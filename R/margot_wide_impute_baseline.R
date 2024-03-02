@@ -16,25 +16,17 @@
 #' # the df_nz is a dataset available in the 'margot' package
 #' data(df_nz, package = "margot")
 #'
-#' baseline_vars <- c(
-#'   "male", "age", "education_level_coarsen", "eth_cat",
-#'   "partner", "religion_church_binary", "agreeableness",
-#'   "conscientiousness", "extraversion", "honesty_humility",
-#'   "openness", "neuroticism", "sample_weights"
-#' )
+#' df_nz <- data.frame(df_nz)
+#' wide_data_imputed <- margot_wide_impute_baseline(df_nz,
+#'   baseline_vars = c("age", "male", "religion_believe_god"),
+#'   exposure_var = ("forgiveness"),
+#'   outcome_vars = ("kessler_latent_anxiety")
+#'   )
 #'
-#' exposure_var <- c("forgiveness", "not_lost")
-#'
-#' outcome_vars <- c(
-#'   "alcohol_frequency", "alcohol_intensity",
-#'   "hlth_bmi", "hours_exercise"
-#' )
-#'
-#' wide_data_imputed <- margot_wide_impute_baseline(df_nz, baseline_vars, exposure_var, outcome_vars)
-#'
-#' @importFrom mice mice complete
-#' @importFrom dplyr select mutate arrange filter relocate
+#' @importFrom magrittr %>%
+#' @importFrom dplyr mutate arrange filter select relocate
 #' @importFrom tidyr pivot_wider
+#' @importFrom mice mice complete
 #' @export
 
 margot_wide_impute_baseline <-
@@ -42,16 +34,16 @@ margot_wide_impute_baseline <-
            baseline_vars,
            exposure_var,
            outcome_vars) {
-    require(tidyverse)
-    require(mice)
-    # add a check for unused levels of factor variables
+    if (!is.data.frame(.data)) {
+      stop("The provided data is not a data frame.")
+    }
+
+    # Add a check for unused levels of factor variables
     lapply(.data, function(column) {
       if (is.factor(column) && any(table(column) == 0)) {
-        stop("There are unused levels in the factor variable: ",
-             deparse(substitute(column)))
+        stop("There are unused levels in the factor variable: ", deparse(substitute(column)))
       }
     })
-
     # add the 'time' column to the data
     data_with_time <- .data %>%
       mutate(time = as.numeric(wave) - 1) %>%
@@ -121,6 +113,13 @@ margot_wide_impute_baseline <-
       wide_data_filtered <- wide_data_filtered %>%
         dplyr::relocate(starts_with(paste0("t", time_values[i + 1], "_")), .after = starts_with(paste0("t", time_values[i], "_")))
     }
+    existing_cols <- names(wide_data_filtered)
+    t0_column_order <- c(
+      paste0("t0_", baseline_vars),
+      paste0("t0_", exposure_var),
+      paste0("t0_", outcome_vars)
+    )
+    t0_column_order <- t0_column_order[t0_column_order %in% existing_cols]
 
     # reorder t0_ columns
     t0_column_order <-
@@ -130,7 +129,7 @@ margot_wide_impute_baseline <-
         paste0("t0_", outcome_vars)
       )
     wide_data_ordered <- wide_data_filtered %>%
-      select(id, t0_column_order, everything())
+      select(id, all_of(t0_column_order), everything())
 
     return(data.frame(wide_data_ordered)) # Ensure output is a data.frame
 

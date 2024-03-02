@@ -28,20 +28,11 @@ Imputed data are then merged back, maintaining the structure suitable for analys
 # the df_nz is a dataset available in the 'margot' package
 data(df_nz, package = "margot")
 
-baseline_vars <- c(
-  "male", "age", "education_level_coarsen", "eth_cat",
-  "partner", "religion_church_binary", "agreeableness",
-  "conscientiousness", "extraversion", "honesty_humility",
-  "openness", "neuroticism", "sample_weights"
-)
-
-exposure_var <- c("forgiveness", "not_lost")
-
-outcome_vars <- c(
-  "alcohol_frequency", "alcohol_intensity",
-  "hlth_bmi", "hours_exercise"
-)
-
-wide_data_imputed <- margot_wide_impute_baseline(df_nz, baseline_vars, exposure_var, outcome_vars)
+df_nz <- data.frame(df_nz)
+wide_data_imputed <- margot_wide_impute_baseline(df_nz,
+  baseline_vars = c("age", "male", "religion_believe_god"),
+  exposure_var = ("forgiveness"),
+  outcome_vars = ("kessler_latent_anxiety")
+  )
 
 }
