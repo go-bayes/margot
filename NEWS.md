@@ -1,3 +1,3 @@
-no# margot 0.1.0
+# margot 0.1.0
 
-* Initial CRAN submission.
+* Initial version.

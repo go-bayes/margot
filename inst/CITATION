@@ -1,0 +1,11 @@
+bibentry(
+  bibtype  = "manual",
+  title    = "margot: Marginal Analysis and Research for General Observational Treatments",
+  journal  = "",
+  author   = "Joseph A Bulbulia",
+  year     = 2024,
+  volume   = "",
+  number   = "",
+  pages    = "",
+  website  ="https://go-bayes.github.io/margot/"
+  )

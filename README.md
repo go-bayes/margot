@@ -3,11 +3,13 @@
 
 # margot
 
+Marginal Analysis and Research for General Observational Treatments
+
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of `margot` is to improve causal inference in psychological
-science.
+The goal of `margot` is to improve causal inference, with an emphasise
+on psychological science.
 
 <!-- badges: start -->
 <!-- badges: end -->
@@ -17,7 +19,7 @@ for teaching purposes.
 
 ## Installation
 
-You can install the development version of kiwicausalR like so:
+You can install the development version of `margot` like so:
 
 ``` r
 if (!require(devtools, quietly = TRUE)) {
