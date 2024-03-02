@@ -23,7 +23,7 @@
 #'   outcome_vars = ("kessler_latent_anxiety")
 #'   )
 #'
-#' @importFrom magrittr %>%
+#' @importFrom magrittr |>
 #' @importFrom dplyr mutate arrange filter select relocate
 #' @importFrom tidyr pivot_wider
 #' @importFrom mice mice complete
@@ -45,17 +45,17 @@ margot_wide_impute_baseline <-
       }
     })
     # add the 'time' column to the data
-    data_with_time <- .data %>%
-      mutate(time = as.numeric(wave) - 1) %>%
-      arrange(id, time)
+    data_with_time <- .data |>
+      dplyr::mutate(time = as.numeric(wave) - 1) |>
+      dplyr::arrange(id, time)
 
     # filter the data based on the time condition
-    data_filtered <- data_with_time %>%
-      filter(time >= 0)
+    data_filtered <- data_with_time |>
+      dplyr::filter(time >= 0)
 
     # create the wide data frame
-    wide_data <- data_filtered %>%
-      pivot_wider(
+    wide_data <- data_filtered  |>
+      tidyr::pivot_wider(
         id_cols = id,
         names_from = time,
         values_from = -c(id, time),
@@ -70,8 +70,8 @@ margot_wide_impute_baseline <-
 
     # apply the imputation
     t0_data <- wide_data[, t0_columns, drop = FALSE]
-    imputed_data <- mice(t0_data, method = 'pmm', m = 1)
-    complete_t0_data <- complete(imputed_data, 1)
+    imputed_data <- mice::mice(t0_data, method = 'pmm', m = 1)
+    complete_t0_data <- mice::complete(imputed_data, 1)
 
     # merge the imputed data back into the wide data
     wide_data[, t0_columns] <- complete_t0_data
@@ -94,12 +94,12 @@ margot_wide_impute_baseline <-
     }
 
     # apply the custom function to select the desired columns
-    wide_data_filtered <- wide_data %>%
+    wide_data_filtered <- wide_data  |>
       dplyr::select(id, which(sapply(
         colnames(wide_data), custom_col_filter
-      ))) %>%
-      dplyr::relocate(starts_with("t0_"), .before = starts_with("t1_"))  %>%
-      arrange(id)
+      ))) |>
+      dplyr::relocate(starts_with("t0_"), .before = starts_with("t1_"))   |>
+      dplyr::arrange(id)
 
     # extract unique time values from column names
     time_values <-
@@ -110,7 +110,7 @@ margot_wide_impute_baseline <-
 
     # relocate columns iteratively
     for (i in 2:(length(time_values) - 1)) {
-      wide_data_filtered <- wide_data_filtered %>%
+      wide_data_filtered <- wide_data_filtered  |>
         dplyr::relocate(starts_with(paste0("t", time_values[i + 1], "_")), .after = starts_with(paste0("t", time_values[i], "_")))
     }
     existing_cols <- names(wide_data_filtered)
@@ -128,8 +128,8 @@ margot_wide_impute_baseline <-
         paste0("t0_", exposure_var),
         paste0("t0_", outcome_vars)
       )
-    wide_data_ordered <- wide_data_filtered %>%
-      select(id, all_of(t0_column_order), everything())
+    wide_data_ordered <- wide_data_filtered  |>
+      dplyr::select(id, all_of(t0_column_order), everything())
 
     return(data.frame(wide_data_ordered)) # Ensure output is a data.frame
 
