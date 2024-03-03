@@ -8,9 +8,15 @@
 <!--   out.width = "100%" -->
 <!-- ) -->
 <!-- ``` -->
+<!-- ```{r, include = FALSE} -->
+<!-- library(here) -->
+<!-- # GitHub pages -->
+<!-- file.create("docs/.nojekyll", showWarnings = FALSE) -->
+<!-- ``` -->
 <!-- badges: start -->
 
-<img src="man/figures/margot_hex_sticker.png" width = 240>
+<img src="docs/reference/figures/margot_hex_sticker.png" width = 240>
+
 <!-- badges: end -->
 
 # margot
