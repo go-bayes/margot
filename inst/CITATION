@@ -1,6 +1,6 @@
 bibentry(
   bibtype  = "manual",
-  title    = "margot: Marginal Analysis and Research for General Observational Treatments",
+  title    = "margot: MARGinal Observational Treatment-effects",
   journal  = "",
   author   = "Joseph A Bulbulia",
   year     = 2024,

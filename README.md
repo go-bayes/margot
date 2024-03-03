@@ -1,21 +1,31 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- badges: start -->
+
+<img src="man/hex/margot_hex_sticker.jpeg" width = 240>
+<!-- badges: end -->
 
 # margot
 
-Marginal Analysis and Research for General Observational Treatments
+**MARG**inal **O**bservational **T**reatment-effects
 
-<!-- badges: start -->
-<!-- badges: end -->
+The goal of `margot` is to make causal inference more accessible. It’s
+main audience are psychological scientists.
 
-The goal of `margot` is to improve causal inference, with an emphasise
-on psychological science.
+We are building helper functions to help:
 
-<!-- badges: start -->
-<!-- badges: end -->
+- evaluate the assumptions required of their data to enable causal
+  inference
+- model their data (if assumptions are met)
+- report results
+- perform sensitivity analyses
 
-Currently, `margot` consists of a synthetic longitudinal dataset used
-for teaching purposes.
+Although `margot` focusses on computing (Marginal) Average Treatment
+Effects, it also aims to help investigators obtain Conditional Average
+Treatment Effects.
+
+**This version is experimental**. It has only been tested for data
+initially passed in long-data form.
 
 ## Installation
 
