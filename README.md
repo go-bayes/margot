@@ -13,7 +13,7 @@
 
 # margot
 
-**MARG**inal **O**bservational **T**reatment-effects
+**MARG**inal **O**bservational **T**reatment-effects.[^1]
 
 Causal inference demands **balance** across the treatments to be
 compared. In observational studies, such balance is not guaranteed. The
@@ -21,23 +21,19 @@ goal of `margot` is to enhance the accessibility of causal inference.
 Its primary audience includes psychological scientists, although it may
 benefit other social scientists.
 
-The package offers helper functions for:
+The package offers functions for:
 
 - evaluating causal assumptions
 - modelling time-series data
 - reporting results
 - performing sensitivity analyses
 
-`margot` focuses on computing Marginal Average Treatment Effects, but it
-also supports Conditional Average Treatment Effects.
+`margot` focuses on streamlining the estimation of (Marginal) Average
+Treatment Effects, but it also supports workflows for Conditional
+Average Treatment Effects, Heterogeneous Treatment Effects, and Modified
+Treatment Policies.
 
-Please note this version is a work in progress and experimental. All
-functions have been tested, albeit only with data resembling synthetic
-teaching data (a three-wave panel design). If your interests or data
-differ, proceed with caution.
-
-The name `margot` aptly reflects the essence of this package, which I
-have also chosen to name in honour of my daughter, Margot.
+This version of the package is a work in progress and experimental.
 
 ## Installation
 
@@ -63,3 +59,6 @@ df_nz |>
   dplyr::group_by(wave) |> 
   dplyr::summarise(mean = mean(agreeableness, na.rm = TRUE))
 ```
+
+[^1]: The name `margot` reflects the contents of this package; it is
+    also the name of my daughter, Margot.
