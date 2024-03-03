@@ -15,11 +15,11 @@
 
 **MARG**inal **O**bservational **T**reatment-effects
 
-Causal inference demands balance among the treatments to be compared. In
-observational studies, such balance is not guaranteed. The goal of
-`margot` is to enhance the accessibility of causal inference. Its
-primary audience includes psychological scientists, though it may
-benefit others.
+Causal inference demands **balance** across the treatments to be
+compared. In observational studies, such balance is not guaranteed. The
+goal of `margot` is to enhance the accessibility of causal inference.
+Its primary audience includes psychological scientists, although it may
+benefit other social scientists.
 
 The package offers helper functions for:
 
