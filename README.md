@@ -2,7 +2,7 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 <!-- badges: start -->
 
-<img src="man/figures/margot_hex_sticker.jpeg" width = 240>
+<img src="man/figures/margot_hex_sticker.png" width = 240>
 <!-- badges: end -->
 
 # margot
@@ -17,10 +17,10 @@ benefit others.
 
 The package offers helper functions for:
 
-- Evaluating causal assumptions
-- Modelling time-series data
-- Reporting results
-- Performing sensitivity analyses
+- evaluating causal assumptions
+- modelling time-series data
+- reporting results
+- performing sensitivity analyses
 
 `margot` focuses on computing Marginal Average Treatment Effects, but it
 also supports Conditional Average Treatment Effects.

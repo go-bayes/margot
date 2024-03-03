@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 # margot
+
 **MARG**inal **O**bservational **T**reatment-effects
 
 
@@ -24,10 +25,10 @@ Causal inference demands balance among the treatments to be compared. In observa
 
 The package offers helper functions for:
 
-- Evaluating causal assumptions
-- Modelling time-series data
-- Reporting results
-- Performing sensitivity analyses
+- evaluating causal assumptions
+- modelling time-series data
+- reporting results
+- performing sensitivity analyses
 
 `margot` focuses on computing Marginal Average Treatment Effects, but it also supports Conditional Average Treatment Effects. 
 
