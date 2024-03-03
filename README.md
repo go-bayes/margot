@@ -9,7 +9,7 @@
 
 **MARG**inal **O**bservational **T**reatment-effects
 
-Causal inference demands balance among treatments to be compared. In
+Causal inference demands balance among the treatments to be compared. In
 observational studies, such balance is not guaranteed. The goal of
 `margot` is to enhance the accessibility of causal inference. Its
 primary audience includes psychological scientists, though it may
