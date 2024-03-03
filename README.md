@@ -2,30 +2,36 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 <!-- badges: start -->
 
-<img src="man/hex/margot_hex_sticker.jpeg" width = 240>
+<img src="man/figures/margot_hex_sticker.jpeg" width = 240>
 <!-- badges: end -->
 
 # margot
 
 **MARG**inal **O**bservational **T**reatment-effects
 
-The goal of `margot` is to make causal inference more accessible. It’s
-main audience are psychological scientists.
+Causal inference demands balance among treatments to be compared. In
+observational studies, such balance is not guaranteed. The goal of
+`margot` is to enhance the accessibility of causal inference. Its
+primary audience includes psychological scientists, though it may
+benefit others.
 
-We are building helper functions to help:
+The package offers helper functions for:
 
-- evaluate the assumptions required of their data to enable causal
-  inference
-- model their data (if assumptions are met)
-- report results
-- perform sensitivity analyses
+- Evaluating causal assumptions
+- Modelling time-series data
+- Reporting results
+- Performing sensitivity analyses
 
-Although `margot` focusses on computing (Marginal) Average Treatment
-Effects, it also aims to help investigators obtain Conditional Average
-Treatment Effects.
+`margot` focuses on computing Marginal Average Treatment Effects, but it
+also supports Conditional Average Treatment Effects.
 
-**This version is experimental**. It has only been tested for data
-initially passed in long-data form.
+Please note this version is a work in progress and experimental. All
+functions have been tested, albeit only with data resembling synthetic
+teaching data (a three-wave panel design). If your interests or data
+differ, proceed with caution.
+
+The name `margot` aptly reflects the essence of this package, which I
+have also chosen to name in honour of my daughter, Margot.
 
 ## Installation
 

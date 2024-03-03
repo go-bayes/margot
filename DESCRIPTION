@@ -2,8 +2,9 @@ Package: margot
 Type: Package
 Title: This package offers a gentle introduction to R
 Version: 0.1.0
-Author: Joseph Bulbulia
-Maintainer: The package maintainer <joseph.bulbulia@gmail.com>
+Author: Joseph A Bulbulia
+Creator: Joseph A Bulbulia
+Maintainer: Joseph A Bulbulia <joseph.bulbulia@gmail.com>
 Description: Helper functions to obtain MARGinal Observational Treatment-effects
 License: CC BY 4.0
 Encoding: UTF-8
