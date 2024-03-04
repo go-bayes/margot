@@ -1,19 +1,19 @@
-#' Transform Longitudinal Data to Wide Format with Baseline Adjustments
+#' Transform longitudinal data to wide format with labels
 #'
 #' This function transforms longitudinal data from long format to wide format,
-#' ensuring that baseline measurements are correctly labeled and included.
+#' ensuring that baseline measurements are correctly labelled and included.
 #' It handles multiple observations per subject across different waves,
 #' and allows for the specification of baseline variables, exposure variables,
 #' and outcome variables. It ensures that all specified variables are
-#' included in the resulting wide-format dataframe, with columns prefixed
+#' included in the resulting wide-format data frame, with columns prefixed
 #' by the time of measurement.
 #'
-#' @param .data A dataframe containing the longitudinal data in long format.
+#' @param .data A data frame containing the longitudinal data in long format.
 #' @param baseline_vars A character vector of baseline variable names to be included at t0.
 #' @param exposure_var A character vector of exposure variable names to be tracked across time.
 #' @param outcome_vars A character vector of outcome variable names to be tracked across time.
 #'
-#' @return A wide-format dataframe with each subject's observations across time points
+#' @return A wide-format data frame with each subject's observations across time points
 #'         represented in a single row, and variables prefixed by their respective
 #'         time of measurement.
 #'
@@ -126,4 +126,3 @@ margot_wide <-
 
     return(data.frame(wide_data_ordered)) # Ensure output is a data.frame
   }
-

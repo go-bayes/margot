@@ -1,6 +1,6 @@
 library(testthat)
 library(dplyr)
-library(mice) # If mice functions are used within margot_wide_impute_baseline
+library(mice) # ff mice functions are used within margot_wide_impute_baseline
 library(margot)
 
 
@@ -28,19 +28,19 @@ test_that(
                       "hlth_bmi",
                       "hours_exercise")
 
-    # Assuming df_nz is already loaded in your environment
+    # assume df_nz is already loaded in your environment
     wide_data_2 <-
       margot_wide_impute_baseline(df_nz, baseline_vars, exposure_var, outcome_vars)
 
-    # Check the function returns a data frame
+    # check function returns a data frame
     expect_true(is.data.frame(wide_data_2))
 
-    # Check baseline columns have no missing values
+    # check baseline columns have no missing values
     for (var in baseline_vars) {
       expect_true(all(!is.na(wide_data_2[[paste0("t0_", var)]])))
     }
 
-    # Check for missing values in t2_ or greater columns for outcome variables
+    # check for missing values in t2_ or greater columns for outcome variables
     time_points <-
       unique(gsub("^t(\\d+)_.*", "\\1", names(wide_data_2)))
     greater_than_t1 <- time_points[as.numeric(time_points) > 1]
@@ -54,9 +54,9 @@ test_that(
         }
       }
     }
-    # Check specific column names are present, for example:
+    # check specific column names are present, for example:
     expect_true("t0_male" %in% names(wide_data_2))
     expect_true("t0_age" %in% names(wide_data_2))
-    # Add more checks as needed for your variables
+    # add more checks... tba
   }
 )

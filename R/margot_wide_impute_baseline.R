@@ -1,4 +1,4 @@
-#' Wide Format Data Transformation with Baseline Imputation
+#' Transform to wide data with labels and impute baseline missing values
 #'
 #' This function transforms longitudinal data into a wide format and performs imputation on baseline variables.
 #' It leverages the `mice` package for imputation, ensuring that missing baseline data are appropriately handled.

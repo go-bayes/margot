@@ -1,15 +1,15 @@
 # tests/testthat/test-margot_wide.R
 
 library(testthat)
-library(dplyr) # Ensure dplyr and tidyr are available if used in the function
+library(dplyr) # ensure dplyr and tidyr are available if used in the function
 library(tidyr)
 library(margot)
 
 test_that("margot_wide transforms data correctly", {
-  # Ensure the df_nz data is accessible as expected
-  data("df_nz", package = "margot") # Adjust the package name accordingly
+  # ensure the df_nz data is accessible as expected
+  data("df_nz", package = "margot")
 
-  # Defining variables as per your function's documentation
+  # define variables
   baseline_vars <- c(
     "male",
     "age",
@@ -31,11 +31,11 @@ test_that("margot_wide transforms data correctly", {
                     "hlth_bmi",
                     "hours_exercise")
 
-  # Apply the function
+  # apply function
   wide_data <-
     margot_wide(df_nz, baseline_vars, exposure_var, outcome_vars)
 
-  # Verify the structure of the wide data
+  # verify structure of wide data
   expected_cols <-
     c(
       "id",
@@ -45,8 +45,8 @@ test_that("margot_wide transforms data correctly", {
     )
   expect_true(all(expected_cols %in% names(wide_data)), info = "All expected columns should be present")
 
-  # Verify the number of rows matches the unique IDs in df_nz
+  # verify the number of rows matches the unique IDs in df_nz
   expect_equal(nrow(wide_data), length(unique(df_nz$id)), info = "One row per unique ID")
 
-  # Additional value checks can be added here
+  # additional value checks can be added here...
 })

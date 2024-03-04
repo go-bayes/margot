@@ -2,12 +2,12 @@
 % Please edit documentation in R/margot_wide.R
 \name{margot_wide}
 \alias{margot_wide}
-\title{Transform Longitudinal Data to Wide Format with Baseline Adjustments}
+\title{Transform longitudinal data to wide format with labels}
 \usage{
 margot_wide(.data, baseline_vars, exposure_var, outcome_vars)
 }
 \arguments{
-\item{.data}{A dataframe containing the longitudinal data in long format.}
+\item{.data}{A data frame containing the longitudinal data in long format.}
 
 \item{baseline_vars}{A character vector of baseline variable names to be included at t0.}
 
@@ -16,17 +16,17 @@ margot_wide(.data, baseline_vars, exposure_var, outcome_vars)
 \item{outcome_vars}{A character vector of outcome variable names to be tracked across time.}
 }
 \value{
-A wide-format dataframe with each subject's observations across time points
+A wide-format data frame with each subject's observations across time points
         represented in a single row, and variables prefixed by their respective
         time of measurement.
 }
 \description{
 This function transforms longitudinal data from long format to wide format,
-ensuring that baseline measurements are correctly labeled and included.
+ensuring that baseline measurements are correctly labelled and included.
 It handles multiple observations per subject across different waves,
 and allows for the specification of baseline variables, exposure variables,
 and outcome variables. It ensures that all specified variables are
-included in the resulting wide-format dataframe, with columns prefixed
+included in the resulting wide-format data frame, with columns prefixed
 by the time of measurement.
 }
 \examples{

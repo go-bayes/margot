@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_wide_impute_baseline.R
 \name{margot_wide_impute_baseline}
 \alias{margot_wide_impute_baseline}
-\title{Wide Format Data Transformation with Baseline Imputation}
+\title{Transform to wide data with labels and impute baseline missing values}
 \usage{
 margot_wide_impute_baseline(.data, baseline_vars, exposure_var, outcome_vars)
 }

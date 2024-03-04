@@ -16,6 +16,9 @@
     <loc>/news/index.html</loc>
   </url>
   <url>
+    <loc>/reference/create_transition_matrix.html</loc>
+  </url>
+  <url>
     <loc>/reference/hello.html</loc>
   </url>
   <url>
@@ -29,5 +32,8 @@
   </url>
   <url>
     <loc>/reference/pipe.html</loc>
+  </url>
+  <url>
+    <loc>/reference/transition_table.html</loc>
   </url>
 </urlset>
