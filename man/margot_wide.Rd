@@ -45,7 +45,7 @@ outcome_vars <- c(
   "hlth_bmi", "hours_exercise"
 )
 
-# df_nz is a dataset included in this package
+# df_nz is a synthetic dataset included in this package
 # wide_data <- margot_wide(df_nz, baseline_vars, exposure_var, outcome_vars)
 # print(wide_data)
 

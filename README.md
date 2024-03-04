@@ -50,14 +50,15 @@ devtools::install_github("go-bayes/margot")
 
 ## Example
 
-``` r
+```r
 library("margot")
 
-# summary of agreeableness responses by wave in retained sample
-df_nz |> 
-  dplyr::select(id, wave, agreeableness) |> 
-  dplyr::group_by(wave) |> 
-  dplyr::summarise(mean = mean(agreeableness, na.rm = TRUE))
+# create transition table to evaluate the positivity assumption
+transition_matrix <- create_transition_matrix(df_nz, "religion_believe_god", "id")
+
+# create table and table explanation
+table_change_belief <- transition_table(transition_matrix)
+table_change_belief
 ```
 
 [^1]: The name `margot` reflects the contents of this package; it is

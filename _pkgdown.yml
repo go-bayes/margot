@@ -1,4 +1,28 @@
-url: ~
+url: https://go-bayes.github.io/margot/
+
 template:
   bootstrap: 5
+  bslib:
+    base_font: {google: "Roboto"}
+    heading_font: {google: "Roboto Slab"}
+    code_font: {google: "Fira Code"}
 
+authors:
+  Joseph A Bulbulia:
+    href: https://github.com/go-bayes
+
+development:
+  #mode: auto
+  version_label: default
+  version_tooltip: "Version"
+
+reference:
+  - title: "Evaluating assumptions"
+    contents:
+    - create_transition_matrix
+    - transition_table
+
+  - title: "Preparing data for models"
+    contents:
+    - margot_wide
+    - margot_wide_impute_baseline

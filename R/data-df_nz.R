@@ -1,9 +1,11 @@
-#' df_nz: Synthetic Dataset
-#'
+
+#' @docType data
+#' @title df_nz Synthetic Dataset
+#' @name df_nz
 #' A synthetic dataset containing columns of responses measured on 20,000 ids by wave. This dataset
 #' is designed for teaching and illustrations.
 #'
-#' @format A data frame with 20,000 observations on the following 4 variables:
+#' @description A data frame with 20,000 observations on the following 4 variables:
 #' \describe{
 #'   \item{\code{id}}{Unique identifier for respondents. Factor}
 #'   \item{\code{wave}}{Wave of the survey. Factor with levels 1, 2, 3.}
@@ -26,3 +28,4 @@
 #'   select(id, wave, agreeableness) %>%
 #'   group_by(wave) %>%
 #'   summarise(mean_agreeableness = mean(agreeableness, na.rm = TRUE))
+

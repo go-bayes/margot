@@ -1,39 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/404.html</loc>
+    <loc>https://go-bayes.github.io/margot/404.html</loc>
   </url>
   <url>
-    <loc>/LICENSE.html</loc>
+    <loc>https://go-bayes.github.io/margot/LICENSE.html</loc>
   </url>
   <url>
-    <loc>/authors.html</loc>
+    <loc>https://go-bayes.github.io/margot/authors.html</loc>
   </url>
   <url>
-    <loc>/index.html</loc>
+    <loc>https://go-bayes.github.io/margot/index.html</loc>
   </url>
   <url>
-    <loc>/news/index.html</loc>
+    <loc>https://go-bayes.github.io/margot/news/index.html</loc>
   </url>
   <url>
-    <loc>/reference/create_transition_matrix.html</loc>
+    <loc>https://go-bayes.github.io/margot/reference/create_transition_matrix.html</loc>
   </url>
   <url>
-    <loc>/reference/hello.html</loc>
+    <loc>https://go-bayes.github.io/margot/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/index.html</loc>
+    <loc>https://go-bayes.github.io/margot/reference/margot_wide.html</loc>
   </url>
   <url>
-    <loc>/reference/margot_wide.html</loc>
+    <loc>https://go-bayes.github.io/margot/reference/margot_wide_impute_baseline.html</loc>
   </url>
   <url>
-    <loc>/reference/margot_wide_impute_baseline.html</loc>
+    <loc>https://go-bayes.github.io/margot/reference/pipe.html</loc>
   </url>
   <url>
-    <loc>/reference/pipe.html</loc>
-  </url>
-  <url>
-    <loc>/reference/transition_table.html</loc>
+    <loc>https://go-bayes.github.io/margot/reference/transition_table.html</loc>
   </url>
 </urlset>

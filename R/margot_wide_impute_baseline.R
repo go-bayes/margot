@@ -13,7 +13,7 @@
 #' @return A data frame in wide format with imputed baseline variables.
 #'
 #' @examples
-#' # the df_nz is a dataset available in the 'margot' package
+#' # df_nz is a synthetic dataset included in this package
 #' data(df_nz, package = "margot")
 #'
 #' df_nz <- data.frame(df_nz)

@@ -25,7 +25,7 @@ The function arranges data by participant id and time, filters based on time con
 Imputed data are then merged back, maintaining the structure suitable for analysis.
 }
 \examples{
-# the df_nz is a dataset available in the 'margot' package
+# df_nz is a synthetic dataset included in this package
 data(df_nz, package = "margot")
 
 df_nz <- data.frame(df_nz)

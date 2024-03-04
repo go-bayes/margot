@@ -4,6 +4,11 @@ library(tidyr)
 library(dplyr)
 library(mice)
 
+# common macros
+devtools::install(".")
+library(pkgdown)
+pkgdown::build_site()
+
 
 # Defining variables as per your function's documentation
 baseline_vars <- c(
@@ -144,4 +149,5 @@ transition_table <- function(data, state_names = NULL) {
 
   list(explanation = explanation, table = markdown_table)
 }
+
 
