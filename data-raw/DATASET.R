@@ -16,7 +16,7 @@
 #   arrow::read_parquet(here::here(push_mods, "df_nz_synth_data_t14"))
 # # # check
 # colnames(df_nz)
-# str(df_nz)
+#str(df_nz$male)
 # #
 # # # save data
-# #usethis::use_data(df_nz, overwrite = TRUE)
+# usethis::use_data(df_nz, overwrite = TRUE)
