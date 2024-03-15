@@ -34,26 +34,35 @@ margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outc
     stop("The provided data is not a data frame.")
   }
 
+  # verify all vars are in the data
+
+  all_vars <- c(baseline_vars, exposure_var, outcome_vars)
+  if (!all(all_vars %in% names(.data))) {
+    missing_vars <- all_vars[!all_vars %in% names(.data)]
+    stop("The following variables are missing: ", paste(missing_vars, collapse = ", "))
+  }
   # add a check for unused levels of factor variables
-  lapply(.data, function(column) {
+  lapply(names(.data), function(col_name) {
+    column <- .data[[col_name]]
     if (is.factor(column) && any(table(column) == 0)) {
-      stop("There are unused levels in the factor variable: ",
-           deparse(substitute(column)))
+      # Option to remove unused levels or issue a warning
+      warning("Removing unused levels in factor variable: ", col_name)
+      .data[[col_name]] <- factor(column)
     }
   })
 
   # add the 'time' column to the data
   data_with_time <- .data |>
-    mutate(time = as.numeric(wave) - 1) |>
-    arrange(id, time)
+    dplyr::mutate(time = as.numeric(wave) - 1) |>
+    dplyr::arrange(id, time)
 
   # Filter the data based on the time condition
   data_filtered <- data_with_time |>
-    filter(time >= 0)
+    dplyr::filter(time >= 0)
 
   # Create the wide data frame
   wide_data <- data_filtered |>
-    pivot_wider(
+    tidyr::pivot_wider(
       id_cols = id,
       names_from = time,
       values_from = -c(id, time),
@@ -68,8 +77,8 @@ margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outc
 
   # Apply the imputation
   t0_data <- wide_data[, t0_columns, drop = FALSE]
-  imputed_data <- mice(t0_data, method = 'pmm', m = 1)
-  complete_t0_data <- complete(imputed_data, 1)
+  imputed_data <- mice::mice(t0_data, method = 'pmm', m = 1)
+  complete_t0_data <- mice::complete(imputed_data, 1)
 
   # Merge the imputed data back into the wide data
   wide_data[, t0_columns] <- complete_t0_data
@@ -97,7 +106,7 @@ margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outc
       colnames(wide_data), custom_col_filter
     ))) |>
     dplyr::relocate(starts_with("t0_"), .before = starts_with("t1_"))  |>
-    arrange(id)
+    dplyr::arrange(id)
 
   # Extract unique time values from column names
   time_values <-
@@ -120,9 +129,7 @@ margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outc
       paste0("t0_", outcome_vars)
     )
   wide_data_ordered <- wide_data_filtered |>
-    select(id, t0_column_order, everything())
-
-  return(data.frame(wide_data_ordered)) # Ensure output is a data.frame
+    dplyr::select(id, t0_column_order, everything())
 
   return(data.frame(wide_data_ordered)) # Ensure output is a data.frame
 }
