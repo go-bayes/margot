@@ -43,7 +43,7 @@ margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outc
   if (length(t0_columns) > 0) {
     # Impute missing values for baseline variables
     t0_data <- wide_data[t0_columns]
-    imputed_data <- mice::mice(t0_data, method = 'pmm', m = 1, print = FALSE)
+    imputed_data <- mice::mice(t0_data, method = 'pmm', m = 1, print = TRUE)
     complete_t0_data <- mice::complete(imputed_data, 1)
 
     # Merge the imputed data back into the wide data
