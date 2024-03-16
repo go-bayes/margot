@@ -17,12 +17,26 @@ development:
   version_tooltip: "Version"
 
 reference:
+
+
   - title: "Evaluating assumptions"
     contents:
     - create_transition_matrix
     - transition_table
+    - coloured_histogram
+    - coloured_histogram_sd
+    - coloured_histogram_shift
 
   - title: "Preparing data for models"
     contents:
     - margot_wide
     - margot_wide_impute_baseline
+
+  - title: "Utility functions"
+    contents:
+    - back_transform_logmean
+    - here_read
+    - here_read_arrow
+    - here_save
+    - here_save_arrow
+    - regress_with_covariates

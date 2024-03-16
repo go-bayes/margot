@@ -16,7 +16,31 @@
     <loc>https://go-bayes.github.io/margot/news/index.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/back_transform_logmean.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/coloured_histogram.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/coloured_histogram_sd.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/coloured_histogram_shift.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/create_transition_matrix.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/here_read.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/here_read_arrow.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/here_save.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/here_save_arrow.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/index.html</loc>
@@ -29,6 +53,9 @@
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/pipe.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/regress_with_covariates.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/transition_table.html</loc>
