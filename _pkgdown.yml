@@ -40,3 +40,4 @@ reference:
     - here_save
     - here_save_arrow
     - regress_with_covariates
+    - select_and_rename_cols

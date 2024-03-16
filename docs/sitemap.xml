@@ -58,6 +58,9 @@
     <loc>https://go-bayes.github.io/margot/reference/regress_with_covariates.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/select_and_rename_cols.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/transition_table.html</loc>
   </url>
 </urlset>
