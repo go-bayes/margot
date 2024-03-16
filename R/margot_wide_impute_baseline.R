@@ -56,11 +56,11 @@ margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outc
     dplyr::mutate(time = as.numeric(wave) - 1) |>
     dplyr::arrange(id, time)
 
-  # Filter the data based on the time condition
+  # filter the data based on the time condition
   data_filtered <- data_with_time |>
     dplyr::filter(time >= 0)
 
-  # Create the wide data frame
+  # create the wide data frame
   wide_data <- data_filtered |>
     tidyr::pivot_wider(
       id_cols = id,
@@ -70,20 +70,20 @@ margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outc
       names_prefix = "t"
     )
 
-  # Identify the columns starting with "t0_" that need to be imputed
+  # identify the columns starting with "t0_" that need to be imputed
   t0_columns <-
     grepl("^t0_", names(wide_data)) &
     names(wide_data) %in% paste0("t0_", c(baseline_vars, exposure_var, outcome_vars))
 
-  # Apply the imputation
+  # apply the imputation
   t0_data <- wide_data[, t0_columns, drop = FALSE]
   imputed_data <- mice::mice(t0_data, method = 'pmm', m = 1)
   complete_t0_data <- mice::complete(imputed_data, 1)
 
-  # Merge the imputed data back into the wide data
+  # merge the imputed data back into the wide data
   wide_data[, t0_columns] <- complete_t0_data
 
-  # Define a custom function to filter columns based on conditions
+  # define a custom function to filter columns based on conditions
   custom_col_filter <- function(col_name) {
     if (startsWith(col_name, "t0_")) {
       return(col_name %in% c(
@@ -100,7 +100,7 @@ margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outc
     }
   }
 
-  # Apply the custom function to select the desired columns
+  # apply the custom function to select the desired columns
   wide_data_filtered <- wide_data |>
     dplyr::select(id, which(sapply(
       colnames(wide_data), custom_col_filter
@@ -108,20 +108,20 @@ margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outc
     dplyr::relocate(starts_with("t0_"), .before = starts_with("t1_"))  |>
     dplyr::arrange(id)
 
-  # Extract unique time values from column names
+  # extract unique time values from column names
   time_values <-
     gsub("^t([0-9]+)_.+$", "\\1", colnames(wide_data_filtered))
   time_values <- time_values[grepl("^[0-9]+$", time_values)]
   time_values <- unique(as.numeric(time_values))
   time_values <- time_values[order(time_values)]
 
-  # Relocate columns iteratively
+  # relocate columns iteratively
   for (i in 2:(length(time_values) - 1)) {
     wide_data_filtered <- wide_data_filtered |>
       dplyr::relocate(starts_with(paste0("t", time_values[i + 1], "_")), .after = starts_with(paste0("t", time_values[i], "_")))
   }
 
-  # Reorder t0_ columns
+  # reorder t0_ columns
   t0_column_order <-
     c(
       paste0("t0_", baseline_vars),
