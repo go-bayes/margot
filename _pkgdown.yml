@@ -35,9 +35,11 @@ reference:
   - title: "Utility functions"
     contents:
     - back_transform_logmean
+    - back_transform_zscore
     - here_read
     - here_read_arrow
     - here_save
     - here_save_arrow
     - regress_with_covariates
+    - remove_numeric_attributes
     - select_and_rename_cols
