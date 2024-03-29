@@ -12,7 +12,6 @@ authors:
     href: https://github.com/go-bayes
 
 development:
-  #mode: auto
   version_label: default
   version_tooltip: "Version"
 

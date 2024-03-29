@@ -1,11 +1,9 @@
-Package: margot: MARGinal Observational Treatment-effects
+Package: margot
 Type: Package
-Title: This package includes functions and wrappers for causal inference in observational settings.
-Version: 0.0.1
-Author: Joseph A Bulbulia
-Creator: Joseph A Bulbulia
-Maintainer: Joseph A Bulbulia <joseph.bulbulia@gmail.com>
-Description: Helper functions to obtain MARGinal Observational Treatment-effects
+Title: MARGinal Observational Treatment-effects
+Version: 0.1.0
+Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
+Description: Helper functions to obtain MARGinal Observational Treatment-effects from observational data.
 License: CC BY 4.0
 Encoding: UTF-8
 LazyData: true
@@ -22,7 +20,6 @@ Imports:
     patchwork,
     here,
     arrow,
-    tidyr,
     glue,
     lmtp,
     tidyr,
