@@ -1,11 +1,7 @@
-bibentry(
-  bibtype  = "manual",
-  title    = "margot: MARGinal Observational Treatment-effects",
-  journal  = "",
-  author   = "Joseph A Bulbulia",
-  year     = 2024,
-  volume   = "",
-  number   = "",
-  pages    = "",
-  website  ="https://go-bayes.github.io/margot/"
-  )
+@Manual{,
+  title = {margot: MARGinal Observational Treatment-effects},
+  author = {Joseph A Bulbulia},
+  year = {2024},
+  note = {R package version 0.0.1},
+  url = {https://go-bayes.github.io/margot/},
+}

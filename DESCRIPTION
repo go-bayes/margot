@@ -1,7 +1,7 @@
-Package: margot
+Package: margot: MARGinal Observational Treatment-effects
 Type: Package
-Title: This package offers a gentle introduction to R
-Version: 0.1.0
+Title: This package includes functions and wrappers for causal inference in observational settings.
+Version: 0.0.1
 Author: Joseph A Bulbulia
 Creator: Joseph A Bulbulia
 Maintainer: Joseph A Bulbulia <joseph.bulbulia@gmail.com>
