@@ -38,12 +38,8 @@ select_and_rename_cols <- function(names_base, baseline_vars, outcome, from_pref
   if (length(outcome) != 1) {
     stop("`outcome` must be a single character string.")
   }
-  if (!outcome %in% names_base) {
-    stop("The outcome variable is not present in `names_base`.")
-  }
-
   # Select columns that match with baseline_vars
-  selected_cols <- grep(paste(baseline_vars, collapse = "|"), names_base, value = TRUE)
+  selected_cols <- names_base[grepl(paste(baseline_vars, collapse = "|"), names_base)]
 
   if (length(selected_cols) == 0) {
     warning("No matching baseline variables found in `names_base`.")
