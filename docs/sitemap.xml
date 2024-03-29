@@ -19,6 +19,9 @@
     <loc>https://go-bayes.github.io/margot/reference/back_transform_logmean.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/back_transform_zscore.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/coloured_histogram.html</loc>
   </url>
   <url>
@@ -56,6 +59,9 @@
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/regress_with_covariates.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/remove_numeric_attributes.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/select_and_rename_cols.html</loc>
