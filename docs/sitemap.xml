@@ -31,7 +31,13 @@
     <loc>https://go-bayes.github.io/margot/reference/coloured_histogram_shift.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/create_ordered_variable.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/create_transition_matrix.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/group_tab.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/here_read.html</loc>
@@ -53,6 +59,21 @@
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/lmtp_evalue_tab.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_lmtp_evalue.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_lmtp_tab.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_plot.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_tab_lmtp.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/margot_wide.html</loc>

@@ -17,6 +17,7 @@
 #'   standard deviations. The plot can be printed or modified further.
 #'
 #' @examples
+#'  \dontrun{
 #' # Assuming `df_nz` is a dataframe with a numeric column 'forgiveness'
 #' # and a factor or integer column 'wave' for subsetting:
 #' df_19 <- dplyr::filter(df_nz, wave == 2019)
@@ -26,7 +27,7 @@
 #'   col_name = "forgiveness",
 #'   binwidth = 0.5 # Adjust binwidth as needed
 #' )
-#'
+#' }
 #' print(graph_density_of_exposure)
 #'
 #' @import ggplot2

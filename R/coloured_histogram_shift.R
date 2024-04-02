@@ -11,6 +11,7 @@
 #' @return A `ggplot` object representing the histogram with specified highlights. This object can be printed or further modified using `ggplot2` functions.
 #'
 #' @examples
+#' \dontrun{
 #' # Assuming df_nz is your dataframe and it includes a numeric variable 'forgiveness'
 #' # Filter to a specific subset, for example, wave 2019
 #' df_19 <- dplyr::filter(df_nz, wave == 2019)
@@ -24,7 +25,7 @@
 #'   range_highlight = c(3.9, 10)
 #' )
 #' print(graph_density_of_exposure)
-#'
+#' }
 #' @import ggplot2
 #' @importFrom rlang sym
 #' @export

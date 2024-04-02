@@ -12,9 +12,11 @@
 #' @return A data frame representing the data stored in the specified `.qs` file.
 #'
 #' @examples
+#' ' \dontrun{
 #' # Assuming you have a directory path "~/mydata"
 #' # and you have previously saved a `.qs` file named "my_dataset.qs" in that directory
 #' my_df <- here_read_qs("my_dataset", "~/mydata")
+#' }
 #'
 #' @export
 #' @importFrom qs qread

@@ -38,6 +38,7 @@ the highest and/or lowest values within a unit of the specified limits. It allow
 customization of bin width and the range to be highlighted.
 }
 \examples{
+ \dontrun{
 # Assuming df_19 is your dataframe and contains the column 'forgiveness'
 graph <- coloured_histogram(
   df = df_19,
@@ -48,5 +49,5 @@ graph <- coloured_histogram(
   binwidth = .1 # Adjust binwidth as needed
 )
 print(graph)
-
+}
 }

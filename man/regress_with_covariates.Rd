@@ -33,6 +33,7 @@ This unitility function performs a generalized linear regression on a specified 
 The function constructs a model formula using the outcome, exposure, and baseline variables. It then fits a generalized linear model using this formula. The baseline variables are filtered to exclude the outcome and exposure variables before model fitting. The function prints the formula used for the regression analysis for verification.
 }
 \examples{
+\dontrun{
 # using `df_nz` is your data frame with "income" as the continuous outcome variable,
 # "age" as an exposure variable, and other covariates
 outcome_var <- "income"
@@ -40,5 +41,6 @@ exposure_var <- "age"
 baseline_vars <- c("age", "education", "partner")
 model <- regress_with_covariates(df_nz, outcome_var, exposure_var, baseline_vars, family =  gaussian())
 summary(model)
+}
 
 }

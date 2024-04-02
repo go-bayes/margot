@@ -17,7 +17,7 @@ development:
 
 reference:
 
-  - title: "Evaluating assumptions"
+  - title: "Evaluate assumptions"
     contents:
     - create_transition_matrix
     - transition_table
@@ -25,10 +25,17 @@ reference:
     - coloured_histogram_sd
     - coloured_histogram_shift
 
-  - title: "Preparing data for models"
+  - title: "Prepare data for models"
     contents:
     - margot_wide
     - margot_wide_impute_baseline
+
+  - title: "Process outputs of models"
+    contents:
+    - group_tab
+    - lmtp_evalue_tab
+    - margot_lmtp_evalue
+    - margot_lmtp_tab
 
   - title: "Simulation functions"
     contents:
@@ -38,6 +45,7 @@ reference:
     contents:
     - back_transform_logmean
     - back_transform_zscore
+    - create_ordered_variable
     - here_read
     - here_save
     - here_read_qs
@@ -45,3 +53,7 @@ reference:
     - regress_with_covariates
     - remove_numeric_attributes
     - select_and_rename_cols
+
+  - title: "Visualise Causal Effect Estimates"
+    contents:
+    - margot_plot

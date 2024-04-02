@@ -17,6 +17,7 @@
 #' @return A ggplot object of the histogram with highlighted ranges as specified.
 #'
 #' @examples
+#'  \dontrun{
 #' # Assuming df_19 is your dataframe and contains the column 'forgiveness'
 #' graph <- coloured_histogram(
 #'   df = df_19,
@@ -27,7 +28,7 @@
 #'   binwidth = .1 # Adjust binwidth as needed
 #' )
 #' print(graph)
-#'
+#' }
 #' @import ggplot2
 #' @import dplyr
 #' @import tools

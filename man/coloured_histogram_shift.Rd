@@ -33,6 +33,7 @@ A `ggplot` object representing the histogram with specified highlights. This obj
 This function creates a histogram that highlights a specified range of values to visualize shifts in data distributions. The highlighted range can indicate areas of interest, such as shifts up or down in the distribution. The fill colour of the histogram is dynamically adjusted based on the specified direction of the shift.
 }
 \examples{
+\dontrun{
 # Assuming df_nz is your dataframe and it includes a numeric variable 'forgiveness'
 # Filter to a specific subset, for example, wave 2019
 df_19 <- dplyr::filter(df_nz, wave == 2019)
@@ -46,5 +47,5 @@ graph_density_of_exposure <- coloured_histogram_shift(
   range_highlight = c(3.9, 10)
 )
 print(graph_density_of_exposure)
-
+}
 }

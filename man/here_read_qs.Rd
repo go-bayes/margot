@@ -21,9 +21,3 @@ This function uses the `qs` package to efficiently read `.qs` files and the `her
 \details{
 The `dir_path` argument must point to an existing directory. The function will throw an error if the specified file does not exist or cannot be read as a `.qs` file.
 }
-\examples{
-# Assuming you have a directory path "~/mydata"
-# and you have previously saved a `.qs` file named "my_dataset.qs" in that directory
-my_df <- here_read_qs("my_dataset", "~/mydata")
-
-}

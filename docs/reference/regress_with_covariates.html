@@ -89,17 +89,15 @@
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># using `df_nz` is your data frame with "income" as the continuous outcome variable,</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># using `df_nz` is your data frame with "income" as the continuous outcome variable,</span></span></span>
 <span class="r-in"><span><span class="co"># "age" as an exposure variable, and other covariates</span></span></span>
 <span class="r-in"><span><span class="va">outcome_var</span> <span class="op">&lt;-</span> <span class="st">"income"</span></span></span>
 <span class="r-in"><span><span class="va">exposure_var</span> <span class="op">&lt;-</span> <span class="st">"age"</span></span></span>
 <span class="r-in"><span><span class="va">baseline_vars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"education"</span>, <span class="st">"partner"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">regress_with_covariates</span><span class="op">(</span><span class="va">df_nz</span>, <span class="va">outcome_var</span>, <span class="va">exposure_var</span>, <span class="va">baseline_vars</span>, family <span class="op">=</span>  <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> income ~ age + education + partner</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x16d4c3dd0&gt;</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(predvars, data, env):</span> object 'income' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'model' not found</span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

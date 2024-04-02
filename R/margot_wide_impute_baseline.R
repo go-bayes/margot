@@ -27,8 +27,6 @@
 #' @importFrom tidyr pivot_wider
 #' @importFrom mice mice complete
 #' @export
-
-# refactor
 margot_wide_impute_baseline <- function(.data, baseline_vars, exposure_var, outcome_vars) {
   if (!is.data.frame(.data)) {
     stop("The provided data is not a data frame.")
