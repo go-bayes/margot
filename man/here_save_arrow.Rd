@@ -2,29 +2,24 @@
 % Please edit documentation in R/here_save_arrow.R
 \name{here_save_arrow}
 \alias{here_save_arrow}
-\title{Save Data Frame to Parquet File in a Specified Directory}
+\title{Save Data Frame to Parquet File in a Specified Directory (Deprecated)}
 \usage{
 here_save_arrow(df, name)
 }
 \arguments{
-\item{df}{Data frame to be saved. This is the object you want to persist to disk in Parquet format.}
+\item{df}{Data frame to be saved.}
 
-\item{name}{Character string specifying the base name of the file (without the ".parquet" extension).}
-}
-\value{
-Invisible NULL. The primary effect of this function is the side effect of writing a parquet file to disk.
+\item{name}{Character string specifying the base name of the file.}
 }
 \description{
-Saves the provided data frame as a parquet file using the specified name, within a directory defined by `push_mods`.
-This function leverages the `arrow` and `here` packages to write data frames to parquet format and construct the file path in a consistent, platform-independent manner.
-}
-\details{
-The `push_mods` variable must be defined in the user's environment or within the package, pointing to the directory where files will be saved.
-It is presumed that `push_mods` is properly set up to point to an existing directory path. The function does not create directories; it assumes that the specified directory already exists.
+This function is deprecated and will be removed in future releases.
+For saving data frames, consider using the `here_save_qs` function.
 }
 \examples{
-# Assuming `push_mods` is set in your environment to "~/mydata"
+\dontrun{
 my_df <- data.frame(x = 1:5, y = letters[1:5])
 here_save_arrow(my_df, "my_saved_dataframe")
+}
 
 }
+\keyword{internal}

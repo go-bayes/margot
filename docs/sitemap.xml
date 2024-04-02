@@ -40,10 +40,16 @@
     <loc>https://go-bayes.github.io/margot/reference/here_read_arrow.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/here_read_qs.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/here_save.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/here_save_arrow.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/here_save_qs.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/index.html</loc>
