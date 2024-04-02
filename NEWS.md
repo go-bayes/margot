@@ -1,10 +1,10 @@
 
-# Changelog
 
-## [Unreleased]
+# margot 0.1.0.1
 
-## margot 0.1.0
+* Minor bug fixes and performance improvements.
 
-* Initial version: data exploration, model preparation, utility functions
 
-## margot 0.1.0.1
+# margot 0.1.0
+
+* Initial release: includes data exploration, model preparation, utility functions.
