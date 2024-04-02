@@ -27,6 +27,7 @@ the number of entities remaining in the same state (diagonal) and those transiti
 to different states (off-diagonal).
 }
 \examples{
+\dontrun{
 df <- read.table(header=TRUE, text="
 id wave year_measured religion_believe_god
 3 0 1 0
@@ -47,5 +48,5 @@ transition_table_data <- transition_table(long_df_transition)
 cat(transition_table_data$explanation)
 cat("\n")
 print(transition_table_data$table)
-
+}
 }

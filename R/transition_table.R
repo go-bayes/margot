@@ -17,6 +17,7 @@
 #' entries show the count of transitions between different states.
 #'
 #' @examples
+#' \dontrun{
 #' df <- read.table(header=TRUE, text="
 #' id wave year_measured religion_believe_god
 #' 3 0 1 0
@@ -37,7 +38,7 @@
 #' cat(transition_table_data$explanation)
 #' cat("\n")
 #' print(transition_table_data$table)
-#'
+#' }
 #' @importFrom dplyr mutate arrange
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom knitr kable

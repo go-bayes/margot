@@ -34,6 +34,7 @@ reference:
     contents:
     - group_tab
     - lmtp_evalue_tab
+    - margot_interpret_table
     - margot_lmtp_evalue
     - margot_lmtp_tab
 
