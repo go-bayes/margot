@@ -65,5 +65,9 @@ table_change_belief
 
 Go to:<https://github.com/go-bayes/margot>
 
+## Doi
+
+[![DOI](https://zenodo.org/badge/766117235.svg)](https://zenodo.org/doi/10.5281/zenodo.10907723)
+
 [^1]: The name `margot` reflects the contents of this package; it is
     also the name of my daughter, Margot.
