@@ -67,6 +67,9 @@
     <loc>https://go-bayes.github.io/margot/reference/select_and_rename_cols.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/simulate_ate_data_with_weights.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/transition_table.html</loc>
   </url>
 </urlset>

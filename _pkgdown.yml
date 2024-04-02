@@ -17,7 +17,6 @@ development:
 
 reference:
 
-
   - title: "Evaluating assumptions"
     contents:
     - create_transition_matrix
@@ -31,6 +30,10 @@ reference:
     - margot_wide
     - margot_wide_impute_baseline
 
+  - title: "Simulation functions"
+    contents:
+    - simulate_ate_data_with_weights
+
   - title: "Utility functions"
     contents:
     - back_transform_logmean
@@ -42,3 +45,5 @@ reference:
     - regress_with_covariates
     - remove_numeric_attributes
     - select_and_rename_cols
+
+
