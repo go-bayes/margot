@@ -19,7 +19,7 @@ Imports:
     gtsummary,
     patchwork,
     here,
-    arrow,
+    qs,
     glue,
     lmtp,
     tidyr,
