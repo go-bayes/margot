@@ -50,7 +50,7 @@ devtools::install_github("go-bayes/margot")
 
 ## Example
 
-```r
+``` r
 library("margot")
 
 # create transition table to evaluate the positivity assumption
@@ -60,6 +60,10 @@ transition_matrix <- create_transition_matrix(df_nz, "religion_believe_god", "id
 table_change_belief <- transition_table(transition_matrix)
 table_change_belief
 ```
+
+## Code
+
+Go to:<https://github.com/go-bayes/margot>
 
 [^1]: The name `margot` reflects the contents of this package; it is
     also the name of my daughter, Margot.

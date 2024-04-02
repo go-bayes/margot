@@ -76,3 +76,7 @@ table_change_belief <- transition_table(transition_matrix)
 table_change_belief
 ```
 
+## Code
+
+Go to:[https://github.com/go-bayes/margot](https://github.com/go-bayes/margot)
+
