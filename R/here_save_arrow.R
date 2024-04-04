@@ -15,8 +15,8 @@
 #' @export
 #' @keywords internal
 here_save_arrow <- function(df, name) {
-  .Deprecated("here_save_qs",
-              message = "here_save_arrow is deprecated and will be removed in a future release. Please use here_save_qs instead.")
-  # function
-  arrow::write_parquet(df, here::here(push_mods, paste0(name, ".parquet")))
+  .Deprecated("here_save_qs", package = "margot")
+  message("here_save_arrow is deprecated and will be removed in a future release. Please use here_save_qs instead.")
+  # function logic
+  arrow::write_parquet(df, here::here(name, ".parquet"))
 }

@@ -13,9 +13,9 @@
 #' @export
 #' @keywords internal
 here_read_arrow <- function(name) {
-  .Deprecated("here_read_qs",
-              message = "here_read_arrow is deprecated and will be removed in a future release. Please use here_read_qs instead.")
-  # function
-  df <- arrow::read_parquet(here::here(push_mods, paste0(name, ".parquet")))
+  .Deprecated("here_read_qs")
+  message("here_read_arrow is deprecated and will be removed in a future release. Please use here_read_qs instead.")
+  # function logic
+  df <- arrow::read_parquet(here::here(name, ".parquet"))
   return(df)
 }

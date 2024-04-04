@@ -24,6 +24,7 @@ reference:
     - coloured_histogram
     - coloured_histogram_sd
     - coloured_histogram_shift
+    - match_mi_general
 
   - title: "Prepare data for models"
     contents:
