@@ -2,27 +2,43 @@
 % Please edit documentation in R/margot_interpret_table.R
 \name{margot_interpret_table}
 \alias{margot_interpret_table}
-\title{Interpret and Describe Causal Effect Estimates}
+\title{Interpret and Describe Causal Effect Estimates Using E-values}
 \usage{
 margot_interpret_table(df, causal_scale, estimand)
 }
 \arguments{
-\item{df}{Data frame output from `group_tab` containing categorized causal effect estimates.}
+\item{df}{Data frame containing causal effect estimates, expected to include columns for
+outcome names, effect estimates (either differences or ratios), confidence intervals,
+E-values, and a summary estimate label. The structure of `df` should align with the specified
+`causal_scale`.}
 
-\item{causal_scale}{Character string specifying the causal scale used in the analysis, currently only supports "causal_difference". Future versions may include additional scales.}
+\item{causal_scale}{Character string specifying the causal scale used in the analysis.
+Currently supports "causal_difference" for differences in means or medians, and "risk_ratio"
+for comparing ratios of probabilities or risks.}
 
-\item{estimand}{Character string indicating the type of causal estimand interpreted: "PATE" (Population Average Treatment Effect), "ATE" (Average Treatment Effect), "ATT" (Average Treatment Effect in the Treated), or "CATE" (Conditional Average Treatment Effect).}
+\item{estimand}{Character string indicating the type of causal estimand interpreted: "PATE"
+(Population Average Treatment Effect), "ATE" (Average Treatment Effect), "ATT" (Average
+Treatment Effect in the Treated), or "CATE" (Conditional Average Treatment Effect).}
 }
 \value{
-A character vector containing a detailed interpretation of each outcome in `df`, including the type of estimand, the causal contrast, E-values, and the strength of evidence for causality.
+A character vector containing a detailed interpretation of each outcome in `df`,
+including the type of estimand, the causal contrast, E-values, and the strength of evidence
+for causality. The interpretation includes whether there is evidence for causality based on
+the E-value and confidence interval, tailored to the specified causal scale.
 }
 \description{
-This function interprets the output of the `group_tab` function, providing textual descriptions of causal effect estimates. It categorizes the strength of evidence for causality based on E-values and confidence intervals, and generates a detailed interpretation of the effect estimates according to specified causal scales and estimands.
+This function interprets the output of causal effect analysis, providing textual descriptions
+of causal effect estimates. It categorizes the strength of evidence for causality based on
+E-values and confidence intervals, and generates a detailed interpretation of the effect
+estimates according to specified causal scales (i.e., "causal_difference" or "risk_ratio")
+and estimands. This function now supports interpreting results on both the causal difference
+and risk ratio scales.
 }
 \examples{
 \dontrun{
-# Assuming `group_tab_output` is the result from `group_tab`
+# Assuming `group_tab_output` is the result from a causal analysis
 margot_interpret_table(group_tab_output, "causal_difference", "ATE")
+margot_interpret_table(group_tab_output, "risk_ratio", "PATE")
 }
 
 }
