@@ -19,11 +19,12 @@
 #' @importFrom glue glue
 margot_interpret_table <- function(df, causal_scale, estimand) {
   estimand_description <- dplyr::case_when(
-    estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) represents the expected difference in outcomes between treatment and control groups for the New Zealand population.",
-    estimand == "ATE" ~ "The Average Treatment Effect (ATE) represents the expected difference in outcomes between treatment and control groups for the population.",
-    estimand == "ATT" ~ "The Average Treatment Effect in the Treated (ATT) represents the expected difference in outcomes between treatment and control groups for the treated population.",
-    estimand == "CATE" ~ "The Conditional Average Treatment Effect (CATE) represents the expected difference in outcomes between treatment and control groups within a stratum of the population.",
-    TRUE ~ "The specified estimand is not recognized. Please use one of the following: 'PATE', 'ATE', 'ATT', 'CATE'."
+    estimand == "lmtp" ~ "This Longitudinal Modified Treatment Policy presents the expected difference in outcomes between treatment and control groups for the New Zealand population.",
+    estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) presents the expected difference in outcomes between treatment and control groups for the New Zealand population.",
+    estimand == "ATE" ~ "The Average Treatment Effect (ATE) represents the presents difference in outcomes between treatment and control groups for the population.",
+    estimand == "ATT" ~ "The Average Treatment Effect in the Treated (ATT) presents the expected difference in outcomes between treatment and control groups for the treated population.",
+    estimand == "CATE" ~ "The Conditional Average Treatment Effect (CATE) presents the expected difference in outcomes between treatment and control groups within a stratum of the population.",
+    TRUE ~ "The specified estimand is not recognized. Please use one of the following: 'PATE', 'ATE', 'ATT', 'CATE', 'LMTP'."
   )
 
   interpretation <- df %>%
@@ -52,12 +53,12 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
       outcome_interpretation = if_else(
         E_Val_bound == 1,
         glue::glue(
-          "For the outcome '{outcome}', given the lower bound of the E-value equals 1, we find no reliable evidence for causality."
+          "For the outcome '{outcome}', given the lower bound of the E-value equals 1, we infer there is no reliable evidence for causality."
         ),
         glue::glue(
           "For the outcome '{outcome}', the {estimand} is {causal_contrast} [{`2.5 %`},{`97.5 %`}]. ",
           "The E-value for this effect estimate is {E_Value} ",
-          "with a lower bound of {E_Val_bound}. In this context, if there exists an unmeasured confounder that is associated with both the treatment and the outcome, and this association has a risk ratio of {E_Val_bound}, then it is possible for such a confounder to negate the observed effect. Conversely, any confounder with a weaker association (i.e., a risk ratio less than {E_Val_bound}) would not be sufficient to fully account for the observed effect.",
+          "with a lower bound of {E_Val_bound}. In this context, if there exists an unmeasured confounder that is associated with both the treatment and the outcome, and this association has a risk ratio of {E_Val_bound}, then it is possible for such a confounder to negate the observed effect. Conversely, any confounder with a weaker association (i.e., a risk ratio of less than {E_Val_bound}) would not be sufficient to fully account for the observed effect.",
           "Here, we find {strength_of_evidence}."
         )
       )
