@@ -61,16 +61,16 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
     dplyr::rowwise() %>%
     dplyr::mutate(
       strength_of_evidence = case_when(
-        E_Val_bound == 1 ~ "no reliable evidence for causality",
-        E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "no reliable evidence for causality",
+        E_Val_bound == 1 ~ "the evidence for causality is not reliable",
+        E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "the evidence for causality is not reliable",
         E_Val_bound > 1 & E_Val_bound < 1.1 ~ "the evidence for causality is weak",
-        E_Val_bound > 2 ~ "strong evidence for causality",
+        E_Val_bound > 2 ~ "the evidence for causality is strong",
         TRUE ~ "evidence for causality"
       ),
       outcome_interpretation = if_else(
         E_Val_bound == 1,
         glue::glue(
-          "For the outcome '{outcome}', given the lower bound of the E-value equals 1, we infer there is no reliable evidence for causality."
+          "For the outcome '{outcome}', given the lower bound of the E-value equals 1; we infer that evidence for causality is not reliable."
         ),
         glue::glue(
           "For the outcome '{outcome}', the {estimand} is {causal_contrast} [{`2.5 %`},{`97.5 %`}]. ",
