@@ -28,7 +28,7 @@ the E-value and confidence interval, tailored to the specified causal scale.
 }
 \description{
 This function interprets the output of causal effect analysis, providing textual descriptions
-of causal effect estimates. It categorizes the strength of evidence for causality based on
+of causal effect estimates. It categorises the strength of evidence for causality based on
 E-values and confidence intervals, and generates a detailed interpretation of the effect
 estimates according to specified causal scales (i.e., "causal_difference" or "risk_ratio")
 and estimands. This function now supports interpreting results on both the causal difference

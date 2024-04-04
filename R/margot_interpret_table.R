@@ -2,7 +2,7 @@
 #' Interpret and Describe Causal Effect Estimates Using E-values
 #'
 #' This function interprets the output of causal effect analysis, providing textual descriptions
-#' of causal effect estimates. It categorizes the strength of evidence for causality based on
+#' of causal effect estimates. It categorises the strength of evidence for causality based on
 #' E-values and confidence intervals, and generates a detailed interpretation of the effect
 #' estimates according to specified causal scales (i.e., "causal_difference" or "risk_ratio")
 #' and estimands. This function now supports interpreting results on both the causal difference
@@ -34,7 +34,6 @@
 #' @export
 #' @importFrom dplyr case_when mutate rowwise ungroup if_else
 #' @importFrom glue glue
-
 margot_interpret_table <- function(df, causal_scale, estimand) {
   estimand_description <- dplyr::case_when(
     estimand == "lmtp" ~ "This longitudinal modified treatment policy computes the expected difference in outcomes between treatment and contrast groups for the target population.",
@@ -70,16 +69,21 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
       ),
       outcome_interpretation = if_else(
         E_Val_bound == 1,
-        glue("For the outcome '{outcome}', given the lower bound of the E-value equals 1, we infer there is no reliable evidence for causality."),
-        glue("For the outcome '{outcome}', the effect is measured on the {causal_scale} scale. The {estimand} suggests a causal contrast of {causal_contrast} [{`2.5 %`},{`97.5 %`}]. The E-value for this effect estimate is {E_Value} with a lower bound of {E_Val_bound}. Here, we find {strength_of_evidence}.")
+        glue::glue(
+          "For the outcome '{outcome}', given the lower bound of the E-value equals 1, we infer there is no reliable evidence for causality."
+        ),
+        glue::glue(
+          "For the outcome '{outcome}', the {estimand} is {causal_contrast} [{`2.5 %`},{`97.5 %`}]. ",
+          "The E-value for this effect estimate is {E_Value} ",
+          "with a lower bound of {E_Val_bound}. In this context, if there exists an unmeasured confounder that is associated with both the treatment and the outcome, and this association has a risk ratio of {E_Val_bound}, then it is possible for such a confounder to negate the observed effect. Conversely, any confounder with a weaker association (i.e., a risk ratio of less than {E_Val_bound}) would not be sufficient to fully account for the observed effect.",
+          "Here, we find {strength_of_evidence}."
+        )
       )
     ) %>%
     dplyr::ungroup()
-
   result <- glue::glue(
     "\n\n{estimand_description}\n\n{paste(interpretation$outcome_interpretation, collapse = '\n\n')}"
   )
   return(result)
 }
-
 
