@@ -2,14 +2,13 @@
 % Please edit documentation in R/margot_plot.R
 \name{margot_plot}
 \alias{margot_plot}
-\title{Visualise Causal Effect Estimates with E-Values}
+\title{Visualise Causal Effect Estimates with Enhanced Flexibility}
 \usage{
 margot_plot(
   .data,
   type = c("RD", "RR"),
   title,
   subtitle,
-  ylab = "",
   estimate_scale = 1,
   base_size = 11,
   text_size = 2.75,
@@ -22,80 +21,76 @@ margot_plot(
   x_lim_lo = ifelse(type == "RR", 0.1, -1.75),
   x_lim_hi = ifelse(type == "RR", 2.5, 1),
   linewidth = 0.5,
-  simplify_axis = FALSE
+  plot_theme = NULL
 )
 }
 \arguments{
-\item{.data}{Data frame containing causal effect estimates outputtd by the `group_tab` function.}
+\item{.data}{A data frame of causal effect estimates, ideally output by a `group_tab` function or similar. The data should include confidence intervals and effect estimate values.}
 
-\item{type}{Character string indicating the scale of effect estimates: "RD" for risk difference
-or "RR" for risk ratio. Defaults to "RD".}
+\item{type}{Character string indicating the scale of effect estimates: "RD" for risk difference or "RR" for risk ratio, with "RD" as the default.}
 
-\item{title}{Main title of the plot.}
+\item{title}{Main title for the plot.}
 
-\item{subtitle}{Subtitle of the plot.}
+\item{subtitle}{Subtitle for the plot.}
 
-\item{ylab}{Y-axis label, typically left blank as outcomes serve as labels.}
+\item{estimate_scale}{Numeric multiplier to adjust the horizontal offset of estimate labels, aiding in plot clarity. Default is 1.}
 
-\item{estimate_scale}{Scale factor for estimate label offsets. Default is 1.}
+\item{base_size}{Base font size for the plot, applied globally unless overridden. Default is 11.}
 
-\item{base_size}{Base font size in the plot. Default is 11.}
+\item{text_size}{Font size for the estimate labels. Default is 2.75.}
 
-\item{text_size}{Font size for estimate labels. Default is 2.75.}
-
-\item{point_size}{Size of the points representing estimates. Default is 0.5.}
+\item{point_size}{Size of points representing the estimates. Default is 0.5.}
 
 \item{title_size}{Font size for the plot title. Default is 10.}
 
-\item{subtitle_size}{Font size for the subtitle. Default is 9.}
+\item{subtitle_size}{Font size for the plot subtitle. Default is 9.}
 
 \item{legend_text_size}{Font size for legend text. Default is 6.}
 
 \item{legend_title_size}{Font size for legend titles. Default is 6.}
 
-\item{x_offset}{Horizontal adjustment of estimate labels, varies by `type`.}
+\item{x_offset}{Horizontal adjustment for estimate labels, varied based on `type`. Default adjustments are 0 for "RR" and -1.75 for "RD".}
 
-\item{x_lim_lo}{Lower limit of the x-axis, adjusted based on `type`.}
+\item{x_lim_lo}{Lower limit of the x-axis, automatically adjusted based on `type`.}
 
-\item{x_lim_hi}{Upper limit of the x-axis, adjusted based on `type`.}
+\item{x_lim_hi}{Upper limit of the x-axis, automatically adjusted based on `type`.}
 
-\item{linewidth}{Width of the error bars. Default is 0.5.}
+\item{linewidth}{Width of the error bars in the plot. Default is 0.5.}
 
-\item{simplify_axis}{Boolean to simplify axis for a cleaner look. Default is FALSE.}
+\item{plot_theme}{ggplot2 theme object for customising plot appearance. Inherits `base_size` from `base_size` parameter to maintain consistency. Uses `theme_classic()` as default but allows for customisation.}
+
+\item{ylab}{Y-axis label, deprecated and ignored in this version as outcomes serve as direct labels.}
 }
 \value{
-A `ggplot` object visualising causal effect estimates with error bars and categorisation labels.
+A ggplot object displaying the causal effect estimates with categorisation and error bars. This plot is tailored for further modifications or direct usage.
 }
 \description{
-Creates a graph to visualise multiple causal effect estimates, organised by effect size,
-on either risk difference (RD) or risk ratio (RR) scales. It categorises estimates as "positive",
-"negative", or "zero_crossing" based on their confidence intervals. This function is flexible,
-allowing customisation of graphical parameters and axis simplification.
+This function renders a graphical representation of causal effect estimates, organised by effect size on either the risk difference (RD) or risk ratio (RR) scale. It categorises estimates into "positive", "negative", or "zero_crossing" based on their confidence intervals. The function features advanced customisability for graphical parameters, including error bar width and the application of custom ggplot2 themes. Notably, it avoids direct manipulation of the input data and implements an advanced labelling strategy for the x-axis to prevent incoherent negative values for RR.
 }
 \examples{
 \dontrun{
-title <- "Religious Service At Least Once Per Week vs None"
+title <- "Impact of Intervention X on Outcome Y"
 
-# Example using Risk Difference (RD) scale
-plot_example_rd <- margot_plot(
-  data = your_data_frame, # replace your_data_frame output of group_tab() function
+# Generating a plot with Risk Difference (RD) scale
+plot_rd <- margot_plot(
+  .data = your_data_frame,
   type = "RD",
   title = title,
-  subtitle = "subtitle here",
+  subtitle = "Subtitle Here",
   estimate_scale = 1,
-  linewidth = 0.5,
-  simplify_axis = TRUE,
-  base_size = 11,
-  text_size = 2.75,
-  point_size = 0.5,
-  title_size = 10,
-  subtitle_size = 9,
-  legend_text_size = 6,
-  legend_title_size = 6,
-  x_offset = -1.75,
-  x_lim_lo = -1.75,
-  x_lim_hi = 1
+  base_size = 12,
+  plot_theme = theme_bw(base_size = 12),
+  ...
 )
-print(plot_example_rd)
+print(plot_rd)
+
+# Generating a plot with Risk Ratio (RR) scale, utilizing custom x-axis labels
+plot_rr <- margot_plot(
+  .data = your_data_frame,
+  type = "RR",
+  ...
+  plot_theme = theme_light(base_size = 12),
+)
+print(plot_rr)
 }
 }
