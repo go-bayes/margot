@@ -19,11 +19,11 @@
 #' @importFrom glue glue
 margot_interpret_table <- function(df, causal_scale, estimand) {
   estimand_description <- dplyr::case_when(
-    estimand == "lmtp" ~ "This Longitudinal Modified Treatment Policy presents the expected difference in outcomes between treatment and control groups for the New Zealand population.",
-    estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) presents the expected difference in outcomes between treatment and control groups for the New Zealand population.",
-    estimand == "ATE" ~ "The Average Treatment Effect (ATE) represents the presents difference in outcomes between treatment and control groups for the population.",
-    estimand == "ATT" ~ "The Average Treatment Effect in the Treated (ATT) presents the expected difference in outcomes between treatment and control groups for the treated population.",
-    estimand == "CATE" ~ "The Conditional Average Treatment Effect (CATE) presents the expected difference in outcomes between treatment and control groups within a stratum of the population.",
+    estimand == "lmtp" ~ "This longitudinal modified treatment policy computes the expected difference in outcomes between treatment and constrast groups for the target population.",
+    estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) computes the expected difference in outcomes between treatment and constrast groups for the New Zealand population.",
+    estimand == "ATE" ~ "The Average Treatment Effect (ATE) represents the computes difference in outcomes between treatment and constrast groups for the target population.",
+    estimand == "ATT" ~ "The Average Treatment Effect in the Treated (ATT) computes the expected difference in outcomes between treatment and constrast groups for the treated in the target opulation.",
+    estimand == "CATE" ~ "The Conditional Average Treatment Effect (CATE) computes the expected difference in outcomes between treatment and constrast groups within a stratum of the population.",
     TRUE ~ "The specified estimand is not recognized. Please use one of the following: 'PATE', 'ATE', 'ATT', 'CATE', 'LMTP'."
   )
 
