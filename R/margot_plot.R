@@ -1,67 +1,63 @@
-#' Visualise Causal Effect Estimates with E-Values
+
+#' Visualise Causal Effect Estimates with Enhanced Flexibility
 #'
-#' @description Creates a graph to visualise multiple causal effect estimates, organised by effect size,
-#' on either risk difference (RD) or risk ratio (RR) scales. It categorises estimates as "positive",
-#' "negative", or "zero_crossing" based on their confidence intervals. This function is flexible,
-#' allowing customisation of graphical parameters and axis simplification.
+#' @description This function renders a graphical representation of causal effect estimates, organised by effect size on either the risk difference (RD) or risk ratio (RR) scale. It categorises estimates into "positive", "negative", or "zero_crossing" based on their confidence intervals. The function features advanced customisability for graphical parameters, including error bar width and the application of custom ggplot2 themes. Notably, it avoids direct manipulation of the input data and implements an advanced labelling strategy for the x-axis to prevent incoherent negative values for RR.
 #'
-#' @param .data Data frame containing causal effect estimates outputtd by the `group_tab` function.
-#' @param type Character string indicating the scale of effect estimates: "RD" for risk difference
-#'   or "RR" for risk ratio. Defaults to "RD".
-#' @param title Main title of the plot.
-#' @param subtitle Subtitle of the plot.
-#' @param ylab Y-axis label, typically left blank as outcomes serve as labels.
-#' @param estimate_scale Scale factor for estimate label offsets. Default is 1.
-#' @param base_size Base font size in the plot. Default is 11.
-#' @param text_size Font size for estimate labels. Default is 2.75.
-#' @param point_size Size of the points representing estimates. Default is 0.5.
+#' @param .data A data frame of causal effect estimates, ideally output by a `group_tab` function or similar. The data should include confidence intervals and effect estimate values.
+#' @param type Character string indicating the scale of effect estimates: "RD" for risk difference or "RR" for risk ratio, with "RD" as the default.
+#' @param title Main title for the plot.
+#' @param subtitle Subtitle for the plot.
+#' @param ylab Y-axis label, deprecated and ignored in this version as outcomes serve as direct labels.
+#' @param estimate_scale Numeric multiplier to adjust the horizontal offset of estimate labels, aiding in plot clarity. Default is 1.
+#' @param base_size Base font size for the plot, applied globally unless overridden. Default is 11.
+#' @param text_size Font size for the estimate labels. Default is 2.75.
+#' @param point_size Size of points representing the estimates. Default is 0.5.
 #' @param title_size Font size for the plot title. Default is 10.
-#' @param subtitle_size Font size for the subtitle. Default is 9.
+#' @param subtitle_size Font size for the plot subtitle. Default is 9.
 #' @param legend_text_size Font size for legend text. Default is 6.
 #' @param legend_title_size Font size for legend titles. Default is 6.
-#' @param x_offset Horizontal adjustment of estimate labels, varies by `type`.
-#' @param x_lim_lo Lower limit of the x-axis, adjusted based on `type`.
-#' @param x_lim_hi Upper limit of the x-axis, adjusted based on `type`.
-#' @param linewidth Width of the error bars. Default is 0.5.
-#' @param simplify_axis Boolean to simplify axis for a cleaner look. Default is FALSE.
+#' @param x_offset Horizontal adjustment for estimate labels, varied based on `type`. Default adjustments are 0 for "RR" and -1.75 for "RD".
+#' @param x_lim_lo Lower limit of the x-axis, automatically adjusted based on `type`.
+#' @param x_lim_hi Upper limit of the x-axis, automatically adjusted based on `type`.
+#' @param linewidth Width of the error bars in the plot. Default is 0.5.
+#' @param plot_theme ggplot2 theme object for customising plot appearance. Inherits `base_size` from `base_size` parameter to maintain consistency. Uses `theme_classic()` as default but allows for customisation.
 #'
-#' @return A `ggplot` object visualising causal effect estimates with error bars and categorisation labels.
+#' @return A ggplot object displaying the causal effect estimates with categorisation and error bars. This plot is tailored for further modifications or direct usage.
 #'
 #' @examples
 #' \dontrun{
-#' title <- "Religious Service At Least Once Per Week vs None"
+#' title <- "Impact of Intervention X on Outcome Y"
 #'
-#' # Example using Risk Difference (RD) scale
-#' plot_example_rd <- margot_plot(
-#'   data = your_data_frame, # replace your_data_frame output of group_tab() function
+#' # Generating a plot with Risk Difference (RD) scale
+#' plot_rd <- margot_plot(
+#'   .data = your_data_frame,
 #'   type = "RD",
 #'   title = title,
-#'   subtitle = "subtitle here",
+#'   subtitle = "Subtitle Here",
 #'   estimate_scale = 1,
-#'   linewidth = 0.5,
-#'   simplify_axis = TRUE,
-#'   base_size = 11,
-#'   text_size = 2.75,
-#'   point_size = 0.5,
-#'   title_size = 10,
-#'   subtitle_size = 9,
-#'   legend_text_size = 6,
-#'   legend_title_size = 6,
-#'   x_offset = -1.75,
-#'   x_lim_lo = -1.75,
-#'   x_lim_hi = 1
+#'   base_size = 12,
+#'   plot_theme = theme_bw(base_size = 12),
+#'   ...
 #' )
-#' print(plot_example_rd)
+#' print(plot_rd)
+#'
+#' # Generating a plot with Risk Ratio (RR) scale, utilizing custom x-axis labels
+#' plot_rr <- margot_plot(
+#'   .data = your_data_frame,
+#'   type = "RR",
+#'   ...
+#'   plot_theme = theme_light(base_size = 12),
+#' )
+#' print(plot_rr)
 #' }
 #' @export
-#' @importFrom ggplot2 ggplot aes geom_errorbarh geom_point geom_vline theme_classic scale_color_manual labs geom_text coord_cartesian theme element_text margin
-#' @importFrom tibble rownames_to_column
-#' @import tibble dplyr
+#' @importFrom ggplot2 ggplot aes geom_errorbarh geom_point geom_vline scale_color_manual labs geom_text coord_cartesian theme element_text margin
+#' @importFrom rlang .data
+#' @import dplyr
 margot_plot <- function(.data,
                         type = c("RD", "RR"),
                         title,
                         subtitle,
-                        ylab = "",
                         estimate_scale = 1,
                         base_size = 11,
                         text_size = 2.75,
@@ -74,102 +70,78 @@ margot_plot <- function(.data,
                         x_lim_lo = ifelse(type == "RR", .1, -1.75),
                         x_lim_hi = ifelse(type == "RR", 2.5, 1),
                         linewidth = .5,
-                        simplify_axis = FALSE) {
+                        plot_theme = NULL){
   type <- match.arg(type)
-  xintercept <- if (type == "RR") 1 else 0
-  x_axis_label <- if (type == "RR") "Causal risk ratio scale (vertical line marks threshold: risk ratio = 1)" else "Causal difference scale (vertical line marks threshold: difference = 0)"
 
-  # define reliability based on type
-  if (type == "RR") {
-    .data$Reliability <-
-      ifelse(
-        .data$`2.5 %` > 1 & .data$`97.5 %` > 1,
-        "positive",
-        ifelse(
-          .data$`2.5 %` < 1 &
-            .data$`97.5 %` < 1,
-          "negative",
-          "zero_crossing"
-        )
-      )
+  # dynamic theme adjustment
+  if (is.null(plot_theme)) {
+    plot_theme <- theme_classic(base_size = base_size)
   } else {
-    .data$Reliability <-
-      ifelse(
-        .data$`2.5 %` > 0 & .data$`97.5 %` > 0,
-        "positive",
-        ifelse(
-          .data$`2.5 %` < 0 &
-            .data$`97.5 %` < 0,
-          "negative",
-          "zero_crossing"
-        )
-      )
-  }
-  # add a condition to apply axis simplifications
-  if (simplify_axis) {
-    simplified_theme <- theme(
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank(),
-      legend.position = "top",
-      legend.direction = "horizontal",
-      axis.ticks.y = element_blank(),
-      plot.title = element_text(face = "bold", size = title_size, hjust = 0),
-      plot.subtitle = element_text(face = "bold", size = subtitle_size, hjust = 0),
-      legend.text = element_text(size = legend_text_size),
-      legend.title = element_text(size = legend_title_size),
-      plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
-    )
-  } else {
-    simplified_theme <- theme(
-      legend.position = "top",
-      legend.direction = "horizontal",
-      axis.ticks.y = element_blank(),
-      plot.title = element_text(face = "bold", size = title_size, hjust = 0),
-      plot.subtitle = element_text(face = "bold", size = subtitle_size, hjust = 0),
-      legend.text = element_text(size = legend_text_size),
-      legend.title = element_text(size = legend_title_size),
-      plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
-    )
+    # Apply base_size to the plot_theme
+    plot_theme <- plot_theme + theme(text = element_text(size = base_size))
   }
 
+
+  # Copy data to avoid direct manipulation
+  plot_data <- .data
+  # Define reliability based on type
+  reliability_condition <- if (type == "RR") {
+    list(condition = c(1, 1), label = "Causal risk ratio scale (vertical line marks threshold for no difference: risk ratio = 1)")
+  } else {
+    list(condition = c(0, 0), label = "Causal difference scale (vertical line marks threshold for risk difference = 0)")
+  }
+
+  plot_data$Reliability <- ifelse(
+    plot_data$`2.5 %` > reliability_condition$condition[1] & plot_data$`97.5 %` > reliability_condition$condition[2],
+    "positive",
+    ifelse(
+      plot_data$`2.5 %` < reliability_condition$condition[1] & plot_data$`97.5 %` < reliability_condition$condition[2],
+      "negative",
+      "zero_crossing"
+    )
+  )
+
+  # Start building the plot
+  x_name <- paste0("E[Y(1)]", ifelse(type == "RR", "/", "-"), "E[Y(0)]")
   out <- ggplot(
-    data = .data,
+    data = plot_data,
     aes(
-      y = reorder(outcome, .data[[paste0("E[Y(1)]", ifelse(type == "RR", "/", "-"), "E[Y(0)]")]]),
-      x = .data[[paste0("E[Y(1)]", ifelse(type == "RR", "/", "-"), "E[Y(0)]")]],
+      y = reorder(outcome, .data[[x_name]]),
+      x = .data[[x_name]],
       xmin = .data$`2.5 %`,
       xmax = .data$`97.5 %`,
       group = Estimate,
       color = Reliability
     )
-  ) +
-    geom_errorbarh(aes(color = Reliability), height = .3, linewidth = linewidth,
-                   position = position_dodge(width = .3)) +
+  ) + geom_errorbarh(aes(color = Reliability), height = .3,
+                     linewidth = linewidth, position = position_dodge(width = .3)) +
     geom_point(size = point_size, position = position_dodge(width = 0.3)) +
-    geom_vline(xintercept = xintercept, linetype = "solid") +
-    theme_classic(base_size = base_size) +
-    scale_color_manual(values = c(
-      "positive" = "dodgerblue",
-      "zero_crossing" = "black",
-      "negative" = "orange"
-    )) +
-    labs(
-      x = x_axis_label,
-      y = NULL,
-      title = title,
-      subtitle = subtitle
-    ) +
-    geom_text(
-      aes(x = x_offset * estimate_scale, label = estimate_lab),
-      size = text_size,
-      hjust = 0,
-      fontface = ifelse(.data$Estimate == "unreliable", "plain", "bold")
-    ) +
+    geom_vline(xintercept = if(type == "RR") 1 else 0, linetype = "solid") +
+    scale_color_manual(values = c("positive" = "dodgerblue", "zero_crossing" = "black", "negative" = "orange")) +
+    labs(x = reliability_condition$label, y = NULL, title = title, subtitle = subtitle) +
+    geom_text(aes(x = x_offset * estimate_scale, label = estimate_lab), size = text_size, hjust = 0, fontface = ifelse(plot_data$Estimate == "unreliable", "plain", "bold")) +
     coord_cartesian(xlim = c(x_lim_lo, x_lim_hi)) +
-    # selected theme option
-    simplified_theme
+    plot_theme +
+    theme(
+      legend.position = "top",
+      legend.direction = "horizontal",
+      axis.ticks.x = element_blank(),
+      axis.ticks.y = element_blank(),
+      plot.title = element_text(face = "bold", size = title_size, hjust = 0),
+      plot.subtitle = element_text(face = "bold", size = subtitle_size, hjust = 0),
+      legend.text = element_text(size = legend_text_size),
+      legend.title = element_text(size = legend_title_size),
+      plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
+    )
 
-
+  # Conditionally add x-axis scale modifications
+  if (type == "RR") {
+    custom_x_labels <- function(x) {
+      ifelse(x < 0, "", as.character(x))
+    }
+    out <- out + scale_x_continuous(labels = custom_x_labels)
+  }
 
   return(out)
 }
+
