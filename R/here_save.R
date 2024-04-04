@@ -21,5 +21,5 @@
 #' @importFrom here here
 #' @importFrom base saveRDS
 here_save <- function(df, name) {
-  saveRDS(df, here::here(push_mods, paste0(name, ".rds")))
+  saveRDS(df, here::here(push_mods, paste0(name, "")))
 }

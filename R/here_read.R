@@ -20,6 +20,6 @@
 #' @importFrom here here
 #' @importFrom base readRDS
 here_read <- function(name) {
-  df <- readRDS(here::here(push_mods, paste0(name, ".rds")))
+  df <- readRDS(here::here(push_mods, paste0(name, "")))
   return(df)
 }

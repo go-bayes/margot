@@ -9,8 +9,7 @@ margot_plot(
   type = c("RD", "RR"),
   title,
   subtitle,
-  xlab,
-  ylab,
+  ylab = "",
   estimate_scale = 1,
   base_size = 11,
   text_size = 2.75,
@@ -21,102 +20,82 @@ margot_plot(
   legend_title_size = 6,
   x_offset = ifelse(type == "RR", 0, -1.75),
   x_lim_lo = ifelse(type == "RR", 0.1, -1.75),
-  x_lim_hi = ifelse(type == "RR", 2.5, 1)
+  x_lim_hi = ifelse(type == "RR", 2.5, 1),
+  linewidth = 0.5,
+  simplify_axis = FALSE
 )
 }
 \arguments{
-\item{.data}{Data frame output from `group_tab` function containing categorized causal effect estimates.}
+\item{.data}{Data frame containing causal effect estimates outputtd by the `group_tab` function.}
 
-\item{type}{Character string indicating the scale of effect estimates to be visualised: "RD" for risk difference
-or "RR" for risk ratio. Default is "RD".}
+\item{type}{Character string indicating the scale of effect estimates: "RD" for risk difference
+or "RR" for risk ratio. Defaults to "RD".}
 
-\item{title}{The main title for the plot.}
+\item{title}{Main title of the plot.}
 
-\item{subtitle}{The subtitle for the plot.}
+\item{subtitle}{Subtitle of the plot.}
 
-\item{xlab}{Label for the x-axis, typically denoting the scale or measurement of effect estimates.}
+\item{ylab}{Y-axis label, typically left blank as outcomes serve as labels.}
 
-\item{ylab}{Label for the y-axis, generally left blank as outcomes are used as labels.}
+\item{estimate_scale}{Scale factor for estimate label offsets. Default is 1.}
 
-\item{estimate_scale}{Numeric value for adjusting the text offset of estimate labels. Default is 1.}
+\item{base_size}{Base font size in the plot. Default is 11.}
 
-\item{base_size}{Numeric value for the base font size in the plot. Default is 11.}
+\item{text_size}{Font size for estimate labels. Default is 2.75.}
 
-\item{text_size}{Numeric value for the size of estimate labels. Default is 2.75.}
+\item{point_size}{Size of the points representing estimates. Default is 0.5.}
 
-\item{point_size}{Numeric value for the size of points representing the estimates. Default is 0.5.}
+\item{title_size}{Font size for the plot title. Default is 10.}
 
-\item{title_size}{Numeric value for the font size of the plot title. Default is 10.}
+\item{subtitle_size}{Font size for the subtitle. Default is 9.}
 
-\item{subtitle_size}{Numeric value for the font size of the plot subtitle. Default is 9.}
+\item{legend_text_size}{Font size for legend text. Default is 6.}
 
-\item{legend_text_size}{Numeric value for the font size of the legend text. Default is 6.}
+\item{legend_title_size}{Font size for legend titles. Default is 6.}
 
-\item{legend_title_size}{Numeric value for the font size of the legend title. Default is 6.}
+\item{x_offset}{Horizontal adjustment of estimate labels, varies by `type`.}
 
-\item{x_offset}{Numeric value for horizontal adjustment of estimate labels. Adjusts based on `type`.}
+\item{x_lim_lo}{Lower limit of the x-axis, adjusted based on `type`.}
 
-\item{x_lim_lo}{Numeric value for the lower limit of the x-axis. Adjusts based on `type`.}
+\item{x_lim_hi}{Upper limit of the x-axis, adjusted based on `type`.}
 
-\item{x_lim_hi}{Numeric value for the upper limit of the x-axis. Adjusts based on `type`.}
+\item{linewidth}{Width of the error bars. Default is 0.5.}
+
+\item{simplify_axis}{Boolean to simplify axis for a cleaner look. Default is FALSE.}
 }
 \value{
-A ggplot object visualising the causal effect estimates with error bars and categorization labels,
-  ready for further modification or saving.
+A `ggplot` object visualising causal effect estimates with error bars and categorisation labels.
 }
 \description{
-Creates a graph of multiple causal effect estimates, organised by effect size. It is designed to
-  work with the output of the `group_tab` function, allowing for visual comparison across estimates
-  categorized as "positive", "negative", or "zero_crossing" based on their reliability and effect size.
-  Supports both risk difference (RD) and risk ratio (RR) scales.
+Creates a graph to visualise multiple causal effect estimates, organised by effect size,
+on either risk difference (RD) or risk ratio (RR) scales. It categorises estimates as "positive",
+"negative", or "zero_crossing" based on their confidence intervals. This function is flexible,
+allowing customisation of graphical parameters and axis simplification.
 }
 \examples{
- \dontrun{
+\dontrun{
 title <- "Religious Service At Least Once Per Week vs None"
 
-# Plotting perceived social support with Risk Difference (RD) scale
-plot_group_tab_all_perceived_support <- margot_plot(
-  group_tab_all_perceived_support,
+# Example using Risk Difference (RD) scale
+plot_example_rd <- margot_plot(
+  data = your_data_frame, # replace your_data_frame output of group_tab() function
   type = "RD",
   title = title,
-  subtitle = "Perceived Social Support",
-  xlab = "",
-  ylab = "",
+  subtitle = "subtitle here",
   estimate_scale = 1,
-  base_size = 18,
-  text_size = 4.5,
-  point_size = 3.5,
-  title_size = 20,
-  subtitle_size = 16,
-  legend_text_size = 10,
-  legend_title_size = 10,
-  x_offset = -.5,
-  x_lim_lo = -.5,
-  x_lim_hi =  .5
+  linewidth = 0.5,
+  simplify_axis = TRUE,
+  base_size = 11,
+  text_size = 2.75,
+  point_size = 0.5,
+  title_size = 10,
+  subtitle_size = 9,
+  legend_text_size = 6,
+  legend_title_size = 6,
+  x_offset = -1.75,
+  x_lim_lo = -1.75,
+  x_lim_hi = 1
 )
-
-# Plot for support received from others with Risk Ratio (RR) scale
-plot_group_tab_all_received_time <- margot_plot(
-  group_tab_contrast_received_time,
-  type = "RR",
-  title = title,
-  subtitle = "Support Received From Others: Time",
-  xlab = "",
-  ylab = "",
-  estimate_scale = 1,
-  base_size = 18,
-  text_size = 4.5,
-  point_size = 3.5,
-  title_size = 20,
-  subtitle_size = 16,
-  legend_text_size = 10,
-  legend_title_size = 10,
-  x_offset = 0,
-  x_lim_lo = 0,
-  x_lim_hi =  4
-)
-
-print(plot_group_tab_all_perceived_support)
-print(plot_group_tab_all_received_time)
+print(plot_example_rd)
 }
 }
