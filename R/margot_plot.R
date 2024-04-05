@@ -59,9 +59,9 @@ margot_plot <- function(.data,
   plot_data <- .data
   # Define reliability based on type
   reliability_condition <- if (type == "RR") {
-    list(condition = c(1, 1), label = "Causal risk ratio scale (vertical line marks threshold for no difference: risk ratio = 1)")
+    list(condition = c(1, 1), label = "Causal risk ratio scale")
   } else {
-    list(condition = c(0, 0), label = "Causal difference scale (vertical line marks threshold for risk difference = 0)")
+    list(condition = c(0, 0), label = "Causal difference scale")
   }
 
   plot_data$Reliability <- ifelse(

@@ -71,7 +71,7 @@ group_tab <- function(df, type = c("RR", "RD")) {
         )
       )) |>
       tibble::rownames_to_column(var = "outcome") |>
-      dplry::mutate(
+      dplyr::mutate(
         across(where(is.numeric), round, digits = 3),
         estimate_lab = paste0(
           `E[Y(1)]-E[Y(0)]`,
