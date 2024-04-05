@@ -80,7 +80,7 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
         glue::glue(
           "For the outcome '{outcome}', the {estimand} is {causal_contrast} [{`2.5 %`},{`97.5 %`}]. ",
           "The E-value for this effect estimate is {E_Value} ",
-          "with a lower bound of {E_Val_bound}. In this scenario, assuming all modelled covariates, if any unmeasured confounders still exhibit an association with both the treatment and outcome, with a minimum strength (on the risk ratio scale) of {E_Val_bound}, they could potentially nullify the observed effect. However, we may infer an effect could persist if there is weaker unmeasured confounding.",
+          "with a lower bound of {E_Val_bound}. In this scenario, assuming all modelled covariates, an unmeasured confounder that exhibits an association with both the treatment and outcome with a minimum strength (on the risk ratio scale) of {E_Val_bound} could nullify the observed effect. However, the effect would survive weaker unmeasured confounding.",
           "Here, we find {strength_of_evidence}.",
           if(!is.na(causal_contrast_data_scale)) {
             glue(" This contrast amounts to a {causal_contrast_data_scale} expected difference on the data scale.")
