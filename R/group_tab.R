@@ -23,15 +23,15 @@
 #' }
 #' @export
 #' @importFrom dplyr arrange mutate across
-#' @importFrom tibble rownames_to_column
+#' @importFrom tidyr rownames_to_column
 group_tab <- function(df, type = c("RR", "RD")) {
   type <- match.arg(type)
 
   require(dplyr)
 
   if (type == "RR") {
-    out <- df %>%
-      arrange(desc(`E[Y(1)]/E[Y(0)]`)) %>%
+    out <- df|>
+      arrange(desc(`E[Y(1)]/E[Y(0)]`))|>
       dplyr::mutate(Estimate  = as.factor(
         ifelse(
           `E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
@@ -40,8 +40,8 @@ group_tab <- function(df, type = c("RR", "RD")) {
                    `97.5 %` < 1, "negative",
                  "not reliable")
         )
-      )) %>%
-      rownames_to_column(var = "outcome") %>%
+      ))|>
+      tibble::rownames_to_column(var = "outcome")|>
       mutate(
         across(where(is.numeric), round, digits = 3),
         estimate_lab = paste0(
@@ -59,8 +59,8 @@ group_tab <- function(df, type = c("RR", "RD")) {
         )
       )
   } else {
-    out <- df %>%
-      arrange(desc(`E[Y(1)]-E[Y(0)]`)) %>%
+    out <- df|>
+      arrange(desc(`E[Y(1)]-E[Y(0)]`))|>
       dplyr::mutate(Estimate  = as.factor(
         ifelse(
           `E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
@@ -69,9 +69,9 @@ group_tab <- function(df, type = c("RR", "RD")) {
                    `97.5 %` < 0, "negative",
                  "not reliable")
         )
-      )) %>%
-      rownames_to_column(var = "outcome") %>%
-      mutate(
+      )) |>
+      tibble::rownames_to_column(var = "outcome") |>
+      dplry::mutate(
         across(where(is.numeric), round, digits = 3),
         estimate_lab = paste0(
           `E[Y(1)]-E[Y(0)]`,
