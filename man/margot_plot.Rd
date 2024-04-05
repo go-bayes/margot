@@ -67,30 +67,3 @@ A ggplot object displaying the causal effect estimates with categorisation and e
 \description{
 This function renders a graphical representation of causal effect estimates, organised by effect size on either the risk difference (RD) or risk ratio (RR) scale. It categorises estimates into "positive", "negative", or "zero_crossing" based on their confidence intervals. The function features advanced customisability for graphical parameters, including error bar width and the application of custom ggplot2 themes. Notably, it avoids direct manipulation of the input data and implements an advanced labelling strategy for the x-axis to prevent incoherent negative values for RR.
 }
-\examples{
-\dontrun{
-title <- "Impact of Intervention X on Outcome Y"
-
-# Generating a plot with Risk Difference (RD) scale
-plot_rd <- margot_plot(
-  .data = your_data_frame,
-  type = "RD",
-  title = title,
-  subtitle = "Subtitle Here",
-  estimate_scale = 1,
-  base_size = 12,
-  plot_theme = theme_bw(base_size = 12),
-  ...
-)
-print(plot_rd)
-
-# Generating a plot with Risk Ratio (RR) scale, utilizing custom x-axis labels
-plot_rr <- margot_plot(
-  .data = your_data_frame,
-  type = "RR",
-  ...
-  plot_theme = theme_light(base_size = 12),
-)
-print(plot_rr)
-}
-}

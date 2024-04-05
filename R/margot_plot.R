@@ -23,33 +23,6 @@
 #' @param plot_theme ggplot2 theme object for customising plot appearance. Inherits `base_size` from `base_size` parameter to maintain consistency. Uses `theme_classic()` as default but allows for customisation.
 #'
 #' @return A ggplot object displaying the causal effect estimates with categorisation and error bars. This plot is tailored for further modifications or direct usage.
-#'
-#' @examples
-#' \dontrun{
-#' title <- "Impact of Intervention X on Outcome Y"
-#'
-#' # Generating a plot with Risk Difference (RD) scale
-#' plot_rd <- margot_plot(
-#'   .data = your_data_frame,
-#'   type = "RD",
-#'   title = title,
-#'   subtitle = "Subtitle Here",
-#'   estimate_scale = 1,
-#'   base_size = 12,
-#'   plot_theme = theme_bw(base_size = 12),
-#'   ...
-#' )
-#' print(plot_rd)
-#'
-#' # Generating a plot with Risk Ratio (RR) scale, utilizing custom x-axis labels
-#' plot_rr <- margot_plot(
-#'   .data = your_data_frame,
-#'   type = "RR",
-#'   ...
-#'   plot_theme = theme_light(base_size = 12),
-#' )
-#' print(plot_rr)
-#' }
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_errorbarh geom_point geom_vline scale_color_manual labs geom_text coord_cartesian theme element_text margin
 #' @importFrom rlang .data

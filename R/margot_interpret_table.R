@@ -56,7 +56,12 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
       E_Value = round(E_Value, 3),
       E_Val_bound = round(E_Val_bound, 3),
       `2.5 %` = round(`2.5 %`, 3),
-      `97.5 %` = round(`97.5 %`, 3)
+      `97.5 %` = round(`97.5 %`, 3),
+      causal_contrast_data_scale = if(!is.null(df$sd_outcome) && causal_scale == "causal_difference") {
+        causal_contrast * df$sd_outcome
+      } else {
+        NA_real_
+      }
     ) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
@@ -75,8 +80,13 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
         glue::glue(
           "For the outcome '{outcome}', the {estimand} is {causal_contrast} [{`2.5 %`},{`97.5 %`}]. ",
           "The E-value for this effect estimate is {E_Value} ",
-          "with a lower bound of {E_Val_bound}. In this context, if there exists an unmeasured confounder that is associated with both the treatment and the outcome, and this association has a risk ratio of {E_Val_bound}, then it is possible for such a confounder to negate the observed effect. Conversely, any confounder with a weaker association (i.e., a risk ratio of less than {E_Val_bound}) would not be sufficient to fully account for the observed effect.",
-          "Here, we find {strength_of_evidence}."
+          "with a lower bound of {E_Val_bound}. In this scenario, assuming all modelled covariates, if any unmeasured confounders still exhibit an association with both the treatment and outcome, with a minimum strength (on the risk ratio scale) of {E_Val_bound}, they could potentially nullify the observed effect. However, we may infer an effect could persist if there is weaker unmeasured confounding.",
+          "Here, we find {strength_of_evidence}.",
+          if(!is.na(causal_contrast_data_scale)) {
+            glue(" This contrast amounts to a {causal_contrast_data_scale} expected difference on the data scale.")
+          } else {
+            ""
+          }
         )
       )
     ) %>%
