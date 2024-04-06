@@ -26,7 +26,7 @@
 #' @export
 #' @importFrom stats glm
 #' @importFrom stats gaussian
-regress_with_covariates <- function(data, outcome, exposure, baseline_vars, family = gaussian()) {
+regress_with_covariates <- function(data, outcome, exposure, baseline_vars, family = gaussian(), sample_weights = NULL) {
   # ensure baseline_vars is correctly formatted as a character vector if passed as a single string
   if (!is.character(baseline_vars)) {
     stop("baseline_vars must be a character vector.")
@@ -43,8 +43,8 @@ regress_with_covariates <- function(data, outcome, exposure, baseline_vars, fami
   # print the formula for verification
   print(formula)
 
-  # regress using glm
-  model <- glm(formula, data = data, family = family)
+  # regress using glm with optional sample weights
+  model <- glm(formula, data = data, family = family, weights = sample_weights)
 
   return(model)
 }

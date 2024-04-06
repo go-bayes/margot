@@ -59,30 +59,30 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
   }
 
   # Data processing and interpretation
-  interpretation <- df %>%
+  interpretation <- df |>
     dplyr::mutate(
       causal_contrast = round(.data[[causal_contrast_column]], 3),
       E_Value = round(E_Value, 3),
       E_Val_bound = round(E_Val_bound, 3),
       `2.5 %` = round(`2.5 %`, 3),
       `97.5 %` = round(`97.5 %`, 3)
-    ) %>%
-    dplyr::rowwise() %>%
+    ) |>
+    dplyr::rowwise() |>
     dplyr::mutate(
       strength_of_evidence = case_when(
         E_Val_bound == 1 ~ "**Evidence for causality is not reliable**",
         E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "**Evidence for causality is not reliable**",
-        E_Val_bound > 1 & E_Val_bound < 1.1 ~ "**Evidence for causality is weak**",
-        E_Val_bound > 2 ~ "**Evidence for causality is strong**",
-        TRUE ~ "**Evidence for causality**"
+        E_Val_bound > 1 & E_Val_bound < 1.1 ~ "**that evidence for causality is weak**",
+        E_Val_bound > 2 ~ "**that evidence for causality is strong**",
+        TRUE ~ "**evidence for causality**"
       ),
       outcome_interpretation = glue::glue(
         "For '{outcome}', the effect estimate is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
-        "The E-value for this estimate is {E_Value} with a lower bound of {E_Val_bound}. ",
-        "Given all modelled covariates, an unmeasured confounder would need a minimum association strength with both the treatment and outcome of {E_Val_bound} to nullify the observed effect. Weaker associations would not overturn it. ",
+        "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
+        "At this lower bound, unmeasured confounders would need a minimum association strength with both the treatment and outcome of {E_Val_bound} to nullify the observed effect. Weaker associations would not overturn it. ",
         "We infer {strength_of_evidence}."
       )
-    ) %>%
+    ) |>
     dplyr::ungroup()
 
   # Compile results

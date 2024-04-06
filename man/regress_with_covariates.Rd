@@ -9,7 +9,8 @@ regress_with_covariates(
   outcome,
   exposure,
   baseline_vars,
-  family = gaussian()
+  family = gaussian(),
+  sample_weights = NULL
 )
 }
 \arguments{
