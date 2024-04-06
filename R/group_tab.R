@@ -30,20 +30,18 @@ group_tab <- function(df, type = c("RR", "RD")) {
   require(dplyr)
 
   if (type == "RR") {
-    out <- df|>
-      arrange(desc(`E[Y(1)]/E[Y(0)]`))|>
+    out <- df %>%
+      arrange(desc(`E[Y(1)]/E[Y(0)]`)) %>%
       dplyr::mutate(Estimate  = as.factor(
         ifelse(
           `E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
           "positive",
-          ifelse(`E[Y(1)]/E[Y(0)]` < 1 &
-                   `97.5 %` < 1, "negative",
-                 "not reliable")
+          ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1, "negative", "not reliable")
         )
-      ))|>
-      tibble::rownames_to_column(var = "outcome")|>
-      mutate(
-        across(where(is.numeric), round, digits = 3),
+      )) %>%
+      tibble::rownames_to_column(var = "outcome") %>%
+      dplyr::mutate(
+        across(.cols = where(is.numeric), .fns = ~round(.x, digits = 3)),
         estimate_lab = paste0(
           `E[Y(1)]/E[Y(0)]`,
           " (",
@@ -59,20 +57,18 @@ group_tab <- function(df, type = c("RR", "RD")) {
         )
       )
   } else {
-    out <- df|>
-      arrange(desc(`E[Y(1)]-E[Y(0)]`))|>
+    out <- df %>%
+      arrange(desc(`E[Y(1)]-E[Y(0)]`)) %>%
       dplyr::mutate(Estimate  = as.factor(
         ifelse(
           `E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
           "positive",
-          ifelse(`E[Y(1)]-E[Y(0)]` < 0 &
-                   `97.5 %` < 0, "negative",
-                 "not reliable")
+          ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0, "negative", "not reliable")
         )
-      )) |>
-      tibble::rownames_to_column(var = "outcome") |>
+      )) %>%
+      tibble::rownames_to_column(var = "outcome") %>%
       dplyr::mutate(
-        across(where(is.numeric), round, digits = 3),
+        across(.cols = where(is.numeric), .fns = ~round(.x, digits = 3)),
         estimate_lab = paste0(
           `E[Y(1)]-E[Y(0)]`,
           " (",
@@ -91,3 +87,4 @@ group_tab <- function(df, type = c("RR", "RD")) {
 
   return(out)
 }
+

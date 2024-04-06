@@ -35,9 +35,9 @@
 #' @importFrom dplyr case_when mutate rowwise ungroup if_else
 #' @importFrom glue glue
 margot_interpret_table <- function(df, causal_scale, estimand) {
-  # Descriptions for different estimands
+  # Estimand descriptions
   estimand_description <- dplyr::case_when(
-    estimand == "lmtp" ~ "This Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast groups for a specified population, focusing on longitudinal data.",
+    estimand == "lmtp" ~ "The Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast groups for a specified population, focusing on longitudinal data.",
     estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) estimates the expected outcome difference between treatment and contrast groups across the entire New Zealand population.",
     estimand == "ATE" ~ "The Average Treatment Effect (ATE) measures the mean difference in outcomes between treatment and contrast groups within the target population.",
     estimand == "ATT" ~ "The Average Treatment Effect on the Treated (ATT) assesses the expected outcome difference for those receiving the treatment, compared to a similar group that did not, within the target population.",
@@ -45,23 +45,27 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
     TRUE ~ "The specified estimand is not recognized. Valid options include: 'PATE', 'ATE', 'ATT', 'CATE', 'LMTP'."
   )
 
+  # Dynamic calculation based on causal_scale
+  causal_contrast_column <- if (causal_scale == "causal_difference") {
+    "E[Y(1)]-E[Y(0)]"
+  } else if (causal_scale == "risk_ratio") {
+    "E[Y(1)]/E[Y(0)]"
+  } else {
+    stop("Invalid causal_scale. Valid options are 'causal_difference' or 'risk_ratio'.")
+  }
+
+  if (!causal_contrast_column %in% names(df)) {
+    stop(paste("Dataframe does not contain the required column:", causal_contrast_column))
+  }
+
   # Data processing and interpretation
   interpretation <- df %>%
     dplyr::mutate(
-      causal_contrast = case_when(
-        causal_scale == "causal_difference" ~ round(`E[Y(1)]-E[Y(0)]`, 3),
-        causal_scale == "risk_ratio" ~ round(`E[Y(1)]/E[Y(0)]`, 3),
-        TRUE ~ NA_real_
-      ),
+      causal_contrast = round(.data[[causal_contrast_column]], 3),
       E_Value = round(E_Value, 3),
       E_Val_bound = round(E_Val_bound, 3),
       `2.5 %` = round(`2.5 %`, 3),
-      `97.5 %` = round(`97.5 %`, 3),
-      causal_contrast_data_scale = if_else(
-        !is.null(df$sd_outcome) && causal_scale == "causal_difference",
-        causal_contrast * df$sd_outcome,
-        NA_real_
-      )
+      `97.5 %` = round(`97.5 %`, 3)
     ) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
@@ -75,13 +79,8 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
       outcome_interpretation = glue::glue(
         "For '{outcome}', the effect estimate is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
         "The E-value for this estimate is {E_Value} with a lower bound of {E_Val_bound}. ",
-        "Given all modelled covariates, an unmeasured confounder would need a minimum association strength with both the treatment and outcome of {E_Val_bound} on the risk ratio scale to nullify the observed effect. Weaker associations would not overturn it. ",
-        "We conclude {strength_of_evidence}.",
-        if (!is.na(causal_contrast_data_scale)) {
-          glue(" This translates to an expected difference of {causal_contrast_data_scale} on the data scale.")
-        } else {
-          ""
-        }
+        "Given all modelled covariates, an unmeasured confounder would need a minimum association strength with both the treatment and outcome of {E_Val_bound} to nullify the observed effect. Weaker associations would not overturn it. ",
+        "We infer {strength_of_evidence}."
       )
     ) %>%
     dplyr::ungroup()
