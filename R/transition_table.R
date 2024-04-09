@@ -72,7 +72,8 @@ transition_table <- function(data, state_names = NULL) {
   markdown_table <- knitr::kable(df, format = "markdown", align = 'c', escape = FALSE)
 
   # explanation
-  explanation <- "The table presents a transition matrix to evaluate shifts in the treatment between the baseline wave and the treatment wave. Entries along the diagonal (in bold) indicate the number of individuals who **stayed** in their initial state. By contrast, the off-diagonal shows the transitions from the initial state (bold) to another state in the following wave (off diagnal). Thus cell located at the intersection of row $i$ and column $j$, where $i \neq j$, gives us the counts of individuals moving from state $i$ to state $j$."
+  explanation <- "This transition matrix captures shifts in states across across the treatment intervals. Each cell in the matrix represents the count of individuals transitioning from one state to another. The rows correspond to the treatment at baseline (From), and the columns correspond to the state at the following wave (To). **Diagonal entries** (in **bold**) correspond to the number of individuals who remained in their initial state across both waves. **Off-diagonal entries** correspond to the transitions of individuals from their baseline state to a different state in the treatment wave.
+A higher number on the diagonal relative to the off-diagonal entries in the same row indicates greater stability in a state. Conversely, higher off-diagonal numbers suggest more frequent shifts from the baseline state to other states."
 
   list(explanation = explanation, table = markdown_table)
 }
