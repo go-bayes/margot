@@ -37,7 +37,7 @@
 margot_interpret_table <- function(df, causal_scale, estimand) {
   # Estimand descriptions
   estimand_description <- dplyr::case_when(
-    estimand == "lmtp" ~ "The Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast groups for a specified population, focusing on longitudinal data.",
+    estimand == "LMTP" ~ "The Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast groups for a specified population, focusing on longitudinal data.",
     estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) estimates the expected outcome difference between treatment and contrast groups across the entire New Zealand population.",
     estimand == "ATE" ~ "The Average Treatment Effect (ATE) measures the mean difference in outcomes between treatment and contrast groups within the target population.",
     estimand == "ATT" ~ "The Average Treatment Effect on the Treated (ATT) assesses the expected outcome difference for those receiving the treatment, compared to a similar group that did not, within the target population.",
@@ -70,8 +70,8 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
     dplyr::rowwise() |>
     dplyr::mutate(
       strength_of_evidence = case_when(
-        E_Val_bound == 1 ~ "**Evidence for causality is not reliable**",
-        E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "**Evidence for causality is not reliable**",
+        E_Val_bound == 1 ~ "**that evidence for causality is not reliable**",
+        E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "**that evidence for causality is not reliable**",
         E_Val_bound > 1 & E_Val_bound < 1.1 ~ "**that evidence for causality is weak**",
         E_Val_bound > 2 ~ "**that evidence for causality is strong**",
         TRUE ~ "**evidence for causality**"
@@ -79,7 +79,7 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
       outcome_interpretation = glue::glue(
         "For '{outcome}', the effect estimate is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
         "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
-        "At this lower bound, unmeasured confounders would need a minimum association strength with both the treatment and outcome of {E_Val_bound} to nullify the observed effect. Weaker associations would not overturn it. ",
+        "At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of {E_Val_bound} to negate the observed effect. Weaker associations would not overturn it. ",
         "We infer {strength_of_evidence}."
       )
     ) |>
@@ -91,4 +91,5 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
   )
   return(result)
 }
+
 
