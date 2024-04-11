@@ -37,7 +37,7 @@
 margot_interpret_table <- function(df, causal_scale, estimand) {
   # Estimand descriptions
   estimand_description <- dplyr::case_when(
-    estimand == "LMTP" ~ "The Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast groups for a specified population, focusing on longitudinal data.",
+    estimand == "LMTP" ~ "A Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast conditions over a sequential regime of treatments for a prespecified target population.",
     estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) estimates the expected outcome difference between treatment and contrast groups across the entire New Zealand population.",
     estimand == "ATE" ~ "The Average Treatment Effect (ATE) measures the mean difference in outcomes between treatment and contrast groups within the target population.",
     estimand == "ATT" ~ "The Average Treatment Effect on the Treated (ATT) assesses the expected outcome difference for those receiving the treatment, compared to a similar group that did not, within the target population.",
