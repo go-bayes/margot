@@ -8,6 +8,7 @@ coloured_histogram(
   df,
   col_name,
   binwidth = 1,
+  unit_of_change = 1,
   scale_min = NULL,
   scale_max = NULL,
   highlight_range = "highest"
@@ -19,6 +20,10 @@ coloured_histogram(
 \item{col_name}{The name of the column for which the histogram will be generated.}
 
 \item{binwidth}{The width of the bins for the histogram; defaults to 1.}
+
+\item{unit_of_change}{The unit of change used to define the highlight range.
+The subtitle will mention this unit. It also adjusts the calculation of the highlight thresholds
+to be slightly less than this unit so that it does not go over the range of the data. Defaults to 1.}
 
 \item{scale_min}{The minimum value to be used for scaling the histogram. If `NULL`,
 the minimum value of `col_name` is used.}
@@ -35,7 +40,7 @@ A ggplot object of the histogram with highlighted ranges as specified.
 \description{
 This function generates a histogram with specific ranges highlighted to indicate
 the highest and/or lowest values within a unit of the specified limits. It allows
-customization of bin width and the range to be highlighted.
+customization of bin width, the unit of change for highlighting, and the range to be highlighted.
 }
 \examples{
  \dontrun{
@@ -46,7 +51,8 @@ graph <- coloured_histogram(
   scale_min = 1,
   scale_max = 7,
   highlight_range = "highest",
-  binwidth = .1 # Adjust binwidth as needed
+  binwidth = .1, # Adjust binwidth as needed
+  unit_of_change = 1 # Specify the unit of change
 )
 print(graph)
 }

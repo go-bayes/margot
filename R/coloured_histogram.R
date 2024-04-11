@@ -2,11 +2,14 @@
 #'
 #' This function generates a histogram with specific ranges highlighted to indicate
 #' the highest and/or lowest values within a unit of the specified limits. It allows
-#' customization of bin width and the range to be highlighted.
+#' customization of bin width, the unit of change for highlighting, and the range to be highlighted.
 #'
 #' @param df The dataframe containing the data to be plotted.
 #' @param col_name The name of the column for which the histogram will be generated.
 #' @param binwidth The width of the bins for the histogram; defaults to 1.
+#' @param unit_of_change The unit of change used to define the highlight range.
+#' The subtitle will mention this unit. It also adjusts the calculation of the highlight thresholds
+#' to be slightly less than this unit so that it does not go over the range of the data. Defaults to 1.
 #' @param scale_min The minimum value to be used for scaling the histogram. If `NULL`,
 #' the minimum value of `col_name` is used.
 #' @param scale_max The maximum value to be used for scaling the histogram. If `NULL`,
@@ -25,7 +28,8 @@
 #'   scale_min = 1,
 #'   scale_max = 7,
 #'   highlight_range = "highest",
-#'   binwidth = .1 # Adjust binwidth as needed
+#'   binwidth = .1, # Adjust binwidth as needed
+#'   unit_of_change = 1 # Specify the unit of change
 #' )
 #' print(graph)
 #' }
@@ -33,7 +37,7 @@
 #' @import dplyr
 #' @import tools
 #' @export
-coloured_histogram <- function(df, col_name, binwidth = 1, scale_min = NULL, scale_max = NULL, highlight_range = "highest") {
+coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, scale_min = NULL, scale_max = NULL, highlight_range = "highest") {
 
   # validate input
   if(!col_name %in% names(df)) stop("col_name does not exist in the dataframe.")
@@ -44,37 +48,36 @@ coloured_histogram <- function(df, col_name, binwidth = 1, scale_min = NULL, sca
   if(is.null(scale_max)) scale_max <- max(df[[col_name]], na.rm = TRUE)
 
   # adjust scale_min and scale_max to create thresholds for highlighting
-  adjusted_min <- scale_min + .99
-  adjusted_max <- scale_max - .99
+  # Adjust by slightly less than the specified unit to avoid exceeding the data range
+  adjusted_min <- scale_min + (unit_of_change * 0.99)
+  adjusted_max <- scale_max - (unit_of_change * 0.99)
 
   # Title and subtitle using Title Case for the column name
   library(tools)
   dynamic_title <- paste("Density of Responses for", tools::toTitleCase(gsub("_", " ", col_name)))
-  fixed_sub_title <- paste(
+  dynamic_sub_title <- paste(
     "Highlights",
     ifelse(highlight_range == "both", "both the lowest and highest", highlight_range),
-    "ranges within 1 unit of limit."
+    "ranges within", unit_of_change, "unit(s) of limit."
   )
 
   # Categorize data based on proximity to min/max and chosen highlight range
   df_copy <- df %>%
-    mutate(fill_category = case_when(
+    dplyr::mutate(fill_category = dplyr::case_when(
       .data[[col_name]] <= adjusted_min & (highlight_range %in% c("lowest", "both")) ~ "Lowest",
       .data[[col_name]] >= adjusted_max & (highlight_range %in% c("highest", "both")) ~ "Highest",
       TRUE ~ "Within Range"
     ))
 
   # Create the plot
-  p <- ggplot(df_copy, aes_string(x = col_name, fill = "fill_category")) +
-    geom_histogram(binwidth = binwidth, alpha = 1, position = "identity") +
-    scale_fill_manual(
+  p <- ggplot2::ggplot(df_copy, ggplot2::aes_string(x = col_name, fill = "fill_category")) +
+    ggplot2::geom_histogram(binwidth = binwidth, alpha = 1, position = "identity") +
+    ggplot2::scale_fill_manual(
       values = c("Lowest" = "dodgerblue", "Highest" = "gold2", "Within Range" = "lightgray"),
       name = "Response Category"
     ) +
-    labs(title = dynamic_title, subtitle = fixed_sub_title, x = tools::toTitleCase(gsub("_", " ", col_name)), y = "Count") +
-    theme_minimal()
+    ggplot2::labs(title = dynamic_title, subtitle = dynamic_sub_title, x = tools::toTitleCase(gsub("_", " ", col_name)), y = "Count") +
+    ggplot2::theme_minimal()
 
   return(p)
 }
-
-
