@@ -2,7 +2,7 @@
 % Please edit documentation in R/construct_formula.R
 \name{construct_formula}
 \alias{construct_formula}
-\title{Construct Formula for Model Fitting}
+\title{Construct a Formula for Regression Models}
 \usage{
 construct_formula(
   Y,
@@ -14,20 +14,38 @@ construct_formula(
 )
 }
 \arguments{
-\item{Y}{The response variable name as a string.}
+\item{Y}{A string specifying the dependent variable in the model.}
 
-\item{X}{The treatment or exposure variable name as a string.}
+\item{X}{A string specifying the independent treatment or exposure variable; defaults to 1 (intercept only model).}
 
-\item{baseline_vars}{Vector of baseline covariate names.}
+\item{baseline_vars}{A character vector of baseline covariate names to include in the model.}
 
-\item{continuous_X}{Logical, whether X is a continuous variable.}
+\item{continuous_X}{A logical indicating whether `X` is a continuous variable; if TRUE and `splines` is TRUE, applies spline transformation to `X`.}
 
-\item{splines}{Logical, whether to apply spline transformation to X.}
+\item{splines}{A logical indicating whether to apply spline transformations to the treatment variable `X`.}
+
+\item{subclass}{An optional string specifying a subclass variable for interaction with `X` and baseline covariates.}
 }
 \value{
-A character string representing the formula for the glm function.
+A string representing the constructed formula for use in regression modeling functions like `glm`.
 }
 \description{
-This function constructs a formula string for model fitting based on provided specifications,
-including handling of continuous variables and application of splines if required.
+This function dynamically constructs a regression formula based on provided parameters.
+It supports incorporating splines for continuous variables and can handle interaction
+terms, including a subclass variable. The function ensures that the subclass variable
+is not redundantly included in the baseline variables.
+}
+\examples{
+# Example with basic interaction terms without subclass:
+construct_formula("health_outcome", "treatment", c("age", "sex"), FALSE, FALSE)
+
+# Example with spline transformation for a continuous treatment:
+construct_formula("health_outcome", "treatment", c("age", "sex"), TRUE, TRUE)
+
+# Example including a subclass variable:
+construct_formula("health_outcome", "treatment", c("age", "sex", "income"), FALSE, FALSE, "region")
+
+# Example with continuous treatment, splines, and subclass interaction:
+construct_formula("health_outcome", "treatment", c("age", "sex", "income"), TRUE, TRUE, "region")
+
 }

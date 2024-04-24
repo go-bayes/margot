@@ -25,6 +25,9 @@
     <loc>https://go-bayes.github.io/margot/reference/causal_contrast_engine.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/causal_contrast_marginal.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/coloured_histogram.html</loc>
   </url>
   <url>
@@ -50,6 +53,9 @@
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/create_transition_matrix.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/double_robust_marginal.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/group_tab.html</loc>
@@ -122,6 +128,9 @@
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/simulate_ate_data_with_weights.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/tab_engine_marginal.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/transition_table.html</loc>

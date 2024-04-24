@@ -17,9 +17,6 @@ development:
 
 reference:
 
-  - title: "Estimators"
-    contents:
-    - causal_contrast_engine
 
   - title: "Evaluate assumptions"
     contents:
@@ -32,6 +29,11 @@ reference:
     - transition_table
 
 
+  - title: "Simulate"
+    contents:
+    - simulate_ate_data_with_weights
+
+
   - title: "Prepare data for models"
     contents:
     - create_ordered_variable
@@ -41,6 +43,13 @@ reference:
     - margot_wide
     - margot_wide_impute_baseline
 
+  - title: "Estimators"
+    contents:
+    - causal_contrast_engine
+    - causal_contrast_marginal
+    - double_robust_marginal
+
+
   - title: "Process outputs of models"
     contents:
     - group_tab
@@ -48,10 +57,11 @@ reference:
     - margot_interpret_table
     - margot_lmtp_evalue
     - margot_lmtp_tab
+    - tab_engine_marginal
 
-  - title: "Simulation functions"
+  - title: "Visualise Causal Effect Estimates"
     contents:
-    - simulate_ate_data_with_weights
+    - margot_plot
 
   - title: "Utility functions"
     contents:
@@ -66,6 +76,4 @@ reference:
     - regress_with_covariates
     - select_and_rename_cols
 
-  - title: "Visualise Causal Effect Estimates"
-    contents:
-    - margot_plot
+
