@@ -52,24 +52,7 @@ match_mi_general <-
            method,
            subgroup = NULL,
            focal = NULL,
-           sample_weights = NULL,
-           stabilize = TRUE) {
-    if (!requireNamespace("WeightIt", quietly = TRUE)) {
-      stop(
-        "Package 'WeightIt' is required but not installed. Please install it using 'install.packages(\"WeightIt\")'."
-      )
-    }
-
-    if (!requireNamespace("MatchThem", quietly = TRUE)) {
-      stop(
-        "Package 'MatchThem' is required but not installed. Please install it using 'install.packages(\"MatchThem\")'."
-      )
-    }
-
-    if (any(is.na(data[[X]]))) {
-      # check for NA in exposure variable
-      warning("There are NA values in the exposure variable.")
-    }
+           sample_weights = NULL) {
 
     data_class <- class(data)
 
@@ -77,14 +60,9 @@ match_mi_general <-
       stop("Input data must be either 'mids' or 'data.frame' object")
     }
 
-    formula_str <-
-      as.formula(paste(X, "~", paste(baseline_vars, collapse = "+")))
+    formula_str <- as.formula(paste(X, "~", paste(baseline_vars, collapse = "+")))
 
-    weight_function <-
-      if (data_class == "mids")
-        weightthem
-    else
-      weightit
+    weight_function <- if (data_class == "mids") MatchThem::weightthem else WeightIt::weightit
 
     perform_matching <- function(data_subset) {
       if (is.null(sample_weights)) {
@@ -92,7 +70,7 @@ match_mi_general <-
           formula = formula_str,
           data = data_subset,
           estimand = estimand,
-          stabilize = stabilize,
+          stabilize = TRUE,
           method = method,
           focal = focal
         )
@@ -101,7 +79,7 @@ match_mi_general <-
           formula = formula_str,
           data = data_subset,
           estimand = estimand,
-          stabilize = stabilize,
+          stabilize = TRUE,
           method = method,
           sample_weights = sample_weights,
           focal = focal
@@ -115,7 +93,7 @@ match_mi_general <-
       levels_list <- unique(data[[subgroup]])
 
       dt_match_list <- lapply(levels_list, function(level) {
-        data_subset <- data[data[[subgroup]] == level,]
+        data_subset <- data[data[[subgroup]] == level, ]
         perform_matching(data_subset)
       })
 

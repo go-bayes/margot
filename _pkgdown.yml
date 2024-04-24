@@ -17,17 +17,27 @@ development:
 
 reference:
 
+  - title: "Estimators"
+    contents:
+    - causal_contrast_engine
+
   - title: "Evaluate assumptions"
     contents:
     - create_transition_matrix
-    - transition_table
     - coloured_histogram
+    - coloured_histogram_quantiles
     - coloured_histogram_sd
     - coloured_histogram_shift
     - match_mi_general
+    - transition_table
+
 
   - title: "Prepare data for models"
     contents:
+    - create_ordered_variable
+    - create_ordered_variable_custom
+    - impute_and_combine
+    - margot_filter
     - margot_wide
     - margot_wide_impute_baseline
 
@@ -47,13 +57,13 @@ reference:
     contents:
     - back_transform_logmean
     - back_transform_zscore
-    - create_ordered_variable
+    - construct_formula
     - here_read
     - here_save
     - here_read_qs
     - here_save_qs
-    - regress_with_covariates
     - remove_numeric_attributes
+    - regress_with_covariates
     - select_and_rename_cols
 
   - title: "Visualise Causal Effect Estimates"

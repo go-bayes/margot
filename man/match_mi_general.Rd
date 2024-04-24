@@ -12,8 +12,7 @@ match_mi_general(
   method,
   subgroup = NULL,
   focal = NULL,
-  sample_weights = NULL,
-  stabilize = TRUE
+  sample_weights = NULL
 )
 }
 \arguments{

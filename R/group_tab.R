@@ -23,7 +23,7 @@
 #' }
 #' @export
 #' @importFrom dplyr arrange mutate across
-#' @importFrom tidyr rownames_to_column
+#' @importFrom tibble rownames_to_column
 group_tab <- function(df, type = c("RR", "RD")) {
   type <- match.arg(type)
 
