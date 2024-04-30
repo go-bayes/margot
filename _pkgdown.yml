@@ -50,14 +50,16 @@ reference:
     - double_robust_marginal
 
 
-  - title: "Process outputs of models"
+  - title: "Understand Results"
     contents:
+    - compute_difference_means
     - group_tab
     - lmtp_evalue_tab
     - margot_interpret_table
     - margot_lmtp_evalue
     - margot_lmtp_tab
     - tab_engine_marginal
+
 
   - title: "Visualise Causal Effect Estimates"
     contents:
