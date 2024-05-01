@@ -14,19 +14,22 @@ Expected structure: list(vals = list(theta = x, std.error = y)).}
 Expected structure: list(vals = list(theta = x, std.error = y)).}
 }
 \value{
-A data frame with columns `mean_difference`, `std_error`, `conf_low`, and `conf_high`,
-        each rounded to 4 decimal places. Suitable for direct use in reporting.
+A list containing:
+        - `results`: A data frame with columns `mean_difference`, `std_error`, `conf_low`, and `conf_high`,
+          each rounded to 4 decimal places. Suitable for direct use in reporting.
+        - `interpretation`: A string providing a formatted interpretation of the results.
 }
 \description{
 This function calculates the difference in means, the standard error of the difference,
 and the 95% confidence intervals between two independent groups. Each group is represented
 as a list that includes the mean (theta) and the standard error (std.error) of the group.
-The result is formatted for easy use with `glue::glue` in Quarto documents etc
+The result includes both a data frame and an interpretation string formatted for easy use
+with `glue::glue` in Quarto documents etc
 }
 \examples{
 group1 <- list(vals = list(theta = 100, std.error = 10))
 group2 <- list(vals = list(theta = 90, std.error = 5))
-result <- compute_difference_means(group1, group2)
-glue::glue("The difference in means is {result$mean_difference} with a 95\% CI of [{result$conf_low}, {result$conf_high}].")
+output <- compute_difference_means(group1, group2)
+cat(output$interpretation)  # Print the interpretation
 
 }

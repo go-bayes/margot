@@ -31,6 +31,7 @@ reference:
 
   - title: "Simulate"
     contents:
+    - run_simulations
     - simulate_ate_data_with_weights
 
 
