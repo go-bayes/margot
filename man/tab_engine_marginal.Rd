@@ -9,7 +9,7 @@ tab_engine_marginal(
   new_name,
   delta = 1,
   sd = 1,
-  type = "RD",
+  type = c("RD", "RR"),
   continuous_X = FALSE
 )
 }

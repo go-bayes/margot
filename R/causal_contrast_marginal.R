@@ -45,6 +45,9 @@ causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0 = tr
                                      weights = NULL, continuous_X = FALSE, splines = FALSE, vcov = "HC2",
                                      verbose = FALSE) {
 
+  # make sure this is set
+  # type <- match.arg(type, choices = c("RR", "RD"))
+
   # Validate family
   if (is.character(family)) {
     if (!family %in% c("gaussian", "binomial", "Gamma", "inverse.gaussian", "poisson", "quasibinomial", "quasipoisson", "quasi")) {

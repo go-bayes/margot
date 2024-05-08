@@ -24,7 +24,7 @@ double_robust_marginal(
   new_name,
   estimand = c("ATE", "ATT"),
   type_causal = c("RR", "RD"),
-  type_tab = "RD"
+  type_tab = c("RR", "RD")
 )
 }
 \arguments{

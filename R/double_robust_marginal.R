@@ -61,8 +61,13 @@
 double_robust_marginal <- function(df, Y, X, baseline_vars, treat_0, treat_1, nsims, cores, family,
                                    weights = TRUE, continuous_X = FALSE, splines = FALSE, vcov = "HC2",
                                    verbose = FALSE, delta = 1, sd = 1, new_name, estimand = c("ATE", "ATT"),
-                                   type_causal = c("RR", "RD"), type_tab = "RD") {
+                                   type_causal = c("RR", "RD"), type_tab = c("RR", "RD")) {
   # type <- match.arg(type)  # This selects the first element of the vector as the default
+
+  # # make sure this is set
+  # type_causal <- match.arg(type_causal, choices = c("RR", "RD"))
+  # type_tab <- match.arg(type_tab, choices = c("RR", "RD"))
+
 
   # First, run the causal_contrast_marginal function with its specific type argument
   causal_results <- causal_contrast_marginal(

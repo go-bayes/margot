@@ -32,13 +32,13 @@ tab_engine_marginal <- function(x,
                                 new_name,
                                 delta = 1,
                                 sd = 1,
-                                type = "RD",
+                                type = c("RD", "RR"),
                                 continuous_X = FALSE) {
   require("EValue")
   require(dplyr)
 
-  # Ensuring 'type' is a single value using match.arg
-  type <- match.arg(type)  # This selects the first element of the vector as the default
+  # Match the argument to ensure it's valid and set the default
+  # type <- match.arg(type, choices = c("RD", "RR"))
 
   x <- as.data.frame(x)
 
@@ -47,7 +47,7 @@ tab_engine_marginal <- function(x,
     rownames(x) <- type
   }
 
-  # Filter and mutate the data
+  # Process data based on type
   out <- x %>%
     dplyr::filter(row.names(x) == type) %>%
     dplyr::mutate(across(where(is.numeric), round, digits = 4))
@@ -62,7 +62,6 @@ tab_engine_marginal <- function(x,
   }
 
   rownames(out)[1] <- new_name
-  out <- as.data.frame(out)
 
   # Calculate E-values based on the type
   if (type == "RD") {
@@ -90,6 +89,7 @@ tab_engine_marginal <- function(x,
     dplyr::select_if(~ !any(is.na(.)))
   colnames(evalout3) <- c("E_Value", "E_Val_bound")
 
+  # Combine results with E-values
   if (type == "RD") {
     tab <- cbind.data.frame(tab0, evalout3) %>%
       dplyr::select(-c(standard_error))
