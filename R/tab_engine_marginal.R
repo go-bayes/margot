@@ -28,32 +28,21 @@
 #' @importFrom dplyr filter mutate rename select
 #' @importFrom EValue evalues.OLS evalues.RR
 #' @export
-
-tab_engine_marginal <- function(x,
-                                new_name,
-                                delta = 1,
-                                sd = 1,
-                                type = c("RD", "RR"),
-                                continuous_X = FALSE) {
+tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "RR"), continuous_X = FALSE) {
   require("EValue")
   require(dplyr)
 
-  # Match the argument to ensure it's valid and set the default
   type <- match.arg(type, choices = c("RD", "RR"))
-
   x <- as.data.frame(x)
 
-  # Adjust rownames if continuous_X is true
   if (continuous_X) {
     rownames(x) <- type
   }
 
-  # Process data based on type
   out <- x %>%
     dplyr::filter(row.names(x) == type) %>%
     dplyr::mutate(across(where(is.numeric), round, digits = 4))
 
-  # Rename based on the type
   if (type == "RD") {
     out <- out %>%
       dplyr::rename("E[Y(1)]-E[Y(0)]" = Estimate)
@@ -62,39 +51,96 @@ tab_engine_marginal <- function(x,
       dplyr::rename("E[Y(1)]/E[Y(0)]" = Estimate)
   }
 
-  # Set the new name for the outcome
-  out <- out %>%
-    dplyr::mutate(outcome = new_name) %>%
-    dplyr::select(outcome, everything())  # This moves 'outcome' to the first position
+  if (!"outcome" %in% names(out)) {
+    out <- out %>%
+      dplyr::mutate(outcome = new_name)
+  } else {
+    out$outcome <- new_name  # Just update the existing 'outcome' column instead of adding a new one
+  }
 
-  # Calculate E-values based on the type
+  out <- dplyr::select(out, outcome, everything())
+
   if (type == "RD") {
     out <- out %>%
       dplyr::mutate(standard_error = abs(`2.5 %` - `97.5 %`) / 3.92)
-    evalout <- as.data.frame(round(
-      EValue::evalues.OLS(
-        out[1, "E[Y(1)]-E[Y(0)]"],
-        se = out$standard_error,
-        sd = sd,
-        delta = delta,
-        true = 0
-      ), 3))
+    evalout <- as.data.frame(round(EValue::evalues.OLS(out[1, "E[Y(1)]-E[Y(0)]"], se = out$standard_error, sd = sd, delta = delta, true = 0), 3))
   } else {
-    evalout <- as.data.frame(round(EValue::evalues.RR(
-      out[1, "E[Y(1)]/E[Y(0)]"],
-      lo = out[1, "2.5 %"],
-      hi = out[1, "97.5 %"],
-      true = 1
-    ), 3))
+    evalout <- as.data.frame(round(EValue::evalues.RR(out[1, "E[Y(1)]/E[Y(0)]"], lo = out[1, "2.5 %"], hi = out[1, "97.5 %"], true = 1), 3))
   }
 
   evalout2 <- subset(evalout[2, ])
-  evalout3 <- evalout2 %>%
-    dplyr::select_if(~ !any(is.na(.)))
+  evalout3 <- evalout2 %>% dplyr::select_if(~ !any(is.na(.)))
   colnames(evalout3) <- c("E_Value", "E_Val_bound")
 
-  # Combine results with E-values
   out <- cbind.data.frame(out, evalout3)
   return(out)
 }
+# tab_engine_marginal <- function(x,
+#                                 new_name,
+#                                 delta = 1,
+#                                 sd = 1,
+#                                 type = c("RD", "RR"),
+#                                 continuous_X = FALSE) {
+#   require("EValue")
+#   require(dplyr)
+#
+#   # Match the argument to ensure it's valid and set the default
+#   type <- match.arg(type, choices = c("RD", "RR"))
+#
+#   x <- as.data.frame(x)
+#
+#   # Adjust rownames if continuous_X is true
+#   if (continuous_X) {
+#     rownames(x) <- type
+#   }
+#
+#   # Process data based on type
+#   out <- x %>%
+#     dplyr::filter(row.names(x) == type) %>%
+#     dplyr::mutate(across(where(is.numeric), round, digits = 4))
+#
+#   # Rename based on the type
+#   if (type == "RD") {
+#     out <- out %>%
+#       dplyr::rename("E[Y(1)]-E[Y(0)]" = Estimate)
+#   } else {
+#     out <- out %>%
+#       dplyr::rename("E[Y(1)]/E[Y(0)]" = Estimate)
+#   }
+#
+#   # Set the new name for the outcome
+#   out <- out %>%
+#     dplyr::mutate(outcome = new_name) %>%
+#     dplyr::select(outcome, everything())  # This moves 'outcome' to the first position
+#
+#   # Calculate E-values based on the type
+#   if (type == "RD") {
+#     out <- out %>%
+#       dplyr::mutate(standard_error = abs(`2.5 %` - `97.5 %`) / 3.92)
+#     evalout <- as.data.frame(round(
+#       EValue::evalues.OLS(
+#         out[1, "E[Y(1)]-E[Y(0)]"],
+#         se = out$standard_error,
+#         sd = sd,
+#         delta = delta,
+#         true = 0
+#       ), 3))
+#   } else {
+#     evalout <- as.data.frame(round(EValue::evalues.RR(
+#       out[1, "E[Y(1)]/E[Y(0)]"],
+#       lo = out[1, "2.5 %"],
+#       hi = out[1, "97.5 %"],
+#       true = 1
+#     ), 3))
+#   }
+#
+#   evalout2 <- subset(evalout[2, ])
+#   evalout3 <- evalout2 %>%
+#     dplyr::select_if(~ !any(is.na(.)))
+#   colnames(evalout3) <- c("E_Value", "E_Val_bound")
+#
+#   # Combine results with E-values
+#   out <- cbind.data.frame(out, evalout3)
+#   return(out)
+# }
 

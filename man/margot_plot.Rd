@@ -7,6 +7,8 @@
 margot_plot(
   .data,
   type = c("RD", "RR"),
+  order = c("default", "alphabetical", "custom"),
+  custom_order = NULL,
   title,
   subtitle,
   estimate_scale = 1,
@@ -28,6 +30,10 @@ margot_plot(
 \item{.data}{A data frame of causal effect estimates, ideally output by a `group_tab` function or similar. The data should include confidence intervals and effect estimate values.}
 
 \item{type}{Character string indicating the scale of effect estimates: "RD" for risk difference or "RR" for risk ratio, with "RD" as the default.}
+
+\item{order}{Character string indicating the ordering of the output: "default" for default descending, "alphabetical" for alphabetical, and "custom" for custom order provided in .data.}
+
+\item{custom_order}{Optional vector specifying custom ordering if 'order' is set to 'custom'.}
 
 \item{title}{Main title for the plot.}
 
@@ -58,8 +64,6 @@ margot_plot(
 \item{linewidth}{Width of the error bars in the plot. Default is 0.5.}
 
 \item{plot_theme}{ggplot2 theme object for customising plot appearance. Inherits `base_size` from `base_size` parameter to maintain consistency. Uses `theme_classic()` as default but allows for customisation.}
-
-\item{ylab}{Y-axis label, deprecated and ignored in this version as outcomes serve as direct labels.}
 }
 \value{
 A ggplot object displaying the causal effect estimates with categorisation and error bars. This plot is tailored for further modifications or direct usage.

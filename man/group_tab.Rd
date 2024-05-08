@@ -2,33 +2,46 @@
 % Please edit documentation in R/group_tab.R
 \name{group_tab}
 \alias{group_tab}
-\title{Group and Categorise LMTP Estimates with E-Values}
+\title{Group and Annotate Treatment Effect Estimates}
 \usage{
-group_tab(df, type = c("RR", "RD"))
+group_tab(
+  df,
+  type = c("RR", "RD"),
+  order = c("default", "alphabetical", "custom"),
+  custom_order = NULL
+)
 }
 \arguments{
-\item{df}{A dataframe resulting from binding multiple outputs from `margot_lmtp_evalue` or `tab_evalue`.}
+\item{df}{Data frame containing the variables of interest.}
 
-\item{type}{A character string specifying the scale of the estimate to be categorised and formatted.
-Valid options are "RR" for risk ratio or "RD" for risk difference. Default is "RR".}
+\item{type}{Type of treatment effect to analyze. Expected values are 'RR' for Risk Ratio
+and 'RD' for Risk Difference. Defaults to 'RR'.}
+
+\item{order}{Specifies the order in which the outcomes should be arranged. Can be
+'default' for descending order of the estimate, 'alphabetical' for alphabetical order by outcome,
+or 'custom' for a user-defined order. Default is 'default'.}
+
+\item{custom_order}{A vector of custom ordering for the outcomes, applicable if `order` is set to 'custom'.
+This should be a vector containing all outcomes in the desired order.}
 }
 \value{
-A dataframe with estimates categorised as "positive", "negative", or "not reliable" based on their
-  confidence intervals and E-values. The dataframe includes a new `estimate_lab` column with formatted
-  estimate and confidence interval labels, and an `Estimate` column indicating the category of the estimate.
-  Rows are arranged by the size of the estimate and renamed to include the outcome variable.
+A data frame that has been arranged based on the specified order and annotated
+with treatment effect estimates, estimate labels, and evidence value annotations.
 }
 \description{
-This function takes a dataframe combining multiple outputs from `margot_lmtp_evalue` or `tab_evalue`,
-categorises the estimates based on their confidence intervals and E-values, and prepares the data
-for further analysis or plotting. Estimates are categorised as "positive", "negative", or "not reliable".
-The function also arranges the data based on the estimate size and adds a column for a formatted label
-of the estimate and its confidence interval, including the E-value.
+This function arranges and annotates a data frame based on specified
+types of treatment effect estimates (RR or RD). It supports different sorting
+options including default descending, alphabetical, and custom order.
 }
 \examples{
-\dontrun{
-# Assuming `tab_all_perceived_support` is a combined dataframe of LMTP estimates
-group_tab_all_perceived_support <- group_tab(tab_all_perceived_support)
-print(group_tab_all_perceived_support)
-}
+# Example using Risk Ratio (RR) and default sorting
+result_df <- group_tab(df = analysis_df, type = 'RR')
+
+# Example using Risk Difference (RD) with alphabetical sorting
+result_df <- group_tab(df = analysis_df, type = 'RD', order = 'alphabetical')
+
+# Example using custom sorting order
+custom_order <- c("Outcome3", "Outcome1", "Outcome2")
+result_df <- group_tab(df = analysis_df, type = 'RR', order = 'custom', custom_order = custom_order)
+
 }
