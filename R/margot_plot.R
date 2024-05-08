@@ -29,8 +29,7 @@
 #' @import dplyr
 margot_plot <- function(.data,
                         type = c("RD", "RR"),
-                        order = c("default", "alphabetical", "custom"),
-                        custom_order = NULL,
+                        order = c("default", "alphabetical"),
                         title,
                         subtitle,
                         estimate_scale = 1,
@@ -54,8 +53,9 @@ margot_plot <- function(.data,
 
   # Check if the data needs processing by group_tab
   if (!"Estimate" %in% names(.data) || !"outcome" %in% names(.data)) {
-    .data <- group_tab(.data, type = type, order = order, custom_order = custom_order)
+    .data <- group_tab(.data, type = type, order = order)
   }
+
 
   # Dynamic theme adjustment
   if (is.null(plot_theme)) {
@@ -64,15 +64,20 @@ margot_plot <- function(.data,
     plot_theme <- plot_theme + theme(text = element_text(size = base_size))
   }
 
+  # Prepare the data for plotting, including ordering
+  effect_size_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
+  .data <- .data %>%
+    mutate(outcome = factor(outcome, levels = if (order == "alphabetical") sort(unique(outcome)) else unique(outcome))) %>%
+    arrange(if (order == "alphabetical") outcome else desc(!!sym(effect_size_col)))
+
   # Start building the plot
-  x_name <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
   out <- ggplot(
     data = .data,
     aes(
-      y = reorder(outcome, .data[[x_name]]),
-      x = .data[[x_name]],
-      xmin = .data$`2.5 %`,
-      xmax = .data$`97.5 %`,
+      y = outcome,
+      x = !!sym(effect_size_col),
+      xmin = `2.5 %`,
+      xmax = `97.5 %`,
       color = Estimate
     )
   ) + geom_errorbarh(aes(color = Estimate), height = .3,
@@ -106,7 +111,6 @@ margot_plot <- function(.data,
 
   return(out)
 }
-
 # margot_plot <- function(.data,
 #                         type = c("RD", "RR"),
 #                         title,
@@ -197,72 +201,4 @@ margot_plot <- function(.data,
 #
 #   return(out)
 # }
-margot_interpret_table <- function(df, causal_scale, estimand) {
-  # Load required libraries
-  require(dplyr)
-  require(glue)
 
-  # Estimand descriptions
-  estimand_description <- dplyr::case_when(
-    estimand == "LMTP" ~ "A Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast conditions over a sequential regime of treatments for a prespecified target population.",
-    estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) estimates the expected outcome difference between treatment and contrast groups across the entire New Zealand population.",
-    estimand == "ATE" ~ "The Average Treatment Effect (ATE) measures the mean difference in outcomes between treatment and contrast groups within the target population.",
-    estimand == "ATT" ~ "The Average Treatment Effect on the Treated (ATT) assesses the expected outcome difference for those receiving the treatment, compared to a similar group that did not, within the target population.",
-    estimand == "CATE" ~ "The Conditional Average Treatment Effect (CATE) evaluates the expected difference in outcomes between treatment and contrast groups within specific population strata.",
-    TRUE ~ "The specified estimand is not recognized. Valid options include: 'PATE', 'ATE', 'ATT', 'CATE', 'LMTP'."
-  )
-
-  # Identify the correct column for calculations based on causal_scale
-  causal_contrast_column <- if (causal_scale == "causal_difference") {
-    "E[Y(1)]-E[Y(0)]"
-  } else if (causal_scale == "risk_ratio") {
-    "E[Y(1)]/E[Y(0)]"
-  } else {
-    stop("Invalid causal_scale. Valid options are 'causal_difference' or 'risk_ratio'.")
-  }
-
-  # Format the causal_scale for output
-  formatted_causal_scale <- if (causal_scale == "causal_difference") {
-    "causal difference"
-  } else {
-    "risk ratio"
-  }
-
-  # Check if the required columns are in the dataframe and process with group_tab if not
-  if (!"Estimate" %in% names(df) || !"outcome" %in% names(df)) {
-    df <- group_tab(df, type = if (causal_scale == "causal_difference") "RD" else "RR")
-  }
-
-  if (!causal_contrast_column %in% names(df)) {
-    stop(paste("Dataframe does not contain the required column:", causal_contrast_column))
-  }
-
-  # Data processing and interpretation
-  interpretation <- df %>%
-    dplyr::mutate(
-      causal_contrast = round(.data[[causal_contrast_column]], 3),
-      E_Value = round(E_Value, 3),
-      E_Val_bound = round(E_Val_bound, 3),
-      `2.5 %` = round(`2.5 %`, 3),
-      `97.5 %` = round(`97.5 %`, 3),
-      strength_of_evidence = case_when(
-        E_Val_bound == 1 ~ "**that evidence for causality is not reliable**",
-        E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "that the **evidence for causality is not reliable**",
-        E_Val_bound > 1 & E_Val_bound < 1.1 ~ "that the **evidence for causality is weak**",
-        E_Val_bound > 2 ~ "that **the evidence for causality is not reliable**",
-        TRUE ~ "**there is evidence for causality**"
-      ),
-      outcome_interpretation = glue::glue(
-        "For '{outcome}', the effect estimate on the {formatted_causal_scale} scale is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
-        "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
-        "At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of {E_Val_bound} to negate the observed effect. Weaker confounding would not overturn it. ",
-        "We infer {strength_of_evidence}."
-      )
-    )
-
-  # Compile results
-  result <- glue::glue(
-    "\n\n{estimand_description}\n\n{paste(interpretation$outcome_interpretation, collapse = '\n\n')}"
-  )
-  return(result)
-}

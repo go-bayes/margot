@@ -35,6 +35,10 @@
 #' @importFrom dplyr case_when mutate rowwise ungroup if_else
 #' @importFrom glue glue
 margot_interpret_table <- function(df, causal_scale, estimand) {
+  # Load required libraries
+  require(dplyr)
+  require(glue)
+
   # Estimand descriptions
   estimand_description <- dplyr::case_when(
     estimand == "LMTP" ~ "A Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast conditions over a sequential regime of treatments for a prespecified target population.",
@@ -45,7 +49,7 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
     TRUE ~ "The specified estimand is not recognized. Valid options include: 'PATE', 'ATE', 'ATT', 'CATE', 'LMTP'."
   )
 
-  # Dynamic calculation based on causal_scale
+  # Identify the correct column for calculations based on causal_scale
   causal_contrast_column <- if (causal_scale == "causal_difference") {
     "E[Y(1)]-E[Y(0)]"
   } else if (causal_scale == "risk_ratio") {
@@ -54,21 +58,30 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
     stop("Invalid causal_scale. Valid options are 'causal_difference' or 'risk_ratio'.")
   }
 
+  # Format the causal_scale for output
+  formatted_causal_scale <- if (causal_scale == "causal_difference") {
+    "causal difference"
+  } else {
+    "risk ratio"
+  }
+
+  # Check if the required columns are in the dataframe and process with group_tab if not
+  if (!"Estimate" %in% names(df) || !"outcome" %in% names(df)) {
+    df <- group_tab(df, type = if (causal_scale == "causal_difference") "RD" else "RR")
+  }
+
   if (!causal_contrast_column %in% names(df)) {
     stop(paste("Dataframe does not contain the required column:", causal_contrast_column))
   }
 
   # Data processing and interpretation
-  interpretation <- df |>
+  interpretation <- df %>%
     dplyr::mutate(
       causal_contrast = round(.data[[causal_contrast_column]], 3),
       E_Value = round(E_Value, 3),
       E_Val_bound = round(E_Val_bound, 3),
       `2.5 %` = round(`2.5 %`, 3),
-      `97.5 %` = round(`97.5 %`, 3)
-    ) |>
-    dplyr::rowwise() |>
-    dplyr::mutate(
+      `97.5 %` = round(`97.5 %`, 3),
       strength_of_evidence = case_when(
         E_Val_bound == 1 ~ "**that evidence for causality is not reliable**",
         E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "that the **evidence for causality is not reliable**",
@@ -77,13 +90,12 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
         TRUE ~ "**there is evidence for causality**"
       ),
       outcome_interpretation = glue::glue(
-        "For '{outcome}', the effect estimate on the {causal_scale} is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
+        "For '{outcome}', the effect estimate on the {formatted_causal_scale} scale is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
         "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
         "At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of {E_Val_bound} to negate the observed effect. Weaker confounding would not overturn it. ",
         "We infer {strength_of_evidence}."
       )
-    ) |>
-    dplyr::ungroup()
+    )
 
   # Compile results
   result <- glue::glue(
