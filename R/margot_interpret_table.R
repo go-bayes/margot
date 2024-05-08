@@ -74,10 +74,10 @@ margot_interpret_table <- function(df, causal_scale, estimand) {
         E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "that the **evidence for causality is not reliable**",
         E_Val_bound > 1 & E_Val_bound < 1.1 ~ "that the **evidence for causality is weak**",
         E_Val_bound > 2 ~ "that **the evidence for causality is not reliable**",
-        TRUE ~ "**evidence for causality**"
+        TRUE ~ "**there is evidence for causality**"
       ),
       outcome_interpretation = glue::glue(
-        "For '{outcome}', the effect estimate is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
+        "For '{outcome}', the effect estimate on the {causal_scale} is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
         "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
         "At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of {E_Val_bound} to negate the observed effect. Weaker confounding would not overturn it. ",
         "We infer {strength_of_evidence}."
