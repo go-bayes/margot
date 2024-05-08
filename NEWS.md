@@ -1,9 +1,12 @@
+<img src="man/figures/margot.png" width = 500>
+
+
 
 # margot 0.1.2.1
 * group_tab now works under the hood of margot_plot, so no need to specify explicitly
 * group_tab now allows custom order for plot, not just by decreasing effect size
 * numerous small enhancements to older pamameteric model options
-
+* new logo
 
 # margot 0.1.2
 
