@@ -36,9 +36,16 @@ group_tab <- function(df, type = c("RR", "RD"), order = c("default", "alphabetic
   type <- match.arg(type)
   order <- match.arg(order)
 
-  # Handle custom ordering or default descending order based on the effect size
+  # Define the measure column based on type
   measure_column <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
 
+  # Prepare the df by creating or confirming the presence of an 'outcome' column
+  if (!"outcome" %in% names(df)) {
+    df <- df %>%
+      mutate(outcome = rownames(df) %>% as.character())
+  }
+
+  # Ordering the df based on the specified order
   if (order == "alphabetical") {
     df <- df %>% arrange(outcome)
   } else if (order == "custom" && !is.null(custom_order)) {
@@ -63,20 +70,20 @@ group_tab <- function(df, type = c("RR", "RD"), order = c("default", "alphabetic
           ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0, "negative", "not reliable")
         )
       }
-    )
-  )
-
-  # Create the estimate_lab for display in the plot
-  df <- df %>%
-    mutate(estimate_lab = if (type == "RR") {
+    ),
+    estimate_lab = if (type == "RR") {
       paste(`E[Y(1)]/E[Y(0)]`, " (", `2.5 %`, "-", `97.5 %`, ")", " [EV ", `E_Value`, "/", `E_Val_bound`, "]", sep = "")
     } else {
       paste(`E[Y(1)]-E[Y(0)]`, " (", `2.5 %`, "-", `97.5 %`, ")", " [EV ", `E_Value`, "/", `E_Val_bound`, "]", sep = "")
-    })
+    }
+  )
+
+  # Rearrange columns to have 'outcome' and 'Estimate' first, followed by the estimate columns
+  df <- df %>%
+    select(outcome, Estimate, estimate_lab, `E[Y(1)]/E[Y(0)]`, `2.5 %`, `97.5 %`, E_Value, E_Val_bound)
 
   return(df)
 }
-
 # old
 # group_tab <- function(df, type = c("RR", "RD")) {
 #   type <- match.arg(type)
