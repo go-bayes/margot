@@ -32,29 +32,29 @@
 #' @export
 group_tab <- function(df, type = c("RR", "RD"), order = c("default", "alphabetical", "custom"), custom_order = NULL) {
   require(dplyr)
-
   type <- match.arg(type)
   order <- match.arg(order)
 
-  # Define the measure column based on type
-  measure_column <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
-
-  # Prepare the df by creating or confirming the presence of an 'outcome' column
-  if (!"outcome" %in% names(df)) {
-    df <- df %>%
-      mutate(outcome = rownames(df) %>% as.character())
+  # Ensure the 'outcome' column exists; if not, create from row names
+  if (!"outcome" %in% names(df) && !is.null(rownames(df))) {
+    df <- df %>% tibble::rownames_to_column(var = "outcome")
+  } else if (!"outcome" %in% names(df)) {
+    stop("No 'outcome' column or row names available to convert into an 'outcome' column.")
   }
 
-  # Ordering the df based on the specified order
+  # Determine the column to sort by based on the type
+  effect_column <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
+
+  # Apply ordering based on the specified 'order'
   if (order == "alphabetical") {
     df <- df %>% arrange(outcome)
   } else if (order == "custom" && !is.null(custom_order)) {
-    df <- df %>% slice(match(custom_order, outcome))
-  } else {  # Default ordering
-    df <- df %>% arrange(desc(!!sym(measure_column)))
+    df <- df %>% slice(match(custom_order, df$outcome))
+  } else {  # default is descending order by effect size
+    df <- df %>% arrange(desc(!!sym(effect_column)))
   }
 
-  # Create the Estimate categorization based on the type
+  # Add Estimate categorization
   df <- df %>% mutate(
     Estimate = factor(
       if (type == "RR") {
@@ -71,19 +71,17 @@ group_tab <- function(df, type = c("RR", "RD"), order = c("default", "alphabetic
         )
       }
     ),
-    estimate_lab = if (type == "RR") {
-      paste(`E[Y(1)]/E[Y(0)]`, " (", `2.5 %`, "-", `97.5 %`, ")", " [EV ", `E_Value`, "/", `E_Val_bound`, "]", sep = "")
-    } else {
-      paste(`E[Y(1)]-E[Y(0)]`, " (", `2.5 %`, "-", `97.5 %`, ")", " [EV ", `E_Value`, "/", `E_Val_bound`, "]", sep = "")
-    }
+    estimate_lab = paste(
+      round(`E[Y(1)]/E[Y(0)]`, 3),
+      " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
+      " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
+      sep = ""
+    )
   )
-
-  # Rearrange columns to have 'outcome' and 'Estimate' first, followed by the estimate columns
-  df <- df %>%
-    select(outcome, Estimate, estimate_lab, `E[Y(1)]/E[Y(0)]`, `2.5 %`, `97.5 %`, E_Value, E_Val_bound)
 
   return(df)
 }
+
 # old
 # group_tab <- function(df, type = c("RR", "RD")) {
 #   type <- match.arg(type)
