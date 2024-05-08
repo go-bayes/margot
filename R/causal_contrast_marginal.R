@@ -24,7 +24,7 @@
 #' @return Depending on the 'type' specified, it returns a summary object containing either risk differences or risk ratios along with additional statistics like confidence intervals.
 #'
 #' @examples
-#' # Assuming df is your dataset with variables 'outcome', 'treatment', 'age', and 'gender'
+#' # Assume that df is your dataset with variables 'outcome', 'treatment', 'age', and 'gender'
 #' result <- causal_contrast_marginal(df = df, Y = "outcome", X = "treatment",
 #'                                    baseline_vars = c("age", "gender"),
 #'                                    treat_0 = "control", treat_1 = "exposed",

@@ -65,7 +65,7 @@ using generalized linear models (GLMs). It supports handling of continuous and c
 use of spline transformations, and adjustments for multiple imputation datasets.
 }
 \examples{
-# Assuming df is your dataset with variables 'outcome', 'treatment', 'age', and 'gender'
+# Assume that df is your dataset with variables 'outcome', 'treatment', 'age', and 'gender'
 result <- causal_contrast_marginal(df = df, Y = "outcome", X = "treatment",
                                    baseline_vars = c("age", "gender"),
                                    treat_0 = "control", treat_1 = "exposed",
