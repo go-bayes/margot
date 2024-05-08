@@ -38,7 +38,7 @@ tab_engine_marginal <- function(x,
   require(dplyr)
 
   # Match the argument to ensure it's valid and set the default
-  # type <- match.arg(type, choices = c("RD", "RR"))
+  type <- match.arg(type, choices = c("RD", "RR"))
 
   x <- as.data.frame(x)
 
@@ -61,25 +61,28 @@ tab_engine_marginal <- function(x,
       dplyr::rename("E[Y(1)]/E[Y(0)]" = Estimate)
   }
 
-  rownames(out)[1] <- new_name
+  # Set the new name for the outcome
+  out <- out %>%
+    dplyr::mutate(outcome = new_name) %>%
+    dplyr::select(outcome, everything())  # This moves 'outcome' to the first position
 
   # Calculate E-values based on the type
   if (type == "RD") {
-    tab0 <- out %>%
+    out <- out %>%
       dplyr::mutate(standard_error = abs(`2.5 %` - `97.5 %`) / 3.92)
     evalout <- as.data.frame(round(
       EValue::evalues.OLS(
-        tab0[1, 1],
-        se = tab0[1, 4],
+        out[1, "E[Y(1)]-E[Y(0)]"],
+        se = out$standard_error,
         sd = sd,
         delta = delta,
         true = 0
       ), 3))
   } else {
     evalout <- as.data.frame(round(EValue::evalues.RR(
-      out[1, 1],
-      lo = out[1, 2],
-      hi = out[1, 3],
+      out[1, "E[Y(1)]/E[Y(0)]"],
+      lo = out[1, "2.5 %"],
+      hi = out[1, "97.5 %"],
       true = 1
     ), 3))
   }
@@ -90,12 +93,7 @@ tab_engine_marginal <- function(x,
   colnames(evalout3) <- c("E_Value", "E_Val_bound")
 
   # Combine results with E-values
-  if (type == "RD") {
-    tab <- cbind.data.frame(tab0, evalout3) %>%
-      dplyr::select(-c(standard_error))
-  } else {
-    tab <- cbind.data.frame(out, evalout3)
-  }
-
-  return(tab)
+  out <- cbind.data.frame(out, evalout3)
+  return(out)
 }
+

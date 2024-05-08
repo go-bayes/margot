@@ -70,7 +70,7 @@ double_robust_marginal <- function(df, Y, X, baseline_vars, treat_0, treat_1, ns
 
 
   # First, run the causal_contrast_marginal function with its specific type argument
-  causal_results <- causal_contrast_engine(
+  causal_results <- causal_contrast_marginal(
     df = df,
     Y = Y,
     X = X,

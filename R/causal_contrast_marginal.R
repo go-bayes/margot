@@ -39,16 +39,15 @@
 #' @import glue
 #' @import rlang
 #' @export
-causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0 = treat_0,
-                                     treat_1 = treat_1, estimand = c("ATE", "ATT"), type = c("RR", "RD"),
+causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0, treat_1,
+                                     estimand = c("ATE", "ATT"), type = c("RR", "RD"),
                                      nsims = 200, cores = parallel::detectCores(), family = "gaussian",
                                      weights = NULL, continuous_X = FALSE, splines = FALSE, vcov = "HC2",
                                      verbose = FALSE) {
+  # Validate the type argument
+  type <- match.arg(type, choices = c("RR", "RD"))
 
-  # make sure this is set
-  # type <- match.arg(type, choices = c("RR", "RD"))
-
-  # Validate family
+  # Validate the family argument
   if (is.character(family)) {
     if (!family %in% c("gaussian", "binomial", "Gamma", "inverse.gaussian", "poisson", "quasibinomial", "quasipoisson", "quasi")) {
       stop("Invalid 'family' argument. Please specify a valid family function.")
@@ -60,30 +59,46 @@ causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0 = tr
     stop("Invalid 'family' argument. Please specify a valid family function or character string.")
   }
 
-  # Build formula
+  # Construct the model formula
   build_formula_str <- function(Y, X, continuous_X, splines, baseline_vars) {
-    baseline_part <- if (length(baseline_vars) > 0 &&
-                         !(length(baseline_vars) == 1 && baseline_vars[1] == "1")) {
+    baseline_part <- if (!(length(baseline_vars) == 1 && baseline_vars == "1")) {
       paste(baseline_vars, collapse = "+")
     } else {
-      "1"  # If baseline_vars is "1" or empty, use "1" to fit just an intercept
+      "1"
     }
 
     if (continuous_X && splines) {
-      return(paste(Y, "~ bs(", X , ")", "*", "(", baseline_part, ")"))
+      paste(Y, "~ bs(", X, ")", "*", "(", baseline_part, ")")
     } else {
-      return(paste(Y, "~", X , "*", "(", baseline_part, ")"))
+      paste(Y, "~", X, "*", "(", baseline_part, ")")
     }
   }
-
 
   # Apply model
   weight_var <- if (!is.null(weights) && weights %in% names(df)) df[[weights]] else NULL
   formula_str <- build_formula_str(Y, X, continuous_X, splines, baseline_vars)
-  fit <- glm(as.formula(formula_str), weights = weight_var, family = family_fun, data = df)
+  fit <- try(glm(as.formula(formula_str), weights = weight_var, family = family_fun, data = df), silent = !verbose)
+  if (inherits(fit, "try-error")) {
+    if (verbose) cat("Model fitting failed with error:", conditionMessage(fit), "\n")
+    return(NULL)
+  }
   sim_imp <- sim(fit, n = nsims, vcov = vcov)
 
   # Output processing and return
   sim_estimand <- sim_ame(sim_imp, var = X, cl = cores, verbose = verbose)
+  treat_0_name <- paste0("`E[Y(", treat_0, ")]`")
+  treat_1_name <- paste0("`E[Y(", treat_1, ")]`")
+
+  if (type == "RR") {
+    rr_expression_str <- glue::glue("{treat_1_name}/{treat_0_name}")
+    rr_expression <- rlang::parse_expr(rr_expression_str)
+    sim_estimand <- transform(sim_estimand, RR = eval(rr_expression))
+  } else {
+    rd_expression_str <- glue::glue("{treat_1_name} - {treat_0_name}")
+    rd_expression <- rlang::parse_expr(rd_expression_str)
+    sim_estimand <- transform(sim_estimand, RD = eval(rd_expression))
+  }
+
   summary(sim_estimand)
 }
+
