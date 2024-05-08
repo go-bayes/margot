@@ -1,8 +1,8 @@
-pandoc: 3.1.1
+pandoc: 3.1.11
 pkgdown: 2.0.8
 pkgdown_sha: ~
 articles: {}
-last_built: 2024-05-01T05:59Z
+last_built: 2024-05-08T00:01Z
 urls:
   reference: https://go-bayes.github.io/margot/reference
   article: https://go-bayes.github.io/margot/articles

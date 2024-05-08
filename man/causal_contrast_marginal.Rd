@@ -8,7 +8,7 @@ causal_contrast_marginal(
   df,
   Y,
   X,
-  baseline_vars = baseline_vars,
+  baseline_vars = "1",
   treat_0 = treat_0,
   treat_1 = treat_1,
   estimand = c("ATE", "ATT"),
@@ -16,7 +16,7 @@ causal_contrast_marginal(
   nsims = 200,
   cores = parallel::detectCores(),
   family = "gaussian",
-  weights = TRUE,
+  weights = NULL,
   continuous_X = FALSE,
   splines = FALSE,
   vcov = "HC2",
@@ -46,7 +46,7 @@ causal_contrast_marginal(
 
 \item{family}{The family of the GLM to be used (e.g., "gaussian" for linear models).}
 
-\item{weights}{Logical indicating whether to use weights in the model fitting.}
+\item{weights}{The name of the weights variable in the data frame, or NULL if no weights are to be used.}
 
 \item{continuous_X}{Logical indicating whether the treatment variable X is continuous.}
 
@@ -70,7 +70,7 @@ result <- causal_contrast_marginal(df = df, Y = "outcome", X = "treatment",
                                    baseline_vars = c("age", "gender"),
                                    treat_0 = "control", treat_1 = "exposed",
                                    estimand = "ATE", type = "RD", nsims = 100,
-                                   cores = 2, family = "gaussian", weights = TRUE,
+                                   cores = 2, family = "gaussian", weights = "weight_var",
                                    continuous_X = FALSE, splines = FALSE,
                                    vcov = "HC3", verbose = TRUE)
 
