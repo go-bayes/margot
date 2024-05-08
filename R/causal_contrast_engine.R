@@ -14,7 +14,7 @@
 #' @param nsims Number of simulations for bootstrap; defaults to 200.
 #' @param cores Number of cores for parallel processing; uses all available cores by default.
 #' @param family Model family as a string or family object; defaults to "gaussian".
-#' @param weights Whether to use sample weights; defaults to TRUE.
+#' @param weights The name of the weights variable in the data frame, or NULL if no weights are to be used.
 #' @param continuous_X Whether X is a continuous variable; defaults to FALSE.
 #' @param splines Whether to apply spline transformation to X; defaults to FALSE.
 #' @param vcov Type of variance-covariance matrix for standard error estimation; defaults to "HC2".
@@ -86,48 +86,31 @@ causal_contrast_engine <- function(df,
     )
   }
 
-  # build formula string
-  build_formula_str <-
-    function(Y,
-             X,
-             continuous_X,
-             splines,
-             baseline_vars) {
-      if (continuous_X && splines) {
-        return(paste(
-          Y,
-          "~ bs(",
-          X ,
-          ")",
-          "*",
-          "(",
-          paste(baseline_vars, collapse = "+"),
-          ")"
-        ))
-      } else {
-        return(paste(
-          Y,
-          "~",
-          X ,
-          "*",
-          "(",
-          paste(baseline_vars, collapse = "+"),
-          ")"
-        ))
-      }
+
+  # Build formula
+  build_formula_str <- function(Y, X, continuous_X, splines, baseline_vars) {
+    baseline_part <- if (length(baseline_vars) > 0 &&
+                         !(length(baseline_vars) == 1 && baseline_vars[1] == "1")) {
+      paste(baseline_vars, collapse = "+")
+    } else {
+      "1"  # If baseline_vars is "1" or empty, use "1" to fit just an intercept
     }
 
-  # fit models using the complete datasets (all imputations) or single dataset
+    if (continuous_X && splines) {
+      return(paste(Y, "~ bs(", X , ")", "*", "(", baseline_part, ")"))
+    } else {
+      return(paste(Y, "~", X , "*", "(", baseline_part, ")"))
+    }
+  }
+
+
+  # Apply model
+  weight_var <- if (!is.null(weights) && weights %in% names(df)) df[[weights]] else NULL
+
   if ("wimids" %in% class(df)) {
     fits <- purrr::map(complete(df, "all"), function(d) {
-      weight_var <- if (weights)
-        d$weights
-      else
-        NULL
-      formula_str <-
-        build_formula_str(Y, X, continuous_X, splines, baseline_vars)
       glm(
-        as.formula(formula_str),
+        as.formula(build_formula_str(Y, X, continuous_X, splines, baseline_vars)),
         weights = weight_var,
         family = family_fun,
         data = d
@@ -135,19 +118,12 @@ causal_contrast_engine <- function(df,
     })
     sim.imp <- misim(fits, n = nsims, vcov = vcov)
   } else {
-    weight_var <- if (weights)
-      df$weights
-    else
-      NULL
-    formula_str <-
-      build_formula_str(Y, X, continuous_X, splines, baseline_vars)
-    fit <-
-      glm(
-        as.formula(formula_str),
-        weights = weight_var,
-        family = family_fun,
-        data = df
-      )
+    fit <- glm(
+      as.formula(build_formula_str(Y, X, continuous_X, splines, baseline_vars)),
+      weights = weight_var,
+      family = family_fun,
+      data = df
+    )
     sim.imp <- sim(fit, n = nsims, vcov = vcov)
   }
 

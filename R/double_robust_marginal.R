@@ -14,7 +14,7 @@
 #' @param nsims The number of simulations to run, used in bootstrap or Monte Carlo methods.
 #' @param cores The number of processor cores to use for parallel computation.
 #' @param family A description of the error distribution and link function to be used in the model.
-#' @param weights Logical, indicating whether to use weighting in the model estimation.
+#' @param weights The name of the weights variable in the data frame, or NULL if no weights are to be used.
 #' @param continuous_X Logical, indicating whether the treatment variable X is continuous.
 #' @param splines Logical, indicating whether to use spline functions for continuous variables.
 #' @param vcov The method to use for variance-covariance estimation.
@@ -70,7 +70,7 @@ double_robust_marginal <- function(df, Y, X, baseline_vars, treat_0, treat_1, ns
 
 
   # First, run the causal_contrast_marginal function with its specific type argument
-  causal_results <- causal_contrast_marginal(
+  causal_results <- causal_contrast_engine(
     df = df,
     Y = Y,
     X = X,

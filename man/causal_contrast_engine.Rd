@@ -46,7 +46,7 @@ causal_contrast_engine(
 
 \item{family}{Model family as a string or family object; defaults to "gaussian".}
 
-\item{weights}{Whether to use sample weights; defaults to TRUE.}
+\item{weights}{The name of the weights variable in the data frame, or NULL if no weights are to be used.}
 
 \item{continuous_X}{Whether X is a continuous variable; defaults to FALSE.}
 

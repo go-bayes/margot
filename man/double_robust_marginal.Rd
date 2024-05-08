@@ -46,7 +46,7 @@ double_robust_marginal(
 
 \item{family}{A description of the error distribution and link function to be used in the model.}
 
-\item{weights}{Logical, indicating whether to use weighting in the model estimation.}
+\item{weights}{The name of the weights variable in the data frame, or NULL if no weights are to be used.}
 
 \item{continuous_X}{Logical, indicating whether the treatment variable X is continuous.}
 
