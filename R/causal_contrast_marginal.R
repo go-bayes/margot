@@ -102,3 +102,4 @@ causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0, tre
   summary(sim_estimand)
 }
 
+
