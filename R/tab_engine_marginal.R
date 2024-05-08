@@ -28,6 +28,7 @@
 #' @importFrom dplyr filter mutate rename select
 #' @importFrom EValue evalues.OLS evalues.RR
 #' @export
+
 tab_engine_marginal <- function(x,
                                 new_name,
                                 delta = 1,
