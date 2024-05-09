@@ -71,16 +71,26 @@ group_tab <- function(df, type = c("RR", "RD"), order = c("default", "alphabetic
         )
       }
     ),
-    estimate_lab = paste(
-      round(`E[Y(1)]/E[Y(0)]`, 3),
-      " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
-      " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
-      sep = ""
-    )
+    estimate_lab = if (type == "RR") {
+      paste(
+        round(`E[Y(1)]/E[Y(0)]`, 3),
+        " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
+        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
+        sep = ""
+      )
+    } else {
+      paste(
+        round(`E[Y(1)]-E[Y(0)]`, 3),
+        " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
+        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
+        sep = ""
+      )
+    }
   )
 
   return(df)
 }
+
 
 # old
 # group_tab <- function(df, type = c("RR", "RD")) {
