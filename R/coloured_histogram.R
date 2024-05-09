@@ -58,7 +58,7 @@ coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, s
   dynamic_sub_title <- paste(
     "Highlights",
     ifelse(highlight_range == "both", "both the lowest and highest", highlight_range),
-    "ranges within", unit_of_change, "unit(s) of limit."
+    "range(s) within", unit_of_change, "unit(s) of limit."
   )
 
   # Categorize data based on proximity to min/max and chosen highlight range

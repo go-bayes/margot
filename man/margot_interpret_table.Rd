@@ -4,7 +4,7 @@
 \alias{margot_interpret_table}
 \title{Interpret and Describe Causal Effect Estimates Using E-values}
 \usage{
-margot_interpret_table(df, causal_scale, estimand)
+margot_interpret_table(df, causal_scale, estimand, order = "default")
 }
 \arguments{
 \item{df}{Data frame containing causal effect estimates, expected to include columns for
