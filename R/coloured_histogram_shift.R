@@ -53,9 +53,9 @@ coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight
 
   # define subtitle based on the shift direction
   subtitle_text <- if(shift == "up") {
-    "Orange region denotes population shifted up to boundary of grey"
+    "Highlights region shifted up to boundary with grey"
   } else {
-    "Green region denotes population shifted down to boundary of grey"
+    "Highlights region shifted down to boundary with grey"
   }
 
   # Optionally add average line description to the subtitle if the line is to be shown
