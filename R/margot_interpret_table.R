@@ -73,21 +73,24 @@ margot_interpret_table <- function(df, causal_scale, estimand, order = "default"
     dplyr::mutate(
       causal_contrast = round(.data[[causal_contrast_column]], 3),
       formatted_strength = case_when(
-        E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "that the **evidence for causality is not reliable**",
-        E_Val_bound > 1 & E_Val_bound < 1.1 ~ "that the **evidence for causality is weak**",
-        E_Val_bound > 2 ~ "that **the evidence for causality is strong**",
+        E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "**the evidence for causality is not reliable**",
+        E_Val_bound > 1 & E_Val_bound < 1.1 ~ "**the evidence for causality is weak**",
+        E_Val_bound > 2 ~ "**the evidence for causality is strong**",
         TRUE ~ "**there is evidence for causality**"
       ),
-      outcome_interpretation = glue::glue(
+      confounder_warning = if_else(E_Val_bound > 1,
+                                   paste0("At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of ", E_Val_bound, " to negate the observed effect. Weaker confounding would not overturn it. "),
+                                   ""),
+      outcome_interpretation = glue(
         "For '{outcome}', the effect estimate on the {causal_scale} scale is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
         "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
-        "At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of {E_Val_bound} to negate the observed effect. Weaker confounding would not overturn it. ",
-        "We infer {formatted_strength}."
+        "{confounder_warning}",
+        "Here, {formatted_strength}."
       )
     )
 
   # Compile and return results
-  result <- glue::glue(
+  result <- glue(
     "{estimand_description}\n\n{paste(interpretation$outcome_interpretation, collapse = '\n\n')}"
   )
   return(result)

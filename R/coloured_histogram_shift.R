@@ -42,7 +42,7 @@ coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight
   avg_val <- mean(df[[col_name]], na.rm = TRUE)
 
   # determine the fill colour based on the shift direction
-  highlight_color <- if(shift == "up") "orange" else "darkgreen"
+  highlight_color <- if(shift == "up") "magenta" else "darkgreen"
 
   # create a new column for fill colour based on range_highlight
   if (!is.null(range_highlight) && length(range_highlight) == 2) {
