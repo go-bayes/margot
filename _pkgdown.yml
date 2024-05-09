@@ -75,6 +75,7 @@ reference:
     - here_save
     - here_read_qs
     - here_save_qs
+    - pretty_number
     - remove_numeric_attributes
     - regress_with_covariates
     - select_and_rename_cols
