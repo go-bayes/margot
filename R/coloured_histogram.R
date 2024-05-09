@@ -2,7 +2,7 @@
 #'
 #' This function generates a histogram with specific ranges highlighted to indicate
 #' the highest and/or lowest values within a unit of the specified limits. It allows
-#' customization of bin width, the unit of change for highlighting, and the range to be highlighted.
+#' customization of bin width, the unit of change for highlighting, and the range to be highlighted. This is useful in the settings of modified treatment policies for #' clarifying which part of a distribution is shifted.
 #'
 #' @param df The dataframe containing the data to be plotted.
 #' @param col_name The name of the column for which the histogram will be generated.
@@ -77,7 +77,7 @@ coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, s
       name = "Response Category"
     ) +
     ggplot2::labs(title = dynamic_title, subtitle = dynamic_sub_title, x = tools::toTitleCase(gsub("_", " ", col_name)), y = "Count") +
-    ggplot2::theme_minimal()
+    ggplot2::theme_classic()
 
   return(p)
 }

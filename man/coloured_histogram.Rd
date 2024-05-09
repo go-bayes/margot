@@ -40,7 +40,7 @@ A ggplot object of the histogram with highlighted ranges as specified.
 \description{
 This function generates a histogram with specific ranges highlighted to indicate
 the highest and/or lowest values within a unit of the specified limits. It allows
-customization of bin width, the unit of change for highlighting, and the range to be highlighted.
+customization of bin width, the unit of change for highlighting, and the range to be highlighted. This is useful in the settings of modified treatment policies for #' clarifying which part of a distribution is shifted.
 }
 \examples{
  \dontrun{

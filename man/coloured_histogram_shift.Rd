@@ -30,7 +30,7 @@ coloured_histogram_shift(
 A `ggplot` object representing the histogram with specified highlights. This object can be printed or further modified using `ggplot2` functions.
 }
 \description{
-This function creates a histogram that highlights a specified range of values to visualize shifts in data distributions. The highlighted range can indicate areas of interest, such as shifts up or down in the distribution. The fill colour of the histogram is dynamically adjusted based on the specified direction of the shift.
+This function creates a histogram that highlights a specified range of values to visualize shifts in data distributions. The highlighted range can indicate areas of interest, such as shifts up or down in the distribution. This visualization is useful for understanding the implications of causal contrasts, such as modified treatment policies. The fill colour of the histogram is dynamically adjusted based on the specified direction of the shift.
 }
 \examples{
 \dontrun{

@@ -1,6 +1,6 @@
 #' Visualize Shifts in Data Distributions with Highlighted Ranges
 #'
-#' This function creates a histogram that highlights a specified range of values to visualize shifts in data distributions. The highlighted range can indicate areas of interest, such as shifts up or down in the distribution. The fill colour of the histogram is dynamically adjusted based on the specified direction of the shift.
+#' This function creates a histogram that highlights a specified range of values to visualize shifts in data distributions. The highlighted range can indicate areas of interest, such as shifts up or down in the distribution. This visualization is useful for understanding the implications of causal contrasts, such as modified treatment policies. The fill colour of the histogram is dynamically adjusted based on the specified direction of the shift.
 #'
 #' @param df A dataframe containing the variable of interest.
 #' @param col_name The name of the column in `df` to be visualized in the histogram. This should be a numeric variable.
@@ -42,20 +42,20 @@ coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight
   avg_val <- mean(df[[col_name]], na.rm = TRUE)
 
   # determine the fill colour based on the shift direction
-  highlight_color <- if(shift == "up") "gold" else "dodgerblue"
+  highlight_color <- if(shift == "up") "orange" else "darkgreen"
 
   # create a new column for fill colour based on range_highlight
   if (!is.null(range_highlight) && length(range_highlight) == 2) {
-    df$fill_color <- ifelse(df[[col_name]] >= range_highlight[1] & df[[col_name]] <= range_highlight[2], highlight_color, "grey60")
+    df$fill_color <- ifelse(df[[col_name]] >= range_highlight[1] & df[[col_name]] <= range_highlight[2], highlight_color, "lightgray")
   } else {
-    df$fill_color <- "grey60" # Default color if no range_highlight is provided
+    df$fill_color <- "lightgray" # Default colour if no range_highlight is provided
   }
 
   # define subtitle based on the shift direction
   subtitle_text <- if(shift == "up") {
-    "Gold region denotes population shifted up to grey"
+    "Orange region denotes population shifted up to boundary of grey"
   } else {
-    "Blue region denotes population shifted down to grey"
+    "Green region denotes population shifted down to boundary of grey"
   }
 
   # Optionally add average line description to the subtitle if the line is to be shown
@@ -68,21 +68,20 @@ coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight
 
   # create the histogram with the new fill_colour column for colouring
   p <- ggplot(df, aes(x = !!col_name_sym, fill = fill_color)) +
-    geom_histogram(binwidth = binwidth, color = "black", alpha = 0.7) +
+    geom_histogram(binwidth = binwidth,  alpha = 0.7) +
     scale_fill_identity() +
     labs(title = paste("Histogram of", col_name_title_case, "Shift Intervention"),
          subtitle = subtitle_text,
          x = col_name_title_case,
          y = "Count") +
-    theme_minimal()
+  theme_classic()
 
   # Conditionally add the average value line
   if(show_avg_line) {
-    p <- p + geom_vline(xintercept = avg_val, color = "red", linetype = "dashed", size = .75)
+    p <- p + geom_vline(xintercept = avg_val, color = "red", linetype = "dashed", linewidth = .75)
   }
 
   return(p)
 }
-
 
 

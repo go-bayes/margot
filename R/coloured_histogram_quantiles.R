@@ -72,7 +72,7 @@ coloured_histogram_quantiles <- function(df, col_name, n_quantiles, binwidth = 1
          color = "Quantile",
          x = tools::toTitleCase(col_name),
          y = "Count") +
-    theme_minimal()
+    theme_classic()
 
   return(p)
 }
