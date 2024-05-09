@@ -17,7 +17,7 @@
 
 Causal inference requires **balance** across the treatments to be
 compared. In observational studies, such balance is not guaranteed;
-quantifying causalityt therefore requires careful, multi-step workflows.
+quantifying causality therefore requires careful, multi-step workflows.
 
 The goal of `margot` is to enhance the accessibility of these workflows
 for causal inference. Its primary audience includes psychological

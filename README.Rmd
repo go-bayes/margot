@@ -30,11 +30,9 @@ knitr::opts_chunk$set(
 
 **MARG**inal **O**bservational **T**reatment-effects.[^1]
 
-Causal inference requires **balance** across the treatments to be compared. In observational studies, such balance is not guaranteed; quantifying causalityt therefore requires careful, multi-step workflows. 
+Causal inference requires **balance** across the treatments to be compared. In observational studies, such balance is not guaranteed; quantifying causality therefore requires careful, multi-step workflows. 
 
-The goal of `margot` is to enhance the accessibility of these workflows for causal inference.
-Its primary audience includes psychological scientists, although it may
-benefit other social scientists.
+The goal of `margot` is to enhance the accessibility of these workflows for causal inference. Its primary audience includes psychological scientists, although it may benefit other social scientists.
 
 The package offers functions for:
 
