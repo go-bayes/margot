@@ -13,32 +13,32 @@ select_and_rename_cols(
 )
 }
 \arguments{
-\item{names_base}{A character vector of column names from which to select.}
+\item{names_base}{a character vector of column names from which to select.}
 
-\item{baseline_vars}{A character vector of baseline variables to match in `names_base`.}
+\item{baseline_vars}{a character vector of baseline variables to match in `names_base`.}
 
-\item{outcome}{The name of the outcome variable whose prefix should be replaced.}
+\item{outcome}{the name of the outcome variable whose prefix should be replaced.}
 
-\item{from_prefix}{The original prefix of the outcome variable to be replaced,
-defaulting to "t2". The prefix should include any character immediately
+\item{from_prefix}{the original prefix of the outcome variable to be replaced,
+defaulting to "t2". the prefix should include any character immediately
 preceding the numeric value and underscore, e.g., "t2_".}
 
-\item{to_prefix}{The new prefix to replace the original prefix in the outcome
-variable, defaulting to "t0". The prefix should be in the same format as
+\item{to_prefix}{the new prefix to replace the original prefix in the outcome
+variable, defaulting to "t0". the prefix should be in the same format as
 `from_prefix`, including the character immediately preceding the numeric value
 and underscore, e.g., "t0_".}
 }
 \value{
-A character vector of selected column names with the outcome variable name
+a character vector of selected column names with the outcome variable name
   modified to reflect the new prefix.
 }
 \description{
 Selects columns from a base set that match specified baseline variables and renames
 an outcome variable by changing its prefix. Useful for longitudinal data where
-time-point prefixes need to be standardized or adjusted.
+time-point prefixes need to be standardised or adjusted.
 }
 \examples{
-names_base <- c("t1_age", "t2_weight", "t3_height", "t2_outcome")
+names_base <- c("t0_age", "t0_weight", "t0_height", "t0_outcome")
 baseline_vars <- c("age", "weight")
 outcome_var <- "t2_outcome"
 
