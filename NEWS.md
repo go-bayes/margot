@@ -1,3 +1,5 @@
+# margot 0.2.0
+
 <img src="man/figures/margot.png" width = 500>
 
 #  margot 0.1.2.2
