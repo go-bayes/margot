@@ -19,15 +19,15 @@ Expected structure: list(vals = data.frame(theta = x, std.error = y)).}
 \value{
 A list containing:
         - `results`: A data frame with columns `mean_difference`, `std_error`, `conf_low`, and `conf_high` for type "RD",
-          or `rrr`, `std_error_log`, `conf_low`, and `conf_high` for type "RR", each rounded to 4 decimal places. 
+          or `rrr`, `std_error_log`, `conf_low`, and `conf_high` for type "RR", each rounded to 4 decimal places.
           Suitable for direct use in reporting.
         - `interpretation`: A string providing a formatted interpretation of the results.
 }
 \description{
 This function calculates either the difference in average treatment effects (ATE) or the relative risk ratio (RRR)
-between two independent subgroups. Each subgroup is represented as a list that includes the estimated effect (theta) and 
-the standard error (std.error) of the effect. The result includes both a data frame and an interpretation 
-string formatted for easy use with `glue::glue` in Quarto documents etc. The subgroups are expected to be 
+between two independent subgroups. Each subgroup is represented as a list that includes the estimated effect (theta) and
+the standard error (std.error) of the effect. The result includes both a data frame and an interpretation
+string formatted for easy use with `glue::glue` in Quarto documents etc. The subgroups are expected to be
 outputs from the `lmtp::lmtp_contrast()` function.
 }
 \examples{

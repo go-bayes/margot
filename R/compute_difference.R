@@ -1,9 +1,9 @@
 #' Compute Difference in Average Treatment Effects or Relative Risk Ratio Between Two Subgroups
 #'
 #' This function calculates either the difference in average treatment effects (ATE) or the relative risk ratio (RRR)
-#' between two independent subgroups. Each subgroup is represented as a list that includes the estimated effect (theta) and 
-#' the standard error (std.error) of the effect. The result includes both a data frame and an interpretation 
-#' string formatted for easy use with `glue::glue` in Quarto documents etc. The subgroups are expected to be 
+#' between two independent subgroups. Each subgroup is represented as a list that includes the estimated effect (theta) and
+#' the standard error (std.error) of the effect. The result includes both a data frame and an interpretation
+#' string formatted for easy use with `glue::glue` in Quarto documents etc. The subgroups are expected to be
 #' outputs from the `lmtp::lmtp_contrast()` function.
 #'
 #' @param group1 A list containing the estimated effect and standard error of subgroup 1.
@@ -15,7 +15,7 @@
 #'
 #' @return A list containing:
 #'         - `results`: A data frame with columns `mean_difference`, `std_error`, `conf_low`, and `conf_high` for type "RD",
-#'           or `rrr`, `std_error_log`, `conf_low`, and `conf_high` for type "RR", each rounded to 4 decimal places. 
+#'           or `rrr`, `std_error_log`, `conf_low`, and `conf_high` for type "RR", each rounded to 4 decimal places.
 #'           Suitable for direct use in reporting.
 #'         - `interpretation`: A string providing a formatted interpretation of the results.
 #'
@@ -85,7 +85,7 @@ compute_difference <- function(group1, group2, type = "RD") {
 
     # generate interpretation using glue
     interpretation <- glue(
-      "the relative risk ratio between the focal group and the reference group is {results$rrr} with a standard error of {results$std_error_log} and a 95% ci of [{results$conf_low}, {results$conf_high}]."
+      "the difference in the relative risk ratio between the focal group and the reference group is {results$rrr} with a standard error of {results$std_error_log} and a 95% ci of [{results$conf_low}, {results$conf_high}]."
     )
   } else {
     stop("Invalid type specified. Use 'RD' for risk difference or 'RR' for relative risk.")
