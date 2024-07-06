@@ -53,7 +53,7 @@ reference:
 
   - title: "Understand Results"
     contents:
-    - compute_difference_means
+    - compute_difference
     - group_tab
     - lmtp_evalue_tab
     - margot_interpret_table

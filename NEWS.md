@@ -1,6 +1,8 @@
 <img src="man/figures/margot.png" width = 500>
 
-
+#  margot 0.1.2.2
+* improved subgroup comparison function 
+* deprecated `compare_group_means` function, with `compare_group`allowing for contrasts of on both the causal difference and relative risk scales.
 
 # margot 0.1.2.1
 * group_tab now works under the hood of margot_plot, so no need to specify explicitly
