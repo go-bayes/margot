@@ -59,6 +59,8 @@ reference:
     - margot_interpret_table
     - margot_lmtp_evalue
     - margot_lmtp_tab
+    - margot_model_evalue
+    - margot_model_tab
     - tab_engine_marginal
 
 
