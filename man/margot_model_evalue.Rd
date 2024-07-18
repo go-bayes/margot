@@ -50,5 +50,5 @@ print(summary_evalues)
 
 }
 \seealso{
-\code{\link{margot_model_tab}}, \code{\link{lmtp_evalue_tab}} for the underlying functions used.
+\code{\link{margot_model_tab}}
 }

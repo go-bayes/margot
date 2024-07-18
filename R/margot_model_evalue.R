@@ -32,54 +32,94 @@
 #' @export
 #' @importFrom EValue evalues.OLS evalues.RR
 #' @import dplyr select_if cbind select
-#' @seealso \code{\link{margot_model_tab}}, \code{\link{lmtp_evalue_tab}} for the underlying functions used.
+#' @seealso \code{\link{margot_model_tab}}
 #'
 margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = "character_string", delta = 1, sd = 1) {
   scale <- match.arg(scale)
 
-  # Step 1: Generate the summary table from model_output
-  tab_model <- margot_model_tab(
-    model_output = model_output,
-    scale = scale,
-    new_name = new_name
-  )
+  # Function to create the summary data frame
+  create_summary_df <- function(estimate, std.error, conf.low, conf.high, scale, new_name) {
+    tab <- cbind.data.frame(
+      estimate,
+      std.error,
+      conf.low,
+      conf.high
+    )
 
-  # Step 2: Calculate E-values and append to the summary table
-  if (scale == "RD") {
-    tab_evalue <- tab_model %>%
-      dplyr::mutate(
-        E_value = EValue::evalues.OLS(
-          est = .data[[1]],
-          se = .data[[2]],
-          delta = delta,
-          sd = sd
-        )[1, "E-value"],
-        E_value_lower = EValue::evalues.OLS(
-          est = .data[[1]],
-          se = .data[[2]],
-          delta = delta,
-          sd = sd
-        )[1, "lower"]
-      ) %>%
-      dplyr::select(-standard_error)
-  } else if (scale == "RR") {
-    tab_evalue <- tab_model %>%
-      dplyr::mutate(
-        E_value = EValue::evalues.RR(
-          est = .data[[1]],
-          lower = .data[[3]],
-          upper = .data[[4]]
-        )[1, "E-value"],
-        E_value_lower = EValue::evalues.RR(
-          est = .data[[1]],
-          lower = .data[[3]],
-          upper = .data[[4]]
-        )[1, "lower"]
-      ) %>%
-      dplyr::select(-standard_error)
-  } else {
-    stop("Unsupported scale type for E-value calculation")
+    if (scale == "RD") {
+      colnames(tab) <- c("E[Y(1)]-E[Y(0)]", "standard_error", "2.5 %", "97.5 %")
+    } else if (scale == "RR") {
+      colnames(tab) <- c("E[Y(1)]/E[Y(0)]", "standard_error", "2.5 %", "97.5 %")
+    }
+
+    tab_round <- tab |>
+      dplyr::mutate(across(where(is.numeric), ~ round(.x, digits = 3)))
+
+    rownames(tab_round)[1] <- paste0(new_name)
+
+    return(tab_round)
   }
 
-  return(tab_evalue)
+  if ("lmtp_contrast" %in% class(model_output)) {
+    # Processing LMTP model output
+    tab_tmle <- create_summary_df(
+      model_output$vals$theta,
+      model_output$vals$std.error,
+      model_output$vals$conf.low,
+      model_output$vals$conf.high,
+      scale,
+      new_name
+    )
+  } else if ("causal_forest" %in% class(model_output)) {
+    # Processing causal forest model output
+    ate_summary <- average_treatment_effect(model_output)
+    theta <- ate_summary[[1]]
+    std.error <- ate_summary[[2]]
+    conf.low <- theta - qnorm(0.975) * std.error
+    conf.high <- theta + qnorm(0.975) * std.error
+
+    tab_tmle <- create_summary_df(
+      theta,
+      std.error,
+      conf.low,
+      conf.high,
+      "RD",
+      new_name
+    )
+  } else {
+    stop("Unsupported model output type")
+  }
+
+  # Calculate E-values and append to the summary table
+  if (scale == "RD") {
+    evalout <- as.data.frame(round(
+      EValue::evalues.OLS(
+        tab_tmle[1, "E[Y(1)]-E[Y(0)]"],
+        se = tab_tmle[1, "standard_error"],
+        sd = sd,
+        delta = delta,
+        true = 0
+      ),
+      3
+    ))
+  } else {
+    evalout <- as.data.frame(round(EValue::evalues.RR(
+      tab_tmle[1, "E[Y(1)]/E[Y(0)]"],
+      lo = tab_tmle[1, "2.5 %"],
+      hi = tab_tmle[1, "97.5 %"],
+      true = 1
+    ),
+    3))
+  }
+
+  evalout2 <- evalout[2, , drop = FALSE] # Keep it as a dataframe
+  evalout3 <- evalout2 |>
+    dplyr::select_if(~ !any(is.na(.))) |>
+    `colnames<-`(c("E_Value", "E_Val_bound"))
+
+  tab <- tab_tmle |>
+    cbind(evalout3) |>
+    dplyr::select(-standard_error) # Correctly reference the column to exclude
+
+  return(tab)
 }
