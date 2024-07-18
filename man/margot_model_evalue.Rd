@@ -9,7 +9,8 @@ margot_model_evalue(
   scale = c("RD", "RR"),
   new_name = "character_string",
   delta = 1,
-  sd = 1
+  sd = 1,
+  subset = NULL
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ Default value is 1.}
 
 \item{sd}{The standard deviation of the outcome for RD scale calculations. Used only when `scale` is "RD".
 Default value is 1.}
+
+\item{subset}{An optional logical vector for subsetting the data when the model is a `grf` model. Default is `NULL`.}
 }
 \value{
 A data frame with the original estimates and their E-values. The table includes columns for the

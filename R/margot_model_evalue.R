@@ -14,6 +14,7 @@
 #' Default value is 1.
 #' @param sd The standard deviation of the outcome for RD scale calculations. Used only when `scale` is "RD".
 #' Default value is 1.
+#' @param subset An optional logical vector for subsetting the data when the model is a `grf` model. Default is `NULL`.
 #'
 #' @return A data frame with the original estimates and their E-values. The table includes columns for the
 #' estimate (either RD or RR), its E-Value, and the E-Value lower bound, excluding the 'standard_error' column.
@@ -31,10 +32,10 @@
 #'
 #' @export
 #' @importFrom EValue evalues.OLS evalues.RR
-#' @import dplyr select_if cbind select
+#' @import dplyr select_if cbind select mutate
 #' @seealso \code{\link{margot_model_tab}}
 #'
-margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = "character_string", delta = 1, sd = 1) {
+margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = "character_string", delta = 1, sd = 1, subset = NULL) {
   scale <- match.arg(scale)
 
   # Function to create the summary data frame
@@ -52,7 +53,7 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
       colnames(tab) <- c("E[Y(1)]/E[Y(0)]", "standard_error", "2.5 %", "97.5 %")
     }
 
-    tab_round <- tab |>
+    tab_round <- tab %>%
       dplyr::mutate(across(where(is.numeric), ~ round(.x, digits = 3)))
 
     rownames(tab_round)[1] <- paste0(new_name)
@@ -72,9 +73,13 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
     )
   } else if ("causal_forest" %in% class(model_output)) {
     # Processing causal forest model output
-    ate_summary <- average_treatment_effect(model_output)
-    theta <- ate_summary[[1]]
-    std.error <- ate_summary[[2]]
+    if (!is.null(subset)) {
+      ate_summary <- average_treatment_effect(model_output, subset = subset)
+    } else {
+      ate_summary <- average_treatment_effect(model_output)
+    }
+    theta <- ate_summary[["estimate"]]
+    std.error <- ate_summary[["std.err"]]
     conf.low <- theta - qnorm(0.975) * std.error
     conf.high <- theta + qnorm(0.975) * std.error
 
@@ -94,8 +99,8 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
   if (scale == "RD") {
     evalout <- as.data.frame(round(
       EValue::evalues.OLS(
-        tab_tmle[1, "E[Y(1)]-E[Y(0)]"],
-        se = tab_tmle[1, "standard_error"],
+        est = tab_tmle$`E[Y(1)]-E[Y(0)]`,
+        se = tab_tmle$standard_error,
         sd = sd,
         delta = delta,
         true = 0
@@ -104,21 +109,21 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
     ))
   } else {
     evalout <- as.data.frame(round(EValue::evalues.RR(
-      tab_tmle[1, "E[Y(1)]/E[Y(0)]"],
-      lo = tab_tmle[1, "2.5 %"],
-      hi = tab_tmle[1, "97.5 %"],
+      est = tab_tmle$`E[Y(1)]/E[Y(0)]`,
+      lo = tab_tmle$`2.5 %`,
+      hi = tab_tmle$`97.5 %`,
       true = 1
     ),
     3))
   }
 
   evalout2 <- evalout[2, , drop = FALSE] # Keep it as a dataframe
-  evalout3 <- evalout2 |>
-    dplyr::select_if(~ !any(is.na(.))) |>
+  evalout3 <- evalout2 %>%
+    dplyr::select_if(~ !any(is.na(.))) %>%
     `colnames<-`(c("E_Value", "E_Val_bound"))
 
-  tab <- tab_tmle |>
-    cbind(evalout3) |>
+  tab <- tab_tmle %>%
+    cbind(evalout3) %>%
     dplyr::select(-standard_error) # Correctly reference the column to exclude
 
   return(tab)
