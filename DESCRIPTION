@@ -4,7 +4,7 @@ Title: MARGinal Observational Treatment-effects
 Version: 0.2.0
 Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
 Description: Functions to obtain MARGinal Observational Treatment-effects from observational data.
-License: CC BY 4.0
+License: CC BY-NC-ND 4.0
 Encoding: UTF-8
 LazyData: true
 Depends: 

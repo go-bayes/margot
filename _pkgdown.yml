@@ -82,4 +82,6 @@ reference:
     - regress_with_covariates
     - select_and_rename_cols
 
-
+  - title: "Simulated data"
+    contents:
+    - df_nz

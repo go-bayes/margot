@@ -4,6 +4,9 @@
     <loc>https://go-bayes.github.io/margot/404.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/LICENSE-data.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/LICENSE.html</loc>
   </url>
   <url>
@@ -59,6 +62,9 @@
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/create_transition_matrix.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/df_nz.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/double_robust_marginal.html</loc>
