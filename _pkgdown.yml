@@ -49,6 +49,7 @@ reference:
     - causal_contrast_engine
     - causal_contrast_marginal
     - double_robust_marginal
+    - margot_run_models_grf
 
 
   - title: "Understand Results"
