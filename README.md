@@ -67,41 +67,17 @@ table_change_belief
 
 Go to:<https://github.com/go-bayes/margot>
 
-## Doi
+### Code
 
-[![DOI](https://zenodo.org/badge/766117235.svg)](https://zenodo.org/doi/10.5281/zenodo.10907723)
+The code in this package is licensed under the GNU General Public
+License (GPL) v3.0. You can redistribute it and/or modify it under the
+terms of the GPL as published by the Free Software Foundation. For more
+information, see [GPL v3.0](http://www.gnu.org/licenses/).
 
-This version of the package is a work in progress and experimental.
-
-## Installation
-
-You can install the development version of `margot` like so:
-
-``` r
-if (!require(devtools, quietly = TRUE)) {
-  install.packages("devtools")
-  library(devtools)
-}
-
-devtools::install_github("go-bayes/margot")
-```
-
-## Example
-
-``` r
-library("margot")
-
-# create transition table to evaluate the positivity assumption
-transition_matrix <- create_transition_matrix(df_nz, "religion_believe_god", "id")
-
-# create table and table explanation
-table_change_belief <- transition_table(transition_matrix)
-table_change_belief
-```
-
-## Code
-
-Go to:<https://github.com/go-bayes/margot>
+The `margot` package is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See th GNU General
+Public License for more details.
 
 ## Doi
 

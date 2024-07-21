@@ -3,8 +3,8 @@ Type: Package
 Title: MARGinal Observational Treatment-effects
 Version: 0.2.0
 Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
-Description: Functions to obtain MARGinal Observational Treatment-effects from observational data.
-License: CC BY-NC-ND 4.0
+Description: Functions to obtain MARGinal Observational Treatment-effects from observational data. The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.
+License: GNU General Public License v3.0
 Encoding: UTF-8
 LazyData: true
 Depends: 
@@ -31,7 +31,7 @@ Imports:
     miceadds,
     parallel, 
     grf
-RoxygenNote: 7.3.2.9000
+RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

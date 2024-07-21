@@ -18,11 +18,12 @@
 #'   }
 #'   \item{...}{Other variables}
 #' }
-#' @source Simulated data
+#' @source Simulated data. Copyright (c) 2024 margot package contributors.
 #'
 #' @details
-#' This dataset is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
-#' © 2024, Curators of the Margot Package. See LICENSE-data.md for more details.
+#' The dataset is licensed under a custom license. You may use the data for non-commercial purposes with appropriate credit, but redistribution of the data in any form, including modified versions, is not permitted to protect privacy.
+#'
+#' The code in the margot package is licensed under the GNU General Public License (GPL) v3.0. You can redistribute it and/or modify it under the terms of the GPL as published by the Free Software Foundation. See <http://www.gnu.org/licenses/>.
 #'
 #' @examples
 #' data(df_nz)
