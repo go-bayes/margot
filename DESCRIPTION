@@ -30,7 +30,8 @@ Imports:
     MatchThem,
     miceadds,
     parallel, 
-    grf
+    grf, 
+    progressr
 RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0)
