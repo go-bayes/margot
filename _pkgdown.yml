@@ -44,7 +44,7 @@ reference:
     - margot_wide
     - margot_wide_impute_baseline
 
-  - title: "Estimators"
+  - title: "Treatment effect estimation"
     contents:
     - causal_contrast_engine
     - causal_contrast_marginal
@@ -62,6 +62,7 @@ reference:
     - margot_lmtp_tab
     - margot_model_evalue
     - margot_model_tab
+    - margot_subset_table_grf
     - tab_engine_marginal
 
 

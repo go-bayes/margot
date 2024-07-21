@@ -1,5 +1,5 @@
-# margot 0.2.dev
-* new table and plot functions for `grf` outputs |> 
+# margot 0.2.0.1
+* new table and plot functions for `grf` outputs
 
 # margot 0.2.0
 

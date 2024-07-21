@@ -26,7 +26,7 @@
 #' \dontrun{
 #' grf_defaults <- list(seed = 123, stabilize.splits = TRUE,
 #'                      tune.parameters = "all", num.trees = 5000)
-#' result <- run_grf_models(
+#' result <- margot_run_models_grf(
 #'   data = df_grf,
 #'   outcome_vars = c("outcome1", "outcome2"),
 #'   covariates = X,

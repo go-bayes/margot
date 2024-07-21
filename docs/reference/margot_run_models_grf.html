@@ -107,7 +107,7 @@ evaluation tables. It includes a progress bar to track the model fitting process
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span><span class="va">grf_defaults</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>seed <span class="op">=</span> <span class="fl">123</span>, stabilize.splits <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>                     tune.parameters <span class="op">=</span> <span class="st">"all"</span>, num.trees <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">run_grf_models</span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">margot_run_models_grf</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">df_grf</span>,</span></span>
 <span class="r-in"><span>  outcome_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"outcome1"</span>, <span class="st">"outcome2"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  covariates <span class="op">=</span> <span class="va">X</span>,</span></span>
