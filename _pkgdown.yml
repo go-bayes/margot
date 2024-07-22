@@ -57,6 +57,7 @@ reference:
     - compute_difference
     - group_tab
     - lmtp_evalue_tab
+    - margot_omnibus_hetero_test
     - margot_interpret_table
     - margot_lmtp_evalue
     - margot_lmtp_tab
