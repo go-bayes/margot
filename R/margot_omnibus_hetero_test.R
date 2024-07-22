@@ -95,7 +95,7 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars, alpha = 0.05
     p <- ggplot2::ggplot(calibration_results, ggplot2::aes(x = outcome, y = diff_estimate)) +
       ggplot2::geom_point() +
       ggplot2::geom_errorbar(ggplot2::aes(ymin = diff_lower, ymax = diff_upper), width = 0.2) +
-      ggplot2::theme_minimal() +
+      ggplot2::theme_classic() +
       ggplot2::labs(title = "Differential Prediction Estimates with 95% CI",
                     y = "Estimate",
                     x = "Outcome") +
