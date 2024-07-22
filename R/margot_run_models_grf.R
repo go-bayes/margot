@@ -11,7 +11,7 @@
 #' @param W A matrix of treatment assignments.
 #' @param weights A vector of weights for the observations.
 #' @param grf_defaults A list of default parameters for the GRF models.
-#' @param save_data Logical indicating whether to save data, covariates, and weights. Default is TRUE.
+#' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
 #' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
 #'
 #' @return A list containing:
@@ -37,7 +37,7 @@
 #'
 #' @export
 margot_run_models_grf <- function(data, outcome_vars, covariates, W, weights, grf_defaults = list(),
-                                  save_data = TRUE, compute_rate = TRUE) {
+                                  save_data = FALSE, compute_rate = TRUE) {
   # Create not_missing vector (only needs to be done once)
   not_missing <- which(complete.cases(covariates))
   full <- seq_len(nrow(covariates))
