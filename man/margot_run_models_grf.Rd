@@ -11,8 +11,9 @@ margot_run_models_grf(
   W,
   weights,
   grf_defaults = list(),
-  save_data = TRUE,
-  compute_rate = TRUE
+  save_data = FALSE,
+  compute_rate = TRUE,
+  top_n_vars = 10
 )
 }
 \arguments{
@@ -28,9 +29,11 @@ margot_run_models_grf(
 
 \item{grf_defaults}{A list of default parameters for the GRF models.}
 
-\item{save_data}{Logical indicating whether to save data, covariates, and weights. Default is TRUE.}
+\item{save_data}{Logical indicating whether to save data, covariates, and weights. Default is FALSE.}
 
 \item{compute_rate}{Logical indicating whether to compute RATE for each model. Default is TRUE.}
+
+\item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 10.}
 }
 \value{
 A list containing:
@@ -43,6 +46,9 @@ A list containing:
   \item{dr_scores}{A list of double robust scores for each model.}
   \item{policy_trees}{A list of policy trees of depth 1 for each model.}
   \item{not_missing}{A vector of indices for complete cases.}
+  \item{variable_importance_rankings}{A list of top n variables by importance for each model, where n is specified by top_n_vars.}
+  \item{best_linear_projections}{A list of best linear projection results using top n variables for each model, where n is specified by top_n_vars.}
+  \item{policy_trees_depth_2}{A list of policy trees of depth 2 using top n variables for each model, where n is specified by top_n_vars.}
   \item{data}{The input data (if save_data is TRUE).}
   \item{covariates}{The input covariates (if save_data is TRUE).}
   \item{weights}{The input weights (if save_data is TRUE).}
@@ -50,6 +56,7 @@ A list containing:
 \description{
 This function runs multiple GRF models for specified outcome variables,
 calculates average treatment effects, tests calibration, creates custom
-evaluation tables, and now includes additional features such as tau.hat estimates,
-RATE calculations, and policy trees.
+evaluation tables, and includes additional features such as tau.hat estimates,
+RATE calculations, policy trees, variable importance rankings, best linear
+projections, and depth-2 policy trees.
 }

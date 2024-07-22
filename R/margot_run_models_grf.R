@@ -2,8 +2,9 @@
 #'
 #' This function runs multiple GRF models for specified outcome variables,
 #' calculates average treatment effects, tests calibration, creates custom
-#' evaluation tables, and now includes additional features such as tau.hat estimates,
-#' RATE calculations, and policy trees.
+#' evaluation tables, and includes additional features such as tau.hat estimates,
+#' RATE calculations, policy trees, variable importance rankings, best linear
+#' projections, and depth-2 policy trees.
 #'
 #' @param data A data frame containing all necessary variables.
 #' @param outcome_vars A character vector of outcome variable names to be modeled.
@@ -13,7 +14,7 @@
 #' @param grf_defaults A list of default parameters for the GRF models.
 #' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
 #' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
-#'
+#' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 10.
 #' @return A list containing:
 #'   \item{results}{A list of model results, one for each outcome variable.}
 #'   \item{combined_table}{A data frame combining all custom evaluation tables.}
@@ -24,11 +25,14 @@
 #'   \item{dr_scores}{A list of double robust scores for each model.}
 #'   \item{policy_trees}{A list of policy trees of depth 1 for each model.}
 #'   \item{not_missing}{A vector of indices for complete cases.}
+#'   \item{variable_importance_rankings}{A list of top n variables by importance for each model, where n is specified by top_n_vars.}
+#'   \item{best_linear_projections}{A list of best linear projection results using top n variables for each model, where n is specified by top_n_vars.}
+#'   \item{policy_trees_depth_2}{A list of policy trees of depth 2 using top n variables for each model, where n is specified by top_n_vars.}
 #'   \item{data}{The input data (if save_data is TRUE).}
 #'   \item{covariates}{The input covariates (if save_data is TRUE).}
 #'   \item{weights}{The input weights (if save_data is TRUE).}
 #'
-#' @importFrom grf causal_forest average_treatment_effect test_calibration rank_average_treatment_effect
+#' @importFrom grf causal_forest average_treatment_effect test_calibration rank_average_treatment_effect variable_importance best_linear_projection
 #' @importFrom dplyr %>%
 #' @importFrom progressr progressor with_progress
 #' @importFrom margot margot_model_evalue
@@ -37,7 +41,7 @@
 #'
 #' @export
 margot_run_models_grf <- function(data, outcome_vars, covariates, W, weights, grf_defaults = list(),
-                                  save_data = FALSE, compute_rate = TRUE) {
+                                       save_data = FALSE, compute_rate = TRUE, top_n_vars = 10) {
   # Create not_missing vector (only needs to be done once)
   not_missing <- which(complete.cases(covariates))
   full <- seq_len(nrow(covariates))
@@ -51,6 +55,9 @@ margot_run_models_grf <- function(data, outcome_vars, covariates, W, weights, gr
     rate_results <- list()
     dr_scores_list <- list()
     policy_trees <- list()
+    variable_importance_rankings <- list()
+    best_linear_projections <- list()
+    policy_trees_depth_2 <- list()
 
     p <- progressor(along = outcome_vars)
     for (outcome in outcome_vars) {
@@ -77,6 +84,15 @@ margot_run_models_grf <- function(data, outcome_vars, covariates, W, weights, gr
       dr_scores <- policytree::double_robust_scores(model)
       policy_tree <- policytree::policy_tree(covariates[full, ], dr_scores[full, ], depth = 1)
 
+      # blps and tree depth 2
+      varimp <- grf::variable_importance(model)
+      ranked_vars <- order(varimp, decreasing = TRUE)
+      top_vars <- colnames(covariates)[ranked_vars[1:top_n_vars]]
+
+      blp_top <- grf::best_linear_projection(model, covariates[, top_vars], target.sample = "all")
+
+      policy_tree_depth_2 <- policytree::policy_tree(covariates[full, top_vars], dr_scores[full, ], depth = 2)
+
       results[[model_name]] <- list(
         model = model,
         ate = ate,
@@ -90,12 +106,18 @@ margot_run_models_grf <- function(data, outcome_vars, covariates, W, weights, gr
       if (compute_rate) rate_results[[outcome]] <- rate_result
       dr_scores_list[[outcome]] <- dr_scores
       policy_trees[[outcome]] <- policy_tree
+      variable_importance_rankings[[outcome]] <- top_vars  # Changed from top_15_vars
+      best_linear_projections[[outcome]] <- blp_top  # Changed from blp_top_15
+      policy_trees_depth_2[[outcome]] <- policy_tree_depth_2
 
       p(sprintf("Completed %s", outcome))
     }
 
     list(results = results, tables = tables, tau_hats = tau_hats, tau_hat_plots = tau_hat_plots,
-         rate_results = rate_results, dr_scores_list = dr_scores_list, policy_trees = policy_trees)
+         rate_results = rate_results, dr_scores_list = dr_scores_list, policy_trees = policy_trees,
+         variable_importance_rankings = variable_importance_rankings,
+         best_linear_projections = best_linear_projections,
+         policy_trees_depth_2 = policy_trees_depth_2)
   }
 
   model_results <- with_progress(run_models_with_progress())
@@ -111,7 +133,10 @@ margot_run_models_grf <- function(data, outcome_vars, covariates, W, weights, gr
     rate_results = model_results$rate_results,
     dr_scores = model_results$dr_scores_list,
     policy_trees = model_results$policy_trees,
-    not_missing = not_missing
+    not_missing = not_missing,
+    variable_importance_rankings = model_results$variable_importance_rankings,
+    best_linear_projections = model_results$best_linear_projections,
+    policy_trees_depth_2 = model_results$policy_trees_depth_2
   )
 
   if (save_data) {
