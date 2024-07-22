@@ -4,15 +4,28 @@
 \alias{margot_omnibus_hetero_test}
 \title{Omnibus Heterogeneity Test for GRF Models}
 \usage{
-margot_omnibus_hetero_test(model_results, outcome_vars)
+margot_omnibus_hetero_test(
+  model_results,
+  outcome_vars,
+  alpha = 0.05,
+  detail_level = "standard",
+  plot = FALSE
+)
 }
 \arguments{
 \item{model_results}{A list of model results from margot::margot_run_models_grf().}
 
 \item{outcome_vars}{A character vector of outcome variable names.}
+
+\item{alpha}{Significance level for hypothesis tests. Default is 0.05.}
+
+\item{detail_level}{Character string specifying the level of detail in the output.
+Options are "basic", "standard" (default), or "detailed".}
+
+\item{plot}{Logical indicating whether to create a plot of the results. Default is FALSE.}
 }
 \value{
-A list containing two elements: a data frame with summary statistics and a character vector with interpretations.
+A list containing a simple summary table, interpretations, and optionally a plot.
 }
 \description{
 This function performs an omnibus heterogeneity test for specified models
