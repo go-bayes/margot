@@ -6,7 +6,7 @@
 \usage{
 margot_omnibus_hetero_test(
   model_results,
-  outcome_vars,
+  outcome_vars = NULL,
   alpha = 0.05,
   detail_level = "standard",
   plot = FALSE
@@ -15,7 +15,8 @@ margot_omnibus_hetero_test(
 \arguments{
 \item{model_results}{A list of model results from margot::margot_run_models_grf().}
 
-\item{outcome_vars}{A character vector of outcome variable names.}
+\item{outcome_vars}{Optional. A character vector of outcome variable names. If NULL,
+the function will attempt to use the outcome_vars from the model_results input.}
 
 \item{alpha}{Significance level for hypothesis tests. Default is 0.05.}
 

@@ -31,7 +31,11 @@ Imports:
     miceadds,
     parallel, 
     grf, 
-    progressr
+    progressr,
+    policytree,
+    DiagrammeR,
+    ggbeeswarm, 
+    naniar
 RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0)

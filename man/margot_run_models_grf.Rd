@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_run_models_grf.R
 \name{margot_run_models_grf}
 \alias{margot_run_models_grf}
-\title{Run Multiple Generalized Random Forest (GRF) Models with Progress Tracking}
+\title{Run Multiple Generalized Random Forest (GRF) Models with Enhanced Features}
 \usage{
 margot_run_models_grf(
   data,
@@ -10,7 +10,9 @@ margot_run_models_grf(
   covariates,
   W,
   weights,
-  grf_defaults = list()
+  grf_defaults = list(),
+  save_data = TRUE,
+  compute_rate = TRUE
 )
 }
 \arguments{
@@ -25,31 +27,29 @@ margot_run_models_grf(
 \item{weights}{A vector of weights for the observations.}
 
 \item{grf_defaults}{A list of default parameters for the GRF models.}
+
+\item{save_data}{Logical indicating whether to save data, covariates, and weights. Default is TRUE.}
+
+\item{compute_rate}{Logical indicating whether to compute RATE for each model. Default is TRUE.}
 }
 \value{
-A list containing two elements:
-  \item{results}{A list of model results, one for each outcome variable.
-                 Each element contains the model object, average treatment effect,
-                 test calibration measure, and a custom evaluation table.}
+A list containing:
+  \item{results}{A list of model results, one for each outcome variable.}
   \item{combined_table}{A data frame combining all custom evaluation tables.}
+  \item{outcome_vars}{The character vector of outcome variable names that were modeled.}
+  \item{tau_hats}{A list of tau.hat estimates for each model.}
+  \item{tau_hat_plots}{A list of ggplot objects for tau.hat histograms.}
+  \item{rate_results}{A list of RATE results (if compute_rate is TRUE).}
+  \item{dr_scores}{A list of double robust scores for each model.}
+  \item{policy_trees}{A list of policy trees of depth 1 for each model.}
+  \item{not_missing}{A vector of indices for complete cases.}
+  \item{data}{The input data (if save_data is TRUE).}
+  \item{covariates}{The input covariates (if save_data is TRUE).}
+  \item{weights}{The input weights (if save_data is TRUE).}
 }
 \description{
 This function runs multiple GRF models for specified outcome variables,
-calculates average treatment effects, tests calibration, and creates custom
-evaluation tables. It includes a progress bar to track the model fitting process.
-}
-\examples{
-\dontrun{
-grf_defaults <- list(seed = 123, stabilize.splits = TRUE,
-                     tune.parameters = "all", num.trees = 5000)
-result <- margot_run_models_grf(
-  data = df_grf,
-  outcome_vars = c("outcome1", "outcome2"),
-  covariates = X,
-  W = W,
-  weights = weights,
-  grf_defaults = grf_defaults
-)
-}
-
+calculates average treatment effects, tests calibration, creates custom
+evaluation tables, and now includes additional features such as tau.hat estimates,
+RATE calculations, and policy trees.
 }

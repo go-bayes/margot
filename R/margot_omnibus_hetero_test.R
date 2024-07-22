@@ -4,7 +4,8 @@
 #' outputted from margot::margot_run_models_grf() and provides interpretations for each result.
 #'
 #' @param model_results A list of model results from margot::margot_run_models_grf().
-#' @param outcome_vars A character vector of outcome variable names.
+#' @param outcome_vars Optional. A character vector of outcome variable names. If NULL,
+#'        the function will attempt to use the outcome_vars from the model_results input.
 #' @param alpha Significance level for hypothesis tests. Default is 0.05.
 #' @param detail_level Character string specifying the level of detail in the output.
 #'        Options are "basic", "standard" (default), or "detailed".
@@ -19,12 +20,22 @@
 #' @importFrom stringr str_extract
 #'
 #' @export
-margot_omnibus_hetero_test <- function(model_results, outcome_vars, alpha = 0.05,
+margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha = 0.05,
                                        detail_level = "standard", plot = FALSE) {
   # input validation
   if (!is.list(model_results) || length(model_results) == 0) {
     stop("model_results must be a non-empty list")
   }
+
+  # if outcome_vars is not provided, try to get it from model_results, or use all model names
+  if (is.null(outcome_vars)) {
+    if ("outcome_vars" %in% names(model_results)) {
+      outcome_vars <- model_results$outcome_vars
+    } else {
+      outcome_vars <- gsub("^model_", "", names(model_results$results))
+    }
+  }
+
   if (!is.character(outcome_vars) || length(outcome_vars) == 0) {
     stop("outcome_vars must be a non-empty character vector")
   }
@@ -44,11 +55,11 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars, alpha = 0.05
   # safe version of the extraction function
   safe_extract <- safely(function(outcome) {
     model_name <- paste0("model_", outcome)
-    if (!model_name %in% names(model_results)) {
+    if (!model_name %in% names(model_results$results)) {
       stop(glue::glue("Model for outcome '{outcome}' not found in model_results"))
     }
 
-    calib <- model_results[[model_name]]$test_calibration
+    calib <- model_results$results[[model_name]]$test_calibration
     data.frame(
       outcome = outcome,
       mean_prediction_estimate = glue::glue("{round(calib['mean.forest.prediction', 'Estimate'], 2)} [{round(calib['mean.forest.prediction', 'Estimate'] - 1.96 * calib['mean.forest.prediction', 'Std. Error'], 2)}, {round(calib['mean.forest.prediction', 'Estimate'] + 1.96 * calib['mean.forest.prediction', 'Std. Error'], 2)}]"),
@@ -64,7 +75,7 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars, alpha = 0.05
   # extract test calibration results
   calibration_results <- purrr::map_dfr(outcome_vars, ~safe_extract(.x)$result)
 
-  # create interpretations based on detail level
+  # interpretations based on detail level
   create_interpretation <- function(result) {
     base_interp <- glue::glue(
       "For {result$outcome}: mean prediction estimate: {result$mean_prediction_estimate}, ",
