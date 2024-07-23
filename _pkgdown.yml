@@ -70,6 +70,7 @@ reference:
   - title: "Visualise Causal Effect Estimates"
     contents:
     - margot_plot
+    - plot_rank_average_treatment_effect
 
   - title: "Utility functions"
     contents:

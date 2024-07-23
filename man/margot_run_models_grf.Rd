@@ -33,7 +33,7 @@ margot_run_models_grf(
 
 \item{compute_rate}{Logical indicating whether to compute RATE for each model. Default is TRUE.}
 
-\item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 10.}
+\item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 15.}
 }
 \value{
 A list containing:
