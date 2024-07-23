@@ -14,7 +14,7 @@
 #' @param grf_defaults A list of default parameters for the GRF models.
 #' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
 #' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
-#' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 10.
+#' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 15.
 #' @return A list containing:
 #'   \item{results}{A list of model results, one for each outcome variable.}
 #'   \item{combined_table}{A data frame combining all custom evaluation tables.}
@@ -54,7 +54,7 @@ margot_run_models_grf <- function(data, outcome_vars, covariates, W, weights, gr
     tau_hat_plots <- list()
     rate_results <- list()
     dr_scores_list <- list()
-    policy_trees <- list()
+    policy_trees_depth_1 <- list()
     variable_importance_rankings <- list()
     best_linear_projections <- list()
     policy_trees_depth_2 <- list()
@@ -82,7 +82,7 @@ margot_run_models_grf <- function(data, outcome_vars, covariates, W, weights, gr
       }
 
       dr_scores <- policytree::double_robust_scores(model)
-      policy_tree <- policytree::policy_tree(covariates[full, ], dr_scores[full, ], depth = 1)
+      policy_trees_depth_1 <- policytree::policy_tree(covariates[full, ], dr_scores[full, ], depth = 1)
 
       # blps and tree depth 2
       varimp <- grf::variable_importance(model)
@@ -105,16 +105,16 @@ margot_run_models_grf <- function(data, outcome_vars, covariates, W, weights, gr
       tau_hat_plots[[outcome]] <- tau_hat_plot
       if (compute_rate) rate_results[[outcome]] <- rate_result
       dr_scores_list[[outcome]] <- dr_scores
-      policy_trees[[outcome]] <- policy_tree
-      variable_importance_rankings[[outcome]] <- top_vars  # Changed from top_15_vars
-      best_linear_projections[[outcome]] <- blp_top  # Changed from blp_top_15
+      policy_trees_depth_1[[outcome]] <- policy_tree
+      variable_importance_rankings[[outcome]] <- top_vars  # default is 15
+      best_linear_projections[[outcome]] <- blp_top  # default is 15
       policy_trees_depth_2[[outcome]] <- policy_tree_depth_2
 
       p(sprintf("Completed %s", outcome))
     }
 
     list(results = results, tables = tables, tau_hats = tau_hats, tau_hat_plots = tau_hat_plots,
-         rate_results = rate_results, dr_scores_list = dr_scores_list, policy_trees = policy_trees,
+         rate_results = rate_results, dr_scores_list = dr_scores_list, policy_trees_depth_1 = policy_trees_depth_1,
          variable_importance_rankings = variable_importance_rankings,
          best_linear_projections = best_linear_projections,
          policy_trees_depth_2 = policy_trees_depth_2)
