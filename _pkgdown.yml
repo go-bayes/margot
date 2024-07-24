@@ -52,8 +52,7 @@ reference:
     - causal_contrast_engine
     - causal_contrast_marginal
     - double_robust_marginal
-    - margot_run_models_grf
-
+    - margot_grf_causal_forest
 
   - title: "Understand Results"
     contents:
@@ -66,14 +65,14 @@ reference:
     - margot_lmtp_tab
     - margot_model_evalue
     - margot_model_tab
-    - margot_subset_table_grf
+    - margot_grf_subset_table
     - tab_engine_marginal
 
 
   - title: "Visualise Causal Effect Estimates"
     contents:
     - margot_plot
-    - plot_rank_average_treatment_effect
+    - margot_plot_grf_rate
 
   - title: "Utility functions"
     contents:

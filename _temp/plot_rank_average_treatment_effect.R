@@ -31,12 +31,12 @@
 #' @importFrom dplyr mutate
 #'
 #' @export
-plot_rank_average_treatment_effect <- function(x,
-                                               title = "Targeting Operator Characteristic",
-                                               subtitle = "(95% confidence interval shown as shaded area)",
-                                               x_lab = "Treated fraction (q)",
-                                               y_lab = "Estimate",
-                                               ...) {
+margot_grf_plot_rate <- function(x,
+                                 title = "Targeting Operator Characteristic",
+                                 subtitle = "(95% confidence interval shown as shaded area)",
+                                 x_lab = "Treated fraction (q)",
+                                 y_lab = "Estimate",
+                                 ...) {
   TOC <- x$TOC
 
   # Prepare the data
