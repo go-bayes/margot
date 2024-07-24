@@ -40,7 +40,10 @@ reference:
     - create_ordered_variable
     - create_ordered_variable_custom
     - impute_and_combine
+    - margot_compute_gender_weights
     - margot_filter
+    - margot_log_transform_vars
+    - margot_process_binary_vars
     - margot_wide
     - margot_wide_impute_baseline
 
