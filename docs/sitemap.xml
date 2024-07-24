@@ -100,6 +100,9 @@
     <loc>https://go-bayes.github.io/margot/reference/lmtp_evalue_tab.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_compute_gender_weights.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/margot_filter.html</loc>
   </url>
   <url>
@@ -112,6 +115,9 @@
     <loc>https://go-bayes.github.io/margot/reference/margot_lmtp_tab.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_log_transform_vars.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/margot_model_evalue.html</loc>
   </url>
   <url>
@@ -122,6 +128,9 @@
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/margot_plot.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_process_binary_vars.html</loc>
   </url>
   <url>
     <loc>https://go-bayes.github.io/margot/reference/margot_run_models_grf.html</loc>
