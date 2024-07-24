@@ -21,18 +21,22 @@
 #' df_updated <- create_ordered_variable(df_nz, "perfectionism", 5)
 #'
 #' @export
-#' @importFrom data.table as.data.table setDT
 #' @importFrom stats quantile
 create_ordered_variable <- function(df, var_name, n_divisions = NULL) {
   if (is.null(n_divisions)) {
     stop("Please specify the number of divisions.")
   }
 
-  # Convert to data.table for faster operations
-  dt <- data.table::as.data.table(df)
+  # Check if the variable exists in the dataframe
+  if (!var_name %in% names(df)) {
+    stop(paste("Variable", var_name, "not found in the dataframe."))
+  }
 
-  # Get unique values and their counts
-  unique_vals <- sort(unique(dt[[var_name]]))
+  # Get the variable
+  var <- df[[var_name]]
+
+  # get unique values and their counts
+  unique_vals <- sort(unique(var[!is.na(var)]))
   n_unique <- length(unique_vals)
 
   if (n_unique < n_divisions) {
@@ -46,7 +50,7 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL) {
   quantile_breaks <- stats::quantile(unique_vals, probs = seq(0, 1, length.out = n_divisions + 1),
                                      na.rm = TRUE, type = 1)
 
-  # Ensure uniqueness of breaks
+  # ensure uniqueness of breaks
   quantile_breaks <- unique(quantile_breaks)
 
   # If we still don't have enough breaks, add small increments
@@ -57,18 +61,15 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL) {
     }
   }
 
-  # Create labels
+  #  labels
   cut_labels <- paste0("tile_", seq_len(n_divisions))
 
-  # Pre-allocate new column
+  #  new column name
   new_col_name <- paste0(var_name, "_", n_divisions, "tile")
-  dt[, (new_col_name) := factor(rep(NA_character_, .N), levels = cut_labels, ordered = TRUE)]
 
-  # Use data.table's fast operations for cutting
-  dt[, (new_col_name) := {
-    cuts <- findInterval(get(var_name), quantile_breaks, all.inside = TRUE)
-    factor(cut_labels[cuts], levels = cut_labels, ordered = TRUE)
-  }]
+  # Cut the variable into ordered factor
+  df[[new_col_name]] <- cut(var, breaks = quantile_breaks, labels = cut_labels,
+                            include.lowest = TRUE, ordered_result = TRUE)
 
-  return(as.data.frame(dt))
+  return(df)
 }
