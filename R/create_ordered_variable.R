@@ -1,75 +1,57 @@
-#' Create Ordered Variable Based on Quantile Breaks
-#'
-#' This function takes a data frame and a specified variable name and divides the variable
-#' into ordered categories based on quantile breaks. The number of quantile divisions must
-#' be specified. The function is designed to handle non-unique breaks by adjusting them
-#' appropriately. It returns the data frame with a new ordered factor variable.
+#' Create Ordered Variable Based on Quantile Breaks with Informative Labels
 #'
 #' @param df A data frame containing the variable to be divided into quantiles.
 #' @param var_name The name of the variable within the data frame to divide into quantiles.
-#'        For example, in the `df_nz` dataset, you might use "perfectionism".
-#' @param n_divisions The number of quantile divisions to create. This must be a positive integer.
-#'        If NULL or not specified, the function will stop and ask the user to provide this parameter.
+#' @param n_divisions The number of quantile divisions to create.
 #'
-#' @return The input data frame with an additional column representing the ordered factor
-#'         variable. This new column is named by combining the original variable name, the
-#'         number of divisions, and the suffix 'tile', e.g., 'perfectionism_5tile' for
-#'         5 divisions of the 'perfectionism' variable.
+#' @return The input data frame with an additional column representing the ordered factor variable.
 #'
-#' @examples
-#' # Assuming df_nz is your dataset and 'perfectionism' is the column of interest:
-#' df_updated <- create_ordered_variable(df_nz, "perfectionism", 5)
-#'
-#' @export
 #' @importFrom stats quantile
+#' @export
 create_ordered_variable <- function(df, var_name, n_divisions = NULL) {
-  if (is.null(n_divisions)) {
-    stop("Please specify the number of divisions.")
-  }
+  if (is.null(n_divisions)) stop("Please specify the number of divisions.")
+  if (!var_name %in% names(df)) stop(paste("Variable", var_name, "not found in the dataframe."))
 
-  # Check if the variable exists in the dataframe
-  if (!var_name %in% names(df)) {
-    stop(paste("Variable", var_name, "not found in the dataframe."))
-  }
-
-  # Get the variable
   var <- df[[var_name]]
+  var_clean <- var[!is.na(var)]
 
-  # get unique values and their counts
-  unique_vals <- sort(unique(var[!is.na(var)]))
-  n_unique <- length(unique_vals)
-
+  n_unique <- length(unique(var_clean))
   if (n_unique < n_divisions) {
-    warning(paste("The variable has fewer unique values (", n_unique,
-                  ") than requested divisions (", n_divisions,
-                  "). Adjusting number of divisions.", sep=""))
+    warning(paste("The variable has fewer unique non-NA values than requested divisions.",
+                  "Adjusting number of divisions."))
     n_divisions <- n_unique
   }
 
-  # Calculate quantile breaks
-  quantile_breaks <- stats::quantile(unique_vals, probs = seq(0, 1, length.out = n_divisions + 1),
-                                     na.rm = TRUE, type = 1)
+  # calculate quantile breaks
+  probs <- seq(0, 1, length.out = n_divisions + 1)
+  quantile_breaks <- unique(quantile(var_clean, probs = probs, na.rm = TRUE, type = 1))
 
-  # ensure uniqueness of breaks
-  quantile_breaks <- unique(quantile_breaks)
-
-  # If we still don't have enough breaks, add small increments
+  # ensure we have the correct number of unique breaks
   if (length(quantile_breaks) < n_divisions + 1) {
-    message("Adjusting breaks to handle ties or insufficient unique values.")
-    while (length(quantile_breaks) < n_divisions + 1) {
-      quantile_breaks <- c(quantile_breaks, max(quantile_breaks) + .Machine$double.eps)
-    }
+    epsilon <- diff(range(var_clean)) * .Machine$double.eps
+    quantile_breaks <- unique(c(quantile_breaks, seq(max(quantile_breaks) + epsilon,
+                                                     by = epsilon,
+                                                     length.out = n_divisions + 1 - length(quantile_breaks))))
   }
 
-  #  labels
-  cut_labels <- paste0("tile_", seq_len(n_divisions))
+  # create informative labels based on cut points
+  labels <- vapply(seq_len(n_divisions), function(x) {
+    if (x == n_divisions) {
+      sprintf("[%.1f,Inf]", quantile_breaks[x])
+    } else {
+      sprintf("[%.1f,%.1f)", quantile_breaks[x], quantile_breaks[x + 1])
+    }
+  }, character(1))
 
-  #  new column name
-  new_col_name <- paste0(var_name, "_", n_divisions, "tile")
+  # use findInterval for categorisation
+  new_col_name <- paste0(var_name, "_cat")
+  df[[new_col_name]] <- factor(labels[findInterval(var, quantile_breaks, all.inside = TRUE)],
+                               levels = labels,
+                               ordered = TRUE)
 
-  # Cut the variable into ordered factor
-  df[[new_col_name]] <- cut(var, breaks = quantile_breaks, labels = cut_labels,
-                            include.lowest = TRUE, ordered_result = TRUE)
+  # print summary of the new variable
+  cat("Summary of", new_col_name, ":\n")
+  print(table(df[[new_col_name]], useNA = "ifany"))
 
   return(df)
 }
