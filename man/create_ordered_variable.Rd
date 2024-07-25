@@ -4,7 +4,13 @@
 \alias{create_ordered_variable}
 \title{Create Ordered Variable Based on Quantile Breaks with Informative Labels}
 \usage{
-create_ordered_variable(df, var_name, n_divisions = NULL)
+create_ordered_variable(
+  df,
+  var_name,
+  n_divisions = NULL,
+  cutpoint_inclusive = "upper",
+  ties.method = NULL
+)
 }
 \arguments{
 \item{df}{A data frame containing the variable to be divided into quantiles.}
@@ -12,10 +18,49 @@ create_ordered_variable(df, var_name, n_divisions = NULL)
 \item{var_name}{The name of the variable within the data frame to divide into quantiles.}
 
 \item{n_divisions}{The number of quantile divisions to create.}
+
+\item{cutpoint_inclusive}{A character string specifying whether cutpoints should be included
+in the lower or upper category. Must be either "lower" or "upper". Default is "upper".}
+
+\item{ties.method}{A character string specifying how ties should be handled.
+Must be one of "first", "last", "random", "ordered", or "average".
+If NULL (default), it will be set to "last" if cutpoint_inclusive is "upper",
+and "first" if cutpoint_inclusive is "lower".}
 }
 \value{
 The input data frame with an additional column representing the ordered factor variable.
+        The new column name will be the original variable name with "_cat" appended.
 }
 \description{
-Create Ordered Variable Based on Quantile Breaks with Informative Labels
+This function divides a numeric variable into quantile-based categories and creates
+an ordered factor variable with informative labels.
+}
+\details{
+The function creates quantile breaks based on the specified number of divisions.
+It then categorizes the values into these quantiles, creating an ordered factor variable.
+
+The `cutpoint_inclusive` parameter determines whether the cutpoint values themselves
+are included in the lower or upper category. For example, if a cutpoint is 40:
+- With "lower", the interval would be [40, 50)
+- With "upper", the interval would be (30, 40]
+
+The `ties.method` parameter specifies how to handle tied values when calculating quantiles.
+It's recommended to use a method consistent with `cutpoint_inclusive`:
+- Use "first" or "last" to ensure consistency with "lower" or "upper" respectively.
+- "average" is not recommended as it may lead to inconsistent results.
+}
+\note{
+- If the number of unique values in the variable is less than the requested number of divisions,
+  the function will adjust the number of divisions and issue a warning.
+- Using "average" for `ties.method` will generate a warning due to potential inconsistencies.
+}
+\examples{
+df <- data.frame(x = rnorm(100))
+result <- create_ordered_variable(df, "x", n_divisions = 4)
+
+# Explicitly setting cutpoint_inclusive and ties.method
+result2 <- create_ordered_variable(df, "x", n_divisions = 3,
+                                   cutpoint_inclusive = "lower",
+                                   ties.method = "first")
+
 }

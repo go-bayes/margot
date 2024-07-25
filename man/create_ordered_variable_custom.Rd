@@ -2,9 +2,18 @@
 % Please edit documentation in R/create_ordered_variable_custom.R
 \name{create_ordered_variable_custom}
 \alias{create_ordered_variable_custom}
-\title{Create Ordered Variable with Custom Breaks and Labels}
+\title{Create Ordered Variable with Custom Breaks and Auto-generated Labels}
 \usage{
-create_ordered_variable_custom(df, var_name, breaks, labels)
+create_ordered_variable_custom(
+  df,
+  var_name,
+  breaks,
+  include_lowest = TRUE,
+  right = TRUE,
+  cutpoint_inclusive = "upper",
+  inf_label = "Inf",
+  neg_inf_label = "-Inf"
+)
 }
 \arguments{
 \item{df}{A data frame containing the variable to be transformed.}
@@ -13,23 +22,29 @@ create_ordered_variable_custom(df, var_name, breaks, labels)
 an ordered factor. This variable should ideally be continuous.}
 
 \item{breaks}{A numeric vector specifying the breakpoints between intervals. The breakpoints
-should cover the entire range of the variable and should be one more than the number of labels.}
+should cover the entire range of the variable.}
 
-\item{labels}{A character vector specifying the labels for the intervals defined by breaks.
-The length of labels should be one less than the length of breaks.}
+\item{include_lowest}{Logical, should the lowest value be included in the first interval? Default is TRUE.}
+
+\item{right}{Logical, should intervals be closed on the right (and open on the left)? Default is TRUE.}
+
+\item{cutpoint_inclusive}{A character string specifying whether cutpoints should be included
+in the lower or upper category. Must be either "lower" or "upper". Default is "upper".}
+
+\item{inf_label}{A string to use for infinity in labels. Default is "Inf".}
+
+\item{neg_inf_label}{A string to use for negative infinity in labels. Default is "-Inf".}
 }
 \value{
 Returns the data frame with an additional column representing the ordered factor variable.
-        The new column is named by combining the original variable name and the suffix "_coarsen".
+        The new column is named by combining the original variable name and the suffix "_cat".
 }
 \description{
-This function creates an ordered categorical variable in a dataframe based on user-specified breaks
-and labels. It checks that the provided breaks and labels are correctly specified before creating
-the factor variable. This is useful for creating a factor with custom defined intervals.
+This function creates an ordered categorical variable in a dataframe based on user-specified breaks.
+It automatically generates labels reflecting the break points and handles various edge cases.
 }
 \examples{
-# Assuming df_nz is your dataset and 'hours_exercise' is the numeric column:
-df_updated <- create_ordered_variable_custom(df_nz, "hours_exercise",
-                                             c(1, 2, 7, Inf), c("[1_2)", "[2_7)", "[7_up]"))
+df <- data.frame(x = runif(100, 0, 10))
+df_updated <- create_ordered_variable_custom(df, "x", c(0, 2, 5, 10))
 
 }

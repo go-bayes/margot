@@ -2,45 +2,94 @@
 % Please edit documentation in R/coloured_histogram_quantiles.R
 \name{coloured_histogram_quantiles}
 \alias{coloured_histogram_quantiles}
-\title{Visualize Distribution with Automatically Calculated Quantile Highlights}
+\title{visualise distribution with automatically calculated quantile highlights}
 \usage{
-coloured_histogram_quantiles(df, col_name, n_quantiles, binwidth = 1)
-}
-\arguments{
-\item{df}{Dataframe containing the data to be visualized.}
-
-\item{col_name}{Name of the column to create a histogram for. This column should
-contain numeric data.}
-
-\item{n_quantiles}{The number of quantiles to calculate. If n_quantiles is 4, this will
-produce quartiles; if 5, quintiles; etc. This should be a positive integer greater than 1.}
-
-\item{binwidth}{Width of the bins for the histogram. Can be adjusted for finer or
-coarser resolution of the distribution. Default is 1.}
-}
-\value{
-A ggplot object representing the histogram with highlighted quantiles.
-  The plot can be printed or modified further.
-}
-\description{
-This function creates a histogram for a specified column in a dataframe,
-highlighting quantiles that are automatically calculated based on the number
-of quantiles specified by the user. It draws vertical lines for each quantile
-in specified colors, with the title of the plot incorporating the capitalized
-column name using \code{tools::toTitleCase()}.
-}
-\examples{
- \dontrun{
-# `df_nz` is the included dataframe with a numeric column 'forgiveness':
-df_19 <- dplyr::filter(df_nz, wave == 2019)
-
-quantile_plot <- coloured_histogram_quantiles(
-  df = df_19,
-  col_name = "forgiveness",
-  n_quantiles = 4, # producing quartiles
-  binwidth = 0.5 # adjust binwidth as needed
+coloured_histogram_quantiles(
+  df,
+  col_name,
+  n_divisions = NULL,
+  breaks = NULL,
+  binwidth = NULL,
+  n_bins = NULL,
+  cutpoint_inclusive = "upper",
+  ties.method = NULL,
+  colours = NULL,
+  hist_fill = "lightgray",
+  hist_colour = "black",
+  line_type = "solid",
+  line_width = 0.75,
+  title = NULL,
+  subtitle = NULL,
+  x_lab = NULL,
+  y_lab = "Count",
+  theme_choice = theme_classic(),
+  text_size = 12,
+  axis_text_angle = 45,
+  add_density = FALSE,
+  add_rug = FALSE,
+  facet_var = NULL,
+  x_scale_transform = NULL,
+  y_scale_transform = NULL,
+  additional_layers = NULL
 )
 }
-print(quantile_plot)
+\arguments{
+\item{df}{dataframe containing the data to be visualised}
 
+\item{col_name}{name of the column to create a histogram for}
+
+\item{n_divisions}{the number of divisions to create. if null, user must provide breaks}
+
+\item{breaks}{optional. a numeric vector specifying custom breakpoints}
+
+\item{binwidth}{width of the bins for the histogram}
+
+\item{n_bins}{optional. number of bins for the histogram. overrides binwidth if specified}
+
+\item{cutpoint_inclusive}{a character string specifying whether cutpoints should be included
+in the lower or upper category. must be either "lower" or "upper". default is "upper"}
+
+\item{ties.method}{a character string specifying how ties should be handled}
+
+\item{colours}{optional. a vector of colours for the quantile lines}
+
+\item{hist_fill}{colour for histogram fill. default is "lightgray"}
+
+\item{hist_colour}{colour for histogram outline. default is "black"}
+
+\item{line_type}{line type for quantile lines. default is "solid"}
+
+\item{line_width}{line width for quantile lines. default is 0.75}
+
+\item{title}{custom title for the plot. if null, a default title is used}
+
+\item{subtitle}{custom subtitle for the plot. if null, a default subtitle is used}
+
+\item{x_lab}{custom x-axis label. if null, the column name is used}
+
+\item{y_lab}{custom y-axis label. default is "count"}
+
+\item{theme_choice}{ggplot2 theme to use. default is theme_classic()}
+
+\item{text_size}{base text size for the plot. default is 12}
+
+\item{axis_text_angle}{angle for x-axis text. default is 45}
+
+\item{add_density}{logical. if true, adds a density curve to the plot}
+
+\item{add_rug}{logical. if true, adds a rug plot to the x-axis}
+
+\item{facet_var}{optional. name of variable to use for faceting}
+
+\item{x_scale_transform}{optional. transformation for x-axis (e.g., "log10")}
+
+\item{y_scale_transform}{optional. transformation for y-axis (e.g., "log10")}
+
+\item{additional_layers}{optional list of additional ggplot2 layers to add to the plot}
+}
+\value{
+a ggplot object representing the histogram with highlighted quantiles
+}
+\description{
+visualise distribution with automatically calculated quantile highlights
 }
