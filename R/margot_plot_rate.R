@@ -31,7 +31,7 @@
 #' @importFrom dplyr mutate
 #'
 #' @export
-margot_plot_grf_rate <- function(x,
+margot_plot_rate <- function(x,
                                  title = "Targeting Operator Characteristic",
                                  subtitle = "(95% confidence interval shown as shaded area)",
                                  x_lab = "Treated fraction (q)",

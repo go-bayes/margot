@@ -157,6 +157,15 @@
     <loc>https://go-bayes.github.io/margot/reference/margot_plot_grf_rate.html</loc>
   </url>
   <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_tree.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_plot_qini.html</loc>
+  </url>
+  <url>
+    <loc>https://go-bayes.github.io/margot/reference/margot_plot_rate.html</loc>
+  </url>
+  <url>
     <loc>https://go-bayes.github.io/margot/reference/margot_process_binary_vars.html</loc>
   </url>
   <url>

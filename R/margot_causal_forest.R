@@ -4,20 +4,38 @@
 #' for specified outcome variables. It calculates average treatment effects, tests calibration,
 #' creates custom evaluation tables, and includes additional features such as tau.hat estimates,
 #' RATE calculations, policy trees, variable importance rankings, and best linear projections.
+#' It also prepares data for policy tree visualization.
 #'
 #' @param data A data frame containing all necessary variables.
 #' @param outcome_vars A character vector of outcome variable names to be modeled.
 #' @param covariates A matrix of covariates to be used in the GRF models.
-#' @param W A matrix of treatment assignments.
+#' @param W A vector of binary treatment assignments.
 #' @param weights A vector of weights for the observations.
 #' @param grf_defaults A list of default parameters for the GRF models.
 #' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
 #' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
 #' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 10.
 #' @param save_models Logical indicating whether to save the full GRF model objects. Default is FALSE.
+#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of data to use for training policy trees. Default is 0.9.
 #'
 #' @return A list containing:
-#'   \item{results}{A list of model results, one for each outcome variable.}
+#'   \item{results}{A list of model results, one for each outcome variable. Each model result includes:
+#'     \itemize{
+#'       \item{ate}{Average treatment effect}
+#'       \item{test_calibration}{Calibration test results}
+#'       \item{custom_table}{Custom evaluation table}
+#'       \item{tau_hat}{Individual treatment effect estimates}
+#'       \item{tau_hat_plot}{A ggplot object showing the distribution of tau.hat}
+#'       \item{rate_result}{Rank Average Treatment Effect (if compute_rate is TRUE)}
+#'       \item{dr_scores}{Double robust scores}
+#'       \item{policy_tree_depth_1}{Policy tree of depth 1}
+#'       \item{top_vars}{Top variables by importance}
+#'       \item{blp_top}{Best linear projection results for top variables}
+#'       \item{policy_tree_depth_2}{Policy tree of depth 2}
+#'       \item{split_variables}{Names of variables used for splits in policy_tree_depth_2}
+#'       \item{plot_data}{Data prepared for policy tree visualization}
+#'     }
+#'   }
 #'   \item{combined_table}{A data frame combining all custom evaluation tables.}
 #'   \item{outcome_vars}{The character vector of outcome variable names that were modeled.}
 #'   \item{not_missing}{A vector of indices for complete cases.}
