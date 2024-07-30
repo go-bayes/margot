@@ -95,7 +95,7 @@ margot_grf_causal_forest <- function(data, outcome_vars, covariates, W, weights,
 
   model_results <- with_progress(run_models_with_progress())
 
-  # Combine tables from all models
+  # combine tables from all models
   combined_table <- do.call(rbind, lapply(model_results$results, function(x) x$custom_table))
 
   output <- list(
