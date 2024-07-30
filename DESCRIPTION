@@ -10,6 +10,7 @@ LazyData: true
 Depends: 
     R (>= 4.0)
 Imports:
+    stats,
     tidyverse,
     ggplot2,
     mice,
@@ -36,7 +37,10 @@ Imports:
     DiagrammeR,
     ggbeeswarm, 
     naniar,
-    data.table
+    data.table,
+    purrr,
+    tidyr,
+    maq
 RoxygenNote: 7.3.2.9000
 Suggests: 
     testthat (>= 3.0.0)

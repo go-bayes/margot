@@ -13,7 +13,7 @@ margot_grf_subset_table(
 )
 }
 \arguments{
-\item{model_results}{A list of model results from `model_grf_causal_forest` or similar functions.
+\item{model_results}{A list of model results from `model_causal_forest` or similar functions.
 Note that these functions should be called with `save_models = TRUE`.}
 
 \item{outcome_vars}{Optional. A character vector of outcome variable names. If NULL,

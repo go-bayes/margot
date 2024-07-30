@@ -52,7 +52,8 @@ reference:
     - causal_contrast_engine
     - causal_contrast_marginal
     - double_robust_marginal
-    - margot_grf_causal_forest
+    - margot_causal_forest
+    - margot_multi_arm_causal_forest
 
   - title: "Understand Results"
     contents:
@@ -94,3 +95,11 @@ reference:
   - title: "Simulated data"
     contents:
     - df_nz
+
+
+  - title: "Internal utility functions"
+    contents:
+    - create_tau_hat_plot
+    - compute_qini_curves
+    - extract_qini_data
+    - group_results_by_comparison
