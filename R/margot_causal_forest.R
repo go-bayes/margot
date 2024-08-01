@@ -4,7 +4,7 @@
 #' for specified outcome variables. It calculates average treatment effects, tests calibration,
 #' creates custom evaluation tables, and includes additional features such as tau.hat estimates,
 #' RATE calculations, policy trees, variable importance rankings, and best linear projections.
-#' It also prepares data for policy tree visualization.
+#' It also prepares data for policy tree visualization, using a specified proportion of the data for training.
 #'
 #' @param data A data frame containing all necessary variables.
 #' @param outcome_vars A character vector of outcome variable names to be modeled.
@@ -16,7 +16,7 @@
 #' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
 #' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 10.
 #' @param save_models Logical indicating whether to save the full GRF model objects. Default is FALSE.
-#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of data to use for training policy trees. Default is 0.9.
+#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.8.
 #'
 #' @return A list containing:
 #'   \item{results}{A list of model results, one for each outcome variable. Each model result includes:
@@ -25,15 +25,14 @@
 #'       \item{test_calibration}{Calibration test results}
 #'       \item{custom_table}{Custom evaluation table}
 #'       \item{tau_hat}{Individual treatment effect estimates}
-#'       \item{tau_hat_plot}{A ggplot object showing the distribution of tau.hat}
 #'       \item{rate_result}{Rank Average Treatment Effect (if compute_rate is TRUE)}
 #'       \item{dr_scores}{Double robust scores}
 #'       \item{policy_tree_depth_1}{Policy tree of depth 1}
 #'       \item{top_vars}{Top variables by importance}
 #'       \item{blp_top}{Best linear projection results for top variables}
-#'       \item{policy_tree_depth_2}{Policy tree of depth 2}
+#'       \item{policy_tree_depth_2}{Policy tree of depth 2, trained on train_proportion of non-missing data}
 #'       \item{split_variables}{Names of variables used for splits in policy_tree_depth_2}
-#'       \item{plot_data}{Data prepared for policy tree visualization}
+#'       \item{plot_data}{Data prepared for policy tree visualization, using the remaining proportion of non-missing data}
 #'     }
 #'   }
 #'   \item{combined_table}{A data frame combining all custom evaluation tables.}
@@ -53,7 +52,8 @@
 #'
 #' @export
 margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf_defaults = list(),
-                                     save_data = FALSE, compute_rate = TRUE, top_n_vars = 10, save_models = FALSE) {
+                                 save_data = FALSE, compute_rate = TRUE, top_n_vars = 10, save_models = FALSE,
+                                 train_proportion = 0.8) {
   # Create not_missing vector (only needs to be done once)
   not_missing <- which(complete.cases(covariates))
   full <- seq_len(nrow(covariates))
@@ -79,11 +79,11 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
 
       tau_hat <- results[[model_name]]$tau_hat
 
-      results[[model_name]]$tau_hat_plot <- ggplot2::ggplot(data.frame(tau_hat = tau_hat), ggplot2::aes(x = tau_hat)) +
-        ggplot2::geom_histogram(bins = 30, fill = "skyblue", color = "black") +
-        ggplot2::theme_minimal() +
-        ggplot2::labs(title = paste("Distribution of tau.hat for", outcome),
-                      x = "tau.hat", y = "Count")
+      # results[[model_name]]$tau_hat_plot <- ggplot2::ggplot(data.frame(tau_hat = tau_hat), ggplot2::aes(x = tau_hat)) +
+      #   ggplot2::geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+      #   ggplot2::theme_minimal() +
+      #   ggplot2::labs(title = paste("Distribution of tau.hat for", outcome),
+      #                 x = "tau.hat", y = "Count")
 
       if (compute_rate) {
         results[[model_name]]$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
@@ -98,7 +98,31 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
       results[[model_name]]$top_vars <- top_vars
 
       results[[model_name]]$blp_top <- grf::best_linear_projection(model, covariates[, top_vars], target.sample = "all")
-      results[[model_name]]$policy_tree_depth_2 <- policytree::policy_tree(covariates[full, top_vars], results[[model_name]]$dr_scores[full, ], depth = 2)
+
+      # Train policy tree on train_proportion of non-missing data
+      n_non_missing <- length(not_missing)
+      train_size <- floor(train_proportion * n_non_missing)
+      train_indices <- sample(not_missing, train_size)
+
+      policy_tree_model <- policytree::policy_tree(
+        covariates[train_indices, top_vars], results[[model_name]]$dr_scores[train_indices, ], depth = 2
+      )
+      results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
+
+      # Extract split variable names
+      split_vars <- sapply(1:3, function(i) colnames(covariates)[policy_tree_model$nodes[[i]]$split_variable])
+      results[[model_name]]$split_variables <- split_vars
+
+      # Prepare data for plotting
+      test_indices <- setdiff(not_missing, train_indices)
+      X_test <- covariates[test_indices, top_vars]
+      predictions <- predict(policy_tree_model, X_test)
+
+      results[[model_name]]$plot_data <- list(
+        X_test = X_test,
+        predictions = predictions,
+        split_variables = split_vars
+      )
 
       # Optionally save the full model
       if (save_models) {

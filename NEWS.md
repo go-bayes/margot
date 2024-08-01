@@ -5,7 +5,7 @@
 
 * improved subgroup comparison function 
 * deprecated `compare_group_means` function, with `compare_group`allowing for contrasts of on both the causal difference and relative risk scales.
-
+* new wrapper functions functions for `grf` plus visualising results.
 
 
 # margot 0.1.2.1

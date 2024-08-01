@@ -41,7 +41,8 @@ Imports:
     purrr,
     tidyr,
     maq,
-    ggokabeito
+    ggokabeito,
+    patchwork
 RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0)

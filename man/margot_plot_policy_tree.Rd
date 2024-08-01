@@ -45,7 +45,7 @@ margot_plot_policy_tree(
 A ggplot object containing two side-by-side plots of the policy tree results.
 }
 \description{
-This function creates a visualization of policy tree results from a multi-arm causal forest model.
+This function creates a visualization of policy tree results from a causal forest or multi-arm causal forest model.
 It generates two plots showing the relationships between the top three split variables,
 with points colored by the predicted optimal treatment.
 }
