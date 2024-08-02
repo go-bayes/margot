@@ -15,92 +15,50 @@
 #'
 #' @keywords internal
 compute_qini_curves <- function(tau_hat, Y, W = NULL, W_multi = NULL) {
-  # Input validation
-  if (is.null(tau_hat) || is.null(Y) || (is.null(W) && is.null(W_multi))) {
-    stop("tau_hat, Y, and either W or W_multi must be provided")
-  }
-
-  if (length(Y) != nrow(as.matrix(tau_hat))) {
-    stop("Length of Y must match the number of rows in tau_hat")
-  }
-
-  # Determine which treatment assignment variable to use
-  is_multi_arm <- !is.null(W_multi)
-  treatment <- if (is_multi_arm) W_multi else W
-
-  if (length(Y) != length(treatment)) {
-    stop("Length of Y must match the length of the treatment assignment variable")
-  }
-
   # Ensure tau_hat is a matrix
   tau_hat <- as.matrix(tau_hat)
 
-  if (!is_multi_arm) {
-    treatment <- as.factor(treatment)
-  } else if (!is.factor(treatment)) {
-    stop("For multi-arm cases, W_multi should be a factor")
+  # Determine if using multi-arm or binary treatment
+  is_multi_arm <- !is.null(W_multi)
+
+  # Ensure treatment is provided and is appropriately formatted
+  if (is_multi_arm) {
+    treatment <- W_multi
+    if (!is.factor(treatment)) {
+      stop("For multi-arm cases, W_multi should be a factor")
+    }
+  } else if (!is.null(W)) {
+    treatment <- as.factor(W)
+  } else {
+    stop("Either W or W_multi must be provided")
   }
 
-  # Compute ipw scores
-  tryCatch({
-    IPW_scores <- maq::get_ipw_scores(Y, treatment)
-  }, error = function(e) {
-    stop("Error in computing IPW scores: ", e$message)
-  })
+  # Compute IPW scores
+  IPW_scores <- maq::get_ipw_scores(Y, treatment)
 
-  # Set cost
+  # Set cost for each treatment arm or for binary treatment
   cost <- rep(1, ncol(tau_hat))
 
-  # Compute qini curves
-  compute_maq <- function(tau, c, ipw, with_covariates = TRUE) {
-    tryCatch({
-      maq::maq(tau, c, ipw, target.with.covariates = with_covariates, R = 200)
-    }, error = function(e) {
-      warning("Error in computing MAQ: ", e$message)
-      NULL
-    })
-  }
+  # Compute Qini curves with and without covariates
+  ma_qini <- maq::maq(tau_hat, cost, IPW_scores, R = 200)
+  ma_qini_baseline <- maq::maq(tau_hat, cost, IPW_scores, target.with.covariates = FALSE, R = 200)
 
-  # Compute qini curves
-  ma_qini <- compute_maq(tau_hat, cost, IPW_scores)
-  ma_qini_baseline <- compute_maq(tau_hat, cost, IPW_scores, FALSE)
-
-  if (is.null(ma_qini) || is.null(ma_qini_baseline)) {
-    stop("Failed to compute main Qini curves")
-  }
-
-  # Create a list of qini objects
+  # Create list of Qini objects
   if (is_multi_arm) {
-    qini_objects <- list(all_treatment_arms = ma_qini, baseline = ma_qini_baseline)
+    qini_objects <- list(all_arms = ma_qini, baseline = ma_qini_baseline)
+    # Dynamically add each arm to the list
+    for (i in 1:ncol(tau_hat)) {
+      qini_objects[[paste0("arm", i)]] <- maq::maq(tau_hat[, i, drop = FALSE], cost[i], IPW_scores[, i, drop = FALSE], R = 200)
+    }
   } else {
     qini_objects <- list(treatment_arm = ma_qini, baseline = ma_qini_baseline)
-  }
-
-  # For multi-arm case, add each arm to the list
-  if (is_multi_arm) {
-    for (i in 1:ncol(tau_hat)) {
-      arm_qini <- compute_maq(tau_hat[, i, drop = FALSE], cost[i], IPW_scores[, i, drop = FALSE])
-      if (!is.null(arm_qini)) {
-        qini_objects[[paste0("arm", i)]] <- arm_qini
-      }
-    }
   }
 
   # Determine the maximum index to extend all curves to
   max_index <- max(sapply(qini_objects, function(qini_obj) length(qini_obj[["_path"]]$gain)))
 
-  # Extract qini data for plotting
-  tryCatch({
-    qini_data <- map2_dfr(qini_objects, names(qini_objects), function(obj, name) {
-      tryCatch({
-        extract_qini_data(obj, name, max_index)
-      }, error = function(e) {
-        stop(paste("Error in extracting Qini data for", name, ":", e$message))
-      })
-    })
-  }, error = function(e) {
-    stop(paste("Error in extracting Qini data:", e$message))
-  })
+  # Extract Qini data for plotting
+  qini_data <- map2_dfr(qini_objects, names(qini_objects), ~ extract_qini_data(.x, .y, max_index))
 
   return(qini_data)
 }
