@@ -3,7 +3,8 @@
 #' This function is a wrapper for grf::causal_forest that runs multiple GRF causal forest models
 #' for specified outcome variables. It calculates average treatment effects, tests calibration,
 #' creates custom evaluation tables, and includes additional features such as tau.hat estimates,
-#' RATE calculations, policy trees, variable importance rankings, and best linear projections.
+#' RATE calculations, policy trees, variable importance rankings, best linear projections,
+#' and Qini curves.
 #' It also prepares data for policy tree visualization, using a specified proportion of the data for training.
 #'
 #' @param data A data frame containing all necessary variables.
@@ -33,6 +34,7 @@
 #'       \item{policy_tree_depth_2}{Policy tree of depth 2, trained on train_proportion of non-missing data}
 #'       \item{split_variables}{Names of variables used for splits in policy_tree_depth_2}
 #'       \item{plot_data}{Data prepared for policy tree visualization, using the remaining proportion of non-missing data}
+#'       \item{qini_data}{Data frame containing Qini curve data for plotting}
 #'     }
 #'   }
 #'   \item{combined_table}{A data frame combining all custom evaluation tables.}
@@ -49,6 +51,7 @@
 #' @importFrom margot margot_model_evalue
 #' @importFrom ggplot2 ggplot geom_histogram theme_minimal labs
 #' @importFrom policytree double_robust_scores policy_tree
+#' @importFrom maq get_ipw_scores maq
 #'
 #' @export
 margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf_defaults = list(),
@@ -78,12 +81,6 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
       )
 
       tau_hat <- results[[model_name]]$tau_hat
-
-      # results[[model_name]]$tau_hat_plot <- ggplot2::ggplot(data.frame(tau_hat = tau_hat), ggplot2::aes(x = tau_hat)) +
-      #   ggplot2::geom_histogram(bins = 30, fill = "skyblue", color = "black") +
-      #   ggplot2::theme_minimal() +
-      #   ggplot2::labs(title = paste("Distribution of tau.hat for", outcome),
-      #                 x = "tau.hat", y = "Count")
 
       if (compute_rate) {
         results[[model_name]]$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
@@ -123,6 +120,9 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
         predictions = predictions,
         split_variables = split_vars
       )
+
+      # Compute qini_data
+      results[[model_name]]$qini_data <- compute_qini_curves(tau_hat, Y, W = W)
 
       # Optionally save the full model
       if (save_models) {

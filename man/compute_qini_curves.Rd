@@ -2,21 +2,23 @@
 % Please edit documentation in R/compute_qini_curves.R
 \name{compute_qini_curves}
 \alias{compute_qini_curves}
-\title{Compute Qini Curves for Multi-Arm Treatments}
+\title{Compute Qini Curves for Causal Forest and Multi-Arm Causal Forest}
 \usage{
-compute_qini_curves(tau_hat, Y, W_multi)
+compute_qini_curves(tau_hat, Y, W = NULL, W_multi = NULL)
 }
 \arguments{
-\item{tau_hat}{Matrix of estimated treatment effects.}
+\item{tau_hat}{Matrix or vector of estimated treatment effects.}
 
 \item{Y}{Vector of observed outcomes.}
 
-\item{W_multi}{Matrix of treatment assignments.}
+\item{W}{Vector of treatment assignments for binary treatment.}
+
+\item{W_multi}{Factor of treatment assignments for multi-arm treatment.}
 }
 \value{
 A data frame containing Qini curve data for plotting.
 }
 \description{
-Computes Qini curves for multi-arm treatments using the maq package.
+Computes Qini curves for both causal forest and multi-arm causal forest using the maq package.
 }
 \keyword{internal}

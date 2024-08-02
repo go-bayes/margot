@@ -57,6 +57,7 @@ A list containing:
       \item{policy_tree_depth_2}{Policy tree of depth 2, trained on train_proportion of non-missing data}
       \item{split_variables}{Names of variables used for splits in policy_tree_depth_2}
       \item{plot_data}{Data prepared for policy tree visualization, using the remaining proportion of non-missing data}
+      \item{qini_data}{Data frame containing Qini curve data for plotting}
     }
   }
   \item{combined_table}{A data frame combining all custom evaluation tables.}
@@ -71,6 +72,7 @@ A list containing:
 This function is a wrapper for grf::causal_forest that runs multiple GRF causal forest models
 for specified outcome variables. It calculates average treatment effects, tests calibration,
 creates custom evaluation tables, and includes additional features such as tau.hat estimates,
-RATE calculations, policy trees, variable importance rankings, and best linear projections.
+RATE calculations, policy trees, variable importance rankings, best linear projections,
+and Qini curves.
 It also prepares data for policy tree visualization, using a specified proportion of the data for training.
 }
