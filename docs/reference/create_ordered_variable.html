@@ -116,7 +116,7 @@ It's recommended to use a method consistent with `cutpoint_inclusive`:
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">create_ordered_variable</span><span class="op">(</span><span class="va">df</span>, <span class="st">"x"</span>, n_divisions <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Summary of x_cat :</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [-2.6,-0.4]  [-0.4,0.1]   [0.1,0.6]   [0.6,2.8] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [-2.6,-0.4]  (-0.4,0.1]   (0.1,0.6]   (0.6,2.8] </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          25          25          25          25 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Explicitly setting cutpoint_inclusive and ties.method</span></span></span>
@@ -125,8 +125,8 @@ It's recommended to use a method consistent with `cutpoint_inclusive`:
 <span class="r-in"><span>                                   ties.method <span class="op">=</span> <span class="st">"first"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Summary of x_cat :</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [-2.6,-0.2]  [-0.2,0.5]   [0.5,2.8] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          34          33          33 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [-2.6,-0.2)  [-0.2,0.5)   [0.5,2.8] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          33          33          34 </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
