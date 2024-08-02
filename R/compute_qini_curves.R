@@ -91,9 +91,15 @@ compute_qini_curves <- function(tau_hat, Y, W = NULL, W_multi = NULL) {
 
   # Extract qini data for plotting
   tryCatch({
-    qini_data <- map2_dfr(qini_objects, names(qini_objects), ~ extract_qini_data(.x, .y, max_index))
+    qini_data <- map2_dfr(qini_objects, names(qini_objects), function(obj, name) {
+      tryCatch({
+        extract_qini_data(obj, name, max_index)
+      }, error = function(e) {
+        stop(paste("Error in extracting Qini data for", name, ":", e$message))
+      })
+    })
   }, error = function(e) {
-    stop("Error in extracting Qini data: ", e$message)
+    stop(paste("Error in extracting Qini data:", e$message))
   })
 
   return(qini_data)

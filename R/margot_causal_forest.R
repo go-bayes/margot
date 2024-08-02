@@ -122,7 +122,12 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
       )
 
       # Compute qini_data
-      results[[model_name]]$qini_data <- compute_qini_curves(tau_hat, Y, W = W)
+      results[[model_name]]$qini_data <- tryCatch({
+        compute_qini_curves(tau_hat, Y, W = W)
+      }, error = function(e) {
+        warning(paste("Error computing Qini curves for", outcome, ":", e$message))
+        NULL
+      })
 
       # Optionally save the full model
       if (save_models) {
@@ -159,3 +164,4 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
 
   return(output)
 }
+
