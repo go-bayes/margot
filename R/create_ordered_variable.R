@@ -81,6 +81,10 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
   probs <- seq(0, 1, length.out = n_divisions + 1)
   quantile_breaks <- unique(quantile(var_clean, probs = probs, na.rm = TRUE, type = 1, ties.method = ties.method))
 
+  # Ensure minimum and maximum values are included
+  quantile_breaks[1] <- min(var_clean, na.rm = TRUE)
+  quantile_breaks[length(quantile_breaks)] <- max(var_clean, na.rm = TRUE)
+
   # ensure we have the correct number of unique breaks
   if (length(quantile_breaks) < n_divisions + 1) {
     epsilon <- diff(range(var_clean)) * .Machine$double.eps
@@ -90,22 +94,13 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
 
   # create informative labels based on cut points
   labels <- vapply(seq_len(n_divisions), function(x) {
-    if (cutpoint_inclusive == "lower") {
-      sprintf("[%.1f,%.1f)", quantile_breaks[x], quantile_breaks[x + 1])
-    } else {  # cutpoint_inclusive == "upper"
-      sprintf("(%.1f,%.1f]", quantile_breaks[x], quantile_breaks[x + 1])
-    }
+    sprintf("[%.1f,%.1f]", quantile_breaks[x], quantile_breaks[x + 1])
   }, character(1))
 
-  # use cut for categorisation, adjusting for cutpoint inclusivity
+  # use cut for categorisation, always including lowest and highest
   new_col_name <- paste0(var_name, "_cat")
-  if (cutpoint_inclusive == "lower") {
-    df[[new_col_name]] <- cut(var, breaks = quantile_breaks,
-                              labels = labels, include.lowest = TRUE, right = FALSE)
-  } else {  # cutpoint_inclusive == "upper"
-    df[[new_col_name]] <- cut(var, breaks = quantile_breaks,
-                              labels = labels, include.lowest = FALSE, right = TRUE)
-  }
+  df[[new_col_name]] <- cut(var, breaks = quantile_breaks,
+                            labels = labels, include.lowest = TRUE, right = TRUE)
 
   # print summary of the new variable
   cat("Summary of", new_col_name, ":\n")
