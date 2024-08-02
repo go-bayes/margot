@@ -92,16 +92,32 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
     quantile_breaks <- quantile_breaks[1:(n_divisions + 1)]  # Ensure exactly n_divisions + 1 breaks
   }
 
-  # create informative labels based on cut points
+  # create informative labels based on cut points and cutpoint_inclusive
   labels <- vapply(seq_len(n_divisions), function(x) {
-    sprintf("[%.1f,%.1f]", quantile_breaks[x], quantile_breaks[x + 1])
+    if (cutpoint_inclusive == "lower") {
+      if (x == n_divisions) {
+        sprintf("[%.1f,%.1f]", quantile_breaks[x], quantile_breaks[x + 1])
+      } else {
+        sprintf("[%.1f,%.1f)", quantile_breaks[x], quantile_breaks[x + 1])
+      }
+    } else {  # cutpoint_inclusive == "upper"
+      if (x == 1) {
+        sprintf("[%.1f,%.1f]", quantile_breaks[x], quantile_breaks[x + 1])
+      } else {
+        sprintf("(%.1f,%.1f]", quantile_breaks[x], quantile_breaks[x + 1])
+      }
+    }
   }, character(1))
 
-  # use cut for categorisation, always including lowest and highest
+  # use cut for categorisation, adjusting for cutpoint inclusivity
   new_col_name <- paste0(var_name, "_cat")
-  df[[new_col_name]] <- cut(var, breaks = quantile_breaks,
-                            labels = labels, include.lowest = TRUE, right = TRUE)
-
+  if (cutpoint_inclusive == "lower") {
+    df[[new_col_name]] <- cut(var, breaks = quantile_breaks,
+                              labels = labels, include.lowest = TRUE, right = FALSE)
+  } else {  # cutpoint_inclusive == "upper"
+    df[[new_col_name]] <- cut(var, breaks = quantile_breaks,
+                              labels = labels, include.lowest = TRUE, right = TRUE)
+  }
   # print summary of the new variable
   cat("Summary of", new_col_name, ":\n")
   print(table(df[[new_col_name]], useNA = "ifany"))
