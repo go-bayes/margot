@@ -59,6 +59,11 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
                                            save_data = FALSE, top_n_vars = 10,
                                            save_models = FALSE, compute_qini = TRUE,
                                            train_proportion = 0.9) {
+  # Ensure W_multi is a factor
+  if (!is.factor(W_multi)) {
+    W_multi <- as.factor(W_multi)
+  }
+
   # Create not_missing vector
   not_missing <- which(complete.cases(covariates))
   full <- seq_len(nrow(covariates))
@@ -130,7 +135,7 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
       # Compute qini curves if requested
       if (compute_qini) {
         tryCatch({
-          results[[model_name]]$qini_data <- compute_qini_curves(tau_hat, Y, W_multi)
+          results[[model_name]]$qini_data <- compute_qini_curves(tau_hat, Y, W_multi = W_multi)
         }, error = function(e) {
           warning("Error in computing Qini curves for ", outcome, ": ", e$message)
           results[[model_name]]$qini_data <- NULL
