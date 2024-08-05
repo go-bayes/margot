@@ -27,6 +27,7 @@ the function will use all models in the input.}
 }
 \value{
 A data frame combining all custom evaluation tables for the specified subset condition.
+        If no full models are available, returns NULL and prints a reminder to set save_models = TRUE.
 }
 \description{
 This function calculates new evaluation tables for specified outcome variables

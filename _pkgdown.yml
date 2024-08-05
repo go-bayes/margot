@@ -53,6 +53,7 @@ reference:
     - causal_contrast_marginal
     - double_robust_marginal
     - margot_causal_forest
+    - margot_lmtp
     - margot_multi_arm_causal_forest
 
   - title: "Understand Results"
@@ -68,7 +69,6 @@ reference:
     - margot_model_tab
     - margot_grf_subset_table
     - tab_engine_marginal
-
 
   - title: "Visualise Causal Effect Estimates"
     contents:

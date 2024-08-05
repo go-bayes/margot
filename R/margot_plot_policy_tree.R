@@ -19,8 +19,10 @@
 #' @return A ggplot object containing two side-by-side plots of the policy tree results.
 #'
 #' @examples
+#' \dontrun{
 #' plot <- plot_policy_tree_results(mc_test, "model_t2_belong_z")
 #' print(plot)
+#' }
 #'
 #' @import ggplot2
 #' @import patchwork

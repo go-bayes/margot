@@ -13,6 +13,7 @@
 #' @param debug Logical. If TRUE, print debug information. Default is FALSE.
 #'
 #' @return A data frame combining all custom evaluation tables for the specified subset condition.
+#'         If no full models are available, returns NULL and prints a reminder to set save_models = TRUE.
 #'
 #' @details
 #' The function uses `margot_model_evalue` to calculate evaluation metrics for each model
@@ -46,6 +47,11 @@ margot_grf_subset_table <- function(model_results, outcome_vars = NULL, subset_c
   if (debug) cat("Debug: class of subset_condition:", class(subset_condition), "\n")
   if (debug) cat("Debug: length of subset_condition:", length(subset_condition), "\n")
 
+  if (is.null(model_results$full_models)) {
+    message("Error: No full models found in the input. Please ensure you set 'save_models = TRUE' when running the original GRF model function.")
+    return(NULL)
+  }
+
   if (is.null(outcome_vars)) {
     outcome_vars <- gsub("^model_", "", names(model_results$full_models))
     if (debug) cat("Debug: outcome_vars set to:", paste(outcome_vars, collapse=", "), "\n")
@@ -61,7 +67,6 @@ margot_grf_subset_table <- function(model_results, outcome_vars = NULL, subset_c
         cat("Debug: Model class:", class(model), "\n")
         cat("Debug: Model names:", paste(names(model), collapse=", "), "\n")
       }
-
       tryCatch({
         custom_table <- margot::margot_model_evalue(model, scale = scale, new_name = outcome, subset = subset_condition)
         tables[[outcome]] <- custom_table

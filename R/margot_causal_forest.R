@@ -57,6 +57,13 @@
 margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf_defaults = list(),
                                  save_data = FALSE, compute_rate = TRUE, top_n_vars = 10, save_models = FALSE,
                                  train_proportion = 0.8) {
+
+  # warning about large object size when save_models is TRUE
+  if (save_models) {
+    warning("Note: setting save_models = TRUE typically results in very large objects (often several GB). ",
+            "Ensure you have sufficient memory available.",
+            call. = FALSE)
+  }
   # Create not_missing vector (only needs to be done once)
   not_missing <- which(complete.cases(covariates))
   full <- seq_len(nrow(covariates))

@@ -50,7 +50,9 @@ It generates two plots showing the relationships between the top three split var
 with points colored by the predicted optimal treatment.
 }
 \examples{
+\dontrun{
 plot <- plot_policy_tree_results(mc_test, "model_t2_belong_z")
 print(plot)
+}
 
 }
