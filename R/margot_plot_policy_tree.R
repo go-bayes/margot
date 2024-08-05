@@ -28,32 +28,37 @@
 #'
 #' @export
 margot_plot_policy_tree <- function(mc_test, model_name,
-                                     color_scale = ggokabeito::scale_colour_okabe_ito(),
-                                     point_alpha = 0.25,
-                                     theme_function = theme_classic,
-                                     title_size = 14,
-                                     subtitle_size = 12,
-                                     axis_title_size = 10,
-                                     legend_title_size = 10,
-                                     jitter_width = 0.3,
-                                     jitter_height = 0.3) {
-  # Extract the plot data for the specified model
+                                    color_scale = ggokabeito::scale_colour_okabe_ito(),
+                                    point_alpha = 0.25,
+                                    theme_function = theme_classic,
+                                    title_size = 14,
+                                    subtitle_size = 12,
+                                    axis_title_size = 10,
+                                    legend_title_size = 10,
+                                    jitter_width = 0.3,
+                                    jitter_height = 0.3) {
+  # extract the plot data for the specified model
   plot_data <- mc_test$results[[model_name]]$plot_data
 
-  # Extract X_test, predictions, and split_variables
+  # extract X_test, predictions, and split_variables
   X_test <- plot_data$X_test
   predictions <- plot_data$predictions
-  split_variables <- plot_data$split_variables
 
-  # Use the actual column names from X_test
+  # extract split variables from the policy tree
+  policy_tree <- mc_test$results[[model_name]]$policy_tree_depth_2$nodes
+  x1_col <- policy_tree[[1]]$split_variable
+  x2_col <- policy_tree[[2]]$split_variable
+  x3_col <- policy_tree[[3]]$split_variable
+
+  # use the actual column names from X_test
   actual_columns <- names(X_test)
 
-  # Create a data frame for plotting
+  # a data frame for plotting
   plot_df <- data.frame(
-    x1 = X_test[[actual_columns[1]]],
-    x2 = X_test[[actual_columns[2]]],
-    x3 = X_test[[actual_columns[3]]],
-    prediction = as.factor(predictions - 1)  # Subtract 1 to match the legend in your example
+    x1 = X_test[[actual_columns[x1_col]]],
+    x2 = X_test[[actual_columns[x2_col]]],
+    x3 = X_test[[actual_columns[x3_col]]],
+    prediction = as.factor(predictions - 1)  # subtract 1 to match the legend in your example
   )
 
   # Create the base plot
@@ -75,18 +80,18 @@ margot_plot_policy_tree <- function(mc_test, model_name,
       )
   }
 
-  # Create the first plot
-  p1 <- base_plot("x1", "x2", actual_columns[1], actual_columns[2],
-                  paste(actual_columns[1], "vs", actual_columns[2])) +
+  # create the first plot
+  p1 <- base_plot("x1", "x2", actual_columns[x1_col], actual_columns[x2_col],
+                  paste(actual_columns[x1_col], "vs", actual_columns[x2_col])) +
     labs(title = paste("Policy Tree Results for", model_name)) +
     theme(legend.position = "top")
 
-  # Create the second plot
-  p2 <- base_plot("x2", "x3", actual_columns[2], actual_columns[3],
-                  paste(actual_columns[2], "vs", actual_columns[3])) +
+  # create the second plot
+  p2 <- base_plot("x2", "x3", actual_columns[x2_col], actual_columns[x3_col],
+                  paste(actual_columns[x2_col], "vs", actual_columns[x3_col])) +
     theme(legend.position = "none")
 
-  # Combine the plots using patchwork
+  # combine the plots using `patchwork`
   combined_plot <- p1 + p2 +
     plot_layout(ncol = 2, widths = c(1.2, 1))
 
