@@ -31,6 +31,7 @@ Imports:
     MatchThem,
     miceadds,
     parallel, 
+    doParallel,
     grf, 
     progressr,
     policytree,
