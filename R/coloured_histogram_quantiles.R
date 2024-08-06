@@ -1,4 +1,4 @@
-#' visualise distribution with automatically calculated quantile highlights
+#' visualise distribution with automatically calculated quantile highlights (deprecated, use `margot_plot_hist`)
 #'
 #' @param df dataframe containing the data to be visualised
 #' @param col_name name of the column to create a histogram for
@@ -35,6 +35,8 @@
 #' @importFrom tools toTitleCase
 #' @importFrom stats quantile
 #' @export
+#' @keywords internal
+#' @importFrom lifecycle deprecate_warn
 coloured_histogram_quantiles <- function(df, col_name, n_divisions = NULL, breaks = NULL,
                                          binwidth = NULL, n_bins = NULL,
                                          cutpoint_inclusive = "upper",
@@ -49,6 +51,9 @@ coloured_histogram_quantiles <- function(df, col_name, n_divisions = NULL, break
                                          facet_var = NULL,
                                          x_scale_transform = NULL, y_scale_transform = NULL,
                                          additional_layers = NULL) {
+  # warning
+  lifecycle::deprecate_warn("1.0.0", "coloured_histogram_quantiles()", "margot_plot_hist()")
+
   # input validation
   if (!col_name %in% names(df)) {
     stop("col_name does not exist in the dataframe.")

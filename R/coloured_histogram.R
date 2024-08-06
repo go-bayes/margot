@@ -1,4 +1,4 @@
-#' Create a Coloured Histogram Highlighting Specific Ranges
+#' Create a Coloured Histogram Highlighting Specific Ranges (deprecated, use `margot_plot_hist`)
 #'
 #' This function generates a histogram with specific ranges highlighted to indicate
 #' the highest and/or lowest values within a unit of the specified limits. It allows
@@ -37,7 +37,12 @@
 #' @import dplyr
 #' @import tools
 #' @export
+#' @keywords internal
+#' @importFrom lifecycle deprecate_warn
 coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, scale_min = NULL, scale_max = NULL, highlight_range = "highest") {
+
+  # warning
+  lifecycle::deprecate_warn("1.0.0", "coloured_histogram()", "margot_plot_hist()")
 
   # validate input
   if(!col_name %in% names(df)) stop("col_name does not exist in the dataframe.")

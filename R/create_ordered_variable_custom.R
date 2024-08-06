@@ -1,3 +1,5 @@
+#' @title create_ordered_variable_custom (Deprecated)
+#' @description This function is deprecated. Please use `create_ordered_variable()` instead.
 #' Create Ordered Variable with Custom Breaks and Auto-generated Labels
 #'
 #' This function creates an ordered categorical variable in a dataframe based on user-specified breaks.
@@ -23,12 +25,18 @@
 #' df_updated <- create_ordered_variable_custom(df, "x", c(0, 2, 5, 10))
 #'
 #' @export
+#' @keywords internal
+#' @importFrom lifecycle deprecate_warn
 create_ordered_variable_custom <- function(df, var_name, breaks,
                                            include_lowest = TRUE,
                                            right = TRUE,
                                            cutpoint_inclusive = "upper",
                                            inf_label = "Inf",
                                            neg_inf_label = "-Inf") {
+
+  # warning
+  lifecycle::deprecate_warn("1.0.0", "create_ordered_variable_custom()", "create_ordered_variable()")
+
   # Check if breaks are provided and in ascending order
   if (is.null(breaks) || !is.numeric(breaks) || !all(diff(breaks) > 0)) {
     stop("Please provide a valid numeric vector of breaks in ascending order.")

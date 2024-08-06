@@ -22,10 +22,9 @@ reference:
   - title: "Evaluate assumptions"
     contents:
     - create_transition_matrix
-    - coloured_histogram
-    - coloured_histogram_quantiles
     - coloured_histogram_sd
     - coloured_histogram_shift
+    - margot_plot_histogram_intervals
     - match_mi_general
     - transition_table
 
@@ -37,7 +36,6 @@ reference:
   - title: "Prepare data for models"
     contents:
     - create_ordered_variable
-    - create_ordered_variable_custom
     - impute_and_combine
     - margot_compute_gender_weights
     - margot_filter
@@ -103,3 +101,10 @@ reference:
     - compute_qini_curves
     - extract_qini_data
     - group_results_by_comparison
+
+
+  - title: "Deprecated functions"
+    contents:
+      - coloured_histogram
+      - coloured_histogram_quantiles
+      - create_ordered_variable_custom

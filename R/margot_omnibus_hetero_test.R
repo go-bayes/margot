@@ -52,7 +52,6 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
     return(sprintf("%.3f", p))
   }
 
-
   # safe version of the extraction function
   safe_extract <- safely(function(outcome) {
     model_name <- paste0("model_", outcome)
@@ -110,12 +109,46 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
   interpretations <- purrr::map_chr(1:nrow(calibration_results), ~create_interpretation(calibration_results[.x, ]))
   interpretations <- c(general_statement, interpretations)
 
-  # Create a formatted summary table
+  # create a formatted summary table
   summary_table <- calibration_results[, c("outcome", "mean_prediction", "differential_prediction")]
   colnames(summary_table) <- c("Outcome", "Mean Prediction (SE)", "Differential Prediction (SE)")
 
+  # function to create concluding paragraph
+  create_concluding_paragraph <- function(results) {
+    reliable_means <- results$outcome[results$mean_prediction_p < alpha & abs(results$mean_prediction_estimate - 1) < 0.1]
+    reliable_heterogeneity <- results$outcome[results$differential_prediction_p < alpha]
+
+    mean_conclusion <- if (length(reliable_means) > 1) {
+      glue::glue("Models for {paste(reliable_means, collapse = ', ')} accurately predict the mean response on held-out data. We can be confident that these models predict similar average treatment effects on unseen data.")
+    } else if (length(reliable_means) == 1) {
+      glue::glue("The model for {reliable_means} accurately predicts the mean response on held-out data. We can be confident that this model predicts similar average treatment effects on unseen data.")
+    } else {
+      "We do not find that any of the outcomes here reliably predict average treatment effects on unseen data."
+    }
+
+    heterogeneity_conclusion <- if (length(reliable_heterogeneity) > 1) {
+      glue::glue("Models for {paste(reliable_heterogeneity, collapse = ', ')} accurately evaluate heterogeneity on held-out data. We can be confident that these models predict heterogeneity for unseen data.")
+    } else if (length(reliable_heterogeneity) == 1) {
+      glue::glue("The model for {reliable_heterogeneity} accurately evaluates heterogeneity on held-out data. We can be confident that this model predicts heterogeneity for unseen data.")
+    } else {
+      "We do not find that any of the models here reliably predict heterogeneity for unseen data."
+    }
+
+    explanation <- "Test calibration of the forest computes the best linear fit using (1) forest predictions on held-out data and (2) the mean forest prediction as regressors, with one-sided heteroskedasticity-robust (HC3) SEs. A coefficient of 1 for the mean forest prediction suggests that the mean prediction is accurate for the held-out data. A coefficient of 1 for the differential forest prediction suggests that the heterogeneity estimates are well calibrated. The p-value of the differential forest prediction coefficient acts as an omnibus test for the presence of heterogeneity."
+
+    brief <- paste(explanation, mean_conclusion, heterogeneity_conclusion)
+    full <- paste("In summary,", brief)
+
+    list(brief = brief, full = full)
+  }
+
+  # Create concluding paragraphs
+  concluding_paragraphs <- create_concluding_paragraph(calibration_results)
+  interpretations <- c(interpretations, concluding_paragraphs$full)
+
   return(list(
     summary_table = summary_table,
-    interpretations = interpretations
+    interpretations = interpretations,
+    brief_interpretation = concluding_paragraphs$brief
   ))
 }

@@ -1,3 +1,14 @@
+# # margot 0.2.0.2
+## Deprecations
+
+* `coloured_histogram()` and `coloured_histogram_quantile()` are deprecated.
+  Now use the new `margot_plot_hist()` instead.
+* `create_ordered_variable_custom` is deprecated. Now use `created_ordered_variable`function with `custom_breaks = c(..)` to obtain custom breaks. 
+
+## New
+* `margot_plot_hist()` for plotting distributions of the exposure variable
+
+
 # margot 0.2.0.1
 * new table and plot functions for `grf` outputs
 

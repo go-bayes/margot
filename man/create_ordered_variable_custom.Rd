@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_ordered_variable_custom.R
 \name{create_ordered_variable_custom}
 \alias{create_ordered_variable_custom}
-\title{Create Ordered Variable with Custom Breaks and Auto-generated Labels}
+\title{create_ordered_variable_custom (Deprecated)}
 \usage{
 create_ordered_variable_custom(
   df,
@@ -40,6 +40,9 @@ Returns the data frame with an additional column representing the ordered factor
         The new column is named by combining the original variable name and the suffix "_cat".
 }
 \description{
+This function is deprecated. Please use `create_ordered_variable()` instead.
+Create Ordered Variable with Custom Breaks and Auto-generated Labels
+
 This function creates an ordered categorical variable in a dataframe based on user-specified breaks.
 It automatically generates labels reflecting the break points and handles various edge cases.
 }
@@ -48,3 +51,4 @@ df <- data.frame(x = runif(100, 0, 10))
 df_updated <- create_ordered_variable_custom(df, "x", c(0, 2, 5, 10))
 
 }
+\keyword{internal}

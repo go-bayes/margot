@@ -2,7 +2,7 @@
 % Please edit documentation in R/coloured_histogram.R
 \name{coloured_histogram}
 \alias{coloured_histogram}
-\title{Create a Coloured Histogram Highlighting Specific Ranges}
+\title{Create a Coloured Histogram Highlighting Specific Ranges (deprecated, use `margot_plot_hist`)}
 \usage{
 coloured_histogram(
   df,
@@ -57,3 +57,4 @@ graph <- coloured_histogram(
 print(graph)
 }
 }
+\keyword{internal}
