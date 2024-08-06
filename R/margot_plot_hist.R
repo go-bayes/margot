@@ -44,7 +44,7 @@
 #' @importFrom tools toTitleCase
 #'
 #' @export
-margot_plot_histogram_intervals <- function(df, col_name, n_divisions = NULL, custom_breaks = NULL,
+margot_plot_hist <- function(df, col_name, n_divisions = NULL, custom_breaks = NULL,
                                          cutpoint_inclusive = "upper",
                                          ties.method = NULL,
                                          colour_palette = NULL,

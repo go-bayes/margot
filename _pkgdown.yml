@@ -24,7 +24,7 @@ reference:
     - create_transition_matrix
     - coloured_histogram_sd
     - coloured_histogram_shift
-    - margot_plot_histogram_intervals
+    - margot_plot_hist
     - match_mi_general
     - transition_table
 
