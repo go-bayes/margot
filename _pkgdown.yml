@@ -6,6 +6,7 @@ template:
     base_font: {google: "Roboto"}
     heading_font: {google: "Roboto Slab"}
     code_font: {google: "Fira Code"}
+    preset: "bootstrap"
 
 authors:
   Joseph A Bulbulia:
@@ -15,9 +16,9 @@ development:
   version_label: default
   version_tooltip: "Version"
 
+vignette_engine: quarto
+
 reference:
-
-
   - title: "Evaluate assumptions"
     contents:
     - create_transition_matrix
@@ -28,12 +29,10 @@ reference:
     - match_mi_general
     - transition_table
 
-
   - title: "Simulate"
     contents:
     - run_simulations
     - simulate_ate_data_with_weights
-
 
   - title: "Prepare data for models"
     contents:
@@ -97,7 +96,6 @@ reference:
   - title: "Simulated data"
     contents:
     - df_nz
-
 
   - title: "Internal utility functions"
     contents:

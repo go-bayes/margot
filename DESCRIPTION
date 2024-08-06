@@ -45,6 +45,8 @@ Imports:
     ggokabeito,
     patchwork
 RoxygenNote: 7.3.2
-Suggests: 
-    testthat (>= 3.0.0)
+VignetteBuilder: quarto
+Suggests:
+    testthat (>= 3.1.0),
+    quarto
 Config/testthat/edition: 3
