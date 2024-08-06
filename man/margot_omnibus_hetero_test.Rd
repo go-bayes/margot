@@ -8,8 +8,7 @@ margot_omnibus_hetero_test(
   model_results,
   outcome_vars = NULL,
   alpha = 0.05,
-  detail_level = "standard",
-  plot = FALSE
+  detail_level = "standard"
 )
 }
 \arguments{
@@ -22,11 +21,11 @@ the function will attempt to use the outcome_vars from the model_results input.}
 
 \item{detail_level}{Character string specifying the level of detail in the output.
 Options are "basic", "standard" (default), or "detailed".}
-
-\item{plot}{Logical indicating whether to create a plot of the results. Default is FALSE.}
 }
 \value{
-A list containing a simple summary table, interpretations, and optionally a plot.
+A list containing a summary table and interpretations.
+       The summary table includes mean and differential predictions with standard errors.
+       Interpretations provide detailed analysis of the test calibration results.
 }
 \description{
 This function performs an omnibus heterogeneity test for specified models

@@ -9,19 +9,19 @@
 #' @param alpha Significance level for hypothesis tests. Default is 0.05.
 #' @param detail_level Character string specifying the level of detail in the output.
 #'        Options are "basic", "standard" (default), or "detailed".
-#' @param plot Logical indicating whether to create a plot of the results. Default is FALSE.
 #'
-#' @return A list containing a simple summary table, interpretations, and optionally a plot.
+#' @return A list containing a summary table and interpretations.
+#'        The summary table includes mean and differential predictions with standard errors.
+#'        Interpretations provide detailed analysis of the test calibration results.
 #'
 #' @importFrom dplyr bind_rows mutate
 #' @importFrom purrr map_dfr map_chr safely
 #' @importFrom glue glue
-#' @importFrom ggplot2 ggplot geom_point geom_errorbar theme_minimal labs
 #' @importFrom stringr str_extract
 #'
 #' @export
 margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha = 0.05,
-                                       detail_level = "standard", plot = FALSE) {
+                                       detail_level = "standard") {
   # input validation
   if (!is.list(model_results) || length(model_results) == 0) {
     stop("model_results must be a non-empty list")
@@ -52,6 +52,7 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
     return(sprintf("%.3f", p))
   }
 
+
   # safe version of the extraction function
   safe_extract <- safely(function(outcome) {
     model_name <- paste0("model_", outcome)
@@ -62,13 +63,16 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
     calib <- model_results$results[[model_name]]$test_calibration
     data.frame(
       outcome = outcome,
-      mean_prediction_estimate = glue::glue("{round(calib['mean.forest.prediction', 'Estimate'], 2)} [{round(calib['mean.forest.prediction', 'Estimate'] - 1.96 * calib['mean.forest.prediction', 'Std. Error'], 2)}, {round(calib['mean.forest.prediction', 'Estimate'] + 1.96 * calib['mean.forest.prediction', 'Std. Error'], 2)}]"),
-      differential_prediction_estimate = glue::glue("{round(calib['differential.forest.prediction', 'Estimate'], 2)} [{round(calib['differential.forest.prediction', 'Estimate'] - 1.96 * calib['differential.forest.prediction', 'Std. Error'], 2)}, {round(calib['differential.forest.prediction', 'Estimate'] + 1.96 * calib['differential.forest.prediction', 'Std. Error'], 2)}]"),
-      differential_forest_prediction_t = calib["differential.forest.prediction", "t value"],
-      differential_forest_prediction_p = calib["differential.forest.prediction", "Pr(>t)"],
-      diff_estimate = calib["differential.forest.prediction", "Estimate"],
-      diff_lower = calib["differential.forest.prediction", "Estimate"] - 1.96 * calib["differential.forest.prediction", "Std. Error"],
-      diff_upper = calib["differential.forest.prediction", "Estimate"] + 1.96 * calib["differential.forest.prediction", "Std. Error"]
+      mean_prediction = glue::glue("{round(calib['mean.forest.prediction', 'Estimate'], 2)} ({round(calib['mean.forest.prediction', 'Std. Error'], 2)})"),
+      mean_prediction_estimate = round(calib['mean.forest.prediction', 'Estimate'], 2),
+      mean_prediction_se = round(calib['mean.forest.prediction', 'Std. Error'], 2),
+      mean_prediction_t = round(calib['mean.forest.prediction', 'Estimate'] / calib['mean.forest.prediction', 'Std. Error'], 2),
+      mean_prediction_p = calib['mean.forest.prediction', 'Pr(>t)'],
+      differential_prediction = glue::glue("{round(calib['differential.forest.prediction', 'Estimate'], 2)} ({round(calib['differential.forest.prediction', 'Std. Error'], 2)})"),
+      differential_prediction_estimate = round(calib['differential.forest.prediction', 'Estimate'], 2),
+      differential_prediction_se = round(calib['differential.forest.prediction', 'Std. Error'], 2),
+      differential_prediction_t = round(calib['differential.forest.prediction', 'Estimate'] / calib['differential.forest.prediction', 'Std. Error'], 2),
+      differential_prediction_p = calib['differential.forest.prediction', 'Pr(>t)']
     )
   })
 
@@ -78,46 +82,40 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
   # interpretations based on detail level
   create_interpretation <- function(result) {
     base_interp <- glue::glue(
-      "For {result$outcome}: mean prediction estimate: {result$mean_prediction_estimate}, ",
-      "differential prediction estimate: {result$differential_prediction_estimate}. ",
-      "t={round(result$differential_forest_prediction_t, 2)}, ",
-      "p={format_pval(result$differential_forest_prediction_p)}. ",
-      "{if(result$differential_forest_prediction_p < alpha) 'We reject the null of no heterogeneity.' else 'We do not rule out the null of no heterogeneity.'}"
+      "For {result$outcome}: The mean forest prediction has an estimate of {result$mean_prediction_estimate} ",
+      "with a standard error of {result$mean_prediction_se}, resulting in a t-value of {result$mean_prediction_t} ",
+      "and a {if(result$mean_prediction_p < alpha) 'statistically significant' else 'statistically unreliable'} ",
+      "p-value of {format_pval(result$mean_prediction_p)}. ",
+      "The differential forest prediction has an estimate of {result$differential_prediction_estimate} ",
+      "with a standard error of {result$differential_prediction_se}, resulting in a t-value of {result$differential_prediction_t} ",
+      "and a {if(result$differential_prediction_p < alpha) 'statistically significant' else 'statistically unreliable'} ",
+      "p-value of {format_pval(result$differential_prediction_p)}. ",
+      "{if(abs(result$mean_prediction_estimate - 1) < 0.1 && result$mean_prediction_p < alpha) 'We find the mean prediction is accurate for the held-out data.' else 'We find the mean prediction is not reliably calibrated for the held-out data.'} ",
+      "{if(result$differential_prediction_p < alpha) 'We reject the null of no heterogeneity.' else 'We find that estimates of heterogeneity are not reliably calibrated for the held-out data.'}"
     )
 
     if (detail_level == "basic") {
       glue::glue(
         "For {result$outcome}: ",
-        "{if(result$differential_forest_prediction_p < alpha) 'We reject the null of no heterogeneity' else 'We do not rule out the null of no heterogeneity'} ",
-        "(p={format_pval(result$differential_forest_prediction_p)})."
+        "{if(result$differential_prediction_p < alpha) 'We reject the null of no heterogeneity' else 'We do not rule out the null of no heterogeneity'} ",
+        "(p={format_pval(result$differential_prediction_p)})."
       )
     } else {
       base_interp
     }
   }
 
-  general_statement <- "Test calibration of the forest computes the best linear fit using (1) forest predictions on held-out data and (2) the mean forest prediction as regressors, with one-sided heteroskedasticity-robust (HC3) SEs. A coefficient of 1 for the mean forest prediction suggests that the mean prediction is correct, while a coefficient of 1 for the differential forest prediction additionally suggests that the heterogeneity estimates are well calibrated. The p-value of the differential forest prediction coefficient acts as an omnibus test for the presence of heterogeneity."
+  general_statement <- "Test calibration of the forest computes the best linear fit using (1) forest predictions on held-out data and (2) the mean forest prediction as regressors, with one-sided heteroskedasticity-robust (HC3) SEs. A coefficient of 1 for the mean forest prediction suggests that the mean prediction is accurate for the held-out data. A coefficient of 1 for the differential forest prediction suggests that the heterogeneity estimates are well calibrated. The p-value of the differential forest prediction coefficient acts as an omnibus test for the presence of heterogeneity."
 
   interpretations <- purrr::map_chr(1:nrow(calibration_results), ~create_interpretation(calibration_results[.x, ]))
   interpretations <- c(general_statement, interpretations)
 
-  # create plot if requested
-  if (plot) {
-    p <- ggplot2::ggplot(calibration_results, ggplot2::aes(x = outcome, y = diff_estimate)) +
-      ggplot2::geom_point() +
-      ggplot2::geom_errorbar(ggplot2::aes(ymin = diff_lower, ymax = diff_upper), width = 0.2) +
-      ggplot2::theme_classic() +
-      ggplot2::labs(title = "Differential Prediction Estimates with 95% CI",
-                    y = "Estimate",
-                    x = "Outcome") +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-  } else {
-    p <- NULL
-  }
+  # Create a formatted summary table
+  summary_table <- calibration_results[, c("outcome", "mean_prediction", "differential_prediction")]
+  colnames(summary_table) <- c("Outcome", "Mean Prediction (SE)", "Differential Prediction (SE)")
 
   return(list(
-    summary_table = calibration_results[, c("outcome", "mean_prediction_estimate", "differential_prediction_estimate")],
-    interpretations = interpretations,
-    plot = p
+    summary_table = summary_table,
+    interpretations = interpretations
   ))
 }
