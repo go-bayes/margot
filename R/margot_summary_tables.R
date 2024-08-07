@@ -45,64 +45,64 @@ margot_summary_tables <- function(data,
                                   exposure_labels = NULL,
                                   outcome_labels = NULL) {
 
-  # Handle exposure_waves input
+  # handle exposure_waves input
   if (length(exposure_waves) == 1 && grepl(",", exposure_waves)) {
     exposure_waves <- unlist(strsplit(exposure_waves, ","))
   }
   exposure_waves <- trimws(exposure_waves)  # Remove any whitespace
 
-  # Sort variables
+  # sort variables
   baseline_vars <- sort(baseline_vars)
   outcome_vars <- sort(outcome_vars)
 
-  # Calculate number of unique participants
+  # calculate number of unique participants
   n_participants <- length(unique(data$id))
   n_participants <- format(n_participants, big.mark = ",")
 
-  # Baseline table
-  dt_baseline <- data %>%
-    filter(wave == baseline_wave) %>%
-    select(all_of(baseline_vars)) %>%
+  # baseline table
+  dt_baseline <- data |>
+    filter(wave == baseline_wave) |>
+    select(all_of(baseline_vars)) |>
     droplevels()
 
-  table_baseline <- dt_baseline %>%
-    clean_names(case = "title") %>%
+  table_baseline <- dt_baseline |>
+    clean_names(case = "title") |>
     tbl_summary(
       missing = "ifany",
       percent = "column",
       statistic = list(all_continuous() ~ c("{mean} ({sd})", "{min}, {max}", "{p25}, {p75}")),
       type = list(all_continuous() ~ "continuous2"),
       label = baseline_labels
-    ) %>%
-    modify_header(label = "**Exposure + Demographic Variables**") %>%
+    ) |>
+    modify_header(label = "**Exposure + Demographic Variables**") |>
     bold_labels()
 
-  # Exposure table and summary
+  # exposure table and summary
   exposure_vars <- c(name_exposure)
   if (!is.null(name_exposure_cat)) {
     exposure_vars <- c(exposure_vars, name_exposure_cat)
   }
 
-  dt_exposure <- data %>%
-    filter(wave %in% c(baseline_wave, exposure_waves)) %>%
-    select(all_of(c(exposure_vars, "wave"))) %>%
+  dt_exposure <- data |>
+    filter(wave %in% c(baseline_wave, exposure_waves)) |>
+    select(all_of(c(exposure_vars, "wave"))) |>
     droplevels()
 
-  table_exposures <- dt_exposure %>%
-    clean_names(case = "title") %>%
-    to_factor() %>%
+  table_exposures <- dt_exposure |>
+    clean_names(case = "title") |>
+    labelled::to_factor() |>
     tbl_summary(
       by = "Wave",
       missing = "always",
       percent = "column",
       label = exposure_labels
-    ) %>%
-    modify_header(label = "**Exposure Variables by Wave**") %>%
+    ) |>
+    modify_header(label = "**Exposure Variables by Wave**") |>
     bold_labels()
 
-  # Calculate exposure summary for each wave
+  # calculate exposure summary for each wave
   exposure_summary <- lapply(c(baseline_wave, exposure_waves), function(wave) {
-    wave_data <- dt_exposure %>% filter(wave == !!wave)
+    wave_data <- dt_exposure |> filter(wave == !!wave)
     list(
       wave = wave,
       mean_exposure = mean(wave_data[[name_exposure]], na.rm = TRUE),
@@ -111,25 +111,25 @@ margot_summary_tables <- function(data,
     )
   })
 
-  # Outcome table
-  dt_outcome <- data %>%
-    filter(wave %in% c(baseline_wave, outcome_wave)) %>%
-    select(all_of(c(outcome_vars, "wave"))) %>%
+  # outcome table
+  dt_outcome <- data |>
+    filter(wave %in% c(baseline_wave, outcome_wave)) |>
+    select(all_of(c(outcome_vars, "wave"))) |>
     droplevels()
 
-  table_outcomes <- dt_outcome %>%
-    clean_names(case = "title") %>%
-    to_factor() %>%
+  table_outcomes <- dt_outcome |>
+    clean_names(case = "title") |>
+    labelled::to_factor() |>
     tbl_summary(
       by = "Wave",
       missing = "always",
       percent = "column",
       label = outcome_labels
-    ) %>%
-    modify_header(label = "**Outcome Variables by Wave**") %>%
+    ) |>
+    modify_header(label = "**Outcome Variables by Wave**") |>
     bold_labels()
 
-  # Return list of tables and additional information
+  # list of tables and additional information
   return(list(
     baseline_table = table_baseline,
     exposure_table = table_exposures,

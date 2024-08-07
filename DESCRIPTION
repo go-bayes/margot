@@ -43,7 +43,8 @@ Imports:
     tidyr,
     maq,
     ggokabeito,
-    patchwork
+    patchwork,
+    labelled
 RoxygenNote: 7.3.2
 VignetteBuilder: quarto
 Suggests:
