@@ -38,17 +38,21 @@ Missing values in the gender or wave column will be excluded from weight calcula
 library(dplyr)
 
 # Create a sample dataset
-dat <- data.frame(id = 1:100, male = sample(c(0, 1), 100, replace = TRUE, prob = c(0.7, 0.3)), wave = rep(1:2, each = 50))
+dat <- data.frame(
+  id = 1:100,
+  male = sample(c(0, 1), 100, replace = TRUE, prob = c(0.7, 0.3)),
+  wave = rep(1:2, each = 50)
+)
 
 # Compute weights by wave
-weights <- margot_compute_gender_weights_by_wave(dat, male_col = "male", wave_col = "wave", target_male_prop = 0.5)
+weights <- margot_compute_gender_weights_by_wave(
+  dat,
+  male_col = "male",
+  wave_col = "wave",
+  target_male_prop = 0.5
+)
 
 # Check weight distribution by wave
 table(round(weights, 3))
-
-# Example with missing data
-dat$male[c(1, 2)] <- NA
-weights_with_na <- margot_compute_gender_weights_by_wave(dat, male_col = "male", wave_col = "wave", target_male_prop = 0.5)
-table(round(weights_with_na, 3))
 
 }
