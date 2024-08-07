@@ -14,7 +14,6 @@
 #' @importFrom purrr map2_dfr
 #'
 #' @keywords internal
-
 compute_qini_curves <- function(tau_hat, Y, W = NULL, W_multi = NULL) {
   # Ensure tau_hat is a matrix
   tau_hat <- as.matrix(tau_hat)
@@ -69,3 +68,22 @@ compute_qini_curves <- function(tau_hat, Y, W = NULL, W_multi = NULL) {
 
   return(qini_data)
 }
+#
+# extract_qini_data <- function(qini_obj, arm_name, max_index) {
+#   # Check if path and gain exist
+#   if (is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain)) {
+#     return(data.frame(index = integer(), gain = numeric(), arm = character()))
+#   }
+#
+#   # Extract path data
+#   path_data <- qini_obj[["_path"]]
+#
+#   # Create a data frame with the correct column names
+#   qini_df <- data.frame(
+#     index = seq_len(max_index),
+#     gain = c(path_data$gain, rep(NA, max_index - length(path_data$gain))),
+#     arm = rep(arm_name, max_index)
+#   )
+#
+#   return(qini_df)
+# }
