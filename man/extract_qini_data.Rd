@@ -4,14 +4,14 @@
 \alias{extract_qini_data}
 \title{Extract Qini Data for Plotting}
 \usage{
-extract_qini_data(qini_obj, arm_name, max_index)
+extract_qini_data(qini_obj, name, max_index)
 }
 \arguments{
 \item{qini_obj}{A Qini object.}
 
-\item{arm_name}{Name of the treatment arm.}
-
 \item{max_index}{Maximum index to extend the curve to.}
+
+\item{arm_name}{Name of the treatment arm.}
 }
 \value{
 A data frame with extracted Qini data.

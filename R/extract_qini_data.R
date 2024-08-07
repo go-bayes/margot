@@ -10,11 +10,19 @@
 #' @return A data frame with extracted Qini data.
 #'
 #' @keywords internal
+<<<<<<< HEAD
 extract_qini_data <- function(qini_obj, arm_name, max_index) {
   # Ensure qini_obj has a '_path' and 'gain' attribute
   if (is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain)) {
     warning("Qini object is missing '_path' or 'gain'")
     return(data.frame(index = integer(0), gain = numeric(0), arm = character(0)))
+=======
+extract_qini_data <- function(qini_obj, name, max_index) {
+  # Ensure qini_obj has a '_path' and 'gain' attribute
+  if (is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain)) {
+    warning("Qini object is missing '_path' or 'gain'")
+    return(data.frame(index = integer(0), gain = numeric(0), name = character(0)))
+>>>>>>> bd6bff32b0490ef0ada4a71d7408f12a808aab88
   }
 
   gain <- qini_obj[["_path"]]$gain
@@ -28,12 +36,20 @@ extract_qini_data <- function(qini_obj, arm_name, max_index) {
   }
 
   # Print statements for debugging
+<<<<<<< HEAD
   print(paste("Extracting Qini data for:", arm_name))
+=======
+  print(paste("Extracting Qini data for:", name))
+>>>>>>> bd6bff32b0490ef0ada4a71d7408f12a808aab88
   print(paste("Gain length:", length(gain)))
 
   data.frame(
     index = seq_len(max_index),
     gain = gain,
+<<<<<<< HEAD
     arm = arm_name  # Update column name from 'name' to 'arm'
+=======
+    name = name
+>>>>>>> bd6bff32b0490ef0ada4a71d7408f12a808aab88
   )
 }
