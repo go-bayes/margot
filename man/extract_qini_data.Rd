@@ -15,21 +15,8 @@ extract_qini_data(qini_obj, arm_name, max_index)
 }
 \value{
 A data frame with extracted Qini data.
-
-A data frame with extracted Qini data.
-
-A data frame with extracted Qini data.
 }
 \description{
 Extracts Qini curve data from a Qini object and prepares it for plotting.
-
-Extracts Qini curve data from a Qini object and prepares it for plotting.
-
-Extracts Qini curve data from a Qini object and prepares it for plotting.
 }
-\keyword{Data}
-\keyword{Extract}
-\keyword{Plotting}
-\keyword{Qini}
-\keyword{for}
 \keyword{internal}

@@ -12,6 +12,7 @@
 #'
 #' @importFrom maq get_ipw_scores maq
 #' @importFrom purrr map2_dfr
+#' @importFrom utils combn
 #'
 #' @keywords internal
 compute_qini_curves <- function(tau_hat, Y, W = NULL, W_multi = NULL) {
@@ -38,9 +39,9 @@ compute_qini_curves <- function(tau_hat, Y, W = NULL, W_multi = NULL) {
 
   # Set cost for each treatment arm or for binary treatment
   if (is_multi_arm) {
-    cost <- rep(1, ncol(tau_hat)) # cost for each treatment arm
+    cost <- rep(1, ncol(tau_hat))
   } else {
-    cost <- 1 # single cost value for binary treatment
+    cost <- 1
   }
 
   # Compute Qini curves with and without covariates
@@ -48,42 +49,24 @@ compute_qini_curves <- function(tau_hat, Y, W = NULL, W_multi = NULL) {
   ma_qini_baseline <- maq::maq(tau_hat, cost, IPW_scores, target.with.covariates = FALSE, R = 200)
 
   # Create list of Qini objects
-  qini_objects <- if (is_multi_arm) {
-    list(all_arms = ma_qini, baseline = ma_qini_baseline)
+  qini_objects <- list(all_arms = ma_qini, baseline = ma_qini_baseline)
+
+  if (is_multi_arm) {
+    arms <- levels(treatment)
+    for (i in seq_along(arms)) {
+      arm_name <- arms[i]
+      qini_objects[[arm_name]] <- maq::maq(tau_hat[, i, drop = FALSE], cost[i], IPW_scores[, i, drop = FALSE], R = 200)
+    }
   } else {
-    list(treatment_arm = ma_qini, baseline = ma_qini_baseline)
+    qini_objects[["treatment_arm"]] <- ma_qini
   }
 
   # Determine the maximum index to extend all curves to
-  max_index <- max(sapply(qini_objects, function(qini_obj) {
-    if (is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain)) {
-      0
-    } else {
-      length(qini_obj[["_path"]]$gain)
-    }
-  }))
+  max_index <- max(sapply(qini_objects, function(qini_obj) length(qini_obj[["_path"]]$gain)))
 
   # Extract Qini data for plotting
-  qini_data <- map2_dfr(qini_objects, names(qini_objects), ~ extract_qini_data(.x, .y, max_index))
+  qini_data <- purrr::map2_dfr(qini_objects, names(qini_objects), ~ extract_qini_data(.x, .y, max_index))
 
   return(qini_data)
 }
-#
-# extract_qini_data <- function(qini_obj, arm_name, max_index) {
-#   # Check if path and gain exist
-#   if (is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain)) {
-#     return(data.frame(index = integer(), gain = numeric(), arm = character()))
-#   }
-#
-#   # Extract path data
-#   path_data <- qini_obj[["_path"]]
-#
-#   # Create a data frame with the correct column names
-#   qini_df <- data.frame(
-#     index = seq_len(max_index),
-#     gain = c(path_data$gain, rep(NA, max_index - length(path_data$gain))),
-#     arm = rep(arm_name, max_index)
-#   )
-#
-#   return(qini_df)
-# }
+
