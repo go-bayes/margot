@@ -86,7 +86,6 @@ reference:
     - here_save
     - here_read_qs
     - here_save_qs
-    - margot_compute_gender_weights
     - margot_log_transform_vars
     - margot_process_binary_vars
     - pretty_number

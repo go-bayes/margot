@@ -83,20 +83,20 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
     base_interp <- glue::glue(
       "For {result$outcome}: The mean forest prediction has an estimate of {result$mean_prediction_estimate} ",
       "with a standard error of {result$mean_prediction_se}, resulting in a t-value of {result$mean_prediction_t} ",
-      "and a {if(result$mean_prediction_p < alpha) 'statistically significant' else 'statistically unreliable'} ",
+      "and a {if(result$mean_prediction_p < alpha) 'statistically significant' else 'statistically non-significant'} ",
       "p-value of {format_pval(result$mean_prediction_p)}. ",
       "The differential forest prediction has an estimate of {result$differential_prediction_estimate} ",
       "with a standard error of {result$differential_prediction_se}, resulting in a t-value of {result$differential_prediction_t} ",
-      "and a {if(result$differential_prediction_p < alpha) 'statistically significant' else 'statistically unreliable'} ",
+      "and a {if(result$differential_prediction_p < alpha) 'statistically significant' else 'statistically non-significant'} ",
       "p-value of {format_pval(result$differential_prediction_p)}. ",
-      "{if(abs(result$mean_prediction_estimate - 1) < 0.1 && result$mean_prediction_p < alpha) 'We find the mean prediction is accurate for the held-out data.' else 'We find the mean prediction is not reliably calibrated for the held-out data.'} ",
-      "{if(result$differential_prediction_p < alpha) 'We reject the null of no heterogeneity.' else 'We find that estimates of heterogeneity are not reliably calibrated for the held-out data.'}"
+      "{if(result$mean_prediction_p < alpha) 'We find the mean prediction is reliably calibrated for the held-out data.' else 'We find the mean prediction is not reliably calibrated for the held-out data.'} ",
+      "{if(result$differential_prediction_p < alpha) 'We reject the null hypothesis of no heterogeneity.' else 'We fail to reject the null hypothesis of no heterogeneity.'}"
     )
 
     if (detail_level == "basic") {
       glue::glue(
         "For {result$outcome}: ",
-        "{if(result$differential_prediction_p < alpha) 'We reject the null of no heterogeneity' else 'We do not rule out the null of no heterogeneity'} ",
+        "{if(result$differential_prediction_p < alpha) 'We reject the null hypothesis of no heterogeneity' else 'We fail to reject the null hypothesis of no heterogeneity'} ",
         "(p={format_pval(result$differential_prediction_p)})."
       )
     } else {
@@ -115,23 +115,23 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
 
   # function to create concluding paragraph
   create_concluding_paragraph <- function(results) {
-    reliable_means <- results$outcome[results$mean_prediction_p < alpha & abs(results$mean_prediction_estimate - 1) < 0.1]
+    reliable_means <- results$outcome[results$mean_prediction_p < alpha]
     reliable_heterogeneity <- results$outcome[results$differential_prediction_p < alpha]
 
     mean_conclusion <- if (length(reliable_means) > 1) {
-      glue::glue("Models for {paste(reliable_means, collapse = ', ')} accurately predict the mean response on held-out data. We can be confident that these models predict similar average treatment effects on unseen data.")
+      glue::glue("Models for {paste(reliable_means, collapse = ', ')} have reliably calibrated mean predictions on held-out data. We can be confident that these models predict similar average treatment effects on unseen data.")
     } else if (length(reliable_means) == 1) {
-      glue::glue("The model for {reliable_means} accurately predicts the mean response on held-out data. We can be confident that this model predicts similar average treatment effects on unseen data.")
+      glue::glue("The model for {reliable_means} has a reliably calibrated mean prediction on held-out data. We can be confident that this model predicts similar average treatment effects on unseen data.")
     } else {
-      "We do not find that any of the outcomes here reliably predict average treatment effects on unseen data."
+      "We do not find that any of the outcomes here have reliably calibrated mean predictions on held-out data."
     }
 
     heterogeneity_conclusion <- if (length(reliable_heterogeneity) > 1) {
-      glue::glue("Models for {paste(reliable_heterogeneity, collapse = ', ')} accurately evaluate heterogeneity on held-out data. We can be confident that these models predict heterogeneity for unseen data.")
+      glue::glue("Models for {paste(reliable_heterogeneity, collapse = ', ')} show evidence of heterogeneity on held-out data. We can be confident that these models predict heterogeneity for unseen data.")
     } else if (length(reliable_heterogeneity) == 1) {
-      glue::glue("The model for {reliable_heterogeneity} accurately evaluates heterogeneity on held-out data. We can be confident that this model predicts heterogeneity for unseen data.")
+      glue::glue("The model for {reliable_heterogeneity} shows evidence of heterogeneity on held-out data. We can be confident that this model predicts heterogeneity for unseen data.")
     } else {
-      "We do not find that any of the models here reliably predict heterogeneity for unseen data."
+      "We do not find evidence of heterogeneity for any of the models on held-out data."
     }
 
     explanation <- "Test calibration of the forest computes the best linear fit using (1) forest predictions on held-out data and (2) the mean forest prediction as regressors, with one-sided heteroskedasticity-robust (HC3) SEs. A coefficient of 1 for the mean forest prediction suggests that the mean prediction is accurate for the held-out data. A coefficient of 1 for the differential forest prediction suggests that the heterogeneity estimates are well calibrated. The p-value of the differential forest prediction coefficient acts as an omnibus test for the presence of heterogeneity."
