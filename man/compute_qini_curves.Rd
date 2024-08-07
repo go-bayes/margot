@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_qini_curves.R
 \name{compute_qini_curves}
 \alias{compute_qini_curves}
-\title{Compute Qini Curves for Causal Forest and Multi-Arm Causal Forest}
+\title{Compute Qini Curves for Multi-Arm and Binary Treatments}
 \usage{
 compute_qini_curves(tau_hat, Y, W = NULL, W_multi = NULL)
 }
@@ -19,6 +19,6 @@ compute_qini_curves(tau_hat, Y, W = NULL, W_multi = NULL)
 A data frame containing Qini curve data for plotting.
 }
 \description{
-Computes Qini curves for both causal forest and multi-arm causal forest using the maq package.
+Computes Qini curves for multi-arm and binary treatments using the maq package.
 }
 \keyword{internal}
