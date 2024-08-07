@@ -10,16 +10,30 @@
 #' @return A data frame with extracted Qini data.
 #'
 #' @keywords internal
-extract_qini_data <- function(qini_obj, arm_name, max_index) {
+extract_qini_data <- function(qini_obj, name, max_index) {
+  # Ensure qini_obj has a '_path' and 'gain' attribute
+  if (is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain)) {
+    warning("Qini object is missing '_path' or 'gain'")
+    return(data.frame(index = integer(0), gain = numeric(0), name = character(0)))
+  }
+
   gain <- qini_obj[["_path"]]$gain
-  index <- seq_along(gain)
-  # extend the gain to the max_index with the last value
-  extended_gain <- c(gain, rep(tail(gain, 1), max_index - length(gain)))
-  extended_index <- seq_len(max_index)
+
+  # If gain is empty, fill it with zeros up to max_index
+  if (length(gain) == 0) {
+    gain <- rep(0, max_index)
+  } else {
+    # Fill in missing values to reach max_index
+    gain <- c(gain, rep(tail(gain, 1), max_index - length(gain)))
+  }
+
+  # Print statements for debugging
+  print(paste("Extracting Qini data for:", name))
+  print(paste("Gain length:", length(gain)))
 
   data.frame(
-    index = extended_index,
-    gain = extended_gain,
-    arm = arm_name
+    index = seq_len(max_index),
+    gain = gain,
+    name = name
   )
 }
