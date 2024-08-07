@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.3</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,10 @@
 <h3 id="new-0-2-0-4">New<a class="anchor" aria-label="anchor" href="#new-0-2-0-4"></a></h3>
 <ul><li>
 <code>margot_process_longitudinal_data</code> orders correctly for <code>lmtp</code> models by updating the censoring column <code>not_lost</code> such that it handles missing responses as well as attrition. The function additionally automatically dummy codes ordinal variables and standardises continuous variables. Presently it is only implemented for three waves, but in the future it will be expanded to handle arbitrarily many.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixed-0-2-0-4">Fixed<a class="anchor" aria-label="anchor" href="#fixed-0-2-0-4"></a></h3>
+<ul><li>Functions <code>compute_qini_curves</code> and <code>extract_qini_data</code> to work with binary interventions</li>
 </ul></div>
 </div>
     <div class="section level2">

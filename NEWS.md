@@ -4,6 +4,9 @@
 ## New
 * `margot_process_longitudinal_data` orders correctly for `lmtp` models by updating the censoring column `not_lost` such that it handles missing responses as well as attrition. The function additionally automatically dummy codes ordinal variables and standardises continuous variables. Presently it is only implemented for three waves, but in the future it will be expanded to handle arbitrarily many. 
 
+## Fixed
+* Functions `compute_qini_curves` and `extract_qini_data` to work with binary interventions
+
 # [2024-08-7] margot 0.2.0.3
 
 ## New
