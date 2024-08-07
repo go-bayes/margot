@@ -14,7 +14,6 @@
 #' @importFrom purrr map2_dfr
 #'
 #' @keywords internal
-
 compute_qini_curves <- function(tau_hat, Y, W = NULL, W_multi = NULL) {
   # Ensure tau_hat is a matrix
   tau_hat <- as.matrix(tau_hat)
