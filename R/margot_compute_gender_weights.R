@@ -1,4 +1,4 @@
-#' Compute Gender-Based Sample Weights
+#' Compute Gender-Based Sample Weights (deprecated, use `margot_compute_gender_weights_by_wave`)
 #'
 #' @param data A data frame containing the gender information.
 #' @param male_col Character string specifying the name of the column in `data` that indicates male gender (1 for male, 0 for female). Default is "male".
@@ -25,25 +25,30 @@
 #' table(round(weights, 3))
 #'
 #' @export
+#' @keywords internal
+#' @importFrom lifecycle deprecate_warn
 margot_compute_gender_weights <- function(data, male_col = "male", target_male_prop = 0.5) {
-  # Check if the male column exists in the data
+  # warning
+  lifecycle::deprecate_warn("1.0.0", "margot_compute_gender_weights()", "margot_compute_gender_weights_by_wave()")
+
+  # check if the male column exists in the data
   if (!male_col %in% names(data)) {
     stop("The specified male column does not exist in the data.")
   }
 
-  # Set target proportions
+  # set target proportions
   prop_male_population <- target_male_prop
   prop_female_population <- 1 - target_male_prop
 
-  # Calculate sample proportions
+  # calculate sample proportions
   prop_male_sample <- mean(data[[male_col]])
   prop_female_sample <- 1 - prop_male_sample
 
-  # Calculate weights
+  # calculate weights
   gender_weight_male <- prop_male_population / prop_male_sample
   gender_weight_female <- prop_female_population / prop_female_sample
 
-  # Assign weights
+  # assign weights
   weights <- ifelse(data[[male_col]] == 1, gender_weight_male, gender_weight_female)
 
   return(weights)

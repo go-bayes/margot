@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_compute_gender_weights.R
 \name{margot_compute_gender_weights}
 \alias{margot_compute_gender_weights}
-\title{Compute Gender-Based Sample Weights}
+\title{Compute Gender-Based Sample Weights (deprecated, use `margot_compute_gender_weights_by_wave`)}
 \usage{
 margot_compute_gender_weights(data, male_col = "male", target_male_prop = 0.5)
 }
@@ -35,3 +35,4 @@ weights <- margot_compute_gender_weights(dat, male_col = "male", target_male_pro
 table(round(weights, 3))
 
 }
+\keyword{internal}

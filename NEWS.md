@@ -1,4 +1,16 @@
-# # margot 0.2.0.2
+
+# [2024-08-7] margot 0.2.0.3
+
+## New
+
+* `margot_summary_tables` creates summary tables of baseline variables, exposure(s), and outcome(s) using the `gtsummary` package.
+
+## Deprecations
+
+* `margot_compute_gender_weights` is deprecated. Now use `margot_compute_gender_weights_by_wave`.
+
+
+# [2024-08-7] margot 0.2.0.2
 ## Deprecations
 
 * `coloured_histogram()` and `coloured_histogram_quantile()` are deprecated.

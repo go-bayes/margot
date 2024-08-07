@@ -19,6 +19,7 @@ development:
 vignette_engine: quarto
 
 reference:
+
   - title: "Evaluate assumptions"
     contents:
     - create_transition_matrix
@@ -26,6 +27,7 @@ reference:
     - coloured_histogram_shift
     - margot_plot_hist
     - match_mi_general
+    - margot_summary_tables
     - transition_table
 
   - title: "Simulate"
@@ -37,7 +39,7 @@ reference:
     contents:
     - create_ordered_variable
     - impute_and_combine
-    - margot_compute_gender_weights
+    - margot_compute_gender_weights_by_wave
     - margot_filter
     - margot_log_transform_vars
     - margot_process_binary_vars
@@ -105,6 +107,7 @@ reference:
 
   - title: "Deprecated functions"
     contents:
+      - create_ordered_variable_custom
       - coloured_histogram
       - coloured_histogram_quantiles
-      - create_ordered_variable_custom
+      - margot_compute_gender_weights

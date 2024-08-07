@@ -38,6 +38,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/lmtp_evalue_tab.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compute_gender_weights.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_compute_gender_weights_by_wave.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_filter.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_subset_table.html</loc></url>
@@ -60,6 +61,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_binary_vars.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_run_models_grf.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_subset_table_grf.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_summary_tables.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_tab_lmtp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_wide.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_wide_impute_baseline.html</loc></url>
