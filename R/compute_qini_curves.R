@@ -32,36 +32,29 @@ compute_qini_curves <- function(tau_hat, Y, W = NULL, W_multi = NULL) {
   # Compute IPW scores
   IPW_scores <- maq::get_ipw_scores(Y, treatment)
 
-  # Set cost for each treatment arm or for binary treatment
-  if (is_multi_arm) {
-    cost <- rep(1, ncol(tau_hat))
-  } else {
-    cost <- 1
-  }
+  # Set cost appropriately
+  cost <- if (is_multi_arm) rep(1, ncol(tau_hat)) else 1
 
-  # compute qini curves
+  # Compute qini curves
   if (is_multi_arm) {
     # Multi-arm treatment
     ma_qini <- maq::maq(tau_hat, cost, IPW_scores, R = 200)
     ma_qini_baseline <- maq::maq(tau_hat, cost, IPW_scores, target.with.covariates = FALSE, R = 200)
 
-    # create a list of qini objects
     qini_objects <- list(all_arms = ma_qini, baseline = ma_qini_baseline)
 
-    # add individual arms
     for (i in 1:ncol(tau_hat)) {
       qini_objects[[paste0("arm", i)]] <- maq::maq(tau_hat[, i, drop = FALSE], cost[i], IPW_scores[, i, drop = FALSE], R = 200)
     }
   } else {
-    # binary treatment
+    # Binary treatment
     treatment_qini <- maq::maq(tau_hat, cost, IPW_scores, R = 200)
     baseline_qini <- maq::maq(tau_hat, cost, IPW_scores, target.with.covariates = FALSE, R = 200)
 
-    # Create a list with only treatment and baseline
     qini_objects <- list(treatment = treatment_qini, baseline = baseline_qini)
   }
 
-  # determine the maximum index to extend all curves to
+  # Determine the maximum index
   max_index <- max(sapply(qini_objects, function(qini_obj) {
     if (is.null(qini_obj) || is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain)) {
       return(0)
