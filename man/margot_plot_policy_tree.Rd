@@ -15,7 +15,15 @@ margot_plot_policy_tree(
   axis_title_size = 10,
   legend_title_size = 10,
   jitter_width = 0.3,
-  jitter_height = 0.3
+  jitter_height = 0.3,
+  split_line_color = "darkgray",
+  split_line_alpha = 0.7,
+  split_line_type = "dashed",
+  split_line_size = 0.5,
+  split_label_size = 10,
+  split_label_color = "darkgray",
+  train_proportion = 0.8,
+  custom_action_names = NULL
 )
 }
 \arguments{
@@ -25,7 +33,7 @@ margot_plot_policy_tree(
 
 \item{color_scale}{A ggplot2 color scale. Default is ggokabeito::scale_colour_okabe_ito().}
 
-\item{point_alpha}{Numeric value between 0 and 1 for point transparency. Default is 0.6.}
+\item{point_alpha}{Numeric value between 0 and 1 for point transparency. Default is 0.25.}
 
 \item{theme_function}{A ggplot2 theme function. Default is theme_classic.}
 
@@ -40,19 +48,38 @@ margot_plot_policy_tree(
 \item{jitter_width}{Numeric value for the amount of horizontal jitter. Default is 0.3.}
 
 \item{jitter_height}{Numeric value for the amount of vertical jitter. Default is 0.3.}
+
+\item{split_line_color}{Color of the split lines. Default is "darkgray".}
+
+\item{split_line_alpha}{Numeric value between 0 and 1 for split line transparency. Default is 0.7.}
+
+\item{split_line_type}{Line type for split lines. Default is "dashed".}
+
+\item{split_line_size}{Numeric value for the thickness of split lines. Default is 0.5.}
+
+\item{split_label_size}{Numeric value for the size of split value labels. Default is 10.}
+
+\item{split_label_color}{Color of split value labels. Default is "darkgray".}
+
+\item{train_proportion}{Numeric value between 0 and 1 for the proportion of data used for training. Default is 0.8.}
+
+\item{custom_action_names}{Optional vector of custom names for the actions. Must match the number of actions in the policy tree.}
 }
 \value{
-A ggplot object containing two side-by-side plots of the policy tree results.
+A list containing two elements:
+  \item{plot}{A ggplot object containing two side-by-side plots of the policy tree results.}
+  \item{interpretation}{A string containing a markdown-formatted interpretation of the policy tree results.}
 }
 \description{
 This function creates a visualization of policy tree results from a causal forest or multi-arm causal forest model.
 It generates two plots showing the relationships between the top three split variables,
-with points colored by the predicted optimal treatment.
+with points colored by the predicted optimal treatment. It also provides a markdown interpretation of the results.
 }
 \examples{
 \dontrun{
-plot <- plot_policy_tree_results(mc_test, "model_t2_belong_z")
-print(plot)
+result <- margot_plot_policy_tree(mc_test, "model_t2_belong_z")
+print(result$plot)
+cat(result$interpretation)
 }
 
 }

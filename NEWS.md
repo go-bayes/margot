@@ -1,3 +1,11 @@
+# [2024-08-8] margot 0.2.0.6
+
+## Improved
+* Greatly enhanced the functionality of `margot_plot_policy_tree` so that it explains the result. 
+
+## Fixed
+
+* broken indexing when I changed `margot_causal_forest` and `margot_multi_arm_causal_forest` to use outcome names, rather than model names.
 
 # [2024-08-8] margot 0.2.0.5
 
