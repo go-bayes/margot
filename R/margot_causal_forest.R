@@ -75,7 +75,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
 
     p <- progressor(along = outcome_vars)
     for (outcome in outcome_vars) {
-      model_name <- paste0("model_", outcome)
+      model_name <- outcome
       Y <- as.matrix(data[[outcome]])
       model <- do.call(grf::causal_forest, c(list(X = covariates, Y = Y, W = W, sample.weights = weights), grf_defaults))
 
@@ -86,8 +86,6 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
         custom_table = margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL),
         tau_hat = predict(model)$predictions
       )
-
-      tau_hat <- results[[model_name]]$tau_hat
 
       if (compute_rate) {
         results[[model_name]]$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
@@ -171,4 +169,3 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
 
   return(output)
 }
-

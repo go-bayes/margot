@@ -1,4 +1,9 @@
 
+# [2024-08-8] margot 0.2.0.5
+## Improved
+* `margot_causal_forest` and `margot_multi_arm_causal_forest` now use outcome names, rather than model names, to name the outcomes
+
+
 # [2024-08-7] margot 0.2.0.4
 
 ## New

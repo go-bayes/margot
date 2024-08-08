@@ -96,7 +96,7 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
     p <- progressor(along = outcome_vars)
 
     for (outcome in outcome_vars) {
-      model_name <- paste0("model_", outcome)
+      model_name <- outcome
       Y <- as.matrix(data[[outcome]])
       model <- do.call(grf::multi_arm_causal_forest,
                        c(list(X = covariates, Y = Y, W = W_multi, sample.weights = weights),
@@ -128,7 +128,7 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
       dr_scores <- policytree::double_robust_scores(model)
       results[[model_name]]$dr_scores <- dr_scores
 
-      # train policy tree on 90% of non-missing data
+      # train policy tree on train_proportion of non-missing data
       n_non_missing <- length(not_missing)
       train_size <- floor(train_proportion * n_non_missing)
       train_indices <- sample(not_missing, train_size)
@@ -138,11 +138,11 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
       )
       results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
 
-      # Extract split variable names
+      # extract split variable names
       split_vars <- sapply(1:3, function(i) colnames(covariates)[policy_tree_model$nodes[[i]]$split_variable])
       results[[model_name]]$split_variables <- split_vars
 
-      # Prepare data for plotting
+      # data for plotting
       test_indices <- setdiff(not_missing, train_indices)
       X_test <- covariates[test_indices, top_vars]
       predictions <- predict(policy_tree_model, X_test)
@@ -153,7 +153,7 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
         split_variables = split_vars
       )
 
-      # Compute qini curves if requested
+      #  qini curves if requested
       if (compute_qini) {
         tryCatch({
           results[[model_name]]$qini_data <- compute_qini_curves(tau_hat, Y, W_multi = W_multi)
@@ -166,7 +166,7 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
       p(sprintf("Completed %s", outcome))
     }
 
-    # Group results by comparison levels
+    # group results by comparison levels
     combined_tables <- group_results_by_comparison(results)
     list(results = results, full_models = full_models, combined_tables = combined_tables)
   }
@@ -193,5 +193,9 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
 
   return(output)
 }
+
+
+
+
 
 
