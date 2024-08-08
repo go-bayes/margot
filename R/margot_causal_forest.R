@@ -75,103 +75,58 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
 
     p <- progressor(along = outcome_vars)
     for (outcome in outcome_vars) {
-      model_name <- outcome
+      model_name <- paste0("model_", outcome)
       Y <- as.matrix(data[[outcome]])
       model <- do.call(grf::causal_forest, c(list(X = covariates, Y = Y, W = W, sample.weights = weights), grf_defaults))
 
-      # Calculate tau_hat first
-      tau_hat <- predict(model)$predictions
-
       # Always save these results
       results[[model_name]] <- list(
-        ate = round(grf::average_treatment_effect(model, target.sample = "treated"), 3),
+        ate = round(grf::average_treatment_effect(model), 3),
         test_calibration = round(grf::test_calibration(model), 3),
         custom_table = margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL),
-        tau_hat = tau_hat
+        tau_hat = predict(model)$predictions
       )
 
+      tau_hat <- results[[model_name]]$tau_hat
+
       if (compute_rate) {
-        results[[model_name]]$rate_result <- tryCatch({
-          propensities <- model$W.hat
-          subset <- propensities > 0.1 & propensities < 0.9  # Adjust these thresholds as needed
-          grf::rank_average_treatment_effect(model, tau_hat, subset = subset)
-        }, error = function(e) {
-          warning(paste("Error computing RATE for", outcome, ":", e$message))
-          NULL
-        })
+        results[[model_name]]$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
       }
 
-      # Compute double robust scores once
-      results[[model_name]]$dr_scores <- tryCatch({
-        policytree::double_robust_scores(model)
-      }, error = function(e) {
-        warning(paste("Error computing double robust scores for", outcome, ":", e$message))
-        NULL
-      })
-
-      # Compute policy tree of depth 1 using the previously calculated dr_scores
-      if (!is.null(results[[model_name]]$dr_scores)) {
-        results[[model_name]]$policy_tree_depth_1 <- tryCatch({
-          policytree::policy_tree(covariates[full, ], results[[model_name]]$dr_scores[full, ], depth = 1)
-        }, error = function(e) {
-          warning(paste("Error computing policy tree (depth 1) for", outcome, ":", e$message))
-          NULL
-        })
-      } else {
-        results[[model_name]]$policy_tree_depth_1 <- NULL
-      }
+      results[[model_name]]$dr_scores <- policytree::double_robust_scores(model)
+      results[[model_name]]$policy_tree_depth_1 <- policytree::policy_tree(covariates[full, ], results[[model_name]]$dr_scores[full, ], depth = 1)
 
       varimp <- grf::variable_importance(model)
       ranked_vars <- order(varimp, decreasing = TRUE)
       top_vars <- colnames(covariates)[ranked_vars[1:top_n_vars]]
       results[[model_name]]$top_vars <- top_vars
 
-      results[[model_name]]$blp_top <- tryCatch({
-        grf::best_linear_projection(model, covariates[, top_vars], target.sample = "all")
-      }, error = function(e) {
-        warning(paste("Error computing best linear projection for", outcome, ":", e$message))
-        NULL
-      })
+      results[[model_name]]$blp_top <- grf::best_linear_projection(model, covariates[, top_vars], target.sample = "all")
 
       # Train policy tree on train_proportion of non-missing data
       n_non_missing <- length(not_missing)
       train_size <- floor(train_proportion * n_non_missing)
       train_indices <- sample(not_missing, train_size)
 
-      if (!is.null(results[[model_name]]$dr_scores)) {
-        results[[model_name]]$policy_tree_depth_2 <- tryCatch({
-          policytree::policy_tree(
-            covariates[train_indices, top_vars], results[[model_name]]$dr_scores[train_indices, ], depth = 2
-          )
-        }, error = function(e) {
-          warning(paste("Error computing policy tree (depth 2) for", outcome, ":", e$message))
-          NULL
-        })
+      policy_tree_model <- policytree::policy_tree(
+        covariates[train_indices, top_vars], results[[model_name]]$dr_scores[train_indices, ], depth = 2
+      )
+      results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
 
-        # Extract split variable names and prepare plot data only if policy_tree_depth_2 is not NULL
-        if (!is.null(results[[model_name]]$policy_tree_depth_2)) {
-          split_vars <- sapply(1:3, function(i) colnames(covariates)[results[[model_name]]$policy_tree_depth_2$nodes[[i]]$split_variable])
-          results[[model_name]]$split_variables <- split_vars
+      # Extract split variable names
+      split_vars <- sapply(1:3, function(i) colnames(covariates)[policy_tree_model$nodes[[i]]$split_variable])
+      results[[model_name]]$split_variables <- split_vars
 
-          # Prepare data for plotting
-          test_indices <- setdiff(not_missing, train_indices)
-          X_test <- covariates[test_indices, top_vars]
-          predictions <- predict(results[[model_name]]$policy_tree_depth_2, X_test)
+      # Prepare data for plotting
+      test_indices <- setdiff(not_missing, train_indices)
+      X_test <- covariates[test_indices, top_vars]
+      predictions <- predict(policy_tree_model, X_test)
 
-          results[[model_name]]$plot_data <- list(
-            X_test = X_test,
-            predictions = predictions,
-            split_variables = split_vars
-          )
-        } else {
-          results[[model_name]]$split_variables <- NULL
-          results[[model_name]]$plot_data <- NULL
-        }
-      } else {
-        results[[model_name]]$policy_tree_depth_2 <- NULL
-        results[[model_name]]$split_variables <- NULL
-        results[[model_name]]$plot_data <- NULL
-      }
+      results[[model_name]]$plot_data <- list(
+        X_test = X_test,
+        predictions = predictions,
+        split_variables = split_vars
+      )
 
       # Compute qini_data
       results[[model_name]]$qini_data <- tryCatch({
@@ -192,11 +147,12 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
     list(results = results, full_models = full_models)
   }
 
-
   model_results <- with_progress(run_models_with_progress())
 
   # combine tables from all models
-  combined_table <- do.call(rbind, lapply(model_results$results, function(x) x$custom_table))
+  combined_table <- do.call(rbind, lapply(model_results$results, function(x) x$custom_table)) # hack
+  rownames(combined_table) <- gsub("model_", "", rownames(combined_table))
+
 
   output <- list(
     results = model_results$results,
