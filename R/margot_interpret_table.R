@@ -1,11 +1,10 @@
-
 #' Interpret and Describe Causal Effect Estimates Using E-values
 #'
 #' This function interprets the output of causal effect analysis, providing textual descriptions
 #' of causal effect estimates. It categorises the strength of evidence for causality based on
 #' E-values and confidence intervals, and generates a detailed interpretation of the effect
 #' estimates according to specified causal scales (i.e., "causal_difference" or "risk_ratio")
-#' and estimands. This function now supports interpreting results on both the causal difference
+#' and estimands. This function supports interpreting results on both the causal difference
 #' and risk ratio scales.
 #'
 #' @param df Data frame containing causal effect estimates, expected to include columns for
@@ -15,40 +14,50 @@
 #' @param causal_scale Character string specifying the causal scale used in the analysis.
 #' Currently supports "causal_difference" for differences in means or medians, and "risk_ratio"
 #' for comparing ratios of probabilities or risks.
-#' @param estimand Character string indicating the type of causal estimand interpreted: "PATE"
+#' @param estimand Optional character string indicating the type of causal estimand interpreted: "PATE"
 #' (Population Average Treatment Effect), "ATE" (Average Treatment Effect), "ATT" (Average
-#' Treatment Effect in the Treated), or "CATE" (Conditional Average Treatment Effect).
+#' Treatment Effect in the Treated), "CATE" (Conditional Average Treatment Effect), or "LMTP"
+#' (Longitudinal Modified Treatment Policy). Default is NULL.
+#' @param order Character string specifying the order of results. Default is "default".
 #'
-#' @return A character vector containing a detailed interpretation of each outcome in `df`,
-#' including the type of estimand, the causal contrast, E-values, and the strength of evidence
-#' for causality. The interpretation includes whether there is evidence for causality based on
-#' the E-value and confidence interval, tailored to the specified causal scale.
+#' @return A list containing two elements:
+#'   \item{estimand_description}{A character string describing the specified estimand, or NULL if no estimand was provided.}
+#'   \item{interpretation}{A character string containing a detailed interpretation of each outcome in `df`,
+#'   including the causal contrast, E-values, and the strength of evidence for causality.}
 #'
 #' @examples
 #' \dontrun{
 #' # Assuming `group_tab_output` is the result from a causal analysis
-#' margot_interpret_table(group_tab_output, "causal_difference", "ATE")
-#' margot_interpret_table(group_tab_output, "risk_ratio", "PATE")
+#' result <- margot_interpret_table(group_tab_output, "causal_difference", "ATE")
+#' cat(result$estimand_description)
+#' cat(result$interpretation)
+#'
+#' # Without specifying an estimand
+#' result <- margot_interpret_table(group_tab_output, "risk_ratio")
+#' cat(result$interpretation)
 #' }
 #'
 #' @export
 #' @importFrom dplyr case_when mutate rowwise ungroup if_else
 #' @importFrom glue glue
-margot_interpret_table <- function(df, causal_scale, estimand, order = "default") {
+margot_interpret_table <- function(df, causal_scale, estimand = NULL, order = "default") {
   require(dplyr)
   require(glue)
-  require(tibble) # Ensure tibble is loaded for rownames_to_column if needed
+  require(tibble)
 
   # Define estimand descriptions
-  estimand_description <- dplyr::case_when(
-    estimand == "LMTP" ~ "A Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast conditions over a sequential regime of treatments for a prespecified target population.",
-    estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) estimates the expected outcome difference between treatment and contrast groups across the entire New Zealand population.",
-    estimand == "ATE" ~ "The Average Treatment Effect (ATE) measures the mean difference in outcomes between treatment and contrast groups within the target population.",
-    estimand == "ATT" ~ "The Average Treatment Effect on the Treated (ATT) assesses the expected outcome difference for those receiving the treatment, compared to a similar group that did not, within the target population.",
-    estimand == "CATE" ~ "The Conditional Average Treatment Effect (CATE) evaluates the expected difference in outcomes between treatment and contrast groups within specific population strata.",
-    TRUE ~ "The specified estimand is not recognized. Valid options include: 'PATE', 'ATE', 'ATT', 'CATE', 'LMTP'."
-  )
-
+  estimand_description <- if (!is.null(estimand)) {
+    dplyr::case_when(
+      estimand == "LMTP" ~ "A Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast conditions over a sequential regime of treatments for a prespecified target population.",
+      estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) estimates the expected outcome difference between treatment and contrast groups across the entire New Zealand population.",
+      estimand == "ATE" ~ "The Average Treatment Effect (ATE) measures the mean difference in outcomes between treatment and contrast groups within the target population.",
+      estimand == "ATT" ~ "The Average Treatment Effect on the Treated (ATT) assesses the expected outcome difference for those receiving the treatment, compared to a similar group that did not, within the target population.",
+      estimand == "CATE" ~ "The Conditional Average Treatment Effect (CATE) evaluates the expected difference in outcomes between treatment and contrast groups within specific population strata.",
+      TRUE ~ "The specified estimand is not recognized. Valid options include: 'PATE', 'ATE', 'ATT', 'CATE', 'LMTP'."
+    )
+  } else {
+    NULL
+  }
   # Determine the correct type based on causal_scale
   effect_type <- if (causal_scale == "causal_difference") "RD" else "RR"
 
@@ -68,7 +77,7 @@ margot_interpret_table <- function(df, causal_scale, estimand, order = "default"
     stop(paste("Dataframe does not contain the required column:", causal_contrast_column))
   }
 
-  # Data processing and interpretation
+  # data processing and interpretation
   interpretation <- df %>%
     dplyr::mutate(
       causal_contrast = round(.data[[causal_contrast_column]], 3),
@@ -89,12 +98,14 @@ margot_interpret_table <- function(df, causal_scale, estimand, order = "default"
       )
     )
 
-  # Compile and return results
-  result <- glue(
-    "{estimand_description}\n\n{paste(interpretation$outcome_interpretation, collapse = '\n\n')}"
-  )
-  return(result)
-}
+  # compile results
+  interpretation_text <- paste(interpretation$outcome_interpretation, collapse = '\n\n')
 
+  # Return results as a list
+  return(list(
+    estimand_description = estimand_description,
+    interpretation = interpretation_text
+  ))
+}
 
 

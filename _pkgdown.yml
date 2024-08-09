@@ -59,16 +59,15 @@ reference:
   - title: "Understand Results"
     contents:
     - compute_difference
-    - group_tab
-    - lmtp_evalue_tab
+    - margot_grf_subset_table
     - margot_omnibus_hetero_test
+    - margot_interpret_policy_tree
     - margot_interpret_table
     - margot_lmtp_evalue
     - margot_lmtp_tab
     - margot_model_evalue
     - margot_model_tab
-    - margot_grf_subset_table
-    - tab_engine_marginal
+    - margot_policy_tree
 
   - title: "Visualise Causal Effect Estimates"
     contents:
@@ -82,10 +81,12 @@ reference:
     - back_transform_logmean
     - back_transform_zscore
     - construct_formula
+    - group_tab
     - here_read
     - here_save
     - here_read_qs
     - here_save_qs
+    - lmtp_evalue_tab
     - margot_log_transform_vars
     - margot_process_binary_vars
     - pretty_number
@@ -103,7 +104,7 @@ reference:
     - compute_qini_curves
     - extract_qini_data
     - group_results_by_comparison
-
+    - tab_engine_marginal
 
   - title: "Deprecated functions"
     contents:

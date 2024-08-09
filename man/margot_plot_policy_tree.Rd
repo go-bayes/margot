@@ -19,10 +19,9 @@ margot_plot_policy_tree(
   split_line_color = "darkgray",
   split_line_alpha = 0.7,
   split_line_type = "dashed",
-  split_line_size = 0.5,
+  split_line_linewidth = 0.5,
   split_label_size = 10,
   split_label_color = "darkgray",
-  train_proportion = 0.8,
   custom_action_names = NULL
 )
 }
@@ -55,31 +54,26 @@ margot_plot_policy_tree(
 
 \item{split_line_type}{Line type for split lines. Default is "dashed".}
 
-\item{split_line_size}{Numeric value for the thickness of split lines. Default is 0.5.}
+\item{split_line_linewidth}{Numeric value for the thickness of split lines. Default is 0.5.}
 
 \item{split_label_size}{Numeric value for the size of split value labels. Default is 10.}
 
 \item{split_label_color}{Color of split value labels. Default is "darkgray".}
 
-\item{train_proportion}{Numeric value between 0 and 1 for the proportion of data used for training. Default is 0.8.}
-
 \item{custom_action_names}{Optional vector of custom names for the actions. Must match the number of actions in the policy tree.}
 }
 \value{
-A list containing two elements:
-  \item{plot}{A ggplot object containing two side-by-side plots of the policy tree results.}
-  \item{interpretation}{A string containing a markdown-formatted interpretation of the policy tree results.}
+A ggplot object containing two side-by-side plots of the policy tree results.
 }
 \description{
 This function creates a visualization of policy tree results from a causal forest or multi-arm causal forest model.
 It generates two plots showing the relationships between the top three split variables,
-with points colored by the predicted optimal treatment. It also provides a markdown interpretation of the results.
+with points colored by the predicted optimal treatment.
 }
 \examples{
 \dontrun{
-result <- margot_plot_policy_tree(mc_test, "model_t2_belong_z")
-print(result$plot)
-cat(result$interpretation)
+plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z")
+print(plot)
 }
 
 }

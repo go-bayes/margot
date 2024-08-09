@@ -1,3 +1,16 @@
+# [2024-08-9] margot 0.2.0.7
+
+## New
+
+* `margot_interpret_policy_tree` interprets policy_tree outputs with outputs in either markdown or \LaTeX formats.
+* `margot_policy_tree` wraps `margot_interpret_policy_tree`, `margot_plot_policy_tree`, `margot_qini_plot` and a decision tree visualisation within one function.
+
+## Improved
+
+* `margot_plot` will now work even if no title or subtitle is passed. 
+* `margot_plot_policy_tree`: focus is not simply on plotting, rather than doing both plotting and interpreting. 
+* `margot_interpret_table`: no longer requires specification of estimate. General explanation printed separately (as it is only used once).
+
 # [2024-08-8] margot 0.2.0.6
 
 ## Improved
