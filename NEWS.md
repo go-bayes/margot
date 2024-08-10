@@ -4,6 +4,13 @@
 
 * `margot_plot_decision_tree` creates policy tree decision rule graphs in a ggplot2 format, so that the graph may be combined `margot_plot_policy` to more effectively communicate decision rules to policy makers. 
 
+* `debug_node_data_with_positions` internal so that `margot_plot_decision_tree` works properly
+
+## Fixed
+
+* `margot_plot_decision_tree` requires `debug_node_data_with_positions`
+
+
 ## Improved
 
 * Enhanced `margot_plot_policy` so that it produces a `margot_plot_decision_tree` graph, as well as its previous outputs.

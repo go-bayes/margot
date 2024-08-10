@@ -52,7 +52,7 @@ margot_plot_decision_tree <- function(batch_model_output, model_name, x_padding 
     node_data$x[node_data$id == 6] <- node_data$x[node_data$id == 6] + node_distance_adjustment  # Move node 6 east
   }
 
-  # create edge data
+  # Create edge data
   edge_data <- data.frame(
     x = numeric(),
     y = numeric(),
@@ -85,7 +85,7 @@ margot_plot_decision_tree <- function(batch_model_output, model_name, x_padding 
     }
   }
 
-  # create labels for nodes
+  # Create labels for nodes
   node_data$label <- ifelse(node_data$is_leaf,
                             paste("Action:", node_data$action),
                             paste(node_data$split_variable, "\n<=", round(node_data$split_value, 2)))
@@ -95,14 +95,14 @@ margot_plot_decision_tree <- function(batch_model_output, model_name, x_padding 
   formatted_model_name <- stringr::str_replace_all(formatted_model_name, "_", " ")
   formatted_model_name <- tools::toTitleCase(formatted_model_name)
 
-  # set title if not provided
+  # Set title if not provided
   if (is.null(title)) {
     title <- formatted_model_name
   } else if (title == "none") {
     title <- NULL
   }
 
-  # create the plot
+  # Create the plot
   p <- ggplot() +
     geom_segment(data = edge_data, aes(x = x, y = y, xend = xend, yend = yend)) +  # No arrowheads
     geom_label(data = node_data, aes(x = x, y = y, label = label),
@@ -124,11 +124,3 @@ margot_plot_decision_tree <- function(batch_model_output, model_name, x_padding 
 
   return(p)
 }
-
-# #eExample usage
-# final_plot <- margot_plot_decision_tree(
-#   result_psychological_well_being,
-#   "model_t2_hlth_fatigue_z",
-#   # title = "none"  # specify "none" for no title
-# )
-# final_plot
