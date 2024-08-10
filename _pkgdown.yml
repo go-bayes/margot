@@ -74,6 +74,7 @@ reference:
     - margot_plot
     - margot_plot_rate
     - margot_plot_qini
+    - margot_plot_decision_tree
     - margot_plot_policy_tree
 
   - title: "Utility functions"

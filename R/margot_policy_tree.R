@@ -11,7 +11,7 @@
 #'   \item{policy_tree_plot}{A ggplot object representing the policy tree visualization.}
 #'   \item{policy_tree_interpretation}{A string containing the interpretation of the policy tree.}
 #'   \item{qini_plot}{A ggplot object representing the Qini curve.}
-#'   \item{decision_tree_visualisation}{A grViz object (DiagrammeR) representing the decision tree structure.}
+#'   \item{decision_tree_visualisation}{A ggplot object representing the decision tree structure.}
 #'
 #' @examples
 #' \dontrun{
@@ -24,6 +24,7 @@
 #'
 #' @import DiagrammeR
 #' @import policytree
+#' @import janitor
 #' @importFrom ggplot2 ggplot
 #' @export
 margot_policy_tree <- function(mc_test, model_name, ...) {
@@ -31,11 +32,9 @@ margot_policy_tree <- function(mc_test, model_name, ...) {
   if (!is.list(mc_test) || is.null(mc_test$results)) {
     stop("mc_test must be a list containing a 'results' element.")
   }
-
   if (!is.character(model_name) || length(model_name) != 1) {
     stop("model_name must be a single character string.")
   }
-
   if (is.null(mc_test$results[[model_name]])) {
     stop(paste("Model", model_name, "not found in mc_test results."))
   }
@@ -66,7 +65,7 @@ margot_policy_tree <- function(mc_test, model_name, ...) {
 
   # Generate decision tree visualization
   tryCatch({
-    decision_tree_visualisation <- plot(mc_test$results[[model_name]]$policy_tree_depth_2)
+    decision_tree_visualisation <- margot_plot_decision_tree(mc_test, model_name)
   }, error = function(e) {
     warning(paste("Error in generating decision tree visualization:", e$message))
     decision_tree_visualisation <- NULL

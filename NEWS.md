@@ -1,3 +1,13 @@
+# [2024-08-10] margot 0.2.0.8
+
+## New
+
+* `margot_plot_decision_tree` creates policy tree decision rule graphs in a ggplot2 format, so that the graph may be combined `margot_plot_policy` to more effectively communicate decision rules to policy makers. 
+
+## Improved
+
+* Enhanced `margot_plot_policy` so that it produces a `margot_plot_decision_tree` graph, as well as its previous outputs.
+
 # [2024-08-9] margot 0.2.0.7
 
 ## New

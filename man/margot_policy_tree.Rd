@@ -18,7 +18,7 @@ A list containing four elements:
   \item{policy_tree_plot}{A ggplot object representing the policy tree visualization.}
   \item{policy_tree_interpretation}{A string containing the interpretation of the policy tree.}
   \item{qini_plot}{A ggplot object representing the Qini curve.}
-  \item{decision_tree_visualisation}{A grViz object (DiagrammeR) representing the decision tree structure.}
+  \item{decision_tree_visualisation}{A ggplot object representing the decision tree structure.}
 }
 \description{
 This function provides a comprehensive analysis of policy tree results from a causal forest or multi-arm causal forest model.
