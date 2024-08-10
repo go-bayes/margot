@@ -45,7 +45,8 @@ Imports:
     ggokabeito,
     patchwork,
     labelled, 
-    purrr
+    purrr,
+    janitor
 RoxygenNote: 7.3.2
 VignetteBuilder: quarto
 Suggests:
