@@ -38,7 +38,7 @@
 #' @export
 margot_plot_policy_tree <- function(mc_test, model_name,
                                     color_scale = ggokabeito::scale_colour_okabe_ito(),
-                                    point_alpha = 0.25,
+                                    point_alpha = 0.5,
                                     theme_function = theme_classic,
                                     title_size = 14,
                                     subtitle_size = 12,
