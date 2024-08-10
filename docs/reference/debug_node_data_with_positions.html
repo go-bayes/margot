@@ -44,7 +44,7 @@ policy tree and computes x and y coordinates for each node.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">debug_node_data_with_positions</span><span class="op">(</span><span class="va">policy_tree</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">debug_node_data_with_positions</span><span class="op">(</span><span class="va">policy_tree</span>, node_distance_adjustment <span class="op">=</span> <span class="op">-</span><span class="fl">1.5</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -53,6 +53,10 @@ policy tree and computes x and y coordinates for each node.</p>
 
 <dl><dt id="arg-policy-tree">policy_tree<a class="anchor" aria-label="anchor" href="#arg-policy-tree"></a></dt>
 <dd><p>A policy tree object, typically obtained from a causal forest model.</p></dd>
+
+
+<dt id="arg-node-distance-adjustment">node_distance_adjustment<a class="anchor" aria-label="anchor" href="#arg-node-distance-adjustment"></a></dt>
+<dd><p>The adjustment for spacing between nodes. Default is -1.5.</p></dd>
 
 </dl></div>
     <div class="section level2">

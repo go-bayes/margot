@@ -8,13 +8,13 @@ margot_plot_decision_tree(
   batch_model_output,
   model_name,
   x_padding = 0.25,
-  y_padding = 0.05,
+  y_padding = 0.25,
   border_size = 1,
   edge_label_hjust_true = 1.5,
   edge_label_hjust_false = -0.5,
-  span_ratio = 2,
-  text_size = 4,
-  node_distance_adjustment = 0.3,
+  span_ratio = 0.35,
+  text_size = 5,
+  node_distance_adjustment = -1.5,
   leaf_fill = "lightgreen",
   non_leaf_fill = "lightyellow",
   title = NULL
@@ -29,7 +29,7 @@ batch_model_output$results.}
 
 \item{x_padding}{The amount of padding to add to the x-axis. Default is 0.25.}
 
-\item{y_padding}{The amount of padding to add to the y-axis. Default is 0.05.}
+\item{y_padding}{The amount of padding to add to the y-axis. Default is 0.25.}
 
 \item{border_size}{The size of the border around node labels. Default is 1.}
 
@@ -39,12 +39,12 @@ Default is 1.5.}
 \item{edge_label_hjust_false}{Horizontal justification for "False" edge labels.
 Default is -0.5.}
 
-\item{span_ratio}{The aspect ratio of the plot. Default is 2.}
+\item{span_ratio}{The aspect ratio of the plot. Default is 0.35.}
 
-\item{text_size}{The size of the text in the node labels. Default is 4.}
+\item{text_size}{The size of the text in the node labels. Default is 5.}
 
-\item{node_distance_adjustment}{The adjustment for spacing between nodes 5 and 6.
-Default is 0.3.}
+\item{node_distance_adjustment}{The adjustment for spacing between nodes.
+Default is -1.5.}
 
 \item{leaf_fill}{The fill color for leaf nodes. Default is "lightgreen".}
 

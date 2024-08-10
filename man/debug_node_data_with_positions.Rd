@@ -4,10 +4,12 @@
 \alias{debug_node_data_with_positions}
 \title{Calculate Node Data and Positions for Policy Tree Visualisation}
 \usage{
-debug_node_data_with_positions(policy_tree)
+debug_node_data_with_positions(policy_tree, node_distance_adjustment = -1.5)
 }
 \arguments{
 \item{policy_tree}{A policy tree object, typically obtained from a causal forest model.}
+
+\item{node_distance_adjustment}{The adjustment for spacing between nodes. Default is -1.5.}
 }
 \value{
 A data frame containing information about each node in the policy tree,

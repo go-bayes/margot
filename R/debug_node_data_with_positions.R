@@ -5,13 +5,14 @@
 #' policy tree and computes x and y coordinates for each node.
 #'
 #' @param policy_tree A policy tree object, typically obtained from a causal forest model.
+#' @param node_distance_adjustment The adjustment for spacing between nodes. Default is -1.5.
 #'
 #' @return A data frame containing information about each node in the policy tree,
 #'   including its ID, whether it's a leaf node, split variable, split value, action,
 #'   left and right child node IDs, and x and y coordinates for visualization.
 #'
 #' @keywords internal
-debug_node_data_with_positions <- function(policy_tree) {
+debug_node_data_with_positions <- function(policy_tree, node_distance_adjustment = -1.5) {
   nodes <- policy_tree$nodes
   columns <- policy_tree$columns
   action_names <- policy_tree$action.names
@@ -49,11 +50,20 @@ debug_node_data_with_positions <- function(policy_tree) {
       node_data$y[i] <- 1
     } else {
       parent <- which(node_data$left_child == i | node_data$right_child == i)
-      node_data$y[i] <- node_data$y[parent] - 1/(max_depth + 1)
-      if (node_data$left_child[parent] == i) {
-        node_data$x[i] <- node_data$x[parent] - 1/(2^node_data$y[i])
+      node_data$y[i] <- node_data$y[parent] - 1/(max_depth)
+
+      # Keep outer edges at the same angle
+      if (node_data$y[i] == min(node_data$y)) {
+        x_offset <- 0.5 / (2^(max_depth - 1))
       } else {
-        node_data$x[i] <- node_data$x[parent] + 1/(2^node_data$y[i])
+        # Adjust inner nodes
+        x_offset <- 0.5 / (2^(max_depth - 1)) * node_distance_adjustment
+      }
+
+      if (node_data$left_child[parent] == i) {
+        node_data$x[i] <- node_data$x[parent] - x_offset
+      } else {
+        node_data$x[i] <- node_data$x[parent] + x_offset
       }
     }
   }
