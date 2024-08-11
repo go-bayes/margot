@@ -7,7 +7,7 @@
 margot_plot_policy_tree(
   mc_test,
   model_name,
-  color_scale = ggokabeito::scale_colour_okabe_ito(),
+  color_scale = NULL,
   point_alpha = 0.5,
   theme_function = theme_classic,
   title_size = 14,
@@ -32,7 +32,8 @@ margot_plot_policy_tree(
 
 \item{model_name}{A string specifying which model's results to plot.}
 
-\item{color_scale}{A ggplot2 color scale. Default is ggokabeito::scale_colour_okabe_ito().}
+\item{color_scale}{An optional ggplot2 color scale. If NULL (default), a color scale based on the Okabe-Ito palette is created,
+with blue for the first level, orange for the second, and subsequent colors for additional levels.}
 
 \item{point_alpha}{Numeric value between 0 and 1 for point transparency. Default is 0.5.}
 
@@ -64,7 +65,7 @@ margot_plot_policy_tree(
 
 \item{custom_action_names}{Optional vector of custom names for the actions. Must match the number of actions in the policy tree.}
 
-\item{legend_position}{String specifying the position of the legend. Can be "top", "bottom", "left", or "right". Default is "top".}
+\item{legend_position}{String specifying the position of the legend. Can be "top", "bottom", "left", or "right". Default is "bottom".}
 
 \item{plot_selection}{String specifying which plots to display: "both", "p1", or "p2". Default is "both".}
 }
@@ -78,7 +79,7 @@ with points colored by the predicted optimal treatment.
 }
 \examples{
 \dontrun{
-# Default (both plots, legend at top)
+# Default (both plots, legend at bottom)
 plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z")
 
 # Only the first plot (p1)
@@ -86,6 +87,10 @@ plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", plot_selection = "
 
 # Both plots with legend on the right
 plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", legend_position = "right")
+
+# Custom color scale
+custom_scale <- scale_colour_manual(values = c("red", "green", "blue"))
+plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", color_scale = custom_scale)
 }
 
 }
