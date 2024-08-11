@@ -11,7 +11,7 @@
 #'   \item{policy_tree_plot}{A ggplot object representing the policy tree visualization.}
 #'   \item{policy_tree_interpretation}{A string containing the interpretation of the policy tree.}
 #'   \item{qini_plot}{A ggplot object representing the Qini curve.}
-#'   \item{decision_tree_visualization}{A ggplot object representing the decision tree structure.}
+#'   \item{decision_tree_visualisation}{A ggplot object representing the decision tree structure.}
 #'
 #' @examples
 #' \dontrun{
@@ -19,7 +19,7 @@
 #' print(results$policy_tree_plot)
 #' cat(results$policy_tree_interpretation)
 #' print(results$qini_plot)
-#' print(results$decision_tree_visualization)
+#' print(results$decision_tree_visualisation)
 #' }
 #'
 #' @import DiagrammeR
@@ -73,7 +73,7 @@ margot_policy_tree <- function(mc_test, model_name, ...) {
   })
 
   # Generate decision tree visualization
-  decision_tree_visualization <- tryCatch({
+  decision_tree_visualisation <- tryCatch({
     margot_plot_decision_tree(mc_test, model_name)
   }, error = function(e) {
     warning(paste("Error in generating decision tree visualization:", e$message))
@@ -85,7 +85,7 @@ margot_policy_tree <- function(mc_test, model_name, ...) {
     policy_tree_plot = policy_tree_plot,
     policy_tree_interpretation = policy_tree_interpretation,
     qini_plot = qini_plot,
-    decision_tree_visualization = decision_tree_visualization
+    decision_tree_visualisation = decision_tree_visualisation
   )
 
   return(results)
