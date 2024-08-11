@@ -14,11 +14,12 @@ margot_policy_tree(mc_test, model_name, ...)
 \item{...}{Additional arguments passed to margot_plot_policy_tree, margot_interpret_policy_tree, and margot_plot_decision_tree functions.}
 }
 \value{
-A list containing four elements:
+A list containing five elements:
   \item{policy_tree_plot}{A ggplot object representing the policy tree visualization.}
   \item{policy_tree_interpretation}{A string containing the interpretation of the policy tree.}
   \item{qini_plot}{A ggplot object representing the Qini curve.}
   \item{decision_tree_visualisation}{A ggplot object representing the decision tree structure.}
+  \item{policy_combo_plot}{A ggplot object representing the policy combo visualisation.}
 }
 \description{
 This function provides a comprehensive analysis of policy tree results from a causal forest or multi-arm causal forest model.

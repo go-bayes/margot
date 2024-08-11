@@ -12,14 +12,13 @@
 #' @param x_padding The amount of padding to add to the x-axis. Default is 0.25.
 #' @param y_padding The amount of padding to add to the y-axis. Default is 0.25.
 #' @param border_size The size of the border around node labels. Default is 1.
-#' @param edge_label_offset The offset for edge labels from the branches. Default is 0.1.
+#' @param edge_label_offset The offset for edge labels from the branches. Default is 0.05.
 #' @param span_ratio The aspect ratio of the plot. Default is 0.5.
 #' @param text_size The size of the text in the node labels. Default is 5.
-#' @param leaf_fill The fill color for leaf nodes. Default is "darkslategray1".
 #' @param non_leaf_fill The fill color for non-leaf nodes. Default is "lightyellow".
 #' @param title The title for the plot. Default is NULL.
-#' @param node_distance_adjustment The adjustment for spacing between nodes.
-#'   Default is -1.5.
+#' @param leaf_palette A vector of colors to be used for leaf nodes. If NULL (default),
+#'   the function will use the Okabe-Ito color palette.
 #'
 #' @return A ggplot object representing the decision tree for the specified model.
 #'
@@ -35,6 +34,10 @@
 #'
 #' # Or if you have a policy tree object directly
 #' margot_plot_decision_tree(policy_tree_obj)
+#'
+#' # Using a custom color palette for leaf nodes
+#' custom_palette <- c("#FF0000", "#00FF00", "#0000FF")
+#' margot_plot_decision_tree(result_object, "model_name", leaf_palette = custom_palette)
 #' }
 #'
 #' @export
@@ -42,13 +45,12 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
                                       x_padding = 0.25,
                                       y_padding = 0.25,
                                       border_size = 1,
-                                      edge_label_offset = 0.1,
-                                      span_ratio = 0.5,
+                                      edge_label_offset = 0.02,
+                                      span_ratio = 0.25,
                                       text_size = 5,
-                                      leaf_fill = "darkslategray1",
                                       non_leaf_fill = "lightyellow",
                                       title = NULL,
-                                      node_distance_adjustment = -1.5) {
+                                      leaf_palette = NULL) {
 
   # Determine the correct policy tree object
   if (!is.null(model_name) && "results" %in% names(result_object)) {
@@ -59,8 +61,7 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
     stop("Invalid input. Please provide either a results object with a model name, or a policy tree object.")
   }
 
-  # Internal function to calculate node positions
-  calculate_node_positions <- function(policy_tree, node_distance_adjustment) {
+  calculate_node_positions <- function(policy_tree) {
     nodes <- policy_tree$nodes
     columns <- policy_tree$columns
     action_names <- policy_tree$action.names
@@ -75,6 +76,7 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
       right_child = integer(length(nodes)),
       x = numeric(length(nodes)),
       y = numeric(length(nodes)),
+      label = character(length(nodes)),
       stringsAsFactors = FALSE
     )
 
@@ -86,6 +88,13 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
       node_data$action[i] <- if (!is.null(nodes[[i]]$action)) as.character(action_names[nodes[[i]]$action]) else NA_character_
       node_data$left_child[i] <- if (!is.null(nodes[[i]]$left_child)) as.integer(nodes[[i]]$left_child) else NA_integer_
       node_data$right_child[i] <- if (!is.null(nodes[[i]]$right_child)) as.integer(nodes[[i]]$right_child) else NA_integer_
+
+      # Create label
+      if (node_data$is_leaf[i]) {
+        node_data$label[i] <- paste("Action:", node_data$action[i])
+      } else {
+        node_data$label[i] <- paste(node_data$split_variable[i], "\n<=", round(node_data$split_value[i], 2))
+      }
     }
 
     max_depth <- policy_tree$depth
@@ -96,11 +105,7 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
       } else {
         parent <- which(node_data$left_child == i | node_data$right_child == i)
         node_data$y[i] <- node_data$y[parent] - 1/(max_depth)
-        x_offset <- if (node_data$y[i] == min(node_data$y)) {
-          0.5 / (2^(max_depth - 1))
-        } else {
-          0.5 / (2^(max_depth - 1)) * node_distance_adjustment
-        }
+        x_offset <- 0.5 / (2^(max_depth - node_data$y[i]))
         node_data$x[i] <- if (node_data$left_child[parent] == i) {
           node_data$x[parent] - x_offset
         } else {
@@ -131,8 +136,7 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
   print_policy_tree(policy_tree_obj)
 
   # Calculate node positions
-  node_data <- calculate_node_positions(policy_tree_obj, node_distance_adjustment)
-
+  node_data <- calculate_node_positions(policy_tree_obj)
 
   # Create edge data
   edge_data <- data.frame(
@@ -154,7 +158,7 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
         y = node_data$y[i],
         xend = node_data$x[left_child],
         yend = node_data$y[left_child],
-        edge_label = if(i == 1) "False" else "True",  # Changed this line
+        edge_label = "True",
         hjust = 1,
         vjust = 0.5,
         angle = 0
@@ -167,13 +171,14 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
         y = node_data$y[i],
         xend = node_data$x[right_child],
         yend = node_data$y[right_child],
-        edge_label = if(i == 1) "True" else "False",  # Changed this line
+        edge_label = "False",
         hjust = 0,
         vjust = 0.5,
         angle = 0
       ))
     }
   }
+
   # Adjust label positions
   edge_data$label_x <- edge_data$x + (edge_data$xend - edge_data$x) / 2
   edge_data$label_y <- edge_data$y + (edge_data$yend - edge_data$y) / 2
@@ -182,25 +187,15 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
   edge_data$label_x <- edge_data$label_x +
     edge_label_offset * sign(edge_data$xend - edge_data$x)
 
-
-  # Create labels for nodes
-  node_data$label <- ifelse(node_data$is_leaf,
-                            paste("Action:", node_data$action),
-                            paste(node_data$split_variable, "\n<=", round(node_data$split_value, 2)))
-
-  # Calculate aspect ratio based on the span_ratio
-  y_range <- max(node_data$y) - min(node_data$y)
-  x_range <- max(node_data$x) - min(node_data$x)
-  aspect_ratio <- (x_range / y_range) * span_ratio
-
-
-  # Get Okabe-Ito color palette
-  okabe_ito_palette <- ggokabeito::palette_okabe_ito()
+  # Use provided palette or default to Okabe-Ito
+  if (is.null(leaf_palette)) {
+    leaf_palette <- ggokabeito::palette_okabe_ito()
+  }
 
   # Create a mapping of actions to colors
   unique_actions <- unique(node_data$action[!is.na(node_data$action)])
   action_colors <- setNames(
-    rep_len(okabe_ito_palette, length(unique_actions)),
+    rep_len(leaf_palette, length(unique_actions)),
     unique_actions
   )
 
@@ -211,13 +206,25 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
     non_leaf_fill
   )
 
+  # Calculate aspect ratio based on the span_ratio
+  y_range <- max(node_data$y) - min(node_data$y)
+  x_range <- max(node_data$x) - min(node_data$x)
+  aspect_ratio <- (x_range / y_range) * span_ratio
 
+  if (is.null(title) && !is.null(model_name)) {
+    formatted_model_name <- janitor::make_clean_names(model_name)
+    formatted_model_name <- stringr::str_replace_all(formatted_model_name, "_", " ")
+    formatted_model_name <- tools::toTitleCase(formatted_model_name)
+    title <- formatted_model_name
+  } else if (identical(title, "none")) {
+    title <- NULL
+  }
 
   p <- ggplot() +
     geom_segment(data = edge_data, aes(x = x, y = y, xend = xend, yend = yend)) +
     geom_label(data = node_data, aes(x = x, y = y, label = label),
                size = text_size,
-               fill = ifelse(node_data$is_leaf, leaf_fill, non_leaf_fill),
+               fill = node_data$fill_color,
                label.padding = unit(border_size, "lines")) +
     geom_text(data = edge_data,
               aes(x = label_x, y = label_y, label = edge_label,
@@ -235,7 +242,7 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
 
   # Run basic unit test
   test_result <- tryCatch({
-    testthat::test_that("Basic tree structure test", {
+    testthat::test_that("Tree structure and plot alignment test", {
       # Test that root node exists
       expect_true("label" %in% names(node_data))
       expect_equal(nrow(node_data[node_data$y == max(node_data$y),]), 1)
@@ -245,6 +252,15 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
 
       # Test that edge labels are correct
       expect_true(all(edge_data$edge_label %in% c("True", "False")))
+
+      # Test the tree structure
+      root_node <- node_data[node_data$y == max(node_data$y),]
+      left_child <- node_data[node_data$id == root_node$left_child,]
+      right_child <- node_data[node_data$id == root_node$right_child,]
+
+      expect_true(grepl("t0_log_hours_housework_z", root_node$label))
+      expect_true(grepl("t0_hlth_bmi_z", left_child$label))
+      expect_true(grepl("t0_log_hours_exercise_z", right_child$label))
     })
     "All tests passed."
   }, error = function(e) {

@@ -55,7 +55,6 @@ A list containing:
       \item{top_vars}{Top variables by importance}
       \item{blp_top}{Best linear projection results for top variables}
       \item{policy_tree_depth_2}{Policy tree of depth 2, trained on train_proportion of non-missing data}
-      \item{split_variables}{Names of variables used for splits in policy_tree_depth_2}
       \item{plot_data}{Data prepared for policy tree visualization, using the remaining proportion of non-missing data}
       \item{qini_data}{Data frame containing Qini curve data for plotting}
     }

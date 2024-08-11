@@ -28,7 +28,6 @@
 #'       \item{variable_importance}{Data frame of variable importance rankings}
 #'       \item{dr_scores}{Double robust scores}
 #'       \item{policy_tree_depth_2}{Policy tree of depth 2, trained on train_proportion of non-missing data}
-#'       \item{split_variables}{Names of variables used for splits in policy_tree_depth_2}
 #'       \item{plot_data}{Data prepared for policy tree visualization, using the remaining proportion of non-missing data}
 #'       \item{qini_data}{Data frame containing Qini curve data for plotting (if compute_qini is TRUE)}
 #'     }
@@ -139,8 +138,8 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
       results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
 
       # Extract split variable names
-      split_vars <- sapply(1:3, function(i) colnames(covariates)[policy_tree_model$nodes[[i]]$split_variable])
-      results[[model_name]]$split_variables <- split_vars
+      # split_vars <- sapply(1:3, function(i) colnames(covariates)[policy_tree_model$nodes[[i]]$split_variable])
+      # results[[model_name]]$split_variables <- split_vars  # not used
 
       # Prepare data for plotting
       test_indices <- setdiff(not_missing, train_indices)
@@ -149,8 +148,8 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
 
       results[[model_name]]$plot_data <- list(
         X_test = X_test,
-        predictions = predictions,
-        split_variables = split_vars
+        predictions = predictions#,
+       # split_variables = split_vars
       )
 
       # Compute qini curves if requested

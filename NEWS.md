@@ -1,9 +1,28 @@
+
+# [2024-08-11] margot 0.2.1.0
+
+## New
+
+* `margot_plot_policy_combo`: creates a combination plot for `margot_plot_decision_tree` and `margot_plot_policy_tree()`, easing the burden of interpretation. 
+
+
+## Improved
+
+* `margot_plot_decision_tree`: policy action leafs different colours (user may specify pallette). Defaults to `ggokabeito::scale_fill_okabe_ito()` to match `margot_plot_policy_tree()`
+*  `margot_policy_tree` outputs a `margot_plot_policy_combo` inaddition to the other ouputs
+
+## Fixed
+
+* removed `split_vars` from the `margot_causal_forest` and `margot_mulit_arm_causal_forest`
+* `margot_plot_decision_tree` correct tree arrangement
+
 # [2024-08-11] margot 0.2.0.9
 
 ## Fixed
 
 * `margot_plot_policy_tree` correctly renders decision tree, allows for individual plots for decision leafs, and collects guides.
 * error in rendering of `margot_plot_decision_tree`, fixed: function now includes internal tests.
+* removed `split_vars` from the `margot_causal_forest` and `margot_mulit_arm_causal_forest`
 
 ## Removed
 
@@ -59,9 +78,11 @@
 # [2024-08-7] margot 0.2.0.4
 
 ## New
+
 * `margot_process_longitudinal_data` orders correctly for `lmtp` models by updating the censoring column `not_lost` such that it handles missing responses as well as attrition. The function additionally automatically dummy codes ordinal variables and standardises continuous variables. Presently it is only implemented for three waves, but in the future it will be expanded to handle arbitrarily many. 
 
 ## Fixed
+
 * Functions `compute_qini_curves` and `extract_qini_data` to work with binary interventions
 
 # [2024-08-7] margot 0.2.0.3

@@ -10,13 +10,12 @@ margot_plot_decision_tree(
   x_padding = 0.25,
   y_padding = 0.25,
   border_size = 1,
-  edge_label_offset = 0.1,
-  span_ratio = 0.5,
+  edge_label_offset = 0.02,
+  span_ratio = 0.25,
   text_size = 5,
-  leaf_fill = "darkslategray1",
   non_leaf_fill = "lightyellow",
   title = NULL,
-  node_distance_adjustment = -1.5
+  leaf_palette = NULL
 )
 }
 \arguments{
@@ -34,20 +33,18 @@ the function will use that object.}
 
 \item{border_size}{The size of the border around node labels. Default is 1.}
 
-\item{edge_label_offset}{The offset for edge labels from the branches. Default is 0.1.}
+\item{edge_label_offset}{The offset for edge labels from the branches. Default is 0.05.}
 
 \item{span_ratio}{The aspect ratio of the plot. Default is 0.5.}
 
 \item{text_size}{The size of the text in the node labels. Default is 5.}
 
-\item{leaf_fill}{The fill color for leaf nodes. Default is "darkslategray1".}
-
 \item{non_leaf_fill}{The fill color for non-leaf nodes. Default is "lightyellow".}
 
 \item{title}{The title for the plot. Default is NULL.}
 
-\item{node_distance_adjustment}{The adjustment for spacing between nodes.
-Default is -1.5.}
+\item{leaf_palette}{A vector of colors to be used for leaf nodes. If NULL (default),
+the function will use the Okabe-Ito color palette.}
 }
 \value{
 A ggplot object representing the decision tree for the specified model.
@@ -63,6 +60,10 @@ margot_plot_decision_tree(result_object, "model_name")
 
 # Or if you have a policy tree object directly
 margot_plot_decision_tree(policy_tree_obj)
+
+# Using a custom color palette for leaf nodes
+custom_palette <- c("#FF0000", "#00FF00", "#0000FF")
+margot_plot_decision_tree(result_object, "model_name", leaf_palette = custom_palette)
 }
 
 }

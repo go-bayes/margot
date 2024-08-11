@@ -32,7 +32,6 @@
 #'       \item{top_vars}{Top variables by importance}
 #'       \item{blp_top}{Best linear projection results for top variables}
 #'       \item{policy_tree_depth_2}{Policy tree of depth 2, trained on train_proportion of non-missing data}
-#'       \item{split_variables}{Names of variables used for splits in policy_tree_depth_2}
 #'       \item{plot_data}{Data prepared for policy tree visualization, using the remaining proportion of non-missing data}
 #'       \item{qini_data}{Data frame containing Qini curve data for plotting}
 #'     }
@@ -113,9 +112,9 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
       )
       results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
 
-      # Extract split variable names
-      split_vars <- sapply(1:3, function(i) colnames(covariates)[policy_tree_model$nodes[[i]]$split_variable])
-      results[[model_name]]$split_variables <- split_vars
+      # Extract split variable names # wrong, not used
+      #split_vars <- sapply(1:3, function(i) colnames(covariates)[policy_tree_model_2$nodes[[i]]$split_variable])
+      #results[[model_name]]$split_variables <- split_vars
 
       # Prepare data for plotting
       test_indices <- setdiff(not_missing, train_indices)
@@ -124,8 +123,8 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
 
       results[[model_name]]$plot_data <- list(
         X_test = X_test,
-        predictions = predictions,
-        split_variables = split_vars
+        predictions = predictions#, not used
+      #  split_variables = split_vars
       )
 
       # Compute qini_data
