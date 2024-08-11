@@ -86,21 +86,34 @@ margot_plot_policy_tree <- function(mc_test, model_name,
     action_names <- custom_action_names
   }
 
+  # Extract policy tree object
+  policy_tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
+
+  if (is.null(policy_tree_obj)) {
+    stop("Policy tree object not found for the specified model name.")
+  }
+
+  # Extract action names and number of actions from the policy tree object
+  action_names <- policy_tree_obj$action.names
+  n_actions <- policy_tree_obj$n.actions
+
+  # If custom action names are provided, use them instead
+  if (!is.null(custom_action_names)) {
+    if (length(custom_action_names) != n_actions) {
+      stop("The number of custom action names must match the number of actions in the policy tree.")
+    }
+    action_names <- custom_action_names
+  }
+
   # Define the Okabe-Ito palette, starting with blue and orange
   okabe_ito_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000")
 
-
-  # If color_scale is not provided, create it based on the number of action_names
+  # If color_scale is not provided, create it based on the number of actions
   if (is.null(color_scale)) {
-    num_colors_needed <- length(action_names)
-    colors_to_use <- okabe_ito_palette[1:min(num_colors_needed, length(okabe_ito_palette))]
+    # Create a named vector of colors
+    color_vector <- setNames(okabe_ito_palette[1:n_actions], action_names)
 
-    # If we need more colors than in the palette, recycle them
-    if (num_colors_needed > length(okabe_ito_palette)) {
-      colors_to_use <- rep_len(colors_to_use, num_colors_needed)
-    }
-
-    color_scale <- scale_colour_manual(values = colors_to_use)
+    color_scale <- scale_colour_manual(values = color_vector)
   }
 
 
@@ -216,9 +229,8 @@ margot_plot_policy_tree <- function(mc_test, model_name,
   # Return the combined plot
   return(combined_plot)
 }
-
 # margot_plot_policy_tree <- function(mc_test, model_name,
-#                                     color_scale = ggokabeito::scale_colour_okabe_ito(),
+#                                     color_scale = NULL,  # We'll set this inside the function
 #                                     point_alpha = 0.5,
 #                                     theme_function = theme_classic,
 #                                     title_size = 14,
@@ -254,6 +266,24 @@ margot_plot_policy_tree <- function(mc_test, model_name,
 #     }
 #     action_names <- custom_action_names
 #   }
+#
+#   # Define the Okabe-Ito palette, starting with blue and orange
+#   okabe_ito_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000")
+#
+#
+#   # If color_scale is not provided, create it based on the number of action_names
+#   if (is.null(color_scale)) {
+#     num_colors_needed <- length(action_names)
+#     colors_to_use <- okabe_ito_palette[1:min(num_colors_needed, length(okabe_ito_palette))]
+#
+#     # If we need more colors than in the palette, recycle them
+#     if (num_colors_needed > length(okabe_ito_palette)) {
+#       colors_to_use <- rep_len(colors_to_use, num_colors_needed)
+#     }
+#
+#     color_scale <- scale_colour_manual(values = colors_to_use)
+#   }
+#
 #
 #   # Extract the plot data for the specified model
 #   plot_data <- mc_test$results[[model_name]]$plot_data
