@@ -103,7 +103,6 @@ reference:
     contents:
     - create_tau_hat_plot
     - compute_qini_curves
-    - debug_node_data_with_positions
     - extract_qini_data
     - group_results_by_comparison
     - tab_engine_marginal

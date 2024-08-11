@@ -9,7 +9,7 @@ results of a policy tree model."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.8</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,19 +42,18 @@ results of a policy tree model.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_plot_decision_tree</span><span class="op">(</span></span>
-<span>  <span class="va">batch_model_output</span>,</span>
-<span>  <span class="va">model_name</span>,</span>
+<span>  <span class="va">result_object</span>,</span>
+<span>  model_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  x_padding <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  y_padding <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  border_size <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  edge_label_hjust_true <span class="op">=</span> <span class="fl">1.5</span>,</span>
-<span>  edge_label_hjust_false <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span>,</span>
-<span>  span_ratio <span class="op">=</span> <span class="fl">0.35</span>,</span>
+<span>  edge_label_offset <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  span_ratio <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  text_size <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  node_distance_adjustment <span class="op">=</span> <span class="op">-</span><span class="fl">1.5</span>,</span>
-<span>  leaf_fill <span class="op">=</span> <span class="st">"lightgreen"</span>,</span>
+<span>  leaf_fill <span class="op">=</span> <span class="st">"darkslategray1"</span>,</span>
 <span>  non_leaf_fill <span class="op">=</span> <span class="st">"lightyellow"</span>,</span>
-<span>  title <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  node_distance_adjustment <span class="op">=</span> <span class="op">-</span><span class="fl">1.5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -62,14 +61,16 @@ results of a policy tree model.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-batch-model-output">batch_model_output<a class="anchor" aria-label="anchor" href="#arg-batch-model-output"></a></dt>
-<dd><p>A list containing the results from a policy tree model.</p></dd>
+<dl><dt id="arg-result-object">result_object<a class="anchor" aria-label="anchor" href="#arg-result-object"></a></dt>
+<dd><p>A list containing the results from a policy tree model,
+or a policy tree object directly.</p></dd>
 
 
 <dt id="arg-model-name">model_name<a class="anchor" aria-label="anchor" href="#arg-model-name"></a></dt>
 <dd><p>A character string specifying the name of the model within
-the batch_model_output to plot. This should match one of the model names in
-batch_model_output$results.</p></dd>
+the result_object to plot. This should match one of the model names in
+result_object$results. If NULL and a policy tree object is provided directly,
+the function will use that object.</p></dd>
 
 
 <dt id="arg-x-padding">x_padding<a class="anchor" aria-label="anchor" href="#arg-x-padding"></a></dt>
@@ -84,31 +85,20 @@ batch_model_output$results.</p></dd>
 <dd><p>The size of the border around node labels. Default is 1.</p></dd>
 
 
-<dt id="arg-edge-label-hjust-true">edge_label_hjust_true<a class="anchor" aria-label="anchor" href="#arg-edge-label-hjust-true"></a></dt>
-<dd><p>Horizontal justification for "True" edge labels.
-Default is 1.5.</p></dd>
-
-
-<dt id="arg-edge-label-hjust-false">edge_label_hjust_false<a class="anchor" aria-label="anchor" href="#arg-edge-label-hjust-false"></a></dt>
-<dd><p>Horizontal justification for "False" edge labels.
-Default is -0.5.</p></dd>
+<dt id="arg-edge-label-offset">edge_label_offset<a class="anchor" aria-label="anchor" href="#arg-edge-label-offset"></a></dt>
+<dd><p>The offset for edge labels from the branches. Default is 0.1.</p></dd>
 
 
 <dt id="arg-span-ratio">span_ratio<a class="anchor" aria-label="anchor" href="#arg-span-ratio"></a></dt>
-<dd><p>The aspect ratio of the plot. Default is 0.35.</p></dd>
+<dd><p>The aspect ratio of the plot. Default is 0.5.</p></dd>
 
 
 <dt id="arg-text-size">text_size<a class="anchor" aria-label="anchor" href="#arg-text-size"></a></dt>
 <dd><p>The size of the text in the node labels. Default is 5.</p></dd>
 
 
-<dt id="arg-node-distance-adjustment">node_distance_adjustment<a class="anchor" aria-label="anchor" href="#arg-node-distance-adjustment"></a></dt>
-<dd><p>The adjustment for spacing between nodes.
-Default is -1.5.</p></dd>
-
-
 <dt id="arg-leaf-fill">leaf_fill<a class="anchor" aria-label="anchor" href="#arg-leaf-fill"></a></dt>
-<dd><p>The fill color for leaf nodes. Default is "lightgreen".</p></dd>
+<dd><p>The fill color for leaf nodes. Default is "darkslategray1".</p></dd>
 
 
 <dt id="arg-non-leaf-fill">non_leaf_fill<a class="anchor" aria-label="anchor" href="#arg-non-leaf-fill"></a></dt>
@@ -116,7 +106,12 @@ Default is -1.5.</p></dd>
 
 
 <dt id="arg-title">title<a class="anchor" aria-label="anchor" href="#arg-title"></a></dt>
-<dd><p>The title for the plot. Set to "none" for no title. Default is NULL.</p></dd>
+<dd><p>The title for the plot. Default is NULL.</p></dd>
+
+
+<dt id="arg-node-distance-adjustment">node_distance_adjustment<a class="anchor" aria-label="anchor" href="#arg-node-distance-adjustment"></a></dt>
+<dd><p>The adjustment for spacing between nodes.
+Default is -1.5.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -127,8 +122,11 @@ Default is -1.5.</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Assuming result_psychological_well_being is the batch model output</span></span></span>
-<span class="r-in"><span><span class="fu">margot_plot_decision_tree</span><span class="op">(</span><span class="va">result_psychological_well_being</span>, <span class="st">"model_t2_hlth_fatigue_z"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Assuming result_object is the policy tree model output</span></span></span>
+<span class="r-in"><span><span class="fu">margot_plot_decision_tree</span><span class="op">(</span><span class="va">result_object</span>, <span class="st">"model_name"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Or if you have a policy tree object directly</span></span></span>
+<span class="r-in"><span><span class="fu">margot_plot_decision_tree</span><span class="op">(</span><span class="va">policy_tree_obj</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

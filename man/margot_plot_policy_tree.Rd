@@ -22,7 +22,9 @@ margot_plot_policy_tree(
   split_line_linewidth = 0.5,
   split_label_size = 10,
   split_label_color = "darkgray",
-  custom_action_names = NULL
+  custom_action_names = NULL,
+  legend_position = "bottom",
+  plot_selection = "both"
 )
 }
 \arguments{
@@ -32,7 +34,7 @@ margot_plot_policy_tree(
 
 \item{color_scale}{A ggplot2 color scale. Default is ggokabeito::scale_colour_okabe_ito().}
 
-\item{point_alpha}{Numeric value between 0 and 1 for point transparency. Default is 0.25.}
+\item{point_alpha}{Numeric value between 0 and 1 for point transparency. Default is 0.5.}
 
 \item{theme_function}{A ggplot2 theme function. Default is theme_classic.}
 
@@ -61,9 +63,13 @@ margot_plot_policy_tree(
 \item{split_label_color}{Color of split value labels. Default is "darkgray".}
 
 \item{custom_action_names}{Optional vector of custom names for the actions. Must match the number of actions in the policy tree.}
+
+\item{legend_position}{String specifying the position of the legend. Can be "top", "bottom", "left", or "right". Default is "top".}
+
+\item{plot_selection}{String specifying which plots to display: "both", "p1", or "p2". Default is "both".}
 }
 \value{
-A ggplot object containing two side-by-side plots of the policy tree results.
+A ggplot object containing the specified plot(s) of the policy tree results.
 }
 \description{
 This function creates a visualization of policy tree results from a causal forest or multi-arm causal forest model.
@@ -72,8 +78,14 @@ with points colored by the predicted optimal treatment.
 }
 \examples{
 \dontrun{
+# Default (both plots, legend at top)
 plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z")
-print(plot)
+
+# Only the first plot (p1)
+plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", plot_selection = "p1")
+
+# Both plots with legend on the right
+plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", legend_position = "right")
 }
 
 }

@@ -5,13 +5,13 @@
 #'
 #' @param mc_test A list containing the results from a multi-arm causal forest model.
 #' @param model_name A string specifying which model's results to analyze.
-#' @param ... Additional arguments passed to margot_plot_policy_tree and margot_interpret_policy_tree functions.
+#' @param ... Additional arguments passed to margot_plot_policy_tree, margot_interpret_policy_tree, and margot_plot_decision_tree functions.
 #'
 #' @return A list containing four elements:
 #'   \item{policy_tree_plot}{A ggplot object representing the policy tree visualization.}
 #'   \item{policy_tree_interpretation}{A string containing the interpretation of the policy tree.}
 #'   \item{qini_plot}{A ggplot object representing the Qini curve.}
-#'   \item{decision_tree_visualisation}{A ggplot object representing the decision tree structure.}
+#'   \item{decision_tree_visualization}{A ggplot object representing the decision tree structure.}
 #'
 #' @examples
 #' \dontrun{
@@ -19,13 +19,15 @@
 #' print(results$policy_tree_plot)
 #' cat(results$policy_tree_interpretation)
 #' print(results$qini_plot)
-#' print(results$decision_tree_visualisation)
+#' print(results$decision_tree_visualization)
 #' }
 #'
 #' @import DiagrammeR
 #' @import policytree
 #' @import janitor
-#' @importFrom ggplot2 ggplot
+#' @import ggplot2
+#' @import testthat
+#' @import ggokabeito
 #' @export
 margot_policy_tree <- function(mc_test, model_name, ...) {
   # Input validation
@@ -39,36 +41,43 @@ margot_policy_tree <- function(mc_test, model_name, ...) {
     stop(paste("Model", model_name, "not found in mc_test results."))
   }
 
+  # Helper function to create error plot
+  create_error_plot <- function(error_message) {
+    ggplot() +
+      annotate("text", x = 0, y = 0, label = error_message) +
+      theme_void()
+  }
+
   # Call margot_plot_policy_tree()
-  tryCatch({
-    policy_tree_plot <- margot_plot_policy_tree(mc_test, model_name, ...)
+  policy_tree_plot <- tryCatch({
+    margot_plot_policy_tree(mc_test, model_name, ...)
   }, error = function(e) {
     warning(paste("Error in generating policy tree plot:", e$message))
-    policy_tree_plot <- NULL
+    create_error_plot("Error in generating policy tree plot")
   })
 
   # Call margot_interpret_policy_tree()
-  tryCatch({
-    policy_tree_interpretation <- margot_interpret_policy_tree(mc_test, model_name, ...)
+  policy_tree_interpretation <- tryCatch({
+    margot_interpret_policy_tree(mc_test, model_name, ...)
   }, error = function(e) {
     warning(paste("Error in generating policy tree interpretation:", e$message))
-    policy_tree_interpretation <- NULL
+    "Error in generating policy tree interpretation"
   })
 
   # Call margot_plot_qini()
-  tryCatch({
-    qini_plot <- margot_plot_qini(mc_test, model_name)
+  qini_plot <- tryCatch({
+    margot_plot_qini(mc_test, model_name)
   }, error = function(e) {
     warning(paste("Error in generating Qini plot:", e$message))
-    qini_plot <- NULL
+    create_error_plot("Error in generating Qini plot")
   })
 
   # Generate decision tree visualization
-  tryCatch({
-    decision_tree_visualisation <- margot_plot_decision_tree(mc_test, model_name)
+  decision_tree_visualization <- tryCatch({
+    margot_plot_decision_tree(mc_test, model_name)
   }, error = function(e) {
     warning(paste("Error in generating decision tree visualization:", e$message))
-    decision_tree_visualisation <- NULL
+    create_error_plot("Error in generating decision tree visualization")
   })
 
   # Return a list containing all four outputs
@@ -76,14 +85,8 @@ margot_policy_tree <- function(mc_test, model_name, ...) {
     policy_tree_plot = policy_tree_plot,
     policy_tree_interpretation = policy_tree_interpretation,
     qini_plot = qini_plot,
-    decision_tree_visualisation = decision_tree_visualisation
+    decision_tree_visualization = decision_tree_visualization
   )
-
-  # Check if any of the results are NULL and warn the user
-  null_results <- names(results)[sapply(results, is.null)]
-  if (length(null_results) > 0) {
-    warning(paste("The following outputs could not be generated:", paste(null_results, collapse = ", ")))
-  }
 
   return(results)
 }

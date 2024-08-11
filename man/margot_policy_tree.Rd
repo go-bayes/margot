@@ -11,14 +11,14 @@ margot_policy_tree(mc_test, model_name, ...)
 
 \item{model_name}{A string specifying which model's results to analyze.}
 
-\item{...}{Additional arguments passed to margot_plot_policy_tree and margot_interpret_policy_tree functions.}
+\item{...}{Additional arguments passed to margot_plot_policy_tree, margot_interpret_policy_tree, and margot_plot_decision_tree functions.}
 }
 \value{
 A list containing four elements:
   \item{policy_tree_plot}{A ggplot object representing the policy tree visualization.}
   \item{policy_tree_interpretation}{A string containing the interpretation of the policy tree.}
   \item{qini_plot}{A ggplot object representing the Qini curve.}
-  \item{decision_tree_visualisation}{A ggplot object representing the decision tree structure.}
+  \item{decision_tree_visualization}{A ggplot object representing the decision tree structure.}
 }
 \description{
 This function provides a comprehensive analysis of policy tree results from a causal forest or multi-arm causal forest model.
@@ -30,7 +30,7 @@ results <- margot_policy_tree(mc_test, "model_t2_log_hours_exercise_z")
 print(results$policy_tree_plot)
 cat(results$policy_tree_interpretation)
 print(results$qini_plot)
-print(results$decision_tree_visualisation)
+print(results$decision_tree_visualization)
 }
 
 }

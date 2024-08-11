@@ -5,27 +5,28 @@
 \title{Plot Decision Tree from Policy Tree Results}
 \usage{
 margot_plot_decision_tree(
-  batch_model_output,
-  model_name,
+  result_object,
+  model_name = NULL,
   x_padding = 0.25,
   y_padding = 0.25,
   border_size = 1,
-  edge_label_hjust_true = 1.5,
-  edge_label_hjust_false = -0.5,
-  span_ratio = 0.35,
+  edge_label_offset = 0.1,
+  span_ratio = 0.5,
   text_size = 5,
-  node_distance_adjustment = -1.5,
-  leaf_fill = "lightgreen",
+  leaf_fill = "darkslategray1",
   non_leaf_fill = "lightyellow",
-  title = NULL
+  title = NULL,
+  node_distance_adjustment = -1.5
 )
 }
 \arguments{
-\item{batch_model_output}{A list containing the results from a policy tree model.}
+\item{result_object}{A list containing the results from a policy tree model,
+or a policy tree object directly.}
 
 \item{model_name}{A character string specifying the name of the model within
-the batch_model_output to plot. This should match one of the model names in
-batch_model_output$results.}
+the result_object to plot. This should match one of the model names in
+result_object$results. If NULL and a policy tree object is provided directly,
+the function will use that object.}
 
 \item{x_padding}{The amount of padding to add to the x-axis. Default is 0.25.}
 
@@ -33,24 +34,20 @@ batch_model_output$results.}
 
 \item{border_size}{The size of the border around node labels. Default is 1.}
 
-\item{edge_label_hjust_true}{Horizontal justification for "True" edge labels.
-Default is 1.5.}
+\item{edge_label_offset}{The offset for edge labels from the branches. Default is 0.1.}
 
-\item{edge_label_hjust_false}{Horizontal justification for "False" edge labels.
-Default is -0.5.}
-
-\item{span_ratio}{The aspect ratio of the plot. Default is 0.35.}
+\item{span_ratio}{The aspect ratio of the plot. Default is 0.5.}
 
 \item{text_size}{The size of the text in the node labels. Default is 5.}
 
-\item{node_distance_adjustment}{The adjustment for spacing between nodes.
-Default is -1.5.}
-
-\item{leaf_fill}{The fill color for leaf nodes. Default is "lightgreen".}
+\item{leaf_fill}{The fill color for leaf nodes. Default is "darkslategray1".}
 
 \item{non_leaf_fill}{The fill color for non-leaf nodes. Default is "lightyellow".}
 
-\item{title}{The title for the plot. Set to "none" for no title. Default is NULL.}
+\item{title}{The title for the plot. Default is NULL.}
+
+\item{node_distance_adjustment}{The adjustment for spacing between nodes.
+Default is -1.5.}
 }
 \value{
 A ggplot object representing the decision tree for the specified model.
@@ -61,8 +58,11 @@ results of a policy tree model.
 }
 \examples{
 \dontrun{
-# Assuming result_psychological_well_being is the batch model output
-margot_plot_decision_tree(result_psychological_well_being, "model_t2_hlth_fatigue_z")
+# Assuming result_object is the policy tree model output
+margot_plot_decision_tree(result_object, "model_name")
+
+# Or if you have a policy tree object directly
+margot_plot_decision_tree(policy_tree_obj)
 }
 
 }

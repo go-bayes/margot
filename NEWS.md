@@ -1,3 +1,16 @@
+# [2024-08-11] margot 0.2.0.9
+
+## Fixed
+
+* `margot_plot_policy_tree` correctly renders decision tree, allows for individual plots for decision leafs, and collects guides.
+* error in rendering of `margot_plot_decision_tree`, fixed: function now includes internal tests.
+
+## Removed
+
+* `debug_node_data_with_positions`, internal function - utility now included with `margot_plot_decision_tree`
+
+
+
 # [2024-08-10] margot 0.2.0.8
 
 ## New
