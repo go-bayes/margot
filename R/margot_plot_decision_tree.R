@@ -24,7 +24,6 @@
 #'
 #' @import ggplot2
 #' @import janitor
-#' @import testthat
 #' @import ggokabeito
 #'
 #' @examples
@@ -240,34 +239,34 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
     ) +
     labs(title = title)
 
-  # Run basic unit test
-  test_result <- tryCatch({
-    testthat::test_that("Tree structure and plot alignment test", {
-      # Test that root node exists
-      expect_true("label" %in% names(node_data))
-      expect_equal(nrow(node_data[node_data$y == max(node_data$y),]), 1)
-
-      # Test that leaf nodes exist
-      expect_true(any(grepl("Action:", node_data$label)))
-
-      # Test that edge labels are correct
-      expect_true(all(edge_data$edge_label %in% c("True", "False")))
-
-      # Test the tree structure
-      root_node <- node_data[node_data$y == max(node_data$y),]
-      left_child <- node_data[node_data$id == root_node$left_child,]
-      right_child <- node_data[node_data$id == root_node$right_child,]
-
-      expect_true(grepl("t0_log_hours_housework_z", root_node$label))
-      expect_true(grepl("t0_hlth_bmi_z", left_child$label))
-      expect_true(grepl("t0_log_hours_exercise_z", right_child$label))
-    })
-    "All tests passed."
-  }, error = function(e) {
-    paste("Test failed:", e$message)
-  })
-
-  cat("\nTest Result: ", test_result, "\n")
+  # Run basic unit test ### NEED TO ALLOW AUTOMATIC UPDATING
+  # test_result <- tryCatch({
+  #   testthat::test_that("Tree structure and plot alignment test", {
+  #     # Test that root node exists
+  #     expect_true("label" %in% names(node_data))
+  #     expect_equal(nrow(node_data[node_data$y == max(node_data$y),]), 1)
+  #
+  #     # Test that leaf nodes exist
+  #     expect_true(any(grepl("Action:", node_data$label)))
+  #
+  #     # Test that edge labels are correct
+  #     expect_true(all(edge_data$edge_label %in% c("True", "False")))
+  #
+  #     # Test the tree structure
+  #     root_node <- node_data[node_data$y == max(node_data$y),]
+  #     left_child <- node_data[node_data$id == root_node$left_child,]
+  #     right_child <- node_data[node_data$id == root_node$right_child,]
+  #
+  #     expect_true(grepl("t0_log_hours_housework_z", root_node$label))
+  #     expect_true(grepl("t0_hlth_bmi_z", left_child$label))
+  #     expect_true(grepl("t0_log_hours_exercise_z", right_child$label))
+  #   })
+  #   "All tests passed."
+  # }, error = function(e) {
+  #   paste("Test failed:", e$message)
+  # })
+  #
+  # cat("\nTest Result: ", test_result, "\n")
 
   return(p)
 }
