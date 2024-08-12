@@ -5,26 +5,40 @@
 \title{Create a Combined Decision Tree and Policy Relationship Graph}
 \usage{
 margot_plot_policy_combo(
-  mc_test,
+  result_object,
   model_name,
   layout = list(heights = c(1, 2)),
-  annotation = list(tag_levels = "A")
+  annotation = list(tag_levels = "A"),
+  generate_policy_tree = TRUE,
+  generate_decision_tree = TRUE,
+  policy_tree_args = list(),
+  decision_tree_args = list()
 )
 }
 \arguments{
-\item{mc_test}{An object containing Monte Carlo test results (exact type/class to be specified)}
+\item{result_object}{An object containing the results from a multi-arm causal forest model.}
 
-\item{model_name}{A character string specifying the name of the model}
+\item{model_name}{A character string specifying the name of the model.}
 
 \item{layout}{A list specifying the layout of the combined plot. Default is
 `list(heights = c(1, 2))`, which sets the relative heights of the two plots.}
 
 \item{annotation}{A list specifying the annotation for the combined plot. Default is
 `list(tag_levels = "A")`, which adds alphabetic tags to the subplots.}
+
+\item{generate_policy_tree}{Logical, whether to generate the policy tree plot. Default is TRUE.}
+
+\item{generate_decision_tree}{Logical, whether to generate the decision tree plot. Default is TRUE.}
+
+\item{policy_tree_args}{A list of arguments to pass to margot_plot_policy_tree. Default is list().}
+
+\item{decision_tree_args}{A list of arguments to pass to margot_plot_decision_tree. Default is list().}
 }
 \value{
 A list containing:
-  \item{plot}{A ggplot2 object representing the combined decision tree and policy relationship graph}
+  \item{policy_tree}{A ggplot object representing the policy tree (if generated)}
+  \item{decision_tree}{A ggplot object representing the decision tree (if generated)}
+  \item{combined_plot}{A ggplot object representing the combined plot (if both plots are generated)}
 }
 \description{
 This function generates a combined plot consisting of a decision tree and a graph
@@ -32,17 +46,58 @@ showing relationships between variables in the recommended policy.
 }
 \details{
 This function performs the following steps:
-1. Generates policy results using `margot_plot_policy_tree`
-2. Creates a decision tree plot using `margot_plot_decision_tree`
-3. Combines the plots using the patchwork package
+1. Generates policy results using `margot_plot_policy_tree` (if requested)
+2. Creates a decision tree plot using `margot_plot_decision_tree` (if requested)
+3. Combines the plots using the patchwork package (if both plots are generated)
 4. Applies the specified layout and annotation to the combined plot
+
+Default arguments for margot_plot_policy_tree:
+- color_scale = NULL
+- point_alpha = 0.5
+- theme_function = theme_classic
+- title_size = 14
+- subtitle_size = 12
+- axis_title_size = 10
+- legend_title_size = 10
+- jitter_width = 0.3
+- jitter_height = 0.3
+- split_line_color = "darkgray"
+- split_line_alpha = 0.7
+- split_line_type = "dashed"
+- split_line_linewidth = 0.5
+- split_label_size = 10
+- split_label_color = "darkgray"
+- custom_action_names = NULL
+- legend_position = "bottom"
+- plot_selection = "both"
+
+Default arguments for margot_plot_decision_tree:
+- x_padding = 0.25
+- y_padding = 0.25
+- border_size = 0.35
+- edge_label_offset = 0.02
+- span_ratio = 0.25
+- text_size = 3.5
+- non_leaf_fill = "lightyellow"
+- title = NULL
+- leaf_palette = NULL
 }
 \examples{
-# Assuming mc_test and model_name are already defined:
-result <- margot_plot_policy_combo(mc_test, "MyModel")
-print(result$plot)
+\dontrun{
+# Assuming result_object is already defined:
+result <- margot_plot_policy_combo(
+  result_object = result_object,
+  model_name = "model_t2_hlth_sleep_hours_z",
+  policy_tree_args = list(point_alpha = 0.75),
+    decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01,
+)
 
+# Access individual plots
+print(result$policy_tree)
+print(result$decision_tree)
+
+# Access combined plot
+print(result$combined_plot)
 }
-\seealso{
-\code{\link{margot_plot_policy_tree}}, \code{\link{margot_plot_decision_tree}}
+
 }

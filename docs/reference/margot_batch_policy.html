@@ -13,7 +13,7 @@ plots for each model."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,12 @@ plots for each model.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_batch_policy</span><span class="op">(</span><span class="va">result_outcomes</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_batch_policy</span><span class="op">(</span></span>
+<span>  <span class="va">result_outcomes</span>,</span>
+<span>  policy_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  decision_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,6 +63,14 @@ plots for each model.</p>
 <dd><p>A list containing the results of multiple models.
 This object should have a structure similar to the output of a multi-arm
 causal forest model, with a `results` element containing named model results.</p></dd>
+
+
+<dt id="arg-policy-tree-args">policy_tree_args<a class="anchor" aria-label="anchor" href="#arg-policy-tree-args"></a></dt>
+<dd><p>A list of arguments to be passed to `margot_plot_policy_tree()`.</p></dd>
+
+
+<dt id="arg-decision-tree-args">decision_tree_args<a class="anchor" aria-label="anchor" href="#arg-decision-tree-args"></a></dt>
+<dd><p>A list of arguments to be passed to `margot_plot_decision_tree()`.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -89,7 +102,11 @@ causal forest model, with a `results` element containing named model results.</p
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="co"># Assuming result_outcomes_health contains multiple model results</span></span></span>
-<span class="r-in"><span><span class="va">batch_results</span> <span class="op">&lt;-</span> <span class="fu">margot_batch_policy</span><span class="op">(</span><span class="va">result_outcomes_health</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">batch_results</span> <span class="op">&lt;-</span> <span class="fu">margot_batch_policy</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">result_outcomes_health</span>,</span></span>
+<span class="r-in"><span>  policy_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>point_alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  decision_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>text_size <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># To access results for a specific model:</span></span></span>
 <span class="r-in"><span><span class="va">smoker_results</span> <span class="op">&lt;-</span> <span class="va">batch_results</span><span class="op">$</span><span class="va">model_t2_smoker_binary</span></span></span>

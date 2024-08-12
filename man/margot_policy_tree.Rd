@@ -4,14 +4,21 @@
 \alias{margot_policy_tree}
 \title{Generate Comprehensive Policy Tree Analysis}
 \usage{
-margot_policy_tree(mc_test, model_name, ...)
+margot_policy_tree(
+  mc_test,
+  model_name,
+  policy_tree_args = list(),
+  decision_tree_args = list()
+)
 }
 \arguments{
 \item{mc_test}{A list containing the results from a multi-arm causal forest model.}
 
 \item{model_name}{A string specifying which model's results to analyze.}
 
-\item{...}{Additional arguments passed to margot_plot_policy_tree, margot_interpret_policy_tree, and margot_plot_decision_tree functions.}
+\item{policy_tree_args}{A list of arguments specifically for margot_plot_policy_tree.}
+
+\item{decision_tree_args}{A list of arguments specifically for margot_plot_decision_tree.}
 }
 \value{
 A list containing five elements:
@@ -23,15 +30,18 @@ A list containing five elements:
 }
 \description{
 This function provides a comprehensive analysis of policy tree results from a causal forest or multi-arm causal forest model.
-It generates a policy tree plot, an interpretation of the policy tree, a Qini curve plot, and a decision tree visualization.
+It generates a policy tree plot, an interpretation of the policy tree, a Qini curve plot, a decision tree visualization, and a policy combo plot.
 }
 \examples{
 \dontrun{
-results <- margot_policy_tree(mc_test, "model_t2_log_hours_exercise_z")
+results <- margot_policy_tree(mc_test, "model_t2_log_hours_exercise_z",
+                              policy_tree_args = list(point_alpha = 0.7),
+                              decision_tree_args = list(text_size = 4))
 print(results$policy_tree_plot)
 cat(results$policy_tree_interpretation)
 print(results$qini_plot)
 print(results$decision_tree_visualisation)
+print(results$policy_combo_plot)
 }
 
 }

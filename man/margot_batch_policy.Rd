@@ -4,12 +4,21 @@
 \alias{margot_batch_policy}
 \title{Apply Policy Tree Analysis to Multiple Models}
 \usage{
-margot_batch_policy(result_outcomes, ...)
+margot_batch_policy(
+  result_outcomes,
+  policy_tree_args = list(),
+  decision_tree_args = list(),
+  ...
+)
 }
 \arguments{
 \item{result_outcomes}{A list containing the results of multiple models.
 This object should have a structure similar to the output of a multi-arm
 causal forest model, with a `results` element containing named model results.}
+
+\item{policy_tree_args}{A list of arguments to be passed to `margot_plot_policy_tree()`.}
+
+\item{decision_tree_args}{A list of arguments to be passed to `margot_plot_decision_tree()`.}
 
 \item{...}{Additional arguments to be passed to `margot_policy_tree()`.}
 }
@@ -31,7 +40,11 @@ plots for each model.
 \examples{
 \dontrun{
 # Assuming result_outcomes_health contains multiple model results
-batch_results <- margot_batch_policy(result_outcomes_health)
+batch_results <- margot_batch_policy(
+  result_outcomes_health,
+  policy_tree_args = list(point_alpha = 0.7),
+  decision_tree_args = list(text_size = 4)
+)
 
 # To access results for a specific model:
 smoker_results <- batch_results$model_t2_smoker_binary

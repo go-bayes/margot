@@ -1,4 +1,18 @@
 
+# To do
+
+* Develop automated reporting of all scales and measures for quarto documents.
+* Begin writing tutorials for use cases.
+
+# [2024-08-13] margot 0.2.1.2
+
+## Improved
+
+* `margot_plot_policy_combo`, `margot_policy_tree`, `margot_batch_policy` and  now accepts arguments for `margot_plot_decision_tree` and `margot_plot_policy_tree`, leading to customisable policy visualisations. 
+
+* Bigger defaults for x and y axis text in `margot_plot_policy_tree` for legibility.
+
+
 # [2024-08-12] margot 0.2.1.1
 
 ## New
@@ -15,8 +29,8 @@
 
 ## Improved
 
-* `margot_plot_decision_tree`: policy action leafs different colours (user may specify pallette). Defaults to `ggokabeito::scale_fill_okabe_ito()` to match `margot_plot_policy_tree()`
-*  `margot_policy_tree` outputs a `margot_plot_policy_combo` inaddition to the other ouputs
+* `margot_plot_decision_tree`: policy action leafs different colours (user may specify palette). Defaults to `ggokabeito::scale_fill_okabe_ito()` to match `margot_plot_policy_tree()`
+*  `margot_policy_tree` outputs a `margot_plot_policy_combo` in addition to the other otuputs.
 
 ## Fixed
 
