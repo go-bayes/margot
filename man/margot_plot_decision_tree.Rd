@@ -12,7 +12,7 @@ margot_plot_decision_tree(
   border_size = 1,
   edge_label_offset = 0.02,
   span_ratio = 0.25,
-  text_size = 4,
+  text_size = 3.5,
   non_leaf_fill = "lightyellow",
   title = NULL,
   leaf_palette = NULL

@@ -1,4 +1,11 @@
 
+# [2024-08-12] margot 0.2.1.1
+
+## New
+
+* `margot_batch_policy` runs `margot_policy_tree` for all outcomes in a model. 
+
+
 # [2024-08-11] margot 0.2.1.0
 
 ## New

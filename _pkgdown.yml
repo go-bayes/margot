@@ -59,6 +59,7 @@ reference:
   - title: "Understand Results"
     contents:
     - compute_difference
+    - margot_batch_policy
     - margot_grf_subset_table
     - margot_omnibus_hetero_test
     - margot_interpret_policy_tree
