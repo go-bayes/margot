@@ -10,9 +10,9 @@
 #'        with blue for the first level, orange for the second, and subsequent colors for additional levels.
 #' @param point_alpha Numeric value between 0 and 1 for point transparency. Default is 0.5.
 #' @param theme_function A ggplot2 theme function. Default is theme_classic.
-#' @param title_size Numeric value for the size of the plot title. Default is 14.
-#' @param subtitle_size Numeric value for the size of the plot subtitle. Default is 12.
-#' @param axis_title_size Numeric value for the size of axis titles. Default is 10.
+#' @param title_size Numeric value for the size of the plot title. Default is 16.
+#' @param subtitle_size Numeric value for the size of the plot subtitle. Default is 16.
+#' @param axis_title_size Numeric value for the size of axis titles. Default is 16.
 #' @param legend_title_size Numeric value for the size of the legend title. Default is 10.
 #' @param jitter_width Numeric value for the amount of horizontal jitter. Default is 0.3.
 #' @param jitter_height Numeric value for the amount of vertical jitter. Default is 0.3.
