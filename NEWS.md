@@ -4,6 +4,22 @@
 * Develop automated reporting of all scales and measures for quarto documents.
 * Begin writing tutorials for use cases.
 
+
+# [2024-08-14] margot 0.2.1.3
+
+## New
+
+* `margot_propensity_model_and_plots` a one stop shop for evaluating balance on the treatment: plots & diagnostics generated.
+
+
+## Restored
+
+* `coloured_histogram()` back by popular demand. 
+
+## Improved
+
+* tweaks to defaults for plots to make them more legible on small computer screens.
+
 # [2024-08-13] margot 0.2.1.2
 
 ## Improved
@@ -118,6 +134,7 @@
 
 
 # [2024-08-7] margot 0.2.0.2
+
 ## Deprecations
 
 * `coloured_histogram()` and `coloured_histogram_quantile()` are deprecated.

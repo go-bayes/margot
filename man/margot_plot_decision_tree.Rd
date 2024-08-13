@@ -10,9 +10,9 @@ margot_plot_decision_tree(
   x_padding = 0.25,
   y_padding = 0.25,
   border_size = 1,
-  edge_label_offset = 0.02,
+  edge_label_offset = 0.01,
   span_ratio = 0.25,
-  text_size = 3.5,
+  text_size = 3,
   non_leaf_fill = "lightyellow",
   title = NULL,
   leaf_palette = NULL
