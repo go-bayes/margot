@@ -1,8 +1,9 @@
-#' Create a Coloured Histogram Highlighting Specific Ranges (deprecated, use `margot_plot_hist`)
+#' Create a Coloured Histogram Highlighting Specific Ranges
 #'
 #' This function generates a histogram with specific ranges highlighted to indicate
 #' the highest and/or lowest values within a unit of the specified limits. It allows
-#' customization of bin width, the unit of change for highlighting, and the range to be highlighted. This is useful in the settings of modified treatment policies for #' clarifying which part of a distribution is shifted.
+#' customization of bin width, the unit of change for highlighting, and the range to be highlighted. This is useful in the settings of modified treatment policies for
+#' clarifying which part of a distribution is shifted.
 #'
 #' @param df The dataframe containing the data to be plotted.
 #' @param col_name The name of the column for which the histogram will be generated.
@@ -38,11 +39,7 @@
 #' @import tools
 #' @export
 #' @keywords internal
-#' @importFrom lifecycle deprecate_warn
 coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, scale_min = NULL, scale_max = NULL, highlight_range = "highest") {
-
-  # warning
-  lifecycle::deprecate_warn("1.0.0", "coloured_histogram()", "margot_plot_hist()")
 
   # validate input
   if(!col_name %in% names(df)) stop("col_name does not exist in the dataframe.")
@@ -53,11 +50,11 @@ coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, s
   if(is.null(scale_max)) scale_max <- max(df[[col_name]], na.rm = TRUE)
 
   # adjust scale_min and scale_max to create thresholds for highlighting
-  # Adjust by slightly less than the specified unit to avoid exceeding the data range
+  # adjust by slightly less than the specified unit to avoid exceeding the data range
   adjusted_min <- scale_min + (unit_of_change * 0.99)
   adjusted_max <- scale_max - (unit_of_change * 0.99)
 
-  # Title and subtitle using Title Case for the column name
+  # title and subtitle using title case for the column name
   library(tools)
   dynamic_title <- paste("Density of Responses for", tools::toTitleCase(gsub("_", " ", col_name)))
   dynamic_sub_title <- paste(
@@ -66,15 +63,15 @@ coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, s
     "range(s) within", unit_of_change, "unit(s) of limit."
   )
 
-  # Categorize data based on proximity to min/max and chosen highlight range
-  df_copy <- df %>%
+  # categorize data based on proximity to min/max and chosen highlight range
+  df_copy <- df |>
     dplyr::mutate(fill_category = dplyr::case_when(
       .data[[col_name]] <= adjusted_min & (highlight_range %in% c("lowest", "both")) ~ "Lowest",
       .data[[col_name]] >= adjusted_max & (highlight_range %in% c("highest", "both")) ~ "Highest",
       TRUE ~ "Within Range"
     ))
 
-  # Create the plot
+  # create the plot
   p <- ggplot2::ggplot(df_copy, ggplot2::aes_string(x = col_name, fill = "fill_category")) +
     ggplot2::geom_histogram(binwidth = binwidth, alpha = 1, position = "identity") +
     ggplot2::scale_fill_manual(

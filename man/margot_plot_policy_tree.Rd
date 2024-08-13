@@ -10,10 +10,10 @@ margot_plot_policy_tree(
   color_scale = NULL,
   point_alpha = 0.5,
   theme_function = theme_classic,
-  title_size = 16,
-  subtitle_size = 16,
-  axis_title_size = 16,
-  legend_title_size = 12,
+  title_size = 14,
+  subtitle_size = 11,
+  axis_title_size = 10,
+  legend_title_size = 10,
   jitter_width = 0.3,
   jitter_height = 0.3,
   split_line_color = "darkgray",
@@ -39,11 +39,11 @@ with blue for the first level, orange for the second, and subsequent colors for 
 
 \item{theme_function}{A ggplot2 theme function. Default is theme_classic.}
 
-\item{title_size}{Numeric value for the size of the plot title. Default is 14.}
+\item{title_size}{Numeric value for the size of the plot title. Default is 16.}
 
-\item{subtitle_size}{Numeric value for the size of the plot subtitle. Default is 12.}
+\item{subtitle_size}{Numeric value for the size of the plot subtitle. Default is 16.}
 
-\item{axis_title_size}{Numeric value for the size of axis titles. Default is 10.}
+\item{axis_title_size}{Numeric value for the size of axis titles. Default is 16.}
 
 \item{legend_title_size}{Numeric value for the size of the legend title. Default is 10.}
 
