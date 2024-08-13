@@ -11,9 +11,6 @@
 
 * `margot_adjust_weights` to streamline creating inverse probability of censoring weights longitudinally, allowing for sample_weights at baseline. 
 
-=======
->>>>>>> c745606072f82c890d0ce483bbd77c4e624ea5b1
-
 # [2024-08-14] margot 0.2.1.3
 
 ## New
