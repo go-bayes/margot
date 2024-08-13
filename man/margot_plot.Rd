@@ -13,7 +13,7 @@ margot_plot(
   estimate_scale = 1,
   base_size = 11,
   text_size = 2.75,
-  point_size = 0.5,
+  point_size = 1,
   title_size = 10,
   subtitle_size = 9,
   legend_text_size = 6,

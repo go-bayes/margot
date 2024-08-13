@@ -4,7 +4,6 @@
 * Develop automated reporting of all scales and measures for quarto documents.
 * Begin writing tutorials for use cases.
 
-<<<<<<< HEAD
 # [2024-08-14] margot 0.2.1.4
 
 ## New
