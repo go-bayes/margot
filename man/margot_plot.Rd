@@ -8,65 +8,59 @@ margot_plot(
   .data,
   type = c("RD", "RR"),
   order = c("default", "alphabetical"),
-  title = NULL,
-  subtitle = NULL,
-  estimate_scale = 1,
-  base_size = 11,
-  text_size = 2.75,
-  point_size = 1,
-  title_size = 10,
-  subtitle_size = 9,
-  legend_text_size = 6,
-  legend_title_size = 6,
-  x_offset = ifelse(type == "RR", 0, -1.75),
-  x_lim_lo = ifelse(type == "RR", 0.1, -1.75),
-  x_lim_hi = ifelse(type == "RR", 2.5, 1),
-  linewidth = 0.5,
-  plot_theme = NULL
+  title_binary = NULL,
+  push_mods = NULL,
+  ...,
+  options = list()
 )
 }
 \arguments{
 \item{.data}{A data frame of causal effect estimates, ideally output by a `group_tab` function or similar. The data should include confidence intervals and effect estimate values.}
 
-\item{type}{Character string indicating the scale of effect estimates: "RD" for risk difference or "RR" for risk ratio, with "RD" as the default.}
+\item{type}{Character string indicating the scale of effect estimates: "RD" for risk difference or "RR" for risk ratio. Default is "RD".}
 
-\item{order}{Character string indicating the ordering of the output: "default" for default descending, "alphabetical" for alphabetical, and "custom" for custom order provided in .data.}
+\item{order}{Character string indicating the ordering of the output: "default" for descending order by effect size, or "alphabetical" for alphabetical order. Default is "default".}
 
-\item{title}{Main title for the plot.}
+\item{title_binary}{Main title for the plot. If NULL, no title is displayed.}
 
-\item{subtitle}{Subtitle for the plot.}
+\item{push_mods}{Directory path for saving the plot. If NULL, the plot is saved in the current working directory.}
 
-\item{estimate_scale}{Numeric multiplier to adjust the horizontal offset of estimate labels, aiding in plot clarity. Default is 1.}
+\item{...}{Additional arguments passed to the function.}
 
-\item{base_size}{Base font size for the plot, applied globally unless overridden. Default is 11.}
-
-\item{text_size}{Font size for the estimate labels. Default is 2.75.}
-
-\item{point_size}{Size of points representing the estimates. Default is 0.5.}
-
-\item{title_size}{Font size for the plot title. Default is 10.}
-
-\item{subtitle_size}{Font size for the plot subtitle. Default is 9.}
-
-\item{legend_text_size}{Font size for legend text. Default is 6.}
-
-\item{legend_title_size}{Font size for legend titles. Default is 6.}
-
-\item{x_offset}{Horizontal adjustment for estimate labels, varied based on `type`. Default adjustments are 0 for "RR" and -1.75 for "RD".}
-
-\item{x_lim_lo}{Lower limit of the x-axis, automatically adjusted based on `type`.}
-
-\item{x_lim_hi}{Upper limit of the x-axis, automatically adjusted based on `type`.}
-
-\item{linewidth}{Width of the error bars in the plot. Default is 0.5.}
-
-\item{plot_theme}{ggplot2 theme object for customising plot appearance. Inherits `base_size` from `base_size` parameter to maintain consistency. Uses `theme_classic()` as default but allows for customisation.}
-
-\item{custom_order}{Optional vector specifying custom ordering if 'order' is set to 'custom'.}
+\item{options}{A list of optional parameters to customize the plot. See details for available options.}
 }
 \value{
 A ggplot object displaying the causal effect estimates with categorisation and error bars. This plot is tailored for further modifications or direct usage.
 }
 \description{
-This function renders a graphical representation of causal effect estimates, organised by effect size on either the risk difference (RD) or risk ratio (RR) scale. It categorises estimates into "positive", "negative", or "zero_crossing" based on their confidence intervals. The function features advanced customisability for graphical parameters, including error bar width and the application of custom ggplot2 themes. Notably, it avoids direct manipulation of the input data and implements an advanced labelling strategy for the x-axis to prevent incoherent negative values for RR.
+This function renders a graphical representation of causal effect estimates, organised by effect size on either the risk difference (RD) or risk ratio (RR) scale. It categorises estimates into "positive", "negative", or "not reliable" based on their confidence intervals. The function features advanced customisability for graphical parameters, including error bar width and the application of custom ggplot2 themes.
+}
+\details{
+The `options` list can include the following parameters:
+\itemize{
+  \item `title`: Main title for the plot (overrides `title_binary` if both are provided).
+  \item `subtitle`: Subtitle for the plot.
+  \item `estimate_scale`: Numeric multiplier to adjust the horizontal offset of estimate labels. Default is 1.
+  \item `base_size`: Base font size for the plot. Default is 11.
+  \item `text_size`: Font size for the estimate labels. Default is 2.75.
+  \item `point_size`: Size of points representing the estimates. Default is 3.
+  \item `title_size`: Font size for the plot title. Default is 10.
+  \item `subtitle_size`: Font size for the plot subtitle. Default is 9.
+  \item `legend_text_size`: Font size for legend text. Default is 6.
+  \item `legend_title_size`: Font size for legend titles. Default is 6.
+  \item `x_offset`: Horizontal adjustment for estimate labels. Default is 0 for "RR" and -1.75 for "RD".
+  \item `x_lim_lo`: Lower limit of the x-axis. Default is 0.1 for "RR" and -1.75 for "RD".
+  \item `x_lim_hi`: Upper limit of the x-axis. Default is 2.5 for "RR" and 1 for "RD".
+  \item `linewidth`: Width of the error bars in the plot. Default is 0.5.
+  \item `plot_theme`: ggplot2 theme object for customising plot appearance.
+  \item `colors`: Named vector of colors for positive, not reliable, and negative estimates. Default is c("positive" = "#E69F00", "not reliable" = "grey50", "negative" = "#56B4E9").
+  \item `facet_var`: Variable name for faceting the plot.
+  \item `confidence_level`: Confidence level for the intervals. Default is 0.95.
+  \item `annotations`: Additional ggplot2 annotations to add to the plot.
+  \item `save_plot`: List with details for saving the plot, or FALSE to prevent saving. If a list, it can include `width`, `height`, `dpi`, and `filename`.
+        If `filename` is not specified, the subtitle (if provided) will be used as the filename, with spaces replaced by underscores and ".png" appended.
+  \item `push_mods`: Directory path for saving the plot (overrides the `push_mods` parameter if both are provided).
+  \item `show_evalues`: Logical indicating whether to show E-values in labels. Default is TRUE.
+  \item `evalue_digits`: Number of digits for rounding E-values. Default is 2.
+}
 }
