@@ -4,6 +4,17 @@
 * Develop automated reporting of all scales and measures for quarto documents.
 * Begin writing tutorials for use cases.
 
+# [2024-08-16] margot 0.2.1.6
+
+## New
+
+* `boilerplate_measures` produces an appendix of measures and items uses from variable inputs (for Quarto manuscripts).
+* `manager_boilerplate_measures` allows to you add / modify an existing database. 
+
+## Improved
+
+* `margot_plot` consistent syntax: user specifies save_plot as TRUE or FALSE (default = TRUE).
+
 # [2024-08-15] margot 0.2.1.5
 
 ## Improved

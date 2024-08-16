@@ -57,7 +57,8 @@ The `options` list can include the following parameters:
   \item `facet_var`: Variable name for faceting the plot.
   \item `confidence_level`: Confidence level for the intervals. Default is 0.95.
   \item `annotations`: Additional ggplot2 annotations to add to the plot.
-  \item `save_plot`: List with details for saving the plot, or FALSE to prevent saving. If a list, it can include `width`, `height`, `dpi`, and `filename`.
+  \item `save_plot`: Logical indicating whether to save the plot. Default is TRUE.
+  \item `save_plot_options`: List with details for saving the plot. It can include `width`, `height`, `dpi`, and `filename`.
         If `filename` is not specified, the subtitle (if provided) will be used as the filename, with spaces replaced by underscores and ".png" appended.
   \item `push_mods`: Directory path for saving the plot (overrides the `push_mods` parameter if both are provided).
   \item `show_evalues`: Logical indicating whether to show E-values in labels. Default is TRUE.

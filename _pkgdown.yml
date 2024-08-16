@@ -85,6 +85,7 @@ reference:
     contents:
     - back_transform_logmean
     - back_transform_zscore
+    - boilerplate_measures
     - construct_formula
     - group_tab
     - here_read
@@ -92,6 +93,7 @@ reference:
     - here_read_qs
     - here_save_qs
     - lmtp_evalue_tab
+    - manager_boilerplate_measures
     - margot_log_transform_vars
     - margot_process_binary_vars
     - pretty_number

@@ -32,7 +32,8 @@
 #'   \item `facet_var`: Variable name for faceting the plot.
 #'   \item `confidence_level`: Confidence level for the intervals. Default is 0.95.
 #'   \item `annotations`: Additional ggplot2 annotations to add to the plot.
-#'   \item `save_plot`: List with details for saving the plot, or FALSE to prevent saving. If a list, it can include `width`, `height`, `dpi`, and `filename`.
+#'   \item `save_plot`: Logical indicating whether to save the plot. Default is TRUE.
+#'   \item `save_plot_options`: List with details for saving the plot. It can include `width`, `height`, `dpi`, and `filename`.
 #'         If `filename` is not specified, the subtitle (if provided) will be used as the filename, with spaces replaced by underscores and ".png" appended.
 #'   \item `push_mods`: Directory path for saving the plot (overrides the `push_mods` parameter if both are provided).
 #'   \item `show_evalues`: Logical indicating whether to show E-values in labels. Default is TRUE.
@@ -76,7 +77,8 @@ margot_plot <- function(.data,
     facet_var = NULL,
     confidence_level = 0.95,
     annotations = NULL,
-    save_plot = list(
+    save_plot = TRUE,
+    save_plot_options = list(
       width = 10,
       height = 6,
       dpi = 300,
@@ -196,13 +198,10 @@ margot_plot <- function(.data,
     out <- out + options$annotations
   }
 
-  # Ensure push_mods is set
-  if (is.null(options$push_mods)) {
-    options$push_mods <- push_mods
-  }
+  # Save plot logic
+  if (isTRUE(options$save_plot)) {
+    save_options <- options$save_plot_options
 
-  # Save plot automatically, unless explicitly set to FALSE
-  if (is.list(options$save_plot) && length(options$save_plot) > 0) {
     # Default to subtitle if no filename is provided
     default_filename <- if (!is.null(options$subtitle)) {
       paste0(gsub("[^a-zA-Z0-9]", "_", options$subtitle), ".png")
@@ -213,8 +212,8 @@ margot_plot <- function(.data,
     }
 
     # Use user-specified filename if provided, otherwise use default
-    filename <- if (!is.null(options$save_plot$filename)) {
-      options$save_plot$filename
+    filename <- if (!is.null(save_options$filename)) {
+      save_options$filename
     } else {
       default_filename
     }
@@ -234,21 +233,225 @@ margot_plot <- function(.data,
     # Save the plot
     tryCatch({
       ggsave(save_path, out,
-             width = options$save_plot$width,
-             height = options$save_plot$height,
-             dpi = options$save_plot$dpi)
+             width = save_options$width,
+             height = save_options$height,
+             dpi = save_options$dpi)
       message(paste("Plot saved to:", normalizePath(save_path)))
     }, error = function(e) {
       message(paste("Error saving plot:", e$message))
     })
-  } else if (isFALSE(options$save_plot)) {
-    message("Plot was not saved as per user request.")
   } else {
-    message("Plot was not saved. To save the plot, provide a 'save_plot' option or set it to FALSE to suppress this message.")
+    message("Plot was not saved as per user request.")
   }
 
   return(out)
 }
+# # old better tested
+# margot_plot <- function(.data,
+#                         type = c("RD", "RR"),
+#                         order = c("default", "alphabetical"),
+#                         title_binary = NULL,
+#                         push_mods = NULL,
+#                         ...,
+#                         options = list()) {
+#
+#   # Capture additional arguments
+#   additional_args <- list(...)
+#
+#   # Default values
+#   default_options <- list(
+#     title = title_binary,
+#     subtitle = NULL,
+#     estimate_scale = 1,
+#     base_size = 11,
+#     text_size = 2.75,
+#     point_size = 3,
+#     title_size = 10,
+#     subtitle_size = 9,
+#     legend_text_size = 6,
+#     legend_title_size = 6,
+#     x_offset = NULL,  # Will be set based on type
+#     x_lim_lo = NULL,  # Will be set based on type
+#     x_lim_hi = NULL,  # Will be set based on type
+#     linewidth = 0.5,
+#     plot_theme = NULL,
+#     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
+#     facet_var = NULL,
+#     confidence_level = 0.95,
+#     annotations = NULL,
+#     save_plot = list(
+#       width = 10,
+#       height = 6,
+#       dpi = 300,
+#       filename = NULL
+#     ),
+#     push_mods = push_mods,
+#     show_evalues = TRUE,
+#     evalue_digits = 2
+#   )
+#
+#   # Merge user-provided options with defaults and additional arguments
+#   options <- modifyList(modifyList(default_options, options), additional_args)
+#
+#   # Ensure push_mods from function parameter takes precedence
+#   if (!is.null(push_mods)) {
+#     options$push_mods <- push_mods
+#   }
+#
+#   require("ggplot2")
+#   require("dplyr")
+#
+#   # Input validation
+#   type <- match.arg(type)
+#   order <- match.arg(order)
+#   if (!is.data.frame(.data)) stop("Input must be a data frame")
+#
+#   # Determine the effect size column based on the data structure
+#   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
+#     "E[Y(1)]-E[Y(0)]"
+#   } else if ("E[Y(1)]/E[Y(0)]" %in% names(.data)) {
+#     "E[Y(1)]/E[Y(0)]"
+#   } else {
+#     stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
+#   }
+#
+#   # Set type-dependent options if not provided
+#   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
+#   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
+#   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
+#
+#   # Add row names as outcome column if it doesn't exist
+#   if (!"outcome" %in% names(.data)) {
+#     .data$outcome <- rownames(.data)
+#   }
+#
+#   # Prepare the data for plotting, including ordering
+#   .data <- .data %>%
+#     mutate(outcome = factor(outcome, levels = if (order == "alphabetical") sort(unique(outcome)) else unique(outcome))) %>%
+#     arrange(if (order == "alphabetical") outcome else desc(!!sym(effect_size_col))) %>%
+#     mutate(Estimate = case_when(
+#       `2.5 %` > 0 ~ "positive",
+#       `97.5 %` < 0 ~ "negative",
+#       TRUE ~ "not reliable"
+#     ))
+#
+#   # Create label including E-value if option is set
+#   if (options$show_evalues) {
+#     .data$label <- sprintf(paste0("%.3f (E-value: %.", options$evalue_digits, "f, CI: %.", options$evalue_digits, "f)"),
+#                            .data[[effect_size_col]], .data$E_Value, .data$E_Val_bound)
+#   } else {
+#     .data$label <- sprintf("%.3f", .data[[effect_size_col]])
+#   }
+#
+#   # Start building the plot
+#   out <- ggplot(
+#     data = .data,
+#     aes(
+#       y = outcome,
+#       x = !!sym(effect_size_col),
+#       xmin = `2.5 %`,
+#       xmax = `97.5 %`,
+#       color = Estimate
+#     )
+#   ) + geom_errorbarh(aes(color = Estimate), height = .3,
+#                      linewidth = options$linewidth, position = position_dodge(width = .3)) +
+#     geom_point(size = options$point_size, position = position_dodge(width = 0.3)) +
+#     geom_vline(xintercept = if(type == "RR") 1 else 0, linetype = "solid") +
+#     scale_color_manual(values = options$colors) +
+#     labs(
+#       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
+#       y = NULL,
+#       title = options$title,
+#       subtitle = options$subtitle
+#     ) +
+#     geom_text(aes(x = options$x_offset * options$estimate_scale,
+#                   label = label),
+#               size = options$text_size, hjust = 0, fontface = "bold") +
+#     coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
+#     theme_classic(base_size = options$base_size) +
+#     theme(
+#       legend.position = "top",
+#       legend.direction = "horizontal",
+#       axis.ticks.x = element_blank(),
+#       axis.ticks.y = element_blank(),
+#       plot.title = element_text(face = "bold", size = options$title_size, hjust = 0),
+#       plot.subtitle = element_text(face = "bold", size = options$subtitle_size, hjust = 0),
+#       legend.text = element_text(size = options$legend_text_size),
+#       legend.title = element_text(size = options$legend_title_size),
+#       plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
+#     )
+#
+#   # Conditionally add x-axis scale modifications for RR
+#   if (type == "RR") {
+#     custom_x_labels <- function(x) {
+#       ifelse(x < 0, "", as.character(x))
+#     }
+#     out <- out + scale_x_continuous(labels = custom_x_labels)
+#   }
+#
+#   # Add faceting if specified
+#   if (!is.null(options$facet_var)) {
+#     out <- out + facet_wrap(vars(!!sym(options$facet_var)), scales = "free_y")
+#   }
+#
+#   # Add custom annotations if provided
+#   if (!is.null(options$annotations)) {
+#     out <- out + options$annotations
+#   }
+#
+#   # Ensure push_mods is set
+#   if (is.null(options$push_mods)) {
+#     options$push_mods <- push_mods
+#   }
+#
+#   # Save plot automatically, unless explicitly set to FALSE
+#   if (is.list(options$save_plot) && length(options$save_plot) > 0) {
+#     # Default to subtitle if no filename is provided
+#     default_filename <- if (!is.null(options$subtitle)) {
+#       paste0(gsub("[^a-zA-Z0-9]", "_", options$subtitle), ".png")
+#     } else if (!is.null(options$title)) {
+#       paste0(gsub("[^a-zA-Z0-9]", "_", options$title), ".png")
+#     } else {
+#       "margot_plot.png"
+#     }
+#
+#     # Use user-specified filename if provided, otherwise use default
+#     filename <- if (!is.null(options$save_plot$filename)) {
+#       options$save_plot$filename
+#     } else {
+#       default_filename
+#     }
+#
+#     # Determine save path
+#     save_path <- if (!is.null(options$push_mods)) {
+#       file.path(options$push_mods, filename)
+#     } else {
+#       filename
+#     }
+#
+#     # Create directory if it doesn't exist
+#     if (!is.null(options$push_mods) && !dir.exists(options$push_mods)) {
+#       dir.create(options$push_mods, recursive = TRUE)
+#     }
+#
+#     # Save the plot
+#     tryCatch({
+#       ggsave(save_path, out,
+#              width = options$save_plot$width,
+#              height = options$save_plot$height,
+#              dpi = options$save_plot$dpi)
+#       message(paste("Plot saved to:", normalizePath(save_path)))
+#     }, error = function(e) {
+#       message(paste("Error saving plot:", e$message))
+#     })
+#   } else if (isFALSE(options$save_plot)) {
+#     message("Plot was not saved as per user request.")
+#   } else {
+#     message("Plot was not saved. To save the plot, provide a 'save_plot' option or set it to FALSE to suppress this message.")
+#   }
+#
+#   return(out)
+# }
 # margot_plot <- function(.data,
 #                         type = c("RD", "RR"),
 #                         order = c("default", "alphabetical"),
