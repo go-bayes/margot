@@ -4,6 +4,17 @@
 * Develop automated reporting of all scales and measures for quarto documents.
 * Begin writing tutorials for use cases.
 
+
+# [2024-08-16] margot 0.2.1.7
+
+## New
+
+* added `batch_edit_measures` within `manager_boilerplate_measures` to allow batch editing of measures database.
+
+## Improved
+
+* `manager_boilerplate_measures` improved by allowing user-friendly navigation forward and backward, and more sensible defaults. requires `rlang`.
+
 # [2024-08-16] margot 0.2.1.6
 
 ## New

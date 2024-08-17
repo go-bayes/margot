@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.4</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,7 +106,8 @@
 <li><p>`facet_var`: Variable name for faceting the plot.</p></li>
 <li><p>`confidence_level`: Confidence level for the intervals. Default is 0.95.</p></li>
 <li><p>`annotations`: Additional ggplot2 annotations to add to the plot.</p></li>
-<li><p>`save_plot`: List with details for saving the plot, or FALSE to prevent saving. If a list, it can include `width`, `height`, `dpi`, and `filename`.
+<li><p>`save_plot`: Logical indicating whether to save the plot. Default is TRUE.</p></li>
+<li><p>`save_plot_options`: List with details for saving the plot. It can include `width`, `height`, `dpi`, and `filename`.
         If `filename` is not specified, the subtitle (if provided) will be used as the filename, with spaces replaced by underscores and ".png" appended.</p></li>
 <li><p>`push_mods`: Directory path for saving the plot (overrides the `push_mods` parameter if both are provided).</p></li>
 <li><p>`show_evalues`: Logical indicating whether to show E-values in labels. Default is TRUE.</p></li>

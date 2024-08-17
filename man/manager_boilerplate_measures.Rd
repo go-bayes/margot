@@ -28,6 +28,7 @@ The function provides the following main operations:
   \item Delete an existing measure
   \item Modify an existing measure
   \item Save the current measures data
+  \item Batch edit measures
 }
 
 Each measure in the database contains the following fields:
@@ -42,7 +43,8 @@ Each measure in the database contains the following fields:
 }
 \note{
 This function uses a command-line interface and is designed to be run interactively.
-It modifies global variables and files on disk, so use with caution.
+It uses local state management and does not modify global variables.
+Changes are only saved to disk when explicitly requested by the user.
 }
 \examples{
 \dontrun{
