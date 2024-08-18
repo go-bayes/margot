@@ -10,7 +10,7 @@
 
 * `boilerplate_methods` function allows first pass automated reporting. 
 *  helper functions include: `boilerplate_methods_sample`, `boilerplate_methods_eligibility_criteria`, `boilerplate_methods_identification_assumptions`, `boilerplate_methods_statistical_estimator`, `boilerplate_methods_confounding_control`, `boilerplate_methods_missing_data`, `boilerplate_methods_causal_interventions`
-
+* implemented 
 
 ## Improved
 

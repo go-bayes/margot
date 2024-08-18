@@ -116,6 +116,7 @@ reference:
     - boilerplate_methods_sample
     - boilerplate_methods_statistical_estimator
     - boilerplate_methods_target_population
+    - boilerplate_methods_variables
     - create_tau_hat_plot
     - compute_qini_curves
     - extract_qini_data
