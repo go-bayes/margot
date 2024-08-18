@@ -5,20 +5,26 @@
 \title{Generate Appendix for Research Measures}
 \usage{
 boilerplate_measures(
-  baseline_vars,
-  exposure_var,
-  outcome_vars,
+  all_vars = NULL,
+  baseline_vars = NULL,
+  exposure_var = NULL,
+  outcome_vars = NULL,
   measure_data,
   custom_titles = NULL,
-  print_keywords = FALSE
+  print_keywords = FALSE,
+  print_waves = FALSE
 )
 }
 \arguments{
-\item{baseline_vars}{A character vector of baseline variable names.}
+\item{all_vars}{A logical value or a character vector. If TRUE, outputs all unique
+variables from baseline_vars, exposure_var, and outcome_vars. If a character vector,
+it replaces the need for separate baseline_vars, exposure_var, and outcome_vars.}
 
-\item{exposure_var}{A single character string naming the exposure variable.}
+\item{baseline_vars}{A character vector of baseline variable names (optional if all_vars is provided).}
 
-\item{outcome_vars}{A character vector of outcome variable names.}
+\item{exposure_var}{A single character string naming the exposure variable (optional if all_vars is provided).}
+
+\item{outcome_vars}{A character vector of outcome variable names (optional if all_vars is provided).}
 
 \item{measure_data}{A list containing information about each measure. Each element
 should be a list with at least 'description' and 'reference' fields. Optional
@@ -26,7 +32,9 @@ fields include 'waves', 'items' for scale dimensions, and 'keywords'.}
 
 \item{custom_titles}{An optional named list of custom titles for measures.}
 
-\item{print_keywords}{A logical value indicating whether to print keywords. Default is FALSE}
+\item{print_keywords}{A logical value indicating whether to print keywords. Default is FALSE.}
+
+\item{print_waves}{A logical value indicating whether to print wave information. Default is FALSE.}
 }
 \value{
 A character string containing the formatted appendix text.
@@ -35,35 +43,5 @@ A character string containing the formatted appendix text.
 This function generates a formatted appendix describing research measures,
 including baseline variables, exposure variables, and outcome variables.
 It can handle both individual measures and scales with multiple dimensions,
-and now includes optional keywords for each measure and custom titles.
-}
-\examples{
-measure_data <- list(
-  age = list(
-    description = "We asked participants' ages.",
-    reference = "author_year",
-    waves = "1-15",
-    keywords = c("demographic", "continuous")
-  ),
-  agreeableness = list(
-    description = "Agreeableness dimension of Mini-IPIP6.",
-    reference = "sibley2011",
-    waves = "1-15",
-    items = c("Item 1", "Item 2", "Item 3", "Item 4"),
-    keywords = c("personality", "Big Five", "self-report")
-  )
-)
-baseline_vars <- c("age", "agreeableness")
-exposure_var <- "age"
-outcome_vars <- "agreeableness"
-custom_titles <- list(age = "Participant Age")
-
-# With keywords
-appendix_text <- boilerplate_measures(baseline_vars, exposure_var, outcome_vars,
-                                      measure_data, custom_titles)
-
-# Without keywords
-appendix_text_no_keywords <- boilerplate_measures(baseline_vars, exposure_var, outcome_vars,
-                                                  measure_data, custom_titles, print_keywords = TRUE)
-
+and includes optional keywords for each measure and custom titles.
 }

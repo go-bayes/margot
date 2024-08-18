@@ -4,8 +4,21 @@
 * Develop automated reporting of all scales and measures for quarto documents.
 * Begin writing tutorials for use cases.
 
+# [2024-08-18] margot 0.2.1.8
 
-# [2024-08-16] margot 0.2.1.7
+## New
+
+* `boilerplate_methods` function allows first pass automated reporting. 
+*  helper functions include: `boilerplate_methods_sample`, `boilerplate_methods_eligibility_criteria`, `boilerplate_methods_identification_assumptions`, `boilerplate_methods_statistical_estimator`, `boilerplate_methods_confounding_control`, `boilerplate_methods_missing_data`, `boilerplate_methods_causal_interventions`
+
+
+## Improved
+
+* `manager_boilerplate_measures` now flexibly handles strings for references when 'string_is ...' is used in the reference category that `manager_boilerplate_measures` creates.
+
+* `manager_boilerplate_measures` has been streamlined.
+
+# [2024-08-17] margot 0.2.1.7
 
 ## New
 

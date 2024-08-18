@@ -8,6 +8,15 @@
 <url><loc>https://go-bayes.github.io/margot/reference/back_transform_logmean.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/back_transform_zscore.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/boilerplate_measures.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_causal_interventions.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_confounding_control.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_eligibility_criteria.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_identification_assumptions.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_missing_data.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_sample.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_statistical_estimator.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_target_population.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/causal_contrast_engine.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/causal_contrast_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/coloured_histogram.html</loc></url>

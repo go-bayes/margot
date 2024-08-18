@@ -1,0 +1,177 @@
+#' Generate Methods Section for a Causal Inference Study (using this package)
+#'
+#' This function generates a comprehensive methods section for a research paper,
+#' including details about the sample, variables, causal interventions,
+#' identification assumptions, target population, eligibility criteria,
+#' confounding control, missing data handling, and statistical estimators.
+#'
+#' @param exposure_var Character string specifying the primary exposure variable.
+#' @param outcome_vars Character vector specifying the outcome variables.
+#' @param n_total Numeric value indicating the total number of participants in the study.
+#' @param baseline_wave Character string specifying the baseline wave of the study (e.g., "NZAVS time 10, years 2018-2019").
+#' @param exposure_wave Character string specifying the exposure wave of the study (e.g., "NZAVS time 11, years 2019-2020").
+#' @param outcome_wave Character string specifying the outcome wave of the study (e.g., "NZAVS time 12, years 2020-2021").
+#' @param ... Additional arguments to be passed to helper functions.
+#'
+#' @return A character string containing the generated methods section in markdown format.
+#'
+#' @examples
+#' methods_text <- boilerplate_methods(
+#'   exposure_var = "political_conservative",
+#'   outcome_vars = c("religion_identification_level", "rumination", "self_esteem"),
+#'   n_total = 47000,
+#'   baseline_wave = "NZAVS time 10, years 2018-2019",
+#'   exposure_wave = "NZAVS time 11, years 2019-2020",
+#'   outcome_wave = "NZAVS time 12, years 2020-2021",
+#'   sample = list(appendices = "A-C"),
+#'   causal_interventions = list(interventions = c("Increase exposure_var", "Do not change exposure_var")),
+#'   contrasts = "null",
+#'   null_intervention = "Do not change exposure_var",
+#'   statistical_estimator = list(estimators = c("lmtp", "grf")),
+#'   inclusion_criteria = c(
+#'     "Enrolled in the 2018 wave of the New Zealand Attitudes and Values Study (NZAVS time 10).",
+#'     "Missing covariate data at baseline was permitted, and the data was subjected to imputation methods to reduce bias."
+#'   ),
+#'   exclusion_criteria = c(
+#'     "Did not answer the religious service attendance question at New Zealand Attitudes and Values Study at time 10 and time 11."
+#'   ),
+#'   n_participants = 32451,
+#'   confounding_control = list(appendix_ref = "B", protocol_url = "https://osf.io/ce4t9/"),
+#'   grf_appendix = "D"
+#' )
+#'
+#' @export
+boilerplate_methods <- function(exposure_var, outcome_vars, n_total, baseline_wave, exposure_wave, outcome_wave, ...) {
+  # initialise an empty list to store all sections
+  methods_sections <- list()
+
+  # capture all additional arguments
+  extra_args <- list(...)
+
+  # define the safe_get function inside boilerplate_methods
+  safe_get <- function(name, default = NULL) {
+    if (name %in% names(extra_args)) extra_args[[name]] else default
+  }
+
+  # define a helper function for error-tolerant execution
+  safe_execute <- function(func_name, args) {
+    tryCatch({
+      if (exists(func_name, mode = "function")) {
+        func <- get(func_name, mode = "function")
+        # Only pass arguments that the function can accept
+        func_args <- formals(func)
+        valid_args <- args[names(args) %in% names(func_args)]
+        do.call(func, valid_args)
+      } else {
+        warning(paste("Function", func_name, "not found. Skipping this section."))
+        NULL  # Return NULL instead of a message
+      }
+    }, error = function(e) {
+      warning(paste("Error in", func_name, ":", e$message))
+      NULL  # Return NULL on error
+    })
+  }
+
+  # get eligibility criteria
+  inclusion_criteria <- safe_get("inclusion_criteria", list("No inclusion criteria specified"))
+  exclusion_criteria <- safe_get("exclusion_criteria", list("No exclusion criteria specified"))
+  n_participants <- safe_get("n_participants", "UNDEFINED")
+
+  # get the statistical estimator
+  statistical_estimator <- safe_get("statistical_estimator", list(estimators = "lmtp"))
+  if (is.list(statistical_estimator) && "estimators" %in% names(statistical_estimator)) {
+    statistical_estimator <- statistical_estimator$estimators[1]  # Use the first estimator if multiple are provided
+  }
+
+  sections <- c(
+    "boilerplate_methods_sample",
+    "boilerplate_methods_variables",
+    "boilerplate_methods_causal_interventions",
+    "boilerplate_methods_identification_assumptions",
+    "boilerplate_methods_target_population",
+    "boilerplate_methods_eligibility_criteria",
+    "boilerplate_methods_confounding_control",
+    "boilerplate_methods_missing_data",
+    "boilerplate_methods_statistical_estimator"
+  )
+
+  # call sub-functions for each section
+  for (section in sections) {
+    section_name <- sub("boilerplate_methods_", "", section)
+    args <- safe_get(section_name, list())
+
+    # add exposure_var, outcome_vars, n_total, and wave information to args if they're needed
+    args$exposure_var <- exposure_var
+    args$n_total <- n_total
+    args$baseline_wave <- baseline_wave
+    args$exposure_wave <- exposure_wave
+    args$outcome_wave <- outcome_wave
+
+    if (section_name == "variables") {
+      args$outcome_vars <- outcome_vars
+    }
+
+    # Special handling for causal_interventions
+    if (section_name == "causal_interventions") {
+      args$causal_interventions <- args$interventions
+      args$contrasts <- safe_get("contrasts", "pairwise")
+      args$null_intervention <- safe_get("null_intervention", NULL)
+      args$interventions <- NULL
+    }
+
+    # special handling for target_population
+    if (section_name == "target_population") {
+      args$statistical_estimator <- statistical_estimator
+    }
+
+    # special handling for eligibility_criteria
+    if (section_name == "eligibility_criteria") {
+      args$inclusion_criteria <- inclusion_criteria
+      args$exclusion_criteria <- exclusion_criteria
+      args$n_participants <- n_participants
+    }
+
+    # unlist nested lists if necessary
+    args <- lapply(args, function(arg) if (is.list(arg) && length(arg) == 1) unlist(arg) else arg)
+
+    result <- safe_execute(section, args)
+    if (!is.null(result)) {
+      methods_sections[[section_name]] <- result
+    }
+  }
+
+  # combine all sections into a single markdown string
+  markdown_output <- paste(unlist(methods_sections), collapse = "\n\n")
+
+  return(markdown_output)
+}
+# methods_text <- boilerplate_methods(
+#   exposure_var = "political_conservative",
+#   outcome_vars = c("religion_identification_level", "rumination", "self_esteem"),
+#   n_total = 47000,
+#   baseline_wave = "NZAVS time 10, years 2018-2019",
+#   exposure_wave = "NZAVS time 11, years 2019-2020",
+#   outcome_wave = "NZAVS time 12, years 2020-2021",
+#   causal_interventions = list(interventions = c("Increase exposure_var", "Do not change exposure_var")),
+#   contrasts = "null",
+#   null_intervention = "Do not change exposure_var",
+#   sample = list(appendices = "A-C"),
+#   causal_interventions = list(
+#     interventions = c("Increase exposure_var", "Do not change exposure_var")
+#   ),
+#   statistical_estimator = list(estimators = c("lmtp", "grf")),
+#   inclusion_criteria = c(
+#     "Enrolled in the 2018 wave of the New Zealand Attitudes and Values Study (NZAVS time 10).",
+#     "Missing covariate data at baseline was permitted, and the data was subjected to imputation methods to reduce bias. Only information obtained at baseline was used for such imputation (refer to [@zhang2023shouldMultipleImputation])."
+#   ),
+#   exclusion_criteria = c(
+#     "Did not answer the religious service attendance question at New Zealand Attitudes and Values Study at time 10 (the baseline wave) and NZAVS time 11 (the treatment wave)."
+#   ),
+#   n_participants = 32451,
+#   # replace with actual number
+#   confounding_control = list(appendix_ref = "B", protocol_url = "https://osf.io/ce4t9/"),
+#   grf_appendix = "D"  # specify the appendix for GRF missing data handling
+# )
+# # print the generated methods text
+# cat(methods_text)
+
