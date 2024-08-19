@@ -12,7 +12,7 @@ boilerplate_methods_statistical_estimator <- function(estimators = "lmtp") {
 
   estimator_texts <- list(
     lmtp = "
-### Longitudinal Modified Treatment Policy (LMTP) Estimator
+#### Longitudinal Modified Treatment Policy (LMTP) Estimator
 
 We perform statistical estimation using a semi-parametric Targeted Minimum Loss-based Estimation (TMLE) approach, specifically the Longitudinal Modified Treatment Policy (LMTP) estimator. TMLE is a robust method for estimating causal effects while providing valid statistical uncertainty measures [@van2014targeted; @van2012targeted].
 
@@ -36,7 +36,7 @@ We use cross-validation to avoid overfitting, following pre-stated protocols [@b
 We perform estimation using the `lmtp` package [@williams2021]. We use the `superlearner` library for semi-parametric estimation with the predefined libraries `SL.ranger`, `SL.glmnet`, and `SL.xgboost` [@polley2023; @xgboost2023; @Ranger2017]. For further details on targeted learning using the `lmtp` package, see [@hoffman2022; @hoffman2023; @díaz2021]. Graphs, tables, and output reports are created using the `margot` package [@margot2024].
     ",
     sdr = "
-### Sequentially Doubly Robust (SDR) Estimator
+#### Sequentially Doubly Robust (SDR) Estimator
 
 We employ a semi-parametric estimator known as Sequentially Doubly Robust (SDR) estimation, which can estimate the causal effect of modified treatment policies on outcomes over time [@díaz2021]. This estimator belongs to the broader class of doubly-robust targeted learning frameworks developed by [@vanderlaan2011; @vanderlaan2018].
 
@@ -77,7 +77,7 @@ SDR uses cross-validation to avoid over-fitting and ensure that the estimator pe
 Estimation is performed using the `lmtp` package [@williams2021; @díaz2021; @hoffman2023]. For further details on the theoretical properties and practical applications of SDR, see [@hoffman2022; @hoffman2023; @díaz2021]. Graphs, tables, and output reports are created using the `margot` package [@margot2024].
     ",
     grf = "
-### Generalized Random Forests (GRF)
+#### Generalized Random Forests (GRF)
 
 In this study, we employ Generalized Random Forests (GRF) to estimate causal effects, using the grf package [@grf2024]. GRF extends the random forest algorithm to estimate heterogeneous treatment effects, providing a non-parametric approach to causal inference. This method allows us to estimate conditional average treatment effects (CATE) across different subgroups or individual characteristics.
 

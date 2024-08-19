@@ -36,6 +36,7 @@ boilerplate_methods_sample <- function(n_total,
                                        outcome_wave) {
   default_template <- "
 ### Sample
+
 Data were collected by the New Zealand Attitudes and Values Study (NZAVS), an annual longitudinal national probability panel study of social attitudes, personality, ideology, and health outcomes in New Zealand. Chris G. Sibley started the New Zealand Attitudes and Values Study in 2009, which has grown to include a community of over fifty researchers. Since its inception, the New Zealand Attitudes and Values Study has accumulated questionnaire responses from {n_total} New Zealand residents. The study operates independently of political or corporate funding and is based in a university setting. Data summaries for our study sample on all measures used in this study are found in **Appendices {appendices_sample}**. For more details about the New Zealand Attitudes and Values Study see: [OSF.IO/75SNB](https://doi.org/10.17605/OSF.IO/75SNB). Here, our study uses data from {baseline_wave}, {exposure_wave}, {outcome_wave}
   "
   # Use custom template if provided, otherwise use default

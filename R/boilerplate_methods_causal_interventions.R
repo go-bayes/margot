@@ -35,7 +35,7 @@
 #' @export
 boilerplate_methods_causal_interventions <- function(causal_interventions, exposure_var, contrasts = "pairwise", null_intervention = NULL) {
   if (is.null(causal_interventions)) {
-    return("## Causal Interventions\n\nCausal intervention information is not available.")
+    return("### Causal Interventions\n\nCausal intervention information is not available.")
   }
 
   # Replace 'exposure_var' with the actual variable name in the interventions and null_intervention
@@ -64,14 +64,14 @@ boilerplate_methods_causal_interventions <- function(causal_interventions, expos
   )
 
   markdown_text <- glue::glue("
-## Causal Interventions and Contrasts
+### Causal Interventions and Contrasts
 
-### Interventions
+#### Interventions
 This study considers the following causal interventions on the exposure variable '{exposure_var}':
 
 {interventions_list}
 
-### Contrasts
+#### Contrasts
 {contrasts_text}
 
 This approach to defining interventions and contrasts allows us to systematically evaluate the causal effects of interest in our study.

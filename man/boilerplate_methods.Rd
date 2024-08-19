@@ -7,19 +7,23 @@
 boilerplate_methods(
   exposure_var,
   outcome_vars,
+  measure_data,
   n_total,
   baseline_wave,
   exposure_wave,
   outcome_wave,
   baseline_missing_data_proportion,
   sections_to_include = "all",
+  appendices_measures = NULL,
   ...
 )
 }
 \arguments{
 \item{exposure_var}{Character string specifying the primary exposure variable.}
 
-\item{outcome_vars}{Character vector specifying the outcome variables.}
+\item{outcome_vars}{A named list of character vectors specifying the outcome variables by domain.}
+
+\item{measure_data}{A list containing information about each measure.}
 
 \item{n_total}{Numeric value indicating the total number of participants in the study.}
 
@@ -34,6 +38,8 @@ boilerplate_methods(
 \item{sections_to_include}{Character vector specifying which sections to include in the output.
 Default is 'all', which includes all available sections. Use 'list' to see available sections.}
 
+\item{appendices_measures}{Character string specifying the appendix where detailed variable descriptions can be found.}
+
 \item{...}{Additional arguments to be passed to helper functions.}
 }
 \value{
@@ -46,23 +52,38 @@ including details about the sample, variables, causal interventions,
 identification assumptions, target population, eligibility criteria,
 confounding control, missing data handling, statistical estimators,
 and additional sections like sensitivity analysis and scope of interventions.
-Users can specify which sections to include in the output or list available sections.
 }
 \examples{
 \dontrun{
-# List available sections
-available_sections <- boilerplate_methods(sections_to_include = "list")
-print(available_sections)
+# Define outcomes by domain
+outcomes_health <- c("smoker_binary", "hlth_bmi", "log_hours_exercise")
+outcomes_psychological <- c("hlth_fatigue", "kessler_latent_anxiety")
+outcomes_social <- c("belong", "neighbourhood_community")
 
-# Generate methods text with all sections
-methods_text_all <- boilerplate_methods(
-  exposure_var = "political_conservative",
-  outcome_vars = c("religion_identification_level", "rumination", "self_esteem"),
+# Combine all outcomes into a single list
+all_outcomes <- list(
+  health = outcomes_health,
+  psychological = outcomes_psychological,
+  social = outcomes_social
+)
+
+# Define the exposure variable
+exposure_var <- "political_conservative"
+
+# Load your measure_data
+measure_data <- readRDS(here::here("boilerplate", "data", "measure_data.rds"))
+
+# Generate methods text
+methods_text <- boilerplate_methods(
+  exposure_var = exposure_var,
+  outcome_vars = all_outcomes,
+  measure_data = measure_data,
   n_total = 47000,
   baseline_wave = "NZAVS time 10, years 2018-2019",
   exposure_wave = "NZAVS time 11, years 2019-2020",
   outcome_wave = "NZAVS time 12, years 2020-2021",
   baseline_missing_data_proportion = 0.15,
+  appendices_measures = "C",
   causal_interventions = list(interventions = c("Increase exposure_var", "Do not change exposure_var")),
   contrasts = "null",
   null_intervention = "Do not change exposure_var",
@@ -73,7 +94,7 @@ methods_text_all <- boilerplate_methods(
     "Missing covariate data at baseline was permitted, and the data was subjected to imputation methods to reduce bias."
   ),
   exclusion_criteria = c(
-    "Did not answer the religious service attendance question at NZAVS time 10 and time 11."
+    "Did not answer the political conservative question at NZAVS time 10 and time 11."
   ),
   n_participants = 32451,
   confounding_control = list(appendix_ref = "B", protocol_url = "https://osf.io/ce4t9/"),
@@ -86,21 +107,8 @@ methods_text_all <- boilerplate_methods(
   )
 )
 
-# Generate methods text with specific sections
-methods_text_specific <- boilerplate_methods(
-  exposure_var = "political_conservative",
-  outcome_vars = c("religion_identification_level", "rumination", "self_esteem"),
-  n_total = 47000,
-  baseline_wave = "NZAVS time 10, years 2018-2019",
-  exposure_wave = "NZAVS time 11, years 2019-2020",
-  outcome_wave = "NZAVS time 12, years 2020-2021",
-  baseline_missing_data_proportion = 0.15,
-  sections_to_include = c("sample", "variables", "causal_interventions"),
-  causal_interventions = list(interventions = c("Increase exposure_var", "Do not change exposure_var")),
-  contrasts = "null",
-  null_intervention = "Do not change exposure_var",
-  sample = list(appendices = "A-C")
-)
+# Print the result
+cat(methods_text)
 }
 
 }

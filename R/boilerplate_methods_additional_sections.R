@@ -132,9 +132,11 @@ transition_table$table
 
   markdown_text <- glue::glue("
 ### Sensitivity Analysis Using the E-value
+
 {sensitivity_analysis$description}
 
 ### Scope of Interventions
+
 To illustrate the magnitude of the shift interventions we contrast, we provide histograms in {scope_interventions$figure_ref}, that display the distribution of treatments during the treatment wave.
 
 {scope_interventions$code}
@@ -142,6 +144,7 @@ To illustrate the magnitude of the shift interventions we contrast, we provide h
 {{{{< pagebreak >}}}}
 
 ### Evidence for Change in the Treatment Variable
+
 {evidence_change$table_ref} clarifies the change in the treatment variable from the baseline wave to the baseline + 1 wave across the sample. Assessing change in a variable is essential for evaluating the positivity assumption and recovering evidence for the incident exposure effect of the treatment variable [@vanderweele2020; @danaei2012; @hernan2024WHATIF].
 
 {evidence_change$code}

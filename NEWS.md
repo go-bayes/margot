@@ -4,7 +4,13 @@
 * Develop automated reporting of all scales and measures for quarto documents.
 * Begin writing tutorials for use cases.
 
+# [2024-08-19] margot 0.2.1.10
 
+## Improved
+* `boilerplate_measures` overhauled to allow bibliography by sections (for outcomewide studies)
+* considerably improved reporting in `boilerplate_methods`, including: selective sections to report. 
+* overhauled `boilerplate_methods` for simple and clear reporting
+* simplified `biolerplate_methods_variables` to act mostly as a wrapper for `boilerplate_measures`
 
 # [2024-08-19] margot 0.2.1.9
 

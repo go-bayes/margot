@@ -13,7 +13,7 @@ and allows for the inclusion of R code blocks."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,9 +93,11 @@ and 'code' is a string containing the R code block for generating the table.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">boilerplate_methods_additional_sections</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ### Sensitivity Analysis Using the E-value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> To assess the sensitivity of results to unmeasured confounding, we report VanderWeele and Ding's "E-value" in all analyses [@vanderweele2017]. The E-value quantifies the minimum strength of association (on the risk ratio scale) that an unmeasured confounder would need to have with both the exposure and the outcome (after considering the measured covariates) to explain away the observed exposure-outcome association [@vanderweele2020; @linden2020EVALUE]. To evaluate the strength of evidence, we use the bound of the E-value 95% confidence interval closest to 1. This provides a clear metric for understanding the robustness of our findings in the presence of potential unmeasured confounding.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ### Scope of Interventions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> To illustrate the magnitude of the shift interventions we contrast, we provide histograms in @fig-hist, that display the distribution of treatments during the treatment wave.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -115,6 +117,7 @@ and 'code' is a string containing the R code block for generating the table.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> {{&lt; pagebreak &gt;}}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ### Evidence for Change in the Treatment Variable</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> @tbl-transition clarifies the change in the treatment variable from the baseline wave to the baseline + 1 wave across the sample. Assessing change in a variable is essential for evaluating the positivity assumption and recovering evidence for the incident exposure effect of the treatment variable [@vanderweele2020; @danaei2012; @hernan2024WHATIF].</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -161,9 +164,11 @@ and 'code' is a string containing the R code block for generating the table.</p>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ### Sensitivity Analysis Using the E-value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> To assess the sensitivity of results to unmeasured confounding, we report VanderWeele and Ding's "E-value" in all analyses [@vanderweele2017]. The E-value quantifies the minimum strength of association (on the risk ratio scale) that an unmeasured confounder would need to have with both the exposure and the outcome (after considering the measured covariates) to explain away the observed exposure-outcome association [@vanderweele2020; @linden2020EVALUE]. To evaluate the strength of evidence, we use the bound of the E-value 95% confidence interval closest to 1. This provides a clear metric for understanding the robustness of our findings in the presence of potential unmeasured confounding.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ### Scope of Interventions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> To illustrate the magnitude of the shift interventions we contrast, we provide histograms in @fig-custom-hist, that display the distribution of treatments during the treatment wave.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -181,6 +186,7 @@ and 'code' is a string containing the R code block for generating the table.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> {{&lt; pagebreak &gt;}}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ### Evidence for Change in the Treatment Variable</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> @tbl-custom-transition clarifies the change in the treatment variable from the baseline wave to the baseline + 1 wave across the sample. Assessing change in a variable is essential for evaluating the positivity assumption and recovering evidence for the incident exposure effect of the treatment variable [@vanderweele2020; @danaei2012; @hernan2024WHATIF].</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>

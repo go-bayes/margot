@@ -3,13 +3,11 @@
 including details about the sample, variables, causal interventions,
 identification assumptions, target population, eligibility criteria,
 confounding control, missing data handling, statistical estimators,
-and additional sections like sensitivity analysis and scope of interventions.
-Users can specify which sections to include in the output or list available sections."><meta property="og:description" content="This function generates a comprehensive methods section for a research paper,
+and additional sections like sensitivity analysis and scope of interventions."><meta property="og:description" content="This function generates a comprehensive methods section for a research paper,
 including details about the sample, variables, causal interventions,
 identification assumptions, target population, eligibility criteria,
 confounding control, missing data handling, statistical estimators,
-and additional sections like sensitivity analysis and scope of interventions.
-Users can specify which sections to include in the output or list available sections."></head><body>
+and additional sections like sensitivity analysis and scope of interventions."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -17,7 +15,7 @@ Users can specify which sections to include in the output or list available sect
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,8 +45,7 @@ Users can specify which sections to include in the output or list available sect
 including details about the sample, variables, causal interventions,
 identification assumptions, target population, eligibility criteria,
 confounding control, missing data handling, statistical estimators,
-and additional sections like sensitivity analysis and scope of interventions.
-Users can specify which sections to include in the output or list available sections.</p>
+and additional sections like sensitivity analysis and scope of interventions.</p>
     </div>
 
     <div class="section level2">
@@ -56,12 +53,14 @@ Users can specify which sections to include in the output or list available sect
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">boilerplate_methods</span><span class="op">(</span></span>
 <span>  <span class="va">exposure_var</span>,</span>
 <span>  <span class="va">outcome_vars</span>,</span>
+<span>  <span class="va">measure_data</span>,</span>
 <span>  <span class="va">n_total</span>,</span>
 <span>  <span class="va">baseline_wave</span>,</span>
 <span>  <span class="va">exposure_wave</span>,</span>
 <span>  <span class="va">outcome_wave</span>,</span>
 <span>  <span class="va">baseline_missing_data_proportion</span>,</span>
 <span>  sections_to_include <span class="op">=</span> <span class="st">"all"</span>,</span>
+<span>  appendices_measures <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -75,7 +74,11 @@ Users can specify which sections to include in the output or list available sect
 
 
 <dt id="arg-outcome-vars">outcome_vars<a class="anchor" aria-label="anchor" href="#arg-outcome-vars"></a></dt>
-<dd><p>Character vector specifying the outcome variables.</p></dd>
+<dd><p>A named list of character vectors specifying the outcome variables by domain.</p></dd>
+
+
+<dt id="arg-measure-data">measure_data<a class="anchor" aria-label="anchor" href="#arg-measure-data"></a></dt>
+<dd><p>A list containing information about each measure.</p></dd>
 
 
 <dt id="arg-n-total">n_total<a class="anchor" aria-label="anchor" href="#arg-n-total"></a></dt>
@@ -103,6 +106,10 @@ Users can specify which sections to include in the output or list available sect
 Default is 'all', which includes all available sections. Use 'list' to see available sections.</p></dd>
 
 
+<dt id="arg-appendices-measures">appendices_measures<a class="anchor" aria-label="anchor" href="#arg-appendices-measures"></a></dt>
+<dd><p>Character string specifying the appendix where detailed variable descriptions can be found.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments to be passed to helper functions.</p></dd>
 
@@ -116,19 +123,35 @@ Default is 'all', which includes all available sections. Use 'list' to see avail
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># List available sections</span></span></span>
-<span class="r-in"><span><span class="va">available_sections</span> <span class="op">&lt;-</span> <span class="fu">boilerplate_methods</span><span class="op">(</span>sections_to_include <span class="op">=</span> <span class="st">"list"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">available_sections</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Define outcomes by domain</span></span></span>
+<span class="r-in"><span><span class="va">outcomes_health</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"smoker_binary"</span>, <span class="st">"hlth_bmi"</span>, <span class="st">"log_hours_exercise"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">outcomes_psychological</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hlth_fatigue"</span>, <span class="st">"kessler_latent_anxiety"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">outcomes_social</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"belong"</span>, <span class="st">"neighbourhood_community"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Generate methods text with all sections</span></span></span>
-<span class="r-in"><span><span class="va">methods_text_all</span> <span class="op">&lt;-</span> <span class="fu">boilerplate_methods</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  exposure_var <span class="op">=</span> <span class="st">"political_conservative"</span>,</span></span>
-<span class="r-in"><span>  outcome_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"religion_identification_level"</span>, <span class="st">"rumination"</span>, <span class="st">"self_esteem"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span><span class="co"># Combine all outcomes into a single list</span></span></span>
+<span class="r-in"><span><span class="va">all_outcomes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  health <span class="op">=</span> <span class="va">outcomes_health</span>,</span></span>
+<span class="r-in"><span>  psychological <span class="op">=</span> <span class="va">outcomes_psychological</span>,</span></span>
+<span class="r-in"><span>  social <span class="op">=</span> <span class="va">outcomes_social</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Define the exposure variable</span></span></span>
+<span class="r-in"><span><span class="va">exposure_var</span> <span class="op">&lt;-</span> <span class="st">"political_conservative"</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Load your measure_data</span></span></span>
+<span class="r-in"><span><span class="va">measure_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"boilerplate"</span>, <span class="st">"data"</span>, <span class="st">"measure_data.rds"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Generate methods text</span></span></span>
+<span class="r-in"><span><span class="va">methods_text</span> <span class="op">&lt;-</span> <span class="fu">boilerplate_methods</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  exposure_var <span class="op">=</span> <span class="va">exposure_var</span>,</span></span>
+<span class="r-in"><span>  outcome_vars <span class="op">=</span> <span class="va">all_outcomes</span>,</span></span>
+<span class="r-in"><span>  measure_data <span class="op">=</span> <span class="va">measure_data</span>,</span></span>
 <span class="r-in"><span>  n_total <span class="op">=</span> <span class="fl">47000</span>,</span></span>
 <span class="r-in"><span>  baseline_wave <span class="op">=</span> <span class="st">"NZAVS time 10, years 2018-2019"</span>,</span></span>
 <span class="r-in"><span>  exposure_wave <span class="op">=</span> <span class="st">"NZAVS time 11, years 2019-2020"</span>,</span></span>
 <span class="r-in"><span>  outcome_wave <span class="op">=</span> <span class="st">"NZAVS time 12, years 2020-2021"</span>,</span></span>
 <span class="r-in"><span>  baseline_missing_data_proportion <span class="op">=</span> <span class="fl">0.15</span>,</span></span>
+<span class="r-in"><span>  appendices_measures <span class="op">=</span> <span class="st">"C"</span>,</span></span>
 <span class="r-in"><span>  causal_interventions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>interventions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Increase exposure_var"</span>, <span class="st">"Do not change exposure_var"</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  contrasts <span class="op">=</span> <span class="st">"null"</span>,</span></span>
 <span class="r-in"><span>  null_intervention <span class="op">=</span> <span class="st">"Do not change exposure_var"</span>,</span></span>
@@ -139,7 +162,7 @@ Default is 'all', which includes all available sections. Use 'list' to see avail
 <span class="r-in"><span>    <span class="st">"Missing covariate data at baseline was permitted, and the data was subjected to imputation methods to reduce bias."</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  exclusion_criteria <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    <span class="st">"Did not answer the religious service attendance question at NZAVS time 10 and time 11."</span></span></span>
+<span class="r-in"><span>    <span class="st">"Did not answer the political conservative question at NZAVS time 10 and time 11."</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  n_participants <span class="op">=</span> <span class="fl">32451</span>,</span></span>
 <span class="r-in"><span>  confounding_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>appendix_ref <span class="op">=</span> <span class="st">"B"</span>, protocol_url <span class="op">=</span> <span class="st">"https://osf.io/ce4t9/"</span><span class="op">)</span>,</span></span>
@@ -152,21 +175,8 @@ Default is 'all', which includes all available sections. Use 'list' to see avail
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Generate methods text with specific sections</span></span></span>
-<span class="r-in"><span><span class="va">methods_text_specific</span> <span class="op">&lt;-</span> <span class="fu">boilerplate_methods</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  exposure_var <span class="op">=</span> <span class="st">"political_conservative"</span>,</span></span>
-<span class="r-in"><span>  outcome_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"religion_identification_level"</span>, <span class="st">"rumination"</span>, <span class="st">"self_esteem"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  n_total <span class="op">=</span> <span class="fl">47000</span>,</span></span>
-<span class="r-in"><span>  baseline_wave <span class="op">=</span> <span class="st">"NZAVS time 10, years 2018-2019"</span>,</span></span>
-<span class="r-in"><span>  exposure_wave <span class="op">=</span> <span class="st">"NZAVS time 11, years 2019-2020"</span>,</span></span>
-<span class="r-in"><span>  outcome_wave <span class="op">=</span> <span class="st">"NZAVS time 12, years 2020-2021"</span>,</span></span>
-<span class="r-in"><span>  baseline_missing_data_proportion <span class="op">=</span> <span class="fl">0.15</span>,</span></span>
-<span class="r-in"><span>  sections_to_include <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sample"</span>, <span class="st">"variables"</span>, <span class="st">"causal_interventions"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  causal_interventions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>interventions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Increase exposure_var"</span>, <span class="st">"Do not change exposure_var"</span><span class="op">)</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  contrasts <span class="op">=</span> <span class="st">"null"</span>,</span></span>
-<span class="r-in"><span>  null_intervention <span class="op">=</span> <span class="st">"Do not change exposure_var"</span>,</span></span>
-<span class="r-in"><span>  sample <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>appendices <span class="op">=</span> <span class="st">"A-C"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Print the result</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">methods_text</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

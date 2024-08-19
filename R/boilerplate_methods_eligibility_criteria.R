@@ -21,11 +21,16 @@ boilerplate_methods_eligibility_criteria <- function(inclusion_criteria, exclusi
   exclusion_md <- list_to_markdown(exclusion_criteria)
   markdown_text <- glue::glue("
 ### Eligibility Criteria
+
 To be included in the analysis of this study, participants needed to meet the following eligibility criteria:
+
 #### Inclusion Criteria
+
 {inclusion_md}
 Participants may have been lost to follow-up at the end of the study if they met eligibility criteria at {baseline_wave}. We adjusted for attrition and non-response using censoring weights, described below.
+
 #### Exclusion Criteria
+
 {exclusion_md}
 A total of {n_participants} individuals met these criteria and were included in the study.
   ")
