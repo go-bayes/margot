@@ -7,38 +7,69 @@
 boilerplate_methods_additional_sections(
   sensitivity_analysis = list(description =
     "To assess the sensitivity of results to unmeasured confounding, we report VanderWeele and Ding's \\"E-value\\" in all analyses [@vanderweele2017]. The E-value quantifies the minimum strength of association (on the risk ratio scale) that an unmeasured confounder would need to have with both the exposure and the outcome (after considering the measured covariates) to explain away the observed exposure-outcome association [@vanderweele2020; @linden2020EVALUE]. To evaluate the strength of evidence, we use the bound of the E-value 95\% confidence interval closest to 1. This provides a clear metric for understanding the robustness of our findings in the presence of potential unmeasured confounding."),
-  scope_interventions = list(figure_ref = "@fig-hist"),
-  evidence_change = list(table_ref = "@tbl-transition"),
+  scope_interventions = list(figure_ref = "@fig-hist", code =
+    "\\n```{r}\\n#| label: fig-hist\\n#| fig-cap: \\" \\"\\n#| eval: true\\n#| include: true\\n#| echo: false\\n#| fig-width: 10\\n#| fig-height: 12\\ngraph_histogram <- margot::here_read(\\"graph_histogram\\")\\ngraph_histogram + theme_classic()\\n```\\n"),
+  evidence_change = list(table_ref = "@tbl-transition", code =
+    "\\n```{r}\\n#| label: tbl-transition\\n#| tbl-cap: \\"TBA.\\"\\n#| eval: true\\n#| echo: false\\ntransition_table <- margot::here_read(\\"transition_table\\")\\ntransition_table$table\\n```\\n"),
   ...
 )
 }
 \arguments{
 \item{sensitivity_analysis}{A list containing details for the Sensitivity Analysis section.
-Default is a list with a description of the E-value method.}
+Should include a 'description' element. Default provides a description of the E-value method.}
 
 \item{scope_interventions}{A list containing details for the Scope of Interventions section.
-Default is a list with a reference to a histogram figure.}
+Should include 'figure_ref' and 'code' elements. 'figure_ref' is a string for the figure reference,
+and 'code' is a string containing the R code block for generating the figure.}
 
 \item{evidence_change}{A list containing details for the Evidence for Change section.
-Default is a list with a reference to a transition table.}
+Should include 'table_ref' and 'code' elements. 'table_ref' is a string for the table reference,
+and 'code' is a string containing the R code block for generating the table.}
 
 \item{...}{Additional arguments (not used in this version).}
 }
 \value{
-A character string containing the markdown-formatted additional sections.
+A character string containing the markdown-formatted additional sections,
+  including R code blocks for figure and table generation.
 }
 \description{
 This function generates markdown-formatted additional sections for the methods,
 including Sensitivity Analysis, Scope of Interventions, and Evidence for Change
-in the Treatment Variable. It uses Quarto-compatible figure and table references.
+in the Treatment Variable. It uses Quarto-compatible figure and table references
+and allows for the inclusion of R code blocks.
 }
 \examples{
 boilerplate_methods_additional_sections()
 
-# Custom figure and table references
+# Custom figure and table references with R code blocks
 boilerplate_methods_additional_sections(
-  scope_interventions = list(figure_ref = "@fig-custom-hist"),
-  evidence_change = list(table_ref = "@tbl-custom-transition")
+  scope_interventions = list(
+    figure_ref = "@fig-custom-hist",
+    code = '
+```{r}
+#| label: fig-custom-hist
+#| fig-cap: "Distribution of treatments"
+#| eval: true
+#| include: true
+#| echo: false
+graph_histogram <- margot::here_read("graph_histogram")
+graph_histogram + theme_classic()
+```
+'
+  ),
+  evidence_change = list(
+    table_ref = "@tbl-custom-transition",
+    code = '
+```{r}
+#| label: tbl-custom-transition
+#| tbl-cap: "Treatment variable changes"
+#| eval: true
+#| echo: false
+transition_table <- margot::here_read("transition_table")
+transition_table$table
+```
+'
+  )
 )
 
 }

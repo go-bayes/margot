@@ -15,7 +15,7 @@
 
 * baseline_missing_data_proportion passed to `boilerplate_methods_missing_data`.
 * all boilerplate functions now accessible with package (not just internal), allowing for better selective use. 
-
+* allow selective printing of `boilerplate_methods`
 
 # [2024-08-18] margot 0.2.1.8
 

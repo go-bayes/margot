@@ -12,6 +12,7 @@ boilerplate_methods(
   exposure_wave,
   outcome_wave,
   baseline_missing_data_proportion,
+  sections_to_include = "all",
   ...
 )
 }
@@ -30,6 +31,9 @@ boilerplate_methods(
 
 \item{baseline_missing_data_proportion}{Numeric value indicating the proportion of missing data at baseline.}
 
+\item{sections_to_include}{Character vector specifying which sections to include in the output.
+Default is 'all', which includes all available sections. Otherwise, specify a vector of section names.}
+
 \item{...}{Additional arguments to be passed to helper functions.}
 }
 \value{
@@ -41,9 +45,12 @@ including details about the sample, variables, causal interventions,
 identification assumptions, target population, eligibility criteria,
 confounding control, missing data handling, statistical estimators,
 and additional sections like sensitivity analysis and scope of interventions.
+Users can specify which sections to include in the output.
 }
 \examples{
-methods_text <- boilerplate_methods(
+\dontrun{
+# Generate methods text with all sections
+methods_text_all <- boilerplate_methods(
   exposure_var = "political_conservative",
   outcome_vars = c("religion_identification_level", "rumination", "self_esteem"),
   n_total = 47000,
@@ -73,6 +80,22 @@ methods_text <- boilerplate_methods(
     evidence_change = list(table_ref = "@tbl-custom-transition")
   )
 )
-cat(methods_text) # print
+
+# Generate methods text with specific sections
+methods_text_specific <- boilerplate_methods(
+  exposure_var = "political_conservative",
+  outcome_vars = c("religion_identification_level", "rumination", "self_esteem"),
+  n_total = 47000,
+  baseline_wave = "NZAVS time 10, years 2018-2019",
+  exposure_wave = "NZAVS time 11, years 2019-2020",
+  outcome_wave = "NZAVS time 12, years 2020-2021",
+  baseline_missing_data_proportion = 0.15,
+  sections_to_include = c("sample", "variables", "causal_interventions"),
+  causal_interventions = list(interventions = c("Increase exposure_var", "Do not change exposure_var")),
+  contrasts = "null",
+  null_intervention = "Do not change exposure_var",
+  sample = list(appendices = "A-C")
+)
+}
 
 }
