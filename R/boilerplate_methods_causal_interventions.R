@@ -53,13 +53,13 @@ boilerplate_methods_causal_interventions <- function(causal_interventions, expos
 
   # Prepare the contrasts section
   contrasts_text <- switch(contrasts,
-                           "pairwise" = "We will conduct pairwise comparisons between all interventions to assess their relative effects.",
+                           "pairwise" = "We conduct pairwise comparisons between all interventions to assess their relative effects.",
                            "null" = if (!is.null(null_intervention)) {
-                             glue::glue("We will compare each intervention to the null intervention: \"{null_intervention}\". This approach allows us to evaluate the effect of each intervention relative to a baseline scenario.")
+                             glue::glue("We compare each intervention to the null intervention: \"{null_intervention}\". This approach allows us to evaluate the effect of each intervention relative to a baseline scenario.")
                            } else {
                              "A null intervention was specified for contrasts, but no null intervention was provided. Please specify a null intervention."
                            },
-                           "custom" = "Custom contrasts will be used for this analysis. The specific contrasts are defined elsewhere in the study protocol.",
+                           "custom" = "We use custom contrasts in this analysis. The specific contrasts are defined elsewhere in the study protocol.",
                            "The contrast method is not specified or is invalid. Please specify a valid contrast method (pairwise, null, or custom)."
   )
 
