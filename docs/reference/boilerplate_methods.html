@@ -4,12 +4,12 @@ including details about the sample, variables, causal interventions,
 identification assumptions, target population, eligibility criteria,
 confounding control, missing data handling, statistical estimators,
 and additional sections like sensitivity analysis and scope of interventions.
-Users can specify which sections to include in the output."><meta property="og:description" content="This function generates a comprehensive methods section for a research paper,
+Users can specify which sections to include in the output or list available sections."><meta property="og:description" content="This function generates a comprehensive methods section for a research paper,
 including details about the sample, variables, causal interventions,
 identification assumptions, target population, eligibility criteria,
 confounding control, missing data handling, statistical estimators,
 and additional sections like sensitivity analysis and scope of interventions.
-Users can specify which sections to include in the output."></head><body>
+Users can specify which sections to include in the output or list available sections."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -48,7 +48,7 @@ including details about the sample, variables, causal interventions,
 identification assumptions, target population, eligibility criteria,
 confounding control, missing data handling, statistical estimators,
 and additional sections like sensitivity analysis and scope of interventions.
-Users can specify which sections to include in the output.</p>
+Users can specify which sections to include in the output or list available sections.</p>
     </div>
 
     <div class="section level2">
@@ -100,7 +100,7 @@ Users can specify which sections to include in the output.</p>
 
 <dt id="arg-sections-to-include">sections_to_include<a class="anchor" aria-label="anchor" href="#arg-sections-to-include"></a></dt>
 <dd><p>Character vector specifying which sections to include in the output.
-Default is 'all', which includes all available sections. Otherwise, specify a vector of section names.</p></dd>
+Default is 'all', which includes all available sections. Use 'list' to see available sections.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -109,12 +109,17 @@ Default is 'all', which includes all available sections. Otherwise, specify a ve
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A character string containing the generated methods section in markdown format.</p>
+    <p>If sections_to_include is not 'list', returns a character string containing the generated methods
+  section in markdown format. If sections_to_include is 'list', returns a character vector of available sections.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># List available sections</span></span></span>
+<span class="r-in"><span><span class="va">available_sections</span> <span class="op">&lt;-</span> <span class="fu">boilerplate_methods</span><span class="op">(</span>sections_to_include <span class="op">=</span> <span class="st">"list"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">available_sections</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Generate methods text with all sections</span></span></span>
 <span class="r-in"><span><span class="va">methods_text_all</span> <span class="op">&lt;-</span> <span class="fu">boilerplate_methods</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  exposure_var <span class="op">=</span> <span class="st">"political_conservative"</span>,</span></span>

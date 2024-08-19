@@ -32,12 +32,13 @@ boilerplate_methods(
 \item{baseline_missing_data_proportion}{Numeric value indicating the proportion of missing data at baseline.}
 
 \item{sections_to_include}{Character vector specifying which sections to include in the output.
-Default is 'all', which includes all available sections. Otherwise, specify a vector of section names.}
+Default is 'all', which includes all available sections. Use 'list' to see available sections.}
 
 \item{...}{Additional arguments to be passed to helper functions.}
 }
 \value{
-A character string containing the generated methods section in markdown format.
+If sections_to_include is not 'list', returns a character string containing the generated methods
+  section in markdown format. If sections_to_include is 'list', returns a character vector of available sections.
 }
 \description{
 This function generates a comprehensive methods section for a research paper,
@@ -45,10 +46,14 @@ including details about the sample, variables, causal interventions,
 identification assumptions, target population, eligibility criteria,
 confounding control, missing data handling, statistical estimators,
 and additional sections like sensitivity analysis and scope of interventions.
-Users can specify which sections to include in the output.
+Users can specify which sections to include in the output or list available sections.
 }
 \examples{
 \dontrun{
+# List available sections
+available_sections <- boilerplate_methods(sections_to_include = "list")
+print(available_sections)
+
 # Generate methods text with all sections
 methods_text_all <- boilerplate_methods(
   exposure_var = "political_conservative",
