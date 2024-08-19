@@ -24,4 +24,3 @@ A character string containing the eligibility criteria description in markdown f
 \description{
 Generate Eligibility Criteria Description
 }
-\keyword{internal}

@@ -26,7 +26,7 @@
 #'   replacements = list(custom_info = "Additional custom information here.")
 #' )
 #'
-#' @keywords internal
+#' @export
 boilerplate_methods_sample <- function(n_total,
                                        appendices_sample = "B-D",
                                        custom_template = NULL,

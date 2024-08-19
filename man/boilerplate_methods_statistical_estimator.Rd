@@ -15,4 +15,3 @@ A character string containing the statistical estimator description in markdown 
 \description{
 Generate Statistical Estimator Description
 }
-\keyword{internal}

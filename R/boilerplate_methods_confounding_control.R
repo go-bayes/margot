@@ -5,7 +5,7 @@
 #'
 #' @return A character string containing the confounding control description in markdown format.
 #'
-#' @keywords internal
+#' @export
 boilerplate_methods_confounding_control <- function(appendix_ref = "B", protocol_url = "https://osf.io/ce4t9/") {
   markdown_text <- glue::glue("
 ### Confounding Control

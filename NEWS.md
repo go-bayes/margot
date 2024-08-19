@@ -4,6 +4,19 @@
 * Develop automated reporting of all scales and measures for quarto documents.
 * Begin writing tutorials for use cases.
 
+
+
+# [2024-08-19] margot 0.2.1.9
+
+## New
+* `boilerplate_methods_additional_sections`
+
+## Improved
+
+* baseline_missing_data_proportion passed to `boilerplate_methods_missing_data`.
+* all boilerplate functions now accessible with package (not just internal), allowing for better selective use. 
+
+
 # [2024-08-18] margot 0.2.1.8
 
 ## New

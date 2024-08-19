@@ -16,4 +16,3 @@ A character string containing the identification assumptions description in mark
 \description{
 Generate Identification Assumptions Description
 }
-\keyword{internal}

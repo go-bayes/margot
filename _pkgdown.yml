@@ -87,6 +87,16 @@ reference:
     - back_transform_zscore
     - boilerplate_measures
     - boilerplate_methods
+    - boilerplate_methods_additional_sections
+    - boilerplate_methods_causal_interventions
+    - boilerplate_methods_confounding_control
+    - boilerplate_methods_eligibility_criteria
+    - boilerplate_methods_identification_assumptions
+    - boilerplate_methods_missing_data
+    - boilerplate_methods_sample
+    - boilerplate_methods_statistical_estimator
+    - boilerplate_methods_target_population
+    - boilerplate_methods_variables
     - construct_formula
     - group_tab
     - here_read
@@ -108,15 +118,6 @@ reference:
 
   - title: "Internal utility functions"
     contents:
-    - boilerplate_methods_causal_interventions
-    - boilerplate_methods_confounding_control
-    - boilerplate_methods_eligibility_criteria
-    - boilerplate_methods_identification_assumptions
-    - boilerplate_methods_missing_data
-    - boilerplate_methods_sample
-    - boilerplate_methods_statistical_estimator
-    - boilerplate_methods_target_population
-    - boilerplate_methods_variables
     - create_tau_hat_plot
     - compute_qini_curves
     - extract_qini_data

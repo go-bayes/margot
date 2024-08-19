@@ -18,4 +18,3 @@ A character string containing the target population description in markdown form
 \description{
 Generate Target Population Description
 }
-\keyword{internal}

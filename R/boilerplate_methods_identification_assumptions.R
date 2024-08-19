@@ -4,7 +4,7 @@
 #'
 #' @return A character string containing the identification assumptions description in markdown format.
 #'
-#' @keywords internal
+#' @export
 boilerplate_methods_identification_assumptions <- function(exposure_var) {
   markdown_text <- glue::glue("
 ### Identification Assumptions

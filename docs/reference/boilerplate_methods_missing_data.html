@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.8</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,7 +43,8 @@
 <span>  grf_appendix <span class="op">=</span> <span class="st">"C"</span>,</span>
 <span>  <span class="va">baseline_wave</span>,</span>
 <span>  <span class="va">exposure_wave</span>,</span>
-<span>  <span class="va">outcome_wave</span></span>
+<span>  <span class="va">outcome_wave</span>,</span>
+<span>  <span class="va">baseline_missing_data_proportion</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -58,12 +59,41 @@
 <dt id="arg-grf-appendix">grf_appendix<a class="anchor" aria-label="anchor" href="#arg-grf-appendix"></a></dt>
 <dd><p>Character string specifying the appendix for GRF missing data handling.</p></dd>
 
+
+<dt id="arg-baseline-wave">baseline_wave<a class="anchor" aria-label="anchor" href="#arg-baseline-wave"></a></dt>
+<dd><p>Character string specifying the baseline wave of the study.</p></dd>
+
+
+<dt id="arg-exposure-wave">exposure_wave<a class="anchor" aria-label="anchor" href="#arg-exposure-wave"></a></dt>
+<dd><p>Character string specifying the exposure wave of the study.</p></dd>
+
+
+<dt id="arg-outcome-wave">outcome_wave<a class="anchor" aria-label="anchor" href="#arg-outcome-wave"></a></dt>
+<dd><p>Character string specifying the outcome wave of the study.</p></dd>
+
+
+<dt id="arg-baseline-missing-data-proportion">baseline_missing_data_proportion<a class="anchor" aria-label="anchor" href="#arg-baseline-missing-data-proportion"></a></dt>
+<dd><p>Numeric value indicating the percentage of missing data at baseline.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A character string containing the missing data handling description in markdown format.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">missing_data_text</span> <span class="op">&lt;-</span> <span class="fu">boilerplate_methods_missing_data</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  estimators <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lmtp"</span>, <span class="st">"grf"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  grf_appendix <span class="op">=</span> <span class="st">"D"</span>,</span></span>
+<span class="r-in"><span>  baseline_wave <span class="op">=</span> <span class="st">"NZAVS time 10, years 2018-2019"</span>,</span></span>
+<span class="r-in"><span>  exposure_wave <span class="op">=</span> <span class="st">"NZAVS time 11, years 2019-2020"</span>,</span></span>
+<span class="r-in"><span>  outcome_wave <span class="op">=</span> <span class="st">"NZAVS time 12, years 2020-2021"</span>,</span></span>
+<span class="r-in"><span>  baseline_missing_data_proportion <span class="op">=</span> <span class="fl">15</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

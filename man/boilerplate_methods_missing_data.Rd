@@ -9,13 +9,22 @@ boilerplate_methods_missing_data(
   grf_appendix = "C",
   baseline_wave,
   exposure_wave,
-  outcome_wave
+  outcome_wave,
+  baseline_missing_data_proportion
 )
 }
 \arguments{
 \item{estimators}{Character vector specifying the statistical estimators used.}
 
 \item{grf_appendix}{Character string specifying the appendix for GRF missing data handling.}
+
+\item{baseline_wave}{Character string specifying the baseline wave of the study.}
+
+\item{exposure_wave}{Character string specifying the exposure wave of the study.}
+
+\item{outcome_wave}{Character string specifying the outcome wave of the study.}
+
+\item{baseline_missing_data_proportion}{Numeric value indicating the percentage of missing data at baseline.}
 }
 \value{
 A character string containing the missing data handling description in markdown format.
@@ -23,4 +32,14 @@ A character string containing the missing data handling description in markdown 
 \description{
 Generate Missing Data Handling Description
 }
-\keyword{internal}
+\examples{
+missing_data_text <- boilerplate_methods_missing_data(
+  estimators = c("lmtp", "grf"),
+  grf_appendix = "D",
+  baseline_wave = "NZAVS time 10, years 2018-2019",
+  exposure_wave = "NZAVS time 11, years 2019-2020",
+  outcome_wave = "NZAVS time 12, years 2020-2021",
+  baseline_missing_data_proportion = 15
+)
+
+}

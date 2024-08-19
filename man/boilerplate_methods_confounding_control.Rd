@@ -20,4 +20,3 @@ A character string containing the confounding control description in markdown fo
 \description{
 Generate Confounding Control Description
 }
-\keyword{internal}
