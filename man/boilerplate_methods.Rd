@@ -7,7 +7,6 @@
 boilerplate_methods(
   exposure_var,
   outcome_vars,
-  measure_data,
   n_total,
   baseline_wave,
   exposure_wave,
@@ -22,8 +21,6 @@ boilerplate_methods(
 \item{exposure_var}{Character string specifying the primary exposure variable.}
 
 \item{outcome_vars}{A named list of character vectors specifying the outcome variables by domain.}
-
-\item{measure_data}{A list containing information about each measure.}
 
 \item{n_total}{Numeric value indicating the total number of participants in the study.}
 
@@ -41,6 +38,8 @@ Default is 'all', which includes all available sections. Use 'list' to see avail
 \item{appendices_measures}{Character string specifying the appendix where detailed variable descriptions can be found.}
 
 \item{...}{Additional arguments to be passed to helper functions.}
+
+\item{measure_data}{A list containing information about each measure.}
 }
 \value{
 If sections_to_include is not 'list', returns a character string containing the generated methods

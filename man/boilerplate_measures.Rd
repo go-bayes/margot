@@ -5,17 +5,13 @@
 \title{Generate Appendix of Measures}
 \usage{
 boilerplate_measures(
-  baseline_vars,
-  exposure_var = NULL,
-  outcome_vars = NULL,
+  exposure_var,
+  outcome_vars,
   measure_data,
-  custom_titles = NULL,
-  print_waves = FALSE
+  appendices_measures = NULL
 )
 }
 \arguments{
-\item{baseline_vars}{A character vector of baseline variable names.}
-
 \item{exposure_var}{A single character string naming the exposure variable, or NULL if not applicable.}
 
 \item{outcome_vars}{A list of character vectors, where each element is named after a domain
@@ -24,6 +20,8 @@ and contains the variable names for that domain, or NULL if not applicable.}
 \item{measure_data}{A list containing information about each measure. Each element
 should be a list with at least 'description' and 'reference' fields. Optional
 fields include 'waves' and 'items' for scale dimensions.}
+
+\item{baseline_vars}{A character vector of baseline variable names.}
 
 \item{custom_titles}{An optional named list of custom titles for measures.}
 

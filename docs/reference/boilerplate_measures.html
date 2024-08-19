@@ -42,12 +42,10 @@ including baseline variables, exposure variables, and outcome variables across d
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">boilerplate_measures</span><span class="op">(</span></span>
-<span>  <span class="va">baseline_vars</span>,</span>
-<span>  exposure_var <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  outcome_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">exposure_var</span>,</span>
+<span>  <span class="va">outcome_vars</span>,</span>
 <span>  <span class="va">measure_data</span>,</span>
-<span>  custom_titles <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  print_waves <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  appendices_measures <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -55,11 +53,7 @@ including baseline variables, exposure variables, and outcome variables across d
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-baseline-vars">baseline_vars<a class="anchor" aria-label="anchor" href="#arg-baseline-vars"></a></dt>
-<dd><p>A character vector of baseline variable names.</p></dd>
-
-
-<dt id="arg-exposure-var">exposure_var<a class="anchor" aria-label="anchor" href="#arg-exposure-var"></a></dt>
+<dl><dt id="arg-exposure-var">exposure_var<a class="anchor" aria-label="anchor" href="#arg-exposure-var"></a></dt>
 <dd><p>A single character string naming the exposure variable, or NULL if not applicable.</p></dd>
 
 
@@ -72,6 +66,10 @@ and contains the variable names for that domain, or NULL if not applicable.</p><
 <dd><p>A list containing information about each measure. Each element
 should be a list with at least 'description' and 'reference' fields. Optional
 fields include 'waves' and 'items' for scale dimensions.</p></dd>
+
+
+<dt id="arg-baseline-vars">baseline_vars<a class="anchor" aria-label="anchor" href="#arg-baseline-vars"></a></dt>
+<dd><p>A character vector of baseline variable names.</p></dd>
 
 
 <dt id="arg-custom-titles">custom_titles<a class="anchor" aria-label="anchor" href="#arg-custom-titles"></a></dt>

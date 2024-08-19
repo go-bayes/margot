@@ -9,7 +9,7 @@
 #' @param measure_data A list containing information about each measure.
 #' @param custom_titles An optional named list of custom titles for measures.
 #' @param print_waves A logical value indicating whether to print wave information. Default is FALSE.
-#' @param appendix_ref An optional character string for the appendix reference. If NULL, no reference is included.
+#' @param appendices_measures An optional character string for the appendix reference. If NULL, no reference is included.
 #'
 #' @return A character string containing the markdown-formatted section on variables.
 #'
@@ -33,7 +33,7 @@
 #'   exposure_var = exposure_var,
 #'   outcome_vars = all_outcomes,
 #'   measure_data = measure_data,
-#'   appendix_ref = "Appendix C"
+#'   appendices_measures = "Appendix C"
 #' )
 #' # Print the result
 #' cat(result)
@@ -43,25 +43,20 @@
 boilerplate_methods_variables <- function(exposure_var,
                                           outcome_vars,
                                           measure_data,
-                                          custom_titles = NULL,
-                                          print_waves = FALSE,
-                                          appendix_ref = NULL) {
+                                          appendices_measures = NULL,
+                                          ...) {
+  # Ignore unused arguments
+  unused_args <- list(...)
 
-  # Call boilerplate_measures with NULL baseline_vars
+  # Call boilerplate_measures with the correct parameters
   variables_text <- boilerplate_measures(
-    baseline_vars = NULL,
     exposure_var = exposure_var,
     outcome_vars = outcome_vars,
     measure_data = measure_data,
-    custom_titles = custom_titles,
-    print_waves = print_waves
+    appendices_measures = appendices_measures
   )
 
-  # Add appendix reference if provided
-  if (!is.null(appendix_ref)) {
-    appendix_text <- paste0("\n\nDetailed descriptions of how these variables were measured and operationalized can be found in **", appendix_ref, "**.")
-    variables_text <- paste0(variables_text, appendix_text)
-  }
+  return(variables_text)
 }
 # boilerplate_methods_variables <- function(exposure_var, outcome_vars = NULL, domains = NULL, ...) {
 #   if (is.null(outcome_vars)) {

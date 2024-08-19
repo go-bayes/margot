@@ -8,9 +8,8 @@ boilerplate_methods_variables(
   exposure_var,
   outcome_vars,
   measure_data,
-  custom_titles = NULL,
-  print_waves = FALSE,
-  appendix_ref = NULL
+  appendices_measures = NULL,
+  ...
 )
 }
 \arguments{
@@ -20,11 +19,11 @@ boilerplate_methods_variables(
 
 \item{measure_data}{A list containing information about each measure.}
 
+\item{appendices_measures}{An optional character string for the appendix reference. If NULL, no reference is included.}
+
 \item{custom_titles}{An optional named list of custom titles for measures.}
 
 \item{print_waves}{A logical value indicating whether to print wave information. Default is FALSE.}
-
-\item{appendix_ref}{An optional character string for the appendix reference. If NULL, no reference is included.}
 }
 \value{
 A character string containing the markdown-formatted section on variables.
@@ -54,7 +53,7 @@ result <- boilerplate_methods_variables(
   exposure_var = exposure_var,
   outcome_vars = all_outcomes,
   measure_data = measure_data,
-  appendix_ref = "Appendix C"
+  appendices_measures = "Appendix C"
 )
 # Print the result
 cat(result)

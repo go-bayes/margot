@@ -53,7 +53,6 @@ and additional sections like sensitivity analysis and scope of interventions.</p
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">boilerplate_methods</span><span class="op">(</span></span>
 <span>  <span class="va">exposure_var</span>,</span>
 <span>  <span class="va">outcome_vars</span>,</span>
-<span>  <span class="va">measure_data</span>,</span>
 <span>  <span class="va">n_total</span>,</span>
 <span>  <span class="va">baseline_wave</span>,</span>
 <span>  <span class="va">exposure_wave</span>,</span>
@@ -75,10 +74,6 @@ and additional sections like sensitivity analysis and scope of interventions.</p
 
 <dt id="arg-outcome-vars">outcome_vars<a class="anchor" aria-label="anchor" href="#arg-outcome-vars"></a></dt>
 <dd><p>A named list of character vectors specifying the outcome variables by domain.</p></dd>
-
-
-<dt id="arg-measure-data">measure_data<a class="anchor" aria-label="anchor" href="#arg-measure-data"></a></dt>
-<dd><p>A list containing information about each measure.</p></dd>
 
 
 <dt id="arg-n-total">n_total<a class="anchor" aria-label="anchor" href="#arg-n-total"></a></dt>
@@ -112,6 +107,10 @@ Default is 'all', which includes all available sections. Use 'list' to see avail
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments to be passed to helper functions.</p></dd>
+
+
+<dt id="arg-measure-data">measure_data<a class="anchor" aria-label="anchor" href="#arg-measure-data"></a></dt>
+<dd><p>A list containing information about each measure.</p></dd>
 
 </dl></div>
     <div class="section level2">

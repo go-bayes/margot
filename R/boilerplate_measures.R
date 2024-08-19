@@ -49,12 +49,10 @@
 #' @import janitor
 #'
 #' @export
-boilerplate_measures <- function(baseline_vars,
-                                 exposure_var = NULL,
-                                 outcome_vars = NULL,
+boilerplate_measures <- function(exposure_var,
+                                 outcome_vars,
                                  measure_data,
-                                 custom_titles = NULL,
-                                 print_waves = FALSE) {
+                                 appendices_measures = NULL) {
 
   # Helper function to format a single measure or scale item
   format_measure <- function(var_name, measure_info) {
@@ -63,20 +61,7 @@ boilerplate_measures <- function(baseline_vars,
       return(paste0("##### ", janitor::make_clean_names(var_name, case = "title"), "\n\nNo information available for this variable.\n\n"))
     }
 
-    if (!all(c("description", "reference") %in% names(measure_info))) {
-      warning(paste("Measure info for", var_name, "is missing 'description' or 'reference'"))
-      missing_fields <- setdiff(c("description", "reference"), names(measure_info))
-      for (field in missing_fields) {
-        measure_info[[field]] <- "Not provided"
-      }
-    }
-
-    # Use custom title if provided, otherwise use clean name
-    if (!is.null(custom_titles) && var_name %in% names(custom_titles)) {
-      title <- custom_titles[[var_name]]
-    } else {
-      title <- janitor::make_clean_names(var_name, case = "title")
-    }
+    title <- janitor::make_clean_names(var_name, case = "title")
 
     # Add variable type indicator
     if (endsWith(var_name, "_binary")) {
@@ -85,36 +70,16 @@ boilerplate_measures <- function(baseline_vars,
       title <- paste0(title, " (Categorical)")
     }
 
-    # Include wave information if available and print_waves is TRUE
-    if (print_waves && "waves" %in% names(measure_info)) {
-      title <- paste0(title, " (waves: ", measure_info$waves, ")")
-    }
-
-    # Combine description and reference
     description <- trimws(measure_info$description)
     reference <- measure_info$reference
 
-    # Check if the reference is a 'string_is' type
+    # Format the description with reference
     if (grepl("^string_is\\s+", reference)) {
       string_content <- sub("^string_is\\s+", "", reference)
       string_content <- gsub("^[\"']|[\"']$", "", string_content)
       description_with_ref <- paste0(description, " ", string_content)
-      if (!grepl("[.!?]$", description_with_ref)) {
-        description_with_ref <- paste0(description_with_ref, ".")
-      }
     } else {
-      # Remove the period before the reference
-      if (substr(description, nchar(description), nchar(description)) %in% c(".", "!", "?")) {
-        description_with_ref <- paste0(
-          substr(description, 1, nchar(description) - 1),
-          " [@",
-          reference,
-          "]",
-          substr(description, nchar(description), nchar(description))
-        )
-      } else {
-        description_with_ref <- paste0(description, " [@", reference, "]")
-      }
+      description_with_ref <- paste0(description, " [@", reference, "]")
     }
 
     formatted_text <- paste0("##### ", title, "\n", description_with_ref, "\n")
@@ -130,48 +95,191 @@ boilerplate_measures <- function(baseline_vars,
     return(formatted_text)
   }
 
-  # Generate baseline section
-  baseline_section <- ""
-  if (!is.null(baseline_vars) && length(baseline_vars) > 0) {
-    baseline_section <- "#### Baseline Variables\n"
-    for (var in baseline_vars) {
-      baseline_section <- paste0(baseline_section, format_measure(var, measure_data[[var]]))
-    }
-  }
-
   # Generate exposure section
-  exposure_section <- ""
-  if (!is.null(exposure_var)) {
-    exposure_section <- paste0(
-      "#### Exposure Indicators\n",
-      format_measure(exposure_var, measure_data[[exposure_var]])
-    )
-  }
+  exposure_section <- paste0(
+    "#### Exposure Indicators\n",
+    format_measure(exposure_var, measure_data[[exposure_var]])
+  )
 
   # Generate outcome sections by domain
-  outcome_sections <- ""
-  if (!is.null(outcome_vars) && length(outcome_vars) > 0) {
-    outcome_sections <- lapply(names(outcome_vars), function(domain) {
-      domain_vars <- outcome_vars[[domain]]
-      domain_section <- paste0("#### Outcome Domain: ", janitor::make_clean_names(domain, case = "title"), "\n")
-      for (var in domain_vars) {
-        domain_section <- paste0(domain_section, format_measure(var, measure_data[[var]]))
-      }
-      return(domain_section)
-    })
-    outcome_sections <- paste(outcome_sections, collapse = "\n")
-  }
+  outcome_sections <- lapply(names(outcome_vars), function(domain) {
+    domain_vars <- outcome_vars[[domain]]
+    domain_section <- paste0("#### Outcome Domain: ", janitor::make_clean_names(domain, case = "title"), "\n")
+    for (var in domain_vars) {
+      domain_section <- paste0(domain_section, format_measure(var, measure_data[[var]]))
+    }
+    return(domain_section)
+  })
 
   # Combine all sections
   full_appendix <- paste0(
     "### Indicators\n",
-    baseline_section,
     exposure_section,
-    outcome_sections
+    paste(outcome_sections, collapse = "\n\n")
   )
+
+  # Add appendix reference if provided
+  if (!is.null(appendices_measures)) {
+    appendix_text <- paste0("\n\nDetailed descriptions of how these variables were measured and operationalized can be found in **Appendix ", appendices_measures, "**.")
+    full_appendix <- paste0(full_appendix, appendix_text)
+  }
 
   return(full_appendix)
 }
+# boilerplate_measures <- function(exposure_var,
+#                                  outcome_vars,
+#                                  measure_data,
+#                                  appendices_measures = NULL) {
+#
+#   # Helper function to format a single measure or scale item
+#   format_measure <- function(var_name, measure_info) {
+#     if (is.null(measure_info)) {
+#       warning(paste("No information available for variable:", var_name))
+#       return(paste0("##### ", janitor::make_clean_names(var_name, case = "title"), "\n\nNo information available for this variable.\n\n"))
+#     }
+#
+#     title <- janitor::make_clean_names(var_name, case = "title")
+#
+#     # Add variable type indicator
+#     if (endsWith(var_name, "_binary")) {
+#       title <- paste0(title, " (Binary)")
+#     } else if (endsWith(var_name, "_cat")) {
+#       title <- paste0(title, " (Categorical)")
+#     }
+#
+#     description <- trimws(measure_info$description)
+#     reference <- measure_info$reference
+#
+#     # Format the description with reference
+#     if (grepl("^string_is\\s+", reference)) {
+#       string_content <- sub("^string_is\\s+", "", reference)
+#       string_content <- gsub("^[\"']|[\"']$", "", string_content)
+#       description_with_ref <- paste0(description, " ", string_content)
+#     } else {
+#       description_with_ref <- paste0(description, " [@", reference, "]")
+#     }
+#
+#     formatted_text <- paste0("##### ", title, "\n", description_with_ref, "\n")
+#
+#     # If the measure is a scale item, include its items
+#     if ("items" %in% names(measure_info)) {
+#       formatted_text <- paste0(formatted_text, "This dimension includes the following items:\n")
+#       for (i in seq_along(measure_info$items)) {
+#         formatted_text <- paste0(formatted_text, "   ", letters[i], ". ", measure_info$items[i], "\n")
+#       }
+#     }
+#
+#     return(formatted_text)
+#   }
+#
+#   # Generate exposure section
+#   exposure_section <- paste0(
+#     "#### Exposure Indicators\n",
+#     format_measure(exposure_var, measure_data[[exposure_var]])
+#   )
+#
+#   # Generate outcome sections by domain
+#   outcome_sections <- lapply(names(outcome_vars), function(domain) {
+#     domain_vars <- outcome_vars[[domain]]
+#     domain_section <- paste0("#### Outcome Domain: ", janitor::make_clean_names(domain, case = "title"), "\n")
+#     for (var in domain_vars) {
+#       domain_section <- paste0(domain_section, format_measure(var, measure_data[[var]]))
+#     }
+#     return(domain_section)
+#   })
+#
+#   # Combine all sections
+#   full_appendix <- paste0(
+#     "### Indicators\n",
+#     exposure_section,
+#     paste(outcome_sections, collapse = "\n\n")
+#   )
+#
+#   # Add appendix reference if provided
+#   if (!is.null(appendices_measures)) {
+#     appendix_text <- paste0("\n\nDetailed descriptions of how these variables were measured and operationalized can be found in **Appendix ", appendices_measures, "**.")
+#     full_appendix <- paste0(full_appendix, appendix_text)
+#   }
+#
+#   return(full_appendix)
+# }
+# boilerplate_measures <- function(exposure_var,
+#                                  outcome_vars,
+#                                  measure_data,
+#                                  appendices_measures = NULL) {
+#
+#   # Helper function to format a single measure or scale item
+#   format_measure <- function(var_name, measure_info) {
+#     if (is.null(measure_info)) {
+#       warning(paste("No information available for variable:", var_name))
+#       return(paste0("##### ", janitor::make_clean_names(var_name, case = "title"), "\n\nNo information available for this variable.\n\n"))
+#     }
+#
+#     title <- janitor::make_clean_names(var_name, case = "title")
+#
+#     # Add variable type indicator
+#     if (endsWith(var_name, "_binary")) {
+#       title <- paste0(title, " (Binary)")
+#     } else if (endsWith(var_name, "_cat")) {
+#       title <- paste0(title, " (Categorical)")
+#     }
+#
+#     description <- trimws(measure_info$description)
+#     reference <- measure_info$reference
+#
+#     # Format the description with reference
+#     if (grepl("^string_is\\s+", reference)) {
+#       string_content <- sub("^string_is\\s+", "", reference)
+#       string_content <- gsub("^[\"']|[\"']$", "", string_content)
+#       description_with_ref <- paste0(description, " ", string_content)
+#     } else {
+#       description_with_ref <- paste0(description, " [@", reference, "]")
+#     }
+#
+#     formatted_text <- paste0("##### ", title, "\n", description_with_ref, "\n")
+#
+#     # If the measure is a scale item, include its items
+#     if ("items" %in% names(measure_info)) {
+#       formatted_text <- paste0(formatted_text, "This dimension includes the following items:\n")
+#       for (i in seq_along(measure_info$items)) {
+#         formatted_text <- paste0(formatted_text, "   ", letters[i], ". ", measure_info$items[i], "\n")
+#       }
+#     }
+#
+#     return(formatted_text)
+#   }
+#
+#   # Generate exposure section
+#   exposure_section <- paste0(
+#     "#### Exposure Indicators\n",
+#     format_measure(exposure_var, measure_data[[exposure_var]])
+#   )
+#
+#   # Generate outcome sections by domain
+#   outcome_sections <- lapply(names(outcome_vars), function(domain) {
+#     domain_vars <- outcome_vars[[domain]]
+#     domain_section <- paste0("#### Outcome Domain: ", janitor::make_clean_names(domain, case = "title"), "\n")
+#     for (var in domain_vars) {
+#       domain_section <- paste0(domain_section, format_measure(var, measure_data[[var]]))
+#     }
+#     return(domain_section)
+#   })
+#
+#   # Combine all sections
+#   full_appendix <- paste0(
+#     "### Indicators\n",
+#     exposure_section,
+#     paste(outcome_sections, collapse = "\n\n")
+#   )
+#
+#   # Add appendix reference if provided
+#   if (!is.null(appendices_measures)) {
+#     appendix_text <- paste0("\n\nDetailed descriptions of how these variables were measured and operationalized can be found in **Appendix ", appendices_measures, "**.")
+#     full_appendix <- paste0(full_appendix, appendix_text)
+#   }
+#
+#   return(full_appendix)
+# }
 # boilerplate_measures <- function(all_vars = NULL,
 #                                  baseline_vars = NULL,
 #                                  exposure_var = NULL,
