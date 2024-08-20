@@ -5,8 +5,16 @@
 * Begin writing tutorials for use cases.
 * customise plots for user-supplied labels
 
-# [2024-08-19] margot 0.2.1.11
 
+# [2024-08-19] margot 0.2.1.12
+
+## Improved
+
+* integrated `cli` messages for user experience, in `margot_create_database`, `margot_merge_databases`, and `boilerplate_methods` (more to follow.)
+
+
+
+# [2024-08-19] margot 0.2.1.11
 ## New
 
 * `margot_create_database`: allows for merging of bioliography databases. 

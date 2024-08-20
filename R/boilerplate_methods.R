@@ -80,6 +80,8 @@
 #' cat(methods_text)
 #' }
 #'
+#' @import cli
+#'
 #' @export
 boilerplate_methods <- function(exposure_var, outcome_vars, n_total, baseline_wave, exposure_wave, outcome_wave, baseline_missing_data_proportion, sections_to_include = 'all', appendices_measures = NULL, ...) {
   all_sections <- c(
@@ -99,7 +101,7 @@ boilerplate_methods <- function(exposure_var, outcome_vars, n_total, baseline_wa
     return(all_sections)
   }
 
-  cat("Starting boilerplate_methods function\n")
+  cli::cli_alert_info("Starting boilerplate_methods function")
 
   # initialise an empty list to store all sections
   methods_sections <- list()
@@ -110,18 +112,18 @@ boilerplate_methods <- function(exposure_var, outcome_vars, n_total, baseline_wa
   # define the safe_get function inside boilerplate_methods
   safe_get <- function(name, default = NULL) {
     if (name %in% names(extra_args)) {
-      cat(paste("Found", name, "in extra_args\n"))
+      cli::cli_alert_success("Found {name} in extra_args")
       return(extra_args[[name]])
     } else {
-      cat(paste("Using default value for", name, "\n"))
+      cli::cli_alert_warning("Using default value for {name}")
       return(default)
     }
   }
 
   # define a helper function for error-tolerant execution
   safe_execute <- function(func_name, args) {
-    cat(paste("Executing", func_name, "\n"))
-    cat("Arguments passed to", func_name, ":\n")
+    cli::cli_h2("Executing {func_name}")
+    cli::cli_alert_info("Arguments passed to {func_name}:")
     print(args)
     tryCatch({
       if (exists(func_name, mode = "function")) {
@@ -129,19 +131,19 @@ boilerplate_methods <- function(exposure_var, outcome_vars, n_total, baseline_wa
         # Only pass arguments that the function can accept
         func_args <- formals(func)
         valid_args <- args[names(args) %in% names(func_args)]
-        cat("Valid arguments for", func_name, ":\n")
+        cli::cli_alert_info("Valid arguments for {func_name}:")
         print(valid_args)
         result <- do.call(func, valid_args)
-        cat(paste("Finished", func_name, "\n"))
-        cat("Result of", func_name, ":\n")
+        cli::cli_alert_success("Finished {func_name}")
+        cli::cli_alert_info("Result of {func_name}:")
         print(result)
         return(result)
       } else {
-        warning(paste("Function", func_name, "not found. Skipping this section."))
+        cli::cli_alert_danger("Function {func_name} not found. Skipping this section.")
         return(NULL)
       }
     }, error = function(e) {
-      warning(paste("Error in", func_name, ":", e$message))
+      cli::cli_alert_danger("Error in {func_name}: {e$message}")
       return(NULL)
     })
   }
@@ -161,7 +163,7 @@ boilerplate_methods <- function(exposure_var, outcome_vars, n_total, baseline_wa
 
   # call sub-functions for each section
   for (section in sections) {
-    cat(paste("\nProcessing section:", section, "\n"))
+    cli::cli_h1("Processing section: {section}")
     section_name <- section
     func_name <- paste0("boilerplate_methods_", section)
     args <- list()
@@ -225,24 +227,186 @@ boilerplate_methods <- function(exposure_var, outcome_vars, n_total, baseline_wa
     result <- safe_execute(func_name, args)
     if (!is.null(result)) {
       methods_sections[[section_name]] <- result
-      cat(paste("Added result for", section_name, "to methods_sections\n"))
+      cli::cli_alert_success("Added result for {section_name} to methods_sections")
     } else {
-      cat(paste("No result added for", section_name, "\n"))
+      cli::cli_alert_warning("No result added for {section_name}")
     }
   }
 
   # combine all sections into a single markdown string
-  cat("\nCombining all sections\n")
-  cat("Contents of methods_sections:\n")
+  cli::cli_h1("Combining all sections")
+  cli::cli_alert_info("Contents of methods_sections:")
   print(methods_sections)
   markdown_output <- paste(unlist(methods_sections), collapse = "\n\n")
 
-  cat("Finished boilerplate_methods function\n")
-  cat("Final markdown_output:\n")
+  cli::cli_alert_success("Finished boilerplate_methods function")
+  cli::cli_alert_info("Final markdown_output:")
   cat(markdown_output)
 
   return(markdown_output)
 }
+# boilerplate_methods <- function(exposure_var, outcome_vars, n_total, baseline_wave, exposure_wave, outcome_wave, baseline_missing_data_proportion, sections_to_include = 'all', appendices_measures = NULL, ...) {
+#   all_sections <- c(
+#     "sample",
+#     "variables",
+#     "causal_interventions",
+#     "identification_assumptions",
+#     "target_population",
+#     "eligibility_criteria",
+#     "confounding_control",
+#     "missing_data",
+#     "statistical_estimator",
+#     "additional_sections"
+#   )
+#
+#   if (identical(sections_to_include, 'list')) {
+#     return(all_sections)
+#   }
+#
+#   cat("Starting boilerplate_methods function\n")
+#
+#   # initialise an empty list to store all sections
+#   methods_sections <- list()
+#
+#   # capture all additional arguments
+#   extra_args <- list(...)
+#
+#   # define the safe_get function inside boilerplate_methods
+#   safe_get <- function(name, default = NULL) {
+#     if (name %in% names(extra_args)) {
+#       cat(paste("Found", name, "in extra_args\n"))
+#       return(extra_args[[name]])
+#     } else {
+#       cat(paste("Using default value for", name, "\n"))
+#       return(default)
+#     }
+#   }
+#
+#   # define a helper function for error-tolerant execution
+#   safe_execute <- function(func_name, args) {
+#     cat(paste("Executing", func_name, "\n"))
+#     cat("Arguments passed to", func_name, ":\n")
+#     print(args)
+#     tryCatch({
+#       if (exists(func_name, mode = "function")) {
+#         func <- get(func_name, mode = "function")
+#         # Only pass arguments that the function can accept
+#         func_args <- formals(func)
+#         valid_args <- args[names(args) %in% names(func_args)]
+#         cat("Valid arguments for", func_name, ":\n")
+#         print(valid_args)
+#         result <- do.call(func, valid_args)
+#         cat(paste("Finished", func_name, "\n"))
+#         cat("Result of", func_name, ":\n")
+#         print(result)
+#         return(result)
+#       } else {
+#         warning(paste("Function", func_name, "not found. Skipping this section."))
+#         return(NULL)
+#       }
+#     }, error = function(e) {
+#       warning(paste("Error in", func_name, ":", e$message))
+#       return(NULL)
+#     })
+#   }
+#
+#   # get eligibility criteria
+#   inclusion_criteria <- safe_get("inclusion_criteria", list("No inclusion criteria specified"))
+#   exclusion_criteria <- safe_get("exclusion_criteria", list("No exclusion criteria specified"))
+#   n_participants <- safe_get("n_participants", "UNDEFINED")
+#
+#   # get the statistical estimator
+#   statistical_estimator <- safe_get("statistical_estimator", list(estimators = "lmtp"))
+#   if (is.list(statistical_estimator) && "estimators" %in% names(statistical_estimator)) {
+#     statistical_estimator <- statistical_estimator$estimators  # Use all provided estimators
+#   }
+#
+#   sections <- if(identical(sections_to_include, 'all')) all_sections else sections_to_include
+#
+#   # call sub-functions for each section
+#   for (section in sections) {
+#     cat(paste("\nProcessing section:", section, "\n"))
+#     section_name <- section
+#     func_name <- paste0("boilerplate_methods_", section)
+#     args <- list()
+#
+#     # Add only necessary arguments for each section
+#     if (section_name == "variables") {
+#       args <- list(
+#         exposure_var = exposure_var,
+#         outcome_vars = outcome_vars,
+#         measure_data = safe_get("measure_data"),
+#         appendices_measures = appendices_measures
+#       )
+#     } else if (section_name == "causal_interventions") {
+#       args <- list(
+#         exposure_var = exposure_var,
+#         causal_interventions = safe_get("causal_interventions")$interventions,
+#         contrasts = safe_get("contrasts", "pairwise"),
+#         null_intervention = safe_get("null_intervention", NULL)
+#       )
+#     } else if (section_name == "target_population") {
+#       args <- list(
+#         statistical_estimator = if (is.list(statistical_estimator)) statistical_estimator[[1]] else statistical_estimator[1],
+#         baseline_wave = baseline_wave
+#       )
+#     } else if (section_name == "eligibility_criteria") {
+#       args <- list(
+#         inclusion_criteria = inclusion_criteria,
+#         exclusion_criteria = exclusion_criteria,
+#         n_participants = n_participants,
+#         baseline_wave = baseline_wave
+#       )
+#     } else if (section_name == "missing_data") {
+#       args <- list(
+#         estimators = statistical_estimator,
+#         baseline_wave = baseline_wave,
+#         exposure_wave = exposure_wave,
+#         outcome_wave = outcome_wave,
+#         baseline_missing_data_proportion = baseline_missing_data_proportion
+#       )
+#     } else if (section_name == "statistical_estimator") {
+#       args <- list(estimators = statistical_estimator)
+#     } else if (section_name == "additional_sections") {
+#       additional_sections_args <- safe_get("additional_sections", list())
+#       args <- list(
+#         sensitivity_analysis = additional_sections_args$sensitivity_analysis,
+#         scope_interventions = additional_sections_args$scope_interventions,
+#         evidence_change = additional_sections_args$evidence_change
+#       )
+#     } else {
+#       # For other sections, pass all common arguments
+#       args <- list(
+#         exposure_var = exposure_var,
+#         outcome_vars = outcome_vars,
+#         n_total = n_total,
+#         baseline_wave = baseline_wave,
+#         exposure_wave = exposure_wave,
+#         outcome_wave = outcome_wave
+#       )
+#     }
+#
+#     result <- safe_execute(func_name, args)
+#     if (!is.null(result)) {
+#       methods_sections[[section_name]] <- result
+#       cat(paste("Added result for", section_name, "to methods_sections\n"))
+#     } else {
+#       cat(paste("No result added for", section_name, "\n"))
+#     }
+#   }
+#
+#   # combine all sections into a single markdown string
+#   cat("\nCombining all sections\n")
+#   cat("Contents of methods_sections:\n")
+#   print(methods_sections)
+#   markdown_output <- paste(unlist(methods_sections), collapse = "\n\n")
+#
+#   cat("Finished boilerplate_methods function\n")
+#   cat("Final markdown_output:\n")
+#   cat(markdown_output)
+#
+#   return(markdown_output)
+# }
 # boilerplate_methods <- function(exposure_var, outcome_vars, measure_data, n_total, baseline_wave,
 #                                 exposure_wave, outcome_wave, baseline_missing_data_proportion,
 #                                 sections_to_include = 'all', appendices_measures = NULL, ...) {
