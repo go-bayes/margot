@@ -71,5 +71,4 @@ appendix_text_3 <- margot_create_bibliography(
   custom_titles = custom_titles,
   print_keywords = TRUE
 )
-
 }

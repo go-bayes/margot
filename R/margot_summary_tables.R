@@ -64,7 +64,7 @@ margot_summary_tables <- function(data,
   n_participants <- length(unique(data$id))
   n_participants_formatted <- format(n_participants, big.mark = ",")
 
-  cli::cli_alert_success("Number of unique participants: {.val {n_participants_formatted}}")
+  cli::cli_alert_success("Number of unique participants: {.val {n_participants_formatted}} \U0001F44D")
 
   # baseline table
   dt_baseline <- data |>
@@ -187,7 +187,7 @@ margot_summary_tables <- function(data,
   cli::cli_progress_done()
 
   # Return results
-  cli::cli_alert_success("Summary tables and information generated successfully!")
+  cli::cli_alert_success("Summary tables and information generated successfully \U0001F44D")
   return(list(
     baseline_table = table_baseline,
     exposure_table = table_exposures,

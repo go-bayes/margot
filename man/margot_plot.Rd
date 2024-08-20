@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_plot.R
 \name{margot_plot}
 \alias{margot_plot}
-\title{Visualise Causal Effect Estimates with Enhanced Flexibility}
+\title{Create a Margot Plot with Interpretation and Transformed Table}
 \usage{
 margot_plot(
   .data,
@@ -15,53 +15,85 @@ margot_plot(
 )
 }
 \arguments{
-\item{.data}{A data frame of causal effect estimates, ideally output by a `group_tab` function or similar. The data should include confidence intervals and effect estimate values.}
+\item{.data}{A data frame containing the data to be plotted.}
 
-\item{type}{Character string indicating the scale of effect estimates: "RD" for risk difference or "RR" for risk ratio. Default is "RD".}
+\item{type}{Character string specifying the type of plot. Either "RD" (Risk Difference) or "RR" (Risk Ratio).}
 
-\item{order}{Character string indicating the ordering of the output: "default" for descending order by effect size, or "alphabetical" for alphabetical order. Default is "default".}
+\item{order}{Character string specifying the order of outcomes. Either "default" or "alphabetical".}
 
-\item{title_binary}{Main title for the plot. If NULL, no title is displayed.}
+\item{title_binary}{Optional title for the plot.}
 
-\item{push_mods}{Directory path for saving the plot. If NULL, the plot is saved in the current working directory.}
+\item{push_mods}{Optional directory path for saving the plot.}
 
-\item{...}{Additional arguments passed to the function.}
+\item{...}{Additional arguments passed to the plotting function.}
 
-\item{options}{A list of optional parameters to customize the plot. See details for available options.}
+\item{options}{A list of additional options for customizing the plot and interpretation. See Details for available options.}
 }
 \value{
-A ggplot object displaying the causal effect estimates with categorisation and error bars. This plot is tailored for further modifications or direct usage.
+A list containing three elements:
+\itemize{
+  \item `plot`: A ggplot object representing the Margot plot.
+  \item `interpretation`: A character string containing the interpretation of the results, with the same formatting applied as the plot labels.
+  \item `transformed_table`: A data frame with the original data and transformed row names, using the same transformation options as the plot labels.
+}
 }
 \description{
-This function renders a graphical representation of causal effect estimates, organised by effect size on either the risk difference (RD) or risk ratio (RR) scale. It categorises estimates into "positive", "negative", or "not reliable" based on their confidence intervals. The function features advanced customisability for graphical parameters, including error bar width and the application of custom ggplot2 themes.
+This function creates a Margot plot, which is useful for visualizing causal effects
+in epidemiological studies. It provides various options for customizing the plot
+and transforming labels. Additionally, it generates an interpretation of the results
+using the margot_interpret_marginal function and returns a transformed table.
 }
 \details{
 The `options` list can include the following parameters:
 \itemize{
-  \item `title`: Main title for the plot (overrides `title_binary` if both are provided).
-  \item `subtitle`: Subtitle for the plot.
-  \item `estimate_scale`: Numeric multiplier to adjust the horizontal offset of estimate labels. Default is 1.
-  \item `base_size`: Base font size for the plot. Default is 11.
-  \item `text_size`: Font size for the estimate labels. Default is 2.75.
-  \item `point_size`: Size of points representing the estimates. Default is 3.
-  \item `title_size`: Font size for the plot title. Default is 10.
-  \item `subtitle_size`: Font size for the plot subtitle. Default is 9.
-  \item `legend_text_size`: Font size for legend text. Default is 6.
-  \item `legend_title_size`: Font size for legend titles. Default is 6.
-  \item `x_offset`: Horizontal adjustment for estimate labels. Default is 0 for "RR" and -1.75 for "RD".
-  \item `x_lim_lo`: Lower limit of the x-axis. Default is 0.1 for "RR" and -1.75 for "RD".
-  \item `x_lim_hi`: Upper limit of the x-axis. Default is 2.5 for "RR" and 1 for "RD".
-  \item `linewidth`: Width of the error bars in the plot. Default is 0.5.
-  \item `plot_theme`: ggplot2 theme object for customising plot appearance.
-  \item `colors`: Named vector of colors for positive, not reliable, and negative estimates. Default is c("positive" = "#E69F00", "not reliable" = "grey50", "negative" = "#56B4E9").
-  \item `facet_var`: Variable name for faceting the plot.
-  \item `confidence_level`: Confidence level for the intervals. Default is 0.95.
-  \item `annotations`: Additional ggplot2 annotations to add to the plot.
-  \item `save_plot`: Logical indicating whether to save the plot. Default is TRUE.
-  \item `save_plot_options`: List with details for saving the plot. It can include `width`, `height`, `dpi`, and `filename`.
-        If `filename` is not specified, the subtitle (if provided) will be used as the filename, with spaces replaced by underscores and ".png" appended.
-  \item `push_mods`: Directory path for saving the plot (overrides the `push_mods` parameter if both are provided).
-  \item `show_evalues`: Logical indicating whether to show E-values in labels. Default is TRUE.
-  \item `evalue_digits`: Number of digits for rounding E-values. Default is 2.
+  \item `remove_tx_prefix`: Logical. If TRUE, removes "tx_" prefix from labels and interpretation. Default is TRUE.
+  \item `remove_z_suffix`: Logical. If TRUE, removes "_z" suffix from labels and interpretation. Default is TRUE.
+  \item `use_title_case`: Logical. If TRUE, converts labels and interpretation to title case. Default is TRUE.
+  \item `remove_underscores`: Logical. If TRUE, removes underscores from labels and interpretation. Default is TRUE.
+  \item `save_plot`: Logical. If TRUE, saves the plot to a file. Default is FALSE.
+  \item `save_plot_options`: List of options for saving the plot (width, height, dpi, filename).
+  \item `show_evalues`: Logical. If TRUE, shows E-values in the plot. Default is TRUE.
+  \item `evalue_digits`: Integer. Number of digits for E-value display. Default is 2.
 }
+}
+\examples{
+\dontrun{
+# Create sample data
+sample_data <- data.frame(
+  outcome = c("t1_outcome_a_z", "t2_outcome_b_z", "t3_outcome_c_z"),
+  `E[Y(1)]-E[Y(0)]` = c(0.1, -0.2, 0.3),
+  `2.5 \%` = c(0.05, -0.3, 0.2),
+  `97.5 \%` = c(0.15, -0.1, 0.4),
+  E_Value = c(1.5, 1.8, 2.0),
+  E_Val_bound = c(1.3, 1.5, 1.7)
+)
+
+# Create a basic Margot plot with interpretation and transformed table
+result <- margot_plot(sample_data, type = "RD")
+print(result$plot)
+cat(result$interpretation)
+print(result$transformed_table)
+
+# Create a Margot plot with custom options
+custom_result <- margot_plot(sample_data,
+                             type = "RD",
+                             title_binary = "Custom Margot Plot",
+                             options = list(
+                               remove_tx_prefix = TRUE,
+                               remove_z_suffix = TRUE,
+                               use_title_case = TRUE,
+                               remove_underscores = TRUE,
+                               save_plot = TRUE,
+                               save_plot_options = list(
+                                 filename = "custom_margot_plot.png",
+                                 width = 12,
+                                 height = 8,
+                                 dpi = 300
+                               )
+                             ))
+print(custom_result$plot)
+cat(custom_result$interpretation)
+print(custom_result$transformed_table)
+}
+
 }

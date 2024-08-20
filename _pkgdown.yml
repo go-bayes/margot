@@ -66,7 +66,7 @@ reference:
     - margot_grf_subset_table
     - margot_omnibus_hetero_test
     - margot_interpret_policy_tree
-    - margot_interpret_table
+    - margot_interpret_marginal
     - margot_lmtp_evalue
     - margot_lmtp_tab
     - margot_model_evalue
@@ -118,6 +118,7 @@ reference:
     - remove_numeric_attributes
     - regress_with_covariates
     - select_and_rename_cols
+    - transform_table_rownames
 
   - title: "Simulated data"
     contents:
@@ -133,6 +134,7 @@ reference:
 
   - title: "Deprecated functions"
     contents:
+      - margot_interpret_table
       - coloured_histogram_quantiles
       - create_ordered_variable_custom
       - margot_compute_gender_weights

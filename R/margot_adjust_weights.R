@@ -61,12 +61,12 @@ margot_adjust_weights <- function(pscore,
     stop("Invalid sample_weights")
   }
 
-  cli::cli_alert_success("Input validation complete")
+  cli::cli_alert_success("Input validation complete \U0001F44D")
 
   # Calculate censoring weights
   cli::cli_alert_info("Calculating censoring weights...")
   censoring_weights <- ifelse(censoring_indicator, 1 / pscore, 1 / (1 - pscore))
-  cli::cli_alert_success("Censoring weights calculated")
+  cli::cli_alert_success("Censoring weights calculated \U0001F44D")
 
   # Combine weights if sample weights are provided
   if (!is.null(sample_weights)) {
@@ -76,7 +76,7 @@ margot_adjust_weights <- function(pscore,
       stop("Mismatched lengths")
     }
     combined_weights <- censoring_weights * sample_weights
-    cli::cli_alert_success("Weights combined")
+    cli::cli_alert_success("Weights combined \U0001F44D")
   } else {
     combined_weights <- censoring_weights
     cli::cli_alert_info("No sample weights provided. Using censoring weights only.")
@@ -86,7 +86,7 @@ margot_adjust_weights <- function(pscore,
   if (na.rm) {
     cli::cli_alert_info("Removing NA values...")
     combined_weights <- combined_weights[!is.na(combined_weights)]
-    cli::cli_alert_success("NA values removed")
+    cli::cli_alert_success("NA values removed \U0001F44D")
   }
 
   # Check if there are any non-NA weights left
@@ -101,7 +101,7 @@ margot_adjust_weights <- function(pscore,
     lower_bound <- quantile(combined_weights, lower_percentile, na.rm = na.rm)
     upper_bound <- quantile(combined_weights, upper_percentile, na.rm = na.rm)
     trimmed_weights <- pmin(pmax(combined_weights, lower_bound), upper_bound)
-    cli::cli_alert_success("Weights trimmed")
+    cli::cli_alert_success("Weights trimmed \U0001F44D")
   } else {
     trimmed_weights <- combined_weights
     cli::cli_alert_info("Skipping weight trimming")
@@ -111,7 +111,7 @@ margot_adjust_weights <- function(pscore,
   if (normalize) {
     cli::cli_alert_info("Normalizing weights...")
     normalized_weights <- trimmed_weights / mean(trimmed_weights, na.rm = na.rm)
-    cli::cli_alert_success("Weights normalized")
+    cli::cli_alert_success("Weights normalized \U0001F44D")
   } else {
     normalized_weights <- trimmed_weights
     cli::cli_alert_info("Skipping weight normalization")
@@ -120,7 +120,7 @@ margot_adjust_weights <- function(pscore,
   # Compute summary statistics
   cli::cli_alert_info("Computing summary statistics...")
   summary_stats <- summary(normalized_weights)
-  cli::cli_alert_success("Summary statistics computed")
+  cli::cli_alert_success("Summary statistics computed \U0001F44D")
 
   # Print summary
   cli::cli_h2("Weight Adjustment Summary")
@@ -142,7 +142,7 @@ margot_adjust_weights <- function(pscore,
   )
 
   # Return results
-  cli::cli_alert_success("Weight adjustment complete")
+  cli::cli_alert_success("Weight adjustment complete \U0001F44D")
   return(list(
     adjusted_weights = normalized_weights,
     censoring_weights = censoring_weights,

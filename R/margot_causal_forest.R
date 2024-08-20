@@ -176,7 +176,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
     cli::cli_alert_info("Full model objects saved in output")
   }
 
-  cli::cli_alert_success(crayon::bold(crayon::green("margot_causal_forest function completed successfully")))
+  cli::cli_alert_success(crayon::bold(crayon::green("margot_causal_forest function completed successfully \U0001F44D")))
 
   return(output)
 }

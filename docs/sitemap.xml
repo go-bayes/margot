@@ -60,6 +60,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_filter.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_subset_table.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp.html</loc></url>
@@ -100,6 +101,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/select_and_rename_cols.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/simulate_ate_data_with_weights.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/tab_engine_marginal.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/transform_table_rownames.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/transition_table.html</loc></url>
 </urlset>
 

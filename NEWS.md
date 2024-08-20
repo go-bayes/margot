@@ -5,6 +5,24 @@
 * Begin writing tutorials for use cases.
 * customise plots for user-supplied labels
 
+# [2024-08-21] margot 0.2.1.14
+
+## New
+
+* `margot_interpret_marginal` has consistent syntax with `margot_plot`. 
+* `transform_table_rownames` to allow for nicer tables with clear labels. 
+* overhauled `margot_plot` function so that it produces nice labels, and so that it also generates an interpretation. 
+
+## Improved
+
+* `margot_create_bibliography` markdown output improved with `cli`
+* considerably decluttered output of `boilerplate_methods`
+
+## Deprecations
+
+* `margot_interpret_table` replaced by `margot_interpret_marginal`
+
+
 # [2024-08-20] margot 0.2.1.13
 
 ## Improved
@@ -20,6 +38,7 @@
 
 
 # [2024-08-19] margot 0.2.1.11
+
 ## New
 
 * `margot_create_database`: allows for creation of bibliography databases. 

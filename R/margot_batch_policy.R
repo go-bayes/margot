@@ -85,7 +85,7 @@ margot_batch_policy <- function(result_outcomes,
   }
 
   cli::cli_progress_done()
-  cli::cli_alert_success(crayon::bold(crayon::green("margot_batch_policy function completed successfully")))
+  cli::cli_alert_success(crayon::bold(crayon::green("margot_batch_policy function completed successfully \U0001F44D")))
 
   return(output_list)
 }

@@ -103,7 +103,7 @@ margot_log_transform_vars <- function(data, vars, exceptions = character(0), pre
   cat(paste("  Variables transformed:", crayon::green(length(vars_to_transform)), "\n"))
   cat(paste("  Variables excluded:", crayon::yellow(length(exceptions)), "\n"))
 
-  cat(crayon::green$bold("\nLog transformation completed successfully!\n"))
+  cat(crayon::green$bold("\nLog transformation completed successfully! \U0001F44D \n"))
   cat(crayon::blue$bold(cli::rule(line = "=")))
 
   return(data_transformed)
