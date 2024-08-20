@@ -1,4 +1,4 @@
-#' Manage Boilerplate Measures
+#' Manage Boilerplate Measures (deprecated, use `margot_create_database`)
 #'
 #' This function provides a command-line interface for managing a database of 'boilerplate' for measures.
 #' It allows users to create, view, modify, and delete measures, as well as save and load measure databases.
@@ -50,9 +50,15 @@
 #' }
 #'
 #' @export
+#' @keywords internal
+#' @importFrom lifecycle deprecate_warn
 manager_boilerplate_measures <- function(measures_path = NULL) {
   library(here)
   library(rlang)
+
+  # warning
+  lifecycle::deprecate_warn("1.0.0", "manager_boilerplate_measures()", "margot_create_database()")
+
 
   measures_path <- measures_path %||% here::here()
 

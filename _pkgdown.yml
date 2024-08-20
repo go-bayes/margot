@@ -23,6 +23,7 @@ reference:
   - title: "Check assumptions"
     contents:
     - create_transition_matrix
+    - coloured_histogram
     - coloured_histogram_sd
     - coloured_histogram_shift
     - margot_plot_hist
@@ -81,11 +82,8 @@ reference:
     - margot_plot_policy_combo
     - margot_plot_policy_tree
 
-  - title: "Utility functions"
+  - title: "Create Reports"
     contents:
-    - back_transform_logmean
-    - back_transform_zscore
-    - boilerplate_measures
     - boilerplate_methods
     - boilerplate_methods_additional_sections
     - boilerplate_methods_causal_interventions
@@ -97,6 +95,15 @@ reference:
     - boilerplate_methods_statistical_estimator
     - boilerplate_methods_target_population
     - boilerplate_methods_variables
+    - margot_create_bibliography
+    - margot_create_database
+    - margot_merge_databases
+
+  - title: "Utility functions"
+    contents:
+    - back_transform_logmean
+    - back_transform_zscore
+    - boilerplate_measures
     - construct_formula
     - group_tab
     - here_read
@@ -126,7 +133,6 @@ reference:
 
   - title: "Deprecated functions"
     contents:
-      - create_ordered_variable_custom
-      - coloured_histogram
       - coloured_histogram_quantiles
+      - create_ordered_variable_custom
       - margot_compute_gender_weights

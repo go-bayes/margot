@@ -58,4 +58,3 @@ graph <- coloured_histogram(
 print(graph)
 }
 }
-\keyword{internal}

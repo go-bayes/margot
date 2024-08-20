@@ -3,6 +3,25 @@
 
 * Develop automated reporting of all scales and measures for quarto documents.
 * Begin writing tutorials for use cases.
+* customise plots for user-supplied labels
+
+# [2024-08-19] margot 0.2.1.11
+
+## New
+
+* `margot_create_database`: allows for merging of bioliography databases. 
+* `margot_merge_databases`: allows for merging of bioliography databases. 
+* `margot_create_bibliography`: purpose-build for appendices in which all measures are reported. 
+
+
+## Improved
+
+- restored `coloured_histogram` to package (still useful)
+
+
+## Deprecations
+
+- `manager_biolerplate_measures` surpassed by `margot_create_database`
 
 # [2024-08-19] margot 0.2.1.10
 

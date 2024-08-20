@@ -38,7 +38,6 @@
 #' @import dplyr
 #' @import tools
 #' @export
-#' @keywords internal
 coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, scale_min = NULL, scale_max = NULL, highlight_range = "highest") {
 
   # validate input
