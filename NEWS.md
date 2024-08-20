@@ -17,8 +17,8 @@
 # [2024-08-19] margot 0.2.1.11
 ## New
 
-* `margot_create_database`: allows for merging of bioliography databases. 
-* `margot_merge_databases`: allows for merging of bioliography databases. 
+* `margot_create_database`: allows for creation of bibliography databases. 
+* `margot_merge_databases`: allows for merging of bibliography databases. 
 * `margot_create_bibliography`: purpose-build for appendices in which all measures are reported. 
 
 
