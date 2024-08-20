@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_adjust_weights.R
 \name{margot_adjust_weights}
 \alias{margot_adjust_weights}
-\title{Adjust Weights for Censoring and Sample Design}
+\title{Adjust Weights for Censoring and Sample Design with Progress Reporting}
 \usage{
 margot_adjust_weights(
   pscore,
@@ -33,33 +33,12 @@ censoring status (TRUE/1 if censored, FALSE/0 if not).}
 \item{upper_percentile}{Numeric; upper percentile for trimming (default is 0.99).}
 
 \item{na.rm}{Logical; whether to remove NA values (default is TRUE).}
-
-\item{previous_weights}{Optional numeric vector of weights from previous time points.}
 }
 \value{
-A list containing:
-  \item{adjusted_weights}{Numeric vector of final adjusted weights}
-  \item{censoring_weights}{Numeric vector of calculated censoring weights}
-  \item{combined_weights}{Numeric vector of combined weights before adjustment}
-  \item{trimmed}{Logical; whether trimming was performed}
-  \item{normalized}{Logical; whether normalization was performed}
-  \item{min_weight}{Minimum adjusted weight}
-  \item{max_weight}{Maximum adjusted weight}
-  \item{mean_weight}{Mean of adjusted weights}
-  \item{median_weight}{Median of adjusted weights}
-  \item{summary_stats}{Summary statistics of adjusted weights}
+A list containing adjusted weights and summary statistics.
 }
 \description{
 This function calculates and adjusts weights for censoring, combining them with
-sample weights and/or gender weights if provided. It also offers options for
-trimming and normalizing the resulting weights.
-}
-\examples{
-pscore <- runif(100, 0, 1)
-censoring <- sample(c(0, 1), 100, replace = TRUE)
-sample_weights <- runif(100, 0.5, 1.5)
-
-result <- margot_adjust_weights(pscore, censoring, sample_weights)
-hist(result$adjusted_weights)
-
+sample weights if provided. It also offers options for trimming and normalizing
+the resulting weights. Progress is reported using cli and crayon packages.
 }

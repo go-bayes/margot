@@ -5,6 +5,11 @@
 * Begin writing tutorials for use cases.
 * customise plots for user-supplied labels
 
+# [2024-08-20] margot 0.2.1.13
+
+## Improved
+
+* informative `cli` messages for `create_ordered_variable`, `margot_process_binary_vars`, `margot_summary_tables`, `margot_log_transform_vars`, `margot_propensity_model_and_plots`, `margot_process_longitudinal_data`, `margot_causal_forest`, `margot_multiarm_causal_forest`, `margot_batch_policy`
 
 # [2024-08-19] margot 0.2.1.12
 

@@ -9,7 +9,7 @@ margot_log_transform_vars(
   vars,
   exceptions = character(0),
   prefix = "log_",
-  keep_original = FALSE
+  keep_original = TRUE
 )
 }
 \arguments{
@@ -36,8 +36,8 @@ df <- data.frame(
   hours_sleep = c(6, 7, 8, 9),
   income = c(1000, 2000, 3000, 4000)
 )
-transformed_df <- log_transform_vars(df,
-                                     vars = c(starts_with("hours_"), "income"),
-                                     exceptions = "hours_work")
+transformed_df <- margot_log_transform_vars(df,
+                                            vars = c(starts_with("hours_"), "income"),
+                                            exceptions = "hours_work")
 
 }

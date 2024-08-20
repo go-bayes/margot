@@ -38,48 +38,5 @@ The input data frame with an additional column representing the ordered factor v
 \description{
 This function divides a numeric variable into categories based on either quantile breaks
 or custom-specified breaks, and creates an ordered factor variable with informative labels.
-}
-\details{
-The function creates categories based on either quantile breaks or custom-specified breaks.
-It then categorizes the values into these breaks, creating an ordered factor variable.
-
-When using quantile breaks (custom_breaks is NULL):
-- The function creates quantile breaks based on the specified number of divisions.
-- If the number of unique values in the variable is less than the requested number of divisions,
-  the function will adjust the number of divisions and issue a warning.
-
-When using custom breaks:
-- If the lowest or highest values in the data are not included in the custom breaks,
-  they will be automatically added and a warning will be issued.
-- Custom breaks are sorted and de-duplicated before use.
-
-The `cutpoint_inclusive` parameter determines whether the cutpoint values themselves
-are included in the lower or upper category. For example, if a cutpoint is 40:
-- With "lower", the interval would be [40, 50)
-- With "upper", the interval would be (30, 40]
-
-The `ties.method` parameter specifies how to handle tied values when calculating quantiles.
-It's recommended to use a method consistent with `cutpoint_inclusive`:
-- Use "first" or "last" to ensure consistency with "lower" or "upper" respectively.
-- "average" is not recommended as it may lead to inconsistent results.
-}
-\note{
-- Using "average" for `ties.method` will generate a warning due to potential inconsistencies.
-- When using custom breaks, ensure that the breaks cover the entire range of the data
-  to avoid unexpected behavior.
-}
-\examples{
-df <- data.frame(x = rnorm(100))
-
-# Using quantile breaks
-result1 <- create_ordered_variable(df, "x", n_divisions = 4)
-
-# Using custom breaks
-result2 <- create_ordered_variable(df, "x", custom_breaks = c(-2, -1, 0, 1, 2))
-
-# Explicitly setting cutpoint_inclusive and ties.method
-result3 <- create_ordered_variable(df, "x", n_divisions = 3,
-                                   cutpoint_inclusive = "lower",
-                                   ties.method = "first")
-
+It now includes rich CLI reporting for better user feedback.
 }

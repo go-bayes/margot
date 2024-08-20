@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_summary_tables.R
 \name{margot_summary_tables}
 \alias{margot_summary_tables}
-\title{Create Summary Tables for Longitudinal Data}
+\title{Create Summary Tables for Longitudinal Data with Rich Reporting and Console Output}
 \usage{
 margot_summary_tables(
   data,
@@ -48,14 +48,10 @@ to include. Default is c("id", "wave", "year_measured", "not_lost", "sample_weig
 \item{outcome_labels}{Optional. A named list of custom labels for outcome variables.}
 }
 \value{
-A list containing:
-  \item{baseline_table}{Summary of baseline variables}
-  \item{exposure_table}{Summary of exposure variables by wave}
-  \item{outcome_table}{Summary of outcome variables by wave}
-  \item{n_participants}{Total number of unique participants}
-  \item{exposure_summary}{A list of exposure summaries for each wave}
+A list containing summary tables and additional information.
 }
 \description{
 This function creates three summary tables (baseline, exposure, and outcome)
-for longitudinal data using gtsummary and janitor, and provides additional summary statistics.
+for longitudinal data using gtsummary and janitor, provides additional summary statistics,
+and prints the tables directly to the console using cli.
 }

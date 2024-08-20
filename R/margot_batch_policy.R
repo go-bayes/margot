@@ -36,38 +36,63 @@
 #' print(smoker_results$policy_tree_plot)
 #' }
 #'
+#' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_progress_bar cli_progress_update cli_progress_done
+#' @importFrom crayon bold green red yellow
+#'
 #' @export
 margot_batch_policy <- function(result_outcomes,
                                 policy_tree_args = list(),
                                 decision_tree_args = list(),
                                 ...) {
+  cli::cli_alert_info(crayon::bold("Starting margot_batch_policy function"))
+
   # Ensure the margot package is loaded
   if (!requireNamespace("margot", quietly = TRUE)) {
+    cli::cli_alert_danger(crayon::red("Package 'margot' is required but not installed. Please install it first."))
     stop("Package 'margot' is required but not installed. Please install it first.")
   }
 
   # Extract the names of the models from the results list
   model_names <- names(result_outcomes$results)
+  cli::cli_alert_info(paste("Number of models to process:", length(model_names)))
 
   # Initialize an empty list to store the results
   output_list <- list()
 
+  # Set up progress bar
+  cli::cli_alert_info(crayon::bold("Processing models"))
+  pb <- cli::cli_progress_bar(total = length(model_names), format = "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}")
+
   # Loop through each model
   for (model_name in model_names) {
-    # Apply margot_policy_tree() to each model
-    output_list[[model_name]] <- margot_policy_tree(
-      mc_test = result_outcomes,
-      model_name = model_name,
-      policy_tree_args = policy_tree_args,
-      decision_tree_args = decision_tree_args,
-      ...
-    )
+    cli::cli_alert_info(paste("Processing model:", model_name))
+
+    tryCatch({
+      # Apply margot_policy_tree() to each model
+      output_list[[model_name]] <- margot_policy_tree(
+        mc_test = result_outcomes,
+        model_name = model_name,
+        policy_tree_args = policy_tree_args,
+        decision_tree_args = decision_tree_args,
+        ...
+      )
+      cli::cli_alert_success(crayon::green(paste("Successfully processed model:", model_name)))
+    }, error = function(e) {
+      cli::cli_alert_danger(crayon::red(paste("Error processing model", model_name, ":", e$message)))
+    })
+
+    cli::cli_progress_update()
   }
+
+  cli::cli_progress_done()
+  cli::cli_alert_success(crayon::bold(crayon::green("margot_batch_policy function completed successfully")))
 
   return(output_list)
 }
-# old
-# margot_batch_policy <- function(result_outcomes, ...) {
+# margot_batch_policy <- function(result_outcomes,
+#                                 policy_tree_args = list(),
+#                                 decision_tree_args = list(),
+#                                 ...) {
 #   # Ensure the margot package is loaded
 #   if (!requireNamespace("margot", quietly = TRUE)) {
 #     stop("Package 'margot' is required but not installed. Please install it first.")
@@ -83,8 +108,10 @@ margot_batch_policy <- function(result_outcomes,
 #   for (model_name in model_names) {
 #     # Apply margot_policy_tree() to each model
 #     output_list[[model_name]] <- margot_policy_tree(
-#       result_outcomes,
-#       model_name,
+#       mc_test = result_outcomes,
+#       model_name = model_name,
+#       policy_tree_args = policy_tree_args,
+#       decision_tree_args = decision_tree_args,
 #       ...
 #     )
 #   }

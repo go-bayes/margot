@@ -28,6 +28,6 @@ df <- data.frame(
   c = c("apple", "banana", "apple"),
   d = factor(c("true", "false", "true"))
 )
-processed_df <- process_binary_vars(df, exceptions = "c")
+processed_df <- margot_process_binary_vars(df, exceptions = "c")
 
 }
