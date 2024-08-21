@@ -5,6 +5,12 @@
 * Begin writing tutorials for use cases.
 * done [customise plots for user-supplied labels]
 
+# [2024-08-21] margot 0.2.1.16
+
+## New
+
+* `margot_plot_create_options` helper function to automate graph production.
+
 # [2024-08-21] margot 0.2.1.15
 
 ## Improved

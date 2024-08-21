@@ -113,6 +113,7 @@ reference:
     - lmtp_evalue_tab
     - manager_boilerplate_measures
     - margot_log_transform_vars
+    - margot_plot_create_options
     - margot_process_binary_vars
     - pretty_number
     - remove_numeric_attributes

@@ -99,7 +99,7 @@ margot_plot <- function(.data,
 
   # Default values
   default_options <- list(
-    title = title_binary,
+    title = NULL,
     subtitle = NULL,
     estimate_scale = 1,
     base_size = 11,
