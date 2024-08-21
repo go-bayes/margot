@@ -8,6 +8,12 @@
 * done [remove "Action: labels"]
 
 
+# [2024-08-21] margot 0.2.1.18
+
+## Improved
+
+* `margot_lmtp` more informative reporting and progress bars using `cli`
+
 # [2024-08-21] margot 0.2.1.17
 
 ## Improved
