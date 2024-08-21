@@ -33,7 +33,7 @@ test_that("margot_wide transforms data correctly", {
 
   # apply function
   wide_data <-
-    margot_wide(df_nz, baseline_vars, exposure_var, outcome_vars)
+    margot::margot_wide(df_nz, baseline_vars, exposure_var, outcome_vars)
 
   # verify structure of wide data
   expected_cols <-

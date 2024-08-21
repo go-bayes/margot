@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_plot_decision_tree.R
 \name{margot_plot_decision_tree}
 \alias{margot_plot_decision_tree}
-\title{Plot Decision Tree from Policy Tree Results}
+\title{Plot a Decision Tree from Margot Results}
 \usage{
 margot_plot_decision_tree(
   result_object,
@@ -15,55 +15,56 @@ margot_plot_decision_tree(
   text_size = 3,
   non_leaf_fill = "lightyellow",
   title = NULL,
-  leaf_palette = NULL
+  leaf_palette = NULL,
+  remove_tx_prefix = TRUE,
+  remove_z_suffix = TRUE,
+  use_title_case = TRUE,
+  remove_underscores = TRUE
 )
 }
 \arguments{
-\item{result_object}{A list containing the results from a policy tree model,
-or a policy tree object directly.}
+\item{result_object}{A list containing the policy tree object or Margot results.}
 
-\item{model_name}{A character string specifying the name of the model within
-the result_object to plot. This should match one of the model names in
-result_object$results. If NULL and a policy tree object is provided directly,
-the function will use that object.}
+\item{model_name}{Character string specifying the model name in the results object. Default is NULL.}
 
-\item{x_padding}{The amount of padding to add to the x-axis. Default is 0.25.}
+\item{x_padding}{Numeric value for horizontal padding of the plot. Default is 0.25.}
 
-\item{y_padding}{The amount of padding to add to the y-axis. Default is 0.25.}
+\item{y_padding}{Numeric value for vertical padding of the plot. Default is 0.25.}
 
-\item{border_size}{The size of the border around node labels. Default is 1.}
+\item{border_size}{Numeric value for the size of node borders. Default is 1.}
 
-\item{edge_label_offset}{The offset for edge labels from the branches. Default is 0.05.}
+\item{edge_label_offset}{Numeric value for the offset of edge labels. Default is 0.01.}
 
-\item{span_ratio}{The aspect ratio of the plot. Default is 0.5.}
+\item{span_ratio}{Numeric value for the aspect ratio of the plot. Default is 0.25.}
 
-\item{text_size}{The size of the text in the node labels. Default is 5.}
+\item{text_size}{Numeric value for the size of text in the plot. Default is 3.}
 
-\item{non_leaf_fill}{The fill color for non-leaf nodes. Default is "lightyellow".}
+\item{non_leaf_fill}{Character string specifying the fill color for non-leaf nodes. Default is "lightyellow".}
 
-\item{title}{The title for the plot. Default is NULL.}
+\item{title}{Character string for the plot title. Default is NULL.}
 
-\item{leaf_palette}{A vector of colors to be used for leaf nodes. If NULL (default),
-the function will use the Okabe-Ito color palette.}
+\item{leaf_palette}{Vector of colors for leaf nodes. Default is NULL (uses Okabe-Ito palette).}
+
+\item{remove_tx_prefix}{Logical indicating whether to remove "tx_" prefix from labels. Default is TRUE.}
+
+\item{remove_z_suffix}{Logical indicating whether to remove "_z" suffix from labels. Default is TRUE.}
+
+\item{use_title_case}{Logical indicating whether to convert labels to title case. Default is TRUE.}
+
+\item{remove_underscores}{Logical indicating whether to remove underscores from labels. Default is TRUE.}
 }
 \value{
-A ggplot object representing the decision tree for the specified model.
+A ggplot object representing the decision tree.
 }
 \description{
-This function creates a ggplot object displaying a decision tree based on the
-results of a policy tree model.
+This function creates a ggplot visualization of a decision tree from Margot results.
+It handles label transformations and provides informative feedback using cli messages.
 }
 \examples{
 \dontrun{
-# Assuming result_object is the policy tree model output
-margot_plot_decision_tree(result_object, "model_name")
-
-# Or if you have a policy tree object directly
-margot_plot_decision_tree(policy_tree_obj)
-
-# Using a custom color palette for leaf nodes
-custom_palette <- c("#FF0000", "#00FF00", "#0000FF")
-margot_plot_decision_tree(result_object, "model_name", leaf_palette = custom_palette)
+# Assuming 'results' is your Margot results object and 'model_name' is the name of your model
+tree_plot <- margot_plot_decision_tree(results, model_name = "my_model")
+print(tree_plot)
 }
 
 }

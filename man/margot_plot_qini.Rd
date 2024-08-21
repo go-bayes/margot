@@ -4,20 +4,36 @@
 \alias{margot_plot_qini}
 \title{Plot Qini Curves from margot_multi_arm_causal_forest Results}
 \usage{
-margot_plot_qini(mc_result, outcome_var)
+margot_plot_qini(
+  mc_result,
+  outcome_var,
+  remove_tx_prefix = TRUE,
+  remove_z_suffix = TRUE,
+  use_title_case = TRUE,
+  remove_underscores = TRUE
+)
 }
 \arguments{
 \item{mc_result}{A list containing the results from margot_multi_arm_causal_forest().}
 
 \item{outcome_var}{A character string specifying the name of the outcome variable
 to plot. This should match one of the model names in mc_result$results.}
+
+\item{remove_tx_prefix}{Logical value indicating whether to remove the "tx_" prefix from labels. Default is TRUE.}
+
+\item{remove_z_suffix}{Logical value indicating whether to remove the "_z" suffix from labels. Default is TRUE.}
+
+\item{use_title_case}{Logical value indicating whether to convert labels to title case. Default is TRUE.}
+
+\item{remove_underscores}{Logical value indicating whether to remove underscores from labels. Default is TRUE.}
 }
 \value{
 A ggplot object representing the Qini curves for the specified outcome variable.
 }
 \description{
 This function creates a ggplot object displaying Qini curves based on the
-results of a margot_multi_arm_causal_forest() model.
+results of a margot_multi_arm_causal_forest() model. It now includes label
+transformations and informative CLI messages.
 }
 \examples{
 \dontrun{

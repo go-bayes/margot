@@ -34,10 +34,11 @@
 #' cat(result$interpretation)
 #' }
 #'
-#' @export
+#' @import rlang
 #' @importFrom dplyr case_when mutate rowwise ungroup if_else
 #' @importFrom glue glue
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning
+#' @export
 margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL, order = "default") {
   require(dplyr)
   require(glue)

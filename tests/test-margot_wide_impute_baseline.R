@@ -30,7 +30,7 @@ test_that(
 
     # assume df_nz is already loaded in your environment
     wide_data_2 <-
-      margot_wide_impute_baseline(df_nz, baseline_vars, exposure_var, outcome_vars)
+      margot::margot_wide_impute_baseline(df_nz, baseline_vars, exposure_var, outcome_vars)
 
     # check function returns a data frame
     expect_true(is.data.frame(wide_data_2))
