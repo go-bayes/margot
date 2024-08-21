@@ -24,7 +24,11 @@ margot_plot_policy_tree(
   split_label_color = "darkgray",
   custom_action_names = NULL,
   legend_position = "bottom",
-  plot_selection = "both"
+  plot_selection = "both",
+  remove_tx_prefix = TRUE,
+  remove_z_suffix = TRUE,
+  use_title_case = TRUE,
+  remove_underscores = TRUE
 )
 }
 \arguments{
@@ -39,11 +43,11 @@ with blue for the first level, orange for the second, and subsequent colors for 
 
 \item{theme_function}{A ggplot2 theme function. Default is theme_classic.}
 
-\item{title_size}{Numeric value for the size of the plot title. Default is 16.}
+\item{title_size}{Numeric value for the size of the plot title. Default is 14.}
 
-\item{subtitle_size}{Numeric value for the size of the plot subtitle. Default is 16.}
+\item{subtitle_size}{Numeric value for the size of the plot subtitle. Default is 11.}
 
-\item{axis_title_size}{Numeric value for the size of axis titles. Default is 16.}
+\item{axis_title_size}{Numeric value for the size of axis titles. Default is 10.}
 
 \item{legend_title_size}{Numeric value for the size of the legend title. Default is 10.}
 
@@ -68,6 +72,14 @@ with blue for the first level, orange for the second, and subsequent colors for 
 \item{legend_position}{String specifying the position of the legend. Can be "top", "bottom", "left", or "right". Default is "bottom".}
 
 \item{plot_selection}{String specifying which plots to display: "both", "p1", or "p2". Default is "both".}
+
+\item{remove_tx_prefix}{Logical value indicating whether to remove the "tx_" prefix from labels. Default is TRUE.}
+
+\item{remove_z_suffix}{Logical value indicating whether to remove the "_z" suffix from labels. Default is TRUE.}
+
+\item{use_title_case}{Logical value indicating whether to convert labels to title case. Default is TRUE.}
+
+\item{remove_underscores}{Logical value indicating whether to remove underscores from labels. Default is TRUE.}
 }
 \value{
 A ggplot object containing the specified plot(s) of the policy tree results.
@@ -75,7 +87,8 @@ A ggplot object containing the specified plot(s) of the policy tree results.
 \description{
 This function creates a visualization of policy tree results from a causal forest or multi-arm causal forest model.
 It generates two plots showing the relationships between the top three split variables,
-with points colored by the predicted optimal treatment.
+with points colored by the predicted optimal treatment. The function now includes label transformation options
+and provides informative CLI messages throughout the process.
 }
 \examples{
 \dontrun{
@@ -91,6 +104,13 @@ plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", legend_position = 
 # Custom color scale
 custom_scale <- scale_colour_manual(values = c("red", "green", "blue"))
 plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", color_scale = custom_scale)
+
+# Customize label transformations
+plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z",
+                                remove_tx_prefix = FALSE,
+                                remove_z_suffix = FALSE,
+                                use_title_case = FALSE,
+                                remove_underscores = FALSE)
 }
 
 }

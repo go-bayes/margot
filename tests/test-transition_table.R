@@ -2,6 +2,7 @@ library(testthat)
 library(dplyr)
 library(tidyr)
 library(knitr)
+library(margot)
 
 test_that("transition_table generates correct markdown table and explanation", {
   # Sample data for testing
@@ -14,14 +15,14 @@ test_that("transition_table generates correct markdown table and explanation", {
   5 0 1 1
   5 1 1 0")
 
-  transition_matrix <- create_transition_matrix(df, "religion_believe_god", "id")
+  transition_matrix <- margot::create_transition_matrix(df, "religion_believe_god", "id")
   # convert the transition matrix to a data frame suitable for transition_table
   df_transition <- as.data.frame.matrix(transition_matrix)
   df_transition$from <- rownames(df_transition)
   long_df_transition <- tidyr::pivot_longer(df_transition, cols = -from, names_to = "to", values_to = "Freq")
 
   # call transition_table and capture output
-  output <- transition_table(long_df_transition)
+  output <- margot::transition_table(long_df_transition)
 
   # test if the output is a list with two elements
   expect_true(is.list(output))

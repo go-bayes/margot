@@ -14,7 +14,7 @@ id wave year_measured religion_believe_god
 # test: numeric states are correctly handled
 test_that("create_transition_matrix handles numeric states", {
   # use the original df since it already contains numeric states
-  result_matrix <- create_transition_matrix(df, "religion_believe_god", "id")
+  result_matrix <- margot::create_transition_matrix(df, "religion_believe_god", "id")
   expect_true(is.matrix(result_matrix))
   expect_equal(dim(result_matrix), c(2, 2))
 })

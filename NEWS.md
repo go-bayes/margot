@@ -1,9 +1,15 @@
 
 # To do
 
-* Develop automated reporting of all scales and measures for quarto documents.
+* progress [Develop automated reporting of all scales and measures for quarto documents.]
 * Begin writing tutorials for use cases.
-* customise plots for user-supplied labels
+* done [customise plots for user-supplied labels]
+
+# [2024-08-21] margot 0.2.1.15
+
+## Improved
+
+* `margot_plot_policy_tree()`, `margot_plot_qini`, `margot_plot_decision_tree` defaults to nice labels, with informative messages. 
 
 # [2024-08-21] margot 0.2.1.14
 
