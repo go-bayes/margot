@@ -1,15 +1,27 @@
 
 # To do
 
-* progress [Develop automated reporting of all scales and measures for quarto documents.]
 * Begin writing tutorials for use cases.
+* fix decision tree layout
+* progress [Develop automated reporting of all scales and measures for quarto documents.]
 * done [customise plots for user-supplied labels]
+* done [remove "Action: labels"]
+
+
+# [2024-08-21] margot 0.2.1.17
+
+## Improved
+
+* `margot_plot_decision_tree` - user may remove 'Action" labels for cleaner graph, if desired (default is to remove them.)
 
 # [2024-08-21] margot 0.2.1.16
 
 ## New
 
 * `margot_plot_create_options` helper function to automate graph production.
+
+
+
 
 # [2024-08-21] margot 0.2.1.15
 

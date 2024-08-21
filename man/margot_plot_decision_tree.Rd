@@ -19,7 +19,8 @@ margot_plot_decision_tree(
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
-  remove_underscores = TRUE
+  remove_underscores = TRUE,
+  remove_action_label = TRUE
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ margot_plot_decision_tree(
 \item{use_title_case}{Logical indicating whether to convert labels to title case. Default is TRUE.}
 
 \item{remove_underscores}{Logical indicating whether to remove underscores from labels. Default is TRUE.}
+
+\item{remove_action_label}{Logical indicating whether to remove "Action: " prefix from leaf node labels in the final plot. Default is TRUE.}
 }
 \value{
 A ggplot object representing the decision tree.
@@ -64,6 +67,10 @@ It handles label transformations and provides informative feedback using cli mes
 \dontrun{
 # Assuming 'results' is your Margot results object and 'model_name' is the name of your model
 tree_plot <- margot_plot_decision_tree(results, model_name = "my_model")
+print(tree_plot)
+
+# To keep the "Action: " prefix in leaf node labels
+tree_plot <- margot_plot_decision_tree(results, model_name = "my_model", remove_action_label = FALSE)
 print(tree_plot)
 }
 
