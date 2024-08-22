@@ -56,8 +56,21 @@ margot_create_bibliography <- function(all_vars = NULL,
                                        custom_titles = NULL,
                                        print_keywords = FALSE,
                                        print_waves = FALSE) {
+
+  # Generate section for variables
+  generate_section <- function(vars, section_title) {
+    section <- paste0(cli::col_magenta("### ", section_title, "\n\n"))
+    for (var in vars) {
+      section <- paste0(section, format_measure(var, measure_data[[var]]))
+    }
+    return(section)
+  }
+
   # Input validation and processing
-  if (!is.null(all_vars)) {
+  if (is.null(all_vars) && is.null(baseline_vars) && is.null(exposure_var) && is.null(outcome_vars)) {
+    # If no variables are specified, use all variables from measure_data
+    all_vars <- names(measure_data)
+  } else if (!is.null(all_vars)) {
     if (is.logical(all_vars) && all_vars) {
       all_vars <- unique(c(baseline_vars, exposure_var, outcome_vars))
     } else if (!is.character(all_vars)) {
@@ -83,7 +96,6 @@ margot_create_bibliography <- function(all_vars = NULL,
     warning(paste("The following variables are not in measure_data:", paste(missing_vars, collapse = ", ")))
   }
 
-  # Helper function to format a single measure or scale item
   format_measure <- function(var_name, measure_info) {
     if (is.null(measure_info)) {
       warning(paste("No information available for variable:", var_name))
@@ -116,8 +128,6 @@ margot_create_bibliography <- function(all_vars = NULL,
     if (print_waves && "waves" %in% names(measure_info)) {
       title <- paste0(title, " (waves: ", measure_info$waves, ")")
     }
-    # Sort all_vars alphabetically
-    all_vars <- sort(all_vars)
 
     # Combine description and reference
     description <- trimws(measure_info$description)
@@ -156,6 +166,7 @@ margot_create_bibliography <- function(all_vars = NULL,
         description_with_ref <- paste0(description, " [@", reference, "].")
       }
     }
+
     # modify the formatted text to include colour
     formatted_text <- paste0(
       cli::col_cyan("#### ", title, "\n\n"),
@@ -165,13 +176,24 @@ margot_create_bibliography <- function(all_vars = NULL,
     if ("items" %in% names(measure_info)) {
       formatted_text <- paste0(
         formatted_text,
-        cli::col_yellow("This dimension includes the following items:\n\n")
+        cli::col_yellow("This dimension includes the following item",
+                        if(length(measure_info$items) > 1) "s" else "", ":\n\n")
       )
-      for (i in seq_along(measure_info$items)) {
+
+      if (length(measure_info$items) == 1) {
+        # Use bullet point for single item
         formatted_text <- paste0(
           formatted_text,
-          cli::col_yellow("   ", letters[i], ". ", measure_info$items[i], "\n")
+          cli::col_yellow("• ", measure_info$items[1], "\n")
         )
+      } else {
+        # Use numbers for multiple items
+        for (i in seq_along(measure_info$items)) {
+          formatted_text <- paste0(
+            formatted_text,
+            cli::col_yellow(i, ". ", measure_info$items[i], "\n")
+          )
+        }
       }
       formatted_text <- paste0(formatted_text, "\n")
     }
@@ -186,14 +208,9 @@ margot_create_bibliography <- function(all_vars = NULL,
     return(formatted_text)
   }
 
-  # Generate section for all variables
-  generate_section <- function(vars, section_title) {
-    section <- paste0(cli::col_magenta("### ", section_title, "\n\n"))
-    for (var in vars) {
-      section <- paste0(section, format_measure(var, measure_data[[var]]))
-    }
-    return(section)
-  }
+
+
+
   # Generate main section with all variables
   main_section <- generate_section(all_vars, "All Measures")
 
@@ -229,10 +246,8 @@ margot_create_bibliography <- function(all_vars = NULL,
   # success message
   cli::cli_alert_success("Finished creating bibliography \U0001F44D")
 
-  # Return the uncolored markdown text
+  # Return the uncoloured markdown text
   return(gsub("\033\\[[0-9;]*m", "", full_appendix))
-
-
 }
 # margot_create_bibliography <- function(all_vars = NULL,
 #                                        baseline_vars = NULL,

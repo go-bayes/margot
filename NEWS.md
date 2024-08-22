@@ -7,6 +7,13 @@
 * done [customise plots for user-supplied labels]
 * done [remove "Action: labels"]
 
+# [2024-08-21] margot 0.2.1.20
+
+## Improved
+
+* `boilerplate_measures` and `margot_create_bibliography` better printout.  However, again, must develop a package specifically for boilerplates. 
+
+
 # [2024-08-21] margot 0.2.1.19
 
 ## Improved

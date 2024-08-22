@@ -67,7 +67,7 @@
 #'   result_object = result_object,
 #'   model_name = "model_t2_hlth_sleep_hours_z",
 #'   policy_tree_args = list(point_alpha = 0.75),
-#'     decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01,
+#'  decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01,
 #' )
 #'
 #' # Access individual plots
