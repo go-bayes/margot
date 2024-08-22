@@ -7,6 +7,11 @@
 * done [customise plots for user-supplied labels]
 * done [remove "Action: labels"]
 
+# [2024-08-21] margot 0.2.1.19
+
+## Improved
+
+* `margot_create_database` made more robust, menus work better, and you can copy information from other citations.  (It's clear this will need to be a separate package,... expect a move down the track)
 
 # [2024-08-21] margot 0.2.1.18
 
