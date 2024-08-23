@@ -8,7 +8,14 @@
 * done [remove "Action: labels"]
 
 
+# [2024-08-22] margot 0.2.1.22
+
+## Improved
+`margot_create_bibliography` now prints binary tags correctly.  Improved presentation of items, with measures first. 
+
 # [2024-08-22] margot 0.2.1.21
+
+## Improved
 
 * `margot_create_database` further improved: deleted unnecessary prompts, back_up function in place. 
 
