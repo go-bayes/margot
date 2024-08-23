@@ -11,6 +11,7 @@
 # [2024-08-22] margot 0.2.1.22
 
 ## Improved
+
 `margot_create_bibliography` now prints binary tags correctly.  Improved presentation of items, with measures first. 
 
 # [2024-08-22] margot 0.2.1.21
