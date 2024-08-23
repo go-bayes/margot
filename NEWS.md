@@ -12,7 +12,9 @@
 
 ## Improved
 
-`margot_create_bibliography` now prints binary tags correctly.  Improved presentation of items, with measures first. 
+* `margot_create_bibliography` now prints binary tags correctly.  Improved presentation of items, with measures first. 
+
+* `boilerplate_methods_variables` now accepts `margot_create_bibliography`.
 
 # [2024-08-22] margot 0.2.1.21
 
