@@ -7,6 +7,12 @@
 * done [customise plots for user-supplied labels]
 * done [remove "Action: labels"]
 
+
+# [2024-08-22] margot 0.2.1.21
+
+* `margot_create_database` further improved: deleted unnecessary prompts, back_up function in place. 
+
+
 # [2024-08-21] margot 0.2.1.20
 
 ## Improved
