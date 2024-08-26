@@ -1,141 +1,160 @@
-#' Generate Appendix of Measures
+#' Generate Appendix of Measures (DEPRECATED)
 #'
-#' This function generates a formatted appendix describing research measures,
-#' including baseline variables, exposure variables, and outcome variables across different domains.
+#' @description
+#' \lifecycle{deprecated}
+#' This function is deprecated. Please use `boilerplate::boilerplate_report_variables()` instead.
+#' Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 #'
-#' @param baseline_vars A character vector of baseline variable names.
-#' @param exposure_var A single character string naming the exposure variable, or NULL if not applicable.
-#' @param outcome_vars A list of character vectors, where each element is named after a domain
-#'   and contains the variable names for that domain, or NULL if not applicable.
-#' @param measure_data A list containing information about each measure. Each element
-#'   should be a list with at least 'description' and 'reference' fields. Optional
-#'   fields include 'waves' and 'items' for scale dimensions.
-#' @param custom_titles An optional named list of custom titles for measures.
-#' @param print_waves A logical value indicating whether to print wave information. Default is FALSE.
+#' @param ... All arguments (ignored)
 #'
-#' @return A character string containing the formatted appendix text.
+#' @return A message indicating the function is deprecated.
 #'
 #' @examples
 #' \dontrun{
-#' # Define baseline variables
-#' baseline_vars <- c("age", "male_binary", "parent_binary")
-#' # Define outcomes by domain
-#' outcomes_health <- c("smoker_binary", "hlth_bmi", "log_hours_exercise")
-#' outcomes_psychological <- c("hlth_fatigue", "kessler_latent_anxiety")
-#' outcomes_social <- c("belong", "neighbourhood_community")
-#' # Combine all outcomes into a single list
-#' all_outcomes <- list(
-#'   health = outcomes_health,
-#'   psychological = outcomes_psychological,
-#'   social = outcomes_social
-#' )
-#' # Define the exposure variable
-#' exposure_var <- "political_conservative"
-#' # Load your measure_data
-#' measure_data <- readRDS(here::here("boilerplate", "data", "measure_data.rds"))
-#' # Call the updated boilerplate_measures function
-#' appendix_text <- boilerplate_measures(
-#'   baseline_vars = baseline_vars,
-#'   exposure_var = exposure_var,
-#'   outcome_vars = all_outcomes,
-#'   measure_data = measure_data,
-#'   custom_titles = NULL,
-#'   print_waves = FALSE
-#' )
-#' # Print the result
-#' cat(appendix_text)
+#' # This function is deprecated. Use instead:
+#' # devtools::install_github("go-bayes/boilerplate")
+#' # library(boilerplate)
+#' # boilerplate::boilerplate_report_variables(...)
 #' }
 #'
-#' @import janitor
+#' @import lifecycle
 #'
 #' @export
-boilerplate_measures <- function(exposure_var,
-                                 outcome_vars,
-                                 measure_data,
-                                 appendices_measures = NULL) {
-  # Helper function to format a single measure or scale item
-  format_measure <- function(var_name, measure_info) {
-    if (is.null(measure_info)) {
-      warning(paste("No information available for variable:", var_name))
-      return(paste0("##### ", janitor::make_clean_names(var_name, case = "title"), "\n\nNo information available for this variable.\n\n"))
-    }
-    title <- janitor::make_clean_names(var_name, case = "title")
-    # Add variable type indicator
-    if (endsWith(var_name, "_binary")) {
-      title <- paste0(title, " (Binary)")
-    } else if (endsWith(var_name, "_cat")) {
-      title <- paste0(title, " (Categorical)")
-    }
-    description <- trimws(measure_info$description)
-    reference <- measure_info$reference
-    # Format the description with reference
-    if (grepl("^string_is\\s+", reference)) {
-      string_content <- sub("^string_is\\s+", "", reference)
-      string_content <- gsub("^[\"']|[\"']$", "", string_content)
-      description_with_ref <- paste0(description, " ", string_content)
-    } else {
-      description_with_ref <- paste0(description, " [@", reference, "]")
-    }
-    formatted_text <- paste0("##### ", title, "\n", description_with_ref, "\n")
-    # If the measure is a scale item, include its items
-    if ("items" %in% names(measure_info)) {
-      formatted_text <- paste0(
-        formatted_text,
-        "This dimension includes the following item",
-        if(length(measure_info$items) > 1) "s" else "", ":\n\n"
-      )
-
-      if (length(measure_info$items) == 1) {
-        # Use bullet point for single item
-        formatted_text <- paste0(
-          formatted_text,
-          "• ", measure_info$items[1], "\n"
-        )
-      } else {
-        # Use numbers for multiple items
-        for (i in seq_along(measure_info$items)) {
-          formatted_text <- paste0(
-            formatted_text,
-            i, ". ", measure_info$items[i], "\n"
-          )
-        }
-      }
-      formatted_text <- paste0(formatted_text, "\n")
-    }
-    return(formatted_text)
-  }
-
-  # Generate exposure section
-  exposure_section <- paste0(
-    "#### Exposure Indicators\n",
-    format_measure(exposure_var, measure_data[[exposure_var]])
+boilerplate_measures <- function(...) {
+  lifecycle::deprecate_warn(
+    when = "0.2.1.22",
+    what = "boilerplate_measures()",
+    with = "boilerplate::boilerplate_report_measures()"
   )
 
-  # Generate outcome sections by domain
-  outcome_sections <- lapply(names(outcome_vars), function(domain) {
-    domain_vars <- outcome_vars[[domain]]
-    domain_section <- paste0("#### Outcome Domain: ", janitor::make_clean_names(domain, case = "title"), "\n")
-    for (var in domain_vars) {
-      domain_section <- paste0(domain_section, format_measure(var, measure_data[[var]]))
-    }
-    return(domain_section)
-  })
-
-  # Combine all sections
-  full_appendix <- paste0(
-    "### Indicators\n",
-    exposure_section,
-    paste(outcome_sections, collapse = "\n\n")
-  )
-
-  # Add appendix reference if provided
-  if (!is.null(appendices_measures)) {
-    appendix_text <- paste0("\n\nDetailed descriptions of how these variables were measured and operationalized can be found in **Appendix ", appendices_measures, "**.")
-    full_appendix <- paste0(full_appendix, appendix_text)
-  }
-
-  return(full_appendix)
+  message("This function is deprecated. Please use boilerplate::boilerplate_report_variables() instead.")
+  message("Install the new package with: devtools::install_github(\"go-bayes/boilerplate\")")
+  message("After installation, load the package with: library(boilerplate)")
 }
+#' #' Generate Appendix of Measures (Soft Deprecated)
+#' #'
+#' #' @description
+#' #' \lifecycle{soft-deprecated}
+#' #' This function is soft deprecated. Please consider using `boilerplate::boilerplate_report_variables()` instead.
+#' #' Install the package with: devtools::install_github("go-bayes/boilerplate")
+#' #'
+#' #' @param exposure_var A single character string naming the exposure variable, or NULL if not applicable.
+#' #' @param outcome_vars A list of character vectors, where each element is named after a domain
+#' #'   and contains the variable names for that domain, or NULL if not applicable.
+#' #' @param measure_data A list containing information about each measure.
+#' #' @param appendices_measures An optional string specifying the appendix reference.
+#' #'
+#' #' @return A character string containing the formatted appendix text.
+#' #'
+#' #' @examples
+#' #' \dontrun{
+#' #' # This function is soft deprecated. Consider using instead:
+#' #' # devtools::install_github("go-bayes/boilerplate")
+#' #' # library(boilerplate)
+#' #' # boilerplate::boilerplate_report_variables(...)
+#' #' }
+#' #'
+#' #' @import lifecycle
+#' #'
+#' #' @export
+#' boilerplate_measures <- function(exposure_var,
+#'                                  outcome_vars,
+#'                                  measure_data,
+#'                                  appendices_measures = NULL) {
+#'   lifecycle::deprecate_soft(
+#'     when = "0.2.1.22",
+#'     what = "boilerplate_measures()",
+#'     with = "boilerplate::boilerplate_report_variables()",
+#'     details = c(
+#'       "This function is soft deprecated and will be removed in a future version.",
+#'       "Please consider using `boilerplate::boilerplate_report_variables()` instead.",
+#'       "You can install the package with: devtools::install_github('go-bayes/boilerplate')",
+#'       "After installation, load the package with: library(boilerplate)"
+#'     )
+#'   )
+#'   # Helper function to format a single measure or scale item
+#'   format_measure <- function(var_name, measure_info) {
+#'     if (is.null(measure_info)) {
+#'       warning(paste("No information available for variable:", var_name))
+#'       return(paste0("##### ", janitor::make_clean_names(var_name, case = "title"), "\n\nNo information available for this variable.\n\n"))
+#'     }
+#'     title <- janitor::make_clean_names(var_name, case = "title")
+#'     # Add variable type indicator
+#'     if (endsWith(var_name, "_binary")) {
+#'       title <- paste0(title, " (Binary)")
+#'     } else if (endsWith(var_name, "_cat")) {
+#'       title <- paste0(title, " (Categorical)")
+#'     }
+#'     description <- trimws(measure_info$description)
+#'     reference <- measure_info$reference
+#'     # Format the description with reference
+#'     if (grepl("^string_is\\s+", reference)) {
+#'       string_content <- sub("^string_is\\s+", "", reference)
+#'       string_content <- gsub("^[\"']|[\"']$", "", string_content)
+#'       description_with_ref <- paste0(description, " ", string_content)
+#'     } else {
+#'       description_with_ref <- paste0(description, " [@", reference, "]")
+#'     }
+#'     formatted_text <- paste0("##### ", title, "\n", description_with_ref, "\n")
+#'     # If the measure is a scale item, include its items
+#'     if ("items" %in% names(measure_info)) {
+#'       formatted_text <- paste0(
+#'         formatted_text,
+#'         "This dimension includes the following item",
+#'         if(length(measure_info$items) > 1) "s" else "", ":\n\n"
+#'       )
+#'
+#'       if (length(measure_info$items) == 1) {
+#'         # Use bullet point for single item
+#'         formatted_text <- paste0(
+#'           formatted_text,
+#'           "• ", measure_info$items[1], "\n"
+#'         )
+#'       } else {
+#'         # Use numbers for multiple items
+#'         for (i in seq_along(measure_info$items)) {
+#'           formatted_text <- paste0(
+#'             formatted_text,
+#'             i, ". ", measure_info$items[i], "\n"
+#'           )
+#'         }
+#'       }
+#'       formatted_text <- paste0(formatted_text, "\n")
+#'     }
+#'     return(formatted_text)
+#'   }
+#'
+#'   # Generate exposure section
+#'   exposure_section <- paste0(
+#'     "#### Exposure Indicators\n",
+#'     format_measure(exposure_var, measure_data[[exposure_var]])
+#'   )
+#'
+#'   # Generate outcome sections by domain
+#'   outcome_sections <- lapply(names(outcome_vars), function(domain) {
+#'     domain_vars <- outcome_vars[[domain]]
+#'     domain_section <- paste0("#### Outcome Domain: ", janitor::make_clean_names(domain, case = "title"), "\n")
+#'     for (var in domain_vars) {
+#'       domain_section <- paste0(domain_section, format_measure(var, measure_data[[var]]))
+#'     }
+#'     return(domain_section)
+#'   })
+#'
+#'   # Combine all sections
+#'   full_appendix <- paste0(
+#'     "### Indicators\n",
+#'     exposure_section,
+#'     paste(outcome_sections, collapse = "\n\n")
+#'   )
+#'
+#'   # Add appendix reference if provided
+#'   if (!is.null(appendices_measures)) {
+#'     appendix_text <- paste0("\n\nDetailed descriptions of how these variables were measured and operationalized can be found in **Appendix ", appendices_measures, "**.")
+#'     full_appendix <- paste0(full_appendix, appendix_text)
+#'   }
+#'
+#'   return(full_appendix)
+#' }
 # boilerplate_measures <- function(exposure_var,
 #                                  outcome_vars,
 #                                  measure_data,

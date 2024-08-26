@@ -2,16 +2,27 @@
 % Please edit documentation in R/boilerplate_methods_statistical_estimator.R
 \name{boilerplate_methods_statistical_estimator}
 \alias{boilerplate_methods_statistical_estimator}
-\title{Generate Statistical Estimator Description}
+\title{Generate Statistical Estimator Description (DEPRECATED)}
 \usage{
-boilerplate_methods_statistical_estimator(estimators = "lmtp")
+boilerplate_methods_statistical_estimator(...)
 }
 \arguments{
-\item{estimators}{Character vector specifying the statistical estimators used.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the statistical estimator description in markdown format.
+A message indicating the function is deprecated.
 }
 \description{
-Generate Statistical Estimator Description
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_statistical_estimator()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
+}
+\examples{
+\dontrun{
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_statistical_estimator(...)
+}
+
 }

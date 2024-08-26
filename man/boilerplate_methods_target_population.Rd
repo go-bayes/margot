@@ -2,19 +2,27 @@
 % Please edit documentation in R/boilerplate_methods_target_population.R
 \name{boilerplate_methods_target_population}
 \alias{boilerplate_methods_target_population}
-\title{Generate Target Population Description}
+\title{Generate Target Population Description (DEPRECATED)}
 \usage{
-boilerplate_methods_target_population(
-  statistical_estimator = "lmtp",
-  baseline_wave
-)
+boilerplate_methods_target_population(...)
 }
 \arguments{
-\item{statistical_estimator}{Character string specifying the statistical estimator used.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the target population description in markdown format.
+A message indicating the function is deprecated.
 }
 \description{
-Generate Target Population Description
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_target_population()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
+}
+\examples{
+\dontrun{
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_target_population(...)
+}
+
 }

@@ -2,67 +2,27 @@
 % Please edit documentation in R/boilerplate_measures.R
 \name{boilerplate_measures}
 \alias{boilerplate_measures}
-\title{Generate Appendix of Measures}
+\title{Generate Appendix of Measures (DEPRECATED)}
 \usage{
-boilerplate_measures(
-  exposure_var,
-  outcome_vars,
-  measure_data,
-  appendices_measures = NULL
-)
+boilerplate_measures(...)
 }
 \arguments{
-\item{exposure_var}{A single character string naming the exposure variable, or NULL if not applicable.}
-
-\item{outcome_vars}{A list of character vectors, where each element is named after a domain
-and contains the variable names for that domain, or NULL if not applicable.}
-
-\item{measure_data}{A list containing information about each measure. Each element
-should be a list with at least 'description' and 'reference' fields. Optional
-fields include 'waves' and 'items' for scale dimensions.}
-
-\item{baseline_vars}{A character vector of baseline variable names.}
-
-\item{custom_titles}{An optional named list of custom titles for measures.}
-
-\item{print_waves}{A logical value indicating whether to print wave information. Default is FALSE.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the formatted appendix text.
+A message indicating the function is deprecated.
 }
 \description{
-This function generates a formatted appendix describing research measures,
-including baseline variables, exposure variables, and outcome variables across different domains.
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_variables()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
 \examples{
 \dontrun{
-# Define baseline variables
-baseline_vars <- c("age", "male_binary", "parent_binary")
-# Define outcomes by domain
-outcomes_health <- c("smoker_binary", "hlth_bmi", "log_hours_exercise")
-outcomes_psychological <- c("hlth_fatigue", "kessler_latent_anxiety")
-outcomes_social <- c("belong", "neighbourhood_community")
-# Combine all outcomes into a single list
-all_outcomes <- list(
-  health = outcomes_health,
-  psychological = outcomes_psychological,
-  social = outcomes_social
-)
-# Define the exposure variable
-exposure_var <- "political_conservative"
-# Load your measure_data
-measure_data <- readRDS(here::here("boilerplate", "data", "measure_data.rds"))
-# Call the updated boilerplate_measures function
-appendix_text <- boilerplate_measures(
-  baseline_vars = baseline_vars,
-  exposure_var = exposure_var,
-  outcome_vars = all_outcomes,
-  measure_data = measure_data,
-  custom_titles = NULL,
-  print_waves = FALSE
-)
-# Print the result
-cat(appendix_text)
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_variables(...)
 }
 
 }

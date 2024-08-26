@@ -2,112 +2,27 @@
 % Please edit documentation in R/boilerplate_methods.R
 \name{boilerplate_methods}
 \alias{boilerplate_methods}
-\title{Generate Methods Section for a Causal Inference Study}
+\title{Generate Methods Section for a Causal Inference Study (DEPRECATED)}
 \usage{
-boilerplate_methods(
-  exposure_var,
-  outcome_vars,
-  n_total,
-  baseline_wave,
-  exposure_wave,
-  outcome_wave,
-  baseline_missing_data_proportion,
-  sections_to_include = "all",
-  appendices_measures = NULL,
-  ...
-)
+boilerplate_methods(...)
 }
 \arguments{
-\item{exposure_var}{Character string specifying the primary exposure variable.}
-
-\item{outcome_vars}{A named list of character vectors specifying the outcome variables by domain.}
-
-\item{n_total}{Numeric value indicating the total number of participants in the study.}
-
-\item{baseline_wave}{Character string specifying the baseline wave of the study.}
-
-\item{exposure_wave}{Character string specifying the exposure wave of the study.}
-
-\item{outcome_wave}{Character string specifying the outcome wave of the study.}
-
-\item{baseline_missing_data_proportion}{Numeric value indicating the proportion of missing data at baseline.}
-
-\item{sections_to_include}{Character vector specifying which sections to include in the output.
-Default is 'all', which includes all available sections. Use 'list' to see available sections.}
-
-\item{appendices_measures}{Character string specifying the appendix where detailed variable descriptions can be found.}
-
-\item{...}{Additional arguments to be passed to helper functions.}
-
-\item{measure_data}{A list containing information about each measure.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-If sections_to_include is not 'list', returns a character string containing the generated methods
-  section in markdown format. If sections_to_include is 'list', returns a character vector of available sections.
+A message indicating the function is deprecated.
 }
 \description{
-This function generates a comprehensive methods section for a research paper,
-including details about the sample, variables, causal interventions,
-identification assumptions, target population, eligibility criteria,
-confounding control, missing data handling, statistical estimators,
-and additional sections like sensitivity analysis and scope of interventions.
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_methods()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
 \examples{
 \dontrun{
-# Define outcomes by domain
-outcomes_health <- c("smoker_binary", "hlth_bmi", "log_hours_exercise")
-outcomes_psychological <- c("hlth_fatigue", "kessler_latent_anxiety")
-outcomes_social <- c("belong", "neighbourhood_community")
-
-# Combine all outcomes into a single list
-all_outcomes <- list(
-  health = outcomes_health,
-  psychological = outcomes_psychological,
-  social = outcomes_social
-)
-
-# Define the exposure variable
-exposure_var <- "political_conservative"
-
-# Load your measure_data
-measure_data <- readRDS(here::here("boilerplate", "data", "measure_data.rds"))
-
-# Generate methods text
-methods_text <- boilerplate_methods(
-  exposure_var = exposure_var,
-  outcome_vars = all_outcomes,
-  measure_data = measure_data,
-  n_total = 47000,
-  baseline_wave = "NZAVS time 10, years 2018-2019",
-  exposure_wave = "NZAVS time 11, years 2019-2020",
-  outcome_wave = "NZAVS time 12, years 2020-2021",
-  baseline_missing_data_proportion = 0.15,
-  appendices_measures = "C",
-  causal_interventions = list(interventions = c("Increase exposure_var", "Do not change exposure_var")),
-  contrasts = "null",
-  null_intervention = "Do not change exposure_var",
-  sample = list(appendices = "A-C"),
-  statistical_estimator = list(estimators = c("lmtp", "grf")),
-  inclusion_criteria = c(
-    "Enrolled in the 2018 wave of the New Zealand Attitudes and Values Study (NZAVS time 10).",
-    "Missing covariate data at baseline was permitted, and the data was subjected to imputation methods to reduce bias."
-  ),
-  exclusion_criteria = c(
-    "Did not answer the political conservative question at NZAVS time 10 and time 11."
-  ),
-  n_participants = 32451,
-  confounding_control = list(appendix_ref = "B", protocol_url = "https://osf.io/ce4t9/"),
-  additional_sections = list(
-    sensitivity_analysis = list(
-      description = "We use the E-value method to assess sensitivity to unmeasured confounding."
-    ),
-    scope_interventions = list(figure_ref = "@fig-custom-hist"),
-    evidence_change = list(table_ref = "@tbl-custom-transition")
-  )
-)
-
-# Print the result
-cat(methods_text)
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_methods(...)
 }
 
 }

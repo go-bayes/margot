@@ -2,57 +2,27 @@
 % Please edit documentation in R/margot_create_database.R
 \name{margot_create_database}
 \alias{margot_create_database}
-\title{Make Measure Databases}
+\title{Create Database of Measures (DEPRECATED)}
 \usage{
-margot_create_database(measures_path = NULL)
+margot_create_database(...)
 }
 \arguments{
-\item{measures_path}{Character string. The path to the directory where measure databases are stored.
-If NULL (default), the current working directory is used.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-This function does not return a value. It runs an interactive command-line interface.
+A message indicating the function is deprecated.
 }
 \description{
-This function provides a command-line interface for managing a database of longitudinal measures.
-It allows users to create, view, modify, and delete measures, as well as save and load measure databases.
-}
-\details{
-The function provides the following main operations:
-\itemize{
-  \item Create a new measures database
-  \item Open an existing measures database
-  \item List available .rds files in the specified directory
-  \item List measures in the current database
-  \item Add a new measure
-  \item Delete an existing measure
-  \item Modify an existing measure
-  \item Save the current measures data
-  \item Batch edit measures
-}
-
-Each measure in the database contains the following fields:
-\itemize{
-  \item name: The name of the measure
-  \item items: A list of items or questions in the measure
-  \item description: A description of the measure
-  \item reference: A reference for the measure
-  \item waves: The waves in which the measure was used
-  \item keywords: Keywords associated with the measure
-}
-}
-\note{
-This function uses a command-line interface and is designed to be run interactively.
-It uses local state management and does not modify global variables.
-Changes are only saved to disk when explicitly requested by the user.
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_manage_measures()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
 \examples{
 \dontrun{
-# Run the function with the default path (current working directory)
-margot_create_database()
-
-# Run the function with a specific path
-margot_create_database("path/to/measures/directory")
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_manage_measures(...)
 }
 
 }

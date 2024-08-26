@@ -8,6 +8,28 @@
 * done [remove "Action: labels"]
 
 
+# [2024-08-26] margot 0.2.1.23
+
+## Deprecations
+
+* `boilerplate_measures()` is deprecated. Use `boilerplate::boilerplate_report_variables()` instead.
+* `boilerplate_methods_causal_interventions()` is deprecated. Use `boilerplate::boilerplate_report_causal_interventions()` instead.
+* `boilerplate_methods_confounding_control()` is deprecated. Use `boilerplate::boilerplate_report_confounding_control()` instead.
+* `boilerplate_methods()` is deprecated. Use `boilerplate::boilerplate_report_methods()` instead.
+* `boilerplate_methods_eligibility_criteria()` is deprecated. Use `boilerplate::boilerplate_report_eligibility_criteria()` instead.
+* `boilerplate_methods_identification_assumptions()` is deprecated. Use `boilerplate::boilerplate_report_identification_assumptions()` instead.
+* `boilerplate_methods_missing_data()` is deprecated. Use `boilerplate::boilerplate_report_missing_data()` instead.
+* `boilerplate_methods_sample()` is deprecated. Use `boilerplate::boilerplate_report_sample()` instead.
+* `boilerplate_methods_statistical_estimator()` is deprecated. Use `boilerplate::boilerplate_report_statistical_estimator()` instead.
+* `boilerplate_methods_target_population()` is deprecated. Use `boilerplate::boilerplate_report_target_population()` instead.
+* `boilerplate_methods_variables()` is deprecated. Use `boilerplate::boilerplate_report_variables()` instead.
+* `margot_create_database()` is deprecated. Use `boilerplate::boilerplate_manage_measures()` instead.
+* `manager_boilerplate_measures()` is deprecated. Use `boilerplate::boilerplate_manage_measures()` instead.
+* `margot_create_bibliography()` is deprecated. Use `boilerplate::boilerplate_report_measures()` instead.
+* `margot_merge_databases()` is deprecated. Use `boilerplate::boilerplate_merge_databases()` instead. (Note the plural 'databases' in the new function name.)
+
+* to obtain these new functions, use `devtools::install_github("go-bayes/boilerplate")`
+
 # [2024-08-22] margot 0.2.1.22
 
 ## Improved

@@ -2,44 +2,27 @@
 % Please edit documentation in R/boilerplate_methods_missing_data.R
 \name{boilerplate_methods_missing_data}
 \alias{boilerplate_methods_missing_data}
-\title{Generate Missing Data Handling Description}
+\title{Generate Missing Data Handling Description (DEPRECATED)}
 \usage{
-boilerplate_methods_missing_data(
-  estimators = c("lmtp"),
-  grf_appendix = "C",
-  baseline_wave,
-  exposure_wave,
-  outcome_wave,
-  baseline_missing_data_proportion
-)
+boilerplate_methods_missing_data(...)
 }
 \arguments{
-\item{estimators}{Character vector specifying the statistical estimators used.}
-
-\item{grf_appendix}{Character string specifying the appendix for GRF missing data handling.}
-
-\item{baseline_wave}{Character string specifying the baseline wave of the study.}
-
-\item{exposure_wave}{Character string specifying the exposure wave of the study.}
-
-\item{outcome_wave}{Character string specifying the outcome wave of the study.}
-
-\item{baseline_missing_data_proportion}{Numeric value indicating the percentage of missing data at baseline.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the missing data handling description in markdown format.
+A message indicating the function is deprecated.
 }
 \description{
-Generate Missing Data Handling Description
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_missing_data()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
 \examples{
-missing_data_text <- boilerplate_methods_missing_data(
-  estimators = c("lmtp", "grf"),
-  grf_appendix = "D",
-  baseline_wave = "NZAVS time 10, years 2018-2019",
-  exposure_wave = "NZAVS time 11, years 2019-2020",
-  outcome_wave = "NZAVS time 12, years 2020-2021",
-  baseline_missing_data_proportion = 15
-)
+\dontrun{
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_missing_data(...)
+}
 
 }

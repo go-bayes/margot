@@ -82,28 +82,10 @@ reference:
     - margot_plot_policy_combo
     - margot_plot_policy_tree
 
-  - title: "Create Reports"
-    contents:
-    - boilerplate_methods
-    - boilerplate_methods_additional_sections
-    - boilerplate_methods_causal_interventions
-    - boilerplate_methods_confounding_control
-    - boilerplate_methods_eligibility_criteria
-    - boilerplate_methods_identification_assumptions
-    - boilerplate_methods_missing_data
-    - boilerplate_methods_sample
-    - boilerplate_methods_statistical_estimator
-    - boilerplate_methods_target_population
-    - boilerplate_methods_variables
-    - margot_create_bibliography
-    - margot_create_database
-    - margot_merge_databases
-
   - title: "Utility functions"
     contents:
     - back_transform_logmean
     - back_transform_zscore
-    - boilerplate_measures
     - construct_formula
     - group_tab
     - here_read
@@ -135,7 +117,22 @@ reference:
 
   - title: "Deprecated functions"
     contents:
-      - margot_interpret_table
-      - coloured_histogram_quantiles
-      - create_ordered_variable_custom
-      - margot_compute_gender_weights
+    - boilerplate_measures
+    - boilerplate_methods_additional_sections
+    - boilerplate_methods
+    - boilerplate_methods_causal_interventions
+    - boilerplate_methods_confounding_control
+    - boilerplate_methods_eligibility_criteria
+    - boilerplate_methods_identification_assumptions
+    - boilerplate_methods_missing_data
+    - boilerplate_methods_sample
+    - boilerplate_methods_statistical_estimator
+    - boilerplate_methods_target_population
+    - boilerplate_methods_variables
+    - margot_create_bibliography
+    - margot_create_database
+    - margot_merge_databases
+    - margot_interpret_table
+    - coloured_histogram_quantiles
+    - create_ordered_variable_custom
+    - margot_compute_gender_weights

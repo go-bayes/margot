@@ -2,25 +2,27 @@
 % Please edit documentation in R/boilerplate_methods_eligibility_criteria.R
 \name{boilerplate_methods_eligibility_criteria}
 \alias{boilerplate_methods_eligibility_criteria}
-\title{Generate Eligibility Criteria Description}
+\title{Generate Eligibility Criteria Description (DEPRECATED)}
 \usage{
-boilerplate_methods_eligibility_criteria(
-  inclusion_criteria,
-  exclusion_criteria,
-  n_participants,
-  baseline_wave
-)
+boilerplate_methods_eligibility_criteria(...)
 }
 \arguments{
-\item{inclusion_criteria}{Character vector specifying the inclusion criteria.}
-
-\item{exclusion_criteria}{Character vector specifying the exclusion criteria.}
-
-\item{n_participants}{Numeric value indicating the number of participants meeting the criteria.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the eligibility criteria description in markdown format.
+A message indicating the function is deprecated.
 }
 \description{
-Generate Eligibility Criteria Description
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_eligibility_criteria()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
+}
+\examples{
+\dontrun{
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_eligibility_criteria(...)
+}
+
 }

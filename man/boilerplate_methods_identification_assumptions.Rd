@@ -3,16 +3,27 @@
 %   R/boilerplate_methods_identification_assumptions.R
 \name{boilerplate_methods_identification_assumptions}
 \alias{boilerplate_methods_identification_assumptions}
-\title{Generate Identification Assumptions Description}
+\title{Generate Identification Assumptions Description (DEPRECATED)}
 \usage{
-boilerplate_methods_identification_assumptions(exposure_var)
+boilerplate_methods_identification_assumptions(...)
 }
 \arguments{
-\item{exposure_var}{Character string specifying the primary exposure variable.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the identification assumptions description in markdown format.
+A message indicating the function is deprecated.
 }
 \description{
-Generate Identification Assumptions Description
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_identification_assumptions()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
+}
+\examples{
+\dontrun{
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_identification_assumptions(...)
+}
+
 }

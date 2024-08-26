@@ -2,21 +2,27 @@
 % Please edit documentation in R/boilerplate_methods_confounding_control.R
 \name{boilerplate_methods_confounding_control}
 \alias{boilerplate_methods_confounding_control}
-\title{Generate Confounding Control Description}
+\title{Generate Confounding Control Description (DEPRECATED)}
 \usage{
-boilerplate_methods_confounding_control(
-  appendix_ref = "B",
-  protocol_url = "https://osf.io/ce4t9/"
-)
+boilerplate_methods_confounding_control(...)
 }
 \arguments{
-\item{appendix_ref}{Character string specifying the appendix reference for covariates.}
-
-\item{protocol_url}{Character string specifying the URL for the study protocol.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the confounding control description in markdown format.
+A message indicating the function is deprecated.
 }
 \description{
-Generate Confounding Control Description
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_confounding_control()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
+}
+\examples{
+\dontrun{
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_confounding_control(...)
+}
+
 }

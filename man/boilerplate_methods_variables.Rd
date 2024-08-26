@@ -2,61 +2,27 @@
 % Please edit documentation in R/boilerplate_methods_variables.R
 \name{boilerplate_methods_variables}
 \alias{boilerplate_methods_variables}
-\title{Generate Variables Section for Methods}
+\title{Generate Variables Section for Methods (DEPRECATED)}
 \usage{
-boilerplate_methods_variables(
-  exposure_var,
-  outcome_vars,
-  measure_data,
-  appendices_measures = NULL,
-  ...
-)
+boilerplate_methods_variables(...)
 }
 \arguments{
-\item{exposure_var}{A character string specifying the name of the exposure variable.}
-
-\item{outcome_vars}{A named list of character vectors specifying the outcome variables by domain.}
-
-\item{measure_data}{A list containing information about each measure.}
-
-\item{appendices_measures}{An optional character string for the appendix reference. If NULL, no reference is included.}
-
-\item{custom_titles}{An optional named list of custom titles for measures.}
-
-\item{print_waves}{A logical value indicating whether to print wave information. Default is FALSE.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the markdown-formatted section on variables.
+A message indicating the function is deprecated.
 }
 \description{
-This function is a wrapper around boilerplate_measures() that generates
-a markdown-formatted section describing the variables used in the study.
-It ignores baseline variables and includes an optional reference to an appendix.
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_variables()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
 \examples{
 \dontrun{
-# Define outcomes by domain
-outcomes_health <- c("smoker_binary", "hlth_bmi", "log_hours_exercise")
-outcomes_psychological <- c("hlth_fatigue", "kessler_latent_anxiety")
-outcomes_social <- c("belong", "neighbourhood_community")
-all_outcomes <- list(
-  health = outcomes_health,
-  psychological = outcomes_psychological,
-  social = outcomes_social
-)
-# Define the exposure variable
-exposure_var <- "political_conservative"
-# Load your measure_data
-measure_data <- readRDS(here::here("boilerplate", "data", "measure_data.rds"))
-# Call the function
-result <- boilerplate_methods_variables(
-  exposure_var = exposure_var,
-  outcome_vars = all_outcomes,
-  measure_data = measure_data,
-  appendices_measures = "Appendix C"
-)
-# Print the result
-cat(result)
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_variables(...)
 }
 
 }

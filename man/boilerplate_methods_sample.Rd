@@ -2,50 +2,27 @@
 % Please edit documentation in R/boilerplate_methods_sample.R
 \name{boilerplate_methods_sample}
 \alias{boilerplate_methods_sample}
-\title{Generate Sample Description}
+\title{Generate Sample Description (DEPRECATED)}
 \usage{
-boilerplate_methods_sample(
-  n_total,
-  appendices_sample = "B-D",
-  custom_template = NULL,
-  replacements = list(),
-  baseline_wave,
-  exposure_wave,
-  outcome_wave
-)
+boilerplate_methods_sample(...)
 }
 \arguments{
-\item{n_total}{Numeric value indicating the total number of participants.}
-
-\item{appendices_sample}{Character string specifying the appendices containing sample data.}
-
-\item{custom_template}{Character string containing a custom template for the sample description.
-Use placeholders like {{n_total}} and {{appendices_sample}} for variable insertion.}
-
-\item{replacements}{Named list of additional custom replacements for the template.}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the sample description in markdown format.
+A message indicating the function is deprecated.
 }
 \description{
-Generate Sample Description
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_report_sample()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
 \examples{
-# Using default template
-boilerplate_methods_sample(n_total = 47000, appendices_sample = "A-C")
-
-# Using custom template
-custom_template <- "
-### Study Sample
-This study used data from {{n_total}} participants in the NZAVS.
-Appendices {{appendices_sample}} contain detailed data summaries.
-{{custom_info}}
-"
-boilerplate_methods_sample(
-  n_total = 47000,
-  appendices_sample = "A-C",
-  custom_template = custom_template,
-  replacements = list(custom_info = "Additional custom information here.")
-)
+\dontrun{
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_report_sample(...)
+}
 
 }

@@ -2,73 +2,27 @@
 % Please edit documentation in R/margot_create_bibliography.R
 \name{margot_create_bibliography}
 \alias{margot_create_bibliography}
-\title{Create a Bibliography of Measures}
+\title{Manage Boilerplate Measures (DEPRECATED)}
 \usage{
-margot_create_bibliography(
-  all_vars = NULL,
-  baseline_vars = NULL,
-  exposure_var = NULL,
-  outcome_vars = NULL,
-  measure_data,
-  custom_titles = NULL,
-  print_keywords = FALSE,
-  print_waves = FALSE
-)
+margot_create_bibliography(...)
 }
 \arguments{
-\item{all_vars}{A character vector of all variable names, or TRUE to use all variables
-from baseline_vars, exposure_var, and outcome_vars.}
-
-\item{baseline_vars}{A character vector of baseline variable names.}
-
-\item{exposure_var}{A character string of the exposure variable name.}
-
-\item{outcome_vars}{A character vector of outcome variable names.}
-
-\item{measure_data}{A list containing information about each measure.}
-
-\item{custom_titles}{A named list of custom titles for variables (optional).}
-
-\item{print_keywords}{Logical, whether to print keywords for each measure (default: FALSE).}
-
-\item{print_waves}{Logical, whether to print wave information for each measure (default: FALSE).}
+\item{...}{All arguments (ignored)}
 }
 \value{
-A character string containing the formatted bibliography.
+A message indicating the function is deprecated.
 }
 \description{
-This function generates a formatted bibliography of measures used in a study,
-including details about questions and citations.
+\lifecycle{deprecated}
+This function is deprecated. Please use `boilerplate::boilerplate_manage_measures()` instead.
+Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
 \examples{
-# Example 1: Using separate variable lists
-baseline_vars <- c("age", "male_binary", "parent_binary")
-exposure_var <- "political_conservative"
-outcome_vars <- c("smoker_binary", "hlth_bmi", "log_hours_exercise",
-                  "hlth_fatigue", "kessler_latent_anxiety",
-                  "belong", "neighbourhood_community")
+\dontrun{
+# This function is deprecated. Use instead:
+# devtools::install_github("go-bayes/boilerplate")
+# library(boilerplate)
+# boilerplate::boilerplate_manage_measures(...)
+}
 
-# Assuming measure_data is a list with information about each variable
-appendix_text_1 <- margot_create_bibliography(
-  baseline_vars = baseline_vars,
-  exposure_var = exposure_var,
-  outcome_vars = outcome_vars,
-  measure_data = measure_data
-)
-
-# Example 2: Using all_vars
-all_vars <- c(baseline_vars, exposure_var, outcome_vars)
-appendix_text_2 <- margot_create_bibliography(
-  all_vars = all_vars,
-  measure_data = measure_data
-)
-
-# Example 3: Using custom titles and printing keywords
-custom_titles <- list(age = "Participant Age", male_binary = "Gender (Male)")
-appendix_text_3 <- margot_create_bibliography(
-  all_vars = all_vars,
-  measure_data = measure_data,
-  custom_titles = custom_titles,
-  print_keywords = TRUE
-)
 }
