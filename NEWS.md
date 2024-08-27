@@ -10,6 +10,10 @@
 * remove color package
 
 
+# [2024-08-28] margot 0.2.1.25
+
+* `margot_plot()` and `margot_plot_create_options()` now allow custom labels, which flexibly combine with defaults.
+
 # [2024-08-28] margot 0.2.1.24
 
 ## Improved
