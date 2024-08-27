@@ -55,25 +55,26 @@
 #' @importFrom crayon bold green red yellow
 #'
 #' @export
+
 margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf_defaults = list(),
                                  save_data = FALSE, compute_rate = TRUE, top_n_vars = 10, save_models = FALSE,
-                                 train_proportion = 0.8) {
+                                 train_proportion = 0.8, propensity_threshold = 0.05) {
 
   cli::cli_alert_info(crayon::bold("Starting margot_causal_forest function"))
 
-  if (save_models) {
-    cli::cli_alert_warning(crayon::yellow(
-      "Note: setting save_models = TRUE typically results in very large objects (often several GB). ",
-      "Ensure you have sufficient memory available."
-    ))
-  }
+  # Log input data types and structures
+  cli::cli_alert_info(paste("covariates class:", class(covariates)))
+  cli::cli_alert_info(paste("covariates dim:", paste(dim(covariates), collapse = "x")))
+  cli::cli_alert_info(paste("W class:", class(W)))
+  cli::cli_alert_info(paste("W length:", length(W)))
+  cli::cli_alert_info(paste("weights class:", class(weights)))
+  cli::cli_alert_info(paste("weights length:", length(weights)))
 
   not_missing <- which(complete.cases(covariates))
   full <- seq_len(nrow(covariates))
   full <- full[which(full %in% not_missing)]
 
   cli::cli_alert_info(paste("Number of complete cases:", length(not_missing)))
-
   run_models_with_progress <- function() {
     results <- list()
     full_models <- list()
@@ -129,6 +130,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
           predictions = predictions
         )
 
+        cli::cli_alert_info("Computing Qini curves")
         results[[model_name]]$qini_data <- tryCatch({
           compute_qini_curves(tau_hat, Y, W = W)
         }, error = function(e) {
@@ -149,7 +151,6 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
     cli::cli_progress_done()
     list(results = results, full_models = full_models)
   }
-
   model_results <- run_models_with_progress()
 
   combined_table <- do.call(rbind, lapply(model_results$results, function(x) x$custom_table))
@@ -184,101 +185,103 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
 #                                  save_data = FALSE, compute_rate = TRUE, top_n_vars = 10, save_models = FALSE,
 #                                  train_proportion = 0.8) {
 #
-#   # warning about large object size when save_models is TRUE
+#   cli::cli_alert_info(crayon::bold("Starting margot_causal_forest function"))
+#
 #   if (save_models) {
-#     warning("Note: setting save_models = TRUE typically results in very large objects (often several GB). ",
-#             "Ensure you have sufficient memory available.",
-#             call. = FALSE)
+#     cli::cli_alert_warning(crayon::yellow(
+#       "Note: setting save_models = TRUE typically results in very large objects (often several GB). ",
+#       "Ensure you have sufficient memory available."
+#     ))
 #   }
-#   # Create not_missing vector (only needs to be done once)
+#
 #   not_missing <- which(complete.cases(covariates))
 #   full <- seq_len(nrow(covariates))
 #   full <- full[which(full %in% not_missing)]
 #
+#   cli::cli_alert_info(paste("Number of complete cases:", length(not_missing)))
+#
 #   run_models_with_progress <- function() {
 #     results <- list()
-#     full_models <- list()  # To store full models if save_models is TRUE
+#     full_models <- list()
 #
-#     p <- progressor(along = outcome_vars)
+#     cli::cli_alert_info(crayon::bold("Running models for each outcome variable"))
+#     pb <- cli::cli_progress_bar(total = length(outcome_vars), format = "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}")
+#
 #     for (outcome in outcome_vars) {
 #       model_name <- paste0("model_", outcome)
 #       Y <- as.matrix(data[[outcome]])
-#       model <- do.call(grf::causal_forest, c(list(X = covariates, Y = Y, W = W, sample.weights = weights), grf_defaults))
 #
-#       # Always save these results
-#       results[[model_name]] <- list(
-#         ate = round(grf::average_treatment_effect(model), 3),
-#         test_calibration = round(grf::test_calibration(model), 3),
-#         custom_table = margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL),
-#         tau_hat = predict(model)$predictions
-#       )
+#       tryCatch({
+#         model <- do.call(grf::causal_forest, c(list(X = covariates, Y = Y, W = W, sample.weights = weights), grf_defaults))
 #
-#       tau_hat <- results[[model_name]]$tau_hat
+#         results[[model_name]] <- list(
+#           ate = round(grf::average_treatment_effect(model), 3),
+#           test_calibration = round(grf::test_calibration(model), 3),
+#           custom_table = margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL),
+#           tau_hat = predict(model)$predictions
+#         )
 #
-#       if (compute_rate) {
-#         results[[model_name]]$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
-#       }
+#         tau_hat <- results[[model_name]]$tau_hat
 #
-#       results[[model_name]]$dr_scores <- policytree::double_robust_scores(model)
-#       results[[model_name]]$policy_tree_depth_1 <- policytree::policy_tree(covariates[full, ], results[[model_name]]$dr_scores[full, ], depth = 1)
+#         if (compute_rate) {
+#           results[[model_name]]$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
+#         }
 #
-#       varimp <- grf::variable_importance(model)
-#       ranked_vars <- order(varimp, decreasing = TRUE)
-#       top_vars <- colnames(covariates)[ranked_vars[1:top_n_vars]]
-#       results[[model_name]]$top_vars <- top_vars
+#         results[[model_name]]$dr_scores <- policytree::double_robust_scores(model)
+#         results[[model_name]]$policy_tree_depth_1 <- policytree::policy_tree(covariates[full, ], results[[model_name]]$dr_scores[full, ], depth = 1)
 #
-#       results[[model_name]]$blp_top <- grf::best_linear_projection(model, covariates[, top_vars], target.sample = "all")
+#         varimp <- grf::variable_importance(model)
+#         ranked_vars <- order(varimp, decreasing = TRUE)
+#         top_vars <- colnames(covariates)[ranked_vars[1:top_n_vars]]
+#         results[[model_name]]$top_vars <- top_vars
 #
-#       # Train policy tree on train_proportion of non-missing data
-#       n_non_missing <- length(not_missing)
-#       train_size <- floor(train_proportion * n_non_missing)
-#       train_indices <- sample(not_missing, train_size)
+#         results[[model_name]]$blp_top <- grf::best_linear_projection(model, covariates[, top_vars], target.sample = "all")
 #
-#       policy_tree_model <- policytree::policy_tree(
-#         covariates[train_indices, top_vars], results[[model_name]]$dr_scores[train_indices, ], depth = 2
-#       )
-#       results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
+#         n_non_missing <- length(not_missing)
+#         train_size <- floor(train_proportion * n_non_missing)
+#         train_indices <- sample(not_missing, train_size)
 #
-#       # Extract split variable names # wrong, not used
-#       #split_vars <- sapply(1:3, function(i) colnames(covariates)[policy_tree_model_2$nodes[[i]]$split_variable])
-#       #results[[model_name]]$split_variables <- split_vars
+#         policy_tree_model <- policytree::policy_tree(
+#           covariates[train_indices, top_vars], results[[model_name]]$dr_scores[train_indices, ], depth = 2
+#         )
+#         results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
 #
-#       # Prepare data for plotting
-#       test_indices <- setdiff(not_missing, train_indices)
-#       X_test <- covariates[test_indices, top_vars]
-#       predictions <- predict(policy_tree_model, X_test)
+#         test_indices <- setdiff(not_missing, train_indices)
+#         X_test <- covariates[test_indices, top_vars]
+#         predictions <- predict(policy_tree_model, X_test)
 #
-#       results[[model_name]]$plot_data <- list(
-#         X_test = X_test,
-#         predictions = predictions#, not used
-#       #  split_variables = split_vars
-#       )
+#         results[[model_name]]$plot_data <- list(
+#           X_test = X_test,
+#           predictions = predictions
+#         )
 #
-#       # Compute qini_data
-#       results[[model_name]]$qini_data <- tryCatch({
-#         compute_qini_curves(tau_hat, Y, W = W)
+#         results[[model_name]]$qini_data <- tryCatch({
+#           compute_qini_curves(tau_hat, Y, W = W)
+#         }, error = function(e) {
+#           cli::cli_alert_warning(crayon::yellow(paste("Error computing Qini curves for", outcome, ":", e$message)))
+#           NULL
+#         })
+#
+#         if (save_models) {
+#           full_models[[model_name]] <- model
+#         }
+#
+#         cli::cli_progress_update()
 #       }, error = function(e) {
-#         warning(paste("Error computing Qini curves for", outcome, ":", e$message))
-#         NULL
+#         cli::cli_alert_danger(crayon::red(paste("Error in model for", outcome, ":", e$message)))
 #       })
-#
-#       # Optionally save the full model
-#       if (save_models) {
-#         full_models[[model_name]] <- model
-#       }
-#
-#       p(sprintf("Completed %s", outcome))
 #     }
 #
+#     cli::cli_progress_done()
 #     list(results = results, full_models = full_models)
 #   }
 #
-#   model_results <- with_progress(run_models_with_progress())
+#   model_results <- run_models_with_progress()
 #
-#   # combine tables from all models
-#   combined_table <- do.call(rbind, lapply(model_results$results, function(x) x$custom_table)) # hack
+#   combined_table <- do.call(rbind, lapply(model_results$results, function(x) x$custom_table))
 #   rownames(combined_table) <- gsub("model_", "", rownames(combined_table))
 #
+#   cli::cli_alert_success(crayon::green("Model runs completed successfully"))
 #
 #   output <- list(
 #     results = model_results$results,
@@ -291,11 +294,15 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf
 #     output$data <- data
 #     output$covariates <- covariates
 #     output$weights <- weights
+#     cli::cli_alert_info("Data, covariates, and weights saved in output")
 #   }
 #
 #   if (save_models) {
 #     output$full_models <- model_results$full_models
+#     cli::cli_alert_info("Full model objects saved in output")
 #   }
+#
+#   cli::cli_alert_success(crayon::bold(crayon::green("margot_causal_forest function completed successfully \U0001F44D")))
 #
 #   return(output)
 # }

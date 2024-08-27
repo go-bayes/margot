@@ -6,7 +6,15 @@
 * progress [Develop automated reporting of all scales and measures for quarto documents.]
 * done [customise plots for user-supplied labels]
 * done [remove "Action: labels"]
+* qini cost options
+* remove color package
 
+
+# [2024-08-28] margot 0.2.1.24
+
+## Improved
+
+* robust reporting/error handling in `margot_causal_forest()`, and its helper funciton `compute_qini_curves()`
 
 # [2024-08-26] margot 0.2.1.23
 
