@@ -1,7 +1,7 @@
 #' Generate Variables Section for Methods (DEPRECATED)
 #'
 #' @description
-#' \lifecycle{deprecated}
+#' `r lifecycle::badge("deprecated")`
 #' This function is deprecated. Please use `boilerplate::boilerplate_report_variables()` instead.
 #' Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 #'

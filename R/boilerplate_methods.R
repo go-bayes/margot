@@ -1,7 +1,7 @@
 #' Generate Methods Section for a Causal Inference Study (DEPRECATED)
 #'
 #' @description
-#' \lifecycle{deprecated}
+#' `r lifecycle::badge("deprecated")`
 #' This function is deprecated. Please use `boilerplate::boilerplate_report_methods()` instead.
 #' Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 #'

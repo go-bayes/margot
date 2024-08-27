@@ -1,7 +1,7 @@
 #' Generate Eligibility Criteria Description (DEPRECATED)
 #'
 #' @description
-#' \lifecycle{deprecated}
+#' `r lifecycle::badge("deprecated")`
 #' This function is deprecated. Please use `boilerplate::boilerplate_report_eligibility_criteria()` instead.
 #' Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 #'
@@ -40,7 +40,8 @@ boilerplate_methods_eligibility_criteria <- function(...) {
 #' #'
 #' #' @return A character string containing the eligibility criteria description in markdown format.
 #' #'
-#' #' @export
+#' @export
+#' @deprecated
 #' boilerplate_methods_eligibility_criteria <- function(inclusion_criteria, exclusion_criteria, n_participants, baseline_wave) {
 #'   # Function to convert a list to markdown bullet points
 #'   list_to_markdown <- function(criteria_list) {

@@ -1,7 +1,7 @@
 #' Merge Two Measure Databases (DEPRECATED)
 #'
 #' @description
-#' \lifecycle{deprecated}
+#' `r lifecycle::badge("deprecated")`
 #' This function is deprecated. Please use `boilerplate::boilerplate_merge_databases()` instead.
 #' Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 #'

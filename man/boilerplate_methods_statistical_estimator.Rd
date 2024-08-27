@@ -13,7 +13,7 @@ boilerplate_methods_statistical_estimator(...)
 A message indicating the function is deprecated.
 }
 \description{
-\lifecycle{deprecated}
+`r lifecycle::badge("deprecated")`
 This function is deprecated. Please use `boilerplate::boilerplate_report_statistical_estimator()` instead.
 Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
