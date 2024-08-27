@@ -67,7 +67,7 @@
 #'   result_object = result_object,
 #'   model_name = "model_t2_hlth_sleep_hours_z",
 #'   policy_tree_args = list(point_alpha = 0.75),
-#'   decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01)
+#'  decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01,
 #' )
 #'
 #' # Access individual plots
@@ -148,12 +148,83 @@ margot_plot_policy_combo <- function(result_object, model_name,
                                decision_tree_args))
   }
 
-  return(list(
-    policy_tree = if(generate_policy_tree) policy_results else NULL,
-    decision_tree = if(generate_decision_tree) decision_tree else NULL,
-    combined_plot = combined_plot
-  ))
+  return(combined_plot)
 }
+# margot_plot_policy_combo <- function(result_object, model_name,
+#                                      layout = list(heights = c(1, 2)),
+#                                      annotation = list(tag_levels = "A"),
+#                                      generate_policy_tree = TRUE,
+#                                      generate_decision_tree = TRUE,
+#                                      policy_tree_args = list(),
+#                                      decision_tree_args = list()) {
+#   # Input validation for result_object
+#   if (!is.list(result_object) || !("results" %in% names(result_object))) {
+#     stop("result_object must be a list containing a 'results' element.")
+#   }
+#
+#   # Input validation for model_name
+#   if (!is.character(model_name) || length(model_name) != 1) {
+#     stop("model_name must be a single character string.")
+#   }
+#
+#   # Check if the specified model exists in the result_object
+#   if (!(model_name %in% names(result_object$results))) {
+#     stop(paste("The specified model_name '", model_name, "' does not exist in the result_object."))
+#   }
+#
+#   # Check if at least one plot type is selected for generation
+#   if (!generate_policy_tree && !generate_decision_tree) {
+#     stop("At least one of generate_policy_tree or generate_decision_tree must be TRUE.")
+#   }
+#
+#   # Check if required functions exist
+#   required_functions <- c("margot_plot_policy_tree", "margot_plot_decision_tree")
+#   missing_functions <- required_functions[!sapply(required_functions, exists, mode = "function")]
+#
+#   if (length(missing_functions) > 0) {
+#     stop("The following required functions are not found: ",
+#          paste(missing_functions, collapse = ", "),
+#          ". Please make sure these functions are loaded.")
+#   }
+#
+#   combined_plot <- NULL
+#
+#   if (generate_policy_tree && generate_decision_tree) {
+#     cat("Generating policy tree...\n")
+#     policy_results <- do.call(margot_plot_policy_tree,
+#                               c(list(mc_test = result_object, model_name = model_name),
+#                                 policy_tree_args))
+#
+#     cat("Generating decision tree...\n")
+#     decision_tree <- do.call(margot_plot_decision_tree,
+#                              c(list(result_object = result_object, model_name = model_name),
+#                                decision_tree_args))
+#
+#     cat("Combining plots...\n")
+#     combined_plot <- decision_tree / policy_results
+#
+#     cat("Applying layout and annotation...\n")
+#     combined_plot <- combined_plot +
+#       do.call(patchwork::plot_layout, layout) +
+#       do.call(patchwork::plot_annotation, annotation)
+#   } else if (generate_policy_tree) {
+#     cat("Generating policy tree...\n")
+#     combined_plot <- do.call(margot_plot_policy_tree,
+#                              c(list(mc_test = result_object, model_name = model_name),
+#                                policy_tree_args))
+#   } else if (generate_decision_tree) {
+#     cat("Generating decision tree...\n")
+#     combined_plot <- do.call(margot_plot_decision_tree,
+#                              c(list(result_object = result_object, model_name = model_name),
+#                                decision_tree_args))
+#   }
+#
+#   return(list(
+#     policy_tree = if(generate_policy_tree) policy_results else NULL,
+#     decision_tree = if(generate_decision_tree) decision_tree else NULL,
+#     combined_plot = combined_plot
+#   ))
+# }
 
 # margot_plot_policy_combo <- function(mc_test, model_name,
 #                                      layout = list(heights = c(1, 2)),

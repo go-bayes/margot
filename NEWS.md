@@ -15,7 +15,6 @@
 
 * `margot_plot()` - consistent names for results table if these are modified using the new `label_mapping` option. 
 * `here_save_qs()` and `here_read_qs()` minor tweaks.
-* `margot_plot_combo` now returns a list, consistent with CRAN.
 
 # [2024-08-27] margot 0.2.1.25
 
