@@ -13,7 +13,7 @@ using the margot_interpret_marginal function and returns a transformed table."><
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.24</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.25</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,8 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <span>  title_binary <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  push_mods <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span>,</span>
-<span>  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -89,6 +90,10 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <dt id="arg-options">options<a class="anchor" aria-label="anchor" href="#arg-options"></a></dt>
 <dd><p>A list of additional options for customizing the plot and interpretation. See Details for available options.</p></dd>
 
+
+<dt id="arg-label-mapping">label_mapping<a class="anchor" aria-label="anchor" href="#arg-label-mapping"></a></dt>
+<dd><p>A named list for custom outcome label mapping. See Details for usage.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -106,6 +111,9 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <li><p>`save_plot_options`: List of options for saving the plot (width, height, dpi, filename).</p></li>
 <li><p>`show_evalues`: Logical. If TRUE, shows E-values in the plot. Default is TRUE.</p></li>
 <li><p>`evalue_digits`: Integer. Number of digits for E-value display. Default is 2.</p></li>
+</ul><p>The `label_mapping` parameter allows for custom renaming of specific outcomes:</p><ul><li><p>It should be a named list where names are original outcome labels and values are new labels.</p></li>
+<li><p>Outcomes not specified in `label_mapping` will use default transformations based on `options`.</p></li>
+<li><p>Custom mapped labels are used as-is, without applying default transformations.</p></li>
 </ul></div>
 
     <div class="section level2">
@@ -127,7 +135,7 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">transformed_table</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Create a Margot plot with custom options</span></span></span>
+<span class="r-in"><span><span class="co"># Create a Margot plot with custom options and label mapping</span></span></span>
 <span class="r-in"><span><span class="va">custom_result</span> <span class="op">&lt;-</span> <span class="fu">margot_plot</span><span class="op">(</span><span class="va">sample_data</span>,</span></span>
 <span class="r-in"><span>                             type <span class="op">=</span> <span class="st">"RD"</span>,</span></span>
 <span class="r-in"><span>                             title_binary <span class="op">=</span> <span class="st">"Custom Margot Plot"</span>,</span></span>
@@ -143,6 +151,10 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <span class="r-in"><span>                                 height <span class="op">=</span> <span class="fl">8</span>,</span></span>
 <span class="r-in"><span>                                 dpi <span class="op">=</span> <span class="fl">300</span></span></span>
 <span class="r-in"><span>                               <span class="op">)</span></span></span>
+<span class="r-in"><span>                             <span class="op">)</span>,</span></span>
+<span class="r-in"><span>                             label_mapping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>                               <span class="st">"t1_outcome_a_z"</span> <span class="op">=</span> <span class="st">"Custom Label A"</span>,</span></span>
+<span class="r-in"><span>                               <span class="st">"t2_outcome_b_z"</span> <span class="op">=</span> <span class="st">"Custom Label B"</span></span></span>
 <span class="r-in"><span>                             <span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">custom_result</span><span class="op">$</span><span class="va">plot</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">custom_result</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>

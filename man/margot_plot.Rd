@@ -11,7 +11,8 @@ margot_plot(
   title_binary = NULL,
   push_mods = NULL,
   ...,
-  options = list()
+  options = list(),
+  label_mapping = NULL
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ margot_plot(
 \item{...}{Additional arguments passed to the plotting function.}
 
 \item{options}{A list of additional options for customizing the plot and interpretation. See Details for available options.}
+
+\item{label_mapping}{A named list for custom outcome label mapping. See Details for usage.}
 }
 \value{
 A list containing three elements:
@@ -55,6 +58,13 @@ The `options` list can include the following parameters:
   \item `show_evalues`: Logical. If TRUE, shows E-values in the plot. Default is TRUE.
   \item `evalue_digits`: Integer. Number of digits for E-value display. Default is 2.
 }
+
+The `label_mapping` parameter allows for custom renaming of specific outcomes:
+\itemize{
+  \item It should be a named list where names are original outcome labels and values are new labels.
+  \item Outcomes not specified in `label_mapping` will use default transformations based on `options`.
+  \item Custom mapped labels are used as-is, without applying default transformations.
+}
 }
 \examples{
 \dontrun{
@@ -74,7 +84,7 @@ print(result$plot)
 cat(result$interpretation)
 print(result$transformed_table)
 
-# Create a Margot plot with custom options
+# Create a Margot plot with custom options and label mapping
 custom_result <- margot_plot(sample_data,
                              type = "RD",
                              title_binary = "Custom Margot Plot",
@@ -90,6 +100,10 @@ custom_result <- margot_plot(sample_data,
                                  height = 8,
                                  dpi = 300
                                )
+                             ),
+                             label_mapping = list(
+                               "t1_outcome_a_z" = "Custom Label A",
+                               "t2_outcome_b_z" = "Custom Label B"
                              ))
 print(custom_result$plot)
 cat(custom_result$interpretation)

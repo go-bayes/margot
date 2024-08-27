@@ -1,28 +1,3 @@
-
-label_mapping = list(
-  "t1_outcome_a_z" = "Custom Label A",
-  "t2_outcome_b_z" = "Custom Label B"
-)
-These changes provide clear documentation on how to use the new label_mapping feature, explaining its purpose, format, and behavior. The updated example demonstrates how to use label_mapping in conjunction with other options, giving users a complete picture of how to customize their Margot plots.
-
-This documentation update ensures that users have all the information they need to effectively use the label_mapping feature, understand how it interacts with other options, and see examples of its usage in context.
-
-Copy
-Retry
-
-
-Claude does not have the ability to run the code it generates yet.
-Claude can make mistakes. Please double-check responses.
-
-
-
-No file chosen
-
-
-3.5 Sonnet
-
-Updated roxygen2 documentation for margot_plot function
-
 #' Create a Margot Plot with Interpretation and Transformed Table
 #'
 #' This function creates a Margot plot, which is useful for visualizing causal effects

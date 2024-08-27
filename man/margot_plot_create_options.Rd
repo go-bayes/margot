@@ -9,6 +9,7 @@ margot_plot_create_options(
   base_defaults = NULL,
   title = NULL,
   filename_prefix = NULL,
+  label_mapping = NULL,
   ...
 )
 }
@@ -21,6 +22,8 @@ margot_plot_create_options(
 
 \item{filename_prefix}{Character string. Prefix for the filename. If NULL, uses a default prefix.}
 
+\item{label_mapping}{Named list. Mapping of original outcome labels to new labels.}
+
 \item{...}{Additional named arguments to override or add to the default options.}
 }
 \value{
@@ -30,12 +33,40 @@ A list of plot options to be used with `margot_plot`.
 This function creates a list of options for use with the `margot_plot` function.
 It allows for easy customization of plot settings while maintaining a set of default values.
 }
+\details{
+The function allows customization of various plot parameters, including color schemes,
+text sizes, and label transformations. The `label_mapping` parameter enables custom
+renaming of specific outcomes without affecting the default transformations for other labels.
+}
 \examples{
 \dontrun{
+# Basic usage
 health_options <- margot_plot_create_options("Health Outcomes")
+
+# Custom title and filename prefix
 education_options <- margot_plot_create_options("Education Outcomes",
-                                        title = "Custom Title",
-                                        filename_prefix = "edu_outcomes")
+                                                title = "Custom Title",
+                                                filename_prefix = "edu_outcomes")
+
+# Using label_mapping for custom outcome labels
+trust_science_options <- margot_plot_create_options(
+  subtitle = "Trust in Science Outcomes",
+  title = "Science Trust Analysis",
+  filename_prefix = "science_trust",
+  label_mapping = list(
+    "t2_trust_science_our_society_places_too_much_emphasis_reversed_z" = "Science Overemphasis"
+  ),
+  colors = c(
+    "positive" = "#4CAF50",
+    "not reliable" = "#FFC107",
+    "negative" = "#F44336"
+  ),
+  base_size = 16,
+  point_size = 4
+)
+
+# Use the created options in margot_plot
+result <- margot_plot(your_data, options = trust_science_options)
 }
 
 }
