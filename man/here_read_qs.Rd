@@ -2,27 +2,29 @@
 % Please edit documentation in R/here_read_qs.R
 \name{here_read_qs}
 \alias{here_read_qs}
-\title{Read Data Frame from qs File in a Specified Directory}
+\title{Read Data Frame or Object from qs File in a Specified Directory}
 \usage{
-here_read_qs(name, dir_path)
+here_read_qs(name, dir_path, nthreads = 1)
 }
 \arguments{
 \item{name}{Character string specifying the name of the `.qs` file to be read (without the ".qs" extension).}
 
 \item{dir_path}{Character string specifying the directory path from which the file will be read.}
+
+\item{nthreads}{Integer specifying the number of threads to use for decompression. Default is 1.}
 }
 \value{
-A data frame representing the data stored in the specified `.qs` file.
+A data frame or object representing the data stored in the specified `.qs` file.
 }
 \description{
-Reads a `.qs` file specified by `name` from a directory defined by `dir_path`, returning the data frame stored within.
+Reads a `.qs` file specified by `name` from a directory defined by `dir_path`, returning the data frame or object stored within.
 This function uses the `qs` package to efficiently read `.qs` files and the `here` package to construct the file path in a consistent, platform-independent manner.
 }
 \details{
 The `dir_path` argument must point to an existing directory. The function will throw an error if the specified file does not exist or cannot be read as a `.qs` file.
 }
 \examples{
- \dontrun{
+\dontrun{
 # Assuming you have a directory path "~/mydata"
 # and you have previously saved a `.qs` file named "my_dataset.qs" in that directory
 my_df <- here_read_qs("my_dataset", "~/mydata")

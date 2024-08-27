@@ -9,12 +9,19 @@
 * qini cost options
 * remove color package
 
+# [2024-08-27] margot 0.2.1.26
 
-# [2024-08-28] margot 0.2.1.25
+## Improved
+
+* `margot_plot()` - consistent names for results table if these are modified using the new `label_mapping` option. 
+* `here_save_qs()` and `here_read_qs()` minor tweaks.
+* `margot_plot_combo` now returns a list, consistent with CRAN.
+
+# [2024-08-27] margot 0.2.1.25
 
 * `margot_plot()` and `margot_plot_create_options()` now allow custom labels, which flexibly combine with defaults.
 
-# [2024-08-28] margot 0.2.1.24
+# [2024-08-27] margot 0.2.1.24
 
 ## Improved
 

@@ -99,11 +99,6 @@ margot_plot <- function(.data,
                         options = list(),
                         label_mapping = NULL) {
 
-  # Load required packages
-  require("ggplot2")
-  require("dplyr")
-  require("cli")
-
   # Create a copy of the original data for table transformation
   .data_for_table <- .data
 
@@ -328,6 +323,36 @@ margot_plot <- function(.data,
 
 
   # Transform table rownames
+  transform_table_rownames <- function(df, remove_tx_prefix, remove_z_suffix, use_title_case, remove_underscores) {
+    rownames_vector <- rownames(df)
+
+    transformed_rownames <- sapply(rownames_vector, function(name) {
+      # First, apply label_mapping if available
+      if (!is.null(label_mapping) && name %in% names(label_mapping)) {
+        return(label_mapping[[name]])
+      }
+
+      # If not in label_mapping, apply default transformations
+      if (remove_tx_prefix) {
+        name <- sub("^t[0-9]+_", "", name)
+      }
+      if (remove_z_suffix) {
+        name <- sub("_z$", "", name)
+      }
+      if (remove_underscores) {
+        name <- gsub("_", " ", name)
+      }
+      if (use_title_case) {
+        name <- tools::toTitleCase(name)
+      }
+      return(name)
+    })
+
+    rownames(df) <- transformed_rownames
+    return(df)
+  }
+
+  # Transform table rownames
   transformed_table <- transform_table_rownames(
     .data_for_table,
     remove_tx_prefix = options$remove_tx_prefix,
@@ -398,7 +423,8 @@ margot_plot <- function(.data,
 #                         title_binary = NULL,
 #                         push_mods = NULL,
 #                         ...,
-#                         options = list()) {
+#                         options = list(),
+#                         label_mapping = NULL) {
 #
 #   # Load required packages
 #   require("ggplot2")
@@ -487,27 +513,46 @@ margot_plot <- function(.data,
 #     cli::cli_alert_info("Added 'outcome' column based on row names")
 #   }
 #
-#   # Function to transform labels
-#   transform_label <- function(label) {
-#     original_label <- label
-#     if (options$remove_tx_prefix) {
-#       label <- sub("^t[0-9]+_", "", label)
+#   # Function to apply label mapping
+#   apply_label_mapping <- function(original_label) {
+#     if (!is.null(label_mapping) && original_label %in% names(label_mapping)) {
+#       mapped_label <- label_mapping[[original_label]]
+#       cli::cli_alert_info("Mapped label: {original_label} -> {mapped_label}")
+#       return(mapped_label)
 #     }
-#     if (options$remove_z_suffix) {
-#       label <- sub("_z$", "", label)
-#     }
-#     if (options$remove_underscores) {
-#       label <- gsub("_", " ", label)
-#     }
-#     if (options$use_title_case) {
-#       label <- tools::toTitleCase(label)
-#     }
-#     if (label != original_label) {
-#       cli::cli_alert_info("Transformed label: {original_label} -> {label}")
-#     }
-#     return(label)
+#     return(original_label)
 #   }
 #
+#
+#   # Modify the label transformation process
+#   transform_label <- function(label) {
+#     original_label <- label
+#
+#     # Apply mapping if available
+#     if (!is.null(label_mapping) && label %in% names(label_mapping)) {
+#       label <- label_mapping[[label]]
+#       cli::cli_alert_info("Mapped label: {original_label} -> {label}")
+#     } else {
+#       # Apply default transformations only if not explicitly mapped
+#       if (options$remove_tx_prefix) {
+#         label <- sub("^t[0-9]+_", "", label)
+#       }
+#       if (options$remove_z_suffix) {
+#         label <- sub("_z$", "", label)
+#       }
+#       if (options$remove_underscores) {
+#         label <- gsub("_", " ", label)
+#       }
+#       if (options$use_title_case) {
+#         label <- tools::toTitleCase(label)
+#       }
+#       if (label != original_label) {
+#         cli::cli_alert_info("Transformed label: {original_label} -> {label}")
+#       }
+#     }
+#
+#     return(label)
+#   }
 #   # Apply transformations to outcome labels
 #   .data$outcome <- sapply(.data$outcome, transform_label)
 #
@@ -673,739 +718,4 @@ margot_plot <- function(.data,
 #     interpretation = transformed_interpretation,
 #     transformed_table = transformed_table
 #   ))
-# }
-# old
-# margot_plot <- function(.data,
-#                         type = c("RD", "RR"),
-#                         order = c("default", "alphabetical"),
-#                         title_binary = NULL,
-#                         push_mods = NULL,
-#                         ...,
-#                         options = list()) {
-#
-#   # Load required packages
-#   require("ggplot2")
-#   require("dplyr")
-#   require("cli")
-#
-#   # Capture additional arguments
-#   additional_args <- list(...)
-#
-#   # Default values
-#   default_options <- list(
-#     title = title_binary,
-#     subtitle = NULL,
-#     estimate_scale = 1,
-#     base_size = 11,
-#     text_size = 2.75,
-#     point_size = 3,
-#     title_size = 10,
-#     subtitle_size = 9,
-#     legend_text_size = 6,
-#     legend_title_size = 6,
-#     x_offset = NULL,  # Will be set based on type
-#     x_lim_lo = NULL,  # Will be set based on type
-#     x_lim_hi = NULL,  # Will be set based on type
-#     linewidth = 0.5,
-#     plot_theme = NULL,
-#     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
-#     facet_var = NULL,
-#     confidence_level = 0.95,
-#     annotations = NULL,
-#     save_plot = FALSE,  # Changed default to FALSE
-#     save_plot_options = list(
-#       width = 10,
-#       height = 6,
-#       dpi = 300,
-#       filename = NULL
-#     ),
-#     push_mods = push_mods,
-#     show_evalues = TRUE,
-#     evalue_digits = 2,
-#     # Label transformation options
-#     remove_tx_prefix = FALSE,
-#     remove_z_suffix = FALSE,
-#     use_title_case = FALSE,
-#     remove_underscores = FALSE
-#   )
-#
-#   # Merge user-provided options with defaults and additional arguments
-#   options <- modifyList(modifyList(default_options, options), additional_args)
-#
-#   # Input validation
-#   if (!is.data.frame(.data)) {
-#     cli::cli_abort("Input must be a data frame")
-#   }
-#
-#   type <- match.arg(type)
-#   order <- match.arg(order)
-#
-#   # Validate options
-#   for (opt in c("remove_tx_prefix", "remove_z_suffix", "use_title_case", "remove_underscores", "save_plot")) {
-#     if (!is.logical(options[[opt]])) {
-#       cli::cli_abort("{opt} must be a logical value (TRUE or FALSE)")
-#     }
-#   }
-#
-#   # Determine the effect size column based on the data structure
-#   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
-#     "E[Y(1)]-E[Y(0)]"
-#   } else if ("E[Y(1)]/E[Y(0)]" %in% names(.data)) {
-#     "E[Y(1)]/E[Y(0)]"
-#   } else {
-#     cli::cli_abort("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
-#   }
-#
-#   # Set type-dependent options if not provided
-#   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
-#   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
-#   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
-#
-#   # Add row names as outcome column if it doesn't exist
-#   if (!"outcome" %in% names(.data)) {
-#     .data$outcome <- rownames(.data)
-#     cli::cli_alert_info("Added 'outcome' column based on row names")
-#   }
-#
-#   # Function to transform labels
-#   transform_label <- function(label) {
-#     original_label <- label
-#     if (options$remove_tx_prefix) {
-#       label <- sub("^t[0-9]+_", "", label)
-#     }
-#     if (options$remove_z_suffix) {
-#       label <- sub("_z$", "", label)
-#     }
-#     if (options$remove_underscores) {
-#       label <- gsub("_", " ", label)
-#     }
-#     if (options$use_title_case) {
-#       label <- tools::toTitleCase(label)
-#     }
-#     if (label != original_label) {
-#       cli::cli_alert_info("Transformed label: {original_label} -> {label}")
-#     }
-#     return(label)
-#   }
-#
-#   # Apply transformations to outcome labels
-#   .data$outcome <- sapply(.data$outcome, transform_label)
-#
-#   # Prepare the data for plotting, including ordering
-#   .data <- .data %>%
-#     mutate(outcome = factor(outcome, levels = if (order == "alphabetical") sort(unique(outcome)) else unique(outcome))) %>%
-#     arrange(if (order == "alphabetical") outcome else desc(!!sym(effect_size_col))) %>%
-#     mutate(Estimate = case_when(
-#       `2.5 %` > 0 ~ "positive",
-#       `97.5 %` < 0 ~ "negative",
-#       TRUE ~ "not reliable"
-#     ))
-#
-#   # Create label including E-value if option is set
-#   if (options$show_evalues) {
-#     .data$label <- sprintf(paste0("%.3f (E-value: %.", options$evalue_digits, "f, CI: %.", options$evalue_digits, "f)"),
-#                            .data[[effect_size_col]], .data$E_Value, .data$E_Val_bound)
-#   } else {
-#     .data$label <- sprintf("%.3f", .data[[effect_size_col]])
-#   }
-#
-#   # Start building the plot
-#   out <- ggplot(
-#     data = .data,
-#     aes(
-#       y = outcome,
-#       x = !!sym(effect_size_col),
-#       xmin = `2.5 %`,
-#       xmax = `97.5 %`,
-#       color = Estimate
-#     )
-#   ) + geom_errorbarh(aes(color = Estimate), height = .3,
-#                      linewidth = options$linewidth, position = position_dodge(width = .3)) +
-#     geom_point(size = options$point_size, position = position_dodge(width = 0.3)) +
-#     geom_vline(xintercept = if(type == "RR") 1 else 0, linetype = "solid") +
-#     scale_color_manual(values = options$colors) +
-#     labs(
-#       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
-#       y = NULL,
-#       title = options$title,
-#       subtitle = options$subtitle
-#     ) +
-#     geom_text(aes(x = options$x_offset * options$estimate_scale,
-#                   label = label),
-#               size = options$text_size, hjust = 0, fontface = "bold") +
-#     coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
-#     theme_classic(base_size = options$base_size) +
-#     theme(
-#       legend.position = "top",
-#       legend.direction = "horizontal",
-#       axis.ticks.x = element_blank(),
-#       axis.ticks.y = element_blank(),
-#       plot.title = element_text(face = "bold", size = options$title_size, hjust = 0),
-#       plot.subtitle = element_text(face = "bold", size = options$subtitle_size, hjust = 0),
-#       legend.text = element_text(size = options$legend_text_size),
-#       legend.title = element_text(size = options$legend_title_size),
-#       plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
-#     )
-#
-#   # Conditionally add x-axis scale modifications for RR
-#   if (type == "RR") {
-#     custom_x_labels <- function(x) {
-#       ifelse(x < 0, "", as.character(x))
-#     }
-#     out <- out + scale_x_continuous(labels = custom_x_labels)
-#   }
-#
-#   # Add faceting if specified
-#   if (!is.null(options$facet_var)) {
-#     out <- out + facet_wrap(vars(!!sym(options$facet_var)), scales = "free_y")
-#   }
-#
-#   # Add custom annotations if provided
-#   if (!is.null(options$annotations)) {
-#     out <- out + options$annotations
-#   }
-#
-#   # Save plot logic
-#   if (isTRUE(options$save_plot)) {
-#     save_options <- options$save_plot_options
-#
-#     # Default to subtitle if no filename is provided
-#     default_filename <- if (!is.null(options$subtitle)) {
-#       paste0(gsub("[^a-zA-Z0-9]", "_", options$subtitle), ".png")
-#     } else if (!is.null(options$title)) {
-#       paste0(gsub("[^a-zA-Z0-9]", "_", options$title), ".png")
-#     } else {
-#       "margot_plot.png"
-#     }
-#
-#     # Use user-specified filename if provided, otherwise use default
-#     filename <- if (!is.null(save_options$filename)) {
-#       save_options$filename
-#     } else {
-#       default_filename
-#     }
-#
-#     # Determine save path
-#     save_path <- if (!is.null(options$push_mods)) {
-#       file.path(options$push_mods, filename)
-#     } else {
-#       filename
-#     }
-#
-#     # Create directory if it doesn't exist
-#     if (!is.null(options$push_mods) && !dir.exists(options$push_mods)) {
-#       dir.create(options$push_mods, recursive = TRUE)
-#     }
-#
-#     # Save the plot
-#     tryCatch({
-#       ggsave(save_path, out,
-#              width = save_options$width,
-#              height = save_options$height,
-#              dpi = save_options$dpi)
-#       cli::cli_alert_success("Plot saved to: {normalizePath(save_path)} \U0001F44D")
-#     }, error = function(e) {
-#       cli::cli_alert_danger("Error saving plot: {e$message}")
-#     })
-#   } else {
-#     cli::cli_alert_info("Plot was not saved as per user request.")
-#   }
-#
-#   cli::cli_alert_success("Margot plot created successfully \U0001F44D")
-#   return(out)
-# }
-# margot_plot <- function(.data,
-#                         type = c("RD", "RR"),
-#                         order = c("default", "alphabetical"),
-#                         title_binary = NULL,
-#                         push_mods = NULL,
-#                         ...,
-#                         options = list()) {
-#
-#   # Capture additional arguments
-#   additional_args <- list(...)
-#
-#   # Default values
-#   default_options <- list(
-#     title = title_binary,
-#     subtitle = NULL,
-#     estimate_scale = 1,
-#     base_size = 11,
-#     text_size = 2.75,
-#     point_size = 3,
-#     title_size = 10,
-#     subtitle_size = 9,
-#     legend_text_size = 6,
-#     legend_title_size = 6,
-#     x_offset = NULL,  # Will be set based on type
-#     x_lim_lo = NULL,  # Will be set based on type
-#     x_lim_hi = NULL,  # Will be set based on type
-#     linewidth = 0.5,
-#     plot_theme = NULL,
-#     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
-#     facet_var = NULL,
-#     confidence_level = 0.95,
-#     annotations = NULL,
-#     save_plot = TRUE,
-#     save_plot_options = list(
-#       width = 10,
-#       height = 6,
-#       dpi = 300,
-#       filename = NULL
-#     ),
-#     push_mods = push_mods,
-#     show_evalues = TRUE,
-#     evalue_digits = 2
-#   )
-#
-#   # Merge user-provided options with defaults and additional arguments
-#   options <- modifyList(modifyList(default_options, options), additional_args)
-#
-#   # Ensure push_mods from function parameter takes precedence
-#   if (!is.null(push_mods)) {
-#     options$push_mods <- push_mods
-#   }
-#
-#   require("ggplot2")
-#   require("dplyr")
-#
-#   # Input validation
-#   type <- match.arg(type)
-#   order <- match.arg(order)
-#   if (!is.data.frame(.data)) stop("Input must be a data frame")
-#
-#   # Determine the effect size column based on the data structure
-#   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
-#     "E[Y(1)]-E[Y(0)]"
-#   } else if ("E[Y(1)]/E[Y(0)]" %in% names(.data)) {
-#     "E[Y(1)]/E[Y(0)]"
-#   } else {
-#     stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
-#   }
-#
-#   # Set type-dependent options if not provided
-#   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
-#   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
-#   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
-#
-#   # Add row names as outcome column if it doesn't exist
-#   if (!"outcome" %in% names(.data)) {
-#     .data$outcome <- rownames(.data)
-#   }
-#
-#   # Prepare the data for plotting, including ordering
-#   .data <- .data %>%
-#     mutate(outcome = factor(outcome, levels = if (order == "alphabetical") sort(unique(outcome)) else unique(outcome))) %>%
-#     arrange(if (order == "alphabetical") outcome else desc(!!sym(effect_size_col))) %>%
-#     mutate(Estimate = case_when(
-#       `2.5 %` > 0 ~ "positive",
-#       `97.5 %` < 0 ~ "negative",
-#       TRUE ~ "not reliable"
-#     ))
-#
-#   # Create label including E-value if option is set
-#   if (options$show_evalues) {
-#     .data$label <- sprintf(paste0("%.3f (E-value: %.", options$evalue_digits, "f, CI: %.", options$evalue_digits, "f)"),
-#                            .data[[effect_size_col]], .data$E_Value, .data$E_Val_bound)
-#   } else {
-#     .data$label <- sprintf("%.3f", .data[[effect_size_col]])
-#   }
-#
-#   # Start building the plot
-#   out <- ggplot(
-#     data = .data,
-#     aes(
-#       y = outcome,
-#       x = !!sym(effect_size_col),
-#       xmin = `2.5 %`,
-#       xmax = `97.5 %`,
-#       color = Estimate
-#     )
-#   ) + geom_errorbarh(aes(color = Estimate), height = .3,
-#                      linewidth = options$linewidth, position = position_dodge(width = .3)) +
-#     geom_point(size = options$point_size, position = position_dodge(width = 0.3)) +
-#     geom_vline(xintercept = if(type == "RR") 1 else 0, linetype = "solid") +
-#     scale_color_manual(values = options$colors) +
-#     labs(
-#       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
-#       y = NULL,
-#       title = options$title,
-#       subtitle = options$subtitle
-#     ) +
-#     geom_text(aes(x = options$x_offset * options$estimate_scale,
-#                   label = label),
-#               size = options$text_size, hjust = 0, fontface = "bold") +
-#     coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
-#     theme_classic(base_size = options$base_size) +
-#     theme(
-#       legend.position = "top",
-#       legend.direction = "horizontal",
-#       axis.ticks.x = element_blank(),
-#       axis.ticks.y = element_blank(),
-#       plot.title = element_text(face = "bold", size = options$title_size, hjust = 0),
-#       plot.subtitle = element_text(face = "bold", size = options$subtitle_size, hjust = 0),
-#       legend.text = element_text(size = options$legend_text_size),
-#       legend.title = element_text(size = options$legend_title_size),
-#       plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
-#     )
-#
-#   # Conditionally add x-axis scale modifications for RR
-#   if (type == "RR") {
-#     custom_x_labels <- function(x) {
-#       ifelse(x < 0, "", as.character(x))
-#     }
-#     out <- out + scale_x_continuous(labels = custom_x_labels)
-#   }
-#
-#   # Add faceting if specified
-#   if (!is.null(options$facet_var)) {
-#     out <- out + facet_wrap(vars(!!sym(options$facet_var)), scales = "free_y")
-#   }
-#
-#   # Add custom annotations if provided
-#   if (!is.null(options$annotations)) {
-#     out <- out + options$annotations
-#   }
-#
-#   # Save plot logic
-#   if (isTRUE(options$save_plot)) {
-#     save_options <- options$save_plot_options
-#
-#     # Default to subtitle if no filename is provided
-#     default_filename <- if (!is.null(options$subtitle)) {
-#       paste0(gsub("[^a-zA-Z0-9]", "_", options$subtitle), ".png")
-#     } else if (!is.null(options$title)) {
-#       paste0(gsub("[^a-zA-Z0-9]", "_", options$title), ".png")
-#     } else {
-#       "margot_plot.png"
-#     }
-#
-#     # Use user-specified filename if provided, otherwise use default
-#     filename <- if (!is.null(save_options$filename)) {
-#       save_options$filename
-#     } else {
-#       default_filename
-#     }
-#
-#     # Determine save path
-#     save_path <- if (!is.null(options$push_mods)) {
-#       file.path(options$push_mods, filename)
-#     } else {
-#       filename
-#     }
-#
-#     # Create directory if it doesn't exist
-#     if (!is.null(options$push_mods) && !dir.exists(options$push_mods)) {
-#       dir.create(options$push_mods, recursive = TRUE)
-#     }
-#
-#     # Save the plot
-#     tryCatch({
-#       ggsave(save_path, out,
-#              width = save_options$width,
-#              height = save_options$height,
-#              dpi = save_options$dpi)
-#       message(paste("Plot saved to:", normalizePath(save_path)))
-#     }, error = function(e) {
-#       message(paste("Error saving plot:", e$message))
-#     })
-#   } else {
-#     message("Plot was not saved as per user request.")
-#   }
-#
-#   return(out)
-# }
-# # old better tested
-# margot_plot <- function(.data,
-#                         type = c("RD", "RR"),
-#                         order = c("default", "alphabetical"),
-#                         title_binary = NULL,
-#                         push_mods = NULL,
-#                         ...,
-#                         options = list()) {
-#
-#   # Capture additional arguments
-#   additional_args <- list(...)
-#
-#   # Default values
-#   default_options <- list(
-#     title = title_binary,
-#     subtitle = NULL,
-#     estimate_scale = 1,
-#     base_size = 11,
-#     text_size = 2.75,
-#     point_size = 3,
-#     title_size = 10,
-#     subtitle_size = 9,
-#     legend_text_size = 6,
-#     legend_title_size = 6,
-#     x_offset = NULL,  # Will be set based on type
-#     x_lim_lo = NULL,  # Will be set based on type
-#     x_lim_hi = NULL,  # Will be set based on type
-#     linewidth = 0.5,
-#     plot_theme = NULL,
-#     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
-#     facet_var = NULL,
-#     confidence_level = 0.95,
-#     annotations = NULL,
-#     save_plot = list(
-#       width = 10,
-#       height = 6,
-#       dpi = 300,
-#       filename = NULL
-#     ),
-#     push_mods = push_mods,
-#     show_evalues = TRUE,
-#     evalue_digits = 2
-#   )
-#
-#   # Merge user-provided options with defaults and additional arguments
-#   options <- modifyList(modifyList(default_options, options), additional_args)
-#
-#   # Ensure push_mods from function parameter takes precedence
-#   if (!is.null(push_mods)) {
-#     options$push_mods <- push_mods
-#   }
-#
-#   require("ggplot2")
-#   require("dplyr")
-#
-#   # Input validation
-#   type <- match.arg(type)
-#   order <- match.arg(order)
-#   if (!is.data.frame(.data)) stop("Input must be a data frame")
-#
-#   # Determine the effect size column based on the data structure
-#   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
-#     "E[Y(1)]-E[Y(0)]"
-#   } else if ("E[Y(1)]/E[Y(0)]" %in% names(.data)) {
-#     "E[Y(1)]/E[Y(0)]"
-#   } else {
-#     stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
-#   }
-#
-#   # Set type-dependent options if not provided
-#   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
-#   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
-#   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
-#
-#   # Add row names as outcome column if it doesn't exist
-#   if (!"outcome" %in% names(.data)) {
-#     .data$outcome <- rownames(.data)
-#   }
-#
-#   # Prepare the data for plotting, including ordering
-#   .data <- .data %>%
-#     mutate(outcome = factor(outcome, levels = if (order == "alphabetical") sort(unique(outcome)) else unique(outcome))) %>%
-#     arrange(if (order == "alphabetical") outcome else desc(!!sym(effect_size_col))) %>%
-#     mutate(Estimate = case_when(
-#       `2.5 %` > 0 ~ "positive",
-#       `97.5 %` < 0 ~ "negative",
-#       TRUE ~ "not reliable"
-#     ))
-#
-#   # Create label including E-value if option is set
-#   if (options$show_evalues) {
-#     .data$label <- sprintf(paste0("%.3f (E-value: %.", options$evalue_digits, "f, CI: %.", options$evalue_digits, "f)"),
-#                            .data[[effect_size_col]], .data$E_Value, .data$E_Val_bound)
-#   } else {
-#     .data$label <- sprintf("%.3f", .data[[effect_size_col]])
-#   }
-#
-#   # Start building the plot
-#   out <- ggplot(
-#     data = .data,
-#     aes(
-#       y = outcome,
-#       x = !!sym(effect_size_col),
-#       xmin = `2.5 %`,
-#       xmax = `97.5 %`,
-#       color = Estimate
-#     )
-#   ) + geom_errorbarh(aes(color = Estimate), height = .3,
-#                      linewidth = options$linewidth, position = position_dodge(width = .3)) +
-#     geom_point(size = options$point_size, position = position_dodge(width = 0.3)) +
-#     geom_vline(xintercept = if(type == "RR") 1 else 0, linetype = "solid") +
-#     scale_color_manual(values = options$colors) +
-#     labs(
-#       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
-#       y = NULL,
-#       title = options$title,
-#       subtitle = options$subtitle
-#     ) +
-#     geom_text(aes(x = options$x_offset * options$estimate_scale,
-#                   label = label),
-#               size = options$text_size, hjust = 0, fontface = "bold") +
-#     coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
-#     theme_classic(base_size = options$base_size) +
-#     theme(
-#       legend.position = "top",
-#       legend.direction = "horizontal",
-#       axis.ticks.x = element_blank(),
-#       axis.ticks.y = element_blank(),
-#       plot.title = element_text(face = "bold", size = options$title_size, hjust = 0),
-#       plot.subtitle = element_text(face = "bold", size = options$subtitle_size, hjust = 0),
-#       legend.text = element_text(size = options$legend_text_size),
-#       legend.title = element_text(size = options$legend_title_size),
-#       plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
-#     )
-#
-#   # Conditionally add x-axis scale modifications for RR
-#   if (type == "RR") {
-#     custom_x_labels <- function(x) {
-#       ifelse(x < 0, "", as.character(x))
-#     }
-#     out <- out + scale_x_continuous(labels = custom_x_labels)
-#   }
-#
-#   # Add faceting if specified
-#   if (!is.null(options$facet_var)) {
-#     out <- out + facet_wrap(vars(!!sym(options$facet_var)), scales = "free_y")
-#   }
-#
-#   # Add custom annotations if provided
-#   if (!is.null(options$annotations)) {
-#     out <- out + options$annotations
-#   }
-#
-#   # Ensure push_mods is set
-#   if (is.null(options$push_mods)) {
-#     options$push_mods <- push_mods
-#   }
-#
-#   # Save plot automatically, unless explicitly set to FALSE
-#   if (is.list(options$save_plot) && length(options$save_plot) > 0) {
-#     # Default to subtitle if no filename is provided
-#     default_filename <- if (!is.null(options$subtitle)) {
-#       paste0(gsub("[^a-zA-Z0-9]", "_", options$subtitle), ".png")
-#     } else if (!is.null(options$title)) {
-#       paste0(gsub("[^a-zA-Z0-9]", "_", options$title), ".png")
-#     } else {
-#       "margot_plot.png"
-#     }
-#
-#     # Use user-specified filename if provided, otherwise use default
-#     filename <- if (!is.null(options$save_plot$filename)) {
-#       options$save_plot$filename
-#     } else {
-#       default_filename
-#     }
-#
-#     # Determine save path
-#     save_path <- if (!is.null(options$push_mods)) {
-#       file.path(options$push_mods, filename)
-#     } else {
-#       filename
-#     }
-#
-#     # Create directory if it doesn't exist
-#     if (!is.null(options$push_mods) && !dir.exists(options$push_mods)) {
-#       dir.create(options$push_mods, recursive = TRUE)
-#     }
-#
-#     # Save the plot
-#     tryCatch({
-#       ggsave(save_path, out,
-#              width = options$save_plot$width,
-#              height = options$save_plot$height,
-#              dpi = options$save_plot$dpi)
-#       message(paste("Plot saved to:", normalizePath(save_path)))
-#     }, error = function(e) {
-#       message(paste("Error saving plot:", e$message))
-#     })
-#   } else if (isFALSE(options$save_plot)) {
-#     message("Plot was not saved as per user request.")
-#   } else {
-#     message("Plot was not saved. To save the plot, provide a 'save_plot' option or set it to FALSE to suppress this message.")
-#   }
-#
-#   return(out)
-# }
-# margot_plot <- function(.data,
-#                         type = c("RD", "RR"),
-#                         order = c("default", "alphabetical"),
-#                         title = NULL,
-#                         subtitle = NULL,
-#                         estimate_scale = 1,
-#                         base_size = 11,
-#                         text_size = 2.75,
-#                         point_size = 3,
-#                         title_size = 10,
-#                         subtitle_size = 9,
-#                         legend_text_size = 6,
-#                         legend_title_size = 6,
-#                         x_offset = ifelse(type == "RR", 0, -1.75),
-#                         x_lim_lo = ifelse(type == "RR", .1, -1.75),
-#                         x_lim_hi = ifelse(type == "RR", 2.5, 1),
-#                         linewidth = .5,
-#                         plot_theme = NULL) {
-#   require("ggplot2")
-#   require("dplyr")
-#
-#   type <- match.arg(type)
-#   order <- match.arg(order)
-#
-#   # Check if the data needs processing by group_tab
-#   if (!"Estimate" %in% names(.data) || !"outcome" %in% names(.data)) {
-#     .data <- group_tab(.data, type = type, order = order)
-#   }
-#
-#   # Dynamic theme adjustment
-#   if (is.null(plot_theme)) {
-#     plot_theme <- theme_classic(base_size = base_size)
-#   } else {
-#     plot_theme <- plot_theme + theme(text = element_text(size = base_size))
-#   }
-#
-#   # Prepare the data for plotting, including ordering
-#   effect_size_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
-#   .data <- .data %>%
-#     mutate(outcome = factor(outcome, levels = if (order == "alphabetical") sort(unique(outcome)) else unique(outcome))) %>%
-#     arrange(if (order == "alphabetical") outcome else desc(!!sym(effect_size_col)))
-#
-#   # Start building the plot
-#   out <- ggplot(
-#     data = .data,
-#     aes(
-#       y = outcome,
-#       x = !!sym(effect_size_col),
-#       xmin = `2.5 %`,
-#       xmax = `97.5 %`,
-#       color = Estimate
-#     )
-#   ) + geom_errorbarh(aes(color = Estimate), height = .3,
-#                      linewidth = linewidth, position = position_dodge(width = .3)) +
-#     geom_point(size = point_size, position = position_dodge(width = 0.3)) +
-#     geom_vline(xintercept = if(type == "RR") 1 else 0, linetype = "solid") +
-#     scale_color_manual(values = c("positive" = "dodgerblue", "not reliable" = "black", "negative" = "orange")) +
-#     labs(
-#       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
-#       y = NULL,
-#       title = ifelse(is.null(title), "", title),
-#       subtitle = ifelse(is.null(subtitle), "", subtitle)
-#     ) +
-#     geom_text(aes(x = x_offset * estimate_scale, label = estimate_lab), size = text_size, hjust = 0, fontface = "bold") +
-#     coord_cartesian(xlim = c(x_lim_lo, x_lim_hi)) +
-#     plot_theme +
-#     theme(
-#       legend.position = "top",
-#       legend.direction = "horizontal",
-#       axis.ticks.x = element_blank(),
-#       axis.ticks.y = element_blank(),
-#       plot.title = element_text(face = "bold", size = title_size, hjust = 0),
-#       plot.subtitle = element_text(face = "bold", size = subtitle_size, hjust = 0),
-#       legend.text = element_text(size = legend_text_size),
-#       legend.title = element_text(size = legend_title_size),
-#       plot.margin = margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
-#     )
-#
-#   # Conditionally add x-axis scale modifications for RR
-#   if (type == "RR") {
-#     custom_x_labels <- function(x) {
-#       ifelse(x < 0, "", as.character(x))
-#     }
-#     out <- out + scale_x_continuous(labels = custom_x_labels)
-#   }
-#
-#   return(out)
 # }

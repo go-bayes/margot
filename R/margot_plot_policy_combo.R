@@ -67,7 +67,7 @@
 #'   result_object = result_object,
 #'   model_name = "model_t2_hlth_sleep_hours_z",
 #'   policy_tree_args = list(point_alpha = 0.75),
-#'  decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01,
+#'   decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01)
 #' )
 #'
 #' # Access individual plots
@@ -148,8 +148,13 @@ margot_plot_policy_combo <- function(result_object, model_name,
                                decision_tree_args))
   }
 
-  return(combined_plot)
+  return(list(
+    policy_tree = if(generate_policy_tree) policy_results else NULL,
+    decision_tree = if(generate_decision_tree) decision_tree else NULL,
+    combined_plot = combined_plot
+  ))
 }
+
 # margot_plot_policy_combo <- function(mc_test, model_name,
 #                                      layout = list(heights = c(1, 2)),
 #                                      annotation = list(tag_levels = "A")) {
