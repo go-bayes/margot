@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_summary_tables.R
 \name{margot_summary_tables}
 \alias{margot_summary_tables}
-\title{Create Summary Tables for Longitudinal Data with Rich Reporting and Console Output}
+\title{Generate summary tables and plots for longitudinal data}
 \usage{
 margot_summary_tables(
   data,
@@ -11,47 +11,51 @@ margot_summary_tables(
   outcome_wave,
   name_exposure,
   name_exposure_cat = NULL,
-  baseline_vars,
-  outcome_vars,
+  baseline_vars = NULL,
+  outcome_vars = NULL,
   extra_vars = c("id", "wave", "year_measured", "not_lost", "sample_weights"),
   baseline_labels = NULL,
   exposure_labels = NULL,
-  outcome_labels = NULL
+  outcome_labels = NULL,
+  create_plots = FALSE,
+  plot_type = "boxplot",
+  show_progress = TRUE
 )
 }
 \arguments{
-\item{data}{A data frame containing the longitudinal data.}
+\item{data}{A data frame containing the longitudinal data}
 
-\item{baseline_wave}{A string specifying the baseline wave (e.g., "2020").}
+\item{baseline_wave}{The wave number for baseline measurements}
 
-\item{exposure_waves}{A vector of strings or a single comma-separated string
-specifying the exposure wave(s) (e.g., c("2021", "2022") or "2021,2022").}
+\item{exposure_waves}{A vector of wave numbers for exposure measurements}
 
-\item{outcome_wave}{A string specifying the outcome wave (e.g., "2022").}
+\item{outcome_wave}{The wave number for outcome measurements}
 
-\item{name_exposure}{A string specifying the name of the exposure variable.}
+\item{name_exposure}{The name of the exposure variable}
 
-\item{name_exposure_cat}{Optional. A string specifying the name of the
-categorical exposure variable. Default is NULL.}
+\item{name_exposure_cat}{The name of the categorical exposure variable (optional)}
 
-\item{baseline_vars}{A vector of strings specifying the baseline variables.}
+\item{baseline_vars}{A vector of baseline variable names}
 
-\item{outcome_vars}{A vector of strings specifying the outcome variables.}
+\item{outcome_vars}{A vector of outcome variable names}
 
-\item{extra_vars}{Optional. A vector of strings specifying additional variables
-to include. Default is c("id", "wave", "year_measured", "not_lost", "sample_weights").}
+\item{extra_vars}{A vector of additional variable names (default: c("id", "wave", "year_measured", "not_lost", "sample_weights"))}
 
-\item{baseline_labels}{Optional. A named list of custom labels for baseline variables.}
+\item{baseline_labels}{A named vector of labels for baseline variables (optional)}
 
-\item{exposure_labels}{Optional. A named list of custom labels for exposure variables.}
+\item{exposure_labels}{A named vector of labels for exposure variables (optional)}
 
-\item{outcome_labels}{Optional. A named list of custom labels for outcome variables.}
+\item{outcome_labels}{A named vector of labels for outcome variables (optional)}
+
+\item{create_plots}{Logical, whether to create plots (default: FALSE)}
+
+\item{plot_type}{The type of plot to create ("boxplot" or "density", default: "boxplot")}
+
+\item{show_progress}{Logical, whether to show a progress bar (default: TRUE)}
 }
 \value{
-A list containing summary tables and additional information.
+A list containing summary tables, information, and optional plots
 }
 \description{
-This function creates three summary tables (baseline, exposure, and outcome)
-for longitudinal data using gtsummary and janitor, provides additional summary statistics,
-and prints the tables directly to the console using cli.
+Generate summary tables and plots for longitudinal data
 }

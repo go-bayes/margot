@@ -96,7 +96,9 @@ reference:
     - manager_boilerplate_measures
     - margot_log_transform_vars
     - margot_plot_create_options
+    - margot_plot_exposure
     - margot_process_binary_vars
+    - margot_size
     - pretty_number
     - remove_numeric_attributes
     - regress_with_covariates

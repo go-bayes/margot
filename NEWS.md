@@ -9,6 +9,19 @@
 * qini cost options
 * remove color package
 
+
+# [2024-08-28] margot 0.2.1.28
+
+## New
+
+* `margot_plot_exposure()` - utility to plot change in the exposure variable from baseline. 
+* `margot_size()` - ultility to check size of object
+
+## Improved
+
+* `margot_summary_table()` - now provides optional graphs to show densities/distributions of the exposure and outcomes at baseline, exposure waves, and end of study. 
+
+
 # [2024-08-27] margot 0.2.1.26
 
 ## Improved
