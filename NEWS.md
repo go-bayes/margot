@@ -15,7 +15,7 @@
 ## New
 
 * `margot_plot_exposure()` - utility to plot change in the exposure variable from baseline. 
-* `margot_size()` - ultility to check size of object
+* `margot_size()` - utility to check size of object
 
 ## Improved
 
