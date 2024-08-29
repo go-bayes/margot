@@ -9,6 +9,11 @@
 * qini cost options
 * remove color package
 
+# [2024-08-29] margot 0.2.1.31
+
+## Improved
+
+* `margot_batch_policy()` allows user to save plots automotically, with different sizes and resolutions. 
 
 # [2024-08-29] margot 0.2.1.30
 

@@ -8,7 +8,11 @@ margot_batch_policy(
   result_outcomes,
   policy_tree_args = list(),
   decision_tree_args = list(),
-  ...
+  dpi = 300,
+  width = 12,
+  height = 12,
+  save_plots = TRUE,
+  output_dir = push_mods
 )
 }
 \arguments{
@@ -20,7 +24,15 @@ causal forest model, with a `results` element containing named model results.}
 
 \item{decision_tree_args}{A list of arguments to be passed to `margot_plot_decision_tree()`.}
 
-\item{...}{Additional arguments to be passed to `margot_policy_tree()`.}
+\item{dpi}{The resolution in dots per inch for saved plots. Default is 300.}
+
+\item{width}{The width of the saved plots in inches. Default is 10.}
+
+\item{height}{The height of the saved plots in inches. Default is 8.}
+
+\item{save_plots}{Logical; if TRUE, plots will be saved to disk. Default is TRUE.}
+
+\item{output_dir}{The directory where plots should be saved. Default is "plots".}
 }
 \value{
 A list where each element corresponds to a model in the input
@@ -35,7 +47,7 @@ A list where each element corresponds to a model in the input
 This function applies the `margot_policy_tree()` function to multiple models
 contained within a single results object. It generates policy tree plots,
 interpretations, Qini plots, decision tree visualizations, and policy combo
-plots for each model.
+plots for each model. It also provides options for saving the generated plots.
 }
 \examples{
 \dontrun{
@@ -43,13 +55,19 @@ plots for each model.
 batch_results <- margot_batch_policy(
   result_outcomes_health,
   policy_tree_args = list(point_alpha = 0.7),
-  decision_tree_args = list(text_size = 4)
+  decision_tree_args = list(text_size = 4),
+  dpi = 300,
+  width = 12,
+  height = 10,
+  save_plots = TRUE,
+  output_dir = "output_plots"
 )
 
 # To access results for a specific model:
 smoker_results <- batch_results$model_t2_smoker_binary
 
-# To view the policy tree plot for this model:
+# The plots are saved in the "output_plots" directory
+# You can also access the plot objects directly:
 print(smoker_results$policy_tree_plot)
 }
 
