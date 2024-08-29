@@ -10,6 +10,13 @@
 * remove color package
 
 
+# [2024-08-29] margot 0.2.1.30
+
+## Improved
+
+* `margot_subset_model()` returns subset of results the user requests.
+
+
 # [2024-08-29] margot 0.2.1.29
 
 ## New

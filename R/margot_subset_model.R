@@ -17,39 +17,23 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Example with binary exposure
-#' binary_result <- margot_subset_model(
+#' # Example for binary exposure
+#' model_cat_subset_pols_binary <- margot_subset_model(
 #'   model_results = models_binary,
-#'   outcome_vars = c("outcome1", "outcome2"),
+#'   outcome_vars = t2_outcome_vars_z,
+#'   subset_condition = subset_condition_pols,
 #'   scale = "RD",
-#'   debug = TRUE
+#'   debug = FALSE
 #' )
 #'
-#' # Example with categorical exposure
-#' categorical_result <- margot_subset_model(
+#' # Example for categorical exposure
+#' model_cat_subset_pols_categorical <- margot_subset_model(
 #'   model_results = models_cat,
-#'   outcome_vars = c("outcome1", "outcome2"),
-#'   scale = "RD",
-#'   contrast = "[5.0,6.0) - [1.0,5.0)",
-#'   debug = TRUE
-#' )
-#'
-#' # Example with subset condition
-#' subset_result <- margot_subset_model(
-#'   model_results = models_cat,
-#'   outcome_vars = c("outcome1", "outcome2"),
-#'   subset_condition = age > 30,
+#'   outcome_vars = t2_outcome_vars_z,
+#'   subset_condition = subset_condition_pols,
 #'   scale = "RD",
 #'   contrast = "[6.0,7.0] - [1.0,5.0)",
 #'   debug = TRUE
-#' )
-#'
-#' # Example using all outcomes
-#' all_outcomes_result <- margot_subset_model(
-#'   model_results = models_cat,
-#'   scale = "RD",
-#'   contrast = "[5.0,6.0) - [1.0,5.0)",
-#'   debug = FALSE
 #' )
 #' }
 #'
@@ -58,38 +42,56 @@ margot_subset_model <- function(model_results, outcome_vars = NULL, subset_condi
                                 scale = "RD", contrast = NULL, debug = FALSE) {
   cli::cli_alert_info("Starting margot_subset_model function")
 
-  if (is.null(model_results$results)) {
-    cli::cli_alert_danger("No results found in the input. Please ensure you're using the correct model output.")
+
+  # Helper function to escape regex special characters
+  escape_regex <- function(string) {
+    gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", string)
+  }
+
+
+  if (is.null(model_results$full_models) && is.null(model_results$results)) {
+    cli::cli_alert_danger("No full models or results found in the input. Please ensure you're using the correct model output.")
     return(NULL)
   }
 
+  # Determine if we're dealing with binary or categorical exposure
+  is_categorical <- !is.null(contrast)
+
+  # Set outcome variables if not provided
   if (is.null(outcome_vars)) {
-    outcome_vars <- gsub("^model_", "", names(model_results$results))
+    if (!is.null(model_results$full_models)) {
+      outcome_vars <- gsub("^model_", "", names(model_results$full_models))
+    } else {
+      outcome_vars <- gsub("^model_", "", names(model_results$results))
+    }
     if (debug) cli::cli_alert_info("Outcome variables set to: {paste(outcome_vars, collapse=', ')}")
   }
-
-  is_categorical <- !is.null(contrast)
 
   tables <- list()
   for (outcome in outcome_vars) {
     cli::cli_alert_info("Processing outcome: {outcome}")
     model_name <- paste0("model_", outcome)
-    if (model_name %in% names(model_results$results)) {
-      result <- model_results$results[[model_name]]
 
+    if (!is.null(model_results$full_models) && model_name %in% names(model_results$full_models)) {
+      # Binary exposure case
+      model <- model_results$full_models[[model_name]]
+      if (debug) {
+        cli::cli_alert_info("Model class: {class(model)}")
+        cli::cli_alert_info("Model names: {paste(names(model), collapse=', ')}")
+      }
+      tryCatch({
+        custom_table <- margot::margot_model_evalue(model, scale = scale, new_name = outcome, subset = subset_condition)
+        tables[[outcome]] <- custom_table
+        cli::cli_alert_success("Successfully created table for {outcome}")
+      }, error = function(e) {
+        cli::cli_alert_warning("Error in margot_model_evalue for {outcome}: {e$message}")
+      })
+    } else if (!is.null(model_results$results) && model_name %in% names(model_results$results)) {
+      # Categorical exposure case
+      result <- model_results$results[[model_name]]
       if (!is.null(result$custom_table)) {
-        if (is_categorical) {
-          contrast_row <- result$custom_table[grepl(fixed(contrast), rownames(result$custom_table)), , drop = FALSE]
-          if (nrow(contrast_row) > 0) {
-            tables[[outcome]] <- contrast_row
-            cli::cli_alert_success("Successfully extracted contrast for {outcome}")
-          } else {
-            cli::cli_alert_warning("Specified contrast not found for {outcome}")
-          }
-        } else {
-          tables[[outcome]] <- result$custom_table
-          cli::cli_alert_success("Successfully extracted table for {outcome}")
-        }
+        tables[[outcome]] <- result$custom_table
+        cli::cli_alert_success("Successfully extracted table for {outcome}")
       } else {
         cli::cli_alert_warning("No custom table found for {outcome}")
       }
@@ -108,6 +110,18 @@ margot_subset_model <- function(model_results, outcome_vars = NULL, subset_condi
   # Clean up row names
   rownames(combined_table) <- gsub("^[^.]+\\.", "", rownames(combined_table))
 
-  cli::cli_alert_success("Processing complete. Returning results.")
+  # Filter the combined table for the specified contrast if it's a categorical model
+  if (is_categorical) {
+    escaped_contrast <- escape_regex(contrast)
+    filtered_table <- combined_table[grepl(escaped_contrast, rownames(combined_table), fixed = FALSE), , drop = FALSE]
+    if (nrow(filtered_table) > 0) {
+      combined_table <- filtered_table
+      cli::cli_alert_success("Successfully filtered table for contrast: {contrast}")
+    } else {
+      cli::cli_alert_warning("Specified contrast not found in any outcomes. Returning unfiltered table.")
+    }
+  }
+
+  cli::cli_alert_success("Processing complete. Returning results.\U0001F44D")
   return(combined_table)
 }

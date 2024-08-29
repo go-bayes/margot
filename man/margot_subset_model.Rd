@@ -36,39 +36,23 @@ from model results, handling both binary and categorical exposure models.
 }
 \examples{
 \dontrun{
-# Example with binary exposure
-binary_result <- margot_subset_model(
+# Example for binary exposure
+model_cat_subset_pols_binary <- margot_subset_model(
   model_results = models_binary,
-  outcome_vars = c("outcome1", "outcome2"),
+  outcome_vars = t2_outcome_vars_z,
+  subset_condition = subset_condition_pols,
   scale = "RD",
-  debug = TRUE
+  debug = FALSE
 )
 
-# Example with categorical exposure
-categorical_result <- margot_subset_model(
+# Example for categorical exposure
+model_cat_subset_pols_categorical <- margot_subset_model(
   model_results = models_cat,
-  outcome_vars = c("outcome1", "outcome2"),
-  scale = "RD",
-  contrast = "[5.0,6.0) - [1.0,5.0)",
-  debug = TRUE
-)
-
-# Example with subset condition
-subset_result <- margot_subset_model(
-  model_results = models_cat,
-  outcome_vars = c("outcome1", "outcome2"),
-  subset_condition = age > 30,
+  outcome_vars = t2_outcome_vars_z,
+  subset_condition = subset_condition_pols,
   scale = "RD",
   contrast = "[6.0,7.0] - [1.0,5.0)",
   debug = TRUE
-)
-
-# Example using all outcomes
-all_outcomes_result <- margot_subset_model(
-  model_results = models_cat,
-  scale = "RD",
-  contrast = "[5.0,6.0) - [1.0,5.0)",
-  debug = FALSE
 )
 }
 
