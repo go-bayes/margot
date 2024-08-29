@@ -76,6 +76,7 @@ reference:
   - title: "Visualise Causal Effect Estimates"
     contents:
     - margot_plot
+    - margot_plot_batch_rate
     - margot_plot_rate
     - margot_plot_qini
     - margot_plot_decision_tree
@@ -100,6 +101,7 @@ reference:
     - margot_process_binary_vars
     - margot_size
     - pretty_number
+    - read_multiple_images
     - remove_numeric_attributes
     - regress_with_covariates
     - select_and_rename_cols

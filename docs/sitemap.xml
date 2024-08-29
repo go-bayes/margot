@@ -73,6 +73,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_multi_arm_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_omnibus_hetero_test.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_batch_rate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_create_options.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_decision_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_exposure.html</loc></url>
@@ -99,6 +100,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/pipe.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/plot_rank_average_treatment_effect.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/pretty_number.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/read_multiple_images.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/regress_with_covariates.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/remove_numeric_attributes.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/run_simulations.html</loc></url>

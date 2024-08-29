@@ -9,11 +9,24 @@
 * qini cost options
 * remove color package
 
+
+
+# [2024-08-20] margot 0.2.1.33
+
+## New
+* `read_multiple_images()` utility function to read batchs of images, for presentations, articles etc. 
+
+# [2024-08-20] margot 0.2.1.32
+
+## New
+
+* `margot_plot_batch_rate`, creates and save rate plots from multiple causal forests outputs.. 
+
 # [2024-08-29] margot 0.2.1.31
 
 ## Improved
 
-* `margot_batch_policy()` allows user to save plots automotically, with different sizes and resolutions. 
+* `margot_batch_policy()` allows user to save plots automatically, with different sizes and resolutions. 
 
 # [2024-08-29] margot 0.2.1.30
 
