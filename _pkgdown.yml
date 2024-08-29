@@ -63,7 +63,6 @@ reference:
     contents:
     - compute_difference
     - margot_batch_policy
-    - margot_grf_subset_table
     - margot_omnibus_hetero_test
     - margot_interpret_policy_tree
     - margot_interpret_marginal
@@ -72,6 +71,7 @@ reference:
     - margot_model_evalue
     - margot_model_tab
     - margot_policy_tree
+    - margot_subset_model
 
   - title: "Visualise Causal Effect Estimates"
     contents:
@@ -138,3 +138,5 @@ reference:
     - coloured_histogram_quantiles
     - create_ordered_variable_custom
     - margot_compute_gender_weights
+    - margot_grf_subset_table
+

@@ -10,7 +10,23 @@
 * remove color package
 
 
+# [2024-08-29] margot 0.2.1.29
+
+## New
+
+* `margot_subset_model()` subsets causal forests for both categorial and binary exposures.
+
+
+## Deprecated
+
+* `margot_grf_subset_table()`, functions replaced by `margot_subset_model()`, use this new function instead.
+
+
 # [2024-08-28] margot 0.2.1.28
+
+## Improved
+
+* `margot_qini_plot()` better labels for binary models.
 
 ## New
 
