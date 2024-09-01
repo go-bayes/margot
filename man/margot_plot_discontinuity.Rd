@@ -109,7 +109,7 @@ library(margot)
 muslim_discontinuity_warmth_plot <- margot_plot_discontinuity(
   data = dat,
   y_var = "warm_muslims",
-  event_dates = c("2019-03-15", "2021-01-01"),
+  event_dates = c("2019-03-15", "2020-03-26"),
   event_names = c("Christchurch Attack", "COVID-19 Lockdown"),
   start_date = "2012-06-06",
   title = "Discontinuity at multiple events (GAM)",

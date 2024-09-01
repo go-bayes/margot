@@ -9,6 +9,11 @@
 * qini cost options
 * remove color package
 
+# [2024-09-02] margot 0.2.1.37
+
+- `margot_plot_discontinuity()`, `margot_plot_slope()`, `margot_plot_slope_covariate()` automatically print number of unique participants and unique number of observations in the title, if no title is passed. 
+
+
 # [2024-09-02] margot 0.2.1.36
 
 ## Improved

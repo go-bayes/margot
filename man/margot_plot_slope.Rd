@@ -48,7 +48,7 @@ margot_plot_slope(
 
 \item{end_date}{An optional end date for the x-axis.}
 
-\item{title}{An optional title for the plot.}
+\item{title}{An optional title for the plot. If NULL, an automatic title will be generated including the count of participants and observations.}
 
 \item{y_label}{An optional label for the y-axis.}
 
@@ -97,7 +97,8 @@ A ggplot2 object representing the slope plot.
 }
 \description{
 This function creates a ggplot2 visualisation to show trends in multiple variables over time.
-It's possible to add vertical lines at significant events.
+It's possible to add vertical lines at significant events. The function now also counts and
+reports the number of unique participants and observations.
 }
 \examples{
 \dontrun{
@@ -111,7 +112,6 @@ single_var_plot <- margot_plot_slope(
   data = dat,
   y_vars = "warm_muslims",
   start_date = "2012-06-06",
-  title = "Trend in Warmth Towards Muslims",
   y_label = "Warmth",
   x_label = "NZAVS Time 4 - 14 Cohort (2012-2023)"
 )
@@ -123,7 +123,6 @@ multi_var_plot <- margot_plot_slope(
   event_dates = c("2019-03-15", "2021-01-01"),
   event_names = c("Christchurch Attack", "COVID-19 Lockdown"),
   start_date = "2012-06-06",
-  title = "Trends in Warmth Towards Muslims and Immigrants",
   y_label = "Warmth",
   x_label = "NZAVS Time 4 - 14 Cohort (2012-2023)",
   y_limits = c(1, 7)
@@ -137,7 +136,6 @@ point_plot <- margot_plot_slope(
   point_alpha = 0.05,
   data_fraction = 0.1,
   seed = 123,
-  title = "Trends in Warmth Towards Asians and Pacific Islanders",
   y_label = "Warmth"
 )
 
@@ -145,7 +143,6 @@ point_plot <- margot_plot_slope(
 saved_plot <- margot_plot_slope(
   data = dat,
   y_vars = "political_orientation",
-  title = "Trend in Political Orientation",
   save_path = here::here("outputs", "plots"),
   width = 10,
   height = 6
@@ -157,7 +154,6 @@ custom_plot <- margot_plot_slope(
   y_vars = list("sat_government", "sat_nz_econ_conditions"),
   event_dates = "2017-10-26",
   event_names = "2017 Election",
-  title = "Trends in Government and Business Satisfaction",
   y_label = "Satisfaction Level (0-10)",
   y_limits = c(0,10), # range of data differs from (1-7)
   event_line_color = "blue",

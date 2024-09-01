@@ -1,18 +1,19 @@
 #' Create a Slope Plot using ggeffects
 #'
-#' This function creates a ggplot2 visualisation using ggeffects to calculate
+#' This function creates a ggplot2 visualization using ggeffects to calculate
 #' predicted responses from a model. It allows flexible specification of the model
-#' and plotting options. Draws on the functionality in the `ggeffects` package
+#' and plotting options. The function automatically handles NA and infinite values,
+#' and reports the number of unique participants and observations used in the analysis.
 #'
 #' @param data A data frame containing the variables for the model.
 #' @param formula A formula specifying the model to be fit.
 #' @param terms A character vector specifying the terms to be used in predict_response.
-#' @param title An optional title for the plot.
-#' @param y_label An optional label for the y-axis.
-#' @param x_label An optional label for the x-axis.
+#' @param title An optional title for the plot. If NULL, an automatic title will be generated.
+#' @param y_label An optional label for the y-axis. If NULL, the response variable name will be used.
+#' @param x_label An optional label for the x-axis. If NULL, the first term will be used.
 #' @param y_limits An optional vector of two numbers specifying the y-axis limits. Default is c(1, 7).
-#' @param color_label An optional label for the color legend.
-#' @param save_path An optional path to save the plot.
+#' @param color_label An optional label for the color legend. If NULL, the second term will be used.
+#' @param save_path An optional path to save the plot. If NULL, the plot will not be saved.
 #' @param width The width of the saved plot in inches. Default is 12.
 #' @param height The height of the saved plot in inches. Default is 8.
 #' @param seed An optional seed for reproducibility.
@@ -24,6 +25,7 @@
 #' @import ggeffects
 #' @import ggokabeito
 #' @import cli
+#' @import dplyr
 #'
 #' @export
 #'
@@ -32,13 +34,13 @@
 #' library(ggplot2)
 #' library(ggeffects)
 #' library(ggokabeito)
+#' library(dplyr)
 #'
 #' # Basic usage
 #' plot <- margot_plot_slope_covariate(
 #'   data = dat,
 #'   formula = warm_muslims ~ wave:hours_work,
 #'   terms = c("wave", "hours_work"),
-#'   title = "Warmth Towards Muslims by Work Hours Over Time",
 #'   y_label = "Warmth",
 #'   x_label = "Wave",
 #'   color_label = "Work Hours"
@@ -49,11 +51,20 @@
 #'   data = dat,
 #'   formula = warm_immigrants ~ wave:education,
 #'   terms = c("wave", "education [0:18]"),
-#'   title = "Warmth Towards Immigrants by Education Over Time",
 #'   y_label = "Warmth",
 #'   x_label = "Wave",
 #'   color_label = "Education (Years)",
 #'   type = "continuous"
+#' )
+#'
+#' # Saving the plot
+#' saved_plot <- margot_plot_slope_covariate(
+#'   data = dat,
+#'   formula = political_orientation ~ wave:age,
+#'   terms = c("wave", "age"),
+#'   save_path = "path/to/save/directory",
+#'   width = 10,
+#'   height = 6
 #' )
 #' }
 margot_plot_slope_covariate <- function(data,
