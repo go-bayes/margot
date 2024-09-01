@@ -16,7 +16,7 @@
 - `margot_plot_slope_covariate()` descriptive trends by covariates over time. 
 - `margot_plot_bloxplot()` descriptive trends using boxplots + facets.
 - `prepare_panel_data()`helper function to get panel data into shape for plotting response timelines for repeated measures studies.
--  `margot_response_timeline()` plot histogram of response timelines for repeated measuress studies.
+-  `margot_response_timeline()` plot histogram of response timelines for repeated measures studies.
 
 ## Improved
 

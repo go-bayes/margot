@@ -3,8 +3,8 @@ url: https://go-bayes.github.io/margot/
 template:
   bootstrap: 5
   bslib:
-    base_font: {google: "Roboto"}
-    heading_font: {google: "Roboto Slab"}
+    base_font: {google: "Fira Code"}
+    heading_font: {google: "Fira Code"}
     code_font: {google: "Fira Code"}
     preset: "bootstrap"
 
