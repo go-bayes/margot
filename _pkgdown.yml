@@ -19,6 +19,9 @@ development:
 vignette_engine: quarto
 
 reference:
+  - title: "Describe Longitudinal Data"
+    contents:
+    - margot_plot_discontinuity
 
   - title: "Check assumptions"
     contents:

@@ -10,13 +10,20 @@
 * remove color package
 
 
+# [2024-09-01] margot 0.2.1.34
 
-# [2024-08-20] margot 0.2.1.33
+## New
+- `margot_plot_discontinuity()` create longitudinal graphs
+
+## Improved
+-  `margot_size()` has cli alerts
+
+# [2024-08-30] margot 0.2.1.33
 
 ## New
 * `read_multiple_images()` utility function to read batchs of images, for presentations, articles etc. 
 
-# [2024-08-20] margot 0.2.1.32
+# [2024-08-30] margot 0.2.1.32
 
 ## New
 
