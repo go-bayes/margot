@@ -46,7 +46,7 @@
 #' library(ggplot2)
 #' library(margot)
 #'
-#' # Assuming 'dat' is your dataset and 'path_talk' is defined
+#' # Assume that 'dat' is your dataset and that 'path_talk' is defined
 #' muslim_discontinuity_warmth_plot <- margot_plot_discontinuity(
 #'   data = dat,
 #'   y_var = "warm_muslims",

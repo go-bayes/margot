@@ -9,6 +9,12 @@
 * qini cost options
 * remove color package
 
+# [2024-09-02] margot 0.2.1.36
+
+## Improved
+
+- `margot_plot_discontinuity()` now being read to namespace.
+
 # [2024-09-01] margot 0.2.1.35
 
 ## New
