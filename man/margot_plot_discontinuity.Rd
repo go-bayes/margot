@@ -96,8 +96,8 @@ margot_plot_discontinuity(
 A ggplot2 object representing the discontinuity plot.
 }
 \description{
-This function creates a ggplot2 visualization to show discontinuities in data across multiple events.
-It's particularly useful for visualizing changes in trends before and after significant events.
+This function creates a ggplot2 visualisation to show discontinuities in data across multiple events.
+It's particularly useful for visualising changes in trends before and after significant events.
 }
 \examples{
 \dontrun{

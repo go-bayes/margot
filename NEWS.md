@@ -9,6 +9,20 @@
 * qini cost options
 * remove color package
 
+# [2024-09-01] margot 0.2.1.35
+
+## New
+- `margot_plot_slope()` descriptive trends in continuous variables over time; user may pass historical events which are denoted by dashed vertical lines on the plot.
+- `margot_plot_slope_covariate()` descriptive trends by covariates over time. 
+- `margot_plot_bloxplot()` descriptive trends using boxplots + facets.
+- `prepare_panel_data()`helper function to get panel data into shape for plotting response timelines for repeated measures studies.
+-  `margot_response_timeline()` plot histogram of response timelines for repeated measuress studies.
+
+## Improved
+
+- `here_save_qs()` and `here_read_qs()` report where and object was saved and how large it is. 
+- `here_save()`and `here_read()`, ditto, and also ask users to specify a directory path, defaulting to `push_mods` if none is supplied
+
 
 # [2024-09-01] margot 0.2.1.34
 

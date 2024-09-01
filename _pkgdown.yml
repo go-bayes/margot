@@ -21,7 +21,12 @@ vignette_engine: quarto
 reference:
   - title: "Describe Longitudinal Data"
     contents:
+    - margot_plot_boxplot
     - margot_plot_discontinuity
+    - margot_plot_response_timeline
+    - margot_plot_slope
+    - margot_plot_slope_covariate
+
 
   - title: "Check assumptions"
     contents:
@@ -103,6 +108,7 @@ reference:
     - margot_plot_exposure
     - margot_process_binary_vars
     - margot_size
+    - prepare_panel_data
     - pretty_number
     - read_multiple_images
     - remove_numeric_attributes

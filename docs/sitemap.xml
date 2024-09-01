@@ -74,6 +74,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_omnibus_hetero_test.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_batch_rate.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_boxplot.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_create_options.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_decision_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_discontinuity.html</loc></url>
@@ -85,6 +86,9 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_qini.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_rate.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_response_timeline.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_slope.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_slope_covariate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_binary_vars.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_longitudinal_data.html</loc></url>
@@ -100,6 +104,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/match_mi_general.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/pipe.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/plot_rank_average_treatment_effect.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/prepare_panel_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/pretty_number.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/read_multiple_images.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/regress_with_covariates.html</loc></url>

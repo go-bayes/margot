@@ -2,27 +2,34 @@
 % Please edit documentation in R/here_read.R
 \name{here_read}
 \alias{here_read}
-\title{Read Data Frame from RDS File in a Specified Directory}
+\title{Read Data Frame or Object from RDS File in a Specified Directory}
 \usage{
-here_read(name)
+here_read(name, dir_path = NULL, quiet = FALSE)
 }
 \arguments{
 \item{name}{Character string specifying the name of the RDS file to be read (without the ".rds" extension).}
+
+\item{dir_path}{Character string specifying the directory path from which the file will be read. If NULL (default), uses `push_mods`.}
+
+\item{quiet}{Logical. If TRUE, suppresses console output. Default is FALSE.}
 }
 \value{
-A data frame or the specific R object stored in the RDS file.
+The data frame or R object stored in the RDS file.
 }
 \description{
-Reads an RDS file specified by `name` from a directory defined by `push_mods`, returning the data frame stored within.
+Reads an RDS file specified by `name` from a directory defined by `dir_path` or `push_mods`, returning the data frame or object stored within.
 This function uses the `here` package to resolve the path, ensuring that file paths are built in a consistent and platform-independent manner.
 }
 \details{
-The `push_mods` variable must be defined in the user's environment or within the package, pointing to the directory from where files are to be read.
-It is presumed that `push_mods` is correctly set up to point to an existing directory path. This function does not validate the existence of the file but will throw an error if the file does not exist.
+If `dir_path` is NULL, the `push_mods` variable must be defined in the user's environment or within the package, pointing to the directory from where files are to be read.
+This function will throw an error if the specified file does not exist.
 }
 \examples{
 # Assuming `push_mods` is set in your environment to "~/mydata"
-# and you have previously saved an RDS file named "my_saved_dataframe.rds" in that directory
+# and you have previously saved an RDS file named "my_df.rds" in that directory
 my_df <- here_read("my_df")
+
+# Reading from a custom directory
+my_df <- here_read("my_df", dir_path = "~/custom_dir")
 
 }

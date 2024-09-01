@@ -23,7 +23,18 @@
 #' @importFrom qs qsave
 #' @importFrom here here
 here_save_qs <- function(obj, name, dir_path, preset = "high", nthreads = 1) {
-  qs::qsave(obj, here::here(dir_path, paste0(name, ".qs")), preset = preset, nthreads = nthreads)
+  file_path <- here::here(dir_path, paste0(name, ".qs"))
+  qs::qsave(obj, file_path, preset = preset, nthreads = nthreads)
+
+  # Get file size
+  file_size <- margot_size(file_path)
+
+  # Print CLI message
+  cat(sprintf("Object saved to: %s\n", file_path))
+  cat(sprintf("Object size: %s\n", file_size))
+  cat("👍 Save operation completed successfully!\n")
+
+  invisible(NULL)
 }
 # old
 # here_save_qs <- function(df, name, dir_path) {

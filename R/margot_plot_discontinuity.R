@@ -1,7 +1,7 @@
 #' Create a Discontinuity Plot for Multiple Events
 #'
-#' This function creates a ggplot2 visualization to show discontinuities in data across multiple events.
-#' It's particularly useful for visualizing changes in trends before and after significant events.
+#' This function creates a ggplot2 visualisation to show discontinuities in data across multiple events.
+#' It's particularly useful for visualising changes in trends before and after significant events.
 #'
 #' @param data A data frame containing the variables to be plotted.
 #' @param y_var The name of the y-axis variable in the data frame.
