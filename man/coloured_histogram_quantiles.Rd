@@ -2,7 +2,7 @@
 % Please edit documentation in R/coloured_histogram_quantiles.R
 \name{coloured_histogram_quantiles}
 \alias{coloured_histogram_quantiles}
-\title{visualise distribution with automatically calculated quantile highlights (deprecated, use `margot_plot_hist`)}
+\title{Visualise Distribution with Automatically Calculated Quantile Highlights (DEPRECATED)}
 \usage{
 coloured_histogram_quantiles(
   df,
@@ -91,6 +91,7 @@ in the lower or upper category. must be either "lower" or "upper". default is "u
 a ggplot object representing the histogram with highlighted quantiles
 }
 \description{
-visualise distribution with automatically calculated quantile highlights (deprecated, use `margot_plot_hist`)
+`r lifecycle::badge("deprecated")`
+This function is deprecated. Please use `margot_plot_categorical()` instead.
 }
 \keyword{internal}

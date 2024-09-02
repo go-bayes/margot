@@ -2,7 +2,7 @@
 % Please edit documentation in R/coloured_histogram.R
 \name{coloured_histogram}
 \alias{coloured_histogram}
-\title{Create a Coloured Histogram Highlighting Specific Ranges}
+\title{Create a Coloured Histogram Highlighting Specific Ranges (DEPRECATED)}
 \usage{
 coloured_histogram(
   df,
@@ -38,6 +38,9 @@ the maximum value of `col_name` is used.}
 A ggplot object of the histogram with highlighted ranges as specified.
 }
 \description{
+`r lifecycle::badge("deprecated")`
+This function is deprecated. Please use `margot_plot_shift()` instead.
+
 This function generates a histogram with specific ranges highlighted to indicate
 the highest and/or lowest values within a unit of the specified limits. It allows
 customization of bin width, the unit of change for highlighting, and the range to be highlighted. This is useful in the settings of modified treatment policies for

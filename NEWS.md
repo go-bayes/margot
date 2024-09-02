@@ -9,6 +9,25 @@
 * qini cost options
 * remove color package
 
+# margot 0.2.1.40
+
+## New features
+
+- `margot_plot_categorical()` for visualising categorical data distributions.
+- `margot_plot_shift()` for visualising shifts in data distributions with highlighted ranges.
+
+## Deprecations
+
+The following functions have been deprecated in favor of the new functions:
+
+- `margot_plot_hist()` is deprecated. Use `margot_plot_histogram()` instead.
+- `coloured_histogram()` is deprecated. Use `margot_plot_histogram()` instead.
+- `coloured_histogram_shift()` is deprecated. Use `margot_plot_shift()` instead.
+ `coloured_histogram_quantiles()` is deprecated. Use `margot_plot_categorical()` instead.
+
+These deprecated functions will continue to work but will issue warnings. They will be removed in a future version of the package.
+
+
 
 # [2024-09-02] margot 0.2.1.39
 

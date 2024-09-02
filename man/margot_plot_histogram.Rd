@@ -15,10 +15,11 @@ margot_plot_histogram(
   x_label = NULL,
   y_label = "Count",
   save_path = NULL,
-  width = 16,
-  height = 10,
+  width = 12,
+  height = 8,
   facet_scales = "free",
-  color_palette = NULL
+  color_palette = NULL,
+  add_timestamp = FALSE
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ margot_plot_histogram(
 \item{facet_scales}{Scales for facet. Either "fixed", "free_x", "free_y", or "free". Default is "free".}
 
 \item{color_palette}{An optional custom color palette for the plot.}
+
+\item{add_timestamp}{Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.}
 }
 \value{
 A ggplot2 object representing the histogram with highlights.
@@ -70,12 +73,13 @@ margot_plot_histogram(data = your_data,
                          waves = c(2018, 2020),
                          binwidth = 1)
 
-# use custom labels and saving the plot
+# use custom labels and saving the plot with timestamp
 margot_plot_histogram(data = your_data,
                          col_names = c("attitude_measure"),
                          title = "Distribution of Attitudes Over Time",
                          x_label = "Attitude Score",
-                         save_path = "path/to/save/plot")
+                         save_path = "path/to/save/plot",
+                         add_timestamp = TRUE)
 
 # use a custom color palette
 custom_colors <- c("#FF9999", "#66B2FF")

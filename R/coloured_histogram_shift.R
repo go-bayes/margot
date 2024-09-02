@@ -1,4 +1,8 @@
-#' Visualize Shifts in Data Distributions with Highlighted Ranges
+#' Visualise Shifts in Data Distributions with Highlighted Ranges (DEPRECATED)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' This function is deprecated. Please use `margot_plot_shift()` instead.
 #'
 #' This function creates a histogram that highlights a specified range of values to visualize shifts in data distributions. The highlighted range can indicate areas of interest, such as shifts up or down in the distribution. This visualization is useful for understanding the implications of causal contrasts, such as modified treatment policies. The fill colour of the histogram is dynamically adjusted based on the specified direction of the shift.
 #'
@@ -28,8 +32,17 @@
 #' }
 #' @import ggplot2
 #' @importFrom rlang sym
+#' @importFrom lifecycle deprecate_warn
 #' @export
 coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight = NULL, shift = "up", show_avg_line = TRUE) {
+  # Deprecation warning
+  lifecycle::deprecate_warn(
+    when = "0.2.1.39",
+    what = "coloured_histogram_shift()",
+    with = "margot_plot_shift()",
+    details = "Please use `margot_plot_shift()` for future development."
+  )
+
 
   # validate data
   if(!col_name %in% names(df)) stop("col_name does not exist in the dataframe.")
@@ -78,7 +91,7 @@ coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight
 
   # Conditionally add the average value line
   if(show_avg_line) {
-    p <- p + geom_vline(xintercept = avg_val, color = "red", linetype = "dashed", linewidth = .75)
+    p <- p + geom_vline(xintercept = avg_val, color = "darkred", linetype = "dashed", linewidth = .75)
   }
 
   return(p)

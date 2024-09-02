@@ -2,7 +2,7 @@
 % Please edit documentation in R/coloured_histogram_shift.R
 \name{coloured_histogram_shift}
 \alias{coloured_histogram_shift}
-\title{Visualize Shifts in Data Distributions with Highlighted Ranges}
+\title{Visualise Shifts in Data Distributions with Highlighted Ranges (DEPRECATED)}
 \usage{
 coloured_histogram_shift(
   df,
@@ -30,6 +30,9 @@ coloured_histogram_shift(
 A `ggplot` object representing the histogram with specified highlights. This object can be printed or further modified using `ggplot2` functions.
 }
 \description{
+`r lifecycle::badge("deprecated")`
+This function is deprecated. Please use `margot_plot_shift()` instead.
+
 This function creates a histogram that highlights a specified range of values to visualize shifts in data distributions. The highlighted range can indicate areas of interest, such as shifts up or down in the distribution. This visualization is useful for understanding the implications of causal contrasts, such as modified treatment policies. The fill colour of the histogram is dynamically adjusted based on the specified direction of the shift.
 }
 \examples{

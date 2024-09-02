@@ -1,8 +1,8 @@
-#' Create a Colored Histogram with Quantile or Custom Breaks
+#' Create a Coloured Histogram with Quantile or Custom Breaks (DEPRECATED)
 #'
-#' This function creates a histogram with colored regions based on quantile breaks or custom breaks.
-#' It uses the `create_ordered_variable` function to categorize the data and then plots the histogram
-#' with different colors for each category.
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' This function is deprecated. Please use `margot_plot_histogram()` instead.
 #'
 #' @param df A data frame containing the variable to be plotted.
 #' @param col_name The name of the column in the data frame to be plotted.
@@ -42,23 +42,32 @@
 #' @importFrom ggokabeito palette_okabe_ito
 #' @importFrom rlang sym
 #' @importFrom tools toTitleCase
+#' @importFrom lifecycle deprecate_warn
 #'
 #' @export
 margot_plot_hist <- function(df, col_name, n_divisions = NULL, custom_breaks = NULL,
-                                         cutpoint_inclusive = "upper",
-                                         ties.method = NULL,
-                                         colour_palette = NULL,
-                                         hist_colour = "black",
-                                         line_type = "solid", line_width = 0.75,
-                                         title = NULL, subtitle = NULL,
-                                         x_lab = NULL, y_lab = "Count",
-                                         theme_choice = theme_classic(),
-                                         text_size = 12, axis_text_angle = 45,
-                                         add_density = FALSE, add_rug = FALSE,
-                                         facet_var = NULL,
-                                         x_scale_transform = NULL, y_scale_transform = NULL,
-                                         additional_layers = NULL,
-                                         binwidth = NULL) {
+                             cutpoint_inclusive = "upper",
+                             ties.method = NULL,
+                             colour_palette = NULL,
+                             hist_colour = "black",
+                             line_type = "solid", line_width = 0.75,
+                             title = NULL, subtitle = NULL,
+                             x_lab = NULL, y_lab = "Count",
+                             theme_choice = theme_classic(),
+                             text_size = 12, axis_text_angle = 45,
+                             add_density = FALSE, add_rug = FALSE,
+                             facet_var = NULL,
+                             x_scale_transform = NULL, y_scale_transform = NULL,
+                             additional_layers = NULL,
+                             binwidth = NULL) {
+
+  # Deprecation warning
+  lifecycle::deprecate_warn(
+    when = "0.2.1.39",
+    what = "margot_plot_hist()",
+    with = "margot_plot_histogram()",
+    details = "Please use `margot_plot_categorical()` for future development."
+  )
 
   # validate cutpoint_inclusive
   if (!cutpoint_inclusive %in% c("lower", "upper")) {

@@ -1,4 +1,8 @@
-#' visualise distribution with automatically calculated quantile highlights (deprecated, use `margot_plot_hist`)
+#' Visualise Distribution with Automatically Calculated Quantile Highlights (DEPRECATED)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' This function is deprecated. Please use `margot_plot_categorical()` instead.
 #'
 #' @param df dataframe containing the data to be visualised
 #' @param col_name name of the column to create a histogram for
@@ -51,8 +55,13 @@ coloured_histogram_quantiles <- function(df, col_name, n_divisions = NULL, break
                                          facet_var = NULL,
                                          x_scale_transform = NULL, y_scale_transform = NULL,
                                          additional_layers = NULL) {
-  # warning
-  lifecycle::deprecate_warn("1.0.0", "coloured_histogram_quantiles()", "margot_plot_hist()")
+  # Deprecation warning
+  lifecycle::deprecate_warn(
+    when = "0.2.1.39",
+    what = "coloured_histogram_quantiles()",
+    with = "margot_plot_categorical()",
+    details = "Please use `margot_plot_categorical()` for future development."
+  )
 
   # input validation
   if (!col_name %in% names(df)) {

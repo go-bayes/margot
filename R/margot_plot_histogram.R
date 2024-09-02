@@ -17,6 +17,7 @@
 #' @param height The height of the saved plot in inches. Default is 10.
 #' @param facet_scales Scales for facet. Either "fixed", "free_x", "free_y", or "free". Default is "free".
 #' @param color_palette An optional custom color palette for the plot.
+#' @param add_timestamp Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.
 #'
 #' @return A ggplot2 object representing the histogram with highlights.
 #'
@@ -40,12 +41,13 @@
 #'                          waves = c(2018, 2020),
 #'                          binwidth = 1)
 #'
-#' # use custom labels and saving the plot
+#' # use custom labels and saving the plot with timestamp
 #' margot_plot_histogram(data = your_data,
 #'                          col_names = c("attitude_measure"),
 #'                          title = "Distribution of Attitudes Over Time",
 #'                          x_label = "Attitude Score",
-#'                          save_path = "path/to/save/plot")
+#'                          save_path = "path/to/save/plot",
+#'                          add_timestamp = TRUE)
 #'
 #' # use a custom color palette
 #' custom_colors <- c("#FF9999", "#66B2FF")
@@ -55,19 +57,20 @@
 #'
 #' @export
 margot_plot_histogram <- function(data,
-                                     col_names,
-                                     id_col = "id",
-                                     wave_col = "wave",
-                                     waves = NULL,
-                                     binwidth = 0.5,
-                                     title = NULL,
-                                     x_label = NULL,
-                                     y_label = "Count",
-                                     save_path = NULL,
-                                     width = 16,
-                                     height = 10,
-                                     facet_scales = "free",
-                                     color_palette = NULL) {
+                                  col_names,
+                                  id_col = "id",
+                                  wave_col = "wave",
+                                  waves = NULL,
+                                  binwidth = 0.5,
+                                  title = NULL,
+                                  x_label = NULL,
+                                  y_label = "Count",
+                                  save_path = NULL,
+                                  width = 12,
+                                  height = 8,
+                                  facet_scales = "free",
+                                  color_palette = NULL,
+                                  add_timestamp = FALSE) {
 
   cli::cli_h1("Margot Plot Histogram")
 
@@ -190,9 +193,13 @@ margot_plot_histogram <- function(data,
     if (!is.null(save_path)) {
       filename <- paste0(
         "histogram_", paste(col_names, collapse = "_"),
-        "_by_", wave_col,
-        "_", format(Sys.Date(), "%Y%m%d")
+        "_by_", wave_col
       )
+
+      # Add timestamp if requested
+      if (add_timestamp) {
+        filename <- paste0(filename, "_", format(Sys.Date(), "%Y%m%d"))
+      }
 
       cli::cli_alert_info("Saving plot...")
 
