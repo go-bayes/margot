@@ -30,7 +30,8 @@ margot_plot_categorical(
   width = 16,
   height = 10,
   legend_position = "right",
-  include_timestamp = FALSE
+  include_timestamp = FALSE,
+  file_prefix = ""
 )
 }
 \arguments{
@@ -85,12 +86,14 @@ margot_plot_categorical(
 \item{legend_position}{The position of the legend. Can be "right", "left", "bottom", "top", or a two-element numeric vector.}
 
 \item{include_timestamp}{A logical value indicating whether to include a timestamp in the saved filename. Default is FALSE.}
+
+\item{file_prefix}{An optional prefix to add to the beginning of the saved filename.}
 }
 \value{
 A ggplot2 object representing the colored histogram.
 }
 \description{
-This function creates a histogram with colored regions based on quantile breaks or custom breaks.
+This function creates a histogram with coloured regions based on quantile breaks or custom breaks.
 It uses the `create_ordered_variable` function to categorise the data and then plots the histogram
 with different colours for each category.
 }

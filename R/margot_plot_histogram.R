@@ -18,6 +18,7 @@
 #' @param facet_scales Scales for facet. Either "fixed", "free_x", "free_y", or "free". Default is "free".
 #' @param color_palette An optional custom color palette for the plot.
 #' @param add_timestamp Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.
+#' @param file_prefix An optional prefix to add to the beginning of the saved filename. Default is an empty string.
 #'
 #' @return A ggplot2 object representing the histogram with highlights.
 #'
@@ -41,13 +42,14 @@
 #'                          waves = c(2018, 2020),
 #'                          binwidth = 1)
 #'
-#' # use custom labels and saving the plot with timestamp
+#' # use custom labels and saving the plot with timestamp and prefix
 #' margot_plot_histogram(data = your_data,
 #'                          col_names = c("attitude_measure"),
 #'                          title = "Distribution of Attitudes Over Time",
 #'                          x_label = "Attitude Score",
 #'                          save_path = "path/to/save/plot",
-#'                          add_timestamp = TRUE)
+#'                          add_timestamp = TRUE,
+#'                          file_prefix = "study1")
 #'
 #' # use a custom color palette
 #' custom_colors <- c("#FF9999", "#66B2FF")
@@ -70,7 +72,8 @@ margot_plot_histogram <- function(data,
                                   height = 8,
                                   facet_scales = "free",
                                   color_palette = NULL,
-                                  add_timestamp = FALSE) {
+                                  add_timestamp = FALSE,
+                                  file_prefix = "") {
 
   cli::cli_h1("Margot Plot Histogram")
 
@@ -157,7 +160,7 @@ margot_plot_histogram <- function(data,
 
     # create the plot
     p <- ggplot(data_long, aes(x = value, fill = variable)) +
-      geom_histogram(aes(y = ..count..), binwidth = binwidth, color = "white", alpha = 0.7) +
+      geom_histogram(aes(y = after_stat(count)), binwidth = binwidth, color = "white", alpha = 0.7) +
       geom_vline(data = stats, aes(xintercept = avg_val), color = "black", linewidth = 1) +
       geom_vline(data = stats, aes(xintercept = avg_val - std_val), color = "black", linewidth = 0.5, linetype = "dashed") +
       geom_vline(data = stats, aes(xintercept = avg_val + std_val), color = "black", linewidth = 0.5, linetype = "dashed") +
@@ -174,7 +177,7 @@ margot_plot_histogram <- function(data,
       theme(legend.position = "bottom",
             strip.text = element_text(size = 12, face = "bold"),
             axis.text.x = element_text(angle = 0, hjust = 1)) +
-      ggplot2::scale_fill_manual(values = recycled_colors, labels = format_label)
+      scale_fill_manual(values = recycled_colors, labels = format_label)
 
     # handle faceting for different scenarios
     if (length(unique(data_long[[wave_col]])) > 1 && length(col_names) > 1) {
@@ -191,8 +194,16 @@ margot_plot_histogram <- function(data,
 
     # save plot if a save path is provided
     if (!is.null(save_path)) {
+      filename <- "histogram"
+
+      # Add the optional prefix
+      if (nzchar(file_prefix)) {
+        filename <- paste0(file_prefix, "_", filename)
+      }
+
       filename <- paste0(
-        "histogram_", paste(col_names, collapse = "_"),
+        filename, "_",
+        paste(col_names, collapse = "_"),
         "_by_", wave_col
       )
 
@@ -215,7 +226,7 @@ margot_plot_histogram <- function(data,
 
       margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
 
-      cli::cli_alert_success("Plot saved successfully")
+      cli::cli_alert_success("Plot saved successfully as '{filename}' in '{save_path}'")
     } else {
       cli::cli_alert_info("No save path provided. Plot not saved.")
     }

@@ -1,6 +1,6 @@
 #' Create a Coloured Histogram with Quantile or Custom Breaks
 #'
-#' This function creates a histogram with colored regions based on quantile breaks or custom breaks.
+#' This function creates a histogram with coloured regions based on quantile breaks or custom breaks.
 #' It uses the `create_ordered_variable` function to categorise the data and then plots the histogram
 #' with different colours for each category.
 #'
@@ -30,6 +30,7 @@
 #' @param height The height of the saved plot in inches. Default is 10.
 #' @param legend_position The position of the legend. Can be "right", "left", "bottom", "top", or a two-element numeric vector.
 #' @param include_timestamp A logical value indicating whether to include a timestamp in the saved filename. Default is FALSE.
+#' @param file_prefix An optional prefix to add to the beginning of the saved filename.
 #'
 #' @return A ggplot2 object representing the colored histogram.
 #'
@@ -57,7 +58,8 @@ margot_plot_categorical <- function(df, col_name, n_divisions = NULL, custom_bre
                                     save_path = NULL,
                                     width = 16, height = 10,
                                     legend_position = "right",
-                                    include_timestamp = FALSE) {
+                                    include_timestamp = FALSE,
+                                    file_prefix = "") {
 
   cli::cli_h1("Margot Plot Categorical")
 
@@ -147,7 +149,14 @@ margot_plot_categorical <- function(df, col_name, n_divisions = NULL, custom_bre
 
     # Save plot if a save path is provided
     if (!is.null(save_path)) {
-      filename <- paste0("categorical_", col_name)
+      filename <- "categorical"
+
+      # Add the optional prefix
+      if (nzchar(file_prefix)) {
+        filename <- paste0(file_prefix, "_", filename)
+      }
+
+      filename <- paste0(filename, "_", col_name)
 
       if (include_timestamp) {
         filename <- paste0(filename, "_", format(Sys.Date(), "%Y%m%d"))

@@ -19,7 +19,8 @@ margot_plot_histogram(
   height = 8,
   facet_scales = "free",
   color_palette = NULL,
-  add_timestamp = FALSE
+  add_timestamp = FALSE,
+  file_prefix = ""
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ margot_plot_histogram(
 \item{color_palette}{An optional custom color palette for the plot.}
 
 \item{add_timestamp}{Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.}
+
+\item{file_prefix}{An optional prefix to add to the beginning of the saved filename. Default is an empty string.}
 }
 \value{
 A ggplot2 object representing the histogram with highlights.
@@ -73,13 +76,14 @@ margot_plot_histogram(data = your_data,
                          waves = c(2018, 2020),
                          binwidth = 1)
 
-# use custom labels and saving the plot with timestamp
+# use custom labels and saving the plot with timestamp and prefix
 margot_plot_histogram(data = your_data,
                          col_names = c("attitude_measure"),
                          title = "Distribution of Attitudes Over Time",
                          x_label = "Attitude Score",
                          save_path = "path/to/save/plot",
-                         add_timestamp = TRUE)
+                         add_timestamp = TRUE,
+                         file_prefix = "study1")
 
 # use a custom color palette
 custom_colors <- c("#FF9999", "#66B2FF")

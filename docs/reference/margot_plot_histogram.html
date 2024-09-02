@@ -57,7 +57,8 @@ It highlights the mean and standard deviation for each variable in each wave.</p
 <span>  height <span class="op">=</span> <span class="fl">8</span>,</span>
 <span>  facet_scales <span class="op">=</span> <span class="st">"free"</span>,</span>
 <span>  color_palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  add_timestamp <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  add_timestamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  file_prefix <span class="op">=</span> <span class="st">""</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -124,6 +125,10 @@ It highlights the mean and standard deviation for each variable in each wave.</p
 <dt id="arg-add-timestamp">add_timestamp<a class="anchor" aria-label="anchor" href="#arg-add-timestamp"></a></dt>
 <dd><p>Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.</p></dd>
 
+
+<dt id="arg-file-prefix">file_prefix<a class="anchor" aria-label="anchor" href="#arg-file-prefix"></a></dt>
+<dd><p>An optional prefix to add to the beginning of the saved filename. Default is an empty string.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -154,13 +159,14 @@ It highlights the mean and standard deviation for each variable in each wave.</p
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;simpleError in eval(expr, envir, enclos): object 'your_data' not found&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># use custom labels and saving the plot with timestamp</span></span></span>
+<span class="r-in"><span><span class="co"># use custom labels and saving the plot with timestamp and prefix</span></span></span>
 <span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span>data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
 <span class="r-in"><span>                         col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"attitude_measure"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                         title <span class="op">=</span> <span class="st">"Distribution of Attitudes Over Time"</span>,</span></span>
 <span class="r-in"><span>                         x_label <span class="op">=</span> <span class="st">"Attitude Score"</span>,</span></span>
 <span class="r-in"><span>                         save_path <span class="op">=</span> <span class="st">"path/to/save/plot"</span>,</span></span>
-<span class="r-in"><span>                         add_timestamp <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>                         add_timestamp <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>                         file_prefix <span class="op">=</span> <span class="st">"study1"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Margot Plot Histogram</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> An error occurred: object 'your_data' not found</span>
