@@ -1,4 +1,4 @@
-#' Generate Statistical Estimator Description (DEPRECATED)
+#' Generate Statistical Estimator Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`

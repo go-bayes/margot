@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_methods_causal_interventions.R
 \name{boilerplate_methods_causal_interventions}
 \alias{boilerplate_methods_causal_interventions}
-\title{Generate Causal Interventions and Contrasts Section for Methods (DEPRECATED)}
+\title{Generate Causal Interventions and Contrasts Section for Methods (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>))}
 \usage{
 boilerplate_methods_causal_interventions(...)
 }
@@ -13,7 +13,7 @@ boilerplate_methods_causal_interventions(...)
 A message indicating the function is deprecated.
 }
 \description{
-`r lifecycle::badge("deprecated")`
+`r lifecycle::badge("deprecated")`  Use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>
 This function is deprecated. Please use `boilerplate::boilerplate_report_causal_interventions()` instead.
 Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }

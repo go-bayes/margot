@@ -32,7 +32,12 @@ margot_plot_slope(
   legend_position = "bottom",
   use_title_case = TRUE,
   remove_underscores = TRUE,
-  y_limits = NULL
+  y_limits = NULL,
+  color_palette = NULL,
+  use_facets = TRUE,
+  facet_scales = "free_y",
+  facet_ncol = NULL,
+  facet_nrow = NULL
 )
 }
 \arguments{
@@ -91,14 +96,25 @@ margot_plot_slope(
 \item{remove_underscores}{Logical, whether to remove underscores from labels. Default is TRUE.}
 
 \item{y_limits}{An optional vector of two numbers specifying the y-axis limits.}
+
+\item{color_palette}{An optional custom color palette. If NULL, a default palette will be used.}
+
+\item{use_facets}{Logical, whether to use faceting for multiple variables. Default is TRUE.}
+
+\item{facet_scales}{The scales parameter for facet_wrap. Default is "free_y".}
+
+\item{facet_ncol}{The number of columns for facet_wrap. Default is NULL.}
+
+\item{facet_nrow}{The number of rows for facet_wrap. Default is NULL.}
 }
 \value{
 A ggplot2 object representing the slope plot.
 }
 \description{
-This function creates a ggplot2 visualisation to show trends in multiple variables over time.
+This function creates a ggplot2 visualization to show trends in multiple variables over time.
 It's possible to add vertical lines at significant events. The function now also counts and
-reports the number of unique participants and observations.
+reports the number of unique participants and observations. It includes options for faceting
+to avoid overplotting when dealing with multiple variables.
 }
 \examples{
 \dontrun{
@@ -125,40 +141,46 @@ multi_var_plot <- margot_plot_slope(
   start_date = "2012-06-06",
   y_label = "Warmth",
   x_label = "NZAVS Time 4 - 14 Cohort (2012-2023)",
-  y_limits = c(1, 7)
+  y_limits = c(1, 7),
+  use_facets = TRUE
 )
 
-# Plot with points, using a subset of data
+# Plot with points, using a subset of data and custom facet layout
 point_plot <- margot_plot_slope(
   data = dat,
-  y_vars = list("warm_asians", "warm_pacific"),
+  y_vars = list("warm_asians", "warm_pacific", "warm_immigrants"),
   plot_points = TRUE,
   point_alpha = 0.05,
   data_fraction = 0.1,
   seed = 123,
-  y_label = "Warmth"
+  y_label = "Warmth",
+  use_facets = TRUE,
+  facet_ncol = 2
 )
 
 # Save the plot
 saved_plot <- margot_plot_slope(
   data = dat,
-  y_vars = "political_orientation",
+  y_vars = list("political_orientation", "social_dominance_orientation"),
   save_path = here::here("outputs", "plots"),
   width = 10,
-  height = 6
+  height = 6,
+  use_facets = TRUE
 )
 
-# Custom styling
+# Custom styling and color palette
 custom_plot <- margot_plot_slope(
   data = dat,
   y_vars = list("sat_government", "sat_nz_econ_conditions"),
   event_dates = "2017-10-26",
   event_names = "2017 Election",
   y_label = "Satisfaction Level (0-10)",
-  y_limits = c(0,10), # range of data differs from (1-7)
+  y_limits = c(0,10),
   event_line_color = "blue",
   event_label_color = "blue",
-  legend_position = "top"
+  legend_position = "top",
+  color_palette = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"),
+  use_facets = TRUE
 )
 }
 }

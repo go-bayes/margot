@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_methods_missing_data.R
 \name{boilerplate_methods_missing_data}
 \alias{boilerplate_methods_missing_data}
-\title{Generate Missing Data Handling Description (DEPRECATED)}
+\title{Generate Missing Data Handling Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_methods_missing_data(...)
 }

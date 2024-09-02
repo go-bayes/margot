@@ -1,4 +1,4 @@
-#' Generate Appendix of Measures (DEPRECATED)
+#' Generate Appendix of Measures (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`

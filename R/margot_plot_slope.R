@@ -1,8 +1,9 @@
 #' Create a Slope Plot for Multiple Variables
 #'
-#' This function creates a ggplot2 visualisation to show trends in multiple variables over time.
+#' This function creates a ggplot2 visualization to show trends in multiple variables over time.
 #' It's possible to add vertical lines at significant events. The function now also counts and
-#' reports the number of unique participants and observations.
+#' reports the number of unique participants and observations. It includes options for faceting
+#' to avoid overplotting when dealing with multiple variables.
 #'
 #' @param data A data frame containing the variables to be plotted.
 #' @param y_vars A list of variable names or a single variable name to be plotted on the y-axis.
@@ -32,6 +33,11 @@
 #' @param use_title_case Logical, whether to use title case for labels. Default is TRUE.
 #' @param remove_underscores Logical, whether to remove underscores from labels. Default is TRUE.
 #' @param y_limits An optional vector of two numbers specifying the y-axis limits.
+#' @param color_palette An optional custom color palette. If NULL, a default palette will be used.
+#' @param use_facets Logical, whether to use faceting for multiple variables. Default is TRUE.
+#' @param facet_scales The scales parameter for facet_wrap. Default is "free_y".
+#' @param facet_ncol The number of columns for facet_wrap. Default is NULL.
+#' @param facet_nrow The number of rows for facet_wrap. Default is NULL.
 #'
 #' @return A ggplot2 object representing the slope plot.
 #'
@@ -67,42 +73,49 @@
 #'   start_date = "2012-06-06",
 #'   y_label = "Warmth",
 #'   x_label = "NZAVS Time 4 - 14 Cohort (2012-2023)",
-#'   y_limits = c(1, 7)
+#'   y_limits = c(1, 7),
+#'   use_facets = TRUE
 #' )
 #'
-#' # Plot with points, using a subset of data
+#' # Plot with points, using a subset of data and custom facet layout
 #' point_plot <- margot_plot_slope(
 #'   data = dat,
-#'   y_vars = list("warm_asians", "warm_pacific"),
+#'   y_vars = list("warm_asians", "warm_pacific", "warm_immigrants"),
 #'   plot_points = TRUE,
 #'   point_alpha = 0.05,
 #'   data_fraction = 0.1,
 #'   seed = 123,
-#'   y_label = "Warmth"
+#'   y_label = "Warmth",
+#'   use_facets = TRUE,
+#'   facet_ncol = 2
 #' )
 #'
 #' # Save the plot
 #' saved_plot <- margot_plot_slope(
 #'   data = dat,
-#'   y_vars = "political_orientation",
+#'   y_vars = list("political_orientation", "social_dominance_orientation"),
 #'   save_path = here::here("outputs", "plots"),
 #'   width = 10,
-#'   height = 6
+#'   height = 6,
+#'   use_facets = TRUE
 #' )
 #'
-#' # Custom styling
+#' # Custom styling and color palette
 #' custom_plot <- margot_plot_slope(
 #'   data = dat,
 #'   y_vars = list("sat_government", "sat_nz_econ_conditions"),
 #'   event_dates = "2017-10-26",
 #'   event_names = "2017 Election",
 #'   y_label = "Satisfaction Level (0-10)",
-#'   y_limits = c(0,10), # range of data differs from (1-7)
+#'   y_limits = c(0,10),
 #'   event_line_color = "blue",
 #'   event_label_color = "blue",
-#'   legend_position = "top"
+#'   legend_position = "top",
+#'   color_palette = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"),
+#'   use_facets = TRUE
 #' )
 #' }
+
 margot_plot_slope <- function(data,
                               y_vars,
                               event_dates = NULL,
@@ -130,7 +143,12 @@ margot_plot_slope <- function(data,
                               legend_position = "bottom",
                               use_title_case = TRUE,
                               remove_underscores = TRUE,
-                              y_limits = NULL) {
+                              y_limits = NULL,
+                              color_palette = NULL,
+                              use_facets = TRUE,
+                              facet_scales = "free_y",
+                              facet_ncol = NULL,
+                              facet_nrow = NULL) {
 
   cli::cli_h1("Margot Plot Slope")
 
@@ -144,15 +162,17 @@ margot_plot_slope <- function(data,
         label <- gsub("_", " ", label)
       }
       if (use_title_case) {
-        label <- tools::toTitleCase(label)
+        label <- stringr::str_to_title(label)
       }
       return(label)
     }
 
     cli::cli_alert_info("Preparing data...")
     # define color palette
-    modified_okabe_ito_colors <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
-                                   "#D55E00", "#CC79A7", "#000000", "#999999")
+    if (is.null(color_palette)) {
+      color_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
+                         "#D55E00", "#CC79A7", "#000000", "#999999")
+    }
 
     # prepare the data
     df <- data %>%
@@ -183,41 +203,44 @@ margot_plot_slope <- function(data,
       }
     }
 
-    # Remove rows with NA or infinite values in any y_var
+    # remove rows with NA or infinite values in any y_var
     for (var in y_vars) {
       df <- df %>% filter(!is.na(!!sym(var)) & is.finite(!!sym(var)))
     }
 
-    # Calculate unique participants and observations after cleaning
+    # calculate unique participants and observations after cleaning
     n_participants <- df %>% select(id) %>% n_distinct()
     n_observations <- nrow(df)
 
-    # Sample the data if data_fraction < 1
+    # sample the data if data_fraction < 1
     if (data_fraction < 1) {
       if (!is.null(seed)) {
         set.seed(seed)
       }
       df <- df %>% sample_frac(data_fraction)
 
-      # Recalculate counts after sampling
+      # recalculate counts after sampling
       n_participants <- df %>% select(id) %>% n_distinct()
       n_observations <- nrow(df)
     }
 
     cli::cli_alert_success("Data prepared successfully")
 
-    # Warning for plotting points with multiple y variables
+    # warning for plotting points with multiple y variables
     if (plot_points && length(y_vars) > 1) {
       cli::cli_alert_warning("Plotting points with multiple y variables may result in a cluttered plot.")
     }
 
     cli::cli_alert_info("Creating base plot...")
 
-    # Reshape data for plotting multiple y variables
+    # reshape data for plotting multiple y variables
     df_long <- df %>%
       tidyr::pivot_longer(cols = all_of(unlist(y_vars)),
                           names_to = "variable",
                           values_to = "value")
+
+    # Create a named vector for label formatting
+    formatted_labels <- setNames(sapply(unlist(y_vars), transform_label), unlist(y_vars))
 
     # Determine y-axis limits
     if (is.null(y_limits)) {
@@ -230,22 +253,27 @@ margot_plot_slope <- function(data,
       }
     }
 
-    # Generate automatic title if not provided
+    # generate automatic title if not provided
     if (is.null(title)) {
       year_range <- range(df$year, na.rm = TRUE)
       title <- sprintf("Slope Plot for %s\nN = %s participants, %s observations; years %.0f - %.0f",
-                       paste(transform_label(unlist(y_vars)), collapse = ", "),
+                       paste(formatted_labels, collapse = ", "),
                        format(n_participants, big.mark = ","),
                        format(n_observations, big.mark = ","),
                        year_range[1], year_range[2])
     }
 
+    # recycle colors
+    n_vars <- length(unique(df_long$variable))
+    recycled_colors <- rep_len(color_palette, n_vars)
+
     # create the ggplot
     p <- ggplot(df_long, aes(x = timeline, y = value, color = variable)) +
       geom_smooth(method = "lm", se = FALSE) +  # add linear trend lines
       theme_classic() +
-      scale_color_manual(values = modified_okabe_ito_colors,
-                         name = "Variables") +
+      scale_color_manual(values = recycled_colors,
+                         name = "Variables",
+                         labels = formatted_labels) +
       theme(
         legend.position = legend_position,
         legend.text = element_text(size = 12),
@@ -261,6 +289,12 @@ margot_plot_slope <- function(data,
     # add points if specified
     if (plot_points) {
       p <- p + geom_jitter(alpha = point_alpha, width = jitter_width)
+    }
+
+    # add faceting if specified
+    if (use_facets && length(y_vars) > 1) {
+      p <- p + facet_wrap(~ variable, scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow,
+                          labeller = as_labeller(formatted_labels))
     }
 
     cli::cli_alert_success("Base plot created")
@@ -394,7 +428,12 @@ margot_plot_slope <- function(data,
 #                               legend_position = "bottom",
 #                               use_title_case = TRUE,
 #                               remove_underscores = TRUE,
-#                               y_limits = NULL) {
+#                               y_limits = NULL,
+#                               color_palette = NULL,
+#                               use_facets = TRUE,
+#                               facet_scales = "free_y",
+#                               facet_ncol = NULL,
+#                               facet_nrow = NULL) {
 #
 #   cli::cli_h1("Margot Plot Slope")
 #
@@ -415,21 +454,15 @@ margot_plot_slope <- function(data,
 #
 #     cli::cli_alert_info("Preparing data...")
 #     # define color palette
-#     modified_okabe_ito_colors <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
-#                                    "#D55E00", "#CC79A7", "#000000", "#999999")
+#     if (is.null(color_palette)) {
+#       color_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
+#                          "#D55E00", "#CC79A7", "#000000", "#999999")
+#     }
 #
 #     # prepare the data
 #     df <- data %>%
 #       mutate(year = as.numeric(as.character(wave))) %>%
 #       mutate(timeline = base_date + tscore)
-#
-#     # Sample the data if data_fraction < 1
-#     if (data_fraction < 1) {
-#       if (!is.null(seed)) {
-#         set.seed(seed)
-#       }
-#       df <- df %>% sample_frac(data_fraction)
-#     }
 #
 #     # filter date range if specified
 #     if (!is.null(start_date)) {
@@ -455,21 +488,37 @@ margot_plot_slope <- function(data,
 #       }
 #     }
 #
-#     # Remove rows with NA or infinite values in any y_var
+#     # remove rows with NA or infinite values in any y_var
 #     for (var in y_vars) {
 #       df <- df %>% filter(!is.na(!!sym(var)) & is.finite(!!sym(var)))
 #     }
 #
+#     # calculate unique participants and observations after cleaning
+#     n_participants <- df %>% select(id) %>% n_distinct()
+#     n_observations <- nrow(df)
+#
+#     # sample the data if data_fraction < 1
+#     if (data_fraction < 1) {
+#       if (!is.null(seed)) {
+#         set.seed(seed)
+#       }
+#       df <- df %>% sample_frac(data_fraction)
+#
+#       # recalculate counts after sampling
+#       n_participants <- df %>% select(id) %>% n_distinct()
+#       n_observations <- nrow(df)
+#     }
+#
 #     cli::cli_alert_success("Data prepared successfully")
 #
-#     # Warning for plotting points with multiple y variables
+#     # warning for plotting points with multiple y variables
 #     if (plot_points && length(y_vars) > 1) {
 #       cli::cli_alert_warning("Plotting points with multiple y variables may result in a cluttered plot.")
 #     }
 #
 #     cli::cli_alert_info("Creating base plot...")
 #
-#     # Reshape data for plotting multiple y variables
+#     # reshape data for plotting multiple y variables
 #     df_long <- df %>%
 #       tidyr::pivot_longer(cols = all_of(unlist(y_vars)),
 #                           names_to = "variable",
@@ -486,12 +535,27 @@ margot_plot_slope <- function(data,
 #       }
 #     }
 #
+#     # generate automatic title if not provided
+#     if (is.null(title)) {
+#       year_range <- range(df$year, na.rm = TRUE)
+#       title <- sprintf("Slope Plot for %s\nN = %s participants, %s observations; years %.0f - %.0f",
+#                        paste(transform_label(unlist(y_vars)), collapse = ", "),
+#                        format(n_participants, big.mark = ","),
+#                        format(n_observations, big.mark = ","),
+#                        year_range[1], year_range[2])
+#     }
+#
+#     # recycle colors
+#     n_vars <- length(unique(df_long$variable))
+#     recycled_colors <- rep_len(color_palette, n_vars)
+#
 #     # create the ggplot
 #     p <- ggplot(df_long, aes(x = timeline, y = value, color = variable)) +
 #       geom_smooth(method = "lm", se = FALSE) +  # add linear trend lines
 #       theme_classic() +
-#       scale_color_manual(values = modified_okabe_ito_colors,
-#                          name = "Variables") +
+#       scale_color_manual(values = recycled_colors,
+#                          name = "Variables",
+#                          labels = transform_label) +
 #       theme(
 #         legend.position = legend_position,
 #         legend.text = element_text(size = 12),
@@ -507,6 +571,12 @@ margot_plot_slope <- function(data,
 #     # add points if specified
 #     if (plot_points) {
 #       p <- p + geom_jitter(alpha = point_alpha, width = jitter_width)
+#     }
+#
+#     # add faceting if specified
+#     if (use_facets && length(y_vars) > 1) {
+#       p <- p + facet_wrap(~ variable, scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow,
+#                           labeller = as_labeller(transform_label))
 #     }
 #
 #     cli::cli_alert_success("Base plot created")

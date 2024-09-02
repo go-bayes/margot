@@ -2,7 +2,7 @@
 % Please edit documentation in R/manager_boilerplate_measures.R
 \name{manager_boilerplate_measures}
 \alias{manager_boilerplate_measures}
-\title{Manage Boilerplate Measures (DEPRECATED)}
+\title{Manage Boilerplate Measures (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 manager_boilerplate_measures(...)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_methods.R
 \name{boilerplate_methods}
 \alias{boilerplate_methods}
-\title{Generate Methods Section for a Causal Inference Study (DEPRECATED)}
+\title{Generate Methods Section for a Causal Inference Study (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_methods(...)
 }

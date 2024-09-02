@@ -1,4 +1,4 @@
-#' Generate Missing Data Handling Description (DEPRECATED)
+#' Generate Missing Data Handling Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`

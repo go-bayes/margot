@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_methods_variables.R
 \name{boilerplate_methods_variables}
 \alias{boilerplate_methods_variables}
-\title{Generate Variables Section for Methods (DEPRECATED)}
+\title{Generate Variables Section for Methods (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_methods_variables(...)
 }

@@ -1,4 +1,4 @@
-#' Generate Target Population Description (DEPRECATED)
+#' Generate Target Population Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`

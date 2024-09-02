@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_create_bibliography.R
 \name{margot_create_bibliography}
 \alias{margot_create_bibliography}
-\title{Manage Boilerplate Measures (DEPRECATED)}
+\title{Manage Boilerplate Measures (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 margot_create_bibliography(...)
 }

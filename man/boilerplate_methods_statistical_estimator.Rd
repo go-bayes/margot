@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_methods_statistical_estimator.R
 \name{boilerplate_methods_statistical_estimator}
 \alias{boilerplate_methods_statistical_estimator}
-\title{Generate Statistical Estimator Description (DEPRECATED)}
+\title{Generate Statistical Estimator Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_methods_statistical_estimator(...)
 }

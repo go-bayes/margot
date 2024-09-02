@@ -1,7 +1,7 @@
-#' Generate Causal Interventions and Contrasts Section for Methods (DEPRECATED)
+#' Generate Causal Interventions and Contrasts Section for Methods (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>))
 #'
 #' @description
-#' `r lifecycle::badge("deprecated")`
+#' `r lifecycle::badge("deprecated")`  Use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>
 #' This function is deprecated. Please use `boilerplate::boilerplate_report_causal_interventions()` instead.
 #' Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 #'

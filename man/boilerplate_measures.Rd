@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_measures.R
 \name{boilerplate_measures}
 \alias{boilerplate_measures}
-\title{Generate Appendix of Measures (DEPRECATED)}
+\title{Generate Appendix of Measures (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_measures(...)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_methods_sample.R
 \name{boilerplate_methods_sample}
 \alias{boilerplate_methods_sample}
-\title{Generate Sample Description (DEPRECATED)}
+\title{Generate Sample Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_methods_sample(...)
 }

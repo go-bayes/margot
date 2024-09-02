@@ -9,6 +9,13 @@
 * qini cost options
 * remove color package
 
+
+# [2024-09-02] margot 0.2.1.39
+
+## Improved
+- `margot_plot_slope()` allows faceting
+
+
 # [2024-09-02] margot 0.2.1.38
 
 ## New 

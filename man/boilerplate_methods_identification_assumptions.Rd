@@ -3,7 +3,7 @@
 %   R/boilerplate_methods_identification_assumptions.R
 \name{boilerplate_methods_identification_assumptions}
 \alias{boilerplate_methods_identification_assumptions}
-\title{Generate Identification Assumptions Description (DEPRECATED)}
+\title{Generate Identification Assumptions Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_methods_identification_assumptions(...)
 }
@@ -14,7 +14,7 @@ boilerplate_methods_identification_assumptions(...)
 A message indicating the function is deprecated.
 }
 \description{
-`r lifecycle::badge("deprecated")`
+`r lifecycle::badge("deprecated")`  Use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>
 This function is deprecated. Please use `boilerplate::boilerplate_report_identification_assumptions()` instead.
 Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_methods_eligibility_criteria.R
 \name{boilerplate_methods_eligibility_criteria}
 \alias{boilerplate_methods_eligibility_criteria}
-\title{Generate Eligibility Criteria Description (DEPRECATED)}
+\title{Generate Eligibility Criteria Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_methods_eligibility_criteria(...)
 }
@@ -13,7 +13,7 @@ boilerplate_methods_eligibility_criteria(...)
 A message indicating the function is deprecated.
 }
 \description{
-`r lifecycle::badge("deprecated")`
+`r lifecycle::badge("deprecated")`  Use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>
 This function is deprecated. Please use `boilerplate::boilerplate_report_eligibility_criteria()` instead.
 Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }

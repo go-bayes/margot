@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_methods_target_population.R
 \name{boilerplate_methods_target_population}
 \alias{boilerplate_methods_target_population}
-\title{Generate Target Population Description (DEPRECATED)}
+\title{Generate Target Population Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_methods_target_population(...)
 }

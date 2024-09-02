@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_merge_databases.R
 \name{margot_merge_databases}
 \alias{margot_merge_databases}
-\title{Merge Two Measure Databases (DEPRECATED)}
+\title{Merge Two Measure Databases (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 margot_merge_databases(...)
 }

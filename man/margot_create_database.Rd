@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_create_database.R
 \name{margot_create_database}
 \alias{margot_create_database}
-\title{Create Database of Measures (DEPRECATED)}
+\title{Create Database of Measures (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 margot_create_database(...)
 }

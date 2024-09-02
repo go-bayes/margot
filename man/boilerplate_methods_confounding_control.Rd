@@ -2,7 +2,7 @@
 % Please edit documentation in R/boilerplate_methods_confounding_control.R
 \name{boilerplate_methods_confounding_control}
 \alias{boilerplate_methods_confounding_control}
-\title{Generate Confounding Control Description (DEPRECATED)}
+\title{Generate Confounding Control Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)}
 \usage{
 boilerplate_methods_confounding_control(...)
 }
@@ -13,7 +13,7 @@ boilerplate_methods_confounding_control(...)
 A message indicating the function is deprecated.
 }
 \description{
-`r lifecycle::badge("deprecated")`
+`r lifecycle::badge("deprecated")`  Use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>
 This function is deprecated. Please use `boilerplate::boilerplate_report_confounding_control()` instead.
 Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }

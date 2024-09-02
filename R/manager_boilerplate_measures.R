@@ -1,4 +1,4 @@
-#' Manage Boilerplate Measures (DEPRECATED)
+#' Manage Boilerplate Measures (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`

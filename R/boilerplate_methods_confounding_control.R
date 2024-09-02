@@ -1,7 +1,7 @@
-#' Generate Confounding Control Description (DEPRECATED)
+#' Generate Confounding Control Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)
 #'
 #' @description
-#' `r lifecycle::badge("deprecated")`
+#' `r lifecycle::badge("deprecated")`  Use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>
 #' This function is deprecated. Please use `boilerplate::boilerplate_report_confounding_control()` instead.
 #' Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 #'

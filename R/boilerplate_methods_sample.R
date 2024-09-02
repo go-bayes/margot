@@ -1,4 +1,4 @@
-#' Generate Sample Description (DEPRECATED)
+#' Generate Sample Description (DEPRECATED, use `boilerplate` package: <https://go-bayes.github.io/boilerplate/>)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
