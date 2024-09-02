@@ -9,6 +9,14 @@
 * qini cost options
 * remove color package
 
+# [2024-09-02] margot 0.2.1.38
+
+## New 
+- `margot_plot_histogram()` new histogram that's more informative and more robust than previous attempts. Can be used for multiple variables and multiple waves. 
+
+## Improved
+- `margot_plot_boxplot()` made robust to single outcome in single wave. 
+
 # [2024-09-02] margot 0.2.1.37
 
 - `margot_plot_discontinuity()`, `margot_plot_slope()`, `margot_plot_slope_covariate()` automatically print number of unique participants and unique number of observations in the title, if no title is passed. 

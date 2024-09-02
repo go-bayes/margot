@@ -23,6 +23,7 @@ reference:
     contents:
     - margot_plot_boxplot
     - margot_plot_discontinuity
+    - margot_plot_histogram
     - margot_plot_response_timeline
     - margot_plot_slope
     - margot_plot_slope_covariate

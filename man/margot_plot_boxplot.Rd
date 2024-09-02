@@ -8,6 +8,7 @@ margot_plot_boxplot(
   data,
   y_vars,
   x_var = "wave",
+  id_col = "id",
   title = NULL,
   y_label = NULL,
   x_label = NULL,
@@ -36,7 +37,9 @@ margot_plot_boxplot(
 
 \item{x_var}{The name of the variable to be used for faceting (default is "wave").}
 
-\item{title}{The title of the plot (optional).}
+\item{id_col}{Name of the column containing unique identifiers (default is "id").}
+
+\item{title}{The title of the plot (optional, auto-generated if NULL).}
 
 \item{y_label}{The label for the y-axis (optional).}
 
@@ -48,7 +51,7 @@ margot_plot_boxplot(
 
 \item{show_points}{Logical, whether to show individual data points (default is FALSE).}
 
-\item{point_alpha}{Alpha value for data points if shown (default is 0.3).}
+\item{point_alpha}{alpha value for data points if shown (default is 0.3).}
 
 \item{point_size}{Size of data points if shown (default is 0.5).}
 
@@ -79,40 +82,5 @@ A ggplot object representing the boxplot.
 }
 \description{
 This function creates a boxplot for one or more variables, faceted by a specified variable (usually time).
-It offers various customization options for the plot appearance and layout.
-}
-\examples{
-# Example 1: Basic usage with two variables
-boxplot_basic <- margot_plot_boxplot(
-  data = your_data,
-  y_vars = list("variable1", "variable2"),
-  x_var = "wave",
-  title = "My Boxplot"
-)
-
-# Example 2: Using facet wrap with a single row
-boxplot_wrap_single_row <- margot_plot_boxplot(
-  data = your_data,
-  y_vars = list("warm_muslims", "warm_immigrants"),
-  x_var = "wave",
-  title = "Warmth Towards Muslims and Immigrants",
-  y_label = "Warmth",
-  facet_type = "wrap",
-  facet_nrow = 1,
-  width = 20,
-  height = 6,
-  save_path = here::here("path", "to", "save")
-)
-
-# Example 3: Showing individual data points
-boxplot_with_points <- margot_plot_boxplot(
-  data = your_data,
-  y_vars = list("variable1", "variable2", "variable3"),
-  x_var = "wave",
-  title = "Boxplot with Data Points",
-  show_points = TRUE,
-  point_alpha = 0.2,
-  point_size = 0.3
-)
-
+It offers various customisation options for the plot appearance and layout.
 }
