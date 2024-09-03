@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_plot_individual_responses.R
 \name{margot_plot_individual_responses}
 \alias{margot_plot_individual_responses}
-\title{Create Individual Response Plots}
+\title{Create Individual Longitudinal Response Plots}
 \usage{
 margot_plot_individual_responses(
   data,
@@ -25,7 +25,9 @@ margot_plot_individual_responses(
   wave_label_angle = 45,
   eligibility_all = FALSE,
   full_response_scale = TRUE,
-  scale_range = NULL
+  scale_range = NULL,
+  prefix = NULL,
+  jitter_amount = 0.05
 )
 }
 \arguments{
@@ -70,6 +72,10 @@ margot_plot_individual_responses(
 \item{full_response_scale}{Logical, whether to use the full response scale for the y-axis. Default is TRUE.}
 
 \item{scale_range}{An optional numeric vector of length 2 specifying the range for the y-axis. If NULL, the range is determined from the data.}
+
+\item{prefix}{An optional prefix for the saved file name.}
+
+\item{jitter_amount}{Numeric, the amount of vertical jitter to apply to points and lines. Default is 0.05. Increase to separate overlapping points/lines, decrease for more precise positioning.}
 }
 \value{
 A ggplot2 object representing the individual response plot.
@@ -100,14 +106,15 @@ plot2 <- margot_plot_individual_responses(
   seed = 123
 )
 
-# Example 3: Using full response scale with a specified range
+# Example 3: Using full response scale with a specified range and jitter
 plot3 <- margot_plot_individual_responses(
   data = your_data,
   y_vars = c("measure1", "measure2"),
   full_response_scale = TRUE,
   scale_range = c(0, 10),
   theme = theme_minimal(),
-  wave_label_angle = 90
+  wave_label_angle = 90,
+  jitter_amount = 0.03
 )
 
 # Example 4: Edge case with minimal random draws and specific settings
@@ -121,14 +128,15 @@ plot4 <- margot_plot_individual_responses(
   save_path = here::here(push_mods),
   seed = 124,
   eligibility_all = TRUE,
-  scale_range = c(0, 10)
+  scale_range = c(0, 10),
+  jitter_amount = 0.02
 )
 
 # Example 5: Using with longitudinal survey data and requiring responses in all waves
 plot5 <- margot_plot_individual_responses(
   data = survey_data,
-  y_vars = c("life_satisfaction", "health_status", "income"),
-  id_col = "respondent_id",
+  y_vars = c("life_satisfaction", "short_form_health", "perfectionism"),
+  id_col = "participant_number",
   wave_col = "survey_year",
   waves = seq(2010, 2020, by = 2),
   random_draws = 100,
@@ -137,7 +145,8 @@ plot5 <- margot_plot_individual_responses(
   x_label = "Survey Year",
   eligibility_all = TRUE,
   full_response_scale = TRUE,
-  scale_range = c(0, 100)
+  scale_range = c(0, 100),
+  jitter_amount = 0.05
 )
 }
 

@@ -1,4 +1,4 @@
-#' Create Individual Response Plots
+#' Create Individual Longitudinal Response Plots
 #'
 #' This function creates a ggplot2 visualization of individual responses over time for one or more variables.
 #' It allows for flexible data filtering, sampling, and customization of the plot appearance.
@@ -24,6 +24,8 @@
 #' @param eligibility_all Logical, whether to require responses in all waves (TRUE) or at least one wave (FALSE). Default is FALSE.
 #' @param full_response_scale Logical, whether to use the full response scale for the y-axis. Default is TRUE.
 #' @param scale_range An optional numeric vector of length 2 specifying the range for the y-axis. If NULL, the range is determined from the data.
+#' @param prefix An optional prefix for the saved file name.
+#' @param jitter_amount Numeric, the amount of vertical jitter to apply to points and lines. Default is 0.05. Increase to separate overlapping points/lines, decrease for more precise positioning.
 #'
 #' @return A ggplot2 object representing the individual response plot.
 #'
@@ -54,14 +56,15 @@
 #'   seed = 123
 #' )
 #'
-#' # Example 3: Using full response scale with a specified range
+#' # Example 3: Using full response scale with a specified range and jitter
 #' plot3 <- margot_plot_individual_responses(
 #'   data = your_data,
 #'   y_vars = c("measure1", "measure2"),
 #'   full_response_scale = TRUE,
 #'   scale_range = c(0, 10),
 #'   theme = theme_minimal(),
-#'   wave_label_angle = 90
+#'   wave_label_angle = 90,
+#'   jitter_amount = 0.03
 #' )
 #'
 #' # Example 4: Edge case with minimal random draws and specific settings
@@ -75,14 +78,15 @@
 #'   save_path = here::here(push_mods),
 #'   seed = 124,
 #'   eligibility_all = TRUE,
-#'   scale_range = c(0, 10)
+#'   scale_range = c(0, 10),
+#'   jitter_amount = 0.02
 #' )
 #'
 #' # Example 5: Using with longitudinal survey data and requiring responses in all waves
 #' plot5 <- margot_plot_individual_responses(
 #'   data = survey_data,
-#'   y_vars = c("life_satisfaction", "health_status", "income"),
-#'   id_col = "respondent_id",
+#'   y_vars = c("life_satisfaction", "short_form_health", "perfectionism"),
+#'   id_col = "participant_number",
 #'   wave_col = "survey_year",
 #'   waves = seq(2010, 2020, by = 2),
 #'   random_draws = 100,
@@ -91,7 +95,8 @@
 #'   x_label = "Survey Year",
 #'   eligibility_all = TRUE,
 #'   full_response_scale = TRUE,
-#'   scale_range = c(0, 100)
+#'   scale_range = c(0, 100),
+#'   jitter_amount = 0.05
 #' )
 #' }
 #'
@@ -116,11 +121,13 @@ margot_plot_individual_responses <- function(data,
                                              wave_label_angle = 45,
                                              eligibility_all = FALSE,
                                              full_response_scale = TRUE,
-                                             scale_range = NULL) {
+                                             scale_range = NULL,
+                                             prefix = NULL,
+                                             jitter_amount = 0.05) {
 
   cli::cli_h1("Margot Plot Individual Responses")
 
-  # check for required columns
+  # Check for required columns
   required_cols <- c(id_col, wave_col, y_vars)
   if (!all(required_cols %in% colnames(data))) {
     missing_cols <- setdiff(required_cols, colnames(data))
@@ -128,63 +135,45 @@ margot_plot_individual_responses <- function(data,
     return(NULL)
   }
 
-  # prepare the data
+  # Prepare the data
   cli::cli_alert_info("Preparing data...")
 
-  # filter waves if specified
+  # Filter waves if specified
   if (!is.null(waves)) {
-    cli::cli_alert_info("Filtering waves...")
     data <- data[data[[wave_col]] %in% waves, ]
   }
 
-  # determine number of waves
+  # Determine number of waves
   unique_waves <- unique(data[[wave_col]])
   num_waves <- length(unique_waves)
 
-  # calculate eligibility
+  # Calculate eligibility
   cli::cli_alert_info("Calculating eligibility...")
 
-  # optimise eligibility calculation
-  eligibility_data <- data %>%
-    group_by(!!sym(id_col)) %>%
-    summarize(across(all_of(c(wave_col, y_vars)),
-                     list(responded = ~sum(!is.na(.)),
-                          waves = ~n_distinct(!!sym(wave_col)))),
-              .groups = "drop")
-
-  # set up progress bar
-  total_steps <- nrow(eligibility_data)
-  cli::cli_progress_bar(
-    total = total_steps,
-    format = "{cli::pb_spin} Calculating eligibility: {cli::pb_current}/{cli::pb_total} [{cli::pb_bar}] ETA: {cli::pb_eta}",
-    clear = FALSE
-  )
-
-  # calculate eligibility with progress updates
-  eligible_ids_one_wave <- c()
-  eligible_ids_all_waves <- c()
-
-  for (i in seq_len(nrow(eligibility_data))) {
-    row <- eligibility_data[i, ]
-
-    if (any(row[, grepl("_responded$", names(row))] > 0)) {
-      eligible_ids_one_wave <- c(eligible_ids_one_wave, row[[id_col]])
+  # Function to check if an ID meets the eligibility criteria
+  check_eligibility <- function(id_data) {
+    if (eligibility_all) {
+      all(!is.na(id_data[, y_vars])) && nrow(id_data) == num_waves
+    } else {
+      all(sapply(y_vars, function(var) any(!is.na(id_data[[var]]))))
     }
-
-    if (all(row[, grepl("_responded$", names(row))] == row[[paste0(wave_col, "_waves")]])) {
-      eligible_ids_all_waves <- c(eligible_ids_all_waves, row[[id_col]])
-    }
-
-    cli::cli_progress_update()
   }
 
-  cli::cli_progress_done()
+  # Apply eligibility criteria
+  eligible_ids <- data %>%
+    group_by(!!sym(id_col)) %>%
+    group_map(~ if(check_eligibility(.x)) .y[[id_col]] else NULL) %>%
+    unlist()
 
-  # select the appropriate eligible IDs based on eligibility_all
-  eligible_ids <- if (eligibility_all) eligible_ids_all_waves else eligible_ids_one_wave
   data <- data[data[[id_col]] %in% eligible_ids, ]
 
-  # sample IDs if data_fraction < 1 or random_draws is specified
+  # Check if there's any data left after filtering
+  if (nrow(data) == 0) {
+    cli::cli_alert_danger("No data left after applying eligibility criteria.")
+    return(NULL)
+  }
+
+  # Sample IDs if data_fraction < 1 or random_draws is specified
   if (data_fraction < 1 || !is.null(random_draws)) {
     cli::cli_alert_info("Sampling IDs...")
     if (!is.null(seed)) set.seed(seed)
@@ -205,52 +194,27 @@ margot_plot_individual_responses <- function(data,
   cli::cli_alert_info("Pivoting data...")
   df <- tidyr::pivot_longer(data, cols = all_of(y_vars), names_to = "variable", values_to = "value")
 
-  cli::cli_alert_info("Formatting variable names...")
+  # Remove rows with missing values
+  df <- df[!is.na(df$value), ]
+
   df$variable <- gsub("_", " ", df$variable)
   df$variable <- tools::toTitleCase(df$variable)
 
-  cli::cli_alert_info("Removing NA values...")
-  df <- df[!is.na(df$value), ]
-
-  # determine eligible cases
-  cli::cli_alert_info("Determining eligible cases...")
-  eligible_count_one_wave <- length(eligible_ids_one_wave)
-  eligible_count_all_waves <- length(eligible_ids_all_waves)
-  total_ids <- length(unique(data[[id_col]]))
-
-  eligibility_percentage <- if (eligibility_all) {
-    (eligible_count_all_waves / eligible_count_one_wave) * 100
-  } else {
-    (eligible_count_one_wave / total_ids) * 100
-  }
-
-  eligibility_message <- sprintf(
-    "Eligibility:\n- %d out of %d IDs (%.2f%%) responded in at least one wave.\n- %d out of %d IDs (%.2f%%) responded in all waves.\nCriteria used: Responded to %s in %d total waves.",
-    eligible_count_one_wave, total_ids, (eligible_count_one_wave / total_ids) * 100,
-    eligible_count_all_waves, eligible_count_one_wave, (eligible_count_all_waves / eligible_count_one_wave) * 100,
-    if (eligibility_all) "all variables in all waves" else "at least one variable in at least one wave",
-    num_waves
-  )
-  cli::cli_alert_info(eligibility_message)
-
-
-  # determine y-axis limits if full_response_scale is TRUE
+  # Determine y-axis limits if full_response_scale is TRUE
   if (full_response_scale) {
     cli::cli_alert_info("Calculating response scale limits...")
-
     if (is.null(scale_range)) {
-      # if scale_range is not provided, use the observed ranges in the data
-      y_limits <- range(sapply(y_vars, function(var) range(data[[var]], na.rm = TRUE)))
-      cli::cli_alert_info("No scale_range provided. Using observed data range: {y_limits[1]} to {y_limits[2]}")
+      y_limits <- range(df$value, na.rm = TRUE, finite = TRUE)
+      if (!all(is.finite(y_limits))) {
+        cli::cli_alert_warning("Unable to determine y-axis limits from data. Using default range 0 to 1.")
+        y_limits <- c(0, 1)
+      }
     } else {
-      # verify that scale_range is correctly specified
       if (length(scale_range) != 2 || !is.numeric(scale_range) || scale_range[1] >= scale_range[2]) {
-        cli::cli_alert_danger("Invalid scale_range. Using observed data range.")
-        y_limits <- range(sapply(y_vars, function(var) range(data[[var]], na.rm = TRUE)))
+        cli::cli_alert_danger("Invalid scale_range. Using default range 0 to 1.")
+        y_limits <- c(0, 1)
       } else {
-        # use the provided scale range
         y_limits <- scale_range
-        cli::cli_alert_info("Using provided scale range: {y_limits[1]} to {y_limits[2]}")
       }
     }
   }
@@ -259,8 +223,14 @@ margot_plot_individual_responses <- function(data,
   cli::cli_alert_info("Creating plot...")
 
   p <- ggplot(df, aes(x = !!sym(wave_col), y = value, color = variable, group = interaction(!!sym(id_col), variable))) +
-    geom_point() +
-    geom_line(data = function(d) d[ave(seq_along(d$value), d[[id_col]], d$variable, FUN = length) > 1, ]) +
+    geom_point(position = position_jitter(height = jitter_amount, width = 0)) +
+    geom_line(position = position_jitter(height = jitter_amount, width = 0),
+              data = function(d) {
+                d %>%
+                  group_by(!!sym(id_col), variable) %>%
+                  filter(n() > 1) %>%
+                  ungroup()
+              }) +
     facet_wrap(as.formula(paste("~", id_col))) +
     theme +
     theme(axis.text.x = element_text(angle = wave_label_angle, hjust = 1)) +
@@ -271,8 +241,10 @@ margot_plot_individual_responses <- function(data,
 
   # Apply y-axis limits if full_response_scale is TRUE
   if (full_response_scale) {
-    p <- p + coord_cartesian(ylim = y_limits)
+    y_range <- diff(y_limits)
+    p <- p + coord_cartesian(ylim = c(y_limits[1] - y_range * 0.05, y_limits[2] + y_range * 0.05))
   }
+
 
   # Apply color palette
   if (is.null(color_palette)) {
@@ -281,27 +253,46 @@ margot_plot_individual_responses <- function(data,
   }
   p <- p + scale_color_manual(values = color_palette)
 
-  cli::cli_alert_success("Plot created successfully \U0001F44D")
-
-  # save plot if a save path is provided
+  # Save plot if a save path is provided
   if (!is.null(save_path)) {
     cli::cli_alert_info("Saving plot...")
-    filename <- "individual_responses_plot"
-    if (include_timestamp) {
-      filename <- paste0(filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"))
-    }
-    full_path <- file.path(save_path, paste0(filename, ".png"))
-    ggsave(
-      plot = p,
-      filename = full_path,
-      width = width,
-      height = height,
-      units = "in",
-      dpi = 300
-    )
-    cli::cli_alert_success("Plot saved successfully \U0001F44D")
-    cli::cli_alert_info("File saved at: {.file {full_path}}")
+    tryCatch({
+      filename <- "individual_responses_plot"
+
+      if (!is.null(prefix) && nzchar(prefix)) {
+        filename <- paste0(prefix, "_", filename)
+      }
+
+      filename <- paste0(filename, "_", paste(y_vars, collapse = "_"))
+
+      if (include_timestamp) {
+        filename <- paste0(filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"))
+      }
+
+      full_path_png <- file.path(save_path, paste0(filename, ".png"))
+      ggsave(
+        plot = p,
+        filename = full_path_png,
+        width = width,
+        height = height,
+        units = "in",
+        dpi = 300
+      )
+      cli::cli_alert_success("Plot saved as PNG: {.file {full_path_png}}")
+
+      margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+      full_path_qs <- file.path(save_path, paste0(filename, ".qs"))
+      cli::cli_alert_success("Plot object saved using qs: {.file {full_path_qs}}")
+
+    }, error = function(e) {
+      cli::cli_alert_danger("An error occurred while saving the plot: {conditionMessage(e)}")
+    })
+  } else {
+    cli::cli_alert_info("No save path provided. Plot not saved.")
   }
 
+  cli::cli_alert_success("Plot created successfully \U0001F44D")
+
+  # Return the plot object directly
   return(p)
 }

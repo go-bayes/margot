@@ -9,7 +9,17 @@
 * qini cost options
 * remove color package
 
+# [2024-09-02] margot 0.2.1.42
+
+## Improved
+
+- `margot_plot_individual_responses()`. Now handles factors, and robust to missing waves. 
+- `margot_plot_boxplot()` different colours for boxplots if a single variable is passed over multiple waves. 
+
 # [2024-09-02] margot 0.2.1.41
+
+
+## New features
 
 - `margot_plot_individual_responses()`. New function to allow random plotting of responses in a subset of the sample, useful for investigating individual trajectories of change. 
 - `margot_plot_boxplot()` Now user supplies `wave` values, allowing more flexible and precise plotting of intervals. Has optional prefixes. The coordinates of the graph may be optionally flipped.

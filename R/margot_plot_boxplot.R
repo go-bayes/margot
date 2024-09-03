@@ -113,13 +113,22 @@ margot_plot_boxplot <- function(data,
     # prepare the data
     df <- data
 
-    # filter waves if specified, otherwise use all waves
-    if (!is.null(waves)) {
-      df <- df %>% filter(wave %in% waves)
+    # ensure wave column is present
+    if (!"wave" %in% names(df)) {
+      stop("The 'wave' column is missing from the data.")
     }
 
-    # convert wave to factor
-    df$wave <- as.factor(df$wave)
+    # convert wave to factor and ensure all specified waves are included
+    if (!is.null(waves)) {
+      df$wave <- factor(df$wave, levels = waves)
+    } else {
+      df$wave <- as.factor(df$wave)
+    }
+
+    # filter waves if specified
+    if (!is.null(waves)) {
+      df <- df %>% dplyr::filter(wave %in% waves)
+    }
 
     # ensure y_vars is a character vector
     if (!is.character(y_vars)) {
@@ -143,10 +152,10 @@ margot_plot_boxplot <- function(data,
 
     # remove NAs and count participants who responded to at least one outcome of interest
     df_long <- df_long %>%
-      filter(!is.na(value) & is.finite(value))
+      dplyr::filter(!is.na(value) & is.finite(value))
 
     # count total unique participants
-    total_unique <- n_distinct(df_long[[id_col]])
+    total_unique <- dplyr::n_distinct(df_long[[id_col]])
 
     # calculate total observations
     total_obs <- nrow(df_long)
@@ -177,38 +186,67 @@ margot_plot_boxplot <- function(data,
     n_vars <- length(y_vars)
 
     # explicitly recycle colors
-    recycled_colors <- rep_len(modified_okabe_ito_colors, length.out = n_vars)
+    recycled_colors <- rep_len(modified_okabe_ito_colors, length.out = max(n_vars, nlevels(df_long$wave)))
 
     cli::cli_alert_success("Data prepared successfully")
 
     cli::cli_alert_info("Creating plot...")
 
     # create the ggplot
-    p <- ggplot(df_long, aes(x = wave, y = value, fill = variable)) +
-      geom_boxplot(...) +
-      theme_minimal() +
-      scale_fill_manual(values = recycled_colors, labels = formatted_labels) +
-      theme(
-        legend.position = legend_position,
-        legend.text = element_text(size = 10),
-        legend.title = element_text(size = 12),
-        axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
-        strip.text = element_text(size = 10),
-        panel.spacing = unit(0.2, "lines")
-      ) +
-      labs(
-        title = title,
-        y = y_label %||% "Value",
-        x = x_label,
-        fill = "Variable"
-      ) +
-      scale_y_continuous(limits = y_limits) +
-      facet_wrap(~ variable, scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow)
+    if (n_vars == 1) {
+      p <- ggplot(df_long, aes(x = wave, y = value, fill = wave)) +
+        geom_boxplot(...) +
+        theme_minimal() +
+        scale_fill_manual(values = recycled_colors) +
+        scale_x_discrete(drop = FALSE) +  # Force all levels to be shown
+        theme(
+          legend.position = legend_position,
+          legend.text = element_text(size = 10),
+          legend.title = element_text(size = 12),
+          axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+          strip.text = element_text(size = 10),
+          panel.spacing = unit(0.2, "lines")
+        ) +
+        labs(
+          title = title,
+          y = y_label %||% formatted_labels[y_vars],
+          x = x_label,
+          fill = "Wave"
+        )
+    } else {
+      p <- ggplot(df_long, aes(x = wave, y = value, fill = variable)) +
+        geom_boxplot(...) +
+        theme_minimal() +
+        scale_fill_manual(values = recycled_colors, labels = formatted_labels) +
+        scale_x_discrete(drop = FALSE) +  # Force all levels to be shown
+        theme(
+          legend.position = legend_position,
+          legend.text = element_text(size = 10),
+          legend.title = element_text(size = 12),
+          axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+          strip.text = element_text(size = 10),
+          panel.spacing = unit(0.2, "lines")
+        ) +
+        labs(
+          title = title,
+          y = y_label %||% "Value",
+          x = x_label,
+          fill = "Variable"
+        ) +
+        facet_wrap(~ variable, scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow)
+    }
+
+    p <- p + scale_y_continuous(limits = y_limits)
 
     # add points if requested
     if (show_points) {
-      p <- p + geom_jitter(aes(color = variable), width = 0.2, alpha = point_alpha, size = point_size) +
-        scale_color_manual(values = recycled_colors, labels = formatted_labels)
+      if (n_vars == 1) {
+        p <- p + geom_jitter(aes(color = wave), width = 0.2, alpha = point_alpha, size = point_size) +
+          scale_color_manual(values = recycled_colors)
+      } else {
+        p <- p + geom_jitter(aes(color = variable), width = 0.2, alpha = point_alpha, size = point_size) +
+          scale_color_manual(values = recycled_colors, labels = formatted_labels)
+      }
     }
 
     # flip coordinates if requested
