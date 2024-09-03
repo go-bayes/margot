@@ -61,25 +61,28 @@ margot_plot_batch_rate <- function(models_binary,
 
   # Loop through each model
   for (model_name in model_names) {
-    tryCatch({
-      # Extract rate result
-      rate_result <- models_binary$results[[model_name]]$rate_result
+    tryCatch(
+      {
+        # Extract rate result
+        rate_result <- models_binary$results[[model_name]]$rate_result
 
-      # Create RATE plot
-      plot <- margot::margot_plot_rate(rate_result)
+        # Create RATE plot
+        plot <- margot::margot_plot_rate(rate_result)
 
-      # Store plot in list
-      rate_plots[[model_name]] <- plot
+        # Store plot in list
+        rate_plots[[model_name]] <- plot
 
-      # Save plot if requested
-      if (save_plots) {
-        file_name <- file.path(output_dir, paste0(model_name, "_rate_plot.png"))
-        ggplot2::ggsave(file_name, plot, dpi = dpi, width = width, height = height)
-        message("Saved ", file_name)
+        # Save plot if requested
+        if (save_plots) {
+          file_name <- file.path(output_dir, paste0(model_name, "_rate_plot.png"))
+          ggplot2::ggsave(file_name, plot, dpi = dpi, width = width, height = height)
+          message("Saved ", file_name)
+        }
+      },
+      error = function(e) {
+        warning("Error processing model ", model_name, ": ", e$message)
       }
-    }, error = function(e) {
-      warning("Error processing model ", model_name, ": ", e$message)
-    })
+    )
   }
 
   return(rate_plots)

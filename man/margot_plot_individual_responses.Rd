@@ -11,7 +11,7 @@ margot_plot_individual_responses(
   wave_col = "wave",
   waves = NULL,
   data_fraction = 1,
-  random_draws = NULL,
+  random_draws = 100,
   title = NULL,
   y_label = NULL,
   x_label = NULL,
@@ -23,11 +23,11 @@ margot_plot_individual_responses(
   height = 8,
   seed = NULL,
   wave_label_angle = 45,
-  eligibility_all = FALSE,
   full_response_scale = TRUE,
   scale_range = NULL,
   prefix = NULL,
-  jitter_amount = 0.05
+  jitter_amount = 0.05,
+  legend_position = "top"
 )
 }
 \arguments{
@@ -67,15 +67,15 @@ margot_plot_individual_responses(
 
 \item{wave_label_angle}{The angle of the x-axis labels in degrees. Default is 45.}
 
-\item{eligibility_all}{Logical, whether to require responses in all waves (TRUE) or at least one wave (FALSE). Default is FALSE.}
-
 \item{full_response_scale}{Logical, whether to use the full response scale for the y-axis. Default is TRUE.}
 
 \item{scale_range}{An optional numeric vector of length 2 specifying the range for the y-axis. If NULL, the range is determined from the data.}
 
 \item{prefix}{An optional prefix for the saved file name.}
 
-\item{jitter_amount}{Numeric, the amount of vertical jitter to apply to points and lines. Default is 0.05. Increase to separate overlapping points/lines, decrease for more precise positioning.}
+\item{jitter_amount}{Numeric, the amount of vertical jitter to apply to points and lines. Default is 0.05.}
+
+\item{legend_position}{The position of the legend. Default is "top".}
 }
 \value{
 A ggplot2 object representing the individual response plot.
@@ -106,7 +106,7 @@ plot2 <- margot_plot_individual_responses(
   seed = 123
 )
 
-# Example 3: Using full response scale with a specified range and jitter
+# Example 3: Customizing plot appearance and saving
 plot3 <- margot_plot_individual_responses(
   data = your_data,
   y_vars = c("measure1", "measure2"),
@@ -114,39 +114,10 @@ plot3 <- margot_plot_individual_responses(
   scale_range = c(0, 10),
   theme = theme_minimal(),
   wave_label_angle = 90,
-  jitter_amount = 0.03
-)
-
-# Example 4: Edge case with minimal random draws and specific settings
-plot4 <- margot_plot_individual_responses(
-  data = dat_long_table,
-  y_vars = outcome_vars,
-  id_col = "id",
-  waves = c("2020", "2021", "2022"),
-  random_draws = 2,
-  theme = theme_classic(),
-  save_path = here::here(push_mods),
-  seed = 124,
-  eligibility_all = TRUE,
-  scale_range = c(0, 10),
-  jitter_amount = 0.02
-)
-
-# Example 5: Using with longitudinal survey data and requiring responses in all waves
-plot5 <- margot_plot_individual_responses(
-  data = survey_data,
-  y_vars = c("life_satisfaction", "short_form_health", "perfectionism"),
-  id_col = "participant_number",
-  wave_col = "survey_year",
-  waves = seq(2010, 2020, by = 2),
-  random_draws = 100,
-  title = "Changes in Life Measures (2010-2020)",
-  y_label = "Measure Value",
-  x_label = "Survey Year",
-  eligibility_all = TRUE,
-  full_response_scale = TRUE,
-  scale_range = c(0, 100),
-  jitter_amount = 0.05
+  jitter_amount = 0.03,
+  legend_position = "bottom",
+  save_path = "path/to/save",
+  prefix = "custom_plot"
 )
 }
 

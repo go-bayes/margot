@@ -48,7 +48,9 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
 
   # helper function to format p-values
   format_pval <- function(p) {
-    if (p < 0.001) return(sprintf("%.2e", p))
+    if (p < 0.001) {
+      return(sprintf("%.2e", p))
+    }
     return(sprintf("%.3f", p))
   }
 
@@ -63,20 +65,20 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
     data.frame(
       outcome = outcome,
       mean_prediction = glue::glue("{round(calib['mean.forest.prediction', 'Estimate'], 2)} ({round(calib['mean.forest.prediction', 'Std. Error'], 2)})"),
-      mean_prediction_estimate = round(calib['mean.forest.prediction', 'Estimate'], 2),
-      mean_prediction_se = round(calib['mean.forest.prediction', 'Std. Error'], 2),
-      mean_prediction_t = round(calib['mean.forest.prediction', 'Estimate'] / calib['mean.forest.prediction', 'Std. Error'], 2),
-      mean_prediction_p = calib['mean.forest.prediction', 'Pr(>t)'],
+      mean_prediction_estimate = round(calib["mean.forest.prediction", "Estimate"], 2),
+      mean_prediction_se = round(calib["mean.forest.prediction", "Std. Error"], 2),
+      mean_prediction_t = round(calib["mean.forest.prediction", "Estimate"] / calib["mean.forest.prediction", "Std. Error"], 2),
+      mean_prediction_p = calib["mean.forest.prediction", "Pr(>t)"],
       differential_prediction = glue::glue("{round(calib['differential.forest.prediction', 'Estimate'], 2)} ({round(calib['differential.forest.prediction', 'Std. Error'], 2)})"),
-      differential_prediction_estimate = round(calib['differential.forest.prediction', 'Estimate'], 2),
-      differential_prediction_se = round(calib['differential.forest.prediction', 'Std. Error'], 2),
-      differential_prediction_t = round(calib['differential.forest.prediction', 'Estimate'] / calib['differential.forest.prediction', 'Std. Error'], 2),
-      differential_prediction_p = calib['differential.forest.prediction', 'Pr(>t)']
+      differential_prediction_estimate = round(calib["differential.forest.prediction", "Estimate"], 2),
+      differential_prediction_se = round(calib["differential.forest.prediction", "Std. Error"], 2),
+      differential_prediction_t = round(calib["differential.forest.prediction", "Estimate"] / calib["differential.forest.prediction", "Std. Error"], 2),
+      differential_prediction_p = calib["differential.forest.prediction", "Pr(>t)"]
     )
   })
 
   # extract test calibration results
-  calibration_results <- purrr::map_dfr(outcome_vars, ~safe_extract(.x)$result)
+  calibration_results <- purrr::map_dfr(outcome_vars, ~ safe_extract(.x)$result)
 
   # interpretations based on detail level
   create_interpretation <- function(result) {
@@ -106,7 +108,7 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
 
   general_statement <- "Test calibration of the forest computes the best linear fit using (1) forest predictions on held-out data and (2) the mean forest prediction as regressors, with one-sided heteroskedasticity-robust (HC3) SEs. A coefficient of 1 for the mean forest prediction suggests that the mean prediction is accurate for the held-out data. A coefficient of 1 for the differential forest prediction suggests that the heterogeneity estimates are well calibrated. The p-value of the differential forest prediction coefficient acts as an omnibus test for the presence of heterogeneity."
 
-  interpretations <- purrr::map_chr(1:nrow(calibration_results), ~create_interpretation(calibration_results[.x, ]))
+  interpretations <- purrr::map_chr(1:nrow(calibration_results), ~ create_interpretation(calibration_results[.x, ]))
   interpretations <- c(general_statement, interpretations)
 
   # create a formatted summary table

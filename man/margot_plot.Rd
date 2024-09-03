@@ -86,25 +86,26 @@ print(result$transformed_table)
 
 # Create a Margot plot with custom options and label mapping
 custom_result <- margot_plot(sample_data,
-                             type = "RD",
-                             title_binary = "Custom Margot Plot",
-                             options = list(
-                               remove_tx_prefix = TRUE,
-                               remove_z_suffix = TRUE,
-                               use_title_case = TRUE,
-                               remove_underscores = TRUE,
-                               save_plot = TRUE,
-                               save_plot_options = list(
-                                 filename = "custom_margot_plot.png",
-                                 width = 12,
-                                 height = 8,
-                                 dpi = 300
-                               )
-                             ),
-                             label_mapping = list(
-                               "t1_outcome_a_z" = "Custom Label A",
-                               "t2_outcome_b_z" = "Custom Label B"
-                             ))
+  type = "RD",
+  title_binary = "Custom Margot Plot",
+  options = list(
+    remove_tx_prefix = TRUE,
+    remove_z_suffix = TRUE,
+    use_title_case = TRUE,
+    remove_underscores = TRUE,
+    save_plot = TRUE,
+    save_plot_options = list(
+      filename = "custom_margot_plot.png",
+      width = 12,
+      height = 8,
+      dpi = 300
+    )
+  ),
+  label_mapping = list(
+    "t1_outcome_a_z" = "Custom Label A",
+    "t2_outcome_b_z" = "Custom Label B"
+  )
+)
 print(custom_result$plot)
 cat(custom_result$interpretation)
 print(custom_result$transformed_table)

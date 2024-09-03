@@ -46,37 +46,45 @@
 #' )
 #'
 #' # Basic usage with all waves
-#' p1 <- margot_plot_boxplot(data = your_data,
-#'                           y_vars = outcome_vars,
-#'                           id_col = "id")
+#' p1 <- margot_plot_boxplot(
+#'   data = your_data,
+#'   y_vars = outcome_vars,
+#'   id_col = "id"
+#' )
 #'
 #' # Plotting specific waves with points shown and coordinates flipped
-#' p2 <- margot_plot_boxplot(data = your_data,
-#'                           y_vars = outcome_vars,
-#'                           waves = c(2021, 2022),
-#'                           show_points = TRUE,
-#'                           coord_flip = TRUE,
-#'                           id_col = "id")
+#' p2 <- margot_plot_boxplot(
+#'   data = your_data,
+#'   y_vars = outcome_vars,
+#'   waves = c(2021, 2022),
+#'   show_points = TRUE,
+#'   coord_flip = TRUE,
+#'   id_col = "id"
+#' )
 #'
 #' # Saving the plot with a custom prefix
-#' margot_plot_boxplot(data = your_data,
-#'                     y_vars = outcome_vars,
-#'                     waves = c(2021, 2022, 2023),
-#'                     save_path = "path/to/save",
-#'                     prefix = "climate_change",
-#'                     include_timestamp = TRUE,
-#'                     id_col = "id")
+#' margot_plot_boxplot(
+#'   data = your_data,
+#'   y_vars = outcome_vars,
+#'   waves = c(2021, 2022, 2023),
+#'   save_path = "path/to/save",
+#'   prefix = "climate_change",
+#'   include_timestamp = TRUE,
+#'   id_col = "id"
+#' )
 #'
 #' # Customizing the plot appearance with flipped coordinates
-#' p3 <- margot_plot_boxplot(data = your_data,
-#'                           y_vars = c("env_climate_chg_concern", "envefficacy"),
-#'                           waves = c(2021, 2022),
-#'                           title = "Climate Change Concern and Efficacy",
-#'                           y_label = "Score",
-#'                           legend_position = "right",
-#'                           facet_scales = "free",
-#'                           coord_flip = TRUE,
-#'                           id_col = "id")
+#' p3 <- margot_plot_boxplot(
+#'   data = your_data,
+#'   y_vars = c("env_climate_chg_concern", "envefficacy"),
+#'   waves = c(2021, 2022),
+#'   title = "Climate Change Concern and Efficacy",
+#'   y_label = "Score",
+#'   legend_position = "right",
+#'   facet_scales = "free",
+#'   coord_flip = TRUE,
+#'   id_col = "id"
+#' )
 #' }
 #'
 #' @export
@@ -93,7 +101,7 @@ margot_plot_boxplot <- function(data,
                                 include_timestamp = FALSE,
                                 save_path = NULL,
                                 prefix = NULL,
-                                width = 16,
+                                width = 12,
                                 height = 8,
                                 legend_position = "bottom",
                                 y_limits = NULL,
@@ -104,203 +112,212 @@ margot_plot_boxplot <- function(data,
                                 ...) {
   cli::cli_h1("Margot Plot Boxplot")
 
-  tryCatch({
-    cli::cli_alert_info("Preparing data...")
-    # define color palette
-    modified_okabe_ito_colors <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
-                                   "#D55E00", "#CC79A7", "#000000", "#999999")
-
-    # prepare the data
-    df <- data
-
-    # ensure wave column is present
-    if (!"wave" %in% names(df)) {
-      stop("The 'wave' column is missing from the data.")
-    }
-
-    # convert wave to factor and ensure all specified waves are included
-    if (!is.null(waves)) {
-      df$wave <- factor(df$wave, levels = waves)
-    } else {
-      df$wave <- as.factor(df$wave)
-    }
-
-    # filter waves if specified
-    if (!is.null(waves)) {
-      df <- df %>% dplyr::filter(wave %in% waves)
-    }
-
-    # ensure y_vars is a character vector
-    if (!is.character(y_vars)) {
-      y_vars <- as.character(y_vars)
-    }
-
-    # function to convert to title case and remove underscores
-    format_label <- function(x) {
-      stringr::str_to_title(gsub("_", " ", x))
-    }
-
-    # create a named vector for label formatting
-    formatted_labels <- setNames(sapply(y_vars, format_label), y_vars)
-
-    # reshape data for plotting multiple y variables
-    df_long <- df %>%
-      tidyr::pivot_longer(cols = all_of(y_vars),
-                          names_to = "variable",
-                          values_to = "value") %>%
-      mutate(variable = factor(variable, levels = y_vars, labels = formatted_labels[y_vars]))
-
-    # remove NAs and count participants who responded to at least one outcome of interest
-    df_long <- df_long %>%
-      dplyr::filter(!is.na(value) & is.finite(value))
-
-    # count total unique participants
-    total_unique <- dplyr::n_distinct(df_long[[id_col]])
-
-    # calculate total observations
-    total_obs <- nrow(df_long)
-
-    # determine the title
-    if (is.null(title)) {
-      title <- sprintf("Distribution of %s by Wave\nTotal N = %d unique participants, %d observations",
-                       paste(formatted_labels, collapse = ", "),
-                       total_unique, total_obs)
-    }
-
-    if (include_timestamp) {
-      title <- paste(title, format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
-    }
-
-    # determine y-axis limits
-    if (is.null(y_limits)) {
-      y_min <- min(df_long$value, na.rm = TRUE)
-      y_max <- max(df_long$value, na.rm = TRUE)
-      if (y_min >= 1 && y_max <= 7) {
-        y_limits <- c(1, 7)
-      } else {
-        y_limits <- c(y_min, y_max)
-      }
-    }
-
-    # determine the number of unique variables
-    n_vars <- length(y_vars)
-
-    # explicitly recycle colors
-    recycled_colors <- rep_len(modified_okabe_ito_colors, length.out = max(n_vars, nlevels(df_long$wave)))
-
-    cli::cli_alert_success("Data prepared successfully")
-
-    cli::cli_alert_info("Creating plot...")
-
-    # create the ggplot
-    if (n_vars == 1) {
-      p <- ggplot(df_long, aes(x = wave, y = value, fill = wave)) +
-        geom_boxplot(...) +
-        theme_minimal() +
-        scale_fill_manual(values = recycled_colors) +
-        scale_x_discrete(drop = FALSE) +  # Force all levels to be shown
-        theme(
-          legend.position = legend_position,
-          legend.text = element_text(size = 10),
-          legend.title = element_text(size = 12),
-          axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
-          strip.text = element_text(size = 10),
-          panel.spacing = unit(0.2, "lines")
-        ) +
-        labs(
-          title = title,
-          y = y_label %||% formatted_labels[y_vars],
-          x = x_label,
-          fill = "Wave"
-        )
-    } else {
-      p <- ggplot(df_long, aes(x = wave, y = value, fill = variable)) +
-        geom_boxplot(...) +
-        theme_minimal() +
-        scale_fill_manual(values = recycled_colors, labels = formatted_labels) +
-        scale_x_discrete(drop = FALSE) +  # Force all levels to be shown
-        theme(
-          legend.position = legend_position,
-          legend.text = element_text(size = 10),
-          legend.title = element_text(size = 12),
-          axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
-          strip.text = element_text(size = 10),
-          panel.spacing = unit(0.2, "lines")
-        ) +
-        labs(
-          title = title,
-          y = y_label %||% "Value",
-          x = x_label,
-          fill = "Variable"
-        ) +
-        facet_wrap(~ variable, scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow)
-    }
-
-    p <- p + scale_y_continuous(limits = y_limits)
-
-    # add points if requested
-    if (show_points) {
-      if (n_vars == 1) {
-        p <- p + geom_jitter(aes(color = wave), width = 0.2, alpha = point_alpha, size = point_size) +
-          scale_color_manual(values = recycled_colors)
-      } else {
-        p <- p + geom_jitter(aes(color = variable), width = 0.2, alpha = point_alpha, size = point_size) +
-          scale_color_manual(values = recycled_colors, labels = formatted_labels)
-      }
-    }
-
-    # flip coordinates if requested
-    if (coord_flip) {
-      p <- p + coord_flip()
-
-      # Adjust text angle for better readability when coordinates are flipped
-      p <- p + theme(
-        axis.text.x = element_text(angle = 0, hjust = 0.5, size = 8),
-        axis.text.y = element_text(angle = 0, hjust = 1, size = 8)
+  tryCatch(
+    {
+      cli::cli_alert_info("Preparing data...")
+      # define color palette
+      modified_okabe_ito_colors <- c(
+        "#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
+        "#D55E00", "#CC79A7", "#000000", "#999999"
       )
-    }
 
-    cli::cli_alert_success("Plot created")
+      # prepare the data
+      df <- data
 
-    # save plot if a save path is provided
-    if (!is.null(save_path)) {
-      filename <- "boxplot"
-
-      # Add the optional prefix
-      if (!is.null(prefix) && nzchar(prefix)) {
-        filename <- paste0(prefix, "_", filename)
+      # ensure wave column is present
+      if (!"wave" %in% names(df)) {
+        stop("The 'wave' column is missing from the data.")
       }
 
-      filename <- paste0(filename, "_", paste(y_vars, collapse = "_"))
+      # convert wave to factor and ensure all specified waves are included
+      if (!is.null(waves)) {
+        df$wave <- factor(df$wave, levels = waves)
+      } else {
+        df$wave <- as.factor(df$wave)
+      }
+
+      # filter waves if specified
+      if (!is.null(waves)) {
+        df <- df %>% dplyr::filter(wave %in% waves)
+      }
+
+      # ensure y_vars is a character vector
+      if (!is.character(y_vars)) {
+        y_vars <- as.character(y_vars)
+      }
+
+      # function to convert to title case and remove underscores
+      format_label <- function(x) {
+        stringr::str_to_title(gsub("_", " ", x))
+      }
+
+      # create a named vector for label formatting
+      formatted_labels <- setNames(sapply(y_vars, format_label), y_vars)
+
+      # reshape data for plotting multiple y variables
+      df_long <- df %>%
+        tidyr::pivot_longer(
+          cols = all_of(y_vars),
+          names_to = "variable",
+          values_to = "value"
+        ) %>%
+        mutate(variable = factor(variable, levels = y_vars, labels = formatted_labels[y_vars]))
+
+      # remove NAs and count participants who responded to at least one outcome of interest
+      df_long <- df_long %>%
+        dplyr::filter(!is.na(value) & is.finite(value))
+
+      # count total unique participants
+      total_unique <- dplyr::n_distinct(df_long[[id_col]])
+
+      # calculate total observations
+      total_obs <- nrow(df_long)
+
+      # determine the title
+      if (is.null(title)) {
+        title <- sprintf(
+          "Distribution of %s by Wave\nTotal N = %d unique participants, %d observations",
+          paste(formatted_labels, collapse = ", "),
+          total_unique, total_obs
+        )
+      }
 
       if (include_timestamp) {
-        filename <- paste0(filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"))
+        title <- paste(title, format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
       }
 
-      cli::cli_alert_info("Saving plot...")
+      # determine y-axis limits
+      if (is.null(y_limits)) {
+        y_min <- min(df_long$value, na.rm = TRUE)
+        y_max <- max(df_long$value, na.rm = TRUE)
+        if (y_min >= 1 && y_max <= 7) {
+          y_limits <- c(1, 7)
+        } else {
+          y_limits <- c(y_min, y_max)
+        }
+      }
 
-      ggsave(
-        plot = p,
-        filename = file.path(save_path, paste0(filename, ".png")),
-        width = width,
-        height = height,
-        units = "in",
-        dpi = 300
-      )
+      # determine the number of unique variables
+      n_vars <- length(y_vars)
 
-      margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+      # explicitly recycle colors
+      recycled_colors <- rep_len(modified_okabe_ito_colors, length.out = max(n_vars, nlevels(df_long$wave)))
 
-      cli::cli_alert_success("Plot saved successfully")
-    } else {
-      cli::cli_alert_info("No save path provided. Plot not saved.")
+      cli::cli_alert_success("Data prepared successfully")
+
+      cli::cli_alert_info("Creating plot...")
+
+      # create the ggplot
+      if (n_vars == 1) {
+        p <- ggplot(df_long, aes(x = wave, y = value, fill = wave)) +
+          geom_boxplot(...) +
+          theme_minimal() +
+          scale_fill_manual(values = recycled_colors) +
+          scale_x_discrete(drop = FALSE) + # Force all levels to be shown
+          theme(
+            legend.position = legend_position,
+            legend.text = element_text(size = 10),
+            legend.title = element_text(size = 12),
+            axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+            strip.text = element_text(size = 10),
+            panel.spacing = unit(0.2, "lines")
+          ) +
+          labs(
+            title = title,
+            y = y_label %||% formatted_labels[y_vars],
+            x = x_label,
+            fill = "Wave"
+          )
+      } else {
+        p <- ggplot(df_long, aes(x = wave, y = value, fill = variable)) +
+          geom_boxplot(...) +
+          theme_minimal() +
+          scale_fill_manual(values = recycled_colors, labels = formatted_labels) +
+          scale_x_discrete(drop = FALSE) + # Force all levels to be shown
+          theme(
+            legend.position = legend_position,
+            legend.text = element_text(size = 10),
+            legend.title = element_text(size = 12),
+            axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+            strip.text = element_text(size = 10),
+            panel.spacing = unit(0.2, "lines")
+          ) +
+          labs(
+            title = title,
+            y = y_label %||% "Value",
+            x = x_label,
+            fill = "Variable"
+          ) +
+          facet_wrap(~variable, scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow)
+      }
+
+      p <- p + scale_y_continuous(limits = y_limits)
+
+      # add points if requested
+      if (show_points) {
+        if (n_vars == 1) {
+          p <- p + geom_jitter(aes(color = wave), width = 0.2, alpha = point_alpha, size = point_size) +
+            scale_color_manual(values = recycled_colors)
+        } else {
+          p <- p + geom_jitter(aes(color = variable), width = 0.2, alpha = point_alpha, size = point_size) +
+            scale_color_manual(values = recycled_colors, labels = formatted_labels)
+        }
+      }
+
+      # flip coordinates if requested
+      if (coord_flip) {
+        p <- p + coord_flip()
+
+        # Adjust text angle for better readability when coordinates are flipped
+        p <- p + theme(
+          axis.text.x = element_text(angle = 0, hjust = 0.5, size = 8),
+          axis.text.y = element_text(angle = 0, hjust = 1, size = 8)
+        )
+      }
+
+      cli::cli_alert_success("Plot created")
+
+      # save plot if a save path is provided
+      if (!is.null(save_path)) {
+        filename <- "boxplot"
+
+        # Add the optional prefix
+        if (!is.null(prefix) && nzchar(prefix)) {
+          filename <- paste0(prefix, "_", filename)
+        }
+
+        filename <- paste0(filename, "_", paste(y_vars, collapse = "_"))
+
+        if (include_timestamp) {
+          filename <- paste0(filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"))
+        }
+
+        cli::cli_alert_info("Saving plot...")
+
+        ggsave(
+          plot = p,
+          filename = file.path(save_path, paste0(filename, ".png")),
+          width = width,
+          height = height,
+          units = "in",
+          dpi = 300
+        )
+
+        margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+
+        cli::cli_alert_success("Plot saved successfully")
+      } else {
+        cli::cli_alert_info("No save path provided. Plot not saved.")
+      }
+
+      cli::cli_alert_success("Margot plot boxplot created successfully \U0001F44D")
+
+      return(p)
+    },
+    error = function(e) {
+      cli::cli_alert_danger("An error occurred: {conditionMessage(e)}")
+      print(e)
+      return(NULL)
     }
-
-    cli::cli_alert_success("Margot plot boxplot created successfully \U0001F44D")
-
-    return(p)
-  }, error = function(e) {
-    cli::cli_alert_danger("An error occurred: {conditionMessage(e)}")
-    print(e)
-    return(NULL)
-  })
+  )
 }

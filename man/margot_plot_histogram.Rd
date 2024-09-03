@@ -71,32 +71,40 @@ It highlights the mean and standard deviation for each variable in each wave.
 }
 \examples{
 # basic usage with default settings
-margot_plot_histogram(data = your_data,
-                      col_names = c("variable1", "variable2"),
-                      id_col = "participant_id",
-                      wave_col = "survey_wave")
+margot_plot_histogram(
+  data = your_data,
+  col_names = c("variable1", "variable2"),
+  id_col = "participant_id",
+  wave_col = "survey_wave"
+)
 
 # specify waves and custom binwidth
-margot_plot_histogram(data = your_data,
-                      col_names = c("score1", "score2"),
-                      waves = c(2018, 2020),
-                      binwidth = 1)
+margot_plot_histogram(
+  data = your_data,
+  col_names = c("score1", "score2"),
+  waves = c(2018, 2020),
+  binwidth = 1
+)
 
 # use custom labels and saving the plot with timestamp and prefix
-margot_plot_histogram(data = your_data,
-                      col_names = c("attitude_measure"),
-                      title = "Distribution of Attitudes Over Time",
-                      x_label = "Attitude Score",
-                      save_path = "path/to/save/plot",
-                      add_timestamp = TRUE,
-                      file_prefix = "study1")
+margot_plot_histogram(
+  data = your_data,
+  col_names = c("attitude_measure"),
+  title = "Distribution of Attitudes Over Time",
+  x_label = "Attitude Score",
+  save_path = "path/to/save/plot",
+  add_timestamp = TRUE,
+  file_prefix = "study1"
+)
 
 # use a custom color palette and custom line colors
 custom_colors <- c("#FF9999", "#66B2FF")
-margot_plot_histogram(data = your_data,
-                      col_names = c("var1", "var2"),
-                      color_palette = custom_colors,
-                      mean_line_color = "red",
-                      sd_line_color = "blue")
+margot_plot_histogram(
+  data = your_data,
+  col_names = c("var1", "var2"),
+  color_palette = custom_colors,
+  mean_line_color = "red",
+  sd_line_color = "blue"
+)
 
 }

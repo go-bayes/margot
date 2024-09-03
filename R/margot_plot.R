@@ -65,25 +65,26 @@
 #'
 #' # Create a Margot plot with custom options and label mapping
 #' custom_result <- margot_plot(sample_data,
-#'                              type = "RD",
-#'                              title_binary = "Custom Margot Plot",
-#'                              options = list(
-#'                                remove_tx_prefix = TRUE,
-#'                                remove_z_suffix = TRUE,
-#'                                use_title_case = TRUE,
-#'                                remove_underscores = TRUE,
-#'                                save_plot = TRUE,
-#'                                save_plot_options = list(
-#'                                  filename = "custom_margot_plot.png",
-#'                                  width = 12,
-#'                                  height = 8,
-#'                                  dpi = 300
-#'                                )
-#'                              ),
-#'                              label_mapping = list(
-#'                                "t1_outcome_a_z" = "Custom Label A",
-#'                                "t2_outcome_b_z" = "Custom Label B"
-#'                              ))
+#'   type = "RD",
+#'   title_binary = "Custom Margot Plot",
+#'   options = list(
+#'     remove_tx_prefix = TRUE,
+#'     remove_z_suffix = TRUE,
+#'     use_title_case = TRUE,
+#'     remove_underscores = TRUE,
+#'     save_plot = TRUE,
+#'     save_plot_options = list(
+#'       filename = "custom_margot_plot.png",
+#'       width = 12,
+#'       height = 8,
+#'       dpi = 300
+#'     )
+#'   ),
+#'   label_mapping = list(
+#'     "t1_outcome_a_z" = "Custom Label A",
+#'     "t2_outcome_b_z" = "Custom Label B"
+#'   )
+#' )
 #' print(custom_result$plot)
 #' cat(custom_result$interpretation)
 #' print(custom_result$transformed_table)
@@ -98,7 +99,6 @@ margot_plot <- function(.data,
                         ...,
                         options = list(),
                         label_mapping = NULL) {
-
   # Create a copy of the original data for table transformation
   .data_for_table <- .data
 
@@ -117,9 +117,9 @@ margot_plot <- function(.data,
     subtitle_size = 9,
     legend_text_size = 6,
     legend_title_size = 6,
-    x_offset = NULL,  # Will be set based on type
-    x_lim_lo = NULL,  # Will be set based on type
-    x_lim_hi = NULL,  # Will be set based on type
+    x_offset = NULL, # Will be set based on type
+    x_lim_lo = NULL, # Will be set based on type
+    x_lim_hi = NULL, # Will be set based on type
     linewidth = 0.5,
     plot_theme = NULL,
     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
@@ -128,8 +128,8 @@ margot_plot <- function(.data,
     annotations = NULL,
     save_plot = FALSE,
     save_plot_options = list(
-      width = 10,
-      height = 6,
+      width = 12,
+      height = 8,
       dpi = 300,
       filename = NULL
     ),
@@ -236,8 +236,10 @@ margot_plot <- function(.data,
 
   # Create label including E-value if option is set
   if (options$show_evalues) {
-    .data$label <- sprintf(paste0("%.3f (E-value: %.", options$evalue_digits, "f, CI: %.", options$evalue_digits, "f)"),
-                           .data[[effect_size_col]], .data$E_Value, .data$E_Val_bound)
+    .data$label <- sprintf(
+      paste0("%.3f (E-value: %.", options$evalue_digits, "f, CI: %.", options$evalue_digits, "f)"),
+      .data[[effect_size_col]], .data$E_Value, .data$E_Val_bound
+    )
   } else {
     .data$label <- sprintf("%.3f", .data[[effect_size_col]])
   }
@@ -252,10 +254,13 @@ margot_plot <- function(.data,
       xmax = `97.5 %`,
       color = Estimate
     )
-  ) + geom_errorbarh(aes(color = Estimate), height = .3,
-                     linewidth = options$linewidth, position = position_dodge(width = .3)) +
+  ) +
+    geom_errorbarh(aes(color = Estimate),
+      height = .3,
+      linewidth = options$linewidth, position = position_dodge(width = .3)
+    ) +
     geom_point(size = options$point_size, position = position_dodge(width = 0.3)) +
-    geom_vline(xintercept = if(type == "RR") 1 else 0, linetype = "solid") +
+    geom_vline(xintercept = if (type == "RR") 1 else 0, linetype = "solid") +
     scale_color_manual(values = options$colors) +
     labs(
       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
@@ -263,9 +268,13 @@ margot_plot <- function(.data,
       title = options$title,
       subtitle = options$subtitle
     ) +
-    geom_text(aes(x = options$x_offset * options$estimate_scale,
-                  label = label),
-              size = options$text_size, hjust = 0, fontface = "bold") +
+    geom_text(
+      aes(
+        x = options$x_offset * options$estimate_scale,
+        label = label
+      ),
+      size = options$text_size, hjust = 0, fontface = "bold"
+    ) +
     coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
     theme_classic(base_size = options$base_size) +
     theme(
@@ -395,15 +404,19 @@ margot_plot <- function(.data,
     }
 
     # Save the plot
-    tryCatch({
-      ggsave(save_path, out,
-             width = save_options$width,
-             height = save_options$height,
-             dpi = save_options$dpi)
-      cli::cli_alert_success("Plot saved to: {normalizePath(save_path)} \U0001F44D")
-    }, error = function(e) {
-      cli::cli_alert_danger("Error saving plot: {e$message}")
-    })
+    tryCatch(
+      {
+        ggsave(save_path, out,
+          width = save_options$width,
+          height = save_options$height,
+          dpi = save_options$dpi
+        )
+        cli::cli_alert_success("Plot saved to: {normalizePath(save_path)} \U0001F44D")
+      },
+      error = function(e) {
+        cli::cli_alert_danger("Error saving plot: {e$message}")
+      }
+    )
   } else {
     cli::cli_alert_info("Plot was not saved as per user request.")
   }

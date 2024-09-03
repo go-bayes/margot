@@ -9,7 +9,7 @@ It highlights the mean and standard deviation for each variable in each wave."><
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.43</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.44</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,10 +148,12 @@ It highlights the mean and standard deviation for each variable in each wave.</p
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># basic usage with default settings</span></span></span>
-<span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span>data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
-<span class="r-in"><span>                      col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variable1"</span>, <span class="st">"variable2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                      id_col <span class="op">=</span> <span class="st">"participant_id"</span>,</span></span>
-<span class="r-in"><span>                      wave_col <span class="op">=</span> <span class="st">"survey_wave"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
+<span class="r-in"><span>  col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variable1"</span>, <span class="st">"variable2"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  id_col <span class="op">=</span> <span class="st">"participant_id"</span>,</span></span>
+<span class="r-in"><span>  wave_col <span class="op">=</span> <span class="st">"survey_wave"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Margot Plot Histogram</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> An error occurred: object 'your_data' not found</span>
@@ -159,10 +161,12 @@ It highlights the mean and standard deviation for each variable in each wave.</p
 <span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># specify waves and custom binwidth</span></span></span>
-<span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span>data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
-<span class="r-in"><span>                      col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"score1"</span>, <span class="st">"score2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                      waves <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2018</span>, <span class="fl">2020</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                      binwidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
+<span class="r-in"><span>  col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"score1"</span>, <span class="st">"score2"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  waves <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2018</span>, <span class="fl">2020</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  binwidth <span class="op">=</span> <span class="fl">1</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Margot Plot Histogram</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> An error occurred: object 'your_data' not found</span>
@@ -170,13 +174,15 @@ It highlights the mean and standard deviation for each variable in each wave.</p
 <span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># use custom labels and saving the plot with timestamp and prefix</span></span></span>
-<span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span>data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
-<span class="r-in"><span>                      col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"attitude_measure"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                      title <span class="op">=</span> <span class="st">"Distribution of Attitudes Over Time"</span>,</span></span>
-<span class="r-in"><span>                      x_label <span class="op">=</span> <span class="st">"Attitude Score"</span>,</span></span>
-<span class="r-in"><span>                      save_path <span class="op">=</span> <span class="st">"path/to/save/plot"</span>,</span></span>
-<span class="r-in"><span>                      add_timestamp <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>                      file_prefix <span class="op">=</span> <span class="st">"study1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
+<span class="r-in"><span>  col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"attitude_measure"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  title <span class="op">=</span> <span class="st">"Distribution of Attitudes Over Time"</span>,</span></span>
+<span class="r-in"><span>  x_label <span class="op">=</span> <span class="st">"Attitude Score"</span>,</span></span>
+<span class="r-in"><span>  save_path <span class="op">=</span> <span class="st">"path/to/save/plot"</span>,</span></span>
+<span class="r-in"><span>  add_timestamp <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  file_prefix <span class="op">=</span> <span class="st">"study1"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Margot Plot Histogram</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> An error occurred: object 'your_data' not found</span>
@@ -185,11 +191,13 @@ It highlights the mean and standard deviation for each variable in each wave.</p
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># use a custom color palette and custom line colors</span></span></span>
 <span class="r-in"><span><span class="va">custom_colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#FF9999"</span>, <span class="st">"#66B2FF"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span>data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
-<span class="r-in"><span>                      col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"var1"</span>, <span class="st">"var2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                      color_palette <span class="op">=</span> <span class="va">custom_colors</span>,</span></span>
-<span class="r-in"><span>                      mean_line_color <span class="op">=</span> <span class="st">"red"</span>,</span></span>
-<span class="r-in"><span>                      sd_line_color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
+<span class="r-in"><span>  col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"var1"</span>, <span class="st">"var2"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  color_palette <span class="op">=</span> <span class="va">custom_colors</span>,</span></span>
+<span class="r-in"><span>  mean_line_color <span class="op">=</span> <span class="st">"red"</span>,</span></span>
+<span class="r-in"><span>  sd_line_color <span class="op">=</span> <span class="st">"blue"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Margot Plot Histogram</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> An error occurred: object 'your_data' not found</span>

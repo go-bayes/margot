@@ -9,11 +9,17 @@
 * qini cost options
 * remove color package
 
+# [2024-09-02] margot 0.2.1.44
+
+## Improved
+
+- `margot_plot_individual_responses()` now plotting all cases by default. Default `random_draws` of 100. 
+
 # [2024-09-02] margot 0.2.1.43
 
 ## Improved
 
-- margot_plot_histogram(), optional coloured mean/sd lines.
+- `margot_plot_histogram()`, optional coloured mean/sd lines.
 
 # [2024-09-02] margot 0.2.1.42
 

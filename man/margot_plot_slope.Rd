@@ -175,7 +175,7 @@ custom_plot <- margot_plot_slope(
   event_dates = "2017-10-26",
   event_names = "2017 Election",
   y_label = "Satisfaction Level (0-10)",
-  y_limits = c(0,10),
+  y_limits = c(0, 10),
   event_line_color = "blue",
   event_label_color = "blue",
   legend_position = "top",

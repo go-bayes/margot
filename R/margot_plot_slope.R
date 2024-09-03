@@ -107,7 +107,7 @@
 #'   event_dates = "2017-10-26",
 #'   event_names = "2017 Election",
 #'   y_label = "Satisfaction Level (0-10)",
-#'   y_limits = c(0,10),
+#'   y_limits = c(0, 10),
 #'   event_line_color = "blue",
 #'   event_label_color = "blue",
 #'   legend_position = "top",
@@ -148,257 +148,280 @@ margot_plot_slope <- function(data,
                               facet_scales = "free_y",
                               facet_ncol = NULL,
                               facet_nrow = NULL) {
-
   cli::cli_h1("Margot Plot Slope")
 
   # Initialize p as NULL
   p <- NULL
 
-  tryCatch({
-    # Function to transform labels
-    transform_label <- function(label) {
-      if (remove_underscores) {
-        label <- gsub("_", " ", label)
+  tryCatch(
+    {
+      # Function to transform labels
+      transform_label <- function(label) {
+        if (remove_underscores) {
+          label <- gsub("_", " ", label)
+        }
+        if (use_title_case) {
+          label <- stringr::str_to_title(label)
+        }
+        return(label)
       }
-      if (use_title_case) {
-        label <- stringr::str_to_title(label)
-      }
-      return(label)
-    }
 
-    cli::cli_alert_info("Preparing data...")
-    # define color palette
-    if (is.null(color_palette)) {
-      color_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
-                         "#D55E00", "#CC79A7", "#000000", "#999999")
-    }
-
-    # prepare the data
-    df <- data %>%
-      mutate(year = as.numeric(as.character(wave))) %>%
-      mutate(timeline = base_date + tscore)
-
-    # filter date range if specified
-    if (!is.null(start_date)) {
-      df <- df %>% filter(timeline >= as.Date(start_date))
-    }
-    if (!is.null(end_date)) {
-      df <- df %>% filter(timeline <= as.Date(end_date))
-    }
-
-    # Ensure y_vars is a list
-    if (!is.list(y_vars)) {
-      y_vars <- list(y_vars)
-    }
-
-    # Check if all specified y variables exist in the data
-    missing_vars <- y_vars[!y_vars %in% names(df)]
-    if (length(missing_vars) > 0) {
-      cli::cli_alert_warning("The following variables are not present in the data: {paste(missing_vars, collapse = ', ')}")
-      y_vars <- y_vars[y_vars %in% names(df)]
-      if (length(y_vars) == 0) {
-        cli::cli_alert_danger("No valid y variables remain. Cannot create plot.")
-        return(NULL)
-      }
-    }
-
-    # remove rows with NA or infinite values in any y_var
-    for (var in y_vars) {
-      df <- df %>% filter(!is.na(!!sym(var)) & is.finite(!!sym(var)))
-    }
-
-    # calculate unique participants and observations after cleaning
-    n_participants <- df %>% select(id) %>% n_distinct()
-    n_observations <- nrow(df)
-
-    # sample the data if data_fraction < 1
-    if (data_fraction < 1) {
-      if (!is.null(seed)) {
-        set.seed(seed)
-      }
-      df <- df %>% sample_frac(data_fraction)
-
-      # recalculate counts after sampling
-      n_participants <- df %>% select(id) %>% n_distinct()
-      n_observations <- nrow(df)
-    }
-
-    cli::cli_alert_success("Data prepared successfully")
-
-    # warning for plotting points with multiple y variables
-    if (plot_points && length(y_vars) > 1) {
-      cli::cli_alert_warning("Plotting points with multiple y variables may result in a cluttered plot.")
-    }
-
-    cli::cli_alert_info("Creating base plot...")
-
-    # reshape data for plotting multiple y variables
-    df_long <- df %>%
-      tidyr::pivot_longer(cols = all_of(unlist(y_vars)),
-                          names_to = "variable",
-                          values_to = "value")
-
-    # Create a named vector for label formatting
-    formatted_labels <- setNames(sapply(unlist(y_vars), transform_label), unlist(y_vars))
-
-    # Determine y-axis limits
-    if (is.null(y_limits)) {
-      y_min <- min(df_long$value, na.rm = TRUE)
-      y_max <- max(df_long$value, na.rm = TRUE)
-      if (y_min >= 1 && y_max <= 7) {
-        y_limits <- c(1, 7)
-      } else {
-        y_limits <- c(y_min, y_max)
-      }
-    }
-
-    # generate automatic title if not provided
-    if (is.null(title)) {
-      year_range <- range(df$year, na.rm = TRUE)
-      title <- sprintf("Slope Plot for %s\nN = %s participants, %s observations; years %.0f - %.0f",
-                       paste(formatted_labels, collapse = ", "),
-                       format(n_participants, big.mark = ","),
-                       format(n_observations, big.mark = ","),
-                       year_range[1], year_range[2])
-    }
-
-    # recycle colors
-    n_vars <- length(unique(df_long$variable))
-    recycled_colors <- rep_len(color_palette, n_vars)
-
-    # create the ggplot
-    p <- ggplot(df_long, aes(x = timeline, y = value, color = variable)) +
-      geom_smooth(method = "lm", se = FALSE) +  # add linear trend lines
-      theme_classic() +
-      scale_color_manual(values = recycled_colors,
-                         name = "Variables",
-                         labels = formatted_labels) +
-      theme(
-        legend.position = legend_position,
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12)
-      ) +
-      labs(
-        title = title,
-        y = transform_label(y_label %||% "Value"),
-        x = transform_label(x_label %||% "Timeline")
-      ) +
-      scale_y_continuous(limits = y_limits)
-
-    # add points if specified
-    if (plot_points) {
-      p <- p + geom_jitter(alpha = point_alpha, width = jitter_width)
-    }
-
-    # add faceting if specified
-    if (use_facets && length(y_vars) > 1) {
-      p <- p + facet_wrap(~ variable, scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow,
-                          labeller = as_labeller(formatted_labels))
-    }
-
-    cli::cli_alert_success("Base plot created")
-
-    if (!is.null(event_dates)) {
-      cli::cli_alert_info("Adding event lines and labels...")
-      # add vertical lines for event dates
-      for (i in seq_along(event_dates)) {
-        event_date <- as.Date(event_dates[i])
-        event_name <- if (!is.null(event_names) && length(event_names) >= i) event_names[i] else paste("Event", i)
-
-        p <- p + geom_vline(xintercept = event_date,
-                            color = event_line_color,
-                            alpha = event_line_alpha,
-                            linetype = event_line_type,
-                            linewidth = event_line_width)
-
-        # calculate y-position for the label to be at the top of the data points
-        y_max <- max(y_limits)
-        y_min <- min(y_limits)
-        y_range <- y_max - y_min
-        label_height <- nchar(event_name) * 0.015 * y_range  # Adjust this multiplier as needed
-        y_position <- y_max
-
-        # calculate x-position slightly to the left of the event line
-        x_offset <- 5  # adjust this value to move labels further left or right
-        x_position <- event_date - x_offset
-
-        # add white rectangle with grey border behind the event label
-        p <- p + annotate("rect",
-                          xmin = x_position - 0.5,
-                          xmax = x_position + 0.5,
-                          ymin = y_position - label_height,
-                          ymax = y_position,
-                          fill = "white",
-                          color = "grey50",
-                          alpha = 0.9,
-                          size = 0.25)
-
-        # add text label for the event
-        p <- p + annotate("text",
-                          x = x_position,
-                          y = y_position,
-                          label = transform_label(event_name),
-                          color = event_label_color,
-                          size = event_label_size,
-                          angle = 90,
-                          vjust = 1,  # Align text to the top of the label box
-                          hjust = 1)  # Align text to the right of the label box
-      }
-      cli::cli_alert_success("Event lines and labels added")
-    }
-
-    cli::cli_alert_info("Saving plot...")
-
-    # save plot if a save path is provided
-    if (!is.null(save_path)) {
-      # generate filename
-      filename <- paste0(
-        "slope_plot_",
-        paste(unlist(y_vars), collapse = "_"),
-        "_",
-        format(Sys.Date(), "%Y%m%d")
-      )
-
-      tryCatch({
-        cli::cli_alert_info("Attempting to print plot...")
-        print(p)
-        cli::cli_alert_success("Plot printed successfully")
-
-        cli::cli_alert_info("Saving plot as PNG...")
-        ggsave(
-          plot = p,
-          filename = file.path(save_path, paste0(filename, ".png")),
-          width = width,
-          height = height,
-          units = "in",
-          device = 'png',
-          dpi = 400
+      cli::cli_alert_info("Preparing data...")
+      # define color palette
+      if (is.null(color_palette)) {
+        color_palette <- c(
+          "#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
+          "#D55E00", "#CC79A7", "#000000", "#999999"
         )
-        cli::cli_alert_success("Plot saved as PNG successfully")
+      }
 
-        cli::cli_alert_info("Saving plot as .qs file...")
-        # from the margot package (go-bayes/margot)
-        margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+      # prepare the data
+      df <- data %>%
+        mutate(year = as.numeric(as.character(wave))) %>%
+        mutate(timeline = base_date + tscore)
 
-      }, error = function(e) {
-        cli::cli_alert_danger("Error while saving: {conditionMessage(e)}")
-      })
-    } else {
-      cli::cli_alert_info("No save path provided. Plot not saved.")
+      # filter date range if specified
+      if (!is.null(start_date)) {
+        df <- df %>% filter(timeline >= as.Date(start_date))
+      }
+      if (!is.null(end_date)) {
+        df <- df %>% filter(timeline <= as.Date(end_date))
+      }
+
+      # Ensure y_vars is a list
+      if (!is.list(y_vars)) {
+        y_vars <- list(y_vars)
+      }
+
+      # Check if all specified y variables exist in the data
+      missing_vars <- y_vars[!y_vars %in% names(df)]
+      if (length(missing_vars) > 0) {
+        cli::cli_alert_warning("The following variables are not present in the data: {paste(missing_vars, collapse = ', ')}")
+        y_vars <- y_vars[y_vars %in% names(df)]
+        if (length(y_vars) == 0) {
+          cli::cli_alert_danger("No valid y variables remain. Cannot create plot.")
+          return(NULL)
+        }
+      }
+
+      # remove rows with NA or infinite values in any y_var
+      for (var in y_vars) {
+        df <- df %>% filter(!is.na(!!sym(var)) & is.finite(!!sym(var)))
+      }
+
+      # calculate unique participants and observations after cleaning
+      n_participants <- df %>%
+        select(id) %>%
+        n_distinct()
+      n_observations <- nrow(df)
+
+      # sample the data if data_fraction < 1
+      if (data_fraction < 1) {
+        if (!is.null(seed)) {
+          set.seed(seed)
+        }
+        df <- df %>% sample_frac(data_fraction)
+
+        # recalculate counts after sampling
+        n_participants <- df %>%
+          select(id) %>%
+          n_distinct()
+        n_observations <- nrow(df)
+      }
+
+      cli::cli_alert_success("Data prepared successfully")
+
+      # warning for plotting points with multiple y variables
+      if (plot_points && length(y_vars) > 1) {
+        cli::cli_alert_warning("Plotting points with multiple y variables may result in a cluttered plot.")
+      }
+
+      cli::cli_alert_info("Creating base plot...")
+
+      # reshape data for plotting multiple y variables
+      df_long <- df %>%
+        tidyr::pivot_longer(
+          cols = all_of(unlist(y_vars)),
+          names_to = "variable",
+          values_to = "value"
+        )
+
+      # Create a named vector for label formatting
+      formatted_labels <- setNames(sapply(unlist(y_vars), transform_label), unlist(y_vars))
+
+      # Determine y-axis limits
+      if (is.null(y_limits)) {
+        y_min <- min(df_long$value, na.rm = TRUE)
+        y_max <- max(df_long$value, na.rm = TRUE)
+        if (y_min >= 1 && y_max <= 7) {
+          y_limits <- c(1, 7)
+        } else {
+          y_limits <- c(y_min, y_max)
+        }
+      }
+
+      # generate automatic title if not provided
+      if (is.null(title)) {
+        year_range <- range(df$year, na.rm = TRUE)
+        title <- sprintf(
+          "Slope Plot for %s\nN = %s participants, %s observations; years %.0f - %.0f",
+          paste(formatted_labels, collapse = ", "),
+          format(n_participants, big.mark = ","),
+          format(n_observations, big.mark = ","),
+          year_range[1], year_range[2]
+        )
+      }
+
+      # recycle colors
+      n_vars <- length(unique(df_long$variable))
+      recycled_colors <- rep_len(color_palette, n_vars)
+
+      # create the ggplot
+      p <- ggplot(df_long, aes(x = timeline, y = value, color = variable)) +
+        geom_smooth(method = "lm", se = FALSE) + # add linear trend lines
+        theme_classic() +
+        scale_color_manual(
+          values = recycled_colors,
+          name = "Variables",
+          labels = formatted_labels
+        ) +
+        theme(
+          legend.position = legend_position,
+          legend.text = element_text(size = 12),
+          legend.title = element_text(size = 12)
+        ) +
+        labs(
+          title = title,
+          y = transform_label(y_label %||% "Value"),
+          x = transform_label(x_label %||% "Timeline")
+        ) +
+        scale_y_continuous(limits = y_limits)
+
+      # add points if specified
+      if (plot_points) {
+        p <- p + geom_jitter(alpha = point_alpha, width = jitter_width)
+      }
+
+      # add faceting if specified
+      if (use_facets && length(y_vars) > 1) {
+        p <- p + facet_wrap(~variable,
+          scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow,
+          labeller = as_labeller(formatted_labels)
+        )
+      }
+
+      cli::cli_alert_success("Base plot created")
+
+      if (!is.null(event_dates)) {
+        cli::cli_alert_info("Adding event lines and labels...")
+        # add vertical lines for event dates
+        for (i in seq_along(event_dates)) {
+          event_date <- as.Date(event_dates[i])
+          event_name <- if (!is.null(event_names) && length(event_names) >= i) event_names[i] else paste("Event", i)
+
+          p <- p + geom_vline(
+            xintercept = event_date,
+            color = event_line_color,
+            alpha = event_line_alpha,
+            linetype = event_line_type,
+            linewidth = event_line_width
+          )
+
+          # calculate y-position for the label to be at the top of the data points
+          y_max <- max(y_limits)
+          y_min <- min(y_limits)
+          y_range <- y_max - y_min
+          label_height <- nchar(event_name) * 0.015 * y_range # Adjust this multiplier as needed
+          y_position <- y_max
+
+          # calculate x-position slightly to the left of the event line
+          x_offset <- 5 # adjust this value to move labels further left or right
+          x_position <- event_date - x_offset
+
+          # add white rectangle with grey border behind the event label
+          p <- p + annotate("rect",
+            xmin = x_position - 0.5,
+            xmax = x_position + 0.5,
+            ymin = y_position - label_height,
+            ymax = y_position,
+            fill = "white",
+            color = "grey50",
+            alpha = 0.9,
+            size = 0.25
+          )
+
+          # add text label for the event
+          p <- p + annotate("text",
+            x = x_position,
+            y = y_position,
+            label = transform_label(event_name),
+            color = event_label_color,
+            size = event_label_size,
+            angle = 90,
+            vjust = 1, # Align text to the top of the label box
+            hjust = 1
+          ) # Align text to the right of the label box
+        }
+        cli::cli_alert_success("Event lines and labels added")
+      }
+
+      cli::cli_alert_info("Saving plot...")
+
+      # save plot if a save path is provided
+      if (!is.null(save_path)) {
+        # generate filename
+        filename <- paste0(
+          "slope_plot_",
+          paste(unlist(y_vars), collapse = "_"),
+          "_",
+          format(Sys.Date(), "%Y%m%d")
+        )
+
+        tryCatch(
+          {
+            cli::cli_alert_info("Attempting to print plot...")
+            print(p)
+            cli::cli_alert_success("Plot printed successfully")
+
+            cli::cli_alert_info("Saving plot as PNG...")
+            ggsave(
+              plot = p,
+              filename = file.path(save_path, paste0(filename, ".png")),
+              width = width,
+              height = height,
+              units = "in",
+              device = "png",
+              dpi = 400
+            )
+            cli::cli_alert_success("Plot saved as PNG successfully")
+
+            cli::cli_alert_info("Saving plot as .qs file...")
+            # from the margot package (go-bayes/margot)
+            margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+          },
+          error = function(e) {
+            cli::cli_alert_danger("Error while saving: {conditionMessage(e)}")
+          }
+        )
+      } else {
+        cli::cli_alert_info("No save path provided. Plot not saved.")
+      }
+
+      cli::cli_alert_success("Margot plot slope created successfully \U0001F44D")
+
+      # return the ggplot object
+      return(p)
+    },
+    error = function(e) {
+      cli::cli_alert_danger("An error occurred: {conditionMessage(e)}")
+      print(e)
+      return(NULL)
+    },
+    warning = function(w) {
+      cli::cli_alert_warning("A warning occurred: {conditionMessage(w)}")
+      print(w)
     }
-
-    cli::cli_alert_success("Margot plot slope created successfully \U0001F44D")
-
-    # return the ggplot object
-    return(p)
-  }, error = function(e) {
-    cli::cli_alert_danger("An error occurred: {conditionMessage(e)}")
-    print(e)
-    return(NULL)
-  }, warning = function(w) {
-    cli::cli_alert_warning("A warning occurred: {conditionMessage(w)}")
-    print(w)
-  })
+  )
 }
 # margot_plot_slope <- function(data,
 #                               y_vars,

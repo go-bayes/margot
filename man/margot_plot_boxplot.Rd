@@ -18,7 +18,7 @@ margot_plot_boxplot(
   include_timestamp = FALSE,
   save_path = NULL,
   prefix = NULL,
-  width = 16,
+  width = 12,
   height = 8,
   legend_position = "bottom",
   y_limits = NULL,
@@ -93,37 +93,45 @@ outcome_vars <- c(
 )
 
 # Basic usage with all waves
-p1 <- margot_plot_boxplot(data = your_data,
-                          y_vars = outcome_vars,
-                          id_col = "id")
+p1 <- margot_plot_boxplot(
+  data = your_data,
+  y_vars = outcome_vars,
+  id_col = "id"
+)
 
 # Plotting specific waves with points shown and coordinates flipped
-p2 <- margot_plot_boxplot(data = your_data,
-                          y_vars = outcome_vars,
-                          waves = c(2021, 2022),
-                          show_points = TRUE,
-                          coord_flip = TRUE,
-                          id_col = "id")
+p2 <- margot_plot_boxplot(
+  data = your_data,
+  y_vars = outcome_vars,
+  waves = c(2021, 2022),
+  show_points = TRUE,
+  coord_flip = TRUE,
+  id_col = "id"
+)
 
 # Saving the plot with a custom prefix
-margot_plot_boxplot(data = your_data,
-                    y_vars = outcome_vars,
-                    waves = c(2021, 2022, 2023),
-                    save_path = "path/to/save",
-                    prefix = "climate_change",
-                    include_timestamp = TRUE,
-                    id_col = "id")
+margot_plot_boxplot(
+  data = your_data,
+  y_vars = outcome_vars,
+  waves = c(2021, 2022, 2023),
+  save_path = "path/to/save",
+  prefix = "climate_change",
+  include_timestamp = TRUE,
+  id_col = "id"
+)
 
 # Customizing the plot appearance with flipped coordinates
-p3 <- margot_plot_boxplot(data = your_data,
-                          y_vars = c("env_climate_chg_concern", "envefficacy"),
-                          waves = c(2021, 2022),
-                          title = "Climate Change Concern and Efficacy",
-                          y_label = "Score",
-                          legend_position = "right",
-                          facet_scales = "free",
-                          coord_flip = TRUE,
-                          id_col = "id")
+p3 <- margot_plot_boxplot(
+  data = your_data,
+  y_vars = c("env_climate_chg_concern", "envefficacy"),
+  waves = c(2021, 2022),
+  title = "Climate Change Concern and Efficacy",
+  y_label = "Score",
+  legend_position = "right",
+  facet_scales = "free",
+  coord_flip = TRUE,
+  id_col = "id"
+)
 }
 
 }
