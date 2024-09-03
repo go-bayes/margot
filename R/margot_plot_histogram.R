@@ -13,12 +13,14 @@
 #' @param x_label An optional label for the x-axis. If NULL, "Value" will be used.
 #' @param y_label An optional label for the y-axis. Default is "Count".
 #' @param save_path An optional path to save the plot. If NULL, the plot will not be saved.
-#' @param width The width of the saved plot in inches. Default is 16.
-#' @param height The height of the saved plot in inches. Default is 10.
+#' @param width The width of the saved plot in inches. Default is 12.
+#' @param height The height of the saved plot in inches. Default is 8.
 #' @param facet_scales Scales for facet. Either "fixed", "free_x", "free_y", or "free". Default is "free".
 #' @param color_palette An optional custom color palette for the plot.
 #' @param add_timestamp Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.
 #' @param file_prefix An optional prefix to add to the beginning of the saved filename. Default is an empty string.
+#' @param mean_line_color Color of the vertical line representing the mean. Default is "black".
+#' @param sd_line_color Color of the dashed lines representing the standard deviation. Default is "black".
 #'
 #' @return A ggplot2 object representing the histogram with highlights.
 #'
@@ -32,32 +34,33 @@
 #' @examples
 #' # basic usage with default settings
 #' margot_plot_histogram(data = your_data,
-#'                          col_names = c("variable1", "variable2"),
-#'                          id_col = "participant_id",
-#'                          wave_col = "survey_wave")
+#'                       col_names = c("variable1", "variable2"),
+#'                       id_col = "participant_id",
+#'                       wave_col = "survey_wave")
 #'
 #' # specify waves and custom binwidth
 #' margot_plot_histogram(data = your_data,
-#'                          col_names = c("score1", "score2"),
-#'                          waves = c(2018, 2020),
-#'                          binwidth = 1)
+#'                       col_names = c("score1", "score2"),
+#'                       waves = c(2018, 2020),
+#'                       binwidth = 1)
 #'
 #' # use custom labels and saving the plot with timestamp and prefix
 #' margot_plot_histogram(data = your_data,
-#'                          col_names = c("attitude_measure"),
-#'                          title = "Distribution of Attitudes Over Time",
-#'                          x_label = "Attitude Score",
-#'                          save_path = "path/to/save/plot",
-#'                          add_timestamp = TRUE,
-#'                          file_prefix = "study1")
+#'                       col_names = c("attitude_measure"),
+#'                       title = "Distribution of Attitudes Over Time",
+#'                       x_label = "Attitude Score",
+#'                       save_path = "path/to/save/plot",
+#'                       add_timestamp = TRUE,
+#'                       file_prefix = "study1")
 #'
-#' # use a custom color palette
+#' # use a custom color palette and custom line colors
 #' custom_colors <- c("#FF9999", "#66B2FF")
 #' margot_plot_histogram(data = your_data,
-#'                          col_names = c("var1", "var2"),
-#'                          color_palette = custom_colors)
+#'                       col_names = c("var1", "var2"),
+#'                       color_palette = custom_colors,
+#'                       mean_line_color = "red",
+#'                       sd_line_color = "blue")
 #'
-#' @export
 margot_plot_histogram <- function(data,
                                   col_names,
                                   id_col = "id",
@@ -73,7 +76,9 @@ margot_plot_histogram <- function(data,
                                   facet_scales = "free",
                                   color_palette = NULL,
                                   add_timestamp = FALSE,
-                                  file_prefix = "") {
+                                  file_prefix = "",
+                                  mean_line_color = "black",  #
+                                  sd_line_color = "black") {  #
 
   cli::cli_h1("Margot Plot Histogram")
 
@@ -161,9 +166,9 @@ margot_plot_histogram <- function(data,
     # create the plot
     p <- ggplot(data_long, aes(x = value, fill = variable)) +
       geom_histogram(aes(y = after_stat(count)), binwidth = binwidth, color = "white", alpha = 0.7) +
-      geom_vline(data = stats, aes(xintercept = avg_val), color = "black", linewidth = 1) +
-      geom_vline(data = stats, aes(xintercept = avg_val - std_val), color = "black", linewidth = 0.5, linetype = "dashed") +
-      geom_vline(data = stats, aes(xintercept = avg_val + std_val), color = "black", linewidth = 0.5, linetype = "dashed") +
+      geom_vline(data = stats, aes(xintercept = avg_val), color = mean_line_color, linewidth = 1) +
+      geom_vline(data = stats, aes(xintercept = avg_val - std_val), color = sd_line_color, linewidth = 0.5, linetype = "dashed") +
+      geom_vline(data = stats, aes(xintercept = avg_val + std_val), color = sd_line_color, linewidth = 0.5, linetype = "dashed") +
       geom_text(data = stats,
                 aes(x = avg_val, y = Inf, label = sprintf("Mean: %.2f\nSD: %.2f", avg_val, std_val)),
                 vjust = 1, hjust = 0, size = 4) +

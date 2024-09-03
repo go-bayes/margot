@@ -10,6 +10,7 @@
 <img src="man/figures/margot.png" width = 600>
 
 <!-- badges: end -->
+<!-- badges: end -->
 
 # margot
 
@@ -67,17 +68,36 @@ table_change_belief
 
 Go to:<https://github.com/go-bayes/margot>
 
-### Code
+### License
 
-The code in this package is licensed under the GNU General Public
-License (GPL) v3.0. You can redistribute it and/or modify it under the
-terms of the GPL as published by the Free Software Foundation. For more
-information, see [GPL v3.0](http://www.gnu.org/licenses/).
+The code in this package is licensed under the Creative Commons
+Attribution 4.0 International (CC BY 4.0) license. You are free to share
+and adapt the code, even for commercial purposes, provided that you
+attribute the original author(s) appropriately. For more information,
+see [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
 
 The `margot` package is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See th GNU General
-Public License for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the Disclaimer
+of Warranties and Limitation of Liability section in the licensing
+information for more details.
+
+### Citing `margot`
+
+If you use the `margot` package in your research, you may cite it as
+follows:
+
+``` r
+bibentry(
+  bibtype = "Manual",
+  title = "margot: MARGinal Observational Treatment-effects",
+  author = person("Joseph A", "Bulbulia"),
+  year = "2024",
+  note = "R package version 0.2.1.43, Functions to obtain MARGinal Observational Treatment-effects from observational data.",
+  url = "https://go-bayes.github.io/margot/",
+  doi = "10.5281/zenodo.10907724"
+)
+```
 
 ## Doi
 

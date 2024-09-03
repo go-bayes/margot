@@ -9,6 +9,12 @@
 * qini cost options
 * remove color package
 
+# [2024-09-02] margot 0.2.1.43
+
+## Improved
+
+- margot_plot_histogram(), optional coloured mean/sd lines.
+
 # [2024-09-02] margot 0.2.1.42
 
 ## Improved
