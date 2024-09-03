@@ -34,6 +34,7 @@ reference:
     - create_transition_matrix
     - match_mi_general
     - margot_plot_categorical
+    - margot_plot_individual_responses
     - margot_plot_shift
     - margot_propensity_model_and_plots
     - margot_summary_tables

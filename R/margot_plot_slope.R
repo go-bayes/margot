@@ -115,7 +115,6 @@
 #'   use_facets = TRUE
 #' )
 #' }
-
 margot_plot_slope <- function(data,
                               y_vars,
                               event_dates = NULL,

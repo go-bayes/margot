@@ -2,31 +2,30 @@
 % Please edit documentation in R/margot_plot_boxplot.R
 \name{margot_plot_boxplot}
 \alias{margot_plot_boxplot}
-\title{Create a Boxplot with Facets using ggplot2}
+\title{Create panel data Boxplots using ggplot2}
 \usage{
 margot_plot_boxplot(
   data,
   y_vars,
-  x_var = "wave",
+  waves = NULL,
   id_col = "id",
   title = NULL,
   y_label = NULL,
-  x_label = NULL,
-  data_fraction = 1,
-  seed = NULL,
+  x_label = "Wave",
   show_points = FALSE,
   point_alpha = 0.3,
   point_size = 0.5,
+  include_timestamp = FALSE,
   save_path = NULL,
+  prefix = NULL,
   width = 16,
   height = 8,
   legend_position = "bottom",
   y_limits = NULL,
-  facet_type = "grid",
-  facet_scales = "free_x",
-  facet_space = "free_x",
+  facet_scales = "free_y",
   facet_ncol = NULL,
   facet_nrow = NULL,
+  coord_flip = FALSE,
   ...
 )
 }
@@ -35,7 +34,7 @@ margot_plot_boxplot(
 
 \item{y_vars}{A list of variable names to be plotted on the y-axis.}
 
-\item{x_var}{The name of the variable to be used for faceting (default is "wave").}
+\item{waves}{A vector of wave values to include in the plot (default is NULL, which includes all waves).}
 
 \item{id_col}{Name of the column containing unique identifiers (default is "id").}
 
@@ -43,19 +42,19 @@ margot_plot_boxplot(
 
 \item{y_label}{The label for the y-axis (optional).}
 
-\item{x_label}{The label for the x-axis (optional, not typically used due to faceting).}
-
-\item{data_fraction}{The fraction of data to use (default is 1, i.e., all data).}
-
-\item{seed}{A seed for random sampling if data_fraction < 1 (optional).}
+\item{x_label}{The label for the x-axis (optional, defaults to "Wave").}
 
 \item{show_points}{Logical, whether to show individual data points (default is FALSE).}
 
-\item{point_alpha}{alpha value for data points if shown (default is 0.3).}
+\item{point_alpha}{Alpha value for data points if shown (default is 0.3).}
 
 \item{point_size}{Size of data points if shown (default is 0.5).}
 
+\item{include_timestamp}{Logical, whether to include timestamp in plot title and filename (default is FALSE).}
+
 \item{save_path}{Path to save the plot (optional).}
+
+\item{prefix}{Optional prefix for the saved file name (default is NULL).}
 
 \item{width}{Width of the saved plot in inches (default is 16).}
 
@@ -65,15 +64,13 @@ margot_plot_boxplot(
 
 \item{y_limits}{Y-axis limits (optional).}
 
-\item{facet_type}{Type of faceting: "grid" or "wrap" (default is "grid").}
-
-\item{facet_scales}{Scales for facet panels (default is "free_x").}
-
-\item{facet_space}{Space for facet panels (default is "free_x").}
+\item{facet_scales}{Scales for facet panels (default is "free_y").}
 
 \item{facet_ncol}{Number of columns for facet_wrap (optional).}
 
 \item{facet_nrow}{Number of rows for facet_wrap (optional).}
+
+\item{coord_flip}{Logical, whether to flip the coordinates of the plot (default is FALSE).}
 
 \item{...}{Additional arguments passed to geom_boxplot().}
 }
@@ -81,6 +78,52 @@ margot_plot_boxplot(
 A ggplot object representing the boxplot.
 }
 \description{
-This function creates a boxplot for one or more variables, faceted by a specified variable (usually time).
+This function creates boxplots for one or more variables across specified panel waves.
 It offers various customisation options for the plot appearance and layout.
+}
+\examples{
+\dontrun{
+# Define outcome variables
+outcome_vars <- c(
+  "env_climate_chg_concern",
+  "env_climate_chg_cause",
+  "env_climate_chg_real",
+  "env_sat_nz_environment",
+  "envefficacy"
+)
+
+# Basic usage with all waves
+p1 <- margot_plot_boxplot(data = your_data,
+                          y_vars = outcome_vars,
+                          id_col = "id")
+
+# Plotting specific waves with points shown and coordinates flipped
+p2 <- margot_plot_boxplot(data = your_data,
+                          y_vars = outcome_vars,
+                          waves = c(2021, 2022),
+                          show_points = TRUE,
+                          coord_flip = TRUE,
+                          id_col = "id")
+
+# Saving the plot with a custom prefix
+margot_plot_boxplot(data = your_data,
+                    y_vars = outcome_vars,
+                    waves = c(2021, 2022, 2023),
+                    save_path = "path/to/save",
+                    prefix = "climate_change",
+                    include_timestamp = TRUE,
+                    id_col = "id")
+
+# Customizing the plot appearance with flipped coordinates
+p3 <- margot_plot_boxplot(data = your_data,
+                          y_vars = c("env_climate_chg_concern", "envefficacy"),
+                          waves = c(2021, 2022),
+                          title = "Climate Change Concern and Efficacy",
+                          y_label = "Score",
+                          legend_position = "right",
+                          facet_scales = "free",
+                          coord_flip = TRUE,
+                          id_col = "id")
+}
+
 }
