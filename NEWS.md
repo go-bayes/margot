@@ -4,10 +4,9 @@
 * Begin writing tutorials for use cases.
 * fix decision tree layout
 * progress [Develop automated reporting of all scales and measures for quarto documents.]
-* done [customise plots for user-supplied labels]
-* done [remove "Action: labels"]
 * qini cost options
-* remove color package
+* remove `color` package
+* methods
 
 # [2024-09-02] margot 0.2.1.44
 

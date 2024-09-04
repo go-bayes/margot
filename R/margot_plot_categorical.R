@@ -39,7 +39,6 @@
 #' @importFrom rlang sym
 #' @importFrom stringr str_to_title
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_danger
-#' @importFrom margot here_save_qs
 #'
 #' @export
 margot_plot_categorical <- function(df, col_name, n_divisions = NULL, custom_breaks = NULL,

@@ -31,7 +31,7 @@
 #'
 #' @export
 #' @importFrom EValue evalues.OLS evalues.RR
-#' @import dplyr select_if cbind select
+#' @import dplyr
 #' @seealso \code{\link{margot_tab_lmtp}}, \code{\link{lmtp_evalue_tab}} for the underlying functions used.
 #'
 margot_lmtp_evalue <- function(lmtp_output, scale = c("RD", "RR"), new_name = "character_string", delta = 1, sd = 1) {

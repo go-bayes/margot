@@ -33,10 +33,8 @@ The package offers functions for:
 
 `margot` focuses on streamlining the estimation of (Marginal) Average
 Treatment Effects, but it also supports workflows for Conditional
-Average Treatment Effects, Heterogeneous Treatment Effects, and Modified
-Treatment Policies.
-
-This version of the package is a work in progress and experimental.
+Average Treatment Effects and exploring Heterogeneous Treatment Effects,
+as well as Modified Treatment Policies.
 
 ## Installation
 

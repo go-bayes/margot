@@ -43,7 +43,6 @@
 #'
 #' @importFrom grf multi_arm_causal_forest average_treatment_effect variable_importance
 #' @importFrom dplyr arrange desc
-#' @importFrom margot margot_model_evalue
 #' @importFrom policytree double_robust_scores policy_tree
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_progress_bar cli_progress_update cli_progress_done
 #' @importFrom crayon bold green red yellow

@@ -47,7 +47,6 @@
 #' @importFrom grf causal_forest average_treatment_effect test_calibration rank_average_treatment_effect variable_importance best_linear_projection
 #' @importFrom dplyr %>%
 #' @importFrom progressr progressor with_progress
-#' @importFrom margot margot_model_evalue
 #' @importFrom ggplot2 ggplot geom_histogram theme_minimal labs
 #' @importFrom policytree double_robust_scores policy_tree
 #' @importFrom maq get_ipw_scores maq

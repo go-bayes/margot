@@ -73,8 +73,6 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_col scale_y_continuous labs theme_classic scale_fill_manual theme element_text ggsave
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_danger cli_alert_warning
-#' @importFrom margot here_save_qs
-#'
 #' @export
 margot_plot_response_timeline <- function(df_timeline,
                                           n_total_participants = NULL,

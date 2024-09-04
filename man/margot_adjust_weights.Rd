@@ -40,5 +40,5 @@ A list containing adjusted weights and summary statistics.
 \description{
 This function calculates and adjusts weights for censoring, combining them with
 sample weights if provided. It also offers options for trimming and normalizing
-the resulting weights. Progress is reported using cli and crayon packages.
+the resulting weights. Progress is reported using the cli package.
 }

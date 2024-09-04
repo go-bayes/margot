@@ -3,7 +3,7 @@ YEAR: 2024
 COPYRIGHT HOLDER: Joseph A. Bulbulia
 
 ## Data License
-The dataset "df_nz" contained in this package is licensed under the following terms:
+The simulated dataset "df_nz" contained in this package is licensed under the following terms:
 
 ### Custom Data License
 
