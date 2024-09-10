@@ -8,6 +8,17 @@
 * remove `color` package
 * methods
 
+# [2024-09-11] margot 0.2.1.45
+
+## New
+
+`build_formula_str` - helper function now documented. Used in `causal_contrast_engine` and `causal_contraset_marginal`
+
+## Improved
+
+- `causal_contrast_marginal` and `causal_contrast_marginal` modified to accommated breaking change in `WeigthIt` package. 
+- `double_robust_marginal` checks if object is a winmids object.
+
 # [2024-09-02] margot 0.2.1.44
 
 ## Improved
