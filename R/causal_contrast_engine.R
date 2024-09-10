@@ -39,7 +39,7 @@ causal_contrast_engine <- function(df, Y, X, baseline_vars, treat_0, treat_1,
     }
   }
 
-  # Helper function to process a single imputed dataset
+  # helper function to process a single imputed dataset
   process_imputation <- function(imputed_data, weights) {
     # Build formula
     formula_str <- build_formula_str(Y, X, continuous_X, splines, baseline_vars)
@@ -55,19 +55,19 @@ causal_contrast_engine <- function(df, Y, X, baseline_vars, treat_0, treat_1,
     return(fit)
   }
 
-  # Check if df is a wimids object
+  # check if df is a wimids object
   if (inherits(df, "wimids")) {
     # Extract the mids object and weights
     mids_obj <- df$object
     weights_list <- lapply(df$models, function(m) m$weights)
 
-    # Process each imputed dataset
+    # process each imputed dataset
     fits <- lapply(1:mids_obj$m, function(i) {
       imputed_data <- mice::complete(mids_obj, i)
       process_imputation(imputed_data, weights_list[[i]])
     })
 
-    # Create a misim object
+    # create a misim object
     sim.imp <- clarify::misim(fits, n = nsims, vcov = vcov)
   } else {
     # If df is not a wimids object, process it as before
@@ -77,12 +77,11 @@ causal_contrast_engine <- function(df, Y, X, baseline_vars, treat_0, treat_1,
     sim.imp <- clarify::sim(fit, n = nsims, vcov = vcov)
   }
 
-  # The rest of the function remains the same
   if (continuous_X) {
     estimand <- "ATE"
   }
 
-  # Compute the average marginal effects
+  # compute the average marginal effects
   if (!continuous_X && estimand == "ATT") {
     subset_expr <- rlang::expr(!!rlang::sym(X) == !!treat_1)
     sim_estimand <- clarify::sim_ame(

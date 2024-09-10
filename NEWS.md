@@ -8,6 +8,14 @@
 * remove `color` package
 * methods
 
+
+# [2024-09-11] margot 0.2.1.46
+
+## Improved
+
+- `hear_read` does not require that an `.rds` file is passed. 
+
+
 # [2024-09-11] margot 0.2.1.45
 
 ## New
