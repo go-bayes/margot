@@ -8,6 +8,13 @@
 * remove `color` package
 * methods
 
+# [2024-09-11] margot 0.2.1.47
+
+## Improved
+-  Coordinated the following functions to play well with `margot_multi_arm_causal_forest()`
+- `margot_plot_qini()`
+- `extract_qini_data()``
+- `compute_qini_curves()`
 
 # [2024-09-11] margot 0.2.1.46
 
