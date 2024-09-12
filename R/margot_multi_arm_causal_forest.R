@@ -133,10 +133,12 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
         train_size <- floor(train_proportion * n_non_missing)
         train_indices <- sample(not_missing, train_size)
 
+        # Ensure we're using the correct subset of covariates and dr_scores for policy tree
+        X_train <- covariates[train_indices, top_vars, drop = FALSE]
+        dr_scores_train <- dr_scores[train_indices, , drop = FALSE]
+
         policy_tree_model <- tryCatch({
-          policytree::policy_tree(
-            covariates[train_indices, top_vars, drop = FALSE], dr_scores[train_indices, , drop = FALSE], depth = 2
-          )
+          policytree::policy_tree(X_train, dr_scores_train, depth = 2)
         }, error = function(e) {
           cli::cli_alert_warning(crayon::yellow(paste("Error in policy tree for", outcome, ":", e$message)))
           NULL
@@ -157,27 +159,26 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
           results[[model_name]]$plot_data <- NULL
         }
 
-
         if (compute_qini) {
-          cli::cli_alert_info(paste("Computing Qini curves for", outcome))
-          cli::cli_alert_info(paste("tau_hat class:", class(tau_hat)))
-          cli::cli_alert_info(paste("tau_hat dimensions:", paste(dim(tau_hat$predictions), collapse = "x")))
-          cli::cli_alert_info(paste("Y dimensions:", paste(dim(Y), collapse = "x")))
-          cli::cli_alert_info(paste("W_multi length:", length(W_multi)))
+          # Compute Qini curves
+          # Compute Qini curves
+          cli::cli_alert_info(paste("Computing Qini curves for", outcome_var))
+          qini_data <- compute_qini_curves_multi_arm(tau_hat = tau_hat,
+                                                     Y = Y,
+                                                     W_multi = W.multi)
 
-          qini_data <- compute_qini_curves(tau_hat, Y, W_multi = W_multi)
-
-          if (is.null(qini_data) || nrow(qini_data) == 0) {
-            cli::cli_alert_warning(paste("Qini data is NULL or empty for", outcome))
-            results[[model_name]]$qini_data <- NULL
-            results[[model_name]]$qini_error <- "Qini data is NULL or empty"
+          if (is.null(qini_data)) {
+            cli::cli_alert_warning(paste("Qini data is NULL for", outcome_var))
+          } else if (attr(qini_data, "imputed")) {
+            cli::cli_alert_warning(paste("Qini data for", outcome_var, "was imputed with zeros. Exercise caution when interpreting results."))
+            model_results$qini_data <- qini_data
+            model_results$qini_imputed <- TRUE
           } else {
-            cli::cli_alert_success(paste("Qini curves computed successfully for", outcome))
-            results[[model_name]]$qini_data <- qini_data
+            model_results$qini_data <- qini_data
+            model_results$qini_imputed <- FALSE
           }
+
         }
-
-
 
         if (save_models) {
           full_models[[model_name]] <- model

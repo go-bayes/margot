@@ -12,11 +12,12 @@
 #' @keywords internal
 extract_qini_data <- function(qini_obj, name, max_index) {
   if (is.null(qini_obj) || is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain)) {
-    cli::cli_alert_warning(paste("Qini object", name, "is NULL or missing required components."))
-    return(data.frame())
+    cli::cli_alert_warning(paste("Qini object", name, "is NULL or missing required components. Extending with zeros."))
+    gain <- rep(0, max_index)
+  } else {
+    gain <- qini_obj[["_path"]]$gain
   }
 
-  gain <- qini_obj[["_path"]]$gain
   proportion <- seq_along(gain) / length(gain)
 
   # Extend or truncate to max_index

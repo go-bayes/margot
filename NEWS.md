@@ -8,6 +8,20 @@
 * remove `color` package
 * methods
 
+
+
+# [2024-09-12] margot 0.2.1.48
+
+## Improved
+
+- `margot_multi_arm_causal_forest()`
+- `extract_qini_data()` improved to work with `margot_multi_arm_causal_forest()`
+
+## New
+- `compute_qini_curves_multi_arm()` internal function to support `margot_multi_arm_causal_forest()`
+
+
+
 # [2024-09-11] margot 0.2.1.47
 
 ## Improved
@@ -21,6 +35,7 @@
 ## Improved
 
 - `hear_read` does not require that an `.rds` file is passed. 
+- `extract_qini_data` made robust
 
 
 # [2024-09-11] margot 0.2.1.45
