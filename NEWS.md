@@ -8,7 +8,12 @@
 * remove `color` package
 * methods
 
+# [2024-09-12] margot 0.2.1.49
 
+## Improved
+
+- reverted `compute_qini_curves` (only works with binary vars)
+- `margot_causal_forest()` now working again
 
 # [2024-09-12] margot 0.2.1.48
 

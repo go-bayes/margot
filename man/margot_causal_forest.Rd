@@ -15,8 +15,7 @@ margot_causal_forest(
   compute_rate = TRUE,
   top_n_vars = 10,
   save_models = FALSE,
-  train_proportion = 0.8,
-  propensity_threshold = 0.05
+  train_proportion = 0.8
 )
 }
 \arguments{
