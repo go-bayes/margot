@@ -8,12 +8,15 @@
 #' @param data A data frame containing the variables for the model.
 #' @param formula A formula specifying the model to be fit.
 #' @param terms A character vector specifying the terms to be used in predict_response.
+#' @param id_col Name of the column containing unique identifiers (default is "id").
 #' @param title An optional title for the plot. If NULL, an automatic title will be generated.
 #' @param y_label An optional label for the y-axis. If NULL, the response variable name will be used.
 #' @param x_label An optional label for the x-axis. If NULL, the first term will be used.
 #' @param y_limits An optional vector of two numbers specifying the y-axis limits. Default is c(1, 7).
 #' @param color_label An optional label for the color legend. If NULL, the second term will be used.
+#' @param include_timestamp Logical, whether to include timestamp in plot title and filename (default is FALSE).
 #' @param save_path An optional path to save the plot. If NULL, the plot will not be saved.
+#' @param prefix Optional prefix for the saved file name (default is NULL).
 #' @param width The width of the saved plot in inches. Default is 12.
 #' @param height The height of the saved plot in inches. Default is 8.
 #' @param seed An optional seed for reproducibility.
@@ -46,7 +49,7 @@
 #'   color_label = "Work Hours"
 #' )
 #'
-#' # With additional ggeffects options
+#' # With additional ggeffects options and timestamp
 #' plot_with_options <- margot_plot_slope_covariate(
 #'   data = dat,
 #'   formula = warm_immigrants ~ wave:education,
@@ -54,32 +57,37 @@
 #'   y_label = "Warmth",
 #'   x_label = "Wave",
 #'   color_label = "Education (Years)",
+#'   include_timestamp = TRUE,
 #'   type = "continuous"
 #' )
 #'
-#' # Saving the plot
+#' # Saving the plot with custom prefix
 #' saved_plot <- margot_plot_slope_covariate(
 #'   data = dat,
 #'   formula = political_orientation ~ wave:age,
 #'   terms = c("wave", "age"),
 #'   save_path = "path/to/save/directory",
+#'   prefix = "political_orientation",
 #'   width = 10,
 #'   height = 6
 #' )
 #' }
 margot_plot_slope_covariate <- function(data,
-                                         formula,
-                                         terms,
-                                         title = NULL,
-                                         y_label = NULL,
-                                         x_label = NULL,
-                                         y_limits = c(1, 7),
-                                         color_label = NULL,
-                                         save_path = NULL,
-                                         width = 12,
-                                         height = 8,
-                                         seed = NULL,
-                                         ...) {
+                                        formula,
+                                        terms,
+                                        id_col = "id",
+                                        title = NULL,
+                                        y_label = NULL,
+                                        x_label = NULL,
+                                        y_limits = c(1, 7),
+                                        color_label = NULL,
+                                        include_timestamp = FALSE,
+                                        save_path = NULL,
+                                        prefix = NULL,
+                                        width = 12,
+                                        height = 8,
+                                        seed = NULL,
+                                        ...) {
 
   cli::cli_h1("Margot Plot ggeffects")
 
@@ -94,6 +102,16 @@ margot_plot_slope_covariate <- function(data,
       set.seed(seed)
     }
 
+    # Remove NAs and count participants who responded
+    data <- data %>%
+      dplyr::filter(!is.na(!!sym(all.vars(formula[[2]]))) & is.finite(!!sym(all.vars(formula[[2]]))))
+
+    # Count total unique participants
+    total_unique <- dplyr::n_distinct(data[[id_col]])
+
+    # Calculate total observations
+    total_obs <- nrow(data)
+
     # Fit the model
     model <- lm(formula, data = data)
 
@@ -104,6 +122,25 @@ margot_plot_slope_covariate <- function(data,
 
     cli::cli_alert_info("Creating plot...")
 
+    # Function to convert to title case and remove underscores
+    format_label <- function(x) {
+      stringr::str_to_title(gsub("_", " ", x))
+    }
+
+    # Determine the title
+    if (is.null(title)) {
+      outcome_label <- format_label(all.vars(formula[[2]]))
+      covariate_label <- format_label(terms[2])
+      title <- sprintf(
+        "%s by %s and %s\nTotal N = %d unique participants, %d observations",
+        outcome_label, format_label(terms[1]), covariate_label, total_unique, total_obs
+      )
+    }
+
+    if (include_timestamp) {
+      title <- paste(title, format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
+    }
+
     # Create the ggplot
     p <- plot(pred) +
       ggokabeito::scale_colour_okabe_ito() +
@@ -111,23 +148,33 @@ margot_plot_slope_covariate <- function(data,
       scale_y_continuous(limits = y_limits) +
       labs(
         title = title,
-        y = y_label %||% all.vars(formula[[2]]),  # Use the response variable name if y_label is not provided
-        x = x_label %||% terms[1],
-        color = color_label %||% terms[2]
+        y = y_label %||% format_label(all.vars(formula[[2]])),
+        x = x_label %||% format_label(terms[1]),
+        color = color_label %||% format_label(terms[2])
       )
 
     cli::cli_alert_success("Plot created successfully")
 
     # Save plot if a save path is provided
     if (!is.null(save_path)) {
+      filename <- "ggeffects_plot"
+
+      # Add the optional prefix
+      if (!is.null(prefix) && nzchar(prefix)) {
+        filename <- paste0(prefix, "_", filename)
+      }
+
       filename <- paste0(
-        "ggeffects_plot_",
+        filename, "_",
         all.vars(formula[[2]]),
         "_by_",
-        paste(terms, collapse = "_"),
-        "_",
-        format(Sys.Date(), "%Y%m%d")
+        paste(terms, collapse = "_")
       )
+
+      # Only add timestamp to filename if include_timestamp is TRUE
+      if (include_timestamp) {
+        filename <- paste0(filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"))
+      }
 
       cli::cli_alert_info("Saving plot...")
 

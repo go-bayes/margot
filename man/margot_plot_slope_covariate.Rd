@@ -8,12 +8,15 @@ margot_plot_slope_covariate(
   data,
   formula,
   terms,
+  id_col = "id",
   title = NULL,
   y_label = NULL,
   x_label = NULL,
   y_limits = c(1, 7),
   color_label = NULL,
+  include_timestamp = FALSE,
   save_path = NULL,
+  prefix = NULL,
   width = 12,
   height = 8,
   seed = NULL,
@@ -27,6 +30,8 @@ margot_plot_slope_covariate(
 
 \item{terms}{A character vector specifying the terms to be used in predict_response.}
 
+\item{id_col}{Name of the column containing unique identifiers (default is "id").}
+
 \item{title}{An optional title for the plot. If NULL, an automatic title will be generated.}
 
 \item{y_label}{An optional label for the y-axis. If NULL, the response variable name will be used.}
@@ -37,7 +42,11 @@ margot_plot_slope_covariate(
 
 \item{color_label}{An optional label for the color legend. If NULL, the second term will be used.}
 
+\item{include_timestamp}{Logical, whether to include timestamp in plot title and filename (default is FALSE).}
+
 \item{save_path}{An optional path to save the plot. If NULL, the plot will not be saved.}
+
+\item{prefix}{Optional prefix for the saved file name (default is NULL).}
 
 \item{width}{The width of the saved plot in inches. Default is 12.}
 
@@ -73,7 +82,7 @@ plot <- margot_plot_slope_covariate(
   color_label = "Work Hours"
 )
 
-# With additional ggeffects options
+# With additional ggeffects options and timestamp
 plot_with_options <- margot_plot_slope_covariate(
   data = dat,
   formula = warm_immigrants ~ wave:education,
@@ -81,15 +90,17 @@ plot_with_options <- margot_plot_slope_covariate(
   y_label = "Warmth",
   x_label = "Wave",
   color_label = "Education (Years)",
+  include_timestamp = TRUE,
   type = "continuous"
 )
 
-# Saving the plot
+# Saving the plot with custom prefix
 saved_plot <- margot_plot_slope_covariate(
   data = dat,
   formula = political_orientation ~ wave:age,
   terms = c("wave", "age"),
   save_path = "path/to/save/directory",
+  prefix = "political_orientation",
   width = 10,
   height = 6
 )

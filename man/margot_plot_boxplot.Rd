@@ -13,7 +13,7 @@ margot_plot_boxplot(
   y_label = NULL,
   x_label = "Wave",
   show_points = FALSE,
-  point_alpha = 0.3,
+  point_alpha = 0.05,
   point_size = 0.5,
   include_timestamp = FALSE,
   save_path = NULL,

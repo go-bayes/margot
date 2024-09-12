@@ -13,7 +13,7 @@ and reports the number of unique participants and observations used in the analy
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.49</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.50</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,12 +52,15 @@ and reports the number of unique participants and observations used in the analy
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">formula</span>,</span>
 <span>  <span class="va">terms</span>,</span>
+<span>  id_col <span class="op">=</span> <span class="st">"id"</span>,</span>
 <span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  y_label <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  x_label <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  y_limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">7</span><span class="op">)</span>,</span>
 <span>  color_label <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  include_timestamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  save_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  prefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  width <span class="op">=</span> <span class="fl">12</span>,</span>
 <span>  height <span class="op">=</span> <span class="fl">8</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -81,6 +84,10 @@ and reports the number of unique participants and observations used in the analy
 <dd><p>A character vector specifying the terms to be used in predict_response.</p></dd>
 
 
+<dt id="arg-id-col">id_col<a class="anchor" aria-label="anchor" href="#arg-id-col"></a></dt>
+<dd><p>Name of the column containing unique identifiers (default is "id").</p></dd>
+
+
 <dt id="arg-title">title<a class="anchor" aria-label="anchor" href="#arg-title"></a></dt>
 <dd><p>An optional title for the plot. If NULL, an automatic title will be generated.</p></dd>
 
@@ -101,8 +108,16 @@ and reports the number of unique participants and observations used in the analy
 <dd><p>An optional label for the color legend. If NULL, the second term will be used.</p></dd>
 
 
+<dt id="arg-include-timestamp">include_timestamp<a class="anchor" aria-label="anchor" href="#arg-include-timestamp"></a></dt>
+<dd><p>Logical, whether to include timestamp in plot title and filename (default is FALSE).</p></dd>
+
+
 <dt id="arg-save-path">save_path<a class="anchor" aria-label="anchor" href="#arg-save-path"></a></dt>
 <dd><p>An optional path to save the plot. If NULL, the plot will not be saved.</p></dd>
+
+
+<dt id="arg-prefix">prefix<a class="anchor" aria-label="anchor" href="#arg-prefix"></a></dt>
+<dd><p>Optional prefix for the saved file name (default is NULL).</p></dd>
 
 
 <dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>
@@ -144,7 +159,7 @@ and reports the number of unique participants and observations used in the analy
 <span class="r-in"><span>  color_label <span class="op">=</span> <span class="st">"Work Hours"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># With additional ggeffects options</span></span></span>
+<span class="r-in"><span><span class="co"># With additional ggeffects options and timestamp</span></span></span>
 <span class="r-in"><span><span class="va">plot_with_options</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_slope_covariate</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">dat</span>,</span></span>
 <span class="r-in"><span>  formula <span class="op">=</span> <span class="va">warm_immigrants</span> <span class="op">~</span> <span class="va">wave</span><span class="op">:</span><span class="va">education</span>,</span></span>
@@ -152,15 +167,17 @@ and reports the number of unique participants and observations used in the analy
 <span class="r-in"><span>  y_label <span class="op">=</span> <span class="st">"Warmth"</span>,</span></span>
 <span class="r-in"><span>  x_label <span class="op">=</span> <span class="st">"Wave"</span>,</span></span>
 <span class="r-in"><span>  color_label <span class="op">=</span> <span class="st">"Education (Years)"</span>,</span></span>
+<span class="r-in"><span>  include_timestamp <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>  type <span class="op">=</span> <span class="st">"continuous"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Saving the plot</span></span></span>
+<span class="r-in"><span><span class="co"># Saving the plot with custom prefix</span></span></span>
 <span class="r-in"><span><span class="va">saved_plot</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_slope_covariate</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">dat</span>,</span></span>
 <span class="r-in"><span>  formula <span class="op">=</span> <span class="va">political_orientation</span> <span class="op">~</span> <span class="va">wave</span><span class="op">:</span><span class="va">age</span>,</span></span>
 <span class="r-in"><span>  terms <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wave"</span>, <span class="st">"age"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  save_path <span class="op">=</span> <span class="st">"path/to/save/directory"</span>,</span></span>
+<span class="r-in"><span>  prefix <span class="op">=</span> <span class="st">"political_orientation"</span>,</span></span>
 <span class="r-in"><span>  width <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  height <span class="op">=</span> <span class="fl">6</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>

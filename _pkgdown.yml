@@ -44,6 +44,7 @@ reference:
   - title: "Describe Longitudinal Data"
     contents:
     - margot_plot_boxplot
+    - margot_plot_boxplot_covariate
     - margot_plot_discontinuity
     - margot_plot_histogram
     - margot_plot_response_timeline

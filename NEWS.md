@@ -8,6 +8,18 @@
 * remove `color` package
 * methods
 
+
+# [2024-09-12] margot 0.2.1.50
+
+## New
+
+- `margot_plot_boxplot_covariate()` descriptive trends by groups
+
+
+## Improve
+
+- `margot_plot_slope_covariate()` automatic title, save png, and optional time stamp
+
 # [2024-09-12] margot 0.2.1.49
 
 ## Improved
