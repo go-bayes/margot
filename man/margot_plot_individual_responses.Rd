@@ -83,6 +83,7 @@ A ggplot2 object representing the individual response plot.
 \description{
 This function creates a ggplot2 visualization of individual responses over time for one or more variables.
 It allows for flexible data filtering, sampling, and customization of the plot appearance.
+The function automatically handles missing data by removing rows with NA values in the specified variables.
 }
 \examples{
 \dontrun{

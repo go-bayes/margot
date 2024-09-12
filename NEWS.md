@@ -19,6 +19,7 @@
 ## Improve
 
 - `margot_plot_slope_covariate()` automatic title, save png, and optional time stamp
+- `margot_plot_individual_responses()` fixed so there is no missingness
 
 # [2024-09-12] margot 0.2.1.49
 
