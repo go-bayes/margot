@@ -29,6 +29,37 @@
 #' }
 #'
 #' @keywords internal
+#' Compute Qini Curves for Multi-Arm Treatments
+#'
+#' This function computes Qini curves for multi-arm treatment effects using the maq package.
+#' It handles various edge cases and provides detailed information about the computation process.
+#'
+#' @param tau_hat A matrix or 3D array of estimated treatment effects. For multi-arm treatments,
+#'   this should be a matrix where each column represents a treatment arm.
+#' @param Y A vector or matrix of observed outcomes.
+#' @param W_multi A factor vector of treatment assignments for multi-arm treatments.
+#'
+#' @return A data frame containing Qini curve data for plotting, or NULL if computation fails.
+#'   The data frame has an attribute "imputed" which is TRUE if any curves were imputed with zeros.
+#'
+#' @details
+#' The function computes Qini curves for all arms combined, a baseline (no covariates),
+#' and each individual treatment arm. It handles cases where some or all Qini objects
+#' have zero length or are NULL, extending curves with zeros when necessary.
+#'
+#' @importFrom maq maq get_ipw_scores
+#' @importFrom cli cli_alert_info cli_alert_warning cli_alert_danger
+#' @importFrom purrr map2_dfr
+#'
+#' @examples
+#' \dontrun{
+#' tau_hat <- matrix(rnorm(1000 * 3), nrow = 1000, ncol = 3)
+#' Y <- rnorm(1000)
+#' W_multi <- factor(sample(1:3, 1000, replace = TRUE))
+#' qini_data <- compute_qini_curves_multi_arm(tau_hat, Y, W_multi)
+#' }
+#'
+#' @export
 compute_qini_curves_multi_arm <- function(tau_hat, Y, W_multi) {
   tryCatch({
     # Debug information

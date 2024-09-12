@@ -92,6 +92,7 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
 
   cli::cli_alert_info(paste("Number of complete cases:", length(not_missing)))
 
+
   run_models_with_progress <- function() {
     results <- list()
     full_models <- list()
@@ -133,7 +134,6 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
         train_size <- floor(train_proportion * n_non_missing)
         train_indices <- sample(not_missing, train_size)
 
-        # Ensure we're using the correct subset of covariates and dr_scores for policy tree
         X_train <- covariates[train_indices, top_vars, drop = FALSE]
         dr_scores_train <- dr_scores[train_indices, , drop = FALSE]
 
@@ -161,23 +161,21 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
 
         if (compute_qini) {
           # Compute Qini curves
-          # Compute Qini curves
-          cli::cli_alert_info(paste("Computing Qini curves for", outcome_var))
-          qini_data <- compute_qini_curves_multi_arm(tau_hat = tau_hat,
+          cli::cli_alert_info(paste("Computing Qini curves for", outcome))
+          qini_data <- compute_qini_curves_multi_arm(tau_hat = tau_hat$predictions,
                                                      Y = Y,
-                                                     W_multi = W.multi)
+                                                     W_multi = W_multi)
 
           if (is.null(qini_data)) {
-            cli::cli_alert_warning(paste("Qini data is NULL for", outcome_var))
+            cli::cli_alert_warning(paste("Qini data is NULL for", outcome))
           } else if (attr(qini_data, "imputed")) {
-            cli::cli_alert_warning(paste("Qini data for", outcome_var, "was imputed with zeros. Exercise caution when interpreting results."))
-            model_results$qini_data <- qini_data
-            model_results$qini_imputed <- TRUE
+            cli::cli_alert_warning(paste("Qini data for", outcome, "was imputed with zeros. Exercise caution when interpreting results."))
+            results[[model_name]]$qini_data <- qini_data
+            results[[model_name]]$qini_imputed <- TRUE
           } else {
-            model_results$qini_data <- qini_data
-            model_results$qini_imputed <- FALSE
+            results[[model_name]]$qini_data <- qini_data
+            results[[model_name]]$qini_imputed <- FALSE
           }
-
         }
 
         if (save_models) {

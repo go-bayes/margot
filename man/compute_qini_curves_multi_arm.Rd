@@ -17,12 +17,19 @@ this should be a matrix where each column represents a treatment arm.}
 \value{
 A data frame containing Qini curve data for plotting, or NULL if computation fails.
   The data frame has an attribute "imputed" which is TRUE if any curves were imputed with zeros.
+
+A data frame containing Qini curve data for plotting, or NULL if computation fails.
+  The data frame has an attribute "imputed" which is TRUE if any curves were imputed with zeros.
 }
 \description{
 This function computes Qini curves for multi-arm treatment effects using the maq package.
 It handles various edge cases and provides detailed information about the computation process.
 }
 \details{
+The function computes Qini curves for all arms combined, a baseline (no covariates),
+and each individual treatment arm. It handles cases where some or all Qini objects
+have zero length or are NULL, extending curves with zeros when necessary.
+
 The function computes Qini curves for all arms combined, a baseline (no covariates),
 and each individual treatment arm. It handles cases where some or all Qini objects
 have zero length or are NULL, extending curves with zeros when necessary.
@@ -35,5 +42,41 @@ W_multi <- factor(sample(1:3, 1000, replace = TRUE))
 qini_data <- compute_qini_curves_multi_arm(tau_hat, Y, W_multi)
 }
 
+\dontrun{
+tau_hat <- matrix(rnorm(1000 * 3), nrow = 1000, ncol = 3)
+Y <- rnorm(1000)
+W_multi <- factor(sample(1:3, 1000, replace = TRUE))
+qini_data <- compute_qini_curves_multi_arm(tau_hat, Y, W_multi)
 }
+
+}
+\keyword{Compute}
+\keyword{Curves}
+\keyword{It}
+\keyword{Multi-Arm}
+\keyword{Qini}
+\keyword{This}
+\keyword{Treatments}
+\keyword{about}
+\keyword{and}
+\keyword{cases}
+\keyword{computation}
+\keyword{computes}
+\keyword{curves}
+\keyword{detailed}
+\keyword{edge}
+\keyword{effects}
+\keyword{for}
+\keyword{function}
+\keyword{handles}
+\keyword{information}
 \keyword{internal}
+\keyword{maq}
+\keyword{multi-arm}
+\keyword{package.}
+\keyword{process.}
+\keyword{provides}
+\keyword{the}
+\keyword{treatment}
+\keyword{using}
+\keyword{various}
