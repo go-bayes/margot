@@ -15,9 +15,9 @@
 #' @param grf_defaults A list of default parameters for the GRF models.
 #' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
 #' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
-#' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 10.
+#' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 15.
 #' @param save_models Logical indicating whether to save the full GRF model objects. Default is FALSE.
-#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.8.
+#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.5.
 #'
 #' @return A list containing:
 #'   \item{results}{A list of model results, one for each outcome variable. Each model result includes:
@@ -55,8 +55,8 @@
 #'
 #' @export
 margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf_defaults = list(),
-                                 save_data = FALSE, compute_rate = TRUE, top_n_vars = 10, save_models = FALSE,
-                                 train_proportion = 0.8) {
+                                 save_data = FALSE, compute_rate = TRUE, top_n_vars = 15, save_models = FALSE,
+                                 train_proportion = 0.5) {
 
   cli::cli_alert_info("Starting margot_causal_forest function")
 

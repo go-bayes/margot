@@ -13,9 +13,9 @@ margot_causal_forest(
   grf_defaults = list(),
   save_data = FALSE,
   compute_rate = TRUE,
-  top_n_vars = 10,
+  top_n_vars = 15,
   save_models = FALSE,
-  train_proportion = 0.8
+  train_proportion = 0.5
 )
 }
 \arguments{
@@ -35,11 +35,11 @@ margot_causal_forest(
 
 \item{compute_rate}{Logical indicating whether to compute RATE for each model. Default is TRUE.}
 
-\item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 10.}
+\item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 15.}
 
 \item{save_models}{Logical indicating whether to save the full GRF model objects. Default is FALSE.}
 
-\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.8.}
+\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.5.}
 }
 \value{
 A list containing:

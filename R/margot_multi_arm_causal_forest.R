@@ -16,7 +16,7 @@
 #' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 10.
 #' @param save_models Logical indicating whether to save the full GRF model objects. Default is FALSE.
 #' @param compute_qini Logical indicating whether to compute Qini curves for each model. Default is TRUE.
-#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.8.
+#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.5.
 #'
 #' @return A list containing:
 #'   \item{results}{A list of model results, one for each outcome variable. Each model result includes:
@@ -61,7 +61,7 @@
 #'   exposure_name = "treatment",
 #'   grf_defaults = list(num.trees = 2000),
 #'   top_n_vars = 15,
-#'   train_proportion = 0.8,
+#'   train_proportion = 0.5,
 #'   save_models = TRUE
 #' )
 #' }
@@ -71,7 +71,7 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
                                            exposure_name, grf_defaults = list(),
                                            save_data = FALSE, top_n_vars = 10,
                                            save_models = FALSE, compute_qini = TRUE,
-                                           train_proportion = 0.8) {
+                                           train_proportion = 0.5) {
   cli::cli_alert_info(crayon::bold("Starting margot_multi_arm_causal_forest function"))
 
   if (save_models) {

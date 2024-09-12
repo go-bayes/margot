@@ -16,7 +16,7 @@ margot_multi_arm_causal_forest(
   top_n_vars = 10,
   save_models = FALSE,
   compute_qini = TRUE,
-  train_proportion = 0.8
+  train_proportion = 0.5
 )
 }
 \arguments{
@@ -42,7 +42,7 @@ margot_multi_arm_causal_forest(
 
 \item{compute_qini}{Logical indicating whether to compute Qini curves for each model. Default is TRUE.}
 
-\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.8.}
+\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.5.}
 }
 \value{
 A list containing:
@@ -89,7 +89,7 @@ result_multi_arm <- margot_multi_arm_causal_forest(
   exposure_name = "treatment",
   grf_defaults = list(num.trees = 2000),
   top_n_vars = 15,
-  train_proportion = 0.8,
+  train_proportion = 0.5,
   save_models = TRUE
 )
 }
