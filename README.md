@@ -91,7 +91,7 @@ bibentry(
   title = "margot: MARGinal Observational Treatment-effects",
   author = person("Joseph A", "Bulbulia"),
   year = "2024",
-  note = "R package version 0.2.1.50, Functions to obtain MARGinal Observational Treatment-effects from observational data.",
+  note = "R package version 0.2.1.52, Functions to obtain MARGinal Observational Treatment-effects from observational data.",
   url = "https://go-bayes.github.io/margot/",
   doi = "10.5281/zenodo.10907724"
 )

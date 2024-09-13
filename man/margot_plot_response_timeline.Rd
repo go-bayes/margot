@@ -15,7 +15,9 @@ margot_plot_response_timeline(
   title = "Panel Study Timeline",
   x_label = "Date",
   y_label = "Count of Responses",
-  color_palette = NULL
+  color_palette = NULL,
+  save_png = FALSE,
+  use_timestamp = FALSE
 )
 }
 \arguments{
@@ -23,7 +25,7 @@ margot_plot_response_timeline(
 
 \item{n_total_participants}{The total number of unique participants. If NULL, it will be extracted from df_timeline if available.}
 
-\item{save}{Logical. If TRUE, saves the plot as a PNG file and a qs file. Default is FALSE.}
+\item{save}{Logical. If TRUE, saves the plot as a qs file. Default is FALSE.}
 
 \item{save_path}{The directory path to save the plot. Default is "output" in the current working directory.}
 
@@ -40,6 +42,10 @@ margot_plot_response_timeline(
 \item{y_label}{The label for the y-axis. Default is "Count of Responses".}
 
 \item{color_palette}{A vector of colors to use for the waves. If NULL, uses a default color-blind friendly palette.}
+
+\item{save_png}{Logical. If TRUE, saves the plot as a PNG file. Default is FALSE.}
+
+\item{use_timestamp}{Logical. If TRUE, includes a timestamp in the PNG filename. Default is FALSE.}
 }
 \value{
 A ggplot2 object representing the panel study response timeline.
@@ -90,10 +96,12 @@ nzavs_timeline <- margot_plot_response_timeline(
   df_timeline = prepared_data$df_timeline,
   n_total_participants = prepared_data$n_total_participants,
   save = TRUE,
+  save_png = TRUE,
+  use_timestamp = TRUE,
   save_path = here::here("output", "plots"),
   title = "New Zealand Attitudes and Values Study (panel)",
-  x_label = paste("NZAVS years", min(year(prepared_data$df_timeline$day)),
-                  "-", max(year(prepared_data$df_timeline$day)),
+  x_label = paste("NZAVS years",  min(prepared_data$df_timeline$day, na.rm = TRUE),
+                  "-", max(prepared_data$df_timeline$day, na.rm = TRUE),
                   "cohort: daily counts by condition"),
   y_label = "Count of Responses"
 )

@@ -268,7 +268,7 @@ margot_plot_slope <- function(data,
           paste(formatted_labels, collapse = ", "),
           format(n_participants, big.mark = ","),
           format(n_observations, big.mark = ","),
-          year_range[1], year_range[2]
+          year_range[1], year_range[2] + 1
         )
       }
 

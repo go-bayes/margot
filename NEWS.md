@@ -8,6 +8,17 @@
 * remove `color` package
 * methods
 
+# [2024-09-12] margot 0.2.1.52
+
+## Improve
+
+- Fixed `margot_plot_response_timeline()` to print dates, and to optionally save a 'png` image. 
+
+# [2024-09-12] margot 0.2.1.51
+
+## Improve
+
+- `margot_plot_discontinuity()` and `margot_plot_slope()` have correct end years (+1 final wave, as waves overlap years)
 
 # [2024-09-12] margot 0.2.1.50
 

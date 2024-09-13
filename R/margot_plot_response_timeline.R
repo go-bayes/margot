@@ -4,7 +4,9 @@
 #'
 #' @param df_timeline A data frame containing the processed timeline data, typically output from `prepare_panel_data()`.
 #' @param n_total_participants The total number of unique participants. If NULL, it will be extracted from df_timeline if available.
-#' @param save Logical. If TRUE, saves the plot as a PNG file and a qs file. Default is FALSE.
+#' @param save Logical. If TRUE, saves the plot as a qs file. Default is FALSE.
+#' @param save_png Logical. If TRUE, saves the plot as a PNG file. Default is FALSE.
+#' @param use_timestamp Logical. If TRUE, includes a timestamp in the PNG filename. Default is FALSE.
 #' @param save_path The directory path to save the plot. Default is "output" in the current working directory.
 #' @param width The width of the saved plot in inches. Default is 12.
 #' @param height The height of the saved plot in inches. Default is 8.
@@ -59,10 +61,12 @@
 #'   df_timeline = prepared_data$df_timeline,
 #'   n_total_participants = prepared_data$n_total_participants,
 #'   save = TRUE,
+#'   save_png = TRUE,
+#'   use_timestamp = TRUE,
 #'   save_path = here::here("output", "plots"),
 #'   title = "New Zealand Attitudes and Values Study (panel)",
-#'   x_label = paste("NZAVS years", min(year(prepared_data$df_timeline$day)),
-#'                   "-", max(year(prepared_data$df_timeline$day)),
+#'   x_label = paste("NZAVS years",  min(prepared_data$df_timeline$day, na.rm = TRUE),
+#'                   "-", max(prepared_data$df_timeline$day, na.rm = TRUE),
 #'                   "cohort: daily counts by condition"),
 #'   y_label = "Count of Responses"
 #' )
@@ -84,7 +88,9 @@ margot_plot_response_timeline <- function(df_timeline,
                                           title = "Panel Study Timeline",
                                           x_label = "Date",
                                           y_label = "Count of Responses",
-                                          color_palette = NULL) {
+                                          color_palette = NULL,
+                                          save_png = FALSE,
+                                          use_timestamp = FALSE) {
   cli::cli_alert_info("Starting to create response timeline plot...")
 
   # Check if required columns exist
@@ -95,25 +101,25 @@ margot_plot_response_timeline <- function(df_timeline,
     stop("Missing required columns")
   }
 
-  # Ensure day column is Date type
+  # ensure day column is date type
   if (!inherits(df_timeline$day, "Date")) {
     cli::cli_alert_warning("Converting 'day' column to Date type")
     df_timeline$day <- as.Date(df_timeline$day)
   }
 
-  # Calculate year range
+  # calculate year range
   year_range <- range(lubridate::year(df_timeline$day), na.rm = TRUE)
 
-  # Calculate total responses
+  # calculate total responses
   total_responses <- sum(df_timeline$n_responses, na.rm = TRUE)
 
-  # Handle n_total_participants
+  # handle n_total_participants
   if (is.null(n_total_participants) && "n_total_participants" %in% names(df_timeline)) {
     n_total_participants <- df_timeline$n_total_participants[1]
     cli::cli_alert_info("Using n_total_participants from df_timeline")
   }
 
-  # Prepare subtitle
+  # prepare subtitle
   if (!is.null(n_total_participants)) {
     subtitle <- sprintf("N = %s participants, %s responses; years %.0f - %.0f",
                         format(n_total_participants, big.mark = ","),
@@ -125,16 +131,16 @@ margot_plot_response_timeline <- function(df_timeline,
                         year_range[1], year_range[2])
   }
 
-  # Set default color palette if not provided
+  # set default color palette if not provided
   if (is.null(color_palette)) {
     color_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
                        "#D55E00", "#CC79A7", "#000000", "#999999")
   }
 
-  # Get the number of unique waves
+  # get the number of unique waves
   n_waves <- length(unique(df_timeline$wave))
 
-  # Explicitly recycle colors
+  # explicitly recycle colors
   recycled_colors <- rep_len(color_palette, length.out = n_waves)
 
   cli::cli_alert_info("Creating ggplot...")
@@ -170,15 +176,26 @@ margot_plot_response_timeline <- function(df_timeline,
         preset = "high",
         nthreads = 1
       )
-      ggplot2::ggsave(
-        plot = gg,
-        filename = file.path(save_path, paste0(base_filename, ".png")),
-        width = width,
-        height = height,
-        units = "in",
-        dpi = 400
-      )
-      cli::cli_alert_success("Plot saved successfully")
+      cli::cli_alert_success("Plot saved as .qs file successfully")
+
+      if (save_png) {
+        # Generate filename for PNG
+        if (use_timestamp) {
+          png_filename <- paste0(base_filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".png")
+        } else {
+          png_filename <- paste0(base_filename, ".png")
+        }
+
+        ggplot2::ggsave(
+          plot = gg,
+          filename = file.path(save_path, png_filename),
+          width = width,
+          height = height,
+          units = "in",
+          dpi = 400
+        )
+        cli::cli_alert_success("Plot saved as PNG successfully")
+      }
     }, error = function(e) {
       cli::cli_alert_danger(paste("Failed to save plot:", e$message))
     })

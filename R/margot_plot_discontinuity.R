@@ -164,7 +164,8 @@ margot_plot_discontinuity <- function(data,
           transform_label(y_var),
           format(n_participants, big.mark = ","),
           format(n_observations, big.mark = ","),
-          year_range[1], year_range[2]
+          year_range[1],
+          year_range[2] + 1
         )
       }
 
