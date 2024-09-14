@@ -8,15 +8,22 @@
 * remove `color` package
 * methods
 
+# [2024-09-12] margot 0.2.1.53
+
+## Improved
+
+- `margot_summary_tables()` plots take upper case letters, remove '_'
+- `margot_adjust_weights()` censored individuals are assigned zero weights, and only uncensored individuals contribute to the final analysis. 
+
 # [2024-09-12] margot 0.2.1.52
 
-## Improve
+## Improved
 
 - Fixed `margot_plot_response_timeline()` to print dates, and to optionally save a 'png` image. 
 
 # [2024-09-12] margot 0.2.1.51
 
-## Improve
+## Improved
 
 - `margot_plot_discontinuity()` and `margot_plot_slope()` have correct end years (+1 final wave, as waves overlap years)
 
@@ -27,7 +34,7 @@
 - `margot_plot_boxplot_covariate()` descriptive trends by groups
 
 
-## Improve
+## Improved
 
 - `margot_plot_slope_covariate()` automatic title, save png, and optional time stamp
 - `margot_plot_individual_responses()` fixed so there is no missingness

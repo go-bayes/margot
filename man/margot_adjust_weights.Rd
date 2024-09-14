@@ -26,7 +26,7 @@ censoring status (TRUE/1 if censored, FALSE/0 if not).}
 
 \item{trim}{Logical; whether to trim weights (default is TRUE).}
 
-\item{normalize}{Logical; whether to normalize weights (default is TRUE).}
+\item{normalize}{Logical; whether to normalise weights (default is TRUE).}
 
 \item{lower_percentile}{Numeric; lower percentile for trimming (default is 0.01).}
 
@@ -39,6 +39,6 @@ A list containing adjusted weights and summary statistics.
 }
 \description{
 This function calculates and adjusts weights for censoring, combining them with
-sample weights if provided. It also offers options for trimming and normalizing
+sample weights if provided. It also offers options for trimming and normalising
 the resulting weights. Progress is reported using the cli package.
 }
