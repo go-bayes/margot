@@ -15,7 +15,8 @@ margot_causal_forest(
   compute_rate = TRUE,
   top_n_vars = 15,
   save_models = FALSE,
-  train_proportion = 0.5
+  train_proportion = 0.5,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -40,38 +41,12 @@ margot_causal_forest(
 \item{save_models}{Logical indicating whether to save the full GRF model objects. Default is FALSE.}
 
 \item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.5.}
+
+\item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 }
 \value{
-A list containing:
-  \item{results}{A list of model results, one for each outcome variable. Each model result includes:
-    \itemize{
-      \item{ate}{Average treatment effect}
-      \item{test_calibration}{Calibration test results}
-      \item{custom_table}{Custom evaluation table}
-      \item{tau_hat}{Individual treatment effect estimates}
-      \item{rate_result}{Rank Average Treatment Effect (if compute_rate is TRUE)}
-      \item{dr_scores}{Double robust scores}
-      \item{policy_tree_depth_1}{Policy tree of depth 1}
-      \item{top_vars}{Top variables by importance}
-      \item{blp_top}{Best linear projection results for top variables}
-      \item{policy_tree_depth_2}{Policy tree of depth 2, trained on train_proportion of non-missing data}
-      \item{plot_data}{Data prepared for policy tree visualization, using the remaining proportion of non-missing data}
-      \item{qini_data}{Data frame containing Qini curve data for plotting}
-    }
-  }
-  \item{combined_table}{A data frame combining all custom evaluation tables.}
-  \item{outcome_vars}{The character vector of outcome variable names that were modeled.}
-  \item{not_missing}{A vector of indices for complete cases.}
-  \item{data}{The input data (if save_data is TRUE).}
-  \item{covariates}{The input covariates (if save_data is TRUE).}
-  \item{weights}{The input weights (if save_data is TRUE).}
-  \item{full_models}{A list of full GRF model objects (if save_models is TRUE).}
+A list containing model results, combined table, and other relevant information.
 }
 \description{
-This function is a wrapper for grf::causal_forest that runs multiple GRF causal forest models
-for specified outcome variables. It calculates average treatment effects, tests calibration,
-creates custom evaluation tables, and includes additional features such as tau.hat estimates,
-RATE calculations, policy trees, variable importance rankings, best linear projections,
-and Qini curves.
-It also prepares data for policy tree visualization, using a specified proportion of the data for training.
+Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Features
 }

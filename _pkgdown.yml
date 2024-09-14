@@ -97,6 +97,7 @@ reference:
     - margot_model_tab
     - margot_policy_tree
     - margot_subset_model
+    - margot_summary_cate_difference_gain
 
   - title: "Visualise Causal Effect Estimates"
     contents:

@@ -4,7 +4,14 @@
 \alias{compute_qini_curves_multi_arm}
 \title{Compute Qini Curves for Multi-Arm Treatments}
 \usage{
-compute_qini_curves_multi_arm(tau_hat, Y, W_multi)
+compute_qini_curves_multi_arm(
+  tau_hat,
+  Y,
+  W_multi,
+  W.hat = NULL,
+  cost = NULL,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{tau_hat}{A matrix or 3D array of estimated treatment effects. For multi-arm treatments,
@@ -13,13 +20,18 @@ this should be a matrix where each column represents a treatment arm.}
 \item{Y}{A vector or matrix of observed outcomes.}
 
 \item{W_multi}{A factor vector of treatment assignments for multi-arm treatments.}
+
+\item{W.hat}{Optional vector specifying known treatment assignment probabilities for each arm.}
+
+\item{cost}{Optional vector specifying the cost associated with each treatment arm.}
+
+\item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 }
 \value{
-A data frame containing Qini curve data for plotting, or NULL if computation fails.
-  The data frame has an attribute "imputed" which is TRUE if any curves were imputed with zeros.
-
-A data frame containing Qini curve data for plotting, or NULL if computation fails.
-  The data frame has an attribute "imputed" which is TRUE if any curves were imputed with zeros.
+A list containing:
+  \item{qini_data}{A data frame containing Qini curve data for plotting.}
+  \item{qini_objects}{A list of maq objects for each curve, which can be used to compute average gain.}
+The qini_data has an attribute "imputed" which is TRUE if any curves were imputed with zeros.
 }
 \description{
 This function computes Qini curves for multi-arm treatment effects using the maq package.
@@ -29,54 +41,5 @@ It handles various edge cases and provides detailed information about the comput
 The function computes Qini curves for all arms combined, a baseline (no covariates),
 and each individual treatment arm. It handles cases where some or all Qini objects
 have zero length or are NULL, extending curves with zeros when necessary.
-
-The function computes Qini curves for all arms combined, a baseline (no covariates),
-and each individual treatment arm. It handles cases where some or all Qini objects
-have zero length or are NULL, extending curves with zeros when necessary.
 }
-\examples{
-\dontrun{
-tau_hat <- matrix(rnorm(1000 * 3), nrow = 1000, ncol = 3)
-Y <- rnorm(1000)
-W_multi <- factor(sample(1:3, 1000, replace = TRUE))
-qini_data <- compute_qini_curves_multi_arm(tau_hat, Y, W_multi)
-}
-
-\dontrun{
-tau_hat <- matrix(rnorm(1000 * 3), nrow = 1000, ncol = 3)
-Y <- rnorm(1000)
-W_multi <- factor(sample(1:3, 1000, replace = TRUE))
-qini_data <- compute_qini_curves_multi_arm(tau_hat, Y, W_multi)
-}
-
-}
-\keyword{Compute}
-\keyword{Curves}
-\keyword{It}
-\keyword{Multi-Arm}
-\keyword{Qini}
-\keyword{This}
-\keyword{Treatments}
-\keyword{about}
-\keyword{and}
-\keyword{cases}
-\keyword{computation}
-\keyword{computes}
-\keyword{curves}
-\keyword{detailed}
-\keyword{edge}
-\keyword{effects}
-\keyword{for}
-\keyword{function}
-\keyword{handles}
-\keyword{information}
 \keyword{internal}
-\keyword{maq}
-\keyword{multi-arm}
-\keyword{package.}
-\keyword{process.}
-\keyword{provides}
-\keyword{the}
-\keyword{treatment}
-\keyword{using}
-\keyword{various}

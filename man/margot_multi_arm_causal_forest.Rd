@@ -2,7 +2,8 @@
 % Please edit documentation in R/margot_multi_arm_causal_forest.R
 \name{margot_multi_arm_causal_forest}
 \alias{margot_multi_arm_causal_forest}
-\title{Run Multiple Generalized Random Forest (GRF) Multi-Arm Causal Forest Models with Enhanced Features}
+\title{Run Multiple Generalized Random Forest (GRF) Multi-Arm Causal Forest Models with Enhanced Features
+Run Multiple Generalized Random Forest (GRF) Multi-Arm Causal Forest Models with Enhanced Features}
 \usage{
 margot_multi_arm_causal_forest(
   data,
@@ -16,7 +17,10 @@ margot_multi_arm_causal_forest(
   top_n_vars = 10,
   save_models = FALSE,
   compute_qini = TRUE,
-  train_proportion = 0.5
+  train_proportion = 0.7,
+  W.hat = NULL,
+  cost = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -42,7 +46,13 @@ margot_multi_arm_causal_forest(
 
 \item{compute_qini}{Logical indicating whether to compute Qini curves for each model. Default is TRUE.}
 
-\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.5.}
+\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.7.}
+
+\item{W.hat}{Optional vector specifying known treatment assignment probabilities for each arm.}
+
+\item{cost}{Optional vector specifying the cost associated with each treatment arm.}
+
+\item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 }
 \value{
 A list containing:
@@ -57,6 +67,7 @@ A list containing:
       \item{policy_tree_depth_2}{Policy tree of depth 2, trained on train_proportion of non-missing data}
       \item{plot_data}{Data prepared for policy tree visualization, using the remaining proportion of non-missing data}
       \item{qini_data}{Data frame containing Qini curve data for plotting (if compute_qini is TRUE)}
+      \item{qini_objects}{List of maq objects for each curve, used for computing average gain}
     }
   }
   \item{combined_tables}{A list of data frames combining custom evaluation tables grouped by comparison levels.}
@@ -90,7 +101,10 @@ result_multi_arm <- margot_multi_arm_causal_forest(
   grf_defaults = list(num.trees = 2000),
   top_n_vars = 15,
   train_proportion = 0.5,
-  save_models = TRUE
+  save_models = TRUE,
+  W.hat = c(0.4, 0.3, 0.3),  # Example treatment assignment probabilities
+  cost = c(1, 2, 3),         # Example costs for each treatment arm
+  verbose = TRUE
 )
 }
 

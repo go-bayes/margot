@@ -9,7 +9,7 @@ It handles various edge cases and provides detailed information about the comput
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.53</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.54</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,14 @@ It handles various edge cases and provides detailed information about the comput
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">compute_qini_curves_multi_arm</span><span class="op">(</span><span class="va">tau_hat</span>, <span class="va">Y</span>, <span class="va">W_multi</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">compute_qini_curves_multi_arm</span><span class="op">(</span></span>
+<span>  <span class="va">tau_hat</span>,</span>
+<span>  <span class="va">Y</span>,</span>
+<span>  <span class="va">W_multi</span>,</span>
+<span>  W.hat <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cost <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -61,42 +68,37 @@ this should be a matrix where each column represents a treatment arm.</p></dd>
 <dt id="arg-w-multi">W_multi<a class="anchor" aria-label="anchor" href="#arg-w-multi"></a></dt>
 <dd><p>A factor vector of treatment assignments for multi-arm treatments.</p></dd>
 
+
+<dt id="arg-w-hat">W.hat<a class="anchor" aria-label="anchor" href="#arg-w-hat"></a></dt>
+<dd><p>Optional vector specifying known treatment assignment probabilities for each arm.</p></dd>
+
+
+<dt id="arg-cost">cost<a class="anchor" aria-label="anchor" href="#arg-cost"></a></dt>
+<dd><p>Optional vector specifying the cost associated with each treatment arm.</p></dd>
+
+
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
+<dd><p>Logical indicating whether to display detailed messages during execution. Default is TRUE.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame containing Qini curve data for plotting, or NULL if computation fails.
-  The data frame has an attribute "imputed" which is TRUE if any curves were imputed with zeros.</p>
-<p>A data frame containing Qini curve data for plotting, or NULL if computation fails.
-  The data frame has an attribute "imputed" which is TRUE if any curves were imputed with zeros.</p>
+    <p>A list containing:</p>
+<dl><dt>qini_data</dt>
+<dd><p>A data frame containing Qini curve data for plotting.</p></dd>
+
+  <dt>qini_objects</dt>
+<dd><p>A list of maq objects for each curve, which can be used to compute average gain.</p></dd>
+
+</dl><p>The qini_data has an attribute "imputed" which is TRUE if any curves were imputed with zeros.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function computes Qini curves for all arms combined, a baseline (no covariates),
 and each individual treatment arm. It handles cases where some or all Qini objects
 have zero length or are NULL, extending curves with zeros when necessary.</p>
-<p>The function computes Qini curves for all arms combined, a baseline (no covariates),
-and each individual treatment arm. It handles cases where some or all Qini objects
-have zero length or are NULL, extending curves with zeros when necessary.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">tau_hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1000</span> <span class="op">*</span> <span class="fl">3</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1000</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">W_multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">1000</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">qini_data</span> <span class="op">&lt;-</span> <span class="fu">compute_qini_curves_multi_arm</span><span class="op">(</span><span class="va">tau_hat</span>, <span class="va">Y</span>, <span class="va">W_multi</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">tau_hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1000</span> <span class="op">*</span> <span class="fl">3</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1000</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">W_multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">1000</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">qini_data</span> <span class="op">&lt;-</span> <span class="fu">compute_qini_curves_multi_arm</span><span class="op">(</span><span class="va">tau_hat</span>, <span class="va">Y</span>, <span class="va">W_multi</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

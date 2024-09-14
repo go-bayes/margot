@@ -28,6 +28,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/compute_difference.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_difference_means.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_binary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_multi_arm.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/construct_formula.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_filtered_wide_dataframes.html</loc></url>
@@ -39,6 +40,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/df_nz.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/double_robust_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/extract_qini_data.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/extract_qini_data_binary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/group_results_by_comparison.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/group_tab.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/here_read.html</loc></url>
@@ -103,6 +105,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_size.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_subset_model.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_subset_table_grf.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_summary_cate_difference_gain.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_summary_tables.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_tab_lmtp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_wide.html</loc></url>

@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_qini_curves.R
 \name{compute_qini_curves}
 \alias{compute_qini_curves}
-\title{Compute Qini Curves for Multi-Arm and Binary Treatments}
+\title{Compute Qini Curves for Multi-Arm and Binary Treatments (Deprecated)}
 \usage{
 compute_qini_curves(tau_hat, Y, W = NULL, W_multi = NULL)
 }
@@ -19,6 +19,13 @@ compute_qini_curves(tau_hat, Y, W = NULL, W_multi = NULL)
 A data frame containing Qini curve data for plotting.
 }
 \description{
-Computes Qini curves for multi-arm and binary treatments using the maq package.
+DEPRECATED: This function is no longer functional and will be removed in a future version.
+Please use `compute_qini_curves_binary()` for binary treatments and
+`compute_qini_curves_multi_arm()` for multi-arm treatments instead.
 }
+\seealso{
+\code{\link{compute_qini_curves_binary}} for binary treatments
+\code{\link{compute_qini_curves_multi_arm}} for multi-arm treatments
+}
+\keyword{deprecated}
 \keyword{internal}

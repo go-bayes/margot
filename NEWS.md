@@ -8,6 +8,20 @@
 * remove `color` package
 * methods
 
+# [2024-09-12] margot 0.2.1.54
+
+## New
+
+- `margot_summary_cate_difference_gain()` computes the difference in average gains and the integrated difference
+between a reference curve (maq object) and a comparison curve at a specified spend level -- to see if there is support for CATEs
+
+## Improved
+
+- `compute_qini_curves_multi_arm()` - modified so that we can now get quantitative estimates for support for CATEs
+- `margot_multi_arm_causal_forest()` - enhanced in several ways, for example to support `margot_summary_cate_differences()`
+- `margot_causal_forest()` - likewise enhanced.
+- `margot_batch_policy()` now outputs `margot_summary_cate_difference_gain() models by default 
+
 # [2024-09-12] margot 0.2.1.53
 
 ## Improved
