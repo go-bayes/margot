@@ -109,6 +109,8 @@ margot_plot_discontinuity <- function(data,
         }
         if (use_title_case) {
           label <- tools::toTitleCase(label)
+          # Preserve "NZ" capitalization
+          label <- gsub("Nz", "NZ", label)
         }
         return(label)
       }

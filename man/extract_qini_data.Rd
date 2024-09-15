@@ -2,21 +2,34 @@
 % Please edit documentation in R/extract_qini_data.R
 \name{extract_qini_data}
 \alias{extract_qini_data}
-\title{Extract Qini Data for Plotting}
+\title{#' Extract Qini Data for Plotting
+#'
+#' @description
+#' Extracts Qini curve data from a Qini object and prepares it for plotting.
+#'
+#' @param qini_obj A Qini object.
+#' @param name Name of the treatment arm.
+#' @param max_index Maximum index to extend the curve to.
+#' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
+#'
+#' @return A data frame with extracted Qini data.
+#'
+#' @keywords internal}
 \usage{
-extract_qini_data(qini_obj, name, max_index)
-}
-\arguments{
-\item{qini_obj}{A Qini object.}
-
-\item{max_index}{Maximum index to extend the curve to.}
-
-\item{arm_name}{Name of the treatment arm.}
-}
-\value{
-A data frame with extracted Qini data.
+extract_qini_data(qini_obj, name, max_index, verbose = TRUE)
 }
 \description{
-Extracts Qini curve data from a Qini object and prepares it for plotting.
+#' Extract Qini Data for Plotting
+#'
+#' @description
+#' Extracts Qini curve data from a Qini object and prepares it for plotting.
+#'
+#' @param qini_obj A Qini object.
+#' @param name Name of the treatment arm.
+#' @param max_index Maximum index to extend the curve to.
+#' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
+#'
+#' @return A data frame with extracted Qini data.
+#'
+#' @keywords internal
 }
-\keyword{internal}

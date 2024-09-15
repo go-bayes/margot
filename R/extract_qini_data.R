@@ -1,35 +1,34 @@
-#' Extract Qini Data for Plotting
-#'
-#' @description
-#' Extracts Qini curve data from a Qini object and prepares it for plotting.
-#'
-#' @param qini_obj A Qini object.
-#' @param arm_name Name of the treatment arm.
-#' @param max_index Maximum index to extend the curve to.
-#'
-#' @return A data frame with extracted Qini data.
-#'
-#' @keywords internal
-extract_qini_data <- function(qini_obj, name, max_index) {
-  if (is.null(qini_obj) || is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain)) {
-    cli::cli_alert_warning(paste("Qini object", name, "is NULL or missing required components. Extending with zeros."))
-    gain <- rep(0, max_index)
+#' #' Extract Qini Data for Plotting
+#' #'
+#' #' @description
+#' #' Extracts Qini curve data from a Qini object and prepares it for plotting.
+#' #'
+#' #' @param qini_obj A Qini object.
+#' #' @param name Name of the treatment arm.
+#' #' @param max_index Maximum index to extend the curve to.
+#' #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
+#' #'
+#' #' @return A data frame with extracted Qini data.
+#' #'
+#' #' @keywords internal
+extract_qini_data <- function(qini_obj, name, max_index, verbose = TRUE) {
+  gain <- if (!is.null(qini_obj[["_path"]]$gain)) {
+    qini_obj[["_path"]]$gain
   } else {
-    gain <- qini_obj[["_path"]]$gain
+    if (verbose) cli::cli_alert_warning(paste("Qini object", name, "is NULL or missing required components. Extending with zeros."))
+    rep(0, max_index)
   }
 
-  proportion <- seq_along(gain) / length(gain)
-
-  # Extend or truncate to max_index
-  if (length(gain) < max_index) {
-    cli::cli_alert_info(paste("Extending Qini curve", name, "from", length(gain), "to", max_index, "points."))
-    gain <- c(gain, rep(tail(gain, 1), max_index - length(gain)))
-    proportion <- seq_len(max_index) / max_index
-  } else if (length(gain) > max_index) {
-    cli::cli_alert_info(paste("Truncating Qini curve", name, "from", length(gain), "to", max_index, "points."))
+  gain_length <- length(gain)
+  if (gain_length < max_index) {
+    # Extend gain vector
+    gain <- c(gain, rep(tail(gain, 1), max_index - gain_length))
+  } else if (gain_length > max_index) {
+    # Truncate gain vector
     gain <- gain[1:max_index]
-    proportion <- proportion[1:max_index]
   }
+
+  proportion <- seq_len(max_index) / max_index
 
   data.frame(
     proportion = proportion,

@@ -51,7 +51,10 @@ margot_plot_shift <- function(df, col_name, binwidth = 1, range_highlight = NULL
 
     # Function to convert to title case and remove underscores
     format_label <- function(x) {
-      stringr::str_to_title(gsub("_", " ", x))
+      label <- stringr::str_to_title(gsub("_", " ", x))
+      # preserve "NZ" capitalisation
+      label <- gsub("Nz", "NZ", label)
+      return(label)
     }
 
     # Format column name for labels

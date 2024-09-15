@@ -146,12 +146,15 @@ margot_plot_boxplot <- function(data,
         y_vars <- as.character(y_vars)
       }
 
-      # function to convert to title case and remove underscores
+      # Function to convert to title case and remove underscores
       format_label <- function(x) {
-        stringr::str_to_title(gsub("_", " ", x))
+        label <- stringr::str_to_title(gsub("_", " ", x))
+        # preserve "NZ" capitalisation
+        label <- gsub("Nz", "NZ", label)
+        return(label)
       }
 
-      # create a named vector for label formatting
+      # Create a named vector for label formatting
       formatted_labels <- setNames(sapply(y_vars, format_label), y_vars)
 
       # reshape data for plotting multiple y variables

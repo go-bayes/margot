@@ -213,6 +213,8 @@ margot_plot <- function(.data,
       }
       if (options$use_title_case) {
         label <- tools::toTitleCase(label)
+        # Preserve "NZ" capitalization
+        label <- gsub("Nz", "NZ", label)
       }
       if (label != original_label) {
         cli::cli_alert_info("Transformed label: {original_label} -> {label}")

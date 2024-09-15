@@ -84,13 +84,14 @@ reference:
     - margot_lmtp
     - margot_multi_arm_causal_forest
 
-  - title: "Report and Interpret Results"
+  - title: "Interpret and Report Results"
     contents:
     - compute_difference
     - margot_batch_policy
     - margot_omnibus_hetero_test
     - margot_interpret_policy_tree
     - margot_interpret_marginal
+    - margot_interpret_qini
     - margot_lmtp_evalue
     - margot_lmtp_tab
     - margot_model_evalue

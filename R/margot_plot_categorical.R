@@ -69,10 +69,14 @@ margot_plot_categorical <- function(df, col_name, n_divisions = NULL, custom_bre
       return(NULL)
     }
 
-    # Function to convert to title case and remove underscores
+    # function to convert to title case and remove underscores
     format_label <- function(x) {
-      stringr::str_to_title(gsub("_", " ", x))
+      label <- stringr::str_to_title(gsub("_", " ", x))
+      # preserve "NZ" capitalisation
+      label <- gsub("Nz", "NZ", label)
+      return(label)
     }
+
 
     # Remove NAs and warn the user
     original_rows <- nrow(df)

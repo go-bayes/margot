@@ -61,7 +61,6 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
   # Define the Okabe-Ito palette
   okabe_ito_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000")
 
-  # Function to transform labels
   transform_label <- function(label, is_action = FALSE) {
     original_label <- label
     if (is_action && remove_action_label) {
@@ -78,13 +77,14 @@ margot_plot_decision_tree <- function(result_object, model_name = NULL,
     }
     if (use_title_case) {
       label <- tools::toTitleCase(label)
+      # Preserve "NZ" capitalization
+      label <- gsub("Nz", "NZ", label)
     }
     if (label != original_label) {
       cli::cli_alert_info("Transformed label: {original_label} -> {label}")
     }
     return(label)
   }
-
 
   # Determine the correct policy tree object
   if (!is.null(model_name) && "results" %in% names(result_object)) {

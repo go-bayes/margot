@@ -162,6 +162,8 @@ margot_plot_slope <- function(data,
         }
         if (use_title_case) {
           label <- stringr::str_to_title(label)
+          # preserve "NZ" capitalisation
+          label <- gsub("Nz", "NZ", label)
         }
         return(label)
       }

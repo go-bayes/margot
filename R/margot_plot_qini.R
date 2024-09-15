@@ -46,6 +46,8 @@ margot_plot_qini <- function(mc_result, outcome_var,
     }
     if (use_title_case) {
       label <- tools::toTitleCase(label)
+      # Preserve "NZ" capitalization
+      label <- gsub("Nz", "NZ", label)
     }
     if (label != original_label) {
       cli::cli_alert_info("Transformed label: {original_label} -> {label}")

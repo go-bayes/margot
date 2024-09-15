@@ -8,6 +8,18 @@
 * remove `color` package
 * methods
 
+# [2024-09-15] margot 0.2.1.55
+
+## New
+
+- `margot_interpet_qini()` interprets results of the qini curves at pre-specified levels. 
+
+
+## Improved
+
+- `extract_qini_data()` improved handling of `margot_multi_arm_causal_forest()`
+-  numerous plot functions enhanced to produce "NZ" instead of "Nz"
+
 # [2024-09-12] margot 0.2.1.54
 
 ## New

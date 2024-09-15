@@ -156,7 +156,10 @@ margot_plot_histogram <- function(data,
 
       # function to convert to title case and remove underscores
       format_label <- function(x) {
-        stringr::str_to_title(gsub("_", " ", x))
+        label <- stringr::str_to_title(gsub("_", " ", x))
+        # preserve "NZ" capitalisation
+        label <- gsub("Nz", "NZ", label)
+        return(label)
       }
 
       # determine the title based on the number of waves
