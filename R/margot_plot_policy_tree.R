@@ -101,6 +101,8 @@ margot_plot_policy_tree <- function(mc_test, model_name,
     }
     if (use_title_case) {
       label <- tools::toTitleCase(label)
+      # correct NZ
+      label <- gsub("Nz", "NZ", label)
     }
     if (label != original_label) {
       cli::cli_alert_info("Transformed label: {original_label} -> {label}")
