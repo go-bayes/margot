@@ -8,6 +8,15 @@
 * remove `color` package
 * methods
 
+
+# [2024-09-16] margot 0.2.1.56
+
+## Improved
+
+- `margot_interpet_qini()` robust for both binary and multi-arm treatments. 
+- `margot_plot_qini()` correct label for binarhy treatments
+- `margot_batch_policy_tree()` correctly modified function added: commputes multiple 'spends'
+
 # [2024-09-15] margot 0.2.1.55
 
 ## New

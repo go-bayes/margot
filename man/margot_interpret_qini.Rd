@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_interpret_qini.R
 \name{margot_interpret_qini}
 \alias{margot_interpret_qini}
-\title{Interpret Qini Results}
+\title{Interpret Qini Results for Both Binary and Multi-Arm Treatments}
 \usage{
 margot_interpret_qini(
   multi_batch,
@@ -21,17 +21,15 @@ margot_interpret_qini(
 \item{decimal_places}{Number of decimal places for rounding (default is 2)}
 }
 \value{
-A list containing two elements for each arm:
-  \item{summary_table}{A data frame with point estimates and confidence intervals for each model and spend level}
-  \item{explanations}{A character vector with explanations for each model and spend level}
+A list containing summary tables and explanations for each arm or binary treatment
 }
 \description{
-This function combines the output of all models processed by margot_batch_policy()
-to produce a single table and provide explanations for each arm.
+This function serves as a wrapper to interpret Qini results for both binary and multi-arm treatments.
+It calls the appropriate subfunction based on the structure of the input data.
 }
 \examples{
 \dontrun{
-# Assuming you have a multi_batch object from margot_batch_policy()
+# Assuming you have multi_batch objects from margot_batch_policy()
 label_mapping <- list(
   "t2_env_not_climate_chg_concern_z" = "Deny Climate Change Concern",
   "t2_env_not_climate_chg_cause_z" = "Deny Humans Cause Climate Change",
@@ -43,19 +41,7 @@ label_mapping <- list(
 # For binary treatment
 binary_results <- margot_interpret_qini(binary_multi_batch, label_mapping = label_mapping)
 
-# View summary table for binary treatment
-print(binary_results$binary$summary_table)
-
-# View explanations for binary treatment
-cat(binary_results$binary$explanations, sep = "\n\n")
-
 # For multi-arm treatment
 multi_arm_results <- margot_interpret_qini(multi_arm_multi_batch, label_mapping = label_mapping)
-
-# View summary table for arm2
-print(multi_arm_results$arm2$summary_table)
-
-# View explanations for arm2
-cat(multi_arm_results$arm2$explanations, sep = "\n\n")
 }
 }
