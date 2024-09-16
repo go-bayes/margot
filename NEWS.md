@@ -8,6 +8,15 @@
 * remove `color` package
 * methods
 
+
+# [2024-09-17] margot 0.2.1.61
+
+## Improved
+
+- `margot_interpret_qini()` - now formats tables to alert readers to where prioritising results are reliably *worse* or **better** than than none.
+
+
+
 # [2024-09-17] margot 0.2.1.60
 
 ## Improved
@@ -41,6 +50,9 @@
     - `margot_merge_databases`
     - `manager_boilerplate_measures`
     - `compute_difference()`
+
+
+
 
 # [2024-09-17] margot 0.2.1.59
 
