@@ -104,11 +104,13 @@ reference:
     contents:
     - margot_plot
     - margot_plot_batch_rate
-    - margot_plot_rate
-    - margot_plot_qini
     - margot_plot_decision_tree
+    - margot_plot_multi_arm
     - margot_plot_policy_combo
     - margot_plot_policy_tree
+    - margot_plot_qini
+    - margot_plot_rate
+
 
   - title: "Utility functions"
     contents:

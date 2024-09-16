@@ -8,6 +8,14 @@
 * remove `color` package
 * methods
 
+# [2024-09-16] margot 0.2.1.57
+
+## New
+- `margot_plot_multi_arm()` wrapper for `margot_plot` that enables each plots/tables for multi arm treatment models
+
+## Improved
+- reporting of multi arm treatment models in `margot_plot_qini()` is easier to follow. 
+- `margot_lmtp()` now has automatic saving of models with optional prefix label and optional time-stamping. Also actually saves table when computing contrasts with only the null model. 
 
 # [2024-09-16] margot 0.2.1.56
 

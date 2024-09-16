@@ -175,7 +175,7 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
 }
 
 #' @keywords internal
-margot_interpret_qini_multi_arm<- function(multi_batch, label_mapping = NULL, alpha = 0.05, decimal_places = 2) {
+margot_interpret_qini_multi_arm <- function(multi_batch, label_mapping = NULL, alpha = 0.05, decimal_places = 2) {
   # Function to extract estimates and create CI
   extract_estimates <- function(diff_gain_summary) {
     estimate <- as.numeric(gsub(".*?([-]?\\d+\\.\\d+).*", "\\1", diff_gain_summary$diff_gain))
@@ -189,7 +189,6 @@ margot_interpret_qini_multi_arm<- function(multi_batch, label_mapping = NULL, al
   transform_label <- function(label) {
     original_label <- label
     if (!is.null(label_mapping)) {
-      # Remove 'model_' prefix if present
       clean_label <- sub("^model_", "", label)
       if (clean_label %in% names(label_mapping)) {
         label <- label_mapping[[clean_label]]
@@ -201,12 +200,12 @@ margot_interpret_qini_multi_arm<- function(multi_batch, label_mapping = NULL, al
         label <- sub("_z$", "", label)
         label <- gsub("_", " ", label)
         label <- tools::toTitleCase(label)
-        # Preserve "NZ" capitalization
         label <- gsub("Nz", "NZ", label)
       }
     }
     return(label)
   }
+
   # Function to create explanation
   create_explanation <- function(diff_gain_summary, model_name, spend, arm = NULL) {
     estimates <- extract_estimates(diff_gain_summary)
@@ -215,8 +214,8 @@ margot_interpret_qini_multi_arm<- function(multi_batch, label_mapping = NULL, al
 
     explanation <- glue::glue(
       "For the outcome {transform_label(model_name)}, at the {spend*100}% spend level, using the conditional average treatment effect (CATE) to prioritise treatments ",
-      "{if(!is.null(arm)) paste('to', arm, 'treatment') else ''} yields {reliability} {direction} ",
-      "than using the average treatment effect (ATE) to assign treatment. The difference when prioritising conditional average treatment effects is {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} ",
+      "{reliability} {direction} ",
+      "than assigning treatments without priorities. The difference when prioritising conditional average treatment effects is {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} ",
       "[95% CI: {format(round(estimates['ci_lower'], decimal_places), nsmall = decimal_places)}, {format(round(estimates['ci_upper'], decimal_places), nsmall = decimal_places)}]."
     )
 
@@ -233,9 +232,6 @@ margot_interpret_qini_multi_arm<- function(multi_batch, label_mapping = NULL, al
     sprintf(paste0("%.", decimal_places, "f [%.", decimal_places, "f, %.", decimal_places, "f]"),
             estimate, ci_lower, ci_upper)
   }
-
-  # Determine if it's a binary or multi-arm model
-  is_binary <- "diff_gain_summary" %in% names(multi_batch[[1]])
 
   # Process multi-arm model
   arms <- c("all_arms", names(multi_batch[[1]]$diff_gain_summaries$spend_0.2)[-1])
@@ -263,7 +259,7 @@ margot_interpret_qini_multi_arm<- function(multi_batch, label_mapping = NULL, al
       ) %>%
       dplyr::rename_with(~paste0(., "%"), -Model)
 
-    # Create explanations
+    # Create explanations grouped by model
     explanations <- purrr::map(names(multi_batch), function(model_name) {
       model_results <- multi_batch[[model_name]]$diff_gain_summaries
       explanation <- purrr::map_chr(names(model_results), function(spend) {
@@ -277,7 +273,10 @@ margot_interpret_qini_multi_arm<- function(multi_batch, label_mapping = NULL, al
       paste(explanation, collapse = "\n\n")  # Add paragraph stop between spend levels
     })
 
-    results[[arm]] <- list(summary_table = summary_table, explanations = unlist(explanations))
+    # Name the explanations with transformed labels
+    names(explanations) <- purrr::map_chr(names(multi_batch), transform_label)
+
+    results[[arm]] <- list(summary_table = summary_table, explanations = explanations)
   }
 
   return(results)
