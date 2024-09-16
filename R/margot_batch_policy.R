@@ -53,17 +53,18 @@
 #' }
 #'
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_danger cli_progress_bar cli_progress_update cli_progress_done
+#' @import here
 #' @importFrom ggplot2 ggsave
 #'
 #' @export
 margot_batch_policy <- function(result_outcomes,
                                 policy_tree_args = list(),
                                 decision_tree_args = list(),
-                                dpi = 300,
+                                dpi = 600,
                                 width = 12,
                                 height = 12,
                                 save_plots = TRUE,
-                                output_dir = push_mods,
+                                output_dir = here::here(push_mods),
                                 spend = c(0.2, 0.5)) {
   cli::cli_alert_info("Starting margot_batch_policy function")
 

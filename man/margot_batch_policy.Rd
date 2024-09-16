@@ -8,11 +8,11 @@ margot_batch_policy(
   result_outcomes,
   policy_tree_args = list(),
   decision_tree_args = list(),
-  dpi = 300,
+  dpi = 600,
   width = 12,
   height = 12,
   save_plots = TRUE,
-  output_dir = push_mods,
+  output_dir = here::here(push_mods),
   spend = c(0.2, 0.5)
 )
 }

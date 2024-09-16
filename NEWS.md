@@ -20,7 +20,7 @@
 
 ## Removed 
 
-- Removed the following deprecated functions from vignettes: 
+- Removed the following deprecated functions from vignettes, instead use [https://github.com/go-bayes/boilerplate](https://github.com/go-bayes/boilerplate)
     - `boilerplate_measures`
     - `boilerplate_methods_additional_sections`
     - `boilerplate_methods`
