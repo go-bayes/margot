@@ -8,6 +8,11 @@
 * remove `color` package
 * methods
 
+
+# [2024-09-16] margot 0.2.1.58
+## New
+- `margot_compare_groups()` compare treatment effects by groups and evaluate evidence for differences 
+
 # [2024-09-16] margot 0.2.1.57
 
 ## New
