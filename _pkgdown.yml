@@ -111,6 +111,7 @@ reference:
     - margot_plot_policy_tree
     - margot_plot_qini
     - margot_plot_rate
+    - margot_plot_save_png
 
 
   - title: "Utility functions"

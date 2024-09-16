@@ -9,6 +9,16 @@
 * methods
 
 
+
+# [2024-09-17] margot 0.2.1.59
+
+## New
+- `margot_plot_save_png()` saves a margot_plot output graph as a png, user can change width, heigh, dpi, and specify a path... 
+
+## Improved
+- `margot_plot()` automatic saving of the output with optional timestamps
+- `margot_plot_multi_arm()` modified to work with new and improved `margot_plot()`
+
 # [2024-09-16] margot 0.2.1.58
 ## New
 - `margot_compare_groups()` compare treatment effects by groups and evaluate evidence for differences 

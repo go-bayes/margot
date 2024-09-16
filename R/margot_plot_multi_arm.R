@@ -8,6 +8,11 @@
 #' @param contrast A character string specifying the contrast to be used (e.g. `"(5.0,7.0] - [1.0,3.0]"`).
 #' @param options A list of additional options for customising the plot, passed directly to `margot_plot()`.
 #' @param label_mapping A named list for custom label mapping of the outcomes, also passed to `margot_plot()`.
+#' @param save_output Logical. If TRUE, saves the complete output to a file. Default is FALSE.
+#' @param use_timestamp Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.
+#' @param base_filename Character string. The base name for the saved file. Default is "margot_plot_output".
+#' @param prefix Character string. An optional prefix for the saved filename. Default is NULL.
+#' @param save_path Character string. The directory path where the output will be saved. Default is here::here("push_mods").
 #'
 #' @details
 #' The user must specify a contrast from the `model_table`. If the contrast is not found, an error will be raised using `cli` reporting.
@@ -22,6 +27,8 @@
 #'   \item `transformed_table`: A data frame with transformed labels according to the options and label mappings.
 #' }
 #'
+#' If `save_output` is TRUE, the complete output will be saved to a file using margot::here_save_qs().
+#'
 #' @examples
 #' \dontrun{
 #' # Example usage with multi-arm models
@@ -29,15 +36,22 @@
 #'   models_multi$combined_tables,
 #'   contrast = "(5.0,7.0] - [1.0,3.0]",
 #'   options = multi_options,
-#'   label_mapping = label_mapping
+#'   label_mapping = label_mapping,
+#'   save_output = TRUE,
+#'   save_path = here::here("output", "margot_plots"),
+#'   base_filename = "margot_plot_output",
+#'   prefix = "test"
 #' )
 #' print(multi_results$plot)
 #' cat(multi_results$interpretation)
 #' print(multi_results$transformed_table)
 #' }
-#'
+#'@importFrom cli cli_abort
 #' @export
-margot_plot_multi_arm <- function(model_table, contrast, options, label_mapping) {
+margot_plot_multi_arm <- function(model_table, contrast, options, label_mapping,
+                                  save_output = FALSE, use_timestamp = FALSE,
+                                  base_filename = "margot_plot_output", prefix = NULL,
+                                  save_path = here::here("push_mods")) {
   # check if the specified contrast exists in the model_table
   if (!contrast %in% names(model_table)) {
     cli::cli_abort(c(
@@ -53,6 +67,13 @@ margot_plot_multi_arm <- function(model_table, contrast, options, label_mapping)
   margot_plot(
     contrast_data,
     options = options,
-    label_mapping = label_mapping
+    label_mapping = label_mapping,
+    save_output = save_output,
+    use_timestamp = use_timestamp,
+    base_filename = base_filename,
+    prefix = prefix,
+    save_path = save_path
   )
 }
+
+

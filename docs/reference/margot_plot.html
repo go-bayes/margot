@@ -13,7 +13,7 @@ using the margot_interpret_marginal function and returns a transformed table."><
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.58</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.59</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,10 +53,14 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RD"</span>, <span class="st">"RR"</span><span class="op">)</span>,</span>
 <span>  order <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"default"</span>, <span class="st">"alphabetical"</span><span class="op">)</span>,</span>
 <span>  title_binary <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  push_mods <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  save_output <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  use_timestamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  base_filename <span class="op">=</span> <span class="st">"margot_plot_output"</span>,</span>
+<span>  prefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  save_path <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"push_mods"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,10 +84,6 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <dd><p>Optional title for the plot.</p></dd>
 
 
-<dt id="arg-push-mods">push_mods<a class="anchor" aria-label="anchor" href="#arg-push-mods"></a></dt>
-<dd><p>Optional directory path for saving the plot.</p></dd>
-
-
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments passed to the plotting function.</p></dd>
 
@@ -95,21 +95,40 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <dt id="arg-label-mapping">label_mapping<a class="anchor" aria-label="anchor" href="#arg-label-mapping"></a></dt>
 <dd><p>A named list for custom outcome label mapping. See Details for usage.</p></dd>
 
+
+<dt id="arg-save-output">save_output<a class="anchor" aria-label="anchor" href="#arg-save-output"></a></dt>
+<dd><p>Logical. If TRUE, saves the complete output to a file. Default is FALSE.</p></dd>
+
+
+<dt id="arg-use-timestamp">use_timestamp<a class="anchor" aria-label="anchor" href="#arg-use-timestamp"></a></dt>
+<dd><p>Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.</p></dd>
+
+
+<dt id="arg-base-filename">base_filename<a class="anchor" aria-label="anchor" href="#arg-base-filename"></a></dt>
+<dd><p>Character string. The base name for the saved file. Default is "margot_plot_output".</p></dd>
+
+
+<dt id="arg-prefix">prefix<a class="anchor" aria-label="anchor" href="#arg-prefix"></a></dt>
+<dd><p>Character string. An optional prefix for the saved filename. Default is NULL.</p></dd>
+
+
+<dt id="arg-save-path">save_path<a class="anchor" aria-label="anchor" href="#arg-save-path"></a></dt>
+<dd><p>Character string. The directory path where the output will be saved. Default is here::here("push_mods").</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list containing three elements:</p><ul><li><p>`plot`: A ggplot object representing the Margot plot.</p></li>
 <li><p>`interpretation`: A character string containing the interpretation of the results, with the same formatting applied as the plot labels.</p></li>
 <li><p>`transformed_table`: A data frame with the original data and transformed row names, using the same transformation options as the plot labels.</p></li>
-</ul></div>
+</ul><p>If `save_output` is TRUE, the complete output will be saved to a file using margot::here_save_qs().</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The `options` list can include the following parameters:</p><ul><li><p>`remove_tx_prefix`: Logical. If TRUE, removes "tx_" prefix from labels and interpretation. Default is TRUE.</p></li>
 <li><p>`remove_z_suffix`: Logical. If TRUE, removes "_z" suffix from labels and interpretation. Default is TRUE.</p></li>
 <li><p>`use_title_case`: Logical. If TRUE, converts labels and interpretation to title case. Default is TRUE.</p></li>
 <li><p>`remove_underscores`: Logical. If TRUE, removes underscores from labels and interpretation. Default is TRUE.</p></li>
-<li><p>`save_plot`: Logical. If TRUE, saves the plot to a file. Default is FALSE.</p></li>
-<li><p>`save_plot_options`: List of options for saving the plot (width, height, dpi, filename).</p></li>
 <li><p>`show_evalues`: Logical. If TRUE, shows E-values in the plot. Default is TRUE.</p></li>
 <li><p>`evalue_digits`: Integer. Number of digits for E-value display. Default is 2.</p></li>
 </ul><p>The `label_mapping` parameter allows for custom renaming of specific outcomes:</p><ul><li><p>It should be a named list where names are original outcome labels and values are new labels.</p></li>
@@ -136,7 +155,7 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">transformed_table</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Create a Margot plot with custom options and label mapping</span></span></span>
+<span class="r-in"><span><span class="co"># Create a Margot plot with custom options, label mapping, and save output</span></span></span>
 <span class="r-in"><span><span class="va">custom_result</span> <span class="op">&lt;-</span> <span class="fu">margot_plot</span><span class="op">(</span><span class="va">sample_data</span>,</span></span>
 <span class="r-in"><span>  type <span class="op">=</span> <span class="st">"RD"</span>,</span></span>
 <span class="r-in"><span>  title_binary <span class="op">=</span> <span class="st">"Custom Margot Plot"</span>,</span></span>
@@ -144,19 +163,16 @@ using the margot_interpret_marginal function and returns a transformed table.</p
 <span class="r-in"><span>    remove_tx_prefix <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>    remove_z_suffix <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>    use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>    remove_underscores <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>    save_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>    save_plot_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>      filename <span class="op">=</span> <span class="st">"custom_margot_plot.png"</span>,</span></span>
-<span class="r-in"><span>      width <span class="op">=</span> <span class="fl">12</span>,</span></span>
-<span class="r-in"><span>      height <span class="op">=</span> <span class="fl">8</span>,</span></span>
-<span class="r-in"><span>      dpi <span class="op">=</span> <span class="fl">300</span></span></span>
-<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span>    remove_underscores <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    <span class="st">"t1_outcome_a_z"</span> <span class="op">=</span> <span class="st">"Custom Label A"</span>,</span></span>
 <span class="r-in"><span>    <span class="st">"t2_outcome_b_z"</span> <span class="op">=</span> <span class="st">"Custom Label B"</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  save_output <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  use_timestamp <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  prefix <span class="op">=</span> <span class="st">"custom"</span>,</span></span>
+<span class="r-in"><span>  save_path <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"output"</span>, <span class="st">"margot_plots"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">custom_result</span><span class="op">$</span><span class="va">plot</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">custom_result</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>

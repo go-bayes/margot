@@ -9,10 +9,14 @@ margot_plot(
   type = c("RD", "RR"),
   order = c("default", "alphabetical"),
   title_binary = NULL,
-  push_mods = NULL,
   ...,
   options = list(),
-  label_mapping = NULL
+  label_mapping = NULL,
+  save_output = FALSE,
+  use_timestamp = FALSE,
+  base_filename = "margot_plot_output",
+  prefix = NULL,
+  save_path = here::here("push_mods")
 )
 }
 \arguments{
@@ -24,13 +28,21 @@ margot_plot(
 
 \item{title_binary}{Optional title for the plot.}
 
-\item{push_mods}{Optional directory path for saving the plot.}
-
 \item{...}{Additional arguments passed to the plotting function.}
 
 \item{options}{A list of additional options for customizing the plot and interpretation. See Details for available options.}
 
 \item{label_mapping}{A named list for custom outcome label mapping. See Details for usage.}
+
+\item{save_output}{Logical. If TRUE, saves the complete output to a file. Default is FALSE.}
+
+\item{use_timestamp}{Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.}
+
+\item{base_filename}{Character string. The base name for the saved file. Default is "margot_plot_output".}
+
+\item{prefix}{Character string. An optional prefix for the saved filename. Default is NULL.}
+
+\item{save_path}{Character string. The directory path where the output will be saved. Default is here::here("push_mods").}
 }
 \value{
 A list containing three elements:
@@ -39,6 +51,8 @@ A list containing three elements:
   \item `interpretation`: A character string containing the interpretation of the results, with the same formatting applied as the plot labels.
   \item `transformed_table`: A data frame with the original data and transformed row names, using the same transformation options as the plot labels.
 }
+
+If `save_output` is TRUE, the complete output will be saved to a file using margot::here_save_qs().
 }
 \description{
 This function creates a Margot plot, which is useful for visualizing causal effects
@@ -53,8 +67,6 @@ The `options` list can include the following parameters:
   \item `remove_z_suffix`: Logical. If TRUE, removes "_z" suffix from labels and interpretation. Default is TRUE.
   \item `use_title_case`: Logical. If TRUE, converts labels and interpretation to title case. Default is TRUE.
   \item `remove_underscores`: Logical. If TRUE, removes underscores from labels and interpretation. Default is TRUE.
-  \item `save_plot`: Logical. If TRUE, saves the plot to a file. Default is FALSE.
-  \item `save_plot_options`: List of options for saving the plot (width, height, dpi, filename).
   \item `show_evalues`: Logical. If TRUE, shows E-values in the plot. Default is TRUE.
   \item `evalue_digits`: Integer. Number of digits for E-value display. Default is 2.
 }
@@ -84,7 +96,7 @@ print(result$plot)
 cat(result$interpretation)
 print(result$transformed_table)
 
-# Create a Margot plot with custom options and label mapping
+# Create a Margot plot with custom options, label mapping, and save output
 custom_result <- margot_plot(sample_data,
   type = "RD",
   title_binary = "Custom Margot Plot",
@@ -92,19 +104,16 @@ custom_result <- margot_plot(sample_data,
     remove_tx_prefix = TRUE,
     remove_z_suffix = TRUE,
     use_title_case = TRUE,
-    remove_underscores = TRUE,
-    save_plot = TRUE,
-    save_plot_options = list(
-      filename = "custom_margot_plot.png",
-      width = 12,
-      height = 8,
-      dpi = 300
-    )
+    remove_underscores = TRUE
   ),
   label_mapping = list(
     "t1_outcome_a_z" = "Custom Label A",
     "t2_outcome_b_z" = "Custom Label B"
-  )
+  ),
+  save_output = TRUE,
+  use_timestamp = TRUE,
+  prefix = "custom",
+  save_path = here::here("output", "margot_plots")
 )
 print(custom_result$plot)
 cat(custom_result$interpretation)
