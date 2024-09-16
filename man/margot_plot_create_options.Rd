@@ -10,6 +10,10 @@ margot_plot_create_options(
   title = NULL,
   filename_prefix = NULL,
   label_mapping = NULL,
+  save_output = FALSE,
+  use_timestamp = FALSE,
+  base_filename = "margot_plot_output",
+  save_path = NULL,
   ...
 )
 }
@@ -24,6 +28,14 @@ margot_plot_create_options(
 
 \item{label_mapping}{Named list. Mapping of original outcome labels to new labels.}
 
+\item{save_output}{Logical. Whether to save the complete output. Default is FALSE.}
+
+\item{use_timestamp}{Logical. Whether to add a timestamp to the output filename. Default is FALSE.}
+
+\item{base_filename}{Character string. Base name for the output file. Default is "margot_plot_output".}
+
+\item{save_path}{Character string. Path where the output should be saved. Default is NULL.}
+
 \item{...}{Additional named arguments to override or add to the default options.}
 }
 \value{
@@ -35,18 +47,25 @@ It allows for easy customization of plot settings while maintaining a set of def
 }
 \details{
 The function allows customization of various plot parameters, including color schemes,
-text sizes, and label transformations. The `label_mapping` parameter enables custom
-renaming of specific outcomes without affecting the default transformations for other labels.
+text sizes, label transformations, and output saving options. The `label_mapping` parameter
+enables custom renaming of specific outcomes without affecting the default transformations
+for other labels.
 }
 \examples{
 \dontrun{
 # Basic usage
 health_options <- margot_plot_create_options("Health Outcomes")
 
-# Custom title and filename prefix
-education_options <- margot_plot_create_options("Education Outcomes",
-                                                title = "Custom Title",
-                                                filename_prefix = "edu_outcomes")
+# Custom title, filename prefix, and output saving
+education_options <- margot_plot_create_options(
+  "Education Outcomes",
+  title = "Custom Title",
+  filename_prefix = "edu_outcomes",
+  save_output = TRUE,
+  use_timestamp = TRUE,
+  base_filename = "education_analysis",
+  save_path = "path/to/save"
+)
 
 # Using label_mapping for custom outcome labels
 trust_science_options <- margot_plot_create_options(
@@ -62,7 +81,8 @@ trust_science_options <- margot_plot_create_options(
     "negative" = "#F44336"
   ),
   base_size = 16,
-  point_size = 4
+  point_size = 4,
+  save_output = TRUE
 )
 
 # Use the created options in margot_plot

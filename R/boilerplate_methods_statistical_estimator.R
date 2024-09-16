@@ -20,7 +20,7 @@
 #' @import lifecycle
 #' @import cli
 #'
-#' @export
+#' @keywords internal
 boilerplate_methods_statistical_estimator <- function(...) {
   lifecycle::deprecate_warn(
     when = "0.2.1.23",

@@ -4,11 +4,43 @@
 * Begin writing tutorials for use cases.
 * fix decision tree layout
 * progress [Develop automated reporting of all scales and measures for quarto documents.]
-* qini cost options
+* [qini cost options] done.
 * remove `color` package
 * methods
 
+# [2024-09-17] margot 0.2.1.60
 
+## Improved
+
+- `margot_plot_create_options()` updated to work with improve plotting workflow
+
+## Deprecated
+
+- `compute_difference()` now use the more general `margot_compare_groups()` workflow. 
+
+## Removed 
+
+- Removed the following deprecated functions from vignettes: 
+    - `boilerplate_measures`
+    - `boilerplate_methods_additional_sections`
+    - `boilerplate_methods`
+    - `boilerplate_methods_causal_interventions`
+    - `boilerplate_methods_confounding_control`
+    - `boilerplate_methods_eligibility_criteria`
+    - `boilerplate_methods_identification_assumptions`
+    - `boilerplate_methods_missing_data`
+    - `boilerplate_methods_sample`
+    - `boilerplate_methods_statistical_estimator`
+    - `boilerplate_methods_target_population`
+    - `boilerplate_methods_variables`
+    - `create_ordered_variable_custom`
+    - `margot_compute_gender_weights`
+    - `margot_create_bibliography`
+    - `margot_create_database`
+    - `margot_grf_subset_table`
+    - `margot_merge_databases`
+    - `manager_boilerplate_measures`
+    - `compute_difference()`
 
 # [2024-09-17] margot 0.2.1.59
 

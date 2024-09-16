@@ -19,7 +19,7 @@
 #'
 #' @import lifecycle
 #'
-#' @export
+#' @keywords internal
 boilerplate_methods_causal_interventions <- function(...) {
   lifecycle::deprecate_warn(
     when = "1.0.0",

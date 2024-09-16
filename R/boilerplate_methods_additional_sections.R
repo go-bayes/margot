@@ -10,7 +10,7 @@
 #'
 #' @return A message indicating the function is deprecated.
 #'
-#' @export
+#' @keywords internal
 boilerplate_methods_additional_sections <- function(...) {
   lifecycle::deprecate_warn(
     when = "0.2.1.22",

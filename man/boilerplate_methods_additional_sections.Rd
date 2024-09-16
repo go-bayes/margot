@@ -18,3 +18,4 @@ A message indicating the function is deprecated.
 This function is deprecated. Please use `boilerplate::boilerplate_report_additional_sections` instead.
 Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
+\keyword{internal}

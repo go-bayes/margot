@@ -1,5 +1,10 @@
 #' Compute Difference in Average Treatment Effects or Relative Risk Ratio Between Two Subgroups
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' This function is deprecated and will be removed in a future release.
+#' Please use the new `margot_compare_groups()` function and associated workflow instead.
+#'
 #' This function calculates either the difference in average treatment effects (ATE) or the relative risk ratio (RRR)
 #' between two independent subgroups. Each subgroup is represented as a list that includes the estimated effect (theta) and
 #' the standard error (std.error) of the effect. The result includes both a data frame and an interpretation
@@ -19,19 +24,12 @@
 #'           Suitable for direct use in reporting.
 #'         - `interpretation`: A string providing a formatted interpretation of the results.
 #'
-#' @examples
-#' group1 <- list(vals = data.frame(theta = 100, std.error = 10))
-#' group2 <- list(vals = data.frame(theta = 90, std.error = 5))
-#' output_rd <- compute_difference(group1, group2)
-#' cat(output_rd$interpretation)  # Print the interpretation for risk difference
-#'
-#' group1 <- list(vals = data.frame(theta = 3.19, std.error = 0.393))
-#' group2 <- list(vals = data.frame(theta = 1.23, std.error = 0.228))
-#' output_rr <- compute_difference(group1, group2, type = "RR")
-#' cat(output_rr$interpretation)  # Print the interpretation for relative risk ratio
-#'
-#' @export
+#' @keywords internal
 compute_difference <- function(group1, group2, type = "RD") {
+  lifecycle::deprecate_soft("1.0.0", "compute_difference()",
+                            details = "Please use the new `margot_compare_groups()` function and associated workflow instead.")
+
+  # The rest of the function remains the same
   # extract means and standard errors from each group
   mean_A <- group1$vals$theta
   mean_B <- group2$vals$theta
@@ -56,7 +54,7 @@ compute_difference <- function(group1, group2, type = "RD") {
     )
 
     # generate interpretation using glue
-    interpretation <- glue(
+    interpretation <- glue::glue(
       "the difference in average treatment effects is {results$mean_difference} with a standard error of {results$std_error} and a 95% ci of [{results$conf_low}, {results$conf_high}]."
     )
   } else if (type == "RR") {
@@ -84,7 +82,7 @@ compute_difference <- function(group1, group2, type = "RD") {
     )
 
     # generate interpretation using glue
-    interpretation <- glue(
+    interpretation <- glue::glue(
       "the difference in the relative risk ratio between the focal group and the reference group is {results$rrr} with a standard error of {results$std_error_log} and a 95% ci of [{results$conf_low}, {results$conf_high}]."
     )
   } else {

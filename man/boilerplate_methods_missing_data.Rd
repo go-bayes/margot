@@ -26,3 +26,4 @@ Install the new package with `devtools::install_github("go-bayes/boilerplate")`.
 }
 
 }
+\keyword{internal}

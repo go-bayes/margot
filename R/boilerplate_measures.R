@@ -19,7 +19,7 @@
 #'
 #' @import lifecycle
 #'
-#' @export
+#' @keywords internal
 boilerplate_measures <- function(...) {
   lifecycle::deprecate_warn(
     when = "0.2.1.22",

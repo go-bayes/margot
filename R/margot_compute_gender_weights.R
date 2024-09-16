@@ -24,7 +24,6 @@
 #' # Check weight distribution
 #' table(round(weights, 3))
 #'
-#' @export
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
 margot_compute_gender_weights <- function(data, male_col = "male", target_male_prop = 0.5) {

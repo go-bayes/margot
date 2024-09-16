@@ -86,7 +86,6 @@ reference:
 
   - title: "Interpret and Report Results"
     contents:
-    - compute_difference
     - margot_batch_policy
     - margot_compare_groups
     - margot_omnibus_hetero_test
@@ -152,28 +151,9 @@ reference:
 
   - title: "Deprecated Functions"
     contents:
-    - boilerplate_measures
-    - boilerplate_methods_additional_sections
-    - boilerplate_methods
-    - boilerplate_methods_causal_interventions
-    - boilerplate_methods_confounding_control
-    - boilerplate_methods_eligibility_criteria
-    - boilerplate_methods_identification_assumptions
-    - boilerplate_methods_missing_data
-    - boilerplate_methods_sample
-    - boilerplate_methods_statistical_estimator
-    - boilerplate_methods_target_population
-    - boilerplate_methods_variables
     - coloured_histogram
     - coloured_histogram_sd
     - coloured_histogram_shift
     - coloured_histogram_quantiles
-    - create_ordered_variable_custom
-    - manager_boilerplate_measures
-    - margot_compute_gender_weights
-    - margot_create_bibliography
-    - margot_create_database
-    - margot_grf_subset_table
     - margot_interpret_table
-    - margot_merge_databases
     - margot_plot_hist

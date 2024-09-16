@@ -22,3 +22,4 @@ This function is deprecated. Please use `margot_subset_model()` instead.
 # result_subset <- margot_subset_model(...)
 }
 }
+\keyword{internal}

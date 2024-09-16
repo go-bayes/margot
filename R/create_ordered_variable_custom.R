@@ -24,7 +24,6 @@
 #' df <- data.frame(x = runif(100, 0, 10))
 #' df_updated <- create_ordered_variable_custom(df, "x", c(0, 2, 5, 10))
 #'
-#' @export
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
 create_ordered_variable_custom <- function(df, var_name, breaks,

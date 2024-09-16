@@ -6,7 +6,6 @@
 #'
 #' @param ... Arguments passed to the deprecated function
 #'
-#' @export
 #'
 #' @examples
 #' \dontrun{
@@ -16,6 +15,9 @@
 #' # Use the new function:
 #' # result_subset <- margot_subset_model(...)
 #' }
+#' @import lifecycle
+#'
+#' @keywords internal
 margot_grf_subset_table <- function(...) {
   lifecycle::deprecate_warn(
     when = "0.2.1.28",

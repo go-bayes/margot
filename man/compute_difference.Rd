@@ -24,21 +24,14 @@ A list containing:
         - `interpretation`: A string providing a formatted interpretation of the results.
 }
 \description{
+`r lifecycle::badge("deprecated")`
+This function is deprecated and will be removed in a future release.
+Please use the new `margot_compare_groups()` function and associated workflow instead.
+
 This function calculates either the difference in average treatment effects (ATE) or the relative risk ratio (RRR)
 between two independent subgroups. Each subgroup is represented as a list that includes the estimated effect (theta) and
 the standard error (std.error) of the effect. The result includes both a data frame and an interpretation
 string formatted for easy use with `glue::glue` in Quarto documents etc. The subgroups are expected to be
 outputs from the `lmtp::lmtp_contrast()` function.
 }
-\examples{
-group1 <- list(vals = data.frame(theta = 100, std.error = 10))
-group2 <- list(vals = data.frame(theta = 90, std.error = 5))
-output_rd <- compute_difference(group1, group2)
-cat(output_rd$interpretation)  # Print the interpretation for risk difference
-
-group1 <- list(vals = data.frame(theta = 3.19, std.error = 0.393))
-group2 <- list(vals = data.frame(theta = 1.23, std.error = 0.228))
-output_rr <- compute_difference(group1, group2, type = "RR")
-cat(output_rr$interpretation)  # Print the interpretation for relative risk ratio
-
-}
+\keyword{internal}
