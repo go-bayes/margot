@@ -13,7 +13,7 @@ margot_causal_forest(
   grf_defaults = list(),
   save_data = FALSE,
   compute_rate = TRUE,
-  top_n_vars = 15,
+  top_n_vars = 20,
   save_models = FALSE,
   train_proportion = 0.7,
   verbose = TRUE

@@ -12,36 +12,37 @@ margot_interpret_qini(
 )
 }
 \arguments{
-\item{multi_batch}{The output of margot_batch_policy() function}
+\item{multi_batch}{List output from margot_batch_policy() with diff_gain_summaries.}
 
-\item{label_mapping}{A named list mapping model names to labels (optional)}
+\item{label_mapping}{Optional named list mapping model names to readable labels.}
 
-\item{alpha}{The significance level for confidence intervals (default is 0.05)}
+\item{alpha}{Significance level for confidence intervals. Default 0.05.}
 
-\item{decimal_places}{Number of decimal places for rounding (default is 2)}
+\item{decimal_places}{Number of decimal places for rounding. Default 2.}
 }
 \value{
-A list containing summary tables and explanations for each arm or binary treatment
+List with summary tables and explanations. Format varies for binary and multi-arm treatments.
 }
 \description{
-This function serves as a wrapper to interpret Qini results for both binary and multi-arm treatments.
-It calls the appropriate subfunction based on the structure of the input data.
+This function interprets Qini results for both binary and multi-arm treatments.
+It detects the treatment type based on the input data structure and calls the appropriate sub-function.
 }
 \examples{
 \dontrun{
-# Assuming you have multi_batch objects from margot_batch_policy()
 label_mapping <- list(
   "t2_env_not_climate_chg_concern_z" = "Deny Climate Change Concern",
-  "t2_env_not_climate_chg_cause_z" = "Deny Humans Cause Climate Change",
-  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real",
-  "t2_env_not_env_efficacy_z" = "Deny Personal Env Efficacy",
-  "t2_env_sat_nz_environment_z" = "Not Sat NZ Environment"
+  "t2_env_not_climate_chg_cause_z" = "Deny Humans Cause Climate Change"
 )
 
-# For binary treatment
 binary_results <- margot_interpret_qini(binary_multi_batch, label_mapping = label_mapping)
+print(binary_results$summary_table)
 
-# For multi-arm treatment
 multi_arm_results <- margot_interpret_qini(multi_arm_multi_batch, label_mapping = label_mapping)
+print(multi_arm_results$arm1$summary_table)
 }
+
+}
+\references{
+Sverdrup, E., Wu, H., Athey, S., & Wager, S. (2024). Qini Curves for Multi-Armed Treatment Rules.
+arXiv preprint arXiv:2306.11979.
 }

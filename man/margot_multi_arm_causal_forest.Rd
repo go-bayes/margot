@@ -14,7 +14,7 @@ margot_multi_arm_causal_forest(
   exposure_name,
   grf_defaults = list(),
   save_data = FALSE,
-  top_n_vars = 10,
+  top_n_vars = 20,
   save_models = FALSE,
   compute_qini = TRUE,
   train_proportion = 0.7,

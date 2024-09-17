@@ -77,7 +77,7 @@
 #' @export
 margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_multi, weights,
                                            exposure_name, grf_defaults = list(),
-                                           save_data = FALSE, top_n_vars = 10,
+                                           save_data = FALSE, top_n_vars = 20,
                                            save_models = FALSE, compute_qini = TRUE,
                                            train_proportion = 0.7, W.hat = NULL, cost = NULL,
                                            verbose = TRUE) {
