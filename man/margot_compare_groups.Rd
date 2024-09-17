@@ -4,7 +4,13 @@
 \alias{margot_compare_groups}
 \title{Compare Treatment Effects Between Groups}
 \usage{
-margot_compare_groups(group, subgroup, type = "RD", label_mapping = NULL)
+margot_compare_groups(
+  group,
+  subgroup,
+  type = "RD",
+  label_mapping = NULL,
+  decimal_places = 4
+)
 }
 \arguments{
 \item{group}{A data frame containing the first group's treatment effects and confidence intervals.}

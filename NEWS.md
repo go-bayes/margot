@@ -8,8 +8,11 @@
 * remove `color` package
 * methods
 
+# [2024-09-17] margot 0.2.1.62
 
-# [2024-09-17] margot 0.2.1.61
+- `margot_compare_groups()` added bold formatting to alert readers to reliable group differences
+
+
 
 ## Improved
 
