@@ -7,6 +7,11 @@
 * [qini cost options] done.
 * remove `color` package
 * methods
+* replace `stringr` and use `tools`
+
+# [2024-09-18] margot 0.2.1.63
+
+- `margot_save_png()` replaces `margot_plot_png()` for consistent function labelling, and to spare a burden of remembering function names.
 
 # [2024-09-17] margot 0.2.1.62
 
