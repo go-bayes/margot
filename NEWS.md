@@ -8,6 +8,8 @@
 * remove `color` package
 * methods
 * replace `stringr` and use `tools`
+* get standard deviation units into reports
+* batch process trend plots
 
 # [2024-09-18] margot 0.2.1.63
 
