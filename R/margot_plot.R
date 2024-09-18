@@ -173,7 +173,7 @@ margot_plot <- function(.data,
     # Label transformation options
     remove_tx_prefix = TRUE,
     remove_z_suffix = TRUE,
-    use_title_case = TRUE,
+    use_title_case = FALSE,
     remove_underscores = TRUE
   )
   # Merge user-provided options with defaults and additional arguments
