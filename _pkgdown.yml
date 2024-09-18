@@ -116,7 +116,6 @@ reference:
     - back_transform_logmean
     - back_transform_zscore
     - construct_formula
-    - group_tab
     - here_read
     - here_save
     - here_read_qs
@@ -142,6 +141,7 @@ reference:
     - compute_qini_curves
     - extract_qini_data
     - group_results_by_comparison
+    - group_tab
     - tab_engine_marginal
 
   - title: "Simulated data"

@@ -11,7 +11,7 @@ to handle zero values or to normalize the distribution of the data."></head><bod
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.63</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.64</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@ The standard deviation is not back-transformed by this function due to the compl
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">log_mean</span> <span class="op">=</span> <span class="fl">1.098612</span> <span class="co"># true mean is 2. We add + 1 to the log to handle zero: log(2+1) = log(3)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">log_mean</span> <span class="op">&lt;-</span> <span class="fl">1.098612</span> <span class="co"># true mean is 2. We add + 1 to the log to handle zero: log(2+1) = log(3)</span></span></span>
 <span class="r-in"><span><span class="va">back_transformed_result</span> <span class="op">&lt;-</span> <span class="fu">back_transform_logmean</span><span class="op">(</span><span class="va">log_mean</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">back_transformed_result</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $mean_original</span>

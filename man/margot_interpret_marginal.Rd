@@ -14,7 +14,7 @@ margot_interpret_marginal(
 \arguments{
 \item{df}{Data frame containing causal effect estimates, expected to include columns for
 outcome names, effect estimates (either differences or ratios), confidence intervals,
-E-values, and a summary estimate label.}
+E-values, and a summary estimate label. Can also be the list output from transform_to_original_scale().}
 
 \item{type}{Character string specifying the type of effect estimate. Must be either "RD"
 (Risk Difference) or "RR" (Risk Ratio). Default is "RD".}
@@ -30,14 +30,25 @@ Treatment Effect in the Treated), "CATE" (Conditional Average Treatment Effect),
 A list containing two elements:
   \item{estimand_description}{A character string describing the specified estimand, or NULL if no estimand was provided.}
   \item{interpretation}{A character string containing a detailed interpretation of each outcome in `df`,
-  including the causal contrast, E-values, and the strength of evidence for causality.}
+  including the causal contrast, E-values, the strength of evidence for causality, and original scale results if available.}
 }
 \description{
 This function interprets the output of causal effect analysis, providing textual descriptions
 of causal effect estimates. It categorises the strength of evidence for causality based on
 E-values and confidence intervals, and generates a detailed interpretation of the effect
 estimates according to specified types (i.e., "RD" for risk difference or "RR" for risk ratio)
-and estimands.
+and estimands. It now also includes interpretation of original scale results when available.
+}
+\details{
+The function now handles both transformed and original scale results. If original scale results
+are available (indicated by the presence of columns with "_original" suffix), these will be included
+in the interpretation. The strength of evidence for causality is categorized as follows:
+\itemize{
+  \item Strong evidence: E-value lower bound > 2
+  \item Evidence: E-value lower bound > 1.1 and <= 2
+  \item Weak evidence: E-value lower bound > 1 and <= 1.1
+  \item Not reliable evidence: E-value lower bound <= 1 or confidence interval includes null effect
+}
 }
 \examples{
 \dontrun{
@@ -48,6 +59,11 @@ cat(result$interpretation)
 
 # Using Risk Ratio without specifying an estimand
 result <- margot_interpret_marginal(group_tab_output, type = "RR")
+cat(result$interpretation)
+
+# Using output from transform_to_original_scale()
+transformed_data <- transform_to_original_scale(results_df, original_df, label_mapping)
+result <- margot_interpret_marginal(transformed_data, type = "RD")
 cat(result$interpretation)
 }
 

@@ -11,6 +11,13 @@
 * get standard deviation units into reports
 * batch process trend plots
 
+# [2024-09-19] margot 0.2.1.64
+
+## Improved
+
+- `margot_plot()`,`margot_interpret_marginal()`, `group_tab()` overhauled so that now we get reporting back-tranformed from standardised effects to effects on the data scale -- greatly benefiting interpretations.
+- `transform_to_original_scale()` new helper introduced to back-transform estimates.
+
 # [2024-09-18] margot 0.2.1.63
 
 - `margot_save_png()` replaces `margot_plot_save_png()` for consistent function labelling, and to spare a burden of remembering function names.

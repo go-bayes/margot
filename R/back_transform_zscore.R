@@ -16,14 +16,22 @@
 #' original_value <- back_transform_zscore(z = 1.5, mean = 100, sd = 15)
 #' print(original_value)
 #'
+#' # Multiple z-scores can be transformed at once
+#' z_scores <- c(-1, 0, 1, 2)
+#' original_values <- back_transform_zscore(z = z_scores, mean = 50, sd = 10)
+#' print(original_values)
+#'
 #' @export
 back_transform_zscore <- function(z, mean, sd) {
-  # validate input types and values
-  if (!is.numeric(z) || !is.numeric(mean) || !is.numeric(sd) || sd <= 0) {
-    stop("All inputs must be numeric, and 'sd' must be positive.")
+  # Validate input types and values
+  if (!is.numeric(z) || !is.numeric(mean) || !is.numeric(sd)) {
+    stop("All inputs must be numeric.")
+  }
+  if (sd <= 0) {
+    stop("'sd' must be positive.")
   }
 
-  # perform back-transformation
+  # Perform back-transformation
   x <- (z * sd) + mean
   return(x)
 }

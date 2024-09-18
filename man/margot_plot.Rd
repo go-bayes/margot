@@ -16,15 +16,16 @@ margot_plot(
   use_timestamp = FALSE,
   base_filename = "margot_plot_output",
   prefix = NULL,
-  save_path = here::here("push_mods")
+  save_path = here::here("push_mods"),
+  original_df = NULL
 )
 }
 \arguments{
 \item{.data}{A data frame containing the data to be plotted.}
 
-\item{type}{Character string specifying the type of plot. Either "RD" (Risk Difference) or "RR" (Risk Ratio).}
+\item{type}{Character string specifying the type of plot. Either "RD" (Risk Difference) or "RR" (Risk Ratio). Default is "RD".}
 
-\item{order}{Character string specifying the order of outcomes. Either "default" or "alphabetical".}
+\item{order}{Character string specifying the order of outcomes. Either "default" or "alphabetical". Default is "default".}
 
 \item{title_binary}{Optional title for the plot.}
 
@@ -43,6 +44,8 @@ margot_plot(
 \item{prefix}{Character string. An optional prefix for the saved filename. Default is NULL.}
 
 \item{save_path}{Character string. The directory path where the output will be saved. Default is here::here("push_mods").}
+
+\item{original_df}{Optional data frame containing the original (non-transformed) data for back-transformation of results.}
 }
 \value{
 A list containing three elements:
@@ -55,20 +58,36 @@ A list containing three elements:
 If `save_output` is TRUE, the complete output will be saved to a file using margot::here_save_qs().
 }
 \description{
-This function creates a Margot plot, which is useful for visualizing causal effects
-in epidemiological studies. It provides various options for customizing the plot
+This function creates a Margot plot, which is useful for visualizing causal effects.
+It provides various options for customizing the plot
 and transforming labels. Additionally, it generates an interpretation of the results
-using the margot_interpret_marginal function and returns a transformed table.
+and returns a transformed table.
 }
 \details{
 The `options` list can include the following parameters:
 \itemize{
+  \item `title`: Character string. Main title for the plot.
+  \item `subtitle`: Character string. Subtitle for the plot.
+  \item `estimate_scale`: Numeric. Scaling factor for estimates. Default is 1.
+  \item `base_size`: Numeric. Base font size for the plot. Default is 11.
+  \item `text_size`: Numeric. Font size for text labels. Default is 2.75.
+  \item `point_size`: Numeric. Size of points in the plot. Default is 3.
+  \item `title_size`: Numeric. Font size for the main title. Default is 10.
+  \item `subtitle_size`: Numeric. Font size for the subtitle. Default is 9.
+  \item `legend_text_size`: Numeric. Font size for legend text. Default is 6.
+  \item `legend_title_size`: Numeric. Font size for legend title. Default is 6.
+  \item `linewidth`: Numeric. Width of lines in the plot. Default is 0.5.
+  \item `plot_theme`: ggplot2 theme object. Custom theme for the plot.
+  \item `colors`: Named vector. Custom colors for different estimate categories.
+  \item `facet_var`: Character string. Variable name for faceting the plot.
+  \item `confidence_level`: Numeric. Confidence level for intervals. Default is 0.95.
+  \item `annotations`: ggplot2 layer. Custom annotations to add to the plot.
+  \item `show_evalues`: Logical. If TRUE, shows E-values in the plot. Default is TRUE.
+  \item `evalue_digits`: Integer. Number of digits for E-value display. Default is 2.
   \item `remove_tx_prefix`: Logical. If TRUE, removes "tx_" prefix from labels and interpretation. Default is TRUE.
   \item `remove_z_suffix`: Logical. If TRUE, removes "_z" suffix from labels and interpretation. Default is TRUE.
   \item `use_title_case`: Logical. If TRUE, converts labels and interpretation to title case. Default is TRUE.
   \item `remove_underscores`: Logical. If TRUE, removes underscores from labels and interpretation. Default is TRUE.
-  \item `show_evalues`: Logical. If TRUE, shows E-values in the plot. Default is TRUE.
-  \item `evalue_digits`: Integer. Number of digits for E-value display. Default is 2.
 }
 
 The `label_mapping` parameter allows for custom renaming of specific outcomes:
@@ -99,12 +118,14 @@ print(result$transformed_table)
 # Create a Margot plot with custom options, label mapping, and save output
 custom_result <- margot_plot(sample_data,
   type = "RD",
-  title_binary = "Custom Margot Plot",
   options = list(
+    title = "Custom Margot Plot",
+    subtitle = "With custom options",
     remove_tx_prefix = TRUE,
     remove_z_suffix = TRUE,
     use_title_case = TRUE,
-    remove_underscores = TRUE
+    remove_underscores = TRUE,
+    colors = c("positive" = "green", "not reliable" = "gray", "negative" = "red")
   ),
   label_mapping = list(
     "t1_outcome_a_z" = "Custom Label A",
@@ -118,6 +139,20 @@ custom_result <- margot_plot(sample_data,
 print(custom_result$plot)
 cat(custom_result$interpretation)
 print(custom_result$transformed_table)
+
+# Create a Margot plot with original data for back-transformation
+original_data <- data.frame(
+  t1_outcome_a = rnorm(100),
+  t2_outcome_b = rnorm(100),
+  t3_outcome_c = rnorm(100)
+)
+result_with_original <- margot_plot(sample_data,
+  type = "RD",
+  original_df = original_data
+)
+print(result_with_original$plot)
+cat(result_with_original$interpretation)
+print(result_with_original$transformed_table)
 }
 
 }

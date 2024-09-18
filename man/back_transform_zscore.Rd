@@ -27,4 +27,9 @@ interpretation.
 original_value <- back_transform_zscore(z = 1.5, mean = 100, sd = 15)
 print(original_value)
 
+# Multiple z-scores can be transformed at once
+z_scores <- c(-1, 0, 1, 2)
+original_values <- back_transform_zscore(z = z_scores, mean = 50, sd = 10)
+print(original_values)
+
 }
