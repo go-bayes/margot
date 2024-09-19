@@ -20,7 +20,8 @@ margot_plot_decision_tree(
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
   remove_underscores = TRUE,
-  remove_action_label = TRUE
+  remove_action_label = TRUE,
+  label_mapping = NULL
 )
 }
 \arguments{
@@ -55,6 +56,9 @@ margot_plot_decision_tree(
 \item{remove_underscores}{Logical indicating whether to remove underscores from labels. Default is TRUE.}
 
 \item{remove_action_label}{Logical indicating whether to remove "Action: " prefix from leaf node labels in the final plot. Default is TRUE.}
+
+\item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names (with or without "model_" prefix),
+and values should be the desired display labels. Default is NULL.}
 }
 \value{
 A ggplot object representing the decision tree.
@@ -71,6 +75,15 @@ print(tree_plot)
 
 # To keep the "Action: " prefix in leaf node labels
 tree_plot <- margot_plot_decision_tree(results, model_name = "my_model", remove_action_label = FALSE)
+print(tree_plot)
+
+# Using custom label mapping
+label_mapping <- list(
+  "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
+  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
+)
+tree_plot <- margot_plot_decision_tree(results, model_name = "model_t2_env_not_env_efficacy_z",
+                                       label_mapping = label_mapping)
 print(tree_plot)
 }
 

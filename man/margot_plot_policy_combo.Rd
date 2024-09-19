@@ -12,7 +12,8 @@ margot_plot_policy_combo(
   generate_policy_tree = TRUE,
   generate_decision_tree = TRUE,
   policy_tree_args = list(),
-  decision_tree_args = list()
+  decision_tree_args = list(),
+  label_mapping = NULL
 )
 }
 \arguments{
@@ -33,6 +34,9 @@ margot_plot_policy_combo(
 \item{policy_tree_args}{A list of arguments to pass to margot_plot_policy_tree. Default is list().}
 
 \item{decision_tree_args}{A list of arguments to pass to margot_plot_decision_tree. Default is list().}
+
+\item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
+(with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
 }
 \value{
 A list containing:
@@ -44,55 +48,22 @@ A list containing:
 This function generates a combined plot consisting of a decision tree and a graph
 showing relationships between variables in the recommended policy.
 }
-\details{
-This function performs the following steps:
-1. Generates policy results using `margot_plot_policy_tree` (if requested)
-2. Creates a decision tree plot using `margot_plot_decision_tree` (if requested)
-3. Combines the plots using the patchwork package (if both plots are generated)
-4. Applies the specified layout and annotation to the combined plot
-
-Default arguments for margot_plot_policy_tree:
-- color_scale = NULL
-- point_alpha = 0.5
-- theme_function = theme_classic
-- title_size = 14
-- subtitle_size = 12
-- axis_title_size = 10
-- legend_title_size = 10
-- jitter_width = 0.3
-- jitter_height = 0.3
-- split_line_color = "darkgray"
-- split_line_alpha = 0.7
-- split_line_type = "dashed"
-- split_line_linewidth = 0.5
-- split_label_size = 10
-- split_label_color = "darkgray"
-- custom_action_names = NULL
-- legend_position = "bottom"
-- plot_selection = "both"
-
-Default arguments for margot_plot_decision_tree:
-- x_padding = 0.25
-- y_padding = 0.25
-- border_size = 0.35
-- edge_label_offset = 0.02
-- span_ratio = 0.25
-- text_size = 3.5
-- non_leaf_fill = "lightyellow"
-- title = NULL
-- leaf_palette = NULL
-}
 \examples{
 \dontrun{
-# Assuming result_object is already defined:
+# Assuming 'results' is your Margot results object and 'model_name' is the name of your model
+label_mapping <- list(
+  "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
+  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
+)
 combined_plot <- margot_plot_policy_combo(
-  result_object = result_object,
-  model_name = "model_t2_hlth_sleep_hours_z",
+  result_object = results,
+  model_name = "model_t2_env_not_env_efficacy_z",
   policy_tree_args = list(point_alpha = 0.75),
-  decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01)
+  decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01),
+  label_mapping = label_mapping
 )
 
 # Print the combined plot
-print(combined_plot)
+print(combined_plot$combined_plot)
 }
 }

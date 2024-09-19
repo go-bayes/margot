@@ -28,7 +28,8 @@ margot_plot_policy_tree(
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
-  remove_underscores = TRUE
+  remove_underscores = TRUE,
+  label_mapping = NULL
 )
 }
 \arguments{
@@ -80,6 +81,9 @@ with blue for the first level, orange for the second, and subsequent colors for 
 \item{use_title_case}{Logical value indicating whether to convert labels to title case. Default is TRUE.}
 
 \item{remove_underscores}{Logical value indicating whether to remove underscores from labels. Default is TRUE.}
+
+\item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names (with or without "model_" prefix),
+and values should be the desired display labels. Default is NULL.}
 }
 \value{
 A ggplot object containing the specified plot(s) of the policy tree results.
@@ -111,6 +115,13 @@ plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z",
                                 remove_z_suffix = FALSE,
                                 use_title_case = FALSE,
                                 remove_underscores = FALSE)
+
+# Use custom label mapping
+label_mapping <- list(
+  "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
+  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
+)
+plot <- margot_plot_policy_tree(mc_test, "model_t2_env_not_env_efficacy_z", label_mapping = label_mapping)
 }
 
 }

@@ -10,7 +10,8 @@ margot_plot_qini(
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
-  remove_underscores = TRUE
+  remove_underscores = TRUE,
+  label_mapping = NULL
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ to plot. This should match one of the model names in mc_result$results.}
 \item{use_title_case}{Logical value indicating whether to convert labels to title case. Default is TRUE.}
 
 \item{remove_underscores}{Logical value indicating whether to remove underscores from labels. Default is TRUE.}
+
+\item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
+(with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
 }
 \value{
 A ggplot object representing the Qini curves for the specified outcome variable.
@@ -39,6 +43,13 @@ transformations and informative CLI messages.
 \dontrun{
 # Assuming mc.test is the result of margot_multi_arm_causal_forest()
 plot_qini_curves(mc.test, "model_t2_belong_z")
+
+# Using custom label mapping
+label_mapping <- list(
+  "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
+  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
+)
+plot_qini_curves(mc.test, "model_t2_env_not_env_efficacy_z", label_mapping = label_mapping)
 }
 
 }

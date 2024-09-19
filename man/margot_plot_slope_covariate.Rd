@@ -94,11 +94,14 @@ plot_with_options <- margot_plot_slope_covariate(
   type = "continuous"
 )
 
-# Saving the plot with custom prefix
+# Save the plot with custom prefix
 saved_plot <- margot_plot_slope_covariate(
   data = dat,
   formula = political_orientation ~ wave:age,
   terms = c("wave", "age"),
+  y_label = "Political Orientation",
+  x_label = "Wave",
+  color_label = "Age",
   save_path = "path/to/save/directory",
   prefix = "political_orientation",
   width = 10,

@@ -1,5 +1,4 @@
-#' @title Batch Processing of Policy Trees and Related Visualizations (Deprecated)
-#' @description This function is deprecated as of margot 0.2.1.65. Please use margot_policy() instead.
+#' @title Batch Processing of Policy Trees and Related Visualizations
 #' @param result_outcomes A list containing the results from margot_multi_arm_causal_forest().
 #' @param policy_tree_args A list of arguments to pass to margot_plot_policy_tree(). Default is list().
 #' @param decision_tree_args A list of arguments to pass to margot_plot_decision_tree(). Default is list().
@@ -24,8 +23,8 @@
 #' @import here
 #' @importFrom ggplot2 ggsave
 #'
-#' @keywords internal
-margot_batch_policy <- function(result_outcomes,
+#' @export
+margot_policy <- function(result_outcomes,
                                 policy_tree_args = list(),
                                 decision_tree_args = list(),
                                 dpi = 600,
@@ -35,13 +34,8 @@ margot_batch_policy <- function(result_outcomes,
                                 output_dir = here::here(push_mods),
                                 spend = c(0.2, 0.5),
                                 label_mapping = NULL) {
-  # Deprecation warning
-  warning("The margot_batch_policy() function is deprecated as of margot 0.2.1.65. Please use margot_policy() instead.",
-          call. = FALSE)
+  cli::cli_alert_info("Starting margot_batch_policy function")
 
-  cli::cli_alert_info("Starting margot_batch_policy function (Deprecated)")
-
-  # Rest of the function remains the same...
   if (save_plots && !dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
     cli::cli_alert_success(paste("Created output directory:", output_dir))
@@ -141,110 +135,6 @@ margot_batch_policy <- function(result_outcomes,
   }
 
   cli::cli_progress_done()
-  cli::cli_alert_success("margot_batch_policy function (Deprecated) completed successfully \U0001F44D")
+  cli::cli_alert_success("margot_batch_policy function completed successfully \U0001F44D")
   return(output_list)
 }
-# margot_batch_policy <- function(result_outcomes,
-#                                 policy_tree_args = list(),
-#                                 decision_tree_args = list(),
-#                                 dpi = 600,
-#                                 width = 12,
-#                                 height = 12,
-#                                 save_plots = TRUE,
-#                                 output_dir = here::here(push_mods),
-#                                 spend = c(0.2, 0.5)) {
-#   cli::cli_alert_info("Starting margot_batch_policy function")
-#
-#   if (save_plots && !dir.exists(output_dir)) {
-#     dir.create(output_dir, recursive = TRUE)
-#     cli::cli_alert_success(paste("Created output directory:", output_dir))
-#   }
-#
-#   model_names <- names(result_outcomes$results)
-#   cli::cli_alert_info(paste("Number of models to process:", length(model_names)))
-#
-#   output_list <- list()
-#   cli::cli_alert_info("Processing models")
-#   pb <- cli::cli_progress_bar(total = length(model_names), format = "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}")
-#
-#   for (model_name in model_names) {
-#     cli::cli_alert_info(paste("Processing model:", model_name))
-#     tryCatch({
-#       model_output <- margot_policy_tree(
-#         mc_test = result_outcomes,
-#         model_name = model_name,
-#         policy_tree_args = policy_tree_args,
-#         decision_tree_args = decision_tree_args
-#       )
-#
-#       # Add difference gain summary for each spend level
-#       qini_objects <- result_outcomes$results[[model_name]]$qini_objects
-#       is_binary <- "cate" %in% names(qini_objects) && "ate" %in% names(qini_objects)
-#
-#       if (is_binary) {
-#         model_output$diff_gain_summaries <- list()
-#         for (s in spend) {
-#           diff_gain_summary <- margot_summary_cate_difference_gain(
-#             result_outcomes,
-#             outcome_var = model_name,
-#             reference_curve = "ate",
-#             comparison_curve = "cate",
-#             spend = s
-#           )
-#           model_output$diff_gain_summaries[[paste0("spend_", s)]] <- diff_gain_summary
-#         }
-#       } else if ("baseline" %in% names(qini_objects)) {
-#         # Multi-arm treatment
-#         model_output$diff_gain_summaries <- list()
-#
-#         for (s in spend) {
-#           spend_summaries <- list()
-#
-#           # Compare 'all_arms' with 'baseline'
-#           spend_summaries[["all_arms"]] <- margot_summary_cate_difference_gain(
-#             result_outcomes,
-#             outcome_var = model_name,
-#             reference_curve = "baseline",
-#             comparison_curve = "all_arms",
-#             spend = s
-#           )
-#
-#           # Compare each individual arm with 'baseline'
-#           arm_names <- setdiff(names(qini_objects), c("all_arms", "baseline"))
-#           for (arm in arm_names) {
-#             spend_summaries[[arm]] <- margot_summary_cate_difference_gain(
-#               result_outcomes,
-#               outcome_var = model_name,
-#               reference_curve = "baseline",
-#               comparison_curve = arm,
-#               spend = s
-#             )
-#           }
-#
-#           model_output$diff_gain_summaries[[paste0("spend_", s)]] <- spend_summaries
-#         }
-#       }
-#
-#       if (save_plots) {
-#         plot_names <- c("policy_tree_plot", "qini_plot", "decision_tree_visualisation", "policy_combo_plot")
-#         for (plot_name in plot_names) {
-#           if (!is.null(model_output[[plot_name]])) {
-#             file_name <- file.path(output_dir, paste0(model_name, "_", plot_name, ".png"))
-#             ggsave(file_name, model_output[[plot_name]], dpi = dpi, width = width, height = height)
-#             cli::cli_alert_success(paste("Saved", file_name))
-#           }
-#         }
-#       }
-#
-#       output_list[[model_name]] <- model_output
-#       cli::cli_alert_success(paste("Successfully processed model:", model_name))
-#     }, error = function(e) {
-#       cli::cli_alert_danger(paste("Error processing model", model_name, ":", e$message))
-#     })
-#     cli::cli_progress_update()
-#   }
-#
-#   cli::cli_progress_done()
-#   cli::cli_alert_success("margot_batch_policy function completed successfully \U0001F44D")
-#   return(output_list)
-# }

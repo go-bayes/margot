@@ -11,6 +11,29 @@
 * get standard deviation units into reports
 * batch process trend plots
 
+# [2024-09-19] margot 0.2.1.65
+
+
+## New
+
+- `margot_plot_slope_covariate_batch()` allows batch processing of multiple wave x covariate regressions on a common outcome.
+-  `margot_policy()` replaces `margot_batch_policy` and allows custom labelling.
+
+## Improved
+
+- `margot_plot_multi_arm()` - can now pass outcomes data frame to recover coefficients on the original data scale. 
+- `margot_plot_slope_covariate()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
+- `margot_plot_qini()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
+- `margot_plot_policy_combo()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
+- `margot_plot_policy_tree()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
+- `margot_plot_decision_tree()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
+
+
+
+## Deprecated
+
+- `margot_batch_policy()`
+
 # [2024-09-19] margot 0.2.1.64
 
 ## Improved

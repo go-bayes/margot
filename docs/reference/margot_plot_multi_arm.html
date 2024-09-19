@@ -11,7 +11,7 @@ If the specified contrast is not found, an error is reported."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.64</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.65</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@ If the specified contrast is not found, an error is reported.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_plot_multi_arm</span><span class="op">(</span></span>
 <span>  <span class="va">model_table</span>,</span>
 <span>  <span class="va">contrast</span>,</span>
+<span>  original_df <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">options</span>,</span>
 <span>  <span class="va">label_mapping</span>,</span>
 <span>  save_output <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -68,6 +69,10 @@ If the specified contrast is not found, an error is reported.</p>
 
 <dt id="arg-contrast">contrast<a class="anchor" aria-label="anchor" href="#arg-contrast"></a></dt>
 <dd><p>A character string specifying the contrast to be used (e.g. `"(5.0,7.0] - [1.0,3.0]"`).</p></dd>
+
+
+<dt id="arg-original-df">original_df<a class="anchor" aria-label="anchor" href="#arg-original-df"></a></dt>
+<dd><p>Optional data frame containing the original (non-transformed) data for back-transformation of results.</p></dd>
 
 
 <dt id="arg-options">options<a class="anchor" aria-label="anchor" href="#arg-options"></a></dt>
@@ -110,6 +115,7 @@ If the specified contrast is not found, an error is reported.</p>
     <p>The user must specify a contrast from the `model_table`. If the contrast is not found, an error will be raised using `cli` reporting.</p>
 <p>The `margot_plot()` function provides various options for customising the plot, including the ability to save the plot,
 modify labels, and adjust plot aesthetics. The full range of options available to `margot_plot()` can be passed through the `options` argument.</p>
+<p>If `original_df` is provided, the function will use it to back-transform the results to the original scale.</p>
     </div>
 
     <div class="section level2">
@@ -119,6 +125,7 @@ modify labels, and adjust plot aesthetics. The full range of options available t
 <span class="r-in"><span><span class="va">multi_results</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_multi_arm</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">models_multi</span><span class="op">$</span><span class="va">combined_tables</span>,</span></span>
 <span class="r-in"><span>  contrast <span class="op">=</span> <span class="st">"(5.0,7.0] - [1.0,3.0]"</span>,</span></span>
+<span class="r-in"><span>  original_df <span class="op">=</span> <span class="va">df_raw_outcomes</span>,</span></span>
 <span class="r-in"><span>  options <span class="op">=</span> <span class="va">multi_options</span>,</span></span>
 <span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span>,</span></span>
 <span class="r-in"><span>  save_output <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>

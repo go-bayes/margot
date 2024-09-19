@@ -6,6 +6,7 @@
 #'
 #' @param model_table A list or data frame containing the model output tables.
 #' @param contrast A character string specifying the contrast to be used (e.g. `"(5.0,7.0] - [1.0,3.0]"`).
+#' @param original_df Optional data frame containing the original (non-transformed) data for back-transformation of results.
 #' @param options A list of additional options for customising the plot, passed directly to `margot_plot()`.
 #' @param label_mapping A named list for custom label mapping of the outcomes, also passed to `margot_plot()`.
 #' @param save_output Logical. If TRUE, saves the complete output to a file. Default is FALSE.
@@ -19,6 +20,8 @@
 #'
 #' The `margot_plot()` function provides various options for customising the plot, including the ability to save the plot,
 #' modify labels, and adjust plot aesthetics. The full range of options available to `margot_plot()` can be passed through the `options` argument.
+#'
+#' If `original_df` is provided, the function will use it to back-transform the results to the original scale.
 #'
 #' @return A list with the following elements:
 #' \itemize{
@@ -35,6 +38,7 @@
 #' multi_results <- margot_plot_multi_arm(
 #'   models_multi$combined_tables,
 #'   contrast = "(5.0,7.0] - [1.0,3.0]",
+#'   original_df = df_raw_outcomes,
 #'   options = multi_options,
 #'   label_mapping = label_mapping,
 #'   save_output = TRUE,
@@ -48,7 +52,7 @@
 #' }
 #'@importFrom cli cli_abort
 #' @export
-margot_plot_multi_arm <- function(model_table, contrast, options, label_mapping,
+margot_plot_multi_arm <- function(model_table, contrast, original_df = NULL, options, label_mapping,
                                   save_output = FALSE, use_timestamp = FALSE,
                                   base_filename = "margot_plot_output", prefix = NULL,
                                   save_path = here::here("push_mods")) {
@@ -59,13 +63,12 @@ margot_plot_multi_arm <- function(model_table, contrast, options, label_mapping,
       "x" = "Available contrasts are: {paste(names(model_table), collapse = ', ')}."
     ))
   }
-
   # retrieve the contrast data
   contrast_data <- model_table[[contrast]]
-
   # call the margot_plot function
   margot_plot(
     contrast_data,
+    original_df = original_df,
     options = options,
     label_mapping = label_mapping,
     save_output = save_output,
@@ -76,4 +79,32 @@ margot_plot_multi_arm <- function(model_table, contrast, options, label_mapping,
   )
 }
 
+# margot_plot_multi_arm <- function(model_table, contrast, options, label_mapping,
+#                                   save_output = FALSE, use_timestamp = FALSE,
+#                                   base_filename = "margot_plot_output", prefix = NULL,
+#                                   save_path = here::here("push_mods")) {
+#   # check if the specified contrast exists in the model_table
+#   if (!contrast %in% names(model_table)) {
+#     cli::cli_abort(c(
+#       "The specified contrast '{contrast}' was not found in the model_table.",
+#       "x" = "Available contrasts are: {paste(names(model_table), collapse = ', ')}."
+#     ))
+#   }
+#
+#   # retrieve the contrast data
+#   contrast_data <- model_table[[contrast]]
+#
+#   # call the margot_plot function
+#   margot_plot(
+#     contrast_data,
+#     options = options,
+#     label_mapping = label_mapping,
+#     save_output = save_output,
+#     use_timestamp = use_timestamp,
+#     base_filename = base_filename,
+#     prefix = prefix,
+#     save_path = save_path
+#   )
+# }
+#
 

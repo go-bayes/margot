@@ -50,6 +50,7 @@ reference:
     - margot_plot_response_timeline
     - margot_plot_slope
     - margot_plot_slope_covariate
+    - margot_plot_slope_covariate_batch
 
   - title: "Check assumptions"
     contents:
@@ -86,7 +87,6 @@ reference:
 
   - title: "Interpret and Report Results"
     contents:
-    - margot_batch_policy
     - margot_compare_groups
     - margot_omnibus_hetero_test
     - margot_interpret_policy_tree
@@ -97,6 +97,7 @@ reference:
     - margot_model_evalue
     - margot_model_tab
     - margot_policy_tree
+    - margot_policy
     - margot_subset_model
     - margot_summary_cate_difference_gain
 

@@ -7,6 +7,7 @@
 margot_plot_multi_arm(
   model_table,
   contrast,
+  original_df = NULL,
   options,
   label_mapping,
   save_output = FALSE,
@@ -20,6 +21,8 @@ margot_plot_multi_arm(
 \item{model_table}{A list or data frame containing the model output tables.}
 
 \item{contrast}{A character string specifying the contrast to be used (e.g. `"(5.0,7.0] - [1.0,3.0]"`).}
+
+\item{original_df}{Optional data frame containing the original (non-transformed) data for back-transformation of results.}
 
 \item{options}{A list of additional options for customising the plot, passed directly to `margot_plot()`.}
 
@@ -55,6 +58,8 @@ The user must specify a contrast from the `model_table`. If the contrast is not 
 
 The `margot_plot()` function provides various options for customising the plot, including the ability to save the plot,
 modify labels, and adjust plot aesthetics. The full range of options available to `margot_plot()` can be passed through the `options` argument.
+
+If `original_df` is provided, the function will use it to back-transform the results to the original scale.
 }
 \examples{
 \dontrun{
@@ -62,6 +67,7 @@ modify labels, and adjust plot aesthetics. The full range of options available t
 multi_results <- margot_plot_multi_arm(
   models_multi$combined_tables,
   contrast = "(5.0,7.0] - [1.0,3.0]",
+  original_df = df_raw_outcomes,
   options = multi_options,
   label_mapping = label_mapping,
   save_output = TRUE,

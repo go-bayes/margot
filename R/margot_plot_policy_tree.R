@@ -30,6 +30,8 @@
 #' @param remove_z_suffix Logical value indicating whether to remove the "_z" suffix from labels. Default is TRUE.
 #' @param use_title_case Logical value indicating whether to convert labels to title case. Default is TRUE.
 #' @param remove_underscores Logical value indicating whether to remove underscores from labels. Default is TRUE.
+#' @param label_mapping Optional named list for custom label mappings. Keys should be original variable names (with or without "model_" prefix),
+#'        and values should be the desired display labels. Default is NULL.
 #'
 #' @return A ggplot object containing the specified plot(s) of the policy tree results.
 #'
@@ -58,6 +60,13 @@
 #'                                 remove_z_suffix = FALSE,
 #'                                 use_title_case = FALSE,
 #'                                 remove_underscores = FALSE)
+#'
+#' # Use custom label mapping
+#' label_mapping <- list(
+#'   "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
+#'   "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
+#' )
+#' plot <- margot_plot_policy_tree(mc_test, "model_t2_env_not_env_efficacy_z", label_mapping = label_mapping)
 #' }
 #'
 #' @export
@@ -83,13 +92,33 @@ margot_plot_policy_tree <- function(mc_test, model_name,
                                     remove_tx_prefix = TRUE,
                                     remove_z_suffix = TRUE,
                                     use_title_case = TRUE,
-                                    remove_underscores = TRUE) {
+                                    remove_underscores = TRUE,
+                                    label_mapping = NULL) {
 
   cli::cli_h1("Margot Plot Policy Tree")
 
   # Function to transform labels
-  transform_label <- function(label) {
+  transform_label <- function(label, use_mapping = TRUE) {
     original_label <- label
+
+    # Apply mapping if available and requested
+    if (use_mapping && !is.null(label_mapping)) {
+      # Check for full model name in mapping
+      if (label %in% names(label_mapping)) {
+        mapped_label <- label_mapping[[label]]
+        cli::cli_alert_info("Applied label mapping: {original_label} -> {mapped_label}")
+        return(mapped_label)
+      }
+      # Check for model name without "model_" prefix in mapping
+      label_without_prefix <- sub("^model_", "", label)
+      if (label_without_prefix %in% names(label_mapping)) {
+        mapped_label <- label_mapping[[label_without_prefix]]
+        cli::cli_alert_info("Applied label mapping (without 'model_' prefix): {original_label} -> {mapped_label}")
+        return(mapped_label)
+      }
+    }
+
+    # Apply other transformations
     if (remove_tx_prefix) {
       label <- sub("^t[0-9]+_", "", label)
     }
@@ -110,6 +139,15 @@ margot_plot_policy_tree <- function(mc_test, model_name,
     return(label)
   }
 
+  # Create title
+  title <- transform_label(model_name, use_mapping = TRUE)
+  cli::cli_alert_info("Using title: {title}")
+
+  # Ensure title is a character string or NULL
+  if (!is.character(title) && !is.null(title)) {
+    cli::cli_warn("Invalid title type. Setting title to NULL.")
+    title <- NULL
+  }
   # Extract policy tree object
   policy_tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
 
@@ -133,7 +171,7 @@ margot_plot_policy_tree <- function(mc_test, model_name,
   }
 
   # Transform action names
-  action_names <- sapply(action_names, transform_label)
+  action_names <- sapply(action_names, transform_label, use_mapping = FALSE)
   cli::cli_alert_success("Action names transformed")
 
   # Define the Okabe-Ito palette, starting with blue and orange
@@ -223,55 +261,79 @@ margot_plot_policy_tree <- function(mc_test, model_name,
   cli::cli_h2("Creating individual plots")
   p1 <- p2 <- NULL
 
-  if (plot_selection %in% c("both", "p1")) {
-    p1 <- base_plot("x1", "x2", transformed_columns[x1_col], transformed_columns[x2_col],
-                    paste(transformed_columns[x1_col], "vs", transformed_columns[x2_col]),
-                    x1_split, x2_split)
-    cli::cli_alert_success("Plot 1 created")
-  }
+  tryCatch({
+    if (plot_selection %in% c("both", "p1")) {
+      p1 <- base_plot("x1", "x2", transformed_columns[x1_col], transformed_columns[x2_col],
+                      paste(transformed_columns[x1_col], "vs", transformed_columns[x2_col]),
+                      x1_split, x2_split)
+      cli::cli_alert_success("Plot 1 created")
+      print(class(p1))  # Debug information
+    }
 
-  if (plot_selection %in% c("both", "p2")) {
-    p2 <- base_plot("x1", "x3", transformed_columns[x1_col], transformed_columns[x3_col],
-                    paste(transformed_columns[x1_col], "vs", transformed_columns[x3_col]),
-                    x1_split, x3_split)
-    cli::cli_alert_success("Plot 2 created")
-  }
+    if (plot_selection %in% c("both", "p2")) {
+      p2 <- base_plot("x1", "x3", transformed_columns[x1_col], transformed_columns[x3_col],
+                      paste(transformed_columns[x1_col], "vs", transformed_columns[x3_col]),
+                      x1_split, x3_split)
+      cli::cli_alert_success("Plot 2 created")
+      print(class(p2))  # Debug information
+    }
+  }, error = function(e) {
+    cli::cli_alert_danger("Error creating plots: {e$message}")
+    print(str(plot_df))  # Debug information
+    print(str(transformed_columns))  # Debug information
+  })
 
   # Combine the plots based on plot_selection
   cli::cli_h2("Combining plots")
-  if (plot_selection == "both") {
-    if (is.null(p1) || is.null(p2)) {
-      cli::cli_abort("Both plots should be created when plot_selection is 'both'")
+  combined_plot <- NULL
+  tryCatch({
+    if (plot_selection == "both") {
+      if (is.null(p1) || is.null(p2)) {
+        cli::cli_abort("Both plots should be created when plot_selection is 'both'")
+      }
+      combined_plot <- p1 + p2 +
+        patchwork::plot_layout(guides = "collect") &
+        patchwork::plot_annotation(
+          title = if (!is.null(title)) paste("Policy Tree Results for", title) else NULL,
+          tag_levels = 'A'
+        ) &
+        theme(
+          plot.tag = element_text(size = 12, face = "bold"),
+          legend.position = legend_position
+        )
+      cli::cli_alert_success("Both plots combined")
+    } else if (plot_selection == "p1") {
+      if (is.null(p1)) {
+        cli::cli_abort("Plot 1 should be created when plot_selection is 'p1'")
+      }
+      combined_plot <- p1 +
+        patchwork::plot_annotation(
+          title = if (!is.null(title)) paste("Policy Tree Results for", title, "- Plot 1") else NULL
+        ) &
+        theme(legend.position = legend_position)
+      cli::cli_alert_success("Plot 1 finalized")
+    } else if (plot_selection == "p2") {
+      if (is.null(p2)) {
+        cli::cli_abort("Plot 2 should be created when plot_selection is 'p2'")
+      }
+      combined_plot <- p2 +
+        patchwork::plot_annotation(
+          title = if (!is.null(title)) paste("Policy Tree Results for", title, "- Plot 2") else NULL
+        ) &
+        theme(legend.position = legend_position)
+      cli::cli_alert_success("Plot 2 finalized")
+    } else {
+      cli::cli_abort("Invalid plot_selection. Choose 'both', 'p1', or 'p2'.")
     }
-    combined_plot <- p1 + p2 +
-      patchwork::plot_layout(guides = "collect") &
-      patchwork::plot_annotation(
-        title = paste("Policy Tree Results for", transform_label(model_name)),
-        tag_levels = 'A'
-      ) &
-      theme(
-        plot.tag = element_text(size = 12, face = "bold"),
-        legend.position = legend_position
-      )
-    cli::cli_alert_success("Both plots combined")
-  } else if (plot_selection == "p1") {
-    if (is.null(p1)) {
-      cli::cli_abort("Plot 1 should be created when plot_selection is 'p1'")
-    }
-    combined_plot <- p1 +
-      patchwork::plot_annotation(title = paste("Policy Tree Results for", transform_label(model_name), "- Plot 1")) &
-      theme(legend.position = legend_position)
-    cli::cli_alert_success("Plot 1 finalized")
-  } else if (plot_selection == "p2") {
-    if (is.null(p2)) {
-      cli::cli_abort("Plot 2 should be created when plot_selection is 'p2'")
-    }
-    combined_plot <- p2 +
-      patchwork::plot_annotation(title = paste("Policy Tree Results for", transform_label(model_name), "- Plot 2")) &
-      theme(legend.position = legend_position)
-    cli::cli_alert_success("Plot 2 finalized")
-  } else {
-    cli::cli_abort("Invalid plot_selection. Choose 'both', 'p1', or 'p2'.")
+  }, error = function(e) {
+    cli::cli_alert_danger("Error combining plots: {e$message}")
+    print(class(p1))  # Debug information
+    print(class(p2))  # Debug information
+  })
+
+  if (is.null(combined_plot)) {
+    cli::cli_alert_danger("Failed to create combined plot")
+    return(NULL)
   }
 
   cli::cli_alert_success("Margot plot policy tree created successfully \U0001F44D")
@@ -279,6 +341,224 @@ margot_plot_policy_tree <- function(mc_test, model_name,
   # Return the combined plot
   return(combined_plot)
 }
+# margot_plot_policy_tree <- function(mc_test, model_name,
+#                                     color_scale = NULL,
+#                                     point_alpha = 0.5,
+#                                     theme_function = theme_classic,
+#                                     title_size = 14,
+#                                     subtitle_size = 11,
+#                                     axis_title_size = 10,
+#                                     legend_title_size = 10,
+#                                     jitter_width = 0.3,
+#                                     jitter_height = 0.3,
+#                                     split_line_color = "darkgray",
+#                                     split_line_alpha = 0.7,
+#                                     split_line_type = "dashed",
+#                                     split_line_linewidth = 0.5,
+#                                     split_label_size = 10,
+#                                     split_label_color = "darkgray",
+#                                     custom_action_names = NULL,
+#                                     legend_position = "bottom",
+#                                     plot_selection = "both",
+#                                     remove_tx_prefix = TRUE,
+#                                     remove_z_suffix = TRUE,
+#                                     use_title_case = TRUE,
+#                                     remove_underscores = TRUE) {
+#
+#   cli::cli_h1("Margot Plot Policy Tree")
+#
+#   # Function to transform labels
+#   transform_label <- function(label) {
+#     original_label <- label
+#     if (remove_tx_prefix) {
+#       label <- sub("^t[0-9]+_", "", label)
+#     }
+#     if (remove_z_suffix) {
+#       label <- sub("_z$", "", label)
+#     }
+#     if (remove_underscores) {
+#       label <- gsub("_", " ", label)
+#     }
+#     if (use_title_case) {
+#       label <- tools::toTitleCase(label)
+#       # correct NZ
+#       label <- gsub("Nz", "NZ", label)
+#     }
+#     if (label != original_label) {
+#       cli::cli_alert_info("Transformed label: {original_label} -> {label}")
+#     }
+#     return(label)
+#   }
+#
+#   # Extract policy tree object
+#   policy_tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
+#
+#   if (is.null(policy_tree_obj)) {
+#     cli::cli_abort("Policy tree object not found for the specified model name.")
+#   }
+#
+#   cli::cli_alert_success("Policy tree object extracted for model: {model_name}")
+#
+#   # Extract action names and number of actions from the policy tree object
+#   action_names <- policy_tree_obj$action.names
+#   n_actions <- policy_tree_obj$n.actions
+#
+#   # If custom action names are provided, use them instead
+#   if (!is.null(custom_action_names)) {
+#     if (length(custom_action_names) != n_actions) {
+#       cli::cli_abort("The number of custom action names must match the number of actions in the policy tree.")
+#     }
+#     action_names <- custom_action_names
+#     cli::cli_alert_info("Using custom action names")
+#   }
+#
+#   # Transform action names
+#   action_names <- sapply(action_names, transform_label)
+#   cli::cli_alert_success("Action names transformed")
+#
+#   # Define the Okabe-Ito palette, starting with blue and orange
+#   okabe_ito_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000")
+#
+#   # If color_scale is not provided, create it based on the number of actions
+#   if (is.null(color_scale)) {
+#     # Create a named vector of colors
+#     color_vector <- setNames(okabe_ito_palette[1:n_actions], action_names)
+#     color_scale <- scale_colour_manual(values = color_vector)
+#     cli::cli_alert_info("Created color scale using Okabe-Ito palette")
+#   }
+#
+#   # Extract the plot data for the specified model
+#   plot_data <- mc_test$results[[model_name]]$plot_data
+#   cli::cli_alert_success("Plot data extracted")
+#
+#   # Extract X_test, predictions, and split_variables
+#   X_test <- plot_data$X_test
+#   predictions <- plot_data$predictions
+#
+#   # Extract split variables and their values from the policy tree
+#   policy_tree <- policy_tree_obj$nodes
+#   x1_col <- policy_tree[[1]]$split_variable
+#   x2_col <- policy_tree[[2]]$split_variable
+#   x3_col <- policy_tree[[3]]$split_variable
+#
+#   # Extract split values
+#   x1_split <- policy_tree[[1]]$split_value
+#   x2_split <- policy_tree[[2]]$split_value
+#   x3_split <- policy_tree[[3]]$split_value
+#
+#   # Use the actual column names from X_test and transform them
+#   actual_columns <- names(X_test)
+#   transformed_columns <- sapply(actual_columns, transform_label)
+#   cli::cli_alert_success("Column names transformed")
+#
+#   # Create a data frame for plotting
+#   plot_df <- data.frame(
+#     x1 = X_test[[actual_columns[x1_col]]],
+#     x2 = X_test[[actual_columns[x2_col]]],
+#     x3 = X_test[[actual_columns[x3_col]]],
+#     prediction = factor(predictions, levels = seq_along(action_names), labels = action_names)
+#   )
+#   cli::cli_alert_success("Plot data frame created")
+#
+#   # Function to create a secondary axis with split value
+#   create_secondary_axis <- function(primary_range, split_value) {
+#     secondary_breaks <- c(min(primary_range), split_value, max(primary_range))
+#     secondary_labels <- c("", sprintf("Split: %.2f", split_value), "")
+#     sec_axis(~ ., breaks = secondary_breaks, labels = secondary_labels)
+#   }
+#
+#   # Create the base plot
+#   base_plot <- function(x, y, x_lab, y_lab, subtitle, x_split, y_split) {
+#     p <- ggplot(plot_df, aes(x = .data[[x]], y = .data[[y]], color = prediction)) +
+#       geom_jitter(alpha = point_alpha, width = jitter_width, height = jitter_height) +
+#       geom_vline(xintercept = x_split, color = split_line_color, alpha = split_line_alpha,
+#                  linetype = split_line_type, linewidth = split_line_linewidth) +
+#       geom_hline(yintercept = y_split, color = split_line_color, alpha = split_line_alpha,
+#                  linetype = split_line_type, linewidth = split_line_linewidth) +
+#       color_scale +
+#       labs(
+#         x = x_lab,
+#         y = y_lab,
+#         subtitle = subtitle
+#       ) +
+#       theme_function() +
+#       theme(
+#         plot.title = element_text(size = title_size),
+#         plot.subtitle = element_text(size = subtitle_size),
+#         axis.title = element_text(size = axis_title_size),
+#         legend.title = element_text(size = legend_title_size),
+#         axis.text.x.top = element_text(size = split_label_size, color = split_label_color),
+#         axis.text.y.right = element_text(size = split_label_size, color = split_label_color)
+#       )
+#
+#     # Add secondary axes with split values
+#     p <- p +
+#       scale_x_continuous(sec.axis = create_secondary_axis(range(plot_df[[x]]), x_split)) +
+#       scale_y_continuous(sec.axis = create_secondary_axis(range(plot_df[[y]]), y_split))
+#
+#     return(p)
+#   }
+#
+#   # Create the individual plots based on plot_selection
+#   cli::cli_h2("Creating individual plots")
+#   p1 <- p2 <- NULL
+#
+#   if (plot_selection %in% c("both", "p1")) {
+#     p1 <- base_plot("x1", "x2", transformed_columns[x1_col], transformed_columns[x2_col],
+#                     paste(transformed_columns[x1_col], "vs", transformed_columns[x2_col]),
+#                     x1_split, x2_split)
+#     cli::cli_alert_success("Plot 1 created")
+#   }
+#
+#   if (plot_selection %in% c("both", "p2")) {
+#     p2 <- base_plot("x1", "x3", transformed_columns[x1_col], transformed_columns[x3_col],
+#                     paste(transformed_columns[x1_col], "vs", transformed_columns[x3_col]),
+#                     x1_split, x3_split)
+#     cli::cli_alert_success("Plot 2 created")
+#   }
+#
+#   # Combine the plots based on plot_selection
+#   cli::cli_h2("Combining plots")
+#   if (plot_selection == "both") {
+#     if (is.null(p1) || is.null(p2)) {
+#       cli::cli_abort("Both plots should be created when plot_selection is 'both'")
+#     }
+#     combined_plot <- p1 + p2 +
+#       patchwork::plot_layout(guides = "collect") &
+#       patchwork::plot_annotation(
+#         title = paste("Policy Tree Results for", transform_label(model_name)),
+#         tag_levels = 'A'
+#       ) &
+#       theme(
+#         plot.tag = element_text(size = 12, face = "bold"),
+#         legend.position = legend_position
+#       )
+#     cli::cli_alert_success("Both plots combined")
+#   } else if (plot_selection == "p1") {
+#     if (is.null(p1)) {
+#       cli::cli_abort("Plot 1 should be created when plot_selection is 'p1'")
+#     }
+#     combined_plot <- p1 +
+#       patchwork::plot_annotation(title = paste("Policy Tree Results for", transform_label(model_name), "- Plot 1")) &
+#       theme(legend.position = legend_position)
+#     cli::cli_alert_success("Plot 1 finalized")
+#   } else if (plot_selection == "p2") {
+#     if (is.null(p2)) {
+#       cli::cli_abort("Plot 2 should be created when plot_selection is 'p2'")
+#     }
+#     combined_plot <- p2 +
+#       patchwork::plot_annotation(title = paste("Policy Tree Results for", transform_label(model_name), "- Plot 2")) &
+#       theme(legend.position = legend_position)
+#     cli::cli_alert_success("Plot 2 finalized")
+#   } else {
+#     cli::cli_abort("Invalid plot_selection. Choose 'both', 'p1', or 'p2'.")
+#   }
+#
+#   cli::cli_alert_success("Margot plot policy tree created successfully \U0001F44D")
+#
+#   # Return the combined plot
+#   return(combined_plot)
+# }
 # margot_plot_policy_tree <- function(mc_test, model_name,
 #                                     color_scale = NULL,  # We'll set this inside the function
 #                                     point_alpha = 0.5,

@@ -9,7 +9,7 @@ It handles label transformations and provides informative feedback using cli mes
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.64</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.65</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,8 @@ It handles label transformations and provides informative feedback using cli mes
 <span>  remove_z_suffix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  remove_underscores <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  remove_action_label <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  remove_action_label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -129,6 +130,11 @@ It handles label transformations and provides informative feedback using cli mes
 <dt id="arg-remove-action-label">remove_action_label<a class="anchor" aria-label="anchor" href="#arg-remove-action-label"></a></dt>
 <dd><p>Logical indicating whether to remove "Action: " prefix from leaf node labels in the final plot. Default is TRUE.</p></dd>
 
+
+<dt id="arg-label-mapping">label_mapping<a class="anchor" aria-label="anchor" href="#arg-label-mapping"></a></dt>
+<dd><p>Optional named list for custom label mappings. Keys should be original variable names (with or without "model_" prefix),
+and values should be the desired display labels. Default is NULL.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -144,6 +150,15 @@ It handles label transformations and provides informative feedback using cli mes
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># To keep the "Action: " prefix in leaf node labels</span></span></span>
 <span class="r-in"><span><span class="va">tree_plot</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_decision_tree</span><span class="op">(</span><span class="va">results</span>, model_name <span class="op">=</span> <span class="st">"my_model"</span>, remove_action_label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tree_plot</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Using custom label mapping</span></span></span>
+<span class="r-in"><span><span class="va">label_mapping</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"t2_env_not_env_efficacy_z"</span> <span class="op">=</span> <span class="st">"Deny Personal Environmental Efficacy"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"t2_env_not_climate_chg_real_z"</span> <span class="op">=</span> <span class="st">"Deny Climate Change Real"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">tree_plot</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_decision_tree</span><span class="op">(</span><span class="va">results</span>, model_name <span class="op">=</span> <span class="st">"model_t2_env_not_env_efficacy_z"</span>,</span></span>
+<span class="r-in"><span>                                       label_mapping <span class="op">=</span> <span class="va">label_mapping</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tree_plot</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
