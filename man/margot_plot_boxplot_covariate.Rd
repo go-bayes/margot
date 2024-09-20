@@ -20,7 +20,7 @@ margot_plot_boxplot_covariate(
   include_timestamp = FALSE,
   save_path = NULL,
   prefix = NULL,
-  width = 12,
+  width = 16,
   height = 8,
   legend_position = "right",
   y_limits = NULL,

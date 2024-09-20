@@ -14,7 +14,8 @@ margot_policy(
   save_plots = TRUE,
   output_dir = here::here(push_mods),
   spend = c(0.2, 0.5),
-  label_mapping = NULL
+  label_mapping = NULL,
+  original_df = NULL
 )
 }
 \arguments{
@@ -38,6 +39,8 @@ margot_policy(
 
 \item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
 (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
+
+\item{original_df}{Optional dataframe with untransformed variables, used to display split values on the data scale.}
 }
 \value{
 A list where each element corresponds to a model in the input

@@ -10,23 +10,22 @@
 * replace `stringr` and use `tools`
 * get standard deviation units into reports
 * batch process trend plots
+* convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 
-# [2024-09-19] margot 0.2.1.65
-
+# [2024-09-20] margot 0.2.3.0
 
 ## New
 
-- `margot_plot_slope_covariate_batch()` allows batch processing of multiple wave x covariate regressions on a common outcome.
--  `margot_policy()` replaces `margot_batch_policy` and allows custom labelling.
+-  Refactored causal tree graphs and interpretations for flexible labelling and for providing both standardised results (where relevant), and results on the data scale. Makes the interpretation of policies easier to understand. 
+- `margot_count_dyads()` counts dyads in a longitudinal dataset. 
+- `margot_summary_panel()` summaries participants by panel wave; counts unique participants by wave, ...
+- `margot_interpret_policy_batch()` interprets the policytree results. 
 
 ## Improved
 
-- `margot_plot_multi_arm()` - can now pass outcomes data frame to recover coefficients on the original data scale. 
-- `margot_plot_slope_covariate()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
-- `margot_plot_qini()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
-- `margot_plot_policy_combo()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
-- `margot_plot_policy_tree()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
-- `margot_plot_decision_tree()` now accepts outcome user specified outcome labels and adjusts plots accordingly. 
+- `margot_summary_tables()` - now pass multiple tables, better exposure plots.
+- `margot_interpret_policy_tree()` - refactored: now returns results on data scale, better labels. 
+- `margot_plot_policy_tree()` - refactored: now returns results on data scale, better labels. 
 
 
 

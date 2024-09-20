@@ -18,7 +18,7 @@ margot_plot_boxplot(
   include_timestamp = FALSE,
   save_path = NULL,
   prefix = NULL,
-  width = 12,
+  width = 16,
   height = 8,
   legend_position = "bottom",
   y_limits = NULL,

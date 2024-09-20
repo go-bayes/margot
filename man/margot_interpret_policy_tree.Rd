@@ -5,27 +5,39 @@
 \title{Interpret Policy Tree Results}
 \usage{
 margot_interpret_policy_tree(
-  mc_test,
+  model,
   model_name,
-  train_proportion = 0.8,
+  train_proportion = 0.7,
   custom_action_names = NULL,
-  format = "markdown"
+  label_mapping = NULL,
+  original_df = NULL,
+  remove_tx_prefix = TRUE,
+  remove_z_suffix = TRUE,
+  use_title_case = TRUE
 )
 }
 \arguments{
-\item{mc_test}{A list containing the results from a multi-arm causal forest model.}
+\item{model}{A list containing the results from a multi-arm causal forest model.}
 
 \item{model_name}{A string specifying which model's results to interpret.}
 
-\item{train_proportion}{Numeric value between 0 and 1 for the proportion of data used for training. Default is 0.8.}
+\item{train_proportion}{numeric value between 0 and 1 for the proportion of data used for training. default is 0.7.}
 
-\item{custom_action_names}{Optional vector of custom names for the actions. Must match the number of actions in the policy tree.}
+\item{custom_action_names}{optional vector of custom names for the actions. must match the number of actions in the policy tree.}
 
-\item{format}{A string specifying the output format. Either "markdown" (default) or "latex".}
+\item{label_mapping}{optional list that maps variable names to custom labels. used for descriptive labels in the interpretation.}
+
+\item{original_df}{optional dataframe with untransformed variables, used to display split values on the data scale.}
+
+\item{remove_tx_prefix}{logical indicating whether to remove prefixes like t0_ from variable names. default is true.}
+
+\item{remove_z_suffix}{logical indicating whether to remove the _z suffix from variable names. default is true.}
+
+\item{use_title_case}{logical indicating whether to convert variable names to title case. default is true.}
 }
 \value{
-Invisibly returns a string containing the interpretation in the specified format.
-  The function also prints the interpretation to the console.
+invisibly returns a string containing the interpretation.
+the function also prints the interpretation to the console.
 }
 \description{
 This function creates an interpretation of policy tree results from a causal forest or multi-arm causal forest model.
@@ -33,14 +45,22 @@ It generates a formatted description of the policy tree, including the main spli
 }
 \examples{
 \dontrun{
-# For markdown output (default):
-margot_interpret_policy_tree(result_outcomes_health, "model_t2_log_hours_exercise_z")
+# create a label mapping
+label_mapping <- list(
+  "t2_env_not_climate_chg_concern_z" = "Deny Climate Change Concern",
+  "t2_env_not_climate_chg_cause_z" = "Deny Humans Cause Climate Change"
+)
 
-# For LaTeX output:
-margot_interpret_policy_tree(result_outcomes_health, "model_t2_log_hours_exercise_z", format = "latex")
+# interpret policy tree results with label mapping
+interpretation <- margot_interpret_policy_tree_new(
+  model = models_multi,
+  model_name = "model_t2_env_not_climate_chg_concern_z",
+  label_mapping = label_mapping,
+  original_df = original_df
+)
 
-# To store the interpretation in a variable:
-interpretation <- margot_interpret_policy_tree(result_outcomes_health, "model_t2_log_hours_exercise_z")
+# print the interpretation
+cat(interpretation)
 }
 
 }

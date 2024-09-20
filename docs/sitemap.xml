@@ -59,12 +59,14 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compare_groups.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compute_gender_weights.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compute_gender_weights_by_wave.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_count_dyads.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_create_bibliography.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_create_database.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_filter.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_subset_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_marginal.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_policy_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_qini.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_table.html</loc></url>
@@ -113,6 +115,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_subset_model.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_subset_table_grf.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_summary_cate_difference_gain.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_summary_panel.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_summary_tables.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_tab_lmtp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_wide.html</loc></url>

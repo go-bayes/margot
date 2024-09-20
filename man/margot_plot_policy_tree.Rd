@@ -7,6 +7,7 @@
 margot_plot_policy_tree(
   mc_test,
   model_name,
+  original_df = NULL,
   color_scale = NULL,
   point_alpha = 0.5,
   theme_function = theme_classic,
@@ -36,6 +37,8 @@ margot_plot_policy_tree(
 \item{mc_test}{A list containing the results from a multi-arm causal forest model.}
 
 \item{model_name}{A string specifying which model's results to plot.}
+
+\item{original_df}{Optional dataframe with untransformed variables, used to display split values on the data scale.}
 
 \item{color_scale}{An optional ggplot2 color scale. If NULL (default), a color scale based on the Okabe-Ito palette is created,
 with blue for the first level, orange for the second, and subsequent colors for additional levels.}
@@ -116,12 +119,14 @@ plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z",
                                 use_title_case = FALSE,
                                 remove_underscores = FALSE)
 
-# Use custom label mapping
+# Use custom label mapping and original_df for unstandardized values
 label_mapping <- list(
   "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
   "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
 )
-plot <- margot_plot_policy_tree(mc_test, "model_t2_env_not_env_efficacy_z", label_mapping = label_mapping)
+plot <- margot_plot_policy_tree(mc_test, "model_t2_env_not_climate_chg_concern_z",
+                                label_mapping = label_mapping,
+                                original_df = original_df)
 }
 
 }

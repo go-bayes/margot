@@ -43,6 +43,7 @@ reference:
 
   - title: "Describe Longitudinal Data"
     contents:
+    - margot_count_dyads
     - margot_plot_boxplot
     - margot_plot_boxplot_covariate
     - margot_plot_discontinuity
@@ -51,6 +52,7 @@ reference:
     - margot_plot_slope
     - margot_plot_slope_covariate
     - margot_plot_slope_covariate_batch
+    - margot_summary_panel
 
   - title: "Check assumptions"
     contents:
@@ -89,14 +91,14 @@ reference:
     contents:
     - margot_compare_groups
     - margot_omnibus_hetero_test
-    - margot_interpret_policy_tree
     - margot_interpret_marginal
+    - margot_interpret_policy_tree
+    - margot_interpret_policy_batch
     - margot_interpret_qini
     - margot_lmtp_evalue
     - margot_lmtp_tab
     - margot_model_evalue
     - margot_model_tab
-    - margot_policy_tree
     - margot_policy
     - margot_subset_model
     - margot_summary_cate_difference_gain

@@ -36,7 +36,7 @@ A ggplot object representing the Qini curves for the specified outcome variable.
 }
 \description{
 This function creates a ggplot object displaying Qini curves based on the
-results of a margot_multi_arm_causal_forest() model. It now includes label
+results of a margot_multi_arm_causal_forest() model. It includes label
 transformations and informative CLI messages.
 }
 \examples{

@@ -7,19 +7,24 @@
 margot_plot_policy_combo(
   result_object,
   model_name,
+  label_mapping = NULL,
+  original_df = NULL,
   layout = list(heights = c(1, 2)),
   annotation = list(tag_levels = "A"),
   generate_policy_tree = TRUE,
   generate_decision_tree = TRUE,
   policy_tree_args = list(),
-  decision_tree_args = list(),
-  label_mapping = NULL
+  decision_tree_args = list()
 )
 }
 \arguments{
 \item{result_object}{An object containing the results from a multi-arm causal forest model.}
 
 \item{model_name}{A character string specifying the name of the model.}
+
+\item{label_mapping}{Optional named list for custom label mappings.}
+
+\item{original_df}{Optional dataframe with untransformed variables.}
 
 \item{layout}{A list specifying the layout of the combined plot. Default is
 `list(heights = c(1, 2))`, which sets the relative heights of the two plots.}
@@ -34,9 +39,6 @@ margot_plot_policy_combo(
 \item{policy_tree_args}{A list of arguments to pass to margot_plot_policy_tree. Default is list().}
 
 \item{decision_tree_args}{A list of arguments to pass to margot_plot_decision_tree. Default is list().}
-
-\item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
-(with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
 }
 \value{
 A list containing:
@@ -50,17 +52,15 @@ showing relationships between variables in the recommended policy.
 }
 \examples{
 \dontrun{
-# Assuming 'results' is your Margot results object and 'model_name' is the name of your model
-label_mapping <- list(
-  "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
-  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
-)
+# Assuming 'results' is your Margot results object, 'model_name' is the name of your model,
+# 'label_mapping' is your custom label mapping, and 'original_df' is your original dataframe
 combined_plot <- margot_plot_policy_combo(
   result_object = results,
   model_name = "model_t2_env_not_env_efficacy_z",
+  label_mapping = label_mapping,
+  original_df = original_df,
   policy_tree_args = list(point_alpha = 0.75),
-  decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01),
-  label_mapping = label_mapping
+  decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01)
 )
 
 # Print the combined plot

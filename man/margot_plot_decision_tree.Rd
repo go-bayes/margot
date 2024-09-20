@@ -2,17 +2,18 @@
 % Please edit documentation in R/margot_plot_decision_tree.R
 \name{margot_plot_decision_tree}
 \alias{margot_plot_decision_tree}
-\title{Plot a Decision Tree from Margot Results}
+\title{Plot a Decision Tree from Margot Causal Forest Results}
 \usage{
 margot_plot_decision_tree(
   result_object,
   model_name = NULL,
-  x_padding = 0.25,
-  y_padding = 0.25,
-  border_size = 1,
-  edge_label_offset = 0.01,
-  span_ratio = 0.25,
-  text_size = 3,
+  original_df = NULL,
+  x_padding = 0.12,
+  y_padding = 0.12,
+  border_size = 0.5,
+  text_size = 4,
+  edge_label_offset = 0.025,
+  span_ratio = 0.4,
   non_leaf_fill = "lightyellow",
   title = NULL,
   leaf_palette = NULL,
@@ -29,17 +30,19 @@ margot_plot_decision_tree(
 
 \item{model_name}{Character string specifying the model name in the results object. Default is NULL.}
 
-\item{x_padding}{Numeric value for horizontal padding of the plot. Default is 0.25.}
+\item{original_df}{Optional dataframe with untransformed variables, used to display split values on the data scale.}
 
-\item{y_padding}{Numeric value for vertical padding of the plot. Default is 0.25.}
+\item{x_padding}{Numeric value for horizontal padding of the plot. Default is 0.12.}
 
-\item{border_size}{Numeric value for the size of node borders. Default is 1.}
+\item{y_padding}{Numeric value for vertical padding of the plot. Default is 0.12.}
 
-\item{edge_label_offset}{Numeric value for the offset of edge labels. Default is 0.01.}
-
-\item{span_ratio}{Numeric value for the aspect ratio of the plot. Default is 0.25.}
+\item{border_size}{Numeric value for the size of node borders. Default is 0.5.}
 
 \item{text_size}{Numeric value for the size of text in the plot. Default is 3.}
+
+\item{edge_label_offset}{Numeric value for the offset of edge labels. Default is 0.025.}
+
+\item{span_ratio}{Numeric value for the aspect ratio of the plot. Default is 0.4.}
 
 \item{non_leaf_fill}{Character string specifying the fill color for non-leaf nodes. Default is "lightyellow".}
 
@@ -64,8 +67,9 @@ and values should be the desired display labels. Default is NULL.}
 A ggplot object representing the decision tree.
 }
 \description{
-This function creates a ggplot visualization of a decision tree from Margot results.
-It handles label transformations and provides informative feedback using cli messages.
+This function creates a ggplot visualization of a decision tree from Margot Causal Forest results.
+It handles label transformations, includes both standardized and original split values,
+and provides informative feedback using cli messages.
 }
 \examples{
 \dontrun{
@@ -77,13 +81,14 @@ print(tree_plot)
 tree_plot <- margot_plot_decision_tree(results, model_name = "my_model", remove_action_label = FALSE)
 print(tree_plot)
 
-# Using custom label mapping
+# Using custom label mapping and original_df for unstandardized values
 label_mapping <- list(
   "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
   "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
 )
 tree_plot <- margot_plot_decision_tree(results, model_name = "model_t2_env_not_env_efficacy_z",
-                                       label_mapping = label_mapping)
+                                       label_mapping = label_mapping,
+                                       original_df = original_df)
 print(tree_plot)
 }
 
