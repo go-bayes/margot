@@ -144,12 +144,10 @@ margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0
 
   # Generate general interpretation
   general_interpretation <- glue::glue(
-    "**Policy Tree Interpretation:** The policytree algorithm uses doubly robust reward estimates ",
+    "**Policy Tree Interpretation:** The `policytree` algorithm uses doubly robust reward estimates ",
     "from grf to find a shallow globally optimal decision tree. ",
     "We train the model on {train_proportion * 100}% of the data and then ",
-    "evaluate the model on the remainder of the data. The graph clarifies whether ",
-    "the leaf node in the test set samples are predicted to have mean outcomes in line ",
-    "with the prescribed policy.\n\n"
+    "evaluate the model on the remainder of the data.\n\n"
   )
 
   cli::cli_alert_success("Generated general interpretation")
