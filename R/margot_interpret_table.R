@@ -104,10 +104,7 @@ margot_interpret_table <- function(df, causal_scale, estimand = NULL, order = "d
                                    paste0("At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of ", E_Val_bound, " to negate the observed effect. Weaker confounding would not overturn it. "),
                                    ""),
       outcome_interpretation = glue(
-        "For '{outcome}', the effect estimate on the {causal_scale} scale is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ",
-        "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
-        "{confounder_warning}",
-        "Here, {formatted_strength}."
+        "For '{outcome}', the effect estimate on the {causal_scale} scale is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ","The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ", "{confounder_warning}", "Here, {formatted_strength}."
       )
     )
 

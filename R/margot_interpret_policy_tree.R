@@ -144,10 +144,18 @@ margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0
 
   # Generate general interpretation
   general_interpretation <- glue::glue(
-    "**Policy Tree Interpretation:** The `policytree` algorithm uses doubly robust reward estimates ",
-    "from grf to find a shallow globally optimal decision tree. ",
-    "We train the model on {train_proportion * 100}% of the data and then ",
-    "evaluate the model on the remainder of the data.\n\n"
+    "**Policy Tree:** A policy tree is a decision tree model that recommends optimal treatments or actions based on individual characteristics. It works by:
+
+  1. Identifying key variables that influence treatment effectiveness
+  2. Determining critical thresholds (split points) for these variables
+  3. Dividing the population into subgroups based on these thresholds
+  4. Recommending specific actions for each subgroup to maximisee the desired outcome
+
+  The tree structure provides a clear, interpretable strategy for decision-making. In this analysis:
+  - We trained the model on {train_proportion * 100}% of the data
+  - We evaluated the model's performance on the remaining {(1 - train_proportion) * 100}% of the data
+
+  The resulting policy suggests tailored interventions based on an individual's position relative to these identified thresholds, potentially leading to more effective allocation of treatment resources."
   )
 
   cli::cli_alert_success("Generated general interpretation")
@@ -208,8 +216,6 @@ margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0
     "     3. The second split is based on '{transform_var_name(var3)}' {formatted_split_val3}.\n",
     "        - If this is less than or equal to the split value, the recommended action is: **{action_names[node6$action]}**\n",
     "        - Otherwise, the recommended action is: **{action_names[node7$action]}**\n\n",
-    "This policy tree suggests that an optimal treatment strategy is related to these inflection points in the variables the policy tree identifies, ",
-    "with recommended actions based on subgroups defined by these split points."
   )
 
   cli::cli_alert_success("Generated specific interpretation")
