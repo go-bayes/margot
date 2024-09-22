@@ -144,18 +144,13 @@ margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0
 
   # Generate general interpretation
   general_interpretation <- glue::glue(
-    "**Policy Tree:** A policy tree is a decision tree model that recommends optimal treatments or actions based on individual characteristics. It works by:
-
-  1. Identifying key variables that influence treatment effectiveness
-  2. Determining critical thresholds (split points) for these variables
-  3. Dividing the population into subgroups based on these thresholds
-  4. Recommending specific actions for each subgroup to maximisee the desired outcome
-
-  The tree structure provides a clear, interpretable strategy for decision-making. In this analysis:
-  - We trained the model on {train_proportion * 100}% of the data
-  - We evaluated the model's performance on the remaining {(1 - train_proportion) * 100}% of the data
-
-  The resulting policy suggests tailored interventions based on an individual's position relative to these identified thresholds, potentially leading to more effective allocation of treatment resources."
+    "**Policy Tree Interpretation:** A policy tree obtains simple rule-based policies, ",
+    "where the rule takes the form of a shallow decision tree. The policytree algorithm ",
+    "uses doubly robust reward estimates from grf to find a shallow, but globally optimal ",
+    "decision tree. We train the model on {train_proportion * 100}% of the data and then ",
+    "evaluate the model on the remainder of the data. The graph helps to clarify whether ",
+    "the leaf node in the test set samples are predicted to have mean outcomes in line ",
+    "with the prescribed policy.\n\n"
   )
 
   cli::cli_alert_success("Generated general interpretation")
@@ -167,9 +162,9 @@ margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0
   format_split_value <- function(var_name, split_val) {
     orig_val <- get_original_value(var_name, split_val)
     if (!is.null(orig_val)) {
-      return(glue::glue("at a standardised value of {round(split_val, 4)} (original scale: {orig_val})"))
+      return(glue::glue("at a standardized value of {round(split_val, 4)} (original scale: {orig_val})"))
     } else {
-      return(glue::glue("at a standardised value of {round(split_val, 4)}"))
+      return(glue::glue("at a standardized value of {round(split_val, 4)}"))
     }
   }
 
@@ -216,6 +211,8 @@ margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0
     "     3. The second split is based on '{transform_var_name(var3)}' {formatted_split_val3}.\n",
     "        - If this is less than or equal to the split value, the recommended action is: **{action_names[node6$action]}**\n",
     "        - Otherwise, the recommended action is: **{action_names[node7$action]}**\n\n",
+    "This policy tree suggests that an optimal treatment strategy is related to these inflection points in the variables the policy tree identifies, ",
+    "with recommended actions based on subgroups defined by these split points."
   )
 
   cli::cli_alert_success("Generated specific interpretation")
@@ -278,106 +275,3 @@ transform_var_name <- function(var_name) {
 
   return(display_name)
 }
-# margot_interpret_policy_tree <- function(mc_test, model_name, train_proportion = 0.8,
-#                                          custom_action_names = NULL, format = "markdown") {
-#   # Extract policy tree object
-#   policy_tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
-#
-#   # Extract action names from the policy tree object
-#   action_names <- policy_tree_obj$action.names
-#
-#   # If custom action names are provided, use them instead
-#   if (!is.null(custom_action_names)) {
-#     if (length(custom_action_names) != length(action_names)) {
-#       stop("The number of custom action names must match the number of actions in the policy tree.")
-#     }
-#     action_names <- custom_action_names
-#   }
-#
-#   # Extract the plot data for the specified model
-#   plot_data <- mc_test$results[[model_name]]$plot_data
-#
-#   # Extract X_test and split_variables
-#   X_test <- plot_data$X_test
-#
-#   # Extract split variables and their values from the policy tree
-#   policy_tree <- policy_tree_obj$nodes
-#   actual_columns <- names(X_test)
-#
-#   if (format == "markdown"){
-#     general_interpretation <- paste0(
-#       "**Policy Tree Interpretation:** ",
-#       "A policy tree obtains simple rule-based policies, where the rule takes the form of a shallow decision tree. ",
-#       "The policytree algorithm uses doubly robust reward estimates from grf to find a shallow, but globally optimal decision tree. ",
-#       sprintf("We train the model on %.0f%% of the data and then evaluate the model on the remainder of the data. ", train_proportion * 100),
-#       "The graph helps to clarify whether the leaf node in the test set samples are predicted to have mean outcomes in line with the prescribed policy.\n\n"
-#     )
-#
-#     specific_interpretation <- paste0(
-#       "**Findings for ", model_name, ":** \n\n",
-#       "1. The first split is based on the variable '", actual_columns[policy_tree[[1]]$split_variable], "' at a value of ", round(policy_tree[[1]]$split_value, 4), ".\n\n",
-#       "   - If this value is less than or equal to the split value:\n",
-#       "     2. The second split is based on '", actual_columns[policy_tree[[2]]$split_variable], "' at ", round(policy_tree[[2]]$split_value, 4), ".\n",
-#       "        - If this is less than or equal to the split value, the recommended action is: **", action_names[policy_tree[[4]]$action], "**\n",
-#       "        - Otherwise, the recommended action is: **", action_names[policy_tree[[5]]$action], "**\n\n",
-#       "   - If the first split value is greater than the split value:\n",
-#       "     3. The second split is based on '", actual_columns[policy_tree[[3]]$split_variable], "' at ", round(policy_tree[[3]]$split_value, 4), ".\n",
-#       "        - If this is less than or equal to the split value, the recommended action is: **", action_names[policy_tree[[6]]$action], "**\n",
-#       "        - Otherwise, the recommended action is: **", action_names[policy_tree[[7]]$action], "**\n\n",
-#       "This policy tree suggests that an optimal treatment strategy is related to these inflection points in the variables the policy tree identifies, ",
-#       "with recommended actions based on subgroups defined by these split points."
-#     )
-#   } else if (format == "latex") {
-#     general_interpretation <- paste0(
-#       "\\textbf{Policy Tree Interpretation:} ",
-#       "A policy tree obtains simple rule-based policies, where the rule takes the form of a shallow decision tree. ",
-#       "The policytree algorithm uses doubly robust reward estimates from grf to find a shallow, but globally optimal decision tree. ",
-#       sprintf("We train the model on %.0f\\%% of the data and then evaluate the model on the remainder of the data. ", train_proportion * 100),
-#       "The graph helps to clarify whether the leaf node in the test set samples are predicted to have mean outcomes in line with the prescribed policy.\n\n"
-#     )
-#
-#     specific_interpretation <- paste0(
-#       "\\textbf{Findings for ", model_name, ":}\n\n",
-#       "\\begin{enumerate}\n",
-#       "\\item The first split is based on the variable '", actual_columns[policy_tree[[1]]$split_variable], "' at a value of ", round(policy_tree[[1]]$split_value, 4), ".\n\n",
-#       "  \\begin{itemize}\n",
-#       "  \\item If this value is less than or equal to the split value:\n",
-#       "    \\begin{enumerate}[resume]\n",
-#       "    \\item The second split is based on '", actual_columns[policy_tree[[2]]$split_variable], "' at ", round(policy_tree[[2]]$split_value, 4), ".\n",
-#       "      \\begin{itemize}\n",
-#       "      \\item If this is less than or equal to the split value, the recommended action is: \\textbf{", action_names[policy_tree[[4]]$action], "}\n",
-#       "      \\item Otherwise, the recommended action is: \\textbf{", action_names[policy_tree[[5]]$action], "}\n",
-#       "      \\end{itemize}\n",
-#       "    \\end{enumerate}\n",
-#       "  \\item If the first split value is greater than the split value:\n",
-#       "    \\begin{enumerate}[resume]\n",
-#       "    \\item The second split is based on '", actual_columns[policy_tree[[3]]$split_variable], "' at ", round(policy_tree[[3]]$split_value, 4), ".\n",
-#       "      \\begin{itemize}\n",
-#       "      \\item If this is less than or equal to the split value, the recommended action is: \\textbf{", action_names[policy_tree[[6]]$action], "}\n",
-#       "      \\item Otherwise, the recommended action is: \\textbf{", action_names[policy_tree[[7]]$action], "}\n",
-#       "      \\end{itemize}\n",
-#       "    \\end{enumerate}\n",
-#       "  \\end{itemize}\n",
-#       "\\end{enumerate}\n\n",
-#       "This policy tree suggests that an optimal treatment strategy is related to these inflection points in the variables the policy tree identifies, ",
-#       "with recommended actions based on subgroups defined by these split points."
-#     )
-#   } else {
-#     stop("Invalid format. Please choose 'markdown' or 'latex'.")
-#   }
-#
-#   interpretation <- list(
-#     general_interpretation = general_interpretation,
-#     specific_interpretation = specific_interpretation
-#   )
-#
-#   # Combine general and specific interpretations
-#   full_interpretation <- paste0(interpretation$general_interpretation, "\n\n",
-#                                 interpretation$specific_interpretation)
-#
-#   # Print the full interpretation to the console
-#   cat(full_interpretation)
-#
-#   # Return the interpretation invisibly
-#   invisible(interpretation)
-# }
