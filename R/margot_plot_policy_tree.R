@@ -101,87 +101,15 @@ margot_plot_policy_tree <- function(mc_test, model_name,
 
   cli::cli_h1("Margot Plot Policy Tree")
 
-  # Function to transform variable names for display
-  transform_var_name <- function(var_name) {
-    display_name <- var_name
-
-    # Remove 'model_' prefix if present (for model names)
-    if (startsWith(display_name, "model_")) {
-      display_name <- sub("^model_", "", display_name)
-    }
-
-    # Apply label mapping first, if exists
-    if (!is.null(label_mapping) && display_name %in% names(label_mapping)) {
-      mapped_label <- label_mapping[[display_name]]
-      cli::cli_alert_info("Applied label mapping: {var_name} -> {mapped_label}")
-      return(mapped_label)
-    }
-
-    # Else, check if it's a t0_ variable corresponding to a t2_ in label_mapping
-    if (startsWith(display_name, "t0_")) {
-      t2_var <- sub("^t0_", "t2_", display_name)
-      if (!is.null(label_mapping) && t2_var %in% names(label_mapping)) {
-        mapped_label <- label_mapping[[t2_var]]
-        cli::cli_alert_info("Applied label mapping via t2_ equivalent: {var_name} -> {mapped_label}")
-        return(mapped_label)
-      }
-    }
-
-    # Else, apply transformations
-    if (remove_tx_prefix) display_name <- sub("^t[0-9]+_", "", display_name)
-    if (remove_z_suffix) display_name <- sub("_z$", "", display_name)
-    if (remove_underscores) display_name <- gsub("_", " ", display_name)
-
-    if (use_title_case) {
-      display_name <- tools::toTitleCase(display_name)
-      # Replace "Nz" with "NZ"
-      display_name <- gsub("Nz", "NZ", display_name)
-    }
-
-    # Notify if transformed
-    if (display_name != var_name) {
-      cli::cli_alert_info("Transformed label: {var_name} -> {display_name}")
-    }
-
-    return(display_name)
-  }
-
-  # Ensure title is a valid character string or NULL
-  title <- transform_var_name(model_name)
+  # ensure title is a valid character string or NULL
+  title <- transform_var_name(model_name, label_mapping, remove_tx_prefix, remove_z_suffix, use_title_case, remove_underscores)
   if (!is.character(title) || is.null(title)) {
     title <- as.character(title)  # Force title to be a string if NULL
   }
 
   cli::cli_alert_info("Using title: {title}")
 
-  # Helper function to get original scale split value
-  get_original_split_value <- function(var_name, split_value, original_df) {
-    if (is.null(original_df)) return(NULL)
-
-    orig_var <- var_name
-    # If variable was z-transformed, assume original_df has the original variable without '_z'
-    if (grepl("_z$", orig_var)) {
-      orig_var <- sub("_z$", "", orig_var)
-    }
-
-    if (!(orig_var %in% names(original_df))) {
-      cli::cli_warn("Original variable '{orig_var}' not found in original_df. Skipping original scale value.")
-      return(NULL)
-    }
-
-    orig_data <- original_df[[orig_var]]
-
-    # Calculate mean and sd from original_df
-    orig_mean <- mean(orig_data, na.rm = TRUE)
-    orig_sd <- sd(orig_data, na.rm = TRUE)
-
-    # Back-transform z-score to original scale
-    original_value <- orig_mean + split_value * orig_sd
-
-    return(round(original_value, 4))
-  }
-
-  # Extract policy tree object
+  # extract policy tree object
   policy_tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
   if (is.null(policy_tree_obj)) {
     cli::cli_abort("Policy tree object not found for the specified model name.")
@@ -193,7 +121,7 @@ margot_plot_policy_tree <- function(mc_test, model_name,
   action_names <- policy_tree_obj$action.names
   n_actions <- policy_tree_obj$n.actions
 
-  # If custom action names are provided, use them instead
+  # if custom action names are provided, use them instead
   if (!is.null(custom_action_names)) {
     if (length(custom_action_names) != n_actions) {
       cli::cli_abort("The number of custom action names must match the number of actions in the policy tree.")
@@ -202,8 +130,8 @@ margot_plot_policy_tree <- function(mc_test, model_name,
     cli::cli_alert_info("Using custom action names")
   }
 
-  # Transform action names using transform_var_name
-  action_names <- sapply(action_names, function(x) transform_var_name(x))
+  # transform action names using transform_var_name
+  action_names <- sapply(action_names, function(x) transform_var_name(x, label_mapping, remove_tx_prefix, remove_z_suffix, use_title_case, remove_underscores))
   cli::cli_alert_success("Action names transformed")
 
   # Define the Okabe-Ito palette, starting with blue and orange
@@ -211,7 +139,7 @@ margot_plot_policy_tree <- function(mc_test, model_name,
                          "#F0E442", "#0072B2", "#D55E00",
                          "#CC79A7", "#000000")
 
-  # If color_scale is not provided, create it based on the number of actions
+  # if color_scale is not provided, create it based on the number of actions
   if (is.null(color_scale)) {
     # Create a named vector of colors
     color_vector <- setNames(okabe_ito_palette[1:n_actions], action_names)
@@ -219,15 +147,15 @@ margot_plot_policy_tree <- function(mc_test, model_name,
     cli::cli_alert_info("Created color scale using Okabe-Ito palette")
   }
 
-  # Extract the plot data for the specified model
+  # extract the plot data for the specified model
   plot_data <- mc_test$results[[model_name]]$plot_data
   cli::cli_alert_success("Plot data extracted")
 
-  # Extract X_test, predictions, and split_variables
+  # extract X_test, predictions, and split_variables
   X_test <- plot_data$X_test
   predictions <- plot_data$predictions
 
-  # Extract split variables and their values from the policy tree
+  # extract split variables and their values from the policy tree
   policy_tree <- policy_tree_obj$nodes
   x1_col <- policy_tree[[1]]$split_variable
   x2_col <- policy_tree[[2]]$split_variable
@@ -238,12 +166,12 @@ margot_plot_policy_tree <- function(mc_test, model_name,
   x2_split <- policy_tree[[2]]$split_value
   x3_split <- policy_tree[[3]]$split_value
 
-  # Use the actual column names from X_test and transform them using transform_var_name
+  # use the actual column names from X_test and transform them using transform_var_name
   actual_columns <- names(X_test)
-  transformed_columns <- sapply(actual_columns, function(x) transform_var_name(x))
+  transformed_columns <- sapply(actual_columns, function(x) transform_var_name(x, label_mapping, remove_tx_prefix, remove_z_suffix, use_title_case, remove_underscores))
   cli::cli_alert_success("Column names transformed")
 
-  # Create a data frame for plotting
+  #create a data frame for plotting
   plot_df <- data.frame(
     x1 = X_test[[actual_columns[x1_col]]],
     x2 = X_test[[actual_columns[x2_col]]],
@@ -252,14 +180,14 @@ margot_plot_policy_tree <- function(mc_test, model_name,
   )
   cli::cli_alert_success("Plot data frame created")
 
-  # Function to create a secondary axis with split value and original split value
+  # function to create a secondary axis with split value and original split value
   create_secondary_axis <- function(primary_range, split_value, var_name) {
     secondary_breaks <- c(min(primary_range), split_value, max(primary_range))
     if (!is.null(original_df)) {
-      original_split <- get_original_split_value(var_name, split_value, original_df)
+      original_split <- get_original_value_plot(var_name, split_value, original_df)
       if (!is.null(original_split)) {
         # Format: Split: standardized_value (original_value)*
-        secondary_labels <- c("", sprintf("Split: %.2f (%.2f)*", split_value, original_split), "")
+        secondary_labels <- c("", sprintf("Split: %.2f (%s)*", split_value, format(original_split, scientific = FALSE, big.mark = ",")), "")
       } else {
         secondary_labels <- c("", sprintf("Split: %.2f", split_value), "")
       }
@@ -300,7 +228,7 @@ margot_plot_policy_tree <- function(mc_test, model_name,
     return(p)
   }
 
-  # Create the individual plots based on plot_selection
+  # create the individual plots based on plot_selection
   cli::cli_h2("Creating individual plots")
   p1 <- p2 <- NULL
 
@@ -324,7 +252,7 @@ margot_plot_policy_tree <- function(mc_test, model_name,
     print(str(transformed_columns))  # Debug information
   })
 
-  # Combine the plots based on plot_selection
+  # combine the plots based on plot_selection
   cli::cli_h2("Combining plots")
   combined_plot <- NULL
   tryCatch({
@@ -391,90 +319,411 @@ margot_plot_policy_tree <- function(mc_test, model_name,
 
   cli::cli_alert_success("Margot plot policy tree created successfully 👍")
 
-  # Return the combined plot
+  # return the combined plot
   return(combined_plot)
 }
-
-
-#' @keywords internal
-transform_var_name <- function(var_name, label_mapping, remove_tx_prefix, remove_z_suffix,
-                               use_title_case, remove_underscores) {
-  display_name <- var_name
-
-  # Remove 'model_' prefix if present (for model names)
-  if (startsWith(display_name, "model_")) {
-    display_name <- sub("^model_", "", display_name)
-  }
-
-  # Apply label mapping first, if exists
-  if (!is.null(label_mapping) && display_name %in% names(label_mapping)) {
-    mapped_label <- label_mapping[[display_name]]
-    cli::cli_alert_info("Applied label mapping: {var_name} -> {mapped_label}")
-    return(mapped_label)
-  }
-
-  # Else, check if it's a t0_ variable corresponding to a t2_ in label_mapping
-  if (startsWith(display_name, "t0_")) {
-    t2_var <- sub("^t0_", "t2_", display_name)
-    if (!is.null(label_mapping) && t2_var %in% names(label_mapping)) {
-      mapped_label <- label_mapping[[t2_var]]
-      cli::cli_alert_info("Applied label mapping via t2_ equivalent: {var_name} -> {mapped_label}")
-      return(mapped_label)
-    }
-  }
-
-  # Else, apply transformations
-  if (remove_tx_prefix) {
-    display_name <- sub("^t[0-9]+_", "", display_name)
-  }
-  if (remove_z_suffix) {
-    display_name <- sub("_z$", "", display_name)
-  }
-  if (remove_underscores) {
-    display_name <- gsub("_", " ", display_name)
-  }
-
-  if (use_title_case) {
-    display_name <- tools::toTitleCase(display_name)
-    # Replace "Nz" with "NZ"
-    display_name <- gsub("Nz", "NZ", display_name)
-  }
-
-  # Notify if transformed
-  if (display_name != var_name) {
-    cli::cli_alert_info("Transformed label: {var_name} -> {display_name}")
-  }
-
-  return(display_name)
-}
-
-# Helper function to get original scale split value
-#' @keywords internal
-get_original_split_value <- function(var_name, split_value, original_df) {
-  if (is.null(original_df)) return(NULL)
-
-  orig_var <- var_name
-  # If variable was z-transformed, assume original_df has the original variable without '_z'
-  if (grepl("_z$", orig_var)) {
-    orig_var <- sub("_z$", "", orig_var)
-  }
-
-  if (!(orig_var %in% names(original_df))) {
-    cli::cli_warn("Original variable '{orig_var}' not found in original_df. Skipping original scale value.")
-    return(NULL)
-  }
-
-  orig_data <- original_df[[orig_var]]
-
-  # Calculate mean and sd from original_df
-  orig_mean <- mean(orig_data, na.rm = TRUE)
-  orig_sd <- sd(orig_data, na.rm = TRUE)
-
-  # Back-transform z-score to original scale
-  original_value <- orig_mean + split_value * orig_sd
-
-  return(round(original_value, 3))
-}
+#' margot_plot_policy_tree <- function(mc_test, model_name,
+#'                                     original_df = NULL,
+#'                                     color_scale = NULL,
+#'                                     point_alpha = 0.5,
+#'                                     theme_function = theme_classic,
+#'                                     title_size = 14,
+#'                                     subtitle_size = 11,
+#'                                     axis_title_size = 10,
+#'                                     legend_title_size = 10,
+#'                                     jitter_width = 0.3,
+#'                                     jitter_height = 0.3,
+#'                                     split_line_color = "darkgray",
+#'                                     split_line_alpha = 0.7,
+#'                                     split_line_type = "dashed",
+#'                                     split_line_linewidth = 0.5,
+#'                                     split_label_size = 10,
+#'                                     split_label_color = "darkgray",
+#'                                     custom_action_names = NULL,
+#'                                     legend_position = "bottom",
+#'                                     plot_selection = "both",
+#'                                     remove_tx_prefix = TRUE,
+#'                                     remove_z_suffix = TRUE,
+#'                                     use_title_case = TRUE,
+#'                                     remove_underscores = TRUE,
+#'                                     label_mapping = NULL) {
+#'
+#'   cli::cli_h1("Margot Plot Policy Tree")
+#'
+#'   # Function to transform variable names for display
+#'   transform_var_name <- function(var_name) {
+#'     display_name <- var_name
+#'
+#'     # Remove 'model_' prefix if present (for model names)
+#'     if (startsWith(display_name, "model_")) {
+#'       display_name <- sub("^model_", "", display_name)
+#'     }
+#'
+#'     # Apply label mapping first, if exists
+#'     if (!is.null(label_mapping) && display_name %in% names(label_mapping)) {
+#'       mapped_label <- label_mapping[[display_name]]
+#'       cli::cli_alert_info("Applied label mapping: {var_name} -> {mapped_label}")
+#'       return(mapped_label)
+#'     }
+#'
+#'     # Else, check if it's a t0_ variable corresponding to a t2_ in label_mapping
+#'     if (startsWith(display_name, "t0_")) {
+#'       t2_var <- sub("^t0_", "t2_", display_name)
+#'       if (!is.null(label_mapping) && t2_var %in% names(label_mapping)) {
+#'         mapped_label <- label_mapping[[t2_var]]
+#'         cli::cli_alert_info("Applied label mapping via t2_ equivalent: {var_name} -> {mapped_label}")
+#'         return(mapped_label)
+#'       }
+#'     }
+#'
+#'     # Else, apply transformations
+#'     if (remove_tx_prefix) display_name <- sub("^t[0-9]+_", "", display_name)
+#'     if (remove_z_suffix) display_name <- sub("_z$", "", display_name)
+#'     if (remove_underscores) display_name <- gsub("_", " ", display_name)
+#'
+#'     if (use_title_case) {
+#'       display_name <- tools::toTitleCase(display_name)
+#'       # Replace "Nz" with "NZ"
+#'       display_name <- gsub("Nz", "NZ", display_name)
+#'     }
+#'
+#'     # Notify if transformed
+#'     if (display_name != var_name) {
+#'       cli::cli_alert_info("Transformed label: {var_name} -> {display_name}")
+#'     }
+#'
+#'     return(display_name)
+#'   }
+#'
+#'   # Ensure title is a valid character string or NULL
+#'   title <- transform_var_name(model_name)
+#'   if (!is.character(title) || is.null(title)) {
+#'     title <- as.character(title)  # Force title to be a string if NULL
+#'   }
+#'
+#'   cli::cli_alert_info("Using title: {title}")
+#'
+#'   # Helper function to get original scale split value
+#'   get_original_split_value <- function(var_name, split_value, original_df) {
+#'     if (is.null(original_df)) return(NULL)
+#'
+#'     orig_var <- var_name
+#'     # If variable was z-transformed, assume original_df has the original variable without '_z'
+#'     if (grepl("_z$", orig_var)) {
+#'       orig_var <- sub("_z$", "", orig_var)
+#'     }
+#'
+#'     if (!(orig_var %in% names(original_df))) {
+#'       cli::cli_warn("Original variable '{orig_var}' not found in original_df. Skipping original scale value.")
+#'       return(NULL)
+#'     }
+#'
+#'     orig_data <- original_df[[orig_var]]
+#'
+#'     # Calculate mean and sd from original_df
+#'     orig_mean <- mean(orig_data, na.rm = TRUE)
+#'     orig_sd <- sd(orig_data, na.rm = TRUE)
+#'
+#'     # Back-transform z-score to original scale
+#'     original_value <- orig_mean + split_value * orig_sd
+#'
+#'     return(round(original_value, 4))
+#'   }
+#'
+#'   # Extract policy tree object
+#'   policy_tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
+#'   if (is.null(policy_tree_obj)) {
+#'     cli::cli_abort("Policy tree object not found for the specified model name.")
+#'   }
+#'
+#'   cli::cli_alert_success("Policy tree object extracted for model: {model_name}")
+#'
+#'   # Extract action names and number of actions from the policy tree object
+#'   action_names <- policy_tree_obj$action.names
+#'   n_actions <- policy_tree_obj$n.actions
+#'
+#'   # If custom action names are provided, use them instead
+#'   if (!is.null(custom_action_names)) {
+#'     if (length(custom_action_names) != n_actions) {
+#'       cli::cli_abort("The number of custom action names must match the number of actions in the policy tree.")
+#'     }
+#'     action_names <- custom_action_names
+#'     cli::cli_alert_info("Using custom action names")
+#'   }
+#'
+#'   # Transform action names using transform_var_name
+#'   action_names <- sapply(action_names, function(x) transform_var_name(x))
+#'   cli::cli_alert_success("Action names transformed")
+#'
+#'   # Define the Okabe-Ito palette, starting with blue and orange
+#'   okabe_ito_palette <- c("#56B4E9", "#E69F00", "#009E73",
+#'                          "#F0E442", "#0072B2", "#D55E00",
+#'                          "#CC79A7", "#000000")
+#'
+#'   # If color_scale is not provided, create it based on the number of actions
+#'   if (is.null(color_scale)) {
+#'     # Create a named vector of colors
+#'     color_vector <- setNames(okabe_ito_palette[1:n_actions], action_names)
+#'     color_scale <- scale_colour_manual(values = color_vector)
+#'     cli::cli_alert_info("Created color scale using Okabe-Ito palette")
+#'   }
+#'
+#'   # Extract the plot data for the specified model
+#'   plot_data <- mc_test$results[[model_name]]$plot_data
+#'   cli::cli_alert_success("Plot data extracted")
+#'
+#'   # Extract X_test, predictions, and split_variables
+#'   X_test <- plot_data$X_test
+#'   predictions <- plot_data$predictions
+#'
+#'   # Extract split variables and their values from the policy tree
+#'   policy_tree <- policy_tree_obj$nodes
+#'   x1_col <- policy_tree[[1]]$split_variable
+#'   x2_col <- policy_tree[[2]]$split_variable
+#'   x3_col <- policy_tree[[3]]$split_variable
+#'
+#'   # Extract split values
+#'   x1_split <- policy_tree[[1]]$split_value
+#'   x2_split <- policy_tree[[2]]$split_value
+#'   x3_split <- policy_tree[[3]]$split_value
+#'
+#'   # Use the actual column names from X_test and transform them using transform_var_name
+#'   actual_columns <- names(X_test)
+#'   transformed_columns <- sapply(actual_columns, function(x) transform_var_name(x))
+#'   cli::cli_alert_success("Column names transformed")
+#'
+#'   # Create a data frame for plotting
+#'   plot_df <- data.frame(
+#'     x1 = X_test[[actual_columns[x1_col]]],
+#'     x2 = X_test[[actual_columns[x2_col]]],
+#'     x3 = X_test[[actual_columns[x3_col]]],
+#'     prediction = factor(predictions, levels = seq_along(action_names), labels = action_names)
+#'   )
+#'   cli::cli_alert_success("Plot data frame created")
+#'
+#'   # Function to create a secondary axis with split value and original split value
+#'   create_secondary_axis <- function(primary_range, split_value, var_name) {
+#'     secondary_breaks <- c(min(primary_range), split_value, max(primary_range))
+#'     if (!is.null(original_df)) {
+#'       original_split <- get_original_split_value(var_name, split_value, original_df)
+#'       if (!is.null(original_split)) {
+#'         # Format: Split: standardized_value (original_value)*
+#'         secondary_labels <- c("", sprintf("Split: %.2f (%.2f)*", split_value, original_split), "")
+#'       } else {
+#'         secondary_labels <- c("", sprintf("Split: %.2f", split_value), "")
+#'       }
+#'     } else {
+#'       secondary_labels <- c("", sprintf("Split: %.2f", split_value), "")
+#'     }
+#'     sec_axis(~ ., breaks = secondary_breaks, labels = secondary_labels)
+#'   }
+#'
+#'   base_plot <- function(x, y, x_lab, y_lab, subtitle, x_split, y_split, x_var_name, y_var_name) {
+#'     p <- ggplot(plot_df, aes(x = .data[[x]], y = .data[[y]], color = prediction)) +
+#'       geom_jitter(alpha = point_alpha, width = jitter_width, height = jitter_height) +
+#'       geom_vline(xintercept = x_split, color = split_line_color, alpha = split_line_alpha,
+#'                  linetype = split_line_type, linewidth = split_line_linewidth) +
+#'       geom_hline(yintercept = y_split, color = split_line_color, alpha = split_line_alpha,
+#'                  linetype = split_line_type, linewidth = split_line_linewidth) +
+#'       color_scale +
+#'       labs(
+#'         x = x_lab,
+#'         y = y_lab,
+#'         subtitle = subtitle
+#'       ) +
+#'       theme_function() +
+#'       theme(
+#'         plot.title = element_text(size = title_size),
+#'         plot.subtitle = element_text(size = subtitle_size),
+#'         axis.title = element_text(size = axis_title_size),
+#'         legend.title = element_text(size = legend_title_size),
+#'         axis.text.x.top = element_text(size = split_label_size, color = split_label_color),
+#'         axis.text.y.right = element_text(size = split_label_size, color = split_label_color)
+#'       )
+#'
+#'     # Add secondary axes with split values and original split values if original_df is provided
+#'     p <- p +
+#'       scale_x_continuous(sec.axis = create_secondary_axis(range(plot_df[[x]]), x_split, x_var_name)) +
+#'       scale_y_continuous(sec.axis = create_secondary_axis(range(plot_df[[y]]), y_split, y_var_name))
+#'
+#'     return(p)
+#'   }
+#'
+#'   # Create the individual plots based on plot_selection
+#'   cli::cli_h2("Creating individual plots")
+#'   p1 <- p2 <- NULL
+#'
+#'   tryCatch({
+#'     if (plot_selection %in% c("both", "p1")) {
+#'       p1 <- base_plot("x1", "x2", transformed_columns[x1_col], transformed_columns[x2_col],
+#'                       paste(transformed_columns[x1_col], "vs", transformed_columns[x2_col]),
+#'                       x1_split, x2_split, actual_columns[x1_col], actual_columns[x2_col])
+#'       cli::cli_alert_success("Plot 1 created")
+#'     }
+#'
+#'     if (plot_selection %in% c("both", "p2")) {
+#'       p2 <- base_plot("x1", "x3", transformed_columns[x1_col], transformed_columns[x3_col],
+#'                       paste(transformed_columns[x1_col], "vs", transformed_columns[x3_col]),
+#'                       x1_split, x3_split, actual_columns[x1_col], actual_columns[x3_col])
+#'       cli::cli_alert_success("Plot 2 created")
+#'     }
+#'   }, error = function(e) {
+#'     cli::cli_alert_danger("Error creating plots: {e$message}")
+#'     print(str(plot_df))  # Debug information
+#'     print(str(transformed_columns))  # Debug information
+#'   })
+#'
+#'   # Combine the plots based on plot_selection
+#'   cli::cli_h2("Combining plots")
+#'   combined_plot <- NULL
+#'   tryCatch({
+#'     if (plot_selection == "both") {
+#'       if (is.null(p1) || is.null(p2)) {
+#'         cli::cli_abort("Both plots should be created when plot_selection is 'both'")
+#'       }
+#'       combined_plot <- p1 + p2 +
+#'         plot_layout(guides = "collect") +
+#'         plot_annotation(
+#'           title = if (!is.null(title)) paste("Policy Tree Results for", title) else NULL,
+#'           caption = if (!is.null(original_df)) "* Original scale value" else NULL,
+#'           tag_levels = 'A'
+#'         ) &
+#'         theme(
+#'           plot.tag = element_text(size = 12, face = "bold"),
+#'           legend.position = legend_position,
+#'           plot.caption = element_text(hjust = 1, size = 12)  # Increase caption size
+#'         )
+#'       cli::cli_alert_success("Both plots combined")
+#'     } else if (plot_selection == "p1") {
+#'       if (is.null(p1)) {
+#'         cli::cli_abort("Plot 1 should be created when plot_selection is 'p1'")
+#'       }
+#'       combined_plot <- p1 +
+#'         plot_annotation(
+#'           title = if (!is.null(title)) paste("Policy Tree Results for", title, "- Plot 1") else NULL,
+#'           caption = if (!is.null(original_df)) "* Original scale value" else NULL,
+#'           tag_levels = 'A'
+#'         ) &
+#'         theme(
+#'           legend.position = legend_position,
+#'           plot.caption = element_text(hjust = 1, size = 12)  # Increase caption size
+#'         )
+#'       cli::cli_alert_success("Plot 1 finalized")
+#'     } else if (plot_selection == "p2") {
+#'       if (is.null(p2)) {
+#'         cli::cli_abort("Plot 2 should be created when plot_selection is 'p2'")
+#'       }
+#'       combined_plot <- p2 +
+#'         plot_annotation(
+#'           title = if (!is.null(title)) paste("Policy Tree Results for", title, "- Plot 2") else NULL,
+#'           caption = if (!is.null(original_df)) "* Original scale value" else NULL,
+#'           tag_levels = 'A'
+#'         ) &
+#'         theme(
+#'           legend.position = legend_position,
+#'           plot.caption = element_text(hjust = 1, size = 12)  # Increase caption size
+#'         )
+#'       cli::cli_alert_success("Plot 2 finalized")
+#'     } else {
+#'       cli::cli_abort("Invalid plot_selection. Choose 'both', 'p1', or 'p2'.")
+#'     }
+#'   }, error = function(e) {
+#'     cli::cli_alert_danger("Error combining plots: {e$message}")
+#'     print(class(p1))  # Debug information
+#'     print(class(p2))  # Debug information
+#'   })
+#'
+#'   if (is.null(combined_plot)) {
+#'     cli::cli_alert_danger("Failed to create combined plot")
+#'     return(NULL)
+#'   }
+#'
+#'   cli::cli_alert_success("Margot plot policy tree created successfully 👍")
+#'
+#'   # Return the combined plot
+#'   return(combined_plot)
+#' }
+#'
+#'
+#' #' @keywords internal
+#' transform_var_name <- function(var_name, label_mapping, remove_tx_prefix, remove_z_suffix,
+#'                                use_title_case, remove_underscores) {
+#'   display_name <- var_name
+#'
+#'   # Remove 'model_' prefix if present (for model names)
+#'   if (startsWith(display_name, "model_")) {
+#'     display_name <- sub("^model_", "", display_name)
+#'   }
+#'
+#'   # Apply label mapping first, if exists
+#'   if (!is.null(label_mapping) && display_name %in% names(label_mapping)) {
+#'     mapped_label <- label_mapping[[display_name]]
+#'     cli::cli_alert_info("Applied label mapping: {var_name} -> {mapped_label}")
+#'     return(mapped_label)
+#'   }
+#'
+#'   # Else, check if it's a t0_ variable corresponding to a t2_ in label_mapping
+#'   if (startsWith(display_name, "t0_")) {
+#'     t2_var <- sub("^t0_", "t2_", display_name)
+#'     if (!is.null(label_mapping) && t2_var %in% names(label_mapping)) {
+#'       mapped_label <- label_mapping[[t2_var]]
+#'       cli::cli_alert_info("Applied label mapping via t2_ equivalent: {var_name} -> {mapped_label}")
+#'       return(mapped_label)
+#'     }
+#'   }
+#'
+#'   # Else, apply transformations
+#'   if (remove_tx_prefix) {
+#'     display_name <- sub("^t[0-9]+_", "", display_name)
+#'   }
+#'   if (remove_z_suffix) {
+#'     display_name <- sub("_z$", "", display_name)
+#'   }
+#'   if (remove_underscores) {
+#'     display_name <- gsub("_", " ", display_name)
+#'   }
+#'
+#'   if (use_title_case) {
+#'     display_name <- tools::toTitleCase(display_name)
+#'     # Replace "Nz" with "NZ"
+#'     display_name <- gsub("Nz", "NZ", display_name)
+#'   }
+#'
+#'   # Notify if transformed
+#'   if (display_name != var_name) {
+#'     cli::cli_alert_info("Transformed label: {var_name} -> {display_name}")
+#'   }
+#'
+#'   return(display_name)
+#' }
+#'
+#' # Helper function to get original scale split value
+#' #' @keywords internal
+#' get_original_split_value <- function(var_name, split_value, original_df) {
+#'   if (is.null(original_df)) return(NULL)
+#'
+#'   orig_var <- var_name
+#'   # If variable was z-transformed, assume original_df has the original variable without '_z'
+#'   if (grepl("_z$", orig_var)) {
+#'     orig_var <- sub("_z$", "", orig_var)
+#'   }
+#'
+#'   if (!(orig_var %in% names(original_df))) {
+#'     cli::cli_warn("Original variable '{orig_var}' not found in original_df. Skipping original scale value.")
+#'     return(NULL)
+#'   }
+#'
+#'   orig_data <- original_df[[orig_var]]
+#'
+#'   # Calculate mean and sd from original_df
+#'   orig_mean <- mean(orig_data, na.rm = TRUE)
+#'   orig_sd <- sd(orig_data, na.rm = TRUE)
+#'
+#'   # Back-transform z-score to original scale
+#'   original_value <- orig_mean + split_value * orig_sd
+#'
+#'   return(round(original_value, 3))
+#' }
 # margot_plot_policy_tree <- function(mc_test, model_name,
 #                                     color_scale = NULL,
 #                                     point_alpha = 0.5,

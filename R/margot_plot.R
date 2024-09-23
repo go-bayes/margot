@@ -152,17 +152,17 @@ margot_plot <- function(.data,
     title = NULL,
     subtitle = NULL,
     estimate_scale = 1,
-    base_size = 11,
+    base_size = 18,
     text_size = 2.75,
     point_size = 3,
-    title_size = 10,
-    subtitle_size = 9,
-    legend_text_size = 6,
-    legend_title_size = 6,
-    x_offset = NULL, # Will be set based on type
-    x_lim_lo = NULL, # Will be set based on type
-    x_lim_hi = NULL, # Will be set based on type
-    linewidth = 0.5,
+    title_size = 20,
+    subtitle_size = 18,
+    legend_text_size = 10,
+    legend_title_size = 10,
+    x_offset = NULL, # will be set based on type
+    x_lim_lo = NULL, # will be set based on type
+    x_lim_hi = NULL, # will be set based on type
+    linewidth = 0.4,
     plot_theme = NULL,
     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
     facet_var = NULL,

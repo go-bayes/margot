@@ -12,6 +12,14 @@
 * batch process trend plots
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 
+
+# [2024-09-20] margot 0.2.3.1
+
+## Improved
+
+- `margot_plot_policy_tree()`, `margot_plot_decision_tree()`, `margot_interpret_policy_tree()`, `margot_plot_qini_tree()` use same global function names. New helper functions back-transform logged values (as well as z-transformed values) so that we get interpretations on the data scale for variables that have been log-transformed.  This aids with interpretation. 
+
+
 # [2024-09-20] margot 0.2.3.0
 
 ## New
