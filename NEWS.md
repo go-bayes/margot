@@ -17,7 +17,7 @@
 
 ## Improved
 
-- `margot_plot()` `margot_interpret_marginal` now back transform values to data scale 
+- `margot_plot()` `margot_interpret_marginal()` now back transform values to data scale. 
 
 # [2024-09-24] margot 0.2.3.1
 

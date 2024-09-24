@@ -188,6 +188,51 @@ get_original_value_plot <- function(var_name, split_value, original_df) {
 
 
 #' @keywords internal
+#' for margot_plot()
+transform_label <- function(label, label_mapping = NULL, options = list()) {
+  original_label <- label
+
+  # Apply mapping with partial substitutions and remove numbers
+  if (!is.null(label_mapping)) {
+    for (pattern in names(label_mapping)) {
+      if (grepl(pattern, label, fixed = TRUE)) {
+        replacement <- label_mapping[[pattern]]
+        label <- gsub(pattern, replacement, label, fixed = TRUE)
+        cli::cli_alert_info("Mapped label: {pattern} -> {replacement}")
+      }
+    }
+  }
+
+  # Remove the numerical part (e.g., " - (3.0,7.0] - [1.0,2.0]")
+  label <- sub(" - \\(.*\\]$", "", label)
+
+  # Apply default transformations if the label wasn't fully replaced
+  if (label == original_label) {
+    if (options$remove_tx_prefix) {
+      label <- sub("^t[0-9]+_", "", label)
+    }
+    if (options$remove_z_suffix) {
+      label <- sub("_z$", "", label)
+    }
+    if (options$remove_underscores) {
+      label <- gsub("_", " ", label)
+    }
+    if (options$use_title_case) {
+      label <- tools::toTitleCase(label)
+      # Preserve "NZ" capitalization
+      label <- gsub("Nz", "NZ", label)
+    }
+  }
+
+  if (label != original_label) {
+    cli::cli_alert_info("Transformed label: {original_label} -> {label}")
+  }
+
+  return(label)
+}
+
+
+#' @keywords internal
 transform_to_original_scale <- function(results_df, original_df, label_mapping = NULL) {
   # Determine the effect size column based on the data structure
   if ("E[Y(1)]-E[Y(0)]" %in% names(results_df)) {
