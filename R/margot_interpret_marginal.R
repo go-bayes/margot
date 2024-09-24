@@ -76,10 +76,18 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
 
   cli::cli_alert_info("Processing and interpreting data...")
 
-  # Determine if we have original scale results
-  has_original_scale <- paste0("E[Y(1)]-E[Y(0)]", "_original") %in% names(df)
+  # Determine the effect size column based on the data structure
+  if ("E[Y(1)]-E[Y(0)]" %in% names(df)) {
+    effect_size_col <- "E[Y(1)]-E[Y(0)]"
+  } else if ("E[Y(1)]/E[Y(0)]" %in% names(df)) {
+    effect_size_col <- "E[Y(1)]/E[Y(0)]"
+  } else {
+    cli::cli_abort("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
+  }
 
-  # Data processing and interpretation
+  # Determine if we have original scale results
+  has_original_scale <- paste0(effect_size_col, "_original") %in% names(df)
+
   interpretation <- df %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
@@ -88,6 +96,22 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
         Estimate == 'negative' ~ cli::col_blue('**there is evidence for causality**'),
         TRUE ~ cli::col_red('**the evidence for causality is not reliable**')
       ),
+      # Define estimate_lab
+      estimate_lab = paste0(
+        round(!!rlang::sym(effect_size_col), 3), " (",
+        round(`2.5 %`, 3), ", ",
+        round(`97.5 %`, 3), ")"
+      ),
+      # Define estimate_lab_original if available
+      estimate_lab_original = if (has_original_scale) {
+        paste0(
+          round(!!rlang::sym(paste0(effect_size_col, "_original")), 3), " (",
+          round(`2.5 %_original`, 3), ", ",
+          round(`97.5 %_original`, 3), ")"
+        )
+      } else {
+        NA_character_
+      },
       outcome_interpretation = glue::glue(
         "For '{outcome}', the effect estimate ({type}) is {estimate_lab}. ",
         "{if (has_original_scale) paste0('On the original data scale, the estimated effect is ', estimate_lab_original, '. ') else ''}",
@@ -109,3 +133,57 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
     interpretation = interpretation_text
   ))
 }
+# margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL, order = "default") {
+#   type <- match.arg(type)
+#
+#   cli::cli_alert_info("Starting interpretation of causal effect estimates...")
+#
+#   # Define estimand descriptions
+#   estimand_description <- if (!is.null(estimand)) {
+#     dplyr::case_when(
+#       estimand == "LMTP" ~ "A Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast conditions over a sequential regime of treatments for a prespecified target population.",
+#       estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) estimates the expected outcome difference between treatment and contrast groups across the entire New Zealand population.",
+#       estimand == "ATE" ~ "The Average Treatment Effect (ATE) measures the mean difference in outcomes between treatment and contrast groups within the target population.",
+#       estimand == "ATT" ~ "The Average Treatment Effect on the Treated (ATT) assesses the expected outcome difference for those receiving the treatment, compared to a similar group that did not, within the target population.",
+#       estimand == "CATE" ~ "The Conditional Average Treatment Effect (CATE) evaluates the expected difference in outcomes between treatment and contrast groups within specific population strata.",
+#       TRUE ~ "The specified estimand is not recognized. Valid options include: 'PATE', 'ATE', 'ATT', 'CATE', 'LMTP'."
+#     )
+#   } else {
+#     NULL
+#   }
+#
+#   cli::cli_alert_info("Processing and interpreting data...")
+#
+#   # Determine if we have original scale results
+#   has_original_scale <- paste0("E[Y(1)]-E[Y(0)]", "_original") %in% names(df)
+#
+#   # Data processing and interpretation
+#   interpretation <- df %>%
+#     dplyr::rowwise() %>%
+#     dplyr::mutate(
+#       evidence_strength = dplyr::case_when(
+#         Estimate == 'positive' ~ cli::col_green('**the evidence for causality is strong**'),
+#         Estimate == 'negative' ~ cli::col_blue('**there is evidence for causality**'),
+#         TRUE ~ cli::col_red('**the evidence for causality is not reliable**')
+#       ),
+#       outcome_interpretation = glue::glue(
+#         "For '{outcome}', the effect estimate ({type}) is {estimate_lab}. ",
+#         "{if (has_original_scale) paste0('On the original data scale, the estimated effect is ', estimate_lab_original, '. ') else ''}",
+#         "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
+#         "{if (E_Val_bound > 1) paste0('At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of ', E_Val_bound, ' to negate the observed effect. Weaker confounding would not overturn it. ') else ''}",
+#         "Here, {evidence_strength}."
+#       )
+#     ) %>%
+#     dplyr::ungroup()
+#
+#   # Compile results
+#   interpretation_text <- paste(interpretation$outcome_interpretation, collapse = '\n\n')
+#
+#   cli::cli_alert_success("Interpretation completed successfully!")
+#
+#   # Return results as a list
+#   return(list(
+#     estimand_description = estimand_description,
+#     interpretation = interpretation_text
+#   ))
+# }

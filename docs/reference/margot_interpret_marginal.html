@@ -15,7 +15,7 @@ and estimands. It now also includes interpretation of original scale results whe
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,7 +119,7 @@ in the interpretation. The strength of evidence for causality is categorized as 
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using output from transform_to_original_scale()</span></span></span>
-<span class="r-in"><span><span class="va">transformed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="transform_to_original_scale.html">transform_to_original_scale</a></span><span class="op">(</span><span class="va">results_df</span>, <span class="va">original_df</span>, <span class="va">label_mapping</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">transformed_data</span> <span class="op">&lt;-</span> <span class="fu">transform_to_original_scale</span><span class="op">(</span><span class="va">results_df</span>, <span class="va">original_df</span>, <span class="va">label_mapping</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_marginal</span><span class="op">(</span><span class="va">transformed_data</span>, type <span class="op">=</span> <span class="st">"RD"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>

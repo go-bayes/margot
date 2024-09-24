@@ -13,7 +13,13 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 
 
-# [2024-09-20] margot 0.2.3.1
+# [2024-09-24] margot 0.2.3.2
+
+## Improved
+
+- `margot_plot()` `margot_interpret_marginal` now back transform values to data scale 
+
+# [2024-09-24] margot 0.2.3.1
 
 ## Improved
 
