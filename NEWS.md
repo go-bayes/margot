@@ -13,7 +13,34 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 
 
-# [2024-09-25] margot 0.2.3.3devtools::install(".")
+# [2024-09-26] margot 0.2.3.5
+
+
+
+## New
+- helper function `back_transform_estimates()` is unique for the marginal plots and marginal interpretions, to avoid confusions with back-transforming helpers for split-points in policy trees.
+
+
+## improved
+- `margot_plot()`, and `margot_interpret_marginal()` produce interpretable results.
+
+
+
+
+# [2024-09-25] margot 0.2.3.4
+
+## new
+- `margot_plot_slope_covariate_combo()` - batch multiple `margot_plot_slope_covariate()` plots onto one graph using `patchwork`.
+
+
+## Improved
+
+- `margot_plot_slope_covariate()` improved for flexibility
+
+
+
+
+# [2024-09-25] margot 0.2.3.3
 
 
 ## Improved

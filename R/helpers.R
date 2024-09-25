@@ -1,4 +1,129 @@
 
+# helpers for margot plot -------------------------------------------------
+
+# #' @keywords internal
+back_transform_estimates <- function(results_df, original_df) {
+  # Determine the effect size column
+  if ("E[Y(1)]-E[Y(0)]" %in% names(results_df)) {
+    effect_size_col <- "E[Y(1)]-E[Y(0)]"
+  } else if ("E[Y(1)]/E[Y(0)]" %in% names(results_df)) {
+    effect_size_col <- "E[Y(1)]/E[Y(0)]"
+  } else {
+    stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
+  }
+
+  # Ensure that results_df has an 'outcome' column
+  if (!"outcome" %in% names(results_df)) {
+    results_df$outcome <- rownames(results_df)
+  }
+
+  # Store the original variable names before any transformations
+  if (!"original_var_name" %in% names(results_df)) {
+    results_df$original_var_name <- results_df$outcome
+  }
+
+  # Initialize new columns for back-transformed estimates and units
+  results_df[[paste0(effect_size_col, "_original")]] <- NA_real_
+  results_df[["2.5 %_original"]] <- NA_real_
+  results_df[["97.5 %_original"]] <- NA_real_
+  results_df[["unit"]] <- NA_character_
+
+  # Loop over each outcome
+  for (i in seq_len(nrow(results_df))) {
+    var_name <- results_df$original_var_name[i]
+
+    # Determine if the variable was z-transformed and/or log-transformed
+    was_z_transformed <- grepl("_z$", var_name)
+    was_log_transformed <- grepl("_log_", var_name)
+    contains_hours <- grepl("_hours_", var_name)
+
+    # Get the original variable name in original_df
+    orig_var_name <- var_name
+    if (was_z_transformed) {
+      orig_var_name <- sub("_z$", "", orig_var_name)
+    }
+
+    # Try to find the variable in original_df
+    if (!(orig_var_name %in% names(original_df))) {
+      # Try removing 't0_', 't1_', 't2_' prefixes
+      orig_var_name_no_prefix <- sub("^t[0-9]+_", "", orig_var_name)
+      if (!(orig_var_name_no_prefix %in% names(original_df))) {
+        # Variable not found in original_df
+        cli::cli_alert_warning("Variable '{orig_var_name}' not found in original_df.")
+        next
+      } else {
+        orig_var_name <- orig_var_name_no_prefix
+      }
+    }
+
+    estimate <- results_df[[effect_size_col]][i]
+    lower <- results_df$`2.5 %`[i]
+    upper <- results_df$`97.5 %`[i]
+
+    # Compute standard error on the standardized scale
+    z_value <- qnorm(0.975)
+    SE_standardized <- (upper - lower) / (2 * z_value)
+
+    # Get mean and sd from original data
+    orig_data <- original_df[[orig_var_name]]
+    orig_sd <- sd(orig_data, na.rm = TRUE)
+
+    if (was_z_transformed) {
+      estimate_log <- estimate * orig_sd
+      SE_log <- SE_standardized * orig_sd
+    } else {
+      estimate_log <- estimate
+      SE_log <- SE_standardized
+    }
+
+    # Initialize unit
+    unit <- ""
+
+    if (was_log_transformed) {
+      # For log-transformed variables, exponentiate to get ratio of geometric means
+      ratio <- exp(estimate_log)
+      # Confidence intervals
+      lower_ratio <- exp(estimate_log - z_value * SE_log)
+      upper_ratio <- exp(estimate_log + z_value * SE_log)
+
+      # Compute percentage change
+      percentage_change <- (ratio - 1) * 100
+      lower_percentage_change <- (lower_ratio - 1) * 100
+      upper_percentage_change <- (upper_ratio - 1) * 100
+
+      # Assign to results_df
+      results_df[[paste0(effect_size_col, "_original")]][i] <- round(percentage_change, 2)
+      results_df[["2.5 %_original"]][i] <- round(lower_percentage_change, 2)
+      results_df[["97.5 %_original"]][i] <- round(upper_percentage_change, 2)
+      unit <- "%"
+    } else {
+      # For variables not log-transformed, back-transform as before
+      estimate_original <- estimate_log
+      SE_original <- SE_log
+
+      lower_original <- estimate_original - z_value * SE_original
+      upper_original <- estimate_original + z_value * SE_original
+
+      # If variable contains '_hours_', transform to minutes
+      if (contains_hours) {
+        estimate_original <- estimate_original * 60
+        lower_original <- lower_original * 60
+        upper_original <- upper_original * 60
+        unit <- "minutes"
+      }
+
+      # Round and assign to results_df
+      results_df[[paste0(effect_size_col, "_original")]][i] <- round(estimate_original, 3)
+      results_df[["2.5 %_original"]][i] <- round(lower_original, 3)
+      results_df[["97.5 %_original"]][i] <- round(upper_original, 3)
+    }
+
+    # Assign unit to results_df
+    results_df[["unit"]][i] <- unit
+  }
+
+  return(results_df)
+}
 
 
 # read utilities ----------------------------------------------------------

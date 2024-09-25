@@ -8,7 +8,8 @@ margot_interpret_marginal(
   df,
   type = c("RD", "RR"),
   estimand = NULL,
-  order = "default"
+  order = "default",
+  original_df = NULL
 )
 }
 \arguments{

@@ -13,7 +13,7 @@ and reports the number of unique participants and observations used in the analy
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.3</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,7 @@ and reports the number of unique participants and observations used in the analy
 <span>  x_label <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  y_limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">7</span><span class="op">)</span>,</span>
 <span>  color_label <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  include_title <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  include_timestamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  save_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  prefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -108,6 +109,10 @@ and reports the number of unique participants and observations used in the analy
 <dd><p>An optional label for the color legend. If NULL, the second term will be used.</p></dd>
 
 
+<dt id="arg-include-title">include_title<a class="anchor" aria-label="anchor" href="#arg-include-title"></a></dt>
+<dd><p>Logical, whether to include the plot title (default is TRUE).</p></dd>
+
+
 <dt id="arg-include-timestamp">include_timestamp<a class="anchor" aria-label="anchor" href="#arg-include-timestamp"></a></dt>
 <dd><p>Logical, whether to include timestamp in plot title and filename (default is FALSE).</p></dd>
 
@@ -144,46 +149,7 @@ and reports the number of unique participants and observations used in the analy
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://strengejacke.github.io/ggeffects/" class="external-link">ggeffects</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/malcolmbarrett/ggokabeito" class="external-link">ggokabeito</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Basic usage</span></span></span>
-<span class="r-in"><span><span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_slope_covariate</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">dat</span>,</span></span>
-<span class="r-in"><span>  formula <span class="op">=</span> <span class="va">warm_muslims</span> <span class="op">~</span> <span class="va">wave</span><span class="op">:</span><span class="va">hours_work</span>,</span></span>
-<span class="r-in"><span>  terms <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wave"</span>, <span class="st">"hours_work"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  y_label <span class="op">=</span> <span class="st">"Warmth"</span>,</span></span>
-<span class="r-in"><span>  x_label <span class="op">=</span> <span class="st">"Wave"</span>,</span></span>
-<span class="r-in"><span>  color_label <span class="op">=</span> <span class="st">"Work Hours"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># With additional ggeffects options and timestamp</span></span></span>
-<span class="r-in"><span><span class="va">plot_with_options</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_slope_covariate</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">dat</span>,</span></span>
-<span class="r-in"><span>  formula <span class="op">=</span> <span class="va">warm_immigrants</span> <span class="op">~</span> <span class="va">wave</span><span class="op">:</span><span class="va">education</span>,</span></span>
-<span class="r-in"><span>  terms <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wave"</span>, <span class="st">"education [0:18]"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  y_label <span class="op">=</span> <span class="st">"Warmth"</span>,</span></span>
-<span class="r-in"><span>  x_label <span class="op">=</span> <span class="st">"Wave"</span>,</span></span>
-<span class="r-in"><span>  color_label <span class="op">=</span> <span class="st">"Education (Years)"</span>,</span></span>
-<span class="r-in"><span>  include_timestamp <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>  type <span class="op">=</span> <span class="st">"continuous"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Save the plot with custom prefix</span></span></span>
-<span class="r-in"><span><span class="va">saved_plot</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_slope_covariate</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">dat</span>,</span></span>
-<span class="r-in"><span>  formula <span class="op">=</span> <span class="va">political_orientation</span> <span class="op">~</span> <span class="va">wave</span><span class="op">:</span><span class="va">age</span>,</span></span>
-<span class="r-in"><span>  terms <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wave"</span>, <span class="st">"age"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  y_label <span class="op">=</span> <span class="st">"Political Orientation"</span>,</span></span>
-<span class="r-in"><span>  x_label <span class="op">=</span> <span class="st">"Wave"</span>,</span></span>
-<span class="r-in"><span>  color_label <span class="op">=</span> <span class="st">"Age"</span>,</span></span>
-<span class="r-in"><span>  save_path <span class="op">=</span> <span class="st">"path/to/save/directory"</span>,</span></span>
-<span class="r-in"><span>  prefix <span class="op">=</span> <span class="st">"political_orientation"</span>,</span></span>
-<span class="r-in"><span>  width <span class="op">=</span> <span class="fl">10</span>,</span></span>
-<span class="r-in"><span>  height <span class="op">=</span> <span class="fl">6</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Example usage remains the same</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

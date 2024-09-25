@@ -44,7 +44,7 @@
 #' label_mapping <- list("var1" = "Variable 1", "var2" = "Variable 2", "var3" = "Variable 3")
 #'
 #' # Create combined plot
-#' combined_plot <- margot_plot_slope_covariate_batch(
+#' combined_plot <- margot_plot_slope_covariate_combo(
 #'   data = dat,
 #'   outcome_vars = outcome_vars,
 #'   exposure_formula = "~ wave:covariate",
@@ -62,7 +62,7 @@
 #'   height = 10
 #' )
 #' }
-margot_plot_slope_covariate_batch <- function(data,
+margot_plot_slope_covariate_combo <- function(data,
                                               outcome_vars,
                                               exposure_formula,
                                               terms,
@@ -78,7 +78,7 @@ margot_plot_slope_covariate_batch <- function(data,
                                               plot_annotation_params = list(),
                                               caption_size = 10,  # New parameter for caption size
                                               include_individual_titles = FALSE,
-                                              width = 10,
+                                              width = 12,
                                               height = 8,
                                               dpi = 400,
                                               ...) {
@@ -177,57 +177,3 @@ margot_plot_slope_covariate_batch <- function(data,
   # Return the combined plot
   return(combined_plot)
 }
-# margot_plot_slope_covariate_batch <- function(data,
-#                                               outcome_vars,
-#                                               exposure_formula,
-#                                               terms,
-#                                               label_mapping = NULL,
-#                                               x_label = NULL,
-#                                               color_label = NULL,
-#                                               save_path = NULL,
-#                                               file_prefix = "plot_slope_covariate_batch",
-#                                               ...) {
-#   # initialise empty list to store the ggplot objects
-#   plot_list <- list()
-#
-#   # iterate over the outcome variables
-#   for (outcome_var in outcome_vars) {
-#     # Create the full formula
-#     full_formula <- as.formula(paste(outcome_var, exposure_formula))
-#
-#     # get the label for the outcome variable
-#     if (!is.null(label_mapping) && outcome_var %in% names(label_mapping)) {
-#       y_label <- label_mapping[[outcome_var]]
-#     } else {
-#       y_label <- gsub("_", " ", outcome_var)
-#       y_label <- tools::toTitleCase(y_label)
-#     }
-#
-#     # create plot
-#     plot <- margot_plot_slope_covariate(
-#       data = data,
-#       formula = full_formula,
-#       terms = terms,
-#       y_label = y_label,
-#       x_label = x_label,
-#       color_label = color_label,
-#       save_path = save_path,
-#       prefix = outcome_var,
-#       ...
-#     )
-#
-#     # add the plot to the list
-#     plot_list[[outcome_var]] <- plot
-#   }
-#
-#   # save the list of ggplot objects if a save path is provided
-#   if (!is.null(save_path)) {
-#     # Create the filename with the optional prefix
-#     filename <- paste0(file_prefix, "_plot_slope_covariate_list.qs")
-#     qs::qsave(plot_list, file.path(save_path, filename))
-#     cli::cli_alert_success("List of ggplot objects saved successfully as {filename} \U0001F44D")
-#   }
-#
-#   # return the list of ggplot objects
-#   return(plot_list)
-# }

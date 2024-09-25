@@ -14,6 +14,7 @@ margot_plot_slope_covariate(
   x_label = NULL,
   y_limits = c(1, 7),
   color_label = NULL,
+  include_title = TRUE,
   include_timestamp = FALSE,
   save_path = NULL,
   prefix = NULL,
@@ -42,6 +43,8 @@ margot_plot_slope_covariate(
 
 \item{color_label}{An optional label for the color legend. If NULL, the second term will be used.}
 
+\item{include_title}{Logical, whether to include the plot title (default is TRUE).}
+
 \item{include_timestamp}{Logical, whether to include timestamp in plot title and filename (default is FALSE).}
 
 \item{save_path}{An optional path to save the plot. If NULL, the plot will not be saved.}
@@ -67,45 +70,6 @@ and reports the number of unique participants and observations used in the analy
 }
 \examples{
 \dontrun{
-library(ggplot2)
-library(ggeffects)
-library(ggokabeito)
-library(dplyr)
-
-# Basic usage
-plot <- margot_plot_slope_covariate(
-  data = dat,
-  formula = warm_muslims ~ wave:hours_work,
-  terms = c("wave", "hours_work"),
-  y_label = "Warmth",
-  x_label = "Wave",
-  color_label = "Work Hours"
-)
-
-# With additional ggeffects options and timestamp
-plot_with_options <- margot_plot_slope_covariate(
-  data = dat,
-  formula = warm_immigrants ~ wave:education,
-  terms = c("wave", "education [0:18]"),
-  y_label = "Warmth",
-  x_label = "Wave",
-  color_label = "Education (Years)",
-  include_timestamp = TRUE,
-  type = "continuous"
-)
-
-# Save the plot with custom prefix
-saved_plot <- margot_plot_slope_covariate(
-  data = dat,
-  formula = political_orientation ~ wave:age,
-  terms = c("wave", "age"),
-  y_label = "Political Orientation",
-  x_label = "Wave",
-  color_label = "Age",
-  save_path = "path/to/save/directory",
-  prefix = "political_orientation",
-  width = 10,
-  height = 6
-)
+# Example usage remains the same
 }
 }
