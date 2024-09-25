@@ -27,7 +27,7 @@
 #'
 #' @importFrom dplyr filter mutate rename select
 #' @importFrom EValue evalues.OLS evalues.RR
-#' @export
+#' @internal
 tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "RR"), continuous_X = FALSE) {
   require("EValue")
   require(dplyr)

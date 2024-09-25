@@ -138,14 +138,6 @@ reference:
     - select_and_rename_cols
     - transform_table_rownames
 
-  - title: "Internal utility functions"
-    contents:
-    - create_tau_hat_plot
-    - compute_qini_curves
-    - extract_qini_data
-    - group_results_by_comparison
-    - group_tab
-    - tab_engine_marginal
 
   - title: "Simulated data"
     contents:

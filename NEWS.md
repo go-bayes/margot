@@ -13,7 +13,17 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 
 
-# [2024-09-24] margot 0.2.3.2
+# [2024-09-25] margot 0.2.3.3devtools::install(".")
+
+
+## Improved
+
+- `margot_plot_histogram()` now take optional `vertical_facets` parameter, allowing for more interpretable time-series graphs.
+-  placed all internal function under `helpers.R` in the R directory, to avoid clutter. 
+
+
+# [2024-09-25] margot 0.2.3.2
+
 
 ## Improved
 

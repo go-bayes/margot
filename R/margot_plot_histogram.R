@@ -21,6 +21,7 @@
 #' @param file_prefix An optional prefix to add to the beginning of the saved filename. Default is an empty string.
 #' @param mean_line_color Color of the vertical line representing the mean. Default is "black".
 #' @param sd_line_color Color of the dashed lines representing the standard deviation. Default is "black".
+#' @param vertical_facets Logical. If TRUE, facets are arranged vertically. If FALSE (default), facets are arranged horizontally.
 #'
 #' @return A ggplot2 object representing the histogram with highlights.
 #'
@@ -68,6 +69,14 @@
 #'   sd_line_color = "blue"
 #' )
 #'
+#' # use vertical faceting
+#' margot_plot_histogram(
+#'   data = your_data,
+#'   col_names = c("var1", "var2"),
+#'   vertical_facets = TRUE
+#' )
+#'
+#' @export
 margot_plot_histogram <- function(data,
                                   col_names,
                                   id_col = "id",
@@ -84,8 +93,9 @@ margot_plot_histogram <- function(data,
                                   color_palette = NULL,
                                   add_timestamp = FALSE,
                                   file_prefix = "",
-                                  mean_line_color = "black", #
-                                  sd_line_color = "black") { #
+                                  mean_line_color = "black",
+                                  sd_line_color = "black",
+                                  vertical_facets = FALSE) {  # New parameter
 
   cli::cli_h1("Margot Plot Histogram")
 
@@ -205,27 +215,37 @@ margot_plot_histogram <- function(data,
         ) +
         scale_fill_manual(values = recycled_colors, labels = format_label)
 
-      # handle faceting for different scenarios
+      # Modified faceting for different scenarios
       if (length(unique(data_long[[wave_col]])) > 1 && length(col_names) > 1) {
-        p <- p + facet_grid(variable ~ .data[[wave_col]],
-          scales = facet_scales,
-          labeller = labeller(
-            .cols = as_labeller(format_label),
-            .rows = as_labeller(format_label)
+        if (vertical_facets) {
+          p <- p + facet_grid(rows = vars(.data[[wave_col]], variable),
+                              scales = facet_scales,
+                              labeller = labeller(
+                                .rows = as_labeller(format_label)
+                              )
           )
-        )
+        } else {
+          p <- p + facet_grid(variable ~ .data[[wave_col]],
+                              scales = facet_scales,
+                              labeller = labeller(
+                                .cols = as_labeller(format_label),
+                                .rows = as_labeller(format_label)
+                              )
+          )
+        }
       } else if (length(unique(data_long[[wave_col]])) > 1) {
         p <- p + facet_wrap(~ .data[[wave_col]],
-          scales = facet_scales,
-          labeller = as_labeller(format_label)
+                            scales = facet_scales,
+                            labeller = as_labeller(format_label),
+                            ncol = if (vertical_facets) 1 else NULL
         )
       } else if (length(col_names) > 1) {
         p <- p + facet_wrap(~variable,
-          scales = facet_scales,
-          labeller = as_labeller(format_label)
+                            scales = facet_scales,
+                            labeller = as_labeller(format_label),
+                            ncol = if (vertical_facets) 1 else NULL
         )
       }
-
       # save plot if a save path is provided
       if (!is.null(save_path)) {
         filename <- "histogram"
@@ -255,7 +275,7 @@ margot_plot_histogram <- function(data,
           height = height,
           units = "in",
           device = "png",
-          dpi = 300
+          dpi = 500
         )
 
         margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)

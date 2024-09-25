@@ -9,7 +9,7 @@ It highlights the mean and standard deviation for each variable in each wave."><
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.2</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,8 @@ It highlights the mean and standard deviation for each variable in each wave.</p
 <span>  add_timestamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  file_prefix <span class="op">=</span> <span class="st">""</span>,</span>
 <span>  mean_line_color <span class="op">=</span> <span class="st">"black"</span>,</span>
-<span>  sd_line_color <span class="op">=</span> <span class="st">"black"</span></span>
+<span>  sd_line_color <span class="op">=</span> <span class="st">"black"</span>,</span>
+<span>  vertical_facets <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -139,6 +140,10 @@ It highlights the mean and standard deviation for each variable in each wave.</p
 <dt id="arg-sd-line-color">sd_line_color<a class="anchor" aria-label="anchor" href="#arg-sd-line-color"></a></dt>
 <dd><p>Color of the dashed lines representing the standard deviation. Default is "black".</p></dd>
 
+
+<dt id="arg-vertical-facets">vertical_facets<a class="anchor" aria-label="anchor" href="#arg-vertical-facets"></a></dt>
+<dd><p>Logical. If TRUE, facets are arranged vertically. If FALSE (default), facets are arranged horizontally.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -197,6 +202,18 @@ It highlights the mean and standard deviation for each variable in each wave.</p
 <span class="r-in"><span>  color_palette <span class="op">=</span> <span class="va">custom_colors</span>,</span></span>
 <span class="r-in"><span>  mean_line_color <span class="op">=</span> <span class="st">"red"</span>,</span></span>
 <span class="r-in"><span>  sd_line_color <span class="op">=</span> <span class="st">"blue"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Margot Plot Histogram</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> An error occurred: object 'your_data' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;simpleError in eval(expr, envir): object 'your_data' not found&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># use vertical faceting</span></span></span>
+<span class="r-in"><span><span class="fu">margot_plot_histogram</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">your_data</span>,</span></span>
+<span class="r-in"><span>  col_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"var1"</span>, <span class="st">"var2"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  vertical_facets <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Margot Plot Histogram</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────</span></span>

@@ -22,7 +22,8 @@ margot_plot_histogram(
   add_timestamp = FALSE,
   file_prefix = "",
   mean_line_color = "black",
-  sd_line_color = "black"
+  sd_line_color = "black",
+  vertical_facets = FALSE
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ margot_plot_histogram(
 \item{mean_line_color}{Color of the vertical line representing the mean. Default is "black".}
 
 \item{sd_line_color}{Color of the dashed lines representing the standard deviation. Default is "black".}
+
+\item{vertical_facets}{Logical. If TRUE, facets are arranged vertically. If FALSE (default), facets are arranged horizontally.}
 }
 \value{
 A ggplot2 object representing the histogram with highlights.
@@ -105,6 +108,13 @@ margot_plot_histogram(
   color_palette = custom_colors,
   mean_line_color = "red",
   sd_line_color = "blue"
+)
+
+# use vertical faceting
+margot_plot_histogram(
+  data = your_data,
+  col_names = c("var1", "var2"),
+  vertical_facets = TRUE
 )
 
 }
