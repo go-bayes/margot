@@ -138,7 +138,7 @@ margot_plot <- function(.data,
                         prefix = NULL,
                         save_path = here::here("push_mods"),
                         original_df = NULL) {
-  # Set default type to "RD"
+  # **Set default type to "RD"**
   type <- match.arg(type, c("RD", "RR"), several.ok = FALSE)
 
   # Create a copy of the original data for table transformation
@@ -226,10 +226,22 @@ margot_plot <- function(.data,
   # Prepare the data for plotting, including ordering
   .data <- group_tab(.data, type = type, order = order)
 
-  # Set type-dependent options if not provided
+  # **Set type-dependent options if not provided**
   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
+
+  # **Adjust 'Estimate' based on whether the confidence interval crosses the null value**
+  null_value <- ifelse(type == "RR", 1, 0)
+
+  .data <- .data %>%
+    dplyr::mutate(
+      Estimate = dplyr::case_when(
+        (`2.5 %` > null_value & `97.5 %` > null_value) ~ "positive",
+        (`2.5 %` < null_value & `97.5 %` < null_value) ~ "negative",
+        TRUE ~ "not reliable"
+      )
+    )
 
   # Start building the plot
   out <- ggplot2::ggplot(
@@ -247,7 +259,7 @@ margot_plot <- function(.data,
                             linewidth = options$linewidth, position = ggplot2::position_dodge(width = .3)
     ) +
     ggplot2::geom_point(size = options$point_size, position = ggplot2::position_dodge(width = 0.3)) +
-    ggplot2::geom_vline(xintercept = if (type == "RR") 1 else 0, linetype = "solid") +
+    ggplot2::geom_vline(xintercept = null_value, linetype = "solid") +
     ggplot2::scale_color_manual(values = options$colors) +
     ggplot2::labs(
       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),

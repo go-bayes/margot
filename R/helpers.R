@@ -12,38 +12,38 @@ back_transform_estimates <- function(results_df, original_df) {
     stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
   }
 
-  # Ensure that results_df has an 'outcome' column
+  # ensure that results_df has an 'outcome' column
   if (!"outcome" %in% names(results_df)) {
     results_df$outcome <- rownames(results_df)
   }
 
-  # Store the original variable names before any transformations
+  # store the original variable names before any transformations
   if (!"original_var_name" %in% names(results_df)) {
     results_df$original_var_name <- results_df$outcome
   }
 
-  # Initialize new columns for back-transformed estimates and units
+  # initialise new columns for back-transformed estimates and units
   results_df[[paste0(effect_size_col, "_original")]] <- NA_real_
   results_df[["2.5 %_original"]] <- NA_real_
   results_df[["97.5 %_original"]] <- NA_real_
   results_df[["unit"]] <- NA_character_
 
-  # Loop over each outcome
+  # loop over each outcome
   for (i in seq_len(nrow(results_df))) {
     var_name <- results_df$original_var_name[i]
 
-    # Determine if the variable was z-transformed and/or log-transformed
+    # determine if the variable was z-transformed and/or log-transformed
     was_z_transformed <- grepl("_z$", var_name)
     was_log_transformed <- grepl("_log_", var_name)
     contains_hours <- grepl("_hours_", var_name)
 
-    # Get the original variable name in original_df
+    # get the original variable name in original_df
     orig_var_name <- var_name
     if (was_z_transformed) {
       orig_var_name <- sub("_z$", "", orig_var_name)
     }
 
-    # Try to find the variable in original_df
+    # try to find the variable in original_df
     if (!(orig_var_name %in% names(original_df))) {
       # Try removing 't0_', 't1_', 't2_' prefixes
       orig_var_name_no_prefix <- sub("^t[0-9]+_", "", orig_var_name)
@@ -67,6 +67,7 @@ back_transform_estimates <- function(results_df, original_df) {
     # Get mean and sd from original data
     orig_data <- original_df[[orig_var_name]]
     orig_sd <- sd(orig_data, na.rm = TRUE)
+    mean_y <- mean(orig_data, na.rm = TRUE)
 
     if (was_z_transformed) {
       estimate_log <- estimate * orig_sd
@@ -80,22 +81,43 @@ back_transform_estimates <- function(results_df, original_df) {
     unit <- ""
 
     if (was_log_transformed) {
-      # For log-transformed variables, exponentiate to get ratio of geometric means
-      ratio <- exp(estimate_log)
-      # Confidence intervals
-      lower_ratio <- exp(estimate_log - z_value * SE_log)
-      upper_ratio <- exp(estimate_log + z_value * SE_log)
+      # For log-transformed variables, back-transform to original scale
+      # E[y|treatment = 0] = mean_y
+      # E[y|treatment = 1] = mean_y + estimate_log
+      E_y_treated <- mean_y + estimate_log
+      E_y_control <- mean_y
 
-      # Compute percentage change
-      percentage_change <- (ratio - 1) * 100
-      lower_percentage_change <- (lower_ratio - 1) * 100
-      upper_percentage_change <- (upper_ratio - 1) * 100
+      # Expected values on the original scale
+      E_x_treated <- exp(E_y_treated) - 1
+      E_x_control <- exp(E_y_control) - 1
 
-      # Assign to results_df
-      results_df[[paste0(effect_size_col, "_original")]][i] <- round(percentage_change, 2)
-      results_df[["2.5 %_original"]][i] <- round(lower_percentage_change, 2)
-      results_df[["97.5 %_original"]][i] <- round(upper_percentage_change, 2)
-      unit <- "%"
+      delta_x <- E_x_treated - E_x_control
+
+      # For confidence intervals
+      estimate_log_lower <- estimate_log - z_value * SE_log
+      estimate_log_upper <- estimate_log + z_value * SE_log
+
+      E_y_treated_lower <- mean_y + estimate_log_lower
+      E_y_treated_upper <- mean_y + estimate_log_upper
+
+      E_x_treated_lower <- exp(E_y_treated_lower) - 1
+      E_x_treated_upper <- exp(E_y_treated_upper) - 1
+
+      delta_x_lower <- E_x_treated_lower - E_x_control
+      delta_x_upper <- E_x_treated_upper - E_x_control
+
+      # If variable contains '_hours_', transform to minutes
+      if (contains_hours) {
+        delta_x <- delta_x * 60
+        delta_x_lower <- delta_x_lower * 60
+        delta_x_upper <- delta_x_upper * 60
+        unit <- "minutes"
+      }
+
+      # assign to results_df
+      results_df[[paste0(effect_size_col, "_original")]][i] <- round(delta_x, 3)
+      results_df[["2.5 %_original"]][i] <- round(delta_x_lower, 3)
+      results_df[["97.5 %_original"]][i] <- round(delta_x_upper, 3)
     } else {
       # For variables not log-transformed, back-transform as before
       estimate_original <- estimate_log
@@ -112,13 +134,13 @@ back_transform_estimates <- function(results_df, original_df) {
         unit <- "minutes"
       }
 
-      # Round and assign to results_df
+      # round and assign to results_df
       results_df[[paste0(effect_size_col, "_original")]][i] <- round(estimate_original, 3)
       results_df[["2.5 %_original"]][i] <- round(lower_original, 3)
       results_df[["97.5 %_original"]][i] <- round(upper_original, 3)
     }
 
-    # Assign unit to results_df
+    # assign unit to results_df
     results_df[["unit"]][i] <- unit
   }
 

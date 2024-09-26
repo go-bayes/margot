@@ -18,11 +18,11 @@
 
 
 ## New
-- helper function `back_transform_estimates()` is unique for the marginal plots and marginal interpretions, to avoid confusions with back-transforming helpers for split-points in policy trees.
+- helper function `back_transform_estimates()` is unique for the marginal plots and marginal interpretions, to avoid confusions with back-transforming helpers for split-points in policy trees. 
 
 
 ## improved
-- `margot_plot()`, and `margot_interpret_marginal()` produce interpretable results.
+- `margot_plot()`, and `margot_interpret_marginal()` produce interpretable results. Fixed issue with `margot_plot()` when risk ratios are selected, where colours were not being plotted. 
 
 
 

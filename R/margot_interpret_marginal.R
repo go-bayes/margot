@@ -117,13 +117,7 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
       ),
       # Define estimate_lab_original if available
       estimate_lab_original = if (has_original_scale) {
-        if (was_log_transformed) {
-          paste0(
-            round(!!rlang::sym(paste0(effect_size_col, "_original")), 2), "% (",
-            round(`2.5 %_original`, 2), "%, ",
-            round(`97.5 %_original`, 2), "%)"
-          )
-        } else if (unit != "") {
+        if (unit != "") {
           paste0(
             round(!!rlang::sym(paste0(effect_size_col, "_original")), 3), " ", unit, " (",
             round(`2.5 %_original`, 3), " to ",
