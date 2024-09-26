@@ -25,8 +25,6 @@
 - `margot_plot()`, and `margot_interpret_marginal()` produce interpretable results. Fixed issue with `margot_plot()` when risk ratios are selected, where colours were not being plotted. 
 
 
-
-
 # [2024-09-25] margot 0.2.3.4
 
 ## new
