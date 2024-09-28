@@ -76,8 +76,10 @@ reference:
     - margot_log_transform_vars
     - margot_process_binary_vars
     - margot_process_longitudinal_data
+    - margot_process_longitudinal_data_wider
     - margot_wide
     - margot_wide_impute_baseline
+    - margot_wide_machine
 
   - title: "Treatment effect estimation"
     contents:

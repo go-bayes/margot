@@ -109,6 +109,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_binary_vars.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_longitudinal_data.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_process_longitudinal_data_wider.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_propensity_model_and_plots.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_run_models_grf.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_save_png.html</loc></url>
@@ -121,6 +122,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_tab_lmtp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_wide.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_wide_impute_baseline.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_wide_machine.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/match_mi_general.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/pipe.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/plot_rank_average_treatment_effect.html</loc></url>

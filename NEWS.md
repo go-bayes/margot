@@ -13,21 +13,27 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 
 
-# [2024-09-26] margot 0.2.3.5
-
-
+# [2024-09-27] margot 0.2.3.6
 
 ## New
-- helper function `back_transform_estimates()` is unique for the marginal plots and marginal interpretions, to avoid confusions with back-transforming helpers for split-points in policy trees. 
+
+- `margot_wide_machine()` converts wide data to long data so using indicators for missing observations, which allows for non-parametric stacked learning in `lmtp` without multiple-imputation assumptions. Also handles more than three time-points. Optional `imputation_method = 'mice` allows users to impute, while also creating NA dummy variables for non-parametric learning.
+
+- `margot_process_longitudinal_data_wider()` extends flexibility of `margot_process_longitudinal_data()` to more than three waves, and allows users to specify variable names. 
+
+# [2024-09-26] margot 0.2.3.5
+
+## New
+- helper function `back_transform_estimates()` is unique for the marginal plots and marginal interpretation, to avoid confusions with back-transforming helpers for split-points in policy trees. 
 
 
-## improved
+## Improved
 - `margot_plot()`, and `margot_interpret_marginal()` produce interpretable results. Fixed issue with `margot_plot()` when risk ratios are selected, where colours were not being plotted. 
 
 
 # [2024-09-25] margot 0.2.3.4
 
-## new
+## New
 - `margot_plot_slope_covariate_combo()` - batch multiple `margot_plot_slope_covariate()` plots onto one graph using `patchwork`.
 
 
