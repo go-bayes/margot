@@ -9,7 +9,7 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.6</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,10 +46,10 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 <span>  <span class="va">df_wide</span>,</span>
 <span>  ordinal_columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  continuous_columns_keep <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  exposure_var_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  exposure_var <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scale_exposure <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  not_lost_indicator_name <span class="op">=</span> <span class="st">"not_lost"</span>,</span>
-<span>  lost_indicator_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  not_lost_in_following_wave <span class="op">=</span> <span class="st">"not_lost_following_wave"</span>,</span>
+<span>  lost_in_following_wave <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  remove_selected_columns <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  time_point_prefixes <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  time_point_regex <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -72,20 +72,8 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 <dd><p>A character vector of continuous column names to keep without scaling.</p></dd>
 
 
-<dt id="arg-exposure-var-name">exposure_var_name<a class="anchor" aria-label="anchor" href="#arg-exposure-var-name"></a></dt>
-<dd><p>Name of the exposure variable. This variable will be used to determine attrition.</p></dd>
-
-
 <dt id="arg-scale-exposure">scale_exposure<a class="anchor" aria-label="anchor" href="#arg-scale-exposure"></a></dt>
 <dd><p>Logical. If TRUE, scales the exposure variable. Default is FALSE.</p></dd>
-
-
-<dt id="arg-not-lost-indicator-name">not_lost_indicator_name<a class="anchor" aria-label="anchor" href="#arg-not-lost-indicator-name"></a></dt>
-<dd><p>Name of the 'not lost' indicator. Default is "not_lost".</p></dd>
-
-
-<dt id="arg-lost-indicator-name">lost_indicator_name<a class="anchor" aria-label="anchor" href="#arg-lost-indicator-name"></a></dt>
-<dd><p>Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.</p></dd>
 
 
 <dt id="arg-remove-selected-columns">remove_selected_columns<a class="anchor" aria-label="anchor" href="#arg-remove-selected-columns"></a></dt>
@@ -98,6 +86,18 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 
 <dt id="arg-time-point-regex">time_point_regex<a class="anchor" aria-label="anchor" href="#arg-time-point-regex"></a></dt>
 <dd><p>A regex pattern to identify time points. Used if time_point_prefixes is NULL.</p></dd>
+
+
+<dt id="arg-exposure-var-name">exposure_var_name<a class="anchor" aria-label="anchor" href="#arg-exposure-var-name"></a></dt>
+<dd><p>Name of the exposure variable. This variable will be used to determine attrition.</p></dd>
+
+
+<dt id="arg-not-lost-indicator-name">not_lost_indicator_name<a class="anchor" aria-label="anchor" href="#arg-not-lost-indicator-name"></a></dt>
+<dd><p>Name of the 'not lost' indicator. Default is "not_lost".</p></dd>
+
+
+<dt id="arg-lost-indicator-name">lost_indicator_name<a class="anchor" aria-label="anchor" href="#arg-lost-indicator-name"></a></dt>
+<dd><p>Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -130,11 +130,7 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 <span class="r-in"><span>  remove_selected_columns <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>  time_point_prefixes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"t0"</span>, <span class="st">"t1"</span>, <span class="st">"t2"</span>, <span class="st">"t3"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Longitudinal Data Processing</span> <span style="color: #00BBBB;">────────────────────────────────────────────────</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Starting data processing for longitudinal data with multiple time points</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Identified 4 time points: t0, t1, t2, t3</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'df_wide' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_process_longitudinal_data_wider(df_wide, ordinal_columns = c("education",     "income_category"), continuous_columns_keep = c("age", "bmi"),     exposure_var_name = "treatment", scale_exposure = FALSE,     not_lost_indicator_name = "not_lost", lost_indicator_name = NULL,     remove_selected_columns = FALSE, time_point_prefixes = c("t0",         "t1", "t2", "t3")):</span> unused arguments (exposure_var_name = "treatment", not_lost_indicator_name = "not_lost", lost_indicator_name = NULL)</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

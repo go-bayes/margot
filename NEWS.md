@@ -11,7 +11,14 @@
 * get standard deviation units into reports
 * batch process trend plots
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
+* clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2024-09-27] margot 0.2.3.7 :)!
+
+
+## Improved
+- `margot_process_longitudinal_data_wider()` performance enhancement
+- `margot_wide_machine()` simplified.  We now have a time-varying treatment workflow in place! 
 
 # [2024-09-27] margot 0.2.3.6
 

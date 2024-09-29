@@ -13,7 +13,6 @@ margot_wide_machine(
   outcome_vars,
   confounder_vars = NULL,
   make_na_dummies = NULL,
-  not_lost_following_wave = NULL,
   imputation_method = "median",
   include_exposure_var_baseline = TRUE,
   include_outcome_vars_baseline = TRUE
@@ -35,8 +34,6 @@ margot_wide_machine(
 \item{confounder_vars}{An optional character vector of time-varying confounder variable names.}
 
 \item{make_na_dummies}{An optional character vector of variable names or keywords ("baseline_vars", "confounder_vars") for which to create NA dummies.}
-
-\item{not_lost_following_wave}{A character string specifying the name of the variable to check for non-missing status across waves (default is NULL).}
 
 \item{imputation_method}{A character string specifying the imputation method to use. Options are 'median' (default), 'mice', or 'none'.}
 }
@@ -83,7 +80,6 @@ df_wide_impute <- margot_wide_machine(
   outcome_vars = outcome_vars,
   confounder_vars = confounder_vars,
   make_na_dummies = c("baseline_vars", "confounder_vars"),
-  not_lost_following_wave = "follow_up_complete",
   imputation_method = "mice"
 )
 }

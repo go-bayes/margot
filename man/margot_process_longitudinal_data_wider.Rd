@@ -8,10 +8,10 @@ margot_process_longitudinal_data_wider(
   df_wide,
   ordinal_columns = NULL,
   continuous_columns_keep = NULL,
-  exposure_var_name = NULL,
+  exposure_var = NULL,
   scale_exposure = FALSE,
-  not_lost_indicator_name = "not_lost",
-  lost_indicator_name = NULL,
+  not_lost_in_following_wave = "not_lost_following_wave",
+  lost_in_following_wave = NULL,
   remove_selected_columns = FALSE,
   time_point_prefixes = NULL,
   time_point_regex = NULL
@@ -24,19 +24,19 @@ margot_process_longitudinal_data_wider(
 
 \item{continuous_columns_keep}{A character vector of continuous column names to keep without scaling.}
 
-\item{exposure_var_name}{Name of the exposure variable. This variable will be used to determine attrition.}
-
 \item{scale_exposure}{Logical. If TRUE, scales the exposure variable. Default is FALSE.}
-
-\item{not_lost_indicator_name}{Name of the 'not lost' indicator. Default is "not_lost".}
-
-\item{lost_indicator_name}{Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.}
 
 \item{remove_selected_columns}{Logical. If TRUE, removes selected columns after encoding. Default is FALSE.}
 
 \item{time_point_prefixes}{A character vector of time point prefixes. If NULL, they will be inferred from the data.}
 
 \item{time_point_regex}{A regex pattern to identify time points. Used if time_point_prefixes is NULL.}
+
+\item{exposure_var_name}{Name of the exposure variable. This variable will be used to determine attrition.}
+
+\item{not_lost_indicator_name}{Name of the 'not lost' indicator. Default is "not_lost".}
+
+\item{lost_indicator_name}{Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.}
 }
 \value{
 A processed dataframe suitable for use in longitudinal analyses with multiple waves.

@@ -1,7 +1,7 @@
 Package: margot
 Type: Package
 Title: MARGinal Observational Treatment-effects
-Version: 0.2.3.6
+Version: 0.2.3.7
 URL: https://github.com/go-bayes/margot
 Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
 Description: Functions to obtain MARGinal Observational Treatment-effects from observational data. The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.
@@ -52,7 +52,8 @@ Imports:
     crayon,
     ggeffects,
     lubridate,
-    stringr
+    stringr,
+    zoo
 RoxygenNote: 7.3.2.9000
 VignetteBuilder: quarto
 Suggests:
