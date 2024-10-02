@@ -12,7 +12,7 @@ margot_process_longitudinal_data_wider(
   scale_exposure = FALSE,
   not_lost_in_following_wave = "not_lost_following_wave",
   lost_in_following_wave = NULL,
-  remove_selected_columns = FALSE,
+  remove_selected_columns = TRUE,
   time_point_prefixes = NULL,
   time_point_regex = NULL,
   save_observed_y = FALSE,
@@ -34,7 +34,7 @@ margot_process_longitudinal_data_wider(
 
 \item{lost_in_following_wave}{Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.}
 
-\item{remove_selected_columns}{Logical. If TRUE, removes selected columns after encoding. Default is FALSE.}
+\item{remove_selected_columns}{Logical. If TRUE, removes selected columns after encoding. Default is TRUE}
 
 \item{time_point_prefixes}{A character vector of time point prefixes. If NULL, they will be inferred from the data.}
 

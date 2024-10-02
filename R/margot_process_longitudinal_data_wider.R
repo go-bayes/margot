@@ -11,7 +11,7 @@
 #' @param scale_exposure Logical. If TRUE, scales the exposure variable. Default is FALSE.
 #' @param not_lost_in_following_wave Name of the 'not lost' indicator. Default is "not_lost_following_wave".
 #' @param lost_in_following_wave Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.
-#' @param remove_selected_columns Logical. If TRUE, removes selected columns after encoding. Default is FALSE.
+#' @param remove_selected_columns Logical. If TRUE, removes selected columns after encoding. Default is TRUE
 #' @param time_point_prefixes A character vector of time point prefixes. If NULL, they will be inferred from the data.
 #' @param time_point_regex A regex pattern to identify time points. Used if time_point_prefixes is NULL.
 #' @param save_observed_y Logical. If TRUE, retains observed outcome values in the final wave even if lost. Default is FALSE.
@@ -59,7 +59,7 @@ margot_process_longitudinal_data_wider <- function(
     scale_exposure = FALSE,
     not_lost_in_following_wave = "not_lost_following_wave",
     lost_in_following_wave = NULL,
-    remove_selected_columns = FALSE,
+    remove_selected_columns = TRUE,
     time_point_prefixes = NULL,
     time_point_regex = NULL,
     save_observed_y = FALSE,
