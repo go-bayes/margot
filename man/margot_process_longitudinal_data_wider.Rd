@@ -14,7 +14,9 @@ margot_process_longitudinal_data_wider(
   lost_in_following_wave = NULL,
   remove_selected_columns = FALSE,
   time_point_prefixes = NULL,
-  time_point_regex = NULL
+  time_point_regex = NULL,
+  save_observed_y = FALSE,
+  censored_if_any_lost = TRUE
 )
 }
 \arguments{
@@ -24,7 +26,13 @@ margot_process_longitudinal_data_wider(
 
 \item{continuous_columns_keep}{A character vector of continuous column names to keep without scaling.}
 
+\item{exposure_var}{Name of the exposure variable. This variable will be used to determine attrition.}
+
 \item{scale_exposure}{Logical. If TRUE, scales the exposure variable. Default is FALSE.}
+
+\item{not_lost_in_following_wave}{Name of the 'not lost' indicator. Default is "not_lost_following_wave".}
+
+\item{lost_in_following_wave}{Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.}
 
 \item{remove_selected_columns}{Logical. If TRUE, removes selected columns after encoding. Default is FALSE.}
 
@@ -32,11 +40,11 @@ margot_process_longitudinal_data_wider(
 
 \item{time_point_regex}{A regex pattern to identify time points. Used if time_point_prefixes is NULL.}
 
-\item{exposure_var_name}{Name of the exposure variable. This variable will be used to determine attrition.}
+\item{save_observed_y}{Logical. If TRUE, retains observed outcome values in the final wave even if lost. Default is FALSE.}
 
-\item{not_lost_indicator_name}{Name of the 'not lost' indicator. Default is "not_lost".}
-
-\item{lost_indicator_name}{Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.}
+\item{censored_if_any_lost}{Logical. Determines how to treat the 'not_lost_in_following_wave' indicator.
+If TRUE, sets 'not_lost_in_following_wave' to 0 if any value is NA in the following wave.
+If FALSE, applies custom logic based on 'save_observed_y'.}
 }
 \value{
 A processed dataframe suitable for use in longitudinal analyses with multiple waves.
@@ -52,7 +60,7 @@ The function performs the following steps:
 3. Applies attrition logic across all waves.
 4. Scales continuous variables across all waves, removing original non-scaled columns.
 5. Optionally encodes ordinal columns.
-6. Handles missing outcomes in the final wave.
+6. Handles missing outcomes in the final wave based on 'save_observed_y'.
 7. Reorders columns, placing exposure and 'not_lost' indicators appropriately.
 }
 \examples{
@@ -61,11 +69,13 @@ processed_data <- margot_process_longitudinal_data_wider(
   df_wide,
   ordinal_columns = c("education", "income_category"),
   continuous_columns_keep = c("age", "bmi"),
-  exposure_var_name = "treatment",
+  exposure_var = "treatment",
   scale_exposure = FALSE,
-  not_lost_indicator_name = "not_lost",
-  lost_indicator_name = NULL,
+  not_lost_in_following_wave = "not_lost",
+  lost_in_following_wave = NULL,
   remove_selected_columns = FALSE,
-  time_point_prefixes = c("t0", "t1", "t2", "t3")
+  time_point_prefixes = c("t0", "t1", "t2", "t3"),
+  save_observed_y = TRUE,
+  censored_if_any_lost = FALSE
 )
 }

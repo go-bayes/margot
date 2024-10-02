@@ -15,9 +15,9 @@
 #' @param time_point_prefixes A character vector of time point prefixes. If NULL, they will be inferred from the data.
 #' @param time_point_regex A regex pattern to identify time points. Used if time_point_prefixes is NULL.
 #' @param save_observed_y Logical. If TRUE, retains observed outcome values in the final wave even if lost. Default is FALSE.
-#' @param censored_if_any_lost Determines how to treat the 'not_lost_in_following_wave' indicator.
+#' @param censored_if_any_lost Logical. Determines how to treat the 'not_lost_in_following_wave' indicator.
 #' If TRUE, sets 'not_lost_in_following_wave' to 0 if any value is NA in the following wave.
-#' If NA, sets 'not_lost_in_following_wave' to NA if one or more variables are observed in the final wave.
+#' If FALSE, applies custom logic based on 'save_observed_y'.
 #'
 #' @return A processed dataframe suitable for use in longitudinal analyses with multiple waves.
 #'
@@ -48,7 +48,7 @@
 #'   remove_selected_columns = FALSE,
 #'   time_point_prefixes = c("t0", "t1", "t2", "t3"),
 #'   save_observed_y = TRUE,
-#'   censored_if_any_lost = TRUE
+#'   censored_if_any_lost = FALSE
 #' )
 #' @export
 margot_process_longitudinal_data_wider <- function(
@@ -68,7 +68,12 @@ margot_process_longitudinal_data_wider <- function(
   cli::cli_h1("Longitudinal Data Processing")
   cli::cli_alert_info("Starting data processing for longitudinal data with multiple time points")
 
-  # identify time points
+  # Validate censored_if_any_lost
+  if (!is.logical(censored_if_any_lost) || length(censored_if_any_lost) != 1) {
+    stop("The 'censored_if_any_lost' parameter must be either TRUE or FALSE.")
+  }
+
+  # Identify time points
   if (is.null(time_point_prefixes)) {
     if (is.null(time_point_regex)) {
       time_point_regex <- "^(t\\d+)_.*$"
@@ -83,16 +88,16 @@ margot_process_longitudinal_data_wider <- function(
 
   cli::cli_alert_info("Identified {num_time_points} time points: {paste(time_points, collapse = ', ')}")
 
-  # init the data frame for processing
+  # Initialize the data frame for processing
   df_wide_use <- df_wide
 
-  # determine outcome var
+  # Determine outcome variables
   final_wave <- time_points[num_time_points]
   final_wave_cols <- grep(paste0("^", final_wave, "_"), names(df_wide_use), value = TRUE)
   outcome_vars <- gsub(paste0("^", final_wave, "_"), "", final_wave_cols)
   cli::cli_alert_info("Using all variables in the final wave as outcomes.")
 
-  # Step 1: create 'not_lost_in_following_wave' indicators and handle missingness
+  # Step 1: Create 'not_lost_in_following_wave' indicators and handle missingness
   cli::cli_h2("Step 1: Creating 'not_lost_in_following_wave' indicators and handling missingness")
 
   for (i in seq_len(num_time_points - 1)) {
@@ -112,21 +117,38 @@ margot_process_longitudinal_data_wider <- function(
         cli::cli_alert_warning("No outcome columns found for the final wave. Skipping 'not_lost' indicator for {t_i}.")
         next
       }
+
+      # Compute counts of observed and missing outcome variables
+      num_observed <- rowSums(!is.na(df_wide_use[, outcome_cols_next, drop = FALSE]))
+      num_missing <- rowSums(is.na(df_wide_use[, outcome_cols_next, drop = FALSE]))
+      total_outcomes <- length(outcome_cols_next)
+
+      all_observed <- num_observed == total_outcomes
+      all_missing <- num_missing == total_outcomes
+      some_observed <- num_observed > 0 & num_observed < total_outcomes
+
+      # Initialize not_lost_col with NA
+      df_wide_use[[not_lost_col]] <- NA
+
+      # Apply the logic based on 'save_observed_y' and 'censored_if_any_lost'
       if (censored_if_any_lost == TRUE) {
-        df_wide_use[[not_lost_col]] <- ifelse(
-          rowSums(is.na(df_wide_use[, outcome_cols_next, drop = FALSE])) == 0, 1, 0
-        )
-      } else if (is.na(censored_if_any_lost)) {
-        observed_in_final_wave <- rowSums(!is.na(df_wide_use[, outcome_cols_next, drop = FALSE])) > 0
-        df_wide_use[[not_lost_col]] <- ifelse(observed_in_final_wave, NA, 0)
-      } else {
-        cli::cli_alert_warning("Invalid value for 'censored_if_any_lost'. Using default TRUE.")
-        df_wide_use[[not_lost_col]] <- ifelse(
-          rowSums(is.na(df_wide_use[, outcome_cols_next, drop = FALSE])) == 0, 1, 0
-        )
+        # Set to 1 if all outcomes observed, else 0
+        df_wide_use[[not_lost_col]][all_observed] <- 1
+        df_wide_use[[not_lost_col]][!all_observed] <- 0
+      } else if (censored_if_any_lost == FALSE) {
+        # When 'save_observed_y' is TRUE
+        if (save_observed_y == TRUE) {
+          df_wide_use[[not_lost_col]][all_observed] <- 1
+          df_wide_use[[not_lost_col]][all_missing] <- 0
+          df_wide_use[[not_lost_col]][some_observed] <- NA
+        } else {
+          # When 'save_observed_y' is FALSE
+          df_wide_use[[not_lost_col]][all_observed] <- 1
+          df_wide_use[[not_lost_col]][!all_observed] <- 0
+        }
       }
     } else {
-      # for other waves, use the exposure variable as before
+      # For other waves, use the exposure variable as before
       if (!exposure_col %in% names(df_wide_use) || !exposure_col_next %in% names(df_wide_use)) {
         cli::cli_alert_warning("Exposure column '{exposure_col}' or '{exposure_col_next}' not found. Skipping 'not_lost' indicator for {t_i}.")
         next
@@ -134,9 +156,11 @@ margot_process_longitudinal_data_wider <- function(
       df_wide_use[[not_lost_col]] <- ifelse(!is.na(df_wide_use[[exposure_col_next]]), 1, 0)
     }
 
-    # handle missingness for current and future waves
+    # Handle missingness for current and future waves
     rows_lost <- df_wide_use[[not_lost_col]] == 0
-    if (any(rows_lost)) {
+    rows_na <- is.na(df_wide_use[[not_lost_col]])
+
+    if (any(rows_lost | rows_na)) {
       future_waves <- time_points[(i+1):num_time_points]
       for (fw in future_waves) {
         future_cols <- grep(paste0("^", fw, "_"), names(df_wide_use), value = TRUE)
@@ -145,14 +169,15 @@ margot_process_longitudinal_data_wider <- function(
           outcome_cols_fw <- paste0(fw, "_", outcome_vars)
           future_cols <- setdiff(future_cols, outcome_cols_fw)
         }
-        df_wide_use[rows_lost, future_cols] <- NA
+        # Set future columns to NA for rows_lost and rows_na
+        df_wide_use[rows_lost | rows_na, future_cols] <- NA
       }
     }
 
     cli::cli_alert_success("Created '{not_lost_col}' indicator and handled missingness")
   }
 
-  # Step 2: handle missing outcomes in the final wave
+  # Step 2: Handle missing outcomes in the final wave
   cli::cli_h2("Step 2: Handling missing outcomes in the final wave")
 
   final_outcome_cols <- paste0(final_wave, "_", outcome_vars)
@@ -160,6 +185,7 @@ margot_process_longitudinal_data_wider <- function(
 
   if (length(final_outcome_cols) > 0) {
     if (!save_observed_y) {
+      # Set missing outcomes in the final wave to NA
       missing_final_wave <- rowSums(is.na(df_wide_use[, final_outcome_cols, drop = FALSE])) > 0
       df_wide_use[missing_final_wave, final_outcome_cols] <- NA
       cli::cli_alert_success("Set missing outcomes in the final wave to NA")
@@ -170,7 +196,7 @@ margot_process_longitudinal_data_wider <- function(
     cli::cli_alert_warning("No outcome columns found for the final wave. Skipping handling of missing outcomes.")
   }
 
-  # Step 3: create lost_in_following_wave indicator if specified
+  # Step 3: Create lost_in_following_wave indicator if specified
   if (!is.null(lost_in_following_wave)) {
     cli::cli_h2("Step 3: Creating lost_in_following_wave indicator")
     for (t in time_points[1:(num_time_points-1)]) {
@@ -183,33 +209,33 @@ margot_process_longitudinal_data_wider <- function(
     }
   }
 
-  # Step 4: scale continuous variables across all waves
+  # Step 4: Scale continuous variables across all waves
   cli::cli_h2("Step 4: Scaling continuous variables across all waves")
 
-  # identify continuous columns to scale
+  # Identify continuous columns to scale
   continuous_cols <- names(df_wide_use)[sapply(df_wide_use, is.numeric)]
   continuous_cols <- continuous_cols[!continuous_cols %in% c(continuous_columns_keep, ordinal_columns)]
   continuous_cols <- continuous_cols[!grepl(paste0("_", not_lost_in_following_wave, "$|_", lost_in_following_wave, "$|_binary$|_na$|_weights$"), continuous_cols)]
 
-  # remove exposure variable from scaling unless scale_exposure is TRUE
+  # Remove exposure variable from scaling unless scale_exposure is TRUE
   if (!scale_exposure) {
     exposure_cols <- paste0(time_points, "_", exposure_var)
     continuous_cols <- setdiff(continuous_cols, exposure_cols)
   }
 
-  # scale continuous variables for all waves and remove original columns
+  # Scale continuous variables for all waves and remove original columns
   cols_to_remove <- character(0)
   for (col in continuous_cols) {
     df_wide_use[[paste0(col, "_z")]] <- scale(df_wide_use[[col]]) %>% as.vector()
     cols_to_remove <- c(cols_to_remove, col)
   }
 
-  # remove original columns that have been z-transformed
+  # Remove original columns that have been z-transformed
   df_wide_use <- df_wide_use[, !names(df_wide_use) %in% cols_to_remove]
 
   cli::cli_alert_success("Scaled continuous variables across all waves and removed original columns")
 
-  # Step 5: encode ordinal columns
+  # Step 5: Encode ordinal columns
   cli::cli_h2("Step 5: Encoding ordinal columns")
 
   if (!is.null(ordinal_columns)) {
@@ -222,7 +248,7 @@ margot_process_longitudinal_data_wider <- function(
       ignore_na = TRUE
     )
 
-    # rename dummy variables
+    # Rename dummy variables
     for (ordinal_col in ordinal_columns) {
       dummy_cols <- grep(paste0("^", ordinal_col, "_"), names(df_wide_use), value = TRUE)
       df_wide_use <- df_wide_use %>%
@@ -234,7 +260,7 @@ margot_process_longitudinal_data_wider <- function(
     cli::cli_alert_info("No ordinal columns to encode")
   }
 
-  # Step 6: reordering columns
+  # Step 6: Reordering columns
   cli::cli_h2("Step 6: Reordering columns")
 
   new_order <- c("id")  # Start with the ID column
@@ -242,33 +268,33 @@ margot_process_longitudinal_data_wider <- function(
   for (t in time_points) {
     t_cols <- grep(paste0("^", t, "_"), names(df_wide_use), value = TRUE)
 
-    # separate columns into different categories
+    # Separate columns into different categories
     exposure_col <- paste0(t, "_", exposure_var)
     not_lost_col <- paste0(t, "_", not_lost_in_following_wave)
     lost_col <- if(!is.null(lost_in_following_wave)) paste0(t, "_", lost_in_following_wave) else NULL
 
-    # identify z-transformed columns
+    # Identify z-transformed columns
     z_cols <- grep("_z$", t_cols, value = TRUE)
 
-    # other columns (excluding z-transformed, exposure, not_lost, and lost)
+    # Other columns (excluding z-transformed, exposure, not_lost, and lost)
     other_cols <- setdiff(t_cols, c(z_cols, exposure_col, not_lost_col, lost_col))
 
-    # order other columns, z-transformed columns, exposure, not_lost, lost (if exists)
+    # Order other columns, z-transformed columns, exposure, not_lost, lost (if exists)
     new_order <- c(new_order, other_cols, z_cols, exposure_col, not_lost_col, lost_col)
   }
 
-  # remove any NULL values (in case lost_col doesn't exist)
+  # Remove any NULL values (in case lost_col doesn't exist)
   new_order <- new_order[!sapply(new_order, is.null)]
 
-  # keep only columns that exist in the dataframe
+  # Keep only columns that exist in the dataframe
   new_order <- intersect(new_order, names(df_wide_use))
 
-  # reorder the dataframe
+  # Reorder the dataframe
   df_wide_use <- df_wide_use[, new_order]
 
   cli::cli_alert_success("Columns reordered successfully \U0001F44D")
 
-  # final messages
+  # Final messages
   cli::cli_alert_success("Data processing completed successfully \U0001F44D")
   cli::cli_h2("Summary")
   cli::cli_ul(c(
