@@ -7,7 +7,7 @@
 margot_plot(
   .data,
   type = c("RD", "RR"),
-  order = c("default", "alphabetical"),
+  order = c("default", "alphabetical", "custom"),
   title_binary = NULL,
   ...,
   options = list(),

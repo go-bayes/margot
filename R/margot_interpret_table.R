@@ -46,17 +46,10 @@
 #' @importFrom dplyr case_when mutate rowwise ungroup if_else
 #' @importFrom glue glue
 #' @importFrom cli cli_alert_danger cli_alert_warning
-margot_interpret_table <- function(df, causal_scale, estimand = NULL, order = "default") {
-  # Deprecation warning with emoji and color
-  cli::cli_alert_danger("{cli::col_red(cli::symbol$warning)} {.strong The `margot_interpret_table()` function is deprecated.}")
-  cli::cli_alert_warning("{cli::col_yellow(cli::symbol$info)} Please use {.code margot_interpret_marginal()} instead. See {.help [?margot_interpret_marginal]} for details.")
+margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL, order = "default", original_df = NULL) {
+  type <- match.arg(type)
 
-  require(dplyr)
-  require(glue)
-  require(tibble)
-
-  # Rest of the function remains the same
-  # ...
+  cli::cli_alert_info("Starting interpretation of causal effect estimates...")
 
   # Define estimand descriptions
   estimand_description <- if (!is.null(estimand)) {
@@ -71,45 +64,84 @@ margot_interpret_table <- function(df, causal_scale, estimand = NULL, order = "d
   } else {
     NULL
   }
-  # Determine the correct type based on causal_scale
-  effect_type <- if (causal_scale == "causal_difference") "RD" else "RR"
 
-  # Use group_tab to ensure the dataframe is correctly formatted
-  if (!"Estimate" %in% names(df) || !"outcome" %in% names(df)) {
-    df <- group_tab(df, type = effect_type, order = order)
+  cli::cli_alert_info("Processing and interpreting data...")
+
+  # Process df via group_tab to ensure 'Estimate' variable is present
+  df <- group_tab(df, type = type, order = order)
+
+  # If original_df is provided, back-transform estimates
+  if (!is.null(original_df)) {
+    df <- back_transform_estimates(df, original_df)
   }
 
-  # Further checks to ensure the dataframe contains the necessary columns
-  causal_contrast_column <- if (causal_scale == "causal_difference") {
+  # Determine the effect size column
+  effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(df)) {
     "E[Y(1)]-E[Y(0)]"
-  } else {
+  } else if ("E[Y(1)]/E[Y(0)]" %in% names(df)) {
     "E[Y(1)]/E[Y(0)]"
+  } else {
+    cli::cli_abort("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
   }
 
-  if (!causal_contrast_column %in% names(df)) {
-    stop(paste("Dataframe does not contain the required column:", causal_contrast_column))
-  }
+  # Determine if we have original scale results
+  has_original_scale <- paste0(effect_size_col, "_original") %in% names(df)
 
-  # data processing and interpretation
+  # Define the null_value based on type
+  null_value <- ifelse(type == "RR", 1, 0)
+
   interpretation <- df %>%
+    dplyr::rowwise() %>%
     dplyr::mutate(
-      causal_contrast = round(.data[[causal_contrast_column]], 3),
-      formatted_strength = case_when(
-        E_Val_bound <= 1 | (`2.5 %` <= 0 & `97.5 %` >= 0) ~ "**the evidence for causality is not reliable**",
-        E_Val_bound > 1 & E_Val_bound < 1.1 ~ "**the evidence for causality is weak**",
-        E_Val_bound > 2 ~ "**the evidence for causality is strong**",
-        TRUE ~ "**there is evidence for causality**"
+      # Determine if the variable was log-transformed
+      was_log_transformed = grepl("_log_", original_var_name),
+      # Define evidence_strength based on E_Val_bound and CI
+      evidence_strength = dplyr::case_when(
+        (`2.5 %` > null_value & E_Val_bound > 2) | (`97.5 %` < null_value & E_Val_bound > 2) ~ cli::col_green('**the evidence for causality is strong**'),
+        (`2.5 %` > null_value & E_Val_bound > 1.1 & E_Val_bound <= 2) | (`97.5 %` < null_value & E_Val_bound > 1.1 & E_Val_bound <= 2) ~ cli::col_blue('**there is evidence for causality**'),
+        (`2.5 %` > null_value & E_Val_bound > 1 & E_Val_bound <= 1.1) | (`97.5 %` < null_value & E_Val_bound > 1 & E_Val_bound <= 1.1) ~ cli::col_yellow('**the evidence for causality is weak**'),
+        TRUE ~ cli::col_red('**the evidence for causality is not reliable**')
       ),
-      confounder_warning = if_else(E_Val_bound > 1,
-                                   paste0("At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of ", E_Val_bound, " to negate the observed effect. Weaker confounding would not overturn it. "),
-                                   ""),
-      outcome_interpretation = glue(
-        "For '{outcome}', the effect estimate on the {causal_scale} scale is {causal_contrast} [{`2.5 %`}, {`97.5 %`}]. ","The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ", "{confounder_warning}", "Here, {formatted_strength}."
+      # Units
+      unit = ifelse(!is.na(unit) & unit != "", unit, ""),
+      # Define estimate_lab
+      estimate_lab = paste0(
+        round(!!rlang::sym(effect_size_col), 3), " (",
+        round(`2.5 %`, 3), ", ",
+        round(`97.5 %`, 3), ")"
+      ),
+      # Define estimate_lab_original if available
+      estimate_lab_original = if (has_original_scale) {
+        if (unit != "") {
+          paste0(
+            round(!!rlang::sym(paste0(effect_size_col, "_original")), 3), " ", unit, " (",
+            round(`2.5 %_original`, 3), " to ",
+            round(`97.5 %_original`, 3), " ", unit, ")"
+          )
+        } else {
+          paste0(
+            round(!!rlang::sym(paste0(effect_size_col, "_original")), 3), " (",
+            round(`2.5 %_original`, 3), ", ",
+            round(`97.5 %_original`, 3), ")"
+          )
+        }
+      } else {
+        NA_character_
+      },
+      outcome_interpretation = glue::glue(
+        "For '{outcome}', the effect estimate ({type}) is {estimate_lab}. ",
+        "{if (has_original_scale) paste0('On the original data scale, the estimated effect is ', estimate_lab_original, '. ') else ''}",
+        "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
+        "{if (E_Val_bound > 1) paste0('At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of ', E_Val_bound, ' to negate the observed effect. Weaker confounding would not overturn it. ') else ''}",
+        "Here, {evidence_strength}."
       )
-    )
+    ) %>%
+    dplyr::ungroup()
 
-  # compile results
+  # Compile results
   interpretation_text <- paste(interpretation$outcome_interpretation, collapse = '\n\n')
+
+  cli::cli_alert_success("Interpretation completed successfully!")
 
   # Return results as a list
   return(list(

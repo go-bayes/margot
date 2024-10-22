@@ -152,5 +152,4 @@ reference:
     - coloured_histogram_sd
     - coloured_histogram_shift
     - coloured_histogram_quantiles
-    - margot_interpret_table
     - margot_plot_hist

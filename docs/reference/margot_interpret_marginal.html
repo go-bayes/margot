@@ -3,11 +3,27 @@
 of causal effect estimates. It categorises the strength of evidence for causality based on
 E-values and confidence intervals, and generates a detailed interpretation of the effect
 estimates according to specified types (i.e., "RD" for risk difference or "RR" for risk ratio)
-and estimands. It now also includes interpretation of original scale results when available.'><meta property="og:description" content='This function interprets the output of causal effect analysis, providing textual descriptions
+and estimands. It now also includes interpretation of original scale results when available.
+`r lifecycle::badge("deprecated")`
+This function is deprecated. Please use `margot_interpret_marginal()` instead.
+This function interprets the output of causal effect analysis, providing textual descriptions
+of causal effect estimates. It categorises the strength of evidence for causality based on
+E-values and confidence intervals, and generates a detailed interpretation of the effect
+estimates according to specified causal scales (i.e., "causal_difference" or "risk_ratio")
+and estimands. This function supports interpreting results on both the causal difference
+and risk ratio scales.'><meta property="og:description" content='This function interprets the output of causal effect analysis, providing textual descriptions
 of causal effect estimates. It categorises the strength of evidence for causality based on
 E-values and confidence intervals, and generates a detailed interpretation of the effect
 estimates according to specified types (i.e., "RD" for risk difference or "RR" for risk ratio)
-and estimands. It now also includes interpretation of original scale results when available.'></head><body>
+and estimands. It now also includes interpretation of original scale results when available.
+`r lifecycle::badge("deprecated")`
+This function is deprecated. Please use `margot_interpret_marginal()` instead.
+This function interprets the output of causal effect analysis, providing textual descriptions
+of causal effect estimates. It categorises the strength of evidence for causality based on
+E-values and confidence intervals, and generates a detailed interpretation of the effect
+estimates according to specified causal scales (i.e., "causal_difference" or "risk_ratio")
+and estimands. This function supports interpreting results on both the causal difference
+and risk ratio scales.'></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -37,7 +53,7 @@ and estimands. It now also includes interpretation of original scale results whe
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Interpret and Describe Causal Effect Estimates Using E-values</h1>
-      <small class="dont-index">Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/R/margot_interpret_marginal.R" class="external-link"><code>R/margot_interpret_marginal.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/R/margot_interpret_marginal.R" class="external-link"><code>R/margot_interpret_marginal.R</code></a>, <a href="https://github.com/go-bayes/margot/blob/HEAD/R/margot_interpret_table.R" class="external-link"><code>R/margot_interpret_table.R</code></a></small>
       <div class="d-none name"><code>margot_interpret_marginal.Rd</code></div>
     </div>
 
@@ -47,11 +63,27 @@ of causal effect estimates. It categorises the strength of evidence for causalit
 E-values and confidence intervals, and generates a detailed interpretation of the effect
 estimates according to specified types (i.e., "RD" for risk difference or "RR" for risk ratio)
 and estimands. It now also includes interpretation of original scale results when available.</p>
+<p>`r lifecycle::badge("deprecated")`</p>
+<p>This function is deprecated. Please use `margot_interpret_marginal()` instead.</p>
+<p>This function interprets the output of causal effect analysis, providing textual descriptions
+of causal effect estimates. It categorises the strength of evidence for causality based on
+E-values and confidence intervals, and generates a detailed interpretation of the effect
+estimates according to specified causal scales (i.e., "causal_difference" or "risk_ratio")
+and estimands. This function supports interpreting results on both the causal difference
+and risk ratio scales.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_interpret_marginal</span><span class="op">(</span></span>
+<span>  <span class="va">df</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RD"</span>, <span class="st">"RR"</span><span class="op">)</span>,</span>
+<span>  estimand <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  order <span class="op">=</span> <span class="st">"default"</span>,</span>
+<span>  original_df <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">margot_interpret_marginal</span><span class="op">(</span></span>
 <span>  <span class="va">df</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RD"</span>, <span class="st">"RR"</span><span class="op">)</span>,</span>
 <span>  estimand <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -67,7 +99,8 @@ and estimands. It now also includes interpretation of original scale results whe
 <dl><dt id="arg-df">df<a class="anchor" aria-label="anchor" href="#arg-df"></a></dt>
 <dd><p>Data frame containing causal effect estimates, expected to include columns for
 outcome names, effect estimates (either differences or ratios), confidence intervals,
-E-values, and a summary estimate label. Can also be the list output from transform_to_original_scale().</p></dd>
+E-values, and a summary estimate label. The structure of `df` should align with the specified
+`causal_scale`.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
@@ -85,6 +118,12 @@ Treatment Effect in the Treated), "CATE" (Conditional Average Treatment Effect),
 <dt id="arg-order">order<a class="anchor" aria-label="anchor" href="#arg-order"></a></dt>
 <dd><p>Character string specifying the order of results. Default is "default".</p></dd>
 
+
+<dt id="arg-causal-scale">causal_scale<a class="anchor" aria-label="anchor" href="#arg-causal-scale"></a></dt>
+<dd><p>Character string specifying the causal scale used in the analysis.
+Currently supports "causal_difference" for differences in means or medians, and "risk_ratio"
+for comparing ratios of probabilities or risks.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -95,6 +134,15 @@ Treatment Effect in the Treated), "CATE" (Conditional Average Treatment Effect),
   <dt>interpretation</dt>
 <dd><p>A character string containing a detailed interpretation of each outcome in `df`,
   including the causal contrast, E-values, the strength of evidence for causality, and original scale results if available.</p></dd>
+
+
+</dl><p>A list containing two elements:</p>
+<dl><dt>estimand_description</dt>
+<dd><p>A character string describing the specified estimand, or NULL if no estimand was provided.</p></dd>
+
+  <dt>interpretation</dt>
+<dd><p>A character string containing a detailed interpretation of each outcome in `df`,
+  including the causal contrast, E-values, and the strength of evidence for causality.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -122,6 +170,17 @@ in the interpretation. The strength of evidence for causality is categorized as 
 <span class="r-in"><span><span class="co"># Using output from transform_to_original_scale()</span></span></span>
 <span class="r-in"><span><span class="va">transformed_data</span> <span class="op">&lt;-</span> <span class="fu">transform_to_original_scale</span><span class="op">(</span><span class="va">results_df</span>, <span class="va">original_df</span>, <span class="va">label_mapping</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_marginal</span><span class="op">(</span><span class="va">transformed_data</span>, type <span class="op">=</span> <span class="st">"RD"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Assuming `group_tab_output` is the result from a causal analysis</span></span></span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_table</span><span class="op">(</span><span class="va">group_tab_output</span>, <span class="st">"causal_difference"</span>, <span class="st">"ATE"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">estimand_description</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Without specifying an estimand</span></span></span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_table</span><span class="op">(</span><span class="va">group_tab_output</span>, <span class="st">"risk_ratio"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

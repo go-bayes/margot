@@ -70,6 +70,10 @@ group_tab <- function(df, type = c("RD", "RR"), order = c("default", "alphabetic
       mutate(outcome = dplyr::recode(outcome, !!!label_mapping))
   }
 
+  # Ensure 'outcome' is a character vector to facilitate proper alphabetical ordering
+  results_df <- results_df %>%
+    mutate(outcome = as.character(outcome))
+
   # Determine the column to sort by based on the type
   effect_column <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
 
@@ -78,8 +82,8 @@ group_tab <- function(df, type = c("RD", "RR"), order = c("default", "alphabetic
     results_df <- results_df %>% arrange(outcome)
   } else if (order == "custom" && !is.null(custom_order)) {
     results_df <- results_df %>% slice(match(custom_order, outcome))
-  } else {  # default is descending order by effect size
-    results_df <- results_df %>% arrange(desc(!!sym(effect_column)))
+  } else {  # default is alphabetical
+    results_df <- results_df %>% arrange(outcome)
   }
 
   # Add Estimate categorization and label column

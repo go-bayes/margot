@@ -54,13 +54,13 @@
 #' @importFrom dplyr case_when mutate rowwise ungroup if_else
 #' @importFrom glue glue
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_alert_danger
-#' @export
+#' @keywords internal
 margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL, order = "default", original_df = NULL) {
   type <- match.arg(type)
 
   cli::cli_alert_info("Starting interpretation of causal effect estimates...")
 
-  # Define estimand descriptions (as before)
+  # Define estimand descriptions
   estimand_description <- if (!is.null(estimand)) {
     dplyr::case_when(
       estimand == "LMTP" ~ "A Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast conditions over a sequential regime of treatments for a prespecified target population.",
@@ -95,6 +95,9 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
 
   # Determine if we have original scale results
   has_original_scale <- paste0(effect_size_col, "_original") %in% names(df)
+
+  # Define the null_value based on type
+  null_value <- ifelse(type == "RR", 1, 0)
 
   interpretation <- df %>%
     dplyr::rowwise() %>%
