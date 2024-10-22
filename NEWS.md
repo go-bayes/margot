@@ -13,6 +13,13 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+
+
+# [2024-10-22] margot 0.2.3.9
+
+## Improved
+- `margot_interpret_marginal()` gives correct interpretation of 'strong' evidence using Evalues.
+
 # [2024-10-02] margot 0.2.3.8
 
 - `margot_process_longitudinal_data_wider()` performance enhancement. Users can save the outcome variable even if previous exposures are missing.  Useful for `lmtp` survival models
