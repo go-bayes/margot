@@ -9,8 +9,8 @@ margot_save_png(
   prefix = NULL,
   base_filename = "plot",
   save_path = here::here("push_mods"),
-  width = 16,
-  height = 8,
+  width = 12,
+  height = 12,
   dpi = 500
 )
 
@@ -19,8 +19,8 @@ margot_save_png(
   prefix = NULL,
   base_filename = "plot",
   save_path = here::here("push_mods"),
-  width = 16,
-  height = 8,
+  width = 12,
+  height = 12,
   dpi = 500
 )
 }

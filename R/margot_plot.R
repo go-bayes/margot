@@ -6,44 +6,64 @@
 #' and returns a transformed table.
 #'
 #' @param .data A data frame containing the data to be plotted.
-#' @param type Character string specifying the type of plot. Either "RD" (Risk Difference) or "RR" (Risk Ratio). Default is "RD".
-#' @param order Character string specifying the order of outcomes. Either "default" or "alphabetical". Default is "default".
-#' @param title_binary Optional title for the plot.
-#' @param ... Additional arguments passed to the plotting function.
-#' @param options A list of additional options for customizing the plot and interpretation. See Details for available options.
-#' @param label_mapping A named list for custom outcome label mapping. See Details for usage.
-#' @param save_output Logical. If TRUE, saves the complete output to a file. Default is FALSE.
-#' @param use_timestamp Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.
-#' @param base_filename Character string. The base name for the saved file. Default is "margot_plot_output".
-#' @param prefix Character string. An optional prefix for the saved filename. Default is NULL.
-#' @param save_path Character string. The directory path where the output will be saved. Default is here::here("push_mods").
-#' @param original_df Optional data frame containing the original (non-transformed) data for back-transformation of results.
+#'   It must include an `outcome` column and either `E[Y(1)]-E[Y(0)]`
+#'   or `E[Y(1)]/E[Y(0)]` columns representing the causal estimates.
+#' @param type Character string specifying the type of plot.
+#'   Either `"RD"` (Risk Difference) or `"RR"` (Risk Ratio). Default is `"RD"`.
+#' @param order Character string specifying the order of outcomes.
+#'   Can be `"default"`, `"alphabetical"`, or `"custom"`.
+#'   - `"default"`: Uses the default ordering based on the data.
+#'   - `"alphabetical"`: Orders outcomes alphabetically.
+#'   - `"custom"`: Allows for a custom ordering (requires additional implementation).
+#'   Default is `"default"`.
+#' @param title_binary Optional title for the plot. If not provided, the title from `options` is used.
+#' @param ... Additional arguments passed to the plotting function, allowing further customization.
+#' @param options A list of additional options for customizing the plot and interpretation.
+#'   See **Details** for available options.
+#' @param label_mapping A named list for custom outcome label mapping.
+#'   See **Details** for usage.
+#' @param save_output Logical. If `TRUE`, saves the complete output to a file. Default is `FALSE`.
+#' @param use_timestamp Logical. If `TRUE`, adds a timestamp to the saved filename. Default is `FALSE`.
+#' @param base_filename Character string. The base name for the saved file. Default is `"margot_plot_output"`.
+#' @param prefix Character string. An optional prefix for the saved filename. Default is `NULL`.
+#' @param save_path Character string. The directory path where the output will be saved.
+#'   Default is `here::here("push_mods")`.
+#' @param original_df Optional data frame containing the original (non-transformed) data
+#'   for back-transformation of results. If provided, it should correspond to `.data` before any transformations.
 #'
 #' @details
 #' The `options` list can include the following parameters:
 #' \itemize{
-#'   \item `title`: Character string. Main title for the plot.
-#'   \item `subtitle`: Character string. Subtitle for the plot.
-#'   \item `estimate_scale`: Numeric. Scaling factor for estimates. Default is 1.
-#'   \item `base_size`: Numeric. Base font size for the plot. Default is 11.
-#'   \item `text_size`: Numeric. Font size for text labels. Default is 2.75.
-#'   \item `point_size`: Numeric. Size of points in the plot. Default is 3.
-#'   \item `title_size`: Numeric. Font size for the main title. Default is 10.
-#'   \item `subtitle_size`: Numeric. Font size for the subtitle. Default is 9.
-#'   \item `legend_text_size`: Numeric. Font size for legend text. Default is 6.
-#'   \item `legend_title_size`: Numeric. Font size for legend title. Default is 6.
-#'   \item `linewidth`: Numeric. Width of lines in the plot. Default is 0.5.
-#'   \item `plot_theme`: ggplot2 theme object. Custom theme for the plot.
-#'   \item `colors`: Named vector. Custom colors for different estimate categories.
-#'   \item `facet_var`: Character string. Variable name for faceting the plot.
-#'   \item `confidence_level`: Numeric. Confidence level for intervals. Default is 0.95.
-#'   \item `annotations`: ggplot2 layer. Custom annotations to add to the plot.
-#'   \item `show_evalues`: Logical. If TRUE, shows E-values in the plot. Default is TRUE.
-#'   \item `evalue_digits`: Integer. Number of digits for E-value display. Default is 2.
-#'   \item `remove_tx_prefix`: Logical. If TRUE, removes "tx_" prefix from labels and interpretation. Default is TRUE.
-#'   \item `remove_z_suffix`: Logical. If TRUE, removes "_z" suffix from labels and interpretation. Default is TRUE.
-#'   \item `use_title_case`: Logical. If TRUE, converts labels and interpretation to title case. Default is TRUE.
-#'   \item `remove_underscores`: Logical. If TRUE, removes underscores from labels and interpretation. Default is TRUE.
+#'   \item `title`: \strong{Character string}. Main title for the plot.
+#'   \item `subtitle`: \strong{Character string}. Subtitle for the plot.
+#'   \item `estimate_scale`: \strong{Numeric}. Scaling factor for estimates. Default is `1`.
+#'   \item `base_size`: \strong{Numeric}. Base font size for the plot. Default is `18`.
+#'   \item `text_size`: \strong{Numeric}. Font size for text labels. Default is `2.75`.
+#'   \item `point_size`: \strong{Numeric}. Size of points in the plot. Default is `3`.
+#'   \item `title_size`: \strong{Numeric}. Font size for the main title. Default is `20`.
+#'   \item `subtitle_size`: \strong{Numeric}. Font size for the subtitle. Default is `18`.
+#'   \item `legend_text_size`: \strong{Numeric}. Font size for legend text. Default is `10`.
+#'   \item `legend_title_size`: \strong{Numeric}. Font size for legend title. Default is `10`.
+#'   \item `linewidth`: \strong{Numeric}. Width of lines in the plot. Default is `0.4`.
+#'   \item `x_offset`: \strong{Numeric}. Horizontal offset for text labels on the plot.
+#'     If `NULL`, it is set based on the `type` (`0` for "RR" and `-1.75` for "RD").
+#'   \item `x_lim_lo`: \strong{Numeric}. Lower limit for the x-axis.
+#'     If `NULL`, it is set based on the `type` (`0.1` for "RR" and `-1.75` for "RD").
+#'   \item `x_lim_hi`: \strong{Numeric}. Upper limit for the x-axis.
+#'     If `NULL`, it is set based on the `type` (`2.5` for "RR" and `1` for "RD").
+#'   \item `plot_theme`: \strong{ggplot2 theme object}. Custom theme for the plot.
+#'   \item `colors`: \strong{Named vector}. Custom colors for different estimate categories.
+#'     Example: `c("positive" = "green", "not reliable" = "gray", "negative" = "red")`.
+#'   \item `facet_var`: \strong{Character string}. Variable name for faceting the plot.
+#'     Allows creating subplots based on a categorical variable.
+#'   \item `confidence_level`: \strong{Numeric}. Confidence level for intervals. Default is `0.95`.
+#'   \item `annotations`: \strong{ggplot2 layer}. Custom annotations to add to the plot, such as text or shapes.
+#'   \item `show_evalues`: \strong{Logical}. If `TRUE`, shows E-values in the plot. Default is `TRUE`.
+#'   \item `evalue_digits`: \strong{Integer}. Number of digits for E-value display. Default is `2`.
+#'   \item `remove_tx_prefix`: \strong{Logical}. If `TRUE`, removes `"tx_"` prefix from labels and interpretation. Default is `TRUE`.
+#'   \item `remove_z_suffix`: \strong{Logical}. If `TRUE`, removes `"_z"` suffix from labels and interpretation. Default is `TRUE`.
+#'   \item `use_title_case`: \strong{Logical}. If `TRUE`, converts labels and interpretation to title case. Default is `TRUE`.
+#'   \item `remove_underscores`: \strong{Logical}. If `TRUE`, removes underscores from labels and interpretation. Default is `TRUE`.
 #' }
 #'
 #' The `label_mapping` parameter allows for custom renaming of specific outcomes:
@@ -55,12 +75,12 @@
 #'
 #' @return A list containing three elements:
 #' \itemize{
-#'   \item `plot`: A ggplot object representing the Margot plot.
+#'   \item `plot`: A `ggplot` object representing the Margot plot.
 #'   \item `interpretation`: A character string containing the interpretation of the results, with the same formatting applied as the plot labels.
 #'   \item `transformed_table`: A data frame with the original data and transformed row names, using the same transformation options as the plot labels.
 #' }
 #'
-#' If `save_output` is TRUE, the complete output will be saved to a file using margot::here_save_qs().
+#' If `save_output` is `TRUE`, the complete output will be saved to a file using `margot::here_save_qs()`.
 #'
 #' @import ggplot2
 #' @import dplyr
@@ -85,7 +105,8 @@
 #' print(result$transformed_table)
 #'
 #' # Create a Margot plot with custom options, label mapping, and save output
-#' custom_result <- margot_plot(sample_data,
+#' custom_result <- margot_plot(
+#'   sample_data,
 #'   type = "RD",
 #'   options = list(
 #'     title = "Custom Margot Plot",
@@ -94,7 +115,10 @@
 #'     remove_z_suffix = TRUE,
 #'     use_title_case = TRUE,
 #'     remove_underscores = TRUE,
-#'     colors = c("positive" = "green", "not reliable" = "gray", "negative" = "red")
+#'     colors = c("positive" = "green", "not reliable" = "gray", "negative" = "red"),
+#'     x_lim_hi = 1.5,
+#'     x_lim_lo = -0.5,
+#'     x_offset = -0.2
 #'   ),
 #'   label_mapping = list(
 #'     "t1_outcome_a_z" = "Custom Label A",
@@ -115,7 +139,8 @@
 #'   t2_outcome_b = rnorm(100),
 #'   t3_outcome_c = rnorm(100)
 #' )
-#' result_with_original <- margot_plot(sample_data,
+#' result_with_original <- margot_plot(
+#'   sample_data,
 #'   type = "RD",
 #'   original_df = original_data
 #' )
@@ -141,7 +166,7 @@ margot_plot <- function(.data,
   # **Set default type to "RD"**
   type <- match.arg(type, c("RD", "RR"), several.ok = FALSE)
 
-  # **Set default order to "default" which is now alphabetical**
+  # **Set default order to "default"**
   order <- match.arg(order)
 
   # Create a copy of the original data for table transformation
@@ -258,7 +283,8 @@ margot_plot <- function(.data,
   ) +
     ggplot2::geom_errorbarh(ggplot2::aes(color = Estimate),
                             height = .3,
-                            linewidth = options$linewidth, position = ggplot2::position_dodge(width = .3)
+                            linewidth = options$linewidth,
+                            position = ggplot2::position_dodge(width = .3)
     ) +
     ggplot2::geom_point(size = options$point_size, position = ggplot2::position_dodge(width = 0.3)) +
     ggplot2::geom_vline(xintercept = null_value, linetype = "solid") +
@@ -354,12 +380,16 @@ margot_plot <- function(.data,
     cli::cli_alert_info("Saving complete output...")
     tryCatch({
       if (use_timestamp) {
-        output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-                                  base_filename, "_",
-                                  format(Sys.time(), "%Y%m%d_%H%M%S"))
+        output_filename <- paste0(
+          ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+          base_filename, "_",
+          format(Sys.time(), "%Y%m%d_%H%M%S")
+        )
       } else {
-        output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-                                  base_filename)
+        output_filename <- paste0(
+          ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+          base_filename
+        )
       }
       margot::here_save_qs(
         obj = complete_output,
@@ -378,98 +408,6 @@ margot_plot <- function(.data,
 
   cli::cli_alert_success("Margot plot analysis complete \U0001F44D")
   return(complete_output)
-}
-
-group_tab <- function(df, type = c("RD", "RR"), order = c("default", "alphabetical", "custom"), custom_order = NULL) {
-  require(dplyr)
-  type <- match.arg(type)
-  order <- match.arg(order)
-
-  # Check if input is the list returned by transform_to_original_scale
-  if (is.list(df) && "results_df" %in% names(df)) {
-    results_df <- df$results_df
-    label_mapping <- df$label_mapping
-  } else {
-    results_df <- df
-    label_mapping <- NULL
-  }
-
-  # Ensure the 'outcome' column exists; if not, create from row names
-  if (!"outcome" %in% names(results_df) && !is.null(rownames(results_df))) {
-    results_df <- results_df %>% tibble::rownames_to_column(var = "outcome")
-  } else if (!"outcome" %in% names(results_df)) {
-    stop("No 'outcome' column or row names available to convert into an 'outcome' column.")
-  }
-
-  # Apply label mapping if available
-  if (!is.null(label_mapping)) {
-    results_df <- results_df %>%
-      mutate(outcome = dplyr::recode(outcome, !!!label_mapping))
-  }
-
-  # Ensure 'outcome' is a character vector to facilitate proper alphabetical ordering
-  results_df <- results_df %>%
-    mutate(outcome = as.character(outcome))
-
-  # Determine the column to sort by based on the type
-  effect_column <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
-
-  # Apply ordering based on the specified 'order'
-  if (order == "alphabetical") {
-    results_df <- results_df %>% arrange(outcome)
-  } else if (order == "custom" && !is.null(custom_order)) {
-    results_df <- results_df %>% slice(match(custom_order, outcome))
-  } else {  # default is alphabetical
-    results_df <- results_df %>% arrange(outcome)
-  }
-
-  # Add Estimate categorization and label column
-  results_df <- results_df %>% mutate(
-    Estimate = factor(
-      if (type == "RR") {
-        ifelse(
-          `E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
-          "positive",
-          ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1, "negative", "not reliable")
-        )
-      } else {
-        ifelse(
-          `E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
-          "positive",
-          ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0, "negative", "not reliable")
-        )
-      }
-    ),
-    estimate_lab = if (type == "RR") {
-      paste(
-        round(`E[Y(1)]/E[Y(0)]`, 3),
-        " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
-        sep = ""
-      )
-    } else {
-      paste(
-        round(`E[Y(1)]-E[Y(0)]`, 3),
-        " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
-        sep = ""
-      )
-    },
-    label = estimate_lab  # Add this line to create the 'label' column
-  )
-
-  # Add original scale estimates if available
-  if (paste0(effect_column, "_original") %in% names(results_df)) {
-    results_df <- results_df %>% mutate(
-      estimate_lab_original = paste(
-        round(.data[[paste0(effect_column, "_original")]], 3),
-        " (", round(.data[["2.5 %_original"]], 3), "-", round(.data[["97.5 %_original"]], 3), ")",
-        sep = ""
-      )
-    )
-  }
-
-  return(results_df)
 }
 # margot_plot <- function(.data,
 #                         type = c("RD", "RR"),

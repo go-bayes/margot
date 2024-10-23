@@ -13,7 +13,7 @@ and returns a transformed table."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.10</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,88 +70,108 @@ and returns a transformed table.</p>
 
 
 <dl><dt id="arg--data">.data<a class="anchor" aria-label="anchor" href="#arg--data"></a></dt>
-<dd><p>A data frame containing the data to be plotted.</p></dd>
+<dd><p>A data frame containing the data to be plotted.
+It must include an `outcome` column and either `E[Y(1)]-E[Y(0)]`
+or `E[Y(1)]/E[Y(0)]` columns representing the causal estimates.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Character string specifying the type of plot. Either "RD" (Risk Difference) or "RR" (Risk Ratio). Default is "RD".</p></dd>
+<dd><p>Character string specifying the type of plot.
+Either `"RD"` (Risk Difference) or `"RR"` (Risk Ratio). Default is `"RD"`.</p></dd>
 
 
 <dt id="arg-order">order<a class="anchor" aria-label="anchor" href="#arg-order"></a></dt>
-<dd><p>Character string specifying the order of outcomes. Either "default" or "alphabetical". Default is "default".</p></dd>
+<dd><p>Character string specifying the order of outcomes.
+Can be `"default"`, `"alphabetical"`, or `"custom"`.
+- `"default"`: Uses the default ordering based on the data.
+- `"alphabetical"`: Orders outcomes alphabetically.
+- `"custom"`: Allows for a custom ordering (requires additional implementation).
+Default is `"default"`.</p></dd>
 
 
 <dt id="arg-title-binary">title_binary<a class="anchor" aria-label="anchor" href="#arg-title-binary"></a></dt>
-<dd><p>Optional title for the plot.</p></dd>
+<dd><p>Optional title for the plot. If not provided, the title from `options` is used.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional arguments passed to the plotting function.</p></dd>
+<dd><p>Additional arguments passed to the plotting function, allowing further customization.</p></dd>
 
 
 <dt id="arg-options">options<a class="anchor" aria-label="anchor" href="#arg-options"></a></dt>
-<dd><p>A list of additional options for customizing the plot and interpretation. See Details for available options.</p></dd>
+<dd><p>A list of additional options for customizing the plot and interpretation.
+See **Details** for available options.</p></dd>
 
 
 <dt id="arg-label-mapping">label_mapping<a class="anchor" aria-label="anchor" href="#arg-label-mapping"></a></dt>
-<dd><p>A named list for custom outcome label mapping. See Details for usage.</p></dd>
+<dd><p>A named list for custom outcome label mapping.
+See **Details** for usage.</p></dd>
 
 
 <dt id="arg-save-output">save_output<a class="anchor" aria-label="anchor" href="#arg-save-output"></a></dt>
-<dd><p>Logical. If TRUE, saves the complete output to a file. Default is FALSE.</p></dd>
+<dd><p>Logical. If `TRUE`, saves the complete output to a file. Default is `FALSE`.</p></dd>
 
 
 <dt id="arg-use-timestamp">use_timestamp<a class="anchor" aria-label="anchor" href="#arg-use-timestamp"></a></dt>
-<dd><p>Logical. If TRUE, adds a timestamp to the saved filename. Default is FALSE.</p></dd>
+<dd><p>Logical. If `TRUE`, adds a timestamp to the saved filename. Default is `FALSE`.</p></dd>
 
 
 <dt id="arg-base-filename">base_filename<a class="anchor" aria-label="anchor" href="#arg-base-filename"></a></dt>
-<dd><p>Character string. The base name for the saved file. Default is "margot_plot_output".</p></dd>
+<dd><p>Character string. The base name for the saved file. Default is `"margot_plot_output"`.</p></dd>
 
 
 <dt id="arg-prefix">prefix<a class="anchor" aria-label="anchor" href="#arg-prefix"></a></dt>
-<dd><p>Character string. An optional prefix for the saved filename. Default is NULL.</p></dd>
+<dd><p>Character string. An optional prefix for the saved filename. Default is `NULL`.</p></dd>
 
 
 <dt id="arg-save-path">save_path<a class="anchor" aria-label="anchor" href="#arg-save-path"></a></dt>
-<dd><p>Character string. The directory path where the output will be saved. Default is here::here("push_mods").</p></dd>
+<dd><p>Character string. The directory path where the output will be saved.
+Default is `here::here("push_mods")`.</p></dd>
 
 
 <dt id="arg-original-df">original_df<a class="anchor" aria-label="anchor" href="#arg-original-df"></a></dt>
-<dd><p>Optional data frame containing the original (non-transformed) data for back-transformation of results.</p></dd>
+<dd><p>Optional data frame containing the original (non-transformed) data
+for back-transformation of results. If provided, it should correspond to `.data` before any transformations.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list containing three elements:</p><ul><li><p>`plot`: A ggplot object representing the Margot plot.</p></li>
+    <p>A list containing three elements:</p><ul><li><p>`plot`: A `ggplot` object representing the Margot plot.</p></li>
 <li><p>`interpretation`: A character string containing the interpretation of the results, with the same formatting applied as the plot labels.</p></li>
 <li><p>`transformed_table`: A data frame with the original data and transformed row names, using the same transformation options as the plot labels.</p></li>
-</ul><p>If `save_output` is TRUE, the complete output will be saved to a file using margot::here_save_qs().</p>
+</ul><p>If `save_output` is `TRUE`, the complete output will be saved to a file using `margot::here_save_qs()`.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The `options` list can include the following parameters:</p><ul><li><p>`title`: Character string. Main title for the plot.</p></li>
-<li><p>`subtitle`: Character string. Subtitle for the plot.</p></li>
-<li><p>`estimate_scale`: Numeric. Scaling factor for estimates. Default is 1.</p></li>
-<li><p>`base_size`: Numeric. Base font size for the plot. Default is 11.</p></li>
-<li><p>`text_size`: Numeric. Font size for text labels. Default is 2.75.</p></li>
-<li><p>`point_size`: Numeric. Size of points in the plot. Default is 3.</p></li>
-<li><p>`title_size`: Numeric. Font size for the main title. Default is 10.</p></li>
-<li><p>`subtitle_size`: Numeric. Font size for the subtitle. Default is 9.</p></li>
-<li><p>`legend_text_size`: Numeric. Font size for legend text. Default is 6.</p></li>
-<li><p>`legend_title_size`: Numeric. Font size for legend title. Default is 6.</p></li>
-<li><p>`linewidth`: Numeric. Width of lines in the plot. Default is 0.5.</p></li>
-<li><p>`plot_theme`: ggplot2 theme object. Custom theme for the plot.</p></li>
-<li><p>`colors`: Named vector. Custom colors for different estimate categories.</p></li>
-<li><p>`facet_var`: Character string. Variable name for faceting the plot.</p></li>
-<li><p>`confidence_level`: Numeric. Confidence level for intervals. Default is 0.95.</p></li>
-<li><p>`annotations`: ggplot2 layer. Custom annotations to add to the plot.</p></li>
-<li><p>`show_evalues`: Logical. If TRUE, shows E-values in the plot. Default is TRUE.</p></li>
-<li><p>`evalue_digits`: Integer. Number of digits for E-value display. Default is 2.</p></li>
-<li><p>`remove_tx_prefix`: Logical. If TRUE, removes "tx_" prefix from labels and interpretation. Default is TRUE.</p></li>
-<li><p>`remove_z_suffix`: Logical. If TRUE, removes "_z" suffix from labels and interpretation. Default is TRUE.</p></li>
-<li><p>`use_title_case`: Logical. If TRUE, converts labels and interpretation to title case. Default is TRUE.</p></li>
-<li><p>`remove_underscores`: Logical. If TRUE, removes underscores from labels and interpretation. Default is TRUE.</p></li>
+    <p>The `options` list can include the following parameters:</p><ul><li><p>`title`: <strong>Character string</strong>. Main title for the plot.</p></li>
+<li><p>`subtitle`: <strong>Character string</strong>. Subtitle for the plot.</p></li>
+<li><p>`estimate_scale`: <strong>Numeric</strong>. Scaling factor for estimates. Default is `1`.</p></li>
+<li><p>`base_size`: <strong>Numeric</strong>. Base font size for the plot. Default is `18`.</p></li>
+<li><p>`text_size`: <strong>Numeric</strong>. Font size for text labels. Default is `2.75`.</p></li>
+<li><p>`point_size`: <strong>Numeric</strong>. Size of points in the plot. Default is `3`.</p></li>
+<li><p>`title_size`: <strong>Numeric</strong>. Font size for the main title. Default is `20`.</p></li>
+<li><p>`subtitle_size`: <strong>Numeric</strong>. Font size for the subtitle. Default is `18`.</p></li>
+<li><p>`legend_text_size`: <strong>Numeric</strong>. Font size for legend text. Default is `10`.</p></li>
+<li><p>`legend_title_size`: <strong>Numeric</strong>. Font size for legend title. Default is `10`.</p></li>
+<li><p>`linewidth`: <strong>Numeric</strong>. Width of lines in the plot. Default is `0.4`.</p></li>
+<li><p>`x_offset`: <strong>Numeric</strong>. Horizontal offset for text labels on the plot.
+    If `NULL`, it is set based on the `type` (`0` for "RR" and `-1.75` for "RD").</p></li>
+<li><p>`x_lim_lo`: <strong>Numeric</strong>. Lower limit for the x-axis.
+    If `NULL`, it is set based on the `type` (`0.1` for "RR" and `-1.75` for "RD").</p></li>
+<li><p>`x_lim_hi`: <strong>Numeric</strong>. Upper limit for the x-axis.
+    If `NULL`, it is set based on the `type` (`2.5` for "RR" and `1` for "RD").</p></li>
+<li><p>`plot_theme`: <strong>ggplot2 theme object</strong>. Custom theme for the plot.</p></li>
+<li><p>`colors`: <strong>Named vector</strong>. Custom colors for different estimate categories.
+    Example: `c("positive" = "green", "not reliable" = "gray", "negative" = "red")`.</p></li>
+<li><p>`facet_var`: <strong>Character string</strong>. Variable name for faceting the plot.
+    Allows creating subplots based on a categorical variable.</p></li>
+<li><p>`confidence_level`: <strong>Numeric</strong>. Confidence level for intervals. Default is `0.95`.</p></li>
+<li><p>`annotations`: <strong>ggplot2 layer</strong>. Custom annotations to add to the plot, such as text or shapes.</p></li>
+<li><p>`show_evalues`: <strong>Logical</strong>. If `TRUE`, shows E-values in the plot. Default is `TRUE`.</p></li>
+<li><p>`evalue_digits`: <strong>Integer</strong>. Number of digits for E-value display. Default is `2`.</p></li>
+<li><p>`remove_tx_prefix`: <strong>Logical</strong>. If `TRUE`, removes `"tx_"` prefix from labels and interpretation. Default is `TRUE`.</p></li>
+<li><p>`remove_z_suffix`: <strong>Logical</strong>. If `TRUE`, removes `"_z"` suffix from labels and interpretation. Default is `TRUE`.</p></li>
+<li><p>`use_title_case`: <strong>Logical</strong>. If `TRUE`, converts labels and interpretation to title case. Default is `TRUE`.</p></li>
+<li><p>`remove_underscores`: <strong>Logical</strong>. If `TRUE`, removes underscores from labels and interpretation. Default is `TRUE`.</p></li>
 </ul><p>The `label_mapping` parameter allows for custom renaming of specific outcomes:</p><ul><li><p>It should be a named list where names are original outcome labels and values are new labels.</p></li>
 <li><p>Outcomes not specified in `label_mapping` will use default transformations based on `options`.</p></li>
 <li><p>Custom mapped labels are used as-is, without applying default transformations.</p></li>
@@ -177,7 +197,8 @@ and returns a transformed table.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">transformed_table</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a Margot plot with custom options, label mapping, and save output</span></span></span>
-<span class="r-in"><span><span class="va">custom_result</span> <span class="op">&lt;-</span> <span class="fu">margot_plot</span><span class="op">(</span><span class="va">sample_data</span>,</span></span>
+<span class="r-in"><span><span class="va">custom_result</span> <span class="op">&lt;-</span> <span class="fu">margot_plot</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sample_data</span>,</span></span>
 <span class="r-in"><span>  type <span class="op">=</span> <span class="st">"RD"</span>,</span></span>
 <span class="r-in"><span>  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    title <span class="op">=</span> <span class="st">"Custom Margot Plot"</span>,</span></span>
@@ -186,7 +207,10 @@ and returns a transformed table.</p>
 <span class="r-in"><span>    remove_z_suffix <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>    use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>    remove_underscores <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>    colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"positive"</span> <span class="op">=</span> <span class="st">"green"</span>, <span class="st">"not reliable"</span> <span class="op">=</span> <span class="st">"gray"</span>, <span class="st">"negative"</span> <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"positive"</span> <span class="op">=</span> <span class="st">"green"</span>, <span class="st">"not reliable"</span> <span class="op">=</span> <span class="st">"gray"</span>, <span class="st">"negative"</span> <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    x_lim_hi <span class="op">=</span> <span class="fl">1.5</span>,</span></span>
+<span class="r-in"><span>    x_lim_lo <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span>,</span></span>
+<span class="r-in"><span>    x_offset <span class="op">=</span> <span class="op">-</span><span class="fl">0.2</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    <span class="st">"t1_outcome_a_z"</span> <span class="op">=</span> <span class="st">"Custom Label A"</span>,</span></span>
@@ -207,7 +231,8 @@ and returns a transformed table.</p>
 <span class="r-in"><span>  t2_outcome_b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  t3_outcome_c <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">result_with_original</span> <span class="op">&lt;-</span> <span class="fu">margot_plot</span><span class="op">(</span><span class="va">sample_data</span>,</span></span>
+<span class="r-in"><span><span class="va">result_with_original</span> <span class="op">&lt;-</span> <span class="fu">margot_plot</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sample_data</span>,</span></span>
 <span class="r-in"><span>  type <span class="op">=</span> <span class="st">"RD"</span>,</span></span>
 <span class="r-in"><span>  original_df <span class="op">=</span> <span class="va">original_data</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>

@@ -13,6 +13,14 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2024-10-23] margot 0.2.3.11
+
+## Improved
+
+- `margot_save_png()` better defaults
+- `margot_plot()` enhancements, and improved documentation
+
+
 # [2024-10-23] margot 0.2.3.10
 ## Improved
 - `margot_save_png()` flexibly handles any plot object, not merely ggplot2 objects.
