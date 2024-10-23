@@ -7,7 +7,7 @@
 margot_save_png(
   plot_output,
   prefix = NULL,
-  base_filename = "margot_plot",
+  base_filename = "plot",
   save_path = here::here("push_mods"),
   width = 16,
   height = 8,
@@ -17,7 +17,7 @@ margot_save_png(
 margot_save_png(
   plot_output,
   prefix = NULL,
-  base_filename = "margot_plot",
+  base_filename = "plot",
   save_path = here::here("push_mods"),
   width = 16,
   height = 8,
@@ -25,12 +25,12 @@ margot_save_png(
 )
 }
 \arguments{
-\item{plot_output}{A list containing the output of `margot_plot()` or `margot_plot_multi_arm()`.
-This list should have a `plot` element that contains the ggplot object.}
+\item{plot_output}{Either a plot object directly, or a list containing a plot element.
+Supported plot types include ggplot objects, base R plot objects, and others.}
 
 \item{prefix}{Character string. A prefix to add to the filename. Default is NULL.}
 
-\item{base_filename}{Character string. The base name for the saved file. Default is "margot_plot".}
+\item{base_filename}{Character string. The base name for the saved file. Default is "plot".}
 
 \item{save_path}{Character string. The directory path where the image will be saved.
 Default is here::here("push_mods").}
@@ -50,16 +50,17 @@ Invisibly returns the path of the saved file.
 This function takes the output of either `margot_plot()` or `margot_plot_multi_arm()`
 and saves the plot as a PNG image using `ggsave()`.
 
-This function takes the output of either `margot_plot()` or `margot_plot_multi_arm()`
-and saves the plot as a PNG image using `ggsave()`.
+This function saves a plot object as a PNG image, supporting multiple plotting systems
+including ggplot2, base R plots, and other plotting libraries.
 }
 \details{
 This function uses `ggsave()` to save the Margot plot as a PNG image.
 If the save_path directory doesn't exist, it will be created.
 The final filename will be constructed as: `{prefix}_{base_filename}.png`.
 
-This function uses `ggsave()` to save the Margot plot as a PNG image.
-If the save_path directory doesn't exist, it will be created.
+This function handles different types of plot objects and saves them as PNG images:
+- For ggplot2 objects: Uses ggsave()
+- For other plot types: Uses png() and dev.off()
 The final filename will be constructed as: `{prefix}_{base_filename}.png`.
 }
 \examples{
@@ -77,16 +78,17 @@ margot_save_png(
 }
 
 \dontrun{
-# Assuming you have already run margot_plot() or margot_plot_multi_arm()
-plot_result <- margot_plot(your_data, your_options)
+# For a ggplot object
+plot_result <- ggplot(mtcars, aes(x = mpg, y = wt)) + geom_point()
+margot_save_png(plot_result, prefix = "study1", base_filename = "scatter")
 
-# Save the plot as PNG
-margot_save_png(
-  plot_result,
-  prefix = "study1",
-  base_filename = "treatment_effects",
-  save_path = here::here("output", "plots")
-)
+# For a base R plot
+plot_result <- plot(mtcars$mpg, mtcars$wt)
+margot_save_png(plot_result, prefix = "study1", base_filename = "scatter")
+
+# For a list containing a plot
+plot_list <- list(plot = ggplot(mtcars, aes(x = mpg, y = wt)) + geom_point())
+margot_save_png(plot_list, prefix = "study1", base_filename = "scatter")
 }
 
 }
