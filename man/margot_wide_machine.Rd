@@ -36,6 +36,10 @@ margot_wide_machine(
 \item{make_na_dummies}{An optional character vector of variable names or keywords ("baseline_vars", "confounder_vars") for which to create NA dummies.}
 
 \item{imputation_method}{A character string specifying the imputation method to use. Options are 'median' (default), 'mice', or 'none'.}
+
+\item{include_exposure_var_baseline}{Logical indicating whether to include the exposure variable at baseline (t0).}
+
+\item{include_outcome_vars_baseline}{Logical indicating whether to include outcome variables at baseline (t0).}
 }
 \value{
 A wide-format data frame with each subject's observations across time points

@@ -13,6 +13,12 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2024-10-26] margot 0.2.3.12
+
+## Improved
+
+- `margot_wide_machine()` correctly handles NA values at baseline, and prints out message
+
 # [2024-10-23] margot 0.2.3.11
 
 ## Improved
