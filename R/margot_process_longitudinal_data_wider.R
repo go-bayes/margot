@@ -104,23 +104,59 @@ margot_process_longitudinal_data_wider <- function(
     t_i <- time_points[i]
     t_i_plus1 <- time_points[i + 1]
 
+    not_lost_col <- paste0(t_i, "_", not_lost_in_following_wave)
+
     # Generate exposure column names for current and next wave
     exposure_cols <- paste0(t_i, "_", exposure_vars)
     exposure_cols_next <- paste0(t_i_plus1, "_", exposure_vars)
 
-    # Check if all exposure columns exist
-    missing_current <- !exposure_cols %in% names(df_wide_use)
-    missing_next <- !exposure_cols_next %in% names(df_wide_use)
-    if (any(missing_current) || any(missing_next)) {
-      cli::cli_alert_warning("Some exposure columns for {t_i} or {t_i_plus1} not found. Skipping 'not_lost' indicator for {t_i}.")
-      next
+    # Check if exposure columns exist in the next wave
+    exposure_missing_next <- !exposure_cols_next %in% names(df_wide_use)
+
+    if (any(exposure_missing_next)) {
+      # If exposure variables are missing in the next wave, attempt to use outcome variables
+      outcome_cols_next <- paste0(t_i_plus1, "_", outcome_vars)
+      outcome_cols_next <- outcome_cols_next[outcome_cols_next %in% names(df_wide_use)]
+
+      if (length(outcome_cols_next) == 0) {
+        cli::cli_alert_warning("No exposure or outcome columns found for {t_i_plus1}. Skipping 'not_lost' indicator for {t_i}.")
+        next
+      }
+
+      # Compute counts of observed and missing outcome variables
+      num_observed <- rowSums(!is.na(df_wide_use[, outcome_cols_next, drop = FALSE]))
+      num_missing <- rowSums(is.na(df_wide_use[, outcome_cols_next, drop = FALSE]))
+      total_outcomes <- length(outcome_cols_next)
+
+      all_observed <- num_observed == total_outcomes
+      all_missing <- num_missing == total_outcomes
+      some_observed <- num_observed > 0 & num_observed < total_outcomes
+
+      # Initialize not_lost_col with NA
+      df_wide_use[[not_lost_col]] <- NA
+
+      # Apply the logic based on 'save_observed_y' and 'censored_if_any_lost'
+      if (censored_if_any_lost == TRUE) {
+        # Set to 1 if all outcomes observed, else 0
+        df_wide_use[[not_lost_col]][all_observed] <- 1
+        df_wide_use[[not_lost_col]][!all_observed] <- 0
+      } else if (censored_if_any_lost == FALSE) {
+        # When 'save_observed_y' is TRUE
+        if (save_observed_y == TRUE) {
+          df_wide_use[[not_lost_col]][all_observed] <- 1
+          df_wide_use[[not_lost_col]][all_missing] <- 0
+          df_wide_use[[not_lost_col]][some_observed] <- NA
+        } else {
+          # When 'save_observed_y' is FALSE
+          df_wide_use[[not_lost_col]][all_observed] <- 1
+          df_wide_use[[not_lost_col]][!all_observed] <- 0
+        }
+      }
+    } else {
+      # Determine 'not_lost' based on all exposure_vars_next being present
+      not_lost_condition <- rowSums(!is.na(df_wide_use[, exposure_cols_next, drop = FALSE])) == length(exposure_vars)
+      df_wide_use[[not_lost_col]] <- ifelse(not_lost_condition, 1, 0)
     }
-
-    not_lost_col <- paste0(t_i, "_", not_lost_in_following_wave)
-
-    # Determine 'not_lost' based on all exposure_vars_next being present
-    not_lost_condition <- rowSums(!is.na(df_wide_use[, exposure_cols_next, drop = FALSE])) == length(exposure_vars)
-    df_wide_use[[not_lost_col]] <- ifelse(not_lost_condition, 1, 0)
 
     # Handle missingness for current and future waves
     rows_lost <- df_wide_use[[not_lost_col]] == 0

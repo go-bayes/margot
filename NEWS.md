@@ -15,7 +15,6 @@
 
 # [2024-10-27] margot 0.2.3.14
 
-
 ## Improved
 - `margot_process_longitudinal_data_wider` - more robost.
 - `margot_wide_impute` - small bug fix. 
