@@ -13,6 +13,18 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+
+# [2024-10-26] margot 0.2.3.13
+
+
+## New
+
+- `margot_censor` create censoring indictors for correct handling of lost-to-follow-up when conditions are not met, includes a clustering variable (useful for romantic dyads)
+
+## Improved
+
+- `margot_wide_machine` now correctly handling multiple time points. 
+
 # [2024-10-26] margot 0.2.3.12
 
 ## Improved

@@ -70,66 +70,165 @@ margot_wide_machine <- function(.data,
                                 imputation_method = 'median',
                                 include_exposure_var_baseline = TRUE,
                                 include_outcome_vars_baseline = TRUE) {
+
+  start_time <- Sys.time()
+  cli::cli_alert_info("Starting data transformation...")
+
   # Load required packages
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' needed but not installed.")
-  }
-  if (!requireNamespace("tidyr", quietly = TRUE)) {
-    stop("Package 'tidyr' needed but not installed.")
-  }
-  if (!requireNamespace("cli", quietly = TRUE)) {
-    stop("Package 'cli' needed but not installed.")
-  }
-  if (imputation_method == 'mice' && !requireNamespace("mice", quietly = TRUE)) {
-    stop("Package 'mice' needed but not installed. Install it or choose a different imputation method.")
-  }
-  if (!requireNamespace("zoo", quietly = TRUE)) {
-    stop("Package 'zoo' needed but not installed.")
-  }
+  required_packages <- c("dplyr", "tidyr", "cli", "zoo")
+  if (imputation_method == 'mice') required_packages <- c(required_packages, "mice")
 
-  # validate imputation_method
-  valid_methods <- c('median', 'mice', 'none')
-  if (!imputation_method %in% valid_methods) {
-    stop(paste("Invalid imputation method. Choose from:", paste(valid_methods, collapse = ", ")))
-  }
-
-  # remove numeric attributes from the data to ensure compatibility with mice
-  .data[] <- lapply(.data, function(x) {
-    if (is.numeric(x)) {
-      attributes(x) <- NULL
+  for (pkg in required_packages) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      stop(sprintf("Package '%s' needed but not installed.", pkg))
     }
-    return(x)
-  })
+  }
 
-  # add the 'time' column to data and reshape to wide format
+  # Pre-process data
+  cli::cli_alert_info("Pre-processing data...")
+
+  # Get number of waves first
+  wave_values <- sort(unique(.data[[wave]]))
+  y_ <- length(wave_values)
+  cli::cli_alert_info(sprintf("Processing %d waves of data...", y_))
+
+  # Ensure no list columns
+  list_cols <- sapply(.data, is.list)
+  if (any(list_cols)) {
+    cli::cli_alert_warning("Converting list columns to character...")
+    .data <- .data %>%
+      dplyr::mutate(across(where(is.list), ~as.character(.x)))
+  }
+
+  # Convert factors to numeric where possible
+  cols_to_process <- c(baseline_vars, unlist(exposure_var), outcome_vars, confounder_vars)
+  cols_to_process <- unique(cols_to_process[cols_to_process %in% names(.data)])
+
+  .data <- .data %>%
+    dplyr::mutate(across(where(is.factor), ~{
+      if (all(grepl("^[-]?[0-9]+\\.?[0-9]*$", levels(.x)))) {
+        as.numeric(as.character(.x))
+      } else {
+        .x
+      }
+    }))
+
+  # Convert wave years to 0-based sequential indices
+  cli::cli_alert_info("Converting time indices...")
+  wave_lookup <- setNames(seq_along(wave_values) - 1, wave_values)
+
+  .data <- .data %>%
+    dplyr::mutate(time = wave_lookup[as.character(.data[[wave]])])
+
+  # Pre-allocate NA indicators if needed
+  if (!is.null(make_na_dummies)) {
+    cli::cli_alert_info("Creating NA indicators...")
+    vars_to_process <- unique(unlist(lapply(make_na_dummies, function(var) {
+      switch(var,
+             "baseline_vars" = baseline_vars,
+             "confounder_vars" = confounder_vars,
+             var)
+    })))
+  }
+
+  # Reshape to wide format
+  cli::cli_alert_info("Reshaping to wide format...")
   data_wide <- .data %>%
-    dplyr::mutate(time = as.numeric(.data[[wave]]) - 1) %>%
+    dplyr::select(-wave) %>%
     dplyr::arrange(.data[[id]], time) %>%
     tidyr::pivot_wider(
       id_cols = id,
       names_from = time,
-      values_from = -c(id, wave),
-      names_glue = "t{time}_{.value}"
+      values_from = -c(id, time),
+      names_glue = "t{time}_{.value}",
+      values_fn = list
     )
 
-  # determine total number of waves
-  time_values <- sort(unique(.data[[wave]]))
-  y_ <- length(time_values)  # Number of waves
-  cli::cli_alert_info(paste0("Data contains ", y_, " waves."))
+  # Unlist all columns that became lists during pivot_wider
+  cli::cli_alert_info("Processing list columns from pivot_wider...")
+  list_cols <- sapply(data_wide, is.list)
+  if (any(list_cols)) {
+    data_wide <- data_wide %>%
+      dplyr::mutate(across(where(is.list), ~{
+        unlist(.x)
+      }))
+  }
 
-  # lists to store column names
-  all_cols <- names(data_wide)
-  id_col <- id
+  # Create NA indicators before any imputation
+  if (!is.null(make_na_dummies)) {
+    cli::cli_alert_info("Creating NA indicators...")
 
-  # outcome columns at the last time point
-  outcome_cols <- paste0("t", y_ - 1, "_", outcome_vars)
-  outcome_cols <- outcome_cols[outcome_cols %in% names(data_wide)]
+    # Ensure exposure_var is a character vector
+    exposure_var <- unlist(exposure_var)
 
-  # exposure columns after t0 (we will not impute these)
-  exposure_cols <- paste0("t", 1:(y_ - 2), "_", exposure_var)
-  exposure_cols <- exposure_cols[exposure_cols %in% names(data_wide)]
+    # Create comprehensive list of variables that need NA indicators
+    vars_to_process <- character(0)
 
-  # the baseline_cols definition
+    # Process each make_na_dummies entry
+    for (dummy_type in make_na_dummies) {
+      new_vars <- switch(dummy_type,
+                         "baseline_vars" = {
+                           # Start with baseline vars
+                           vars <- baseline_vars
+                           # Add exposure vars if requested
+                           if (include_exposure_var_baseline) {
+                             vars <- c(vars, exposure_var)
+                           }
+                           # Add outcome vars if requested
+                           if (include_outcome_vars_baseline) {
+                             vars <- c(vars, outcome_vars)
+                           }
+                           vars
+                         },
+                         "confounder_vars" = confounder_vars,
+                         dummy_type)
+      vars_to_process <- c(vars_to_process, new_vars)
+    }
+
+    # Remove duplicates and NULLs
+    vars_to_process <- unique(vars_to_process[!is.null(vars_to_process)])
+
+    cli::cli_alert_info(sprintf("Will create NA indicators for variables: %s",
+                                paste(vars_to_process, collapse = ", ")))
+
+    # Create NA indicators for each variable at each appropriate time point
+    for (var in vars_to_process) {
+      for (t in 0:(y_ - 2)) {  # Exclude final outcome wave
+        col_name <- paste0("t", t, "_", var)
+
+        # Only create indicators for existing columns
+        if (col_name %in% names(data_wide)) {
+          # Determine if this variable should have NA indicator at this time point
+          create_indicator <- FALSE
+
+          # Logic for when to create NA indicators
+          if (var %in% baseline_vars && t == 0) {
+            create_indicator <- TRUE
+          } else if (var %in% exposure_var && include_exposure_var_baseline && t == 0) {
+            create_indicator <- TRUE
+          } else if (var %in% outcome_vars && include_outcome_vars_baseline && t == 0) {
+            create_indicator <- TRUE
+          } else if (var %in% confounder_vars) {
+            create_indicator <- TRUE
+          }
+
+          if (create_indicator) {
+            # Check if the variable has any missing values
+            if (any(is.na(data_wide[[col_name]]))) {
+              # Create the NA indicator
+              na_col_name <- paste0(col_name, "_na")
+              data_wide[[na_col_name]] <- as.integer(is.na(data_wide[[col_name]]))
+
+              cli::cli_alert_success(sprintf("Created NA indicator for %s", col_name))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  # Generate column names
+  cli::cli_alert_info("Generating column names...")
   baseline_cols <- paste0("t0_", baseline_vars)
   if (include_exposure_var_baseline) {
     baseline_cols <- c(baseline_cols, paste0("t0_", exposure_var))
@@ -137,271 +236,119 @@ margot_wide_machine <- function(.data,
   if (include_outcome_vars_baseline) {
     baseline_cols <- c(baseline_cols, paste0("t0_", outcome_vars))
   }
-  baseline_cols <- unique(baseline_cols)  # Remove any duplicates
+  baseline_cols <- unique(baseline_cols)
 
-  # confounder variables at t >= 0
-  confounder_cols <- c()
-  if (!is.null(confounder_vars)) {
-    for (t in 0:(y_ - 2)) {
-      confounder_cols <- c(confounder_cols, paste0("t", t, "_", confounder_vars))
+  outcome_cols <- paste0("t", y_ - 1, "_", outcome_vars)
+  exposure_cols <- paste0("t", 1:(y_ - 2), "_", exposure_var)
+
+  # Perform imputation
+  if (imputation_method != 'none') {
+    cli::cli_alert_info(sprintf("Starting %s imputation...", imputation_method))
+
+    # Prepare data for imputation
+    impute_cols <- baseline_cols[baseline_cols %in% names(data_wide)]
+
+    if (imputation_method == 'mice') {
+      tryCatch({
+        imp <- mice::mice(data_wide[, impute_cols, drop = FALSE],
+                          m = 1,
+                          maxit = 5,
+                          method = "pmm",
+                          printFlag = FALSE)
+
+        data_wide[, impute_cols] <- mice::complete(imp)
+        cli::cli_alert_success("MICE imputation completed successfully")
+      }, error = function(e) {
+        cli::cli_alert_warning(sprintf("MICE failed: %s. Falling back to median imputation.", e$message))
+        imputation_method <- 'median'
+      })
     }
-  }
 
-  # non-imputed columns
-  non_impute_cols <- c(id_col, outcome_cols, exposure_cols)
-
-  # columns to impute at baseline (t0): baseline variables
-  impute_baseline_cols <- baseline_cols
-
-  # identify variables with missing values before imputation
-  missing_vars_before <- names(which(colSums(is.na(data_wide[, impute_baseline_cols, drop = FALSE])) > 0))
-
-  # Create NA indicators before imputation
-  if (!is.null(make_na_dummies)) {
-    vars_to_process <- c()
-    for (var in make_na_dummies) {
-      if (var == "baseline_vars") {
-        vars_to_process <- c(vars_to_process, baseline_vars)
-      } else if (var == "confounder_vars") {
-        vars_to_process <- c(vars_to_process, confounder_vars)
-      } else {
-        vars_to_process <- c(vars_to_process, var)
-      }
-    }
-    vars_to_process <- unique(vars_to_process)
-
-    # **amended section starts here**
-    for (var in vars_to_process) {
-      for (t in 0:(y_ - 2)) {  # Exclude outcome wave
-        # **Skip creating '_na' for baseline_vars at t > 0**
-        if (var %in% baseline_vars && t != 0) {
-          next  # skip processing baseline_vars at waves beyond t0
-        }
-
-        col_name <- paste0("t", t, "_", var)
-        if (col_name %in% names(data_wide)) {
-          create_na <- TRUE
-
-          # **Ccnditional Creation for Baseline Variables at t0**
-          if (var %in% baseline_vars && t == 0) {
-            # Only create '_na' column if there are missing values in t0_var
-            if (!any(is.na(data_wide[[col_name]]))) {
-              create_na <- FALSE
-            }
-          }
-
-          if (create_na) {
-            na_indicator <- paste0(col_name, "_na")
-            data_wide[[na_indicator]] <- as.integer(is.na(data_wide[[col_name]]))
-          }
-        }
-      }
-    }
-    # **amended section ends here**
-  }
-
-  # initialise imp to NULL
-  imp <- NULL
-
-  # step 1: impute baseline variables
-  if (imputation_method == 'mice') {
-    cli::cli_alert_info("Starting MICE imputation for baseline variables...")
-
-    # prepare data for mICE (only baseline variables)
-    mice_data <- data_wide[, impute_baseline_cols, drop = FALSE]
-
-    # run MICE with error handling
-    tryCatch({
-      imp <- mice::mice(mice_data, m = 1, maxit = 5, method = "pmm", printFlag = TRUE)
-
-      cli::cli_alert_info("MICE imputation completed. Extracting imputed data...")
-
-      # check for logged events
-      if (!is.null(imp$loggedEvents) && nrow(imp$loggedEvents) > 0) {
-        cli::cli_alert_warning(paste("Number of logged events:", nrow(imp$loggedEvents)))
-        print(imp$loggedEvents)
-      }
-
-      imputed_data <- mice::complete(imp)
-
-      # replace the original data with imputed data
-      data_wide[, impute_baseline_cols] <- imputed_data
-
-      # identify variables that were imputed
-      imputed_vars <- setdiff(names(which(colSums(is.na(mice_data)) > 0)), non_impute_cols)
-
-      if (length(imputed_vars) > 0) {
-        cli::cli_alert_info("Variables imputed at baseline:")
-        cli::cli_ul(imputed_vars)
-      } else {
-        cli::cli_alert_info("No variables needed imputation at baseline.")
-      }
-
-      cli::cli_alert_success("Baseline variables imputed using MICE.")
-    }, error = function(e) {
-      cli::cli_alert_danger(paste("Error in MICE imputation:", e$message))
-      cli::cli_alert_info("Falling back to median imputation for baseline variables.")
-
-      for (col in impute_baseline_cols) {
+    if (imputation_method == 'median') {
+      for (col in impute_cols) {
         if (is.numeric(data_wide[[col]])) {
-          median_value <- stats::median(data_wide[[col]], na.rm = TRUE)
-          if (is.na(median_value)) median_value <- 0  # Default value if median is NA
-          data_wide[[col]][is.na(data_wide[[col]])] <- median_value
-          cli::cli_alert_success(paste0("Imputed missing values in ", col, " with median"))
+          data_wide[[col]][is.na(data_wide[[col]])] <- median(data_wide[[col]], na.rm = TRUE)
         } else {
-          mode_value <- names(sort(table(data_wide[[col]]), decreasing = TRUE))[1]
-          if (length(mode_value) == 0) mode_value <- NA  # Handle case with all NAs
-          data_wide[[col]][is.na(data_wide[[col]])] <- mode_value
-          cli::cli_alert_success(paste0("Imputed missing values in ", col, " with mode"))
+          mode_val <- names(sort(table(data_wide[[col]]), decreasing = TRUE))[1]
+          data_wide[[col]][is.na(data_wide[[col]])] <- mode_val
         }
       }
-    })
-  } else if (imputation_method == 'median') {
-    cli::cli_alert_info("Starting median/mode imputation for baseline variables...")
-
-    # impute missing values
-    for (col in impute_baseline_cols) {
-      if (any(is.na(data_wide[[col]]))) {
-        if (is.numeric(data_wide[[col]])) {
-          median_value <- stats::median(data_wide[[col]], na.rm = TRUE)
-          if (is.na(median_value)) median_value <- 0  # Default value if median is NA
-          data_wide[[col]][is.na(data_wide[[col]])] <- median_value
-          cli::cli_alert_success(paste0("Imputed missing values in ", col, " with median"))
-        } else {
-          mode_value <- names(sort(table(data_wide[[col]]), decreasing = TRUE))[1]
-          if (length(mode_value) == 0) mode_value <- NA  # Handle case with all NAs
-          data_wide[[col]][is.na(data_wide[[col]])] <- mode_value
-          cli::cli_alert_success(paste0("Imputed missing values in ", col, " with mode"))
-        }
-      }
+      cli::cli_alert_success("Median imputation completed")
     }
-
-    # identify variables that were imputed
-    imputed_vars <- intersect(missing_vars_before, impute_baseline_cols)
-    if (length(imputed_vars) > 0) {
-      cli::cli_alert_info("Variables imputed at baseline:")
-      cli::cli_ul(imputed_vars)
-    } else {
-      cli::cli_alert_info("No variables needed imputation at baseline.")
-    }
-  } else {
-    cli::cli_alert_info("No imputation performed on baseline variables.")
   }
 
-  # step 2: carry imputation forward confounders
+  # Handle confounders
   if (!is.null(confounder_vars)) {
+    cli::cli_alert_info("Processing confounders...")
     for (var in confounder_vars) {
       var_cols <- paste0("t", 0:(y_ - 2), "_", var)
       var_cols <- var_cols[var_cols %in% names(data_wide)]
 
-      # Apply carry-forward imputation row-wise
-      data_wide[var_cols] <- t(apply(data_wide[var_cols], 1, function(x) {
-        zoo::na.locf(x, na.rm = FALSE)
+      # Create a matrix for more efficient processing
+      mat <- as.matrix(data_wide[, var_cols, drop = FALSE])
+
+      # Process each row using apply and convert back to numeric
+      mat <- t(apply(mat, 1, function(x) {
+        x_num <- as.numeric(as.character(x))
+        zoo::na.locf(x_num, na.rm = FALSE)
       }))
 
-      # After carry-forward, impute any remaining missing values using median/mode
-      for (col in var_cols) {
-        if (any(is.na(data_wide[[col]]))) {
-          if (is.numeric(data_wide[[col]])) {
-            median_value <- stats::median(data_wide[[col]], na.rm = TRUE)
-            if (is.na(median_value)) median_value <- 0  # Default value if median is NA
-            data_wide[[col]][is.na(data_wide[[col]])] <- median_value
-            cli::cli_alert_success(paste0("Imputed remaining missing values in ", col, " with median"))
-          } else {
-            mode_value <- names(sort(table(data_wide[[col]]), decreasing = TRUE))[1]
-            if (length(mode_value) == 0) mode_value <- NA  # Handle case with all NAs
-            data_wide[[col]][is.na(data_wide[[col]])] <- mode_value
-            cli::cli_alert_success(paste0("Imputed remaining missing values in ", col, " with mode"))
-          }
-        }
-      }
-
-      cli::cli_alert_success(paste0("Carried forward values and imputed for confounder variable: ", var))
+      # Assign back to data_wide
+      data_wide[, var_cols] <- mat
     }
+    cli::cli_alert_success("Confounder processing completed")
   }
 
-  # confirm no imputation of exposure variable after t0
-  cli::cli_alert_success(paste0("Confirmed: exposure variable(s) '", paste(exposure_var, collapse = ", "), "' not imputed after t0."))
+  # Reorder columns
+  cli::cli_alert_info("Reordering columns...")
+  new_order <- c(id)
 
-  # confirm no imputation of variables at end of study
-  cli::cli_alert_success(paste0("Confirmed: outcome variables at t", y_ - 1, " (end of study) not imputed."))
-
-  # reorder columns
-  new_order <- c(id_col)
   for (t in 0:(y_ - 1)) {
     t_prefix <- paste0("t", t, "_")
-    if (t < (y_ - 1)) {
-      # for t0, include baseline_vars and potentially exposure and outcome vars
-      if (t == 0) {
-        wave_vars <- unique(c(baseline_vars, confounder_vars))
-        if (include_exposure_var_baseline) {
-          wave_vars <- c(wave_vars, exposure_var)
-        }
-        if (include_outcome_vars_baseline) {
-          wave_vars <- c(wave_vars, outcome_vars)
-        }
-      } else {
-        wave_vars <- unique(c(confounder_vars, outcome_vars))
-      }
-      wave_vars <- unique(wave_vars)
-
-      # build column names
-      wave_cols <- paste0(t_prefix, wave_vars)
-      wave_cols <- wave_cols[wave_cols %in% names(data_wide)]
-
-      # include exposure_var
-      extra_cols <- c(paste0(t_prefix, exposure_var))
-      extra_cols <- extra_cols[extra_cols %in% names(data_wide)]
-
-      # append NA indicators
-      na_cols <- c()
-      if (!is.null(make_na_dummies)) {
-        na_vars <- intersect(wave_vars, vars_to_process)
-        na_cols <- paste0(t_prefix, na_vars, "_na")
-        na_cols <- na_cols[na_cols %in% names(data_wide)]
-      }
-
-      # ddd to new_order
-      new_order <- c(new_order, wave_cols, na_cols, extra_cols)
+    if (t == 0) {
+      wave_vars <- unique(c(
+        baseline_vars,
+        if (include_exposure_var_baseline) exposure_var else NULL,
+        if (include_outcome_vars_baseline) outcome_vars else NULL,
+        confounder_vars
+      ))
+    } else if (t < (y_ - 1)) {
+      wave_vars <- unique(c(confounder_vars, outcome_vars, exposure_var))
     } else {
-      # outcome wave
-      wave_cols <- paste0(t_prefix, outcome_vars)
-      wave_cols <- wave_cols[wave_cols %in% names(data_wide)]
-      new_order <- c(new_order, wave_cols)
+      wave_vars <- outcome_vars
     }
+
+    # Add main columns
+    new_cols <- paste0(t_prefix, wave_vars)
+    new_cols <- new_cols[new_cols %in% names(data_wide)]
+
+    # Add NA indicator columns
+    if (!is.null(make_na_dummies)) {
+      for (col in new_cols) {
+        # Add NA indicator immediately after its corresponding variable
+        na_col <- paste0(col, "_na")
+        if (na_col %in% names(data_wide)) {
+          new_cols <- append(new_cols, na_col, after = which(new_cols == col))
+        }
+      }
+    }
+
+    new_order <- c(new_order, new_cols)
   }
 
-  # remove duplicates in new_order
-  new_order <- unique(new_order)
-  # kep only columns that are in data_wide
-  new_order <- intersect(new_order, names(data_wide))
+  # Ensure all columns exist and are unique
+  new_order <- unique(new_order[new_order %in% names(data_wide)])
 
-  data_wide_ordered <- data_wide[, new_order]
+  # Final reordering
+  data_wide <- data_wide[, new_order]
 
-  # final step: adjust position of exposure_var within each wave
-  for (t in 0:(y_ - 2)) {  # Excluding the final wave
-    t_prefix <- paste0("t", t, "_")
+  # Report execution time
+  end_time <- Sys.time()
+  execution_time <- difftime(end_time, start_time, units = "secs")
+  cli::cli_alert_success(sprintf("Processing completed in %.2f seconds", as.numeric(execution_time)))
 
-    # columns to move
-    move_cols <- paste0(t_prefix, exposure_var)
-    move_cols <- move_cols[move_cols %in% names(data_wide_ordered)]
-
-    # find position of last column in current wave
-    last_col_position <- max(which(grepl(paste0("^", t_prefix), names(data_wide_ordered))))
-
-    # move the column(s)
-    if (length(move_cols) > 0) {
-      data_wide_ordered <- data_wide_ordered %>%
-        dplyr::relocate(dplyr::any_of(move_cols), .after = dplyr::any_of(names(data_wide_ordered)[last_col_position]))
-    }
-  }
-
-  # message
-  cli::cli_alert_success("Data successfully transformed to wide format, imputed, and reordered \U0001F44D")
-
-  return(data.frame(data_wide_ordered))  # Ensure output is a data.frame
+  return(data.frame(data_wide))
 }
-
 # Example usage:
 # Define variables
 # baseline_vars <- c("age", "education", "income")
