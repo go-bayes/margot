@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_wide_machine.R
 \name{margot_wide_machine}
 \alias{margot_wide_machine}
-\title{Transform longitudinal data to wide format with flexible wave handling and imputation}
+\title{Transform longitudinal data to wide format with baseline imputation and NA indicators}
 \usage{
 margot_wide_machine(
   .data,
@@ -12,7 +12,6 @@ margot_wide_machine(
   exposure_var,
   outcome_vars,
   confounder_vars = NULL,
-  make_na_dummies = NULL,
   imputation_method = "median",
   include_exposure_var_baseline = TRUE,
   include_outcome_vars_baseline = TRUE
@@ -31,11 +30,9 @@ margot_wide_machine(
 
 \item{outcome_vars}{A character vector of outcome variable names to be tracked across time.}
 
-\item{confounder_vars}{An optional character vector of time-varying confounder variable names.}
+\item{confounder_vars}{An optional character vector of time-varying confounder variable names to be carried forward (default is NULL).}
 
-\item{make_na_dummies}{An optional character vector of variable names or keywords ("baseline_vars", "confounder_vars") for which to create NA dummies.}
-
-\item{imputation_method}{A character string specifying the imputation method to use. Options are 'median' (default), 'mice', or 'none'.}
+\item{imputation_method}{A character string specifying the imputation method to use for baseline variables. Options are 'median' (default), 'mice', or 'none'.}
 
 \item{include_exposure_var_baseline}{Logical indicating whether to include the exposure variable at baseline (t0).}
 
@@ -43,29 +40,39 @@ margot_wide_machine(
 }
 \value{
 A wide-format data frame with each subject's observations across time points
-        represented in a single row, and variables prefixed by their respective
-        time of measurement. Imputed values and NA indicators are included as specified.
+        represented in a single row. Baseline variables, exposure variables at baseline,
+        and outcome variables at baseline (if included) have missing values imputed as specified.
+        NA indicators are created for variables at baseline. Exposure variables are tracked across
+        waves but are not imputed beyond baseline. Outcome variables are included only at the final wave
+        unless `include_outcome_vars_baseline` is `TRUE`. Confounders (if any) are carried forward using last observation carried forward (LOCF).
 }
 \description{
 This function transforms longitudinal data from long format to wide format,
-ensuring that baseline measurements are correctly labelled and included.
+ensuring that baseline measurements are correctly labeled and included.
 It handles multiple observations per subject across an indefinite number of waves,
 and allows for the specification of baseline variables, exposure variables,
-outcome variables, and time-varying confounders. The function also performs
-imputation for missing values and creates NA indicator variables as specified.
+outcome variables, and time-varying confounders.
 }
 \details{
-Imputation methods:
-- 'median': For numeric variables, missing values are imputed with the median.
-            For categorical variables, missing values are imputed with the mode.
-- 'mice': Multiple Imputation by Chained Equations is used for baseline variables.
-          If MICE fails, the function falls back to median/mode imputation.
-- 'none': No imputation is performed.
-
-The function creates NA indicator variables for specified variables, imputes
-missing values according to the chosen method, and ensures that the exposure
-variable is not imputed after t0 and outcome variables are not imputed at the
-final time point.
+Key functionalities:
+- **Imputation at Baseline**: Missing values are imputed at baseline (`t0`) for:
+  - `baseline_vars`
+  - `exposure_var` (if `include_exposure_var_baseline = TRUE`)
+  - `outcome_vars` (if `include_outcome_vars_baseline = TRUE`)
+  - 'median': For numeric variables, missing values are imputed with the median.
+    For categorical variables, missing values are imputed with the mode.
+  - 'mice': Multiple Imputation by Chained Equations is used.
+    If MICE fails, the function falls back to median/mode imputation.
+  - 'none': No imputation is performed.
+- **NA Indicators**: NA indicator variables are created for all variables at baseline.
+  Each variable at baseline will have a corresponding NA indicator with the suffix `_na`.
+- **Exposure Variables**: Tracked across waves but never imputed beyond baseline.
+- **Outcome Variables**: Included only at the final wave unless `include_outcome_vars_baseline` is `TRUE`.
+- **Confounder Variables**: If specified, these are carried forward across waves using LOCF.
+- **Variable Inclusion per Wave**:
+  - **Baseline (`t0`)**: Includes `baseline_vars`, exposure variables (if included), outcome variables (if included), and their NA indicators.
+  - **Waves `t1` to `t(y_-2)`**: Include only the exposure variables (and confounders if specified).
+  - **Final Wave (`t(y_-1)`)**: Includes only the outcome variables.
 }
 \examples{
 # Define variables
@@ -74,16 +81,17 @@ exposure_var <- "treatment"
 outcome_vars <- c("health_score", "quality_of_life")
 confounder_vars <- c("stress_level", "exercise_frequency")
 
-# Transform data to wide format with imputation
+# Transform data to wide format with baseline imputation
 df_wide_impute <- margot_wide_machine(
-  longitudinal_data,
+  data_long,
   id = "patient_id",
   wave = "visit_time",
   baseline_vars = baseline_vars,
   exposure_var = exposure_var,
   outcome_vars = outcome_vars,
   confounder_vars = confounder_vars,
-  make_na_dummies = c("baseline_vars", "confounder_vars"),
-  imputation_method = "mice"
+  imputation_method = "mice",
+  include_exposure_var_baseline = TRUE,
+  include_outcome_vars_baseline = TRUE
 )
 }

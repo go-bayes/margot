@@ -9,7 +9,7 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.13</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.14</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 <span>  <span class="va">df_wide</span>,</span>
 <span>  ordinal_columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  continuous_columns_keep <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  exposure_var <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  exposure_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scale_exposure <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  not_lost_in_following_wave <span class="op">=</span> <span class="st">"not_lost_following_wave"</span>,</span>
 <span>  lost_in_following_wave <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -74,12 +74,12 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 <dd><p>A character vector of continuous column names to keep without scaling.</p></dd>
 
 
-<dt id="arg-exposure-var">exposure_var<a class="anchor" aria-label="anchor" href="#arg-exposure-var"></a></dt>
-<dd><p>Name of the exposure variable. This variable will be used to determine attrition.</p></dd>
+<dt id="arg-exposure-vars">exposure_vars<a class="anchor" aria-label="anchor" href="#arg-exposure-vars"></a></dt>
+<dd><p>A character vector of exposure variable names. These variables will be used to determine attrition.</p></dd>
 
 
 <dt id="arg-scale-exposure">scale_exposure<a class="anchor" aria-label="anchor" href="#arg-scale-exposure"></a></dt>
-<dd><p>Logical. If TRUE, scales the exposure variable. Default is FALSE.</p></dd>
+<dd><p>Logical. If TRUE, scales the exposure variable(s). Default is FALSE.</p></dd>
 
 
 <dt id="arg-not-lost-in-following-wave">not_lost_in_following_wave<a class="anchor" aria-label="anchor" href="#arg-not-lost-in-following-wave"></a></dt>
@@ -91,7 +91,7 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 
 
 <dt id="arg-remove-selected-columns">remove_selected_columns<a class="anchor" aria-label="anchor" href="#arg-remove-selected-columns"></a></dt>
-<dd><p>Logical. If TRUE, removes selected columns after encoding. Default is TRUE</p></dd>
+<dd><p>Logical. If TRUE, removes selected columns after encoding. Default is TRUE.</p></dd>
 
 
 <dt id="arg-time-point-prefixes">time_point_prefixes<a class="anchor" aria-label="anchor" href="#arg-time-point-prefixes"></a></dt>
@@ -120,7 +120,7 @@ If FALSE, applies custom logic based on 'save_observed_y'.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function performs the following steps:
 1. Identifies all time points in the dataset.
-2. Creates 'not_lost' indicators based on the exposure variable in subsequent waves.
+2. Creates 'not_lost' indicators based on the exposure variable(s) in subsequent waves, excluding the final wave.
 3. Applies attrition logic across all waves.
 4. Scales continuous variables across all waves, removing original non-scaled columns.
 5. Optionally encodes ordinal columns.
@@ -135,7 +135,7 @@ If FALSE, applies custom logic based on 'save_observed_y'.</p></dd>
 <span class="r-in"><span>  <span class="va">df_wide</span>,</span></span>
 <span class="r-in"><span>  ordinal_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"education"</span>, <span class="st">"income_category"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  continuous_columns_keep <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"bmi"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  exposure_var <span class="op">=</span> <span class="st">"treatment"</span>,</span></span>
+<span class="r-in"><span>  exposure_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"treatment"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  scale_exposure <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>  not_lost_in_following_wave <span class="op">=</span> <span class="st">"not_lost"</span>,</span></span>
 <span class="r-in"><span>  lost_in_following_wave <span class="op">=</span> <span class="cn">NULL</span>,</span></span>

@@ -8,7 +8,7 @@ margot_process_longitudinal_data_wider(
   df_wide,
   ordinal_columns = NULL,
   continuous_columns_keep = NULL,
-  exposure_var = NULL,
+  exposure_vars = NULL,
   scale_exposure = FALSE,
   not_lost_in_following_wave = "not_lost_following_wave",
   lost_in_following_wave = NULL,
@@ -26,15 +26,15 @@ margot_process_longitudinal_data_wider(
 
 \item{continuous_columns_keep}{A character vector of continuous column names to keep without scaling.}
 
-\item{exposure_var}{Name of the exposure variable. This variable will be used to determine attrition.}
+\item{exposure_vars}{A character vector of exposure variable names. These variables will be used to determine attrition.}
 
-\item{scale_exposure}{Logical. If TRUE, scales the exposure variable. Default is FALSE.}
+\item{scale_exposure}{Logical. If TRUE, scales the exposure variable(s). Default is FALSE.}
 
 \item{not_lost_in_following_wave}{Name of the 'not lost' indicator. Default is "not_lost_following_wave".}
 
 \item{lost_in_following_wave}{Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.}
 
-\item{remove_selected_columns}{Logical. If TRUE, removes selected columns after encoding. Default is TRUE}
+\item{remove_selected_columns}{Logical. If TRUE, removes selected columns after encoding. Default is TRUE.}
 
 \item{time_point_prefixes}{A character vector of time point prefixes. If NULL, they will be inferred from the data.}
 
@@ -56,7 +56,7 @@ It handles attrition, scales continuous variables, optionally encodes ordinal va
 \details{
 The function performs the following steps:
 1. Identifies all time points in the dataset.
-2. Creates 'not_lost' indicators based on the exposure variable in subsequent waves.
+2. Creates 'not_lost' indicators based on the exposure variable(s) in subsequent waves, excluding the final wave.
 3. Applies attrition logic across all waves.
 4. Scales continuous variables across all waves, removing original non-scaled columns.
 5. Optionally encodes ordinal columns.
@@ -69,7 +69,7 @@ processed_data <- margot_process_longitudinal_data_wider(
   df_wide,
   ordinal_columns = c("education", "income_category"),
   continuous_columns_keep = c("age", "bmi"),
-  exposure_var = "treatment",
+  exposure_vars = c("treatment"),
   scale_exposure = FALSE,
   not_lost_in_following_wave = "not_lost",
   lost_in_following_wave = NULL,

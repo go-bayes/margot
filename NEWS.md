@@ -13,6 +13,12 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2024-10-27] margot 0.2.3.14
+
+
+## Improved
+- `margot_process_longitudinal_data_wider` - more robost.
+- `margot_wide_impute` - small bug fix. 
 
 # [2024-10-26] margot 0.2.3.13
 
