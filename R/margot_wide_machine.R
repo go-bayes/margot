@@ -1,4 +1,4 @@
-#' Transform longitudinal data to wide format with baseline imputation and NA indicators
+# Transform longitudinal data to wide format with baseline imputation and NA indicators
 #'
 #' This function transforms longitudinal data from long format to wide format,
 #' ensuring that baseline measurements are correctly labeled and included.
@@ -20,8 +20,9 @@
 #' @return A wide-format data frame with each subject's observations across time points
 #'         represented in a single row. Baseline variables, exposure variables at baseline,
 #'         and outcome variables at baseline (if included) have missing values imputed as specified.
-#'         NA indicators are created for variables at baseline. Exposure variables are tracked across
-#'         waves but are not imputed beyond baseline. Outcome variables are included only at the final wave
+#'         NA indicators are created for variables at baseline only if they have missing values.
+#'         Exposure variables are tracked across waves but are not imputed beyond baseline.
+#'         Outcome variables are included only at the final wave
 #'         unless `include_outcome_vars_baseline` is `TRUE`. Confounders (if any) are carried forward using last observation carried forward (LOCF).
 #'
 #' @details
@@ -35,13 +36,14 @@
 #'   - 'mice': Multiple Imputation by Chained Equations is used.
 #'     If MICE fails, the function falls back to median/mode imputation.
 #'   - 'none': No imputation is performed.
-#' - **NA Indicators**: NA indicator variables are created for all variables at baseline.
-#'   Each variable at baseline will have a corresponding NA indicator with the suffix `_na`.
+#' - **NA Indicators**: NA indicator variables are created **only** for baseline variables
+#'   that have missing values. Each such variable at baseline will have a corresponding
+#'   NA indicator with the suffix `_na`.
 #' - **Exposure Variables**: Tracked across waves but never imputed beyond baseline.
 #' - **Outcome Variables**: Included only at the final wave unless `include_outcome_vars_baseline` is `TRUE`.
 #' - **Confounder Variables**: If specified, these are carried forward across waves using LOCF.
 #' - **Variable Inclusion per Wave**:
-#'   - **Baseline (`t0`)**: Includes `baseline_vars`, exposure variables (if included), outcome variables (if included), and their NA indicators.
+#'   - **Baseline (`t0`)**: Includes `baseline_vars`, exposure variables (if included), outcome variables (if included), and their NA indicators (only if necessary).
 #'   - **Waves `t1` to `t(y_-2)`**: Include only the exposure variables (and confounders if specified).
 #'   - **Final Wave (`t(y_-1)`)**: Includes only the outcome variables.
 #'
@@ -168,8 +170,8 @@ margot_wide_machine <- function(.data,
       names_glue = "t{time}_{.value}"
     )
 
-  # Create NA indicators for all variables at baseline
-  cli::cli_alert_info("Creating NA indicators for variables at baseline...")
+  # Create NA indicators for all variables at baseline **only if they have missing values**
+  cli::cli_alert_info("Creating NA indicators for variables at baseline (only if necessary)...")
   baseline_all_vars <- c(baseline_vars)
   if (include_exposure_var_baseline) {
     baseline_all_vars <- c(baseline_all_vars, exposure_var)
@@ -182,9 +184,14 @@ margot_wide_machine <- function(.data,
   baseline_cols <- baseline_cols[baseline_cols %in% names(data_wide)]
 
   for (col in baseline_cols) {
-    na_col_name <- paste0(col, "_na")
-    data_wide[[na_col_name]] <- as.integer(is.na(data_wide[[col]]))
-    cli::cli_alert_success(sprintf("Created NA indicator for %s", col))
+    # **Check if the column has any NA values before creating the indicator**
+    if (any(is.na(data_wide[[col]]))) {
+      na_col_name <- paste0(col, "_na")
+      data_wide[[na_col_name]] <- as.integer(is.na(data_wide[[col]]))
+      cli::cli_alert_success(sprintf("Created NA indicator for %s", col))
+    } else {
+      cli::cli_alert_info(sprintf("No missing values in %s; skipping NA indicator creation.", col))
+    }
   }
 
   # Prepare columns for imputation at baseline
@@ -227,7 +234,7 @@ margot_wide_machine <- function(.data,
   if (!is.null(confounder_vars)) {
     cli::cli_alert_info("Carrying forward confounders...")
     for (var in confounder_vars) {
-      var_cols <- paste0("t", 1:(y_ - 2), "_", var)
+      var_cols <- paste0("t", 1:(y_ - 1), "_", var)  # Corrected to y_ -1 to include all relevant waves
       var_cols <- var_cols[var_cols %in% names(data_wide)]
 
       # Process each row
@@ -260,7 +267,7 @@ margot_wide_machine <- function(.data,
     new_cols <- paste0(t_prefix, wave_vars)
     new_cols <- new_cols[new_cols %in% names(data_wide)]
 
-    # Add NA indicator columns for baseline variables
+    # Add NA indicator columns for baseline variables **only if they were created**
     if (t == 0) {
       na_cols <- paste0(new_cols, "_na")
       na_cols <- na_cols[na_cols %in% names(data_wide)]
