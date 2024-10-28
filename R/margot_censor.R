@@ -37,8 +37,14 @@ margot_censor <- function(
     condition_value = 0,
     year_measured_var = "year_measured"
 ) {
+  # Ensure data.table is loaded
+  if (!requireNamespace("data.table", quietly = TRUE)) {
+    stop("Package 'data.table' is required but not installed.")
+  }
+  .datatable.aware <- TRUE  # Make the environment data.table-aware
+
   # Input validation and conversion to data.table
-  dt <- as.data.table(copy(dt))
+  dt <- data.table::as.data.table(data.table::copy(dt))
 
   # Validate required variables exist
   required_vars <- c(cluster_id, id_var, wave_var, condition_var, year_measured_var)
@@ -49,7 +55,7 @@ margot_censor <- function(
 
   # Ensure wave_var is numeric
   if (!is.numeric(dt[[wave_var]])) {
-    dt[, (wave_var) := as.numeric(as.character(get(wave_var)))]
+    data.table::set(dt, j = wave_var, value = as.numeric(as.character(dt[[wave_var]])))
     if (any(is.na(dt[[wave_var]]))) {
       cli::cli_abort("The '{wave_var}' variable cannot be converted to numeric.")
     }
