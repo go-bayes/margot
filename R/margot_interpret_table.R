@@ -42,11 +42,11 @@
 #' cat(result$interpretation)
 #' }
 #'
-#' @export
+#' @keywords internal
 #' @importFrom dplyr case_when mutate rowwise ungroup if_else
 #' @importFrom glue glue
 #' @importFrom cli cli_alert_danger cli_alert_warning
-margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL, order = "default", original_df = NULL) {
+margot_interpret_table <- function(df, type = c("RD", "RR"), estimand = NULL, order = "default", original_df = NULL) {
   .Deprecated("margot_interpret_marginal")
   margot_interpret_marginal(df = df, type = type, estimand = estimand, order = order, original_df = original_df)
 }

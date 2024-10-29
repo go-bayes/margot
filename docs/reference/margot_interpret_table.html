@@ -21,7 +21,7 @@ and risk ratio scales.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.9</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,13 @@ and risk ratio scales.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_interpret_table</span><span class="op">(</span><span class="va">df</span>, <span class="va">causal_scale</span>, estimand <span class="op">=</span> <span class="cn">NULL</span>, order <span class="op">=</span> <span class="st">"default"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_interpret_table</span><span class="op">(</span></span>
+<span>  <span class="va">df</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RD"</span>, <span class="st">"RR"</span><span class="op">)</span>,</span>
+<span>  estimand <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  order <span class="op">=</span> <span class="st">"default"</span>,</span>
+<span>  original_df <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -74,12 +80,6 @@ E-values, and a summary estimate label. The structure of `df` should align with 
 `causal_scale`.</p></dd>
 
 
-<dt id="arg-causal-scale">causal_scale<a class="anchor" aria-label="anchor" href="#arg-causal-scale"></a></dt>
-<dd><p>Character string specifying the causal scale used in the analysis.
-Currently supports "causal_difference" for differences in means or medians, and "risk_ratio"
-for comparing ratios of probabilities or risks.</p></dd>
-
-
 <dt id="arg-estimand">estimand<a class="anchor" aria-label="anchor" href="#arg-estimand"></a></dt>
 <dd><p>Optional character string indicating the type of causal estimand interpreted: "PATE"
 (Population Average Treatment Effect), "ATE" (Average Treatment Effect), "ATT" (Average
@@ -89,6 +89,12 @@ Treatment Effect in the Treated), "CATE" (Conditional Average Treatment Effect),
 
 <dt id="arg-order">order<a class="anchor" aria-label="anchor" href="#arg-order"></a></dt>
 <dd><p>Character string specifying the order of results. Default is "default".</p></dd>
+
+
+<dt id="arg-causal-scale">causal_scale<a class="anchor" aria-label="anchor" href="#arg-causal-scale"></a></dt>
+<dd><p>Character string specifying the causal scale used in the analysis.
+Currently supports "causal_difference" for differences in means or medians, and "risk_ratio"
+for comparing ratios of probabilities or risks.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -127,7 +133,7 @@ Treatment Effect in the Treated), "CATE" (Conditional Average Treatment Effect),
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>
