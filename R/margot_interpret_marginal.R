@@ -1,80 +1,62 @@
-#' Interpret and Describe Causal Effect Estimates Using E-values
+#' This function interprets the output of causal effect analysis, providing a compact report.
+#' It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality.
+#' The language is suitable for scientific reports, avoiding explanations of treatment effects and E-values.
+#' Each outcome's interpretation starts with a separate paragraph heading using `####`.
+#' Additionally, it includes a final paragraph indicating that all other effect estimates presented
+#' either weak or unreliable evidence for causality.
 #'
-#' This function interprets the output of causal effect analysis, providing textual descriptions
-#' of causal effect estimates. It categorizes the strength of evidence for causality based on
-#' E-values and confidence intervals, and generates a detailed interpretation of the effect
-#' estimates according to specified types (i.e., "RD" for risk difference or "RR" for risk ratio)
-#' and estimands. It also includes interpretation of original scale results when available.
-#'
-#' @param df Data frame containing causal effect estimates, expected to include columns for
-#' outcome names, effect estimates (either differences or ratios), confidence intervals,
-#' E-values, and a summary estimate label. Can also be the list output from `transform_to_original_scale()`.
+#' @param df Data frame containing causal effect estimates. Expected to include columns for
+#' outcome names, effect estimates, confidence intervals, E-values, and summary labels.
+#' Can also be the list output from `transform_to_original_scale()`.
 #' @param type Character string specifying the type of effect estimate. Must be either "RD"
 #' (Risk Difference) or "RR" (Risk Ratio). Default is "RD".
-#' @param estimand Optional character string indicating the type of causal estimand interpreted: "PATE"
-#' (Population Average Treatment Effect), "ATE" (Average Treatment Effect), "ATT" (Average
-#' Treatment Effect in the Treated), "CATE" (Conditional Average Treatment Effect), or "LMTP"
-#' (Longitudinal Modified Treatment Policy). Default is NULL.
-#' @param order Character string specifying the order of results. Default is "default".
+#' @param order Character string specifying the order of results. Default is "alphabetical".
+#'   - `"alphabetical"`: Orders outcomes alphabetically.
+#'   - `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.
+#'   - `"custom"`: Allows for a custom ordering (requires additional implementation).
+#'   - `"default"`: Deprecated. Uses `"magnitude"` ordering and issues a warning.
 #' @param original_df Optional data frame for back-transforming estimates to the original scale.
 #'
-#' @return A list containing two elements:
-#'   \item{estimand_description}{A character string describing the specified estimand, or NULL if no estimand was provided.}
-#'   \item{interpretation}{A character string containing a detailed interpretation of each outcome in `df`,
-#'   including the causal contrast, E-values, the strength of evidence for causality, and original scale results if available.}
-#'
-#' @details
-#' The function handles both transformed and original scale results. If original scale results
-#' are available (indicated by the presence of columns with "_original" suffix), these will be included
-#' in the interpretation. The strength of evidence for causality is categorized as follows:
-#'
-#' - **Strong evidence:** E-value lower bound > 2
-#' - **Evidence:** E-value lower bound > 1.1 and <= 2
-#' - **Weak evidence:** E-value lower bound > 1 and <= 1.1
-#' - **Not reliable evidence:** E-value lower bound <= 1 or confidence interval includes null effect
+#' @return A list containing one element:
+#'   \item{interpretation}{A character string containing a compact interpretation of each outcome in `df`,
+#'   including separate paragraph headings and sentence-cased descriptions, followed by a concluding paragraph
+#'   if applicable.}
 #'
 #' @examples
 #' \dontrun{
 #' # Assuming `group_tab_output` is the result from a causal analysis
-#' result <- margot_interpret_marginal(group_tab_output, type = "RD", estimand = "ATE")
-#' cat(result$estimand_description)
+#' result <- margot_interpret_marginal(group_tab_output, type = "RD")
 #' cat(result$interpretation)
 #'
 #' # Using Risk Ratio without specifying an estimand
 #' result <- margot_interpret_marginal(group_tab_output, type = "RR")
-#' cat(result$interpretation)
 #'
 #' # Using output from transform_to_original_scale()
 #' transformed_data <- transform_to_original_scale(results_df, original_df, label_mapping)
 #' result <- margot_interpret_marginal(transformed_data, type = "RD")
-#' cat(result$interpretation)
 #' }
 #'
-#' @importFrom dplyr case_when mutate rowwise ungroup if_else
+#' @importFrom dplyr case_when mutate rowwise ungroup if_else filter arrange desc
 #' @importFrom glue glue
+#' @importFrom stringr str_to_sentence
 #' @export
-margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL, order = "default", original_df = NULL) {
+margot_interpret_marginal <- function(df, type = c("RD", "RR"), order = "alphabetical", original_df = NULL) {
   type <- match.arg(type)
 
-  message("Starting interpretation of causal effect estimates...")
-
-  # Define estimand descriptions
-  estimand_description <- if (!is.null(estimand)) {
-    dplyr::case_when(
-      estimand == "LMTP" ~ "A Longitudinal Modified Treatment Policy (LMTP) calculates the expected outcome difference between treatment and contrast conditions over a sequential regime of treatments for a prespecified target population.",
-      estimand == "PATE" ~ "The Population Average Treatment Effect (PATE) estimates the expected outcome difference between treatment and contrast groups across the entire population.",
-      estimand == "ATE" ~ "The Average Treatment Effect (ATE) measures the mean difference in outcomes between treatment and contrast groups within the target population.",
-      estimand == "ATT" ~ "The Average Treatment Effect on the Treated (ATT) assesses the expected outcome difference for those receiving the treatment, compared to a similar group that did not, within the target population.",
-      estimand == "CATE" ~ "The Conditional Average Treatment Effect (CATE) evaluates the expected difference in outcomes between treatment and contrast groups within specific population strata.",
-      TRUE ~ "The specified estimand is not recognized. Valid options include: 'PATE', 'ATE', 'ATT', 'CATE', 'LMTP'."
-    )
-  } else {
-    NULL
+  # Handle order parameter
+  if (order == "default") {
+    warning("'default' order is deprecated. Please use 'magnitude' instead.")
+    order <- "magnitude"
   }
 
-  message("Processing and interpreting data...")
+  # Validate order parameter
+  if (!order %in% c("alphabetical", "magnitude", "custom")) {
+    stop("Invalid 'order' parameter. Choose from 'alphabetical', 'magnitude', or 'custom'.")
+  }
 
-  # Process df via group_tab to ensure 'Estimate' variable is present
+  message("Starting compact interpretation of causal effect estimates...")
+
+  # Process df via group_tab to ensure necessary columns are present
   df <- group_tab(df, type = type, order = order)
 
   # If original_df is provided, back-transform estimates
@@ -88,7 +70,7 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
   } else if ("E[Y(1)]/E[Y(0)]" %in% names(df)) {
     "E[Y(1)]/E[Y(0)]"
   } else {
-    stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
+    stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column.")
   }
 
   # Determine if we have original scale results
@@ -97,16 +79,31 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
   # Define the null_value based on type
   null_value <- ifelse(type == "RR", 1, 0)
 
-  interpretation <- df %>%
+  # Filter for Evidence and Strong evidence
+  df_filtered <- df %>%
+    dplyr::mutate(
+      evidence_strength = dplyr::case_when(
+        (`2.5 %` > null_value & E_Val_bound > 2) | (`97.5 %` < null_value & E_Val_bound > 2) ~ "Strong evidence",
+        (`2.5 %` > null_value & E_Val_bound > 1.1 & E_Val_bound <= 2) | (`97.5 %` < null_value & E_Val_bound > 1.1 & E_Val_bound <= 2) ~ "Evidence",
+        TRUE ~ NA_character_
+      )
+    ) %>%
+    dplyr::filter(!is.na(evidence_strength))
+
+  # Calculate remaining outcomes for the final paragraph
+  total_outcomes <- nrow(df)
+  reported_outcomes <- nrow(df_filtered)
+  remaining_outcomes <- total_outcomes - reported_outcomes
+
+  if (nrow(df_filtered) == 0) {
+    message("No effect estimates with Evidence or Strong evidence for causality were found.")
+    return(list(interpretation = "No reliable causal evidence detected for the reported outcomes."))
+  }
+
+  # Create interpretation for each row
+  interpretation <- df_filtered %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
-      # Determine the strength of evidence based on E_Val_bound and CI
-      evidence_strength = dplyr::case_when(
-        (`2.5 %` > null_value & E_Val_bound > 2) | (`97.5 %` < null_value & E_Val_bound > 2) ~ "**Strong evidence** for causality",
-        (`2.5 %` > null_value & E_Val_bound > 1.1 & E_Val_bound <= 2) | (`97.5 %` < null_value & E_Val_bound > 1.1 & E_Val_bound <= 2) ~ "**Evidence** for causality",
-        (`2.5 %` > null_value & E_Val_bound > 1 & E_Val_bound <= 1.1) | (`97.5 %` < null_value & E_Val_bound > 1 & E_Val_bound <= 1.1) ~ "**Weak evidence** for causality",
-        TRUE ~ "**Not reliable evidence** for causality"
-      ),
       # Units
       unit = ifelse(!is.na(unit) & unit != "", unit, ""),
       # Define estimate_lab
@@ -133,25 +130,33 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
       } else {
         NA_character_
       },
+      # Construct the interpretation with heading and sentence-cased text
       outcome_interpretation = glue::glue(
-        "### {outcome}\n",
+        "#### {outcome}\n\n",
         "The effect estimate ({type}) is {estimate_lab}. ",
-        "{if (!is.na(estimate_lab_original)) paste0('On the original data scale, the estimated effect is ', estimate_lab_original, '. ') else ''}",
-        "The E-value for this estimate is {E_Value}, with a lower bound of {E_Val_bound}. ",
-        "{if (E_Val_bound > 1) paste0('At this lower bound, unmeasured confounders would need a minimum association strength with both the intervention sequence and outcome of ', E_Val_bound, ' to negate the observed effect. Weaker confounding would not overturn it. ') else ''}",
-        "{evidence_strength}."
-      )
+        "{if (!is.na(estimate_lab_original)) paste0('On the original scale, the estimated effect is ', estimate_lab_original, '. ') else ''}",
+        "E-value lower bound is {E_Val_bound}, indicating {tolower(evidence_strength)} for causality."
+      ),
+      # Convert the interpretation text to sentence case
+      outcome_interpretation = stringr::str_to_sentence(outcome_interpretation)
     ) %>%
     dplyr::ungroup()
 
-  # Compile results
-  interpretation_text <- paste(interpretation$outcome_interpretation, collapse = '\n\n')
+  # Combine interpretations
+  interpretation_text <- paste(interpretation$outcome_interpretation, collapse = "\n\n")
 
-  message("Interpretation completed successfully 👍")
+  # Add final paragraph indicating all other estimates have weak or unreliable evidence
+  if (remaining_outcomes > 0) {
+    final_paragraph <- "\n\nAll other effect estimates presented either weak or unreliable evidence for causality."
+    # Ensure sentence case
+    final_paragraph <- stringr::str_to_sentence(final_paragraph)
+    interpretation_text <- paste(interpretation_text, final_paragraph, sep = "\n\n")
+  }
+
+  message("Compact interpretation completed successfully 👍")
 
   # Return results as a list
   return(list(
-    estimand_description = estimand_description,
     interpretation = interpretation_text
   ))
 }

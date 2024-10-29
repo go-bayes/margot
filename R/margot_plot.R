@@ -1,8 +1,8 @@
-#' Create a Margot Plot with Interpretation and Transformed Table
+#' Create a Margot Plot with Interpretation
 #'
 #' This function creates a Margot plot, which is useful for visualizing causal effects.
 #' It provides various options for customizing the plot
-#' and transforming labels. Additionally, it generates an interpretation of the results
+#' and transforming labels. Additionally, it generates a compact interpretation of the results
 #' and returns a transformed table.
 #'
 #' @param .data A data frame containing the data to be plotted.
@@ -11,14 +11,15 @@
 #' @param type Character string specifying the type of plot.
 #'   Either `"RD"` (Risk Difference) or `"RR"` (Risk Ratio). Default is `"RD"`.
 #' @param order Character string specifying the order of outcomes.
-#'   Can be `"default"`, `"alphabetical"`, or `"custom"`.
-#'   - `"default"`: Uses the default ordering based on the data.
+#'   Can be `"alphabetical"`, `"magnitude"`, or `"custom"`.
 #'   - `"alphabetical"`: Orders outcomes alphabetically.
+#'   - `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.
 #'   - `"custom"`: Allows for a custom ordering (requires additional implementation).
-#'   Default is `"default"`.
+#'   - `"default"`: Deprecated. Uses `"magnitude"` ordering and issues a warning.
+#'   Default is `"alphabetical"`.
 #' @param title_binary Optional title for the plot. If not provided, the title from `options` is used.
 #' @param ... Additional arguments passed to the plotting function, allowing further customization.
-#' @param options A list of additional options for customizing the plot and interpretation.
+#' @param options A list of additional options for customizing the plot.
 #'   See **Details** for available options.
 #' @param label_mapping A named list for custom outcome label mapping.
 #'   See **Details** for usage.
@@ -76,7 +77,7 @@
 #' @return A list containing three elements:
 #' \itemize{
 #'   \item `plot`: A `ggplot` object representing the Margot plot.
-#'   \item `interpretation`: A character string containing the interpretation of the results, with the same formatting applied as the plot labels.
+#'   \item `interpretation`: A character string containing the compact interpretation of the results.
 #'   \item `transformed_table`: A data frame with the original data and transformed row names, using the same transformation options as the plot labels.
 #' }
 #'
@@ -85,6 +86,7 @@
 #' @import ggplot2
 #' @import dplyr
 #' @importFrom glue glue
+#' @importFrom stringr str_to_sentence
 #' @importFrom here here
 #'
 #' @examples
@@ -96,64 +98,46 @@
 #'   `2.5 %` = c(0.05, -0.3, 0.2),
 #'   `97.5 %` = c(0.15, -0.1, 0.4),
 #'   E_Value = c(1.5, 1.8, 2.0),
-#'   E_Val_bound = c(1.3, 1.5, 1.7)
+#'   E_Val_bound = c(1.3, 1.5, 1.7),
+#'   unit = c("unit1", "unit2", "unit3")  # Assuming there's a 'unit' column
 #' )
 #'
-#' # Create a basic Margot plot with interpretation and transformed table
-#' result <- margot_plot(sample_data, type = "RD")
-#' print(result$plot)
-#' cat(result$interpretation)
-#' print(result$transformed_table)
-#'
-#' # Create a Margot plot with custom options, label mapping, and save output
-#' custom_result <- margot_plot(
-#'   sample_data,
+#' # Create a Margot plot with interpretation and transformed table
+#' result <- margot_plot(
+#'   .data = sample_data,
 #'   type = "RD",
+#'   order = "alphabetical",
 #'   options = list(
-#'     title = "Custom Margot Plot",
-#'     subtitle = "With custom options",
+#'     title = "Causal Effect Estimates",
+#'     subtitle = "Risk Difference Scale",
+#'     colors = c("positive" = "green", "not reliable" = "gray", "negative" = "red"),
 #'     remove_tx_prefix = TRUE,
 #'     remove_z_suffix = TRUE,
-#'     use_title_case = TRUE,
-#'     remove_underscores = TRUE,
-#'     colors = c("positive" = "green", "not reliable" = "gray", "negative" = "red"),
-#'     x_lim_hi = 1.5,
-#'     x_lim_lo = -0.5,
-#'     x_offset = -0.2
+#'     use_title_case = TRUE,  # This will be overridden to enforce sentence case
+#'     remove_underscores = TRUE
 #'   ),
 #'   label_mapping = list(
-#'     "t1_outcome_a_z" = "Custom Label A",
-#'     "t2_outcome_b_z" = "Custom Label B"
+#'     "t1_outcome_a_z" = "Outcome A",
+#'     "t2_outcome_b_z" = "Outcome B",
+#'     "t3_outcome_c_z" = "Outcome C"
 #'   ),
-#'   save_output = TRUE,
-#'   use_timestamp = TRUE,
-#'   prefix = "custom",
-#'   save_path = here::here("output", "margot_plots")
+#'   save_output = FALSE  # Set to TRUE to save the output
 #' )
-#' print(custom_result$plot)
-#' cat(custom_result$interpretation)
-#' print(custom_result$transformed_table)
 #'
-#' # Create a Margot plot with original data for back-transformation
-#' original_data <- data.frame(
-#'   t1_outcome_a = rnorm(100),
-#'   t2_outcome_b = rnorm(100),
-#'   t3_outcome_c = rnorm(100)
-#' )
-#' result_with_original <- margot_plot(
-#'   sample_data,
-#'   type = "RD",
-#'   original_df = original_data
-#' )
-#' print(result_with_original$plot)
-#' cat(result_with_original$interpretation)
-#' print(result_with_original$transformed_table)
+#' # Display the plot
+#' print(result$plot)
+#'
+#' # Display the interpretation
+#' cat(result$interpretation)
+#'
+#' # Display the transformed table
+#' print(result$transformed_table)
 #' }
 #'
 #' @export
 margot_plot <- function(.data,
                         type = c("RD", "RR"),
-                        order = c("default", "alphabetical", "custom"),
+                        order = c("alphabetical", "magnitude", "custom", "default"),
                         title_binary = NULL,
                         ...,
                         options = list(),
@@ -167,8 +151,14 @@ margot_plot <- function(.data,
   # **Set default type to "RD"**
   type <- match.arg(type, choices = c("RD", "RR"), several.ok = FALSE)
 
-  # **Set default order to "default"**
-  order <- match.arg(order)
+  # **Set default order to "alphabetical"**
+  order <- match.arg(order, choices = c("alphabetical", "magnitude", "custom", "default"))
+
+  # Deprecate "default" order with a warning
+  if (order == "default") {
+    warning("'default' order is deprecated. Please use 'magnitude' instead.")
+    order <- "magnitude"
+  }
 
   # Create a copy of the original data for table transformation
   .data_for_table <- .data
@@ -202,7 +192,7 @@ margot_plot <- function(.data,
     # Label transformation options
     remove_tx_prefix = TRUE,
     remove_z_suffix = TRUE,
-    use_title_case = FALSE,
+    use_title_case = TRUE,  # This will be overridden to enforce sentence case
     remove_underscores = TRUE
   )
 
@@ -335,29 +325,16 @@ margot_plot <- function(.data,
     out <- out + options$annotations
   }
 
-  # Generate interpretation using margot_interpret_marginal
-  interpretation <- margot_interpret_marginal(
+  # Generate interpretation using margot_interpret_marginal()
+  interpretation_result <- margot_interpret_marginal(
     df = .data,
     type = type,
-    estimand = NULL,
     order = order,
     original_df = original_df
   )
 
-  # Apply the same label transformations to the interpretation text
-  transformed_interpretation <- interpretation$interpretation
-  if (options$remove_tx_prefix) {
-    transformed_interpretation <- gsub("t[0-9]+_", "", transformed_interpretation)
-  }
-  if (options$remove_z_suffix) {
-    transformed_interpretation <- gsub("_z", "", transformed_interpretation)
-  }
-  if (options$remove_underscores) {
-    transformed_interpretation <- gsub("_", " ", transformed_interpretation)
-  }
-  if (options$use_title_case) {
-    transformed_interpretation <- tools::toTitleCase(transformed_interpretation)
-  }
+  # Extract the interpretation text
+  interpretation_text <- interpretation_result$interpretation
 
   # Transform table rownames
   transform_table_rownames <- function(df, label_mapping, options) {
@@ -372,7 +349,7 @@ margot_plot <- function(.data,
   # Create the complete output
   complete_output <- list(
     plot = out,
-    interpretation = transformed_interpretation,
+    interpretation = interpretation_text,  # For backward compatibility
     transformed_table = transformed_table
   )
 
@@ -410,5 +387,3 @@ margot_plot <- function(.data,
   message("Margot plot analysis complete 👍")
   return(complete_output)
 }
-
-

@@ -2,71 +2,62 @@
 % Please edit documentation in R/margot_interpret_marginal.R
 \name{margot_interpret_marginal}
 \alias{margot_interpret_marginal}
-\title{Interpret and Describe Causal Effect Estimates Using E-values}
+\title{This function interprets the output of causal effect analysis, providing a compact report.
+It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality.
+The language is suitable for scientific reports, avoiding explanations of treatment effects and E-values.
+Each outcome's interpretation starts with a separate paragraph heading using `####`.
+Additionally, it includes a final paragraph indicating that all other effect estimates presented
+either weak or unreliable evidence for causality.}
 \usage{
 margot_interpret_marginal(
   df,
   type = c("RD", "RR"),
-  estimand = NULL,
-  order = "default",
+  order = "alphabetical",
   original_df = NULL
 )
 }
 \arguments{
-\item{df}{Data frame containing causal effect estimates, expected to include columns for
-outcome names, effect estimates (either differences or ratios), confidence intervals,
-E-values, and a summary estimate label. Can also be the list output from `transform_to_original_scale()`.}
+\item{df}{Data frame containing causal effect estimates. Expected to include columns for
+outcome names, effect estimates, confidence intervals, E-values, and summary labels.
+Can also be the list output from `transform_to_original_scale()`.}
 
 \item{type}{Character string specifying the type of effect estimate. Must be either "RD"
 (Risk Difference) or "RR" (Risk Ratio). Default is "RD".}
 
-\item{estimand}{Optional character string indicating the type of causal estimand interpreted: "PATE"
-(Population Average Treatment Effect), "ATE" (Average Treatment Effect), "ATT" (Average
-Treatment Effect in the Treated), "CATE" (Conditional Average Treatment Effect), or "LMTP"
-(Longitudinal Modified Treatment Policy). Default is NULL.}
-
-\item{order}{Character string specifying the order of results. Default is "default".}
+\item{order}{Character string specifying the order of results. Default is "alphabetical".
+- `"alphabetical"`: Orders outcomes alphabetically.
+- `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.
+- `"custom"`: Allows for a custom ordering (requires additional implementation).
+- `"default"`: Deprecated. Uses `"magnitude"` ordering and issues a warning.}
 
 \item{original_df}{Optional data frame for back-transforming estimates to the original scale.}
 }
 \value{
-A list containing two elements:
-  \item{estimand_description}{A character string describing the specified estimand, or NULL if no estimand was provided.}
-  \item{interpretation}{A character string containing a detailed interpretation of each outcome in `df`,
-  including the causal contrast, E-values, the strength of evidence for causality, and original scale results if available.}
+A list containing one element:
+  \item{interpretation}{A character string containing a compact interpretation of each outcome in `df`,
+  including separate paragraph headings and sentence-cased descriptions, followed by a concluding paragraph
+  if applicable.}
 }
 \description{
-This function interprets the output of causal effect analysis, providing textual descriptions
-of causal effect estimates. It categorizes the strength of evidence for causality based on
-E-values and confidence intervals, and generates a detailed interpretation of the effect
-estimates according to specified types (i.e., "RD" for risk difference or "RR" for risk ratio)
-and estimands. It also includes interpretation of original scale results when available.
-}
-\details{
-The function handles both transformed and original scale results. If original scale results
-are available (indicated by the presence of columns with "_original" suffix), these will be included
-in the interpretation. The strength of evidence for causality is categorized as follows:
-
-- **Strong evidence:** E-value lower bound > 2
-- **Evidence:** E-value lower bound > 1.1 and <= 2
-- **Weak evidence:** E-value lower bound > 1 and <= 1.1
-- **Not reliable evidence:** E-value lower bound <= 1 or confidence interval includes null effect
+This function interprets the output of causal effect analysis, providing a compact report.
+It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality.
+The language is suitable for scientific reports, avoiding explanations of treatment effects and E-values.
+Each outcome's interpretation starts with a separate paragraph heading using `####`.
+Additionally, it includes a final paragraph indicating that all other effect estimates presented
+either weak or unreliable evidence for causality.
 }
 \examples{
 \dontrun{
 # Assuming `group_tab_output` is the result from a causal analysis
-result <- margot_interpret_marginal(group_tab_output, type = "RD", estimand = "ATE")
-cat(result$estimand_description)
+result <- margot_interpret_marginal(group_tab_output, type = "RD")
 cat(result$interpretation)
 
 # Using Risk Ratio without specifying an estimand
 result <- margot_interpret_marginal(group_tab_output, type = "RR")
-cat(result$interpretation)
 
 # Using output from transform_to_original_scale()
 transformed_data <- transform_to_original_scale(results_df, original_df, label_mapping)
 result <- margot_interpret_marginal(transformed_data, type = "RD")
-cat(result$interpretation)
 }
 
 }
