@@ -130,8 +130,7 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), order = "alphabe
       },
       # Construct the interpretation with heading and sentence-cased text
       outcome_interpretation = glue::glue(
-        "#### {outcome}",
-        "",
+        "#### {outcome}\n\n",  # Adding an extra newline after the heading
         "The effect estimate ({type}) is {estimate_lab}. ",
         "{if (!is.na(estimate_lab_original)) paste0('On the original scale, the estimated effect is ', estimate_lab_original, '. ') else ''}",
         "E-value lower bound is {E_Val_bound}, indicating {tolower(evidence_strength)} for causality."
