@@ -26,9 +26,7 @@ Can also be the list output from `transform_to_original_scale()`.}
 
 \item{order}{Character string specifying the order of results. Default is "alphabetical".
 - `"alphabetical"`: Orders outcomes alphabetically.
-- `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.
-- `"custom"`: Allows for a custom ordering (requires additional implementation).
-- `"default"`: Deprecated. Uses `"magnitude"` ordering and issues a warning.}
+- `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.}
 
 \item{original_df}{Optional data frame for back-transforming estimates to the original scale.}
 }

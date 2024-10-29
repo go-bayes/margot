@@ -13,8 +13,6 @@
 #' @param order Character string specifying the order of results. Default is "alphabetical".
 #'   - `"alphabetical"`: Orders outcomes alphabetically.
 #'   - `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.
-#'   - `"custom"`: Allows for a custom ordering (requires additional implementation).
-#'   - `"default"`: Deprecated. Uses `"magnitude"` ordering and issues a warning.
 #' @param original_df Optional data frame for back-transforming estimates to the original scale.
 #'
 #' @return A list containing one element:
@@ -50,8 +48,8 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), order = "alphabe
   }
 
   # Validate order parameter
-  if (!order %in% c("alphabetical", "magnitude", "custom")) {
-    stop("Invalid 'order' parameter. Choose from 'alphabetical', 'magnitude', or 'custom'.")
+  if (!order %in% c("alphabetical", "magnitude")) {
+    stop("Invalid 'order' parameter. Choose from 'alphabetical' or 'magnitude'.")
   }
 
   message("Starting compact interpretation of causal effect estimates...")
@@ -132,7 +130,8 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), order = "alphabe
       },
       # Construct the interpretation with heading and sentence-cased text
       outcome_interpretation = glue::glue(
-        "#### {outcome}\n\n",
+        "#### {outcome}",
+        "",
         "The effect estimate ({type}) is {estimate_lab}. ",
         "{if (!is.na(estimate_lab_original)) paste0('On the original scale, the estimated effect is ', estimate_lab_original, '. ') else ''}",
         "E-value lower bound is {E_Val_bound}, indicating {tolower(evidence_strength)} for causality."
@@ -142,7 +141,7 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), order = "alphabe
     ) %>%
     dplyr::ungroup()
 
-  # Combine interpretations
+  # Combine interpretations with double newlines for proper Markdown formatting
   interpretation_text <- paste(interpretation$outcome_interpretation, collapse = "\n\n")
 
   # Add final paragraph indicating all other estimates have weak or unreliable evidence
