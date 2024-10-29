@@ -52,7 +52,7 @@
 #'
 #' @importFrom dplyr case_when mutate rowwise ungroup if_else
 #' @importFrom glue glue
-#' @keywords internal
+#' @export
 margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL, order = "default", original_df = NULL) {
   type <- match.arg(type)
 

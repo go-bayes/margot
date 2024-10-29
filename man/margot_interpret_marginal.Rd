@@ -111,4 +111,3 @@ cat(result$interpretation)
 }
 
 }
-\keyword{internal}
