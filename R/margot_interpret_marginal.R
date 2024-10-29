@@ -147,7 +147,7 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
   # Compile results
   interpretation_text <- paste(interpretation$outcome_interpretation, collapse = '\n\n')
 
-  message("Interpretation completed successfully 👍")
+  message("Interpretation completed successfully.")
 
   # Return results as a list
   return(list(
