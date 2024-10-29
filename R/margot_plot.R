@@ -1,4 +1,3 @@
-
 #' Create a Margot Plot with Interpretation and Transformed Table
 #'
 #' This function creates a Margot plot, which is useful for visualizing causal effects.
@@ -411,6 +410,7 @@ margot_plot <- function(.data,
   message("Margot plot analysis complete 👍")
   return(complete_output)
 }
+
 #' margot_plot <- function(.data,
 #'                         type = c("RD", "RR"),
 #'                         order = c("default", "alphabetical", "custom"),

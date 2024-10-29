@@ -14,6 +14,10 @@
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
 
+# [2024-10-29] margot 0.2.4
+
+## Improved
+- `margot_plot` to work with new `margot_interpret_marginal` function
 
 # [2024-10-29] margot 0.2.3.16
 
