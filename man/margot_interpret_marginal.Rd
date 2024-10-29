@@ -59,7 +59,7 @@ This function interprets the output of causal effect analysis, providing textual
 of causal effect estimates. It categorizes the strength of evidence for causality based on
 E-values and confidence intervals, and generates a detailed interpretation of the effect
 estimates according to specified types (i.e., "RD" for risk difference or "RR" for risk ratio)
-and estimands. It now also includes interpretation of original scale results when available.
+and estimands. It also includes interpretation of original scale results when available.
 
 `r lifecycle::badge("deprecated")`
 

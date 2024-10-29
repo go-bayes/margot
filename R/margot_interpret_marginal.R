@@ -4,7 +4,7 @@
 #' of causal effect estimates. It categorizes the strength of evidence for causality based on
 #' E-values and confidence intervals, and generates a detailed interpretation of the effect
 #' estimates according to specified types (i.e., "RD" for risk difference or "RR" for risk ratio)
-#' and estimands. It now also includes interpretation of original scale results when available.
+#' and estimands. It also includes interpretation of original scale results when available.
 #'
 #' @param df Data frame containing causal effect estimates, expected to include columns for
 #' outcome names, effect estimates (either differences or ratios), confidence intervals,
@@ -147,7 +147,7 @@ margot_interpret_marginal <- function(df, type = c("RD", "RR"), estimand = NULL,
   # Compile results
   interpretation_text <- paste(interpretation$outcome_interpretation, collapse = '\n\n')
 
-  message("Interpretation completed successfully.")
+  message("Interpretation completed successfully 👍")
 
   # Return results as a list
   return(list(
