@@ -1,3 +1,4 @@
+
 #' Create a Margot Plot with Interpretation and Transformed Table
 #'
 #' This function creates a Margot plot, which is useful for visualizing causal effects.
@@ -84,7 +85,8 @@
 #'
 #' @import ggplot2
 #' @import dplyr
-#' @import cli
+#' @importFrom glue glue
+#' @importFrom here here
 #'
 #' @examples
 #' \dontrun{
@@ -164,7 +166,7 @@ margot_plot <- function(.data,
                         save_path = here::here("push_mods"),
                         original_df = NULL) {
   # **Set default type to "RD"**
-  type <- match.arg(type, c("RD", "RR"), several.ok = FALSE)
+  type <- match.arg(type, choices = c("RD", "RR"), several.ok = FALSE)
 
   # **Set default order to "default"**
   order <- match.arg(order)
@@ -210,13 +212,13 @@ margot_plot <- function(.data,
 
   # Input validation
   if (!is.data.frame(.data)) {
-    cli::cli_abort("Input must be a data frame")
+    stop("Input must be a data frame.")
   }
 
   # Validate options
   for (opt in c("remove_tx_prefix", "remove_z_suffix", "use_title_case", "remove_underscores")) {
     if (!is.logical(options[[opt]])) {
-      cli::cli_abort("{opt} must be a logical value (TRUE or FALSE)")
+      stop(sprintf("`%s` must be a logical value (TRUE or FALSE).", opt))
     }
   }
 
@@ -226,13 +228,13 @@ margot_plot <- function(.data,
   } else if ("E[Y(1)]/E[Y(0)]" %in% names(.data)) {
     "E[Y(1)]/E[Y(0)]"
   } else {
-    cli::cli_abort("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
+    stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column.")
   }
 
   # Ensure .data has an 'outcome' column
   if (!"outcome" %in% names(.data)) {
     .data$outcome <- rownames(.data)
-    cli::cli_alert_info("Added 'outcome' column based on row names")
+    message("Added 'outcome' column based on row names.")
   }
 
   # Store original variable names before any label transformations
@@ -244,7 +246,7 @@ margot_plot <- function(.data,
   if (!is.null(original_df)) {
     .data <- back_transform_estimates(.data, original_df)
   } else {
-    cli::cli_alert_info("No original_df provided. Results will be on the transformed scale.")
+    message("No original_df provided. Results will be on the transformed scale.")
   }
 
   # Apply transformations to outcome labels
@@ -290,7 +292,7 @@ margot_plot <- function(.data,
     ggplot2::geom_vline(xintercept = null_value, linetype = "solid") +
     ggplot2::scale_color_manual(values = options$colors) +
     ggplot2::labs(
-      x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
+      x = paste0("Causal ", ifelse(type == "RR", "Risk Ratio", "Risk Difference"), " Scale"),
       y = NULL,
       title = options$title,
       subtitle = options$subtitle
@@ -377,7 +379,7 @@ margot_plot <- function(.data,
 
   # Handle saving logic
   if (save_output) {
-    cli::cli_alert_info("Saving complete output...")
+    message("Saving complete output...")
     tryCatch({
       if (use_timestamp) {
         output_filename <- paste0(
@@ -398,256 +400,20 @@ margot_plot <- function(.data,
         preset = "high",
         nthreads = 1
       )
-      cli::cli_alert_success("Complete output saved successfully")
+      message("Complete output saved successfully.")
     }, error = function(e) {
-      cli::cli_alert_danger(paste("Failed to save complete output:", e$message))
+      warning(paste("Failed to save complete output:", e$message))
     })
   } else {
-    cli::cli_alert_info("Output was not saved as per user request.")
+    message("Output was not saved as per user request.")
   }
 
-  cli::cli_alert_success("Margot plot analysis complete \U0001F44D")
+  message("Margot plot analysis complete 👍")
   return(complete_output)
 }
-# margot_plot <- function(.data,
-#                         type = c("RD", "RR"),
-#                         order = c("default", "alphabetical"),
-#                         title_binary = NULL,
-#                         ...,
-#                         options = list(),
-#                         label_mapping = NULL,
-#                         save_output = FALSE,
-#                         use_timestamp = FALSE,
-#                         base_filename = "margot_plot_output",
-#                         prefix = NULL,
-#                         save_path = here::here("push_mods"),
-#                         original_df = NULL) {
-#   # Set default type to "RD"
-#   type <- match.arg(type, c("RD", "RR"), several.ok = FALSE)
-#
-#   # Create a copy of the original data for table transformation
-#   .data_for_table <- .data
-#
-#   # Capture additional arguments
-#   additional_args <- list(...)
-#
-#   # Default values
-#   default_options <- list(
-#     title = NULL,
-#     subtitle = NULL,
-#     estimate_scale = 1,
-#     base_size = 18,
-#     text_size = 2.75,
-#     point_size = 3,
-#     title_size = 20,
-#     subtitle_size = 18,
-#     legend_text_size = 10,
-#     legend_title_size = 10,
-#     x_offset = NULL, # will be set based on type
-#     x_lim_lo = NULL, # will be set based on type
-#     x_lim_hi = NULL, # will be set based on type
-#     linewidth = 0.4,
-#     plot_theme = NULL,
-#     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
-#     facet_var = NULL,
-#     confidence_level = 0.95,
-#     annotations = NULL,
-#     show_evalues = TRUE,
-#     evalue_digits = 2,
-#     # Label transformation options
-#     remove_tx_prefix = TRUE,
-#     remove_z_suffix = TRUE,
-#     use_title_case = FALSE,
-#     remove_underscores = TRUE
-#   )
-#   # Merge user-provided options with defaults and additional arguments
-#   options <- modifyList(modifyList(default_options, options), additional_args)
-#
-#   # Input validation
-#   if (!is.data.frame(.data)) {
-#     cli::cli_abort("Input must be a data frame")
-#   }
-#
-#   order <- match.arg(order)
-#
-#   # Validate options
-#   for (opt in c("remove_tx_prefix", "remove_z_suffix", "use_title_case", "remove_underscores")) {
-#     if (!is.logical(options[[opt]])) {
-#       cli::cli_abort("{opt} must be a logical value (TRUE or FALSE)")
-#     }
-#   }
-#
-#   # Determine the effect size column based on the data structure
-#   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
-#     "E[Y(1)]-E[Y(0)]"
-#   } else if ("E[Y(1)]/E[Y(0)]" %in% names(.data)) {
-#     "E[Y(1)]/E[Y(0)]"
-#   } else {
-#     cli::cli_abort("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
-#   }
-#
-#   # Transform to original scale if original_df is provided
-#   if (!is.null(original_df)) {
-#     transformed_data <- transform_to_original_scale(results_df = .data, original_df = original_df, label_mapping = label_mapping)
-#     .data <- transformed_data$results_df
-#     label_mapping <- transformed_data$label_mapping
-#   } else {
-#     cli::cli_alert_info("No original_df provided. Results will be on the transformed scale.")
-#   }
-#
-#   # Ensure .data has an 'outcome' column
-#   if (!"outcome" %in% names(.data)) {
-#     .data$outcome <- rownames(.data)
-#     cli::cli_alert_info("Added 'outcome' column based on row names")
-#   }
-#
-#   # Apply transformations to outcome labels
-#   .data$outcome <- sapply(.data$outcome, transform_label, label_mapping = label_mapping, options = options)
-#
-#   # Prepare the data for plotting, including ordering
-#   .data <- group_tab(.data, type = type, order = order)
-#
-#   # Set type-dependent options if not provided
-#   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
-#   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
-#   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
-#
-#   # Start building the plot
-#   out <- ggplot2::ggplot(
-#     data = .data,
-#     ggplot2::aes(
-#       y = outcome,
-#       x = !!rlang::sym(effect_size_col),
-#       xmin = `2.5 %`,
-#       xmax = `97.5 %`,
-#       color = Estimate
-#     )
-#   ) +
-#     ggplot2::geom_errorbarh(ggplot2::aes(color = Estimate),
-#                             height = .3,
-#                             linewidth = options$linewidth, position = ggplot2::position_dodge(width = .3)
-#     ) +
-#     ggplot2::geom_point(size = options$point_size, position = ggplot2::position_dodge(width = 0.3)) +
-#     ggplot2::geom_vline(xintercept = if (type == "RR") 1 else 0, linetype = "solid") +
-#     ggplot2::scale_color_manual(values = options$colors) +
-#     ggplot2::labs(
-#       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
-#       y = NULL,
-#       title = options$title,
-#       subtitle = options$subtitle
-#     ) +
-#     ggplot2::geom_text(
-#       ggplot2::aes(
-#         x = options$x_offset * options$estimate_scale,
-#         label = label
-#       ),
-#       size = options$text_size, hjust = 0, fontface = "bold"
-#     ) +
-#     ggplot2::coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
-#     ggplot2::theme_classic(base_size = options$base_size) +
-#     ggplot2::theme(
-#       legend.position = "top",
-#       legend.direction = "horizontal",
-#       axis.ticks.x = ggplot2::element_blank(),
-#       axis.ticks.y = ggplot2::element_blank(),
-#       plot.title = ggplot2::element_text(face = "bold", size = options$title_size, hjust = 0),
-#       plot.subtitle = ggplot2::element_text(face = "bold", size = options$subtitle_size, hjust = 0),
-#       legend.text = ggplot2::element_text(size = options$legend_text_size),
-#       legend.title = ggplot2::element_text(size = options$legend_title_size),
-#       plot.margin = ggplot2::margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
-#     )
-#
-#   # Conditionally add x-axis scale modifications for RR
-#   if (type == "RR") {
-#     custom_x_labels <- function(x) {
-#       ifelse(x < 0, "", as.character(x))
-#     }
-#     out <- out + ggplot2::scale_x_continuous(labels = custom_x_labels)
-#   }
-#
-#   # Add faceting if specified
-#   if (!is.null(options$facet_var)) {
-#     out <- out + ggplot2::facet_wrap(ggplot2::vars(!!rlang::sym(options$facet_var)), scales = "free_y")
-#   }
-#
-#   # Add custom annotations if provided
-#   if (!is.null(options$annotations)) {
-#     out <- out + options$annotations
-#   }
-#
-#   # Generate interpretation using margot_interpret_marginal
-#   interpretation <- margot_interpret_marginal(
-#     df = .data,
-#     type = type,
-#     estimand = NULL,
-#     order = order
-#   )
-#
-#   # Apply the same label transformations to the interpretation text
-#   transformed_interpretation <- interpretation$interpretation
-#   if (options$remove_tx_prefix) {
-#     transformed_interpretation <- gsub("t[0-9]+_", "", transformed_interpretation)
-#   }
-#   if (options$remove_z_suffix) {
-#     transformed_interpretation <- gsub("_z", "", transformed_interpretation)
-#   }
-#   if (options$remove_underscores) {
-#     transformed_interpretation <- gsub("_", " ", transformed_interpretation)
-#   }
-#   if (options$use_title_case) {
-#     transformed_interpretation <- tools::toTitleCase(transformed_interpretation)
-#   }
-#
-#   # Transform table rownames
-#   transform_table_rownames <- function(df, label_mapping, options) {
-#     rownames_vector <- rownames(df)
-#     transformed_rownames <- sapply(rownames_vector, transform_label, label_mapping = label_mapping, options = options)
-#     rownames(df) <- transformed_rownames
-#     return(df)
-#   }
-#
-#   transformed_table <- transform_table_rownames(.data_for_table, label_mapping, options)
-#
-#   # Create the complete output
-#   complete_output <- list(
-#     plot = out,
-#     interpretation = transformed_interpretation,
-#     transformed_table = transformed_table
-#   )
-#
-#   # Handle saving logic
-#   if (save_output) {
-#     cli::cli_alert_info("Saving complete output...")
-#     tryCatch({
-#       if (use_timestamp) {
-#         output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-#                                   base_filename, "_",
-#                                   format(Sys.time(), "%Y%m%d_%H%M%S"))
-#       } else {
-#         output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-#                                   base_filename)
-#       }
-#       margot::here_save_qs(
-#         obj = complete_output,
-#         name = output_filename,
-#         dir_path = save_path,
-#         preset = "high",
-#         nthreads = 1
-#       )
-#       cli::cli_alert_success("Complete output saved successfully")
-#     }, error = function(e) {
-#       cli::cli_alert_danger(paste("Failed to save complete output:", e$message))
-#     })
-#   } else {
-#     cli::cli_alert_info("Output was not saved as per user request.")
-#   }
-#
-#   cli::cli_alert_success("Margot plot analysis complete \U0001F44D")
-#   return(complete_output)
-# }
 #' margot_plot <- function(.data,
 #'                         type = c("RD", "RR"),
-#'                         order = c("default", "alphabetical"),
+#'                         order = c("default", "alphabetical", "custom"),
 #'                         title_binary = NULL,
 #'                         ...,
 #'                         options = list(),
@@ -658,8 +424,11 @@ margot_plot <- function(.data,
 #'                         prefix = NULL,
 #'                         save_path = here::here("push_mods"),
 #'                         original_df = NULL) {
-#'   # Set default type to "RD"
+#'   # **Set default type to "RD"**
 #'   type <- match.arg(type, c("RD", "RR"), several.ok = FALSE)
+#'
+#'   # **Set default order to "default"**
+#'   order <- match.arg(order)
 #'
 #'   # Create a copy of the original data for table transformation
 #'   .data_for_table <- .data
@@ -696,6 +465,7 @@ margot_plot <- function(.data,
 #'     use_title_case = FALSE,
 #'     remove_underscores = TRUE
 #'   )
+#'
 #'   # Merge user-provided options with defaults and additional arguments
 #'   options <- modifyList(modifyList(default_options, options), additional_args)
 #'
@@ -703,8 +473,6 @@ margot_plot <- function(.data,
 #'   if (!is.data.frame(.data)) {
 #'     cli::cli_abort("Input must be a data frame")
 #'   }
-#'
-#'   order <- match.arg(order)
 #'
 #'   # Validate options
 #'   for (opt in c("remove_tx_prefix", "remove_z_suffix", "use_title_case", "remove_underscores")) {
@@ -722,19 +490,22 @@ margot_plot <- function(.data,
 #'     cli::cli_abort("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
 #'   }
 #'
-#'   # Transform to original scale if original_df is provided
-#'   if (!is.null(original_df)) {
-#'     transformed_data <- transform_to_original_scale(results_df = .data, original_df = original_df, label_mapping = label_mapping)
-#'     .data <- transformed_data$results_df
-#'     label_mapping <- transformed_data$label_mapping
-#'   } else {
-#'     cli::cli_alert_info("No original_df provided. Results will be on the transformed scale.")
-#'   }
-#'
 #'   # Ensure .data has an 'outcome' column
 #'   if (!"outcome" %in% names(.data)) {
 #'     .data$outcome <- rownames(.data)
 #'     cli::cli_alert_info("Added 'outcome' column based on row names")
+#'   }
+#'
+#'   # Store original variable names before any label transformations
+#'   if (!"original_var_name" %in% names(.data)) {
+#'     .data$original_var_name <- .data$outcome
+#'   }
+#'
+#'   # Transform to original scale if original_df is provided
+#'   if (!is.null(original_df)) {
+#'     .data <- back_transform_estimates(.data, original_df)
+#'   } else {
+#'     cli::cli_alert_info("No original_df provided. Results will be on the transformed scale.")
 #'   }
 #'
 #'   # Apply transformations to outcome labels
@@ -743,10 +514,22 @@ margot_plot <- function(.data,
 #'   # Prepare the data for plotting, including ordering
 #'   .data <- group_tab(.data, type = type, order = order)
 #'
-#'   # Set type-dependent options if not provided
+#'   # **Set type-dependent options if not provided**
 #'   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
 #'   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
 #'   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
+#'
+#'   # **Adjust 'Estimate' based on whether the confidence interval crosses the null value**
+#'   null_value <- ifelse(type == "RR", 1, 0)
+#'
+#'   .data <- .data %>%
+#'     dplyr::mutate(
+#'       Estimate = dplyr::case_when(
+#'         (`2.5 %` > null_value & `97.5 %` > null_value) ~ "positive",
+#'         (`2.5 %` < null_value & `97.5 %` < null_value) ~ "negative",
+#'         TRUE ~ "not reliable"
+#'       )
+#'     )
 #'
 #'   # Start building the plot
 #'   out <- ggplot2::ggplot(
@@ -761,10 +544,11 @@ margot_plot <- function(.data,
 #'   ) +
 #'     ggplot2::geom_errorbarh(ggplot2::aes(color = Estimate),
 #'                             height = .3,
-#'                             linewidth = options$linewidth, position = ggplot2::position_dodge(width = .3)
+#'                             linewidth = options$linewidth,
+#'                             position = ggplot2::position_dodge(width = .3)
 #'     ) +
 #'     ggplot2::geom_point(size = options$point_size, position = ggplot2::position_dodge(width = 0.3)) +
-#'     ggplot2::geom_vline(xintercept = if (type == "RR") 1 else 0, linetype = "solid") +
+#'     ggplot2::geom_vline(xintercept = null_value, linetype = "solid") +
 #'     ggplot2::scale_color_manual(values = options$colors) +
 #'     ggplot2::labs(
 #'       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
@@ -816,7 +600,8 @@ margot_plot <- function(.data,
 #'     df = .data,
 #'     type = type,
 #'     estimand = NULL,
-#'     order = order
+#'     order = order,
+#'     original_df = original_df
 #'   )
 #'
 #'   # Apply the same label transformations to the interpretation text
@@ -856,12 +641,16 @@ margot_plot <- function(.data,
 #'     cli::cli_alert_info("Saving complete output...")
 #'     tryCatch({
 #'       if (use_timestamp) {
-#'         output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-#'                                   base_filename, "_",
-#'                                   format(Sys.time(), "%Y%m%d_%H%M%S"))
+#'         output_filename <- paste0(
+#'           ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+#'           base_filename, "_",
+#'           format(Sys.time(), "%Y%m%d_%H%M%S")
+#'         )
 #'       } else {
-#'         output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-#'                                   base_filename)
+#'         output_filename <- paste0(
+#'           ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+#'           base_filename
+#'         )
 #'       }
 #'       margot::here_save_qs(
 #'         obj = complete_output,
@@ -881,118 +670,590 @@ margot_plot <- function(.data,
 #'   cli::cli_alert_success("Margot plot analysis complete \U0001F44D")
 #'   return(complete_output)
 #' }
-#'
-#'
-#' # Helper function for label transformation
-#' #' @keywords internal
-#' transform_label <- function(label, label_mapping = NULL, options = list()) {
-#'   original_label <- label
-#'
-#'   # Apply mapping with partial substitutions and remove numbers
-#'   if (!is.null(label_mapping)) {
-#'     for (pattern in names(label_mapping)) {
-#'       if (grepl(pattern, label, fixed = TRUE)) {
-#'         replacement <- label_mapping[[pattern]]
-#'         label <- gsub(pattern, replacement, label, fixed = TRUE)
-#'         cli::cli_alert_info("Mapped label: {pattern} -> {replacement}")
-#'       }
-#'     }
-#'   }
-#'
-#'   # Remove the numerical part (e.g., " - (3.0,7.0] - [1.0,2.0]")
-#'   label <- sub(" - \\(.*\\]$", "", label)
-#'
-#'   # Apply default transformations if the label wasn't fully replaced
-#'   if (label == original_label) {
-#'     if (options$remove_tx_prefix) {
-#'       label <- sub("^t[0-9]+_", "", label)
-#'     }
-#'     if (options$remove_z_suffix) {
-#'       label <- sub("_z$", "", label)
-#'     }
-#'     if (options$remove_underscores) {
-#'       label <- gsub("_", " ", label)
-#'     }
-#'     if (options$use_title_case) {
-#'       label <- tools::toTitleCase(label)
-#'       # Preserve "NZ" capitalization
-#'       label <- gsub("Nz", "NZ", label)
-#'     }
-#'   }
-#'
-#'   if (label != original_label) {
-#'     cli::cli_alert_info("Transformed label: {original_label} -> {label}")
-#'   }
-#'
-#'   return(label)
-#' }
-#' Transform Z-Score Results to Original Scale
+#' # margot_plot <- function(.data,
+#' #                         type = c("RD", "RR"),
+#' #                         order = c("default", "alphabetical"),
+#' #                         title_binary = NULL,
+#' #                         ...,
+#' #                         options = list(),
+#' #                         label_mapping = NULL,
+#' #                         save_output = FALSE,
+#' #                         use_timestamp = FALSE,
+#' #                         base_filename = "margot_plot_output",
+#' #                         prefix = NULL,
+#' #                         save_path = here::here("push_mods"),
+#' #                         original_df = NULL) {
+#' #   # Set default type to "RD"
+#' #   type <- match.arg(type, c("RD", "RR"), several.ok = FALSE)
+#' #
+#' #   # Create a copy of the original data for table transformation
+#' #   .data_for_table <- .data
+#' #
+#' #   # Capture additional arguments
+#' #   additional_args <- list(...)
+#' #
+#' #   # Default values
+#' #   default_options <- list(
+#' #     title = NULL,
+#' #     subtitle = NULL,
+#' #     estimate_scale = 1,
+#' #     base_size = 18,
+#' #     text_size = 2.75,
+#' #     point_size = 3,
+#' #     title_size = 20,
+#' #     subtitle_size = 18,
+#' #     legend_text_size = 10,
+#' #     legend_title_size = 10,
+#' #     x_offset = NULL, # will be set based on type
+#' #     x_lim_lo = NULL, # will be set based on type
+#' #     x_lim_hi = NULL, # will be set based on type
+#' #     linewidth = 0.4,
+#' #     plot_theme = NULL,
+#' #     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
+#' #     facet_var = NULL,
+#' #     confidence_level = 0.95,
+#' #     annotations = NULL,
+#' #     show_evalues = TRUE,
+#' #     evalue_digits = 2,
+#' #     # Label transformation options
+#' #     remove_tx_prefix = TRUE,
+#' #     remove_z_suffix = TRUE,
+#' #     use_title_case = FALSE,
+#' #     remove_underscores = TRUE
+#' #   )
+#' #   # Merge user-provided options with defaults and additional arguments
+#' #   options <- modifyList(modifyList(default_options, options), additional_args)
+#' #
+#' #   # Input validation
+#' #   if (!is.data.frame(.data)) {
+#' #     cli::cli_abort("Input must be a data frame")
+#' #   }
+#' #
+#' #   order <- match.arg(order)
+#' #
+#' #   # Validate options
+#' #   for (opt in c("remove_tx_prefix", "remove_z_suffix", "use_title_case", "remove_underscores")) {
+#' #     if (!is.logical(options[[opt]])) {
+#' #       cli::cli_abort("{opt} must be a logical value (TRUE or FALSE)")
+#' #     }
+#' #   }
+#' #
+#' #   # Determine the effect size column based on the data structure
+#' #   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
+#' #     "E[Y(1)]-E[Y(0)]"
+#' #   } else if ("E[Y(1)]/E[Y(0)]" %in% names(.data)) {
+#' #     "E[Y(1)]/E[Y(0)]"
+#' #   } else {
+#' #     cli::cli_abort("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
+#' #   }
+#' #
+#' #   # Transform to original scale if original_df is provided
+#' #   if (!is.null(original_df)) {
+#' #     transformed_data <- transform_to_original_scale(results_df = .data, original_df = original_df, label_mapping = label_mapping)
+#' #     .data <- transformed_data$results_df
+#' #     label_mapping <- transformed_data$label_mapping
+#' #   } else {
+#' #     cli::cli_alert_info("No original_df provided. Results will be on the transformed scale.")
+#' #   }
+#' #
+#' #   # Ensure .data has an 'outcome' column
+#' #   if (!"outcome" %in% names(.data)) {
+#' #     .data$outcome <- rownames(.data)
+#' #     cli::cli_alert_info("Added 'outcome' column based on row names")
+#' #   }
+#' #
+#' #   # Apply transformations to outcome labels
+#' #   .data$outcome <- sapply(.data$outcome, transform_label, label_mapping = label_mapping, options = options)
+#' #
+#' #   # Prepare the data for plotting, including ordering
+#' #   .data <- group_tab(.data, type = type, order = order)
+#' #
+#' #   # Set type-dependent options if not provided
+#' #   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
+#' #   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
+#' #   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
+#' #
+#' #   # Start building the plot
+#' #   out <- ggplot2::ggplot(
+#' #     data = .data,
+#' #     ggplot2::aes(
+#' #       y = outcome,
+#' #       x = !!rlang::sym(effect_size_col),
+#' #       xmin = `2.5 %`,
+#' #       xmax = `97.5 %`,
+#' #       color = Estimate
+#' #     )
+#' #   ) +
+#' #     ggplot2::geom_errorbarh(ggplot2::aes(color = Estimate),
+#' #                             height = .3,
+#' #                             linewidth = options$linewidth, position = ggplot2::position_dodge(width = .3)
+#' #     ) +
+#' #     ggplot2::geom_point(size = options$point_size, position = ggplot2::position_dodge(width = 0.3)) +
+#' #     ggplot2::geom_vline(xintercept = if (type == "RR") 1 else 0, linetype = "solid") +
+#' #     ggplot2::scale_color_manual(values = options$colors) +
+#' #     ggplot2::labs(
+#' #       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
+#' #       y = NULL,
+#' #       title = options$title,
+#' #       subtitle = options$subtitle
+#' #     ) +
+#' #     ggplot2::geom_text(
+#' #       ggplot2::aes(
+#' #         x = options$x_offset * options$estimate_scale,
+#' #         label = label
+#' #       ),
+#' #       size = options$text_size, hjust = 0, fontface = "bold"
+#' #     ) +
+#' #     ggplot2::coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
+#' #     ggplot2::theme_classic(base_size = options$base_size) +
+#' #     ggplot2::theme(
+#' #       legend.position = "top",
+#' #       legend.direction = "horizontal",
+#' #       axis.ticks.x = ggplot2::element_blank(),
+#' #       axis.ticks.y = ggplot2::element_blank(),
+#' #       plot.title = ggplot2::element_text(face = "bold", size = options$title_size, hjust = 0),
+#' #       plot.subtitle = ggplot2::element_text(face = "bold", size = options$subtitle_size, hjust = 0),
+#' #       legend.text = ggplot2::element_text(size = options$legend_text_size),
+#' #       legend.title = ggplot2::element_text(size = options$legend_title_size),
+#' #       plot.margin = ggplot2::margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
+#' #     )
+#' #
+#' #   # Conditionally add x-axis scale modifications for RR
+#' #   if (type == "RR") {
+#' #     custom_x_labels <- function(x) {
+#' #       ifelse(x < 0, "", as.character(x))
+#' #     }
+#' #     out <- out + ggplot2::scale_x_continuous(labels = custom_x_labels)
+#' #   }
+#' #
+#' #   # Add faceting if specified
+#' #   if (!is.null(options$facet_var)) {
+#' #     out <- out + ggplot2::facet_wrap(ggplot2::vars(!!rlang::sym(options$facet_var)), scales = "free_y")
+#' #   }
+#' #
+#' #   # Add custom annotations if provided
+#' #   if (!is.null(options$annotations)) {
+#' #     out <- out + options$annotations
+#' #   }
+#' #
+#' #   # Generate interpretation using margot_interpret_marginal
+#' #   interpretation <- margot_interpret_marginal(
+#' #     df = .data,
+#' #     type = type,
+#' #     estimand = NULL,
+#' #     order = order
+#' #   )
+#' #
+#' #   # Apply the same label transformations to the interpretation text
+#' #   transformed_interpretation <- interpretation$interpretation
+#' #   if (options$remove_tx_prefix) {
+#' #     transformed_interpretation <- gsub("t[0-9]+_", "", transformed_interpretation)
+#' #   }
+#' #   if (options$remove_z_suffix) {
+#' #     transformed_interpretation <- gsub("_z", "", transformed_interpretation)
+#' #   }
+#' #   if (options$remove_underscores) {
+#' #     transformed_interpretation <- gsub("_", " ", transformed_interpretation)
+#' #   }
+#' #   if (options$use_title_case) {
+#' #     transformed_interpretation <- tools::toTitleCase(transformed_interpretation)
+#' #   }
+#' #
+#' #   # Transform table rownames
+#' #   transform_table_rownames <- function(df, label_mapping, options) {
+#' #     rownames_vector <- rownames(df)
+#' #     transformed_rownames <- sapply(rownames_vector, transform_label, label_mapping = label_mapping, options = options)
+#' #     rownames(df) <- transformed_rownames
+#' #     return(df)
+#' #   }
+#' #
+#' #   transformed_table <- transform_table_rownames(.data_for_table, label_mapping, options)
+#' #
+#' #   # Create the complete output
+#' #   complete_output <- list(
+#' #     plot = out,
+#' #     interpretation = transformed_interpretation,
+#' #     transformed_table = transformed_table
+#' #   )
+#' #
+#' #   # Handle saving logic
+#' #   if (save_output) {
+#' #     cli::cli_alert_info("Saving complete output...")
+#' #     tryCatch({
+#' #       if (use_timestamp) {
+#' #         output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+#' #                                   base_filename, "_",
+#' #                                   format(Sys.time(), "%Y%m%d_%H%M%S"))
+#' #       } else {
+#' #         output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+#' #                                   base_filename)
+#' #       }
+#' #       margot::here_save_qs(
+#' #         obj = complete_output,
+#' #         name = output_filename,
+#' #         dir_path = save_path,
+#' #         preset = "high",
+#' #         nthreads = 1
+#' #       )
+#' #       cli::cli_alert_success("Complete output saved successfully")
+#' #     }, error = function(e) {
+#' #       cli::cli_alert_danger(paste("Failed to save complete output:", e$message))
+#' #     })
+#' #   } else {
+#' #     cli::cli_alert_info("Output was not saved as per user request.")
+#' #   }
+#' #
+#' #   cli::cli_alert_success("Margot plot analysis complete \U0001F44D")
+#' #   return(complete_output)
+#' # }
+#' #' margot_plot <- function(.data,
+#' #'                         type = c("RD", "RR"),
+#' #'                         order = c("default", "alphabetical"),
+#' #'                         title_binary = NULL,
+#' #'                         ...,
+#' #'                         options = list(),
+#' #'                         label_mapping = NULL,
+#' #'                         save_output = FALSE,
+#' #'                         use_timestamp = FALSE,
+#' #'                         base_filename = "margot_plot_output",
+#' #'                         prefix = NULL,
+#' #'                         save_path = here::here("push_mods"),
+#' #'                         original_df = NULL) {
+#' #'   # Set default type to "RD"
+#' #'   type <- match.arg(type, c("RD", "RR"), several.ok = FALSE)
 #' #'
-#' #' This function takes a dataframe of z-score results and transforms them back to the original scale
-#' #' using the standard deviations from the original dataset. It is particularly useful for
-#' #' interpreting causal contrasts that were calculated on z-transformed data.
+#' #'   # Create a copy of the original data for table transformation
+#' #'   .data_for_table <- .data
 #' #'
-#' #' @param results_df A dataframe containing the z-score results.
-#' #' @param original_df A dataframe containing the original (non-transformed) data. Column names
-#' #'   should match those in results_df or be mappable via label_mapping.
-#' #' @param label_mapping An optional named list mapping row names in results_df to column names
-#' #'   in original_df. Use this if the names do not match exactly.
+#' #'   # Capture additional arguments
+#' #'   additional_args <- list(...)
 #' #'
-#' #' @return A dataframe similar to results_df, with additional columns for the back-transformed
-#' #'   estimates and confidence intervals (suffixed with "_original").
+#' #'   # Default values
+#' #'   default_options <- list(
+#' #'     title = NULL,
+#' #'     subtitle = NULL,
+#' #'     estimate_scale = 1,
+#' #'     base_size = 18,
+#' #'     text_size = 2.75,
+#' #'     point_size = 3,
+#' #'     title_size = 20,
+#' #'     subtitle_size = 18,
+#' #'     legend_text_size = 10,
+#' #'     legend_title_size = 10,
+#' #'     x_offset = NULL, # will be set based on type
+#' #'     x_lim_lo = NULL, # will be set based on type
+#' #'     x_lim_hi = NULL, # will be set based on type
+#' #'     linewidth = 0.4,
+#' #'     plot_theme = NULL,
+#' #'     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
+#' #'     facet_var = NULL,
+#' #'     confidence_level = 0.95,
+#' #'     annotations = NULL,
+#' #'     show_evalues = TRUE,
+#' #'     evalue_digits = 2,
+#' #'     # Label transformation options
+#' #'     remove_tx_prefix = TRUE,
+#' #'     remove_z_suffix = TRUE,
+#' #'     use_title_case = FALSE,
+#' #'     remove_underscores = TRUE
+#' #'   )
+#' #'   # Merge user-provided options with defaults and additional arguments
+#' #'   options <- modifyList(modifyList(default_options, options), additional_args)
 #' #'
-#' #' @keywords internal
-#' transform_to_original_scale <- function(results_df, original_df, label_mapping = NULL) {
-#'   cli::cli_alert_info("Starting transformation to original scale...")
+#' #'   # Input validation
+#' #'   if (!is.data.frame(.data)) {
+#' #'     cli::cli_abort("Input must be a data frame")
+#' #'   }
+#' #'
+#' #'   order <- match.arg(order)
+#' #'
+#' #'   # Validate options
+#' #'   for (opt in c("remove_tx_prefix", "remove_z_suffix", "use_title_case", "remove_underscores")) {
+#' #'     if (!is.logical(options[[opt]])) {
+#' #'       cli::cli_abort("{opt} must be a logical value (TRUE or FALSE)")
+#' #'     }
+#' #'   }
+#' #'
+#' #'   # Determine the effect size column based on the data structure
+#' #'   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
+#' #'     "E[Y(1)]-E[Y(0)]"
+#' #'   } else if ("E[Y(1)]/E[Y(0)]" %in% names(.data)) {
+#' #'     "E[Y(1)]/E[Y(0)]"
+#' #'   } else {
+#' #'     cli::cli_abort("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
+#' #'   }
+#' #'
+#' #'   # Transform to original scale if original_df is provided
+#' #'   if (!is.null(original_df)) {
+#' #'     transformed_data <- transform_to_original_scale(results_df = .data, original_df = original_df, label_mapping = label_mapping)
+#' #'     .data <- transformed_data$results_df
+#' #'     label_mapping <- transformed_data$label_mapping
+#' #'   } else {
+#' #'     cli::cli_alert_info("No original_df provided. Results will be on the transformed scale.")
+#' #'   }
+#' #'
+#' #'   # Ensure .data has an 'outcome' column
+#' #'   if (!"outcome" %in% names(.data)) {
+#' #'     .data$outcome <- rownames(.data)
+#' #'     cli::cli_alert_info("Added 'outcome' column based on row names")
+#' #'   }
+#' #'
+#' #'   # Apply transformations to outcome labels
+#' #'   .data$outcome <- sapply(.data$outcome, transform_label, label_mapping = label_mapping, options = options)
+#' #'
+#' #'   # Prepare the data for plotting, including ordering
+#' #'   .data <- group_tab(.data, type = type, order = order)
+#' #'
+#' #'   # Set type-dependent options if not provided
+#' #'   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
+#' #'   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
+#' #'   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
+#' #'
+#' #'   # Start building the plot
+#' #'   out <- ggplot2::ggplot(
+#' #'     data = .data,
+#' #'     ggplot2::aes(
+#' #'       y = outcome,
+#' #'       x = !!rlang::sym(effect_size_col),
+#' #'       xmin = `2.5 %`,
+#' #'       xmax = `97.5 %`,
+#' #'       color = Estimate
+#' #'     )
+#' #'   ) +
+#' #'     ggplot2::geom_errorbarh(ggplot2::aes(color = Estimate),
+#' #'                             height = .3,
+#' #'                             linewidth = options$linewidth, position = ggplot2::position_dodge(width = .3)
+#' #'     ) +
+#' #'     ggplot2::geom_point(size = options$point_size, position = ggplot2::position_dodge(width = 0.3)) +
+#' #'     ggplot2::geom_vline(xintercept = if (type == "RR") 1 else 0, linetype = "solid") +
+#' #'     ggplot2::scale_color_manual(values = options$colors) +
+#' #'     ggplot2::labs(
+#' #'       x = paste0("Causal ", ifelse(type == "RR", "risk ratio", "difference"), " scale"),
+#' #'       y = NULL,
+#' #'       title = options$title,
+#' #'       subtitle = options$subtitle
+#' #'     ) +
+#' #'     ggplot2::geom_text(
+#' #'       ggplot2::aes(
+#' #'         x = options$x_offset * options$estimate_scale,
+#' #'         label = label
+#' #'       ),
+#' #'       size = options$text_size, hjust = 0, fontface = "bold"
+#' #'     ) +
+#' #'     ggplot2::coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
+#' #'     ggplot2::theme_classic(base_size = options$base_size) +
+#' #'     ggplot2::theme(
+#' #'       legend.position = "top",
+#' #'       legend.direction = "horizontal",
+#' #'       axis.ticks.x = ggplot2::element_blank(),
+#' #'       axis.ticks.y = ggplot2::element_blank(),
+#' #'       plot.title = ggplot2::element_text(face = "bold", size = options$title_size, hjust = 0),
+#' #'       plot.subtitle = ggplot2::element_text(face = "bold", size = options$subtitle_size, hjust = 0),
+#' #'       legend.text = ggplot2::element_text(size = options$legend_text_size),
+#' #'       legend.title = ggplot2::element_text(size = options$legend_title_size),
+#' #'       plot.margin = ggplot2::margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
+#' #'     )
+#' #'
+#' #'   # Conditionally add x-axis scale modifications for RR
+#' #'   if (type == "RR") {
+#' #'     custom_x_labels <- function(x) {
+#' #'       ifelse(x < 0, "", as.character(x))
+#' #'     }
+#' #'     out <- out + ggplot2::scale_x_continuous(labels = custom_x_labels)
+#' #'   }
+#' #'
+#' #'   # Add faceting if specified
+#' #'   if (!is.null(options$facet_var)) {
+#' #'     out <- out + ggplot2::facet_wrap(ggplot2::vars(!!rlang::sym(options$facet_var)), scales = "free_y")
+#' #'   }
+#' #'
+#' #'   # Add custom annotations if provided
+#' #'   if (!is.null(options$annotations)) {
+#' #'     out <- out + options$annotations
+#' #'   }
+#' #'
+#' #'   # Generate interpretation using margot_interpret_marginal
+#' #'   interpretation <- margot_interpret_marginal(
+#' #'     df = .data,
+#' #'     type = type,
+#' #'     estimand = NULL,
+#' #'     order = order
+#' #'   )
+#' #'
+#' #'   # Apply the same label transformations to the interpretation text
+#' #'   transformed_interpretation <- interpretation$interpretation
+#' #'   if (options$remove_tx_prefix) {
+#' #'     transformed_interpretation <- gsub("t[0-9]+_", "", transformed_interpretation)
+#' #'   }
+#' #'   if (options$remove_z_suffix) {
+#' #'     transformed_interpretation <- gsub("_z", "", transformed_interpretation)
+#' #'   }
+#' #'   if (options$remove_underscores) {
+#' #'     transformed_interpretation <- gsub("_", " ", transformed_interpretation)
+#' #'   }
+#' #'   if (options$use_title_case) {
+#' #'     transformed_interpretation <- tools::toTitleCase(transformed_interpretation)
+#' #'   }
+#' #'
+#' #'   # Transform table rownames
+#' #'   transform_table_rownames <- function(df, label_mapping, options) {
+#' #'     rownames_vector <- rownames(df)
+#' #'     transformed_rownames <- sapply(rownames_vector, transform_label, label_mapping = label_mapping, options = options)
+#' #'     rownames(df) <- transformed_rownames
+#' #'     return(df)
+#' #'   }
+#' #'
+#' #'   transformed_table <- transform_table_rownames(.data_for_table, label_mapping, options)
+#' #'
+#' #'   # Create the complete output
+#' #'   complete_output <- list(
+#' #'     plot = out,
+#' #'     interpretation = transformed_interpretation,
+#' #'     transformed_table = transformed_table
+#' #'   )
+#' #'
+#' #'   # Handle saving logic
+#' #'   if (save_output) {
+#' #'     cli::cli_alert_info("Saving complete output...")
+#' #'     tryCatch({
+#' #'       if (use_timestamp) {
+#' #'         output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+#' #'                                   base_filename, "_",
+#' #'                                   format(Sys.time(), "%Y%m%d_%H%M%S"))
+#' #'       } else {
+#' #'         output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+#' #'                                   base_filename)
+#' #'       }
+#' #'       margot::here_save_qs(
+#' #'         obj = complete_output,
+#' #'         name = output_filename,
+#' #'         dir_path = save_path,
+#' #'         preset = "high",
+#' #'         nthreads = 1
+#' #'       )
+#' #'       cli::cli_alert_success("Complete output saved successfully")
+#' #'     }, error = function(e) {
+#' #'       cli::cli_alert_danger(paste("Failed to save complete output:", e$message))
+#' #'     })
+#' #'   } else {
+#' #'     cli::cli_alert_info("Output was not saved as per user request.")
+#' #'   }
+#' #'
+#' #'   cli::cli_alert_success("Margot plot analysis complete \U0001F44D")
+#' #'   return(complete_output)
+#' #' }
+#' #'
+#' #'
+#' #' # Helper function for label transformation
+#' #' #' @keywords internal
+#' #' transform_label <- function(label, label_mapping = NULL, options = list()) {
+#' #'   original_label <- label
+#' #'
+#' #'   # Apply mapping with partial substitutions and remove numbers
+#' #'   if (!is.null(label_mapping)) {
+#' #'     for (pattern in names(label_mapping)) {
+#' #'       if (grepl(pattern, label, fixed = TRUE)) {
+#' #'         replacement <- label_mapping[[pattern]]
+#' #'         label <- gsub(pattern, replacement, label, fixed = TRUE)
+#' #'         cli::cli_alert_info("Mapped label: {pattern} -> {replacement}")
+#' #'       }
+#' #'     }
+#' #'   }
+#' #'
+#' #'   # Remove the numerical part (e.g., " - (3.0,7.0] - [1.0,2.0]")
+#' #'   label <- sub(" - \\(.*\\]$", "", label)
+#' #'
+#' #'   # Apply default transformations if the label wasn't fully replaced
+#' #'   if (label == original_label) {
+#' #'     if (options$remove_tx_prefix) {
+#' #'       label <- sub("^t[0-9]+_", "", label)
+#' #'     }
+#' #'     if (options$remove_z_suffix) {
+#' #'       label <- sub("_z$", "", label)
+#' #'     }
+#' #'     if (options$remove_underscores) {
+#' #'       label <- gsub("_", " ", label)
+#' #'     }
+#' #'     if (options$use_title_case) {
+#' #'       label <- tools::toTitleCase(label)
+#' #'       # Preserve "NZ" capitalization
+#' #'       label <- gsub("Nz", "NZ", label)
+#' #'     }
+#' #'   }
+#' #'
+#' #'   if (label != original_label) {
+#' #'     cli::cli_alert_info("Transformed label: {original_label} -> {label}")
+#' #'   }
+#' #'
+#' #'   return(label)
+#' #' }
+#' #' Transform Z-Score Results to Original Scale
+#' #' #'
+#' #' #' This function takes a dataframe of z-score results and transforms them back to the original scale
+#' #' #' using the standard deviations from the original dataset. It is particularly useful for
+#' #' #' interpreting causal contrasts that were calculated on z-transformed data.
+#' #' #'
+#' #' #' @param results_df A dataframe containing the z-score results.
+#' #' #' @param original_df A dataframe containing the original (non-transformed) data. Column names
+#' #' #'   should match those in results_df or be mappable via label_mapping.
+#' #' #' @param label_mapping An optional named list mapping row names in results_df to column names
+#' #' #'   in original_df. Use this if the names do not match exactly.
+#' #' #'
+#' #' #' @return A dataframe similar to results_df, with additional columns for the back-transformed
+#' #' #'   estimates and confidence intervals (suffixed with "_original").
+#' #' #'
+#' #' #' @keywords internal
+#' #' transform_to_original_scale <- function(results_df, original_df, label_mapping = NULL) {
+#' #'   cli::cli_alert_info("Starting transformation to original scale...")
+#' #'
+#' #'   # If label_mapping is provided, create a reverse mapping
+#' #'   reverse_mapping <- if (!is.null(label_mapping)) {
+#' #'     setNames(names(label_mapping), unlist(label_mapping))
+#' #'   } else {
+#' #'     NULL
+#' #'   }
+#' #'
+#' #'   if (!is.null(reverse_mapping)) {
+#' #'     cli::cli_alert_info("Reverse mapping: {paste(names(reverse_mapping), reverse_mapping, sep = ' -> ', collapse = ', ')}")
+#' #'   }
+#' #'
+#' #'   # Function to get the original column name
+#' #'   get_original_col <- function(row_name) {
+#' #'     if (!is.null(reverse_mapping) && row_name %in% names(reverse_mapping)) {
+#' #'       return(reverse_mapping[[row_name]])
+#' #'     }
+#' #'     return(row_name)
+#' #'   }
+#' #'
+#' #'   # Calculate standard deviations for all columns in the original dataframe
+#' #'   sds <- sapply(original_df, function(x) sd(x, na.rm = TRUE))
+#' #'
+#' #'   for (i in 1:nrow(results_df)) {
+#' #'     row_name <- rownames(results_df)[i]
+#' #'     cli::cli_alert_info("Processing row: {row_name}")
+#' #'
+#' #'     original_col <- get_original_col(row_name)
+#' #'     # Remove "_z" suffix if present
+#' #'     full_col <- sub("_z$", "", original_col)
+#' #'
+#' #'     if (full_col %in% names(original_df)) {
+#' #'       cli::cli_alert_success("Found matching column in original data: {full_col} \U0001F44D")
+#' #'
+#' #'       sd_original <- sds[full_col]
+#' #'       cli::cli_alert_info("Original data standard deviation for {full_col}: sd = {sd_original}")
+#' #'
+#' #'       # Back-transform the estimate and confidence intervals
+#' #'       results_df[i, "E[Y(1)]-E[Y(0)]_original"] <- results_df[i, "E[Y(1)]-E[Y(0)]"] * sd_original
+#' #'       results_df[i, "2.5 %_original"] <- results_df[i, "2.5 %"] * sd_original
+#' #'       results_df[i, "97.5 %_original"] <- results_df[i, "97.5 %"] * sd_original
+#' #'
+#' #'       cli::cli_alert_success("Transformation complete for {row_name} \U0001F44D")
+#' #'     } else {
+#' #'       cli::cli_alert_warning("No matching column found in original data for {full_col}")
+#' #'     }
+#' #'   }
+#' #'
+#' #'   cli::cli_alert_success("Transformation to original scale completed \U0001F44D")
+#' #'   return(list(results_df = results_df, label_mapping = label_mapping))
+#' #' }
 #'
-#'   # If label_mapping is provided, create a reverse mapping
-#'   reverse_mapping <- if (!is.null(label_mapping)) {
-#'     setNames(names(label_mapping), unlist(label_mapping))
-#'   } else {
-#'     NULL
-#'   }
-#'
-#'   if (!is.null(reverse_mapping)) {
-#'     cli::cli_alert_info("Reverse mapping: {paste(names(reverse_mapping), reverse_mapping, sep = ' -> ', collapse = ', ')}")
-#'   }
-#'
-#'   # Function to get the original column name
-#'   get_original_col <- function(row_name) {
-#'     if (!is.null(reverse_mapping) && row_name %in% names(reverse_mapping)) {
-#'       return(reverse_mapping[[row_name]])
-#'     }
-#'     return(row_name)
-#'   }
-#'
-#'   # Calculate standard deviations for all columns in the original dataframe
-#'   sds <- sapply(original_df, function(x) sd(x, na.rm = TRUE))
-#'
-#'   for (i in 1:nrow(results_df)) {
-#'     row_name <- rownames(results_df)[i]
-#'     cli::cli_alert_info("Processing row: {row_name}")
-#'
-#'     original_col <- get_original_col(row_name)
-#'     # Remove "_z" suffix if present
-#'     full_col <- sub("_z$", "", original_col)
-#'
-#'     if (full_col %in% names(original_df)) {
-#'       cli::cli_alert_success("Found matching column in original data: {full_col} \U0001F44D")
-#'
-#'       sd_original <- sds[full_col]
-#'       cli::cli_alert_info("Original data standard deviation for {full_col}: sd = {sd_original}")
-#'
-#'       # Back-transform the estimate and confidence intervals
-#'       results_df[i, "E[Y(1)]-E[Y(0)]_original"] <- results_df[i, "E[Y(1)]-E[Y(0)]"] * sd_original
-#'       results_df[i, "2.5 %_original"] <- results_df[i, "2.5 %"] * sd_original
-#'       results_df[i, "97.5 %_original"] <- results_df[i, "97.5 %"] * sd_original
-#'
-#'       cli::cli_alert_success("Transformation complete for {row_name} \U0001F44D")
-#'     } else {
-#'       cli::cli_alert_warning("No matching column found in original data for {full_col}")
-#'     }
-#'   }
-#'
-#'   cli::cli_alert_success("Transformation to original scale completed \U0001F44D")
-#'   return(list(results_df = results_df, label_mapping = label_mapping))
-#' }
-
