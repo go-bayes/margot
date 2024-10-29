@@ -37,6 +37,8 @@ Treatment Effect in the Treated), "CATE" (Conditional Average Treatment Effect),
 
 \item{order}{Character string specifying the order of results. Default is "default".}
 
+\item{original_df}{Optional data frame for back-transforming estimates to the original scale.}
+
 \item{causal_scale}{Character string specifying the causal scale used in the analysis.
 Currently supports "causal_difference" for differences in means or medians, and "risk_ratio"
 for comparing ratios of probabilities or risks.}
@@ -54,7 +56,7 @@ A list containing two elements:
 }
 \description{
 This function interprets the output of causal effect analysis, providing textual descriptions
-of causal effect estimates. It categorises the strength of evidence for causality based on
+of causal effect estimates. It categorizes the strength of evidence for causality based on
 E-values and confidence intervals, and generates a detailed interpretation of the effect
 estimates according to specified types (i.e., "RD" for risk difference or "RR" for risk ratio)
 and estimands. It now also includes interpretation of original scale results when available.
@@ -71,15 +73,14 @@ and estimands. This function supports interpreting results on both the causal di
 and risk ratio scales.
 }
 \details{
-The function now handles both transformed and original scale results. If original scale results
+The function handles both transformed and original scale results. If original scale results
 are available (indicated by the presence of columns with "_original" suffix), these will be included
 in the interpretation. The strength of evidence for causality is categorized as follows:
-\itemize{
-  \item Strong evidence: E-value lower bound > 2
-  \item Evidence: E-value lower bound > 1.1 and <= 2
-  \item Weak evidence: E-value lower bound > 1 and <= 1.1
-  \item Not reliable evidence: E-value lower bound <= 1 or confidence interval includes null effect
-}
+
+- **Strong evidence:** E-value lower bound > 2
+- **Evidence:** E-value lower bound > 1.1 and <= 2
+- **Weak evidence:** E-value lower bound > 1 and <= 1.1
+- **Not reliable evidence:** E-value lower bound <= 1 or confidence interval includes null effect
 }
 \examples{
 \dontrun{

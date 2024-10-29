@@ -13,6 +13,13 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+
+
+# [2024-10-29] margot 0.2.3.16
+
+## Improved
+- `margot_interpret_marginal` removed cli formatting for compatibility with quarto documents
+
 # [2024-10-28] margot 0.2.3.15
 
 ## Improved
