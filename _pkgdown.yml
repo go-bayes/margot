@@ -44,6 +44,7 @@ reference:
   - title: "Describe Longitudinal Data"
     contents:
     - margot_count_dyads
+    - margot_count_ids
     - margot_plot_boxplot
     - margot_plot_boxplot_covariate
     - margot_plot_discontinuity

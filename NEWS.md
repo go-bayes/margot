@@ -14,6 +14,15 @@
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
 
+# [2024-10-30] margot 0.2.8
+
+## New
+
+- `margot_count_ids()` - track cumulative counts of participants, returning participants, 
+
+## Improved
+- `margot_count_dyads()` - more informative information. 
+
 # [2024-10-30] margot 0.2.7
 ## Improved
 - `margot_interpret_marginal` clean appearance

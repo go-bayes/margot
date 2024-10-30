@@ -8,7 +8,10 @@ margot_count_dyads(
   dat,
   start_wave = 2009,
   end_wave = 2022,
-  year_measured_val = 1
+  year_measured_val = 1,
+  rel_id_var = "rel_num_l",
+  complete_var = "rel_complete",
+  prev_wave_counts = c(1, 2, 3, 4)
 )
 }
 \arguments{
@@ -19,29 +22,24 @@ margot_count_dyads(
 \item{end_wave}{Integer. The last wave to process (default: 2022).}
 
 \item{year_measured_val}{Integer. The value of 'year_measured' to filter on (default: 1).}
+
+\item{rel_id_var}{Character. The name of the variable indicating relationship dyad (default: "rel_num_l").}
+
+\item{complete_var}{Character. The name of the variable indicating complete dyad status (default: "rel_complete").}
+
+\item{prev_wave_counts}{Integer vector. Previous wave thresholds to count (default: c(1,2,3,4)).}
 }
 \value{
-A tibble with columns for wave, total_dyads, singletons, complete_dyads, and unique_dyads.
+A tibble with columns for:
+  - wave: Survey wave number
+  - n_total: Total number of dyads (complete + singleton)
+  - n_single: Number of singleton dyads
+  - n_complete: Number of complete dyads
+  - n_wave_1plus: Dyads in 1+ previous waves
+  - n_wave_2plus: Dyads in 2+ previous waves
+  - n_wave_3plus: Dyads in 3+ previous waves
+  - n_wave_4plus: Dyads in 4+ previous waves
 }
 \description{
-This function computes dyad counts within each wave of a longitudinal data set.
-It can process either a single wave or multiple waves of data.
-}
-\examples{
-\dontrun{
-# Assuming you have a longitudinal dataset called 'my_data'
-# with columns: wave, year_measured, rel_num_l
-
-# Process all waves from 2009 to 2022
-results <- margot_count_dyads(my_data, start_wave = 2009, end_wave = 2022)
-
-# Process a single wave (e.g., 2015)
-single_wave_results <- margot_count_dyads(my_data, start_wave = 2015, end_wave = 2015)
-
-# Process waves from 2010 to 2020 with a different year_measured_val
-custom_results <- margot_count_dyads(my_data, start_wave = 2010, end_wave = 2020, year_measured_val = 2)
-
-# View the results
-print(results)
-}
+Count Dyads in Longitudinal Data
 }
