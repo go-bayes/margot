@@ -48,7 +48,7 @@
 #' @importFrom cli cli_alert_danger cli_alert_warning
 margot_interpret_table <- function(df, type = c("RD", "RR"), estimand = NULL, order = "default", original_df = NULL) {
   .Deprecated("margot_interpret_marginal")
-  margot_interpret_marginal(df = df, type = type, estimand = estimand, order = order, original_df = original_df)
+  margot_interpret_marginal(df = df, type = type, order = order, original_df = original_df)
 }
 #   type <- match.arg(type)
 #
