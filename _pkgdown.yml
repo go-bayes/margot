@@ -60,6 +60,7 @@ reference:
     contents:
     - create_transition_matrix
     - match_mi_general
+    - margot_make_tables
     - margot_plot_categorical
     - margot_plot_individual_responses
     - margot_plot_shift
@@ -72,6 +73,7 @@ reference:
     - create_ordered_variable
     - impute_and_combine
     - margot_adjust_weights
+    - margot_amelia_to_mice
     - margot_censor
     - margot_compute_gender_weights_by_wave
     - margot_filter

@@ -54,6 +54,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/lmtp_evalue_tab.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/manager_boilerplate_measures.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_adjust_weights.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_amelia_to_mice.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_batch_policy.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_censor.html</loc></url>
@@ -76,6 +77,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_evalue.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_tab.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_log_transform_vars.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_make_tables.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_merge_databases.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_model_evalue.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_model_tab.html</loc></url>

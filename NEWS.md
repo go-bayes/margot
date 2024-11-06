@@ -13,8 +13,13 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2024-11-06] margot 0.3.0.0
 
-# [2024-10-30] margot 0.2.8
+## New
+- `margot_make_table()` - flexible longitudinal tables 
+- `margot_amelia_to_mice()` - converts `Amelia` output to `mice` output. 
+
+# [2024-10-30] margot  0.2.3.80
 
 ## New
 
@@ -23,7 +28,7 @@
 ## Improved
 - `margot_count_dyads()` - more informative information. 
 
-# [2024-10-30] margot 0.2.7
+# [2024-10-30] margot 0.2.3.70
 ## Improved
 - `margot_interpret_marginal` clean appearance
 
@@ -31,16 +36,16 @@
 - `margot_plot` and `margot_interpret_marginal` functions overhauled again to focus on compact reporting.
 
 
-# [2024-10-29] margot 0.2.6
+# [2024-10-29] margot 0.2.3.60
 
 ## Improved
 - `margot_plot` and `margot_interpret_marginal` functions overhauled again to focus on compact reporting.
 
 
-# [2024-10-29] margot 0.2.5
+# [2024-10-29] margot 0.2.3.50
 - `margot_plot` and `margot_interpret_marginal` functions
 
-# [2024-10-29] margot 0.2.4
+# [2024-10-29] margot 0.2.3.40
 
 ## Improved
 - `margot_plot` to work with new `margot_interpret_marginal` function
