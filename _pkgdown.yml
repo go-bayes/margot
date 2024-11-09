@@ -77,6 +77,7 @@ reference:
     - margot_censor
     - margot_compute_gender_weights_by_wave
     - margot_filter
+    - margot_impute_carry_forward
     - margot_log_transform_vars
     - margot_process_binary_vars
     - margot_process_longitudinal_data

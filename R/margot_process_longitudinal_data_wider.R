@@ -31,6 +31,35 @@
 #' 6. Handles missing outcomes in the final wave based on 'save_observed_y'.
 #' 7. Reorders columns, placing exposure and 'not_lost' indicators appropriately.
 #'
+#' Censoring Behavior:
+#' The function implements a recursive censoring mechanism across waves:
+#' 1. For each wave t (from t=0 to τ-1), a "not_lost_in_following_wave" indicator is created
+#'    based on missingness in wave t+1.
+#' 2. If an observation has missing values at wave t+1:
+#'    - The "not_lost_in_following_wave" indicator at wave t is set to 0
+#'    - All data for this observation in waves > t are set to NA
+#' 3. This censoring cascades forward: once an observation is censored at time t,
+#'    it remains censored for all future waves.
+#'
+#' Example of censoring behavior:
+#' ```r
+#' # Input data
+#' df <- data.frame(
+#'   id = 1:3,
+#'   t0_exposure = c(1, 1, 1),
+#'   t1_exposure = c(1, NA, 1),
+#'   t2_exposure = c(1, NA, NA),
+#'   t0_outcome = c(10, 10, 10),
+#'   t1_outcome = c(20, NA, 20),
+#'   t2_outcome = c(30, NA, NA)
+#' )
+#'
+#' # After processing:
+#' # Row 1: Never censored, all data retained
+#' # Row 2: Censored at t1, everything from t1 onward is NA
+#' # Row 3: Censored at t2, everything from t2 onward is NA
+#' ```
+#'
 #' @import dplyr
 #' @import fastDummies
 #' @import cli

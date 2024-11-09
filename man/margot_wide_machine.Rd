@@ -34,7 +34,7 @@ margot_wide_machine(
 
 \item{outcome_vars}{A character vector of outcome variable names to be tracked across time.}
 
-\item{confounder_vars}{An optional character vector of time-varying confounder variable names to be carried forward (default is NULL).}
+\item{confounder_vars}{An optional character vector of time-varying confounder variable names to include without imputation (default is NULL).}
 
 \item{imputation_method}{A character string specifying the imputation method to use for baseline variables. Options are 'median' (default), 'mice', or 'none'.}
 
@@ -49,7 +49,7 @@ A wide-format data frame with each subject's observations across time points
         NA indicators are created for variables at baseline only if they have missing values.
         Exposure variables are tracked across waves but are not imputed beyond baseline.
         Outcome variables are included only at the final wave
-        unless `include_outcome_vars_baseline` is `TRUE`. Confounders (if any) are carried forward using last observation carried forward (LOCF).
+        unless `include_outcome_vars_baseline` is `TRUE`. Confounders (if any) are included without imputation.
 }
 \description{
 This function transforms longitudinal data from long format to wide format,
@@ -73,8 +73,9 @@ Key functionalities:
   that have missing values. Each such variable at baseline will have a corresponding
   NA indicator with the suffix `_na`.
 - **Exposure Variables**: Tracked across waves but never imputed beyond baseline.
-- **Outcome Variables**: Included only at the final wave unless `include_outcome_vars_baseline` is `TRUE`.
-- **Confounder Variables**: If specified, these are carried forward across waves using LOCF.
+- **Outcome Variables**: Included only at the final wave unless specified to include at baseline.
+- **Confounder Variables**: If specified, these are included across waves without any imputation.
+  Missing values remain as `NA`.
 - **Variable Inclusion per Wave**:
   - **Baseline (`t0`)**: Includes `baseline_vars`, exposure variables (if included), outcome variables (if included), and their NA indicators (only if necessary).
   - **Waves `t1` to `t(y_-2)`**: Include only the exposure variables (and confounders if specified).

@@ -12,7 +12,7 @@
 #' @param baseline_vars A character vector of baseline variable names to be included at t0.
 #' @param exposure_var A character string specifying the name of the exposure variable to be tracked across time.
 #' @param outcome_vars A character vector of outcome variable names to be tracked across time.
-#' @param confounder_vars An optional character vector of time-varying confounder variable names to be carried forward (default is NULL).
+#' @param confounder_vars An optional character vector of time-varying confounder variable names to include without imputation (default is NULL).
 #' @param imputation_method A character string specifying the imputation method to use for baseline variables. Options are 'median' (default), 'mice', or 'none'.
 #' @param include_exposure_var_baseline Logical indicating whether to include the exposure variable at baseline (t0).
 #' @param include_outcome_vars_baseline Logical indicating whether to include outcome variables at baseline (t0).
@@ -23,7 +23,7 @@
 #'         NA indicators are created for variables at baseline only if they have missing values.
 #'         Exposure variables are tracked across waves but are not imputed beyond baseline.
 #'         Outcome variables are included only at the final wave
-#'         unless `include_outcome_vars_baseline` is `TRUE`. Confounders (if any) are carried forward using last observation carried forward (LOCF).
+#'         unless `include_outcome_vars_baseline` is `TRUE`. Confounders (if any) are included without imputation.
 #'
 #' @details
 #' Key functionalities:
@@ -40,8 +40,9 @@
 #'   that have missing values. Each such variable at baseline will have a corresponding
 #'   NA indicator with the suffix `_na`.
 #' - **Exposure Variables**: Tracked across waves but never imputed beyond baseline.
-#' - **Outcome Variables**: Included only at the final wave unless `include_outcome_vars_baseline` is `TRUE`.
-#' - **Confounder Variables**: If specified, these are carried forward across waves using LOCF.
+#' - **Outcome Variables**: Included only at the final wave unless specified to include at baseline.
+#' - **Confounder Variables**: If specified, these are included across waves without any imputation.
+#'   Missing values remain as `NA`.
 #' - **Variable Inclusion per Wave**:
 #'   - **Baseline (`t0`)**: Includes `baseline_vars`, exposure variables (if included), outcome variables (if included), and their NA indicators (only if necessary).
 #'   - **Waves `t1` to `t(y_-2)`**: Include only the exposure variables (and confounders if specified).
@@ -85,7 +86,7 @@ margot_wide_machine <- function(.data,
   start_time <- Sys.time()
   cli::cli_alert_info("Starting data transformation...")
 
-  # Load required packages
+  # load required packages
   required_packages <- c("dplyr", "tidyr", "cli", "zoo")
   if (imputation_method == 'mice') required_packages <- c(required_packages, "mice")
 
@@ -95,15 +96,15 @@ margot_wide_machine <- function(.data,
     }
   }
 
-  # Pre-process data
+  # pre-process data
   cli::cli_alert_info("Pre-processing data...")
 
-  # Get number of waves first
+  # get number of waves first
   wave_values <- sort(unique(.data[[wave]]))
   y_ <- length(wave_values)
   cli::cli_alert_info(sprintf("Processing %d waves of data...", y_))
 
-  # Ensure no list columns
+  # ensure no list columns
   list_cols <- sapply(.data, is.list)
   if (any(list_cols)) {
     cli::cli_alert_warning("Converting list columns to character...")
@@ -111,7 +112,7 @@ margot_wide_machine <- function(.data,
       dplyr::mutate(across(where(is.list), ~as.character(.x)))
   }
 
-  # Convert factors to numeric where possible
+  # convert factors to numeric where possible
   cols_to_process <- c(baseline_vars, exposure_var, outcome_vars, confounder_vars)
   cols_to_process <- unique(cols_to_process[cols_to_process %in% names(.data)])
 
@@ -124,14 +125,14 @@ margot_wide_machine <- function(.data,
       }
     }))
 
-  # Convert wave values to 0-based sequential indices
+  # convert wave values to 0-based sequential indices
   cli::cli_alert_info("Converting time indices...")
   wave_lookup <- setNames(seq_along(wave_values) - 1, wave_values)
 
   .data <- .data %>%
     dplyr::mutate(time = wave_lookup[as.character(.data[[wave]])])
 
-  # Filter data for each time point
+  # filter data for each time point
   data_subsets <- list()
 
   for (t in unique(.data$time)) {
@@ -158,7 +159,7 @@ margot_wide_machine <- function(.data,
 
   .data_filtered <- bind_rows(data_subsets)
 
-  # Reshape to wide format
+  # reshape to wide format
   cli::cli_alert_info("Reshaping to wide format...")
   data_wide <- .data_filtered %>%
     dplyr::select(-wave) %>%
@@ -170,7 +171,7 @@ margot_wide_machine <- function(.data,
       names_glue = "t{time}_{.value}"
     )
 
-  # Create NA indicators for all variables at baseline **only if they have missing values**
+  # make NA indicators for all variables at baseline **only if they have missing values**
   cli::cli_alert_info("Creating NA indicators for variables at baseline (only if necessary)...")
   baseline_all_vars <- c(baseline_vars)
   if (include_exposure_var_baseline) {
@@ -184,7 +185,7 @@ margot_wide_machine <- function(.data,
   baseline_cols <- baseline_cols[baseline_cols %in% names(data_wide)]
 
   for (col in baseline_cols) {
-    # **Check if the column has any NA values before creating the indicator**
+    # **check if the column has any NA values before creating the indicator**
     if (any(is.na(data_wide[[col]]))) {
       na_col_name <- paste0(col, "_na")
       data_wide[[na_col_name]] <- as.integer(is.na(data_wide[[col]]))
@@ -194,10 +195,10 @@ margot_wide_machine <- function(.data,
     }
   }
 
-  # Prepare columns for imputation at baseline
+  # prepare columns for imputation at baseline
   impute_cols <- baseline_cols  # All variables at baseline
 
-  # Perform imputation only at baseline for specified variables
+  # do imputation only at baseline for specified variables
   if (imputation_method != 'none' && length(impute_cols) > 0) {
     cli::cli_alert_info(sprintf("Starting %s imputation at baseline...", imputation_method))
 
@@ -207,7 +208,7 @@ margot_wide_machine <- function(.data,
                           m = 1,
                           maxit = 5,
                           method = "pmm",
-                          printFlag = FALSE)
+                          printFlag = TRUE)
 
         data_wide[, impute_cols] <- mice::complete(imp)
         cli::cli_alert_success("MICE imputation at baseline completed successfully")
@@ -230,22 +231,10 @@ margot_wide_machine <- function(.data,
     }
   }
 
-  # Carry forward confounders if specified
-  if (!is.null(confounder_vars)) {
-    cli::cli_alert_info("Carrying forward confounders...")
-    for (var in confounder_vars) {
-      var_cols <- paste0("t", 1:(y_ - 1), "_", var)  # Corrected to y_ -1 to include all relevant waves
-      var_cols <- var_cols[var_cols %in% names(data_wide)]
+  # ***removed LOCF for confounders***
+  # previously, confounders were imputed using LOCF. This section has been removed to keep missing values as is.
 
-      # Process each row
-      data_wide[, var_cols] <- t(apply(data_wide[, var_cols, drop = FALSE], 1, function(x) {
-        zoo::na.locf(x, na.rm = FALSE)
-      }))
-    }
-    cli::cli_alert_success("Confounder carry forward completed")
-  }
-
-  # Reorder columns
+  # reorder columns
   cli::cli_alert_info("Reordering columns...")
   new_order <- c(id)
 
@@ -263,16 +252,16 @@ margot_wide_machine <- function(.data,
       wave_vars <- outcome_vars
     }
 
-    # Add main columns
+    # add main columns
     new_cols <- paste0(t_prefix, wave_vars)
     new_cols <- new_cols[new_cols %in% names(data_wide)]
 
-    # Add NA indicator columns for baseline variables **only if they were created**
+    # add NA indicator columns for baseline variables **only if they were created**
     if (t == 0) {
       na_cols <- paste0(new_cols, "_na")
       na_cols <- na_cols[na_cols %in% names(data_wide)]
 
-      # Interleave new_cols and na_cols
+      # interleave new_cols and na_cols
       cols_with_na <- c()
       for (col in new_cols) {
         cols_with_na <- c(cols_with_na, col)
@@ -287,13 +276,13 @@ margot_wide_machine <- function(.data,
     }
   }
 
-  # Ensure all columns exist and are unique
+  # ensure all columns exist and are unique
   new_order <- unique(new_order[new_order %in% names(data_wide)])
 
-  # Final reordering
+  # final reordering
   data_wide <- data_wide[, new_order]
 
-  # Report execution time
+  # report execution time
   end_time <- Sys.time()
   execution_time <- difftime(end_time, start_time, units = "secs")
   cli::cli_alert_success(sprintf("Processing completed in %.2f seconds", as.numeric(execution_time)))

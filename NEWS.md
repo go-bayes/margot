@@ -13,6 +13,15 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2024-11-09] margot 0.3.0.1
+
+## New
+-`margot_impute_carry_forward` - carry forward last observed value (for handling 'prodigal' id's that are lost and found).
+
+## Fixed
+- `margot_wide_machine` - removed functionality now handled by `margot_impute_carry_forward` 
+
+
 # [2024-11-06] margot 0.3.0.0
 
 ## New

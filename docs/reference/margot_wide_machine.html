@@ -15,7 +15,7 @@ outcome variables, and time-varying confounders."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,7 +94,7 @@ outcome variables, and time-varying confounders.</p>
 
 
 <dt id="arg-confounder-vars">confounder_vars<a class="anchor" aria-label="anchor" href="#arg-confounder-vars"></a></dt>
-<dd><p>An optional character vector of time-varying confounder variable names to be carried forward (default is NULL).</p></dd>
+<dd><p>An optional character vector of time-varying confounder variable names to include without imputation (default is NULL).</p></dd>
 
 
 <dt id="arg-imputation-method">imputation_method<a class="anchor" aria-label="anchor" href="#arg-imputation-method"></a></dt>
@@ -117,7 +117,7 @@ outcome variables, and time-varying confounders.</p>
         NA indicators are created for variables at baseline only if they have missing values.
         Exposure variables are tracked across waves but are not imputed beyond baseline.
         Outcome variables are included only at the final wave
-        unless `include_outcome_vars_baseline` is `TRUE`. Confounders (if any) are carried forward using last observation carried forward (LOCF).</p>
+        unless `include_outcome_vars_baseline` is `TRUE`. Confounders (if any) are included without imputation.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -135,8 +135,9 @@ outcome variables, and time-varying confounders.</p>
   that have missing values. Each such variable at baseline will have a corresponding
   NA indicator with the suffix `_na`.
 - **Exposure Variables**: Tracked across waves but never imputed beyond baseline.
-- **Outcome Variables**: Included only at the final wave unless `include_outcome_vars_baseline` is `TRUE`.
-- **Confounder Variables**: If specified, these are carried forward across waves using LOCF.
+- **Outcome Variables**: Included only at the final wave unless specified to include at baseline.
+- **Confounder Variables**: If specified, these are included across waves without any imputation.
+  Missing values remain as `NA`.
 - **Variable Inclusion per Wave**:
   - **Baseline (`t0`)**: Includes `baseline_vars`, exposure variables (if included), outcome variables (if included), and their NA indicators (only if necessary).
   - **Waves `t1` to `t(y_-2)`**: Include only the exposure variables (and confounders if specified).
