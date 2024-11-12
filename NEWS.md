@@ -13,6 +13,12 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+
+# [2024-11-11] margot 0.3.0.2
+
+## Fixed
+`margot_plot()` label now reads "causal difference" rather than "causal risk difference".
+
 # [2024-11-09] margot 0.3.0.1
 
 ## New

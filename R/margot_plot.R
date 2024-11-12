@@ -281,7 +281,7 @@ margot_plot <- function(.data,
     ggplot2::geom_vline(xintercept = null_value, linetype = "solid") +
     ggplot2::scale_color_manual(values = options$colors) +
     ggplot2::labs(
-      x = paste0("Causal ", ifelse(type == "RR", "Risk Ratio", "Risk Difference"), " Scale"),
+      x = paste0("Causal ", ifelse(type == "RR", "Risk Ratio", "Difference"), " Scale"),
       y = NULL,
       title = options$title,
       subtitle = options$subtitle
