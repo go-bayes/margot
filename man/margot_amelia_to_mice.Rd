@@ -4,7 +4,7 @@
 \alias{margot_amelia_to_mice}
 \title{convert an amelia object to a mice object}
 \usage{
-margot_amelia_to_mice(amelia_output)
+margot_amelia_to_mice(amelia_obj)
 }
 \arguments{
 \item{amelia_output}{an object of class `amelia`, containing imputed datasets from the Amelia package}

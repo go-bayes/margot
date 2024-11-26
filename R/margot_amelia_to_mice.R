@@ -16,53 +16,51 @@
 #'
 #' # verify mids object
 #' print(mids_obj)
-margot_amelia_to_mice <- function(amelia_output) {
-  # get imputations
-  imp_list <- amelia_output$imputations
-
-  # make empty list to store processed data
-  mice_format <- list()
-
-  # init the .id variable if it doesn't exist
-  if (!".id" %in% names(imp_list[[1]])) {
-    for (i in seq_along(imp_list)) {
-      imp_list[[i]]$.id <- 1:nrow(imp_list[[i]])
-    }
+margot_amelia_to_mice <- function(amelia_obj) {
+  # Verify input is an amelia object
+  if (!inherits(amelia_obj, "amelia")) {
+    stop("Input must be an amelia object")
   }
 
-  # get var names
-  all_vars <- names(imp_list[[1]])
+  # Get imputations and combine with original data
+  imp_list <- amelia_obj$imputations
 
-  # find imputed vars
-  # compare first two imputations to find differences
+  # Initialize mice format list
+  mice_format <- list()
+
+  # Set original data (first imputation)
+  mice_format$data <- imp_list[[1]]
+  mice_format$data$.imp <- 0
+
+  # Create where matrix - use complete.cases on original data
+  mice_format$where <- matrix(FALSE,
+                              nrow = nrow(mice_format$data),
+                              ncol = ncol(mice_format$data))
+  colnames(mice_format$where) <- names(mice_format$data)
+
+  # Get all variables except special columns
+  all_vars <- setdiff(names(mice_format$data), c(".imp", ".id"))
+
+  # Find imputed variables by comparing imputations
   imputed_vars <- names(which(colSums(imp_list[[1]] != imp_list[[2]]) > 0))
-  imputed_vars <- setdiff(imputed_vars, c(".imp", ".id")) # remove unnecessary variables
+  imputed_vars <- setdiff(imputed_vars, c(".imp", ".id"))
 
-  # make mice format
-  mice_format$data <- imp_list[[1]] # original dataset
-  mice_format$data$.imp <- 0        # original data marked as imp=0
-
-  # init where matrix
-  mice_format$where <- is.na(mice_format$data)
-
-  # make imp array
+  # Create imp array
   n_imp <- length(imp_list)
-  n_vars <- length(imputed_vars)
-  n_rows <- nrow(mice_format$data)
-
-  # init imp array
   mice_format$imp <- vector("list", length(imputed_vars))
   names(mice_format$imp) <- imputed_vars
 
-  # fill imp array
+  # Fill imp array
   for (var in imputed_vars) {
-    mice_format$imp[[var]] <- matrix(NA, nrow = n_rows, ncol = n_imp)
+    mice_format$imp[[var]] <- matrix(NA,
+                                     nrow = nrow(mice_format$data),
+                                     ncol = n_imp)
     for (m in 1:n_imp) {
       mice_format$imp[[var]][, m] <- imp_list[[m]][[var]]
     }
   }
 
-  # add mice attributes
+  # Set mice attributes
   mice_format$m <- n_imp
   mice_format$method <- rep("amelia", length(imputed_vars))
   names(mice_format$method) <- imputed_vars
