@@ -13,14 +13,20 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2024-11-26] margot 0.3.0.4
+
+## New
+- `margot_prop_missing()` - utility function to get propoportion of missing data at baseline. 
+
 # [2024-11-26] margot 0.3.0.3
+
 ## Fixed
-`margot_amelia_to_mice()` - fixed to be unconstrained to previous workflow.
+- `margot_amelia_to_mice()` - fixed to be unconstrained to previous workflow.
 
 # [2024-11-11] margot 0.3.0.2
 
 ## Fixed
-`margot_plot()` label now reads "causal difference" rather than "causal risk difference".
+- `margot_plot()` label now reads "causal difference" rather than "causal risk difference".
 
 # [2024-11-09] margot 0.3.0.1
 

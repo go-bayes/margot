@@ -136,6 +136,7 @@ reference:
     - margot_plot_create_options
     - margot_plot_exposure
     - margot_process_binary_vars
+    - margot_prop_missing
     - margot_save_png
     - margot_size
     - prepare_panel_data

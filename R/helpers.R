@@ -914,3 +914,335 @@ transform_var_name <- function(var_name, label_mapping = NULL,
   return(display_name)
 }
 
+
+#' @keywords internal
+margot_batch_glm <- function(
+    data,
+    outcome_vars,
+    exposure_formula,
+    terms = NULL,
+    label_mapping = NULL,
+    x_label = NULL,
+    y_label = NULL,
+    color_label = NULL,
+    y_limits = NULL,
+    weights = NULL,
+    family_list = NULL,
+    plot_params = list(
+      show_data = TRUE,
+      jitter = 0.4,
+      dot_alpha = 0.025,
+      alpha = 3,
+      show_ci = TRUE,
+      ci_style = "dash",
+      colors = "us",
+      dot_size = 2
+    ),
+    facet_params = NULL,
+    theme_params = theme_bw()
+) {
+  #  validation
+  if (!is.data.frame(data)) stop("Data must be a data frame")
+  if (length(outcome_vars) == 0) stop("Must provide at least one outcome variable")
+
+  # initialize storage lists
+  predictions_list <- list()
+  plots_list <- list()
+
+  # process each outcome variable
+  for (outcome_var in outcome_vars) {
+    # Create formula
+    formula_str <- paste(outcome_var, exposure_formula)
+    formula_obj <- as.formula(formula_str)
+
+    # family for this outcome
+    current_family <- if (!is.null(family_list) && outcome_var %in% names(family_list)) {
+      family_list[[outcome_var]]
+    } else {
+      gaussian()  # Default to gaussian if no family specified
+    }
+
+    cli::cli_alert_info("Processing model for outcome: {outcome_var} using {current_family$family} family")
+
+    # fit model with appropriate family and weights if specified
+    if (!is.null(weights)) {
+      model <- glm(formula_obj, data = data, family = current_family, weights = weights)
+      cli::cli_alert_info("Using weighted GLM for {outcome_var}")
+      # Generate predictions with weights
+      pred <- ggeffects::ggpredict(model, terms = terms, weights = weights)
+    } else {
+      model <- glm(formula_obj, data = data, family = current_family)
+      # Generate predictions without weights
+      pred <- ggeffects::ggpredict(model, terms = terms)
+    }
+
+    predictions_list[[outcome_var]] <- pred
+
+    # transform labels
+    outcome_label <- transform_label(
+      outcome_var,
+      label_mapping = label_mapping,
+      options = list(
+        remove_tx_prefix = TRUE,
+        remove_z_suffix = TRUE,
+        remove_underscores = TRUE,
+        use_title_case = TRUE
+      )
+    )
+
+    # make base plot
+    p <- plot(pred,
+              show_data = plot_params$show_data,
+              jitter = plot_params$jitter,
+              dot_alpha = plot_params$dot_alpha,
+              alpha = plot_params$alpha,
+              show_ci = plot_params$show_ci,
+              ci_style = plot_params$ci_style,
+              colors = plot_params$colors) +
+      geom_point(aes(x = x, y = predicted),
+                 color = "dodgerblue",
+                 size = plot_params$dot_size,
+                 alpha = 1)
+
+    # add labels
+    p <- p + labs(
+      x = x_label %||% terms,
+      y = y_label %||% outcome_label,
+      title = outcome_label
+    )
+
+    # add theme
+    p <- p + theme_params
+
+    # set y-axis limits based on family type and user input
+    if (!is.null(y_limits)) {
+      p <- p + scale_y_continuous(limits = y_limits)
+    } else if (current_family$family == "binomial") {
+      p <- p + scale_y_continuous(limits = c(0, 1))
+    } else {
+      # Let ggplot2 determine the limits for gaussian family
+      p <- p + scale_y_continuous()
+    }
+
+    # add faceting if specified
+    if (!is.null(facet_params)) {
+      if (!is.null(facet_params$facets)) {
+        p <- p + facet_wrap(facet_params$facets,
+                            scales = facet_params$scales %||% "fixed",
+                            ncol = facet_params$ncol,
+                            nrow = facet_params$nrow)
+      }
+    }
+
+    plots_list[[outcome_label]] <- p
+  }
+
+  return(list(
+    predictions = predictions_list,
+    plots = plots_list
+  ))
+}
+
+# helper operator for NULL handling
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+
+
+#' @keywords internal
+#' experimental cross-table functions
+margot_summary_tables_cat <- function(data,
+                                      baseline_wave,
+                                      exposure_waves,
+                                      outcome_wave,
+                                      name_exposure,
+                                      name_exposure_cat = NULL,
+                                      baseline_vars = NULL,
+                                      outcome_vars = NULL,
+                                      extra_vars = c("id", "wave", "year_measured", "not_lost", "sample_weights"),
+                                      baseline_labels = NULL,
+                                      exposure_labels = NULL,
+                                      outcome_labels = NULL,
+                                      create_plots = FALSE,
+                                      plot_type = "boxplot",
+                                      show_progress = TRUE,
+                                      cross_tabs = FALSE) {
+
+  require(cli)
+  require(dplyr)
+  require(janitor)
+  require(gtsummary)
+  require(labelled)
+  require(tidyr)
+  require(ggplot2)
+  require(crayon)
+
+  # Basic checks
+  if (is.null(baseline_vars) && is.null(outcome_vars)) {
+    stop("At least one of baseline_vars or outcome_vars must be provided.")
+  }
+
+  if (!name_exposure %in% names(data)) {
+    stop(sprintf("Exposure variable '%s' not found. Available columns: %s",
+                 name_exposure, paste(sort(names(data)), collapse=", ")))
+  }
+
+  # If cross_tabs is TRUE, verify categorical exposure
+  if (cross_tabs) {
+    if (length(name_exposure) > 1) {
+      stop("For cross-tabulation, only one exposure variable should be provided.")
+    }
+
+    # Ensure exposure is factor
+    data[[name_exposure]] <- as.factor(data[[name_exposure]])
+  }
+
+  cli::cli_h1("Margot Summary Tables")
+
+  # Calculate participants
+  n_participants <- length(unique(data$id))
+  n_participants_formatted <- format(n_participants, big.mark = ",")
+  cli::cli_alert_success("Number of unique participants: {.val {n_participants_formatted}} \U0001F44D")
+
+  # Baseline table
+  table_baseline <- NULL
+  if (!is.null(baseline_vars)) {
+    # Create baseline dataset with exposure
+    baseline_vars_with_exposure <- unique(c(baseline_vars, name_exposure))
+
+    dt_baseline <- data %>%
+      dplyr::filter(wave == baseline_wave) %>%
+      dplyr::select(any_of(baseline_vars_with_exposure)) %>%
+      droplevels()
+
+    if (cross_tabs) {
+      # Create stratified baseline table
+      table_baseline <- dt_baseline %>%
+        gtsummary::tbl_summary(
+          by = name_exposure,
+          missing = "ifany",
+          percent = "row",
+          statistic = list(all_continuous() ~ c("{mean} ({sd})", "{min}, {max}", "{p25}, {p75}")),
+          type = list(all_continuous() ~ "continuous2"),
+          label = baseline_labels
+        ) %>%
+        gtsummary::modify_header(label = "**Baseline Variables Stratified by Exposure**") %>%
+        gtsummary::bold_labels() %>%
+        gtsummary::add_overall()
+    } else {
+      table_baseline <- dt_baseline %>%
+        gtsummary::tbl_summary(
+          missing = "ifany",
+          percent = "column",
+          statistic = list(all_continuous() ~ c("{mean} ({sd})", "{min}, {max}", "{p25}, {p75}")),
+          type = list(all_continuous() ~ "continuous2"),
+          label = baseline_labels
+        ) %>%
+        gtsummary::modify_header(label = "**Exposure + Demographic Variables**") %>%
+        gtsummary::bold_labels()
+    }
+  }
+
+  # Initialize lists for tables and summaries
+  exposure_tables <- list()
+  exposure_summaries <- list()
+  plots <- list()
+
+  # Process exposure variable(s)
+  for (exposure_var in name_exposure) {
+    cli::cli_h2(paste("Processing exposure variable:", exposure_var))
+
+    if (cross_tabs) {
+      # Create transition frequencies table
+      exposure_transitions <- data %>%
+        dplyr::filter(wave %in% c(baseline_wave, exposure_waves)) %>%
+        dplyr::select(id, wave, !!sym(exposure_var)) %>%
+        tidyr::pivot_wider(
+          names_from = wave,
+          values_from = !!sym(exposure_var),
+          names_prefix = "wave_"
+        ) %>%
+        tidyr::drop_na()
+
+      # Create summary table using gtsummary
+      exposure_tables[[exposure_var]] <- exposure_transitions %>%
+        tidyr::pivot_longer(
+          cols = starts_with("wave_"),
+          names_to = "wave",
+          values_to = "value"
+        ) %>%
+        dplyr::group_by(wave, value) %>%
+        dplyr::summarise(n = n(), .groups = "drop") %>%
+        dplyr::mutate(
+          pct = n / sum(n) * 100,
+          summary = sprintf("%d (%.1f%%)", n, pct)
+        ) %>%
+        tidyr::pivot_wider(
+          names_from = wave,
+          values_from = summary
+        ) %>%
+        # Convert to gtsummary table
+        gtsummary::tbl_summary(
+          label = list(value ~ "Category")
+        ) %>%
+        gtsummary::modify_header(label = paste("**Exposure Variable:", exposure_var, "Transitions**"))
+    } else {
+      dt_exposure <- data %>%
+        dplyr::filter(wave %in% c(baseline_wave, exposure_waves)) %>%
+        dplyr::select(all_of(c(exposure_var, "wave"))) %>%
+        droplevels()
+
+      exposure_tables[[exposure_var]] <- dt_exposure %>%
+        gtsummary::tbl_summary(
+          by = "wave",
+          missing = "always",
+          percent = "column",
+          label = exposure_labels
+        ) %>%
+        gtsummary::modify_header(label = paste("**Exposure Variable:", exposure_var, "by Wave**")) %>%
+        gtsummary::bold_labels()
+    }
+  }
+
+  # Outcome table
+  table_outcomes <- NULL
+  if (!is.null(outcome_vars)) {
+    outcome_vars_with_exposure <- unique(c(outcome_vars, name_exposure))
+
+    dt_outcome <- data %>%
+      dplyr::filter(wave %in% c(baseline_wave, outcome_wave)) %>%
+      dplyr::select(any_of(outcome_vars_with_exposure)) %>%
+      droplevels()
+
+    if (cross_tabs) {
+      table_outcomes <- dt_outcome %>%
+        gtsummary::tbl_summary(
+          by = name_exposure,
+          missing = "always",
+          percent = "row",
+          label = outcome_labels
+        ) %>%
+        gtsummary::modify_header(label = "**Outcome Variables Stratified by Exposure**") %>%
+        gtsummary::bold_labels() %>%
+        gtsummary::add_overall()
+    } else {
+      table_outcomes <- dt_outcome %>%
+        gtsummary::tbl_summary(
+          by = "wave",
+          missing = "always",
+          percent = "column",
+          label = outcome_labels
+        ) %>%
+        gtsummary::modify_header(label = "**Outcome Variables by Wave**") %>%
+        gtsummary::bold_labels()
+    }
+  }
+
+  return(list(
+    baseline_table = table_baseline,
+    exposure_tables = exposure_tables,
+    outcome_table = table_outcomes,
+    n_participants = n_participants_formatted,
+    exposure_summaries = exposure_summaries,
+    plots = plots
+  ))
+}
