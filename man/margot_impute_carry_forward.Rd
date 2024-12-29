@@ -29,7 +29,7 @@ margot_impute_carry_forward(
 
 \item{time_point_regex}{Optional regex pattern to identify time points. Overrides \code{time_point_prefixes} if provided.}
 
-\item{require_one_observed}{Logical. If \code{TRUE}, only impute if at least one value is observed in the next wave.}
+\item{require_one_observed}{Logical. If \code{TRUE}, only impute if at least one value is observed in a following wave.}
 
 \item{columns_no_future_required}{Character vector of columns that do not require future observations for imputation.
 Defaults to all columns if \code{require_one_observed = FALSE}, or none if \code{require_one_observed = TRUE}.}
