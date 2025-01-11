@@ -15,7 +15,8 @@ margot_impute_carry_forward(
   create_na_indicator = TRUE,
   indicator_suffix = "_na",
   indicator_as_suffix = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  impute_final_wave = FALSE
 )
 }
 \arguments{
@@ -41,16 +42,50 @@ Defaults to all columns if \code{require_one_observed = FALSE}, or none if \code
 \item{indicator_as_suffix}{Logical. If \code{TRUE}, the indicator suffix is added as a suffix; if \code{FALSE}, it's added as a prefix.}
 
 \item{verbose}{Logical. If \code{TRUE}, prints progress information.}
+
+\item{impute_final_wave}{Logical. If \code{FALSE} (default), the final wave (end-of-study) is never imputed.
+If \code{TRUE}, the final wave can be imputed like other waves.}
 }
 \value{
 A dataframe with imputed values and optional indicator variables.
 }
 \description{
 Imputes missing values in longitudinal data by carrying forward previous observations
-up to a specified number of time points back. Optionally, it can create indicator variables
-for the imputed values.
+up to a specified number of time points back. By default, it never imputes data for the final wave
+(end-of-study). Optionally, it can create indicator variables for imputed values.
 }
 \examples{
-# [Examples as provided in the original function]
+\dontrun{
+# Example dataframe
+df <- data.frame(
+  id = 1:5,
+  t0_var1 = c(1, NA, 3, NA, 5),
+  t1_var1 = c(NA, 2, NA, 4, NA),
+  t2_var1 = c(1, NA, 3, NA, 5),
+  t0_var2 = c(NA, 2, NA, 4, 5),
+  t1_var2 = c(1, NA, 3, NA, NA),
+  t2_var2 = c(NA, 2, NA, 4, 5),
+  t2_end_of_study = c(1, 1, 1, 1, 1)  # End-of-study indicator
+)
+
+# Impute missing values without imputing the final wave
+df_imputed <- margot_impute_carry_forward(
+  df_wide = df,
+  columns_to_impute = c("var1", "var2"),
+  max_carry_forward = 2,
+  create_na_indicator = TRUE,
+  verbose = TRUE
+)
+
+# Impute missing values including the final wave
+df_imputed_final <- margot_impute_carry_forward(
+  df_wide = df,
+  columns_to_impute = c("var1", "var2"),
+  max_carry_forward = 2,
+  create_na_indicator = TRUE,
+  impute_final_wave = TRUE,
+  verbose = TRUE
+)
+}
 
 }

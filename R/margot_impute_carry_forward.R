@@ -2,8 +2,8 @@
 #'
 #' @description
 #' Imputes missing values in longitudinal data by carrying forward previous observations
-#' up to a specified number of time points back. Optionally, it can create indicator variables
-#' for the imputed values.
+#' up to a specified number of time points back. By default, it never imputes data for the final wave
+#' (end-of-study). Optionally, it can create indicator variables for imputed values.
 #'
 #' @param df_wide A wide-format dataframe containing longitudinal data.
 #' @param columns_to_impute Character vector of base column names to impute (without time prefixes).
@@ -17,11 +17,44 @@
 #' @param indicator_suffix Suffix to add to the original column name for the indicator variable (default is \code{"_na"}).
 #' @param indicator_as_suffix Logical. If \code{TRUE}, the indicator suffix is added as a suffix; if \code{FALSE}, it's added as a prefix.
 #' @param verbose Logical. If \code{TRUE}, prints progress information.
+#' @param impute_final_wave Logical. If \code{FALSE} (default), the final wave (end-of-study) is never imputed.
+#'   If \code{TRUE}, the final wave can be imputed like other waves.
 #'
 #' @return A dataframe with imputed values and optional indicator variables.
 #'
 #' @examples
-#' # [Examples as provided in the original function]
+#' \dontrun{
+#' # Example dataframe
+#' df <- data.frame(
+#'   id = 1:5,
+#'   t0_var1 = c(1, NA, 3, NA, 5),
+#'   t1_var1 = c(NA, 2, NA, 4, NA),
+#'   t2_var1 = c(1, NA, 3, NA, 5),
+#'   t0_var2 = c(NA, 2, NA, 4, 5),
+#'   t1_var2 = c(1, NA, 3, NA, NA),
+#'   t2_var2 = c(NA, 2, NA, 4, 5),
+#'   t2_end_of_study = c(1, 1, 1, 1, 1)  # End-of-study indicator
+#' )
+#'
+#' # Impute missing values without imputing the final wave
+#' df_imputed <- margot_impute_carry_forward(
+#'   df_wide = df,
+#'   columns_to_impute = c("var1", "var2"),
+#'   max_carry_forward = 2,
+#'   create_na_indicator = TRUE,
+#'   verbose = TRUE
+#' )
+#'
+#' # Impute missing values including the final wave
+#' df_imputed_final <- margot_impute_carry_forward(
+#'   df_wide = df,
+#'   columns_to_impute = c("var1", "var2"),
+#'   max_carry_forward = 2,
+#'   create_na_indicator = TRUE,
+#'   impute_final_wave = TRUE,
+#'   verbose = TRUE
+#' )
+#' }
 #'
 #' @import dplyr
 #' @import cli
@@ -38,7 +71,8 @@ margot_impute_carry_forward <- function(
     create_na_indicator = TRUE,
     indicator_suffix = "_na",
     indicator_as_suffix = TRUE,
-    verbose = TRUE
+    verbose = TRUE,
+    impute_final_wave = FALSE  # <- NEW PARAM: default = FALSE
 ) {
   # Set default for columns_no_future_required
   if (!is.null(columns_no_future_required)) {
@@ -103,14 +137,25 @@ margot_impute_carry_forward <- function(
     # Determine if this column requires future observation
     requires_future <- require_one_observed && !(col_base %in% columns_no_future_required)
 
-    # Determine maximum time point index
-    max_t <- if (requires_future) num_time_points - 1 else num_time_points
+    # Decide how far we go in time points
+    # If 'impute_final_wave = FALSE', we stop at 'num_time_points - 1'
+    # unless it also requires a future wave (in which case it also stops at num_time_points - 1).
+    if (!impute_final_wave) {
+      max_t <- num_time_points - 1
+    } else {
+      # Original logic: if require future, stop at (num_time_points - 1),
+      # otherwise up to num_time_points
+      max_t <- if (requires_future) num_time_points - 1 else num_time_points
+    }
 
-    for (t_idx in 1:max_t) {
+    # Safeguard if num_time_points == 1
+    max_t <- max(0, min(max_t, num_time_points))
+
+    for (t_idx in seq_len(max_t)) {
       current_t <- time_points[t_idx]
       current_col <- paste0(current_t, "_", col_base)
 
-      # Initialize stats for this time point
+      # initialise stats for this time point
       imputation_stats[[col_base]][[current_t]] <- list(
         total_missing = 0,
         imputed = 0,
@@ -118,7 +163,7 @@ margot_impute_carry_forward <- function(
         source_timepoints = list()
       )
 
-      # Skip if column doesn't exist
+      # skip if column doesn't exist
       if (!current_col %in% names(df_imputed)) {
         if (verbose) {
           cli::cli_alert_warning("Column `{current_col}` not found, skipping.")
@@ -126,8 +171,8 @@ margot_impute_carry_forward <- function(
         next
       }
 
+      # if we require a future wave for imputation, ensure at least one future wave has data
       if (requires_future && t_idx < num_time_points) {
-        # Check all future waves, not just the next
         future_timepoints <- time_points[(t_idx + 1):num_time_points]
         future_cols <- paste0(future_timepoints, "_", col_base)
         future_cols <- future_cols[future_cols %in% names(df_imputed)]
@@ -140,23 +185,19 @@ margot_impute_carry_forward <- function(
           }
           next
         }
-
-        # Only carry forward if at least one future wave is observed
+        # only carry forward if at least one future wave is observed
         rows_to_process <- rowSums(!is.na(df_imputed[, future_cols, drop = FALSE])) > 0
-
       } else {
-        # Process all rows
         rows_to_process <- rep(TRUE, nrow(df_imputed))
       }
 
-      # Find missing values in the current column
+      # find missing values in the current column
       missing_mask <- is.na(df_imputed[[current_col]]) & rows_to_process
       initial_missing <- sum(missing_mask)
-
       imputation_stats[[col_base]][[current_t]]$total_missing <- initial_missing
 
       if (initial_missing > 0) {
-        # Create or update NA indicator
+        # create or update NA indicator
         if (create_na_indicator) {
           indicator_var_name <- if (indicator_as_suffix) {
             paste0(current_col, indicator_suffix)
@@ -173,23 +214,21 @@ margot_impute_carry_forward <- function(
           cli::cli_alert_info("Processing `{current_t}`: {initial_missing} missing values to impute.")
         }
 
-        # Look back up to `max_carry_forward` time points
-        for (look_back in 1:max_carry_forward) {
-          if ((t_idx - look_back) < 1) break  # No more previous time points
-
-          prev_t <- time_points[t_idx - look_back]
+        # look back up to `max_carry_forward` time points
+        for (look_back in seq_len(max_carry_forward)) {
+          prev_idx <- t_idx - look_back
+          if (prev_idx < 1) break  # No more previous time points
+          prev_t <- time_points[prev_idx]
           prev_col <- paste0(prev_t, "_", col_base)
 
           if (prev_col %in% names(df_imputed)) {
-            # Identify rows still missing before imputation
             still_missing <- is.na(df_imputed[[current_col]]) & missing_mask
+            if (!any(still_missing)) break  # No more imputations needed
 
-            if (sum(still_missing) == 0) break  # No more imputations needed
-
-            # Impute from the previous time point
+            # impute from the previous time point
             df_imputed[still_missing, current_col] <- df_imputed[still_missing, prev_col]
 
-            # Count how many were imputed
+            # count how many were imputed
             newly_imputed <- sum(!is.na(df_imputed[still_missing, current_col]))
             if (newly_imputed > 0) {
               imputation_stats[[col_base]][[current_t]]$imputed <-
@@ -204,19 +243,20 @@ margot_impute_carry_forward <- function(
           }
         }
 
-        # Update remaining missing
+        # update remaining missing
         final_missing <- sum(is.na(df_imputed[[current_col]]) & missing_mask)
         imputation_stats[[col_base]][[current_t]]$remaining_missing <- final_missing
       }
     }
 
-    # Handle the last time point if no future observation is required
-    if (!requires_future && num_time_points >= 1) {
+    # if we *do* want to impute the final wave (and we haven't already handled it above)
+    if (impute_final_wave && !requires_future && num_time_points >= 1) {
+      # The final wave is time_points[num_time_points]
       t_idx <- num_time_points
       current_t <- time_points[t_idx]
       current_col <- paste0(current_t, "_", col_base)
 
-      # Initialize stats for this time point if not already done
+      # init stats for this time point if not already done
       if (is.null(imputation_stats[[col_base]][[current_t]])) {
         imputation_stats[[col_base]][[current_t]] <- list(
           total_missing = 0,
@@ -226,66 +266,69 @@ margot_impute_carry_forward <- function(
         )
       }
 
-      missing_mask <- is.na(df_imputed[[current_col]])
-      initial_missing <- sum(missing_mask)
-      imputation_stats[[col_base]][[current_t]]$total_missing <- initial_missing
+      # proceed only if the column exists
+      if (current_col %in% names(df_imputed)) {
+        missing_mask <- is.na(df_imputed[[current_col]])
+        initial_missing <- sum(missing_mask)
+        imputation_stats[[col_base]][[current_t]]$total_missing <- initial_missing
 
-      if (initial_missing > 0) {
-        if (create_na_indicator) {
-          indicator_var_name <- if (indicator_as_suffix) {
-            paste0(current_col, indicator_suffix)
-          } else {
-            paste0(indicator_suffix, current_col)
+        if (initial_missing > 0) {
+          if (create_na_indicator) {
+            indicator_var_name <- if (indicator_as_suffix) {
+              paste0(current_col, indicator_suffix)
+            } else {
+              paste0(indicator_suffix, current_col)
+            }
+            if (!indicator_var_name %in% names(indicator_columns)) {
+              indicator_columns[[indicator_var_name]] <- integer(nrow(df_imputed))
+            }
+            indicator_columns[[indicator_var_name]][missing_mask] <- 1
           }
-          if (!indicator_var_name %in% names(indicator_columns)) {
-            indicator_columns[[indicator_var_name]] <- integer(nrow(df_imputed))
+
+          if (verbose) {
+            cli::cli_alert_info("Processing `{current_t}`: {initial_missing} missing values to impute.")
           }
-          indicator_columns[[indicator_var_name]][missing_mask] <- 1
-        }
 
-        if (verbose) {
-          cli::cli_alert_info("Processing `{current_t}`: {initial_missing} missing values to impute.")
-        }
+          # look back up to `max_carry_forward` time points
+          for (look_back in seq_len(max_carry_forward)) {
+            prev_idx <- t_idx - look_back
+            if (prev_idx < 1) break
+            prev_t <- time_points[prev_idx]
+            prev_col <- paste0(prev_t, "_", col_base)
 
-        # Look back up to `max_carry_forward` time points
-        for (look_back in 1:max_carry_forward) {
-          if ((t_idx - look_back) < 1) break
+            if (prev_col %in% names(df_imputed)) {
+              still_missing <- is.na(df_imputed[[current_col]]) & missing_mask
+              if (!any(still_missing)) break
 
-          prev_t <- time_points[t_idx - look_back]
-          prev_col <- paste0(prev_t, "_", col_base)
+              df_imputed[still_missing, current_col] <- df_imputed[still_missing, prev_col]
 
-          if (prev_col %in% names(df_imputed)) {
-            still_missing <- is.na(df_imputed[[current_col]]) & missing_mask
-            if (sum(still_missing) == 0) break
-
-            df_imputed[still_missing, current_col] <- df_imputed[still_missing, prev_col]
-
-            newly_imputed <- sum(!is.na(df_imputed[still_missing, current_col]))
-            if (newly_imputed > 0) {
-              imputation_stats[[col_base]][[current_t]]$imputed <-
-                imputation_stats[[col_base]][[current_t]]$imputed + newly_imputed
-              imputation_stats[[col_base]][[current_t]]$source_timepoints[[prev_t]] <-
-                ifelse(
-                  is.null(imputation_stats[[col_base]][[current_t]]$source_timepoints[[prev_t]]),
-                  newly_imputed,
-                  imputation_stats[[col_base]][[current_t]]$source_timepoints[[prev_t]] + newly_imputed
-                )
+              newly_imputed <- sum(!is.na(df_imputed[still_missing, current_col]))
+              if (newly_imputed > 0) {
+                imputation_stats[[col_base]][[current_t]]$imputed <-
+                  imputation_stats[[col_base]][[current_t]]$imputed + newly_imputed
+                imputation_stats[[col_base]][[current_t]]$source_timepoints[[prev_t]] <-
+                  ifelse(
+                    is.null(imputation_stats[[col_base]][[current_t]]$source_timepoints[[prev_t]]),
+                    newly_imputed,
+                    imputation_stats[[col_base]][[current_t]]$source_timepoints[[prev_t]] + newly_imputed
+                  )
+              }
             }
           }
-        }
 
-        final_missing <- sum(is.na(df_imputed[[current_col]]) & missing_mask)
-        imputation_stats[[col_base]][[current_t]]$remaining_missing <- final_missing
+          final_missing <- sum(is.na(df_imputed[[current_col]]) & missing_mask)
+          imputation_stats[[col_base]][[current_t]]$remaining_missing <- final_missing
+        }
       }
     }
   }
 
-  # Add indicator columns to the dataframe
+  # add indicator columns to the dataframe
   if (create_na_indicator && length(indicator_columns) > 0) {
     df_imputed <- cbind(df_imputed, as.data.frame(indicator_columns))
   }
 
-  # Make report
+  # make report
   if (verbose) {
     cli::cli_h1("Imputation Summary Report")
 

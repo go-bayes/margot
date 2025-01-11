@@ -13,11 +13,18 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2024-12-29] margot 0.3.0.7
+
+## Improved
+`margot_impute_carry_forward()` - prevents imputing variables at end of study if they are included as time-varying variables.
+
 # [2024-12-29] margot 0.3.0.6
+
 ## Improved
 `margot_impute_carry_forward()` is more efficient. Can carry forward more than one-wave if a future observation is made and 'require_one_observed' is set to "TRUE".
 
 # [2024-12-08] margot 0.3.0.5
+
 ## New
 - re-factored `margot_make_tables()` to work with the table1 package, for extending flexibility of tables (esp with latex.)
 
