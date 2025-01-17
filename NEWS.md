@@ -13,6 +13,12 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2025-01-17] margot 0.3.0.8
+
+## Improved
+- `margot_plot` has a new parameter `include_coefficients` which if set to TRUE will remove the coefficients from a graph. This makes it easier to view the results. 
+- minor fix to `margot_save_png` so that it defaults to the output folder set by `push_mods`
+
 # [2024-12-29] margot 0.3.0.7
 
 ## Improved

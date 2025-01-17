@@ -42,7 +42,7 @@
 margot_save_png <- function(plot_output,
                             prefix = NULL,
                             base_filename = "plot",
-                            save_path = here::here("push_mods"),
+                            save_path = here::here(push_mods), # default path
                             width = 12,
                             height = 12,
                             dpi = 500) {
