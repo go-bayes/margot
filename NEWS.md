@@ -17,7 +17,7 @@
 
 ## Improved
 - `margot_plot` has a new parameter `include_coefficients` which if set to TRUE will remove the coefficients from a graph. This makes it easier to view the results. 
-- minor fix to `margot_save_png` so that it defaults to the output folder set by `push_mods`
+-  minor fix to `margot_save_png` so that it defaults to the output folder set by `push_mods`
 
 # [2024-12-29] margot 0.3.0.7
 
