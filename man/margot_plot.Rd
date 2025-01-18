@@ -9,6 +9,8 @@ margot_plot(
   type = c("RD", "RR"),
   order = c("alphabetical", "magnitude", "custom", "default"),
   title_binary = NULL,
+  include_coefficients = TRUE,
+  standardize_label = c("NZ", "US", "none"),
   ...,
   options = list(),
   label_mapping = NULL,
@@ -29,7 +31,7 @@ or `E[Y(1)]/E[Y(0)]` columns representing the causal estimates.}
 Either `"RD"` (Risk Difference) or `"RR"` (Risk Ratio). Default is `"RD"`.}
 
 \item{order}{Character string specifying the order of outcomes.
-Can be `"alphabetical"`, `"magnitude"`, or `"custom"`.
+Can be `"alphabetical"`, `"magnitude"`, `"custom"`, or `"default"`.
 - `"alphabetical"`: Orders outcomes alphabetically.
 - `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.
 - `"custom"`: Allows for a custom ordering (requires additional implementation).
@@ -37,6 +39,14 @@ Can be `"alphabetical"`, `"magnitude"`, or `"custom"`.
 Default is `"alphabetical"`.}
 
 \item{title_binary}{Optional title for the plot. If not provided, the title from `options` is used.}
+
+\item{include_coefficients}{Logical. If `TRUE`, includes the text of the coefficients in the plot.
+Default is `TRUE`.}
+
+\item{standardize_label}{Character. If `"NZ"`, the x-axis uses "Standardised" (NZ/UK style) for RD effects.
+If `"US"`, the x-axis uses "Standardized". If `"none"`, omits that word entirely.
+Default is `"NZ"`. When `type == "RR"`, this word is always omitted.
+### CHANGE: new argument to handle label spelling/omission.}
 
 \item{...}{Additional arguments passed to the plotting function, allowing further customization.}
 
@@ -71,7 +81,7 @@ A list containing three elements:
 If `save_output` is `TRUE`, the complete output will be saved to a file using `margot::here_save_qs()`.
 }
 \description{
-This function creates a Margot plot, which is useful for visualizing causal effects.
+This function creates a Margot plot, which is useful for visualising causal effects.
 It provides various options for customizing the plot
 and transforming labels. Additionally, it generates a compact interpretation of the results
 and returns a transformed table.
@@ -136,6 +146,7 @@ result <- margot_plot(
   .data = sample_data,
   type = "RD",
   order = "alphabetical",
+  standardize_label = "US",    # "Standardized"
   options = list(
     title = "Causal Effect Estimates",
     subtitle = "Risk Difference Scale",
@@ -150,7 +161,8 @@ result <- margot_plot(
     "t2_outcome_b_z" = "Outcome B",
     "t3_outcome_c_z" = "Outcome C"
   ),
-  save_output = FALSE  # Set to TRUE to save the output
+  include_coefficients = FALSE,  # Set to FALSE to exclude coefficients
+  save_output = FALSE            # Set to TRUE to save the output
 )
 
 # Display the plot

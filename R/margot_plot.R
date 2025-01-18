@@ -1,6 +1,6 @@
 #' Create a Margot Plot with Interpretation
 #'
-#' This function creates a Margot plot, which is useful for visualizing causal effects.
+#' This function creates a Margot plot, which is useful for visualising causal effects.
 #' It provides various options for customizing the plot
 #' and transforming labels. Additionally, it generates a compact interpretation of the results
 #' and returns a transformed table.
@@ -11,13 +11,19 @@
 #' @param type Character string specifying the type of plot.
 #'   Either `"RD"` (Risk Difference) or `"RR"` (Risk Ratio). Default is `"RD"`.
 #' @param order Character string specifying the order of outcomes.
-#'   Can be `"alphabetical"`, `"magnitude"`, or `"custom"`.
+#'   Can be `"alphabetical"`, `"magnitude"`, `"custom"`, or `"default"`.
 #'   - `"alphabetical"`: Orders outcomes alphabetically.
 #'   - `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.
 #'   - `"custom"`: Allows for a custom ordering (requires additional implementation).
 #'   - `"default"`: Deprecated. Uses `"magnitude"` ordering and issues a warning.
 #'   Default is `"alphabetical"`.
 #' @param title_binary Optional title for the plot. If not provided, the title from `options` is used.
+#' @param include_coefficients Logical. If `TRUE`, includes the text of the coefficients in the plot.
+#'   Default is `TRUE`.
+#' @param standardize_label Character. If `"NZ"`, the x-axis uses "Standardised" (NZ/UK style) for RD effects.
+#'   If `"US"`, the x-axis uses "Standardized". If `"none"`, omits that word entirely.
+#'   Default is `"NZ"`. When `type == "RR"`, this word is always omitted.
+#'   ### CHANGE: new argument to handle label spelling/omission.
 #' @param ... Additional arguments passed to the plotting function, allowing further customization.
 #' @param options A list of additional options for customizing the plot.
 #'   See **Details** for available options.
@@ -107,6 +113,7 @@
 #'   .data = sample_data,
 #'   type = "RD",
 #'   order = "alphabetical",
+#'   standardize_label = "US",    # "Standardized"
 #'   options = list(
 #'     title = "Causal Effect Estimates",
 #'     subtitle = "Risk Difference Scale",
@@ -121,7 +128,8 @@
 #'     "t2_outcome_b_z" = "Outcome B",
 #'     "t3_outcome_c_z" = "Outcome C"
 #'   ),
-#'   save_output = FALSE  # Set to TRUE to save the output
+#'   include_coefficients = FALSE,  # Set to FALSE to exclude coefficients
+#'   save_output = FALSE            # Set to TRUE to save the output
 #' )
 #'
 #' # Display the plot
@@ -139,6 +147,9 @@ margot_plot <- function(.data,
                         type = c("RD", "RR"),
                         order = c("alphabetical", "magnitude", "custom", "default"),
                         title_binary = NULL,
+                        include_coefficients = TRUE,
+                        ### CHANGE: new argument
+                        standardize_label = c("NZ", "US", "none"),
                         ...,
                         options = list(),
                         label_mapping = NULL,
@@ -159,6 +170,9 @@ margot_plot <- function(.data,
     warning("'default' order is deprecated. Please use 'magnitude' instead.")
     order <- "magnitude"
   }
+
+  ### CHANGED: match.arg for new parameter
+  standardize_label <- match.arg(standardize_label, c("NZ", "US", "none"))
 
   # Create a copy of the original data for table transformation
   .data_for_table <- .data
@@ -261,6 +275,27 @@ margot_plot <- function(.data,
       )
     )
 
+  ### CHANGED: Build x-axis label conditionally
+  #  1) If RR, omit "Standardised"/"Standardized"
+  #  2) If RD, use user choice
+  label_word <- switch(
+    standardize_label,
+    NZ   = "Standardised",
+    US   = "Standardized",
+    none = "Effect"
+  )
+  x_axis_label <- if (type == "RR") {
+    paste0("Effect (Risk Ratio Scale)")
+  } else {
+    # RD scale
+    if (label_word %in% c("Standardised", "Standardized")) {
+      paste0(label_word, " Effect (Difference Scale)")
+    } else {
+      # i.e. "Effect (Difference Scale)"
+      paste0(label_word, " (Difference Scale)")
+    }
+  }
+
   # Start building the plot
   out <- ggplot2::ggplot(
     data = .data,
@@ -280,18 +315,12 @@ margot_plot <- function(.data,
     ggplot2::geom_point(size = options$point_size, position = ggplot2::position_dodge(width = 0.3)) +
     ggplot2::geom_vline(xintercept = null_value, linetype = "solid") +
     ggplot2::scale_color_manual(values = options$colors) +
+    ### CHANGE: use our new x_axis_label
     ggplot2::labs(
-      x = paste0("Causal ", ifelse(type == "RR", "Risk Ratio", "Difference"), " Scale"),
+      x = x_axis_label,
       y = NULL,
       title = options$title,
       subtitle = options$subtitle
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = options$x_offset * options$estimate_scale,
-        label = label
-      ),
-      size = options$text_size, hjust = 0, fontface = "bold"
     ) +
     ggplot2::coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
     ggplot2::theme_classic(base_size = options$base_size) +
@@ -313,6 +342,19 @@ margot_plot <- function(.data,
       ifelse(x < 0, "", as.character(x))
     }
     out <- out + ggplot2::scale_x_continuous(labels = custom_x_labels)
+  }
+
+  # Conditionally add geom_text based on include_coefficients
+  if (include_coefficients) {
+    out <- out + ggplot2::geom_text(
+      ggplot2::aes(
+        x = !!rlang::sym(effect_size_col) + options$x_offset * options$estimate_scale,
+        label = sprintf("%.2f", !!rlang::sym(effect_size_col))
+      ),
+      size = options$text_size,
+      hjust = ifelse(type == "RR", 0, 1),
+      fontface = "bold"
+    )
   }
 
   # Add faceting if specified
@@ -349,7 +391,7 @@ margot_plot <- function(.data,
   # Create the complete output
   complete_output <- list(
     plot = out,
-    interpretation = interpretation_text,  # For backward compatibility
+    interpretation = interpretation_text,
     transformed_table = transformed_table
   )
 

@@ -13,6 +13,19 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+
+
+# [2025-01-18] margot 0.3.0.9
+
+## New
+- `margot_combine_results` Takes multiple results tables from `margot_plot` objects and combines them into a single
+formatted table using `kableExtra`, with optional group headers for each section.
+
+## Improved
+-`margot_plot` has option `standardize_label` which when to display Standardised, Standardized, or to remove it altogether ("none").
+  - For Risk Ratios (type = "RR"), the code always omits that word and shows the label as "Effect (Risk Ratio Scale)".
+	- For Risk Differences (type = "RD"), if standardize_label = "NZ" you get "Standardised Effect (Difference Scale)"; if standardize_label = "US" you get "Standardized Effect (Difference Scale)"; and if standardize_label = "none", you get "Effect (Difference Scale)".
+
 # [2025-01-17] margot 0.3.0.8
 
 ## Improved
@@ -103,7 +116,6 @@
 # [2024-10-28] margot 0.2.3.15
 
 ## Improved
-
 - `margot_wide_impute` - small bug fix, na indicators not automatically created (functionality was lost at previous iteration)
 
 # [2024-10-27] margot 0.2.3.14
@@ -148,7 +160,6 @@
 - `margot_interpret_marginal()` gives correct interpretation of 'strong' evidence using Evalues.
 
 # [2024-10-02] margot 0.2.3.8
-
 - `margot_process_longitudinal_data_wider()` performance enhancement. Users can save the outcome variable even if previous exposures are missing.  Useful for `lmtp` survival models
 
 # [2024-09-27] margot 0.2.3.7 :)!
@@ -161,7 +172,6 @@
 # [2024-09-27] margot 0.2.3.6
 
 ## New
-
 - `margot_wide_machine()` converts wide data to long data so using indicators for missing observations, which allows for non-parametric stacked learning in `lmtp` without multiple-imputation assumptions. Also handles more than three time-points. Optional `imputation_method = 'mice` allows users to impute, while also creating NA dummy variables for non-parametric learning.
 
 - `margot_process_longitudinal_data_wider()` extends flexibility of `margot_process_longitudinal_data()` to more than three waves, and allows users to specify variable names. 
@@ -183,7 +193,6 @@
 
 
 ## Improved
-
 - `margot_plot_slope_covariate()` improved for flexibility
 
 

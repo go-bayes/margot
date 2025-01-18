@@ -97,6 +97,7 @@ reference:
 
   - title: "Interpret and Report Results"
     contents:
+    - margot_combine_results
     - margot_compare_groups
     - margot_omnibus_hetero_test
     - margot_interpret_marginal
