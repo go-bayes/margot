@@ -13,7 +13,11 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2025-02-05] margot 0.3.1.0
 
+## Improved
+
+- `margot_process_longitudinal_data_wider` can now handle dyadic data, so that if an agent's partner is censored, then the agent is also censored.
 
 # [2025-01-18] margot 0.3.0.9
 

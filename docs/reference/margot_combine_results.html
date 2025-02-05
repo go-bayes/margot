@@ -9,7 +9,7 @@ formatted table using kableExtra, with optional group headers for each section."
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,6 +84,43 @@ that will be used as the section header.</p></dd>
     <p>A kable object that can be further customized using kableExtra functions.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Suppose we have domain-based results:</span></span></span>
+<span class="r-in"><span><span class="va">results_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  Health <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    transformed_table <span class="op">=</span> <span class="va">health_religious_vs_secular</span><span class="op">$</span><span class="va">transformed_table</span>,</span></span>
+<span class="r-in"><span>    interpretation <span class="op">=</span> <span class="va">health_religious_vs_secular</span><span class="op">$</span><span class="va">interpretation</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  Psychological <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    transformed_table <span class="op">=</span> <span class="va">psych_religious_vs_secular</span><span class="op">$</span><span class="va">transformed_table</span>,</span></span>
+<span class="r-in"><span>    interpretation <span class="op">=</span> <span class="va">psych_religious_vs_secular</span><span class="op">$</span><span class="va">interpretation</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># And corresponding options:</span></span></span>
+<span class="r-in"><span><span class="va">options_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  Health <span class="op">=</span> <span class="fu"><a href="margot_plot_create_options.html">margot_plot_create_options</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    subtitle <span class="op">=</span> <span class="st">"Health: Religious vs Secular (baseline)"</span>,</span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  Psychological <span class="op">=</span> <span class="fu"><a href="margot_plot_create_options.html">margot_plot_create_options</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    subtitle <span class="op">=</span> <span class="st">"Psychological: Religious vs Secular (baseline)"</span>,</span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Combine the results and print:</span></span></span>
+<span class="r-in"><span><span class="va">combined_table</span> <span class="op">&lt;-</span> <span class="fu">margot_combine_results</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  results <span class="op">=</span> <span class="va">results_list</span>,</span></span>
+<span class="r-in"><span>  options <span class="op">=</span> <span class="va">options_list</span>,</span></span>
+<span class="r-in"><span>  format <span class="op">=</span> <span class="st">"latex"</span>,</span></span>
+<span class="r-in"><span>  booktabs <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  longtable <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  digits <span class="op">=</span> <span class="fl">2</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

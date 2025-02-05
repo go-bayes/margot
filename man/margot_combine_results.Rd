@@ -34,3 +34,38 @@ A kable object that can be further customized using kableExtra functions.
 Takes multiple results tables from `margot_plot` objects and combines them into a single
 formatted table using kableExtra, with optional group headers for each section.
 }
+\examples{
+\dontrun{
+# Suppose we have domain-based results:
+results_list <- list(
+  Health = list(
+    transformed_table = health_religious_vs_secular$transformed_table,
+    interpretation = health_religious_vs_secular$interpretation
+  ),
+  Psychological = list(
+    transformed_table = psych_religious_vs_secular$transformed_table,
+    interpretation = psych_religious_vs_secular$interpretation
+  )
+)
+
+# And corresponding options:
+options_list <- list(
+  Health = margot_plot_create_options(
+    subtitle = "Health: Religious vs Secular (baseline)",
+  ),
+  Psychological = margot_plot_create_options(
+    subtitle = "Psychological: Religious vs Secular (baseline)",
+  )
+)
+
+# Combine the results and print:
+combined_table <- margot_combine_results(
+  results = results_list,
+  options = options_list,
+  format = "latex",
+  booktabs = TRUE,
+  longtable = TRUE,
+  digits = 2
+)
+}
+}

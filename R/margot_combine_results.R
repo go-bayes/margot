@@ -49,7 +49,7 @@
 #'   longtable = TRUE,
 #'   digits = 2
 #' )
-#'
+#'}
 #' @importFrom dplyr mutate across where select bind_rows
 #' @importFrom kableExtra kbl group_rows
 #' @export

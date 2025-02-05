@@ -2,10 +2,11 @@
 % Please edit documentation in R/margot_process_longitudinal_data_wider.R
 \name{margot_process_longitudinal_data_wider}
 \alias{margot_process_longitudinal_data_wider}
-\title{Process Longitudinal Data for Multiple Waves}
+\title{Process Longitudinal Dyadic Data for Multiple Waves}
 \usage{
 margot_process_longitudinal_data_wider(
   df_wide,
+  relationship_id = "NULL",
   ordinal_columns = NULL,
   continuous_columns_keep = NULL,
   exposure_vars = NULL,
@@ -20,91 +21,51 @@ margot_process_longitudinal_data_wider(
 )
 }
 \arguments{
-\item{df_wide}{A wide-format dataframe containing longitudinal data for multiple waves.}
+\item{df_wide}{A wide-format dataframe containing longitudinal data.}
+
+\item{relationship_id}{A string naming the column that identifies dyads. Defaults to "NULL".}
 
 \item{ordinal_columns}{A character vector of column names to be treated as ordinal and dummy-coded.}
 
 \item{continuous_columns_keep}{A character vector of continuous column names to keep without scaling.}
 
-\item{exposure_vars}{A character vector of exposure variable names. These variables will be used to determine attrition.}
+\item{exposure_vars}{A character vector of exposure variable names that determine attrition.}
 
 \item{scale_exposure}{Logical. If TRUE, scales the exposure variable(s). Default is FALSE.}
 
-\item{not_lost_in_following_wave}{Name of the 'not lost' indicator. Default is "not_lost_following_wave".}
+\item{not_lost_in_following_wave}{Character string with the suffix for the "not lost" indicator.
+Default is "not_lost_following_wave".}
 
-\item{lost_in_following_wave}{Name of the 'lost' indicator. If NULL, no 'lost' indicator is created.}
+\item{lost_in_following_wave}{Character string with the suffix for the "lost" indicator.
+If NULL, no 'lost' indicator is created.}
 
 \item{remove_selected_columns}{Logical. If TRUE, removes selected columns after encoding. Default is TRUE.}
 
-\item{time_point_prefixes}{A character vector of time point prefixes. If NULL, they will be inferred from the data.}
+\item{time_point_prefixes}{A character vector of time point prefixes. If NULL, inferred from the data.}
 
-\item{time_point_regex}{A regex pattern to identify time points. Used if time_point_prefixes is NULL.}
+\item{time_point_regex}{A regex pattern for identifying time points. Used if time_point_prefixes is NULL.}
 
-\item{save_observed_y}{Logical. If TRUE, retains observed outcome values in the final wave even if lost. Default is FALSE.}
+\item{save_observed_y}{Logical. If TRUE, retains observed outcome values in the final wave even if lost. Default FALSE.}
 
-\item{censored_if_any_lost}{Logical. Determines how to treat the 'not_lost_in_following_wave' indicator.
-If TRUE, sets 'not_lost_in_following_wave' to 0 if any value is NA in the following wave.
-If FALSE, applies custom logic based on 'save_observed_y'.}
+\item{censored_if_any_lost}{Logical. If TRUE, sets "not_lost_in_following_wave" = 0 if any data are NA in wave t+1.}
 }
 \value{
-A processed dataframe suitable for use in longitudinal analyses with multiple waves.
+A processed dataframe suitable for longitudinal analyses.
 }
 \description{
-This function processes longitudinal data for an arbitrary number of waves (e.g., t0, t1, t2, ...).
-It handles attrition, scales continuous variables, optionally encodes ordinal variables, and manages exposure variables.
+This function processes longitudinal data (wide format) across multiple waves,
+handling dyadic censoring: if one partner in a dyad is lost at wave \(t\),
+the entire dyad is set to lost at wave \(t\). All subsequent wave data are then set to NA.
 }
 \details{
-The function performs the following steps:
-1. Identifies all time points in the dataset.
-2. Creates 'not_lost' indicators based on the exposure variable(s) in subsequent waves, excluding the final wave.
-3. Applies attrition logic across all waves.
-4. Scales continuous variables across all waves, removing original non-scaled columns.
-5. Optionally encodes ordinal columns.
-6. Handles missing outcomes in the final wave based on 'save_observed_y'.
-7. Reorders columns, placing exposure and 'not_lost' indicators appropriately.
+The dyadic logic occurs after computing each wave's "not_lost" indicator.
+If any person in a dyad is flagged lost (0), then all partners in that dyad
+also get flagged lost at the same wave.
 
-Censoring Behavior:
-The function implements a recursive censoring mechanism across waves:
-1. For each wave t (from t=0 to τ-1), a "not_lost_in_following_wave" indicator is created
-   based on missingness in wave t+1.
-2. If an observation has missing values at wave t+1:
-   - The "not_lost_in_following_wave" indicator at wave t is set to 0
-   - All data for this observation in waves > t are set to NA
-3. This censoring cascades forward: once an observation is censored at time t,
-   it remains censored for all future waves.
-
-Example of censoring behavior:
-```r
-# Input data
-df <- data.frame(
-  id = 1:3,
-  t0_exposure = c(1, 1, 1),
-  t1_exposure = c(1, NA, 1),
-  t2_exposure = c(1, NA, NA),
-  t0_outcome = c(10, 10, 10),
-  t1_outcome = c(20, NA, 20),
-  t2_outcome = c(30, NA, NA)
-)
-
-# After processing:
-# Row 1: Never censored, all data retained
-# Row 2: Censored at t1, everything from t1 onward is NA
-# Row 3: Censored at t2, everything from t2 onward is NA
-```
+The function prints CLI messages summarising how many dyads and how many participants
+are lost at each wave, and which dyad IDs were forced lost.
 }
 \examples{
-# Assuming df_wide is your wide-format dataframe with multiple waves
-processed_data <- margot_process_longitudinal_data_wider(
-  df_wide,
-  ordinal_columns = c("education", "income_category"),
-  continuous_columns_keep = c("age", "bmi"),
-  exposure_vars = c("treatment"),
-  scale_exposure = FALSE,
-  not_lost_in_following_wave = "not_lost",
-  lost_in_following_wave = NULL,
-  remove_selected_columns = FALSE,
-  time_point_prefixes = c("t0", "t1", "t2", "t3"),
-  save_observed_y = TRUE,
-  censored_if_any_lost = FALSE
-)
+# See the tests in previous examples, or adapt your own.
+
 }
