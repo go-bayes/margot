@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,14 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.1.1" id="id_2025-02-06-margot-0311">[2025-02-06] margot 0.3.1.1<a class="anchor" aria-label="anchor" href="#id_2025-02-06-margot-0311"></a></h2>
+<div class="section level3">
+<h3 id="improved-0-3-1-1">Improved<a class="anchor" aria-label="anchor" href="#improved-0-3-1-1"></a></h3>
+<ul><li><p><code>margot_plot</code> and <code>margot_interpret_marginal</code> now all reporting of all coefficients if E-value is above 1 (instead of 1.1, the default threshold).</p></li>
+<li><p><code>margot_censor</code> now deletes all values of a variable if the censoring indicator is set to 1 (or year_measured == 0), instead of merely changing the indicator. This can be helpful downstream of this function when handling dyadic data.</p></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.1.0" id="id_2025-02-05-margot-0310">[2025-02-05] margot 0.3.1.0<a class="anchor" aria-label="anchor" href="#id_2025-02-05-margot-0310"></a></h2>
 <div class="section level3">

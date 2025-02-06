@@ -11,6 +11,7 @@ margot_plot(
   title_binary = NULL,
   include_coefficients = TRUE,
   standardize_label = c("NZ", "US", "none"),
+  interpret_all_E_gt1 = FALSE,
   ...,
   options = list(),
   label_mapping = NULL,
@@ -45,8 +46,11 @@ Default is `TRUE`.}
 
 \item{standardize_label}{Character. If `"NZ"`, the x-axis uses "Standardised" (NZ/UK style) for RD effects.
 If `"US"`, the x-axis uses "Standardized". If `"none"`, omits that word entirely.
-Default is `"NZ"`. When `type == "RR"`, this word is always omitted.
-### CHANGE: new argument to handle label spelling/omission.}
+Default is `"NZ"`. When `type == "RR"`, this word is always omitted.}
+
+\item{interpret_all_E_gt1}{Logical. If `TRUE`, interprets any effect estimate with an `E_Value` > 1.
+In that case, the final interpretation text reads "All other effect estimates presented unreliable evidence for causality."
+Default is `FALSE`.}
 
 \item{...}{Additional arguments passed to the plotting function, allowing further customization.}
 
@@ -138,22 +142,24 @@ sample_data <- data.frame(
   `97.5 \%` = c(0.15, -0.1, 0.4),
   E_Value = c(1.5, 1.8, 2.0),
   E_Val_bound = c(1.3, 1.5, 1.7),
-  unit = c("unit1", "unit2", "unit3")  # Assuming there's a 'unit' column
+  unit = c("unit1", "unit2", "unit3")
 )
 
-# Create a Margot plot with interpretation and transformed table
+# Create a Margot plot with interpretation and transformed table.
+# With interpret_all_E_gt1 = TRUE, all estimates with E_Value > 1 are interpreted.
 result <- margot_plot(
   .data = sample_data,
   type = "RD",
   order = "alphabetical",
-  standardize_label = "US",    # "Standardized"
+  standardize_label = "US",
+  interpret_all_E_gt1 = TRUE,
   options = list(
     title = "Causal Effect Estimates",
     subtitle = "Risk Difference Scale",
-    colors = c("positive" = "green", "not reliable" = "gray", "negative" = "red"),
+    colors = c("positive" = "green", "not reliable" = "black", "negative" = "red"),
     remove_tx_prefix = TRUE,
     remove_z_suffix = TRUE,
-    use_title_case = TRUE,  # This will be overridden to enforce sentence case
+    use_title_case = TRUE,
     remove_underscores = TRUE
   ),
   label_mapping = list(
@@ -161,8 +167,8 @@ result <- margot_plot(
     "t2_outcome_b_z" = "Outcome B",
     "t3_outcome_c_z" = "Outcome C"
   ),
-  include_coefficients = FALSE,  # Set to FALSE to exclude coefficients
-  save_output = FALSE            # Set to TRUE to save the output
+  include_coefficients = FALSE,
+  save_output = FALSE
 )
 
 # Display the plot

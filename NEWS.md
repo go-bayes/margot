@@ -13,6 +13,14 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2025-02-06] margot 0.3.1.1
+
+## Improved
+
+- `margot_plot` and `margot_interpret_marginal` now all reporting of all coefficients if E-value is above 1 (instead of 1.1, the default threshold). 
+
+- `margot_censor` now deletes all values of a variable if the censoring indicator is set to 1 (or year_measured == 0), instead of merely changing the indicator. This can be helpful downstream of this function when handling dyadic data.
+
 # [2025-02-05] margot 0.3.1.0
 
 ## Improved

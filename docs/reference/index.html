@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -242,7 +242,7 @@
           <code><a href="margot_censor.html">margot_censor()</a></code>
 
         </dt>
-        <dd>Transform year_measured Variable Based on Clustered Conditions Within Waves</dd>
+        <dd>#' Transform year_measured Variable Based on Clustered Conditions Within Waves #' #' @param dt A `data.frame` or `data.table` in long format containing repeated measures. #' @param cluster_id A string specifying the cluster identifier variable. Default is "rel_num". #' @param id_var A string specifying the individual identifier variable. Default is "id". #' @param wave_var A string specifying the variable indicating the wave. Default is "wave". #' @param condition_var A string specifying the condition variable. Default is "rel_complete". #' @param condition_value The value of `condition_var` that triggers transformation. Default is 0. #' @param year_measured_var A string specifying the `year_measured` variable. Default is "year_measured". #' #' @return A modified `data.table` with updated year_measured values based on the condition. #' #' @import data.table #' @import cli #' @export #' Transform year_measured Variable Based on Clustered Conditions Within Waves #' #' @param dt A `data.frame` or `data.table` in long format containing repeated measures. #' @param cluster_id A string specifying the cluster identifier variable. Default is "rel_num". #' @param id_var A string specifying the individual identifier variable. Default is "id". #' @param wave_var A string specifying the variable indicating the wave. Default is "wave". #' @param condition_var A string specifying the condition variable. Default is "rel_complete". #' @param condition_value The value of `condition_var` that triggers transformation. Default is 0. #' @param year_measured_var A string specifying the `year_measured` variable. Default is "year_measured". #' #' @return A modified `data.table` with updated year_measured values based on the condition. #' #' @import data.table #' @import cli #' @export</dd>
       </dl><dl><dt>
 
           <code><a href="margot_compute_gender_weights_by_wave.html">margot_compute_gender_weights_by_wave()</a></code>
@@ -384,7 +384,7 @@
           <code><a href="margot_interpret_marginal.html">margot_interpret_marginal()</a></code>
 
         </dt>
-        <dd>This function interprets the output of causal effect analysis, providing a compact report. It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality. The language is suitable for scientific reports, avoiding explanations of treatment effects and E-values. Each outcome's interpretation starts with a separate paragraph heading using `####`. Additionally, it includes a final paragraph indicating that all other effect estimates presented either weak or unreliable evidence for causality.</dd>
+        <dd>This function interprets the output of causal effect analysis, providing a compact report. It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality, unless all estimates with E_Value &gt; 1 (and E_Val_bound &gt; 1) are requested. Each outcome's interpretation starts with a separate paragraph heading using `####`. Additionally, it includes a final paragraph indicating that all other effect estimates presented either weak or unreliable evidence for causality.</dd>
       </dl><dl><dt>
 
           <code><a href="margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code>

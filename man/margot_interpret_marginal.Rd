@@ -3,8 +3,8 @@
 \name{margot_interpret_marginal}
 \alias{margot_interpret_marginal}
 \title{This function interprets the output of causal effect analysis, providing a compact report.
-It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality.
-The language is suitable for scientific reports, avoiding explanations of treatment effects and E-values.
+It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality,
+unless all estimates with E_Value > 1 (and E_Val_bound > 1) are requested.
 Each outcome's interpretation starts with a separate paragraph heading using `####`.
 Additionally, it includes a final paragraph indicating that all other effect estimates presented
 either weak or unreliable evidence for causality.}
@@ -13,13 +13,13 @@ margot_interpret_marginal(
   df,
   type = c("RD", "RR"),
   order = "alphabetical",
-  original_df = NULL
+  original_df = NULL,
+  interpret_all_E_gt1 = FALSE
 )
 }
 \arguments{
 \item{df}{Data frame containing causal effect estimates. Expected to include columns for
-outcome names, effect estimates, confidence intervals, E-values, and summary labels.
-Can also be the list output from `transform_to_original_scale()`.}
+outcome names, effect estimates, confidence intervals, E-values, and summary labels.}
 
 \item{type}{Character string specifying the type of effect estimate. Must be either "RD"
 (Risk Difference) or "RR" (Risk Ratio). Default is "RD".}
@@ -29,6 +29,9 @@ Can also be the list output from `transform_to_original_scale()`.}
 - `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.}
 
 \item{original_df}{Optional data frame for back-transforming estimates to the original scale.}
+
+\item{interpret_all_E_gt1}{Logical. If `TRUE`, interprets any effect estimate with an `E_Value` > 1
+and a lower E-value bound > 1. Default is `FALSE`.}
 }
 \value{
 A list containing one element:
@@ -38,24 +41,16 @@ A list containing one element:
 }
 \description{
 This function interprets the output of causal effect analysis, providing a compact report.
-It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality.
-The language is suitable for scientific reports, avoiding explanations of treatment effects and E-values.
+It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality,
+unless all estimates with E_Value > 1 (and E_Val_bound > 1) are requested.
 Each outcome's interpretation starts with a separate paragraph heading using `####`.
 Additionally, it includes a final paragraph indicating that all other effect estimates presented
 either weak or unreliable evidence for causality.
 }
 \examples{
 \dontrun{
-# Assuming `group_tab_output` is the result from a causal analysis
-result <- margot_interpret_marginal(group_tab_output, type = "RD")
+result <- margot_interpret_marginal(group_tab_output, type = "RD", interpret_all_E_gt1 = TRUE)
 cat(result$interpretation)
-
-# Using Risk Ratio without specifying an estimand
-result <- margot_interpret_marginal(group_tab_output, type = "RR")
-
-# Using output from transform_to_original_scale()
-transformed_data <- transform_to_original_scale(results_df, original_df, label_mapping)
-result <- margot_interpret_marginal(transformed_data, type = "RD")
 }
 
 }
