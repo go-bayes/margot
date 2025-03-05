@@ -2,36 +2,7 @@
 % Please edit documentation in R/margot_censor.R
 \name{margot_censor}
 \alias{margot_censor}
-\title{#' Transform year_measured Variable Based on Clustered Conditions Within Waves
-#'
-#' @param dt A `data.frame` or `data.table` in long format containing repeated measures.
-#' @param cluster_id A string specifying the cluster identifier variable. Default is "rel_num".
-#' @param id_var A string specifying the individual identifier variable. Default is "id".
-#' @param wave_var A string specifying the variable indicating the wave. Default is "wave".
-#' @param condition_var A string specifying the condition variable. Default is "rel_complete".
-#' @param condition_value The value of `condition_var` that triggers transformation. Default is 0.
-#' @param year_measured_var A string specifying the `year_measured` variable. Default is "year_measured".
-#'
-#' @return A modified `data.table` with updated year_measured values based on the condition.
-#'
-#' @import data.table
-#' @import cli
-#' @export
-#' Transform year_measured Variable Based on Clustered Conditions Within Waves
-#'
-#' @param dt A `data.frame` or `data.table` in long format containing repeated measures.
-#' @param cluster_id A string specifying the cluster identifier variable. Default is "rel_num".
-#' @param id_var A string specifying the individual identifier variable. Default is "id".
-#' @param wave_var A string specifying the variable indicating the wave. Default is "wave".
-#' @param condition_var A string specifying the condition variable. Default is "rel_complete".
-#' @param condition_value The value of `condition_var` that triggers transformation. Default is 0.
-#' @param year_measured_var A string specifying the `year_measured` variable. Default is "year_measured".
-#'
-#' @return A modified `data.table` with updated year_measured values based on the condition.
-#'
-#' @import data.table
-#' @import cli
-#' @export}
+\title{Transform year_measured Variable Based on Clustered Conditions Within Waves}
 \usage{
 margot_censor(
   dt,
@@ -43,35 +14,26 @@ margot_censor(
   year_measured_var = "year_measured"
 )
 }
+\arguments{
+\item{dt}{A `data.frame` or `data.table` in long format containing repeated measures.}
+
+\item{cluster_id}{A string specifying the cluster identifier variable. Default is "rel_num".}
+
+\item{id_var}{A string specifying the individual identifier variable. Default is "id".}
+
+\item{wave_var}{A string specifying the variable indicating the wave. Default is "wave".}
+
+\item{condition_var}{A string specifying the condition variable. Default is "rel_complete".}
+
+\item{condition_value}{The value of `condition_var` that triggers transformation. Default is 0.}
+
+\item{year_measured_var}{A string specifying the `year_measured` variable. Default is "year_measured".}
+}
+\value{
+A modified `data.table` with updated year_measured values based on the condition.
+
+A modified `data.table` with updated year_measured values based on the condition.
+}
 \description{
-#' Transform year_measured Variable Based on Clustered Conditions Within Waves
-#'
-#' @param dt A `data.frame` or `data.table` in long format containing repeated measures.
-#' @param cluster_id A string specifying the cluster identifier variable. Default is "rel_num".
-#' @param id_var A string specifying the individual identifier variable. Default is "id".
-#' @param wave_var A string specifying the variable indicating the wave. Default is "wave".
-#' @param condition_var A string specifying the condition variable. Default is "rel_complete".
-#' @param condition_value The value of `condition_var` that triggers transformation. Default is 0.
-#' @param year_measured_var A string specifying the `year_measured` variable. Default is "year_measured".
-#'
-#' @return A modified `data.table` with updated year_measured values based on the condition.
-#'
-#' @import data.table
-#' @import cli
-#' @export
-#' Transform year_measured Variable Based on Clustered Conditions Within Waves
-#'
-#' @param dt A `data.frame` or `data.table` in long format containing repeated measures.
-#' @param cluster_id A string specifying the cluster identifier variable. Default is "rel_num".
-#' @param id_var A string specifying the individual identifier variable. Default is "id".
-#' @param wave_var A string specifying the variable indicating the wave. Default is "wave".
-#' @param condition_var A string specifying the condition variable. Default is "rel_complete".
-#' @param condition_value The value of `condition_var` that triggers transformation. Default is 0.
-#' @param year_measured_var A string specifying the `year_measured` variable. Default is "year_measured".
-#'
-#' @return A modified `data.table` with updated year_measured values based on the condition.
-#'
-#' @import data.table
-#' @import cli
-#' @export
+Transform year_measured Variable Based on Clustered Conditions Within Waves
 }

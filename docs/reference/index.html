@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,12 +150,6 @@
 
       <dl><dt>
 
-          <code><a href="create_transition_matrix.html">create_transition_matrix()</a></code>
-
-        </dt>
-        <dd>Create transition matrix for state transitions</dd>
-      </dl><dl><dt>
-
           <code><a href="match_mi_general.html">match_mi_general()</a></code>
 
         </dt>
@@ -198,10 +192,10 @@
         <dd>Generate summary tables and plots for longitudinal data</dd>
       </dl><dl><dt>
 
-          <code><a href="transition_table.html">transition_table()</a></code>
+          <code><a href="margot_transition_table.html">margot_transition_table()</a></code>
 
         </dt>
-        <dd>Transition Table</dd>
+        <dd>Sequential Transition Tables</dd>
       </dl></div><div class="section level2">
       <h2 id="prepare-data-for-models">Prepare data for models<a class="anchor" aria-label="anchor" href="#prepare-data-for-models"></a></h2>
 
@@ -242,7 +236,7 @@
           <code><a href="margot_censor.html">margot_censor()</a></code>
 
         </dt>
-        <dd>#' Transform year_measured Variable Based on Clustered Conditions Within Waves #' #' @param dt A `data.frame` or `data.table` in long format containing repeated measures. #' @param cluster_id A string specifying the cluster identifier variable. Default is "rel_num". #' @param id_var A string specifying the individual identifier variable. Default is "id". #' @param wave_var A string specifying the variable indicating the wave. Default is "wave". #' @param condition_var A string specifying the condition variable. Default is "rel_complete". #' @param condition_value The value of `condition_var` that triggers transformation. Default is 0. #' @param year_measured_var A string specifying the `year_measured` variable. Default is "year_measured". #' #' @return A modified `data.table` with updated year_measured values based on the condition. #' #' @import data.table #' @import cli #' @export #' Transform year_measured Variable Based on Clustered Conditions Within Waves #' #' @param dt A `data.frame` or `data.table` in long format containing repeated measures. #' @param cluster_id A string specifying the cluster identifier variable. Default is "rel_num". #' @param id_var A string specifying the individual identifier variable. Default is "id". #' @param wave_var A string specifying the variable indicating the wave. Default is "wave". #' @param condition_var A string specifying the condition variable. Default is "rel_complete". #' @param condition_value The value of `condition_var` that triggers transformation. Default is 0. #' @param year_measured_var A string specifying the `year_measured` variable. Default is "year_measured". #' #' @return A modified `data.table` with updated year_measured values based on the condition. #' #' @import data.table #' @import cli #' @export</dd>
+        <dd>Transform year_measured Variable Based on Clustered Conditions Within Waves</dd>
       </dl><dl><dt>
 
           <code><a href="margot_compute_gender_weights_by_wave.html">margot_compute_gender_weights_by_wave()</a></code>

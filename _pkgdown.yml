@@ -58,7 +58,6 @@ reference:
 
   - title: "Check assumptions"
     contents:
-    - create_transition_matrix
     - match_mi_general
     - margot_make_tables
     - margot_plot_categorical
@@ -66,7 +65,7 @@ reference:
     - margot_plot_shift
     - margot_propensity_model_and_plots
     - margot_summary_tables
-    - transition_table
+    - margot_transition_table
 
   - title: "Prepare data for models"
     contents:

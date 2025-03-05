@@ -13,6 +13,13 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+
+# [2025-03-05] margot 0.3.1.2
+
+## New
+
+ - `margot_transition_table()` replaces `transition_table()` and `create_transition_matrix()` and will print out state change for multiple waves. Useful for longitudinal modified treatment policies. (Old functions soft deprecated as helper functions.)
+
 # [2025-02-06] margot 0.3.1.1
 
 ## Improved
