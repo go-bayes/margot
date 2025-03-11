@@ -14,6 +14,11 @@
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
 
+# [2025-03-12] margot 0.3.1.3
+
+## Improved
+- `margot_censor()`: censoring is conditional on both the condition and the wave: if $\texttt{censor_final_wave = FALSE}$ then rows in the final wave (determined as $\texttt{max(dt[[wave_var]])}$) are preserved (default behaviour). This allows for estimating a per-protocal effect where changing a censoring condition is part of the causal effect of the intervention for the population at baseline.
+
 # [2025-03-05] margot 0.3.1.2
 
 ## New

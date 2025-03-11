@@ -11,11 +11,12 @@ margot_censor(
   wave_var = "wave",
   condition_var = "rel_complete",
   condition_value = 0,
-  year_measured_var = "year_measured"
+  year_measured_var = "year_measured",
+  censor_final_wave = FALSE
 )
 }
 \arguments{
-\item{dt}{A `data.frame` or `data.table` in long format containing repeated measures.}
+\item{dt}{A data.frame or data.table in long format containing repeated measures.}
 
 \item{cluster_id}{A string specifying the cluster identifier variable. Default is "rel_num".}
 
@@ -25,14 +26,14 @@ margot_censor(
 
 \item{condition_var}{A string specifying the condition variable. Default is "rel_complete".}
 
-\item{condition_value}{The value of `condition_var` that triggers transformation. Default is 0.}
+\item{condition_value}{The value of condition_var that triggers transformation. Default is 0.}
 
-\item{year_measured_var}{A string specifying the `year_measured` variable. Default is "year_measured".}
+\item{year_measured_var}{A string specifying the year_measured variable. Default is "year_measured".}
+
+\item{censor_final_wave}{Logical. If TRUE, censoring is applied to the final wave; if FALSE (default), final wave is exempt.}
 }
 \value{
-A modified `data.table` with updated year_measured values based on the condition.
-
-A modified `data.table` with updated year_measured values based on the condition.
+A modified data.table with updated year_measured values based on the condition.
 }
 \description{
 Transform year_measured Variable Based on Clustered Conditions Within Waves
