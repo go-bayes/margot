@@ -9,6 +9,7 @@ margot_compute_gender_weights_by_wave(
   data,
   male_col = "male",
   wave_col = "wave",
+  target_wave,
   target_male_prop = 0.5
 )
 
@@ -16,30 +17,30 @@ margot_compute_gender_weights_by_wave(
   data,
   male_col = "male",
   wave_col = "wave",
+  target_wave,
   target_male_prop = 0.5
 )
 }
 \arguments{
-\item{data}{A data frame containing the gender and wave information.}
+\item{data}{A data frame containing gender and wave information.}
 
-\item{male_col}{Character string specifying the name of the column in `data` that indicates male gender (1 for male, 0 for female). Default is "male".}
+\item{male_col}{A character string specifying the column that indicates male gender (1 for male, 0 for female). Default is \code{"male"}.}
 
-\item{wave_col}{Character string specifying the name of the column in `data` that indicates the wave or group for weighting. Default is "wave".}
-
-\item{target_male_prop}{Numeric value between 0 and 1 specifying the target proportion of males in the population. Default is 0.5 (50\% male).}
+\item{wave_col}{A character string specifying the column indicating the wave. Default is \code{"wave"}.}
 
 \item{target_wave}{The value in \code{wave_col} that identifies the baseline wave.}
+
+\item{target_male_prop}{A numeric value between 0 and 1 representing the target proportion of males. Default is 0.5.}
 }
 \value{
 A numeric vector of sample weights for all rows.
 
-A numeric vector of sample weights. Each weight corresponds to a row in the input data frame.
+A numeric vector of sample weights for all rows.
 }
 \description{
 Compute sample weights for gender adjustment based on the baseline wave proportions.
 
-This function computes sample weights based on gender for each wave to achieve a target gender balance in the population.
-It assumes a binary gender classification where 1 represents male and 0 represents female.
+Compute sample weights for gender adjustment based on the baseline wave proportions.
 }
 \details{
 The function calculates the gender proportions in the baseline wave and computes weights so that
@@ -50,10 +51,13 @@ The function computes the sample proportions in the baseline wave and calculates
 proportions with the target proportions. It upweights the underrepresented gender and downweights the overrepresented gender.
 The resulting weights are applied to the full dataset.
 
-The function requires the `dplyr` package and calculates weights that, when applied, will adjust the sample within each wave to match the specified target gender proportion.
-It upweights the underrepresented gender and downweights the overrepresented gender within each wave.
-The function will return an error if `target_male_prop` is not between 0 and 1 or if the gender column does not contain binary values.
-Missing values in the gender or wave column will be excluded from weight calculations.
+The function calculates the gender proportions in the baseline wave and computes weights so that
+the overall sample aligns with the target gender distribution. The same weights are then applied to all rows.
+
+
+The function computes the sample proportions in the baseline wave and calculates weights by comparing these
+proportions with the target proportions. It upweights the underrepresented gender and downweights the overrepresented gender.
+The resulting weights are applied to the full dataset.
 }
 \examples{
 dat <- data.frame(
@@ -67,25 +71,15 @@ weights <- margot_compute_gender_weights_by_wave(dat, male_col = "male",
                                                  target_male_prop = 0.52)
 head(weights)
 
-# Load the dplyr package
-library(dplyr)
-
-# Create a sample dataset
 dat <- data.frame(
   id = 1:100,
   male = sample(c(0, 1), 100, replace = TRUE, prob = c(0.7, 0.3)),
   wave = rep(1:2, each = 50)
 )
-
-# Compute weights by wave
-weights <- margot_compute_gender_weights_by_wave(
-  dat,
-  male_col = "male",
-  wave_col = "wave",
-  target_male_prop = 0.5
-)
-
-# Check weight distribution by wave
-table(round(weights, 3))
+weights <- margot_compute_gender_weights_by_wave(dat, male_col = "male",
+                                                 wave_col = "wave",
+                                                 target_wave = 1,
+                                                 target_male_prop = 0.52)
+head(weights)
 
 }
