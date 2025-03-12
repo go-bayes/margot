@@ -1,54 +1,66 @@
-#' Compute Gender-Based Sample Weights (deprecated, use `margot_compute_gender_weights_by_wave`)
+#' Compute Gender-Based Sample Weights Using Baseline Wave Proportions
 #'
-#' @param data A data frame containing the gender information.
-#' @param male_col Character string specifying the name of the column in `data` that indicates male gender (1 for male, 0 for female). Default is "male".
-#' @param target_male_prop Numeric value between 0 and 1 specifying the target proportion of males in the population. Default is 0.5 (50\% male).
+#' Compute sample weights for gender adjustment based on the baseline wave proportions.
 #'
-#' @return A numeric vector of sample weights. Each weight corresponds to a row in the input data frame.
+#' The function calculates the gender proportions in the baseline wave and computes weights so that
+#' the overall sample aligns with the target gender distribution. The same weights are then applied to all rows.
 #'
-#' @description
-#' This function computes sample weights based on gender to achieve a target gender balance in the population.
-#' It assumes a binary gender classification where 1 represents male and 0 represents female.
+#' @param data A data frame containing gender and wave information.
+#' @param male_col A character string specifying the column that indicates male gender (1 for male, 0 for female). Default is \code{"male"}.
+#' @param wave_col A character string specifying the column indicating the wave. Default is \code{"wave"}.
+#' @param target_wave The value in \code{wave_col} that identifies the baseline wave.
+#' @param target_male_prop A numeric value between 0 and 1 representing the target proportion of males. Default is 0.5.
+#'
+#' @return A numeric vector of sample weights for all rows.
 #'
 #' @details
-#' The function calculates weights that, when applied, will adjust the sample to match the specified target gender proportion.
-#' It upweights the underrepresented gender and downweights the overrepresented gender.
+#' The function computes the sample proportions in the baseline wave and calculates weights by comparing these
+#' proportions with the target proportions. It upweights the underrepresented gender and downweights the overrepresented gender.
+#' The resulting weights are applied to the full dataset.
 #'
 #' @examples
-#' # Create a sample dataset
-#' dat <- data.frame(id = 1:100, male = sample(c(0, 1), 100, replace = TRUE, prob = c(0.7, 0.3)))
+#' dat <- data.frame(
+#'   id = 1:100,
+#'   male = sample(c(0, 1), 100, replace = TRUE, prob = c(0.7, 0.3)),
+#'   wave = rep(1:2, each = 50)
+#' )
+#' weights <- margot_compute_gender_weights_by_wave(dat, male_col = "male",
+#'                                                  wave_col = "wave",
+#'                                                  target_wave = 1,
+#'                                                  target_male_prop = 0.52)
+#' head(weights)
 #'
-#' # Compute weights
-#' weights <- margot_compute_gender_weights(dat, male_col = "male", target_male_prop = 0.5)
-#'
-#' # Check weight distribution
-#' table(round(weights, 3))
-#'
-#' @keywords internal
-#' @importFrom lifecycle deprecate_warn
-margot_compute_gender_weights <- function(data, male_col = "male", target_male_prop = 0.5) {
-  # warning
-  lifecycle::deprecate_warn("1.0.0", "margot_compute_gender_weights()", "margot_compute_gender_weights_by_wave()")
-
-  # check if the male column exists in the data
+#' @export
+margot_compute_gender_weights_by_wave <- function(data, male_col = "male", wave_col = "wave", target_wave, target_male_prop = 0.5) {
   if (!male_col %in% names(data)) {
     stop("The specified male column does not exist in the data.")
   }
+  if (!wave_col %in% names(data)) {
+    stop("The specified wave column does not exist in the data.")
+  }
 
-  # set target proportions
-  prop_male_population <- target_male_prop
-  prop_female_population <- 1 - target_male_prop
+  # Coerce wave values to character if necessary
+  if (is.factor(data[[wave_col]]) || is.character(data[[wave_col]])) {
+    wave_values <- as.character(data[[wave_col]])
+    target_wave <- as.character(target_wave)
+  } else {
+    wave_values <- data[[wave_col]]
+  }
 
-  # calculate sample proportions
-  prop_male_sample <- mean(data[[male_col]])
+  baseline_idx <- wave_values == target_wave
+  if (sum(baseline_idx, na.rm = TRUE) == 0) {
+    stop("No data found for the specified baseline wave.")
+  }
+
+  baseline_data <- data[baseline_idx, ]
+
+  prop_male_sample <- mean(baseline_data[[male_col]], na.rm = TRUE)
   prop_female_sample <- 1 - prop_male_sample
 
-  # calculate weights
-  gender_weight_male <- prop_male_population / prop_male_sample
-  gender_weight_female <- prop_female_population / prop_female_sample
+  weight_male <- target_male_prop / prop_male_sample
+  weight_female <- (1 - target_male_prop) / prop_female_sample
 
-  # assign weights
-  weights <- ifelse(data[[male_col]] == 1, gender_weight_male, gender_weight_female)
+  weights <- ifelse(data[[male_col]] == 1, weight_male, weight_female)
 
   return(weights)
 }

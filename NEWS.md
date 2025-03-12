@@ -13,6 +13,10 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2025-03-12] margot 0.3.1.4
+
+## Improved
+- `margot_compute_gender_weights_by_wave()` correctly assigns weights to a target population, specified by the `target_wave` parameters.
 
 # [2025-03-12] margot 0.3.1.3
 
