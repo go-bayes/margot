@@ -51,6 +51,11 @@ margot_interpret_marginal <- function(df,
 
   df <- group_tab(df, type = type, order = order)
 
+  # fix after grouping or at the start of margot_interpret_marginal:
+  if (!"unit" %in% names(df)) {
+    df$unit <- rep("", nrow(df))
+  }
+
   if (!is.null(original_df)) {
     df <- back_transform_estimates(df, original_df)
   }
