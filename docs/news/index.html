@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.6</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,30 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.1.8" id="id_2025-03-17-margot-0318">[2025-03-17] margot 0.3.1.8<a class="anchor" aria-label="anchor" href="#id_2025-03-17-margot-0318"></a></h2>
+<div class="section level3">
+<h3 id="new-0-3-1-8">New<a class="anchor" aria-label="anchor" href="#new-0-3-1-8"></a></h3>
+<ul><li>
+<code><a href="../reference/margot_rate.html">margot_rate()</a></code> produce a table for RATE estimates from batched processed causal forests.</li>
+<li>
+<code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> when interpreting the effect as <em>benefitial</em> we may need to invert the outcomes. This function does this on already processed models.</li>
+<li>
+<code><a href="../reference/margot_interpret_rate.html">margot_interpret_rate()</a></code> provides automated reporting of rate outputs, allowing users to specify whether AUTOC or QINI was targeted.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.1.7" id="id_2025-03-15-margot-0317">[2025-03-15] margot 0.3.1.7<a class="anchor" aria-label="anchor" href="#id_2025-03-15-margot-0317"></a></h2>
+<div class="section level3">
+<h3 id="improved-0-3-1-7">Improved<a class="anchor" aria-label="anchor" href="#improved-0-3-1-7"></a></h3>
+<ul><li>
+<code><a href="../reference/create_ordered_variable.html">create_ordered_variable()</a></code> appends “_binary” when binary variables are made</li>
+<li>
+<code><a href="../reference/margot_transition_table.html">margot_transition_table()</a></code> user may specify a table name.</li>
+<li>
+<code>margot_process_longitudinal_wider()</code> new parameters so that no continuous vars are scaled</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.1.6" id="id_2025-03-14-margot-0316">[2025-03-14] margot 0.3.1.6<a class="anchor" aria-label="anchor" href="#id_2025-03-14-margot-0316"></a></h2>
 <div class="section level3">

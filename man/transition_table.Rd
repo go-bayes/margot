@@ -4,7 +4,12 @@
 \alias{transition_table}
 \title{Transition Table}
 \usage{
-transition_table(trans_df, state_names = NULL, wave_info = NULL)
+transition_table(
+  trans_df,
+  state_names = NULL,
+  wave_info = NULL,
+  table_name = "transition_table"
+)
 }
 \arguments{
 \item{state_names}{Optional; a vector of state names to replace the default state labels.

@@ -46,6 +46,8 @@ margot_causal_forest(
 }
 \value{
 A list containing model results, combined table, and other relevant information.
+
+A list containing model results, combined table, and other relevant information.
 }
 \description{
 Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Features

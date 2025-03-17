@@ -13,6 +13,25 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+
+
+# [2025-03-17] margot 0.3.1.8
+
+## New
+- `margot_rate()` produce a table for RATE estimates from batched processed causal forests.
+- `margot_flip_forests()` when interpreting the effect as *benefitial* we may need to invert the outcomes. This function does this on already processed models.
+- `margot_interpret_rate()` provides automated reporting of rate outputs, allowing users to specify whether AUTOC or QINI was targeted. 
+
+# Improved
+- `margot_causal_forest()` - now also computes RATE targeting the QINI when this is selected. 
+
+# [2025-03-15] margot 0.3.1.7
+
+## Improved
+- `create_ordered_variable()` appends "_binary" when binary variables are made
+- `margot_transition_table()` user may specify a table name.
+- `margot_process_longitudinal_wider()` new parameters so that no continuous vars are scaled
+
 # [2025-03-14] margot 0.3.1.6
 ## Improved
 - `margot_interpret_marginal()` made robust when when units are not given in the the input model.

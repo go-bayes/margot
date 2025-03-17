@@ -67,13 +67,16 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_create_bibliography.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_create_database.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_filter.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_flip_forests.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_subset_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_impute_carry_forward.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_inspect_model.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_policy_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_qini.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_rate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_evalue.html</loc></url>
@@ -118,6 +121,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_longitudinal_data_wider.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_prop_missing.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_propensity_model_and_plots.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_rate.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_recalculate_policy_trees.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_run_models_grf.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_save_png.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_size.html</loc></url>

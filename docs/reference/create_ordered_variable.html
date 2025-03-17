@@ -11,7 +11,7 @@ It now includes rich CLI reporting for better user feedback."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.6</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,14 +84,15 @@ and "first" if cutpoint_inclusive is "lower".</p></dd>
 
 
 <dt id="arg-custom-breaks">custom_breaks<a class="anchor" aria-label="anchor" href="#arg-custom-breaks"></a></dt>
-<dd><p>A numeric vector of break points to use for categorization. If provided,
+<dd><p>A numeric vector of break points to use for categorisation. If provided,
 this overrides the quantile-based division specified by n_divisions.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The input data frame with an additional column representing the ordered factor variable.
-        The new column name will be the original variable name with "_cat" appended.</p>
+        The new column name will be the original variable name with "_binary" appended if there
+        are 2 divisions, or "_cat" otherwise.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

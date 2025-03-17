@@ -11,6 +11,7 @@ margot_process_longitudinal_data_wider(
   continuous_columns_keep = NULL,
   exposure_vars = NULL,
   scale_exposure = FALSE,
+  scale_continuous = TRUE,
   not_lost_in_following_wave = "not_lost_following_wave",
   lost_in_following_wave = NULL,
   remove_selected_columns = TRUE,
@@ -33,6 +34,9 @@ margot_process_longitudinal_data_wider(
 
 \item{scale_exposure}{Logical. If TRUE, scales the exposure variable(s). Default is FALSE.}
 
+\item{scale_continuous}{Logical. If TRUE, scales continuous variables. If FALSE, no variables are scaled.
+Default is TRUE.}
+
 \item{not_lost_in_following_wave}{Character string with the suffix for the "not lost" indicator.
 Default is "not_lost_following_wave".}
 
@@ -47,15 +51,15 @@ If NULL, no 'lost' indicator is created.}
 
 \item{save_observed_y}{Logical. If TRUE, retains observed outcome values in the final wave even if lost. Default FALSE.}
 
-\item{censored_if_any_lost}{Logical. If TRUE, sets "not_lost_in_following_wave" = 0 if any data are NA in wave t+1.}
+\item{censored_if_any_lost}{Logical. If TRUE, sets "not_lost_in_following_wave" = 0 if any data are NA in wave $t+1$.}
 }
 \value{
 A processed dataframe suitable for longitudinal analyses.
 }
 \description{
 This function processes longitudinal data (wide format) across multiple waves,
-handling dyadic censoring: if one partner in a dyad is lost at wave \(t\),
-the entire dyad is set to lost at wave \(t\). All subsequent wave data are then set to NA.
+handling dyadic censoring: if one partner in a dyad is lost at wave $t$, the entire
+dyad is set to lost at wave $t$. All subsequent wave data are then set to NA.
 }
 \details{
 The dyadic logic occurs after computing each wave's "not_lost" indicator.

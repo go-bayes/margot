@@ -28,12 +28,13 @@ Must be one of "first", "last", "random", "ordered", or "average".
 If NULL (default), it will be set to "last" if cutpoint_inclusive is "upper",
 and "first" if cutpoint_inclusive is "lower".}
 
-\item{custom_breaks}{A numeric vector of break points to use for categorization. If provided,
+\item{custom_breaks}{A numeric vector of break points to use for categorisation. If provided,
 this overrides the quantile-based division specified by n_divisions.}
 }
 \value{
 The input data frame with an additional column representing the ordered factor variable.
-        The new column name will be the original variable name with "_cat" appended.
+        The new column name will be the original variable name with "_binary" appended if there
+        are 2 divisions, or "_cat" otherwise.
 }
 \description{
 This function divides a numeric variable into categories based on either quantile breaks

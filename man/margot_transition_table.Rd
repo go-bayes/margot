@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_transition_table.R
 \name{margot_transition_table}
 \alias{margot_transition_table}
-\title{Sequential Transition Tables}
+\title{Format a Transition Table}
 \usage{
 margot_transition_table(
   data,
@@ -10,89 +10,29 @@ margot_transition_table(
   id_var,
   wave_var,
   waves = NULL,
-  state_names = NULL
+  state_names = NULL,
+  table_name = "transition_table"
 )
 }
 \arguments{
-\item{data}{A data frame containing the observations.}
+\item{state_names}{Optional vector of state names to replace the default numeric state labels.
+If \code{NULL}, state labels are preserved.}
 
-\item{state_var}{The name of the state variable column in `data` as a string.
-This variable tracks the state changes to be analyzed.}
+\item{table_name}{Optional string specifying the name for the transition table output.
+Default is \code{"transition_table"}.}
 
-\item{id_var}{The name of the identifier variable column in `data` as a string.
-This variable distinguishes between different subjects or entities.}
+\item{trans_df}{A data frame with columns \code{from}, \code{to}, and \code{Freq} indicating transitions.}
 
-\item{wave_var}{The name of the wave/time variable column in `data` as a string.}
-
-\item{waves}{Optional vector of wave values to analyze. If NULL, all unique waves in the data are used.}
-
-\item{state_names}{Optional vector of state names to replace the default state labels.
-If NULL, states will be labeled as "State 1", "State 2", etc.}
+\item{wave_info}{Optional string specifying the wave transition information to include as a header.}
 }
 \value{
-A list with the following components:
-        - `tables`: A list where each element corresponds to a pair of consecutive waves,
-                   containing the markdown-formatted transition table
-        - `waves`: A list of wave pairs that were compared
-        - `explanation`: A single explanation that can be used for all tables
+A list with components:
+        \item{table}{The markdown-formatted transition table.}
+        \item{table_with_header}{The transition table with a header including wave information (if provided).}
+        \item{wave_info}{The provided wave transition information (if any).}
+        \item{table_name}{The name provided for the transition table output.}
 }
 \description{
-Generates transition tables for sequential waves of data, showing how entities move between
-states over time. The function produces a series of tables (wave 1 to wave 2, wave 2 to wave 3, etc.)
-with formatted markdown output highlighting state stability and transitions.
-}
-\section{Quarto Usage}{
-
-To use in a Quarto document, you can include the tables with custom captions:
-
-```
-# Get explanation
-```{r, results='asis'}
-cat(transition_tables$explanation)
-```
-
-# First transition table
-```{r}
-#| label: tbl-wave0-1
-#| tbl-cap: !expr paste0("Transitions from Wave ", transition_tables$waves[[1]][1], " to Wave ", transition_tables$waves[[1]][2])
-transition_tables$tables[[1]]
-```
-```
-}
-
-\examples{
-\dontrun{
-df <- read.table(header=TRUE, text="
-id wave year_measured religion_believe_god
-3 0 1 0
-3 1 1 1
-3 2 1 0
-4 0 1 0
-4 1 1 1
-4 2 1 1
-5 0 1 1
-5 1 1 0
-5 2 1 1")
-
-# Get sequential transition tables between all waves
-transition_tables <- margot_transition_table(df, "religion_believe_god", "id", "wave")
-
-# In a standard R session:
-cat(transition_tables$explanation)
-cat("\n\n")
-# Display first transition table (wave 0 to 1)
-print(transition_tables$tables[[1]])
-
-# In a Quarto document:
-# ```{r, results='asis'}
-# cat(transition_tables$explanation)
-# ```
-#
-# ```{r}
-# #| label: tbl-transition-wave0-wave1
-# #| tbl-cap: "Transition Matrix From Wave 0 to Wave 1"
-# transition_tables$tables[[1]]
-# ```
-}
-
+Reshapes a long-format transition frequency data frame into a wide-format table with totals,
+and formats it using markdown. Diagonal elements are bolded to highlight state stability.
 }
