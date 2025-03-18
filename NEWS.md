@@ -3,24 +3,30 @@
 
 * Begin writing tutorials for use cases.
 * fix decision tree layout
-* progress [Develop automated reporting of all scales and measures for quarto documents.]
-* [qini cost options] done [tick!].
-* remove `color` package
-* methods
+* remove `color` and other unnecessary package dependences
+* write examples
 * replace `stringr` and use `tools`
-* get standard deviation units into reports
-* batch process trend plots
-* convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
-* clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
+
+# [2025-03-19] margot 0.3.2.0
+
+## New 
+- added `.strict_exposure_outcome_censoring()` helper function for strict dyadic censoring -- now encompassed by `margot_process_longitudinal_data_wider()` but added for backward compatibility.
+
+## Improved
+-  `coloured_histogram()`, `margot_impute_carry_forward()`, `margot_process_longitudinal_data_wider()`, `margot_lmtp_evalue()`,`margot_plot_batch_rate()`, `margot_plot_boxplot()`, `margot_plot_boxplot_covariate()`,  `margot_plot_discontinuity()`, `margot_plot_histogram()`, `margot_plot_slope_covariate_batch()`, `margot_plot_slope_covariate_combo()`, `margot_plot_slope_covariate()`, `margot_plot_slope()`, `margot_plot_individual_responses()`, `margot_wide_machine()`, `margot_process_longitudinal_data()`, `margot_count_dyads()`, `margot_count_ids()` correct package calls, explicit namespace calls.
+- `group_tab()` function re-factored
+- `margot_interpret_marginal()` corrected order & small improvements
+- `margot_plot()` function refactored for clarity.
 
 # [2025-03-18] margot 0.3.1.9
 
-# Improved
+## Improved
+
 - `here_save()` removed the call to base R
 - `here_read()` removed the call to base R
 - `margot_combine_results()` - made helper function
-- `margot_summary_panel` - specified functions required
-- `margot_censor` - specified functions required by data.table (#' @importFrom data.table as.data.table copy set get uniqueN)
+- `margot_summary_panel()` - specified functions required
+- `margot_censor()` - specified functions required by data.table (#' @importFrom data.table as.data.table copy set get uniqueN)
 - `read_multiple_images()` - made internal
 - `margot_wide_machine()` - stated explicit functions in dependencies (removed zoo)
 - `margot_interpret_qini()` - improved for reporting
@@ -35,7 +41,7 @@
 - `margot_flip_forests()` when interpreting the effect as *benefitial* we may need to invert the outcomes. This function does this on already processed models.
 - `margot_interpret_rate()` provides automated reporting of rate outputs, allowing users to specify whether AUTOC or QINI was targeted. 
 
-# Improved
+## Improved
 - `margot_causal_forest()` - now also computes RATE targeting the QINI when this is selected. 
 
 # [2025-03-15] margot 0.3.1.7
@@ -65,13 +71,11 @@
 # [2025-03-05] margot 0.3.1.2
 
 ## New
-
  - `margot_transition_table()` replaces `transition_table()` and `create_transition_matrix()` and will print out state change for multiple waves. Useful for longitudinal modified treatment policies. (Old functions soft deprecated as helper functions.)
 
 # [2025-02-06] margot 0.3.1.1
 
 ## Improved
-
 - `margot_plot` and `margot_interpret_marginal` now all reporting of all coefficients if E-value is above 1 (instead of 1.1, the default threshold). 
 
 - `margot_censor` now deletes all values of a variable if the censoring indicator is set to 1 (or year_measured == 0), instead of merely changing the indicator. This can be helpful downstream of this function when handling dyadic data.

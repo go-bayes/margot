@@ -24,7 +24,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Example dataframe
+#' # example dataframe
 #' df <- data.frame(
 #'   id = 1:5,
 #'   t0_var1 = c(1, NA, 3, NA, 5),
@@ -33,10 +33,10 @@
 #'   t0_var2 = c(NA, 2, NA, 4, 5),
 #'   t1_var2 = c(1, NA, 3, NA, NA),
 #'   t2_var2 = c(NA, 2, NA, 4, 5),
-#'   t2_end_of_study = c(1, 1, 1, 1, 1)  # End-of-study indicator
+#'   t2_end_of_study = c(1, 1, 1, 1, 1)  # end-of-study indicator
 #' )
 #'
-#' # Impute missing values without imputing the final wave
+#' # impute missing values without imputing the final wave
 #' df_imputed <- margot_impute_carry_forward(
 #'   df_wide = df,
 #'   columns_to_impute = c("var1", "var2"),
@@ -45,7 +45,7 @@
 #'   verbose = TRUE
 #' )
 #'
-#' # Impute missing values including the final wave
+#' # impute missing values including the final wave
 #' df_imputed_final <- margot_impute_carry_forward(
 #'   df_wide = df,
 #'   columns_to_impute = c("var1", "var2"),
@@ -56,8 +56,8 @@
 #' )
 #' }
 #'
-#' @import dplyr
-#' @import cli
+#' @importFrom dplyr '%>%'
+#' @importFrom cli cli_h1 cli_h2 cli_h3 cli_alert_info cli_alert_success cli_alert_warning cli_ul cli_li cli_text
 #'
 #' @export
 margot_impute_carry_forward <- function(
@@ -72,11 +72,11 @@ margot_impute_carry_forward <- function(
     indicator_suffix = "_na",
     indicator_as_suffix = TRUE,
     verbose = TRUE,
-    impute_final_wave = FALSE  # <- NEW PARAM: default = FALSE
+    impute_final_wave = FALSE  # <- new param: default = FALSE
 ) {
-  # Set default for columns_no_future_required
+  # set default for columns_no_future_required
   if (!is.null(columns_no_future_required)) {
-    # Validate that columns_no_future_required is a subset of columns_to_impute
+    # validate that columns_no_future_required is a subset of columns_to_impute
     invalid_cols <- setdiff(columns_no_future_required, columns_to_impute)
     if (length(invalid_cols) > 0) {
       stop("The following columns in columns_no_future_required are not in columns_to_impute: ",
@@ -90,16 +90,16 @@ margot_impute_carry_forward <- function(
     }
   }
 
-  # Initialize progress reporting and imputation tracking
+  # initialize progress reporting and imputation tracking
   if (verbose) {
     cli::cli_h1("Longitudinal Data Imputation")
     cli::cli_alert_info("Starting imputation process")
   }
 
-  # Initialize imputation tracking list
+  # initialize imputation tracking list
   imputation_stats <- list()
 
-  # Find time points
+  # find time points
   if (is.null(time_point_prefixes)) {
     if (is.null(time_point_regex)) {
       time_point_regex <- "^(t\\d+)_.*$"
@@ -111,7 +111,7 @@ margot_impute_carry_forward <- function(
     time_points <- time_point_prefixes
   }
 
-  # Sort time points numerically
+  # sort time points numerically
   time_points <- time_points[order(as.numeric(gsub("\\D", "", time_points)))]
   num_time_points <- length(time_points)
 
@@ -119,36 +119,36 @@ margot_impute_carry_forward <- function(
     cli::cli_alert_success("Identified {num_time_points} time points: {paste(time_points, collapse = ', ')}")
   }
 
-  # Make copy of dataframe to modify
+  # make copy of dataframe to modify
   df_imputed <- df_wide
 
-  # Initialize a list to store indicator columns
+  # initialize a list to store indicator columns
   indicator_columns <- list()
 
-  # For each column to impute
+  # for each column to impute
   for (col_base in columns_to_impute) {
     if (verbose) {
       cli::cli_h2("Processing variable: {col_base}")
     }
 
-    # Initialize stats for this column
+    # initialize stats for this column
     imputation_stats[[col_base]] <- list()
 
-    # Determine if this column requires future observation
+    # determine if this column requires future observation
     requires_future <- require_one_observed && !(col_base %in% columns_no_future_required)
 
-    # Decide how far we go in time points
-    # If 'impute_final_wave = FALSE', we stop at 'num_time_points - 1'
+    # decide how far we go in time points
+    # if 'impute_final_wave = FALSE', we stop at 'num_time_points - 1'
     # unless it also requires a future wave (in which case it also stops at num_time_points - 1).
     if (!impute_final_wave) {
       max_t <- num_time_points - 1
     } else {
-      # Original logic: if require future, stop at (num_time_points - 1),
+      # original logic: if require future, stop at (num_time_points - 1),
       # otherwise up to num_time_points
       max_t <- if (requires_future) num_time_points - 1 else num_time_points
     }
 
-    # Safeguard if num_time_points == 1
+    # safeguard if num_time_points == 1
     max_t <- max(0, min(max_t, num_time_points))
 
     for (t_idx in seq_len(max_t)) {
@@ -217,13 +217,13 @@ margot_impute_carry_forward <- function(
         # look back up to `max_carry_forward` time points
         for (look_back in seq_len(max_carry_forward)) {
           prev_idx <- t_idx - look_back
-          if (prev_idx < 1) break  # No more previous time points
+          if (prev_idx < 1) break  # no more previous time points
           prev_t <- time_points[prev_idx]
           prev_col <- paste0(prev_t, "_", col_base)
 
           if (prev_col %in% names(df_imputed)) {
             still_missing <- is.na(df_imputed[[current_col]]) & missing_mask
-            if (!any(still_missing)) break  # No more imputations needed
+            if (!any(still_missing)) break  # no more imputations needed
 
             # impute from the previous time point
             df_imputed[still_missing, current_col] <- df_imputed[still_missing, prev_col]
@@ -251,7 +251,7 @@ margot_impute_carry_forward <- function(
 
     # if we *do* want to impute the final wave (and we haven't already handled it above)
     if (impute_final_wave && !requires_future && num_time_points >= 1) {
-      # The final wave is time_points[num_time_points]
+      # the final wave is time_points[num_time_points]
       t_idx <- num_time_points
       current_t <- time_points[t_idx]
       current_col <- paste0(current_t, "_", col_base)

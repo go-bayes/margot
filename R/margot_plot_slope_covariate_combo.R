@@ -27,13 +27,13 @@
 #'
 #' @return A ggplot2 object representing the combined plot.
 #'
-#' @import ggplot2
-#' @import ggeffects
-#' @import ggokabeito
-#' @import cli
-#' @import dplyr
-#' @import qs
-#' @import patchwork
+#' @importFrom ggplot2 element_text ggsave theme
+#' @importFrom ggeffects predict_response
+#' @importFrom ggokabeito scale_color_okabe_ito
+#' @importFrom cli cli_alert_info cli_alert_success
+#' @importFrom dplyr filter select
+#' @importFrom patchwork wrap_plots plot_layout plot_annotation
+#' @importFrom tools toTitleCase
 #'
 #' @export
 #'
@@ -76,23 +76,23 @@ margot_plot_slope_covariate_combo <- function(data,
                                               guides = "collect",
                                               patchwork_params = list(),
                                               plot_annotation_params = list(),
-                                              caption_size = 10,  # New parameter for caption size
+                                              caption_size = 10,  # new parameter for caption size
                                               include_individual_titles = FALSE,
                                               width = 12,
                                               height = 8,
                                               dpi = 400,
                                               ...) {
-  # Initialize empty lists to store the ggplot objects and IDs
+  # initialize empty lists to store the ggplot objects and IDs
   plot_list <- list()
   all_ids <- c()
   total_obs <- 0
 
-  # Iterate over the outcome variables
+  # iterate over the outcome variables
   for (outcome_var in outcome_vars) {
-    # Create the full formula
+    # create the full formula
     full_formula <- as.formula(paste(outcome_var, exposure_formula))
 
-    # Get the label for the outcome variable
+    # get the label for the outcome variable
     if (!is.null(label_mapping) && outcome_var %in% names(label_mapping)) {
       y_label <- label_mapping[[outcome_var]]
     } else {
@@ -100,7 +100,7 @@ margot_plot_slope_covariate_combo <- function(data,
       y_label <- tools::toTitleCase(y_label)
     }
 
-    # Create plot
+    # create plot
     plot_result <- margot_plot_slope_covariate(
       data = data,
       formula = full_formula,
@@ -109,58 +109,55 @@ margot_plot_slope_covariate_combo <- function(data,
       x_label = x_label,
       color_label = color_label,
       include_title = include_individual_titles,
-      save_path = NULL,  # We don't save individual plots here
+      save_path = NULL,  # we don't save individual plots here
       ...
     )
 
     if (!is.null(plot_result)) {
-      # Add the plot to the list
+      # add the plot to the list
       plot_list[[outcome_var]] <- plot_result$plot
-      # Collect IDs and total observations
+      # collect IDs and total observations
       all_ids <- c(all_ids, plot_result$ids)
       total_obs <- total_obs + plot_result$total_obs
     }
   }
 
-  # Get the total unique participants across all plots
+  # get the total unique participants across all plots
   combined_total_unique <- length(unique(all_ids))
   combined_total_obs <- total_obs
 
-  # Combine the plots using patchwork
-  library(patchwork)
+  # combine the plots using wrap_plots, passing in ncol, nrow, guides
+  combined_plot <- patchwork::wrap_plots(plot_list, ncol = ncol, nrow = nrow, guides = guides)
 
-  # Combine the plots using wrap_plots, passing in ncol, nrow, guides
-  combined_plot <- wrap_plots(plot_list, ncol = ncol, nrow = nrow, guides = guides)
-
-  # Apply any additional patchwork parameters via plot_layout
+  # apply any additional patchwork parameters via plot_layout
   if (length(patchwork_params) > 0) {
-    combined_plot <- combined_plot & do.call(plot_layout, patchwork_params)
+    combined_plot <- combined_plot & do.call(patchwork::plot_layout, patchwork_params)
   }
 
-  # Prepare total participants and observations info
+  # prepare total participants and observations info
   caption_text <- sprintf(
     "Total N = %d unique participants, %d observations",
     combined_total_unique, combined_total_obs
   )
 
-  # Add participant counts to plot annotations
+  # add participant counts to plot annotations
   if (is.null(plot_annotation_params$caption)) {
     plot_annotation_params$caption <- caption_text
   }
 
-  # Apply plot annotations
+  # apply plot annotations
   if (length(plot_annotation_params) > 0) {
-    combined_plot <- combined_plot & do.call(plot_annotation, plot_annotation_params)
+    combined_plot <- combined_plot & do.call(patchwork::plot_annotation, plot_annotation_params)
   }
 
-  # Adjust caption size
-  combined_plot <- combined_plot & theme(plot.caption = element_text(size = caption_size))
+  # adjust caption size
+  combined_plot <- combined_plot & ggplot2::theme(plot.caption = ggplot2::element_text(size = caption_size))
 
-  # Save the combined plot if a save path is provided
+  # save the combined plot if a save path is provided
   if (!is.null(save_path)) {
     filename <- paste0(file_prefix, "_combined_plot")
     cli::cli_alert_info("Saving combined plot...")
-    ggsave(
+    ggplot2::ggsave(
       plot = combined_plot,
       filename = file.path(save_path, paste0(filename, ".png")),
       width = width,
@@ -169,11 +166,11 @@ margot_plot_slope_covariate_combo <- function(data,
       device = 'png',
       dpi = dpi
     )
-    # Save the ggplot2 object
+    # save the ggplot2 object
     margot::here_save_qs(combined_plot, filename, save_path, preset = "high", nthreads = 1)
     cli::cli_alert_success("Combined plot saved successfully as {filename}.png and {filename}.qs \U0001F44D")
   }
 
-  # Return the combined plot
+  # return the combined plot
   return(combined_plot)
 }

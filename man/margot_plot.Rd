@@ -36,7 +36,7 @@ Can be `"alphabetical"`, `"magnitude"`, `"custom"`, or `"default"`.
 - `"alphabetical"`: Orders outcomes alphabetically.
 - `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.
 - `"custom"`: Allows for a custom ordering (requires additional implementation).
-- `"default"`: Deprecated. Uses `"magnitude"` ordering and issues a warning.
+- `"default"`: Equivalent to `"magnitude"` for backward compatibility.
 Default is `"alphabetical"`.}
 
 \item{title_binary}{Optional title for the plot. If not provided, the title from `options` is used.}

@@ -26,25 +26,25 @@
 #'
 #' @examples
 #'  \dontrun{
-#' # Assuming df_19 is your dataframe and contains the column 'forgiveness'
+#' # assuming df_19 is your dataframe and contains the column 'forgiveness'
 #' graph <- coloured_histogram(
 #'   df = df_19,
 #'   col_name = "forgiveness",
 #'   scale_min = 1,
 #'   scale_max = 7,
 #'   highlight_range = "highest",
-#'   binwidth = .1, # Adjust binwidth as needed
-#'   unit_of_change = 1 # Specify the unit of change
+#'   binwidth = .1, # adjust binwidth as needed
+#'   unit_of_change = 1 # specify the unit of change
 #' )
 #' print(graph)
 #' }
-#' @import ggplot2
-#' @import dplyr
-#' @import tools
+#' @importFrom ggplot2 ggplot aes_string geom_histogram scale_fill_manual labs theme_classic
+#' @importFrom dplyr mutate case_when
+#' @importFrom tools toTitleCase
 #' @importFrom lifecycle deprecate_warn
 #' @export
 coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, scale_min = NULL, scale_max = NULL, highlight_range = "highest") {
-  # Deprecation warning
+  # deprecation warning
   lifecycle::deprecate_warn(
     when = "0.2.1.39",
     what = "coloured_histogram()",
@@ -66,7 +66,6 @@ coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, s
   adjusted_max <- scale_max - (unit_of_change * 0.99)
 
   # title and subtitle using title case for the column name
-  library(tools)
   dynamic_title <- paste("Density of Responses for", tools::toTitleCase(gsub("_", " ", col_name)))
   dynamic_sub_title <- paste(
     "Highlights",

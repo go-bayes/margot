@@ -50,7 +50,9 @@
 #'
 #' @export
 #'
-#' @import dplyr tidyr cli
+#' @importFrom dplyr mutate across where all_of filter select arrange bind_rows
+#' @importFrom tidyr pivot_wider
+#' @importFrom cli cli_alert_info cli_alert_warning cli_alert_success
 #'
 #' @examples
 #' # Define variables
@@ -109,7 +111,7 @@ margot_wide_machine <- function(.data,
   if (any(list_cols)) {
     cli::cli_alert_warning("Converting list columns to character...")
     .data <- .data %>%
-      dplyr::mutate(across(where(is.list), ~as.character(.x)))
+      dplyr::mutate(dplyr::across(dplyr::where(is.list), ~as.character(.x)))
   }
 
   # convert factors to numeric where possible
@@ -117,7 +119,7 @@ margot_wide_machine <- function(.data,
   cols_to_process <- unique(cols_to_process[cols_to_process %in% names(.data)])
 
   .data <- .data %>%
-    dplyr::mutate(across(all_of(cols_to_process), ~{
+    dplyr::mutate(dplyr::across(dplyr::all_of(cols_to_process), ~{
       if (is.factor(.x) && all(grepl("^[-]?[0-9]+\\.?[0-9]*$", levels(.x)))) {
         as.numeric(as.character(.x))
       } else {
@@ -151,13 +153,13 @@ margot_wide_machine <- function(.data,
     vars_in_data <- vars_to_select[vars_to_select %in% names(.data)]
 
     data_t <- .data %>%
-      filter(time == t) %>%
-      select(all_of(vars_in_data))
+      dplyr::filter(time == t) %>%
+      dplyr::select(dplyr::all_of(vars_in_data))
 
     data_subsets[[as.character(t)]] <- data_t
   }
 
-  .data_filtered <- bind_rows(data_subsets)
+  .data_filtered <- dplyr::bind_rows(data_subsets)
 
   # reshape to wide format
   cli::cli_alert_info("Reshaping to wide format...")
@@ -196,7 +198,7 @@ margot_wide_machine <- function(.data,
   }
 
   # prepare columns for imputation at baseline
-  impute_cols <- baseline_cols  # All variables at baseline
+  impute_cols <- baseline_cols  # all variables at baseline
 
   # do imputation only at baseline for specified variables
   if (imputation_method != 'none' && length(impute_cols) > 0) {
@@ -232,7 +234,7 @@ margot_wide_machine <- function(.data,
   }
 
   # ***removed LOCF for confounders***
-  # previously, confounders were imputed using LOCF. This section has been removed to keep missing values as is.
+  # previously, confounders were imputed using LOCF. this section has been removed to keep missing values as is.
 
   # reorder columns
   cli::cli_alert_info("Reordering columns...")

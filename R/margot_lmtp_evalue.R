@@ -20,7 +20,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Assuming `contrast_output` is the result from `lmtp::lmtp_contrast()`
+#' # assuming `contrast_output` is the result from `lmtp::lmtp_contrast()`
 #' summary_evalues <- margot_lmtp_evalue(
 #'   lmtp_output = contrast_output,
 #'   scale = "RD",
@@ -31,24 +31,22 @@
 #'
 #' @export
 #' @importFrom EValue evalues.OLS evalues.RR
-#' @import dplyr
+#' @importFrom dplyr %>% mutate select filter
 #' @seealso \code{\link{margot_tab_lmtp}}, \code{\link{lmtp_evalue_tab}} for the underlying functions used.
 #'
 margot_lmtp_evalue <- function(lmtp_output, scale = c("RD", "RR"), new_name = "character_string", delta = 1, sd = 1) {
-  # Step 1: Generate the summary table from lmtp_output
+  # step 1: generate the summary table from lmtp_output
   tab_lmtp <- margot_lmtp_tab(
     lmtp_output = lmtp_output,
     scale = scale,
     new_name = new_name
   )
-
-  # Step 2: Calculate E-values and append to the summary table
+  # step 2: calculate e-values and append to the summary table
   tab_evalue <- lmtp_evalue_tab(
     x = tab_lmtp,
     delta = delta,
     sd = sd,
     scale = scale
   )
-
   return(tab_evalue)
 }

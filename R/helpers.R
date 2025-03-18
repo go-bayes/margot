@@ -1391,3 +1391,324 @@ create_transition_matrix <- function(data, state_var, id_var) {
   return(transition_matrix)
 }
 
+
+
+#' Strict All-or-Nothing Censoring for Longitudinal Data
+#'
+#' @description
+#' This function processes wide-format longitudinal data with multiple time points:
+#'
+#' - For each wave t < final wave:
+#'   - If wave t+1 **has exposure columns**, a participant remains "not lost" at wave t
+#'     only if *all* exposures at wave t+1 are present (no missing). Otherwise, they are censored at wave t.
+#'   - If wave t+1 **has no exposures** (i.e., final wave is purely outcomes),
+#'     we require *all* final-wave outcomes to be present. If *any* final-wave outcome is missing,
+#'     the participant is censored from wave t onward.
+#'
+#' Censoring sets all future waves to `NA`, and once censored, participants remain censored.
+#'
+#' @param df_wide A wide-format dataframe with columns like t0_X, t1_X, t2_X, etc.
+#' @param exposure_vars Character vector of all exposure names (e.g. c("aaron_antagonism", "aaron_disinhibition", ...)).
+#' @param ordinal_columns Character vector of ordinal (factor) variables to be dummy-coded.
+#' @param continuous_columns_keep Numeric columns you do NOT want to scale (e.g. if they must remain in original units).
+#' @param scale_exposure If FALSE, do not scale exposures; if TRUE, exposures are also scaled.
+#' @param not_lost_in_following_wave Name for the "not lost" indicator (default "not_lost_following_wave").
+#' @param lost_in_following_wave Name for the "lost" indicator (default "lost_following_wave").
+#' @param remove_selected_columns If TRUE, remove original columns after dummy-coding ordinal columns.
+#' @param time_point_prefixes Optional vector of wave prefixes (like c("t0","t1","t2")); if NULL, we auto-detect via regex.
+#' @param time_point_regex Regex used to detect wave prefixes if `time_point_prefixes` is NULL.
+#' @param save_observed_y If FALSE, set any missing final-wave outcomes to NA. If TRUE, keep partial final-wave outcomes.
+#'
+#' @return A processed dataframe, with strict all-or-nothing censoring on exposures in earlier waves,
+#'         and outcome-based censoring for the final wave if it lacks exposures.
+#'
+#' @details
+#' **Core Logic**
+#' For wave t from 0 to T-2 (i.e., up to the penultimate wave):
+#' \preformatted{
+#'   needed_exposures <- paste0(t+1, "_", exposure_vars)
+#'   not_lost[t] = 1 if rowSums(!is.na(needed_exposures)) == length(needed_exposures)
+#'                else 0
+#'
+#'   if not_lost[t] = 0, set waves t+1..T to NA
+#' }
+#' If wave t+1 is the final wave and it has no exposures, we fallback to the final wave's outcome columns.
+#' Then "not_lost[t] = 1 if *all* final-wave outcomes are present, else 0".
+#'
+#' This is a "strict" approach: if *any* exposure is missing at wave t+1, we censor from wave t onward.
+#'
+#' @keywords internal
+.strict_exposure_outcome_censoring <- function(
+    df_wide,
+    exposure_vars,
+    ordinal_columns = NULL,
+    continuous_columns_keep = NULL,
+    scale_exposure = FALSE,
+    not_lost_in_following_wave = "not_lost_following_wave",
+    lost_in_following_wave     = "lost_following_wave",
+    remove_selected_columns    = TRUE,
+    time_point_prefixes        = NULL,
+    time_point_regex           = NULL,
+    save_observed_y            = FALSE
+) {
+  # explicit package call
+  cli::cli_h1("Strict All-or-Nothing Censoring for Longitudinal Data")
+
+  # step 1. Identify wave prefixes
+  if (is.null(time_point_prefixes)) {
+    if (is.null(time_point_regex)) {
+      time_point_regex <- "^(t\\d+)_.*$"
+    }
+    matched_cols <- grep(time_point_regex, colnames(df_wide), value = TRUE)
+    time_points  <- unique(gsub(time_point_regex, "\\1", matched_cols))
+    time_points  <- time_points[order(as.numeric(gsub("t", "", time_points)))]
+  } else {
+    time_points <- time_point_prefixes
+  }
+  num_time_points <- length(time_points)
+  cli::cli_alert_info(
+    "Identified {num_time_points} time points: {paste(time_points, collapse = ', ')}"
+  )
+
+  # create a working copy of the data
+  df_wide_use <- df_wide
+
+  # step 2. Final wave outcomes
+  final_wave <- time_points[num_time_points]
+  final_wave_cols <- grep(paste0("^", final_wave, "_"), names(df_wide_use), value = TRUE)
+  outcome_vars <- sub(paste0("^", final_wave, "_"), "", final_wave_cols)
+  cli::cli_alert_info("Using all variables in the final wave as outcomes.")
+
+  # STEP 1: Create not_lost_in_following_wave for each wave t < final wave
+  cli::cli_h2("Step 1: Creating 'not_lost_in_following_wave' with strict exposure (or outcome) logic")
+
+  # function to check if all columns are present for a row
+  check_all_present <- function(df, columns) {
+    rowSums(!is.na(df[, columns, drop = FALSE])) == length(columns)
+  }
+
+  for (i in seq_len(num_time_points - 1)) {
+    t_i       <- time_points[i]
+    t_i_plus1 <- time_points[i + 1]
+
+    not_lost_col <- paste0(t_i, "_", not_lost_in_following_wave)
+
+    # Exposures for wave t_i_plus1
+    needed_exposures <- paste0(t_i_plus1, "_", exposure_vars)
+    needed_exposures <- needed_exposures[needed_exposures %in% names(df_wide_use)]
+
+    if (length(needed_exposures) == 0) {
+      # If the next wave has no exposures, we check final-wave outcomes (only if t_i_plus1 is the final wave)
+      if (t_i_plus1 == final_wave) {
+        # Fallback to outcome-based logic
+        needed_outcomes <- paste0(final_wave, "_", outcome_vars)
+        needed_outcomes <- needed_outcomes[needed_outcomes %in% names(df_wide_use)]
+        if (length(needed_outcomes) == 0) {
+          cli::cli_alert_warning("No exposures or outcomes found for {t_i_plus1}. Skipping wave {t_i}.")
+          next
+        }
+        # Strict approach: lost if ANY final-wave outcome is missing
+        df_wide_use[[not_lost_col]] <- ifelse(check_all_present(df_wide_use, needed_outcomes), 1, 0)
+
+      } else {
+        # If it's not the final wave but we have no exposures?
+        # This is unusual, but let's just skip creating a not_lost indicator
+        cli::cli_alert_warning(
+          "No exposure columns found for {t_i_plus1}, which is not the final wave. Skipping."
+        )
+        next
+      }
+    } else {
+      # Strict approach: wave t is "not lost" only if all exposures at t+1 are present
+      df_wide_use[[not_lost_col]] <- ifelse(check_all_present(df_wide_use, needed_exposures), 1, 0)
+    }
+
+    # If not_lost_col = 0 => set wave t+1..final wave to NA
+    rows_lost <- which(df_wide_use[[not_lost_col]] == 0)
+    if (length(rows_lost) > 0) {
+      future_waves <- time_points[(i + 1):num_time_points]
+      for (fw in future_waves) {
+        fw_cols <- grep(paste0("^", fw, "_"), names(df_wide_use), value = TRUE)
+        # If we want to preserve observed final-wave outcomes, skip them:
+        if (save_observed_y && fw == final_wave) {
+          # remove outcome columns from the set to overwrite
+          fw_outcomes <- paste0(fw, "_", outcome_vars)
+          fw_cols     <- setdiff(fw_cols, fw_outcomes)
+        }
+        df_wide_use[rows_lost, fw_cols] <- NA
+      }
+    }
+    cli::cli_alert_success(
+      "Created '{not_lost_col}' indicator with strict logic for wave {t_i}"
+    )
+  }
+
+  # step 2: Missing outcomes in final wave
+  cli::cli_h2("Step 2: Handling missing outcomes in the final wave")
+  final_outcome_cols <- paste0(final_wave, "_", outcome_vars)
+  final_outcome_cols <- final_outcome_cols[final_outcome_cols %in% names(df_wide_use)]
+
+  if (length(final_outcome_cols) == 0) {
+    cli::cli_alert_warning("No outcome columns found for the final wave. Skipping outcome-based missingness.")
+  } else {
+    if (!save_observed_y) {
+      # Optionally set missing final-wave outcomes to NA
+      missing_final_wave <- rowSums(is.na(df_wide_use[, final_outcome_cols, drop = FALSE])) > 0
+      df_wide_use[missing_final_wave, final_outcome_cols] <- NA
+      cli::cli_alert_success("Set partially missing final-wave outcomes to NA.")
+    } else {
+      cli::cli_alert_info("save_observed_y=TRUE => retaining partial final-wave outcomes.")
+    }
+  }
+
+  # step 3: Lost_in_following_wave indicators
+  cli::cli_h2("Step 3: Creating lost_in_following_wave indicators")
+  for (i in seq_len(num_time_points - 1)) {
+    t_i        <- time_points[i]
+    not_lost_col <- paste0(t_i, "_", not_lost_in_following_wave)
+    lost_col     <- paste0(t_i, "_", lost_in_following_wave)
+
+    # Create lost_in_following_wave as inverse of not_lost_in_following_wave
+    if (not_lost_col %in% names(df_wide_use)) {
+      df_wide_use[[lost_col]] <- 1 - df_wide_use[[not_lost_col]]
+    }
+  }
+
+  # step 4: Scale numeric variables (excluding exposures if scale_exposure=FALSE)
+  cli::cli_h2("Step 4: Scaling continuous variables")
+  continuous_cols <- names(df_wide_use)[sapply(df_wide_use, is.numeric)]
+  continuous_cols <- setdiff(continuous_cols, c(ordinal_columns, continuous_columns_keep))
+
+  # Exclude lost/not_lost columns, binary/na, weighting columns
+  drop_regex <- paste0("_", not_lost_in_following_wave, "$|_",
+                       lost_in_following_wave, "$|_binary$|_na$|_weights$")
+  continuous_cols <- continuous_cols[!grepl(drop_regex, continuous_cols)]
+
+  # Exclude exposures if not scaling them
+  if (!is.null(exposure_vars) && !scale_exposure) {
+    expo_cols_all <- as.vector(outer(time_points, exposure_vars, paste0))
+    continuous_cols <- setdiff(continuous_cols, expo_cols_all)
+  }
+
+  # Scale them
+  cols_to_remove <- character(0)
+  for (cc in continuous_cols) {
+    zcol <- paste0(cc, "_z")
+    df_wide_use[[zcol]] <- as.vector(scale(df_wide_use[[cc]]))
+    cols_to_remove <- c(cols_to_remove, cc)
+  }
+  df_wide_use <- df_wide_use[, !names(df_wide_use) %in% cols_to_remove]
+  cli::cli_alert_success("Scaled continuous variables (strict approach) and removed originals")
+
+  # step 5: Encode ordinal columns
+  cli::cli_h2("Step 5: Encoding ordinal columns")
+  if (!is.null(ordinal_columns) && length(ordinal_columns) > 0) {
+    df_wide_use <- fastDummies::dummy_cols(
+      df_wide_use,
+      select_columns = ordinal_columns,
+      remove_selected_columns = remove_selected_columns,
+      remove_first_dummy = FALSE,
+      remove_most_frequent_dummy = FALSE,
+      ignore_na = TRUE
+    )
+    # rename e.g. "education_3" => "education_3_binary"
+    for (oc in ordinal_columns) {
+      dcol <- grep(paste0("^", oc, "_"), names(df_wide_use), value = TRUE)
+      df_wide_use <- dplyr::rename_with(
+        df_wide_use,
+        ~ paste0(.x, "_binary"),
+        .cols = dcol
+      )
+    }
+    cli::cli_alert_success("Encoded ordinal columns and removed originals (if requested)")
+  } else {
+    cli::cli_alert_info("No ordinal columns to encode.")
+  }
+
+  # step 6: Reorder columns
+  cli::cli_h2("Step 6: Reordering columns")
+  new_order <- c("id")   # place id first if it exists
+  for (tp in time_points) {
+    tp_cols <- grep(paste0("^", tp, "_"), names(df_wide_use), value = TRUE)
+
+    # exposures
+    ex_cols <- if (!is.null(exposure_vars)) paste0(tp, "_", exposure_vars) else character(0)
+    ex_cols <- ex_cols[ex_cols %in% names(df_wide_use)]
+
+    # not_lost, lost
+    not_lost_col <- paste0(tp, "_", not_lost_in_following_wave)
+    lost_col <- paste0(tp, "_", lost_in_following_wave)
+
+    # z-transformed
+    z_cols <- grep("_z$", tp_cols, value = TRUE)
+
+    # everything else
+    other_cols <- setdiff(tp_cols, c(ex_cols, not_lost_col, lost_col, z_cols))
+
+    # add in the order: other, z_cols, exposures, not_lost, lost
+    new_order <- c(
+      new_order,
+      other_cols,
+      z_cols,
+      ex_cols,
+      not_lost_col,
+      lost_col
+    )
+  }
+
+  # include only existing columns
+  new_order <- intersect(new_order, names(df_wide_use))
+
+  df_wide_use <- df_wide_use[, new_order, drop = FALSE]
+  cli::cli_alert_success("Columns reordered successfully")
+
+  # Done
+  cli::cli_alert_success("Data processing completed with strict all-or-nothing censoring")
+  cli::cli_h2("Summary")
+  cli::cli_ul(c(
+    paste("Total rows:", nrow(df_wide_use)),
+    paste("Total columns:", ncol(df_wide_use)),
+    paste("Time points processed:", length(time_points))
+  ))
+
+  return(df_wide_use)
+}
+
+#' Strict All-or-Nothing Censoring for Longitudinal Data
+#'
+#' @description
+#' This function processes wide-format longitudinal data with multiple time points.
+#' It is a wrapper around the internal function `.strict_exposure_outcome_censoring`.
+#' See the internal function documentation for details.
+#'
+#' @inheritParams .strict_exposure_outcome_censoring
+#' @return A processed dataframe, with strict all-or-nothing censoring
+#' @keywords internal
+strict_exposure_outcome_censoring <- function(
+    df_wide,
+    exposure_vars,
+    ordinal_columns = NULL,
+    continuous_columns_keep = NULL,
+    scale_exposure = FALSE,
+    not_lost_in_following_wave = "not_lost_following_wave",
+    lost_in_following_wave     = "lost_following_wave",
+    remove_selected_columns    = TRUE,
+    time_point_prefixes        = NULL,
+    time_point_regex           = NULL,
+    save_observed_y            = FALSE
+) {
+  # Call the internal function with the same parameters
+  .strict_exposure_outcome_censoring(
+    df_wide = df_wide,
+    exposure_vars = exposure_vars,
+    ordinal_columns = ordinal_columns,
+    continuous_columns_keep = continuous_columns_keep,
+    scale_exposure = scale_exposure,
+    not_lost_in_following_wave = not_lost_in_following_wave,
+    lost_in_following_wave = lost_in_following_wave,
+    remove_selected_columns = remove_selected_columns,
+    time_point_prefixes = time_point_prefixes,
+    time_point_regex = time_point_regex,
+    save_observed_y = save_observed_y
+  )
+}

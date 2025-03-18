@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_count_dyads.R
 \name{margot_count_dyads}
 \alias{margot_count_dyads}
-\title{Count Dyads in Longitudinal Data}
+\title{count dyads in longitudinal data}
 \usage{
 margot_count_dyads(
   dat,
@@ -15,31 +15,31 @@ margot_count_dyads(
 )
 }
 \arguments{
-\item{dat}{A data frame containing the longitudinal data.}
+\item{dat}{a data frame containing the longitudinal data.}
 
-\item{start_wave}{Integer. The first wave to process (default: 2009).}
+\item{start_wave}{integer. the first wave to process (default: 2009).}
 
-\item{end_wave}{Integer. The last wave to process (default: 2022).}
+\item{end_wave}{integer. the last wave to process (default: 2022).}
 
-\item{year_measured_val}{Integer. The value of 'year_measured' to filter on (default: 1).}
+\item{year_measured_val}{integer. the value of 'year_measured' to filter on (default: 1).}
 
-\item{rel_id_var}{Character. The name of the variable indicating relationship dyad (default: "rel_num_l").}
+\item{rel_id_var}{character. the name of the variable indicating relationship dyad (default: "rel_num_l").}
 
-\item{complete_var}{Character. The name of the variable indicating complete dyad status (default: "rel_complete").}
+\item{complete_var}{character. the name of the variable indicating complete dyad status (default: "rel_complete").}
 
-\item{prev_wave_counts}{Integer vector. Previous wave thresholds to count (default: c(1,2,3,4)).}
+\item{prev_wave_counts}{integer vector. previous wave thresholds to count (default: c(1,2,3,4)).}
 }
 \value{
-A tibble with columns for:
-  - wave: Survey wave number
-  - n_total: Total number of dyads (complete + singleton)
-  - n_single: Number of singleton dyads
-  - n_complete: Number of complete dyads
-  - n_wave_1plus: Dyads in 1+ previous waves
-  - n_wave_2plus: Dyads in 2+ previous waves
-  - n_wave_3plus: Dyads in 3+ previous waves
-  - n_wave_4plus: Dyads in 4+ previous waves
+a tibble with columns for:
+  - wave: survey wave number
+  - n_total: total number of dyads (complete + singleton)
+  - n_single: number of singleton dyads
+  - n_complete: number of complete dyads
+  - n_wave_1plus: dyads in 1+ previous waves
+  - n_wave_2plus: dyads in 2+ previous waves
+  - n_wave_3plus: dyads in 3+ previous waves
+  - n_wave_4plus: dyads in 4+ previous waves
 }
 \description{
-Count Dyads in Longitudinal Data
+count dyads in longitudinal data
 }

@@ -34,8 +34,8 @@ This should be a vector containing all outcomes in the desired order.}
 }
 \value{
 A data frame that has been arranged based on the specified order and annotated
-with treatment effect estimates, estimate labels, and evidence value annotations.
-If original scale estimates are available, these will be included in the output.
+  with treatment effect estimates, estimate labels, and evidence value annotations.
+  If original scale estimates are available, these will be included in the output.
 
 A data frame that has been arranged based on the specified order and annotated
 with treatment effect estimates, estimate labels, and evidence value annotations.
@@ -44,7 +44,7 @@ If original scale estimates are available, these will be included in the output.
 \description{
 This function arranges and annotates a data frame based on specified
 types of treatment effect estimates (RR or RD). It supports different sorting
-options including default descending, alphabetical, and custom order.
+options including alphabetical (default), magnitude, and custom order.
 It now also handles original scale estimates when available.
 
 This function arranges and annotates a data frame based on specified
@@ -62,19 +62,19 @@ are available (indicated by the presence of columns with "_original" suffix), th
 in the output. The function also applies label mapping if provided.
 }
 \examples{
-# Example using Risk Ratio (RR) and default sorting
-result_df <- group_tab(df = analysis_df, type = 'RR')
+# example using default alphabetical ordering with risk difference (RD)
+result_df <- group_tab(df = analysis_df)
 
-# Example using Risk Difference (RD) with alphabetical sorting
-result_df <- group_tab(df = analysis_df, type = 'RD', order = 'alphabetical')
+# example using risk ratio (RR) with magnitude sorting
+result_df <- group_tab(df = analysis_df, type = 'RR', order = 'magnitude')
 
-# Example using custom sorting order
-custom_order <- c("Outcome3", "Outcome1", "Outcome2")
+# example using custom sorting order
+custom_order <- c("outcome3", "outcome1", "outcome2")
 result_df <- group_tab(df = analysis_df, type = 'RR', order = 'custom', custom_order = custom_order)
 
-# Example using output from transform_to_original_scale()
+# example using output from transform_to_original_scale()
 transformed_data <- transform_to_original_scale(results_df, original_df, label_mapping)
-result_df <- group_tab(transformed_data, type = 'RD')
+result_df <- group_tab(transformed_data)
 
 # Example using Risk Ratio (RR) and default sorting
 result_df <- group_tab(df = analysis_df, type = 'RR')

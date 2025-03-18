@@ -25,11 +25,12 @@
 #'
 #' @return A ggplot2 object representing the histogram with highlights.
 #'
-#' @import ggplot2
-#' @import dplyr
-#' @import tidyr
-#' @import cli
-#' @import stringr
+#' @importFrom ggplot2 ggplot aes geom_histogram geom_vline geom_text labs theme_minimal theme element_text scale_fill_manual facet_grid facet_wrap vars labeller as_labeller ggsave
+#' @importFrom dplyr filter group_by summarise n_distinct n .data all_of
+#' @importFrom tidyr pivot_longer
+#' @importFrom cli cli_h1 cli_alert_info cli_alert_success cli_alert_danger cli_alert_warning
+#' @importFrom stringr str_to_title
+#' @importFrom rlang sym
 #'
 #' @examples
 #' # basic usage with default settings
@@ -95,12 +96,15 @@ margot_plot_histogram <- function(data,
                                   file_prefix = "",
                                   mean_line_color = "black",
                                   sd_line_color = "black",
-                                  vertical_facets = FALSE) {  # New parameter
+                                  vertical_facets = FALSE) {  # new parameter
 
   cli::cli_h1("Margot Plot Histogram")
 
   tryCatch(
     {
+      # null coalescing operator replacement
+      `%||%` <- function(x, y) if (is.null(x)) y else x
+
       # validate inputs
       if (!all(c(col_names, id_col, wave_col) %in% names(data))) {
         stop("One or more specified columns do not exist in the dataframe.")
@@ -124,13 +128,13 @@ margot_plot_histogram <- function(data,
       }
 
       # reshape data for plotting multiple columns
-      data_long <- tidyr::pivot_longer(data, cols = all_of(col_names), names_to = "variable", values_to = "value")
+      data_long <- tidyr::pivot_longer(data, cols = dplyr::all_of(col_names), names_to = "variable", values_to = "value")
 
       # check for completely missing columns in any wave
       missing_columns <- data_long %>%
-        group_by(!!sym(wave_col), variable) %>%
-        summarise(all_missing = all(is.na(value)), .groups = "drop") %>%
-        filter(all_missing)
+        dplyr::group_by(!!rlang::sym(wave_col), variable) %>%
+        dplyr::summarise(all_missing = all(is.na(value)), .groups = "drop") %>%
+        dplyr::filter(all_missing)
 
       if (nrow(missing_columns) > 0) {
         cli::cli_alert_warning("The following columns are completely missing for some waves:")
@@ -141,10 +145,10 @@ margot_plot_histogram <- function(data,
 
       # remove NAs and count participants who responded to at least one outcome of interest
       data_long <- data_long %>%
-        filter(!is.na(value) & is.finite(value))
+        dplyr::filter(!is.na(value) & is.finite(value))
 
       # count total unique participants
-      total_unique <- n_distinct(data_long[[id_col]])
+      total_unique <- dplyr::n_distinct(data_long[[id_col]])
 
       # calculate total observations
       total_obs <- nrow(data_long)
@@ -155,12 +159,12 @@ margot_plot_histogram <- function(data,
 
       # compute statistics for each variable within each wave
       stats <- data_long %>%
-        group_by(!!sym(wave_col), variable) %>%
-        summarise(
+        dplyr::group_by(!!rlang::sym(wave_col), variable) %>%
+        dplyr::summarise(
           avg_val = mean(value, na.rm = TRUE),
           std_val = sd(value, na.rm = TRUE),
-          n_obs = n(),
-          n_unique = n_distinct(!!sym(id_col)),
+          n_obs = dplyr::n(),
+          n_unique = dplyr::n_distinct(!!rlang::sym(id_col)),
           .groups = "drop"
         )
 
@@ -191,66 +195,93 @@ margot_plot_histogram <- function(data,
       }
 
       # create the plot
-      p <- ggplot(data_long, aes(x = value, fill = variable)) +
-        geom_histogram(aes(y = after_stat(count)), binwidth = binwidth, color = "white", alpha = 0.7) +
-        geom_vline(data = stats, aes(xintercept = avg_val), color = mean_line_color, linewidth = 1) +
-        geom_vline(data = stats, aes(xintercept = avg_val - std_val), color = sd_line_color, linewidth = 0.5, linetype = "dashed") +
-        geom_vline(data = stats, aes(xintercept = avg_val + std_val), color = sd_line_color, linewidth = 0.5, linetype = "dashed") +
-        geom_text(
+      p <- ggplot2::ggplot(data_long, ggplot2::aes(x = value, fill = variable)) +
+        ggplot2::geom_histogram(
+          ggplot2::aes(y = after_stat(count)),
+          binwidth = binwidth,
+          color = "white",
+          alpha = 0.7
+        ) +
+        ggplot2::geom_vline(
           data = stats,
-          aes(x = avg_val, y = Inf, label = sprintf("Mean: %.2f\nSD: %.2f", avg_val, std_val)),
+          ggplot2::aes(xintercept = avg_val),
+          color = mean_line_color,
+          linewidth = 1
+        ) +
+        ggplot2::geom_vline(
+          data = stats,
+          ggplot2::aes(xintercept = avg_val - std_val),
+          color = sd_line_color,
+          linewidth = 0.5,
+          linetype = "dashed"
+        ) +
+        ggplot2::geom_vline(
+          data = stats,
+          ggplot2::aes(xintercept = avg_val + std_val),
+          color = sd_line_color,
+          linewidth = 0.5,
+          linetype = "dashed"
+        ) +
+        ggplot2::geom_text(
+          data = stats,
+          ggplot2::aes(x = avg_val, y = Inf, label = sprintf("Mean: %.2f\nSD: %.2f", avg_val, std_val)),
           vjust = 1, hjust = 0, size = 4
         ) +
-        labs(
+        ggplot2::labs(
           title = title,
           x = x_label %||% "Value",
           y = y_label,
           fill = "Variable"
         ) +
-        theme_minimal(base_size = 14) +
-        theme(
+        ggplot2::theme_minimal(base_size = 14) +
+        ggplot2::theme(
           legend.position = "bottom",
-          strip.text = element_text(size = 12, face = "bold"),
-          axis.text.x = element_text(angle = 0, hjust = 1)
+          strip.text = ggplot2::element_text(size = 12, face = "bold"),
+          axis.text.x = ggplot2::element_text(angle = 0, hjust = 1)
         ) +
-        scale_fill_manual(values = recycled_colors, labels = format_label)
+        ggplot2::scale_fill_manual(values = recycled_colors, labels = format_label)
 
-      # Modified faceting for different scenarios
+      # modified faceting for different scenarios
       if (length(unique(data_long[[wave_col]])) > 1 && length(col_names) > 1) {
         if (vertical_facets) {
-          p <- p + facet_grid(rows = vars(.data[[wave_col]], variable),
-                              scales = facet_scales,
-                              labeller = labeller(
-                                .rows = as_labeller(format_label)
-                              )
+          p <- p + ggplot2::facet_grid(
+            rows = ggplot2::vars(dplyr::.data[[wave_col]], variable),
+            scales = facet_scales,
+            labeller = ggplot2::labeller(
+              .rows = ggplot2::as_labeller(format_label)
+            )
           )
         } else {
-          p <- p + facet_grid(variable ~ .data[[wave_col]],
-                              scales = facet_scales,
-                              labeller = labeller(
-                                .cols = as_labeller(format_label),
-                                .rows = as_labeller(format_label)
-                              )
+          p <- p + ggplot2::facet_grid(
+            variable ~ dplyr::.data[[wave_col]],
+            scales = facet_scales,
+            labeller = ggplot2::labeller(
+              .cols = ggplot2::as_labeller(format_label),
+              .rows = ggplot2::as_labeller(format_label)
+            )
           )
         }
       } else if (length(unique(data_long[[wave_col]])) > 1) {
-        p <- p + facet_wrap(~ .data[[wave_col]],
-                            scales = facet_scales,
-                            labeller = as_labeller(format_label),
-                            ncol = if (vertical_facets) 1 else NULL
+        p <- p + ggplot2::facet_wrap(
+          ~ dplyr::.data[[wave_col]],
+          scales = facet_scales,
+          labeller = ggplot2::as_labeller(format_label),
+          ncol = if (vertical_facets) 1 else NULL
         )
       } else if (length(col_names) > 1) {
-        p <- p + facet_wrap(~variable,
-                            scales = facet_scales,
-                            labeller = as_labeller(format_label),
-                            ncol = if (vertical_facets) 1 else NULL
+        p <- p + ggplot2::facet_wrap(
+          ~variable,
+          scales = facet_scales,
+          labeller = ggplot2::as_labeller(format_label),
+          ncol = if (vertical_facets) 1 else NULL
         )
       }
+
       # save plot if a save path is provided
       if (!is.null(save_path)) {
         filename <- "histogram"
 
-        # Add the optional prefix
+        # add the optional prefix
         if (nzchar(file_prefix)) {
           filename <- paste0(file_prefix, "_", filename)
         }
@@ -261,14 +292,14 @@ margot_plot_histogram <- function(data,
           "_by_", wave_col
         )
 
-        # Add timestamp if requested
+        # add timestamp if requested
         if (add_timestamp) {
           filename <- paste0(filename, "_", format(Sys.Date(), "%Y%m%d"))
         }
 
         cli::cli_alert_info("Saving plot...")
 
-        ggsave(
+        ggplot2::ggsave(
           plot = p,
           filename = file.path(save_path, paste0(filename, ".png")),
           width = width,

@@ -56,7 +56,7 @@ up to a specified number of time points back. By default, it never imputes data 
 }
 \examples{
 \dontrun{
-# Example dataframe
+# example dataframe
 df <- data.frame(
   id = 1:5,
   t0_var1 = c(1, NA, 3, NA, 5),
@@ -65,10 +65,10 @@ df <- data.frame(
   t0_var2 = c(NA, 2, NA, 4, 5),
   t1_var2 = c(1, NA, 3, NA, NA),
   t2_var2 = c(NA, 2, NA, 4, 5),
-  t2_end_of_study = c(1, 1, 1, 1, 1)  # End-of-study indicator
+  t2_end_of_study = c(1, 1, 1, 1, 1)  # end-of-study indicator
 )
 
-# Impute missing values without imputing the final wave
+# impute missing values without imputing the final wave
 df_imputed <- margot_impute_carry_forward(
   df_wide = df,
   columns_to_impute = c("var1", "var2"),
@@ -77,7 +77,7 @@ df_imputed <- margot_impute_carry_forward(
   verbose = TRUE
 )
 
-# Impute missing values including the final wave
+# impute missing values including the final wave
 df_imputed_final <- margot_impute_carry_forward(
   df_wide = df,
   columns_to_impute = c("var1", "var2"),

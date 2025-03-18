@@ -16,7 +16,7 @@ margot_plot_individual_responses(
   y_label = NULL,
   x_label = NULL,
   color_palette = NULL,
-  theme = theme_classic(),
+  theme = ggplot2::theme_classic(),
   include_timestamp = FALSE,
   save_path = NULL,
   width = 16,

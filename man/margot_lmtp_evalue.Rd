@@ -39,7 +39,7 @@ appending these values to the summary table.
 }
 \examples{
 \dontrun{
-# Assuming `contrast_output` is the result from `lmtp::lmtp_contrast()`
+# assuming `contrast_output` is the result from `lmtp::lmtp_contrast()`
 summary_evalues <- margot_lmtp_evalue(
   lmtp_output = contrast_output,
   scale = "RD",

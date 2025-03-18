@@ -12,7 +12,6 @@
 #'
 #' @return A list containing the generated ggplot objects for each model.
 #'
-#' @import margot
 #' @import ggplot2
 #' @import cli
 #' @importFrom crayon red green bold

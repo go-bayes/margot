@@ -28,15 +28,17 @@
 #'
 #' @return A ggplot object representing the boxplot.
 #'
-#' @import ggplot2
-#' @import dplyr
-#' @import tidyr
-#' @import cli
-#' @import stringr
+#' @importFrom ggplot2 ggplot aes geom_boxplot geom_jitter theme_minimal scale_fill_manual
+#'   scale_x_discrete scale_y_continuous scale_color_manual theme element_text unit
+#'   labs facet_wrap coord_flip ggsave
+#' @importFrom dplyr filter mutate n_distinct %>%
+#' @importFrom tidyr pivot_longer all_of
+#' @importFrom cli cli_h1 cli_alert_info cli_alert_success cli_alert_danger
+#' @importFrom stringr str_to_title
 #'
 #' @examples
 #' \dontrun{
-#' # Define outcome variables
+#' # define outcome variables
 #' outcome_vars <- c(
 #'   "env_climate_chg_concern",
 #'   "env_climate_chg_cause",
@@ -45,14 +47,14 @@
 #'   "envefficacy"
 #' )
 #'
-#' # Basic usage with all waves
+#' # basic usage with all waves
 #' p1 <- margot_plot_boxplot(
 #'   data = your_data,
 #'   y_vars = outcome_vars,
 #'   id_col = "id"
 #' )
 #'
-#' # Plotting specific waves with points shown and coordinates flipped
+#' # plotting specific waves with points shown and coordinates flipped
 #' p2 <- margot_plot_boxplot(
 #'   data = your_data,
 #'   y_vars = outcome_vars,
@@ -62,7 +64,7 @@
 #'   id_col = "id"
 #' )
 #'
-#' # Saving the plot with a custom prefix
+#' # saving the plot with a custom prefix
 #' margot_plot_boxplot(
 #'   data = your_data,
 #'   y_vars = outcome_vars,
@@ -73,7 +75,7 @@
 #'   id_col = "id"
 #' )
 #'
-#' # Customizing the plot appearance with flipped coordinates
+#' # customizing the plot appearance with flipped coordinates
 #' p3 <- margot_plot_boxplot(
 #'   data = your_data,
 #'   y_vars = c("env_climate_chg_concern", "envefficacy"),
@@ -146,7 +148,7 @@ margot_plot_boxplot <- function(data,
         y_vars <- as.character(y_vars)
       }
 
-      # Function to convert to title case and remove underscores
+      # function to convert to title case and remove underscores
       format_label <- function(x) {
         label <- stringr::str_to_title(gsub("_", " ", x))
         # preserve "NZ" capitalisation
@@ -154,17 +156,17 @@ margot_plot_boxplot <- function(data,
         return(label)
       }
 
-      # Create a named vector for label formatting
+      # create a named vector for label formatting
       formatted_labels <- setNames(sapply(y_vars, format_label), y_vars)
 
       # reshape data for plotting multiple y variables
       df_long <- df %>%
         tidyr::pivot_longer(
-          cols = all_of(y_vars),
+          cols = tidyr::all_of(y_vars),
           names_to = "variable",
           values_to = "value"
         ) %>%
-        mutate(variable = factor(variable, levels = y_vars, labels = formatted_labels[y_vars]))
+        dplyr::mutate(variable = factor(variable, levels = y_vars, labels = formatted_labels[y_vars]))
 
       # remove NAs and count participants who responded to at least one outcome of interest
       df_long <- df_long %>%
@@ -212,69 +214,69 @@ margot_plot_boxplot <- function(data,
 
       # create the ggplot
       if (n_vars == 1) {
-        p <- ggplot(df_long, aes(x = wave, y = value, fill = wave)) +
-          geom_boxplot(...) +
-          theme_minimal() +
-          scale_fill_manual(values = recycled_colors) +
-          scale_x_discrete(drop = FALSE) + # Force all levels to be shown
-          theme(
+        p <- ggplot2::ggplot(df_long, ggplot2::aes(x = wave, y = value, fill = wave)) +
+          ggplot2::geom_boxplot(...) +
+          ggplot2::theme_minimal() +
+          ggplot2::scale_fill_manual(values = recycled_colors) +
+          ggplot2::scale_x_discrete(drop = FALSE) + # force all levels to be shown
+          ggplot2::theme(
             legend.position = legend_position,
-            legend.text = element_text(size = 10),
-            legend.title = element_text(size = 12),
-            axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
-            strip.text = element_text(size = 10),
-            panel.spacing = unit(0.2, "lines")
+            legend.text = ggplot2::element_text(size = 10),
+            legend.title = ggplot2::element_text(size = 12),
+            axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 8),
+            strip.text = ggplot2::element_text(size = 10),
+            panel.spacing = ggplot2::unit(0.2, "lines")
           ) +
-          labs(
+          ggplot2::labs(
             title = title,
             y = y_label %||% formatted_labels[y_vars],
             x = x_label,
             fill = "Wave"
           )
       } else {
-        p <- ggplot(df_long, aes(x = wave, y = value, fill = variable)) +
-          geom_boxplot(...) +
-          theme_minimal() +
-          scale_fill_manual(values = recycled_colors, labels = formatted_labels) +
-          scale_x_discrete(drop = FALSE) + # Force all levels to be shown
-          theme(
+        p <- ggplot2::ggplot(df_long, ggplot2::aes(x = wave, y = value, fill = variable)) +
+          ggplot2::geom_boxplot(...) +
+          ggplot2::theme_minimal() +
+          ggplot2::scale_fill_manual(values = recycled_colors, labels = formatted_labels) +
+          ggplot2::scale_x_discrete(drop = FALSE) + # force all levels to be shown
+          ggplot2::theme(
             legend.position = legend_position,
-            legend.text = element_text(size = 10),
-            legend.title = element_text(size = 12),
-            axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
-            strip.text = element_text(size = 10),
-            panel.spacing = unit(0.2, "lines")
+            legend.text = ggplot2::element_text(size = 10),
+            legend.title = ggplot2::element_text(size = 12),
+            axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 8),
+            strip.text = ggplot2::element_text(size = 10),
+            panel.spacing = ggplot2::unit(0.2, "lines")
           ) +
-          labs(
+          ggplot2::labs(
             title = title,
             y = y_label %||% "Value",
             x = x_label,
             fill = "Variable"
           ) +
-          facet_wrap(~variable, scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow)
+          ggplot2::facet_wrap(~variable, scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow)
       }
 
-      p <- p + scale_y_continuous(limits = y_limits)
+      p <- p + ggplot2::scale_y_continuous(limits = y_limits)
 
       # add points if requested
       if (show_points) {
         if (n_vars == 1) {
-          p <- p + geom_jitter(aes(color = wave), width = 0.2, alpha = point_alpha, size = point_size) +
-            scale_color_manual(values = recycled_colors)
+          p <- p + ggplot2::geom_jitter(ggplot2::aes(color = wave), width = 0.2, alpha = point_alpha, size = point_size) +
+            ggplot2::scale_color_manual(values = recycled_colors)
         } else {
-          p <- p + geom_jitter(aes(color = variable), width = 0.2, alpha = point_alpha, size = point_size) +
-            scale_color_manual(values = recycled_colors, labels = formatted_labels)
+          p <- p + ggplot2::geom_jitter(ggplot2::aes(color = variable), width = 0.2, alpha = point_alpha, size = point_size) +
+            ggplot2::scale_color_manual(values = recycled_colors, labels = formatted_labels)
         }
       }
 
       # flip coordinates if requested
       if (coord_flip) {
-        p <- p + coord_flip()
+        p <- p + ggplot2::coord_flip()
 
-        # Adjust text angle for better readability when coordinates are flipped
-        p <- p + theme(
-          axis.text.x = element_text(angle = 0, hjust = 0.5, size = 8),
-          axis.text.y = element_text(angle = 0, hjust = 1, size = 8)
+        # adjust text angle for better readability when coordinates are flipped
+        p <- p + ggplot2::theme(
+          axis.text.x = ggplot2::element_text(angle = 0, hjust = 0.5, size = 8),
+          axis.text.y = ggplot2::element_text(angle = 0, hjust = 1, size = 8)
         )
       }
 
@@ -284,7 +286,7 @@ margot_plot_boxplot <- function(data,
       if (!is.null(save_path)) {
         filename <- "boxplot"
 
-        # Add the optional prefix
+        # add the optional prefix
         if (!is.null(prefix) && nzchar(prefix)) {
           filename <- paste0(prefix, "_", filename)
         }
@@ -297,7 +299,7 @@ margot_plot_boxplot <- function(data,
 
         cli::cli_alert_info("Saving plot...")
 
-        ggsave(
+        ggplot2::ggsave(
           plot = p,
           filename = file.path(save_path, paste0(filename, ".png")),
           width = width,

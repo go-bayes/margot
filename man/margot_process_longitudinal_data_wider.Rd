@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_process_longitudinal_data_wider.R
 \name{margot_process_longitudinal_data_wider}
 \alias{margot_process_longitudinal_data_wider}
-\title{Process Longitudinal Dyadic Data for Multiple Waves}
+\title{process longitudinal dyadic data for multiple waves}
 \usage{
 margot_process_longitudinal_data_wider(
   df_wide,
@@ -22,54 +22,54 @@ margot_process_longitudinal_data_wider(
 )
 }
 \arguments{
-\item{df_wide}{A wide-format dataframe containing longitudinal data.}
+\item{df_wide}{a wide-format dataframe containing longitudinal data.}
 
-\item{relationship_id}{A string naming the column that identifies dyads. Defaults to "NULL".}
+\item{relationship_id}{a string naming the column that identifies dyads. defaults to "NULL".}
 
-\item{ordinal_columns}{A character vector of column names to be treated as ordinal and dummy-coded.}
+\item{ordinal_columns}{a character vector of column names to be treated as ordinal and dummy-coded.}
 
-\item{continuous_columns_keep}{A character vector of continuous column names to keep without scaling.}
+\item{continuous_columns_keep}{a character vector of continuous column names to keep without scaling.}
 
-\item{exposure_vars}{A character vector of exposure variable names that determine attrition.}
+\item{exposure_vars}{a character vector of exposure variable names that determine attrition.}
 
-\item{scale_exposure}{Logical. If TRUE, scales the exposure variable(s). Default is FALSE.}
+\item{scale_exposure}{logical. if TRUE, scales the exposure variable(s). default is FALSE.}
 
-\item{scale_continuous}{Logical. If TRUE, scales continuous variables. If FALSE, no variables are scaled.
-Default is TRUE.}
+\item{scale_continuous}{logical. if TRUE, scales continuous variables. if FALSE, no variables are scaled.
+default is TRUE.}
 
-\item{not_lost_in_following_wave}{Character string with the suffix for the "not lost" indicator.
-Default is "not_lost_following_wave".}
+\item{not_lost_in_following_wave}{character string with the suffix for the "not lost" indicator.
+default is "not_lost_following_wave".}
 
-\item{lost_in_following_wave}{Character string with the suffix for the "lost" indicator.
-If NULL, no 'lost' indicator is created.}
+\item{lost_in_following_wave}{character string with the suffix for the "lost" indicator.
+if NULL, no 'lost' indicator is created.}
 
-\item{remove_selected_columns}{Logical. If TRUE, removes selected columns after encoding. Default is TRUE.}
+\item{remove_selected_columns}{logical. if TRUE, removes selected columns after encoding. default is TRUE.}
 
-\item{time_point_prefixes}{A character vector of time point prefixes. If NULL, inferred from the data.}
+\item{time_point_prefixes}{a character vector of time point prefixes. if NULL, inferred from the data.}
 
-\item{time_point_regex}{A regex pattern for identifying time points. Used if time_point_prefixes is NULL.}
+\item{time_point_regex}{a regex pattern for identifying time points. used if time_point_prefixes is NULL.}
 
-\item{save_observed_y}{Logical. If TRUE, retains observed outcome values in the final wave even if lost. Default FALSE.}
+\item{save_observed_y}{logical. if TRUE, retains observed outcome values in the final wave even if lost. default FALSE.}
 
-\item{censored_if_any_lost}{Logical. If TRUE, sets "not_lost_in_following_wave" = 0 if any data are NA in wave $t+1$.}
+\item{censored_if_any_lost}{logical. if TRUE, sets "not_lost_in_following_wave" = 0 if any data are NA in wave $t+1$.}
 }
 \value{
-A processed dataframe suitable for longitudinal analyses.
+a processed dataframe suitable for longitudinal analyses.
 }
 \description{
-This function processes longitudinal data (wide format) across multiple waves,
+this function processes longitudinal data (wide format) across multiple waves,
 handling dyadic censoring: if one partner in a dyad is lost at wave $t$, the entire
-dyad is set to lost at wave $t$. All subsequent wave data are then set to NA.
+dyad is set to lost at wave $t$. all subsequent wave data are then set to NA.
 }
 \details{
-The dyadic logic occurs after computing each wave's "not_lost" indicator.
-If any person in a dyad is flagged lost (0), then all partners in that dyad
+the dyadic logic occurs after computing each wave's "not_lost" indicator.
+if any person in a dyad is flagged lost (0), then all partners in that dyad
 also get flagged lost at the same wave.
 
-The function prints CLI messages summarising how many dyads and how many participants
+the function prints CLI messages summarising how many dyads and how many participants
 are lost at each wave, and which dyad IDs were forced lost.
 }
 \examples{
-# See the tests in previous examples, or adapt your own.
+# see the tests in previous examples, or adapt your own.
 
 }

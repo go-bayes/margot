@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_count_ids.R
 \name{margot_count_ids}
 \alias{margot_count_ids}
-\title{Count Individual Participants in Longitudinal Data}
+\title{count individual participants in longitudinal data}
 \usage{
 margot_count_ids(
   dat,
@@ -15,36 +15,36 @@ margot_count_ids(
 )
 }
 \arguments{
-\item{dat}{A data frame containing the longitudinal data}
+\item{dat}{a data frame containing the longitudinal data}
 
-\item{start_wave}{Integer. The first wave to process (default: 2009)}
+\item{start_wave}{integer. the first wave to process (default: 2009)}
 
-\item{end_wave}{Integer. The last wave to process (default: 2022)}
+\item{end_wave}{integer. the last wave to process (default: 2022)}
 
-\item{prev_wave_counts}{Integer vector. Previous wave thresholds to count (default: c(1,2,3,4))}
+\item{prev_wave_counts}{integer vector. previous wave thresholds to count (default: c(1,2,3,4))}
 
-\item{opt_in_var}{Character. Name of the opt-in variable to track (default: "sample_frame_opt_in")}
+\item{opt_in_var}{character. name of the opt-in variable to track (default: "sample_frame_opt_in")}
 
-\item{opt_in_true}{Value indicating opted-in status (default: 1)}
+\item{opt_in_true}{value indicating opted-in status (default: 1)}
 
-\item{opt_in_false}{Value indicating not opted-in status (default: 0)}
+\item{opt_in_false}{value indicating not opted-in status (default: 0)}
 }
 \value{
-A tibble with columns for:
-  - wave: Survey wave number
-  - n_total: Cumulative unique participants through current wave
-  - n_active: Active participants in current wave
-  - n_deceased: Newly deceased in current wave
-  - n_deceased_total: Total deceased through current wave
-  - n_returned: Participants absent in previous wave but present in earlier waves
-  - n_returned_total: Total returnees through current wave
-  - n_opt_in: Newly opted-in participants in current wave
-  - n_opt_in_total: Total opted-in participants through current wave
-  - n_wave_1plus: Participants in 1+ previous waves
-  - n_wave_2plus: Participants in 2+ previous waves
-  - n_wave_3plus: Participants in 3+ previous waves
-  - n_wave_4plus: Participants in 4+ previous waves
+a tibble with columns for:
+  - wave: survey wave number
+  - n_total: cumulative unique participants through current wave
+  - n_active: active participants in current wave
+  - n_deceased: newly deceased in current wave
+  - n_deceased_total: total deceased through current wave
+  - n_returned: participants absent in previous wave but present in earlier waves
+  - n_returned_total: total returnees through current wave
+  - n_opt_in: newly opted-in participants in current wave
+  - n_opt_in_total: total opted-in participants through current wave
+  - n_wave_1plus: participants in 1+ previous waves
+  - n_wave_2plus: participants in 2+ previous waves
+  - n_wave_3plus: participants in 3+ previous waves
+  - n_wave_4plus: participants in 4+ previous waves
 }
 \description{
-Count Individual Participants in Longitudinal Data
+count individual participants in longitudinal data
 }

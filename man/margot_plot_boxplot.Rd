@@ -83,7 +83,7 @@ It offers various customisation options for the plot appearance and layout.
 }
 \examples{
 \dontrun{
-# Define outcome variables
+# define outcome variables
 outcome_vars <- c(
   "env_climate_chg_concern",
   "env_climate_chg_cause",
@@ -92,14 +92,14 @@ outcome_vars <- c(
   "envefficacy"
 )
 
-# Basic usage with all waves
+# basic usage with all waves
 p1 <- margot_plot_boxplot(
   data = your_data,
   y_vars = outcome_vars,
   id_col = "id"
 )
 
-# Plotting specific waves with points shown and coordinates flipped
+# plotting specific waves with points shown and coordinates flipped
 p2 <- margot_plot_boxplot(
   data = your_data,
   y_vars = outcome_vars,
@@ -109,7 +109,7 @@ p2 <- margot_plot_boxplot(
   id_col = "id"
 )
 
-# Saving the plot with a custom prefix
+# saving the plot with a custom prefix
 margot_plot_boxplot(
   data = your_data,
   y_vars = outcome_vars,
@@ -120,7 +120,7 @@ margot_plot_boxplot(
   id_col = "id"
 )
 
-# Customizing the plot appearance with flipped coordinates
+# customizing the plot appearance with flipped coordinates
 p3 <- margot_plot_boxplot(
   data = your_data,
   y_vars = c("env_climate_chg_concern", "envefficacy"),

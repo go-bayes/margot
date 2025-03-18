@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_plot_boxplot_covariate.R
 \name{margot_plot_boxplot_covariate}
 \alias{margot_plot_boxplot_covariate}
-\title{Create Boxplots with Covariates using ggplot2}
+\title{create boxplots with covariates using ggplot2}
 \usage{
 margot_plot_boxplot_covariate(
   data,
@@ -29,59 +29,59 @@ margot_plot_boxplot_covariate(
 )
 }
 \arguments{
-\item{data}{A data frame containing the variables to be plotted.}
+\item{data}{a data frame containing the variables to be plotted.}
 
-\item{outcome}{The name of the outcome variable to be plotted.}
+\item{outcome}{the name of the outcome variable to be plotted.}
 
-\item{covariate}{The name of the covariate variable for grouping.}
+\item{covariate}{the name of the covariate variable for grouping.}
 
-\item{waves}{A vector of wave values to include in the plot (default is NULL, which includes all waves).}
+\item{waves}{a vector of wave values to include in the plot (default is NULL, which includes all waves).}
 
-\item{id_col}{Name of the column containing unique identifiers (default is "id").}
+\item{id_col}{name of the column containing unique identifiers (default is "id").}
 
-\item{title}{The title of the plot (optional, auto-generated if NULL).}
+\item{title}{the title of the plot (optional, auto-generated if NULL).}
 
-\item{y_label}{The label for the y-axis (optional).}
+\item{y_label}{the label for the y-axis (optional).}
 
-\item{x_label}{The label for the x-axis (optional, defaults to "Wave").}
+\item{x_label}{the label for the x-axis (optional, defaults to "Wave").}
 
-\item{color_label}{The label for the color legend (optional, defaults to the covariate name).}
+\item{color_label}{the label for the color legend (optional, defaults to the covariate name).}
 
-\item{show_points}{Logical, whether to show individual data points (default is FALSE).}
+\item{show_points}{logical, whether to show individual data points (default is FALSE).}
 
-\item{point_alpha}{Alpha value for data points if shown (default is 0.05).}
+\item{point_alpha}{alpha value for data points if shown (default is 0.05).}
 
-\item{point_size}{Size of data points if shown (default is 0.5).}
+\item{point_size}{size of data points if shown (default is 0.5).}
 
-\item{include_timestamp}{Logical, whether to include timestamp in plot title and filename (default is FALSE).}
+\item{include_timestamp}{logical, whether to include timestamp in plot title and filename (default is FALSE).}
 
-\item{save_path}{Path to save the plot (optional).}
+\item{save_path}{path to save the plot (optional).}
 
-\item{prefix}{Optional prefix for the saved file name (default is NULL).}
+\item{prefix}{optional prefix for the saved file name (default is NULL).}
 
-\item{width}{Width of the saved plot in inches (default is 12).}
+\item{width}{width of the saved plot in inches (default is 12).}
 
-\item{height}{Height of the saved plot in inches (default is 8).}
+\item{height}{height of the saved plot in inches (default is 8).}
 
-\item{legend_position}{Position of the legend (default is "right").}
+\item{legend_position}{position of the legend (default is "right").}
 
-\item{y_limits}{Y-axis limits (optional).}
+\item{y_limits}{y-axis limits (optional).}
 
-\item{coord_flip}{Logical, whether to flip the coordinates of the plot (default is FALSE).}
+\item{coord_flip}{logical, whether to flip the coordinates of the plot (default is FALSE).}
 
-\item{...}{Additional arguments passed to geom_boxplot().}
+\item{...}{additional arguments passed to geom_boxplot().}
 }
 \value{
-A ggplot object representing the boxplot with covariates.
+a ggplot object representing the boxplot with covariates.
 }
 \description{
-This function creates boxplots for one outcome variable across specified panel waves,
-allowing for different groups as covariates. It combines features from
+this function creates boxplots for one outcome variable across specified panel waves,
+allowing for different groups as covariates. it combines features from
 margot_plot_boxplot() and margot_plot_slope_covariate().
 }
 \examples{
 \dontrun{
-# Example 1: Basic usage with all waves
+# example 1: basic usage with all waves
 p1 <- margot_plot_boxplot_covariate(
   data = your_data,
   outcome = "env_climate_chg_concern",
@@ -89,7 +89,7 @@ p1 <- margot_plot_boxplot_covariate(
   id_col = "id"
 )
 
-# Example 2: Plotting specific waves with custom labels
+# example 2: plotting specific waves with custom labels
 p2 <- margot_plot_boxplot_covariate(
   data = your_data,
   outcome = "political_orientation",
@@ -100,7 +100,7 @@ p2 <- margot_plot_boxplot_covariate(
   id_col = "id"
 )
 
-# Example 3: Showing individual points and flipping coordinates
+# example 3: showing individual points and flipping coordinates
 p3 <- margot_plot_boxplot_covariate(
   data = your_data,
   outcome = "env_sat_nz_environment",
@@ -112,7 +112,7 @@ p3 <- margot_plot_boxplot_covariate(
   id_col = "id"
 )
 
-# Example 4: Customizing plot appearance and saving
+# example 4: customizing plot appearance and saving
 p4 <- margot_plot_boxplot_covariate(
   data = your_data,
   outcome = "envefficacy",
@@ -128,7 +128,7 @@ p4 <- margot_plot_boxplot_covariate(
   id_col = "id"
 )
 
-# Example 5: Using with categorical outcome and including timestamp
+# example 5: using with categorical outcome and including timestamp
 p5 <- margot_plot_boxplot_covariate(
   data = your_data,
   outcome = "env_climate_chg_cause",

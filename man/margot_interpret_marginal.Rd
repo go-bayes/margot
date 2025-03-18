@@ -35,9 +35,9 @@ and a lower E-value bound > 1. Default is `FALSE`.}
 }
 \value{
 A list containing one element:
-  \item{interpretation}{A character string containing a compact interpretation of each outcome in `df`,
-  including separate paragraph headings and sentence-cased descriptions, followed by a concluding paragraph
-  if applicable.}
+  \item{interpretation}{A character string containing a compact interpretation of each outcome in
+  `df`, including separate paragraph headings and sentence-cased descriptions, followed by a
+  concluding paragraph if applicable.}
 }
 \description{
 This function interprets the output of causal effect analysis, providing a compact report.

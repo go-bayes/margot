@@ -30,10 +30,12 @@
 #'
 #' @return A ggplot2 object representing the individual response plot.
 #'
-#' @import ggplot2
-#' @import dplyr
-#' @import tidyr
-#' @import cli
+#' @importFrom ggplot2 ggplot aes geom_point geom_line facet_wrap theme_classic theme element_text labs coord_cartesian scale_color_manual position_jitter ggsave
+#' @importFrom dplyr filter select group_by summarise n_distinct pull all_of
+#' @importFrom tidyr drop_na pivot_longer
+#' @importFrom cli cli_h1 cli_alert_info cli_alert_success cli_alert_danger cli_alert_warning
+#' @importFrom rlang sym
+#' @importFrom tools toTitleCase
 #'
 #' @examples
 #' \dontrun{
@@ -84,7 +86,7 @@ margot_plot_individual_responses <- function(data,
                                              y_label = NULL,
                                              x_label = NULL,
                                              color_palette = NULL,
-                                             theme = theme_classic(),
+                                             theme = ggplot2::theme_classic(),
                                              include_timestamp = FALSE,
                                              save_path = NULL,
                                              width = 16,
@@ -99,7 +101,10 @@ margot_plot_individual_responses <- function(data,
 
   cli::cli_h1("Margot Plot Individual Responses")
 
-  # Check for required columns
+  # null coalescing operator replacement
+  `%||%` <- function(x, y) if (is.null(x)) y else x
+
+  # check for required columns
   required_cols <- c(id_col, wave_col, y_vars)
   if (!all(required_cols %in% colnames(data))) {
     missing_cols <- setdiff(required_cols, colnames(data))
@@ -107,37 +112,37 @@ margot_plot_individual_responses <- function(data,
     return(NULL)
   }
 
-  # Prepare the data
+  # prepare the data
   cli::cli_alert_info("Preparing data...")
 
-  # Filter waves if specified and drop NA values
+  # filter waves if specified and drop NA values
   if (!is.null(waves)) {
     data <- data %>%
-      dplyr::filter(!!sym(wave_col) %in% waves) %>%
-      dplyr::select(!!sym(id_col), !!sym(wave_col), all_of(y_vars)) %>%
+      dplyr::filter(!!rlang::sym(wave_col) %in% waves) %>%
+      dplyr::select(!!rlang::sym(id_col), !!rlang::sym(wave_col), dplyr::all_of(y_vars)) %>%
       tidyr::drop_na()
   } else {
     data <- data %>%
-      dplyr::select(!!sym(id_col), !!sym(wave_col), all_of(y_vars)) %>%
+      dplyr::select(!!rlang::sym(id_col), !!rlang::sym(wave_col), dplyr::all_of(y_vars)) %>%
       tidyr::drop_na()
   }
 
-  # Check if there's any data left after filtering
+  # check if there's any data left after filtering
   if (nrow(data) == 0) {
     cli::cli_alert_danger("No data left after dropping NA values.")
     return(NULL)
   }
 
-  # Ensure each ID has data for all waves
+  # ensure each ID has data for all waves
   complete_ids <- data %>%
-    dplyr::group_by(!!sym(id_col)) %>%
-    dplyr::summarise(n_waves = dplyr::n_distinct(!!sym(wave_col))) %>%
+    dplyr::group_by(!!rlang::sym(id_col)) %>%
+    dplyr::summarise(n_waves = dplyr::n_distinct(!!rlang::sym(wave_col))) %>%
     dplyr::filter(n_waves == dplyr::n_distinct(data[[wave_col]])) %>%
-    dplyr::pull(!!sym(id_col))
+    dplyr::pull(!!rlang::sym(id_col))
 
-  data <- data %>% dplyr::filter(!!sym(id_col) %in% complete_ids)
+  data <- data %>% dplyr::filter(!!rlang::sym(id_col) %in% complete_ids)
 
-  # Sample IDs if data_fraction < 1 or random_draws is specified
+  # sample IDs if data_fraction < 1 or random_draws is specified
   if (data_fraction < 1 || !is.null(random_draws)) {
     cli::cli_alert_info("Sampling IDs...")
     if (!is.null(seed)) set.seed(seed)
@@ -156,12 +161,12 @@ margot_plot_individual_responses <- function(data,
   }
 
   cli::cli_alert_info("Pivoting data...")
-  df <- tidyr::pivot_longer(data, cols = all_of(y_vars), names_to = "variable", values_to = "value")
+  df <- tidyr::pivot_longer(data, cols = dplyr::all_of(y_vars), names_to = "variable", values_to = "value")
 
   df$variable <- gsub("_", " ", df$variable)
   df$variable <- tools::toTitleCase(df$variable)
 
-  # Determine y-axis limits if full_response_scale is TRUE
+  # determine y-axis limits if full_response_scale is TRUE
   if (full_response_scale) {
     cli::cli_alert_info("Calculating response scale limits...")
     if (is.null(scale_range)) {
@@ -182,21 +187,22 @@ margot_plot_individual_responses <- function(data,
     y_limits <- NULL
   }
 
-  # Create the plot
+  # create the plot
   cli::cli_alert_info("Creating plot...")
 
   p <- tryCatch({
-    ggplot(df, aes(x = !!sym(wave_col), y = value, color = variable, group = interaction(!!sym(id_col), variable))) +
-      geom_point(position = position_jitter(height = jitter_amount, width = 0)) +
-      geom_line(position = position_jitter(height = jitter_amount, width = 0)) +
-      facet_wrap(as.formula(paste("~", id_col))) +
+    ggplot2::ggplot(df, ggplot2::aes(x = !!rlang::sym(wave_col), y = value, color = variable,
+                                     group = interaction(!!rlang::sym(id_col), variable))) +
+      ggplot2::geom_point(position = ggplot2::position_jitter(height = jitter_amount, width = 0)) +
+      ggplot2::geom_line(position = ggplot2::position_jitter(height = jitter_amount, width = 0)) +
+      ggplot2::facet_wrap(as.formula(paste("~", id_col))) +
       theme +
-      theme(axis.text.x = element_text(angle = wave_label_angle, hjust = 1),
-            legend.position = legend_position) +
-      labs(title = title,
-           y = y_label %||% "Value",
-           x = x_label %||% "Wave",
-           color = "Variable")
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = wave_label_angle, hjust = 1),
+                     legend.position = legend_position) +
+      ggplot2::labs(title = title,
+                    y = y_label %||% "Value",
+                    x = x_label %||% "Wave",
+                    color = "Variable")
   }, error = function(e) {
     cli::cli_alert_danger("Error creating plot: {conditionMessage(e)}")
     return(NULL)
@@ -206,20 +212,20 @@ margot_plot_individual_responses <- function(data,
     return(NULL)
   }
 
-  # Apply y-axis limits if full_response_scale is TRUE
+  # apply y-axis limits if full_response_scale is TRUE
   if (full_response_scale && !is.null(y_limits)) {
     y_range <- diff(y_limits)
-    p <- p + coord_cartesian(ylim = c(y_limits[1] - y_range * 0.05, y_limits[2] + y_range * 0.05))
+    p <- p + ggplot2::coord_cartesian(ylim = c(y_limits[1] - y_range * 0.05, y_limits[2] + y_range * 0.05))
   }
 
-  # Apply color palette
+  # apply color palette
   if (is.null(color_palette)) {
     color_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
                        "#D55E00", "#CC79A7", "#000000", "#999999")
   }
-  p <- p + scale_color_manual(values = color_palette)
+  p <- p + ggplot2::scale_color_manual(values = color_palette)
 
-  # Save plot if a save path is provided
+  # save plot if a save path is provided
   if (!is.null(save_path)) {
     cli::cli_alert_info("Saving plot...")
     tryCatch({
@@ -236,7 +242,7 @@ margot_plot_individual_responses <- function(data,
       }
 
       full_path_png <- file.path(save_path, paste0(filename, ".png"))
-      ggsave(
+      ggplot2::ggsave(
         plot = p,
         filename = full_path_png,
         width = width,
@@ -259,6 +265,6 @@ margot_plot_individual_responses <- function(data,
 
   cli::cli_alert_success("Plot created successfully \U0001F44D")
 
-  # Return the plot object directly
+  # return the plot object directly
   return(p)
 }

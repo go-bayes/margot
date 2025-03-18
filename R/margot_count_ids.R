@@ -1,31 +1,32 @@
-#' Count Individual Participants in Longitudinal Data
+#' count individual participants in longitudinal data
 #'
-#' @param dat A data frame containing the longitudinal data
-#' @param start_wave Integer. The first wave to process (default: 2009)
-#' @param end_wave Integer. The last wave to process (default: 2022)
-#' @param prev_wave_counts Integer vector. Previous wave thresholds to count (default: c(1,2,3,4))
-#' @param opt_in_var Character. Name of the opt-in variable to track (default: "sample_frame_opt_in")
-#' @param opt_in_true Value indicating opted-in status (default: 1)
-#' @param opt_in_false Value indicating not opted-in status (default: 0)
+#' @param dat a data frame containing the longitudinal data
+#' @param start_wave integer. the first wave to process (default: 2009)
+#' @param end_wave integer. the last wave to process (default: 2022)
+#' @param prev_wave_counts integer vector. previous wave thresholds to count (default: c(1,2,3,4))
+#' @param opt_in_var character. name of the opt-in variable to track (default: "sample_frame_opt_in")
+#' @param opt_in_true value indicating opted-in status (default: 1)
+#' @param opt_in_false value indicating not opted-in status (default: 0)
 #'
-#' @return A tibble with columns for:
-#'   - wave: Survey wave number
-#'   - n_total: Cumulative unique participants through current wave
-#'   - n_active: Active participants in current wave
-#'   - n_deceased: Newly deceased in current wave
-#'   - n_deceased_total: Total deceased through current wave
-#'   - n_returned: Participants absent in previous wave but present in earlier waves
-#'   - n_returned_total: Total returnees through current wave
-#'   - n_opt_in: Newly opted-in participants in current wave
-#'   - n_opt_in_total: Total opted-in participants through current wave
-#'   - n_wave_1plus: Participants in 1+ previous waves
-#'   - n_wave_2plus: Participants in 2+ previous waves
-#'   - n_wave_3plus: Participants in 3+ previous waves
-#'   - n_wave_4plus: Participants in 4+ previous waves
+#' @return a tibble with columns for:
+#'   - wave: survey wave number
+#'   - n_total: cumulative unique participants through current wave
+#'   - n_active: active participants in current wave
+#'   - n_deceased: newly deceased in current wave
+#'   - n_deceased_total: total deceased through current wave
+#'   - n_returned: participants absent in previous wave but present in earlier waves
+#'   - n_returned_total: total returnees through current wave
+#'   - n_opt_in: newly opted-in participants in current wave
+#'   - n_opt_in_total: total opted-in participants through current wave
+#'   - n_wave_1plus: participants in 1+ previous waves
+#'   - n_wave_2plus: participants in 2+ previous waves
+#'   - n_wave_3plus: participants in 3+ previous waves
+#'   - n_wave_4plus: participants in 4+ previous waves
 #'
-#' @import dplyr
-#' @import tibble
-#' @import cli
+#' @importFrom dplyr filter mutate pull anti_join bind_rows %>%
+#' @importFrom tibble tibble
+#' @importFrom cli cli_alert_info cli_alert_warning cli_alert_success
+#' @importFrom rlang sym !!
 #'
 #' @export
 margot_count_ids <- function(dat,
@@ -37,9 +38,9 @@ margot_count_ids <- function(dat,
                              opt_in_false = 0) {
 
   cli::cli_alert_info("Starting participant count calculation")
-  results <- tibble()
+  results <- tibble::tibble()
 
-  # Validate opt_in variable exists if needed
+  # validate opt_in variable exists if needed
   if(opt_in_var %in% names(dat)) {
     track_opt_ins <- TRUE
   } else {
@@ -47,11 +48,11 @@ margot_count_ids <- function(dat,
     cli::cli_alert_warning(sprintf("opt_in variable '%s' not found in data - opt-in tracking disabled", opt_in_var))
   }
 
-  # Ensure wave is numeric
+  # ensure wave is numeric
   dat <- dat %>%
-    mutate(wave = as.numeric(as.character(wave)))
+    dplyr::mutate(wave = as.numeric(as.character(wave)))
 
-  # Initialize tracking
+  # initialize tracking
   all_waves <- seq(start_wave, end_wave)
   wave_history <- matrix(0, nrow = 0, ncol = length(all_waves))
   colnames(wave_history) <- as.character(all_waves)
@@ -60,7 +61,7 @@ margot_count_ids <- function(dat,
   returned_ids <- character(0)
   opted_in_ids <- character(0)
 
-  # Validate prev_wave_counts
+  # validate prev_wave_counts
   if(!is.numeric(prev_wave_counts) || any(prev_wave_counts < 1)) {
     stop("prev_wave_counts must be a numeric vector with values >= 1")
   }
@@ -69,28 +70,28 @@ margot_count_ids <- function(dat,
   for(wave in all_waves) {
     cli::cli_alert_info(paste("Processing wave:", wave))
 
-    # Get current wave data
+    # get current wave data
     wave_data <- dat %>%
-      filter(wave == !!wave)
+      dplyr::filter(wave == !!wave)
 
-    # Count participants by status
+    # count participants by status
     active_ids <- wave_data %>%
-      filter(year_measured == 1) %>%
-      pull(id) %>%
+      dplyr::filter(year_measured == 1) %>%
+      dplyr::pull(id) %>%
       unique()
 
     newly_deceased <- wave_data %>%
-      filter(year_measured == -1) %>%
-      pull(id) %>%
+      dplyr::filter(year_measured == -1) %>%
+      dplyr::pull(id) %>%
       unique()
 
-    # Track opt-ins for current wave if variable exists
+    # track opt-ins for current wave if variable exists
     if(track_opt_ins) {
       new_opt_ins <- wave_data %>%
-        filter(year_measured == 1,
-               !!sym(opt_in_var) == opt_in_true) %>%
-        anti_join(tibble(id = opted_in_ids), by = "id") %>%
-        pull(id) %>%
+        dplyr::filter(year_measured == 1,
+                      !!rlang::sym(opt_in_var) == opt_in_true) %>%
+        dplyr::anti_join(tibble::tibble(id = opted_in_ids), by = "id") %>%
+        dplyr::pull(id) %>%
         unique()
 
       opted_in_ids <- union(opted_in_ids, new_opt_ins)
@@ -98,32 +99,32 @@ margot_count_ids <- function(dat,
       new_opt_ins <- character(0)
     }
 
-    # Update tracking with current wave participants
+    # update tracking with current wave participants
     participant_ids <- union(participant_ids, c(active_ids, newly_deceased))
     deceased_ids <- union(deceased_ids, newly_deceased)
 
-    # Calculate cumulative total through this wave
+    # calculate cumulative total through this wave
     cumulative_total <- dat %>%
-      filter(wave <= !!wave, year_measured %in% c(1, -1)) %>%
-      pull(id) %>%
+      dplyr::filter(wave <= !!wave, year_measured %in% c(1, -1)) %>%
+      dplyr::pull(id) %>%
       unique() %>%
       length()
 
-    # Identify returnees (present in earlier waves but not previous wave)
+    # identify returnees (present in earlier waves but not previous wave)
     if(wave > start_wave) {
-      # Get previous wave participants
+      # get previous wave participants
       prev_wave_actives <- dat %>%
-        filter(wave == (!!wave - 1), year_measured == 1) %>%
-        pull(id) %>%
+        dplyr::filter(wave == (!!wave - 1), year_measured == 1) %>%
+        dplyr::pull(id) %>%
         unique()
 
-      # Get participants from waves before the previous wave
+      # get participants from waves before the previous wave
       earlier_participants <- dat %>%
-        filter(wave < (!!wave - 1), year_measured == 1) %>%
-        pull(id) %>%
+        dplyr::filter(wave < (!!wave - 1), year_measured == 1) %>%
+        dplyr::pull(id) %>%
         unique()
 
-      # Find returnees: active now, not in previous wave, but in earlier waves
+      # find returnees: active now, not in previous wave, but in earlier waves
       new_returnees <- intersect(
         setdiff(active_ids, prev_wave_actives), # not in previous wave
         earlier_participants  # but were in earlier waves
@@ -134,7 +135,7 @@ margot_count_ids <- function(dat,
       new_returnees <- character(0)
     }
 
-    # Update wave history matrix
+    # update wave history matrix
     new_ids <- setdiff(active_ids, rownames(wave_history))
     if(length(new_ids) > 0) {
       new_rows <- matrix(0, nrow = length(new_ids), ncol = length(all_waves))
@@ -143,12 +144,12 @@ margot_count_ids <- function(dat,
       wave_history <- rbind(wave_history, new_rows)
     }
 
-    # Mark current wave in history
+    # mark current wave in history
     wave_idx <- which(all_waves == wave)
     active_rows <- match(active_ids, rownames(wave_history))
     wave_history[active_rows, wave_idx] <- 1
 
-    # Compute previous wave appearances
+    # compute previous wave appearances
     participants_in_prev_waves <- list()
     if(wave > start_wave) {
       active_rows <- match(active_ids, rownames(wave_history))
@@ -165,8 +166,8 @@ margot_count_ids <- function(dat,
       }
     }
 
-    # Create results for current wave with new naming convention
-    temp_tibble <- tibble(
+    # create results for current wave with new naming convention
+    temp_tibble <- tibble::tibble(
       wave = wave,
       n_total = cumulative_total,
       n_active = length(active_ids),
@@ -178,17 +179,17 @@ margot_count_ids <- function(dat,
       n_opt_in_total = length(opted_in_ids)
     )
 
-    # Add previous wave counts with new naming convention
+    # add previous wave counts with new naming convention
     for(count in prev_wave_counts) {
       temp_tibble[[paste0("n_wave_", count, "plus")]] <-
         participants_in_prev_waves[[paste0("prev_", count)]]
     }
 
-    results <- bind_rows(results, temp_tibble)
+    results <- dplyr::bind_rows(results, temp_tibble)
     cli::cli_alert_success(paste("Completed processing for wave:", wave))
   }
 
-  # Add variable labels using attributes
+  # add variable labels using attributes
   attr(results, "variable.labels") <- c(
     wave = "Survey Wave",
     n_total = "Total Unique Participants (Cumulative)",
@@ -208,17 +209,21 @@ margot_count_ids <- function(dat,
   cli::cli_alert_success("Participant count calculation completed \U0001F44D")
   return(results)
 }
-# debugging function to include opt-in checking
+
+#' debugging function to include opt-in checking
+#'
+#' @keywords internal
+#' @noRd
 # debug_participant_counts <- function(dat, results_df, opt_in_var = "sample_frame_opt_in", opt_in_true = 1) {
-#   # Get all unique IDs from raw data
+#   # get all unique ids from raw data
 #   all_unique_ids <- unique(dat$id)
 #
-#   # Get final cumulative count from results
+#   # get final cumulative count from results
 #   final_cumulative <- tail(results_df$total_participants_cum, 1)
 #   final_opt_ins <- tail(results_df$opt_ins_cum, 1)
 #
-#   # Basic comparison
-#   comparison <- tibble(
+#   # basic comparison
+#   comparison <- tibble::tibble(
 #     total_unique_ids = length(all_unique_ids),
 #     final_cumulative = final_cumulative,
 #     difference = length(all_unique_ids) - final_cumulative,
@@ -226,23 +231,23 @@ margot_count_ids <- function(dat,
 #     final_opt_ins_cum = final_opt_ins
 #   )
 #
-#   # Find IDs that are counted vs not counted
+#   # find ids that are counted vs not counted
 #   ids_in_measured <- dat %>%
-#     filter(year_measured %in% c(1, -1)) %>%
-#     pull(id) %>%
+#     dplyr::filter(year_measured %in% c(1, -1)) %>%
+#     dplyr::pull(id) %>%
 #     unique()
 #
 #   ids_only_zero <- setdiff(all_unique_ids, ids_in_measured)
 #
-#   # Detailed analysis of potentially problematic IDs
+#   # detailed analysis of potentially problematic ids
 #   problem_cases <- dat %>%
-#     filter(id %in% ids_only_zero) %>%
-#     group_by(id) %>%
-#     summarize(
+#     dplyr::filter(id %in% ids_only_zero) %>%
+#     dplyr::group_by(id) %>%
+#     dplyr::summarize(
 #       all_waves = paste(sort(unique(wave)), collapse = ", "),
 #       all_measured_values = paste(sort(unique(year_measured)), collapse = ", "),
-#       all_opt_in_values = paste(sort(unique(!!sym(opt_in_var))), collapse = ", "),
-#       n_waves = n_distinct(wave),
+#       all_opt_in_values = paste(sort(unique(!!rlang::sym(opt_in_var))), collapse = ", "),
+#       n_waves = dplyr::n_distinct(wave),
 #       .groups = 'drop'
 #     )
 #

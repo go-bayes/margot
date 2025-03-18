@@ -34,9 +34,11 @@
 #'
 #' @return A ggplot2 object representing the discontinuity plot.
 #'
-#' @import ggplot2
-#' @import dplyr
-#' @import cli
+#' @importFrom ggplot2 ggplot aes geom_jitter theme_classic scale_color_manual theme element_text labs geom_smooth geom_vline annotate ggsave
+#' @importFrom dplyr mutate filter select n_distinct sample_frac
+#' @importFrom cli cli_h1 cli_alert_info cli_alert_success cli_alert_danger cli_alert_warning
+#' @importFrom rlang sym
+#' @importFrom tools toTitleCase
 #'
 #' @export
 #'
@@ -102,6 +104,9 @@ margot_plot_discontinuity <- function(data,
 
   tryCatch(
     {
+      # null coalescing operator replacement
+      `%||%` <- function(x, y) if (is.null(x)) y else x
+
       # function to transform labels
       transform_label <- function(label) {
         if (remove_underscores) {
@@ -109,7 +114,7 @@ margot_plot_discontinuity <- function(data,
         }
         if (use_title_case) {
           label <- tools::toTitleCase(label)
-          # Preserve "NZ" capitalization
+          # preserve "NZ" capitalization
           label <- gsub("Nz", "NZ", label)
         }
         return(label)
@@ -124,41 +129,41 @@ margot_plot_discontinuity <- function(data,
 
       # prepare the data
       df <- data %>%
-        mutate(year = as.numeric(as.character(wave))) %>%
-        mutate(timeline = base_date + tscore)
+        dplyr::mutate(year = as.numeric(as.character(wave))) %>%
+        dplyr::mutate(timeline = base_date + tscore)
 
       # filter date range if specified
       if (!is.null(start_date)) {
-        df <- df %>% filter(timeline >= as.Date(start_date))
+        df <- df %>% dplyr::filter(timeline >= as.Date(start_date))
       }
       if (!is.null(end_date)) {
-        df <- df %>% filter(timeline <= as.Date(end_date))
+        df <- df %>% dplyr::filter(timeline <= as.Date(end_date))
       }
 
       # remove rows with na or infinite values in y_var
-      df <- df %>% filter(!is.na(!!sym(y_var)) & is.finite(!!sym(y_var)))
+      df <- df %>% dplyr::filter(!is.na(!!rlang::sym(y_var)) & is.finite(!!rlang::sym(y_var)))
 
-      # Calculate unique participants and observations after cleaning
+      # calculate unique participants and observations after cleaning
       n_participants <- df %>%
-        select(id) %>%
-        n_distinct()
+        dplyr::select(id) %>%
+        dplyr::n_distinct()
       n_observations <- nrow(df)
 
-      # Sample the data if data_fraction < 1
+      # sample the data if data_fraction < 1
       if (data_fraction < 1) {
         if (!is.null(seed)) {
           set.seed(seed)
         }
-        df <- df %>% sample_frac(data_fraction)
+        df <- df %>% dplyr::sample_frac(data_fraction)
 
-        # Recalculate counts after sampling
+        # recalculate counts after sampling
         n_participants <- df %>%
-          select(id) %>%
-          n_distinct()
+          dplyr::select(id) %>%
+          dplyr::n_distinct()
         n_observations <- nrow(df)
       }
 
-      # Generate automatic title if not provided
+      # generate automatic title if not provided
       if (is.null(title)) {
         year_range <- range(df$year, na.rm = TRUE)
         title <- sprintf(
@@ -176,10 +181,10 @@ margot_plot_discontinuity <- function(data,
       n_discontinuities <- length(event_dates) + 1
 
       df <- df %>%
-        mutate(event_condition = cut(timeline,
-          breaks = c(as.Date(-Inf), event_dates, as.Date(Inf)),
-          labels = seq_len(n_discontinuities),
-          include.lowest = TRUE
+        dplyr::mutate(event_condition = cut(timeline,
+                                            breaks = c(as.Date(-Inf), event_dates, as.Date(Inf)),
+                                            labels = seq_len(n_discontinuities),
+                                            include.lowest = TRUE
         ))
 
       # recycle colors for the number of discontinuities
@@ -190,19 +195,19 @@ margot_plot_discontinuity <- function(data,
       cli::cli_alert_info("Creating base plot...")
 
       # create the ggplot
-      p <- ggplot(df, aes(x = timeline, y = !!sym(y_var), color = event_condition)) +
-        geom_jitter(alpha = point_alpha, width = jitter_width) +
-        theme_classic() +
-        scale_color_manual(
+      p <- ggplot2::ggplot(df, ggplot2::aes(x = timeline, y = !!rlang::sym(y_var), color = event_condition)) +
+        ggplot2::geom_jitter(alpha = point_alpha, width = jitter_width) +
+        ggplot2::theme_classic() +
+        ggplot2::scale_color_manual(
           values = recycled_colors,
           name = "Event Periods"
         ) +
-        theme(
+        ggplot2::theme(
           legend.position = legend_position,
-          legend.text = element_text(size = 12),
-          legend.title = element_text(size = 12)
+          legend.text = ggplot2::element_text(size = 12),
+          legend.title = ggplot2::element_text(size = 12)
         ) +
-        labs(
+        ggplot2::labs(
           title = title,
           y = transform_label(y_label %||% y_var),
           x = transform_label(x_label %||% "Timeline")
@@ -212,16 +217,16 @@ margot_plot_discontinuity <- function(data,
 
       cli::cli_alert_info("Adding smoothing...")
 
-      # Add smoothing directly without wrapper
+      # add smoothing directly without wrapper
       p <- p + tryCatch(
         {
           if (smoothing_method == "gam") {
-            geom_smooth(
+            ggplot2::geom_smooth(
               method = "gam",
               formula = y ~ s(x, k = gam_k), se = FALSE
             )
           } else {
-            geom_smooth(
+            ggplot2::geom_smooth(
               method = smoothing_method,
               formula = y ~ x, se = FALSE
             )
@@ -230,7 +235,7 @@ margot_plot_discontinuity <- function(data,
         error = function(e) {
           cli::cli_alert_danger("Failed to add smoothing: {conditionMessage(e)}")
           cli::cli_alert_info("Plotting without smoothing...")
-          geom_blank()
+          ggplot2::geom_blank()
         }
       )
 
@@ -243,7 +248,7 @@ margot_plot_discontinuity <- function(data,
         event_date <- event_dates[i]
         event_name <- if (!is.null(event_names) && length(event_names) >= i) event_names[i] else paste("Event", i)
 
-        p <- p + geom_vline(
+        p <- p + ggplot2::geom_vline(
           xintercept = event_date,
           color = event_line_color,
           alpha = event_line_alpha,
@@ -255,7 +260,7 @@ margot_plot_discontinuity <- function(data,
         y_max <- max(df[[y_var]], na.rm = TRUE)
         y_min <- min(df[[y_var]], na.rm = TRUE)
         y_range <- y_max - y_min
-        label_height <- nchar(event_name) * 0.015 * y_range # Adjust this multiplier as needed
+        label_height <- nchar(event_name) * 0.015 * y_range # adjust this multiplier as needed
         y_position <- y_max
 
         # calculate x-position slightly to the left of the event line
@@ -263,28 +268,28 @@ margot_plot_discontinuity <- function(data,
         x_position <- event_date - x_offset
 
         # add white rectangle with grey border behind the event label
-        p <- p + annotate("rect",
-          xmin = x_position - 0.5,
-          xmax = x_position + 0.5,
-          ymin = y_position - label_height,
-          ymax = y_position,
-          fill = "white",
-          color = "grey50",
-          alpha = 0.9,
-          linewidth = 0.25
+        p <- p + ggplot2::annotate("rect",
+                                   xmin = x_position - 0.5,
+                                   xmax = x_position + 0.5,
+                                   ymin = y_position - label_height,
+                                   ymax = y_position,
+                                   fill = "white",
+                                   color = "grey50",
+                                   alpha = 0.9,
+                                   linewidth = 0.25
         )
 
         # add text label for the event
-        p <- p + annotate("text",
-          x = x_position,
-          y = y_position,
-          label = transform_label(event_name),
-          color = event_label_color,
-          size = event_label_size,
-          angle = 90,
-          vjust = 1, # Align text to the top of the label box
-          hjust = 1
-        ) # Align text to the right of the label box
+        p <- p + ggplot2::annotate("text",
+                                   x = x_position,
+                                   y = y_position,
+                                   label = transform_label(event_name),
+                                   color = event_label_color,
+                                   size = event_label_size,
+                                   angle = 90,
+                                   vjust = 1, # align text to the top of the label box
+                                   hjust = 1  # align text to the right of the label box
+        )
       }
       cli::cli_alert_success("Event lines and labels added")
       cli::cli_alert_info("Saving plot...")
@@ -304,7 +309,7 @@ margot_plot_discontinuity <- function(data,
             cli::cli_alert_success("Plot printed successfully")
 
             cli::cli_alert_info("Saving plot as PNG...")
-            ggsave(
+            ggplot2::ggsave(
               plot = p,
               filename = file.path(save_path, paste0(filename, ".png")),
               width = width,
@@ -343,229 +348,3 @@ margot_plot_discontinuity <- function(data,
     }
   )
 }
-# margot_plot_discontinuity <- function(data,
-#                                       y_var,
-#                                       event_dates,
-#                                       event_names = NULL,
-#                                       start_date = NULL,
-#                                       end_date = NULL,
-#                                       title = NULL,
-#                                       y_label = NULL,
-#                                       x_label = NULL,
-#                                       smoothing_method = "gam",
-#                                       gam_k = 4,
-#                                       data_fraction = 1,
-#                                       seed = NULL,
-#                                       point_alpha = 0.03,
-#                                       jitter_width = 1,
-#                                       base_date = as.Date("2009-06-30"),
-#                                       save_path = NULL,
-#                                       width = 12,
-#                                       height = 8,
-#                                       event_line_color = "darkred",
-#                                       event_line_alpha = 0.7,
-#                                       event_line_type = "dashed",
-#                                       event_line_width = 0.5,
-#                                       event_label_size = 3,
-#                                       event_label_color = "darkred",
-#                                       legend_position = "bottom",
-#                                       use_title_case = TRUE,
-#                                       remove_underscores = TRUE) {
-#
-#   cli::cli_h1("Margot Plot Discontinuity")
-#
-#   # initialise p as NULL
-#   p <- NULL
-#
-#   tryCatch({
-#     # function to transform labels
-#     transform_label <- function(label) {
-#       if (remove_underscores) {
-#         label <- gsub("_", " ", label)
-#       }
-#       if (use_title_case) {
-#         label <- tools::toTitleCase(label)
-#       }
-#       return(label)
-#     }
-#
-#     cli::cli_alert_info("Preparing data...")
-#     # define color palette
-#     modified_okabe_ito_colors <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
-#                                    "#D55E00", "#CC79A7", "#000000", "#999999")
-#
-#     # prepare the data
-#     df <- data %>%
-#       mutate(year = as.numeric(as.character(wave))) %>%
-#       mutate(timeline = base_date + tscore)
-#
-#     # Sample the data if data_fraction < 1
-#     if (data_fraction < 1) {
-#       if (!is.null(seed)) {
-#         set.seed(seed)
-#       }
-#       df <- df %>% sample_frac(data_fraction)
-#     }
-#
-#     # create event condition based on multiple event dates
-#     event_dates <- as.Date(event_dates)
-#     n_discontinuities <- length(event_dates) + 1
-#
-#     df <- df %>%
-#       mutate(event_condition = cut(timeline,
-#                                    breaks = c(as.Date(-Inf), event_dates, as.Date(Inf)),
-#                                    labels = seq_len(n_discontinuities),
-#                                    include.lowest = TRUE))
-#
-#     # recycle colors for the number of discontinuities
-#     recycled_colors <- rep_len(modified_okabe_ito_colors, length.out = n_discontinuities)
-#
-#     # filter date range if specified
-#     if (!is.null(start_date)) {
-#       df <- df %>% filter(timeline >= as.Date(start_date))
-#     }
-#     if (!is.null(end_date)) {
-#       df <- df %>% filter(timeline <= as.Date(end_date))
-#     }
-#
-#     # remove rows with na or infinite values in y_var
-#     df <- df %>% filter(!is.na(!!sym(y_var)) & is.finite(!!sym(y_var)))
-#
-#     cli::cli_alert_success("Data prepared successfully")
-#
-#     cli::cli_alert_info("Creating base plot...")
-#     # create the ggplot
-#     p <- ggplot(df, aes(x = timeline, y = !!sym(y_var), color = event_condition)) +
-#       geom_jitter(alpha = point_alpha, width = jitter_width) +
-#       theme_classic() +
-#       scale_color_manual(values = recycled_colors,
-#                          name = "Event Periods") +
-#       theme(
-#         legend.position = legend_position,
-#         legend.text = element_text(size = 12),
-#         legend.title = element_text(size = 12)
-#       ) +
-#       labs(
-#         title = title,
-#         y = transform_label(y_label %||% y_var),
-#         x = transform_label(x_label %||% "Timeline")
-#       )
-#
-#     cli::cli_alert_success("Base plot created")
-#
-#     cli::cli_alert_info("Adding smoothing...")
-#
-#     # Add smoothing directly without wrapper
-#     p <- p + tryCatch({
-#       if (smoothing_method == "gam") {
-#         geom_smooth(method = "gam",
-#                     formula = y ~ s(x, k = gam_k), se = FALSE)
-#       } else {
-#         geom_smooth(method = smoothing_method,
-#                     formula = y ~ x, se = FALSE)
-#       }
-#     }, error = function(e) {
-#       cli::cli_alert_danger("Failed to add smoothing: {conditionMessage(e)}")
-#       cli::cli_alert_info("Plotting without smoothing...")
-#       geom_blank()
-#     })
-#
-#     cli::cli_alert_success("Smoothing added")
-#
-#     cli::cli_alert_info("Adding event lines and labels...")
-#     # add vertical lines for event dates
-#     for (i in seq_along(event_dates)) {
-#       event_date <- event_dates[i]
-#       event_name <- if (!is.null(event_names) && length(event_names) >= i) event_names[i] else paste("Event", i)
-#
-#       p <- p + geom_vline(xintercept = event_date,
-#                           color = event_line_color,
-#                           alpha = event_line_alpha,
-#                           linetype = event_line_type,
-#                           linewidth = event_line_width)
-#
-#       # calculate y-position for the label to be at the top of the data points
-#       y_max <- max(df[[y_var]], na.rm = TRUE)
-#       y_min <- min(df[[y_var]], na.rm = TRUE)
-#       y_range <- y_max - y_min
-#       label_height <- nchar(event_name) * 0.015 * y_range  # Adjust this multiplier as needed
-#       y_position <- y_max
-#
-#       # calculate x-position slightly to the left of the event line
-#       x_offset <- 5  # adjust this value to move labels further left or right
-#       x_position <- event_date - x_offset
-#
-#       # add white rectangle with grey border behind the event label
-#       p <- p + annotate("rect",
-#                         xmin = x_position - 0.5,
-#                         xmax = x_position + 0.5,
-#                         ymin = y_position - label_height,
-#                         ymax = y_position,
-#                         fill = "white",
-#                         color = "grey50",
-#                         alpha = 0.9,
-#                         size = 0.25)
-#
-#       # add text label for the event
-#       p <- p + annotate("text",
-#                         x = x_position,
-#                         y = y_position,
-#                         label = transform_label(event_name),
-#                         color = event_label_color,
-#                         size = event_label_size,
-#                         angle = 90,
-#                         vjust = 1,  # Align text to the top of the label box
-#                         hjust = 1)  # Align text to the right of the label box
-#     }
-#     cli::cli_alert_success("Event lines and labels added")
-#     cli::cli_alert_info("Saving plot...")
-#
-#     # save plot if a save path is provided
-#     if (!is.null(save_path)) {
-#       # generate filename
-#       filename <- paste0(
-#         "discontinuity_plot_", y_var, "_",
-#         format(Sys.Date(), "%Y%m%d")
-#       )
-#
-#       tryCatch({
-#         cli::cli_alert_info("Attempting to print plot...")
-#         print(p)
-#         cli::cli_alert_success("Plot printed successfully")
-#
-#         cli::cli_alert_info("Saving plot as PNG...")
-#         ggsave(
-#           plot = p,
-#           filename = file.path(save_path, paste0(filename, ".png")),
-#           width = width,
-#           height = height,
-#           units = "in",
-#           device = 'png',
-#           dpi = 400
-#         )
-#         cli::cli_alert_success("Plot saved as PNG successfully")
-#
-#         cli::cli_alert_info("Saving plot as .qs file...")
-#         # from the margot package (go-bayes/margot)
-#         margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
-#
-#       }, error = function(e) {
-#         cli::cli_alert_danger("Error while saving: {conditionMessage(e)}")
-#       })
-#     } else {
-#       cli::cli_alert_info("No save path provided. Plot not saved.")
-#     }
-#
-#     cli::cli_alert_success("Margot plot discontinuity created successfully \U0001F44D")
-#
-#     # return the ggplot object
-#     return(p)
-#   }, error = function(e) {
-#     cli::cli_alert_danger("An error occurred: {conditionMessage(e)}")
-#     print(e)
-#     return(NULL)
-#   }, warning = function(w) {
-#     cli::cli_alert_warning("A warning occurred: {conditionMessage(w)}")
-#     print(w)
-#   })
-# }

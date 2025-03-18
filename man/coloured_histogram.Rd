@@ -48,15 +48,15 @@ clarifying which part of a distribution is shifted.
 }
 \examples{
  \dontrun{
-# Assuming df_19 is your dataframe and contains the column 'forgiveness'
+# assuming df_19 is your dataframe and contains the column 'forgiveness'
 graph <- coloured_histogram(
   df = df_19,
   col_name = "forgiveness",
   scale_min = 1,
   scale_max = 7,
   highlight_range = "highest",
-  binwidth = .1, # Adjust binwidth as needed
-  unit_of_change = 1 # Specify the unit of change
+  binwidth = .1, # adjust binwidth as needed
+  unit_of_change = 1 # specify the unit of change
 )
 print(graph)
 }
