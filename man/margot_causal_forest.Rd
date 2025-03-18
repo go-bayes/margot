@@ -22,7 +22,7 @@ margot_causal_forest(
 \arguments{
 \item{data}{A data frame containing all necessary variables.}
 
-\item{outcome_vars}{A character vector of outcome variable names to be modeled.}
+\item{outcome_vars}{A character vector of outcome variable names to be modelled.}
 
 \item{covariates}{A matrix of covariates to be used in the GRF models.}
 
@@ -40,15 +40,23 @@ margot_causal_forest(
 
 \item{save_models}{Logical indicating whether to save the full GRF model objects. Default is FALSE.}
 
-\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.7.}
+\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
+training policy trees. Default is 0.7.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
+
+\item{target_rate}{Character string specifying the type of RATE estimate. Options are \code{"AUTOC"} (default)
+and \code{"QINI"}.}
 }
 \value{
-A list containing model results, combined table, and other relevant information.
-
-A list containing model results, combined table, and other relevant information.
+A list containing model results, a combined table, and other relevant information.
 }
 \description{
-Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Features
+This function runs multiple GRF causal forest models with enhanced features. In addition to estimating
+causal effects, it can compute the Rank-Weighted Average Treatment Effect (RATE) for each model. RATE
+ranks individuals based on their predicted treatment effects and calculates the average effect for selected
+percentiles. When computing RATE, the \code{target_rate} parameter determines the variant: \code{"AUTOC"}
+(default) exhibits greater power when only a small subset of the population experiences nontrivial heterogeneous
+treatment effects, whereas \code{"QINI"} is more powerful when many individuals experience diffuse or substantial
+treatment effect heterogeneity.
 }

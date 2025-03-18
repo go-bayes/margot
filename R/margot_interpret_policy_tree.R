@@ -25,7 +25,7 @@
 #' )
 #'
 #' # interpret policy tree results with label mapping
-#' interpretation <- margot_interpret_policy_tree_new(
+#' interpretation <- margot_interpret_policy_tree(
 #'   model = models_multi,
 #'   model_name = "model_t2_env_not_climate_chg_concern_z",
 #'   label_mapping = label_mapping,
@@ -37,7 +37,7 @@
 #' }
 #'
 #' @export
-margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0.7,
+margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0.5,
                                          custom_action_names = NULL, label_mapping = NULL,
                                          original_df = NULL, remove_tx_prefix = TRUE,
                                          remove_z_suffix = TRUE, use_title_case = TRUE) {
@@ -79,7 +79,7 @@ margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0
   general_interpretation <- glue::glue(
     "**Policy Tree Interpretation:** A policy tree obtains simple rule-based policies, ",
     "where the rule takes the form of a shallow decision tree. The policytree algorithm ",
-    "uses doubly robust reward estimates from grf to find a shallow, but globally optimal ",
+    "uses doubly robust reward estimates from a causal forest model to find a shallow, but globally optimal ",
     "decision tree. We train the model on {train_proportion * 100}% of the data and then ",
     "evaluate the model on the remainder of the data. The graph helps to clarify whether ",
     "the leaf node in the test set samples are predicted to have mean outcomes in line ",

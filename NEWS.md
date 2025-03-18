@@ -13,7 +13,20 @@
 * convert values in decision tree plots from standard deviation units to data scale in `margot_interpret_policy_tree`
 * clean up require packages in  `margot_wide_machine()` and elsewhere [tick!].
 
+# [2025-03-18] margot 0.3.1.9
 
+# Improved
+- `here_save()` removed the call to base R
+- `here_read()` removed the call to base R
+- `margot_combine_results()` - made helper function
+- `margot_summary_panel` - specified functions required
+- `margot_censor` - specified functions required by data.table (#' @importFrom data.table as.data.table copy set get uniqueN)
+- `read_multiple_images()` - made internal
+- `margot_wide_machine()` - stated explicit functions in dependencies (removed zoo)
+- `margot_interpret_qini()` - improved for reporting
+- `margot_policy()` - now allows subsetting specific models
+- `margot_interpret_policy_batch()` - now allows subsetting specific models
+- `margot_causal_forest()` - added roxygen code (forgotten in last update). 
 
 # [2025-03-17] margot 0.3.1.8
 

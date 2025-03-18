@@ -25,7 +25,6 @@
 #'
 #' @export
 #' @importFrom here here
-#' @importFrom base saveRDS
 here_save <- function(df, name, dir_path = NULL, compress = TRUE, quiet = FALSE) {
   # Use push_mods if dir_path is NULL, maintaining backward compatibility
   save_dir <- if (is.null(dir_path)) push_mods else dir_path

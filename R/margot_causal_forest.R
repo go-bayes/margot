@@ -1,43 +1,30 @@
 #' Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Features
 #'
+#' This function runs multiple GRF causal forest models with enhanced features. In addition to estimating
+#' causal effects, it can compute the Rank-Weighted Average Treatment Effect (RATE) for each model. RATE
+#' ranks individuals based on their predicted treatment effects and calculates the average effect for selected
+#' percentiles. When computing RATE, the \code{target_rate} parameter determines the variant: \code{"AUTOC"}
+#' (default) exhibits greater power when only a small subset of the population experiences nontrivial heterogeneous
+#' treatment effects, whereas \code{"QINI"} is more powerful when many individuals experience diffuse or substantial
+#' treatment effect heterogeneity.
+#'
 #' @param data A data frame containing all necessary variables.
-#' @param outcome_vars A character vector of outcome variable names to be modeled.
+#' @param outcome_vars A character vector of outcome variable names to be modelled.
 #' @param covariates A matrix of covariates to be used in the GRF models.
 #' @param W A vector of binary treatment assignments.
 #' @param weights A vector of weights for the observations.
 #' @param grf_defaults A list of default parameters for the GRF models.
 #' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
 #' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
+#' @param target_rate Character string specifying the type of RATE estimate. Options are \code{"AUTOC"} (default)
+#'   and \code{"QINI"}.
 #' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 15.
 #' @param save_models Logical indicating whether to save the full GRF model objects. Default is FALSE.
-#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.7.
+#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
+#'   training policy trees. Default is 0.7.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
 #'
-#' @return A list containing model results, combined table, and other relevant information.
-#'
-#' @importFrom grf causal_forest average_treatment_effect test_calibration rank_average_treatment_effect variable_importance best_linear_projection
-#' @importFrom dplyr %>%
-#' @importFrom policytree double_robust_scores policy_tree
-#' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_progress_bar cli_progress_update cli_progress_done
-#' @importFrom crayon bold green red yellow
-#'
-#' @export
-#' Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Features
-#'
-#' @param data A data frame containing all necessary variables.
-#' @param outcome_vars A character vector of outcome variable names to be modeled.
-#' @param covariates A matrix of covariates to be used in the GRF models.
-#' @param W A vector of binary treatment assignments.
-#' @param weights A vector of weights for the observations.
-#' @param grf_defaults A list of default parameters for the GRF models.
-#' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
-#' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
-#' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 15.
-#' @param save_models Logical indicating whether to save the full GRF model objects. Default is FALSE.
-#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for training policy trees. Default is 0.7.
-#' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
-#'
-#' @return A list containing model results, combined table, and other relevant information.
+#' @return A list containing model results, a combined table, and other relevant information.
 #'
 #' @importFrom grf causal_forest average_treatment_effect test_calibration rank_average_treatment_effect variable_importance best_linear_projection
 #' @importFrom dplyr %>%

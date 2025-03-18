@@ -8,7 +8,8 @@ margot_interpret_qini(
   multi_batch,
   label_mapping = NULL,
   alpha = 0.05,
-  decimal_places = 2
+  decimal_places = 2,
+  model_names = NULL
 )
 }
 \arguments{
@@ -16,33 +17,20 @@ margot_interpret_qini(
 
 \item{label_mapping}{Optional named list mapping model names to readable labels.}
 
-\item{alpha}{Significance level for confidence intervals. Default 0.05.}
+\item{alpha}{Significance level for confidence intervals. Default is 0.05.}
 
-\item{decimal_places}{Number of decimal places for rounding. Default 2.}
+\item{decimal_places}{Number of decimal places for rounding. Default is 2.}
+
+\item{model_names}{Optional character vector specifying models to process.
+Default is NULL (i.e. process all).}
 }
 \value{
-List with summary tables and explanations. Format varies for binary and multi-arm treatments.
+A list with a summary table and a single combined explanation in
+        \code{qini_explanation} that starts with a header "### Explanation of Qini Curves".
 }
 \description{
 This function interprets Qini results for both binary and multi-arm treatments.
-It detects the treatment type based on the input data structure and calls the appropriate sub-function.
-}
-\examples{
-\dontrun{
-label_mapping <- list(
-  "t2_env_not_climate_chg_concern_z" = "Deny Climate Change Concern",
-  "t2_env_not_climate_chg_cause_z" = "Deny Humans Cause Climate Change"
-)
-
-binary_results <- margot_interpret_qini(binary_multi_batch, label_mapping = label_mapping)
-print(binary_results$summary_table)
-
-multi_arm_results <- margot_interpret_qini(multi_arm_multi_batch, label_mapping = label_mapping)
-print(multi_arm_results$arm1$summary_table)
-}
-
-}
-\references{
-Sverdrup, E., Wu, H., Athey, S., & Wager, S. (2024). Qini Curves for Multi-Armed Treatment Rules.
-arXiv preprint arXiv:2306.11979.
+It detects the treatment type based on the input data structure and calls the
+appropriate sub-function. A new parameter, \code{model_names}, restricts the
+analysis to the specified models; if not supplied, all models are processed.
 }

@@ -48,13 +48,12 @@
 #' print(results$balance_table)
 #' }
 #'
-#' @import WeightIt
+#' @importFrom WeightIt weightit
 #' @import MatchIt
 #' @import cobalt
 #' @import cli
 #'
 #' @export
-
 margot_propensity_model_and_plots <- function(
     df_propensity,
     exposure_variable,
@@ -68,24 +67,14 @@ margot_propensity_model_and_plots <- function(
     verbose = TRUE
 ) {
 
-  # Function to safely load or install packages
-  load_or_install_package <- function(package_name) {
-    if (!requireNamespace(package_name, quietly = TRUE)) {
-      message(paste("Package", package_name, "is not installed. Attempting to install..."))
-      install.packages(package_name, dependencies = TRUE, quiet = TRUE)
-    }
-    library(package_name, character.only = TRUE)
-  }
-
-  # Required packages
+  # Check for required packages without attaching them
   required_packages <- c("WeightIt", "MatchIt", "cobalt", "cli")
-
-  # Load or install required packages
-  tryCatch({
-    sapply(required_packages, load_or_install_package)
-  }, error = function(e) {
-    stop(paste("Error loading or installing packages:", e$message))
-  })
+  for (pkg in required_packages) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      message(paste("Package", pkg, "is not installed. Installing..."))
+      install.packages(pkg, dependencies = TRUE, quiet = TRUE)
+    }
+  }
 
   # Function to print messages if verbose is TRUE
   log_msg <- function(msg, level = "INFO") {
@@ -129,7 +118,7 @@ margot_propensity_model_and_plots <- function(
 
   log_msg("Starting propensity score modeling and analysis...")
 
-  # Create the propensity score model
+  # Create the propensity score model using explicit namespace call
   cli::cli_h1("Propensity Score Modeling")
   cli::cli_progress_step("Creating propensity score model")
   result$match_propensity <- tryCatch({
@@ -158,11 +147,9 @@ margot_propensity_model_and_plots <- function(
     size = 3,
     limits = list(m = c(-1, 2))
   )
-
-  # Merge user-provided options with defaults
   love_plot_options <- modifyList(default_love_plot_options, love_plot_options)
 
-  # Create love plot with merged options
+  # Create love plot with explicit call
   cli::cli_h1("Generating Plots")
   cli::cli_progress_step("Creating love plot")
   result$love_plot <- tryCatch({
@@ -208,11 +195,9 @@ margot_propensity_model_and_plots <- function(
     un = TRUE,
     thresholds = c(m = .05, v = 2)
   )
-
-  # Merge user-provided options with defaults
   bal_tab_options <- modifyList(default_bal_tab_options, bal_tab_options)
 
-  # Create balance table with merged options
+  # Create balance table with explicit call
   cli::cli_h1("Balance Analysis")
   cli::cli_progress_step("Creating balance table")
   result$balance_table <- tryCatch({
@@ -227,12 +212,11 @@ margot_propensity_model_and_plots <- function(
     log_msg("Balance table created.", "SUCCESS")
   }
 
-  # Calculate additional diagnostics
+  # Additional diagnostics
   cli::cli_h1("Additional Diagnostics")
   cli::cli_progress_step("Calculating additional diagnostics")
   result$diagnostics <- tryCatch({
     diag_list <- list()
-
     if (!is.null(result$match_propensity)) {
       if ("weights" %in% names(result$match_propensity)) {
         diag_list$weight_summary <- summary(result$match_propensity$weights)
@@ -240,7 +224,6 @@ margot_propensity_model_and_plots <- function(
       } else {
         log_msg("Weights not found in match_propensity object", "WARNING")
       }
-
       if ("propensity" %in% names(result$match_propensity)) {
         diag_list$prop_score_summary <- summary(result$match_propensity$propensity)
       } else if ("ps" %in% names(result$match_propensity)) {
@@ -249,7 +232,6 @@ margot_propensity_model_and_plots <- function(
         log_msg("Propensity scores not found in match_propensity object", "WARNING")
       }
     }
-
     diag_list$model_info <- list(
       estimand = estimand,
       method = method,
@@ -257,7 +239,6 @@ margot_propensity_model_and_plots <- function(
       exposure_variable = exposure_variable,
       n_baseline_vars = length(baseline_vars)
     )
-
     diag_list
   }, error = function(e) {
     log_msg(paste("Error in calculating diagnostics:", e$message), "ERROR")
@@ -267,7 +248,6 @@ margot_propensity_model_and_plots <- function(
   log_msg("Additional diagnostics calculated.", "SUCCESS")
 
   log_msg("Propensity score modeling and analysis completed.", "SUCCESS")
-
   return(result)
 }
 #

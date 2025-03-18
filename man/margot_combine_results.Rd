@@ -69,3 +69,4 @@ combined_table <- margot_combine_results(
 )
 }
 }
+\keyword{internal}

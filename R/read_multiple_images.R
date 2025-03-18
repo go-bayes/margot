@@ -7,11 +7,8 @@
 #' @param pattern Character string specifying the pattern to match in the filenames. Default is "policy_tree_plot\\.png$".
 #' @return A named list of magick image objects.
 #'
-#' @importFrom here here
-#' @importFrom magick image_read
-#' @importFrom stringr str_subset
 #'
-#' @export
+#' @keywords internal
 #'
 #' @examples
 #' \dontrun{

@@ -25,7 +25,6 @@
 #'
 #' @export
 #' @importFrom here here
-#' @importFrom base readRDS
 here_read <- function(name, dir_path = NULL, quiet = FALSE) {
   # use push_mods if dir_path is NULL, maintaining backward compatibility
   read_dir <- if (is.null(dir_path)) push_mods else dir_path

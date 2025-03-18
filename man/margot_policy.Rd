@@ -15,7 +15,8 @@ margot_policy(
   output_dir = here::here(push_mods),
   spend = c(0.2, 0.5),
   label_mapping = NULL,
-  original_df = NULL
+  original_df = NULL,
+  model_names = NULL
 )
 }
 \arguments{
@@ -35,12 +36,14 @@ margot_policy(
 
 \item{output_dir}{The directory to save plots in. Default is here::here(push_mods).}
 
-\item{spend}{A vector of spend levels to use for difference gain summaries. Default is c(0.2, 0.5).}
+\item{spend}{A vector of spend levels to use for difference gain summaries. Default is c(.2, .5).}
 
 \item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
 (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
 
 \item{original_df}{Optional dataframe with untransformed variables, used to display split values on the data scale.}
+
+\item{model_names}{Optional character vector specifying which models to process. If NULL, all models in result_outcomes are processed.}
 }
 \value{
 A list where each element corresponds to a model in the input
@@ -51,7 +54,18 @@ A list where each element corresponds to a model in the input
   \item{decision_tree_visualisation}{A ggplot object visualizing the decision tree}
   \item{policy_combo_plot}{A ggplot object of the policy combo plot}
   \item{diff_gain_summaries}{A nested list containing difference gain summaries for each spend level}
+
+A list where each element corresponds to a model in the input
+  `result_outcomes`. Each element is itself a list containing:
+  \item{policy_tree_plot}{A ggplot object of the policy tree plot}
+  \item{policy_tree_interpretation}{A character string interpreting the policy tree}
+  \item{qini_plot}{A ggplot object of the Qini plot}
+  \item{decision_tree_visualisation}{A ggplot object visualising the decision tree}
+  \item{policy_combo_plot}{A ggplot object of the policy combo plot}
+  \item{diff_gain_summaries}{A nested list containing difference gain summaries for each spend level}
 }
 \description{
 Batch Processing of Policy Trees and Related Visualizations
+
+Batch Processing of Policy Trees and Related Visualisations
 }

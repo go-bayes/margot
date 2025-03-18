@@ -50,7 +50,7 @@
 #'
 #' @export
 #'
-#' @import dplyr tidyr cli zoo
+#' @import dplyr tidyr cli
 #'
 #' @examples
 #' # Define variables

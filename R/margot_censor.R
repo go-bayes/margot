@@ -11,7 +11,7 @@
 #'
 #' @return A modified data.table with updated year_measured values based on the condition.
 #'
-#' @import data.table
+#' @importFrom data.table as.data.table copy set uniqueN
 #' @import cli
 #' @export
 margot_censor <- function(

@@ -52,7 +52,7 @@
 #'}
 #' @importFrom dplyr mutate across where select bind_rows
 #' @importFrom kableExtra kbl group_rows
-#' @export
+#' @keywords internal
 margot_combine_results <- function(
     results,
     options = NULL,

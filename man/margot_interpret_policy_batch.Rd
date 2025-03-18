@@ -2,10 +2,11 @@
 % Please edit documentation in R/margot_interpret_policy_batch.R
 \name{margot_interpret_policy_batch}
 \alias{margot_interpret_policy_batch}
-\title{Batch Process Policy Tree Interpretations}
+\title{Batch process policy tree interpretations}
 \usage{
 margot_interpret_policy_batch(
   models,
+  model_names = NULL,
   save_path = NULL,
   prefix = NULL,
   include_timestamp = FALSE,
@@ -15,18 +16,21 @@ margot_interpret_policy_batch(
 \arguments{
 \item{models}{A list containing the results from multi-arm causal forest models.}
 
-\item{save_path}{The path where the interpretations will be saved. If NULL, interpretations are not saved. Default is NULL.}
+\item{model_names}{A character vector of model names to interpret. If NULL, all models are processed.}
 
-\item{prefix}{An optional prefix for the filenames. Default is NULL.}
+\item{save_path}{The path where the combined interpretation will be saved. If NULL, nothing is saved.}
 
-\item{include_timestamp}{Logical, whether to include a timestamp in the filename. Default is FALSE.}
+\item{prefix}{An optional prefix for the filename.}
+
+\item{include_timestamp}{Logical; whether to include a timestamp in the filename (if desired).}
 
 \item{...}{Additional arguments to pass to margot_interpret_policy_tree().}
 }
 \value{
-A list of the generated interpretations.
+A single character string containing the combined markdown output.
 }
 \description{
-This function batch processes outputs from margot_interpret_policy_tree() models
-and optionally saves them using the here_save_qs method.
+This function now accepts a vector of model names to process and produces
+a single combined output. The common description is printed once at the top,
+followed by each model's specific findings.
 }

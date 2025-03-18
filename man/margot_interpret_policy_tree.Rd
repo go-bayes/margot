@@ -7,7 +7,7 @@
 margot_interpret_policy_tree(
   model,
   model_name,
-  train_proportion = 0.7,
+  train_proportion = 0.5,
   custom_action_names = NULL,
   label_mapping = NULL,
   original_df = NULL,
@@ -52,7 +52,7 @@ label_mapping <- list(
 )
 
 # interpret policy tree results with label mapping
-interpretation <- margot_interpret_policy_tree_new(
+interpretation <- margot_interpret_policy_tree(
   model = models_multi,
   model_name = "model_t2_env_not_climate_chg_concern_z",
   label_mapping = label_mapping,

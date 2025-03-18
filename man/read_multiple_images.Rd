@@ -25,3 +25,4 @@ policy_tree_plots <- read_multiple_images(path_multi_plots, "policy_tree_plot\\\
 qini_plots <- read_multiple_images(path_multi_plots, "qini_plot\\\\.png$")
 }
 }
+\keyword{internal}

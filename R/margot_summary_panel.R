@@ -12,10 +12,13 @@
 #'
 #' @return A list containing three elements: unique_ids_by_wave, participant_wave_summary, and participant_wave_summary_grouped.
 #'
-#' @import tidyverse
-#' @import gt
+#' @importFrom dplyr filter group_by summarize ungroup mutate n_distinct
+#' @importFrom tidyr pivot_wider
+#' @importFrom magrittr %>%
+#' @importFrom rlang sym
+#' @importFrom gt gt tab_header fmt_number cols_label tab_options
 #' @import cli
-#' @import kableExtra
+#' @importFrom kableExtra kable
 #'
 #' @export
 #'
