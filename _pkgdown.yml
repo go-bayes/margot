@@ -119,18 +119,20 @@ reference:
     - margot_policy
     - margot_rate
     - margot_subset_model
+    - margot_subset_batch
     - margot_summary_cate_difference_gain
 
   - title: "Visualise Causal Effect Estimates"
     contents:
     - margot_plot
-    - margot_plot_batch_rate
     - margot_plot_decision_tree
     - margot_plot_multi_arm
     - margot_plot_policy_combo
     - margot_plot_policy_tree
     - margot_plot_qini
     - margot_plot_rate
+    - margot_plot_rate_batch
+
 
   - title: "Utility functions"
     contents:

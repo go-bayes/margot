@@ -10,6 +10,11 @@ margot_subset_model(
   subset_condition = NULL,
   scale = "RD",
   contrast = NULL,
+  X = NULL,
+  subset_var = NULL,
+  subset_value = 1,
+  subset_operator = "==",
+  subset_description = NULL,
   debug = FALSE
 )
 }
@@ -19,40 +24,96 @@ margot_subset_model(
 \item{outcome_vars}{Optional. A character vector of outcome variable names. If NULL,
 the function will use all models in the input.}
 
-\item{subset_condition}{A logical vector indicating the subset of data to use. Default is NULL.}
+\item{subset_condition}{A logical vector indicating the subset of data to use. Default is NULL.
+Can be generated using the subset_var, subset_value, and subset_operator parameters.}
 
 \item{scale}{A character string indicating the scale to use. Default is "RD".}
 
 \item{contrast}{For categorical exposures, a single character string specifying the contrast to extract.}
 
+\item{X}{Optional. The feature matrix used in the original models. Required if using subset_var.}
+
+\item{subset_var}{Optional. The name of the variable to use for subsetting.}
+
+\item{subset_value}{Optional. The value to compare against for subsetting. Default is 1.}
+
+\item{subset_operator}{Optional. The operator to use for comparison ("==", ">", ">=", "<", "<=", "!="). Default is "==".}
+
+\item{subset_description}{Optional. A description of the subset for reporting. If NULL, one will be generated.}
+
 \item{debug}{Logical. If TRUE, print debug information. Default is FALSE.}
 }
 \value{
-A data frame combining all custom evaluation tables for the specified outcomes and contrast.
+A list containing:
+  \item{results}{A data frame combining all custom evaluation tables for the specified outcomes and contrast.}
+  \item{subset_condition}{The logical vector used for subsetting.}
+  \item{subset_description}{A description of the subset.}
+  \item{subset_info}{Additional information about the subset, if available.}
 }
 \description{
 This function extracts and combines evaluation tables for specified outcome variables
-from model results, handling both binary and categorical exposure models.
+from model results, handling both binary and categorical exposure models. It provides
+enhanced functionality for creating and analyzing subsets based on various conditions.
+}
+\details{
+The function can be used in two ways:
+1. By providing a pre-computed logical vector as `subset_condition`.
+2. By providing a variable name (`subset_var`), value (`subset_value`), and operator (`subset_operator`)
+   to generate the subset condition automatically.
+
+For categorical exposures, specify the contrast parameter to extract specific comparisons.
 }
 \examples{
 \dontrun{
-# Example for binary exposure
-model_cat_subset_pols_binary <- margot_subset_model(
+# Example 1: Basic subsetting with a pre-computed condition
+subset_condition_conservative <- X[, "t0_political_conservative_z"] > 1
+model_subset_conservative <- margot_subset_model(
   model_results = models_binary,
-  outcome_vars = t2_outcome_vars_z,
-  subset_condition = subset_condition_pols,
+  subset_condition = subset_condition_conservative,
+  debug = FALSE
+)
+
+# Example 2: Using the built-in subsetting functionality
+model_subset_religious <- margot_subset_model(
+  model_results = models_binary,
+  X = X,
+  subset_var = "t0_religion_bigger_denominations_not_rel_binary",
+  subset_value = 1,
+  subset_description = "Effects among religious participants",
+  debug = TRUE
+)
+
+# Example 3: For categorical exposures with specific contrast
+model_subset_gen_z <- margot_subset_model(
+  model_results = models_cat,
+  X = X,
+  subset_var = "t0_gen_cohort_gen_Z_binary",
+  subset_value = 1,
+  contrast = "[6.0,7.0] - [1.0,5.0)",
   scale = "RD",
   debug = FALSE
 )
 
-# Example for categorical exposure
-model_cat_subset_pols_categorical <- margot_subset_model(
-  model_results = models_cat,
-  outcome_vars = t2_outcome_vars_z,
-  subset_condition = subset_condition_pols,
-  scale = "RD",
-  contrast = "[6.0,7.0] - [1.0,5.0)",
+# Example 4: Multiple outcome variables
+model_subset_boomers <- margot_subset_model(
+  model_results = models_binary,
+  outcome_vars = c("t2_wellbeing_z", "t2_depression_z"),
+  X = X,
+  subset_var = "t0_gen_cohort_gen_Boomers_binary",
+  subset_value = 1,
+  subset_operator = "==",
+  subset_description = "Effects among Baby Boomer participants",
   debug = TRUE
+)
+
+# Example 5: More complex subsetting (multiple conditions)
+# Define a complex condition directly
+complex_condition <- X[, "t0_political_conservative_z"] > 1 & X[, "t0_age_z"] > -2
+model_subset_complex <- margot_subset_model(
+  model_results = models_binary,
+  subset_condition = complex_condition,
+  subset_description = "Conservative (>1 SD) and not very young (>-2 SD in age)",
+  debug = FALSE
 )
 }
 

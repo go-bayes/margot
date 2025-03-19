@@ -91,7 +91,6 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_multi_arm_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_omnibus_hetero_test.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot.html</loc></url>
-<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_batch_rate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_boxplot.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_boxplot_covariate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_categorical.html</loc></url>
@@ -109,6 +108,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_qini.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_rate.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_rate_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_response_timeline.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_save_png.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_shift.html</loc></url>
@@ -128,6 +128,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_run_models_grf.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_save_png.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_size.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_subset_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_subset_model.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_subset_table_grf.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_summary_cate_difference_gain.html</loc></url>

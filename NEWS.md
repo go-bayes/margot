@@ -7,6 +7,14 @@
 * write examples
 * replace `stringr` and use `tools`
 
+# [2025-03-19] margot 0.3.2.2
+## New
+- `margot_subset_batch()` batch process subsetted models (causal forests)
+-  `margot_plot_rate_batch()` replaces `margot_plot_batch_rate()`, which is deprecated. 
+
+## Improved
+- `margot_subset_model()` - streamlined
+
 
 # [2025-03-19] margot 0.3.2.1
 ## Improved
@@ -16,7 +24,6 @@
 
 
 # [2025-03-19] margot 0.3.2.0
-
 ## New 
 - added `.strict_exposure_outcome_censoring()` helper function for strict dyadic censoring -- now encompassed by `margot_process_longitudinal_data_wider()` but added for backward compatibility.
 
