@@ -7,6 +7,14 @@
 * write examples
 * replace `stringr` and use `tools`
 
+
+# [2025-03-19] margot 0.3.2.1
+## Improved
+- `group_tab()` now only in helper functions
+- `margot_plot()` reverted to remove errors.
+- `margot_comapare_groups()`, `margot_interpret_qini()` removed redundant function.
+
+
 # [2025-03-19] margot 0.3.2.0
 
 ## New 

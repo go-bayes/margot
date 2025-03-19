@@ -20,6 +20,8 @@ margot_compare_groups(
 \item{type}{Character string specifying the type of comparison. Either "RD" for risk difference (default) or "RR" for relative risk ratio.}
 
 \item{label_mapping}{Optional list for mapping original variable names to more readable labels.}
+
+\item{decimal_places}{Number of decimal places for rounding outputs.}
 }
 \value{
 A list containing two elements:

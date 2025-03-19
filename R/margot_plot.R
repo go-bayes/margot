@@ -156,7 +156,7 @@ margot_plot <- function(.data,
                         title_binary = NULL,
                         include_coefficients = TRUE,
                         standardize_label = c("NZ", "US", "none"),
-                        interpret_all_E_gt1 = FALSE,
+                        interpret_all_E_gt1 = FALSE,  # NEW parameter
                         ...,
                         options = list(),
                         label_mapping = NULL,
@@ -167,87 +167,28 @@ margot_plot <- function(.data,
                         save_path = here::here("push_mods"),
                         original_df = NULL) {
 
-  # 1. Setup and validation
-  options <- setup_margot_plot_options(options, ...)
-
-  # Match arguments
+  # Set default type to "RD"
   type <- match.arg(type, choices = c("RD", "RR"), several.ok = FALSE)
+
+  # Set default order to "alphabetical"
   order <- match.arg(order, choices = c("alphabetical", "magnitude", "custom", "default"))
+
+  # Deprecate "default" order with a warning
+  if (order == "default") {
+    warning("'default' order is deprecated. Please use 'magnitude' instead.")
+    order <- "magnitude"
+  }
+
+  # Match argument for standardise label
   standardize_label <- match.arg(standardize_label, c("NZ", "US", "none"))
-
-  # Handle "default" for backward compatibility
-  if (order == "default") order <- "magnitude"
-
-  # Basic validation
-  validate_margot_plot_input(.data)
-
-  # 2. Data preparation
-  plot_data <- prepare_margot_plot_data(
-    .data = .data,
-    type = type,
-    order = order,
-    options = options,
-    label_mapping = label_mapping,
-    original_df = original_df
-  )
 
   # Create a copy of the original data for table transformation
   .data_for_table <- .data
 
-  # 3. Build the plot
-  plot_obj <- build_margot_plot(
-    .data = plot_data,
-    type = type,
-    options = options,
-    include_coefficients = include_coefficients,
-    standardize_label = standardize_label
-  )
+  # Capture additional arguments
+  additional_args <- list(...)
 
-  # 4. Generate interpretation
-  interpretation_result <- margot_interpret_marginal(
-    df = plot_data,
-    type = type,
-    order = order,
-    original_df = original_df,
-    interpret_all_E_gt1 = interpret_all_E_gt1
-  )
-  interpretation_text <- interpretation_result$interpretation
-
-  # 5. Transform table
-  transformed_table <- transform_table_rownames(.data_for_table, label_mapping, options)
-
-  # 6. Assemble and return output
-  complete_output <- list(
-    plot = plot_obj,
-    interpretation = interpretation_text,
-    transformed_table = transformed_table
-  )
-
-  # 7. Handle saving if requested
-  if (save_output) {
-    save_margot_output(
-      output = complete_output,
-      use_timestamp = use_timestamp,
-      base_filename = base_filename,
-      prefix = prefix,
-      save_path = save_path
-    )
-  } else {
-    message("output was not saved as per user request.")
-  }
-
-  message("margot plot analysis complete 👍")
-  return(complete_output)
-}
-
-#' Setup options for Margot plot
-#'
-#' @param options User-provided options list
-#' @param ... Additional parameters to be included in options
-#' @return Merged options list
-#' @keywords internal
-setup_margot_plot_options <- function(options, ...) {
-  # Default values
+  # Default values for options
   default_options <- list(
     title = NULL,
     subtitle = NULL,
@@ -259,9 +200,9 @@ setup_margot_plot_options <- function(options, ...) {
     subtitle_size = 18,
     legend_text_size = 10,
     legend_title_size = 10,
-    x_offset = NULL,
-    x_lim_lo = NULL,
-    x_lim_hi = NULL,
+    x_offset = NULL,   # will be set based on type
+    x_lim_lo = NULL,   # will be set based on type
+    x_lim_hi = NULL,   # will be set based on type
     linewidth = 0.4,
     plot_theme = NULL,
     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
@@ -277,60 +218,35 @@ setup_margot_plot_options <- function(options, ...) {
     remove_underscores = TRUE
   )
 
-  # Capture additional arguments
-  additional_args <- list(...)
+  # Merge user-provided options with defaults and additional arguments
+  options <- modifyList(modifyList(default_options, options), additional_args)
 
-  # Merge options
-  merged_options <- modifyList(modifyList(default_options, options), additional_args)
+  # Input validation for data
+  if (!is.data.frame(.data)) {
+    stop("Input must be a data frame.")
+  }
 
-  # Validate options
+  # Validate and coerce label transformation options to single logical values
   for (opt in c("remove_tx_prefix", "remove_z_suffix", "use_title_case", "remove_underscores")) {
-    if (!is.logical(merged_options[[opt]])) {
-      stop(sprintf("`%s` must be a logical value (TRUE or FALSE).", opt))
+    options[[opt]] <- as.logical(options[[opt]])[1]
+    if (!is.logical(options[[opt]]) || length(options[[opt]]) != 1) {
+      stop(sprintf("`%s` must be a single logical value (TRUE or FALSE).", opt))
     }
   }
 
-  return(merged_options)
-}
-
-#' Validate input for Margot plot
-#'
-#' @param .data Input data frame
-#' @return No return, throws error if invalid
-#' @keywords internal
-validate_margot_plot_input <- function(.data) {
-  if (!is.data.frame(.data)) {
-    stop("input must be a data frame.")
-  }
-
-  # Check for required effect size column
-  if (!any(c("E[Y(1)]-E[Y(0)]", "E[Y(1)]/E[Y(0)]") %in% names(.data))) {
-    stop("data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column.")
-  }
-}
-
-#' Prepare data for Margot plot
-#'
-#' @param .data Input data frame
-#' @param type Type of effect (RD or RR)
-#' @param order Ordering method
-#' @param options Options list
-#' @param label_mapping Label mapping list
-#' @param original_df Original data frame for back-transformation
-#' @return Prepared data frame
-#' @keywords internal
-prepare_margot_plot_data <- function(.data, type, order, options, label_mapping, original_df) {
   # Determine the effect size column based on the data structure
   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
     "E[Y(1)]-E[Y(0)]"
-  } else {
+  } else if ("E[Y(1)]/E[Y(0)]" %in% names(.data)) {
     "E[Y(1)]/E[Y(0)]"
+  } else {
+    stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column.")
   }
 
   # Ensure .data has an 'outcome' column
   if (!"outcome" %in% names(.data)) {
     .data$outcome <- rownames(.data)
-    message("added 'outcome' column based on row names.")
+    message("Added 'outcome' column based on row names.")
   }
 
   # Store original variable names before any label transformations
@@ -342,7 +258,7 @@ prepare_margot_plot_data <- function(.data, type, order, options, label_mapping,
   if (!is.null(original_df)) {
     .data <- back_transform_estimates(.data, original_df)
   } else {
-    message("no original_df provided. results will be on the transformed scale.")
+    message("No original_df provided. Results will be on the transformed scale.")
   }
 
   # Apply transformations to outcome labels
@@ -353,7 +269,7 @@ prepare_margot_plot_data <- function(.data, type, order, options, label_mapping,
   # Prepare the data for plotting, including ordering
   .data <- group_tab(.data, type = type, order = order)
 
-  # Set type-dependent options
+  # Set type-dependent options if not provided
   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
@@ -370,29 +286,6 @@ prepare_margot_plot_data <- function(.data, type, order, options, label_mapping,
       )
     )
 
-  return(.data)
-}
-
-#' Build Margot plot
-#'
-#' @param .data Prepared data frame
-#' @param type Type of effect (RD or RR)
-#' @param options Options list
-#' @param include_coefficients Whether to include coefficient text
-#' @param standardize_label Type of standardization label (NZ, US, none)
-#' @return ggplot object
-#' @keywords internal
-build_margot_plot <- function(.data, type, options, include_coefficients, standardize_label) {
-  # Determine effect column
-  effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
-    "E[Y(1)]-E[Y(0)]"
-  } else {
-    "E[Y(1)]/E[Y(0)]"
-  }
-
-  # Determine null value
-  null_value <- ifelse(type == "RR", 1, 0)
-
   # Build x-axis label conditionally
   label_word <- switch(
     standardize_label,
@@ -400,7 +293,6 @@ build_margot_plot <- function(.data, type, options, include_coefficients, standa
     US   = "Standardized",
     none = "Effect"
   )
-
   x_axis_label <- if (type == "RR") {
     paste0("Effect (Risk Ratio Scale)")
   } else {
@@ -412,7 +304,7 @@ build_margot_plot <- function(.data, type, options, include_coefficients, standa
   }
 
   # Start building the plot
-  plot_obj <- ggplot2::ggplot(
+  out <- ggplot2::ggplot(
     data = .data,
     ggplot2::aes(
       y = outcome,
@@ -422,16 +314,13 @@ build_margot_plot <- function(.data, type, options, include_coefficients, standa
       color = Estimate
     )
   ) +
-    ggplot2::geom_errorbarh(
-      ggplot2::aes(color = Estimate),
-      height = .3,
-      linewidth = options$linewidth,
-      position = ggplot2::position_dodge(width = .3)
+    ggplot2::geom_errorbarh(ggplot2::aes(color = Estimate),
+                            height = 0.3,
+                            linewidth = options$linewidth,
+                            position = ggplot2::position_dodge(width = 0.3)
     ) +
-    ggplot2::geom_point(
-      size = options$point_size,
-      position = ggplot2::position_dodge(width = 0.3)
-    ) +
+    ggplot2::geom_point(size = options$point_size,
+                        position = ggplot2::position_dodge(width = 0.3)) +
     ggplot2::geom_vline(xintercept = null_value, linetype = "solid") +
     ggplot2::scale_color_manual(values = options$colors) +
     ggplot2::labs(
@@ -454,17 +343,15 @@ build_margot_plot <- function(.data, type, options, include_coefficients, standa
       plot.margin = ggplot2::margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
     )
 
-  # Handle RR specific scale
   if (type == "RR") {
     custom_x_labels <- function(x) {
       ifelse(x < 0, "", as.character(x))
     }
-    plot_obj <- plot_obj + ggplot2::scale_x_continuous(labels = custom_x_labels)
+    out <- out + ggplot2::scale_x_continuous(labels = custom_x_labels)
   }
 
-  # Add coefficient text if requested
   if (include_coefficients) {
-    plot_obj <- plot_obj + ggplot2::geom_text(
+    out <- out + ggplot2::geom_text(
       ggplot2::aes(
         x = !!rlang::sym(effect_size_col) + options$x_offset * options$estimate_scale,
         label = sprintf("%.2f", !!rlang::sym(effect_size_col))
@@ -475,73 +362,473 @@ build_margot_plot <- function(.data, type, options, include_coefficients, standa
     )
   }
 
-  # Add facet if specified
   if (!is.null(options$facet_var)) {
-    plot_obj <- plot_obj + ggplot2::facet_wrap(
-      ggplot2::vars(!!rlang::sym(options$facet_var)),
-      scales = "free_y"
-    )
+    out <- out + ggplot2::facet_wrap(ggplot2::vars(!!rlang::sym(options$facet_var)),
+                                     scales = "free_y")
   }
 
-  # Add custom annotations if provided
   if (!is.null(options$annotations)) {
-    plot_obj <- plot_obj + options$annotations
+    out <- out + options$annotations
   }
 
-  return(plot_obj)
-}
+  # Generate interpretation using the marginal interpretation helper
+  interpretation_result <- margot_interpret_marginal(
+    df = .data,
+    type = type,
+    order = order,
+    original_df = original_df,
+    interpret_all_E_gt1 = interpret_all_E_gt1
+  )
 
-#' Transform table row names
-#'
-#' @param df Data frame to transform
-#' @param label_mapping Label mapping list
-#' @param options Options list
-#' @return Transformed data frame
-#' @keywords internal
-transform_table_rownames <- function(df, label_mapping, options) {
-  rownames_vector <- rownames(df)
-  transformed_rownames <- sapply(rownames_vector, transform_label,
-                                 label_mapping = label_mapping,
-                                 options = options)
-  rownames(df) <- transformed_rownames
-  return(df)
-}
+  interpretation_text <- interpretation_result$interpretation
 
-#' Save Margot plot output
-#'
-#' @param output Complete output to save
-#' @param use_timestamp Whether to include timestamp in filename
-#' @param base_filename Base filename
-#' @param prefix Optional filename prefix
-#' @param save_path Directory to save in
-#' @return No return value
-#' @keywords internal
-save_margot_output <- function(output, use_timestamp, base_filename, prefix, save_path) {
-  message("saving complete output...")
-  tryCatch({
-    if (use_timestamp) {
-      output_filename <- paste0(
-        ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-        base_filename, "_",
-        format(Sys.time(), "%Y%m%d_%H%M%S")
+  # Transform table row names using the provided label mapping and options
+  transform_table_rownames <- function(df, label_mapping, options) {
+    rownames_vector <- rownames(df)
+    transformed_rownames <- sapply(rownames_vector,
+                                   transform_label,
+                                   label_mapping = label_mapping,
+                                   options = options)
+    rownames(df) <- transformed_rownames
+    return(df)
+  }
+
+  transformed_table <- transform_table_rownames(.data_for_table, label_mapping, options)
+
+  complete_output <- list(
+    plot = out,
+    interpretation = interpretation_text,
+    transformed_table = transformed_table
+  )
+
+  # Save output if requested
+  if (save_output) {
+    message("Saving complete output...")
+    tryCatch({
+      if (use_timestamp) {
+        output_filename <- paste0(
+          ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+          base_filename, "_",
+          format(Sys.time(), "%Y%m%d_%H%M%S")
+        )
+      } else {
+        output_filename <- paste0(
+          ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+          base_filename
+        )
+      }
+      margot::here_save_qs(
+        obj = complete_output,
+        name = output_filename,
+        dir_path = save_path,
+        preset = "high",
+        nthreads = 1
       )
-    } else {
-      output_filename <- paste0(
-        ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-        base_filename
-      )
-    }
+      message("Complete output saved successfully.")
+    }, error = function(e) {
+      warning(paste("Failed to save complete output:", e$message))
+    })
+  } else {
+    message("Output was not saved as per user request.")
+  }
 
-    margot::here_save_qs(
-      obj = output,
-      name = output_filename,
-      dir_path = save_path,
-      preset = "high",
-      nthreads = 1
-    )
-
-    message("complete output saved successfully.")
-  }, error = function(e) {
-    warning(paste("failed to save complete output:", e$message))
-  })
+  message("Margot plot analysis complete 👍")
+  return(complete_output)
 }
+
+# refactor below failed
+#' margot_plot <- function(.data,
+#'                         type = c("RD", "RR"),
+#'                         order = c("alphabetical", "magnitude", "custom", "default"),
+#'                         title_binary = NULL,
+#'                         include_coefficients = TRUE,
+#'                         standardize_label = c("NZ", "US", "none"),
+#'                         interpret_all_E_gt1 = FALSE,
+#'                         ...,
+#'                         options = list(),
+#'                         label_mapping = NULL,
+#'                         save_output = FALSE,
+#'                         use_timestamp = FALSE,
+#'                         base_filename = "margot_plot_output",
+#'                         prefix = NULL,
+#'                         save_path = here::here("push_mods"),
+#'                         original_df = NULL) {
+#'
+#'   # 1. Setup and validation
+#'   options <- setup_margot_plot_options(options, ...)
+#'
+#'   # Match arguments
+#'   type <- match.arg(type, choices = c("RD", "RR"), several.ok = FALSE)
+#'   order <- match.arg(order, choices = c("alphabetical", "magnitude", "custom", "default"))
+#'   standardize_label <- match.arg(standardize_label, c("NZ", "US", "none"))
+#'
+#'   # Handle "default" for backward compatibility
+#'   if (order == "default") order <- "magnitude"
+#'
+#'   # Basic validation
+#'   validate_margot_plot_input(.data)
+#'
+#'   # 2. Data preparation
+#'   plot_data <- prepare_margot_plot_data(
+#'     .data = .data,
+#'     type = type,
+#'     order = order,
+#'     options = options,
+#'     label_mapping = label_mapping,
+#'     original_df = original_df
+#'   )
+#'
+#'   # Create a copy of the original data for table transformation
+#'   .data_for_table <- .data
+#'
+#'   # 3. Build the plot
+#'   plot_obj <- build_margot_plot(
+#'     .data = plot_data,
+#'     type = type,
+#'     options = options,
+#'     include_coefficients = include_coefficients,
+#'     standardize_label = standardize_label
+#'   )
+#'
+#'   # 4. Generate interpretation
+#'   interpretation_result <- margot_interpret_marginal(
+#'     df = plot_data,
+#'     type = type,
+#'     order = order,
+#'     original_df = original_df,
+#'     interpret_all_E_gt1 = interpret_all_E_gt1
+#'   )
+#'   interpretation_text <- interpretation_result$interpretation
+#'
+#'   # 5. Transform table
+#'   transformed_table <- transform_table_rownames(.data_for_table, label_mapping, options)
+#'
+#'   # 6. Assemble and return output
+#'   complete_output <- list(
+#'     plot = plot_obj,
+#'     interpretation = interpretation_text,
+#'     transformed_table = transformed_table
+#'   )
+#'
+#'   # 7. Handle saving if requested
+#'   if (save_output) {
+#'     save_margot_output(
+#'       output = complete_output,
+#'       use_timestamp = use_timestamp,
+#'       base_filename = base_filename,
+#'       prefix = prefix,
+#'       save_path = save_path
+#'     )
+#'   } else {
+#'     message("output was not saved as per user request.")
+#'   }
+#'
+#'   message("margot plot analysis complete 👍")
+#'   return(complete_output)
+#' }
+#'
+#' #' Setup options for Margot plot
+#' #'
+#' #' @param options User-provided options list
+#' #' @param ... Additional parameters to be included in options
+#' #' @return Merged options list
+#' #' @keywords internal
+#' setup_margot_plot_options <- function(options, ...) {
+#'   # Default values
+#'   default_options <- list(
+#'     title = NULL,
+#'     subtitle = NULL,
+#'     estimate_scale = 1,
+#'     base_size = 18,
+#'     text_size = 2.75,
+#'     point_size = 3,
+#'     title_size = 20,
+#'     subtitle_size = 18,
+#'     legend_text_size = 10,
+#'     legend_title_size = 10,
+#'     x_offset = NULL,
+#'     x_lim_lo = NULL,
+#'     x_lim_hi = NULL,
+#'     linewidth = 0.4,
+#'     plot_theme = NULL,
+#'     colors = c("positive" = "#E69F00", "not reliable" = "black", "negative" = "#56B4E9"),
+#'     facet_var = NULL,
+#'     confidence_level = 0.95,
+#'     annotations = NULL,
+#'     show_evalues = TRUE,
+#'     evalue_digits = 2,
+#'     # Label transformation options
+#'     remove_tx_prefix = TRUE,
+#'     remove_z_suffix = TRUE,
+#'     use_title_case = TRUE,
+#'     remove_underscores = TRUE
+#'   )
+#'
+#'   # Capture additional arguments
+#'   additional_args <- list(...)
+#'
+#'   # Merge options
+#'   merged_options <- modifyList(modifyList(default_options, options), additional_args)
+#'
+#'   # Validate options
+#'   for (opt in c("remove_tx_prefix", "remove_z_suffix", "use_title_case", "remove_underscores")) {
+#'     if (!is.logical(merged_options[[opt]])) {
+#'       stop(sprintf("`%s` must be a logical value (TRUE or FALSE).", opt))
+#'     }
+#'   }
+#'
+#'   return(merged_options)
+#' }
+#'
+#' #' Validate input for Margot plot
+#' #'
+#' #' @param .data Input data frame
+#' #' @return No return, throws error if invalid
+#' #' @keywords internal
+#' validate_margot_plot_input <- function(.data) {
+#'   if (!is.data.frame(.data)) {
+#'     stop("input must be a data frame.")
+#'   }
+#'
+#'   # Check for required effect size column
+#'   if (!any(c("E[Y(1)]-E[Y(0)]", "E[Y(1)]/E[Y(0)]") %in% names(.data))) {
+#'     stop("data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column.")
+#'   }
+#' }
+#'
+#' #' Prepare data for Margot plot
+#' #'
+#' #' @param .data Input data frame
+#' #' @param type Type of effect (RD or RR)
+#' #' @param order Ordering method
+#' #' @param options Options list
+#' #' @param label_mapping Label mapping list
+#' #' @param original_df Original data frame for back-transformation
+#' #' @return Prepared data frame
+#' #' @keywords internal
+#' prepare_margot_plot_data <- function(.data, type, order, options, label_mapping, original_df) {
+#'   # Determine the effect size column based on the data structure
+#'   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
+#'     "E[Y(1)]-E[Y(0)]"
+#'   } else {
+#'     "E[Y(1)]/E[Y(0)]"
+#'   }
+#'
+#'   # Ensure .data has an 'outcome' column
+#'   if (!"outcome" %in% names(.data)) {
+#'     .data$outcome <- rownames(.data)
+#'     message("added 'outcome' column based on row names.")
+#'   }
+#'
+#'   # Store original variable names before any label transformations
+#'   if (!"original_var_name" %in% names(.data)) {
+#'     .data$original_var_name <- .data$outcome
+#'   }
+#'
+#'   # Transform to original scale if original_df is provided
+#'   if (!is.null(original_df)) {
+#'     .data <- back_transform_estimates(.data, original_df)
+#'   } else {
+#'     message("no original_df provided. results will be on the transformed scale.")
+#'   }
+#'
+#'   # Apply transformations to outcome labels
+#'   .data$outcome <- sapply(.data$outcome, transform_label,
+#'                           label_mapping = label_mapping,
+#'                           options = options)
+#'
+#'   # Prepare the data for plotting, including ordering
+#'   .data <- group_tab(.data, type = type, order = order)
+#'
+#'   # Set type-dependent options
+#'   if (is.null(options$x_offset)) options$x_offset <- ifelse(type == "RR", 0, -1.75)
+#'   if (is.null(options$x_lim_lo)) options$x_lim_lo <- ifelse(type == "RR", 0.1, -1.75)
+#'   if (is.null(options$x_lim_hi)) options$x_lim_hi <- ifelse(type == "RR", 2.5, 1)
+#'
+#'   # Adjust 'Estimate' based on whether the confidence interval crosses the null value
+#'   null_value <- ifelse(type == "RR", 1, 0)
+#'
+#'   .data <- .data %>%
+#'     dplyr::mutate(
+#'       Estimate = dplyr::case_when(
+#'         (`2.5 %` > null_value & `97.5 %` > null_value) ~ "positive",
+#'         (`2.5 %` < null_value & `97.5 %` < null_value) ~ "negative",
+#'         TRUE ~ "not reliable"
+#'       )
+#'     )
+#'
+#'   return(.data)
+#' }
+#'
+#' #' Build Margot plot
+#' #'
+#' #' @param .data Prepared data frame
+#' #' @param type Type of effect (RD or RR)
+#' #' @param options Options list
+#' #' @param include_coefficients Whether to include coefficient text
+#' #' @param standardize_label Type of standardization label (NZ, US, none)
+#' #' @return ggplot object
+#' #' @keywords internal
+#' build_margot_plot <- function(.data, type, options, include_coefficients, standardize_label) {
+#'   # Determine effect column
+#'   effect_size_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
+#'     "E[Y(1)]-E[Y(0)]"
+#'   } else {
+#'     "E[Y(1)]/E[Y(0)]"
+#'   }
+#'
+#'   # Determine null value
+#'   null_value <- ifelse(type == "RR", 1, 0)
+#'
+#'   # Build x-axis label conditionally
+#'   label_word <- switch(
+#'     standardize_label,
+#'     NZ   = "Standardised",
+#'     US   = "Standardized",
+#'     none = "Effect"
+#'   )
+#'
+#'   x_axis_label <- if (type == "RR") {
+#'     paste0("Effect (Risk Ratio Scale)")
+#'   } else {
+#'     if (label_word %in% c("Standardised", "Standardized")) {
+#'       paste0(label_word, " Effect (Difference Scale)")
+#'     } else {
+#'       paste0(label_word, " (Difference Scale)")
+#'     }
+#'   }
+#'
+#'   # Start building the plot
+#'   plot_obj <- ggplot2::ggplot(
+#'     data = .data,
+#'     ggplot2::aes(
+#'       y = outcome,
+#'       x = !!rlang::sym(effect_size_col),
+#'       xmin = `2.5 %`,
+#'       xmax = `97.5 %`,
+#'       color = Estimate
+#'     )
+#'   ) +
+#'     ggplot2::geom_errorbarh(
+#'       ggplot2::aes(color = Estimate),
+#'       height = .3,
+#'       linewidth = options$linewidth,
+#'       position = ggplot2::position_dodge(width = .3)
+#'     ) +
+#'     ggplot2::geom_point(
+#'       size = options$point_size,
+#'       position = ggplot2::position_dodge(width = 0.3)
+#'     ) +
+#'     ggplot2::geom_vline(xintercept = null_value, linetype = "solid") +
+#'     ggplot2::scale_color_manual(values = options$colors) +
+#'     ggplot2::labs(
+#'       x = x_axis_label,
+#'       y = NULL,
+#'       title = options$title,
+#'       subtitle = options$subtitle
+#'     ) +
+#'     ggplot2::coord_cartesian(xlim = c(options$x_lim_lo, options$x_lim_hi)) +
+#'     ggplot2::theme_classic(base_size = options$base_size) +
+#'     ggplot2::theme(
+#'       legend.position = "top",
+#'       legend.direction = "horizontal",
+#'       axis.ticks.x = ggplot2::element_blank(),
+#'       axis.ticks.y = ggplot2::element_blank(),
+#'       plot.title = ggplot2::element_text(face = "bold", size = options$title_size, hjust = 0),
+#'       plot.subtitle = ggplot2::element_text(face = "bold", size = options$subtitle_size, hjust = 0),
+#'       legend.text = ggplot2::element_text(size = options$legend_text_size),
+#'       legend.title = ggplot2::element_text(size = options$legend_title_size),
+#'       plot.margin = ggplot2::margin(t = 10, r = 10, b = 10, l = 10, unit = "pt")
+#'     )
+#'
+#'   # Handle RR specific scale
+#'   if (type == "RR") {
+#'     custom_x_labels <- function(x) {
+#'       ifelse(x < 0, "", as.character(x))
+#'     }
+#'     plot_obj <- plot_obj + ggplot2::scale_x_continuous(labels = custom_x_labels)
+#'   }
+#'
+#'   # Add coefficient text if requested
+#'   if (include_coefficients) {
+#'     plot_obj <- plot_obj + ggplot2::geom_text(
+#'       ggplot2::aes(
+#'         x = !!rlang::sym(effect_size_col) + options$x_offset * options$estimate_scale,
+#'         label = sprintf("%.2f", !!rlang::sym(effect_size_col))
+#'       ),
+#'       size = options$text_size,
+#'       hjust = ifelse(type == "RR", 0, 1),
+#'       fontface = "bold"
+#'     )
+#'   }
+#'
+#'   # Add facet if specified
+#'   if (!is.null(options$facet_var)) {
+#'     plot_obj <- plot_obj + ggplot2::facet_wrap(
+#'       ggplot2::vars(!!rlang::sym(options$facet_var)),
+#'       scales = "free_y"
+#'     )
+#'   }
+#'
+#'   # Add custom annotations if provided
+#'   if (!is.null(options$annotations)) {
+#'     plot_obj <- plot_obj + options$annotations
+#'   }
+#'
+#'   return(plot_obj)
+#' }
+#'
+#' #' Transform table row names
+#' #'
+#' #' @param df Data frame to transform
+#' #' @param label_mapping Label mapping list
+#' #' @param options Options list
+#' #' @return Transformed data frame
+#' #' @keywords internal
+#' transform_table_rownames <- function(df, label_mapping, options) {
+#'   rownames_vector <- rownames(df)
+#'   transformed_rownames <- sapply(rownames_vector, transform_label,
+#'                                  label_mapping = label_mapping,
+#'                                  options = options)
+#'   rownames(df) <- transformed_rownames
+#'   return(df)
+#' }
+#'
+#' #' Save Margot plot output
+#' #'
+#' #' @param output Complete output to save
+#' #' @param use_timestamp Whether to include timestamp in filename
+#' #' @param base_filename Base filename
+#' #' @param prefix Optional filename prefix
+#' #' @param save_path Directory to save in
+#' #' @return No return value
+#' #' @keywords internal
+#' save_margot_output <- function(output, use_timestamp, base_filename, prefix, save_path) {
+#'   message("saving complete output...")
+#'   tryCatch({
+#'     if (use_timestamp) {
+#'       output_filename <- paste0(
+#'         ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+#'         base_filename, "_",
+#'         format(Sys.time(), "%Y%m%d_%H%M%S")
+#'       )
+#'     } else {
+#'       output_filename <- paste0(
+#'         ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+#'         base_filename
+#'       )
+#'     }
+#'
+#'     margot::here_save_qs(
+#'       obj = output,
+#'       name = output_filename,
+#'       dir_path = save_path,
+#'       preset = "high",
+#'       nthreads = 1
+#'     )
+#'
+#'     message("complete output saved successfully.")
+#'   }, error = function(e) {
+#'     warning(paste("failed to save complete output:", e$message))
+#'   })
+#' }
