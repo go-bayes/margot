@@ -7,6 +7,10 @@
 * write examples
 * replace `stringr` and use `tools`
 
+# [2025-03-19] margot 0.3.2.3
+## Improved
+- `margot_subset_batch()` - now exports plots and explanations for all submodels models (causal forests).
+
 # [2025-03-19] margot 0.3.2.2
 ## New
 - `margot_subset_batch()` batch process subsetted models (causal forests)

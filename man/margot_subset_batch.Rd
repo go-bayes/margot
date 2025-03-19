@@ -11,7 +11,8 @@ margot_subset_batch(
   title = "",
   label_mapping = NULL,
   subsets,
-  debug = FALSE
+  debug = FALSE,
+  original_df = NULL
 )
 }
 \arguments{
@@ -31,36 +32,26 @@ margot_subset_batch(
   \item{value}{The value used to define the subset.}
   \item{operator}{(Optional) A comparison operator (default is \code{"=="}).}
   \item{description}{A character string describing the subset.}
+  \item{label}{(Optional) A user-friendly label for the subset. If missing, the list name is used.}
 }}
 
 \item{debug}{Logical; if \code{TRUE}, prints debugging information.}
+
+\item{original_df}{Optional data frame containing the original (non-transformed) data for back-transformation.}
 }
 \value{
 A list with the following elements:
   \describe{
-    \item{results}{A list of subset results, each containing the plot and sample statistics.}
+    \item{results}{A list of subset results, each containing the plot, interpretation, and transformed table along with sample statistics.}
     \item{summary}{A data frame summarising the sample size, total sample size, and percentage for each subset.}
-    \item{interpretation}{A character string providing a narrative of the comparisons including the composition of the subsets.}
+    \item{explanation}{A character string providing a comprehensive explanation of the subsetting process and the results for each model.}
   }
 }
 \description{
 We compared treatment effects across multiple subsets derived from causal forest models (using the grf package).
 For each subset, the number of participants, the total sample size, and the corresponding percentage are computed,
-describing the composition of each targeted subpopulation. Note that exploratory comparisons in causal forest analyses
+describing the composition of each targeted subpopulation. In addition, for each subset the plot, interpretation,
+and transformed table are generated to summarise the causal effect estimates. Note that exploratory comparisons in causal forest analyses
 should be interpreted with caution, as subsetting targeted subpopulations may yield unstable treatment effect estimates,
 typically indicated by large standard errors and wide confidence intervals.
-}
-\examples{
-\dontrun{
-# Define subsets
-subsets <- list(
-  "males" = list(var = "gender", value = "male", description = "Males only"),
-  "older" = list(var = "age", value = 30, operator = ">=", description = "Age 30 or above")
-)
-
-# Run the batch processing function
-results <- margot_subset_batch(model_results, X, base_defaults,
-                                     "Example Title", label_mapping, subsets)
-}
-
 }

@@ -1,7 +1,7 @@
 Package: margot
 Type: Package
 Title: MARGinal Observational Treatment-effects
-Version: 0.3.2.2
+Version: 0.3.2.3
 Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
 Description: Functions to obtain MARGinal Observational Treatment-effects from observational data. The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.
 License: CC BY 4.0

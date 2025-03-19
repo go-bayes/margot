@@ -2,7 +2,8 @@
 #'
 #' We compared treatment effects across multiple subsets derived from causal forest models (using the grf package).
 #' For each subset, the number of participants, the total sample size, and the corresponding percentage are computed,
-#' describing the composition of each targeted subpopulation. Note that exploratory comparisons in causal forest analyses
+#' describing the composition of each targeted subpopulation. In addition, for each subset the plot, interpretation,
+#' and transformed table are generated to summarise the causal effect estimates. Note that exploratory comparisons in causal forest analyses
 #' should be interpreted with caution, as subsetting targeted subpopulations may yield unstable treatment effect estimates,
 #' typically indicated by large standard errors and wide confidence intervals.
 #'
@@ -17,41 +18,33 @@
 #'     \item{value}{The value used to define the subset.}
 #'     \item{operator}{(Optional) A comparison operator (default is \code{"=="}).}
 #'     \item{description}{A character string describing the subset.}
+#'     \item{label}{(Optional) A user-friendly label for the subset. If missing, the list name is used.}
 #'   }
 #' @param debug Logical; if \code{TRUE}, prints debugging information.
+#' @param original_df Optional data frame containing the original (non-transformed) data for back-transformation.
 #'
 #' @return A list with the following elements:
 #'   \describe{
-#'     \item{results}{A list of subset results, each containing the plot and sample statistics.}
+#'     \item{results}{A list of subset results, each containing the plot, interpretation, and transformed table along with sample statistics.}
 #'     \item{summary}{A data frame summarising the sample size, total sample size, and percentage for each subset.}
-#'     \item{interpretation}{A character string providing a narrative of the comparisons including the composition of the subsets.}
+#'     \item{explanation}{A character string providing a comprehensive explanation of the subsetting process and the results for each model.}
 #'   }
-#'
-#' @examples
-#' \dontrun{
-#' # Define subsets
-#' subsets <- list(
-#'   "males" = list(var = "gender", value = "male", description = "Males only"),
-#'   "older" = list(var = "age", value = 30, operator = ">=", description = "Age 30 or above")
-#' )
-#'
-#' # Run the batch processing function
-#' results <- margot_subset_batch(model_results, X, base_defaults,
-#'                                      "Example Title", label_mapping, subsets)
-#' }
 #'
 #' @export
 margot_subset_batch <- function(model_results,
-                                      X,
-                                      base_defaults = list(),
-                                      title = "",
-                                      label_mapping = NULL,
-                                      subsets,
-                                      debug = FALSE) {
+                                X,
+                                base_defaults = list(),
+                                title = "",
+                                label_mapping = NULL,
+                                subsets,
+                                debug = FALSE,
+                                original_df = NULL) {
   results <- list()
 
   for (subset_name in names(subsets)) {
     subset_info <- subsets[[subset_name]]
+    # Use user-friendly label if provided; otherwise default to subset_name.
+    subset_label <- if (!is.null(subset_info$label)) subset_info$label else subset_name
 
     # Use operator if provided; otherwise default to "=="
     subset_operator <- if (!is.null(subset_info$operator)) subset_info$operator else "=="
@@ -67,33 +60,36 @@ margot_subset_batch <- function(model_results,
       debug = debug
     )
 
-    # Create plot options for this subset
+    # Create plot options for this subset, using subset_label in the filename prefix.
     options <- margot_plot_create_options(
       subtitle = subset_result$subset_description,
       base_defaults = base_defaults,
       title = title,
-      filename_prefix = paste0("subset_", subset_name)
+      filename_prefix = paste0("subset_", subset_label)
     )
 
-    # Generate the plot for the subset model
+    # Generate the plot for the subset model, passing original_df if provided.
     plot_result <- margot_plot(
       subset_result$results,
       options = options,
       label_mapping = label_mapping,
-      include_coefficients = FALSE
+      include_coefficients = FALSE,
+      original_df = original_df
     )
 
-    # Store results including sample size and percentage.
-    results[[subset_name]] <- list(
+    # Store all outputs along with sample statistics, indexed by the friendly label.
+    results[[subset_label]] <- list(
       subset = subset_result,
       plot = plot_result$plot,
+      interpretation = plot_result$interpretation,
+      transformed_table = plot_result$transformed_table,
       n = subset_result$subset_info$subset_size,
       total = subset_result$subset_info$total_size,
       pct = 100 * subset_result$subset_info$subset_size / subset_result$subset_info$total_size
     )
   }
 
-  # Create a summary data frame and remove extra row names
+  # Create a summary data frame of the sample sizes.
   summary_df <- data.frame(
     Subset = names(results),
     Sample_Size = sapply(results, function(x) x$n),
@@ -103,22 +99,30 @@ margot_subset_batch <- function(model_results,
   )
   rownames(summary_df) <- NULL
 
-  # Build an interpretation narrative that incorporates results
+  # Build summary lines for subsetting explanation.
   subset_lines <- apply(summary_df, 1, function(row) {
     sprintf("In the '%s' subset, %s participants were observed out of %s (%.2f%% of the full sample).",
             row["Subset"], row["Sample_Size"], row["Total_Size"], as.numeric(row["Percentage"]))
   })
 
-  interpretation <- paste(
+  # Build individual subset interpretation explanations.
+  subset_interpretations <- sapply(names(results), function(subset_label) {
+    paste("###", subset_label, "\n", results[[subset_label]]$interpretation)
+  })
+
+  # Combine subsetting and model results explanations into a full explanation.
+  explanation <- paste(
     "We compared treatment effects across multiple subsets derived from causal forest models (using the grf package).",
-    paste(subset_lines, collapse = " "),
+    paste(subset_lines, collapse = "\n"),
+    paste(subset_interpretations, collapse = "\n\n"),
     "These comparisons help assess heterogeneity in treatment effects.",
-    "Note that exploratory comparisons in causal forest analyses should be interpreted with caution, as subsetting targeted subpopulations may yield unstable treatment effect estimates, typically indicated by wider confidence intervals."
+    "Note that exploratory comparisons in causal forest analyses should be interpreted with caution, as subsetting targeted subpopulations may yield unstable treatment effect estimates, typically indicated by wider confidence intervals.",
+    sep = "\n\n"
   )
 
-  # Print interpretation to the console
-  cat("\nInterpretation:\n", interpretation, "\n")
+  # Print explanation to the console.
+  cat("\nExplanation:\n", explanation, "\n")
 
-  # Return a list with results, summary, and interpretation
-  return(list(results = results, summary = summary_df, interpretation = interpretation))
+  # Return a list with results, summary, and explanation.
+  return(list(results = results, summary = summary_df, explanation = explanation))
 }
