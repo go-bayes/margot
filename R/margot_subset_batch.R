@@ -22,6 +22,7 @@
 #'   }
 #' @param debug Logical; if \code{TRUE}, prints debugging information.
 #' @param original_df Optional data frame containing the original (non-transformed) data for back-transformation.
+#' @param ... Additional arguments to be passed to margot_plot().
 #'
 #' @return A list with the following elements:
 #'   \describe{
@@ -38,7 +39,8 @@ margot_subset_batch <- function(model_results,
                                 label_mapping = NULL,
                                 subsets,
                                 debug = FALSE,
-                                original_df = NULL) {
+                                original_df = NULL,
+                                ...) {
   results <- list()
 
   for (subset_name in names(subsets)) {
@@ -68,13 +70,15 @@ margot_subset_batch <- function(model_results,
       filename_prefix = paste0("subset_", subset_label)
     )
 
-    # Generate the plot for the subset model, passing original_df if provided.
+    # Generate the plot for the subset model, passing original_df if provided
+    # and forwarding any additional arguments to margot_plot
     plot_result <- margot_plot(
       subset_result$results,
       options = options,
       label_mapping = label_mapping,
       include_coefficients = FALSE,
-      original_df = original_df
+      original_df = original_df,
+      ...  # Forward additional arguments to margot_plot
     )
 
     # Store all outputs along with sample statistics, indexed by the friendly label.

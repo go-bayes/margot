@@ -7,6 +7,12 @@
 * write examples
 * replace `stringr` and use `tools`
 
+# [2025-03-19] margot 0.3.2.4
+## Improved
+- `margot_subset_batch()` - now correctly passes all parameters required by `margot_plot()`. 
+- `margot_plot()` - default is now: interpret_all_E_gt1 = TRUE (all results with non-null Evalues reported).
+
+
 # [2025-03-19] margot 0.3.2.3
 ## Improved
 - `margot_subset_batch()` - now exports plots and explanations for all submodels models (causal forests).
@@ -24,7 +30,7 @@
 ## Improved
 - `group_tab()` now only in helper functions
 - `margot_plot()` reverted to remove errors.
-- `margot_comapare_groups()`, `margot_interpret_qini()` removed redundant function.
+- `margot_compare_groups()`, `margot_interpret_qini()` removed redundant function.
 
 
 # [2025-03-19] margot 0.3.2.0

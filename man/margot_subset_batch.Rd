@@ -12,7 +12,8 @@ margot_subset_batch(
   label_mapping = NULL,
   subsets,
   debug = FALSE,
-  original_df = NULL
+  original_df = NULL,
+  ...
 )
 }
 \arguments{
@@ -38,6 +39,8 @@ margot_subset_batch(
 \item{debug}{Logical; if \code{TRUE}, prints debugging information.}
 
 \item{original_df}{Optional data frame containing the original (non-transformed) data for back-transformation.}
+
+\item{...}{Additional arguments to be passed to margot_plot().}
 }
 \value{
 A list with the following elements:

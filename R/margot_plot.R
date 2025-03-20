@@ -156,7 +156,7 @@ margot_plot <- function(.data,
                         title_binary = NULL,
                         include_coefficients = TRUE,
                         standardize_label = c("NZ", "US", "none"),
-                        interpret_all_E_gt1 = FALSE,  # NEW parameter
+                        interpret_all_E_gt1 = TRUE,  # NEW parameter
                         ...,
                         options = list(),
                         label_mapping = NULL,

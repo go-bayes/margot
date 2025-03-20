@@ -11,7 +11,7 @@ margot_plot(
   title_binary = NULL,
   include_coefficients = TRUE,
   standardize_label = c("NZ", "US", "none"),
-  interpret_all_E_gt1 = FALSE,
+  interpret_all_E_gt1 = TRUE,
   ...,
   options = list(),
   label_mapping = NULL,
