@@ -33,7 +33,7 @@
 #' @import ggplot2
 #' @importFrom rlang sym
 #' @importFrom tools toTitleCase
-#' @export
+#' @keywords internal
 coloured_histogram_sd <- function(df, col_name, binwidth = 1) {
 
   # validate data

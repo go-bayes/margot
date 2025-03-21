@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_plot_shift.R
 \name{margot_plot_shift}
 \alias{margot_plot_shift}
-\title{Visualize Shifts in Data Distributions with Highlighted Ranges}
+\title{Visualise Shifts in Data Distributions with Highlighted Ranges}
 \usage{
 margot_plot_shift(
   df,
@@ -11,6 +11,8 @@ margot_plot_shift(
   range_highlight = NULL,
   shift = "up",
   show_avg_line = TRUE,
+  print_avg_value = TRUE,
+  show_sd_line = TRUE,
   title = NULL,
   subtitle = NULL,
   x_lab = NULL,
@@ -24,38 +26,44 @@ margot_plot_shift(
 \arguments{
 \item{df}{A dataframe containing the variable of interest.}
 
-\item{col_name}{The name of the column in `df` to be visualized in the histogram. This should be a numeric variable.}
+\item{col_name}{The name of the column in \code{df} to be visualised in the histogram. This should be a numeric variable.}
 
 \item{binwidth}{The width of the bins for the histogram. Default is 1. Adjust this based on the distribution and scale of your data.}
 
-\item{range_highlight}{A numeric vector of length 2 specifying the start and end of the range to highlight. If `NULL`, no range is highlighted.}
+\item{range_highlight}{A numeric vector of length 2 specifying the start and end of the range to highlight. If \code{NULL}, no range is highlighted.}
 
 \item{shift}{A character string indicating the direction of the shift, either "up" or "down". Default is "up".}
 
-\item{show_avg_line}{A logical value indicating whether to display a vertical line representing the average value. Default is `TRUE`.}
+\item{show_avg_line}{A logical value indicating whether to display a vertical line representing the average value. Default is \code{TRUE}.}
 
-\item{title}{An optional custom title for the plot. If NULL, a default title will be generated.}
+\item{print_avg_value}{A logical value indicating whether to print the numerical value of the average on the plot.
+When \code{TRUE}, the value is printed horizontally to the left of the mean line at the bottom of the graph.
+Default is \code{TRUE}.}
 
-\item{subtitle}{An optional custom subtitle for the plot. If NULL, a default subtitle will be generated.}
+\item{show_sd_line}{A logical value indicating whether to display vertical dashed lines (in grey) representing one standard deviation on either side of the average. Default is \code{TRUE}.}
 
-\item{x_lab}{An optional label for the x-axis. If NULL, the formatted column name is used.}
+\item{title}{An optional custom title for the plot. If \code{NULL}, a default title will be generated.}
+
+\item{subtitle}{An optional custom subtitle for the plot. If \code{NULL}, a default subtitle will be generated.}
+
+\item{x_lab}{An optional label for the x-axis. If \code{NULL}, the formatted column name is used.}
 
 \item{y_lab}{The label for the y-axis. Default is "Count".}
 
-\item{save_path}{An optional path to save the plot. If NULL, the plot will not be saved.}
+\item{save_path}{An optional path to save the plot. If \code{NULL}, the plot will not be saved.}
 
-\item{width}{The width of the saved plot in inches. Default is 10.}
+\item{width}{The width of the saved plot in inches. Default is 12.}
 
-\item{height}{The height of the saved plot in inches. Default is 6.}
+\item{height}{The height of the saved plot in inches. Default is 8.}
 
-\item{include_timestamp}{A logical value indicating whether to include a timestamp in the saved filename. Default is FALSE.}
+\item{include_timestamp}{A logical value indicating whether to include a timestamp in the saved filename. Default is \code{FALSE}.}
 }
 \value{
 A ggplot object representing the histogram with specified highlights.
 }
 \description{
-This function creates a histogram that highlights a specified range of values to visualize shifts in data distributions.
+This function creates a histogram that highlights a specified range of values to visualise shifts in data distributions.
 The highlighted range can indicate areas of interest, such as shifts up or down in the distribution.
-This visualization is useful for understanding the implications of causal contrasts, such as modified treatment policies.
+This visualisation is useful for understanding the implications of causal contrasts, such as modified treatment policies.
 The fill colour of the histogram is dynamically adjusted based on the specified direction of the shift.
 }

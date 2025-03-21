@@ -38,7 +38,6 @@
 #' @importFrom rlang sym
 #' @importFrom tools toTitleCase
 #' @importFrom stats quantile
-#' @export
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
 coloured_histogram_quantiles <- function(df, col_name, n_divisions = NULL, breaks = NULL,

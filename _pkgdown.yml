@@ -133,7 +133,6 @@ reference:
     - margot_plot_rate
     - margot_plot_rate_batch
 
-
   - title: "Utility functions"
     contents:
     - back_transform_logmean
@@ -162,11 +161,3 @@ reference:
   - title: "Simulated data"
     contents:
     - df_nz
-
-  - title: "Deprecated Functions"
-    contents:
-    - coloured_histogram
-    - coloured_histogram_sd
-    - coloured_histogram_shift
-    - coloured_histogram_quantiles
-    - margot_plot_hist

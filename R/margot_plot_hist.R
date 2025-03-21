@@ -44,7 +44,7 @@
 #' @importFrom tools toTitleCase
 #' @importFrom lifecycle deprecate_warn
 #'
-#' @export
+#' @keywords internal
 margot_plot_hist <- function(df, col_name, n_divisions = NULL, custom_breaks = NULL,
                              cutpoint_inclusive = "upper",
                              ties.method = NULL,

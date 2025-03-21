@@ -5,7 +5,7 @@
 #'
 #' @param model A list containing the results from a multi-arm causal forest model.
 #' @param model_name A string specifying which model's results to interpret.
-#' @param train_proportion numeric value between 0 and 1 for the proportion of data used for training. default is 0.7.
+#' @param train_proportion numeric value between 0 and 1 for the proportion of data used for training. default is 0.5.
 #' @param custom_action_names optional vector of custom names for the actions. must match the number of actions in the policy tree.
 #' @param label_mapping optional list that maps variable names to custom labels. used for descriptive labels in the interpretation.
 #' @param original_df optional dataframe with untransformed variables, used to display split values on the data scale.

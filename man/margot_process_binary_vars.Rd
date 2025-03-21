@@ -19,14 +19,16 @@ A data frame with processed binary variables.
 \description{
 This function identifies binary variables (both factors and numeric),
 converts them to 0/1 format, and renames them. It allows for exceptions
-to be specified.
+to be specified, and ignores variables whose names already end with the
+specified suffix.
 }
 \examples{
 df <- data.frame(
   a = factor(c("yes", "no", "yes")),
   b = c(1, 0, 1),
   c = c("apple", "banana", "apple"),
-  d = factor(c("true", "false", "true"))
+  d = factor(c("true", "false", "true")),
+  e_binary = c(0, 1, 0)
 )
 processed_df <- margot_process_binary_vars(df, exceptions = "c")
 

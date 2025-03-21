@@ -19,9 +19,9 @@
 #' @param target_rate Character string specifying the type of RATE estimate. Options are \code{"AUTOC"} (default)
 #'   and \code{"QINI"}.
 #' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 15.
-#' @param save_models Logical indicating whether to save the full GRF model objects. Default is FALSE.
+#' @param save_models Logical indicating whether to save the full GRF model objects. Default is TRUE
 #' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
-#'   training policy trees. Default is 0.7.
+#'   training policy trees. Default is 0.5.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
 #'
 #' @return A list containing model results, a combined table, and other relevant information.
@@ -34,8 +34,8 @@
 #'
 #' @export
 margot_causal_forest <- function(data, outcome_vars, covariates, W, weights, grf_defaults = list(),
-                                 save_data = FALSE, compute_rate = TRUE, top_n_vars = 20, save_models = FALSE,
-                                 train_proportion = 0.7, verbose = TRUE) {
+                                 save_data = FALSE, compute_rate = TRUE, top_n_vars = 15, save_models = TRUE,
+                                 train_proportion = 0.5, verbose = TRUE) {
 
   if (verbose) cli::cli_alert_info(crayon::bold("Starting margot_causal_forest function"))
 

@@ -33,7 +33,7 @@
 #' @import ggplot2
 #' @importFrom rlang sym
 #' @importFrom lifecycle deprecate_warn
-#' @export
+#' @keywords internal
 coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight = NULL, shift = "up", show_avg_line = TRUE) {
   # Deprecation warning
   lifecycle::deprecate_warn(

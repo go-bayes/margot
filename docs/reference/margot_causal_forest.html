@@ -19,7 +19,7 @@ treatment effect heterogeneity.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2.4</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,9 +66,9 @@ treatment effect heterogeneity.</p>
 <span>  grf_defaults <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  save_data <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  compute_rate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  top_n_vars <span class="op">=</span> <span class="fl">20</span>,</span>
-<span>  save_models <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  train_proportion <span class="op">=</span> <span class="fl">0.7</span>,</span>
+<span>  top_n_vars <span class="op">=</span> <span class="fl">15</span>,</span>
+<span>  save_models <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  train_proportion <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -114,12 +114,12 @@ treatment effect heterogeneity.</p>
 
 
 <dt id="arg-save-models">save_models<a class="anchor" aria-label="anchor" href="#arg-save-models"></a></dt>
-<dd><p>Logical indicating whether to save the full GRF model objects. Default is FALSE.</p></dd>
+<dd><p>Logical indicating whether to save the full GRF model objects. Default is TRUE</p></dd>
 
 
 <dt id="arg-train-proportion">train_proportion<a class="anchor" aria-label="anchor" href="#arg-train-proportion"></a></dt>
 <dd><p>Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
-training policy trees. Default is 0.7.</p></dd>
+training policy trees. Default is 0.5.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>

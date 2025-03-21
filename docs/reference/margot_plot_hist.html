@@ -9,7 +9,7 @@ This function is deprecated. Please use `margot_plot_histogram()` instead.'></he
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2.4</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -179,15 +179,11 @@ This function is deprecated. Please use `margot_plot_histogram()` instead.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="coloured_histogram_quantiles.html">coloured_histogram_quantiles</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"value"</span>, n_divisions <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>`coloured_histogram_quantiles()` was deprecated in margot 0.2.1.39.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Please use `margot_plot_categorical()` instead.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Please use `margot_plot_categorical()` for future development.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span>
-<span class="r-plt img"><img src="margot_plot_hist-1.png" alt="" width="700" height="433"></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in coloured_histogram_quantiles(df, "value", n_divisions = 4):</span> could not find function "coloured_histogram_quantiles"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With custom breaks</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="coloured_histogram_quantiles.html">coloured_histogram_quantiles</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"value"</span>, custom_breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in coloured_histogram_quantiles(df, "value", custom_breaks = c(-2,     -1, 0, 1, 2)):</span> unused argument (custom_breaks = c(-2, -1, 0, 1, 2))</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in coloured_histogram_quantiles(df, "value", custom_breaks = c(-2,     -1, 0, 1, 2)):</span> could not find function "coloured_histogram_quantiles"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -42,7 +42,7 @@
 #' @importFrom dplyr mutate case_when
 #' @importFrom tools toTitleCase
 #' @importFrom lifecycle deprecate_warn
-#' @export
+#' @keywords internal
 coloured_histogram <- function(df, col_name, binwidth = 1, unit_of_change = 1, scale_min = NULL, scale_max = NULL, highlight_range = "highest") {
   # deprecation warning
   lifecycle::deprecate_warn(

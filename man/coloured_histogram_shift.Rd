@@ -52,3 +52,4 @@ graph_density_of_exposure <- coloured_histogram_shift(
 print(graph_density_of_exposure)
 }
 }
+\keyword{internal}

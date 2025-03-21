@@ -5,7 +5,14 @@
 * fix decision tree layout
 * remove `color` and other unnecessary package dependences
 * write examples
-* replace `stringr` and use `tools`
+
+
+# [2025-03-21] margot 0.3.2.5
+## Improved
+- `margot_process_binary()`: if a variable already ends with "_binary" it is not processed again as binary. Also removed dependency on the `color` package.
+- `coloured_histogram_shift()`... and other deprecated functions no longer exported or maintained.
+- `margot_plot_shift()` - improved to print mean value and also to show +/- sd of distribution
+- `margot_causal_forest()` - default parameter is 0.5 training. 
 
 # [2025-03-19] margot 0.3.2.4
 ## Improved
@@ -20,7 +27,7 @@
 # [2025-03-19] margot 0.3.2.2
 ## New
 - `margot_subset_batch()` batch process subsetted models (causal forests)
--  `margot_plot_rate_batch()` replaces `margot_plot_batch_rate()`, which is deprecated. 
+- `margot_plot_rate_batch()` replaces `margot_plot_batch_rate()`, which is deprecated. 
 
 ## Improved
 - `margot_subset_model()` - streamlined
