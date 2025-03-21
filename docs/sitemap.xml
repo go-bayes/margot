@@ -5,6 +5,7 @@
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/news/index.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/back_transform_log_z.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/back_transform_logmean.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/back_transform_zscore.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/boilerplate_measures.html</loc></url>
@@ -57,6 +58,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/manager_boilerplate_measures.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_adjust_weights.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_amelia_to_mice.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_back_transform_log_z.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_batch_policy.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_censor.html</loc></url>
@@ -90,6 +92,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_model_tab.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_multi_arm_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_omnibus_hetero_test.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_planned_subgroups_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_boxplot.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_boxplot_covariate.html</loc></url>

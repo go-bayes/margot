@@ -116,6 +116,7 @@ reference:
     - margot_model_evalue
     - margot_model_tab
     - margot_omnibus_hetero_test
+    - margot_planned_subgroups_batch
     - margot_policy
     - margot_rate
     - margot_subset_model
@@ -136,6 +137,7 @@ reference:
   - title: "Utility functions"
     contents:
     - back_transform_logmean
+    - back_transform_log_z
     - back_transform_zscore
     - construct_formula
     - here_read
@@ -143,6 +145,7 @@ reference:
     - here_read_qs
     - here_save_qs
     - lmtp_evalue_tab
+    - margot_back_transform_log_z
     - margot_log_transform_vars
     - margot_plot_create_options
     - margot_plot_exposure

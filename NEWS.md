@@ -6,6 +6,13 @@
 * remove `color` and other unnecessary package dependences
 * write examples
 
+# [2025-03-21] margot 0.3.2.6
+## New
+- `margot_planned_subgroups_batch()` -- batch the batched analysis of planned subgroups analysis for causal forests (time-saver).
+- `backtransform_log_z()` utility function to backtranform scores from logged values to original data values. 
+
+## Improved
+- `margot_subset_batch()` now working as it should for complex conditions.
 
 # [2025-03-21] margot 0.3.2.5
 ## Improved

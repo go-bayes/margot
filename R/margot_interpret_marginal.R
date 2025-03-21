@@ -1,7 +1,7 @@
 #' This function interprets the output of causal effect analysis, providing a compact report.
 #' It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality,
 #' unless all estimates with E_Value > 1 (and E_Val_bound > 1) are requested.
-#' Each outcome's interpretation starts with a separate paragraph heading using `####`.
+#' Each outcome's interpretation starts with a separate paragraph heading.
 #' Additionally, it includes a final paragraph indicating that all other effect estimates presented
 #' either weak or unreliable evidence for causality.
 #'

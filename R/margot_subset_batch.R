@@ -17,6 +17,7 @@
 #'     \item{var}{A character string specifying the variable to subset on.}
 #'     \item{value}{The value used to define the subset.}
 #'     \item{operator}{(Optional) A comparison operator (default is \code{"=="}).}
+#'     \item{subset_condition}{(Optional) A pre-computed logical vector defining the subset.}
 #'     \item{description}{A character string describing the subset.}
 #'     \item{label}{(Optional) A user-friendly label for the subset. If missing, the list name is used.}
 #'   }
@@ -48,19 +49,28 @@ margot_subset_batch <- function(model_results,
     # Use user-friendly label if provided; otherwise default to subset_name.
     subset_label <- if (!is.null(subset_info$label)) subset_info$label else subset_name
 
-    # Use operator if provided; otherwise default to "=="
-    subset_operator <- if (!is.null(subset_info$operator)) subset_info$operator else "=="
+    # Check if a pre-computed logical vector is provided.
+    if (!is.null(subset_info$subset_condition)) {
+      subset_result <- margot_subset_model(
+        model_results = model_results,
+        subset_condition = subset_info$subset_condition,
+        subset_description = subset_info$description,
+        debug = debug
+      )
+    } else {
+      # Use operator if provided; otherwise default to "=="
+      subset_operator <- if (!is.null(subset_info$operator)) subset_info$operator else "=="
 
-    # Run the subset model
-    subset_result <- margot_subset_model(
-      model_results = model_results,
-      X = X,
-      subset_var = subset_info$var,
-      subset_value = subset_info$value,
-      subset_operator = subset_operator,
-      subset_description = subset_info$description,
-      debug = debug
-    )
+      subset_result <- margot_subset_model(
+        model_results = model_results,
+        X = X,
+        subset_var = subset_info$var,
+        subset_value = subset_info$value,
+        subset_operator = subset_operator,
+        subset_description = subset_info$description,
+        debug = debug
+      )
+    }
 
     # Create plot options for this subset, using subset_label in the filename prefix.
     options <- margot_plot_create_options(
@@ -71,14 +81,14 @@ margot_subset_batch <- function(model_results,
     )
 
     # Generate the plot for the subset model, passing original_df if provided
-    # and forwarding any additional arguments to margot_plot
+    # and forwarding any additional arguments to margot_plot.
     plot_result <- margot_plot(
       subset_result$results,
       options = options,
       label_mapping = label_mapping,
       include_coefficients = FALSE,
       original_df = original_df,
-      ...  # Forward additional arguments to margot_plot
+      ...
     )
 
     # Store all outputs along with sample statistics, indexed by the friendly label.

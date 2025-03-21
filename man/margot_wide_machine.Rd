@@ -2,11 +2,7 @@
 % Please edit documentation in R/margot_wide_machine.R
 \name{margot_wide_machine}
 \alias{margot_wide_machine}
-\title{This function transforms longitudinal data from long format to wide format,
-ensuring that baseline measurements are correctly labeled and included.
-It handles multiple observations per subject across an indefinite number of waves,
-and allows for the specification of baseline variables, exposure variables,
-outcome variables, and time-varying confounders.}
+\title{Transform longitudinal data to wide format with baseline imputation and NA indicators}
 \usage{
 margot_wide_machine(
   .data,

@@ -21,7 +21,7 @@ margot_interpret_policy_tree(
 
 \item{model_name}{A string specifying which model's results to interpret.}
 
-\item{train_proportion}{numeric value between 0 and 1 for the proportion of data used for training. default is 0.7.}
+\item{train_proportion}{numeric value between 0 and 1 for the proportion of data used for training. default is 0.5.}
 
 \item{custom_action_names}{optional vector of custom names for the actions. must match the number of actions in the policy tree.}
 

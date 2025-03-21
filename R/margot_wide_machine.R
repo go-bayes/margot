@@ -1,4 +1,4 @@
-# Transform longitudinal data to wide format with baseline imputation and NA indicators
+#' Transform longitudinal data to wide format with baseline imputation and NA indicators
 #'
 #' This function transforms longitudinal data from long format to wide format,
 #' ensuring that baseline measurements are correctly labeled and included.

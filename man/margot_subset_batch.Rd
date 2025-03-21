@@ -32,6 +32,7 @@ margot_subset_batch(
   \item{var}{A character string specifying the variable to subset on.}
   \item{value}{The value used to define the subset.}
   \item{operator}{(Optional) A comparison operator (default is \code{"=="}).}
+  \item{subset_condition}{(Optional) A pre-computed logical vector defining the subset.}
   \item{description}{A character string describing the subset.}
   \item{label}{(Optional) A user-friendly label for the subset. If missing, the list name is used.}
 }}

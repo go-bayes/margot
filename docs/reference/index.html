@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2.5</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -296,7 +296,7 @@
           <code><a href="margot_wide_machine.html">margot_wide_machine()</a></code>
 
         </dt>
-        <dd>This function transforms longitudinal data from long format to wide format, ensuring that baseline measurements are correctly labeled and included. It handles multiple observations per subject across an indefinite number of waves, and allows for the specification of baseline variables, exposure variables, outcome variables, and time-varying confounders.</dd>
+        <dd>Transform longitudinal data to wide format with baseline imputation and NA indicators</dd>
       </dl></div><div class="section level2">
       <h2 id="treatment-effect-estimation">Treatment effect estimation<a class="anchor" aria-label="anchor" href="#treatment-effect-estimation"></a></h2>
 
@@ -372,7 +372,7 @@
           <code><a href="margot_interpret_marginal.html">margot_interpret_marginal()</a></code>
 
         </dt>
-        <dd>This function interprets the output of causal effect analysis, providing a compact report. It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality, unless all estimates with E_Value &gt; 1 (and E_Val_bound &gt; 1) are requested. Each outcome's interpretation starts with a separate paragraph heading using `####`. Additionally, it includes a final paragraph indicating that all other effect estimates presented either weak or unreliable evidence for causality.</dd>
+        <dd>This function interprets the output of causal effect analysis, providing a compact report. It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality, unless all estimates with E_Value &gt; 1 (and E_Val_bound &gt; 1) are requested. Each outcome's interpretation starts with a separate paragraph heading. Additionally, it includes a final paragraph indicating that all other effect estimates presented either weak or unreliable evidence for causality.</dd>
       </dl><dl><dt>
 
           <code><a href="margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code>
@@ -427,6 +427,12 @@
 
         </dt>
         <dd>Omnibus Heterogeneity Test for GRF Models</dd>
+      </dl><dl><dt>
+
+          <code><a href="margot_planned_subgroups_batch.html">margot_planned_subgroups_batch()</a></code>
+
+        </dt>
+        <dd>Batch process heterogeneity analyses across multiple outcome domains</dd>
       </dl><dl><dt>
 
           <code><a href="margot_policy.html">margot_policy()</a></code>
@@ -535,6 +541,12 @@
         <dd>Back-transform Log-transformed Mean</dd>
       </dl><dl><dt>
 
+          <code><a href="back_transform_log_z.html">back_transform_log_z()</a></code>
+
+        </dt>
+        <dd>Back Transform Z-Score to Original Log-Transformed Scale</dd>
+      </dl><dl><dt>
+
           <code><a href="back_transform_zscore.html">back_transform_zscore()</a></code>
 
         </dt>
@@ -575,6 +587,12 @@
 
         </dt>
         <dd>Calculate E-values for LMTP Output</dd>
+      </dl><dl><dt>
+
+          <code><a href="margot_back_transform_log_z.html">margot_back_transform_log_z()</a></code>
+
+        </dt>
+        <dd>Create Z-score to Original Scale Mapping for Log-Transformed Data</dd>
       </dl><dl><dt>
 
           <code><a href="margot_log_transform_vars.html">margot_log_transform_vars()</a></code>
