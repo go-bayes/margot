@@ -6,6 +6,10 @@
 * remove `color` and other unnecessary package dependences
 * write examples
 
+# [2025-03-21] margot 0.3.2.7
+## New
+- margot_bind_tables(): binds results from multiple out-comewide studies into one table
+
 # [2025-03-21] margot 0.3.2.6
 ## New
 - `margot_planned_subgroups_batch()` -- batch the batched analysis of planned subgroups analysis for causal forests (time-saver).

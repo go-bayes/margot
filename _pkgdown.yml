@@ -104,6 +104,7 @@ reference:
 
   - title: "Interpret and Report Results"
     contents:
+    - margot_bind_tables
     - margot_compare_groups
     - margot_flip_forests
     - margot_interpret_marginal
