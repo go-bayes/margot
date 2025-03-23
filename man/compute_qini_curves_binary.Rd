@@ -2,11 +2,13 @@
 % Please edit documentation in R/margot_causal_forest.R
 \name{compute_qini_curves_binary}
 \alias{compute_qini_curves_binary}
-\title{Compute Qini Curves for Binary Treatments}
+\title{Compute Qini Curves for Binary Treatments Using Doubly Robust Scores}
 \usage{
-compute_qini_curves_binary(tau_hat, Y, W, verbose = TRUE)
+compute_qini_curves_binary(model, tau_hat, Y, W, verbose = TRUE)
 }
 \arguments{
+\item{model}{A fitted GRF causal forest model.}
+
 \item{tau_hat}{Numeric vector of estimated treatment effects.}
 
 \item{Y}{Vector or matrix of observed outcomes.}
@@ -22,13 +24,8 @@ A list containing two elements:
   Returns NULL if an error occurs or if the resulting Qini data is empty.
 }
 \description{
-Computes Qini curves for binary treatments using the maq package. This function
-calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
-Effect (ATE) Qini curves.
-}
-\details{
-This function computes Qini curves for binary treatments. It handles potential
-errors and edge cases, providing verbose output when requested. The function
-calculates both CATE and ATE Qini curves using the maq package.
+Computes Qini curves for binary treatments using the maq package and doubly robust (DR) scores from GRF.
+This function calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
+Effect (ATE) Qini curves. A note is printed indicating that DR scores are used.
 }
 \keyword{internal}

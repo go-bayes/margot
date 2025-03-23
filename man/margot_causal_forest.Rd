@@ -38,7 +38,7 @@ margot_causal_forest(
 
 \item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 15.}
 
-\item{save_models}{Logical indicating whether to save the full GRF model objects. Default is TRUE}
+\item{save_models}{Logical indicating whether to save the full GRF model objects. Default is TRUE.}
 
 \item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
 training policy trees. Default is 0.5.}

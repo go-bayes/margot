@@ -6,6 +6,10 @@
 * remove `color` and other unnecessary package dependences
 * write examples
 
+# [2025-03-21] margot 0.3.2.9
+## Improved
+- `margot_causal_forest()` now passes doubly robust scores to policy decision trees. We now compute policy trees using doubly robust (DR) scores from \texttt{grf::get_scores()} rather than the previous IPW-based approach. DR scores combine outcome and propensity estimates, yielding improved statistical power and more efficient estimation of treatment effects. This change is backward compatible -- no modifications to user code are required -- and a note is printed during execution indicating that DR scores are used.
+
 # [2025-03-21] margot 0.3.2.8
 ## Improved
 - `margot_interpret_qini()` prints out more economical explanation, only giving explanations for reliable results.
