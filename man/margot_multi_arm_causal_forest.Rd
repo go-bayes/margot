@@ -2,8 +2,7 @@
 % Please edit documentation in R/margot_multi_arm_causal_forest.R
 \name{margot_multi_arm_causal_forest}
 \alias{margot_multi_arm_causal_forest}
-\title{Run Multiple Generalized Random Forest (GRF) Multi-Arm Causal Forest Models with Enhanced Features
-Run Multiple Generalized Random Forest (GRF) Multi-Arm Causal Forest Models with Enhanced Features}
+\title{Run Multiple Generalized Random Forest (GRF) Multi-Arm Causal Forest Models with Enhanced Features}
 \usage{
 margot_multi_arm_causal_forest(
   data,
@@ -88,24 +87,4 @@ and Qini curves. It also prepares data for policy tree visualization, using a sp
 \note{
 Setting save_models = TRUE typically results in very large objects (often several GB).
       Ensure you have sufficient memory available when using this option.
-}
-\examples{
-\dontrun{
-result_multi_arm <- margot_multi_arm_causal_forest(
-  data = df_grf,
-  outcome_vars = outcomes,
-  covariates = X,
-  W_multi = W_multi,
-  weights = weights,
-  exposure_name = "treatment",
-  grf_defaults = list(num.trees = 2000),
-  top_n_vars = 15,
-  train_proportion = 0.5,
-  save_models = TRUE,
-  W.hat = c(0.4, 0.3, 0.3),  # Example treatment assignment probabilities
-  cost = c(1, 2, 3),         # Example costs for each treatment arm
-  verbose = TRUE
-)
-}
-
 }

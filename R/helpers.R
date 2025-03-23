@@ -503,48 +503,34 @@ create_tau_hat_plot <- function(tau_hat, outcome) {
     ggplot2::facet_wrap(~ comparison, scales = "free_y")
 }
 
-#' Extract Qini Data for Plotting
-#'
-#' @description
-#' Extracts Qini curve data from a Qini object and prepares it for plotting.
-#'
-#' @param qini_obj A Qini object.
-#' @param name Name of the treatment arm.
-#' @param max_index Maximum index to extend the curve to.
-#' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
-#'
-#' @return A data frame with extracted Qini data.
-#'
-#' @keywords internal
-extract_qini_data <- function(qini_obj, name, max_index, verbose = TRUE) {
-  gain <- if (!is.null(qini_obj[["_path"]]$gain)) {
-    qini_obj[["_path"]]$gain
-  } else {
-    if (verbose) cli::cli_alert_warning(paste("Qini object", name, "is NULL or missing required components. Extending with zeros."))
-    rep(0, max_index)
-  }
-
-  gain_length <- length(gain)
-  if (gain_length < max_index) {
-    # Extend gain vector
-    gain <- c(gain, rep(tail(gain, 1), max_index - gain_length))
-  } else if (gain_length > max_index) {
-    # Truncate gain vector
-    gain <- gain[1:max_index]
-  }
-
-  proportion <- seq_len(max_index) / max_index
-
-  data.frame(
-    proportion = proportion,
-    gain = gain,
-    curve = name
-  )
-}
+# to remove
+# extract_qini_data <- function(qini_obj, name, max_index, verbose = TRUE) {
+#   gain <- if (!is.null(qini_obj[["_path"]]$gain)) {
+#     qini_obj[["_path"]]$gain
+#   } else {
+#     if (verbose) cli::cli_alert_warning(paste("Qini object", name, "is NULL or missing required components. Extending with zeros."))
+#     rep(0, max_index)
+#   }
+#
+#   gain_length <- length(gain)
+#   if (gain_length < max_index) {
+#     # Extend gain vector
+#     gain <- c(gain, rep(tail(gain, 1), max_index - gain_length))
+#   } else if (gain_length > max_index) {
+#     # Truncate gain vector
+#     gain <- gain[1:max_index]
+#   }
+#
+#   proportion <- seq_len(max_index) / max_index
+#
+#   data.frame(
+#     proportion = proportion,
+#     gain = gain,
+#     curve = name
+#   )
+# }
 
 # label and plotting for causal forest models -----------------------------
-
-
 #' @keywords internal
 #' works with transform to original scale
 determine_transformation <- function(var_name) {

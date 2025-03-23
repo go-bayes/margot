@@ -19,7 +19,7 @@ treatment effect heterogeneity.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2.9</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -125,16 +125,35 @@ training policy trees. Default is 0.5.</p></dd>
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical indicating whether to display detailed messages during execution. Default is TRUE.</p></dd>
 
-
-<dt id="arg-target-rate">target_rate<a class="anchor" aria-label="anchor" href="#arg-target-rate"></a></dt>
-<dd><p>Character string specifying the type of RATE estimate. Options are <code>"AUTOC"</code> (default)
-and <code>"QINI"</code>.</p></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list containing model results, a combined table, and other relevant information.</p>
-    </div>
+    <p>A list containing:</p>
+<dl><dt>results</dt>
+<dd><p>A list of model results, where each element contains model-specific outputs including qini_objects and qini_data</p></dd>
+
+  <dt>combined_table</dt>
+<dd><p>A data frame combining custom tables from all models</p></dd>
+
+  <dt>outcome_vars</dt>
+<dd><p>The original outcome variables vector</p></dd>
+
+  <dt>not_missing</dt>
+<dd><p>Vector of indices for observations with complete data</p></dd>
+
+  <dt>data</dt>
+<dd><p>Original data (if save_data=TRUE)</p></dd>
+
+  <dt>covariates</dt>
+<dd><p>Original covariates matrix (if save_data=TRUE)</p></dd>
+
+  <dt>weights</dt>
+<dd><p>Original weights vector (if save_data=TRUE)</p></dd>
+
+  <dt>full_models</dt>
+<dd><p>List of full GRF model objects (if save_models=TRUE)</p></dd>
+
+</dl></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

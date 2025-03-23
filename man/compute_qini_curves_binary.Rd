@@ -21,11 +21,18 @@ compute_qini_curves_binary(model, tau_hat, Y, W, verbose = TRUE)
 A list containing two elements:
   \item{qini_data}{A data frame containing Qini curve data for plotting.}
   \item{qini_objects}{A list of maq objects for CATE and ATE Qini curves.}
-  Returns NULL if an error occurs or if the resulting Qini data is empty.
+  Returns placeholder objects if calculations fail.
 }
 \description{
 Computes Qini curves for binary treatments using the maq package and doubly robust (DR) scores from GRF.
 This function calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
-Effect (ATE) Qini curves. A note is printed indicating that DR scores are used.
+Effect (ATE) Qini curves. The function includes robust error handling and multiple fallback mechanisms
+to ensure valid output even when the primary calculation methods fail.
+}
+\details{
+The function first attempts to compute doubly robust scores from the model. If this fails,
+it falls back to several alternative methods, progressively simplifying the approach
+until valid output structures are produced. This ensures that downstream functions
+have the expected data structures available.
 }
 \keyword{internal}

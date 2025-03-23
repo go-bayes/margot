@@ -44,12 +44,17 @@ margot_causal_forest(
 training policy trees. Default is 0.5.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
-
-\item{target_rate}{Character string specifying the type of RATE estimate. Options are \code{"AUTOC"} (default)
-and \code{"QINI"}.}
 }
 \value{
-A list containing model results, a combined table, and other relevant information.
+A list containing:
+  \item{results}{A list of model results, where each element contains model-specific outputs including qini_objects and qini_data}
+  \item{combined_table}{A data frame combining custom tables from all models}
+  \item{outcome_vars}{The original outcome variables vector}
+  \item{not_missing}{Vector of indices for observations with complete data}
+  \item{data}{Original data (if save_data=TRUE)}
+  \item{covariates}{Original covariates matrix (if save_data=TRUE)}
+  \item{weights}{Original weights vector (if save_data=TRUE)}
+  \item{full_models}{List of full GRF model objects (if save_models=TRUE)}
 }
 \description{
 This function runs multiple GRF causal forest models with enhanced features. In addition to estimating
