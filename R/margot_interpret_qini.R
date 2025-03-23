@@ -119,16 +119,26 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
     if (any(is.na(estimates))) {
       return(paste("Unable to create explanation for", model_name, "at", spend * 100, "% spend level due to missing estimates."))
     }
+
+    # Determine direction and reliability.
     direction <- if (estimates["estimate"] > 0) "better" else if (estimates["estimate"] < 0) "worse" else "indistinguishable"
-    reliability <- if (estimates["ci_lower"] * estimates["ci_upper"] > 0) "is reliably" else "is not reliably"
-    explanation <- glue::glue(
-      "For the outcome {transform_label_wrapper(model_name)}, at the {spend * 100}% spend level, using the conditional average treatment effect (CATE) to prioritise treatments {reliability} {direction} than using the average treatment effect (ATE) to assign treatment. The difference when prioritising CATE is {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} [95% CI: {format(round(estimates['ci_lower'], decimal_places), nsmall = decimal_places)}, {format(round(estimates['ci_upper'], decimal_places), nsmall = decimal_places)}]."
-    )
-    if (reliability == "is reliably" && direction == "better") {
-      explanation <- paste(explanation, "This result suggests that prioritising CATE may increase the average treatment response relative to no prioritisation at this spend level.")
-    } else if (reliability == "is reliably" && direction == "worse") {
-      explanation <- paste(explanation, "This result suggests that prioritising CATE may decrease the average treatment response relative to no prioritisation at this spend level.")
+    reliably <- estimates["ci_lower"] * estimates["ci_upper"] > 0
+
+    if (!reliably) {
+      return(paste("At the", spend * 100, "% spend level for outcome", transform_label_wrapper(model_name),
+                   "there is no reliable evidence to support using CATE to prioritise treatments."))
     }
+
+    if (direction != "better") {
+      return(paste("At the", spend * 100, "% spend level for outcome", transform_label_wrapper(model_name),
+                   "the evidence indicates that using CATE to prioritise treatments would lead to worse average responses compared to using the ATE."))
+    }
+
+    # If evidence is reliably positive, output the full explanation.
+    explanation <- glue::glue(
+      "For the outcome {transform_label_wrapper(model_name)}, at the {spend * 100}% spend level, using the conditional average treatment effect (CATE) to prioritise treatments is reliably better than using the average treatment effect (ATE) to assign treatment. The difference when prioritising CATE is {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} [95% CI: {format(round(estimates['ci_lower'], decimal_places), nsmall = decimal_places)}, {format(round(estimates['ci_upper'], decimal_places), nsmall = decimal_places)}]."
+    )
+    explanation <- paste(explanation, "This result suggests that prioritising CATE may increase the average treatment response relative to no prioritisation at this spend level.")
     return(explanation)
   }
 

@@ -6,6 +6,10 @@
 * remove `color` and other unnecessary package dependences
 * write examples
 
+# [2025-03-21] margot 0.3.2.8
+## Improved
+- `margot_interpret_qini()` prints out more economical explanation, only giving explanations for reliable results.
+
 # [2025-03-21] margot 0.3.2.7
 ## New
 - margot_bind_tables(): binds results from multiple out-comewide studies into one table
