@@ -15,7 +15,7 @@ margot_causal_forest(
   compute_rate = TRUE,
   top_n_vars = 15,
   save_models = TRUE,
-  train_proportion = 0.5,
+  train_proportion = 0.7,
   verbose = TRUE
 )
 }
@@ -38,23 +38,18 @@ margot_causal_forest(
 
 \item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 15.}
 
-\item{save_models}{Logical indicating whether to save the full GRF model objects. Default is TRUE.}
+\item{save_models}{Logical indicating whether to save the full GRF model objects. Default is TRUE}
 
 \item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
-training policy trees. Default is 0.5.}
+training policy trees. Default is 0.7.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
+
+\item{target_rate}{Character string specifying the type of RATE estimate. Options are \code{"AUTOC"} (default)
+and \code{"QINI"}.}
 }
 \value{
-A list containing:
-  \item{results}{A list of model results, where each element contains model-specific outputs including qini_objects and qini_data}
-  \item{combined_table}{A data frame combining custom tables from all models}
-  \item{outcome_vars}{The original outcome variables vector}
-  \item{not_missing}{Vector of indices for observations with complete data}
-  \item{data}{Original data (if save_data=TRUE)}
-  \item{covariates}{Original covariates matrix (if save_data=TRUE)}
-  \item{weights}{Original weights vector (if save_data=TRUE)}
-  \item{full_models}{List of full GRF model objects (if save_models=TRUE)}
+A list containing model results, a combined table, and other relevant information.
 }
 \description{
 This function runs multiple GRF causal forest models with enhanced features. In addition to estimating

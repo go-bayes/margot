@@ -6,10 +6,14 @@
 * remove `color` and other unnecessary package dependences
 * write examples
 
+# [2025-03-22] margot 0.3.3.1
+## Improved
+- `margot_causal_forest()`- correct calculation of qini ate (reverted to older function)
+
 # [2025-03-21] margot 0.3.3.0
 ## Improved
 - `margot_causal_forest()`- refactored to save qini_data and qini_objects for each model. (was not working before).
-- `margot_multi_arm_causal_forest()` - refactored 
+- `margot_multi_arm_causal_forest()` - refactored.
 
 # [2025-03-21] margot 0.3.2.9
 ## Improved

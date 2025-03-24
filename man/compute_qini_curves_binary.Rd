@@ -2,13 +2,11 @@
 % Please edit documentation in R/margot_causal_forest.R
 \name{compute_qini_curves_binary}
 \alias{compute_qini_curves_binary}
-\title{Compute Qini Curves for Binary Treatments Using Doubly Robust Scores}
+\title{Compute Qini Curves for Binary Treatments}
 \usage{
-compute_qini_curves_binary(model, tau_hat, Y, W, verbose = TRUE)
+compute_qini_curves_binary(tau_hat, Y, W, verbose = TRUE)
 }
 \arguments{
-\item{model}{A fitted GRF causal forest model.}
-
 \item{tau_hat}{Numeric vector of estimated treatment effects.}
 
 \item{Y}{Vector or matrix of observed outcomes.}
@@ -21,18 +19,16 @@ compute_qini_curves_binary(model, tau_hat, Y, W, verbose = TRUE)
 A list containing two elements:
   \item{qini_data}{A data frame containing Qini curve data for plotting.}
   \item{qini_objects}{A list of maq objects for CATE and ATE Qini curves.}
-  Returns placeholder objects if calculations fail.
+  Returns NULL if an error occurs or if the resulting Qini data is empty.
 }
 \description{
-Computes Qini curves for binary treatments using the maq package and doubly robust (DR) scores from GRF.
-This function calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
-Effect (ATE) Qini curves. The function includes robust error handling and multiple fallback mechanisms
-to ensure valid output even when the primary calculation methods fail.
+Computes Qini curves for binary treatments using the maq package. This function
+calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
+Effect (ATE) Qini curves.
 }
 \details{
-The function first attempts to compute doubly robust scores from the model. If this fails,
-it falls back to several alternative methods, progressively simplifying the approach
-until valid output structures are produced. This ensures that downstream functions
-have the expected data structures available.
+This function computes Qini curves for binary treatments. It handles potential
+errors and edge cases, providing verbose output when requested. The function
+calculates both CATE and ATE Qini curves using the maq package.
 }
 \keyword{internal}
