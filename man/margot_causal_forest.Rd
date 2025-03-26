@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_causal_forest.R
 \name{margot_causal_forest}
 \alias{margot_causal_forest}
-\title{Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Features}
+\title{Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Qini Cross-Validation}
 \usage{
 margot_causal_forest(
   data,
@@ -16,6 +16,8 @@ margot_causal_forest(
   top_n_vars = 15,
   save_models = TRUE,
   train_proportion = 0.7,
+  qini_split = TRUE,
+  qini_test_prop = 0.5,
   verbose = TRUE
 )
 }
@@ -38,25 +40,24 @@ margot_causal_forest(
 
 \item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 15.}
 
-\item{save_models}{Logical indicating whether to save the full GRF model objects. Default is TRUE}
+\item{save_models}{Logical indicating whether to save the full GRF model objects. Default is TRUE.}
 
 \item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
 training policy trees. Default is 0.7.}
 
-\item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
+\item{qini_split}{Logical indicating whether to do a separate train/test split exclusively for the Qini
+calculation. Default is FALSE (i.e., Qini is computed in-sample).}
 
-\item{target_rate}{Character string specifying the type of RATE estimate. Options are \code{"AUTOC"} (default)
-and \code{"QINI"}.}
+\item{qini_test_prop}{Proportion of data to use for the Qini test set (if \code{qini_split=TRUE}). Default is 0.5.}
+
+\item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 }
 \value{
 A list containing model results, a combined table, and other relevant information.
 }
 \description{
 This function runs multiple GRF causal forest models with enhanced features. In addition to estimating
-causal effects, it can compute the Rank-Weighted Average Treatment Effect (RATE) for each model. RATE
-ranks individuals based on their predicted treatment effects and calculates the average effect for selected
-percentiles. When computing RATE, the \code{target_rate} parameter determines the variant: \code{"AUTOC"}
-(default) exhibits greater power when only a small subset of the population experiences nontrivial heterogeneous
-treatment effects, whereas \code{"QINI"} is more powerful when many individuals experience diffuse or substantial
-treatment effect heterogeneity.
+causal effects, it can compute the Rank-Weighted Average Treatment Effect (RATE) for each model. It also
+gives you the option to train a separate "Qini forest" on a subset of data and compute Qini curves on
+held-out data, thereby avoiding in-sample optimism in the Qini plots.
 }

@@ -6,6 +6,13 @@
 * remove `color` and other unnecessary package dependences
 * write examples
 
+# [2025-03-26] margot 0.3.3.2
+## Improved
+- `margot_causal_forest()`: we now default to honest splitting for computing qini curves.
+- `margot_plot_categorical()`: fixed error in handling of binary variables.
+- `margot_bind_tables()` - nicer printout, user can change column names.
+
+
 # [2025-03-22] margot 0.3.3.1
 ## Improved
 - `margot_causal_forest()`- correct calculation of qini ate (reverted to older function)

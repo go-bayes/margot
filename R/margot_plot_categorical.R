@@ -77,7 +77,6 @@ margot_plot_categorical <- function(df, col_name, n_divisions = NULL, custom_bre
       return(label)
     }
 
-
     # Remove NAs and warn the user
     original_rows <- nrow(df)
     df <- df[!is.na(df[[col_name]]), ]
@@ -92,8 +91,44 @@ margot_plot_categorical <- function(df, col_name, n_divisions = NULL, custom_bre
                                          cutpoint_inclusive = cutpoint_inclusive,
                                          ties.method = ties.method)
 
-    # Extract the new column name (it's the original name with "_cat" appended)
-    new_col_name <- paste0(col_name, "_cat")
+    # Check for the new column name in result_df
+    # First, try to determine based on custom_breaks or n_divisions
+    local_n_divisions <- if (!is.null(custom_breaks)) {
+      length(custom_breaks) - 1
+    } else {
+      n_divisions
+    }
+
+    # Now determine suffix based on divisions
+    suffix <- if (!is.null(local_n_divisions) && local_n_divisions == 2) "_binary" else "_cat"
+    expected_col_name <- paste0(col_name, suffix)
+
+    # If the expected column isn't found, try the alternative suffix
+    if (!expected_col_name %in% names(result_df)) {
+      alternative_suffix <- if (suffix == "_binary") "_cat" else "_binary"
+      alternative_col_name <- paste0(col_name, alternative_suffix)
+
+      if (alternative_col_name %in% names(result_df)) {
+        # Use the alternative column if found
+        new_col_name <- alternative_col_name
+      } else {
+        # Search for any column that matches the pattern col_name + suffix
+        possible_cols <- grep(paste0("^", col_name, "_(binary|cat)$"), names(result_df), value = TRUE)
+
+        if (length(possible_cols) > 0) {
+          new_col_name <- possible_cols[1]
+        } else {
+          cli::cli_alert_danger("No categorical column found for '{col_name}' in the result dataframe.")
+          return(NULL)
+        }
+      }
+    } else {
+      # Expected column exists
+      new_col_name <- expected_col_name
+    }
+
+    # Instead of cli::cli_alert_info
+    message(paste0("\nUsing categorical column: ", new_col_name, "\n"))
 
     # Get the levels of the new categorical variable
     cat_levels <- levels(result_df[[new_col_name]])
@@ -193,3 +228,4 @@ margot_plot_categorical <- function(df, col_name, n_divisions = NULL, custom_bre
     return(NULL)
   })
 }
+

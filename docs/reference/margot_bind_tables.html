@@ -11,7 +11,7 @@ rows by domain using pack_rows. Advanced formatting features work with LaTeX or 
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,9 @@ rows by domain using <code>pack_rows</code>. Advanced formatting features work w
 <span>  highlight_color <span class="op">=</span> <span class="st">"yellow"</span>,</span>
 <span>  bold <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  output_format <span class="op">=</span> <span class="st">"latex"</span>,</span>
+<span>  rename_cols <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  col_renames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>`E-Value` <span class="op">=</span> <span class="st">"E_Value"</span>, `E-Value bound` <span class="op">=</span> <span class="st">"E_Val_bound"</span><span class="op">)</span>,</span>
+<span>  threshold_col <span class="op">=</span> <span class="st">"E_Val_bound"</span>,</span>
 <span>  kbl_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>booktabs <span class="op">=</span> <span class="cn">TRUE</span>, caption <span class="op">=</span> <span class="st">"Combined Results by Domain"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -70,7 +73,8 @@ Default is <code>1</code>.</p></dd>
 
 
 <dt id="arg-highlight-color">highlight_color<a class="anchor" aria-label="anchor" href="#arg-highlight-color"></a></dt>
-<dd><p>Character. The background highlight colour for output formats. Default is <code>"yellow"</code>.</p></dd>
+<dd><p>Character. The background highlight colour for output formats. Default is <code>"yellow"</code>.
+Set to <code>NULL</code> to disable highlighting color.</p></dd>
 
 
 <dt id="arg-bold">bold<a class="anchor" aria-label="anchor" href="#arg-bold"></a></dt>
@@ -83,6 +87,20 @@ this is achieved with inline CSS. Default is <code>TRUE</code>.</p></dd>
 Default is <code>"latex"</code>.</p></dd>
 
 
+<dt id="arg-rename-cols">rename_cols<a class="anchor" aria-label="anchor" href="#arg-rename-cols"></a></dt>
+<dd><p>Logical. Whether to rename columns using default renaming. Default is <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-col-renames">col_renames<a class="anchor" aria-label="anchor" href="#arg-col-renames"></a></dt>
+<dd><p>Named list. Custom column renamings to apply. Format should be list("new_name" = "old_name").
+Default renames "E_Value" to "E-Value" and "E_Val_bound" to "E-Value bound". Supply custom named list to override.</p></dd>
+
+
+<dt id="arg-threshold-col">threshold_col<a class="anchor" aria-label="anchor" href="#arg-threshold-col"></a></dt>
+<dd><p>Character. The name of the column used for determining which rows to highlight.
+Default is "E_Val_bound". This should be the name of the column *before* any renaming is applied.</p></dd>
+
+
 <dt id="arg-kbl-args">kbl_args<a class="anchor" aria-label="anchor" href="#arg-kbl-args"></a></dt>
 <dd><p>A list of additional arguments to pass to <code>kbl()</code>. For example, you might supply
 <code>list(booktabs = TRUE, caption = "Combined Results by Domain")</code>.</p></dd>
@@ -92,6 +110,20 @@ Default is <code>"latex"</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A formatted table (of class <code>knitr_kable</code>) with rows grouped by domain and
   highlighted where <code>E_Val_bound</code> exceeds the threshold.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="additional-notes">Additional Notes<a class="anchor" aria-label="anchor" href="#additional-notes"></a></h2>
+
+
+<p>This function requires the <code>kableExtra</code> package to format tables.
+For LaTeX output, the <code>booktabs</code> package is recommended to be loaded in your LaTeX document.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/kableExtra/man/kbl.html" class="external-link">kbl</a></code> for base table creation
+<code><a href="https://rdrr.io/pkg/kableExtra/man/row_spec.html" class="external-link">row_spec</a></code> for row styling
+<code><a href="https://rdrr.io/pkg/kableExtra/man/group_rows.html" class="external-link">pack_rows</a></code> for grouping rows
+<code><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></code> for column renaming operations</p></div>
     </div>
 
     <div class="section level2">
@@ -119,6 +151,13 @@ Default is <code>"latex"</code>.</p></dd>
 <span class="r-in"><span>  highlight_color <span class="op">=</span> <span class="st">"yellow"</span>,</span></span>
 <span class="r-in"><span>  bold <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>  kbl_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Combined Results by Domain"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># With custom column renaming:</span></span></span>
+<span class="r-in"><span><span class="fu">margot_bind_tables</span><span class="op">(</span><span class="va">tables_list</span>,</span></span>
+<span class="r-in"><span>  output_format <span class="op">=</span> <span class="st">"html"</span>,</span></span>
+<span class="r-in"><span>  rename_cols <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  col_renames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"E-value (custom)"</span> <span class="op">=</span> <span class="st">"E_Value"</span>, <span class="st">"E-value bound (custom)"</span> <span class="op">=</span> <span class="st">"E_Val_bound"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

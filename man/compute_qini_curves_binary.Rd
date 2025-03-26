@@ -26,9 +26,4 @@ Computes Qini curves for binary treatments using the maq package. This function
 calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
 Effect (ATE) Qini curves.
 }
-\details{
-This function computes Qini curves for binary treatments. It handles potential
-errors and edge cases, providing verbose output when requested. The function
-calculates both CATE and ATE Qini curves using the maq package.
-}
 \keyword{internal}
