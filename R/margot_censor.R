@@ -12,7 +12,7 @@
 #' @return A modified data.table with updated year_measured values based on the condition.
 #'
 #' @importFrom data.table as.data.table copy set uniqueN
-#' @import cli
+#' @importFrom cli cli_abort cli_alert_info cli_alert_success
 #' @export
 margot_censor <- function(
     dt,
@@ -28,30 +28,24 @@ margot_censor <- function(
     stop("Package 'data.table' is required but not installed.")
   }
   library(data.table)
-  library(cli)
   .datatable.aware <- TRUE
-
-  dt <- as.data.table(copy(dt))
+  dt <- data.table::as.data.table(data.table::copy(dt))
   required_vars <- c(cluster_id, id_var, wave_var, condition_var, year_measured_var)
   missing_required <- setdiff(required_vars, names(dt))
   if (length(missing_required) > 0) {
-    cli_abort("Missing required variables: {paste(missing_required, collapse = ', ')}")
+    cli::cli_abort("Missing required variables: {paste(missing_required, collapse = ', ')}")
   }
-
   if (!is.numeric(dt[[wave_var]])) {
-    set(dt, j = wave_var, value = as.numeric(as.character(dt[[wave_var]])))
+    data.table::set(dt, j = wave_var, value = as.numeric(as.character(dt[[wave_var]])))
     if (any(is.na(dt[[wave_var]]))) {
-      cli_abort("The '{wave_var}' variable cannot be converted to numeric.")
+      cli::cli_abort("The '{wave_var}' variable cannot be converted to numeric.")
     }
   }
-
-  total_clusters <- uniqueN(dt[[cluster_id]])
-  total_ids <- uniqueN(dt[[id_var]])
+  total_clusters <- data.table::uniqueN(dt[[cluster_id]])
+  total_ids <- data.table::uniqueN(dt[[id_var]])
   wave_range <- range(dt[[wave_var]])
-  cli_alert_info("Dataset has {total_clusters} clusters, {total_ids} unique IDs, waves {wave_range[1]} to {wave_range[2]}")
-
+  cli::cli_alert_info("Dataset has {total_clusters} clusters, {total_ids} unique IDs, waves {wave_range[1]} to {wave_range[2]}")
   final_wave <- max(dt[[wave_var]])
-
   # Determine clusters to censor. If censor_final_wave is FALSE,
   # only consider non-final wave rows for triggering censoring.
   if (!censor_final_wave) {
@@ -60,12 +54,10 @@ margot_censor <- function(
     dt_trigger <- dt
   }
   clusters_to_censor <- dt_trigger[get(condition_var) == condition_value, unique(get(cluster_id))]
-
   if (length(clusters_to_censor) == 0) {
-    cli_alert_info("No clusters meet the censoring condition ({condition_var} == {condition_value}).")
+    cli::cli_alert_info("No clusters meet the censoring condition ({condition_var} == {condition_value}).")
     return(dt)
   }
-
   # Identify rows to modify.
   # When censor_final_wave is FALSE, skip rows in the final wave.
   if (!censor_final_wave) {
@@ -73,21 +65,17 @@ margot_censor <- function(
   } else {
     censor_idx <- dt[[cluster_id]] %in% clusters_to_censor
   }
-
   dt[censor_idx, (year_measured_var) := 0]
   vars_to_na <- setdiff(
     names(dt),
     c(cluster_id, wave_var, id_var, condition_var, year_measured_var)
   )
   dt[censor_idx, (vars_to_na) := NA]
-
-  cli_alert_success("Applied full cluster-level censoring for {length(clusters_to_censor)} cluster(s).")
+  cli::cli_alert_success("Applied full cluster-level censoring for {length(clusters_to_censor)} cluster(s).")
   if (!censor_final_wave) {
-    cli_alert_info("Final wave (wave = {final_wave}) was exempt from censoring.")
+    cli::cli_alert_info("Final wave (wave = {final_wave}) was exempt from censoring.")
   } else {
-    cli_alert_info("Censoring was applied across all waves.")
+    cli::cli_alert_info("Censoring was applied across all waves.")
   }
-
   return(dt)
 }
-

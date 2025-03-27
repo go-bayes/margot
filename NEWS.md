@@ -3,8 +3,20 @@
 
 * Begin writing tutorials for use cases.
 * fix decision tree layout
-* remove `color` and other unnecessary package dependences
+* remove `crayon` and other unnecessary package dependences
 * write examples
+
+
+# [2025-03-26] margot 0.3.3.3
+## Improved
+- `margot_censor()` - explicit call for 'cli' to avoid conflict with crayon 
+- `create_ordered_variable()` - removed crayon
+- `margot_summary_tables_cat()` - deleted this experimental table
+- `margot_log_transform_vars()` removed crayon, made all function calls explicit, removed `require` for packages.
+- `margot_summary_tables()` - remove `require` and explicit function calls now.
+- `causal_contrast_engine()` - refactored - removes `require`
+- `margot_wide_machine()` - removes `require`
+- `margot_wide()` - removes `require`
 
 # [2025-03-26] margot 0.3.3.2
 ## Improved

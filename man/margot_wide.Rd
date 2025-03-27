@@ -30,7 +30,7 @@ included in the resulting wide-format data frame, with columns prefixed
 by the time of measurement.
 }
 \examples{
-# Defining variables as per the function's documentation
+# defining variables as per the function's documentation
 baseline_vars <- c(
   "male", "age",  "eth_cat",
   "partner", "agreeableness",

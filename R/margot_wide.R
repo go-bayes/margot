@@ -18,7 +18,7 @@
 #'         time of measurement.
 #'
 #' @examples
-#' # Defining variables as per the function's documentation
+#' # defining variables as per the function's documentation
 #' baseline_vars <- c(
 #'   "male", "age",  "eth_cat",
 #'   "partner", "agreeableness",
@@ -38,43 +38,39 @@
 #' # print(wide_data)
 #'
 #' @export
-#' @importFrom dplyr mutate arrange filter select
+#' @importFrom dplyr mutate arrange filter select relocate all_of starts_with everything
 #' @importFrom tidyr pivot_wider
+#' @importFrom cli cli_abort
 margot_wide <-
   function(.data,
            baseline_vars,
            exposure_var,
            outcome_vars) {
-    require(dplyr)
-    require(tidyr)
 
     # add a check for unused levels of factor variables
     lapply(.data, function(column) {
       if (is.factor(column) && any(table(column) == 0)) {
-        stop("There are unused levels in the factor variable: ",
-             deparse(substitute(column)))
+        cli::cli_abort(paste("there are unused levels in the factor variable:",
+                             deparse(substitute(column))))
       }
     })
 
     # add the 'time' column to the data
-    data_with_time <- .data |>
-      dplyr::mutate(time = as.numeric(wave) - 1) |>
+    data_with_time <- dplyr::mutate(.data, time = as.numeric(wave) - 1) |>
       dplyr::arrange(id, time)
 
     # filter the data based on the time condition
-    data_filtered <- data_with_time |>
-      dplyr::filter(time >= 0)
+    data_filtered <- dplyr::filter(data_with_time, time >= 0)
 
     # create the wide data frame
-    wide_data <- data_filtered |>
-      tidyr::pivot_wider(
-        id_cols = id,
-        names_from = time,
-        #values_from = -c(id, time),
-        values_from = setdiff(names(data_filtered), c("id", "time")),
-        names_glue = "t{time}_{.value}",
-        names_prefix = "t"
-      )
+    wide_data <- tidyr::pivot_wider(
+      data_filtered,
+      id_cols = id,
+      names_from = time,
+      values_from = setdiff(names(data_filtered), c("id", "time")),
+      names_glue = "t{time}_{.value}",
+      names_prefix = "t"
+    )
 
     # define a custom function to filter columns based on conditions
     custom_col_filter <- function(col_name) {
@@ -94,11 +90,11 @@ margot_wide <-
     }
 
     # apply the custom function to select the desired columns
-    wide_data_filtered <- wide_data |>
-      dplyr::select(id, which(sapply(
-        colnames(wide_data), custom_col_filter
-      ))) |>
-      dplyr::relocate(starts_with("t0_"), .before = starts_with("t1_"))  |>
+    wide_data_filtered <- dplyr::select(
+      wide_data,
+      id, which(sapply(colnames(wide_data), custom_col_filter))
+    ) |>
+      dplyr::relocate(dplyr::starts_with("t0_"), .before = dplyr::starts_with("t1_")) |>
       dplyr::arrange(id)
 
     # extract unique time values from column names
@@ -110,8 +106,11 @@ margot_wide <-
 
     # relocate columns iteratively
     for (i in 2:(length(time_values) - 1)) {
-      wide_data_filtered <- wide_data_filtered |>
-        dplyr::relocate(starts_with(paste0("t", time_values[i + 1], "_")), .after = starts_with(paste0("t", time_values[i], "_")))
+      wide_data_filtered <- dplyr::relocate(
+        wide_data_filtered,
+        dplyr::starts_with(paste0("t", time_values[i + 1], "_")),
+        .after = dplyr::starts_with(paste0("t", time_values[i], "_"))
+      )
     }
 
     # reorder t0_ columns
@@ -121,8 +120,97 @@ margot_wide <-
         paste0("t0_", exposure_var),
         paste0("t0_", outcome_vars)
       )
-    wide_data_ordered <- wide_data_filtered |>
-      dplyr::select(id, all_of(t0_column_order), everything())
+    wide_data_ordered <- dplyr::select(
+      wide_data_filtered,
+      id, dplyr::all_of(t0_column_order), dplyr::everything()
+    )
 
-    return(data.frame(wide_data_ordered)) # Ensure output is a data.frame
+    return(data.frame(wide_data_ordered)) # ensure output is a data.frame
   }
+# note custom column filter currently only retains exp variables at t1 and outcome variables at t2 (via a hard‐coded check)
+#margot_wide <-
+  # function(.data,
+  #          baseline_vars,
+  #          exposure_var,
+  #          outcome_vars) {
+  #   require(dplyr)
+  #   require(tidyr)
+  #
+  #   # add a check for unused levels of factor variables
+  #   lapply(.data, function(column) {
+  #     if (is.factor(column) && any(table(column) == 0)) {
+  #       stop("There are unused levels in the factor variable: ",
+  #            deparse(substitute(column)))
+  #     }
+  #   })
+  #
+  #   # add the 'time' column to the data
+  #   data_with_time <- .data |>
+  #     dplyr::mutate(time = as.numeric(wave) - 1) |>
+  #     dplyr::arrange(id, time)
+  #
+  #   # filter the data based on the time condition
+  #   data_filtered <- data_with_time |>
+  #     dplyr::filter(time >= 0)
+  #
+  #   # create the wide data frame
+  #   wide_data <- data_filtered |>
+  #     tidyr::pivot_wider(
+  #       id_cols = id,
+  #       names_from = time,
+  #       #values_from = -c(id, time),
+  #       values_from = setdiff(names(data_filtered), c("id", "time")),
+  #       names_glue = "t{time}_{.value}",
+  #       names_prefix = "t"
+  #     )
+  #
+  #   # define a custom function to filter columns based on conditions
+  #   custom_col_filter <- function(col_name) {
+  #     if (startsWith(col_name, "t0_")) {
+  #       return(col_name %in% c(
+  #         paste0("t0_", baseline_vars),
+  #         paste0("t0_", exposure_var),
+  #         paste0("t0_", outcome_vars)
+  #       ))
+  #     } else if (startsWith(col_name, "t1_")) {
+  #       return(col_name %in% paste0("t1_", exposure_var))
+  #     } else if (grepl("^t[2-9][0-9]*_", col_name)) {
+  #       return(col_name %in% paste0("t2_", outcome_vars))
+  #     } else {
+  #       return(FALSE)
+  #     }
+  #   }
+  #
+  #   # apply the custom function to select the desired columns
+  #   wide_data_filtered <- wide_data |>
+  #     dplyr::select(id, which(sapply(
+  #       colnames(wide_data), custom_col_filter
+  #     ))) |>
+  #     dplyr::relocate(starts_with("t0_"), .before = starts_with("t1_"))  |>
+  #     dplyr::arrange(id)
+  #
+  #   # extract unique time values from column names
+  #   time_values <-
+  #     gsub("^t([0-9]+)_.+$", "\\1", colnames(wide_data_filtered))
+  #   time_values <- time_values[grepl("^[0-9]+$", time_values)]
+  #   time_values <- unique(as.numeric(time_values))
+  #   time_values <- time_values[order(time_values)]
+  #
+  #   # relocate columns iteratively
+  #   for (i in 2:(length(time_values) - 1)) {
+  #     wide_data_filtered <- wide_data_filtered |>
+  #       dplyr::relocate(starts_with(paste0("t", time_values[i + 1], "_")), .after = starts_with(paste0("t", time_values[i], "_")))
+  #   }
+  #
+  #   # reorder t0_ columns
+  #   t0_column_order <-
+  #     c(
+  #       paste0("t0_", baseline_vars),
+  #       paste0("t0_", exposure_var),
+  #       paste0("t0_", outcome_vars)
+  #     )
+  #   wide_data_ordered <- wide_data_filtered |>
+  #     dplyr::select(id, all_of(t0_column_order), everything())
+  #
+  #   return(data.frame(wide_data_ordered)) # Ensure output is a data.frame
+  # }
