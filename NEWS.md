@@ -6,6 +6,10 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
+# [2025-03-26] margot 1.0.0
+## improved
+-  we are now using semantic versioning. 
+-  `margot_omnibus_hetero_test` now has label mapping
 
 # [2025-03-26] margot 0.3.3.3
 ## Improved

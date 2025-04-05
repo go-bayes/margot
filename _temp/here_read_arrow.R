@@ -10,7 +10,6 @@
 #' my_df <- here_read_arrow("my_dataset")
 #' }
 #'
-#' @export
 #' @keywords internal
 here_read_arrow <- function(name) {
   .Deprecated("here_read_qs")

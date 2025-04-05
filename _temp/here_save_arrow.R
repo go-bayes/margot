@@ -12,7 +12,6 @@
 #' here_save_arrow(my_df, "my_saved_dataframe")
 #' }
 #'
-#' @export
 #' @keywords internal
 here_save_arrow <- function(df, name) {
   .Deprecated("here_save_qs", package = "margot")
