@@ -9,6 +9,8 @@
 #' @param alpha Significance level for hypothesis tests. Default is 0.05.
 #' @param detail_level Character string specifying the level of detail in the output.
 #'        Options are "basic", "standard" (default), or "detailed".
+#' @param label_mapping Optional. A named list mapping outcome variable names to display labels.
+#'        For example: list("t2_agreeableness_z" = "Agreeableness").
 #'
 #' @return A list containing a summary table and interpretations.
 #'        The summary table includes mean and differential predictions with standard errors.
@@ -18,10 +20,11 @@
 #' @importFrom purrr map_dfr map_chr safely
 #' @importFrom glue glue
 #' @importFrom stringr str_extract
+#' @importFrom cli cli_alert_info
 #'
 #' @export
 margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha = 0.05,
-                                       detail_level = "standard") {
+                                       detail_level = "standard", label_mapping = NULL) {
   # input validation
   if (!is.list(model_results) || length(model_results) == 0) {
     stop("model_results must be a non-empty list")
@@ -46,6 +49,19 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
     stop("detail_level must be 'basic', 'standard', or 'detailed'")
   }
 
+  # create display labels for outcomes
+  display_labels <- sapply(outcome_vars, function(outcome) {
+    transform_label(outcome, label_mapping,
+                    list(remove_tx_prefix = TRUE,
+                         remove_z_suffix = TRUE,
+                         remove_underscores = TRUE,
+                         use_title_case = TRUE))
+  })
+
+  # create a mapping between original outcomes and display labels
+  outcome_to_display <- setNames(display_labels, outcome_vars)
+  display_to_outcome <- setNames(outcome_vars, display_labels)
+
   # helper function to format p-values
   format_pval <- function(p) {
     if (p < 0.001) {
@@ -64,6 +80,7 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
     calib <- model_results$results[[model_name]]$test_calibration
     data.frame(
       outcome = outcome,
+      display_label = outcome_to_display[outcome],
       mean_prediction = glue::glue("{round(calib['mean.forest.prediction', 'Estimate'], 2)} ({round(calib['mean.forest.prediction', 'Std. Error'], 2)})"),
       mean_prediction_estimate = round(calib["mean.forest.prediction", "Estimate"], 2),
       mean_prediction_se = round(calib["mean.forest.prediction", "Std. Error"], 2),
@@ -82,8 +99,11 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
 
   # interpretations based on detail level
   create_interpretation <- function(result) {
+    # use display label instead of raw outcome name
+    display_name <- result$display_label
+
     base_interp <- glue::glue(
-      "For {result$outcome}: The mean forest prediction has an estimate of {result$mean_prediction_estimate} ",
+      "For {display_name}: The mean forest prediction has an estimate of {result$mean_prediction_estimate} ",
       "with a standard error of {result$mean_prediction_se}, resulting in a t-value of {result$mean_prediction_t} ",
       "and a {if(result$mean_prediction_p < alpha) 'statistically significant' else 'statistically non-significant'} ",
       "p-value of {format_pval(result$mean_prediction_p)}. ",
@@ -97,7 +117,7 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
 
     if (detail_level == "basic") {
       glue::glue(
-        "For {result$outcome}: ",
+        "For {display_name}: ",
         "{if(result$differential_prediction_p < alpha) 'We reject the null hypothesis of no heterogeneity' else 'We fail to reject the null hypothesis of no heterogeneity'} ",
         "(p={format_pval(result$differential_prediction_p)})."
       )
@@ -112,13 +132,19 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
   interpretations <- c(general_statement, interpretations)
 
   # create a formatted summary table
-  summary_table <- calibration_results[, c("outcome", "mean_prediction", "differential_prediction")]
+  summary_table <- calibration_results[, c("display_label", "mean_prediction", "differential_prediction")]
   colnames(summary_table) <- c("Outcome", "Mean Prediction (SE)", "Differential Prediction (SE)")
+  # fix row names to be clean numbers instead of the original outcome names
+  row.names(summary_table) <- NULL
 
   # function to create concluding paragraph
   create_concluding_paragraph <- function(results) {
-    reliable_means <- results$outcome[results$mean_prediction_p < alpha]
-    reliable_heterogeneity <- results$outcome[results$differential_prediction_p < alpha]
+    reliable_means_outcomes <- results$outcome[results$mean_prediction_p < alpha]
+    reliable_heterogeneity_outcomes <- results$outcome[results$differential_prediction_p < alpha]
+
+    # convert to display labels
+    reliable_means <- results$display_label[results$mean_prediction_p < alpha]
+    reliable_heterogeneity <- results$display_label[results$differential_prediction_p < alpha]
 
     mean_conclusion <- if (length(reliable_means) > 1) {
       glue::glue("Models for {paste(reliable_means, collapse = ', ')} have reliably calibrated mean predictions on held-out data. We can be confident that these models predict similar average treatment effects on unseen data.")

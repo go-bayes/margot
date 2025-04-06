@@ -6,8 +6,13 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
-# [2025-03-26] margot 1.0.0
-## improved
+# [2025-04-06] margot 1.0.1
+## Fixed
+- restored accidentally deleted helpers
+- `margot_omnibus_hetero_test()` now works as it should
+
+# [2025-04-05] margot 1.0.0
+## Improved
 -  we are now using semantic versioning. 
 -  `margot_omnibus_hetero_test` now has label mapping
 
