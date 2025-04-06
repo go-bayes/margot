@@ -7,6 +7,10 @@
 * write examples
 
 
+# [2025-04-06] margot 1.0.6
+## Improved
+- `margot_interpret_policy_tree()` langague improved for clarity
+
 # [2025-04-06] margot 1.0.5
 ## Improved
 - `margot_interpret_qini()` and `margot_interpret_rate()` and `margot_interpret_qini()` more aggressive error handlings
