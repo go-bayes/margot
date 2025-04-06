@@ -7,7 +7,12 @@
 * write examples
 
 
+# [2025-04-06] margot 1.0.5
+## Improved
+- `margot_interpret_qini()` and `margot_interpret_rate()` and `margot_interpret_qini()` more aggressive error handlings
+
 # [2025-04-06] margot 1.0.4
+## Improved
 - `margot_interpret_qini()` and `margot_interpret_rate()` even better with LaTeX.
 
 # [2025-04-06] margot 1.0.3

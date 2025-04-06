@@ -11,14 +11,6 @@ margot_interpret_qini(
   decimal_places = 2,
   model_names = NULL
 )
-
-margot_interpret_qini(
-  multi_batch,
-  label_mapping = NULL,
-  alpha = 0.05,
-  decimal_places = 2,
-  model_names = NULL
-)
 }
 \arguments{
 \item{multi_batch}{List output from margot_batch_policy() with diff_gain_summaries.}
@@ -31,23 +23,12 @@ margot_interpret_qini(
 
 \item{model_names}{Optional character vector specifying models to process.
 Default is NULL (i.e. process all).}
-
-\item{format}{Output format for tables. Can be "markdown" (default) or "latex".}
 }
 \value{
-A list with summary tables in both markdown and latex formats, and a single
-        combined explanation in \code{qini_explanation} that starts with a
-        header "### Explanation of Qini Curves".
-
 A list with a summary table and a single combined explanation in
         \code{qini_explanation} that starts with a header "### Explanation of Qini Curves".
 }
 \description{
-This function interprets Qini results for both binary and multi-arm treatments.
-It detects the treatment type based on the input data structure and calls the
-appropriate sub-function. A new parameter, \code{model_names}, restricts the
-analysis to the specified models; if not supplied, all models are processed.
-
 This function interprets Qini results for both binary and multi-arm treatments.
 It detects the treatment type based on the input data structure and calls the
 appropriate sub-function. A new parameter, \code{model_names}, restricts the
