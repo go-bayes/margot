@@ -158,7 +158,7 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
   # check if any outcomes are significant (either positive or negative)
   if (length(sig_idx) == 0) {
     # no significant outcomes at all
-    no_sig_text <- "No statistically significant evidence of treatment effect heterogeneity was detected for any outcome (all 95% confidence intervals crossed zero)."
+    no_sig_text <- "No statistically reliable evidence of treatment effect heterogeneity was detected for any outcome (all 95% confidence intervals crossed zero)."
     interpretation_parts[[length(interpretation_parts) + 1]] <- no_sig_text
   } else if (sum(is_significant) < length(outcome_names)) {
     # some outcomes are not significant
@@ -168,7 +168,7 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
     if (length(non_sig_outcomes) > 0) {
       non_sig_text <- paste0(
         "For the remaining outcome(s): ", paste(non_sig_outcomes, collapse = ", "),
-        ", no statistically significant evidence of treatment effect heterogeneity was detected ",
+        ", no statistically reliable evidence of treatment effect heterogeneity was detected ",
         "(95% confidence intervals crossed zero)."
       )
       interpretation_parts[[length(interpretation_parts) + 1]] <- non_sig_text
@@ -338,9 +338,9 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
     if (ci_lower > 0) {
       formatted <- paste0("**", formatted, "**")
     }
-    # Mark negative reliable estimates with bold and a cautionary prefix
+    # Mark negative reliable estimates with a cautionary symbol that works in LaTeX
     else if (ci_upper < 0) {
-      formatted <- paste0("⚠️ *", formatted, "*")
+      formatted <- paste0("(!!) *", formatted, "*")
     }
     return(formatted)
   }
@@ -408,7 +408,7 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
     }
 
     if (length(non_sig_explanations) > 0) {
-      result <- c(result, "**Non-Significant Effects:**", non_sig_explanations)
+      result <- c(result, "**Unreliable Effect Estimates:**", non_sig_explanations)
     }
 
     paste(result, collapse = "\n\n")
@@ -430,7 +430,7 @@ create_qini_explanation_binary <- function() {
     "Given two Qini curves, Q_a and Q_b, we obtain an estimate of the difference Q_a(B) - Q_b(B), at a spend level B.",
     "This difference indicates how much better (or worse) using the conditional average treatment effect (CATE) to prioritise treatments performs compared to using the average treatment effect (ATE) or no prioritisation.",
     "Positive values (in bold) suggest that prioritising treatment based on CATE may lead to higher average responses at that spend level.",
-    "Negative values (marked with ⚠️) indicate a caution: targeting treatments using CATE would lead to reliably worse outcomes than using the ATE and is not recommended.",
+    "Negative values (marked with '(!!)') indicate a caution: targeting treatments using CATE would lead to reliably worse outcomes than using the ATE and is not recommended.",
     sep = "\n"
   )
   return(explanation)

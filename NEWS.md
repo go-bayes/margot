@@ -6,6 +6,12 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
+
+# [2025-04-06] margot 1.0.3
+## Improved
+- `margot_interpret_qini()` and `margot_interpret_rate()` play better with LaTeX. Use "statistically reliable" in place of statistically significant. 
+
+
 # [2025-04-06] margot 1.0.2
 ## Improved
 - `margot_interpret_qini()` and `margot_interpret_rate()` improved warnings for negative estimates
