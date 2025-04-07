@@ -378,10 +378,7 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
 #' @keywords internal
 create_qini_explanation_binary <- function() {
   explanation <- paste(
-    "the values in the table and explanations represent the difference in gain between two qini curves at various spend levels, along with 95% confidence intervals.",
-    "given two qini curves, Q_a and Q_b, we obtain an estimate of the difference Q_a(B) - Q_b(B), at a spend level B.",
-    "this difference indicates how much better (or worse) using the conditional average treatment effect (CATE) to prioritise treatments performs compared to using the average treatment effect (ATE) or no prioritisation.",
-    "positive values suggest that prioritising treatment based on CATE may lead to higher average responses at that spend level, while negative values suggest it may lead to lower average responses.",
+    "The Qini curve helps us understand whether focusing on the people predicted to benefit the most actually leads to better overall outcomes than treating everyone (or no one). We start with those who are forecast to benefit the most, then gradually include more people. If the Qini curve remains above the line for treating everyone equally, it implies a targeted approach is likely beneficial.",
     sep = "\n"
   )
   return(explanation)
@@ -567,3 +564,4 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
   interpretation_text <- paste(interpretation_parts, collapse = "\n\n")
   return(interpretation_text)
 }
+

@@ -6,10 +6,13 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
+# [2025-04-07] margot 1.0.7
+## Improved
+- `margot_interpret_qini()` language improved for clarity.
 
 # [2025-04-06] margot 1.0.6
 ## Improved
-- `margot_interpret_policy_tree()` langague improved for clarity
+- `margot_interpret_policy_tree()` language improved for clarity.
 
 # [2025-04-06] margot 1.0.5
 ## Improved
