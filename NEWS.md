@@ -8,6 +8,11 @@
 
 # [2025-04-07] margot 1.0.7
 ## Improved
+- `margot_plot_decision_tree()`, `margot_plot_policy_tree()` -- enhancements
+
+
+# [2025-04-07] margot 1.0.7
+## Improved
 - `margot_interpret_qini()` language improved for clarity.
 
 # [2025-04-06] margot 1.0.6

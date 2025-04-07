@@ -97,7 +97,8 @@ margot_plot_policy_tree <- function(mc_test, model_name,
                                     remove_z_suffix = TRUE,
                                     use_title_case = TRUE,
                                     remove_underscores = TRUE,
-                                    label_mapping = NULL) {
+                                    label_mapping = NULL
+                                    ) {
 
   cli::cli_h1("Margot Plot Policy Tree")
 
@@ -197,7 +198,30 @@ margot_plot_policy_tree <- function(mc_test, model_name,
     sec_axis(~ ., breaks = secondary_breaks, labels = secondary_labels)
   }
 
+  # **modify the base_plot function to check label_mapping for x_var_name and y_var_name:**
+
   base_plot <- function(x, y, x_lab, y_lab, subtitle, x_split, y_split, x_var_name, y_var_name) {
+    # Get the appropriate variable names for original value lookup
+    lookup_x_var_name <- x_var_name
+    lookup_y_var_name <- y_var_name
+
+    # Add enhanced mapping lookup for original value lookups
+    if (!is.null(original_df) && !is.null(label_mapping)) {
+      # Check if we have reverse mappings (from mapped name to original name)
+      reverse_mappings <- names(label_mapping)[sapply(label_mapping, function(mapped)
+        mapped == x_lab || mapped == y_lab)]
+
+      if (length(reverse_mappings) > 0) {
+        # Use the original variable name for lookup if we find a reverse mapping
+        for (orig_name in reverse_mappings) {
+          if (label_mapping[[orig_name]] == x_lab) lookup_x_var_name <- orig_name
+          if (label_mapping[[orig_name]] == y_lab) lookup_y_var_name <- orig_name
+        }
+        cli::cli_alert_info("Using original variable names for split value lookup: {lookup_x_var_name}, {lookup_y_var_name}")
+      }
+    }
+
+    # Create the plot
     p <- ggplot(plot_df, aes(x = .data[[x]], y = .data[[y]], color = prediction)) +
       geom_jitter(alpha = point_alpha, width = jitter_width, height = jitter_height) +
       geom_vline(xintercept = x_split, color = split_line_color, alpha = split_line_alpha,
@@ -212,7 +236,7 @@ margot_plot_policy_tree <- function(mc_test, model_name,
       ) +
       theme_function() +
       theme(
-        plot.title = element_text(size = title_size),
+        plot.title = element_text(size = title_size, margin = margin(b = 20)), # Add margin below title
         plot.subtitle = element_text(size = subtitle_size),
         axis.title = element_text(size = axis_title_size),
         legend.title = element_text(size = legend_title_size),
@@ -222,8 +246,8 @@ margot_plot_policy_tree <- function(mc_test, model_name,
 
     # Add secondary axes with split values and original split values if original_df is provided
     p <- p +
-      scale_x_continuous(sec.axis = create_secondary_axis(range(plot_df[[x]]), x_split, x_var_name)) +
-      scale_y_continuous(sec.axis = create_secondary_axis(range(plot_df[[y]]), y_split, y_var_name))
+      scale_x_continuous(sec.axis = create_secondary_axis(range(plot_df[[x]]), x_split, lookup_x_var_name)) +
+      scale_y_continuous(sec.axis = create_secondary_axis(range(plot_df[[y]]), y_split, lookup_y_var_name))
 
     return(p)
   }
@@ -292,15 +316,18 @@ margot_plot_policy_tree <- function(mc_test, model_name,
       if (is.null(p2)) {
         cli::cli_abort("Plot 2 should be created when plot_selection is 'p2'")
       }
-      combined_plot <- p2 +
+      combined_plot <- p1 + p2 +
+        plot_layout(guides = "collect") +
         plot_annotation(
-          title = if (!is.null(title)) paste("Policy Tree Results for", title, "- Plot 2") else NULL,
+          title = if (!is.null(title)) paste("Policy Tree Results for", title) else NULL,
           caption = if (!is.null(original_df)) "* Original scale value" else NULL,
           tag_levels = 'A'
         ) &
         theme(
+          plot.tag = element_text(size = 12, face = "bold"),
           legend.position = legend_position,
-          plot.caption = element_text(hjust = 1, size = 12)  # Increase caption size
+          plot.caption = element_text(hjust = 1, size = 12),
+          plot.margin = margin(t = 30, r = 10, b = 10, l = 10) # Add more top margin
         )
       cli::cli_alert_success("Plot 2 finalized")
     } else {
@@ -322,6 +349,7 @@ margot_plot_policy_tree <- function(mc_test, model_name,
   # return the combined plot
   return(combined_plot)
 }
+
 #' margot_plot_policy_tree <- function(mc_test, model_name,
 #'                                     original_df = NULL,
 #'                                     color_scale = NULL,

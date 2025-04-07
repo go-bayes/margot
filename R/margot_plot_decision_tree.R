@@ -57,7 +57,7 @@ margot_plot_decision_tree <- function(result_object,
                                       model_name = NULL,
                                       original_df = NULL,
                                       x_padding = 0.12,
-                                      y_padding = 0.12,
+                                      y_padding = 0.25,
                                       border_size = .5,
                                       text_size = 4,
                                       edge_label_offset = 0.025,
@@ -65,6 +65,7 @@ margot_plot_decision_tree <- function(result_object,
                                       non_leaf_fill = "lightyellow",
                                       title = NULL,
                                       leaf_palette = NULL,
+                                      plot_margin = unit(c(1, 1, 1, 1), "cm"),  # new parameter with old default
                                       remove_tx_prefix = TRUE,
                                       remove_z_suffix = TRUE,
                                       use_title_case = TRUE,
@@ -350,15 +351,14 @@ margot_plot_decision_tree <- function(result_object,
     scale_x_continuous(expand = expansion(mult = c(x_padding, x_padding))) +
     scale_y_continuous(expand = expansion(mult = c(y_padding, y_padding))) +
     theme(
-      plot.margin = unit(c(1, 1, 1, 1), "cm"),
-      plot.title = element_text(hjust = 0.5, face = "bold"),
-      plot.caption = element_text(hjust = 1, size = text_size + 2)  # Increase caption size
+      plot.margin = plot_margin,  # increase top margin from 1cm to 2.5cm
+      plot.title = element_text(hjust = 0.5, face = "bold", margin = margin(b = 20)),  # add bottom margin to title
+      plot.caption = element_text(hjust = 1, size = text_size + 2)
     ) +
     labs(
       title = title,
       caption = if (!is.null(original_df)) "* Original scale value" else NULL
     )
-
 
   # Display a warning if original_df was provided but no original values were found
   if (!is.null(original_df)) {
