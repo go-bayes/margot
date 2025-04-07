@@ -18,8 +18,8 @@
 #' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
 #'   training policy trees. Default is 0.7.
 #' @param qini_split Logical indicating whether to do a separate train/test split exclusively for the Qini
-#'   calculation. Default is TRUE (i.e., Qini is computed out of sample).
-#' @param qini_test_prop Proportion of data to use for the Qini test set (if \code{qini_split=TRUE}). Default is 0.5.
+#'   calculation. Default is TRUE (i.e., Qini is computed out-of-sample).
+#' @param qini_train_prop Proportion of data to use for the Qini training set (if \code{qini_split=TRUE}). Default is 0.7.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
 #'
 #' @return A list containing model results, a combined table, and other relevant information.
@@ -37,8 +37,8 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  top_n_vars = 15,
                                  save_models = TRUE,
                                  train_proportion = 0.7,
-                                 qini_split = TRUE,  # Changed default from FALSE to TRUE
-                                 qini_test_prop = 0.5,
+                                 qini_split = TRUE,
+                                 qini_train_prop = 0.7,  # renamed from qini_test_prop to qini_train_prop
                                  verbose = TRUE) {
 
   # --- basic dimension checks ---
@@ -59,8 +59,8 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
     }
   }
   if (qini_split) {
-    if (qini_test_prop <= 0 || qini_test_prop >= 1) {
-      stop("qini_test_prop must be between 0 and 1 (exclusive) when qini_split is TRUE")
+    if (qini_train_prop <= 0 || qini_train_prop >= 1) {
+      stop("qini_train_prop must be between 0 and 1 (exclusive) when qini_split is TRUE")
     }
   }
 
@@ -162,9 +162,9 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       } else {
         if (verbose) cli::cli_alert_info("performing separate train/test split for qini evaluation")
         qini_n <- length(not_missing)
-        qini_train_size <- floor((1 - qini_test_prop) * qini_n)
+        qini_train_size <- floor(qini_train_prop * qini_n)  # modified to use qini_train_prop directly
         if (qini_train_size < 1 || qini_train_size >= qini_n) {
-          stop("invalid qini_test_prop: results in empty train or test set for qini evaluation")
+          stop("invalid qini_train_prop: results in empty train or test set for qini evaluation")
         }
         qini_train_idxs <- sample(not_missing, qini_train_size)
         qini_test_idxs  <- setdiff(not_missing, qini_train_idxs)
@@ -268,18 +268,9 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
       cli::cli_alert_info(paste("cost length:", length(cost)))
       cli::cli_alert_info(paste("IPW_scores dimensions:", paste(dim(IPW_scores), collapse = "x")))
     }
-    if (verbose) print(summary(IPW_scores))
-    if (any(!is.finite(IPW_scores))) {
-      cli::cli_alert_warning("Non-finite values found in IPW_scores!")
-      # Optionally, print rows with non-finite scores
-      # print(IPW_scores[!is.finite(IPW_scores[,1]) | !is.finite(IPW_scores[,2]), ])
-    }
+
     cate_qini <- maq::maq(tau_hat, cost, IPW_scores, R = 200)
-    # new
-    current_mean_tau <- mean(tau_hat)
-    if (verbose) cli::cli_alert_info(paste("Mean tau_hat for ATE maq:", current_mean_tau))
-    if (!is.finite(current_mean_tau)) stop("Mean tau_hat is not finite!")
-    ate_qini <- maq::maq(rep(current_mean_tau, length(tau_hat)), cost, IPW_scores, R = 200)
+    ate_qini <- maq::maq(rep(mean(tau_hat), length(tau_hat)), cost, IPW_scores, R = 200)
     qini_objects <- list(cate = cate_qini, ate = ate_qini)
 
     max_index <- max(sapply(qini_objects, function(qini_obj) {

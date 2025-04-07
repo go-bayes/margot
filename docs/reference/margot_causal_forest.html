@@ -13,7 +13,7 @@ held-out data, thereby avoiding in-sample optimism in the Qini plots.'></head><b
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.9</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@ held-out data, thereby avoiding in-sample optimism in the Qini plots.</p>
 <span>  save_models <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  train_proportion <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  qini_split <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  qini_test_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  qini_train_prop <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -117,11 +117,11 @@ training policy trees. Default is 0.7.</p></dd>
 
 <dt id="arg-qini-split">qini_split<a class="anchor" aria-label="anchor" href="#arg-qini-split"></a></dt>
 <dd><p>Logical indicating whether to do a separate train/test split exclusively for the Qini
-calculation. Default is TRUE (i.e., Qini is computed out of sample).</p></dd>
+calculation. Default is TRUE (i.e., Qini is computed out-of-sample).</p></dd>
 
 
-<dt id="arg-qini-test-prop">qini_test_prop<a class="anchor" aria-label="anchor" href="#arg-qini-test-prop"></a></dt>
-<dd><p>Proportion of data to use for the Qini test set (if <code>qini_split=TRUE</code>). Default is 0.5.</p></dd>
+<dt id="arg-qini-train-prop">qini_train_prop<a class="anchor" aria-label="anchor" href="#arg-qini-train-prop"></a></dt>
+<dd><p>Proportion of data to use for the Qini training set (if <code>qini_split=TRUE</code>). Default is 0.7.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>

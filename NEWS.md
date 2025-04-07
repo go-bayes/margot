@@ -6,6 +6,10 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
+# [2025-04-07] margot 1.0.10
+## Improved
+- `margot_causal_forest()` consistent use of training proportion rather than mixing training/test. 
+
 # [2025-04-07] margot 1.0.9
 ## Improved
 - `margot_causal_forest()` reverted --enhancements failing
