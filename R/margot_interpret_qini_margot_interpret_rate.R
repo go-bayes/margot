@@ -219,19 +219,19 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
 
     if (!reliably) {
       return(paste("at the", spend * 100, "% spend level for outcome", transform_label_wrapper(model_name),
-                   "there is no reliable evidence to support using CATE to prioritise treatments."))
+                   "There is no reliable evidence to support using CATE to prioritise treatments."))
     }
 
     if (direction != "better") {
       return(paste("at the", spend * 100, "% spend level for outcome", transform_label_wrapper(model_name),
-                   "the evidence indicates that using CATE to prioritise treatments would lead to worse average responses compared to using the ATE."))
+                   "The evidence indicates that using CATE to prioritise treatments would lead to worse average responses compared to using the ATE."))
     }
 
     # if evidence is reliably positive, output the full explanation
     explanation <- glue::glue(
-      "for the outcome {transform_label_wrapper(model_name)}, at the {spend * 100}% spend level, using the conditional average treatment effect (CATE) to prioritise treatments is reliably better than using the average treatment effect (ATE) to assign treatment. the difference when prioritising CATE is {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} [95% CI: {format(round(estimates['ci_lower'], decimal_places), nsmall = decimal_places)}, {format(round(estimates['ci_upper'], decimal_places), nsmall = decimal_places)}]."
+      "For the outcome {transform_label_wrapper(model_name)}, at the {spend * 100}% spend level, using the conditional average treatment effect (CATE) to prioritise treatments is reliably better than using the average treatment effect (ATE) to assign treatment. The difference when prioritising CATE is {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} [95% CI: {format(round(estimates['ci_lower'], decimal_places), nsmall = decimal_places)}, {format(round(estimates['ci_upper'], decimal_places), nsmall = decimal_places)}]."
     )
-    explanation <- paste(explanation, "this result suggests that prioritising CATE may increase the average treatment response relative to no prioritisation at this spend level.")
+    explanation <- paste(explanation, "This result suggests that prioritising CATE may increase the average treatment response relative to no prioritisation at this spend level.")
     return(explanation)
   }
 
@@ -444,13 +444,13 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
   # brief explanation of RATE based on selected target
   if (target == "AUTOC") {
     target_explanation <- paste0(
-      "the rank-weighted average treatment effect (RATE) identifies subgroups of individuals ",
+      "The rank-weighted average treatment effect (RATE) identifies subgroups of individuals ",
       "with different responses to treatment. we used the AUTOC targeting method, which is ",
       "appropriate when heterogeneity is concentrated in a smaller subset of the population."
     )
   } else { # QINI
     target_explanation <- paste0(
-      "the rank-weighted average treatment effect (RATE) identifies subgroups of individuals ",
+      "The rank-weighted average treatment effect (RATE) identifies subgroups of individuals ",
       "with different responses to treatment. we used the QINI targeting method, which is ",
       "appropriate when heterogeneity is broadly distributed across the population."
     )
@@ -482,13 +482,13 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
       # determine if effect is positive based on RATE estimate and flipped status
       if (is_flipped) {
         interpretation_text <- paste0(
-          "this result indicates reliable treatment effect heterogeneity with positive effects for targeted subgroups (after inverting the outcome). ",
-          "this suggests that targeting treatment using CATE may lead to better outcomes for certain individuals."
+          "This result indicates reliable treatment effect heterogeneity with positive effects for targeted subgroups (after inverting the outcome). ",
+          "This suggests that targeting treatment using CATE may lead to better outcomes for certain individuals."
         )
       } else {
         interpretation_text <- paste0(
-          "this result indicates reliable treatment effect heterogeneity with positive effects for targeted subgroups. ",
-          "this suggests that targeting treatment using CATE may lead to better outcomes for certain individuals."
+          "This result indicates reliable treatment effect heterogeneity with positive effects for targeted subgroups. ",
+          "This suggests that targeting treatment using CATE may lead to better outcomes for certain individuals."
         )
       }
 
@@ -508,8 +508,8 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
     neg_outcomes_list <- paste(neg_outcome_names, collapse = ", ")
 
     neg_interpretation <- paste0(
-      "for the following outcome(s): ", neg_outcomes_list, ", the analysis shows reliably negative RATE estimates ",
-      "(95% confidence intervals entirely below zero). this is an important caution that targeting treatment ",
+      "For the following outcome(s): ", neg_outcomes_list, ", the analysis shows reliably negative RATE estimates ",
+      "(95% confidence intervals entirely below zero). This is an important caution that targeting treatment ",
       "based on predicted effects would lead to worse outcomes than using the average treatment effect (ATE). ",
       "for these outcomes, targeting the CATE is expected to lead to reliably worse outcomes and ",
       "is not recommended."
@@ -544,7 +544,7 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
   # check if any outcomes are significant (either positive or negative)
   if (length(sig_idx) == 0) {
     # no significant outcomes at all
-    no_sig_text <- "no statistically significant evidence of treatment effect heterogeneity was detected for any outcome (all 95% confidence intervals crossed zero)."
+    no_sig_text <- "No statistically significant evidence of treatment effect heterogeneity was detected for any outcome (all 95% confidence intervals crossed zero)."
     interpretation_parts[[length(interpretation_parts) + 1]] <- no_sig_text
   } else if (sum(is_significant) < length(outcome_names)) {
     # some outcomes are not significant
@@ -553,7 +553,7 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
 
     if (length(non_sig_outcomes) > 0) {
       non_sig_text <- paste0(
-        "for the remaining outcome(s): ", paste(non_sig_outcomes, collapse = ", "),
+        "For the remaining outcome(s): ", paste(non_sig_outcomes, collapse = ", "),
         ", no statistically significant evidence of treatment effect heterogeneity was detected ",
         "(95% confidence intervals crossed zero)."
       )
@@ -564,4 +564,48 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
   interpretation_text <- paste(interpretation_parts, collapse = "\n\n")
   return(interpretation_text)
 }
+
+
+## new helpers
+# Helper function to convert text to sentence case
+to_sentence_case <- function(text) {
+  # Split by periods to identify sentences
+  sentences <- unlist(strsplit(text, "(?<=\\.)\\s+", perl = TRUE))
+
+  # Capitalize the first letter of each sentence
+  sentences <- sapply(sentences, function(s) {
+    if (nchar(s) > 0) {
+      first_char <- toupper(substr(s, 1, 1))
+      rest <- substr(s, 2, nchar(s))
+      return(paste0(first_char, rest))
+    } else {
+      return(s)
+    }
+  })
+
+  # Rejoin the sentences
+  return(paste(sentences, collapse = ". "))
+}
+
+# # Example of applying this to the target_explanation in margot_interpret_rate
+# target_explanation <- paste0(
+#   "The rank-weighted average treatment effect (RATE) identifies subgroups of individuals ",
+#   "with different responses to treatment. We used the AUTOC targeting method, which is ",
+#   "appropriate when heterogeneity is concentrated in a smaller subset of the population."
+# )
+#
+# # In the create_explanation function of margot_interpret_qini_binary, modify:
+# explanation <- glue::glue(
+#   "For the outcome {transform_label_wrapper(model_name)}, at the {spend * 100}% spend level, using the conditional average treatment effect (CATE) to prioritise treatments is reliably better than using the average treatment effect (ATE) to assign treatment. The difference when prioritising CATE is {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} [95% CI: {format(round(estimates['ci_lower'], decimal_places), nsmall = decimal_places)}, {format(round(estimates['ci_upper'], decimal_places), nsmall = decimal_places)}]."
+# )
+# explanation <- paste(explanation, "This result suggests that prioritising CATE may increase the average treatment response relative to no prioritisation at this spend level.")
+#
+# # For margot_interpret_rate, apply sentence case to all text parts:
+# interpretation_text <- paste0(
+#   "This result indicates reliable treatment effect heterogeneity with positive effects for targeted subgroups. ",
+#   "This suggests that targeting treatment using CATE may lead to better outcomes for certain individuals."
+# )
+#
+# # For margot_interpret_qini_binary, update "no significant outcomes at all" text:
+# no_sig_text <- "No statistically significant evidence of treatment effect heterogeneity was detected for any outcome (all 95% confidence intervals crossed zero)."
 

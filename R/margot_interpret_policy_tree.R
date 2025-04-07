@@ -74,7 +74,7 @@ margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0
 
   # generate general interpretation
   general_interpretation <- glue::glue(
-    "**Policy Tree Interpretation:** A policy tree uses simple rules (a shallow decision tree) ",
+    "A policy tree uses simple rules (a shallow decision tree) ",
     "to recommend an optimal action. The algorithm uses doubly robust reward estimates ",
     "from a causal forest. We used {train_proportion * 100}% of the data for training and ",
     "the remainder for model evaluation. Each split below shows how distinct subgroups ",
