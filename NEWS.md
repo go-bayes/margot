@@ -6,6 +6,10 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
+# [2025-04-07] margot 1.0.9
+## Improved
+- `margot_causal_forest()` reverted --enhancements failing
+
 # [2025-04-07] margot 1.0.8
 ## Improved
 - `margot_causal_forest()` added checks

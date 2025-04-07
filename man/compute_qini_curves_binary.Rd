@@ -2,19 +2,28 @@
 % Please edit documentation in R/margot_causal_forest.R
 \name{compute_qini_curves_binary}
 \alias{compute_qini_curves_binary}
-\title{Compute Qini Curves for Binary Treatments
-(Revised version with propensity score input and checks)}
+\title{Compute Qini Curves for Binary Treatments}
 \usage{
-compute_qini_curves_binary(
-  tau_hat,
-  Y,
-  W,
-  propensity_scores = NULL,
-  verbose = TRUE
-)
+compute_qini_curves_binary(tau_hat, Y, W, verbose = TRUE)
+}
+\arguments{
+\item{tau_hat}{Numeric vector of estimated treatment effects.}
+
+\item{Y}{Vector or matrix of observed outcomes.}
+
+\item{W}{Vector of treatment assignments (binary).}
+
+\item{verbose}{Logical; if TRUE, print diagnostic information during execution.}
+}
+\value{
+A list containing two elements:
+  \item{qini_data}{A data frame containing Qini curve data for plotting.}
+  \item{qini_objects}{A list of maq objects for CATE and ATE Qini curves.}
+  Returns NULL if an error occurs or if the resulting Qini data is empty.
 }
 \description{
-Compute Qini Curves for Binary Treatments
-(Revised version with propensity score input and checks)
+Computes Qini curves for binary treatments using the maq package. This function
+calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
+Effect (ATE) Qini curves.
 }
 \keyword{internal}
