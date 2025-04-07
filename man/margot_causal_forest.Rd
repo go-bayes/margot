@@ -46,7 +46,7 @@ margot_causal_forest(
 training policy trees. Default is 0.7.}
 
 \item{qini_split}{Logical indicating whether to do a separate train/test split exclusively for the Qini
-calculation. Default is FALSE (i.e., Qini is computed in-sample).}
+calculation. Default is TRUE (i.e., Qini is computed out of sample).}
 
 \item{qini_test_prop}{Proportion of data to use for the Qini test set (if \code{qini_split=TRUE}). Default is 0.5.}
 
