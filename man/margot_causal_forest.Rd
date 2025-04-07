@@ -2,14 +2,15 @@
 % Please edit documentation in R/margot_causal_forest.R
 \name{margot_causal_forest}
 \alias{margot_causal_forest}
-\title{Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Qini Cross-Validation}
+\title{Run Multiple Generalized Random Forest (GRF) Causal Forest Models
+(Revised Version with Robustness Fixes)}
 \usage{
 margot_causal_forest(
   data,
   outcome_vars,
   covariates,
   W,
-  weights,
+  weights = NULL,
   grf_defaults = list(),
   save_data = FALSE,
   compute_rate = TRUE,
@@ -18,6 +19,7 @@ margot_causal_forest(
   train_proportion = 0.7,
   qini_split = TRUE,
   qini_test_prop = 0.5,
+  propensity_clip = 0.01,
   verbose = TRUE
 )
 }
@@ -30,7 +32,7 @@ margot_causal_forest(
 
 \item{W}{A vector of binary treatment assignments.}
 
-\item{weights}{A vector of weights for the observations.}
+\item{weights}{Optional vector of weights for the observations.}
 
 \item{grf_defaults}{A list of default parameters for the GRF models.}
 
@@ -46,18 +48,20 @@ margot_causal_forest(
 training policy trees. Default is 0.7.}
 
 \item{qini_split}{Logical indicating whether to do a separate train/test split exclusively for the Qini
-calculation. Default is TRUE (i.e., Qini is computed out of sample).}
+calculation. Default is TRUE.}
 
 \item{qini_test_prop}{Proportion of data to use for the Qini test set (if \code{qini_split=TRUE}). Default is 0.5.}
+
+\item{propensity_clip}{Numeric value for clipping propensity scores (e.g., 0.01).
+Propensity scores p will be clipped to [propensity_clip, 1 - propensity_clip].
+Set to NULL or 0 to disable clipping. Default is 0.01.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 }
 \value{
-A list containing model results, a combined table, and other relevant information.
+A list containing model results, a combined table (potentially NULL if errors occurred), and other relevant information.
 }
 \description{
-This function runs multiple GRF causal forest models with enhanced features. In addition to estimating
-causal effects, it can compute the Rank-Weighted Average Treatment Effect (RATE) for each model. It also
-gives you the option to train a separate "Qini forest" on a subset of data and compute Qini curves on
-held-out data, thereby avoiding in-sample optimism in the Qini plots.
+Run Multiple Generalized Random Forest (GRF) Causal Forest Models
+(Revised Version with Robustness Fixes)
 }

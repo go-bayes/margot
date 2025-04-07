@@ -2,23 +2,13 @@
 % Please edit documentation in R/margot_causal_forest.R
 \name{extract_qini_data_binary}
 \alias{extract_qini_data_binary}
-\title{Extract Qini Data for Binary Treatment Plotting}
+\title{Extract Qini Data for Binary Treatment Plotting
+(Modified slightly to handle potential non-finite max_gain more gracefully)}
 \usage{
 extract_qini_data_binary(qini_obj, name, max_index, verbose = TRUE)
 }
-\arguments{
-\item{qini_obj}{A Qini object.}
-
-\item{name}{Name of the curve type (either "ate" or "cate").}
-
-\item{max_index}{Maximum index to extend the curve to.}
-
-\item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
-}
-\value{
-A data frame with extracted Qini data.
-}
 \description{
-Extracts Qini curve data from a Qini object for binary treatments and prepares it for plotting.
+Extract Qini Data for Binary Treatment Plotting
+(Modified slightly to handle potential non-finite max_gain more gracefully)
 }
 \keyword{internal}
