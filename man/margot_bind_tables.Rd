@@ -29,8 +29,8 @@ Set to \code{NULL} to disable highlighting color.}
 \item{bold}{Logical. Whether to bold highlighted rows. For LaTeX this uses the \code{bold} parameter; for HTML,
 this is achieved with inline CSS. Default is \code{TRUE}.}
 
-\item{output_format}{Character. The output format passed to \code{kbl()}. Either \code{"latex"} or \code{"html"}.
-Default is \code{"latex"}.}
+\item{output_format}{Character. The output format passed to \code{kbl()}. Either \code{"latex"}, \code{"html"},
+or \code{"markdown"}. Default is \code{"latex"}.}
 
 \item{rename_cols}{Logical. Whether to rename columns using default renaming. Default is \code{TRUE}.}
 
@@ -50,52 +50,5 @@ A formatted table (of class \code{knitr_kable}) with rows grouped by domain and
 \description{
 This function binds a named list of domain-specific tables, removes the domain column,
 highlights rows where \eqn{E_{\text{Val_bound}}} exceeds a specified threshold, and groups
-rows by domain using \code{pack_rows}. Advanced formatting features work with LaTeX or HTML output.
-}
-\section{Additional Notes}{
-
-This function requires the \code{kableExtra} package to format tables.
-For LaTeX output, the \code{booktabs} package is recommended to be loaded in your LaTeX document.
-}
-
-\examples{
-\dontrun{
-tables_list <- list(
-  Health = binary_results_health$transformed_table,
-  Psych  = binary_results_psych$transformed_table,
-  Life   = binary_results_life$transformed_table,
-  Social = binary_results_social$transformed_table
-)
-
-# For LaTeX output:
-margot_bind_tables(tables_list,
-  output_format = "latex",
-  e_val_bound_threshold = 1,
-  bold = TRUE,
-  kbl_args = list(booktabs = TRUE, caption = "Combined Results by Domain")
-)
-
-# For HTML output:
-margot_bind_tables(tables_list,
-  output_format = "html",
-  e_val_bound_threshold = 1,
-  highlight_color = "yellow",
-  bold = TRUE,
-  kbl_args = list(caption = "Combined Results by Domain")
-)
-
-# With custom column renaming:
-margot_bind_tables(tables_list,
-  output_format = "html",
-  rename_cols = TRUE,
-  col_renames = list("E-value (custom)" = "E_Value", "E-value bound (custom)" = "E_Val_bound")
-)
-}
-
-}
-\seealso{
-\code{\link[kableExtra]{kbl}} for base table creation
-\code{\link[kableExtra]{row_spec}} for row styling
-\code{\link[kableExtra]{pack_rows}} for grouping rows
-\code{\link[dplyr]{rename}} for column renaming operations
+rows by domain. Works with LaTeX, HTML, or Markdown output.
 }

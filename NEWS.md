@@ -12,6 +12,7 @@
 ## New
 - `margot_bind_models()` - bind model outputs (currently implemented for batch caual forest models)
 - `margot_interprete_rate_comparison()` compare qini and auto RATE estimates, also called by `margot_interpret_rate()`
+- `margot_bind_tables()` - better markdown
 
 ## Improved
 - `margot_interpret_rate()` combines qini and rate estimates.

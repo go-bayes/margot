@@ -2,21 +2,11 @@
 #'
 #' This function binds a named list of domain-specific tables, removes the domain column,
 #' highlights rows where \eqn{E_{\text{Val_bound}}} exceeds a specified threshold, and groups
-#' rows by domain using \code{pack_rows}. Advanced formatting features work with LaTeX or HTML output.
+#' rows by domain. Works with LaTeX, HTML, or Markdown output.
 #'
 #' @importFrom dplyr bind_rows select rename
 #' @importFrom kableExtra kbl row_spec pack_rows
 #' @importFrom rlang .data !!!
-#'
-#' @section Additional Notes:
-#' This function requires the \code{kableExtra} package to format tables.
-#' For LaTeX output, the \code{booktabs} package is recommended to be loaded in your LaTeX document.
-#'
-#' @seealso
-#' \code{\link[kableExtra]{kbl}} for base table creation
-#' \code{\link[kableExtra]{row_spec}} for row styling
-#' \code{\link[kableExtra]{pack_rows}} for grouping rows
-#' \code{\link[dplyr]{rename}} for column renaming operations
 #'
 #' @param tables_list A named list of data frames. Each element should represent a domain-specific table.
 #'   The names of the list are used as domain labels.
@@ -26,8 +16,8 @@
 #'   Set to \code{NULL} to disable highlighting color.
 #' @param bold Logical. Whether to bold highlighted rows. For LaTeX this uses the \code{bold} parameter; for HTML,
 #'   this is achieved with inline CSS. Default is \code{TRUE}.
-#' @param output_format Character. The output format passed to \code{kbl()}. Either \code{"latex"} or \code{"html"}.
-#'   Default is \code{"latex"}.
+#' @param output_format Character. The output format passed to \code{kbl()}. Either \code{"latex"}, \code{"html"},
+#'   or \code{"markdown"}. Default is \code{"latex"}.
 #' @param rename_cols Logical. Whether to rename columns using default renaming. Default is \code{TRUE}.
 #' @param col_renames Named list. Custom column renamings to apply. Format should be list("new_name" = "old_name").
 #'   Default renames "E_Value" to "E-Value" and "E_Val_bound" to "E-Value bound". Supply custom named list to override.
@@ -38,40 +28,6 @@
 #'
 #' @return A formatted table (of class \code{knitr_kable}) with rows grouped by domain and
 #'   highlighted where \code{E_Val_bound} exceeds the threshold.
-#'
-#' @examples
-#' \dontrun{
-#' tables_list <- list(
-#'   Health = binary_results_health$transformed_table,
-#'   Psych  = binary_results_psych$transformed_table,
-#'   Life   = binary_results_life$transformed_table,
-#'   Social = binary_results_social$transformed_table
-#' )
-#'
-#' # For LaTeX output:
-#' margot_bind_tables(tables_list,
-#'   output_format = "latex",
-#'   e_val_bound_threshold = 1,
-#'   bold = TRUE,
-#'   kbl_args = list(booktabs = TRUE, caption = "Combined Results by Domain")
-#' )
-#'
-#' # For HTML output:
-#' margot_bind_tables(tables_list,
-#'   output_format = "html",
-#'   e_val_bound_threshold = 1,
-#'   highlight_color = "yellow",
-#'   bold = TRUE,
-#'   kbl_args = list(caption = "Combined Results by Domain")
-#' )
-#'
-#' # With custom column renaming:
-#' margot_bind_tables(tables_list,
-#'   output_format = "html",
-#'   rename_cols = TRUE,
-#'   col_renames = list("E-value (custom)" = "E_Value", "E-value bound (custom)" = "E_Val_bound")
-#' )
-#' }
 #'
 #' @export
 margot_bind_tables <- function(tables_list,
@@ -102,9 +58,35 @@ margot_bind_tables <- function(tables_list,
   }
 
   # validate output format
-  if (!output_format %in% c("latex", "html", "markdown")) {
+  valid_formats <- c("latex", "html", "markdown")
+  if (!output_format %in% valid_formats) {
     warning("Output format '", output_format, "' not fully supported. Output may be unpredictable.")
   }
+
+  # Special handling for markdown format
+  if (output_format == "markdown") {
+    # create a combined table with domain markers
+    combined_table <- dplyr::bind_rows(tables_list, .id = "Domain")
+
+    # rename columns if requested
+    if (rename_cols && !is.null(col_renames) && length(col_renames) > 0) {
+      for (new_name in names(col_renames)) {
+        old_name <- col_renames[[new_name]]
+        if (old_name %in% names(combined_table)) {
+          names(combined_table)[names(combined_table) == old_name] <- new_name
+        }
+      }
+    }
+
+    # Create a basic knitr table without any kableExtra enhancements
+    caption <- if (!is.null(kbl_args$caption)) kbl_args$caption else NULL
+    markdown_table <- knitr::kable(combined_table, format = "markdown", caption = caption)
+
+    # Return as a plain string with knitr_kable class
+    return(markdown_table)
+  }
+
+  # Original code for latex and html formats
   # combine tables and preserve domain labels
   combined_table <- dplyr::bind_rows(tables_list, .id = "Domain")
 
@@ -114,25 +96,17 @@ margot_bind_tables <- function(tables_list,
 
   # rename columns if requested
   # identify the e_val_bound column for highlighting later
-  e_val_bound_col <- "E_Val_bound"
+  e_val_bound_col <- threshold_col  # Changed from hardcoded "E_Val_bound"
 
   if (rename_cols && !is.null(col_renames) && length(col_renames) > 0) {
-    # for dplyr::rename, we need a named list where names are new column names
-    # and values are existing column names
+    for (new_name in names(col_renames)) {
+      old_name <- col_renames[[new_name]]
+      if (old_name %in% names(combined_table2)) {
+        names(combined_table2)[names(combined_table2) == old_name] <- new_name
 
-    # check which target columns exist in the dataset
-    cols_exist <- names(col_renames) %in% names(combined_table2)
-    valid_renames <- col_renames[cols_exist]
-
-    if (length(valid_renames) > 0) {
-      # apply renaming - for dplyr::rename format is: rename(new_name = old_name)
-      combined_table2 <- dplyr::rename(combined_table2, !!!valid_renames)
-
-      # if the threshold column was renamed, track the new name for highlighting
-      for (new_name in names(valid_renames)) {
-        if (valid_renames[[new_name]] == threshold_col) {
+        # Update the threshold column name if it was renamed
+        if (old_name == threshold_col) {
           e_val_bound_col <- new_name
-          break
         }
       }
     }
@@ -144,6 +118,7 @@ margot_bind_tables <- function(tables_list,
   # create a kable object using additional kbl arguments
   tbl <- do.call(kableExtra::kbl, c(list(combined_table2, format = output_format), kbl_args))
 
+  # apply formatting for latex and html
   if (output_format %in% c("latex", "html")) {
     # apply formatting only if highlight_color is not NULL
     if (!is.null(highlight_color) && length(highlight_rows) > 0) {
@@ -159,7 +134,7 @@ margot_bind_tables <- function(tables_list,
         }
       } else if (output_format == "latex") {
         # for latex, use row_spec with bold parameter
-        tbl <- tbl %>% kableExtra::row_spec(highlight_rows, bold = bold)
+        tbl <- tbl %>% kableExtra::row_spec(highlight_rows, bold = bold, background = highlight_color)
       }
     } else if (bold && length(highlight_rows) > 0) {
       # if highlight_color is NULL but bold is TRUE, still apply bold
@@ -184,7 +159,7 @@ margot_bind_tables <- function(tables_list,
     for (i in seq_len(nrow(domain_indices))) {
       # add tryCatch to handle potential errors in pack_rows
       tryCatch({
-        tbl <- tbl |>
+        tbl <- tbl %>%
           kableExtra::pack_rows(
             group_label = domain_indices$domain[i],
             start_row = domain_indices$start_row[i],
