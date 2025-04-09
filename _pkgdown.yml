@@ -105,6 +105,7 @@ reference:
   - title: "Interpret and Report Results"
     contents:
     - margot_bind_tables
+    - margot_bind_models
     - margot_compare_groups
     - margot_flip_forests
     - margot_interpret_marginal
@@ -112,6 +113,7 @@ reference:
     - margot_interpret_policy_tree
     - margot_interpret_qini
     - margot_interpret_rate
+    - margot_interpret_rate_comparison
     - margot_lmtp_evalue
     - margot_lmtp_tab
     - margot_model_evalue

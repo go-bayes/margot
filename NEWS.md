@@ -6,6 +6,18 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
+
+# [2025-04-09] margot 1.0.11
+
+## New
+- `margot_bind_models()` - bind model outputs (currently implemented for batch caual forest models)
+- `margot_interprete_rate_comparison()` compare qini and auto RATE estimates, also called by `margot_interpret_rate()`
+
+## Improved
+- `margot_interpret_rate()` combines qini and rate estimates.
+- `margot_rate()` output better worded, still reate "rate_result" for backward compatibility; table only highlight "significant" if RATE is positive.
+
+
 # [2025-04-07] margot 1.0.10
 ## Improved
 - `margot_causal_forest()` consistent use of training proportion rather than mixing training/test. 

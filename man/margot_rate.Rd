@@ -30,10 +30,10 @@ margot_rate(
 
 \item{round_digits}{Integer specifying the number of decimal places for rounding. Default is 3.}
 
-\item{highlight_significant}{Logical indicating whether to add asterisks to outcomes with confidence intervals that don\sQuote{t} cross zero. Default is FALSE.}
+\item{highlight_significant}{Logical indicating whether to add asterisks to outcomes with positive confidence intervals that don\sQuote{t} cross zero. Default is FALSE.}
 }
 \value{
-A list containing two tables: rate_result and rate_qini.
+A list containing two tables: rate_autoc (also accessible as rate_result for backward compatibility) and rate_qini.
 }
 \description{
 Format RATE Results into Readable Tables

@@ -7,9 +7,9 @@
 #' @param use_title_case Logical indicating whether to convert outcome names to title case. Default is TRUE.
 #' @param remove_underscores Logical indicating whether to replace underscores with spaces. Default is TRUE.
 #' @param round_digits Integer specifying the number of decimal places for rounding. Default is 3.
-#' @param highlight_significant Logical indicating whether to add asterisks to outcomes with confidence intervals that don\sQuote{t} cross zero. Default is FALSE.
+#' @param highlight_significant Logical indicating whether to add asterisks to outcomes with positive confidence intervals that don\sQuote{t} cross zero. Default is FALSE.
 #'
-#' @return A list containing two tables: rate_result and rate_qini.
+#' @return A list containing two tables: rate_autoc (also accessible as rate_result for backward compatibility) and rate_qini.
 #'
 #' @export
 margot_rate <- function(models, label_mapping = NULL,
@@ -65,11 +65,11 @@ margot_rate <- function(models, label_mapping = NULL,
       result_table$`97.5%` <- round(result_table$`RATE Estimate` + 1.96 * result_table$`Std Error`, round_digits)
     }
 
-    # add ** to the outcome names where the CI does not cross zero if highlight_significant is TRUE
+    # MODIFIED: add ** only to positive significant outcomes where CI doesn't cross zero
     if (highlight_significant && all(c("2.5%", "97.5%") %in% colnames(result_table))) {
-      significant <- (result_table$`2.5%` > 0 & result_table$`97.5%` > 0) |
-        (result_table$`2.5%` < 0 & result_table$`97.5%` < 0)
-      result_table[, 1] <- ifelse(significant,
+      # only highlight when both CI bounds are positive
+      significant_positive <- (result_table$`2.5%` > 0 & result_table$`97.5%` > 0)
+      result_table[, 1] <- ifelse(significant_positive,
                                   paste0("**", result_table[, 1], "**"),
                                   result_table[, 1])
     }
@@ -80,7 +80,18 @@ margot_rate <- function(models, label_mapping = NULL,
     result_table
   }
 
-  # return a list with two tables
-  list(rate_result = build_table("rate_result"),
-       rate_qini   = build_table("rate_qini"))
+  # Build tables
+  autoc_table <- build_table("rate_result")
+  qini_table <- build_table("rate_qini")
+
+  # Return a list with both tables, providing rate_autoc as an alias for rate_result
+  result <- list(
+    rate_qini = qini_table
+  )
+
+  # Add rate_autoc and rate_result (for backward compatibility)
+  result$rate_autoc <- autoc_table
+  result$rate_result <- result$rate_autoc  # Same object, different name for backward compatibility
+
+  return(result)
 }
