@@ -16,6 +16,7 @@
 ## Improved
 - `margot_interpret_rate()` combines qini and rate estimates.
 - `margot_rate()` output better worded, still reate "rate_result" for backward compatibility; table only highlight "significant" if RATE is positive.
+- `margot_interpret_qini()` - better outputs
 
 
 # [2025-04-07] margot 1.0.10

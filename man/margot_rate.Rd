@@ -12,7 +12,7 @@ margot_rate(
   use_title_case = TRUE,
   remove_underscores = TRUE,
   round_digits = 3,
-  highlight_significant = FALSE
+  highlight_significant = TRUE
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ margot_rate(
 
 \item{round_digits}{Integer specifying the number of decimal places for rounding. Default is 3.}
 
-\item{highlight_significant}{Logical indicating whether to add asterisks to outcomes with positive confidence intervals that don\sQuote{t} cross zero. Default is FALSE.}
+\item{highlight_significant}{Logical indicating whether to add asterisks to outcomes with positive confidence intervals that don\sQuote{t} cross zero. Default is TRUE}
 }
 \value{
 A list containing two tables: rate_autoc (also accessible as rate_result for backward compatibility) and rate_qini.

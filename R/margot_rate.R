@@ -7,7 +7,7 @@
 #' @param use_title_case Logical indicating whether to convert outcome names to title case. Default is TRUE.
 #' @param remove_underscores Logical indicating whether to replace underscores with spaces. Default is TRUE.
 #' @param round_digits Integer specifying the number of decimal places for rounding. Default is 3.
-#' @param highlight_significant Logical indicating whether to add asterisks to outcomes with positive confidence intervals that don\sQuote{t} cross zero. Default is FALSE.
+#' @param highlight_significant Logical indicating whether to add asterisks to outcomes with positive confidence intervals that don\sQuote{t} cross zero. Default is TRUE
 #'
 #' @return A list containing two tables: rate_autoc (also accessible as rate_result for backward compatibility) and rate_qini.
 #'
@@ -15,7 +15,7 @@
 margot_rate <- function(models, label_mapping = NULL,
                         remove_tx_prefix = TRUE, remove_z_suffix = TRUE,
                         use_title_case = TRUE, remove_underscores = TRUE,
-                        round_digits = 3, highlight_significant = FALSE) {
+                        round_digits = 3, highlight_significant = TRUE) {
 
   build_table <- function(target_field) {
     rate_list <- lapply(names(models$result), function(mod_name) {

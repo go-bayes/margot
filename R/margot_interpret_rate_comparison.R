@@ -156,7 +156,7 @@ margot_interpret_rate_comparison <- function(autoc_df, qini_df, flipped_outcomes
   }
 
   # recommendation section
-  comparison_parts[[length(comparison_parts) + 1]] <- "#### Implementation Recommendations"
+  comparison_parts[[length(comparison_parts) + 1]] <- "#### Policy Recommendations"
 
   # add recommendation based on findings
   if (length(positive_both) > 0) {

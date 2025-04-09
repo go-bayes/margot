@@ -26,11 +26,11 @@ Default is NULL (i.e. process all).}
 }
 \value{
 A list with a summary table and a single combined explanation in
-        \code{qini_explanation} that starts with a header "### Explanation of Qini Curves".
+        \code{qini_explanation}.
 }
 \description{
 This function interprets Qini results for both binary and multi-arm treatments.
 It detects the treatment type based on the input data structure and calls the
 appropriate sub-function. A new parameter, \code{model_names}, restricts the
-analysisto the specified models; if not supplied, all models are processed.
+analysis to the specified models; if not supplied, all models are processed.
 }

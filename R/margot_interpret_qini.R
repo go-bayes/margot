@@ -3,7 +3,7 @@
 #' This function interprets Qini results for both binary and multi-arm treatments.
 #' It detects the treatment type based on the input data structure and calls the
 #' appropriate sub-function. A new parameter, \code{model_names}, restricts the
-#' analysisto the specified models; if not supplied, all models are processed.
+#' analysis to the specified models; if not supplied, all models are processed.
 #'
 #' @param multi_batch List output from margot_batch_policy() with diff_gain_summaries.
 #' @param label_mapping Optional named list mapping model names to readable labels.
@@ -13,7 +13,7 @@
 #'        Default is NULL (i.e. process all).
 #'
 #' @return A list with a summary table and a single combined explanation in
-#'         \code{qini_explanation} that starts with a header "### Explanation of Qini Curves".
+#'         \code{qini_explanation}.
 #'
 #' @export
 margot_interpret_qini <- function(multi_batch,
@@ -119,10 +119,9 @@ margot_interpret_qini <- function(multi_batch,
     }
   }
 
-  # combine the common explanation with the individual model explanations into one block
-  combined_explanation <- paste0(
-    "### Explanation of Qini Curves\n\n",
-    result$qini_explanation, "\n\n",
+  # create the combined explanation without the header
+  combined_explanation <- paste(
+    result$qini_explanation, "\n",
     paste(sapply(names(result$explanations), function(model) {
       paste0("**", model, "**\n", result$explanations[[model]])
     }), collapse = "\n\n")
@@ -141,45 +140,55 @@ margot_interpret_qini <- function(multi_batch,
 margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alpha = 0.05, decimal_places = 2) {
   cli::cli_alert_info("processing binary treatment model...")
 
-  # use the explanation for binary qini curves
+  # use the new general explanation for binary qini curves
   qini_explanation <- create_qini_explanation_binary()
 
-  # wrapper to transform model labels using the package helper
-  transform_label_wrapper <- function(label) {
-    original_label <- label
-    if (!is.null(label_mapping)) {
-      # remove "model_" prefix before checking mapping
-      clean_label <- sub("^model_", "", label)
-      if (clean_label %in% names(label_mapping)) {
-        mapped <- label_mapping[[clean_label]]
-        cli::cli_alert_info(glue::glue("mapped label: {original_label} -> {mapped}"))
-        return(mapped)
-      }
-      if (label %in% names(label_mapping)) {
-        mapped <- label_mapping[[label]]
-        cli::cli_alert_info(glue::glue("mapped label: {original_label} -> {mapped}"))
-        return(mapped)
-      }
-    }
-
-    # remove "model_" prefix and then apply the helper transformation
-    label <- sub("^model_", "", label)
-
-    if (exists("transform_label", mode = "function")) {
-      transformed <- transform_label(label, label_mapping = NULL, options = list(
+  # use transform_var_name helper for consistent variable naming
+  transform_model_label <- function(label) {
+    # first check if we have direct access to transform_var_name function
+    if (exists("transform_var_name", mode = "function")) {
+      return(transform_var_name(
+        label,
+        label_mapping = label_mapping,
         remove_tx_prefix = TRUE,
         remove_z_suffix = TRUE,
-        remove_underscores = TRUE,
-        use_title_case = TRUE
+        use_title_case = TRUE,
+        remove_underscores = TRUE
       ))
-      return(transformed)
     } else {
-      # fallback if transform_label function is not available
-      label <- gsub("_", " ", label)
-      label <- sub("^tx ", "", label)
-      label <- sub(" z$", "", label)
-      # basic title case
-      label <- gsub("(^|[[:space:]])([[:alpha:]])", "\\1\\U\\2", label, perl = TRUE)
+      # fallback if transform_var_name function is not available
+      original_label <- label
+
+      # apply label mapping if available
+      if (!is.null(label_mapping)) {
+        # try direct mapping
+        if (label %in% names(label_mapping)) {
+          mapped <- label_mapping[[label]]
+          cli::cli_alert_info(glue::glue("mapped label: {original_label} -> {mapped}"))
+          return(mapped)
+        }
+
+        # remove "model_" prefix before checking mapping
+        clean_label <- sub("^model_", "", label)
+        if (clean_label %in% names(label_mapping)) {
+          mapped <- label_mapping[[clean_label]]
+          cli::cli_alert_info(glue::glue("mapped label: {original_label} -> {mapped}"))
+          return(mapped)
+        }
+      }
+
+      # apply transformations if no mapping found
+      label <- sub("^model_", "", label)
+      label <- sub("^t[0-9]+_", "", label) # remove tx_ prefix
+      label <- sub("_z$", "", label)       # remove _z suffix
+      label <- gsub("_", " ", label)       # replace underscores with spaces
+
+      # apply title case
+      label <- tools::toTitleCase(label)
+
+      # Special case for NZ
+      label <- gsub("Nz", "NZ", label)
+
       return(label)
     }
   }
@@ -210,7 +219,7 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
   create_explanation <- function(diff_gain_summary, model_name, spend) {
     estimates <- extract_estimates(diff_gain_summary)
     if (any(is.na(estimates))) {
-      return(paste("unable to create explanation for", model_name, "at", spend * 100, "% spend level due to missing estimates."))
+      return(paste("Unable to evaluate", spend * 100, "% spend level due to missing estimates."))
     }
 
     # determine direction and reliability
@@ -218,20 +227,17 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
     reliably <- estimates["ci_lower"] * estimates["ci_upper"] > 0
 
     if (!reliably) {
-      return(paste("at the", spend * 100, "% spend level for outcome", transform_label_wrapper(model_name),
-                   "There is no reliable evidence to support using CATE to prioritise treatments."))
+      return(paste("At", spend * 100, "% spend: No reliable benefits from CATE prioritisation."))
     }
 
     if (direction != "better") {
-      return(paste("at the", spend * 100, "% spend level for outcome", transform_label_wrapper(model_name),
-                   "The evidence indicates that using CATE to prioritise treatments would lead to worse average responses compared to using the ATE."))
+      return(paste("At", spend * 100, "% spend: CATE prioritisation worsens outcomes compared to ATE."))
     }
 
-    # if evidence is reliably positive, output the full explanation
+    # if evidence is reliably positive, output the concise explanation
     explanation <- glue::glue(
-      "For the outcome {transform_label_wrapper(model_name)}, at the {spend * 100}% spend level, using the conditional average treatment effect (CATE) to prioritise treatments is reliably better than using the average treatment effect (ATE) to assign treatment. The difference when prioritising CATE is {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} [95% CI: {format(round(estimates['ci_lower'], decimal_places), nsmall = decimal_places)}, {format(round(estimates['ci_upper'], decimal_places), nsmall = decimal_places)}]."
+      "At {spend * 100}% spend: CATE prioritisation is beneficial (diff: {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} [95% CI: {format(round(estimates['ci_lower'], decimal_places), nsmall = decimal_places)}, {format(round(estimates['ci_upper'], decimal_places), nsmall = decimal_places)}])."
     )
-    explanation <- paste(explanation, "This result suggests that prioritising CATE may increase the average treatment response relative to no prioritisation at this spend level.")
     return(explanation)
   }
 
@@ -292,7 +298,7 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
 
       # create data frame row
       data.frame(
-        Model = transform_label_wrapper(model_name),
+        Model = transform_model_label(model_name),
         Spend = extract_spend_value(spend),
         estimate_ci = format_estimate_ci(estimates["estimate"], estimates["ci_lower"], estimates["ci_upper"])
       )
@@ -338,33 +344,44 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
   # generate explanations for each model
   cli::cli_alert_info("generating explanations...")
 
-  explanations <- purrr::map(names(multi_batch), function(model_name) {
+  explanations <- list()
+  for (model_name in names(multi_batch)) {
     cli::cli_alert_info(paste("generating explanation for model:", model_name))
 
     if (!("diff_gain_summaries" %in% names(multi_batch[[model_name]]))) {
-      return("no diff_gain_summaries data available for this model.")
+      explanations[[transform_model_label(model_name)]] <- "No data available for this model."
+      next
     }
 
     model_results <- multi_batch[[model_name]]$diff_gain_summaries
     spend_levels <- names(model_results)
 
-    # create explanation for each spend level
-    explanation <- purrr::map_chr(spend_levels, function(spend) {
-      if (is.null(model_results[[spend]])) {
-        return(paste("no data available for", spend, "spend level."))
-      }
+    # Check for spend levels that match 0.2 (20%) and 0.5 (50%)
+    spend_values <- as.numeric(gsub("spend_", "", spend_levels))
+    spend_20 <- spend_levels[which(abs(spend_values - 0.2) < 0.01)]
+    spend_50 <- spend_levels[which(abs(spend_values - 0.5) < 0.01)]
 
-      create_explanation(
-        model_results[[spend]],
-        model_name,
-        as.numeric(gsub("spend_", "", spend))
-      )
-    })
+    # Get explanations for both spend levels
+    expl_20 <- if(length(spend_20) > 0 && !is.null(model_results[[spend_20]])) {
+      create_explanation(model_results[[spend_20]], model_name, 0.2)
+    } else {
+      "At 20% spend: No data available."
+    }
 
-    paste(explanation, collapse = "\n\n")
-  })
+    expl_50 <- if(length(spend_50) > 0 && !is.null(model_results[[spend_50]])) {
+      create_explanation(model_results[[spend_50]], model_name, 0.5)
+    } else {
+      "At 50% spend: No data available."
+    }
 
-  names(explanations) <- purrr::map_chr(names(multi_batch), transform_label_wrapper)
+    # Check if both levels show no benefits
+    if (grepl("No reliable benefits", expl_20) && grepl("No reliable benefits", expl_50)) {
+      explanations[[transform_model_label(model_name)]] <-
+        "No benefits for priority investments as measured by the QINI curve at the twenty and fifty percent spend levels."
+    } else {
+      explanations[[transform_model_label(model_name)]] <- paste(expl_20, expl_50, sep = " ")
+    }
+  }
 
   cli::cli_alert_success("binary treatment model processing completed")
 
@@ -377,9 +394,7 @@ margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alph
 
 #' @keywords internal
 create_qini_explanation_binary <- function() {
-  explanation <- paste(
-    "The Qini curve helps us understand whether focusing on the people predicted to benefit the most actually leads to better overall outcomes than treating everyone (or no one). We start with those who are forecast to benefit the most, then gradually include more people. If the Qini curve remains above the line for treating everyone equally, it implies a targeted approach is likely beneficial.",
-    sep = "\n"
-  )
+  # new general comment instead of explanation header
+  explanation <- "We computed the cumulative benefits as we increase the treated fraction by prioritising conditional average treatment effects (CATE) at two different spend levels: 20% of a total budget and 50% of a total budget, where the contrast is no priority assignment."
   return(explanation)
 }
