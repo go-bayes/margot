@@ -2,37 +2,38 @@
 % Please edit documentation in R/margot_interpret_rate.R
 \name{margot_interpret_rate}
 \alias{margot_interpret_rate}
-\title{This function provides a concise interpretation of Rank-Weighted Average Treatment Effect (RATE)
-estimates from \code{margot_rate()}. The RATE ranks individuals by predicted treatment effects
-and computes average effects for selected percentiles.}
+\title{Interpret Rank-Weighted Average Treatment Effect (RATE) estimates}
 \usage{
 margot_interpret_rate(rate_df, flipped_outcomes = NULL, target = "AUTOC")
 }
 \arguments{
 \item{rate_df}{A data frame from \code{margot_rate()} with columns:
-\code{RATE Estimate}, \code{2.5\%}, and \code{97.5\%}. First column contains outcome names.
+\code{RATE Estimate}, \code{2.5\%}, and \code{97.5\%}. The first column contains outcome names.
 Alternatively, a list containing both AUTOC and QINI results.}
 
 \item{flipped_outcomes}{Character vector of outcome names that were inverted during pre-processing.}
 
 \item{target}{Character string specifying RATE type: \code{AUTOC} (default) or \code{QINI}.
-Ignored if rate_df is a list containing both methods.}
+Ignored if \code{rate_df} is a list containing both methods.}
 }
 \value{
-A markdown string interpreting statistically reliable RATE estimates.
+A markdown string interpreting the RATE estimates.
 }
 \description{
 This function provides a concise interpretation of Rank-Weighted Average Treatment Effect (RATE)
-estimates from \code{margot_rate()}. The RATE ranks individuals by predicted treatment effects
-and computes average effects for selected percentiles.
+estimates from \code{margot_rate()}. The RATE evaluates a prioritisation policy based on the
+estimated conditional treatment effect, \eqn{\tau(x)}, which reflects the expected gain conditional
+on measured covariates. For AUTOC the logarithmic weighting is most effective when heterogeneity
+is concentrated in a small subset of individuals (typically ≤ 10%), whereas for QINI the linear
+weighting is most effective when heterogeneity is broadly distributed (typically > 50%).
 }
 \examples{
-\dontrun{
-# For a single method:
+\donttest{
+# single method:
 interpretation <- margot_interpret_rate(rate_table, flipped_outcomes = c("t2_neuroticism_z"))
 cat(interpretation)
 
-# For both methods:
+# both methods:
 interpretation <- margot_interpret_rate(rate_table_all, flipped_outcomes = flipped_names)
 cat(interpretation)
 }

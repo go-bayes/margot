@@ -7,20 +7,23 @@
 margot_interpret_rate_comparison(autoc_df, qini_df, flipped_outcomes = NULL)
 }
 \arguments{
-\item{autoc_df}{Data frame with AUTOC RATE results}
+\item{autoc_df}{Data frame with AUTOC RATE results.}
 
-\item{qini_df}{Data frame with QINI RATE results}
+\item{qini_df}{Data frame with QINI RATE results.}
 
 \item{flipped_outcomes}{Character vector of outcome names that were inverted during pre-processing.}
 }
 \value{
-A list containing the comparison text and individual method interpretations
+A list containing the integrated comparison text as well as the individual
+method interpretations.
 }
 \description{
-This function compares and synthesizes results from both AUTOC and QINI analyses,
-highlighting outcomes that show consistent effects across both methods, as well as
-method-specific findings. It provides a comprehensive interpretation of treatment
-effect heterogeneity patterns.
+This function compares and synthesises results from AUTOC and QINI analyses,
+providing an integrated interpretation of treatment effect heterogeneity. It
+evaluates prioritisation policies based on the estimated conditional treatment effect,
+and examines how these estimates differ from targeting by the average
+treatment effect (ATE). Negative RATE estimates provide strong evidence that CATE-based
+targeting would lead to worse outcomes, while positive estimates remain suggestive.
 }
 \examples{
 \dontrun{

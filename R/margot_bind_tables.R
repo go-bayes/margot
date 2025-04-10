@@ -15,7 +15,7 @@
 #' @param highlight_color Character. The background highlight colour for output formats. Default is \code{"yellow"}.
 #'   Set to \code{NULL} to disable highlighting color.
 #' @param bold Logical. Whether to bold highlighted rows. For LaTeX this uses the \code{bold} parameter; for HTML,
-#'   this is achieved with inline CSS. Default is \code{TRUE}.
+#'   this is achieved with inline CSS. For Markdown, this adds asterisks around the entire row. Default is \code{TRUE}.
 #' @param output_format Character. The output format passed to \code{kbl()}. Either \code{"latex"}, \code{"html"},
 #'   or \code{"markdown"}. Default is \code{"latex"}.
 #' @param rename_cols Logical. Whether to rename columns using default renaming. Default is \code{TRUE}.
@@ -74,6 +74,51 @@ margot_bind_tables <- function(tables_list,
         old_name <- col_renames[[new_name]]
         if (old_name %in% names(combined_table)) {
           names(combined_table)[names(combined_table) == old_name] <- new_name
+        }
+      }
+    }
+
+    # For markdown with bold=TRUE, add asterisks around rows where threshold is exceeded
+    if (bold) {
+      # First identify the threshold column (before or after renaming)
+      threshold_col_name <- threshold_col
+      for (new_name in names(col_renames)) {
+        if (col_renames[[new_name]] == threshold_col) {
+          threshold_col_name <- new_name
+          break
+        }
+      }
+
+      # Ensure the threshold column exists
+      if (threshold_col_name %in% names(combined_table)) {
+        # Apply markdown bold formatting to rows exceeding the threshold
+        # Get a character matrix representation of the data
+        char_data <- as.matrix(combined_table)
+        mode(char_data) <- "character"
+
+        # Identify rows to be bolded
+        rows_to_bold <- which(as.numeric(combined_table[[threshold_col_name]]) > e_val_bound_threshold)
+
+        # Add asterisks to each cell in rows that need bolding
+        if (length(rows_to_bold) > 0) {
+          for (row in rows_to_bold) {
+            char_data[row, ] <- paste0("**", char_data[row, ], "**")
+          }
+        }
+
+        # Convert back to a data frame
+        combined_table <- as.data.frame(char_data, stringsAsFactors = FALSE)
+
+        # preserve original column types where possible
+        for (col in names(combined_table)) {
+          # try to convert to numeric if appropriate
+          if (!col %in% c("Domain")) {  # skip domain column
+            combined_table[[col]] <- tryCatch({
+              as.numeric(combined_table[[col]])
+            }, warning = function(w) {
+              combined_table[[col]]  # keep as character if conversion fails
+            })
+          }
         }
       }
     }
@@ -173,3 +218,4 @@ margot_bind_tables <- function(tables_list,
 
   return(tbl)
 }
+

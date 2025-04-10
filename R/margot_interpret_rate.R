@@ -1,23 +1,28 @@
+#' Interpret Rank-Weighted Average Treatment Effect (RATE) estimates
+#'
 #' This function provides a concise interpretation of Rank-Weighted Average Treatment Effect (RATE)
-#' estimates from \code{margot_rate()}. The RATE ranks individuals by predicted treatment effects
-#' and computes average effects for selected percentiles.
+#' estimates from \code{margot_rate()}. The RATE evaluates a prioritisation policy based on the
+#' estimated conditional treatment effect, \eqn{\tau(x)}, which reflects the expected gain conditional
+#' on measured covariates. For AUTOC the logarithmic weighting is most effective when heterogeneity
+#' is concentrated in a small subset of individuals (typically ≤ 10%), whereas for QINI the linear
+#' weighting is most effective when heterogeneity is broadly distributed (typically > 50%).
 #'
 #' @param rate_df A data frame from \code{margot_rate()} with columns:
-#'   \code{RATE Estimate}, \code{2.5\%}, and \code{97.5\%}. First column contains outcome names.
+#'   \code{RATE Estimate}, \code{2.5\%}, and \code{97.5\%}. The first column contains outcome names.
 #'   Alternatively, a list containing both AUTOC and QINI results.
 #' @param flipped_outcomes Character vector of outcome names that were inverted during pre-processing.
 #' @param target Character string specifying RATE type: \code{AUTOC} (default) or \code{QINI}.
-#'   Ignored if rate_df is a list containing both methods.
+#'   Ignored if \code{rate_df} is a list containing both methods.
 #'
-#' @return A markdown string interpreting statistically reliable RATE estimates.
+#' @return A markdown string interpreting the RATE estimates.
 #'
 #' @examples
-#' \dontrun{
-#' # For a single method:
+#' \donttest{
+#' # single method:
 #' interpretation <- margot_interpret_rate(rate_table, flipped_outcomes = c("t2_neuroticism_z"))
 #' cat(interpretation)
 #'
-#' # For both methods:
+#' # both methods:
 #' interpretation <- margot_interpret_rate(rate_table_all, flipped_outcomes = flipped_names)
 #' cat(interpretation)
 #' }
@@ -25,21 +30,26 @@
 #' @importFrom stats qnorm
 #' @export
 margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AUTOC") {
-  # Check if rate_df is a list containing both methods
+  # if rate_df is a list of both methods, first check that both results are available;
+  # if not, state that the results remain inconclusive.
   if (is.list(rate_df) && !is.data.frame(rate_df) &&
       (("rate_result" %in% names(rate_df) && "rate_qini" %in% names(rate_df)) ||
        ("rate_autoc" %in% names(rate_df) && "rate_qini" %in% names(rate_df)))) {
 
-    # Get the correct AUTOC data frame (either rate_result or rate_autoc)
+    if (!("rate_qini" %in% names(rate_df)) ||
+        !(("rate_autoc" %in% names(rate_df)) || ("rate_result" %in% names(rate_df)))) {
+      return("Results remain inconclusive for all evaluated models.")
+    }
+
+    # get the appropriate AUTOC data frame if available
     autoc_df <- if ("rate_autoc" %in% names(rate_df)) rate_df$rate_autoc else rate_df$rate_result
     qini_df <- rate_df$rate_qini
 
-    # Call the comparison function instead
+    # call the separate comparison function
     return(margot_interpret_rate_comparison(autoc_df, qini_df, flipped_outcomes))
   }
 
-  # Original function for single method continues here
-  # validate target parameter
+  # validate target
   if (!target %in% c("AUTOC", "QINI")) {
     stop("target must be either 'AUTOC' or 'QINI'.")
   }
@@ -53,72 +63,48 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
   # outcome names are assumed to be in the first column
   outcome_names <- rate_df[[1]]
 
-  # ensure flipped_outcomes is always a character vector
+  # ensure flipped_outcomes is a character vector
   if (!is.null(flipped_outcomes)) {
-    if (!is.vector(flipped_outcomes)) {
-      flipped_outcomes <- c(as.character(flipped_outcomes))
-    } else {
-      flipped_outcomes <- as.character(flipped_outcomes)
-    }
+    flipped_outcomes <- as.character(flipped_outcomes)
   }
 
-  # determine significance: significant if the 95% CI doesn't include zero
+  # determine significance by checking whether the 95% CI does not cross zero
+  # note: a positive RATE estimate with CI entirely above zero and a negative RATE estimate with CI entirely below zero
   is_significant <- (rate_df[,"2.5%"] > 0) | (rate_df[,"97.5%"] < 0)
-  sig_idx <- which(is_significant)
-
-  # separate positive and negative significant effects
   pos_sig_idx <- which(rate_df[,"2.5%"] > 0)
   neg_sig_idx <- which(rate_df[,"97.5%"] < 0)
 
-  # create the main heading with the method specified
-  interpretation_parts <- list(paste0("### Evidence for Heterogeneous Treatment Effects (", target, " Method)"))
+  interpretation_parts <- list(
+    paste0("### Evidence for Treatment Prioritisation based on $\\tau(x)$ (", target, " Method)")
+  )
 
-  # brief explanation of RATE based on selected target
+  # explanation of the selected targeting method
   if (target == "AUTOC") {
     target_explanation <- paste0(
-      "The rank-weighted average treatment effect (RATE) identifies subgroups of individuals ",
-      "with different responses to treatment. We used the AUTOC (Area Under the TOC curve) targeting method, ",
-      "which uses logarithmic weighting and is most effective when heterogeneity is concentrated in a smaller ",
-      "subset of the population (typically ≤ 10%). AUTOC provides better statistical power when only a ",
-      "small fraction of individuals experiences non-zero heterogeneous treatment effects."
+      "The RATE evaluates a prioritisation policy based on the estimated conditional treatment effect, $\\tau(x)$, ",
+      "using logarithmic weighting. This approach is most effective when heterogeneity is concentrated in a ",
+      "small subset of individuals (typically ≤ 10%)."
     )
-  } else { # QINI
+  } else {
     target_explanation <- paste0(
-      "The rank-weighted average treatment effect (RATE) identifies subgroups of individuals ",
-      "with different responses to treatment. We used the QINI targeting method, which uses linear weighting ",
-      "and is most effective when heterogeneity is broadly distributed across a substantial portion of the population ",
-      "(typically > 50%). The Qini coefficient measures cumulative benefits as we increase the treatment fraction ",
-      "and provides better statistical power when treatment effects are diffuse across the population."
+      "The RATE evaluates a prioritisation policy based on the estimated conditional treatment effect, $\\tau(x)$, ",
+      "using linear weighting. This approach is most effective when heterogeneity is broadly distributed across the ",
+      "population (typically > 50%)."
     )
   }
   interpretation_parts[[length(interpretation_parts) + 1]] <- target_explanation
 
-  # handle positive outcomes as a group
+  # handle outcomes with positive RATE estimates
   if (length(pos_sig_idx) > 0) {
-    pos_outcome_names <- outcome_names[pos_sig_idx]
-
-    # create a subsection for positive outcomes
-    pos_header <- paste0("#### Evidence for Prioritising using CATE (", target, ")")
-
-    # list the outcomes with positive effects
-    pos_outcomes_list <- paste(pos_outcome_names, collapse = ", ")
-
-    pos_interpretation <- paste0(
-      "For the following outcome(s): ", pos_outcomes_list, ", the analysis shows reliably positive RATE estimates ",
-      "(95% confidence intervals entirely above zero). This indicates that targeting treatment ",
-      "based on predicted effects would lead to better outcomes than using the average treatment effect (ATE). ",
-      "For these outcomes, targeting the CATE is expected to lead to reliably better outcomes and ",
-      "is recommended."
-    )
-
-    # Add estimates for each positive outcome
-    pos_estimates <- paste0("Specific Estimates (", target, "):")
-    for (i in pos_sig_idx) {
+    outcomes <- outcome_names[pos_sig_idx]
+    estimates <- sapply(pos_sig_idx, function(i) {
+      # extract outcome details
       outcome <- outcome_names[i]
       rate_est <- rate_df[i, "RATE Estimate"]
       ci_lower <- rate_df[i, "2.5%"]
       ci_upper <- rate_df[i, "97.5%"]
 
+      # check for flipped outcome
       is_flipped <- FALSE
       if (!is.null(flipped_outcomes)) {
         outcome_str <- gsub("\\*", "", as.character(outcome))
@@ -126,38 +112,24 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
         is_flipped <- outcome_str %in% flipped_clean
       }
 
-      flip_note <- if (is_flipped) " (after inverting the outcome)" else ""
-      pos_estimates <- paste0(
-        pos_estimates, "\n- ", outcome, ": ",
-        sprintf("%.3f (95%% CI: %.3f, %.3f)", rate_est, ci_lower, ci_upper), flip_note
-      )
-    }
-
-    pos_section <- paste(pos_header, pos_interpretation, pos_estimates, sep = "\n\n")
+      paste0(outcome, ": ", sprintf("%.3f (95%% CI: %.3f, %.3f)", rate_est, ci_lower, ci_upper),
+             if (is_flipped) " (after inverting the outcome)" else "")
+    })
+    pos_section <- paste0(
+      "If heterogeneity is concentrated in a small subset of individuals",
+      if (target == "QINI") " or broadly distributed" else "",
+      ", the following outcome(s) exhibit positive RATE estimates: ",
+      paste(outcomes, collapse = ", "), ". ",
+      "These estimates (", paste(estimates, collapse = "; "), ") suggest that a treatment prioritisation policy based on ",
+      "predicted individual gains may result in outcomes that differ from those achieved by targeting using the ATE."
+    )
     interpretation_parts[[length(interpretation_parts) + 1]] <- pos_section
   }
 
-  # handle reliably negative outcomes as a group with a caution
+  # handle outcomes with negative RATE estimates
   if (length(neg_sig_idx) > 0) {
-    neg_outcome_names <- outcome_names[neg_sig_idx]
-
-    # create a subsection for negative outcomes
-    neg_header <- paste0("#### Caution Against Prioritising using CATE (", target, ")")
-
-    # list the outcomes with negative effects
-    neg_outcomes_list <- paste(neg_outcome_names, collapse = ", ")
-
-    neg_interpretation <- paste0(
-      "For the following outcome(s): ", neg_outcomes_list, ", the analysis shows reliably negative RATE estimates ",
-      "(95% confidence intervals entirely below zero). This is an important caution that targeting treatment ",
-      "based on predicted effects would lead to worse outcomes than using the average treatment effect (ATE). ",
-      "For these outcomes, targeting the CATE is expected to lead to reliably worse outcomes and ",
-      "is not recommended."
-    )
-
-    # Add estimates for each negative outcome
-    neg_estimates <- paste0("Specific Estimates (", target, "):")
-    for (i in neg_sig_idx) {
+    outcomes <- outcome_names[neg_sig_idx]
+    estimates <- sapply(neg_sig_idx, function(i) {
       outcome <- outcome_names[i]
       rate_est <- rate_df[i, "RATE Estimate"]
       ci_lower <- rate_df[i, "2.5%"]
@@ -170,35 +142,29 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
         is_flipped <- outcome_str %in% flipped_clean
       }
 
-      flip_note <- if (is_flipped) " (after inverting the outcome)" else ""
-      neg_estimates <- paste0(
-        neg_estimates, "\n- ", outcome, ": ",
-        sprintf("%.3f (95%% CI: %.3f, %.3f)", rate_est, ci_lower, ci_upper), flip_note
-      )
-    }
-
-    neg_section <- paste(neg_header, neg_interpretation, neg_estimates, sep = "\n\n")
+      paste0(outcome, ": ", sprintf("%.3f (95%% CI: %.3f, %.3f)", rate_est, ci_lower, ci_upper),
+             if (is_flipped) " (after inverting the outcome)" else "")
+    })
+    neg_section <- paste0(
+      "For outcome(s) where the RATE estimates are negative (",
+      paste(outcomes, collapse = ", "), "), the analysis provides strong evidence that ",
+      "targeting treatment based on $\\tau(x)$ would yield worse outcomes compared to a policy based solely on the ATE. ",
+      "Specific estimates (", paste(estimates, collapse = "; "), ") indicate that extra caution is warranted when considering a CATE-based approach."
+    )
     interpretation_parts[[length(interpretation_parts) + 1]] <- neg_section
   }
 
-  # check if any outcomes are significant (either positive or negative)
-  if (length(sig_idx) == 0) {
-    # no significant outcomes at all
-    no_sig_text <- "No statistically significant evidence of treatment effect heterogeneity was detected for any outcome (all 95% confidence intervals crossed zero)."
-    interpretation_parts[[length(interpretation_parts) + 1]] <- no_sig_text
+  # handle cases where no significant outcomes were detected
+  if (length(pos_sig_idx) == 0 && length(neg_sig_idx) == 0) {
+    interpretation_parts[[length(interpretation_parts) + 1]] <-
+      "No statistically significant evidence of treatment effect heterogeneity was detected for any outcome, indicating that the results remain inconclusive. Proceed with caution."
   } else if (sum(is_significant) < length(outcome_names)) {
-    # some outcomes are not significant
     non_sig_idx <- which(!is_significant)
     non_sig_outcomes <- outcome_names[non_sig_idx]
-
-    if (length(non_sig_outcomes) > 0) {
-      non_sig_text <- paste0(
-        "For the remaining outcome(s): ", paste(non_sig_outcomes, collapse = ", "),
-        ", no statistically significant evidence of treatment effect heterogeneity was detected ",
-        "(95% confidence intervals crossed zero)."
-      )
-      interpretation_parts[[length(interpretation_parts) + 1]] <- non_sig_text
-    }
+    interpretation_parts[[length(interpretation_parts) + 1]] <- paste0(
+      "For outcome(s) ", paste(non_sig_outcomes, collapse = ", "),
+      ", the confidence intervals cross zero, rendering the evidence inconclusive."
+    )
   }
 
   interpretation_text <- paste(interpretation_parts, collapse = "\n\n")

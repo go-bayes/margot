@@ -27,7 +27,7 @@ Default is \code{1}.}
 Set to \code{NULL} to disable highlighting color.}
 
 \item{bold}{Logical. Whether to bold highlighted rows. For LaTeX this uses the \code{bold} parameter; for HTML,
-this is achieved with inline CSS. Default is \code{TRUE}.}
+this is achieved with inline CSS. For Markdown, this adds asterisks around the entire row. Default is \code{TRUE}.}
 
 \item{output_format}{Character. The output format passed to \code{kbl()}. Either \code{"latex"}, \code{"html"},
 or \code{"markdown"}. Default is \code{"latex"}.}

@@ -6,6 +6,11 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
+# [2025-04-09] margot 1.0.12
+
+## Improved
+- `margot_bind_models()` now bolds reliable results in markdown
+- `margot_interpret_rate()` and `margot_interpret_rate_comparison()` more accurate reporting and deal with edge cases (no RATE reliable) better. 
 
 # [2025-04-09] margot 1.0.11
 
