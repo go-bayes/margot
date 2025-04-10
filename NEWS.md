@@ -6,7 +6,13 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
-# [2025-04-09] margot 1.0.12
+
+# [2025-04-10] margot 1.0.13
+## Improved
+- `margot_bind_tables()` streamlined the function by focusing on markdown and LaTeX outputs. reduced dependencies by eliminating reliance on dplyr, stringr, and cli packages. enhanced markdown output with bold variable names for better readability, improved LaTeX output with better multi-page support and alternating row colors, maintained all core functionality.
+- `margot_omnibus_hetero_test()` - considerably improved for clarity.
+
+# [2025-04-10] margot 1.0.12
 
 ## Improved
 - `margot_bind_models()` now bolds reliable results in markdown

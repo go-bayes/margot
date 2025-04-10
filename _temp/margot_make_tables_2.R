@@ -2,7 +2,52 @@
 #'
 #' \code{margot_make_tables} is a wrapper for \code{table1::table1()} which simplifies the creation of summary tables.
 #' It provides custom variable labelling, formatting, factor conversion, and additional table options.
-#' This function is optimized for \code{"markdown"} and \code{"latex"} outputs, with special support for Quarto documents.
+#' The function supports output in four formats: \code{"html"} (default), \code{"latex"}, \code{"docx"} and \code{"markdown"}.
+#'
+#' When \code{format = "markdown"}, the table is converted to a data frame and then rendered with \code{knitr::kable()} to produce a markdown table.
+#'
+#' @param data A \code{data.frame} containing the dataset.
+#' @param vars A character vector of variable names to include on the left-hand side of the table.
+#' @param by A character vector of variable names to stratify the table by. Supports multiple variables for interactions.
+#' @param labels A named character vector for custom variable labels. Names should correspond to variable names in \code{vars}.
+#' @param factor_vars An optional character vector of variable names in \code{vars} to convert to factors for frequency tables.
+#' @param table1_opts A list of additional options to pass to \code{table1::table1()}. For example, \code{list(overall = FALSE, transpose = TRUE)}.
+#' @param format A character string specifying the output format. Options are \code{"html"} (default), \code{"latex"}, \code{"docx"} and \code{"markdown"}.
+#' @param kable_opts A list of additional options controlling table styling:
+#'  \itemize{
+#'    \item For \code{format = "latex"}, these are passed to \code{kableExtra::kable_styling()}.
+#'    \item For \code{format = "docx"}, they control \code{flextable} styling (e.g. \code{font_size}).
+#'    \item For \code{format = "markdown"}, options are available for future extensions.
+#'  }
+#'
+#' @return A table object formatted for the specified output.
+#'
+#' @examples
+#' \dontrun{
+#'   # markdown output example
+#'   summary_tab_md <- margot_make_tables(
+#'     data = mydata,
+#'     vars = c("age", "gender", "income"),
+#'     by = "group",
+#'     labels = c("age" = "Age", "gender" = "Gender", "income" = "Income"),
+#'     factor_vars = "gender",
+#'     table1_opts = list(overall = FALSE, transpose = TRUE),
+#'     format = "markdown",
+#'     kable_opts = list(font_size = 10)
+#'   )
+#' }
+#'
+#' @importFrom table1 table1 setLabel t1kable
+#' @importFrom dplyr mutate across all_of intersect setdiff
+#' @importFrom stringr str_to_title
+#' @importFrom cli cat_rule
+#' @importFrom knitr kable
+#' @keywords internal
+#' Create Summary Tables Using table1 with Custom Formatting
+#'
+#' \code{margot_make_tables} is a wrapper for \code{table1::table1()} which simplifies the creation of summary tables.
+#' It provides custom variable labelling, formatting, factor conversion, and additional table options.
+#' This function is optimized for \code{"markdown"} and \code{"latex"} outputs.
 #'
 #' @param data A \code{data.frame} containing the dataset.
 #' @param vars A character vector of variable names to include on the left-hand side of the table.
@@ -16,35 +61,32 @@
 #'    \item For \code{format = "latex"}, these are passed to \code{kableExtra::kable_styling()}.
 #'    \item For \code{format = "markdown"}, currently only for documentation purposes.
 #'  }
-#' @param quarto_label An optional label for Quarto cross-references (e.g., "tbl-demographics"). When specified for LaTeX output,
-#'   this adds a \code{\\label{}} command to enable Quarto's cross-referencing system.
 #'
 #' @return A table object formatted for the specified output:
 #'  \itemize{
-#'    \item For \code{format = "latex"}, a kableExtra-formatted LaTeX table with optional Quarto label
+#'    \item For \code{format = "latex"}, a kableExtra-formatted LaTeX table
 #'    \item For \code{format = "markdown"}, a markdown-formatted kable table with bold variable names
 #'  }
 #'
 #' @examples
 #' \dontrun{
-#'   # LaTeX output with Quarto label
-#'   latex_table <- margot_make_tables(
+#'   # markdown output example
+#'   summary_tab_md <- margot_make_tables(
 #'     data = mydata,
 #'     vars = c("age", "gender", "income"),
 #'     by = "group",
 #'     labels = c("age" = "Age", "gender" = "Gender", "income" = "Income"),
 #'     factor_vars = "gender",
 #'     table1_opts = list(overall = FALSE, transpose = TRUE),
-#'     format = "latex",
-#'     quarto_label = "tbl-demographics"
+#'     format = "markdown"
 #'   )
 #' }
 #'
 #' @importFrom table1 table1 setLabel t1kable
 #' @importFrom knitr kable
-#' @export
-margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL, table1_opts = list(),
-                               format = c("markdown", "latex"), kable_opts = list(), quarto_label = NULL) {
+#' @keywords internal
+margot_make_tables_2 <- function(data, vars, by, labels = NULL, factor_vars = NULL, table1_opts = list(),
+                               format = c("markdown", "latex"), kable_opts = list()) {
   # match and validate format argument
   format <- match.arg(format)
 
@@ -153,23 +195,6 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
     result <- kableExtra::kable_styling(latex_table,
                                         font_size = font_size,
                                         latex_options = latex_options)
-
-    # Add Quarto cross-reference label if provided
-    if (!is.null(quarto_label)) {
-      # Insert the label right after the beginning of the longtable environment
-      label_pos <- regexpr("\\\\begin\\{longtable\\}\\[t\\]\\{[^}]*\\}", result)
-      if (label_pos > 0) {
-        label_end <- label_pos + attr(label_pos, "match.length")
-        result <- paste0(
-          substr(result, 1, label_end),
-          "\n\\label{", quarto_label, "}",
-          substr(result, label_end + 1, nchar(result))
-        )
-      } else {
-        # Fallback if longtable pattern not found
-        result <- paste0("\\label{", quarto_label, "}\n", result)
-      }
-    }
   } else { # markdown
     # convert to data frame
     table_df <- as.data.frame(table_obj)
@@ -191,8 +216,6 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
 
     # create markdown table
     result <- knitr::kable(table_df, format = "markdown")
-
-    # For markdown, the quarto_label is handled by Quarto itself when using code chunks with labels
   }
 
   # provide feedback on successful completion

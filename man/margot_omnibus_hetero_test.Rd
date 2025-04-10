@@ -9,7 +9,8 @@ margot_omnibus_hetero_test(
   outcome_vars = NULL,
   alpha = 0.05,
   detail_level = "standard",
-  label_mapping = NULL
+  label_mapping = NULL,
+  format = "table"
 )
 }
 \arguments{
@@ -25,13 +26,19 @@ Options are "basic", "standard" (default), or "detailed".}
 
 \item{label_mapping}{Optional. A named list mapping outcome variable names to display labels.
 For example: list("t2_agreeableness_z" = "Agreeableness").}
+
+\item{format}{Output format: "table" (default), "markdown", or "text".
+"table" returns a tibble for use with tidyverse tools.
+"markdown" returns formatted markdown text for Quarto documents.
+"text" returns plain text interpretations.}
 }
 \value{
-A list containing a summary table and interpretations.
-       The summary table includes mean and differential predictions with standard errors.
-       Interpretations provide detailed analysis of the test calibration results.
+A list containing:
+  - summary_table: A tibble with all test results
+  - interpretations: Results formatted according to the format parameter
+  - brief_interpretation: A concise summary of all results
 }
 \description{
 This function performs an omnibus heterogeneity test for specified models
-outputted from margot::margot_run_models_grf() and provides interpretations for each result.
+outputted from margot::margot_run_models_grf() and provides interpretations in a readable format.
 }
