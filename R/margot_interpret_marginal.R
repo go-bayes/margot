@@ -28,7 +28,7 @@
 #' @importFrom dplyr filter mutate case_when rowwise ungroup
 #' @importFrom glue glue
 #' @importFrom stringr str_to_sentence
-#' @importFrom rlang sym
+#' @importFrom rlang .data
 #' @export
 margot_interpret_marginal <- function(
     df,
@@ -116,6 +116,11 @@ margot_interpret_marginal <- function(
       text = str_to_sentence(text)
     ) %>%
     ungroup()
+
+  # reverse text order so narrative matches plot ordering # NEW
+  if (grepl("_(asc|desc)$", order)) {
+    interp <- interp[nrow(interp):1, ]
+  }
 
   # combine
   body <- paste(interp$text, collapse = "\n\n")
