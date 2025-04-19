@@ -6,6 +6,11 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
+
+# [2025-04-19] margot 1.0.15
+## Improved
+- `margot_interpret_marginal()` - clearer wording, outcomes listed rather than dull repetative sentences. 
+
 # [2025-04-19] margot 1.0.14
 ## Improved
 - `margot_bind_tables()` has additional parameter,  `sort_E_val_bound = c("none", "asc", "desc")`, which allows users to order multiple tables by E_value thresholds. 

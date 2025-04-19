@@ -14,32 +14,29 @@ margot_interpret_marginal(
 )
 }
 \arguments{
-\item{df}{A data frame from \code{group_tab()}, including \code{outcome}, an effect column,
+\item{df}{a data frame from \code{group_tab()}, including \code{outcome}, an effect column,
 \verb{2.5 \%}, \verb{97.5 \%}, \code{E_Value}, \code{E_Val_bound}, and optionally \code{unit}.}
 
-\item{type}{One of \code{"RD"} or \code{"RR"}. Default: \code{"RD"}.}
+\item{type}{one of \code{"RD"} or \code{"RR"}. default: \code{"RD"}.}
 
-\item{order}{One of
+\item{order}{one of
 \code{"alphabetical"}, \code{"magnitude_desc"}, \code{"magnitude_asc"},
 \code{"evaluebound_desc"}, \code{"evaluebound_asc"}, \code{"custom"}, or \code{"default"}.
 (\code{"default"} → \code{"magnitude_desc"}; deprecated.)}
 
-\item{original_df}{Optional raw data frame for back‑transforming to original scale.}
+\item{original_df}{optional raw data frame for back‑transforming to original scale.}
 
-\item{interpret_all_E_gt1}{Logical; if \code{TRUE}, include \emph{all} estimates with
-\code{E_Value > 1} & \code{E_Val_bound > 1}. Default: \code{FALSE}.}
+\item{interpret_all_E_gt1}{logical; if \code{TRUE}, include \emph{all} estimates with
+\code{E_Value > 1} & \code{E_Val_bound > 1}. default: \code{FALSE}.}
 }
 \value{
-A list with the following element:
+a list with one element:
 \describe{
-\item{interpretation}{A markdown string with per‐outcome headings and
-sentences, plus a closing note about any remaining estimates.}
+\item{interpretation}{a markdown string with a bulleted list of outcomes.}
 }
 }
 \description{
-This function takes the output of \code{group_tab()} (with RD or RR estimates
-plus E‑values) and produces a compact, per‑outcome markdown report. It only
-reports those estimates with \strong{Evidence} or \strong{Strong evidence}, unless
-\code{interpret_all_E_gt1 = TRUE}. Outcomes appear in the same order as you passed
-via \code{order} (e.g. \code{"magnitude_desc"}, \code{"evaluebound_desc"}).
+this function takes the output of \code{group_tab()} (with rd or rr estimates and e‑values)
+and returns a markdown bulleted list of outcomes that exhibited causal evidence.
+it notes that outcomes are presented in the same order as they appear in the plot.
 }
