@@ -2,55 +2,44 @@
 % Please edit documentation in R/margot_interpret_marginal.R
 \name{margot_interpret_marginal}
 \alias{margot_interpret_marginal}
-\title{This function interprets the output of causal effect analysis, providing a compact report.
-It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality,
-unless all estimates with E_Value > 1 (and E_Val_bound > 1) are requested.
-Each outcome's interpretation starts with a separate paragraph heading.
-Additionally, it includes a final paragraph indicating that all other effect estimates presented
-either weak or unreliable evidence for causality.}
+\title{Interpret Marginal Causal Effect Estimates}
 \usage{
 margot_interpret_marginal(
   df,
   type = c("RD", "RR"),
-  order = "alphabetical",
+  order = c("alphabetical", "magnitude_desc", "magnitude_asc", "evaluebound_desc",
+    "evaluebound_asc", "custom", "default"),
   original_df = NULL,
   interpret_all_E_gt1 = FALSE
 )
 }
 \arguments{
-\item{df}{Data frame containing causal effect estimates. Expected to include columns for
-outcome names, effect estimates, confidence intervals, E-values, and summary labels.}
+\item{df}{A data frame from \code{group_tab()}, including \code{outcome}, an effect column,
+\verb{2.5 \%}, \verb{97.5 \%}, \code{E_Value}, \code{E_Val_bound}, and optionally \code{unit}.}
 
-\item{type}{Character string specifying the type of effect estimate. Must be either "RD"
-(Risk Difference) or "RR" (Risk Ratio). Default is "RD".}
+\item{type}{One of \code{"RD"} or \code{"RR"}. Default: \code{"RD"}.}
 
-\item{order}{Character string specifying the order of results. Default is "alphabetical".
-- `"alphabetical"`: Orders outcomes alphabetically.
-- `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.}
+\item{order}{One of
+\code{"alphabetical"}, \code{"magnitude_desc"}, \code{"magnitude_asc"},
+\code{"evaluebound_desc"}, \code{"evaluebound_asc"}, \code{"custom"}, or \code{"default"}.
+(\code{"default"} → \code{"magnitude_desc"}; deprecated.)}
 
-\item{original_df}{Optional data frame for back-transforming estimates to the original scale.}
+\item{original_df}{Optional raw data frame for back‑transforming to original scale.}
 
-\item{interpret_all_E_gt1}{Logical. If `TRUE`, interprets any effect estimate with an `E_Value` > 1
-and a lower E-value bound > 1. Default is `FALSE`.}
+\item{interpret_all_E_gt1}{Logical; if \code{TRUE}, include \emph{all} estimates with
+\code{E_Value > 1} & \code{E_Val_bound > 1}. Default: \code{FALSE}.}
 }
 \value{
-A list containing one element:
-  \item{interpretation}{A character string containing a compact interpretation of each outcome in
-  `df`, including separate paragraph headings and sentence-cased descriptions, followed by a
-  concluding paragraph if applicable.}
+A list with the following element:
+\describe{
+\item{interpretation}{A markdown string with per‐outcome headings and
+sentences, plus a closing note about any remaining estimates.}
+}
 }
 \description{
-This function interprets the output of causal effect analysis, providing a compact report.
-It only reports coefficients and E-values with **Evidence** or **Strong evidence** for causality,
-unless all estimates with E_Value > 1 (and E_Val_bound > 1) are requested.
-Each outcome's interpretation starts with a separate paragraph heading.
-Additionally, it includes a final paragraph indicating that all other effect estimates presented
-either weak or unreliable evidence for causality.
-}
-\examples{
-\dontrun{
-result <- margot_interpret_marginal(group_tab_output, type = "RD", interpret_all_E_gt1 = TRUE)
-cat(result$interpretation)
-}
-
+This function takes the output of \code{group_tab()} (with RD or RR estimates
+plus E‑values) and produces a compact, per‑outcome markdown report. It only
+reports those estimates with \strong{Evidence} or \strong{Strong evidence}, unless
+\code{interpret_all_E_gt1 = TRUE}. Outcomes appear in the same order as you passed
+via \code{order} (e.g. \code{"magnitude_desc"}, \code{"evaluebound_desc"}).
 }

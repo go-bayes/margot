@@ -161,17 +161,17 @@ margot_plot_slope <- function(data,
       `%||%` <- function(x, y) if (is.null(x)) y else x
 
       # function to transform labels
-      transform_label <- function(label) {
-        if (remove_underscores) {
-          label <- gsub("_", " ", label)
-        }
-        if (use_title_case) {
-          label <- stringr::str_to_title(label)
-          # preserve "NZ" capitalisation
-          label <- gsub("Nz", "NZ", label)
-        }
-        return(label)
-      }
+      # transform_label <- function(label) {
+      #   if (remove_underscores) {
+      #     label <- gsub("_", " ", label)
+      #   }
+      #   if (use_title_case) {
+      #     label <- stringr::str_to_title(label)
+      #     # preserve "NZ" capitalisation
+      #     label <- gsub("Nz", "NZ", label)
+      #   }
+      #   return(label)
+      # }
 
       cli::cli_alert_info("Preparing data...")
       # define color palette

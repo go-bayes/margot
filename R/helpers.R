@@ -202,135 +202,263 @@ here_save_arrow <- function(df, name) {
 #' Group and Annotate Treatment Effect Estimates
 #'
 #' This function arranges and annotates a data frame based on specified
-#' types of treatment effect estimates (RR or RD). It supports different sorting
-#' options including default descending, alphabetical, and custom order.
-#' It now also handles original scale estimates when available.
+#' types of treatment effect estimates (RR or RD). It supports a variety of sorting
+#' options including alphabetical, magnitude (ascending or descending), E-value bound
+#' (ascending or descending), custom order, and a default alias for backward compatibility.
+#' It also handles original scale estimates when available.
 #'
 #' @param df Data frame containing the variables of interest, or a list containing
-#' the results dataframe and label mapping from transform_to_original_scale().
-#' @param type Type of treatment effect to analyze. Expected values are 'RR' for Risk Ratio
-#' and 'RD' for Risk Difference. Defaults to 'RD'.
-#' @param order Specifies the order in which the outcomes should be arranged. Can be
-#' 'default' for descending order of the estimate, 'alphabetical' for alphabetical order by outcome,
-#' or 'custom' for a user-defined order. Default is 'default'.
-#' @param custom_order A vector of custom ordering for the outcomes, applicable if `order` is set to 'custom'.
-#' This should be a vector containing all outcomes in the desired order.
+#'   the results data frame and label mapping from transform_to_original_scale().
+#' @param type Type of treatment effect to analyze. One of 'RR' (Risk Ratio) or
+#'   'RD' (Risk Difference). Defaults to 'RD'.
+#' @param order Sorting option for outcomes. Options are:
+#'   \itemize{
+#'     \item 'alphabetical': sort by outcome name (A–Z)
+#'     \item 'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')
+#'     \item 'magnitude_asc': sort by absolute effect size, ascending
+#'     \item 'evaluebound_desc': sort by E-value bound, descending
+#'     \item 'evaluebound_asc': sort by E-value bound, ascending
+#'     \item 'custom': user-defined order (requires custom_order)
+#'     \item 'default': alias for 'magnitude_desc' (deprecated)
+#'   }
+#'   Default is 'default'.
+#' @param custom_order Character vector specifying a custom outcome ordering,
+#'   used when order = 'custom'. Must contain all outcomes exactly once.
 #'
-#' @return A data frame that has been arranged based on the specified order and annotated
-#' with treatment effect estimates, estimate labels, and evidence value annotations.
-#' If original scale estimates are available, these will be included in the output.
+#' @return A data frame arranged according to `order`, annotated with:
+#'   \itemize{
+#'     \item Estimate category (positive, negative, not reliable)
+#'     \item Formatted label for the effect and confidence interval
+#'     \item Optional original-scale label if _original columns are present
+#'   }
 #'
 #' @details
-#' The function now handles both transformed and original scale results. If original scale results
-#' are available (indicated by the presence of columns with "_original" suffix), these will be included
-#' in the output. The function also applies label mapping if provided.
+#' The function detects whether `df` is a list output from transform_to_original_scale()
+#' and extracts `results_df` and `label_mapping` accordingly. It then ensures an `outcome`
+#' column, applies any label mapping, and sorts based on the chosen `order`. New options
+#' 'magnitude_desc' and 'magnitude_asc' sort by absolute effect size; 'evaluebound_desc'
+#' and 'evaluebound_asc' sort by the E-Value bound; 'alphabetical' sorts by outcome
+#' name; 'custom' respects a user-provided vector; 'default' is an alias for 'magnitude_desc'.
 #'
 #' @examples
-#' # Example using Risk Ratio (RR) and default sorting
-#' result_df <- group_tab(df = analysis_df, type = 'RR')
+#' # descending magnitude (default for 'default')
+#' result_df <- group_tab(df = analysis_df, order = 'default')
 #'
-#' # Example using Risk Difference (RD) with alphabetical sorting
-#' result_df <- group_tab(df = analysis_df, type = 'RD', order = 'alphabetical')
+#' # ascending magnitude
+#' result_df <- group_tab(df = analysis_df, order = 'magnitude_asc')
 #'
-#' # Example using custom sorting order
-#' custom_order <- c("Outcome3", "Outcome1", "Outcome2")
-#' result_df <- group_tab(df = analysis_df, type = 'RR', order = 'custom', custom_order = custom_order)
+#' # strongest E-value bound first
+#' result_df <- group_tab(df = analysis_df, order = 'evaluebound_desc')
 #'
-#' # Example using output from transform_to_original_scale()
-#' transformed_data <- transform_to_original_scale(results_df, original_df, label_mapping)
-#' result_df <- group_tab(transformed_data, type = 'RD')
+#' # alphabetical
+#' result_df <- group_tab(df = analysis_df, order = 'alphabetical')
 #'
-#' @importFrom dplyr arrange mutate slice desc recode
+#' # custom ordering
+#' custom_order <- c('Outcome3','Outcome1','Outcome2')
+#' result_df <- group_tab(df = analysis_df, order = 'custom', custom_order = custom_order)
+#'
+#' @importFrom dplyr arrange desc mutate slice
 #' @importFrom tibble rownames_to_column
 #' @importFrom rlang sym
 #' @keywords internal
-group_tab <- function(df, type = c("RD", "RR"), order = c("default", "alphabetical", "custom"), custom_order = NULL) {
+group_tab <- function(
+    df,
+    type = c("RD","RR"),
+    order = c(
+      "alphabetical",
+      "magnitude_desc",
+      "magnitude_asc",
+      "evaluebound_desc",
+      "evaluebound_asc",
+      "custom",
+      "default"
+    ),
+    custom_order = NULL
+) {
+  # load dplyr verbs
   require(dplyr)
-  type <- match.arg(type)
+
+  # match arguments
+  type  <- match.arg(type)
   order <- match.arg(order)
 
-  # Check if input is the list returned by transform_to_original_scale
+  # alias old magnitude and default to magnitude_desc
+  if (order %in% c("default")) {
+    warning("'default' is deprecated; using 'magnitude_desc' instead.")
+    order <- "magnitude_desc"
+  }
+
+  # handle list input
   if (is.list(df) && "results_df" %in% names(df)) {
-    results_df <- df$results_df
+    results_df   <- df$results_df
     label_mapping <- df$label_mapping
   } else {
-    results_df <- df
+    results_df   <- df
     label_mapping <- NULL
   }
 
-  # Ensure the 'outcome' column exists; if not, create from row names
+  # ensure outcome column
   if (!"outcome" %in% names(results_df) && !is.null(rownames(results_df))) {
     results_df <- results_df %>% tibble::rownames_to_column(var = "outcome")
   } else if (!"outcome" %in% names(results_df)) {
-    stop("No 'outcome' column or row names available to convert into an 'outcome' column.")
+    stop("No 'outcome' column or row names to convert.")
   }
 
-  # Apply label mapping if available
+  # apply label mapping
   if (!is.null(label_mapping)) {
-    results_df <- results_df %>%
-      mutate(outcome = dplyr::recode(outcome, !!!label_mapping))
+    results_df <- results_df %>% mutate(outcome = dplyr::recode(outcome, !!!label_mapping))
   }
 
-  # Determine the column to sort by based on the type
-  effect_column <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
+  # columns for sorting
+  effect_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
+  ev_bound   <- "E_Val_bound"
 
-  # Apply ordering based on the specified 'order'
-  if (order == "alphabetical") {
-    results_df <- results_df %>% arrange(outcome)
-  } else if (order == "custom" && !is.null(custom_order)) {
-    results_df <- results_df %>% slice(match(custom_order, outcome))
-  } else {  # default is descending order by effect size
-    results_df <- results_df %>% arrange(desc(!!sym(effect_column)))
-  }
+  # apply ordering
+  results_df <- switch(order,
+                       alphabetical      = results_df %>% arrange(outcome),
+                       magnitude_desc    = results_df %>% arrange(desc(abs(!!sym(effect_col)))),
+                       magnitude_asc     = results_df %>% arrange(abs(!!sym(effect_col))),
+                       evaluebound_desc  = results_df %>% arrange(desc(!!sym(ev_bound))),
+                       evaluebound_asc   = results_df %>% arrange(!!sym(ev_bound)),
+                       custom            = {
+                         if (is.null(custom_order)) stop("custom_order must be provided for 'custom' order")
+                         results_df %>% slice(match(custom_order, outcome))
+                       }
+  )
 
-  # Add Estimate categorization and label column
+  # annotate estimates
   results_df <- results_df %>% mutate(
     Estimate = factor(
       if (type == "RR") {
-        ifelse(
-          `E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
-          "positive",
-          ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1, "negative", "not reliable")
-        )
+        ifelse(`E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
+               "positive",
+               ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1,
+                      "negative",
+                      "not reliable"))
       } else {
-        ifelse(
-          `E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
-          "positive",
-          ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0, "negative", "not reliable")
-        )
+        ifelse(`E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
+               "positive",
+               ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0,
+                      "negative",
+                      "not reliable"))
       }
     ),
     estimate_lab = if (type == "RR") {
-      paste(
-        round(`E[Y(1)]/E[Y(0)]`, 3),
-        " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
-        sep = ""
+      paste0(
+        round(`E[Y(1)]/E[Y(0)]`, 3), " (",
+        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
+        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
       )
     } else {
-      paste(
-        round(`E[Y(1)]-E[Y(0)]`, 3),
-        " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
-        sep = ""
+      paste0(
+        round(`E[Y(1)]-E[Y(0)]`, 3), " (",
+        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
+        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
       )
-    },
-    label = estimate_lab  # Add this line to create the 'label' column
+    }
   )
 
-  # Add original scale estimates if available
-  if (paste0(effect_column, "_original") %in% names(results_df)) {
+  # add original-scale label if present
+  if (paste0(effect_col, "_original") %in% names(results_df)) {
     results_df <- results_df %>% mutate(
-      estimate_lab_original = paste(
-        round(.data[[paste0(effect_column, "_original")]], 3),
-        " (", round(.data[["2.5 %_original"]], 3), "-", round(.data[["97.5 %_original"]], 3), ")",
-        sep = ""
+      estimate_lab_original = paste0(
+        round(.data[[paste0(effect_col, "_original")]], 3), " (",
+        round(.data[["2.5 %_original"]], 3), "-",
+        round(.data[["97.5 %_original"]], 3), ")"
       )
     )
   }
 
-  return(results_df)
+  results_df
 }
+
+# group_tab <- function(df, type = c("RD", "RR"), order = c("default", "alphabetical", "custom"), custom_order = NULL) {
+#   require(dplyr)
+#   type <- match.arg(type)
+#   order <- match.arg(order)
+#
+#   # Check if input is the list returned by transform_to_original_scale
+#   if (is.list(df) && "results_df" %in% names(df)) {
+#     results_df <- df$results_df
+#     label_mapping <- df$label_mapping
+#   } else {
+#     results_df <- df
+#     label_mapping <- NULL
+#   }
+#
+#   # Ensure the 'outcome' column exists; if not, create from row names
+#   if (!"outcome" %in% names(results_df) && !is.null(rownames(results_df))) {
+#     results_df <- results_df %>% tibble::rownames_to_column(var = "outcome")
+#   } else if (!"outcome" %in% names(results_df)) {
+#     stop("No 'outcome' column or row names available to convert into an 'outcome' column.")
+#   }
+#
+#   # Apply label mapping if available
+#   if (!is.null(label_mapping)) {
+#     results_df <- results_df %>%
+#       mutate(outcome = dplyr::recode(outcome, !!!label_mapping))
+#   }
+#
+#   # Determine the column to sort by based on the type
+#   effect_column <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
+#
+#   # Apply ordering based on the specified 'order'
+#   if (order == "alphabetical") {
+#     results_df <- results_df %>% arrange(outcome)
+#   } else if (order == "custom" && !is.null(custom_order)) {
+#     results_df <- results_df %>% slice(match(custom_order, outcome))
+#   } else {  # default is descending order by effect size
+#     results_df <- results_df %>% arrange(desc(!!sym(effect_column)))
+#   }
+#
+#   # Add Estimate categorization and label column
+#   results_df <- results_df %>% mutate(
+#     Estimate = factor(
+#       if (type == "RR") {
+#         ifelse(
+#           `E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
+#           "positive",
+#           ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1, "negative", "not reliable")
+#         )
+#       } else {
+#         ifelse(
+#           `E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
+#           "positive",
+#           ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0, "negative", "not reliable")
+#         )
+#       }
+#     ),
+#     estimate_lab = if (type == "RR") {
+#       paste(
+#         round(`E[Y(1)]/E[Y(0)]`, 3),
+#         " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
+#         " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
+#         sep = ""
+#       )
+#     } else {
+#       paste(
+#         round(`E[Y(1)]-E[Y(0)]`, 3),
+#         " (", round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
+#         " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]",
+#         sep = ""
+#       )
+#     },
+#     label = estimate_lab  # Add this line to create the 'label' column
+#   )
+#
+#   # Add original scale estimates if available
+#   if (paste0(effect_column, "_original") %in% names(results_df)) {
+#     results_df <- results_df %>% mutate(
+#       estimate_lab_original = paste(
+#         round(.data[[paste0(effect_column, "_original")]], 3),
+#         " (", round(.data[["2.5 %_original"]], 3), "-", round(.data[["97.5 %_original"]], 3), ")",
+#         sep = ""
+#       )
+#     )
+#   }
+#
+#   return(results_df)
+# }
 
 
 
@@ -694,47 +822,135 @@ get_original_value_plot <- function(var_name, split_value, original_df) {
 
 #' @keywords internal
 #' for margot_plot()
+#' @keywords internal
+
+#' @keywords internal
+#' @keywords internal
 transform_label <- function(label, label_mapping = NULL, options = list()) {
+  # coerce each flag to a single TRUE/FALSE
+  remove_tx_prefix   <- isTRUE(options$remove_tx_prefix)
+  remove_z_suffix    <- isTRUE(options$remove_z_suffix)
+  remove_underscores <- isTRUE(options$remove_underscores)
+  use_title_case     <- isTRUE(options$use_title_case)
+
   original_label <- label
 
-  # Apply mapping with partial substitutions and remove numbers
+  # 1) explicit mappings
   if (!is.null(label_mapping)) {
-    for (pattern in names(label_mapping)) {
-      if (grepl(pattern, label, fixed = TRUE)) {
-        replacement <- label_mapping[[pattern]]
-        label <- gsub(pattern, replacement, label, fixed = TRUE)
-        cli::cli_alert_info("Mapped label: {pattern} -> {replacement}")
+    for (pat in names(label_mapping)) {
+      if (grepl(pat, label, fixed = TRUE)) {
+        repl  <- label_mapping[[pat]]
+        label <- gsub(pat, repl, label, fixed = TRUE)
+        cli::cli_alert_info("Mapped label: {pat} -> {repl}")
       }
     }
   }
 
-  # Remove the numerical part (e.g., " - (3.0,7.0] - [1.0,2.0]")
+  # 2) strip trailing numeric-range suffix
   label <- sub(" - \\(.*\\]$", "", label)
 
-  # Apply default transformations if the label wasn't fully replaced
-  if (label == original_label) {
-    if (options$remove_tx_prefix) {
-      label <- sub("^t[0-9]+_", "", label)
-    }
-    if (options$remove_z_suffix) {
-      label <- sub("_z$", "", label)
-    }
-    if (options$remove_underscores) {
-      label <- gsub("_", " ", label)
-    }
-    if (options$use_title_case) {
+  # 3) default transforms if unmapped
+  if (identical(label, original_label)) {
+    if (remove_tx_prefix)   label <- sub("^t[0-9]+_", "", label)
+    if (remove_z_suffix)    label <- sub("_z$", "", label)
+    if (remove_underscores) label <- gsub("_", " ", label)
+    if (use_title_case) {
       label <- tools::toTitleCase(label)
-      # Preserve "NZ" capitalization
       label <- gsub("Nz", "NZ", label)
     }
   }
 
-  if (label != original_label) {
+  if (!identical(label, original_label)) {
     cli::cli_alert_info("Transformed label: {original_label} -> {label}")
   }
-
-  return(label)
+  label
 }
+
+# helper operator for NULL handling
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+
+# transform_label <- function(label, label_mapping = NULL, options = list()) {
+#   remove_tx_prefix   <- isTRUE(options$remove_tx_prefix)
+#   remove_z_suffix    <- isTRUE(options$remove_z_suffix)
+#   remove_underscores <- isTRUE(options$remove_underscores)
+#   use_title_case     <- isTRUE(options$use_title_case)
+#
+#   original_label <- label
+#
+#   # 1) apply any explicit mappings
+#   if (!is.null(label_mapping)) {
+#     for (pattern in names(label_mapping)) {
+#       if (grepl(pattern, label, fixed = TRUE)) {
+#         replacement <- label_mapping[[pattern]]
+#         label <- gsub(pattern, replacement, label, fixed = TRUE)
+#         cli::cli_alert_info("Mapped label: {pattern} -> {replacement}")
+#       }
+#     }
+#   }
+#
+#   # 2) strip trailing numeric-range suffix if present
+#   label <- sub(" - \\(.*\\]$", "", label)
+#
+#   # 3) if nothing was mapped, apply the defaults
+#   if (identical(label, original_label)) {
+#     if (remove_tx_prefix)   label <- sub("^t[0-9]+_", "", label)
+#     if (remove_z_suffix)    label <- sub("_z$", "", label)
+#     if (remove_underscores) label <- gsub("_", " ", label)
+#     if (use_title_case) {
+#       label <- tools::toTitleCase(label)
+#       # preserve NZ capitalization
+#       label <- gsub("Nz", "NZ", label)
+#     }
+#   }
+#
+#   if (!identical(label, original_label)) {
+#     cli::cli_alert_info("Transformed label: {original_label} -> {label}")
+#   }
+#
+#   label
+# }
+# transform_label <- function(label, label_mapping = NULL, options = list()) {
+#   original_label <- label
+#
+#   # Apply mapping with partial substitutions and remove numbers
+#   if (!is.null(label_mapping)) {
+#     for (pattern in names(label_mapping)) {
+#       if (grepl(pattern, label, fixed = TRUE)) {
+#         replacement <- label_mapping[[pattern]]
+#         label <- gsub(pattern, replacement, label, fixed = TRUE)
+#         cli::cli_alert_info("Mapped label: {pattern} -> {replacement}")
+#       }
+#     }
+#   }
+#
+#   # Remove the numerical part (e.g., " - (3.0,7.0] - [1.0,2.0]")
+#   label <- sub(" - \\(.*\\]$", "", label)
+#
+#   # Apply default transformations if the label wasn't fully replaced
+#   if (label == original_label) {
+#     if (options$remove_tx_prefix) {
+#       label <- sub("^t[0-9]+_", "", label)
+#     }
+#     if (options$remove_z_suffix) {
+#       label <- sub("_z$", "", label)
+#     }
+#     if (options$remove_underscores) {
+#       label <- gsub("_", " ", label)
+#     }
+#     if (options$use_title_case) {
+#       label <- tools::toTitleCase(label)
+#       # Preserve "NZ" capitalization
+#       label <- gsub("Nz", "NZ", label)
+#     }
+#   }
+#
+#   if (label != original_label) {
+#     cli::cli_alert_info("Transformed label: {original_label} -> {label}")
+#   }
+#
+#   return(label)
+# }
 
 
 #' @keywords internal

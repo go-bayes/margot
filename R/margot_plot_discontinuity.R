@@ -107,19 +107,6 @@ margot_plot_discontinuity <- function(data,
       # null coalescing operator replacement
       `%||%` <- function(x, y) if (is.null(x)) y else x
 
-      # function to transform labels
-      transform_label <- function(label) {
-        if (remove_underscores) {
-          label <- gsub("_", " ", label)
-        }
-        if (use_title_case) {
-          label <- tools::toTitleCase(label)
-          # preserve "NZ" capitalization
-          label <- gsub("Nz", "NZ", label)
-        }
-        return(label)
-      }
-
       cli::cli_alert_info("Preparing data...")
       # define color palette
       modified_okabe_ito_colors <- c(

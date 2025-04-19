@@ -6,6 +6,11 @@
 * remove `crayon` and other unnecessary package dependences
 * write examples
 
+# [2025-04-19] margot 1.0.14
+## Improved
+- `margot_bind_tables()` has additional parameter,  `sort_E_val_bound = c("none", "asc", "desc")`, which allows users to order multiple tables by E_value thresholds. 
+-  fixed multiple functions to get assending order for `margot_plot()`, these are `margot_plot()`, `group_tab()`, `margot_interpret_marginal()` `transform_label()`, `transform_table_rownames()` -- and removing stray `transform_label()` label functions from various functions. `transform_table_rownames()` now internal. 
+
 
 # [2025-04-10] margot 1.0.13
 ## Improved

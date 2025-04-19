@@ -26,47 +26,88 @@
 #' df <- data.frame(x = 1:3, row.names = c("t1_variable_z", "t2_another_var", "last_variable"))
 #' transformed_df <- transform_table_rownames(df)
 #'
-#' @export
-transform_table_rownames <- function(df,
-                                     remove_tx_prefix = TRUE,
-                                     remove_z_suffix = TRUE,
-                                     use_title_case = TRUE,
-                                     remove_underscores = TRUE) {
-  cli::cli_h1("Transforming Table Row Names")
+#' @keywords internal
+#' Transform table row names using transform_label, with cli feedback
+transform_table_rownames <- function(df, label_mapping = NULL, options = list()) {
+  # coerce each flag to a single TRUE/FALSE
+  remove_tx_prefix   <- isTRUE(options$remove_tx_prefix)
+  remove_z_suffix    <- isTRUE(options$remove_z_suffix)
+  remove_underscores <- isTRUE(options$remove_underscores)
+  use_title_case     <- isTRUE(options$use_title_case)
 
-  changes <- 0
-  # Function to transform a single row name and report changes
-  transform_rowname <- function(name) {
-    original_name <- name
-    if (remove_tx_prefix) {
-      name <- sub("^t[0-9]+_", "", name)
+  n_before <- nrow(df)
+  cli::cli_h1("Transforming table row names")
+
+  # helper: run transform_label() with only scalar flags
+  transform_row <- function(rn) {
+    new_rn <- transform_label(
+      rn,
+      label_mapping = label_mapping,
+      options = list(
+        remove_tx_prefix   = remove_tx_prefix,
+        remove_z_suffix    = remove_z_suffix,
+        remove_underscores = remove_underscores,
+        use_title_case     = use_title_case
+      )
+    )
+    if (!identical(new_rn, rn)) {
+      cli::cli_alert_info("Changed {.val {rn}} → {.val {new_rn}}")
     }
-    if (remove_z_suffix) {
-      name <- sub("_z$", "", name)
-    }
-    if (remove_underscores) {
-      name <- gsub("_", " ", name)
-    }
-    if (use_title_case) {
-      name <- tools::toTitleCase(name)
-    }
-    if (name != original_name) {
-      cli::cli_alert_info("Changed: {.val {original_name}} -> {.val {name}}")
-      changes <<- changes + 1
-    }
-    return(name)
+    new_rn
   }
 
-  # Apply the transformation to all row names
-  rownames(df) <- sapply(rownames(df), transform_rowname)
+  # apply to every rowname
+  rownames(df) <- vapply(rownames(df), transform_row, FUN.VALUE = "")
 
-  # Print summary
-  cli::cli_h2("Transformation Summary")
-  cli::cli_alert_info("Total rows processed: {.val {nrow(df)}}")
-  cli::cli_alert_info("Total changes made: {.val {changes}}")
+  # summary
+  cli::cli_h2("Summary")
+  cli::cli_alert_info("Rows processed: {.val {n_before}}")
+  changes <- sum(rownames(df) != names(table(rownames(df))))
+  cli::cli_alert_info("Changes made: {.val {changes}}")
+  cli::cli_alert_success("Table row names successfully transformed")
 
-  # Print success message
-  cli::cli_alert_success("Table row names have been successfully transformed.")
-
-  return(df)
+  df
 }
+# transform_table_rownames <- function(df,
+#                                      remove_tx_prefix = TRUE,
+#                                      remove_z_suffix = TRUE,
+#                                      use_title_case = TRUE,
+#                                      remove_underscores = TRUE) {
+#   cli::cli_h1("Transforming Table Row Names")
+#
+#   changes <- 0
+#   # Function to transform a single row name and report changes
+#   transform_rowname <- function(name) {
+#     original_name <- name
+#     if (remove_tx_prefix) {
+#       name <- sub("^t[0-9]+_", "", name)
+#     }
+#     if (remove_z_suffix) {
+#       name <- sub("_z$", "", name)
+#     }
+#     if (remove_underscores) {
+#       name <- gsub("_", " ", name)
+#     }
+#     if (use_title_case) {
+#       name <- tools::toTitleCase(name)
+#     }
+#     if (name != original_name) {
+#       cli::cli_alert_info("Changed: {.val {original_name}} -> {.val {name}}")
+#       changes <<- changes + 1
+#     }
+#     return(name)
+#   }
+#
+#   # Apply the transformation to all row names
+#   rownames(df) <- sapply(rownames(df), transform_rowname)
+#
+#   # Print summary
+#   cli::cli_h2("Transformation Summary")
+#   cli::cli_alert_info("Total rows processed: {.val {nrow(df)}}")
+#   cli::cli_alert_info("Total changes made: {.val {changes}}")
+#
+#   # Print success message
+#   cli::cli_alert_success("Table row names have been successfully transformed.")
+#
+#   return(df)
+# }

@@ -2,30 +2,42 @@
 % Please edit documentation in R/margot_bind_models.R
 \name{margot_bind_models}
 \alias{margot_bind_models}
-\title{Combine multiple batched causal forest model objects}
+\title{Combine multiple batched model outputs}
 \usage{
 margot_bind_models(..., quiet = FALSE)
 }
 \arguments{
-\item{...}{One or more batched model objects with the structure shown in the examples.}
+\item{...}{One or more batched model output objects.}
 
 \item{quiet}{Logical; if TRUE, suppresses CLI feedback messages. Default is FALSE.}
 }
 \value{
-A combined model object with the same structure as the inputs but containing
-  all models from the input objects.
+A single combined model output object.
 }
 \description{
-This function combines multiple batched causal forest model objects into a single
-combined model object, provided they have compatible structures.
+This function combines either “causal forest” or “lmtp” batched model outputs
+into a single object, provided they share compatible structures.
 }
 \details{
-The function checks that all input model objects have the same structure and
-compatible elements before combining them. It ensures that the 'not_missing'
-vectors are identical across all model objects.
+- If all inputs have the four elements `models`, `contrasts`,
+  `individual_tables` and `combined_tables`, it assumes an **lmtp**‐style object
+  and flattens each list, row‐binding the `combined_tables`.
+- Otherwise it falls back on the original “causal forest” structure
+  with elements `results`, `combined_table`, `outcome_vars`,
+  `not_missing` and `full_models`.
+- It checks that any `not_missing` vectors match exactly across inputs.
 }
 \examples{
-# assuming models_binary_social, models_binary_psych, and models_binary_health exist
-combined_models <- margot_bind_models(models_binary_social, models_binary_psych)
+# for lmtp outputs
+combined_lmtp <- margot_bind_models(
+  health_lmtp_output,
+  psych_lmtp_output
+)
+
+# for causal forest outputs
+combined_cf <- margot_bind_models(
+  models_binary_social,
+  models_binary_psych
+)
 
 }

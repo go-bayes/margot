@@ -1,118 +1,103 @@
-#' Combine multiple batched causal forest model objects
+#' Combine multiple batched model outputs
 #'
 #' @description
-#' This function combines multiple batched causal forest model objects into a single
-#' combined model object, provided they have compatible structures.
+#' This function combines either “causal forest” or “lmtp” batched model outputs
+#' into a single object, provided they share compatible structures.
 #'
-#' @param ... One or more batched model objects with the structure shown in the examples.
+#' @param ... One or more batched model output objects.
 #' @param quiet Logical; if TRUE, suppresses CLI feedback messages. Default is FALSE.
 #'
-#' @return A combined model object with the same structure as the inputs but containing
-#'   all models from the input objects.
+#' @return A single combined model output object.
 #'
 #' @details
-#' The function checks that all input model objects have the same structure and
-#' compatible elements before combining them. It ensures that the 'not_missing'
-#' vectors are identical across all model objects.
+#' - If all inputs have the four elements `models`, `contrasts`,
+#'   `individual_tables` and `combined_tables`, it assumes an **lmtp**‐style object
+#'   and flattens each list, row‐binding the `combined_tables`.
+#' - Otherwise it falls back on the original “causal forest” structure
+#'   with elements `results`, `combined_table`, `outcome_vars`,
+#'   `not_missing` and `full_models`.
+#' - It checks that any `not_missing` vectors match exactly across inputs.
 #'
 #' @examples
-#' # assuming models_binary_social, models_binary_psych, and models_binary_health exist
-#' combined_models <- margot_bind_models(models_binary_social, models_binary_psych)
+#' # for lmtp outputs
+#' combined_lmtp <- margot_bind_models(
+#'   health_lmtp_output,
+#'   psych_lmtp_output
+#' )
+#'
+#' # for causal forest outputs
+#' combined_cf <- margot_bind_models(
+#'   models_binary_social,
+#'   models_binary_psych
+#' )
 #'
 #' @importFrom cli cli_alert_success cli_alert_warning cli_alert_danger cli_alert_info
-#' @importFrom purrr map_lgl
+#' @importFrom purrr map_lgl flatten map
 #' @importFrom dplyr bind_rows
 #' @export
 margot_bind_models <- function(..., quiet = FALSE) {
-  # import required packages
-  if (!requireNamespace("cli", quietly = TRUE)) {
-    stop("Package 'cli' needed for this function to work. Please install it.",
-         call. = FALSE)
-  }
-  if (!requireNamespace("purrr", quietly = TRUE)) {
-    stop("Package 'purrr' needed for this function to work. Please install it.",
-         call. = FALSE)
-  }
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' needed for this function to work. Please install it.",
-         call. = FALSE)
-  }
-
-  # collect all model objects
   models <- list(...)
 
-  # check if there are any models to combine
   if (length(models) < 1) {
-    cli::cli_alert_danger("No models provided!")
+    cli::cli_alert_danger("no models provided!")
     return(NULL)
   }
-
   if (length(models) == 1) {
-    cli::cli_alert_warning("Only one model provided, returning as is.")
+    cli::cli_alert_warning("only one model provided, returning as is.")
     return(models[[1]])
   }
 
-  if (!quiet) cli::cli_alert_info("Checking compatibility of {length(models)} model objects...")
+  # detect lmtp‐style structure
+  lmtp_names <- c("models", "contrasts", "individual_tables", "combined_tables")
+  is_lmtp <- purrr::map_lgl(models, ~ setequal(names(.x), lmtp_names))
 
-  # verify all objects have the same structure (5 elements with the same names)
-  expected_names <- c("results", "combined_table", "outcome_vars", "not_missing", "full_models")
-  structure_check <- purrr::map_lgl(models, function(model) {
-    all(names(model) %in% expected_names) && length(names(model)) == 5
-  })
+  if (all(is_lmtp)) {
+    if (!quiet) cli::cli_alert_info("combining {length(models)} lmtp outputs...")
+    combined <- list(
+      models = purrr::flatten(purrr::map(models, "models")),
+      contrasts = purrr::flatten(purrr::map(models, "contrasts")),
+      individual_tables = purrr::flatten(purrr::map(models, "individual_tables"))
+    )
+    # bind each combined_tables data.frame
+    dfs <- purrr::map(models, ~ .x$combined_tables[[1]])
+    combined$combined_tables <- list(
+      combined_outcomes_religious_vs_secular = dplyr::bind_rows(dfs)
+    )
+    if (!quiet) cli::cli_alert_success("successfully combined {length(models)} lmtp outputs!")
+    return(combined)
+  }
 
-  if (!all(structure_check)) {
-    cli::cli_alert_danger("Not all model objects have the expected structure!")
+  # otherwise, assume causal forest structure
+  if (!quiet) cli::cli_alert_info("checking {length(models)} causal forest models...")
+  expected_cf <- c("results", "combined_table", "outcome_vars", "not_missing", "full_models")
+  ok_structure <- purrr::map_lgl(models, ~ all(names(.x) %in% expected_cf) &&
+                                   length(names(.x)) == length(expected_cf))
+  if (!all(ok_structure)) {
+    cli::cli_alert_danger("not all models have the expected causal forest structure!")
     return(NULL)
   }
 
-  # check if not_missing vectors are identical across all models
-  not_missing_check <- purrr::map(models, ~ .x$not_missing)
-  identical_not_missing <- all(
-    purrr::map_lgl(not_missing_check[-1], ~ identical(.x, not_missing_check[[1]]))
-  )
-
-  if (!identical_not_missing) {
-    cli::cli_alert_danger("The 'not_missing' vectors are not identical across all models!")
+  # ensure all not_missing vectors match exactly
+  nm <- purrr::map(models, "not_missing")
+  if (!all(purrr::map_lgl(nm[-1], ~ identical(.x, nm[[1]])))) {
+    cli::cli_alert_danger("the 'not_missing' vectors differ across models!")
     return(NULL)
   }
+  if (!quiet) cli::cli_alert_success("all causal forest models are compatible!")
 
-  if (!quiet) cli::cli_alert_success("All models are compatible!")
-
-  # combine the models
-  if (!quiet) cli::cli_alert_info("Combining models...")
-
-  # initialise combined model
-  combined_model <- list()
-
-  # combine results lists
-  combined_model$results <- unlist(
-    purrr::map(models, ~ .x$results),
-    recursive = FALSE
-  )
-
-  # combine combined_tables
-  combined_model$combined_table <- dplyr::bind_rows(
-    purrr::map(models, ~ .x$combined_table)
-  )
-
-  # combine outcome_vars
-  combined_model$outcome_vars <- unlist(
-    purrr::map(models, ~ .x$outcome_vars)
-  )
-
-  # use not_missing from first model (they're all identical)
-  combined_model$not_missing <- models[[1]]$not_missing
-
-  # combine full_models
-  combined_model$full_models <- unlist(
-    purrr::map(models, ~ .x$full_models),
-    recursive = FALSE
+  # combine
+  if (!quiet) cli::cli_alert_info("combining causal forest models...")
+  combined <- list(
+    results       = unlist(purrr::map(models, "results"),       recursive = FALSE),
+    combined_table= dplyr::bind_rows(purrr::map(models, "combined_table")),
+    outcome_vars  = unlist(purrr::map(models, "outcome_vars")),
+    not_missing   = models[[1]]$not_missing,
+    full_models   = unlist(purrr::map(models, "full_models"),   recursive = FALSE)
   )
 
   if (!quiet) {
-    cli::cli_alert_success("Successfully combined {length(models)} model objects!")
-    cli::cli_alert_info("Combined object contains {length(combined_model$results)} individual models.")
+    cli::cli_alert_success("successfully combined {length(models)} causal forest models!")
+    cli::cli_alert_info("combined object has {length(combined$results)} individual models.")
   }
-
-  return(combined_model)
+  combined
 }

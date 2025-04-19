@@ -33,11 +33,10 @@
 #'                                    continuous_X = FALSE, splines = FALSE,
 #'                                    vcov = "HC3", verbose = TRUE)
 #'
-#' @importFrom stats glm
 #' @importFrom parallel detectCores
 #' @importFrom purrr map
-#' @import glue
-#' @import rlang
+#' @importFrom glue glue
+#' @importFrom rlang .data quo enquo eval_tidy
 #' @export
 causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0, treat_1,
                                      estimand = c("ATE", "ATT"), type = c("RR", "RD"),

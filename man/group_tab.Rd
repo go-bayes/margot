@@ -7,54 +7,72 @@
 group_tab(
   df,
   type = c("RD", "RR"),
-  order = c("default", "alphabetical", "custom"),
+  order = c("alphabetical", "magnitude_desc", "magnitude_asc", "evaluebound_desc",
+    "evaluebound_asc", "custom", "default"),
   custom_order = NULL
 )
 }
 \arguments{
 \item{df}{Data frame containing the variables of interest, or a list containing
-the results dataframe and label mapping from transform_to_original_scale().}
+the results data frame and label mapping from transform_to_original_scale().}
 
-\item{type}{Type of treatment effect to analyze. Expected values are 'RR' for Risk Ratio
-and 'RD' for Risk Difference. Defaults to 'RD'.}
+\item{type}{Type of treatment effect to analyze. One of 'RR' (Risk Ratio) or
+'RD' (Risk Difference). Defaults to 'RD'.}
 
-\item{order}{Specifies the order in which the outcomes should be arranged. Can be
-'default' for descending order of the estimate, 'alphabetical' for alphabetical order by outcome,
-or 'custom' for a user-defined order. Default is 'default'.}
+\item{order}{Sorting option for outcomes. Options are:
+\itemize{
+  \item 'alphabetical': sort by outcome name (A–Z)
+  \item 'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')
+  \item 'magnitude_asc': sort by absolute effect size, ascending
+  \item 'evaluebound_desc': sort by E-value bound, descending
+  \item 'evaluebound_asc': sort by E-value bound, ascending
+  \item 'custom': user-defined order (requires custom_order)
+  \item 'default': alias for 'magnitude_desc' (deprecated)
+}
+Default is 'default'.}
 
-\item{custom_order}{A vector of custom ordering for the outcomes, applicable if `order` is set to 'custom'.
-This should be a vector containing all outcomes in the desired order.}
+\item{custom_order}{Character vector specifying a custom outcome ordering,
+used when order = 'custom'. Must contain all outcomes exactly once.}
 }
 \value{
-A data frame that has been arranged based on the specified order and annotated
-with treatment effect estimates, estimate labels, and evidence value annotations.
-If original scale estimates are available, these will be included in the output.
+A data frame arranged according to `order`, annotated with:
+  \itemize{
+    \item Estimate category (positive, negative, not reliable)
+    \item Formatted label for the effect and confidence interval
+    \item Optional original-scale label if _original columns are present
+  }
 }
 \description{
 This function arranges and annotates a data frame based on specified
-types of treatment effect estimates (RR or RD). It supports different sorting
-options including default descending, alphabetical, and custom order.
-It now also handles original scale estimates when available.
+types of treatment effect estimates (RR or RD). It supports a variety of sorting
+options including alphabetical, magnitude (ascending or descending), E-value bound
+(ascending or descending), custom order, and a default alias for backward compatibility.
+It also handles original scale estimates when available.
 }
 \details{
-The function now handles both transformed and original scale results. If original scale results
-are available (indicated by the presence of columns with "_original" suffix), these will be included
-in the output. The function also applies label mapping if provided.
+The function detects whether `df` is a list output from transform_to_original_scale()
+and extracts `results_df` and `label_mapping` accordingly. It then ensures an `outcome`
+column, applies any label mapping, and sorts based on the chosen `order`. New options
+'magnitude_desc' and 'magnitude_asc' sort by absolute effect size; 'evaluebound_desc'
+and 'evaluebound_asc' sort by the E-Value bound; 'alphabetical' sorts by outcome
+name; 'custom' respects a user-provided vector; 'default' is an alias for 'magnitude_desc'.
 }
 \examples{
-# Example using Risk Ratio (RR) and default sorting
-result_df <- group_tab(df = analysis_df, type = 'RR')
+# descending magnitude (default for 'default')
+result_df <- group_tab(df = analysis_df, order = 'default')
 
-# Example using Risk Difference (RD) with alphabetical sorting
-result_df <- group_tab(df = analysis_df, type = 'RD', order = 'alphabetical')
+# ascending magnitude
+result_df <- group_tab(df = analysis_df, order = 'magnitude_asc')
 
-# Example using custom sorting order
-custom_order <- c("Outcome3", "Outcome1", "Outcome2")
-result_df <- group_tab(df = analysis_df, type = 'RR', order = 'custom', custom_order = custom_order)
+# strongest E-value bound first
+result_df <- group_tab(df = analysis_df, order = 'evaluebound_desc')
 
-# Example using output from transform_to_original_scale()
-transformed_data <- transform_to_original_scale(results_df, original_df, label_mapping)
-result_df <- group_tab(transformed_data, type = 'RD')
+# alphabetical
+result_df <- group_tab(df = analysis_df, order = 'alphabetical')
+
+# custom ordering
+custom_order <- c('Outcome3','Outcome1','Outcome2')
+result_df <- group_tab(df = analysis_df, order = 'custom', custom_order = custom_order)
 
 }
 \keyword{internal}

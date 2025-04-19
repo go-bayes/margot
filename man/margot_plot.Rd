@@ -7,11 +7,13 @@
 margot_plot(
   .data,
   type = c("RD", "RR"),
-  order = c("alphabetical", "magnitude", "custom", "default"),
+  order = c("alphabetical", "magnitude_desc", "magnitude_asc", "evaluebound_desc",
+    "evaluebound_asc", "custom", "default"),
+  custom_order = NULL,
   title_binary = NULL,
   include_coefficients = TRUE,
   standardize_label = c("NZ", "US", "none"),
-  interpret_all_E_gt1 = TRUE,
+  interpret_all_E_gt1 = FALSE,
   ...,
   options = list(),
   label_mapping = NULL,
@@ -24,161 +26,69 @@ margot_plot(
 )
 }
 \arguments{
-\item{.data}{A data frame containing the data to be plotted.
-It must include an `outcome` column and either `E[Y(1)]-E[Y(0)]`
-or `E[Y(1)]/E[Y(0)]` columns representing the causal estimates.}
+\item{.data}{A data frame with:
+- `outcome` column,
+- effect columns: `E[Y(1)]-E[Y(0)]` or `E[Y(1)]/E[Y(0)]`,
+- confidence limits: `2.5 %`, `97.5 %`,
+- `E_Value`, `E_Val_bound`, and optional `unit`.}
 
-\item{type}{Character string specifying the type of plot.
-Either `"RD"` (Risk Difference) or `"RR"` (Risk Ratio). Default is `"RD"`.}
+\item{type}{One of `"RD"` (Risk Difference) or `"RR"` (Risk Ratio). Default: `"RD"`.}
 
-\item{order}{Character string specifying the order of outcomes.
-Can be `"alphabetical"`, `"magnitude"`, `"custom"`, or `"default"`.
-- `"alphabetical"`: Orders outcomes alphabetically.
-- `"magnitude"`: Orders outcomes by the absolute magnitude of the effect size in descending order.
-- `"custom"`: Allows for a custom ordering (requires additional implementation).
-- `"default"`: Equivalent to `"magnitude"` for backward compatibility.
-Default is `"alphabetical"`.}
+\item{order}{Outcome sorting. Options:
+\describe{
+  \item{alphabetical}{A–Z}
+  \item{magnitude_desc}{|effect| descending (alias for old `"magnitude"`/`"default"`) }
+  \item{magnitude_asc}{|effect| ascending}
+  \item{evaluebound_desc}{E‑value bound descending}
+  \item{evaluebound_asc}{E‑value bound ascending}
+  \item{custom}{use `custom_order`}
+  \item{default}{alias for `"magnitude_desc"` (deprecated)}
+}
+Default: `"alphabetical"`.}
 
-\item{title_binary}{Optional title for the plot. If not provided, the title from `options` is used.}
+\item{custom_order}{Character vector for `order = "custom"`.}
 
-\item{include_coefficients}{Logical. If `TRUE`, includes the text of the coefficients in the plot.
-Default is `TRUE`.}
+\item{title_binary}{Optional title for binary plots.}
 
-\item{standardize_label}{Character. If `"NZ"`, the x-axis uses "Standardised" (NZ/UK style) for RD effects.
-If `"US"`, the x-axis uses "Standardized". If `"none"`, omits that word entirely.
-Default is `"NZ"`. When `type == "RR"`, this word is always omitted.}
+\item{include_coefficients}{Logical; include effect values on plot. Default: `TRUE`.}
 
-\item{interpret_all_E_gt1}{Logical. If `TRUE`, interprets any effect estimate with an `E_Value` > 1.
-In that case, the final interpretation text reads "All other effect estimates presented unreliable evidence for causality."
-Default is `FALSE`.}
+\item{standardize_label}{One of `"NZ"`, `"US"`, or `"none"`. Controls x-axis label. Default: `"NZ"`.}
 
-\item{...}{Additional arguments passed to the plotting function, allowing further customization.}
+\item{interpret_all_E_gt1}{Logical; if `TRUE`, interprets all effects with `E_Value>1` & `E_Val_bound>1`. Default: `FALSE`.}
 
-\item{options}{A list of additional options for customizing the plot.
-See **Details** for available options.}
+\item{...}{Additional arguments passed to `options`.}
 
-\item{label_mapping}{A named list for custom outcome label mapping.
-See **Details** for usage.}
+\item{options}{List of plot & label options (see details).}
 
-\item{save_output}{Logical. If `TRUE`, saves the complete output to a file. Default is `FALSE`.}
+\item{label_mapping}{Named vector mapping original to display labels.}
 
-\item{use_timestamp}{Logical. If `TRUE`, adds a timestamp to the saved filename. Default is `FALSE`.}
+\item{save_output}{Logical; if `TRUE`, saves output via `here_save_qs()`. Default: `FALSE`.}
 
-\item{base_filename}{Character string. The base name for the saved file. Default is `"margot_plot_output"`.}
+\item{use_timestamp}{Logical; append timestamp. Default: `FALSE`.}
 
-\item{prefix}{Character string. An optional prefix for the saved filename. Default is `NULL`.}
+\item{base_filename}{Base of output filename. Default: `"margot_plot_output"`.}
 
-\item{save_path}{Character string. The directory path where the output will be saved.
-Default is `here::here("push_mods")`.}
+\item{prefix}{Optional filename prefix.}
 
-\item{original_df}{Optional data frame containing the original (non-transformed) data
-for back-transformation of results. If provided, it should correspond to `.data` before any transformations.}
+\item{save_path}{Directory for saving. Default: `here::here("push_mods")`.}
+
+\item{original_df}{Optional data frame for back-transformation to original scale.}
 }
 \value{
-A list containing three elements:
-\itemize{
-  \item `plot`: A `ggplot` object representing the Margot plot.
-  \item `interpretation`: A character string containing the compact interpretation of the results.
-  \item `transformed_table`: A data frame with the original data and transformed row names, using the same transformation options as the plot labels.
-}
-
-If `save_output` is `TRUE`, the complete output will be saved to a file using `margot::here_save_qs()`.
+A list with:
+  \itemize{
+    \item `plot`: a `ggplot2` object
+    \item `interpretation`: markdown string
+    \item `transformed_table`: input `.data` with transformed rownames
+  }
 }
 \description{
-This function creates a Margot plot, which is useful for visualising causal effects.
-It provides various options for customizing the plot
-and transforming labels. Additionally, it generates a compact interpretation of the results
-and returns a transformed table.
+This function creates a Margot plot for visualising causal effects with flexible sorting,
+embeds a compact interpretation, and returns a transformed table.
 }
 \details{
-The `options` list can include the following parameters:
-\itemize{
-  \item `title`: \strong{Character string}. Main title for the plot.
-  \item `subtitle`: \strong{Character string}. Subtitle for the plot.
-  \item `estimate_scale`: \strong{Numeric}. Scaling factor for estimates. Default is `1`.
-  \item `base_size`: \strong{Numeric}. Base font size for the plot. Default is `18`.
-  \item `text_size`: \strong{Numeric}. Font size for text labels. Default is `2.75`.
-  \item `point_size`: \strong{Numeric}. Size of points in the plot. Default is `3`.
-  \item `title_size`: \strong{Numeric}. Font size for the main title. Default is `20`.
-  \item `subtitle_size`: \strong{Numeric}. Font size for the subtitle. Default is `18`.
-  \item `legend_text_size`: \strong{Numeric}. Font size for legend text. Default is `10`.
-  \item `legend_title_size`: \strong{Numeric}. Font size for legend title. Default is `10`.
-  \item `linewidth`: \strong{Numeric}. Width of lines in the plot. Default is `0.4`.
-  \item `x_offset`: \strong{Numeric}. Horizontal offset for text labels on the plot.
-    If `NULL`, it is set based on the `type` (`0` for "RR" and `-1.75` for "RD").
-  \item `x_lim_lo`: \strong{Numeric}. Lower limit for the x-axis.
-    If `NULL`, it is set based on the `type` (`0.1` for "RR" and `-1.75` for "RD").
-  \item `x_lim_hi`: \strong{Numeric}. Upper limit for the x-axis.
-    If `NULL`, it is set based on the `type` (`2.5` for "RR" and `1` for "RD").
-  \item `plot_theme`: \strong{ggplot2 theme object}. Custom theme for the plot.
-  \item `colors`: \strong{Named vector}. Custom colors for different estimate categories.
-    Example: `c("positive" = "green", "not reliable" = "gray", "negative" = "red")`.
-  \item `facet_var`: \strong{Character string}. Variable name for faceting the plot.
-    Allows creating subplots based on a categorical variable.
-  \item `confidence_level`: \strong{Numeric}. Confidence level for intervals. Default is `0.95`.
-  \item `annotations`: \strong{ggplot2 layer}. Custom annotations to add to the plot, such as text or shapes.
-  \item `show_evalues`: \strong{Logical}. If `TRUE`, shows E-values in the plot. Default is `TRUE`.
-  \item `evalue_digits`: \strong{Integer}. Number of digits for E-value display. Default is `2`.
-  \item `remove_tx_prefix`: \strong{Logical}. If `TRUE`, removes `"tx_"` prefix from labels and interpretation. Default is `TRUE`.
-  \item `remove_z_suffix`: \strong{Logical}. If `TRUE`, removes `"_z"` suffix from labels and interpretation. Default is `TRUE`.
-  \item `use_title_case`: \strong{Logical}. If `TRUE`, converts labels and interpretation to title case. Default is `TRUE`.
-  \item `remove_underscores`: \strong{Logical}. If `TRUE`, removes underscores from labels and interpretation. Default is `TRUE`.
-}
-
-The `label_mapping` parameter allows for custom renaming of specific outcomes:
-\itemize{
-  \item It should be a named list where names are original outcome labels and values are new labels.
-  \item Outcomes not specified in `label_mapping` will use default transformations based on `options`.
-  \item Custom mapped labels are used as-is, without applying default transformations.
-}
-}
-\examples{
-\dontrun{
-# Create sample data
-sample_data <- data.frame(
-  outcome = c("t1_outcome_a_z", "t2_outcome_b_z", "t3_outcome_c_z"),
-  `E[Y(1)]-E[Y(0)]` = c(0.1, -0.2, 0.3),
-  `2.5 \%` = c(0.05, -0.3, 0.2),
-  `97.5 \%` = c(0.15, -0.1, 0.4),
-  E_Value = c(1.5, 1.8, 2.0),
-  E_Val_bound = c(1.3, 1.5, 1.7),
-  unit = c("unit1", "unit2", "unit3")
-)
-
-# Create a Margot plot with interpretation and transformed table.
-# With interpret_all_E_gt1 = TRUE, all estimates with E_Value > 1 are interpreted.
-result <- margot_plot(
-  .data = sample_data,
-  type = "RD",
-  order = "alphabetical",
-  standardize_label = "US",
-  interpret_all_E_gt1 = TRUE,
-  options = list(
-    title = "Causal Effect Estimates",
-    subtitle = "Risk Difference Scale",
-    colors = c("positive" = "green", "not reliable" = "black", "negative" = "red"),
-    remove_tx_prefix = TRUE,
-    remove_z_suffix = TRUE,
-    use_title_case = TRUE,
-    remove_underscores = TRUE
-  ),
-  label_mapping = list(
-    "t1_outcome_a_z" = "Outcome A",
-    "t2_outcome_b_z" = "Outcome B",
-    "t3_outcome_c_z" = "Outcome C"
-  ),
-  include_coefficients = FALSE,
-  save_output = FALSE
-)
-
-# Display the plot
-print(result$plot)
-
-# Display the interpretation
-cat(result$interpretation)
-
-# Display the transformed table
-print(result$transformed_table)
-}
-
+Sorting is implemented via `group_tab()`. The `options` list can include:
+  title, subtitle, base_size, text_size, point_size, colors, theme, facet_var,
+  show_evalues, evalue_digits, remove_tx_prefix, remove_z_suffix,
+  use_title_case, remove_underscores.
 }

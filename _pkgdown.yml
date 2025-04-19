@@ -161,8 +161,6 @@ reference:
     - remove_numeric_attributes
     - regress_with_covariates
     - select_and_rename_cols
-    - transform_table_rownames
-
 
   - title: "Simulated data"
     contents:

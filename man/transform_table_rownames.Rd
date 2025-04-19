@@ -4,13 +4,7 @@
 \alias{transform_table_rownames}
 \title{Transform Table Row Names with CLI Feedback}
 \usage{
-transform_table_rownames(
-  df,
-  remove_tx_prefix = TRUE,
-  remove_z_suffix = TRUE,
-  use_title_case = TRUE,
-  remove_underscores = TRUE
-)
+transform_table_rownames(df, label_mapping = NULL, options = list())
 }
 \arguments{
 \item{df}{A data frame whose row names are to be transformed.}
@@ -44,3 +38,13 @@ df <- data.frame(x = 1:3, row.names = c("t1_variable_z", "t2_another_var", "last
 transformed_df <- transform_table_rownames(df)
 
 }
+\keyword{Transform}
+\keyword{cli}
+\keyword{feedback}
+\keyword{internal}
+\keyword{names}
+\keyword{row}
+\keyword{table}
+\keyword{transform_label,}
+\keyword{using}
+\keyword{with}

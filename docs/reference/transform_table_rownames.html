@@ -9,7 +9,7 @@ and provides CLI feedback on the changes made."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.13</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.14</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,13 +42,7 @@ and provides CLI feedback on the changes made.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">transform_table_rownames</span><span class="op">(</span></span>
-<span>  <span class="va">df</span>,</span>
-<span>  remove_tx_prefix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  remove_z_suffix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  remove_underscores <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">transform_table_rownames</span><span class="op">(</span><span class="va">df</span>, label_mapping <span class="op">=</span> <span class="cn">NULL</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -93,17 +87,7 @@ and provides CLI feedback on the changes made.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, row.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"t1_variable_z"</span>, <span class="st">"t2_another_var"</span>, <span class="st">"last_variable"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">transformed_df</span> <span class="op">&lt;-</span> <span class="fu">transform_table_rownames</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Transforming Table Row Names</span> <span style="color: #00BBBB;">────────────────────────────────────────────────</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Changed: <span style="color: #0000BB;">"t1_variable_z"</span> -&gt; <span style="color: #0000BB;">"Variable"</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Changed: <span style="color: #0000BB;">"t2_another_var"</span> -&gt; <span style="color: #0000BB;">"Another Var"</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Changed: <span style="color: #0000BB;">"last_variable"</span> -&gt; <span style="color: #0000BB;">"Last Variable"</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="font-weight: bold;">Transformation Summary</span> ──</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Total rows processed: <span style="color: #0000BB;">3</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Total changes made: <span style="color: #0000BB;">3</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Table row names have been successfully transformed.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in transform_table_rownames(df):</span> could not find function "transform_table_rownames"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
