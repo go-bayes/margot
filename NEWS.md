@@ -7,6 +7,11 @@
 * write examples
 
 
+# [2025-04-20] margot 1.0.17
+## Improved
+- `margot_lmtp_tab()` -- fixes breaking change introduced by `lmtp v1.50`
+
+
 # [2025-04-20] margot 1.0.16
 ## Improved
 - `margot_transition_table()` -- allows filtering by observation/censoring variable, can be useful where data are entirely missing from certain waves.
