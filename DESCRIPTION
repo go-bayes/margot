@@ -62,7 +62,7 @@ Imports:
     clarify,
     labelled,
     tools
-RoxygenNote: 7.3.2.9000
+RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 URL: https://go-bayes.github.io/margot
 BugReports: https://github.com/go-bayes/margot/issues

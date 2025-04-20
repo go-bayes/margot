@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.16</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.17</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,48 +59,19 @@
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># load Amelia package and perform imputation</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gking.harvard.edu/amelia" class="external-link">Amelia</a></span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: Rcpp</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ## </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ## Amelia II: Multiple Imputation</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ## (Version 1.8.3, built: 2024-11-07)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ## Copyright (C) 2005-2025 James Honaker, Gary King and Matthew Blackwell</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ## Refer to http://gking.harvard.edu/amelia/ for more information</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ## </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in library(Amelia):</span> there is no package called ‘Amelia’</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">africa</span><span class="op">)</span> <span class="co"># example dataset from Amelia package</span></span></span>
-<span class="r-in"><span><span class="va">amelia_output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Amelia/man/amelia.html" class="external-link">amelia</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">africa</span>, m <span class="op">=</span> <span class="fl">5</span>, idvars <span class="op">=</span> <span class="st">"country"</span><span class="op">)</span> <span class="co"># impute data</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -- Imputation 1 --</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1  2  3  4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -- Imputation 2 --</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1  2  3  4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -- Imputation 3 --</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1  2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -- Imputation 4 --</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1  2  3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -- Imputation 5 --</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1  2  3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>data set ‘africa’ not found</span>
+<span class="r-in"><span><span class="va">amelia_output</span> <span class="op">&lt;-</span> <span class="fu">amelia</span><span class="op">(</span>x <span class="op">=</span> <span class="va">africa</span>, m <span class="op">=</span> <span class="fl">5</span>, idvars <span class="op">=</span> <span class="st">"country"</span><span class="op">)</span> <span class="co"># impute data</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in amelia(x = africa, m = 5, idvars = "country"):</span> could not find function "amelia"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># convert amelia object to mice object</span></span></span>
 <span class="r-in"><span><span class="va">mids_obj</span> <span class="op">&lt;-</span> <span class="fu">margot_amelia_to_mice</span><span class="op">(</span><span class="va">amelia_output</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'amelia_output' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># verify mids object</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">mids_obj</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Class: mids</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Number of multiple imputations:  5 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Imputation methods:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   gdp_pc    trade </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> "amelia" "amelia" </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> PredictorMatrix:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'mids_obj' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
