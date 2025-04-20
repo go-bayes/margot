@@ -7,9 +7,15 @@
 * write examples
 
 
+# [2025-04-20] margot 1.0.16
+## Improved
+- `margot_transition_table()` -- allows filtering by observation/censoring variable, can be useful where data are entirely missing from certain waves.
+- `margot_bind_tables()` -- correct output retaining outcome names
+- `margot_impute_carry_forward()` -- better error handling/ if observation is seen in a year, may impute forward. 
+
 # [2025-04-19] margot 1.0.15
 ## Improved
-- `margot_interpret_marginal()` - clearer wording, outcomes listed rather than dull repetative sentences. 
+- `margot_interpret_marginal()` - clearer wording, outcomes listed rather than dull repetitive sentences. 
 
 # [2025-04-19] margot 1.0.14
 ## Improved

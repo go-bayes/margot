@@ -89,9 +89,9 @@ margot_interpret_marginal <- function(
   # choose intro based on evidence types
   strengths <- unique(df_f$evidence_strength)
   if (all(strengths == "strong causal evidence")) {
-    intro <- "The following outcomes exhibited strong causal evidence (presented in the same order as they appear in the plot):"
+    intro <- "The following outcomes exhibited strong causal evidence (presented in the same order as they appear in the results table):\n"
   } else {
-    intro <- "The following outcomes exhibited causal evidence (presented in the same order as they appear in the plot):"
+    intro <- "The following outcomes exhibited causal evidence (presented in the same order as they appear in the plot):\n"
   }
 
   # build bullets without trailing evidence phrase

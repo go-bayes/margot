@@ -11,7 +11,7 @@ up to a specified number of time points back. By default, it never imputes data 
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.15</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.16</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,97 +66,60 @@ up to a specified number of time points back. By default, it never imputes data 
 
 
 <dl><dt id="arg-df-wide">df_wide<a class="anchor" aria-label="anchor" href="#arg-df-wide"></a></dt>
-<dd><p>A wide-format dataframe containing longitudinal data.</p></dd>
+<dd><p>a wide-format dataframe containing longitudinal data.</p></dd>
 
 
 <dt id="arg-columns-to-impute">columns_to_impute<a class="anchor" aria-label="anchor" href="#arg-columns-to-impute"></a></dt>
-<dd><p>Character vector of base column names to impute (without time prefixes).</p></dd>
+<dd><p>character vector of base column names to impute (without time prefixes).</p></dd>
 
 
 <dt id="arg-max-carry-forward">max_carry_forward<a class="anchor" aria-label="anchor" href="#arg-max-carry-forward"></a></dt>
-<dd><p>Maximum number of time points to look back for carrying forward values.</p></dd>
+<dd><p>maximum number of time points to look back for carrying forward values.</p></dd>
 
 
 <dt id="arg-time-point-prefixes">time_point_prefixes<a class="anchor" aria-label="anchor" href="#arg-time-point-prefixes"></a></dt>
-<dd><p>Optional vector of time point prefixes (e.g., <code>c("t0", "t1", "t2")</code>).</p></dd>
+<dd><p>optional vector of time point prefixes (e.g., c("t0", "t1", "t2")).</p></dd>
 
 
 <dt id="arg-time-point-regex">time_point_regex<a class="anchor" aria-label="anchor" href="#arg-time-point-regex"></a></dt>
-<dd><p>Optional regex pattern to identify time points. Overrides <code>time_point_prefixes</code> if provided.</p></dd>
+<dd><p>optional regex pattern to identify time points. Overrides time_point_prefixes if provided.</p></dd>
 
 
 <dt id="arg-require-one-observed">require_one_observed<a class="anchor" aria-label="anchor" href="#arg-require-one-observed"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, only impute if at least one value is observed in a following wave.</p></dd>
+<dd><p>logical. if TRUE, only impute if at least one value is observed in the present or a following wave.</p></dd>
 
 
 <dt id="arg-columns-no-future-required">columns_no_future_required<a class="anchor" aria-label="anchor" href="#arg-columns-no-future-required"></a></dt>
-<dd><p>Character vector of columns that do not require future observations for imputation.
-Defaults to all columns if <code>require_one_observed = FALSE</code>, or none if <code>require_one_observed = TRUE</code>.</p></dd>
+<dd><p>character vector of columns that do not require future observations for imputation.
+defaults to all columns if require_one_observed = FALSE, or none if require_one_observed = TRUE.</p></dd>
 
 
 <dt id="arg-create-na-indicator">create_na_indicator<a class="anchor" aria-label="anchor" href="#arg-create-na-indicator"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, creates indicator variables for imputed values.</p></dd>
+<dd><p>logical. if TRUE, creates indicator variables for imputed values.</p></dd>
 
 
 <dt id="arg-indicator-suffix">indicator_suffix<a class="anchor" aria-label="anchor" href="#arg-indicator-suffix"></a></dt>
-<dd><p>Suffix to add to the original column name for the indicator variable (default is <code>"_na"</code>).</p></dd>
+<dd><p>suffix to add to the original column name for the indicator variable (default is "_na").</p></dd>
 
 
 <dt id="arg-indicator-as-suffix">indicator_as_suffix<a class="anchor" aria-label="anchor" href="#arg-indicator-as-suffix"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, the indicator suffix is added as a suffix; if <code>FALSE</code>, it's added as a prefix.</p></dd>
+<dd><p>logical. if TRUE, the indicator suffix is added as a suffix; if FALSE, it's added as a prefix.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, prints progress information.</p></dd>
+<dd><p>logical. if TRUE, prints progress information.</p></dd>
 
 
 <dt id="arg-impute-final-wave">impute_final_wave<a class="anchor" aria-label="anchor" href="#arg-impute-final-wave"></a></dt>
-<dd><p>Logical. If <code>FALSE</code> (default), the final wave (end-of-study) is never imputed.
-If <code>TRUE</code>, the final wave can be imputed like other waves.</p></dd>
+<dd><p>logical. if FALSE (default), the final wave (end-of-study) is never imputed.
+if TRUE, the final wave can be imputed like other waves.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A dataframe with imputed values and optional indicator variables.</p>
+    <p>a dataframe with imputed values and optional indicator variables.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># example dataframe</span></span></span>
-<span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,</span></span>
-<span class="r-in"><span>  t0_var1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">NA</span>, <span class="fl">3</span>, <span class="cn">NA</span>, <span class="fl">5</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  t1_var1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">2</span>, <span class="cn">NA</span>, <span class="fl">4</span>, <span class="cn">NA</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  t2_var1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">NA</span>, <span class="fl">3</span>, <span class="cn">NA</span>, <span class="fl">5</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  t0_var2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">2</span>, <span class="cn">NA</span>, <span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  t1_var2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">NA</span>, <span class="fl">3</span>, <span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  t2_var2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">2</span>, <span class="cn">NA</span>, <span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  t2_end_of_study <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>  <span class="co"># end-of-study indicator</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># impute missing values without imputing the final wave</span></span></span>
-<span class="r-in"><span><span class="va">df_imputed</span> <span class="op">&lt;-</span> <span class="fu">margot_impute_carry_forward</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  df_wide <span class="op">=</span> <span class="va">df</span>,</span></span>
-<span class="r-in"><span>  columns_to_impute <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"var1"</span>, <span class="st">"var2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  max_carry_forward <span class="op">=</span> <span class="fl">2</span>,</span></span>
-<span class="r-in"><span>  create_na_indicator <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># impute missing values including the final wave</span></span></span>
-<span class="r-in"><span><span class="va">df_imputed_final</span> <span class="op">&lt;-</span> <span class="fu">margot_impute_carry_forward</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  df_wide <span class="op">=</span> <span class="va">df</span>,</span></span>
-<span class="r-in"><span>  columns_to_impute <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"var1"</span>, <span class="st">"var2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  max_carry_forward <span class="op">=</span> <span class="fl">2</span>,</span></span>
-<span class="r-in"><span>  create_na_indicator <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>  impute_final_wave <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

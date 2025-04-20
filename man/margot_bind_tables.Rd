@@ -18,7 +18,8 @@ margot_bind_tables(
 )
 }
 \arguments{
-\item{tables_list}{A named list of data frames; each element is a domain table.}
+\item{tables_list}{A named list of data frames; each element is a domain table.
+row‑names are captured as an "Outcome" column.}
 
 \item{sort_E_val_bound}{Character: one of "none", "asc", or "desc".
 If "asc", sorts by raw E_Val_bound ascending;
@@ -35,8 +36,7 @@ if "desc", sorts descending. Default "none".}
 \item{rename_cols}{Logical; whether to apply column renaming. Default TRUE.}
 
 \item{col_renames}{Named list; mapping new_name = old_name for renaming.
-Default list("E-Value" = "E_Value",
-              "E-Value bound" = "E_Val_bound").}
+Default list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound").}
 
 \item{threshold_col}{Character; name of the column (pre‑rename) to test. Default "E_Val_bound".}
 

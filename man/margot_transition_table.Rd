@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_transition_table.R
 \name{margot_transition_table}
 \alias{margot_transition_table}
-\title{Format a Transition Table}
+\title{Format a Transition Table with observed‑indicator filtering}
 \usage{
 margot_transition_table(
   data,
@@ -11,28 +11,37 @@ margot_transition_table(
   wave_var,
   waves = NULL,
   state_names = NULL,
+  observed_var = NULL,
+  observed_val = 1,
   table_name = "transition_table"
 )
 }
 \arguments{
-\item{state_names}{Optional vector of state names to replace the default numeric state labels.
-If \code{NULL}, state labels are preserved.}
+\item{data}{a data frame containing your id, state, wave, and (optionally) an observed indicator.}
 
-\item{table_name}{Optional string specifying the name for the transition table output.
-Default is \code{"transition_table"}.}
+\item{state_var}{name of the column indicating the state at each wave.}
 
-\item{trans_df}{A data frame with columns \code{from}, \code{to}, and \code{Freq} indicating transitions.}
+\item{id_var}{name of the column identifying each participant.}
 
-\item{wave_info}{Optional string specifying the wave transition information to include as a header.}
+\item{wave_var}{name of the column indicating the wave (numeric or factor).}
+
+\item{waves}{optional numeric vector of waves to include (defaults to all present in data).}
+
+\item{state_names}{optional character vector of labels for each state.}
+
+\item{observed_var}{optional name of a column marking participants still observed.}
+
+\item{observed_val}{value in \code{observed_var} that denotes “observed” (default 1).}
+
+\item{table_name}{name for the output object (default "transition_table").}
 }
 \value{
-A list with components:
-        \item{table}{The markdown-formatted transition table.}
-        \item{table_with_header}{The transition table with a header including wave information (if provided).}
-        \item{wave_info}{The provided wave transition information (if any).}
-        \item{table_name}{The name provided for the transition table output.}
+an object of class \code{margot_transitions} with
+  \code{tables}, \code{explanation}, \code{wave_info}, and a
+  \code{quarto_code} helper.
 }
 \description{
-Reshapes a long-format transition frequency data frame into a wide-format table with totals,
-and formats it using markdown. Diagonal elements are bolded to highlight state stability.
+Reshapes a long‑format transition frequency data frame into a
+wide‑format table with totals, and formats it using markdown.
+Diagonal elements are bolded to highlight state stability.
 }

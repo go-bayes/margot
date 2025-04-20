@@ -20,72 +20,37 @@ margot_impute_carry_forward(
 )
 }
 \arguments{
-\item{df_wide}{A wide-format dataframe containing longitudinal data.}
+\item{df_wide}{a wide-format dataframe containing longitudinal data.}
 
-\item{columns_to_impute}{Character vector of base column names to impute (without time prefixes).}
+\item{columns_to_impute}{character vector of base column names to impute (without time prefixes).}
 
-\item{max_carry_forward}{Maximum number of time points to look back for carrying forward values.}
+\item{max_carry_forward}{maximum number of time points to look back for carrying forward values.}
 
-\item{time_point_prefixes}{Optional vector of time point prefixes (e.g., \code{c("t0", "t1", "t2")}).}
+\item{time_point_prefixes}{optional vector of time point prefixes (e.g., c("t0", "t1", "t2")).}
 
-\item{time_point_regex}{Optional regex pattern to identify time points. Overrides \code{time_point_prefixes} if provided.}
+\item{time_point_regex}{optional regex pattern to identify time points. Overrides time_point_prefixes if provided.}
 
-\item{require_one_observed}{Logical. If \code{TRUE}, only impute if at least one value is observed in a following wave.}
+\item{require_one_observed}{logical. if TRUE, only impute if at least one value is observed in the present or a following wave.}
 
-\item{columns_no_future_required}{Character vector of columns that do not require future observations for imputation.
-Defaults to all columns if \code{require_one_observed = FALSE}, or none if \code{require_one_observed = TRUE}.}
+\item{columns_no_future_required}{character vector of columns that do not require future observations for imputation.
+defaults to all columns if require_one_observed = FALSE, or none if require_one_observed = TRUE.}
 
-\item{create_na_indicator}{Logical. If \code{TRUE}, creates indicator variables for imputed values.}
+\item{create_na_indicator}{logical. if TRUE, creates indicator variables for imputed values.}
 
-\item{indicator_suffix}{Suffix to add to the original column name for the indicator variable (default is \code{"_na"}).}
+\item{indicator_suffix}{suffix to add to the original column name for the indicator variable (default is "_na").}
 
-\item{indicator_as_suffix}{Logical. If \code{TRUE}, the indicator suffix is added as a suffix; if \code{FALSE}, it's added as a prefix.}
+\item{indicator_as_suffix}{logical. if TRUE, the indicator suffix is added as a suffix; if FALSE, it's added as a prefix.}
 
-\item{verbose}{Logical. If \code{TRUE}, prints progress information.}
+\item{verbose}{logical. if TRUE, prints progress information.}
 
-\item{impute_final_wave}{Logical. If \code{FALSE} (default), the final wave (end-of-study) is never imputed.
-If \code{TRUE}, the final wave can be imputed like other waves.}
+\item{impute_final_wave}{logical. if FALSE (default), the final wave (end-of-study) is never imputed.
+if TRUE, the final wave can be imputed like other waves.}
 }
 \value{
-A dataframe with imputed values and optional indicator variables.
+a dataframe with imputed values and optional indicator variables.
 }
 \description{
 Imputes missing values in longitudinal data by carrying forward previous observations
 up to a specified number of time points back. By default, it never imputes data for the final wave
 (end-of-study). Optionally, it can create indicator variables for imputed values.
-}
-\examples{
-\dontrun{
-# example dataframe
-df <- data.frame(
-  id = 1:5,
-  t0_var1 = c(1, NA, 3, NA, 5),
-  t1_var1 = c(NA, 2, NA, 4, NA),
-  t2_var1 = c(1, NA, 3, NA, 5),
-  t0_var2 = c(NA, 2, NA, 4, 5),
-  t1_var2 = c(1, NA, 3, NA, NA),
-  t2_var2 = c(NA, 2, NA, 4, 5),
-  t2_end_of_study = c(1, 1, 1, 1, 1)  # end-of-study indicator
-)
-
-# impute missing values without imputing the final wave
-df_imputed <- margot_impute_carry_forward(
-  df_wide = df,
-  columns_to_impute = c("var1", "var2"),
-  max_carry_forward = 2,
-  create_na_indicator = TRUE,
-  verbose = TRUE
-)
-
-# impute missing values including the final wave
-df_imputed_final <- margot_impute_carry_forward(
-  df_wide = df,
-  columns_to_impute = c("var1", "var2"),
-  max_carry_forward = 2,
-  create_na_indicator = TRUE,
-  impute_final_wave = TRUE,
-  verbose = TRUE
-)
-}
-
 }
