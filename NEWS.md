@@ -7,6 +7,10 @@
 * write examples
 
 
+# [2025-04-21] margot 1.0.18
+## Improved
+- `margot_plot_categorical()` robust to wider range of data values
+
 # [2025-04-20] margot 1.0.17
 ## Improved
 - `margot_lmtp_tab()` -- fixes breaking change introduced by `lmtp v1.50`

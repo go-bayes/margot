@@ -47,9 +47,9 @@ margot_plot_categorical(
 
 \item{ties.method}{A character string specifying how ties should be handled. See ?quantile for details.}
 
-\item{colour_palette}{A vector of colors to use for the intervals. If NULL, uses the Okabe-Ito palette.}
+\item{colour_palette}{A vector of colours to use for the intervals. If NULL, uses the Okabe‑Ito palette.}
 
-\item{hist_colour}{The color of the histogram borders.}
+\item{hist_colour}{The colour of the histogram borders.}
 
 \item{line_type}{The type of line to use for the histogram borders.}
 
@@ -59,19 +59,19 @@ margot_plot_categorical(
 
 \item{subtitle}{The subtitle of the plot. If NULL, a default subtitle is used.}
 
-\item{x_lab}{The label for the x-axis. If NULL, the formatted column name is used.}
+\item{x_lab}{The label for the x‑axis. If NULL, the formatted column name is used.}
 
-\item{y_lab}{The label for the y-axis. Default is "Count".}
+\item{y_lab}{The label for the y‑axis. Default is "Count".}
 
 \item{theme_choice}{The ggplot2 theme to use. Default is theme_classic().}
 
 \item{text_size}{The base text size for the plot.}
 
-\item{axis_text_angle}{The angle of the x-axis text.}
+\item{axis_text_angle}{The angle of the x‑axis text.}
 
-\item{x_scale_transform}{Optional. A transformation for the x-axis (e.g., "log10").}
+\item{x_scale_transform}{Optional. A transformation for the x‑axis (e.g., "log10").}
 
-\item{y_scale_transform}{Optional. A transformation for the y-axis (e.g., "log10").}
+\item{y_scale_transform}{Optional. A transformation for the y‑axis (e.g., "log10").}
 
 \item{additional_layers}{A list of additional ggplot2 layers to add to the plot.}
 
@@ -83,14 +83,14 @@ margot_plot_categorical(
 
 \item{height}{The height of the saved plot in inches. Default is 10.}
 
-\item{legend_position}{The position of the legend. Can be "right", "left", "bottom", "top", or a two-element numeric vector.}
+\item{legend_position}{The position of the legend. Can be "right", "left", "bottom", "top", or a two‑element numeric vector.}
 
 \item{include_timestamp}{A logical value indicating whether to include a timestamp in the saved filename. Default is FALSE.}
 
 \item{file_prefix}{An optional prefix to add to the beginning of the saved filename.}
 }
 \value{
-A ggplot2 object representing the colored histogram.
+A ggplot2 object representing the coloured histogram.
 }
 \description{
 This function creates a histogram with coloured regions based on quantile breaks or custom breaks.
