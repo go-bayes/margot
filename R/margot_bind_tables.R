@@ -1,56 +1,47 @@
-#' Bind and Format Domain‑Specific Tables
+#' Bind and format domain-specific tables
 #'
-#' This function binds a named list of domain‑specific tables, optionally
-#' sorts by the raw E_Val_bound column (ascending or descending), highlights
-#' rows where E_Val_bound exceeds a threshold, and groups rows by domain.
-#' Works for LaTeX, HTML, or Markdown output.
+#' This function binds a named list of domain-specific tables, optionally
+#' sorts by the raw E_Val_bound column (ascending or descending),
+#' optionally renames columns, highlights rows above a threshold, and
+#' groups rows by domain. works for latex, html, or markdown output.
+#'
+#' @param tables_list a named list of data frames; each element is a domain table.
+#'   row-names are captured as an "Outcome" column.
+#' @param sort_E_val_bound character: one of "none", "asc", or "desc". default "none".
+#' @param e_val_bound_threshold numeric; threshold for highlighting rows. default 1.
+#' @param highlight_color character or NULL; background colour for highlighted rows. default "yellow".
+#' @param bold logical; whether to bold highlighted rows. default TRUE.
+#' @param output_format character; one of "latex", "html", or "markdown". default "latex".
+#' @param rename_cols logical; whether to apply column renaming. default TRUE.
+#' @param col_renames named list; mapping new_name = old_name for renaming.
+#'   default list("E-Value"="E_Value","E-Value bound"="E_Val_bound").
+#' @param rename_ate logical; if TRUE, renames the effect column to "ATE". default FALSE.
+#' @param threshold_col character; name of the (pre-rename) column to test. default "E_Val_bound".
+#' @param kbl_args list; extra arguments for kableExtra::kbl(),
+#'   e.g. list(booktabs=TRUE, caption="Combined Results by Domain", align=NULL).
 #'
 #' @importFrom dplyr bind_rows arrange desc select everything
 #' @importFrom kableExtra kbl row_spec pack_rows
 #' @importFrom tibble rownames_to_column
 #' @importFrom rlang .data
-#'
-#' @param tables_list A named list of data frames; each element is a domain table.
-#'                    row‑names are captured as an "Outcome" column.
-#' @param sort_E_val_bound Character: one of "none", "asc", or "desc".
-#'                         If "asc", sorts by raw E_Val_bound ascending;
-#'                         if "desc", sorts descending. Default "none".
-#' @param e_val_bound_threshold Numeric; rows with E_Val_bound above this value will be highlighted. Default 1.
-#' @param highlight_color Character or NULL; background colour for highlighted rows. Default "yellow".
-#' @param bold Logical; whether to bold highlighted rows. Default TRUE.
-#' @param output_format Character; one of "latex", "html", or "markdown". Default "latex".
-#' @param rename_cols Logical; whether to apply column renaming. Default TRUE.
-#' @param col_renames Named list; mapping new_name = old_name for renaming.
-#'                     Default list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound").
-#' @param threshold_col Character; name of the column (pre‑rename) to test. Default "E_Val_bound".
-#' @param kbl_args List; extra arguments for kbl(), e.g. list(booktabs = TRUE, caption = "Combined Results by Domain").
-#'
-#' @return A knitr_kable object with rows sorted, highlighted, and grouped by domain.
 #' @export
-margot_bind_tables <- function(tables_list,
-                               sort_E_val_bound = c("none", "asc", "desc"),
-                               e_val_bound_threshold = 1,
-                               highlight_color = "yellow",
-                               bold = TRUE,
-                               output_format = "latex",
-                               rename_cols = TRUE,
-                               col_renames = list(
-                                 "E-Value"       = "E_Value",
-                                 "E-Value bound" = "E_Val_bound"
-                               ),
-                               threshold_col = "E_Val_bound",
-                               kbl_args = list(booktabs = TRUE, caption = "Combined Results by Domain")) {
-  # validate inputs
-  if (!is.list(tables_list) || is.null(names(tables_list)) ||
-      any(names(tables_list) == "") || length(tables_list) == 0) {
-    stop("'tables_list' must be a non-empty named list of data frames")
-  }
-  if (!all(sapply(tables_list, is.data.frame))) {
-    stop("all elements of 'tables_list' must be data frames")
-  }
+margot_bind_tables <- function(
+    tables_list,
+    sort_E_val_bound      = c("none","asc","desc"),
+    e_val_bound_threshold = 1,
+    highlight_color       = "yellow",
+    bold                  = TRUE,
+    output_format         = "markdown",
+    rename_cols           = TRUE,
+    col_renames           = list("E-Value"="E_Value", "E-Value bound"="E_Val_bound"),
+    rename_ate            = FALSE,
+    threshold_col         = "E_Val_bound",
+    kbl_args              = list(booktabs=TRUE, caption="Combined Results by Domain", align=NULL)
+) {
+  # coerce sort argument
   sort_E_val_bound <- match.arg(sort_E_val_bound)
 
-  # bring rownames into a column called 'Outcome'
+  # bring rownames into a column called "Outcome"
   tables_list <- lapply(tables_list, function(df) {
     if (!"Outcome" %in% names(df)) {
       df <- tibble::rownames_to_column(df, var = "Outcome")
@@ -58,63 +49,70 @@ margot_bind_tables <- function(tables_list,
     df
   })
 
-  # bind rows with domain identifier (and keep the new Outcome column)
-  combined <- dplyr::bind_rows(tables_list, .id = "Domain")
-  # reorder so Domain, Outcome, then the rest
-  combined <- combined %>%
-    dplyr::select(.data$Domain, .data$Outcome, dplyr::everything())
+  # bind rows with domain identifier
+  combined <- dplyr::bind_rows(tables_list, .id = "Domain") %>%
+    dplyr::select(Domain, Outcome, everything())
 
   # sort by raw E_Val_bound if requested
   if (sort_E_val_bound == "asc") {
-    combined <- combined %>% dplyr::arrange(.data$E_Val_bound)
+    combined <- combined %>% arrange(.data$E_Val_bound)
   } else if (sort_E_val_bound == "desc") {
-    combined <- combined %>% dplyr::arrange(dplyr::desc(.data$E_Val_bound))
+    combined <- combined %>% arrange(desc(.data$E_Val_bound))
   }
 
-  # apply column renaming
+  # 1) rename effect column to "ATE" if requested
+  if (rename_ate) {
+    old_eff <- intersect(c("E[Y(1)]-E[Y(0)]", "E[Y(1)]/E[Y(0)]"), names(combined))
+    if (length(old_eff) == 1) {
+      names(combined)[names(combined) == old_eff] <- "ATE"
+    }
+  }
+
+  # 2) apply column renaming map
   if (rename_cols && length(col_renames) > 0) {
     for (new_nm in names(col_renames)) {
       old_nm <- col_renames[[new_nm]]
-      if (old_nm %in% names(combined)) {
-        names(combined)[names(combined) == old_nm] <- new_nm
+      idx <- which(names(combined) == old_nm)
+      if (length(idx) == 1) {
+        names(combined)[idx] <- new_nm
       }
     }
   }
 
-  # determine renamed threshold column name
-  threshold_col_name <- threshold_col
-  for (new_nm in names(col_renames)) {
-    if (col_renames[[new_nm]] == threshold_col) {
-      threshold_col_name <- new_nm
-      break
-    }
+  # determine final threshold column name
+  threshold_col_name <- if (threshold_col %in% names(combined)) {
+    threshold_col
+  } else {
+    names(col_renames)[col_renames == threshold_col] %||% threshold_col
   }
 
-  # Markdown output: left justify, bold threshold exceeders, preserve headers
+  # markdown output: bold rows above threshold
   if (output_format == "markdown") {
-    cap <- kbl_args$caption %||% NULL
-    align_vec <- kbl_args$align %||% rep("l", ncol(combined))
     df_md <- combined
-
     if (bold && threshold_col_name %in% names(df_md)) {
-      hi_rows <- which(as.numeric(df_md[[threshold_col_name]]) > e_val_bound_threshold)
-      if (length(hi_rows)) {
+      hi <- which(as.numeric(df_md[[threshold_col_name]]) > e_val_bound_threshold)
+      if (length(hi) > 0) {
         df_md[] <- lapply(df_md, as.character)
-        for (r in hi_rows) {
-          for (c in names(df_md)) {
-            v <- df_md[r, c]
+        for (r in hi) {
+          df_md[r, ] <- lapply(df_md[r, ], function(v) {
             if (nzchar(v) && !grepl("^\\*\\*.*\\*\\*$", v)) {
-              df_md[r, c] <- paste0("**", v, "**")
+              paste0("**", v, "**")
+            } else {
+              v
             }
-          }
+          })
         }
       }
     }
-
+    align_vec <- if (!is.null(kbl_args$align)) {
+      kbl_args$align
+    } else {
+      rep("l", ncol(df_md))
+    }
     return(knitr::kable(
       df_md,
       format    = "markdown",
-      caption   = cap,
+      caption   = kbl_args$caption,
       row.names = FALSE,
       align     = align_vec,
       col.names = names(df_md),
@@ -122,38 +120,40 @@ margot_bind_tables <- function(tables_list,
     ))
   }
 
-  # LaTeX/HTML output: drop Domain for display, highlight, then group by Domain
+  # latex/html output
   domain_vec <- combined$Domain
-  disp_df    <- dplyr::select(combined, -.data$Domain)
+  disp_df <- dplyr::select(combined, -Domain)
   hi_rows    <- which(as.numeric(disp_df[[threshold_col_name]]) > e_val_bound_threshold)
 
-  tbl <- do.call(kableExtra::kbl,
-                 c(list(disp_df, format = output_format), kbl_args))
+  tbl <- do.call(kableExtra::kbl, c(list(disp_df, format = output_format), kbl_args))
 
-  if (length(hi_rows)) {
+  if (length(hi_rows) > 0) {
     if (!is.null(highlight_color)) {
       if (output_format == "html") {
-        tbl <- tbl %>% kableExtra::row_spec(
-          hi_rows,
-          background = highlight_color,
-          extra_css  = if (bold) "font-weight: bold;" else NULL
-        )
+        tbl <- tbl %>%
+          kableExtra::row_spec(
+            hi_rows,
+            background = highlight_color,
+            extra_css  = if (bold) "font-weight: bold;" else NULL
+          )
       } else {
-        tbl <- tbl %>% kableExtra::row_spec(
-          hi_rows,
-          bold       = bold,
-          background = highlight_color
-        )
+        tbl <- tbl %>%
+          kableExtra::row_spec(
+            hi_rows,
+            bold       = bold,
+            background = highlight_color
+          )
       }
     } else if (bold) {
       css <- if (output_format == "html") "font-weight: bold;" else NULL
-      tbl <- tbl %>% kableExtra::row_spec(hi_rows, extra_css = css, bold = bold)
+      tbl <- tbl %>%
+        kableExtra::row_spec(hi_rows, extra_css = css, bold = bold)
     }
   }
 
   # pack rows by Domain
   domains <- unique(domain_vec)
-  idx <- data.frame(
+  idx     <- data.frame(
     start = vapply(domains, function(x) min(which(domain_vec == x)), integer(1)),
     end   = vapply(domains, function(x) max(which(domain_vec == x)), integer(1))
   )
@@ -163,131 +163,3 @@ margot_bind_tables <- function(tables_list,
 
   tbl
 }
-# margot_bind_tables <- function(tables_list,
-#                                sort_E_val_bound = c("none", "asc", "desc"),
-#                                e_val_bound_threshold = 1,
-#                                highlight_color = "yellow",
-#                                bold = TRUE,
-#                                output_format = "latex",
-#                                rename_cols = TRUE,
-#                                col_renames = list(
-#                                  "E-Value"       = "E_Value",
-#                                  "E-Value bound" = "E_Val_bound"
-#                                ),
-#                                threshold_col = "E_Val_bound",
-#                                kbl_args = list(booktabs = TRUE, caption = "Combined Results by Domain")) {
-#   # validate inputs
-#   if (!is.list(tables_list) || is.null(names(tables_list)) ||
-#       any(names(tables_list) == "") || length(tables_list) == 0) {
-#     stop("'tables_list' must be a non-empty named list of data frames")
-#   }
-#   if (!all(sapply(tables_list, is.data.frame))) {
-#     stop("all elements of 'tables_list' must be data frames")
-#   }
-#
-#   sort_E_val_bound <- match.arg(sort_E_val_bound)
-#
-#   # bind rows with domain identifier
-#   combined <- dplyr::bind_rows(tables_list, .id = "Domain")
-#
-#   # sort by raw E_Val_bound if requested
-#   if (sort_E_val_bound == "asc") {
-#     combined <- combined %>% dplyr::arrange(.data$E_Val_bound)
-#   } else if (sort_E_val_bound == "desc") {
-#     combined <- combined %>% dplyr::arrange(dplyr::desc(.data$E_Val_bound))
-#   }
-#
-#   # apply column renaming
-#   if (rename_cols && length(col_renames) > 0) {
-#     for (new_nm in names(col_renames)) {
-#       old_nm <- col_renames[[new_nm]]
-#       if (old_nm %in% names(combined)) {
-#         names(combined)[names(combined) == old_nm] <- new_nm
-#       }
-#     }
-#   }
-#
-#   # determine renamed threshold column name
-#   threshold_col_name <- threshold_col
-#   for (new_nm in names(col_renames)) {
-#     if (col_renames[[new_nm]] == threshold_col) {
-#       threshold_col_name <- new_nm
-#       break
-#     }
-#   }
-#
-#   # Markdown output: bolding and preserve headers
-#   if (output_format == "markdown") {
-#     cap   <- kbl_args$caption %||% NULL
-#     align <- kbl_args$align   %||% NULL
-#     df_md <- combined
-#
-#     # bold threshold-exceeding rows
-#     if (bold && threshold_col_name %in% names(df_md)) {
-#       hi_rows <- which(as.numeric(df_md[[threshold_col_name]]) > e_val_bound_threshold)
-#       if (length(hi_rows)) {
-#         df_md[] <- lapply(df_md, as.character)
-#         for (r in hi_rows) {
-#           for (c in names(df_md)) {
-#             v <- df_md[r, c]
-#             if (nzchar(v) && !grepl("^\\*\\*.*\\*\\*$", v)) {
-#               df_md[r, c] <- paste0("**", v, "**")
-#             }
-#           }
-#         }
-#       }
-#     }
-#
-#     return(knitr::kable(
-#       df_md,
-#       format    = "markdown",
-#       caption   = cap,
-#       align     = align,
-#       col.names = names(df_md),
-#       escape    = FALSE
-#     ))
-#   }
-#
-#   # LaTeX/HTML output: drop Domain, highlight, then group
-#   domain_vec <- combined$Domain
-#   disp_df    <- dplyr::select(combined, -Domain)
-#   hi_rows    <- which(as.numeric(disp_df[[threshold_col_name]]) > e_val_bound_threshold)
-#
-#   tbl <- do.call(kableExtra::kbl,
-#                  c(list(disp_df, format = output_format), kbl_args))
-#
-#   if (length(hi_rows)) {
-#     if (!is.null(highlight_color)) {
-#       if (output_format == "html") {
-#         tbl <- tbl %>% kableExtra::row_spec(
-#           hi_rows,
-#           background = highlight_color,
-#           extra_css   = if (bold) "font-weight: bold;" else NULL
-#         )
-#       } else {
-#         tbl <- tbl %>% kableExtra::row_spec(
-#           hi_rows,
-#           bold       = bold,
-#           background = highlight_color
-#         )
-#       }
-#     } else if (bold) {
-#       css <- if (output_format == "html") "font-weight: bold;" else NULL
-#       tbl <- tbl %>% kableExtra::row_spec(hi_rows, extra_css = css, bold = bold)
-#     }
-#   }
-#
-#   # pack rows by Domain
-#   domains <- unique(domain_vec)
-#   idx <- data.frame(
-#     start = vapply(domains, function(x) min(which(domain_vec == x)), integer(1)),
-#     end   = vapply(domains, function(x) max(which(domain_vec == x)), integer(1))
-#   )
-#   for (i in seq_along(domains)) {
-#     try({
-#       tbl <- tbl %>% kableExtra::pack_rows(domains[i], idx$start[i], idx$end[i])
-#     })
-#   }
-#
-#   tbl
-# }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_bind_tables.R
 \name{margot_bind_tables}
 \alias{margot_bind_tables}
-\title{Bind and Format Domain‑Specific Tables}
+\title{Bind and format domain-specific tables}
 \usage{
 margot_bind_tables(
   tables_list,
@@ -10,44 +10,43 @@ margot_bind_tables(
   e_val_bound_threshold = 1,
   highlight_color = "yellow",
   bold = TRUE,
-  output_format = "latex",
+  output_format = "markdown",
   rename_cols = TRUE,
   col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
+  rename_ate = FALSE,
   threshold_col = "E_Val_bound",
-  kbl_args = list(booktabs = TRUE, caption = "Combined Results by Domain")
+  kbl_args = list(booktabs = TRUE, caption = "Combined Results by Domain", align = NULL)
 )
 }
 \arguments{
-\item{tables_list}{A named list of data frames; each element is a domain table.
-row‑names are captured as an "Outcome" column.}
+\item{tables_list}{a named list of data frames; each element is a domain table.
+row-names are captured as an "Outcome" column.}
 
-\item{sort_E_val_bound}{Character: one of "none", "asc", or "desc".
-If "asc", sorts by raw E_Val_bound ascending;
-if "desc", sorts descending. Default "none".}
+\item{sort_E_val_bound}{character: one of "none", "asc", or "desc". default "none".}
 
-\item{e_val_bound_threshold}{Numeric; rows with E_Val_bound above this value will be highlighted. Default 1.}
+\item{e_val_bound_threshold}{numeric; threshold for highlighting rows. default 1.}
 
-\item{highlight_color}{Character or NULL; background colour for highlighted rows. Default "yellow".}
+\item{highlight_color}{character or NULL; background colour for highlighted rows. default "yellow".}
 
-\item{bold}{Logical; whether to bold highlighted rows. Default TRUE.}
+\item{bold}{logical; whether to bold highlighted rows. default TRUE.}
 
-\item{output_format}{Character; one of "latex", "html", or "markdown". Default "latex".}
+\item{output_format}{character; one of "latex", "html", or "markdown". default "latex".}
 
-\item{rename_cols}{Logical; whether to apply column renaming. Default TRUE.}
+\item{rename_cols}{logical; whether to apply column renaming. default TRUE.}
 
-\item{col_renames}{Named list; mapping new_name = old_name for renaming.
-Default list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound").}
+\item{col_renames}{named list; mapping new_name = old_name for renaming.
+default list("E-Value"="E_Value","E-Value bound"="E_Val_bound").}
 
-\item{threshold_col}{Character; name of the column (pre‑rename) to test. Default "E_Val_bound".}
+\item{rename_ate}{logical; if TRUE, renames the effect column to "ATE". default FALSE.}
 
-\item{kbl_args}{List; extra arguments for kbl(), e.g. list(booktabs = TRUE, caption = "Combined Results by Domain").}
-}
-\value{
-A knitr_kable object with rows sorted, highlighted, and grouped by domain.
+\item{threshold_col}{character; name of the (pre-rename) column to test. default "E_Val_bound".}
+
+\item{kbl_args}{list; extra arguments for kableExtra::kbl(),
+e.g. list(booktabs=TRUE, caption="Combined Results by Domain", align=NULL).}
 }
 \description{
-This function binds a named list of domain‑specific tables, optionally
-sorts by the raw E_Val_bound column (ascending or descending), highlights
-rows where E_Val_bound exceeds a threshold, and groups rows by domain.
-Works for LaTeX, HTML, or Markdown output.
+This function binds a named list of domain-specific tables, optionally
+sorts by the raw E_Val_bound column (ascending or descending),
+optionally renames columns, highlights rows above a threshold, and
+groups rows by domain. works for latex, html, or markdown output.
 }

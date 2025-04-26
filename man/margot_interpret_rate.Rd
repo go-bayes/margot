@@ -2,40 +2,20 @@
 % Please edit documentation in R/margot_interpret_rate.R
 \name{margot_interpret_rate}
 \alias{margot_interpret_rate}
-\title{Interpret Rank-Weighted Average Treatment Effect (RATE) estimates}
+\title{Interpret rank-weighted average treatment effect (RATE) estimates}
 \usage{
 margot_interpret_rate(rate_df, flipped_outcomes = NULL, target = "AUTOC")
 }
 \arguments{
-\item{rate_df}{A data frame from \code{margot_rate()} with columns:
-\code{RATE Estimate}, \code{2.5\%}, and \code{97.5\%}. The first column contains outcome names.
-Alternatively, a list containing both AUTOC and QINI results.}
+\item{rate_df}{A data frame (or list) as returned by \code{margot_rate()}.}
 
-\item{flipped_outcomes}{Character vector of outcome names that were inverted during pre-processing.}
+\item{flipped_outcomes}{Character vector of outcomes inverted during preprocessing.}
 
-\item{target}{Character string specifying RATE type: \code{AUTOC} (default) or \code{QINI}.
-Ignored if \code{rate_df} is a list containing both methods.}
+\item{target}{Either \code{"AUTOC"} or \code{"Qini"} (ignored if \code{rate_df} is a list).}
 }
 \value{
 A markdown string interpreting the RATE estimates.
 }
 \description{
-This function provides a concise interpretation of Rank-Weighted Average Treatment Effect (RATE)
-estimates from \code{margot_rate()}. The RATE evaluates a prioritisation policy based on the
-estimated conditional treatment effect, \eqn{\tau(x)}, which reflects the expected gain conditional
-on measured covariates. For AUTOC the logarithmic weighting is most effective when heterogeneity
-is concentrated in a small subset of individuals (typically ≤ 10%), whereas for QINI the linear
-weighting is most effective when heterogeneity is broadly distributed (typically > 50%).
-}
-\examples{
-\donttest{
-# single method:
-interpretation <- margot_interpret_rate(rate_table, flipped_outcomes = c("t2_neuroticism_z"))
-cat(interpretation)
-
-# both methods:
-interpretation <- margot_interpret_rate(rate_table_all, flipped_outcomes = flipped_names)
-cat(interpretation)
-}
-
+Provide a concise interpretation of RATE estimates from causal forests.
 }

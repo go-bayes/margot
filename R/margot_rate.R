@@ -33,11 +33,14 @@ margot_rate <- function(models, label_mapping = NULL,
       })
 
       # transform the model name
-      outcome <- transform_var_name(mod_name, label_mapping,
-                                    remove_tx_prefix = remove_tx_prefix,
-                                    remove_z_suffix = remove_z_suffix,
-                                    use_title_case = use_title_case,
-                                    remove_underscores = remove_underscores)
+      outcome <- transform_var_name(
+        mod_name,
+        label_mapping,
+        remove_tx_prefix = remove_tx_prefix,
+        remove_z_suffix = remove_z_suffix,
+        use_title_case = use_title_case,
+        remove_underscores = remove_underscores
+      )
 
       # build a one-row data frame
       df <- data.frame(outcome = outcome, stringsAsFactors = FALSE)
@@ -80,16 +83,16 @@ margot_rate <- function(models, label_mapping = NULL,
     result_table
   }
 
-  # Build tables
+  # build tables
   autoc_table <- build_table("rate_result")
   qini_table <- build_table("rate_qini")
 
-  # Return a list with both tables, providing rate_autoc as an alias for rate_result
+  # return a list with both tables, providing rate_autoc as an alias for rate_result
   result <- list(
     rate_qini = qini_table
   )
 
-  # Add rate_autoc and rate_result (for backward compatibility)
+  # add rate_autoc and rate_result (for backward compatibility)
   result$rate_autoc <- autoc_table
   result$rate_result <- result$rate_autoc  # Same object, different name for backward compatibility
 

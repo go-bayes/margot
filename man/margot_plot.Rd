@@ -14,6 +14,7 @@ margot_plot(
   include_coefficients = TRUE,
   standardize_label = c("NZ", "US", "none"),
   interpret_all_E_gt1 = FALSE,
+  e_val_bound_threshold = 1,
   ...,
   options = list(),
   label_mapping = NULL,
@@ -22,73 +23,76 @@ margot_plot(
   base_filename = "margot_plot_output",
   prefix = NULL,
   save_path = here::here("push_mods"),
-  original_df = NULL
+  original_df = NULL,
+  bold_rows = FALSE,
+  rename_cols = FALSE,
+  col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
+  rename_ate = FALSE
 )
 }
 \arguments{
-\item{.data}{A data frame with:
+\item{.data}{a data frame with:
 - `outcome` column,
 - effect columns: `E[Y(1)]-E[Y(0)]` or `E[Y(1)]/E[Y(0)]`,
 - confidence limits: `2.5 %`, `97.5 %`,
 - `E_Value`, `E_Val_bound`, and optional `unit`.}
 
-\item{type}{One of `"RD"` (Risk Difference) or `"RR"` (Risk Ratio). Default: `"RD"`.}
+\item{type}{one of `"RD"` (risk difference) or `"RR"` (risk ratio). Default: `"RD"`.}
 
-\item{order}{Outcome sorting. Options:
-\describe{
-  \item{alphabetical}{A–Z}
-  \item{magnitude_desc}{|effect| descending (alias for old `"magnitude"`/`"default"`) }
-  \item{magnitude_asc}{|effect| ascending}
-  \item{evaluebound_desc}{E‑value bound descending}
-  \item{evaluebound_asc}{E‑value bound ascending}
-  \item{custom}{use `custom_order`}
-  \item{default}{alias for `"magnitude_desc"` (deprecated)}
-}
+\item{order}{outcome sorting. Options:
+- `alphabetical`, `magnitude_desc`, `magnitude_asc`,
+- `evaluebound_desc`, `evaluebound_asc`, `custom`, `default`.
 Default: `"alphabetical"`.}
 
-\item{custom_order}{Character vector for `order = "custom"`.}
+\item{custom_order}{character vector for `order = "custom"`.}
 
-\item{title_binary}{Optional title for binary plots.}
+\item{title_binary}{optional title for binary plots.}
 
-\item{include_coefficients}{Logical; include effect values on plot. Default: `TRUE`.}
+\item{include_coefficients}{logical; include effect values on plot. Default: `TRUE`.}
 
-\item{standardize_label}{One of `"NZ"`, `"US"`, or `"none"`. Controls x-axis label. Default: `"NZ"`.}
+\item{standardize_label}{one of `"NZ"`, `"US"`, or `"none"`. Default: `"NZ"`.}
 
-\item{interpret_all_E_gt1}{Logical; if `TRUE`, interprets all effects with `E_Value>1` & `E_Val_bound>1`. Default: `FALSE`.}
+\item{interpret_all_E_gt1}{logical; if `TRUE`, interpret all effects with
+`E_Value > 1` & `E_Val_bound > 1`. Default: `FALSE`.}
 
-\item{...}{Additional arguments passed to `options`.}
+\item{e_val_bound_threshold}{numeric; minimum `E_Val_bound` to treat an effect as
+reliable. Default: `1`.}
 
-\item{options}{List of plot & label options (see details).}
+\item{...}{additional args passed to `options`.}
 
-\item{label_mapping}{Named vector mapping original to display labels.}
+\item{options}{list of plot & label options.}
 
-\item{save_output}{Logical; if `TRUE`, saves output via `here_save_qs()`. Default: `FALSE`.}
+\item{label_mapping}{named vector mapping original to display labels.}
 
-\item{use_timestamp}{Logical; append timestamp. Default: `FALSE`.}
+\item{save_output}{logical; if `TRUE`, save output via `here_save_qs()`.
+Default: `FALSE`.}
 
-\item{base_filename}{Base of output filename. Default: `"margot_plot_output"`.}
+\item{use_timestamp}{logical; append timestamp to filename. Default: `FALSE`.}
 
-\item{prefix}{Optional filename prefix.}
+\item{base_filename}{base of output filename. Default: `"margot_plot_output"`.}
 
-\item{save_path}{Directory for saving. Default: `here::here("push_mods")`.}
+\item{prefix}{optional filename prefix.}
 
-\item{original_df}{Optional data frame for back-transformation to original scale.}
+\item{save_path}{directory for saving. Default: `here::here("push_mods")`.}
+
+\item{original_df}{optional data frame for back-transformation.}
+
+\item{bold_rows}{logical; bold row-names above threshold. Default: `FALSE`.}
+
+\item{rename_cols}{logical; apply `col_renames`. Default: `FALSE`.}
+
+\item{col_renames}{named list mapping new = old. Default:
+`list("E-Value"="E_Value", "E-Value bound"="E_Val_bound")`.}
+
+\item{rename_ate}{logical; rename effect column to `"ATE"`. Default: `FALSE`.}
 }
 \value{
 A list with:
-  \itemize{
-    \item `plot`: a `ggplot2` object
-    \item `interpretation`: markdown string
-    \item `transformed_table`: input `.data` with transformed rownames
-  }
+* `plot`:   a `ggplot2` object
+* `interpretation`: markdown string
+* `transformed_table`: input `.data` with transformed row-names
 }
 \description{
-This function creates a Margot plot for visualising causal effects with flexible sorting,
-embeds a compact interpretation, and returns a transformed table.
-}
-\details{
-Sorting is implemented via `group_tab()`. The `options` list can include:
-  title, subtitle, base_size, text_size, point_size, colors, theme, facet_var,
-  show_evalues, evalue_digits, remove_tx_prefix, remove_z_suffix,
-  use_title_case, remove_underscores.
+Create a Margot plot for visualising causal effects with flexible sorting,
+embed a compact interpretation, and return a transformed table.
 }

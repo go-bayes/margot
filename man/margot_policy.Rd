@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_policy.R
 \name{margot_policy}
 \alias{margot_policy}
-\title{Batch Processing of Policy Trees and Related Visualizations}
+\title{Batch Processing of Policy Trees and Related Visualisations}
 \usage{
 margot_policy(
   result_outcomes,
@@ -20,52 +20,42 @@ margot_policy(
 )
 }
 \arguments{
-\item{result_outcomes}{A list containing the results from margot_multi_arm_causal_forest().}
+\item{result_outcomes}{List returned by \code{margot_multi_arm_causal_forest()}.}
 
-\item{policy_tree_args}{A list of arguments to pass to margot_plot_policy_tree(). Default is list().}
+\item{policy_tree_args}{List of args for \code{margot_plot_policy_tree()}. Default: \code{list()}.}
 
-\item{decision_tree_args}{A list of arguments to pass to margot_plot_decision_tree(). Default is list().}
+\item{decision_tree_args}{List of args for \code{margot_plot_decision_tree()}. Default: \code{list()}.}
 
-\item{dpi}{The resolution of saved plots in dots per inch. Default is 600.}
+\item{dpi}{Resolution (dpi) for saved plots. Default: 600.}
 
-\item{width}{The width of saved plots in inches. Default is 12.}
+\item{width}{Width (in inches) for saved plots. Default: 12.}
 
-\item{height}{The height of saved plots in inches. Default is 12.}
+\item{height}{Height (in inches) for saved plots. Default: 12.}
 
-\item{save_plots}{Logical indicating whether to save plots to disk. Default is TRUE.}
+\item{save_plots}{Logical; save plots to disk? Default: TRUE.}
 
-\item{output_dir}{The directory to save plots in. Default is here::here(push_mods).}
+\item{output_dir}{Directory for saving plots. Default: \code{here::here(push_mods)}.}
 
-\item{spend}{A vector of spend levels to use for difference gain summaries. Default is c(.2, .5).}
+\item{spend}{Numeric vector of spend levels for difference-gain summaries. Default: \code{c(0.2, 0.5)}.}
 
-\item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
-(with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
+\item{label_mapping}{Named list mapping variable names to display labels. Default: NULL.}
 
-\item{original_df}{Optional dataframe with untransformed variables, used to display split values on the data scale.}
+\item{original_df}{Optional data.frame of untransformed variables for axis annotations. Default: NULL.}
 
-\item{model_names}{Optional character vector specifying which models to process. If NULL, all models in result_outcomes are processed.}
+\item{model_names}{Character vector of model names to process; NULL = all. Default: NULL.}
 }
 \value{
-A list where each element corresponds to a model in the input
-  `result_outcomes`. Each element is itself a list containing:
-  \item{policy_tree_plot}{A ggplot object of the policy tree plot}
-  \item{policy_tree_interpretation}{A character string interpreting the policy tree}
-  \item{qini_plot}{A ggplot object of the Qini plot}
-  \item{decision_tree_visualisation}{A ggplot object visualizing the decision tree}
-  \item{policy_combo_plot}{A ggplot object of the policy combo plot}
-  \item{diff_gain_summaries}{A nested list containing difference gain summaries for each spend level}
-
-A list where each element corresponds to a model in the input
-  `result_outcomes`. Each element is itself a list containing:
-  \item{policy_tree_plot}{A ggplot object of the policy tree plot}
-  \item{policy_tree_interpretation}{A character string interpreting the policy tree}
-  \item{qini_plot}{A ggplot object of the Qini plot}
-  \item{decision_tree_visualisation}{A ggplot object visualising the decision tree}
-  \item{policy_combo_plot}{A ggplot object of the policy combo plot}
-  \item{diff_gain_summaries}{A nested list containing difference gain summaries for each spend level}
+A named list; each element corresponds to a model and contains:
+  \describe{
+    \item{policy_tree_plot}{ggplot of the policy-tree plot}
+    \item{policy_tree_interpretation}{character interpretation}
+    \item{qini_plot}{ggplot of the Qini curve}
+    \item{decision_tree_visualisation}{ggplot of the decision tree}
+    \item{policy_combo_plot}{ggplot of combined policy vs decision}
+    \item{diff_gain_summaries}{list of difference-gain summaries per spend}
+  }
 }
 \description{
-Batch Processing of Policy Trees and Related Visualizations
-
-Batch Processing of Policy Trees and Related Visualisations
+Process a list of multi-arm causal forest results: generate policy-tree and decision-tree plots,
+Qini curves, and difference-gain summaries, optionally saving each to disk.
 }

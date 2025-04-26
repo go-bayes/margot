@@ -3,9 +3,22 @@
 
 * Begin writing tutorials for use cases.
 * fix decision tree layout
-* remove `crayon` and other unnecessary package dependences
+* remove `crayon` and other unnecessary packages
 * write examples
+* remove arrow from "margot_plot_policy_tree()"
 
+# [2025-04-21] margot 1.0.19
+## Improved
+- `margot_bind_table()` flexibly modify column names 
+- `margot_plot()` - added options to transform colname for the estimand to "ATE", also the E_value colnames. 
+- `margot_interpret_marginal()` and `group_tab()` now return order consistent with the plot
+- `margot_interpret_rate()` better language, `margot_interpret_rate_comparison()` now a helper (not exported).
+- `margot_plot_policy_tree()` and `margot_policy` now defaults to shading out regions where there is no interest.
+
+
+# [2025-04-21] margot 1.0.18
+## Improved
+- `margot_log_transform_vars()` handles edge cases better by (1) requiring numeric input (2) requiring no NAs.
 
 # [2025-04-21] margot 1.0.18
 ## Improved
@@ -24,7 +37,7 @@
 
 # [2025-04-19] margot 1.0.15
 ## Improved
-- `margot_interpret_marginal()` - clearer wording, outcomes listed rather than dull repetitive sentences. 
+- `margot_interpret_marginal()` - clearer wording, outcomes listed rather than dull sentences. 
 
 # [2025-04-19] margot 1.0.14
 ## Improved

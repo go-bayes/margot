@@ -83,17 +83,23 @@ margot_interpret_marginal <- function(
     return(list(interpretation = "No reliable causal evidence was detected for any outcome."))
   }
 
-  # reverse so bullets match plot
-  if (grepl("_(asc|desc)$", order)) df_f <- df_f[nrow(df_f):1, ]
-
+  # # reverse so bullets match plot
+  # if (grepl("_(asc|desc)$", order)) df_f <- df_f[nrow(df_f):1, ]
+  #
   # choose intro based on evidence types
+  # strengths <- unique(df_f$evidence_strength)
+  # if (all(strengths == "strong causal evidence")) {
+  #   intro <- "The following outcomes exhibited strong causal evidence (presented in the same order as they appear in the results table):\n"
+  # } else {
+  #   intro <- "The following outcomes exhibited causal evidence (presented in the same order as they appear in the plot):\n"
+  # }
+
   strengths <- unique(df_f$evidence_strength)
   if (all(strengths == "strong causal evidence")) {
-    intro <- "The following outcomes exhibited strong causal evidence (presented in the same order as they appear in the results table):\n"
+    intro <- "The following outcomes exhibited strong causal evidence:\n"
   } else {
-    intro <- "The following outcomes exhibited causal evidence (presented in the same order as they appear in the plot):\n"
+    intro <- "The following outcomes exhibited causal evidence:\n"
   }
-
   # build bullets without trailing evidence phrase
   bullets <- df_f %>%
     rowwise() %>%
@@ -131,6 +137,7 @@ margot_interpret_marginal <- function(
   message("interpretation complete 👍")
   list(interpretation = interpretation)
 }
+
 # margot_interpret_marginal <- function(
 #     df,
 #     type = c("RD", "RR"),
@@ -148,19 +155,14 @@ margot_interpret_marginal <- function(
 #     warning("'default' is deprecated; using 'magnitude_desc' instead.")
 #     order <- "magnitude_desc"
 #   }
-#
 #   message(glue::glue("starting interpretation with order = '{order}'..."))
 #
-#   # apply sorting
+#   # sort and back-transform as needed
 #   df <- group_tab(df, type = type, order = order)
-#
-#   # ensure unit column
 #   if (!"unit" %in% names(df)) df$unit <- ""
-#
-#   # back-transform if requested
 #   if (!is.null(original_df)) df <- back_transform_estimates(df, original_df)
 #
-#   # identify effect column
+#   # determine effect column
 #   effect_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(df)) {
 #     "E[Y(1)]-E[Y(0)]"
 #   } else {
@@ -173,69 +175,76 @@ margot_interpret_marginal <- function(
 #   if (interpret_all_E_gt1) {
 #     df_f <- df %>%
 #       filter(E_Value > 1, E_Val_bound > 1) %>%
-#       mutate(evidence_strength = "Evidence")
+#       mutate(evidence_strength = "causal evidence")
 #   } else {
 #     df_f <- df %>%
-#       mutate(
-#         evidence_strength = case_when(
-#           (`2.5 %` > null_val & E_Val_bound > 2) |
-#             (`97.5 %` < null_val & E_Val_bound > 2) ~ "Strong causal evidence",
-#           (`2.5 %` > null_val & E_Val_bound > 1.1) |
-#             (`97.5 %` < null_val & E_Val_bound > 1.1) ~ "Causal evidence",
-#           TRUE ~ NA_character_
-#         )
-#       ) %>%
+#       mutate(evidence_strength = case_when(
+#         (`2.5 %` > null_val & E_Val_bound > 2) |
+#           (`97.5 %` < null_val & E_Val_bound > 2) ~ "strong causal evidence",
+#         (`2.5 %` > null_val & E_Val_bound > 1.1) |
+#           (`97.5 %` < null_val & E_Val_bound > 1.1) ~ "causal evidence",
+#         TRUE ~ NA_character_
+#       )) %>%
 #       filter(!is.na(evidence_strength))
 #   }
 #
-#   # if nothing to report
+#   # handle no evidence
 #   if (nrow(df_f) == 0) {
 #     message("no estimates meet evidence criteria.")
-#     return(list(
-#       interpretation = "No reliable causal evidence detected."
-#     ))
+#     return(list(interpretation = "No reliable causal evidence was detected for any outcome."))
 #   }
 #
-#   # build per-outcome text
-#   interp <- df_f %>%
+#   # reverse so bullets match plot
+#   if (grepl("_(asc|desc)$", order)) df_f <- df_f[nrow(df_f):1, ]
+#
+#   # choose intro based on evidence types
+#   # strengths <- unique(df_f$evidence_strength)
+#   # if (all(strengths == "strong causal evidence")) {
+#   #   intro <- "The following outcomes exhibited strong causal evidence (presented in the same order as they appear in the results table):\n"
+#   # } else {
+#   #   intro <- "The following outcomes exhibited causal evidence (presented in the same order as they appear in the plot):\n"
+#   # }
+#
+#   strengths <- unique(df_f$evidence_strength)
+#     if (all(strengths == "strong causal evidence")) {
+#       intro <- "The following outcomes exhibited strong causal evidence:\n"
+#       } else {
+#         intro <- "The following outcomes exhibited causal evidence:\n"
+#         }
+#   # build bullets without trailing evidence phrase
+#   bullets <- df_f %>%
 #     rowwise() %>%
 #     mutate(
 #       lab = glue::glue(
-#         "{round(.data[[effect_col]],3)} (",
-#         round(`2.5 %`,3), ", ", round(`97.5 %`,3), ")"
+#         "{round(.data[[effect_col]], 3)} (",
+#         round(`2.5 %`, 3), ", ", round(`97.5 %`, 3), ")"
 #       ),
 #       lab_orig = if (has_orig) glue::glue(
-#         "{round(.data[[paste0(effect_col,'_original')]],3)} {unit} (",
-#         round(`2.5 %_original`,3), ", ", round(`97.5 %_original`,3), ")"
+#         "{round(.data[[paste0(effect_col, '_original')]], 3)} {unit} (",
+#         round(`2.5 %_original`, 3), ", ", round(`97.5 %_original`, 3), ")"
 #       ) else NA_character_,
 #       text = glue::glue(
-#         "#### {outcome}\n\n",
-#         "The effect ({type}) is {lab}. ",
-#         "{if (has_orig) paste0('On original scale, ', lab_orig, '. ')}",
-#         "E-value lower bound is {E_Val_bound}, indicating {tolower(evidence_strength)}."
-#       ),
-#       text = str_to_sentence(text)
+#         "- {outcome}: {type} = {lab}",
+#         "{if (has_orig) glue('; original scale: {lab_orig}')}",
+#         "; E-value lower bound = {E_Val_bound}"
+#       )
 #     ) %>%
-#     ungroup()
+#     ungroup() %>%
+#     pull(text)
 #
-#   # reverse text order so narrative matches plot ordering # NEW
-#   if (grepl("_(asc|desc)$", order)) {
-#     interp <- interp[nrow(interp):1, ]
-#   }
-#
-#   # combine
-#   body <- paste(interp$text, collapse = "\n\n")
-#
+#   # concluding line
 #   rem <- nrow(df) - nrow(df_f)
-#   if (rem > 0) {
-#     concl <- if (interpret_all_E_gt1) {
-#       "All other estimates presented unreliable evidence."
-#     } else {
-#       "All other estimates presented weak or unreliable evidence."
-#     }
-#     body <- paste(body, concl, sep = "\n\n")
+#   conclusion <- if (rem > 0) {
+#     "Other estimates were either weak or unreliable."
+#   } else {
+#     ""
 #   }
+#
+#   # assemble output
+#   parts <- c(intro, bullets)
+#   if (conclusion != "") parts <- c(parts, "", conclusion)
+#   interpretation <- paste(parts, collapse = "\n")
 #
 #   message("interpretation complete 👍")
-#   list(interpretation = body)
+#   list(interpretation = interpretation)
 # }

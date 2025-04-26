@@ -2,27 +2,28 @@
 % Please edit documentation in R/margot_plot_policy_tree.R
 \name{margot_plot_policy_tree}
 \alias{margot_plot_policy_tree}
-\title{Plot Policy Tree Results}
+\title{Plot Policy Tree Results with Shading Option}
 \usage{
 margot_plot_policy_tree(
   mc_test,
   model_name,
   original_df = NULL,
+  shading = TRUE,
   color_scale = NULL,
   point_alpha = 0.5,
   theme_function = theme_classic,
-  title_size = 14,
-  subtitle_size = 11,
-  axis_title_size = 10,
-  legend_title_size = 10,
+  title_size = 16,
+  subtitle_size = 14,
+  axis_title_size = 14,
+  legend_title_size = 14,
   jitter_width = 0.3,
   jitter_height = 0.3,
-  split_line_color = "darkgray",
+  split_line_color = "red",
   split_line_alpha = 0.7,
   split_line_type = "dashed",
   split_line_linewidth = 0.5,
   split_label_size = 10,
-  split_label_color = "darkgray",
+  split_label_color = "red",
   custom_action_names = NULL,
   legend_position = "bottom",
   plot_selection = "both",
@@ -30,103 +31,76 @@ margot_plot_policy_tree(
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
   remove_underscores = TRUE,
-  label_mapping = NULL
+  label_mapping = NULL,
+  shade_fill = "#6e6e6e",
+  shade_alpha = 0.5
 )
 }
 \arguments{
-\item{mc_test}{A list containing the results from a multi-arm causal forest model.}
+\item{mc_test}{List from a multi-arm causal forest run containing
+\code{$results[[model_name]]$policy_tree_depth_2} and
+\code{$results[[model_name]]$plot_data}.}
 
-\item{model_name}{A string specifying which model's results to plot.}
+\item{model_name}{String name of the model in \code{mc_test$results}.}
 
-\item{original_df}{Optional dataframe with untransformed variables, used to display split values on the data scale.}
+\item{original_df}{Optional data.frame of original-scale variables for axis annotations.}
 
-\item{color_scale}{An optional ggplot2 color scale. If NULL (default), a color scale based on the Okabe-Ito palette is created,
-with blue for the first level, orange for the second, and subsequent colors for additional levels.}
+\item{shading}{Logical; if \code{TRUE}, shade non-decision regions. Default: \code{TRUE}.}
 
-\item{point_alpha}{Numeric value between 0 and 1 for point transparency. Default is 0.5.}
+\item{color_scale}{Optional ggplot2 colour scale. Default: Okabe–Ito palette.}
 
-\item{theme_function}{A ggplot2 theme function. Default is theme_classic.}
+\item{point_alpha}{Numeric point transparency (0–1). Default: 0.5.}
 
-\item{title_size}{Numeric value for the size of the plot title. Default is 14.}
+\item{theme_function}{ggplot2 theme function. Default: \code{theme_classic()}.}
 
-\item{subtitle_size}{Numeric value for the size of the plot subtitle. Default is 11.}
+\item{title_size}{Numeric plot-title text size. Default: 16.}
 
-\item{axis_title_size}{Numeric value for the size of axis titles. Default is 10.}
+\item{subtitle_size}{Numeric subtitle text size. Default: 14.}
 
-\item{legend_title_size}{Numeric value for the size of the legend title. Default is 10.}
+\item{axis_title_size}{Numeric axis-title text size. Default: 14.}
 
-\item{jitter_width}{Numeric value for the amount of horizontal jitter. Default is 0.3.}
+\item{legend_title_size}{Numeric legend-title text size. Default: 14.}
 
-\item{jitter_height}{Numeric value for the amount of vertical jitter. Default is 0.3.}
+\item{jitter_width}{Numeric horizontal jitter. Default: 0.3.}
 
-\item{split_line_color}{Color of the split lines. Default is "darkgray".}
+\item{jitter_height}{Numeric vertical jitter. Default: 0.3.}
 
-\item{split_line_alpha}{Numeric value between 0 and 1 for split line transparency. Default is 0.7.}
+\item{split_line_color}{Colour of split lines. Default: "red".}
 
-\item{split_line_type}{Line type for split lines. Default is "dashed".}
+\item{split_line_alpha}{Alpha for split lines. Default: 0.7.}
 
-\item{split_line_linewidth}{Numeric value for the thickness of split lines. Default is 0.5.}
+\item{split_line_type}{Linetype for split lines. Default: "dashed".}
 
-\item{split_label_size}{Numeric value for the size of split value labels. Default is 10.}
+\item{split_line_linewidth}{Linewidth for split lines. Default: 0.5.}
 
-\item{split_label_color}{Color of split value labels. Default is "darkgray".}
+\item{split_label_size}{Text size for secondary-axis labels. Default: 10.}
 
-\item{custom_action_names}{Optional vector of custom names for the actions. Must match the number of actions in the policy tree.}
+\item{split_label_color}{Colour for secondary-axis labels. Default: "red".}
 
-\item{legend_position}{String specifying the position of the legend. Can be "top", "bottom", "left", or "right". Default is "bottom".}
+\item{custom_action_names}{Optional vector of custom action labels.}
 
-\item{plot_selection}{String specifying which plots to display: "both", "p1", or "p2". Default is "both".}
+\item{legend_position}{Legend position: "top","bottom","left","right". Default: "bottom".}
 
-\item{remove_tx_prefix}{Logical value indicating whether to remove the "tx_" prefix from labels. Default is TRUE.}
+\item{plot_selection}{Which panels to show: "both","p1","p2". Default: "both".}
 
-\item{remove_z_suffix}{Logical value indicating whether to remove the "_z" suffix from labels. Default is TRUE.}
+\item{remove_tx_prefix}{Logical; strip "tx_" from names. Default: TRUE.}
 
-\item{use_title_case}{Logical value indicating whether to convert labels to title case. Default is TRUE.}
+\item{remove_z_suffix}{Logical; strip "_z" from names. Default: TRUE.}
 
-\item{remove_underscores}{Logical value indicating whether to remove underscores from labels. Default is TRUE.}
+\item{use_title_case}{Logical; convert labels to Title Case. Default: TRUE.}
 
-\item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names (with or without "model_" prefix),
-and values should be the desired display labels. Default is NULL.}
+\item{remove_underscores}{Logical; remove underscores. Default: TRUE.}
+
+\item{label_mapping}{Named list of label overrides. Default: NULL.}
+
+\item{shade_fill}{Fill colour for shading. Default: "#6e6e6e".}
+
+\item{shade_alpha}{Alpha for shading. Default: 0.35.}
 }
 \value{
-A ggplot object containing the specified plot(s) of the policy tree results.
+A patchwork ggplot of the two panels.
 }
 \description{
-This function creates a visualization of policy tree results from a causal forest or multi-arm causal forest model.
-It generates two plots showing the relationships between the top three split variables,
-with points colored by the predicted optimal treatment. The function now includes label transformation options
-and provides informative CLI messages throughout the process.
-}
-\examples{
-\dontrun{
-# Default (both plots, legend at bottom)
-plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z")
-
-# Only the first plot (p1)
-plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", plot_selection = "p1")
-
-# Both plots with legend on the right
-plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", legend_position = "right")
-
-# Custom color scale
-custom_scale <- scale_colour_manual(values = c("red", "green", "blue"))
-plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z", color_scale = custom_scale)
-
-# Customize label transformations
-plot <- margot_plot_policy_tree(mc_test, "model_t2_belong_z",
-                                remove_tx_prefix = FALSE,
-                                remove_z_suffix = FALSE,
-                                use_title_case = FALSE,
-                                remove_underscores = FALSE)
-
-# Use custom label mapping and original_df for unstandardized values
-label_mapping <- list(
-  "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
-  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
-)
-plot <- margot_plot_policy_tree(mc_test, "model_t2_env_not_climate_chg_concern_z",
-                                label_mapping = label_mapping,
-                                original_df = original_df)
-}
-
+Visualise the top-two splits of a policy tree with scatterplots of the two split variables,
+points coloured by predicted action, and optional shading for non-decision regions.
 }
