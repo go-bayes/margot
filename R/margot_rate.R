@@ -1,18 +1,43 @@
-#’ Format RATE results into readable tables, keeping raw model names
-#’
-#’ @param models a list containing model results (element `results`)
-#’ @param label_mapping optional named vector mapping model names to human-readable labels
-#’ @param remove_tx_prefix remove `t0_` prefixes? (default TRUE)
-#’ @param remove_z_suffix remove `_z` suffixes? (default TRUE)
-#’ @param use_title_case convert labels to title case? (default TRUE)
-#’ @param remove_underscores replace underscores with spaces? (default TRUE)
-#’ @param round_digits decimal places for numeric fields (default 3)
-#’ @param highlight_significant bold outcomes whose 95% CI lies entirely above zero
-#’ @return a list with components `rate_autoc` and `rate_qini`, each a data.frame with columns:
-#’   * `model` (raw model name)
-#’   * `outcome` (human-readable label)
-#’   * `RATE Estimate`, `Std Error`, `2.5%`, `97.5%`
-#’ @export
+#' Format RATE results into readable tables, keeping raw model names
+#'
+#' Assemble two tables that summarise rank-average treatment effect (RATE)
+#' estimates from causal-forest models under two targeting operating
+#' characteristics (TOC): **AUTOC** and **Qini**.  Each table retains the raw
+#' model names but maps them to human-readable outcome labels and appends 95\%
+#' Wald confidence intervals.
+#'
+#' @details
+#' Outcome labels are created with `transform_var_name()`.
+#' Setting `highlight_significant = TRUE` wraps the outcome label in **bold**
+#' Markdown when the 95 \% confidence interval lies strictly above zero, making
+#' it easy to emphasise robust results in Quarto or R Markdown documents.
+#'
+#' @param models  A list returned by `margot_multi_arm_causal_forest()` that
+#'   contains an element `results`, itself a named list of model fits.
+#' @param label_mapping Named character vector mapping raw variable names to
+#'   presentation labels.
+#' @param remove_tx_prefix Logical. Drop a leading `t0_` from variable names?
+#' @param remove_z_suffix Logical. Drop a trailing `_z` from variable names?
+#' @param use_title_case Logical. Convert labels to title case?
+#' @param remove_underscores Logical. Replace underscores with spaces?
+#' @param round_digits Integer. Decimal places to keep (default = 3).
+#' @param highlight_significant Logical. Bold labels whose 95 \% CI is entirely
+#'   above zero.
+#'
+#' @return A named list with two data frames
+#' \describe{
+#'   \item{rate_autoc}{Data frame with columns
+#'     \code{model}, \code{outcome}, \code{RATE Estimate},
+#'     \code{Std Error}, \code{2.5\%}, \code{97.5\%}.}
+#'   \item{rate_qini}{Identical structure, estimated with Qini weights.}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' rate <- margot_rate(my_models)
+#' knitr::kable(rate$rate_autoc)
+#' }
+#' @export
 margot_rate <- function(models,
                         label_mapping      = NULL,
                         remove_tx_prefix   = TRUE,
@@ -25,7 +50,7 @@ margot_rate <- function(models,
   build_table <- function(field) {
     rows <- lapply(names(models$results), function(mod_name) {
       res <- models$results[[mod_name]][[field]]
-      res <- res[ setdiff(names(res), c("TOC","target")) ]
+      res <- res[setdiff(names(res), c("TOC", "target"))]
       res <- lapply(res, function(x) {
         if (is.numeric(x)) x <- round(x, round_digits)
         if (length(x) > 1) x[1] else x
@@ -47,13 +72,13 @@ margot_rate <- function(models,
     })
     tab <- do.call(rbind, rows)
     rownames(tab) <- NULL
-    names(tab)[names(tab)=="estimate"] <- "RATE Estimate"
-    names(tab)[names(tab)=="std.err"]   <- "Std Error"
-    if (all(c("RATE Estimate","Std Error") %in% names(tab))) {
+    names(tab)[names(tab) == "estimate"] <- "RATE Estimate"
+    names(tab)[names(tab) == "std.err"]  <- "Std Error"
+    if (all(c("RATE Estimate", "Std Error") %in% names(tab))) {
       tab$`2.5%`  <- round(tab$`RATE Estimate` - 1.96 * tab$`Std Error`, round_digits)
       tab$`97.5%` <- round(tab$`RATE Estimate` + 1.96 * tab$`Std Error`, round_digits)
     }
-    if (highlight_significant && all(c("2.5%","97.5%") %in% names(tab))) {
+    if (highlight_significant && all(c("2.5%", "97.5%") %in% names(tab))) {
       sig <- which(tab$`2.5%` > 0 & tab$`97.5%` > 0)
       tab$outcome[sig] <- paste0("**", tab$outcome[sig], "**")
     }
@@ -66,28 +91,33 @@ margot_rate <- function(models,
   )
 }
 
-#’ Interpret RATE estimates for a single method
-#’
-#’ @param rate_df a data.frame from margot_rate() or a list with components rate_autoc and rate_qini
-#’ @param flipped_outcomes character vector of outcomes inverted during preprocessing
-#’ @param target “AUTOC” or “Qini” (ignored if rate_df is a list)
-#’ @return if data.frame, a markdown string; if list, returns comparison list
-#’ @importFrom stats qnorm
-#’ @export
-margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AUTOC") {
-  # if both methods present, delegate to comparison
+#' Interpret RATE estimates
+#'
+#' Produce a compact Markdown summary describing which outcomes show positive,
+#' negative, or inconclusive heterogeneous treatment effects.
+#'
+#' @param rate_df A data frame from `margot_rate()` *or* a list containing
+#'   `rate_autoc` and `rate_qini`.
+#' @param flipped_outcomes Character vector of outcomes that were inverted during
+#'   preprocessing (unused here but kept for API symmetry).
+#' @param target Either `"AUTOC"` or `"Qini"` (ignored when `rate_df` is a list).
+#' @return A Markdown string (single method) or a comparison list (two methods).
+#' @export
+margot_interpret_rate <- function(rate_df,
+                                  flipped_outcomes = NULL,
+                                  target = "AUTOC") {
   if (is.list(rate_df) && !is.data.frame(rate_df) &&
-      all(c("rate_autoc","rate_qini") %in% names(rate_df))) {
+      all(c("rate_autoc", "rate_qini") %in% names(rate_df))) {
     return(margot_interpret_rate_comparison(
       rate_df$rate_autoc, rate_df$rate_qini, flipped_outcomes
     ))
   }
-  # otherwise treat as single-method data.frame
-  required <- c("RATE Estimate","2.5%","97.5%","outcome")
+
+  required <- c("RATE Estimate", "2.5%", "97.5%", "outcome")
   if (!all(required %in% names(rate_df))) {
     stop("rate_df must contain RATE Estimate, 2.5%, 97.5%, and outcome columns")
   }
-  # headings
+
   header <- paste0(
     "### Targeting operating characteristic (TOC) by rank average treatment effect (RATE): ",
     target
@@ -97,12 +127,12 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
   } else {
     "Qini uses linear weighting to balance effect size and prevalence for aggregate gain."
   }
-  low  <- rate_df$`2.5%`
-  high <- rate_df$`97.5%`
-  pos  <- which(low  > 0)
-  neg  <- which(high < 0)
-  all  <- seq_len(nrow(rate_df))
-  incon <- setdiff(all, union(pos, neg))
+
+  low   <- rate_df$`2.5%`
+  high  <- rate_df$`97.5%`
+  pos   <- which(low  > 0)
+  neg   <- which(high < 0)
+  incon <- setdiff(seq_len(nrow(rate_df)), union(pos, neg))
 
   parts <- list(header, desc)
   if (length(pos) > 0) {
@@ -130,115 +160,90 @@ margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AU
   if (length(incon) > 0) {
     parts <- c(parts,
                paste0(
-                 "For outcomes with 95% CI crossing zero (",
+                 "For outcomes with 95%% CI crossing zero (",
                  paste(rate_df$outcome[incon], collapse = ", "),
                  "), evidence is inconclusive."
                )
     )
   }
 
-  # return the assembled text
   paste(parts, collapse = "\n\n")
 }
 
-#’ Compare and interpret RATE estimates from both AUTOC and Qini, extracting model names
+#' Compare and interpret RATE estimates from AUTOC and Qini
 #'
-#’ @keywords internal
-margot_interpret_rate_comparison <- function(autoc_df, qini_df, flipped_outcomes = NULL) {
-  # ensure required columns
-  req <- c("model","outcome","RATE Estimate","2.5%","97.5%")
+#' @keywords internal
+#' @param autoc_df Data frame of AUTOC results produced by `margot_rate()`.
+#' @param qini_df  Data frame of Qini  results produced by `margot_rate()`.
+#' @param flipped_outcomes Character vector of outcomes inverted during preprocessing.
+#' @return A list with comparison text, individual summaries, and model name sets.
+#' @export
+margot_interpret_rate_comparison <- function(autoc_df,
+                                             qini_df,
+                                             flipped_outcomes = NULL) {
+  req <- c("model", "outcome", "RATE Estimate", "2.5%", "97.5%")
   if (!all(req %in% names(autoc_df)) || !all(req %in% names(qini_df))) {
-    stop("data frames must include columns: ", paste(req, collapse=", "))
+    stop("data frames must include columns: ", paste(req, collapse = ", "))
   }
 
-  # raw model significance
-  pos_auto <- autoc_df$model[ autoc_df$`2.5%`  > 0 ]
-  neg_auto <- autoc_df$model[ autoc_df$`97.5%` < 0 ]
-  pos_qini <- qini_df$model[  qini_df$`2.5%`    > 0 ]
-  neg_qini <- qini_df$model[  qini_df$`97.5%`   < 0 ]
+  pos_auto <- autoc_df$model[autoc_df$`2.5%` > 0]
+  pos_qini <- qini_df$model[qini_df$`2.5%` > 0]
 
-  autoc_models  <- unique(c(pos_auto, neg_auto))
-  qini_models   <- unique(c(pos_qini, neg_qini))
+  autoc_models  <- unique(pos_auto)
+  qini_models   <- unique(pos_qini)
   both_models   <- intersect(autoc_models, qini_models)
   either_models <- union(autoc_models, qini_models)
 
-  # map raw names to labels
   label_map <- setNames(autoc_df$outcome, autoc_df$model)
 
-  # build comparison text
   parts <- list(
     "### Comparison of targeting operating characteristic (TOC) by rank average treatment effect (RATE): AUTOC vs Qini",
-    "We applied two TOC by RATE methods to the same causal-forest $\tau(x)$ estimates:",
-    "- TOC AUTOC intensifies focus on top responders via logarithmic weighting.",
-    "- TOC Qini balances effect size and prevalence via linear weighting."
+    "We applied two TOC by RATE methods to the same causal-forest $\\tau(x)$ estimates:",
+    "- **AUTOC** intensifies focus on top responders via logarithmic weighting.",
+    "- **Qini**  balances effect size and prevalence via linear weighting."
   )
 
-  # concordant positives
   if (length(both_models) > 0) {
-    both_labels <- label_map[both_models]
     parts <- c(parts,
-               paste0("Both methods yield positive RATE estimates for: ", paste(both_labels, collapse=", "), "."),
+               paste0("Both methods yield positive RATE estimates for: ",
+                      paste(label_map[both_models], collapse = ", "), "."),
                "This concordance indicates robust evidence of treatment effect heterogeneity."
     )
   }
 
-  # concordant negatives
-  neg_both <- intersect(neg_auto, neg_qini)
-  if (length(neg_both) > 0) {
-    both_labels <- label_map[neg_both]
-    parts <- c(parts,
-               paste0("Both methods yield negative RATE estimates for: ", paste(both_labels, collapse=", "), "."),
-               "This concordance cautions against CATE-based prioritisation for these outcomes."
-    )
-  }
-
-  # disagreement on positives
-  pos_only_a <- setdiff(pos_auto, pos_qini)
-  pos_only_q <- setdiff(pos_qini, pos_auto)
+  pos_only_a <- setdiff(autoc_models, qini_models)
+  pos_only_q <- setdiff(qini_models, autoc_models)
   if (length(pos_only_a) + length(pos_only_q) > 0) {
-    desc <- c()
-    if (length(pos_only_a)>0) desc <- c(desc,
-                                        paste0("only AUTOC yields a positive RATE for ", paste(label_map[pos_only_a], collapse=", ")))
-    if (length(pos_only_q)>0) desc <- c(desc,
-                                        paste0("only Qini yields a positive RATE for ", paste(label_map[pos_only_q], collapse=", ")))
+    desc <- character()
+    if (length(pos_only_a) > 0) {
+      desc <- c(desc,
+                paste0("only AUTOC yields a positive RATE for ",
+                       paste(label_map[pos_only_a], collapse = ", "))
+      )
+    }
+    if (length(pos_only_q) > 0) {
+      desc <- c(desc,
+                paste0("only Qini yields a positive RATE for ",
+                       paste(label_map[pos_only_q], collapse = ", "))
+      )
+    }
     parts <- c(parts,
                paste0(
-                 "When Qini and AUTOC disagree on positive RATE (", paste(desc, collapse="; "), "), ",
-                 "choose Qini to maximise overall benefit or AUTOC to focus on top responders."
+                 "When Qini and AUTOC disagree on positive RATE (",
+                 paste(desc, collapse = "; "),
+                 "), choose **Qini** to maximise overall benefit or **AUTOC** to focus on top responders."
                )
     )
   }
 
-  # disagreement on negatives
-  neg_only_a <- setdiff(neg_auto, neg_qini)
-  neg_only_q <- setdiff(neg_qini, neg_auto)
-  if (length(neg_only_a) + length(neg_only_q) > 0) {
-    desc <- c()
-    if (length(neg_only_a)>0) desc <- c(desc,
-                                        paste0("only AUTOC yields a negative RATE for ", paste(label_map[neg_only_a], collapse=", ")))
-    if (length(neg_only_q)>0) desc <- c(desc,
-                                        paste0("only Qini yields a negative RATE for ", paste(label_map[neg_only_q], collapse=", ")))
-    parts <- c(parts,
-               paste0(
-                 "For outcomes where one method yields a negative RATE (", paste(desc, collapse="; "), "), ",
-                 "CATE-based prioritisation is not recommended; use an ATE-based approach."
-               )
-    )
-  }
-
-  # inconclusive
-  if (length(either_models)==0) {
+  if (length(either_models) == 0) {
     parts <- c(parts,
                "Neither TOC AUTOC nor TOC Qini yields a statistically significant RATE for any outcome; evidence is inconclusive."
     )
   }
 
-  comparison_text <- paste(parts, collapse="
-
-")
-
   list(
-    comparison          = comparison_text,
+    comparison          = paste(parts, collapse = "\n\n"),
     autoc_results       = margot_interpret_rate(autoc_df, flipped_outcomes, "AUTOC"),
     qini_results        = margot_interpret_rate(qini_df,  flipped_outcomes, "Qini"),
     autoc_model_names   = autoc_models,
@@ -247,4 +252,3 @@ margot_interpret_rate_comparison <- function(autoc_df, qini_df, flipped_outcomes
     either_model_names  = either_models
   )
 }
-

@@ -7,7 +7,13 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-04-29] margot 1.0.21
+## Improved
+- `margot_plot_rate_batch()` user can pass specific model names 
+- `margot_rate_comparision()` outputs correct model names (and never statistically significant negative results.)
+
 # [2025-04-28] margot 1.0.20
+## Improved
 - `margot_rate()`, `margot_rate_interpret()` now output model names for reliable result estimates. 
 
 # [2025-04-21] margot 1.0.19

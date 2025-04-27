@@ -7,6 +7,7 @@
 \usage{
 margot_plot_rate_batch(
   models_binary,
+  model_names = NULL,
   dpi = 300,
   width = 12,
   height = 8,
@@ -16,6 +17,7 @@ margot_plot_rate_batch(
 
 margot_plot_batch_rate(
   models_binary,
+  model_names = NULL,
   dpi = 300,
   width = 12,
   height = 8,
@@ -25,6 +27,8 @@ margot_plot_batch_rate(
 }
 \arguments{
 \item{models_binary}{A list of model results, where each element contains a 'rate_result' component.}
+
+\item{model_names}{Optional character vector of model names to process. Default NULL (all models).}
 
 \item{dpi}{The resolution of the saved plots in dots per inch. Default is 300.}
 
@@ -37,9 +41,9 @@ margot_plot_batch_rate(
 \item{output_dir}{The directory where plots should be saved. Default is "rate_plots".}
 }
 \value{
-A list containing the generated ggplot objects for each model.
+A list containing the generated ggplot objects for each processed model.
 }
 \description{
-This function processes multiple models, creates RATE (Rank Average Treatment Effect)
+This function processes a subset of models (or all models by default), creates RATE (Rank Average Treatment Effect)
 plots for each model using the margot package, and optionally saves the plots.
 }
