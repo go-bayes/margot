@@ -7,6 +7,9 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-04-28] margot 1.0.20
+- `margot_rate()`, `margot_rate_interpret()` now output model names for reliable result estimates. 
+
 # [2025-04-21] margot 1.0.19
 ## Improved
 - `margot_bind_table()` flexibly modify column names 
