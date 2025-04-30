@@ -154,6 +154,7 @@ reference:
     - margot_prop_missing
     - margot_save_png
     - margot_size
+    - margot_trim_sample_weights
     - prepare_panel_data
     - pretty_number
     - remove_numeric_attributes

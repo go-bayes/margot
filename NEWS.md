@@ -7,6 +7,10 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-04-30] margot 1.0.22
+## NEW
+- `margot_trim_sample_weights()`: standardises the (possibly trimmed) weights to have a mean of 1.  Missing values are preserved.
+
 # [2025-04-29] margot 1.0.21
 ## Improved
 - `margot_plot_rate_batch()` user can pass specific model names 
