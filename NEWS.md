@@ -7,6 +7,10 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-04-30] margot 1.0.23
+## Improved
+- `margot_plot()` interpretation tracks user specified E-value
+
 # [2025-04-30] margot 1.0.22
 ## NEW
 - `margot_trim_sample_weights()`: standardises the (possibly trimmed) weights to have a mean of 1.  Missing values are preserved.

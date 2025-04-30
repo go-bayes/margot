@@ -13,8 +13,7 @@ margot_plot(
   title_binary = NULL,
   include_coefficients = TRUE,
   standardize_label = c("NZ", "US", "none"),
-  interpret_all_E_gt1 = FALSE,
-  e_val_bound_threshold = 1,
+  e_val_bound_threshold = 1.2,
   ...,
   options = list(),
   label_mapping = NULL,
@@ -52,11 +51,8 @@ Default: `"alphabetical"`.}
 
 \item{standardize_label}{one of `"NZ"`, `"US"`, or `"none"`. Default: `"NZ"`.}
 
-\item{interpret_all_E_gt1}{logical; if `TRUE`, interpret all effects with
-`E_Value > 1` & `E_Val_bound > 1`. Default: `FALSE`.}
-
 \item{e_val_bound_threshold}{numeric; minimum `E_Val_bound` to treat an effect as
-reliable. Default: `1`.}
+reliable. Default: `1.2`.}
 
 \item{...}{additional args passed to `options`.}
 

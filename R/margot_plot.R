@@ -17,10 +17,8 @@
 #' @param title_binary  optional title for binary plots.
 #' @param include_coefficients  logical; include effect values on plot. Default: `TRUE`.
 #' @param standardize_label     one of `"NZ"`, `"US"`, or `"none"`. Default: `"NZ"`.
-#' @param interpret_all_E_gt1    logical; if `TRUE`, interpret all effects with
-#'   `E_Value > 1` & `E_Val_bound > 1`. Default: `FALSE`.
 #' @param e_val_bound_threshold  numeric; minimum `E_Val_bound` to treat an effect as
-#'   reliable. Default: `1`.
+#'   reliable. Default: `1.2`.
 #' @param ...                     additional args passed to `options`.
 #' @param options                 list of plot & label options.
 #' @param label_mapping           named vector mapping original to display labels.
@@ -53,8 +51,7 @@ margot_plot <- function(
     title_binary = NULL,
     include_coefficients = TRUE,
     standardize_label = c("NZ","US","none"),
-    interpret_all_E_gt1 = FALSE,
-    e_val_bound_threshold = 1,
+    e_val_bound_threshold = 1.2,
     ...,
     options = list(),
     label_mapping = NULL,
@@ -193,11 +190,11 @@ margot_plot <- function(
 
   # generate interpretation
   interpretation <- margot_interpret_marginal(
-    df                  = sorted_df,
-    type                = type,
-    order               = order,
-    original_df         = original_df,
-    interpret_all_E_gt1 = interpret_all_E_gt1
+    df                    = sorted_df,
+    type                  = type,
+    order                 = order,
+    original_df           = original_df,
+    e_val_bound_threshold = thresh
   )$interpretation
 
   # transform and return the table to match plot order
@@ -338,6 +335,8 @@ transform_table_rownames <- function(df, label_mapping = NULL, options = list())
 
 
 #’ @keywords internal
+# ── Updated interpretation helper ─────────────────────────────────────────────
+#’ @keywords internal
 margot_interpret_marginal <- function(
     df,
     type = c("RD", "RR"),
@@ -346,72 +345,48 @@ margot_interpret_marginal <- function(
       "evaluebound_desc", "evaluebound_asc", "custom", "default"
     ),
     original_df = NULL,
-    interpret_all_E_gt1 = FALSE
+    e_val_bound_threshold = 1
 ) {
-  # validate arguments
   type  <- match.arg(type)
   order <- match.arg(order)
   if (order == "default") {
     warning("'default' is deprecated; using 'magnitude_desc' instead.")
     order <- "magnitude_desc"
   }
-  message(glue::glue("starting interpretation with order = '{order}'..."))
+  message(glue::glue("starting interpretation with threshold = {e_val_bound_threshold}..."))
 
-  # sort and back-transform as needed
   df <- group_tab(df, type = type, order = order)
   if (!"unit" %in% names(df)) df$unit <- ""
   if (!is.null(original_df)) df <- back_transform_estimates(df, original_df)
 
-  # determine effect column
   effect_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(df)) {
     "E[Y(1)]-E[Y(0)]"
   } else {
     "E[Y(1)]/E[Y(0)]"
   }
-  has_orig <- paste0(effect_col, "_original") %in% names(df)
   null_val <- ifelse(type == "RR", 1, 0)
 
-  # filter by evidence
-  if (interpret_all_E_gt1) {
-    df_f <- df %>%
-      filter(E_Value > 1, E_Val_bound > 1) %>%
-      mutate(evidence_strength = "causal evidence")
-  } else {
-    df_f <- df %>%
-      mutate(evidence_strength = case_when(
-        (`2.5 %` > null_val & E_Val_bound > 2) |
-          (`97.5 %` < null_val & E_Val_bound > 2) ~ "strong causal evidence",
-        (`2.5 %` > null_val & E_Val_bound > 1.1) |
-          (`97.5 %` < null_val & E_Val_bound > 1.1) ~ "causal evidence",
-        TRUE ~ NA_character_
-      )) %>%
-      filter(!is.na(evidence_strength))
-  }
+  # now use a single threshold for “reliable” evidence
+  df_f <- df %>%
+    filter(E_Value > 1, E_Val_bound > e_val_bound_threshold)
 
-  # handle no evidence
   if (nrow(df_f) == 0) {
-    message("no estimates meet evidence criteria.")
-    return(list(interpretation = "No reliable causal evidence was detected for any outcome."))
+    return(list(
+      interpretation = paste0(
+        "No outcomes had E-Value > 1 and E-Value bound > ",
+        e_val_bound_threshold,
+        "."
+      )
+    ))
   }
 
-  # # reverse so bullets match plot
+  # bullets in same order as the plot
   if (grepl("_(asc|desc)$", order)) df_f <- df_f[nrow(df_f):1, ]
-  #
-  # choose intro based on evidence types
-  # strengths <- unique(df_f$evidence_strength)
-  # if (all(strengths == "strong causal evidence")) {
-  #   intro <- "The following outcomes exhibited strong causal evidence (presented in the same order as they appear in the results table):\n"
-  # } else {
-  #   intro <- "The following outcomes exhibited causal evidence (presented in the same order as they appear in the plot):\n"
-  # }
 
-  strengths <- unique(df_f$evidence_strength)
-  if (all(strengths == "strong causal evidence")) {
-    intro <- "The following outcomes exhibited strong causal evidence:\n"
-  } else {
-    intro <- "The following outcomes exhibited causal evidence:\n"
-  }
-  # build bullets without trailing evidence phrase
+  intro <- glue::glue(
+    "The following outcomes showed reliable causal evidence",
+    " (E-Value lower bound > {e_val_bound_threshold}):\n"
+  )
   bullets <- df_f %>%
     rowwise() %>%
     mutate(
@@ -419,32 +394,13 @@ margot_interpret_marginal <- function(
         "{round(.data[[effect_col]], 3)} (",
         round(`2.5 %`, 3), ", ", round(`97.5 %`, 3), ")"
       ),
-      lab_orig = if (has_orig) glue::glue(
-        "{round(.data[[paste0(effect_col, '_original')]], 3)} {unit} (",
-        round(`2.5 %_original`, 3), ", ", round(`97.5 %_original`, 3), ")"
-      ) else NA_character_,
       text = glue::glue(
-        "- {outcome}: {type} = {lab}",
-        "{if (has_orig) glue('; original scale: {lab_orig}')}",
-        "; E-value lower bound = {E_Val_bound}"
+        "- {outcome}: {lab}; E-Value bound = {E_Val_bound}"
       )
     ) %>%
-    ungroup() %>%
     pull(text)
 
-  # concluding line
-  rem <- nrow(df) - nrow(df_f)
-  conclusion <- if (rem > 0) {
-    "Other estimates were either weak or unreliable."
-  } else {
-    ""
-  }
-
-  # assemble output
-  parts <- c(intro, bullets)
-  if (conclusion != "") parts <- c(parts, "", conclusion)
-  interpretation <- paste(parts, collapse = "\n")
-
+  interpretation <- paste(c(intro, bullets), collapse = "\n")
   message("interpretation complete 👍")
   list(interpretation = interpretation)
 }
