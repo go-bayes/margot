@@ -7,6 +7,10 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-05-02] margot 1.0.25
+## Improved
+- `margot_plot_shift()` and `margot_plot_categorical` more tightly integrated. Both now plot the mean/median and flexibly plot sds.  (Both are now in the `margot_plot_categorical.R` script).
+
 # [2025-05-01] margot 1.0.24
 ## Improved
 - `margot_bind_models()` works with `lmtp` batched outputs with more than two conditions.
