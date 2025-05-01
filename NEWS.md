@@ -7,6 +7,10 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-05-01] margot 1.0.24
+## Improved
+- `margot_bind_models()` works with `lmtp` batched outputs with more than two conditions.
+
 # [2025-04-30] margot 1.0.23
 ## Improved
 - `margot_plot()` interpretation tracks user specified E-value

@@ -53,16 +53,26 @@ margot_bind_models <- function(..., quiet = FALSE) {
 
   if (all(is_lmtp)) {
     if (!quiet) cli::cli_alert_info("combining {length(models)} lmtp outputs...")
+
+    # flatten the simple list components
     combined <- list(
-      models = purrr::flatten(purrr::map(models, "models")),
-      contrasts = purrr::flatten(purrr::map(models, "contrasts")),
+      models            = purrr::flatten(purrr::map(models, "models")),
+      contrasts         = purrr::flatten(purrr::map(models, "contrasts")),
       individual_tables = purrr::flatten(purrr::map(models, "individual_tables"))
     )
-    # bind each combined_tables data.frame
-    dfs <- purrr::map(models, ~ .x$combined_tables[[1]])
-    combined$combined_tables <- list(
-      combined_outcomes_religious_vs_secular = dplyr::bind_rows(dfs)
+
+    # --- new dynamic handling of combined_tables ---
+    # 1. collect every table‐name that appears in any model
+    tbl_names <- unique(unlist(purrr::map(models, ~ names(.x$combined_tables))))
+    # 2. for each name, bind_rows across all models
+    combined$combined_tables <- purrr::set_names(
+      purrr::map(tbl_names, function(tbl) {
+        dplyr::bind_rows(purrr::map(models, ~ .x$combined_tables[[tbl]]))
+      }),
+      tbl_names
     )
+    # -------------------------------------------------
+
     if (!quiet) cli::cli_alert_success("successfully combined {length(models)} lmtp outputs!")
     return(combined)
   }
@@ -85,14 +95,14 @@ margot_bind_models <- function(..., quiet = FALSE) {
   }
   if (!quiet) cli::cli_alert_success("all causal forest models are compatible!")
 
-  # combine
+  # combine causal forest models
   if (!quiet) cli::cli_alert_info("combining causal forest models...")
   combined <- list(
-    results       = unlist(purrr::map(models, "results"),       recursive = FALSE),
-    combined_table= dplyr::bind_rows(purrr::map(models, "combined_table")),
-    outcome_vars  = unlist(purrr::map(models, "outcome_vars")),
-    not_missing   = models[[1]]$not_missing,
-    full_models   = unlist(purrr::map(models, "full_models"),   recursive = FALSE)
+    results        = unlist(purrr::map(models, "results"),       recursive = FALSE),
+    combined_table = dplyr::bind_rows(purrr::map(models, "combined_table")),
+    outcome_vars   = unlist(purrr::map(models, "outcome_vars")),
+    not_missing    = models[[1]]$not_missing,
+    full_models    = unlist(purrr::map(models, "full_models"),   recursive = FALSE)
   )
 
   if (!quiet) {
