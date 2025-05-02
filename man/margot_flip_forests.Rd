@@ -2,12 +2,13 @@
 % Please edit documentation in R/margot_flip_forests.R
 \name{margot_flip_forests}
 \alias{margot_flip_forests}
-\title{Flip CATE Estimates for Selected Outcomes in GRF Model Results}
+\title{Flip CATE Estimates and Recalculate Policy Trees for Selected Outcomes}
 \usage{
 margot_flip_forests(
   model_results,
   flip_outcomes,
   model_prefix = "model_",
+  recalc_policy = TRUE,
   verbose = TRUE
 )
 }
@@ -16,16 +17,17 @@ margot_flip_forests(
 
 \item{flip_outcomes}{A character vector of outcome variable names for which CATE estimates should be flipped.}
 
-\item{model_prefix}{A character string indicating the prefix used for model names in the results list. Default is "model_".}
+\item{model_prefix}{A character string indicating the prefix used for model names in the results list. Default is "model_.".}
+
+\item{recalc_policy}{Logical; if TRUE (default) recalculates policy trees for flipped outcomes.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 }
 \value{
-A modified copy of the model_results list with flipped CATE estimates and related outputs
-        for the specified outcomes.
+A modified copy of the model_results list with flipped CATE estimates and recalculated policy trees.
 }
 \description{
 This function post-processes the results from margot_causal_forest to flip CATE estimates,
-RATE results, QINI RATE results, and QINI curves for selected outcomes. This is useful when
-you want to ensure consistent interpretation of effects across differently coded outcomes.
+RATE results, QINI RATE results, QINI curves, and (by default) recalculates the policy trees
+for the specified outcomes.  If `recalc_policy = FALSE`, tree regeneration is skipped.
 }

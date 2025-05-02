@@ -147,6 +147,7 @@ reference:
     - here_save_qs
     - lmtp_evalue_tab
     - margot_back_transform_log_z
+    - margot_get_labels
     - margot_log_transform_vars
     - margot_plot_create_options
     - margot_plot_exposure

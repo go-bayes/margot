@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_bind_models.R
 \name{margot_bind_models}
 \alias{margot_bind_models}
-\title{Combine multiple batched model outputs}
+\title{Combine multiple batched model outputs (with covariates & metadata)}
 \usage{
 margot_bind_models(..., quiet = FALSE)
 }
@@ -15,29 +15,8 @@ margot_bind_models(..., quiet = FALSE)
 A single combined model output object.
 }
 \description{
-This function combines either “causal forest” or “lmtp” batched model outputs
-into a single object, provided they share compatible structures.
-}
-\details{
-- If all inputs have the four elements `models`, `contrasts`,
-  `individual_tables` and `combined_tables`, it assumes an **lmtp**‐style object
-  and flattens each list, row‐binding the `combined_tables`.
-- Otherwise it falls back on the original “causal forest” structure
-  with elements `results`, `combined_table`, `outcome_vars`,
-  `not_missing` and `full_models`.
-- It checks that any `not_missing` vectors match exactly across inputs.
-}
-\examples{
-# for lmtp outputs
-combined_lmtp <- margot_bind_models(
-  health_lmtp_output,
-  psych_lmtp_output
-)
-
-# for causal forest outputs
-combined_cf <- margot_bind_models(
-  models_binary_social,
-  models_binary_psych
-)
-
+This function combines either "causal forest" or "lmtp" batched model outputs
+into a single object, provided they share compatible structures.  It now also
+preserves `covariates`, `data`, `weights`, and any flip or rescue metadata
+when binding causal forest outputs.
 }

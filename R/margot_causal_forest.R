@@ -333,3 +333,81 @@ extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) 
     curve = name
   )
 }
+
+
+#' inspect qini diagnostics for one or several models
+#'
+#' @param model_results list returned by `margot_causal_forest()` **with**
+#'        `save_models = TRUE, save_data = TRUE`.
+#' @param model_names  optional character vector of outcome names
+#'        (with or without the `model_` prefix).  default = *all*.
+#' @param test_prop    fraction of trimmed rows to allocate to the
+#'        validation/Qini test set.  default 0.5.
+#' @param propensity_bounds numeric length-2 vector giving the lower
+#'        and upper trimming thresholds for `forest$W.hat`.  default
+#'        c(0.05, 0.95).
+#' @param seed integer for reproducibility.
+#'
+#' @return a tibble of diagnostics (class `"margot_qini_diag"`).
+#' @keywords internal
+margot_inspect_qini <- function(model_results,
+                                model_names        = NULL,
+                                test_prop          = 0.5,
+                                propensity_bounds  = c(0.05, 0.95),
+                                seed               = 2025) {
+
+  stopifnot(is.list(model_results),
+            "full_models" %in% names(model_results),
+            "data"        %in% names(model_results))
+
+  # make sure tidyverse is on board
+  requireNamespace("dplyr", quietly = TRUE)
+  requireNamespace("tibble", quietly = TRUE)
+  requireNamespace("policytree", quietly = TRUE)
+
+  if (is.null(model_names))
+    model_names <- names(model_results$full_models)
+  model_names <- ifelse(grepl("^model_", model_names),
+                        model_names,
+                        paste0("model_", model_names))
+
+  set.seed(seed)
+
+  purrr::map_dfr(model_names, function(mn) {
+
+    forest <- model_results$full_models[[mn]]
+    if (is.null(forest))
+      return(NULL)
+
+    outcome_name <- sub("^model_", "", mn)
+
+    Y  <- model_results$data[[outcome_name]]
+    W  <- forest$W
+    eh <- forest$W.hat
+    th <- predict(forest)$predictions               # tau_hat
+    dr <- policytree::double_robust_scores(forest)  # n x 2 matrix
+    dr <- dr[, 2] - dr[, 1]                         # treated – control
+
+    keep <- which(!is.na(Y) &
+                    eh > propensity_bounds[1] &
+                    eh < propensity_bounds[2])
+
+    n_trimmed <- length(Y) - length(keep)
+    if (length(keep) < 10)
+      return(tibble::tibble(model      = mn,
+                            outcome    = outcome_name,
+                            note       = "too little data after trimming"))
+
+    idx_test <- sample(keep, size = floor(test_prop * length(keep)))
+    ord      <- order(-th[idx_test])                # best-to-worst ranking
+    gain     <- cumsum(dr[idx_test][ord])
+
+    tibble::tibble(model       = mn,
+                   outcome     = outcome_name,
+                   sd_tau      = sd(th[idx_test]),
+                   min_gain    = min(gain),
+                   final_gain  = gain[length(gain)],
+                   n_test      = length(idx_test),
+                   n_trimmed   = n_trimmed)
+  }) %>% dplyr::arrange(dplyr::desc(abs(final_gain)))
+}

@@ -15,9 +15,9 @@ margot_recalculate_policy_trees(
 \item{model_results}{A list containing the model results after running margot_flip_forests().}
 
 \item{outcomes_to_recalculate}{A character vector of outcome names to recalculate policy trees for.
-If NULL, recalculates all outcomes marked as needing recalculation.}
+If NULL, recalculates all models marked as needing recalculation.}
 
-\item{model_prefix}{A character string indicating the prefix used for model names. Default is "model_".}
+\item{model_prefix}{A character string indicating the prefix used for model names. Default is "model_.".}
 
 \item{verbose}{Logical indicating whether to display detailed messages. Default is TRUE.}
 }
@@ -26,6 +26,6 @@ An updated copy of model_results with recalculated policy trees.
 }
 \description{
 This function recalculates policy trees using flipped double robust scores for outcomes
-that were processed by margot_flip_forests.
+that were processed by margot_flip_forests().
 }
 \keyword{internal}

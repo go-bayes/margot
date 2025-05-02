@@ -7,6 +7,15 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-05-02] margot 1.0.27
+## New 
+- `margot_flip_forests()` automatic recomputing of the policy trees by default.
+- `margot_inspect_qini()` helper to evaluate extreme propensity scores from grf models. 
+- `margot_rescue_qini()` (developing) - to recompute qini data for grf models when `qini_objects` are null / empty.
+
+## Improve
+- `margot_bind_models()` -- accommodates changes
+
 # [2025-05-02] margot 1.0.26
 ## Improved
 - `margot_wide_machine()` now handles allows for `imputation_method` = "none". new parameters `extend_baseline` effectively pivots all date from long to wide, and allows for time indexing of columns - userful for `grf` models. 
