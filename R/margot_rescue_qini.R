@@ -13,7 +13,7 @@
 #'
 #' @return modified model_results with rescued qini_data and qini_objects
 #'   for any models that initially had empty gain
-#' @keywords internal
+#' @keywords export
 margot_rescue_qini <- function(model_results,
                                propensity_bounds = c(0.05, 0.95),
                                verbose = TRUE) {

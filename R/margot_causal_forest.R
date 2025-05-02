@@ -334,7 +334,6 @@ extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) 
   )
 }
 
-
 #' inspect qini diagnostics for one or several models
 #'
 #' @param model_results list returned by `margot_causal_forest()` **with**
@@ -349,7 +348,7 @@ extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) 
 #' @param seed integer for reproducibility.
 #'
 #' @return a tibble of diagnostics (class `"margot_qini_diag"`).
-#' @keywords internal
+#' @keywords margot_inspect_qini
 margot_inspect_qini <- function(model_results,
                                 model_names        = NULL,
                                 test_prop          = 0.5,

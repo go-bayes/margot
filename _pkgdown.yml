@@ -108,6 +108,7 @@ reference:
     - margot_bind_models
     - margot_compare_groups
     - margot_flip_forests
+    - margot_inspect_qini
     - margot_interpret_policy_batch
     - margot_interpret_policy_tree
     - margot_interpret_qini
@@ -120,6 +121,7 @@ reference:
     - margot_planned_subgroups_batch
     - margot_policy
     - margot_rate
+    - margot_rescue_qini
     - margot_subset_model
     - margot_subset_batch
     - margot_summary_cate_difference_gain
