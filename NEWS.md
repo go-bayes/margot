@@ -7,6 +7,10 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-05-02] margot 1.0.26
+## Improved
+- `margot_wide_machine()` now handles allows for `imputation_method` = "none". new parameters `extend_baseline` effectively pivots all date from long to wide, and allows for time indexing of columns - userful for `grf` models. 
+
 # [2025-05-02] margot 1.0.25
 ## Improved
 - `margot_plot_shift()` and `margot_plot_categorical` more tightly integrated. Both now plot the mean/median and flexibly plot sds.  (Both are now in the `margot_plot_categorical.R` script).

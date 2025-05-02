@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_wide_machine.R
 \name{margot_wide_machine}
 \alias{margot_wide_machine}
-\title{Transform longitudinal data to wide format with baseline imputation and NA indicators}
+\title{Transform longitudinal data to wide format with baseline imputation and optional NA indicators}
 \usage{
 margot_wide_machine(
   .data,
@@ -12,9 +12,11 @@ margot_wide_machine(
   exposure_var,
   outcome_vars,
   confounder_vars = NULL,
-  imputation_method = "median",
+  imputation_method = c("median", "mice", "none"),
   include_exposure_var_baseline = TRUE,
-  include_outcome_vars_baseline = TRUE
+  include_outcome_vars_baseline = TRUE,
+  extend_baseline = FALSE,
+  include_na_indicators = TRUE
 )
 }
 \arguments{
@@ -37,15 +39,19 @@ margot_wide_machine(
 \item{include_exposure_var_baseline}{Logical indicating whether to include the exposure variable at baseline (t0).}
 
 \item{include_outcome_vars_baseline}{Logical indicating whether to include outcome variables at baseline (t0).}
+
+\item{extend_baseline}{Logical indicating whether to include baseline_vars in all subsequent waves (default FALSE).}
+
+\item{include_na_indicators}{Logical indicating whether to generate NA indicator columns for baseline variables (default TRUE).}
 }
 \value{
 A wide-format data frame with each subject's observations across time points
         represented in a single row. Baseline variables, exposure variables at baseline,
-        and outcome variables at baseline (if included) have missing values imputed as specified.
-        NA indicators are created for variables at baseline only if they have missing values.
+        and outcome variables at baseline have missing values imputed as specified.
+        NA indicators are created for variables at baseline only if include_na_indicators is TRUE.
         Exposure variables are tracked across waves but are not imputed beyond baseline.
-        Outcome variables are included only at the final wave
-        unless `include_outcome_vars_baseline` is `TRUE`. Confounders (if any) are included without imputation.
+        Outcome variables are included only at the final wave unless include_outcome_vars_baseline is TRUE.
+        Confounders (if any) are included without imputation.
 }
 \description{
 This function transforms longitudinal data from long format to wide format,
@@ -53,48 +59,4 @@ ensuring that baseline measurements are correctly labeled and included.
 It handles multiple observations per subject across an indefinite number of waves,
 and allows for the specification of baseline variables, exposure variables,
 outcome variables, and time-varying confounders.
-}
-\details{
-Key functionalities:
-- **Imputation at Baseline**: Missing values are imputed at baseline (`t0`) for:
-  - `baseline_vars`
-  - `exposure_var` (if `include_exposure_var_baseline = TRUE`)
-  - `outcome_vars` (if `include_outcome_vars_baseline = TRUE`)
-  - 'median': For numeric variables, missing values are imputed with the median.
-    For categorical variables, missing values are imputed with the mode.
-  - 'mice': Multiple Imputation by Chained Equations is used.
-    If MICE fails, the function falls back to median/mode imputation.
-  - 'none': No imputation is performed.
-- **NA Indicators**: NA indicator variables are created **only** for baseline variables
-  that have missing values. Each such variable at baseline will have a corresponding
-  NA indicator with the suffix `_na`.
-- **Exposure Variables**: Tracked across waves but never imputed beyond baseline.
-- **Outcome Variables**: Included only at the final wave unless specified to include at baseline.
-- **Confounder Variables**: If specified, these are included across waves without any imputation.
-  Missing values remain as `NA`.
-- **Variable Inclusion per Wave**:
-  - **Baseline (`t0`)**: Includes `baseline_vars`, exposure variables (if included), outcome variables (if included), and their NA indicators (only if necessary).
-  - **Waves `t1` to `t(y_-2)`**: Include only the exposure variables (and confounders if specified).
-  - **Final Wave (`t(y_-1)`)**: Includes only the outcome variables.
-}
-\examples{
-# Define variables
-baseline_vars <- c("age", "education", "income")
-exposure_var <- "treatment"
-outcome_vars <- c("health_score", "quality_of_life")
-confounder_vars <- c("stress_level", "exercise_frequency")
-
-# Transform data to wide format with baseline imputation
-df_wide_impute <- margot_wide_machine(
-  data_long,
-  id = "patient_id",
-  wave = "visit_time",
-  baseline_vars = baseline_vars,
-  exposure_var = exposure_var,
-  outcome_vars = outcome_vars,
-  confounder_vars = confounder_vars,
-  imputation_method = "mice",
-  include_exposure_var_baseline = TRUE,
-  include_outcome_vars_baseline = TRUE
-)
 }
