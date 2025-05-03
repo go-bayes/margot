@@ -7,6 +7,7 @@
 margot_interpret_policy_tree(
   model,
   model_name,
+  max_depth = 2L,
   train_proportion = 0.5,
   custom_action_names = NULL,
   label_mapping = NULL,

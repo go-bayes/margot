@@ -8,6 +8,7 @@ margot_policy(
   result_outcomes,
   policy_tree_args = list(),
   decision_tree_args = list(),
+  max_depth = 2L,
   dpi = 600,
   width = 12,
   height = 12,
@@ -25,6 +26,8 @@ margot_policy(
 \item{policy_tree_args}{List of args for \code{margot_plot_policy_tree()}. Default: \code{list()}.}
 
 \item{decision_tree_args}{List of args for \code{margot_plot_decision_tree()}. Default: \code{list()}.}
+
+\item{max_depth}{Integer, 1 or 2; which decision tree depth to plot. Default: 2.}
 
 \item{dpi}{Resolution (dpi) for saved plots. Default: 600.}
 
@@ -48,10 +51,9 @@ margot_policy(
 A named list; each element corresponds to a model and contains:
   \describe{
     \item{policy_tree_plot}{ggplot of the policy-tree plot}
-    \item{policy_tree_interpretation}{character interpretation}
     \item{qini_plot}{ggplot of the Qini curve}
-    \item{decision_tree_visualisation}{ggplot of the decision tree}
-    \item{policy_combo_plot}{ggplot of combined policy vs decision}
+    \item{decision_tree}{ggplot of the decision tree at the chosen depth}
+    \item{combined_plot}{ggplot of combined policy vs decision}
     \item{diff_gain_summaries}{list of difference-gain summaries per spend}
   }
 }

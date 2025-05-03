@@ -2,105 +2,65 @@
 % Please edit documentation in R/margot_plot_policy_tree.R
 \name{margot_plot_policy_tree}
 \alias{margot_plot_policy_tree}
-\title{Plot Policy Tree Results with Shading Option}
+\title{Plot a policy tree (depth-adaptive)}
 \usage{
 margot_plot_policy_tree(
   mc_test,
   model_name,
+  max_depth = 2L,
   original_df = NULL,
-  shading = TRUE,
+  shading = NULL,
   color_scale = NULL,
   point_alpha = 0.5,
-  theme_function = theme_classic,
-  title_size = 16,
-  subtitle_size = 14,
-  axis_title_size = 14,
-  legend_title_size = 14,
-  jitter_width = 0.3,
-  jitter_height = 0.3,
-  split_line_color = "red",
-  split_line_alpha = 0.7,
-  split_line_type = "dashed",
-  split_line_linewidth = 0.5,
-  split_label_size = 10,
-  split_label_color = "red",
-  custom_action_names = NULL,
-  legend_position = "bottom",
-  plot_selection = "both",
-  remove_tx_prefix = TRUE,
-  remove_z_suffix = TRUE,
-  use_title_case = TRUE,
-  remove_underscores = TRUE,
+  theme_function = ggplot2::theme_classic,
   label_mapping = NULL,
-  shade_fill = "#6e6e6e",
-  shade_alpha = 0.5
+  label_options = list(remove_tx_prefix = TRUE, remove_z_suffix = TRUE,
+    remove_underscores = TRUE, use_title_case = TRUE),
+  ...
 )
 }
 \arguments{
-\item{mc_test}{List from a multi-arm causal forest run containing
-\code{$results[[model_name]]$policy_tree_depth_2} and
-\code{$results[[model_name]]$plot_data}.}
+\item{mc_test}{A list produced by `margot_multiclass_cf()` (or similar)
+whose `results` slot holds `policy_tree_depth_1`,
+`policy_tree_depth_2`, and `plot_data` entries for `model_name`.}
 
-\item{model_name}{String name of the model in \code{mc_test$results}.}
+\item{model_name}{Character scalar identifying the result inside
+`mc_test$results`.}
 
-\item{original_df}{Optional data.frame of original-scale variables for axis annotations.}
+\item{max_depth}{Integer, 1 or 2; which stored tree to visualise.}
 
-\item{shading}{Logical; if \code{TRUE}, shade non-decision regions. Default: \code{TRUE}.}
+\item{original_df}{Optional data frame of raw-scale variables (only used
+by the depth-2 plot for secondary-axis labels).}
 
-\item{color_scale}{Optional ggplot2 colour scale. Default: Okabe–Ito palette.}
+\item{shading}{Logical – draw shaded half-planes for non-decision regions
+(depth-2 only).  If `NULL` (default) the function decides automatically.}
 
-\item{point_alpha}{Numeric point transparency (0–1). Default: 0.5.}
+\item{color_scale}{A pre-built `ggplot2` colour scale (rarely needed).}
 
-\item{theme_function}{ggplot2 theme function. Default: \code{theme_classic()}.}
+\item{point_alpha}{Alpha transparency for plotted points.}
 
-\item{title_size}{Numeric plot-title text size. Default: 16.}
+\item{theme_function}{A `ggplot2` theme function; default
+`ggplot2::theme_classic`.}
 
-\item{subtitle_size}{Numeric subtitle text size. Default: 14.}
+\item{label_mapping}{Named list for explicit string replacements; passed
+to `transform_label()`.}
 
-\item{axis_title_size}{Numeric axis-title text size. Default: 14.}
+\item{label_options}{List of logical flags understood by
+`transform_label()` (see that function for details).}
 
-\item{legend_title_size}{Numeric legend-title text size. Default: 14.}
-
-\item{jitter_width}{Numeric horizontal jitter. Default: 0.3.}
-
-\item{jitter_height}{Numeric vertical jitter. Default: 0.3.}
-
-\item{split_line_color}{Colour of split lines. Default: "red".}
-
-\item{split_line_alpha}{Alpha for split lines. Default: 0.7.}
-
-\item{split_line_type}{Linetype for split lines. Default: "dashed".}
-
-\item{split_line_linewidth}{Linewidth for split lines. Default: 0.5.}
-
-\item{split_label_size}{Text size for secondary-axis labels. Default: 10.}
-
-\item{split_label_color}{Colour for secondary-axis labels. Default: "red".}
-
-\item{custom_action_names}{Optional vector of custom action labels.}
-
-\item{legend_position}{Legend position: "top","bottom","left","right". Default: "bottom".}
-
-\item{plot_selection}{Which panels to show: "both","p1","p2". Default: "both".}
-
-\item{remove_tx_prefix}{Logical; strip "tx_" from names. Default: TRUE.}
-
-\item{remove_z_suffix}{Logical; strip "_z" from names. Default: TRUE.}
-
-\item{use_title_case}{Logical; convert labels to Title Case. Default: TRUE.}
-
-\item{remove_underscores}{Logical; remove underscores. Default: TRUE.}
-
-\item{label_mapping}{Named list of label overrides. Default: NULL.}
-
-\item{shade_fill}{Fill colour for shading. Default: "#6e6e6e".}
-
-\item{shade_alpha}{Alpha for shading. Default: 0.35.}
+\item{...}{Extra arguments forwarded **only** to the depth-2 helper
+(e.g. `title_size`, `jitter_width`, etc.).}
 }
 \value{
-A patchwork ggplot of the two panels.
+A `ggplot` object (depth 1) or a patchwork object (depth 2).
 }
 \description{
-Visualise the top-two splits of a policy tree with scatterplots of the two split variables,
-points coloured by predicted action, and optional shading for non-decision regions.
+Visualise the first one or two splits of a `policytree` stored inside a
+multi-arm causal-forest result.
+}
+\details{
+* **Depth 1** – a one–dimensional jitter plot coloured by the predicted
+  action and annotated with the split point.
+* **Depth 2** – the existing two-panel scatter-plot (hand-off to
+  `margot_plot_policy_tree_depth2()`).
 }

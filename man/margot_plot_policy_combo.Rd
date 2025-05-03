@@ -7,6 +7,7 @@
 margot_plot_policy_combo(
   result_object,
   model_name,
+  max_depth = 2L,
   label_mapping = NULL,
   original_df = NULL,
   layout = list(heights = c(1, 2)),
@@ -22,23 +23,25 @@ margot_plot_policy_combo(
 
 \item{model_name}{A character string specifying the name of the model.}
 
+\item{max_depth}{Integer, 1 or 2; which decision tree depth to plot. Default: 2.}
+
 \item{label_mapping}{Optional named list for custom label mappings.}
 
 \item{original_df}{Optional dataframe with untransformed variables.}
 
-\item{layout}{A list specifying the layout of the combined plot. Default is
+\item{layout}{A list specifying the layout of the combined plot when max_depth==2. Default is
 `list(heights = c(1, 2))`, which sets the relative heights of the two plots.}
 
-\item{annotation}{A list specifying the annotation for the combined plot. Default is
+\item{annotation}{A list specifying the annotation for the combined plot when max_depth==2. Default is
 `list(tag_levels = "A")`, which adds alphabetic tags to the subplots.}
 
 \item{generate_policy_tree}{Logical, whether to generate the policy tree plot. Default is TRUE.}
 
 \item{generate_decision_tree}{Logical, whether to generate the decision tree plot. Default is TRUE.}
 
-\item{policy_tree_args}{A list of arguments to pass to margot_plot_policy_tree. Default is list().}
+\item{policy_tree_args}{A list of arguments to pass to `margot_plot_policy_tree`. Default is list().}
 
-\item{decision_tree_args}{A list of arguments to pass to margot_plot_decision_tree. Default is list().}
+\item{decision_tree_args}{A list of arguments to pass to `margot_plot_decision_tree`. Default is list().}
 }
 \value{
 A list containing:
@@ -49,21 +52,4 @@ A list containing:
 \description{
 This function generates a combined plot consisting of a decision tree and a graph
 showing relationships between variables in the recommended policy.
-}
-\examples{
-\dontrun{
-# Assuming 'results' is your Margot results object, 'model_name' is the name of your model,
-# 'label_mapping' is your custom label mapping, and 'original_df' is your original dataframe
-combined_plot <- margot_plot_policy_combo(
-  result_object = results,
-  model_name = "model_t2_env_not_env_efficacy_z",
-  label_mapping = label_mapping,
-  original_df = original_df,
-  policy_tree_args = list(point_alpha = 0.75),
-  decision_tree_args = list(text_size = 4.5, edge_label_offset = 0.01)
-)
-
-# Print the combined plot
-print(combined_plot$combined_plot)
-}
 }

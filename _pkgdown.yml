@@ -121,6 +121,7 @@ reference:
     - margot_planned_subgroups_batch
     - margot_policy
     - margot_rate
+    - margot_rate_batch
     - margot_rescue_qini
     - margot_subset_model
     - margot_subset_batch

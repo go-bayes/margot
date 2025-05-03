@@ -41,6 +41,12 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  qini_train_prop = 0.7,  # renamed from qini_test_prop to qini_train_prop
                                  verbose = TRUE) {
 
+  # value:
+  #   • plot_data – a list with elements
+  #       • X_test       – test matrix restricted to `top_vars`
+  #       • X_test_full  – full-width test matrix (all covariates)
+  #       • predictions  – policy-tree action predictions
+
   # --- basic dimension checks ---
   n_rows <- nrow(covariates)
   if (verbose) cli::cli_alert_info(paste("number of rows in covariates:", n_rows))
@@ -143,10 +149,15 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       test_indices <- setdiff(not_missing, train_indices)
       if (length(test_indices) < 1) stop("test set is empty after splitting for policy tree")
       X_test <- covariates[test_indices, top_vars, drop = FALSE]
+
+      X_test_full <- covariates[test_indices, , drop = FALSE]
+
       predictions <- predict(policy_tree_model, X_test)
+
       results[[model_name]]$plot_data <- list(
-        X_test = X_test,
-        predictions = predictions
+        X_test       = X_test,
+        X_test_full  = X_test_full,   # <- NEW
+        predictions  = predictions
       )
 
       # --- 4) compute qini curves ---

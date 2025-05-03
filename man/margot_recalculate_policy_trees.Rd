@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_flip_forests.R
 \name{margot_recalculate_policy_trees}
 \alias{margot_recalculate_policy_trees}
-\title{Recalculate Policy Trees with Flipped Double Robust Scores}
+\title{recalculate policy trees with flipped double-robust scores}
 \usage{
 margot_recalculate_policy_trees(
   model_results,
@@ -12,20 +12,20 @@ margot_recalculate_policy_trees(
 )
 }
 \arguments{
-\item{model_results}{A list containing the model results after running margot_flip_forests().}
+\item{model_results}{list returned by `margot_flip_forests()`}
 
-\item{outcomes_to_recalculate}{A character vector of outcome names to recalculate policy trees for.
-If NULL, recalculates all models marked as needing recalculation.}
+\item{outcomes_to_recalculate}{character vector of outcome names}
 
-\item{model_prefix}{A character string indicating the prefix used for model names. Default is "model_.".}
+\item{model_prefix}{prefix used for model names inside `results`}
 
-\item{verbose}{Logical indicating whether to display detailed messages. Default is TRUE.}
+\item{verbose}{logical; print progress messages?}
 }
 \value{
-An updated copy of model_results with recalculated policy trees.
+updated `model_results` with fresh depth-1/2 trees and
+        a plot_data list that now contains both X_test *and*
+        X_test_full.
 }
 \description{
-This function recalculates policy trees using flipped double robust scores for outcomes
-that were processed by margot_flip_forests().
+recalculate policy trees with flipped double-robust scores
 }
 \keyword{internal}

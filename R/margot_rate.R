@@ -1,96 +1,3 @@
-#' Format RATE results into readable tables, keeping raw model names
-#'
-#' Assemble two tables that summarise rank-average treatment effect (RATE)
-#' estimates from causal-forest models under two targeting operating
-#' characteristics (TOC): **AUTOC** and **Qini**.  Each table retains the raw
-#' model names but maps them to human-readable outcome labels and appends 95\%
-#' Wald confidence intervals.
-#'
-#' @details
-#' Outcome labels are created with `transform_var_name()`.
-#' Setting `highlight_significant = TRUE` wraps the outcome label in **bold**
-#' Markdown when the 95 \% confidence interval lies strictly above zero, making
-#' it easy to emphasise robust results in Quarto or R Markdown documents.
-#'
-#' @param models  A list returned by `margot_multi_arm_causal_forest()` that
-#'   contains an element `results`, itself a named list of model fits.
-#' @param label_mapping Named character vector mapping raw variable names to
-#'   presentation labels.
-#' @param remove_tx_prefix Logical. Drop a leading `t0_` from variable names?
-#' @param remove_z_suffix Logical. Drop a trailing `_z` from variable names?
-#' @param use_title_case Logical. Convert labels to title case?
-#' @param remove_underscores Logical. Replace underscores with spaces?
-#' @param round_digits Integer. Decimal places to keep (default = 3).
-#' @param highlight_significant Logical. Bold labels whose 95 \% CI is entirely
-#'   above zero.
-#'
-#' @return A named list with two data frames
-#' \describe{
-#'   \item{rate_autoc}{Data frame with columns
-#'     \code{model}, \code{outcome}, \code{RATE Estimate},
-#'     \code{Std Error}, \code{2.5\%}, \code{97.5\%}.}
-#'   \item{rate_qini}{Identical structure, estimated with Qini weights.}
-#' }
-#'
-#' @examples
-#' \dontrun{
-#' rate <- margot_rate(my_models)
-#' knitr::kable(rate$rate_autoc)
-#' }
-#' @export
-margot_rate <- function(models,
-                        label_mapping      = NULL,
-                        remove_tx_prefix   = TRUE,
-                        remove_z_suffix    = TRUE,
-                        use_title_case     = TRUE,
-                        remove_underscores = TRUE,
-                        round_digits       = 3,
-                        highlight_significant = TRUE) {
-
-  build_table <- function(field) {
-    rows <- lapply(names(models$results), function(mod_name) {
-      res <- models$results[[mod_name]][[field]]
-      res <- res[setdiff(names(res), c("TOC", "target"))]
-      res <- lapply(res, function(x) {
-        if (is.numeric(x)) x <- round(x, round_digits)
-        if (length(x) > 1) x[1] else x
-      })
-      label <- transform_var_name(
-        mod_name, label_mapping,
-        remove_tx_prefix   = remove_tx_prefix,
-        remove_z_suffix    = remove_z_suffix,
-        use_title_case     = use_title_case,
-        remove_underscores = remove_underscores
-      )
-      df <- data.frame(
-        model   = mod_name,
-        outcome = label,
-        stringsAsFactors = FALSE
-      )
-      for (nm in names(res)) df[[nm]] <- res[[nm]]
-      df
-    })
-    tab <- do.call(rbind, rows)
-    rownames(tab) <- NULL
-    names(tab)[names(tab) == "estimate"] <- "RATE Estimate"
-    names(tab)[names(tab) == "std.err"]  <- "Std Error"
-    if (all(c("RATE Estimate", "Std Error") %in% names(tab))) {
-      tab$`2.5%`  <- round(tab$`RATE Estimate` - 1.96 * tab$`Std Error`, round_digits)
-      tab$`97.5%` <- round(tab$`RATE Estimate` + 1.96 * tab$`Std Error`, round_digits)
-    }
-    if (highlight_significant && all(c("2.5%", "97.5%") %in% names(tab))) {
-      sig <- which(tab$`2.5%` > 0 & tab$`97.5%` > 0)
-      tab$outcome[sig] <- paste0("**", tab$outcome[sig], "**")
-    }
-    tab
-  }
-
-  list(
-    rate_autoc = build_table("rate_result"),
-    rate_qini  = build_table("rate_qini")
-  )
-}
-
 #' Interpret RATE estimates
 #'
 #' Produce a compact Markdown summary describing which outcomes show positive,
@@ -102,7 +9,7 @@ margot_rate <- function(models,
 #'   preprocessing (unused here but kept for API symmetry).
 #' @param target Either `"AUTOC"` or `"Qini"` (ignored when `rate_df` is a list).
 #' @return A Markdown string (single method) or a comparison list (two methods).
-#' @export
+#' @keywords internal
 margot_interpret_rate <- function(rate_df,
                                   flipped_outcomes = NULL,
                                   target = "AUTOC") {
@@ -118,10 +25,19 @@ margot_interpret_rate <- function(rate_df,
     stop("rate_df must contain RATE Estimate, 2.5%, 97.5%, and outcome columns")
   }
 
+  # inside margot_interpret_rate() --------------------------------------------
+  # 1. filter on policy if the column exists
+  if ("policy" %in% names(rate_df))
+    rate_df <- dplyr::filter(rate_df, policy == unique(rate_df$policy)[1])
+
+  # 2. adapt the explanatory header
   header <- paste0(
-    "### Targeting operating characteristic (TOC) by rank average treatment effect (RATE): ",
-    target
+    "### Evidence for heterogeneous treatment effects (policy = ",
+    ifelse(rate_df$policy[1] == "treat_best",
+           "treat best responders",
+           "withhold from best responders"), ") using ", target
   )
+
   desc <- if (target == "AUTOC") {
     "AUTOC uses logarithmic weighting to focus treatment on top responders."
   } else {
@@ -170,14 +86,40 @@ margot_interpret_rate <- function(rate_df,
   paste(parts, collapse = "\n\n")
 }
 
+#' @keywords internal
+make_table <- function(targ) {
+  tab <- margot_rate_batch(models,
+                           policy       = policy,
+                           target       = targ,
+                           round_digits = round_digits) |>
+    dplyr::mutate(
+      outcome = vapply(
+        model,
+        transform_var_name,
+        character(1),
+        label_mapping,
+        remove_tx_prefix,
+        remove_z_suffix,
+        use_title_case,
+        remove_underscores
+      )
+    )
+
+  if (highlight_significant) {
+    sig <- which(tab$`2.5%` > 0 | tab$`97.5%` < 0)
+    tab$outcome[sig] <- paste0("**", tab$outcome[sig], "**")
+  }
+
+  dplyr::arrange(tab, dplyr::desc(`RATE Estimate`))   # ← new line
+}
+
 #' Compare and interpret RATE estimates from AUTOC and Qini
 #'
-#' @keywords internal
 #' @param autoc_df Data frame of AUTOC results produced by `margot_rate()`.
 #' @param qini_df  Data frame of Qini  results produced by `margot_rate()`.
 #' @param flipped_outcomes Character vector of outcomes inverted during preprocessing.
 #' @return A list with comparison text, individual summaries, and model name sets.
-#' @export
+#' @keywords internal
 margot_interpret_rate_comparison <- function(autoc_df,
                                              qini_df,
                                              flipped_outcomes = NULL) {
@@ -250,5 +192,152 @@ margot_interpret_rate_comparison <- function(autoc_df,
     qini_model_names    = qini_models,
     both_model_names    = both_models,
     either_model_names  = either_models
+  )
+}
+
+#' Batch-compute RATEs for every outcome in a *margot_causal_forest* result
+#'
+#' This replaces the legacy "internal RATE" code and is the only function that
+#' actually talks to **grf**.  It flips the CATE vector on the fly when
+#' `policy = "withhold_best"`.
+#'
+#' @param model_results List returned by `margot_causal_forest()` (possibly
+#'   flipped by `margot_flip_forests()`), containing `$results` and
+#'   `$full_models`.
+#' @param policy Either `"treat_best"` (default) or `"withhold_best"`.
+#' @param target Weighting scheme: `"AUTOC"` (default) or `"QINI"`.
+#' @param level  Wald confidence level (default 0.95).
+#' @param round_digits Decimal places to keep (default 3).
+#' @param model_prefix Common prefix on model names (default `"model_"`).
+#' @param verbose Print progress with **cli**?
+#'
+#' @return A tibble with columns
+#'   `model`, `outcome`, `policy`, `target`,
+#'   `RATE Estimate`, `Std Error`, `2.5%`, `97.5%`.
+#' @export
+#' @importFrom grf rank_average_treatment_effect
+#' @importFrom stats qnorm
+#' @importFrom tibble tibble
+#' @importFrom cli   cli_alert_info cli_alert_warning
+margot_rate_batch <- function(model_results,
+                              policy       = c("treat_best", "withhold_best"),
+                              target       = c("AUTOC", "QINI"),
+                              level        = 0.95,
+                              round_digits = 3,
+                              model_prefix = "model_",
+                              verbose      = TRUE) {
+
+  stopifnot(is.list(model_results),
+            all(c("results", "full_models") %in% names(model_results)))
+
+  policy <- match.arg(policy)
+  target <- match.arg(target)
+  z      <- qnorm(1 - (1 - level) / 2)
+
+  say <- function(fun, msg) if (verbose) fun(msg)
+
+  out <- lapply(names(model_results$results), function(mn) {
+
+    say(cli::cli_alert_info,
+        sprintf("↻ computing %s (%s, %s)", mn, target, policy))
+
+    forest  <- model_results$full_models[[mn]]
+    tau_hat <- model_results$results[[mn]]$tau_hat
+
+    if (is.null(forest) || !inherits(forest, "causal_forest")) {
+      say(cli::cli_alert_warning, sprintf("skip %s: no causal_forest", mn))
+      return(NULL)
+    }
+    if (!is.numeric(tau_hat)) {
+      say(cli::cli_alert_warning, sprintf("skip %s: tau_hat missing", mn))
+      return(NULL)
+    }
+
+    if (policy == "withhold_best") tau_hat <- -tau_hat
+
+    ra <- grf::rank_average_treatment_effect(forest, tau_hat, target = target)
+
+    est <- round(ra$estimate, round_digits)
+    se  <- round(ra$std.err , round_digits)
+    ci  <- round(est + c(-1, 1) * qnorm(1 - (1 - level) / 2) * se, round_digits)
+
+    say(cli::cli_alert_info,
+        sprintf("✔ %s RATE = %.3f (SE %.3f)", mn, est, se))
+
+    tibble::tibble(
+      model           = mn,
+      outcome         = sub(paste0("^", model_prefix), "", mn),
+      policy          = policy,
+      target          = target,
+      `RATE Estimate` = est,
+      `Std Error`     = se,
+      `2.5%`          = ci[1],
+      `97.5%`         = ci[2]
+    )
+  })
+
+  dplyr::bind_rows(out)
+}
+
+#' Assemble RATE tables (AUTOC and Qini)
+#'
+#' Convenience wrapper around `margot_rate_batch()`.  Returns two data frames,
+#' both sorted by descending `RATE Estimate`, and with reliable results
+#' highlighted in **bold**.
+#'
+#' @param models  List from `margot_causal_forest()` (possibly flipped).
+#' @param policy  `"treat_best"` (default) or `"withhold_best"`.
+#' @param round_digits Integer; decimal places (default 3).
+#' @param highlight_significant Logical; bold outcomes whose 95% CI excludes
+#'   0 (default TRUE).
+#' @param label_mapping Named character vector for converting variable names to readable labels.
+#' @param remove_tx_prefix Logical; remove treatment prefix from variable names (default TRUE).
+#' @param remove_z_suffix Logical; remove z-score suffix from variable names (default TRUE).
+#' @param use_title_case Logical; convert variable names to title case (default TRUE).
+#' @param remove_underscores Logical; replace underscores with spaces (default TRUE).
+#' @return List with elements `rate_autoc`, `rate_qini`.
+#' @export
+margot_rate <- function(models,
+                        policy               = c("treat_best", "withhold_best"),
+                        round_digits         = 3,
+                        highlight_significant = TRUE,
+                        label_mapping        = NULL,
+                        remove_tx_prefix     = TRUE,
+                        remove_z_suffix      = TRUE,
+                        use_title_case       = TRUE,
+                        remove_underscores   = TRUE) {
+
+  policy <- match.arg(policy)
+
+  ## local helper -----------------------------------------------------------
+  make_table <- function(target) {
+    tab <- margot_rate_batch(models,
+                             policy       = policy,
+                             target       = target,
+                             round_digits = round_digits) |>
+      dplyr::mutate(
+        outcome = vapply(
+          model,
+          transform_var_name,
+          character(1),
+          label_mapping,
+          remove_tx_prefix,
+          remove_z_suffix,
+          use_title_case,
+          remove_underscores
+        )
+      )
+
+    if (highlight_significant) {
+      sig <- with(tab, `2.5%` > 0 | `97.5%` < 0)
+      tab$outcome[sig] <- paste0("**", tab$outcome[sig], "**")
+    }
+
+    dplyr::arrange(tab, dplyr::desc(`RATE Estimate`))
+  }
+
+  list(
+    rate_autoc = make_table("AUTOC"),
+    rate_qini  = make_table("QINI")
   )
 }

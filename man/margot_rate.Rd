@@ -2,64 +2,45 @@
 % Please edit documentation in R/margot_rate.R
 \name{margot_rate}
 \alias{margot_rate}
-\title{Format RATE results into readable tables, keeping raw model names}
+\title{Assemble RATE tables (AUTOC and Qini)}
 \usage{
 margot_rate(
   models,
+  policy = c("treat_best", "withhold_best"),
+  round_digits = 3,
+  highlight_significant = TRUE,
   label_mapping = NULL,
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
-  remove_underscores = TRUE,
-  round_digits = 3,
-  highlight_significant = TRUE
+  remove_underscores = TRUE
 )
 }
 \arguments{
-\item{models}{A list returned by `margot_multi_arm_causal_forest()` that
-contains an element `results`, itself a named list of model fits.}
+\item{models}{List from `margot_causal_forest()` (possibly flipped).}
 
-\item{label_mapping}{Named character vector mapping raw variable names to
-presentation labels.}
+\item{policy}{`"treat_best"` (default) or `"withhold_best"`.}
 
-\item{remove_tx_prefix}{Logical. Drop a leading `t0_` from variable names?}
+\item{round_digits}{Integer; decimal places (default 3).}
 
-\item{remove_z_suffix}{Logical. Drop a trailing `_z` from variable names?}
+\item{highlight_significant}{Logical; bold outcomes whose 95% CI excludes
+0 (default TRUE).}
 
-\item{use_title_case}{Logical. Convert labels to title case?}
+\item{label_mapping}{Named character vector for converting variable names to readable labels.}
 
-\item{remove_underscores}{Logical. Replace underscores with spaces?}
+\item{remove_tx_prefix}{Logical; remove treatment prefix from variable names (default TRUE).}
 
-\item{round_digits}{Integer. Decimal places to keep (default = 3).}
+\item{remove_z_suffix}{Logical; remove z-score suffix from variable names (default TRUE).}
 
-\item{highlight_significant}{Logical. Bold labels whose 95 \% CI is entirely
-above zero.}
+\item{use_title_case}{Logical; convert variable names to title case (default TRUE).}
+
+\item{remove_underscores}{Logical; replace underscores with spaces (default TRUE).}
 }
 \value{
-A named list with two data frames
-\describe{
-  \item{rate_autoc}{Data frame with columns
-    \code{model}, \code{outcome}, \code{RATE Estimate},
-    \code{Std Error}, \code{2.5\%}, \code{97.5\%}.}
-  \item{rate_qini}{Identical structure, estimated with Qini weights.}
-}
+List with elements `rate_autoc`, `rate_qini`.
 }
 \description{
-Assemble two tables that summarise rank-average treatment effect (RATE)
-estimates from causal-forest models under two targeting operating
-characteristics (TOC): **AUTOC** and **Qini**.  Each table retains the raw
-model names but maps them to human-readable outcome labels and appends 95\%
-Wald confidence intervals.
-}
-\details{
-Outcome labels are created with `transform_var_name()`.
-Setting `highlight_significant = TRUE` wraps the outcome label in **bold**
-Markdown when the 95 \% confidence interval lies strictly above zero, making
-it easy to emphasise robust results in Quarto or R Markdown documents.
-}
-\examples{
-\dontrun{
-rate <- margot_rate(my_models)
-knitr::kable(rate$rate_autoc)
-}
+Convenience wrapper around `margot_rate_batch()`.  Returns two data frames,
+both sorted by descending `RATE Estimate`, and with reliable results
+highlighted in **bold**.
 }

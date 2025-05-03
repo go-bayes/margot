@@ -7,6 +7,27 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-05-03] margot 1.0.29
+## New
+- `margot_rate_batch()` - Two allocation rules are available: **"treat_best"**  (default) ─ administer treatment to those with the largest predicted benefits; **"withhold_best"** ─ *remove* treatment from that same subgroup, useful when the intervention harmful. The CATE vector is flipped (multiplied by −1) *after* model fitting and *before* calling `grf::rank_average_treatment_effect()`.  Outcome direction flips performed earlier by `margot_flip_forests()` are thus kept conceptually separate from the policy flip implemented here.
+-  removed `add_resistance`
+
+## Refactored to accept 1L depth policy trees 👍
+- `margot_plot_policy_tree()` will plot a tree of depth = 1L. 
+- `margot_recalculate_policy_trees()`
+- `margot_flip_forests()`
+- `margot_interpret_policy_batch()`
+- `margot_interpret_policy_tree()`
+- `margot_interpret_rate()`
+- `margot_plot_decision_tree()`
+- `margot_plot_policy_combo()`
+- `margot_policy()`
+
+
+# [2025-05-02] margot 1.0.28
+## New 
+- `margot_rate()` now computes resistance to exposure (if requested) using `add_resistance`
+
 # [2025-05-02] margot 1.0.27
 ## New 
 - `margot_flip_forests()` automatic recomputing of the policy trees by default.

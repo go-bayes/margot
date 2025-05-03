@@ -135,6 +135,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_prop_missing.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_propensity_model_and_plots.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_rate.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_rate_batch.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_rate_resistance.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_recalculate_policy_trees.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_rescue_qini.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_run_models_grf.html</loc></url>

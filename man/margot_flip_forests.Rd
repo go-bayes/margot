@@ -17,7 +17,7 @@ margot_flip_forests(
 
 \item{flip_outcomes}{A character vector of outcome variable names for which CATE estimates should be flipped.}
 
-\item{model_prefix}{A character string indicating the prefix used for model names in the results list. Default is "model_.".}
+\item{model_prefix}{A character string indicating the prefix used for model names in the results list. Default is "model_".}
 
 \item{recalc_policy}{Logical; if TRUE (default) recalculates policy trees for flipped outcomes.}
 
@@ -29,5 +29,5 @@ A modified copy of the model_results list with flipped CATE estimates and recalc
 \description{
 This function post-processes the results from margot_causal_forest to flip CATE estimates,
 RATE results, QINI RATE results, QINI curves, and (by default) recalculates the policy trees
-for the specified outcomes.  If `recalc_policy = FALSE`, tree regeneration is skipped.
+for the specified outcomes. If \code{recalc_policy = FALSE}, tree regeneration is skipped.
 }

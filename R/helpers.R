@@ -944,18 +944,31 @@ transform_to_original_scale <- function(results_df, original_df, label_mapping =
 
 #' @keywords internal
 transform_var_name <- function(var_name, label_mapping = NULL,
-                               remove_tx_prefix = TRUE, remove_z_suffix = TRUE,
-                               use_title_case = TRUE, remove_underscores = TRUE) {
+                               remove_tx_prefix   = TRUE,
+                               remove_z_suffix    = TRUE,
+                               use_title_case     = TRUE,
+                               remove_underscores = TRUE) {
+  # if there's no variable (e.g. root node at depth 1), return NA
+  if (is.na(var_name) || length(var_name) == 0) {
+    return(NA_character_)
+  }
+
   display_name <- var_name
-  if (startsWith(display_name, "model_")) {
+
+  # only strip "model_" when display_name is non-NA
+  if (!is.na(display_name) && startsWith(display_name, "model_")) {
     display_name <- sub("^model_", "", display_name)
   }
+
+  # apply explicit mapping
   if (!is.null(label_mapping) && display_name %in% names(label_mapping)) {
     mapped_label <- label_mapping[[display_name]]
     cli::cli_alert_info("Applied label mapping: {var_name} -> {mapped_label}")
     return(mapped_label)
   }
-  if (startsWith(display_name, "t0_")) {
+
+  # handle t0_ → t2_ lookup
+  if (!is.na(display_name) && startsWith(display_name, "t0_")) {
     t2_var <- sub("^t0_", "t2_", display_name)
     if (!is.null(label_mapping) && t2_var %in% names(label_mapping)) {
       mapped_label <- label_mapping[[t2_var]]
@@ -963,22 +976,34 @@ transform_var_name <- function(var_name, label_mapping = NULL,
       return(mapped_label)
     }
   }
-  if (remove_tx_prefix)   display_name <- sub("^t[0-9]+_", "", display_name)
-  if (remove_z_suffix)    display_name <- sub("_z$", "", display_name)
-  if (remove_underscores) display_name <- gsub("_", " ", display_name)
-  if (use_title_case) {
+
+  # remove prefixes/suffixes/underscores
+  if (remove_tx_prefix   && !is.na(display_name)) {
+    display_name <- sub("^t[0-9]+_", "", display_name)
+  }
+  if (remove_z_suffix    && !is.na(display_name)) {
+    display_name <- sub("_z$", "", display_name)
+  }
+  if (remove_underscores && !is.na(display_name)) {
+    display_name <- gsub("_", " ", display_name)
+  }
+
+  # title–case and NZ acronyms
+  if (use_title_case && !is.na(display_name)) {
     display_name <- tools::toTitleCase(display_name)
     display_name <- gsub("Nz", "NZ", display_name)
   }
-  if (display_name != var_name) {
+
+  # log any transformation
+  if (!identical(display_name, var_name)) {
     cli::cli_alert_info("Transformed label: {var_name} -> {display_name}")
   }
-  return(display_name)
+
+  display_name
 }
 
 # helper for NULL
-`%||%` <- function(x,y) if (is.null(x)) y else x
-
+`%||%` <- function(x, y) if (is.null(x)) y else x
 
 #' @keywords internal
 margot_batch_glm <- function(

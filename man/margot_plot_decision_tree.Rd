@@ -7,6 +7,7 @@
 margot_plot_decision_tree(
   result_object,
   model_name = NULL,
+  max_depth = 2L,
   original_df = NULL,
   x_padding = 0.12,
   y_padding = 0.25,
@@ -17,7 +18,7 @@ margot_plot_decision_tree(
   non_leaf_fill = "lightyellow",
   title = NULL,
   leaf_palette = NULL,
-  plot_margin = unit(c(1, 1, 1, 1), "cm"),
+  plot_margin = grid::unit(c(1, 1, 1, 1), "cm"),
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
@@ -30,6 +31,8 @@ margot_plot_decision_tree(
 \item{result_object}{A list containing the policy tree object or Margot results.}
 
 \item{model_name}{Character string specifying the model name in the results object. Default is NULL.}
+
+\item{max_depth}{Integer, 1 or 2; which stored tree to visualise.}
 
 \item{original_df}{Optional dataframe with untransformed variables, used to display split values on the data scale.}
 
@@ -59,38 +62,13 @@ margot_plot_decision_tree(
 
 \item{remove_underscores}{Logical indicating whether to remove underscores from labels. Default is TRUE.}
 
-\item{remove_action_label}{Logical indicating whether to remove "Action: " prefix from leaf node labels in the final plot. Default is TRUE.}
+\item{remove_action_label}{Logical indicating whether to remove "Action: " prefix from leaf node labels. Default is TRUE.}
 
-\item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names (with or without "model_" prefix),
-and values should be the desired display labels. Default is NULL.}
+\item{label_mapping}{Optional named list for custom label mappings. Default is NULL.}
 }
 \value{
 A ggplot object representing the decision tree.
 }
 \description{
-This function creates a ggplot visualization of a decision tree from Margot Causal Forest results.
-It handles label transformations, includes both standardized and original split values,
-and provides informative feedback using cli messages.
-}
-\examples{
-\dontrun{
-# Assuming 'results' is your Margot results object and 'model_name' is the name of your model
-tree_plot <- margot_plot_decision_tree(results, model_name = "my_model")
-print(tree_plot)
-
-# To keep the "Action: " prefix in leaf node labels
-tree_plot <- margot_plot_decision_tree(results, model_name = "my_model", remove_action_label = FALSE)
-print(tree_plot)
-
-# Using custom label mapping and original_df for unstandardized values
-label_mapping <- list(
-  "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
-  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
-)
-tree_plot <- margot_plot_decision_tree(results, model_name = "model_t2_env_not_env_efficacy_z",
-                                       label_mapping = label_mapping,
-                                       original_df = original_df)
-print(tree_plot)
-}
-
+Plot a Decision Tree from Margot Causal Forest Results
 }

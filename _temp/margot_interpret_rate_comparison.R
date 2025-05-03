@@ -1,204 +1,250 @@
-#’ interpret rank-weighted average treatment effect (rate) estimates
-#’
-#’ this function provides a concise interpretation of rate estimates from causal forests.
-#’
-#’ @param rate_df a data frame or list from margot_rate()
-#’ @param flipped_outcomes character vector of outcomes inverted during preprocessing
-#’ @param target “AUTOC” or “QINI” (ignored if rate_df is a list)
-#’ @return a markdown string interpreting the rate estimates
-#’ @importFrom stats qnorm
-#’ @export
-margot_interpret_rate <- function(rate_df, flipped_outcomes = NULL, target = "AUTOC") {
-  # if both methods present, delegate to comparison function
+# ────────────────────────────────────────────────────────────────────────────
+# 1. Interpret a single AUTOC or QINI table
+#' interpret RATE estimates (single table or pair of tables)
+#'
+#' @param rate_df data-frame returned by `margot_rate()` **or** the list
+#'   (`rate_autoc`, `rate_qini`) that `margot_rate()` returns.
+#' @param flipped_outcomes character vector of outcome names that were
+#'   direction-flipped during preprocessing.
+#' @param target character; "AUTOC" or "QINI". ignored when `rate_df`
+#'   is the list of two tables.
+#'
+#' @return markdown character string (single table) or the comparison list.
+#' @keywords internal
+margot_interpret_rate <- function(rate_df,
+                                  flipped_outcomes = NULL,
+                                  target           = "AUTOC") {
+
+  ## ── send two-table input to the comparison helper ──────────────────────
   if (is.list(rate_df) && !is.data.frame(rate_df) &&
-      all(c("rate_autoc","rate_qini") %in% names(rate_df))) {
-    return(margot_interpret_rate_comparison(
-      rate_df$rate_autoc, rate_df$rate_qini, flipped_outcomes
-    ))
+      all(c("rate_autoc", "rate_qini") %in% names(rate_df))) {
+    return(
+      margot_interpret_rate_comparison(
+        autoc_df         = rate_df$rate_autoc,
+        qini_df          = rate_df$rate_qini,
+        flipped_outcomes = flipped_outcomes
+      )
+    )
   }
 
-  # validate inputs
-  if (!target %in% c("AUTOC","QINI")) stop("target must be 'AUTOC' or 'QINI'")
-  required <- c("RATE Estimate","2.5%","97.5%")
-  if (!all(required %in% colnames(rate_df))) stop("missing required columns")
+  ## ── sanity checks ──────────────────────────────────────────────────────
+  stopifnot(target %in% c("AUTOC", "QINI"))
+  req <- c("RATE Estimate", "2.5%", "97.5%", "outcome")
+  if (!all(req %in% names(rate_df)))
+    stop("rate_df must contain columns: ", paste(req, collapse = ", "))
 
-  outcomes <- rate_df[[1]]
-  ci_low  <- rate_df[,"2.5%"]
-  ci_high <- rate_df[,"97.5%"]
+  ## ── isolate a single policy, if present ────────────────────────────────
+  if ("policy" %in% names(rate_df)) {
+    pol <- unique(rate_df$policy)
+    if (length(pol) != 1)
+      stop("rate_df mixes multiple policies; filter before calling.")
+    rate_df <- dplyr::filter(rate_df, policy == pol)
+    pol_txt <- ifelse(pol == "treat_best",
+                      "treat best responders",
+                      "withhold best responders")
+  } else {
+    pol_txt <- "treat best responders"   # legacy default
+  }
 
-  # identify significant positive and negative
-  pos_idx <- which(ci_low  > 0)
-  neg_idx <- which(ci_high < 0)
+  ## ── mark inverted outcomes (optional) ──────────────────────────────────
+  if (!is.null(flipped_outcomes) && length(flipped_outcomes)) {
+    w <- rate_df$outcome %in% flipped_outcomes
+    rate_df$outcome[w] <- paste0(rate_df$outcome[w], " (inverted)")
+  }
 
-  parts <- list(
-    paste0("### prioritisation via ", target, " on causal-forest $\\tau(x)$ estimates")
+  ## ── classify outcomes ──────────────────────────────────────────────────
+  lo  <- rate_df$`2.5%`
+  hi  <- rate_df$`97.5%`
+  pos <- which(lo  > 0)
+  neg <- which(hi < 0)
+  inc <- setdiff(seq_along(lo), c(pos, neg))
+
+  ## ── assemble markdown text ─────────────────────────────────────────────
+  lines <- list(
+    paste0("### RATE (", target, ", policy = ", pol_txt, ")"),
+    if (target == "AUTOC")
+      "AUTOC applies logarithmic weighting, sharpening focus on top responders."
+    else
+      "QINI applies linear weighting, maximising aggregate gain."
   )
 
-  # method description
-  desc <- if (target=="AUTOC") {
-    "AUTOC uses logarithmic weighting to focus treatment on the top responders."
-  } else {
-    "QINI uses linear weighting to balance effect size and prevalence for aggregate gain."
-  }
-  parts <- c(parts, desc)
+  if (length(pos))
+    lines <- c(lines,
+               paste0("**Positive RATE** – CATE targeting outperforms ATE for: ",
+                      paste(rate_df$outcome[pos], collapse = ", "), "."))
+  if (length(neg))
+    lines <- c(lines,
+               paste0("**Negative RATE** – CATE targeting would *underperform* ATE for: ",
+                      paste(rate_df$outcome[neg], collapse = ", "), "."))
+  if (length(inc))
+    lines <- c(lines,
+               paste0("Evidence inconclusive for: ",
+                      paste(rate_df$outcome[inc], collapse = ", "),
+                      " (95 % CI crosses 0)."))
 
-  # positive outcomes
-  if (length(pos_idx) > 0) {
-    pos_out <- outcomes[pos_idx]
-    pos_est <- sapply(pos_idx, function(i)
-      sprintf("%s: %.3f (95%% CI %.3f, %.3f)",
-              outcomes[i], rate_df[i,"RATE Estimate"], ci_low[i], ci_high[i])
-    )
-    parts <- c(parts,
-               paste0(
-                 "positive rate estimates for ", target, " indicate that c-ate targeting ",
-                 "outperforms ate for: ", paste(pos_out, collapse=", "), ". ",
-                 "(", paste(pos_est, collapse="; "), ")."
-               )
-    )
-  }
-
-  # negative outcomes
-  if (length(neg_idx) > 0) {
-    neg_out <- outcomes[neg_idx]
-    neg_est <- sapply(neg_idx, function(i)
-      sprintf("%s: %.3f (95%% CI %.3f, %.3f)",
-              outcomes[i], rate_df[i,"RATE Estimate"], ci_low[i], ci_high[i])
-    )
-    parts <- c(parts,
-               paste0(
-                 "negative rate estimates for ", target, " indicate that c-ate targeting ",
-                 "would underperform ate for: ", paste(neg_out, collapse=", "), ". ",
-                 "(", paste(neg_est, collapse="; "), ")."
-               )
-    )
-  }
-
-  # inconclusive outcomes
-  nonsig <- setdiff(seq_along(outcomes), union(pos_idx, neg_idx))
-  if (length(pos_idx)==0 && length(neg_idx)==0) {
-    parts <- c(parts,
-               "no outcome shows a confidence interval excluding zero; heterogeneity evidence is inconclusive."
-    )
-  } else if (length(nonsig)>0) {
-    parts <- c(parts,
-               paste0(
-                 "for ", paste(outcomes[nonsig], collapse=", "),
-                 ", the 95% ci includes zero; evidence remains inconclusive."
-               )
-    )
-  }
-
-  paste(parts, collapse="\n\n")
+  paste(lines, collapse = "\n\n")
 }
 
-#’ compare and interpret rate estimates from both autoc and qini
-#’
-#’ @param autoc_df data frame of autoc results
-#’ @param qini_df data frame of qini results
-#’ @param flipped_outcomes character vector of inverted outcomes
-#’ @return list with elements comparison (markdown), autoc_results, qini_results
-#’ @export
-margot_interpret_rate_comparison <- function(autoc_df, qini_df, flipped_outcomes = NULL) {
-  # validate inputs
-  req <- c("RATE Estimate","2.5%","97.5%")
-  if (!all(req %in% colnames(autoc_df)) || !all(req %in% colnames(qini_df))) {
-    stop("both inputs must have RATE Estimate, 2.5%, 97.5%")
+#' Compare AUTOC and QINI RATE tables for the *same* policy
+#'
+#' @param autoc_df Data frame from `margot_rate()` (AUTOC).
+#' @param qini_df  Data frame from `margot_rate()` (QINI).
+#' @param flipped_outcomes Character (unused; kept for API symmetry).
+#'
+#' @return List with `comparison`, `autoc_results`, `qini_results`,
+#'   and the four sets of model names.
+#' @keywords internal
+margot_interpret_rate_comparison <- function(autoc_df,
+                                             qini_df,
+                                             flipped_outcomes = NULL) {
+
+  req <- c("model", "outcome", "RATE Estimate", "2.5%", "97.5%")
+  stopifnot(all(req %in% names(autoc_df)),
+            all(req %in% names(qini_df)))
+
+  ## ── align on a single policy ───────────────────────────────────────────
+  if ("policy" %in% names(autoc_df)) {
+    pol <- unique(autoc_df$policy)
+    if (length(pol) != 1 ||
+        !all(pol %in% unique(qini_df$policy)))
+      stop("AUTOC and QINI tables refer to different policies.")
+    autoc_df <- dplyr::filter(autoc_df, policy == pol)
+    qini_df  <- dplyr::filter(qini_df,  policy == pol)
+    pol_txt  <- ifelse(pol == "treat_best",
+                       "treat best responders",
+                       "withhold best responders")
+  } else {
+    pol_txt  <- "treat best responders"
   }
 
-  # extract outcome names and significance
-  out <- autoc_df[[1]]
-  sig_autoc_pos <- out[autoc_df[,"2.5%"] > 0]
-  sig_autoc_neg <- out[autoc_df[,"97.5%"] < 0]
-  sig_qini_pos  <- out[qini_df[,"2.5%"]    > 0]
-  sig_qini_neg  <- out[qini_df[,"97.5%"]   < 0]
+  ## ── significant positives only (your original convention) ──────────────
+  pos_auto <- autoc_df$model[autoc_df$`2.5%` > 0]
+  pos_qini <- qini_df$model[qini_df$`2.5%`  > 0]
 
-  # identify overlaps and method-specific
-  both_pos <- intersect(sig_autoc_pos, sig_qini_pos)
-  both_neg <- intersect(sig_autoc_neg, sig_qini_neg)
-  auto_only_pos <- setdiff(sig_autoc_pos, sig_qini_pos)
-  qini_only_pos <- setdiff(sig_qini_pos, sig_autoc_pos)
-  auto_only_neg <- setdiff(sig_autoc_neg, sig_qini_neg)
-  qini_only_neg <- setdiff(sig_qini_neg, sig_autoc_neg)
+  both_pos  <- intersect(pos_auto, pos_qini)
+  only_auto <- setdiff(pos_auto, pos_qini)
+  only_qini <- setdiff(pos_qini, pos_auto)
 
-  parts <- list("### comparison of AUTOC vs QINI prioritisation")
+  lbl <- setNames(autoc_df$outcome, autoc_df$model)
 
-  # methods summary
-  parts <- c(parts,
-             "we apply two strategies to the same causal-forest $\\tau(x)$ estimates: ",
-             "- AUTOC intensifies focus on top responders (log weighting)\n",
-             "- QINI balances effect size and prevalence (linear weighting)"
+  ## ── build narrative ────────────────────────────────────────────────────
+  txt <- c(
+    paste0("### AUTOC vs QINI (policy = ", pol_txt, ")"),
+    "* AUTOC — logarithmic weighting (top responders)",
+    "* QINI  — linear weighting (aggregate gain)"
   )
 
-  # concordant positive
-  if (length(both_pos)>0) {
-    parts <- c(parts,
-               paste0(
-                 "both methods yield positive estimates for: ", paste(both_pos, collapse=", "),
-                 ". robust heterogeneity signal. see table below."
-               ),
-               # build small markdown table
-               {
-                 rows <- sapply(both_pos, function(o){
-                   a <- autoc_df[autoc_df[[1]]==o,"RATE Estimate"]; al <- autoc_df[autoc_df[[1]]==o,"2.5%"]; ah <- autoc_df[autoc_df[[1]]==o,"97.5%"]
-                   q <- qini_df[qini_df[[1]]==o,"RATE Estimate"]; ql <- qini_df[qini_df[[1]]==o,"2.5%"]; qh <- qini_df[qini_df[[1]]==o,"97.5%"]
-                   sprintf("| %s | %.3f (%.3f,%.3f) | %.3f (%.3f,%.3f) |",
-                           o, a, al, ah, q, ql, qh)
-                 })
-                 c("| Outcome | AUTOC (95% CI) | QINI (95% CI) |",
-                   "|:--------|:---------------|:-------------|",
-                   rows)
-               }
-    )
+  if (length(both_pos)) {
+    txt <- c(txt,
+             paste0("Both methods agree on **positive RATE** for: ",
+                    paste(lbl[both_pos], collapse = ", "), "."))
   }
-
-  # concordant negative
-  if (length(both_neg)>0) {
-    parts <- c(parts,
-               paste0(
-                 "both methods yield negative estimates for: ", paste(both_neg, collapse=", "),
-                 ". targeting by c-ate would underperform ate."
-               )
-    )
+  if (length(only_auto) || length(only_qini)) {
+    disc <- c()
+    if (length(only_auto))
+      disc <- c(disc,
+                paste0("AUTOC-only positive: ",
+                       paste(lbl[only_auto], collapse = ", ")))
+    if (length(only_qini))
+      disc <- c(disc,
+                paste0("QINI-only positive: ",
+                       paste(lbl[only_qini], collapse = ", ")))
+    txt <- c(txt,
+             "Weighting choice matters:",
+             paste(disc, collapse = "; "), ".")
   }
-
-  # discordant
-  if (length(auto_only_pos)+length(qini_only_pos)+length(auto_only_neg)+length(qini_only_neg) > 0) {
-    discord <- c()
-    if (length(auto_only_pos)>0)
-      discord <- c(discord,
-                   paste0("AUTOC only positive: ", paste(auto_only_pos, collapse=", "))
-      )
-    if (length(qini_only_pos)>0)
-      discord <- c(discord,
-                   paste0("QINI only positive: ", paste(qini_only_pos, collapse=", "))
-      )
-    if (length(auto_only_neg)>0)
-      discord <- c(discord,
-                   paste0("AUTOC only negative: ", paste(auto_only_neg, collapse=", "))
-      )
-    if (length(qini_only_neg)>0)
-      discord <- c(discord,
-                   paste0("QINI only negative: ", paste(qini_only_neg, collapse=", "))
-      )
-    parts <- c(parts,
-               "discordant findings indicate sensitivity to weighting scheme:",
-               paste(discord, collapse="; "), "."
-    )
+  if (!length(c(both_pos, only_auto, only_qini))) {
+    txt <- c(txt, "No statistically reliable positives under either weighting.")
   }
-
-  # nuanced recommendation
-  parts <- c(parts,
-             "#### policy note",
-             "overlap indicates robust heterogeneity but does not mandate one scheme over the other. ",
-             "choose AUTOC to intensify benefit for top responders or QINI to maximise aggregate gain."
-  )
-
-  comparison_text <- paste(parts, collapse="\n\n")
 
   list(
-    comparison    = comparison_text,
-    autoc_results = margot_interpret_rate(autoc_df, flipped_outcomes, target="AUTOC"),
-    qini_results  = margot_interpret_rate(qini_df,  flipped_outcomes, target="QINI")
+    comparison          = paste(txt, collapse = "\n\n"),
+    autoc_results       = margot_interpret_rate(autoc_df, flipped_outcomes, "AUTOC"),
+    qini_results        = margot_interpret_rate(qini_df,  flipped_outcomes, "QINI"),
+    autoc_model_names   = pos_auto,
+    qini_model_names    = pos_qini,
+    both_model_names    = both_pos
   )
 }
+
+# ────────────────────────────────────────────────────────────────────────────
+# old
+# margot_interpret_rate <- function(rate_df,
+#                                   flipped_outcomes = NULL,
+#                                   target = "AUTOC") {
+#
+#   ## ── dispatch to comparison helper ───────────────────────────────────────
+#   if (is.list(rate_df) && !is.data.frame(rate_df) &&
+#       all(c("rate_autoc", "rate_qini") %in% names(rate_df))) {
+#     return(
+#       margot_interpret_rate_comparison(
+#         autoc_df        = rate_df$rate_autoc,
+#         qini_df         = rate_df$rate_qini,
+#         flipped_outcomes = flipped_outcomes
+#       )
+#     )
+#   }
+#
+#   ## ── basic checks ────────────────────────────────────────────────────────
+#   stopifnot(target %in% c("AUTOC", "QINI"))
+#   req <- c("RATE Estimate", "2.5%", "97.5%")
+#   if (!all(req %in% names(rate_df)))
+#     stop("rate_df must contain the columns: ", paste(req, collapse = ", "))
+#
+#   ## ── isolate one policy (if present) ─────────────────────────────────────
+#   if ("policy" %in% names(rate_df)) {
+#     pol <- unique(rate_df$policy)
+#     if (length(pol) > 1)
+#       stop("rate_df mixes different policies; filter before calling.")
+#     rate_df <- dplyr::filter(rate_df, policy == pol)
+#     policy_string <- ifelse(pol == "treat_best",
+#                             "treat best responders",
+#                             "withhold best responders")
+#   } else {
+#     policy_string <- "treat best responders"   # legacy default
+#   }
+#
+#   ## ── identify signals ────────────────────────────────────────────────────
+#   out   <- rate_df[[1]]
+#   lo    <- rate_df$`2.5%`
+#   hi    <- rate_df$`97.5%`
+#   pos   <- which(lo > 0)
+#   neg   <- which(hi < 0)
+#   incon <- setdiff(seq_along(out), c(pos, neg))
+#
+#   ## ── construct narrative ────────────────────────────────────────────────
+#   bullets <- list(
+#     paste0("### Evidence for heterogeneous treatment effects (policy = ",
+#            policy_string, ") via ", target),
+#     if (target == "AUTOC")
+#       "AUTOC uses logarithmic weighting, emphasising the top responders."
+#     else
+#       "QINI uses linear weighting, balancing effect size and prevalence."
+#   )
+#
+#   if (length(pos)) {
+#     bullets <- c(
+#       bullets,
+#       paste0("**Positive RATE** – CATE targeting outperforms ATE for: ",
+#              paste(out[pos], collapse = ", "), ".")
+#     )
+#   }
+#   if (length(neg)) {
+#     bullets <- c(
+#       bullets,
+#       paste0("**Negative RATE** – CATE targeting would *underperform* ATE for: ",
+#              paste(out[neg], collapse = ", "), ".")
+#     )
+#   }
+#   if (length(incon)) {
+#     bullets <- c(
+#       bullets,
+#       paste0(
+#         "Evidence remains inconclusive for: ",
+#         paste(out[incon], collapse = ", "),
+#         " (95 % CI crosses zero)."
+#       )
+#     )
+#   }
+#   paste(bullets, collapse = "\n\n")
+# }

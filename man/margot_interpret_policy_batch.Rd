@@ -7,6 +7,7 @@
 margot_interpret_policy_batch(
   models,
   model_names = NULL,
+  max_depth = 2L,
   save_path = NULL,
   prefix = NULL,
   include_timestamp = FALSE,
@@ -17,6 +18,8 @@ margot_interpret_policy_batch(
 \item{models}{A list containing the results from multi-arm causal forest models.}
 
 \item{model_names}{A character vector of model names to interpret. If NULL, all models are processed.}
+
+\item{max_depth}{Integer, 1 or 2; which saved policy tree to interpret (default 2).}
 
 \item{save_path}{The path where the combined interpretation will be saved. If NULL, nothing is saved.}
 
@@ -32,5 +35,6 @@ A single character string containing the combined markdown output.
 \description{
 This function now accepts a vector of model names to process and produces
 a single combined output. The common description is printed once at the top,
-followed by each model's specific findings.
+followed by each model's specific findings. You can now control whether to
+interpret the depth-1 or depth-2 tree via the `max_depth` argument.
 }

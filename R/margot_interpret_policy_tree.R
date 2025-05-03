@@ -37,137 +37,113 @@
 #' }
 #'
 #' @export
-margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0.5,
-                                         custom_action_names = NULL, label_mapping = NULL,
-                                         original_df = NULL, remove_tx_prefix = TRUE,
-                                         remove_z_suffix = TRUE, use_title_case = TRUE) {
-  cli::cli_alert_info("Starting policy tree interpretation for {model_name}")
+margot_interpret_policy_tree <- function(model,
+                                         model_name,
+                                         max_depth       = 2L,
+                                         train_proportion= 0.5,
+                                         custom_action_names = NULL,
+                                         label_mapping   = NULL,
+                                         original_df     = NULL,
+                                         remove_tx_prefix= TRUE,
+                                         remove_z_suffix = TRUE,
+                                         use_title_case  = TRUE) {
+  cli::cli_alert_info("Starting policy tree interpretation for {model_name} (depth {max_depth})")
 
-  # use the global transform_var_name function
-  transform_var <- function(var_name) {
-    transform_var_name(var_name, label_mapping, remove_tx_prefix, remove_z_suffix, use_title_case)
+  transform_var <- function(v) {
+    transform_var_name(v, label_mapping, remove_tx_prefix, remove_z_suffix, use_title_case)
   }
 
-  # extract policy tree object
-  policy_tree_obj <- model$results[[model_name]]$policy_tree_depth_2
+  # pull out the right tree
+  policy_tree_obj <- model$results[[model_name]][[paste0("policy_tree_depth_", max_depth)]]
+  if (is.null(policy_tree_obj)) {
+    cli::cli_abort("No policy_tree_depth_{max_depth} found for {model_name}")
+  }
 
-  # extract action names and apply custom names if provided
+  # apply any custom action names
   action_names <- policy_tree_obj$action.names
   if (!is.null(custom_action_names)) {
-    if (length(custom_action_names) != length(action_names)) {
-      cli::cli_abort("The number of custom action names must match the number of actions in the policy tree.")
-    }
+    if (length(custom_action_names) != length(action_names))
+      cli::cli_abort("custom_action_names must match the number of actions")
     action_names <- custom_action_names
-    cli::cli_alert_success("Applied custom action names")
   }
 
-  # extract split variables (numeric indices)
-  split_variable_indices <- sapply(policy_tree_obj$nodes, function(node) node$split_variable)
-  split_variable_indices <- unlist(split_variable_indices)
-  split_variable_indices <- split_variable_indices[!is.na(split_variable_indices)]
+  # grab all split‐variable indices
+  split_idxs <- vapply(policy_tree_obj$nodes,
+                       function(n) n$split_variable %||% NA_integer_,
+                       integer(1))
+  split_idxs <- split_idxs[!is.na(split_idxs)]
+  split_vars <- policy_tree_obj$columns[split_idxs]
 
-  # map numeric indices to actual variable names
-  if (!is.vector(policy_tree_obj$columns) && !is.character(policy_tree_obj$columns)) {
-    cli::cli_abort("policy_tree_obj$columns must be a character vector.")
-  }
-  split_var_names <- policy_tree_obj$columns[split_variable_indices]
-
-  # generate general interpretation
-  general_interpretation <- glue::glue(
-    "A policy tree uses simple rules (a shallow decision tree) ",
-    "to recommend an optimal action. The algorithm uses doubly robust reward estimates ",
-    "from a causal forest. We used {train_proportion * 100}% of the data for training and ",
-    "the remainder for model evaluation. Each split below shows how distinct subgroups ",
-    "are assigned different actions.\n\n"
+  # common opening text
+  general <- glue::glue(
+    "A policy tree (depth {max_depth}) was trained on {train_proportion*100}% of the data.\n"
   )
 
-  cli::cli_alert_success("Generated general interpretation")
+  # now branch
+  if (max_depth == 1L) {
+    # only one split + two leaves
+    node1 <- policy_tree_obj$nodes[[1]]
+    sv1   <- format_split_value(split_vars[1], node1$split_value)
+    leafL <- policy_tree_obj$nodes[[2]]$action
+    leafR <- policy_tree_obj$nodes[[3]]$action
 
-  # pull out the nodes for convenience
-  nodes <- policy_tree_obj$nodes
+    specific <- glue::glue(
+      "**{transform_var(split_vars[1])}** split at **{sv1}**.\n",
+      "- If TRUE → **{action_names[leafL]}**\n",
+      "- If FALSE → **{action_names[leafR]}**\n"
+    )
 
-  # define helper function to format split values
-  format_split_value <- function(var_name, split_val) {
-    orig_val <- get_original_value(var_name, split_val, original_df)  # uses your custom function
-    if (!is.null(orig_val)) {
-      glue::glue("{round(split_val, 3)} (original scale: {orig_val})")
-    } else {
-      as.character(round(split_val, 3))
-    }
+  } else {
+    # depth == 2: root, two secondary splits, four leaves
+    node1 <- policy_tree_obj$nodes[[1]]; var1 <- split_vars[1]
+    node2 <- policy_tree_obj$nodes[[2]]; var2 <- split_vars[2]
+    node3 <- policy_tree_obj$nodes[[3]]; var3 <- split_vars[3]
+    leaf4 <- policy_tree_obj$nodes[[4]]$action
+    leaf5 <- policy_tree_obj$nodes[[5]]$action
+    leaf6 <- policy_tree_obj$nodes[[6]]$action
+    leaf7 <- policy_tree_obj$nodes[[7]]$action
+
+    sv1 <- format_split_value(var1, node1$split_value)
+    sv2 <- format_split_value(var2, node2$split_value)
+    sv3 <- format_split_value(var3, node3$split_value)
+
+    specific <- glue::glue(
+      "**{transform_var(var1})** ≤ {sv1} → split on **{transform_var(var2)}** ≤ {sv2},\n",
+      "    - TRUE → **{action_names[leaf4]}**,  FALSE → **{action_names[leaf5]}**;\n",
+      "  > {sv1} → split on **{transform_var(var3)}** ≤ {sv3},\n",
+      "    - TRUE → **{action_names[leaf6]}**,  FALSE → **{action_names[leaf7]}**.\n"
+    )
   }
 
-  # a depth-2 policy tree has one root split, two children splits, and four leaves
-  # root node
-  node1 <- nodes[[1]]
-  var1 <- split_var_names[1]
-  split_val1 <- format_split_value(var1, node1$split_value)
-
-  # left child of root
-  node2 <- nodes[[2]]
-  var2 <- split_var_names[2]
-  split_val2 <- format_split_value(var2, node2$split_value)
-
-  # right child of root
-  node3 <- nodes[[3]]
-  var3 <- split_var_names[3]
-  split_val3 <- format_split_value(var3, node3$split_value)
-
-  # leaves (children of node2 and node3)
-  node4 <- nodes[[4]] # left child of node2
-  node5 <- nodes[[5]] # right child of node2
-  node6 <- nodes[[6]] # left child of node3
-  node7 <- nodes[[7]] # right child of node3
-
-  if (length(split_var_names) < 3) {
-    cli::cli_abort("Insufficient split variables extracted. Expected at least 3.")
-  }
-
-  # create a more paragraph-based interpretation
-  # you can adapt the wording further to suit your style
-  specific_interpretation <- glue::glue(
-    "**Findings for {transform_var(model_name)}:**\n\n",
-    "Participants are first split by {transform_var(var1)} at {split_val1}. ",
-    "For those with {transform_var(var1)} <= this threshold, the next split is by {transform_var(var2)} at {split_val2}. ",
-    "Within that subgroup, individuals with {transform_var(var2)} <= the threshold are recommended **{action_names[node4$action]}**, ",
-    "while those with {transform_var(var2)} > the threshold are recommended **{action_names[node5$action]}**.\n\n",
-    "For participants with {transform_var(var1)} > {split_val1}, the second split is by {transform_var(var3)} at {split_val3}. ",
-    "In this subgroup, individuals with {transform_var(var3)} <= the threshold are recommended **{action_names[node6$action]}**, ",
-    "while those with {transform_var(var3)} > the threshold are recommended **{action_names[node7$action]}**.\n\n",
-    "This policy tree highlights two key splitting variables (",
-    "{transform_var(var1)}, then {transform_var(var2)} or {transform_var(var3)}), ",
-    "defining four subgroups that receive different recommended actions."
-  )
-
-  cli::cli_alert_success("Generated specific interpretation")
-
-  # combine both parts
-  full_interpretation <- glue::glue("{general_interpretation}\n{specific_interpretation}\n")
-
-  # print
-  cat(full_interpretation)
-  cli::cli_alert_success("Policy tree interpretation completed successfully!")
-
-  # return invisibly
-  invisible(full_interpretation)
+  cat(general, "\n", specific, "\n")
+  invisible(glue::glue("{general}\n{specific}"))
 }
 
-# # old language
+# helper to format standardized + original
+format_split_value <- function(var, std_val, original_df) {
+  orig <- get_original_value(var, std_val, original_df)
+  if (!is.null(orig)) {
+    paste0(round(std_val,3), " (orig: ", format(orig, big.mark=","),")")
+  } else {
+    as.character(round(std_val,3))
+  }
+}
+
 # margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0.5,
 #                                          custom_action_names = NULL, label_mapping = NULL,
 #                                          original_df = NULL, remove_tx_prefix = TRUE,
 #                                          remove_z_suffix = TRUE, use_title_case = TRUE) {
-#   # Start interpretation
 #   cli::cli_alert_info("Starting policy tree interpretation for {model_name}")
 #
-#   # Use the global transform_var_name function
+#   # use the global transform_var_name function
 #   transform_var <- function(var_name) {
 #     transform_var_name(var_name, label_mapping, remove_tx_prefix, remove_z_suffix, use_title_case)
 #   }
 #
-#   # Extract policy tree object
+#   # extract policy tree object
 #   policy_tree_obj <- model$results[[model_name]]$policy_tree_depth_2
 #
-#   # Extract action names and apply custom names if provided
+#   # extract action names and apply custom names if provided
 #   action_names <- policy_tree_obj$action.names
 #   if (!is.null(custom_action_names)) {
 #     if (length(custom_action_names) != length(action_names)) {
@@ -177,102 +153,92 @@ margot_interpret_policy_tree <- function(model, model_name, train_proportion = 0
 #     cli::cli_alert_success("Applied custom action names")
 #   }
 #
-#   # Extract split variables (numeric indices)
+#   # extract split variables (numeric indices)
 #   split_variable_indices <- sapply(policy_tree_obj$nodes, function(node) node$split_variable)
-#   split_variable_indices <- unlist(split_variable_indices)  # Ensure it's a numeric vector
+#   split_variable_indices <- unlist(split_variable_indices)
 #   split_variable_indices <- split_variable_indices[!is.na(split_variable_indices)]
 #
-#   # Map numeric indices to actual variable names
-#   # Ensure policy_tree_obj$columns is a character vector
+#   # map numeric indices to actual variable names
 #   if (!is.vector(policy_tree_obj$columns) && !is.character(policy_tree_obj$columns)) {
 #     cli::cli_abort("policy_tree_obj$columns must be a character vector.")
 #   }
-#
 #   split_var_names <- policy_tree_obj$columns[split_variable_indices]
 #
-#   # Generate general interpretation
+#   # generate general interpretation
 #   general_interpretation <- glue::glue(
-#     "**Policy Tree Interpretation:** A policy tree obtains simple rule-based policies, ",
-#     "where the rule takes the form of a shallow decision tree. The policytree algorithm ",
-#     "uses doubly robust reward estimates from a causal forest model to find a shallow, but globally optimal ",
-#     "decision tree. We train the model on {train_proportion * 100}% of the data and then ",
-#     "evaluate the model on the remainder of the data. The graph helps to clarify whether ",
-#     "the leaf node in the test set samples are predicted to have mean outcomes in line ",
-#     "with the prescribed policy.\n\n"
+#     "A policy tree uses simple rules (a shallow decision tree) ",
+#     "to recommend an optimal action. The algorithm uses doubly robust reward estimates ",
+#     "from a causal forest. We used {train_proportion * 100}% of the data for training and ",
+#     "the remainder for model evaluation. Each split below shows how distinct subgroups ",
+#     "are assigned different actions.\n\n"
 #   )
 #
 #   cli::cli_alert_success("Generated general interpretation")
 #
-#   # Extract nodes for easier access
+#   # pull out the nodes for convenience
 #   nodes <- policy_tree_obj$nodes
 #
-#   # Define helper function to format split value with original scale
+#   # define helper function to format split values
 #   format_split_value <- function(var_name, split_val) {
-#     orig_val <- get_original_value(var_name, split_val, original_df)  # Pass original_df here
+#     orig_val <- get_original_value(var_name, split_val, original_df)  # uses your custom function
 #     if (!is.null(orig_val)) {
-#       return(glue::glue("at a standardized value of {round(split_val, 3)} (original scale: {orig_val})"))
+#       glue::glue("{round(split_val, 3)} (original scale: {orig_val})")
 #     } else {
-#       return(glue::glue("at a standardized value of {round(split_val, 3)}"))
+#       as.character(round(split_val, 3))
 #     }
 #   }
 #
-#   # Construct specific_interpretation
-#   # Assuming depth 2 tree: root, two children, four leaves.
-#
-#   # Node 1: root
+#   # a depth-2 policy tree has one root split, two children splits, and four leaves
+#   # root node
 #   node1 <- nodes[[1]]
 #   var1 <- split_var_names[1]
-#   split_val1 <- node1$split_value
-#   formatted_split_val1 <- format_split_value(var1, split_val1)
+#   split_val1 <- format_split_value(var1, node1$split_value)
 #
-#   # Node 2: left child of node1
+#   # left child of root
 #   node2 <- nodes[[2]]
 #   var2 <- split_var_names[2]
-#   split_val2 <- node2$split_value
-#   formatted_split_val2 <- format_split_value(var2, split_val2)
+#   split_val2 <- format_split_value(var2, node2$split_value)
 #
-#   # Node 3: right child of node1
+#   # right child of root
 #   node3 <- nodes[[3]]
 #   var3 <- split_var_names[3]
-#   split_val3 <- node3$split_value
-#   formatted_split_val3 <- format_split_value(var3, split_val3)
+#   split_val3 <- format_split_value(var3, node3$split_value)
 #
-#   # Nodes 4-7: leaves
+#   # leaves (children of node2 and node3)
 #   node4 <- nodes[[4]] # left child of node2
 #   node5 <- nodes[[5]] # right child of node2
 #   node6 <- nodes[[6]] # left child of node3
 #   node7 <- nodes[[7]] # right child of node3
 #
-#   # Check if split_var_names has at least 3 variables
 #   if (length(split_var_names) < 3) {
 #     cli::cli_abort("Insufficient split variables extracted. Expected at least 3.")
 #   }
 #
+#   # create a more paragraph-based interpretation
+#   # you can adapt the wording further to suit your style
 #   specific_interpretation <- glue::glue(
-#     "**Findings for {transform_var(model_name)}:** \n\n",
-#     "1. The first split is based on the variable '{transform_var(var1)}' {formatted_split_val1}.\n\n",
-#     "   - If this value is less than or equal to the split value:\n",
-#     "     2. The second split is based on '{transform_var(var2)}' {formatted_split_val2}.\n",
-#     "        - If this is less than or equal to the split value, the recommended action is: **{action_names[node4$action]}**\n",
-#     "        - Otherwise, the recommended action is: **{action_names[node5$action]}**\n\n",
-#     "   - If the first split value is greater than the split value:\n",
-#     "     3. The second split is based on '{transform_var(var3)}' {formatted_split_val3}.\n",
-#     "        - If this is less than or equal to the split value, the recommended action is: **{action_names[node6$action]}**\n",
-#     "        - Otherwise, the recommended action is: **{action_names[node7$action]}**\n\n",
-#     "This policy tree suggests that an optimal treatment strategy is related to these inflection points in the variables the policy tree identifies, ",
-#     "with recommended actions based on subgroups defined by these split points."
+#     "**Findings for {transform_var(model_name)}:**\n\n",
+#     "Participants are first split by {transform_var(var1)} at {split_val1}. ",
+#     "For those with {transform_var(var1)} <= this threshold, the next split is by {transform_var(var2)} at {split_val2}. ",
+#     "Within that subgroup, individuals with {transform_var(var2)} <= the threshold are recommended **{action_names[node4$action]}**, ",
+#     "while those with {transform_var(var2)} > the threshold are recommended **{action_names[node5$action]}**.\n\n",
+#     "For participants with {transform_var(var1)} > {split_val1}, the second split is by {transform_var(var3)} at {split_val3}. ",
+#     "In this subgroup, individuals with {transform_var(var3)} <= the threshold are recommended **{action_names[node6$action]}**, ",
+#     "while those with {transform_var(var3)} > the threshold are recommended **{action_names[node7$action]}**.\n\n",
+#     "This policy tree highlights two key splitting variables (",
+#     "{transform_var(var1)}, then {transform_var(var2)} or {transform_var(var3)}), ",
+#     "defining four subgroups that receive different recommended actions."
 #   )
 #
 #   cli::cli_alert_success("Generated specific interpretation")
 #
-#   # Combine interpretations
-#   full_interpretation <- paste(general_interpretation, specific_interpretation, sep = "\n")
+#   # combine both parts
+#   full_interpretation <- glue::glue("{general_interpretation}\n{specific_interpretation}\n")
 #
-#   # Print the full interpretation to the console
+#   # print
 #   cat(full_interpretation)
+#   cli::cli_alert_success("Policy tree interpretation completed successfully!")
 #
-#   cli::cli_alert_success("Policy tree interpretation completed successfully! {cli::col_green(cli::symbol$tick)}")
-#
-#   # Return the full interpretation invisibly
+#   # return invisibly
 #   invisible(full_interpretation)
 # }
