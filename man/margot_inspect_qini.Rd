@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_causal_forest.R
 \name{margot_inspect_qini}
 \alias{margot_inspect_qini}
-\title{inspect qini diagnostics for one or several models}
+\title{Inspect qini diagnostics for one or several models}
 \usage{
 margot_inspect_qini(
   model_results,
@@ -32,6 +32,5 @@ c(0.05, 0.95).}
 a tibble of diagnostics (class `"margot_qini_diag"`).
 }
 \description{
-inspect qini diagnostics for one or several models
+Inspect qini diagnostics for one or several models
 }
-\keyword{internal}
