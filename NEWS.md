@@ -7,6 +7,12 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-05-03] margot 1.0.30
+- `margot_plot_decision_tree()`- colours robustly match decisions 'control', 'treat'
+- internal helpers `transform_label()`, and `transform_var_name()` labelling handles SDO and RWA correctly, also `get_original_value_plot()` and `get_original_var_info()`
+
+
+
 # [2025-05-03] margot 1.0.29
 ## New
 - `margot_rate_batch()` - Two allocation rules are available: **"treat_best"**  (default) ─ administer treatment to those with the largest predicted benefits; **"withhold_best"** ─ *remove* treatment from that same subgroup, useful when the intervention harmful. The CATE vector is flipped (multiplied by −1) *after* model fitting and *before* calling `grf::rank_average_treatment_effect()`.  Outcome direction flips performed earlier by `margot_flip_forests()` are thus kept conceptually separate from the policy flip implemented here.

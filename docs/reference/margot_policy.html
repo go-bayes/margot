@@ -9,7 +9,7 @@ Qini curves, and difference-gain summaries, optionally saving each to disk."></h
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.29</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.30</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,7 @@ Qini curves, and difference-gain summaries, optionally saving each to disk.</p>
 <span>  <span class="va">result_outcomes</span>,</span>
 <span>  policy_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  decision_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  max_depth <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  dpi <span class="op">=</span> <span class="fl">600</span>,</span>
 <span>  width <span class="op">=</span> <span class="fl">12</span>,</span>
 <span>  height <span class="op">=</span> <span class="fl">12</span>,</span>
@@ -72,6 +73,10 @@ Qini curves, and difference-gain summaries, optionally saving each to disk.</p>
 
 <dt id="arg-decision-tree-args">decision_tree_args<a class="anchor" aria-label="anchor" href="#arg-decision-tree-args"></a></dt>
 <dd><p>List of args for <code><a href="margot_plot_decision_tree.html">margot_plot_decision_tree()</a></code>. Default: <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
+
+
+<dt id="arg-max-depth">max_depth<a class="anchor" aria-label="anchor" href="#arg-max-depth"></a></dt>
+<dd><p>Integer, 1 or 2; which decision tree depth to plot. Default: 2.</p></dd>
 
 
 <dt id="arg-dpi">dpi<a class="anchor" aria-label="anchor" href="#arg-dpi"></a></dt>
@@ -115,16 +120,13 @@ Qini curves, and difference-gain summaries, optionally saving each to disk.</p>
     <p>A named list; each element corresponds to a model and contains:</p><dl><dt>policy_tree_plot</dt>
 <dd><p>ggplot of the policy-tree plot</p></dd>
 
-    <dt>policy_tree_interpretation</dt>
-<dd><p>character interpretation</p></dd>
-
     <dt>qini_plot</dt>
 <dd><p>ggplot of the Qini curve</p></dd>
 
-    <dt>decision_tree_visualisation</dt>
-<dd><p>ggplot of the decision tree</p></dd>
+    <dt>decision_tree</dt>
+<dd><p>ggplot of the decision tree at the chosen depth</p></dd>
 
-    <dt>policy_combo_plot</dt>
+    <dt>combined_plot</dt>
 <dd><p>ggplot of combined policy vs decision</p></dd>
 
     <dt>diff_gain_summaries</dt>

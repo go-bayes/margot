@@ -619,116 +619,166 @@ get_original_value <- function(var_name, split_value, original_df) {
 
 #' @keywords internal
 get_original_var_info <- function(var_name, original_df) {
-  # Create a list of possible variable names
-  orig_var_candidates <- character()
-
-  # Start with var_name
-  orig_var_candidates <- c(orig_var_candidates, var_name)
-
-  # Remove '_z' suffix
-  var_no_z <- sub("_z$", "", var_name)
-  orig_var_candidates <- c(orig_var_candidates, var_no_z)
-
-  # Keep '_log_' in variable name
-  var_with_log <- var_no_z
-  orig_var_candidates <- c(orig_var_candidates, var_with_log)
-
-  # Remove 't0_' prefix
-  var_no_t0 <- sub("^t[0-9]+_", "", var_with_log)
-  orig_var_candidates <- c(orig_var_candidates, var_no_t0)
-
-  # Remove duplicates
-  orig_var_candidates <- unique(orig_var_candidates)
-
-  # Try to find a matching variable in original_df
-  orig_var <- NULL
-  for (candidate in orig_var_candidates) {
-    if (candidate %in% names(original_df)) {
-      orig_var <- candidate
-      break
-    }
-  }
-
-  if (is.null(orig_var)) {
-    cli::cli_warn("Original variable '{var_name}' not found in original_df. Skipping original scale value.")
+  # guard
+  if (is.null(original_df) || length(var_name) == 0) {
     return(NULL)
   }
 
-  # Check if variable was log-transformed and/or z-transformed
-  was_log_transformed <- grepl("_log_", var_name)
-  was_z_transformed <- grepl("_z$", var_name)
+  # 1) strip off any _z, any leading t#_ and any _log_ to get the “bare” name
+  bare <- sub("_z$",     "", var_name)
+  bare <- sub("^t[0-9]+_", "", bare)
+  bare <- sub("_log_",   "", bare)
 
-  orig_data <- original_df[[orig_var]]
+  # 2) build candidates (include lowercase)
+  candidates <- unique(c(var_name, bare, tolower(bare)))
 
-  if (was_z_transformed) {
-    # Calculate mean and sd from the original data
-    orig_mean <- mean(orig_data, na.rm = TRUE)
-    orig_sd <- sd(orig_data, na.rm = TRUE)
-  } else {
-    orig_mean <- NA
-    orig_sd <- NA
+  # 3) pick the first that actually exists
+  orig_var <- intersect(candidates, names(original_df))[1]
+  if (is.na(orig_var) || !nzchar(orig_var)) {
+    cli::cli_warn("Original variable '{var_name}' not found; skipping.")
+    return(NULL)
   }
 
-  return(list(
-    orig_mean = orig_mean,
-    orig_sd = orig_sd,
-    was_log_transformed = was_log_transformed,
-    was_z_transformed = was_z_transformed
-  ))
+  # 4) only numeric columns can have means/sds
+  data_col <- original_df[[orig_var]]
+  if (!is.numeric(data_col)) {
+    return(NULL)
+  }
+
+  list(
+    orig_var            = orig_var,
+    orig_mean           = mean(data_col, na.rm = TRUE),
+    orig_sd             = sd(data_col, na.rm = TRUE),
+    was_log_transformed = grepl("_log_", var_name),
+    was_z_transformed   = grepl("_z$", var_name)
+  )
 }
+
+# get_original_var_info <- function(var_name, original_df) {
+#   # Create a list of possible variable names
+#   orig_var_candidates <- character()
+#
+#   # Start with var_name
+#   orig_var_candidates <- c(orig_var_candidates, var_name)
+#
+#   # Remove '_z' suffix
+#   var_no_z <- sub("_z$", "", var_name)
+#   orig_var_candidates <- c(orig_var_candidates, var_no_z)
+#
+#   # Keep '_log_' in variable name
+#   var_with_log <- var_no_z
+#   orig_var_candidates <- c(orig_var_candidates, var_with_log)
+#
+#   # Remove 't0_' prefix
+#   var_no_t0 <- sub("^t[0-9]+_", "", var_with_log)
+#   orig_var_candidates <- c(orig_var_candidates, var_no_t0)
+#
+#   # Remove duplicates
+#   orig_var_candidates <- unique(orig_var_candidates)
+#
+#   # Try to find a matching variable in original_df
+#   orig_var <- NULL
+#   for (candidate in orig_var_candidates) {
+#     if (candidate %in% names(original_df)) {
+#       orig_var <- candidate
+#       break
+#     }
+#   }
+#
+#   if (is.null(orig_var)) {
+#     cli::cli_warn("Original variable '{var_name}' not found in original_df. Skipping original scale value.")
+#     return(NULL)
+#   }
+#
+#   # Check if variable was log-transformed and/or z-transformed
+#   was_log_transformed <- grepl("_log_", var_name)
+#   was_z_transformed <- grepl("_z$", var_name)
+#
+#   orig_data <- original_df[[orig_var]]
+#
+#   if (was_z_transformed) {
+#     # Calculate mean and sd from the original data
+#     orig_mean <- mean(orig_data, na.rm = TRUE)
+#     orig_sd <- sd(orig_data, na.rm = TRUE)
+#   } else {
+#     orig_mean <- NA
+#     orig_sd <- NA
+#   }
+#
+#   return(list(
+#     orig_mean = orig_mean,
+#     orig_sd = orig_sd,
+#     was_log_transformed = was_log_transformed,
+#     was_z_transformed = was_z_transformed
+#   ))
+# }
 
 
 #' @keywords internal
 get_original_value_plot <- function(var_name, split_value, original_df) {
-  if (is.null(original_df)) return(NULL)
-
-  # Create list of possible variable names
-  orig_var_candidates <- c(
-    var_name,
-    sub("_z$", "", var_name),
-    sub("^t[0-9]+_", "", sub("_z$", "", var_name))
-  )
-  orig_var_candidates <- unique(orig_var_candidates)
-
-  # Try to find a matching variable in original_df
-  orig_var <- NULL
-  for (candidate in orig_var_candidates) {
-    if (candidate %in% names(original_df)) {
-      orig_var <- candidate
-      break
-    }
+  info <- get_original_var_info(var_name, original_df)
+  if (is.null(info)) return(NULL)
+  val <- split_value
+  if (info$was_z_transformed) {
+    val <- info$orig_mean + split_value * info$orig_sd
   }
-
-  if (is.null(orig_var)) {
-    cli::cli_warn("Original variable '{var_name}' not found in original_df. Skipping original scale value.")
-    return(NULL)
+  if (info$was_log_transformed) {
+    # if you want exp(x)-1 on the raw scale
+    val <- exp(val) - 1
   }
-
-  # Determine transformation types
-  was_log_transformed <- grepl("_log_", var_name)
-  was_z_transformed <- grepl("_z$", var_name)
-
-  orig_data <- original_df[[orig_var]]
-
-  if (was_z_transformed) {
-    # Calculate mean and sd from the original data
-    orig_mean <- mean(orig_data, na.rm = TRUE)
-    orig_sd <- sd(orig_data, na.rm = TRUE)
-
-    # Back-transform z-score to the original scale
-    original_value <- orig_mean + split_value * orig_sd
-  } else {
-    # If not z-transformed, the split_value is already on the (log-transformed) scale
-    original_value <- split_value
-  }
-
-  # If variable was log-transformed, back-transform to the original data scale
-  if (was_log_transformed) {
-    original_value <- exp(original_value) - 1
-  }
-
-  return(round(original_value, 3))
+  round(val, 3)
 }
+
+# get_original_value_plot <- function(var_name, split_value, original_df) {
+#   if (is.null(original_df)) return(NULL)
+#
+#   # Create list of possible variable names
+#   orig_var_candidates <- c(
+#     var_name,
+#     sub("_z$", "", var_name),
+#     sub("^t[0-9]+_", "", sub("_z$", "", var_name))
+#   )
+#   orig_var_candidates <- unique(orig_var_candidates)
+#
+#   # Try to find a matching variable in original_df
+#   orig_var <- NULL
+#   for (candidate in orig_var_candidates) {
+#     if (candidate %in% names(original_df)) {
+#       orig_var <- candidate
+#       break
+#     }
+#   }
+#
+#   if (is.null(orig_var)) {
+#     cli::cli_warn("Original variable '{var_name}' not found in original_df. Skipping original scale value.")
+#     return(NULL)
+#   }
+#
+#   # Determine transformation types
+#   was_log_transformed <- grepl("_log_", var_name)
+#   was_z_transformed <- grepl("_z$", var_name)
+#
+#   orig_data <- original_df[[orig_var]]
+#
+#   if (was_z_transformed) {
+#     # Calculate mean and sd from the original data
+#     orig_mean <- mean(orig_data, na.rm = TRUE)
+#     orig_sd <- sd(orig_data, na.rm = TRUE)
+#
+#     # Back-transform z-score to the original scale
+#     original_value <- orig_mean + split_value * orig_sd
+#   } else {
+#     # If not z-transformed, the split_value is already on the (log-transformed) scale
+#     original_value <- split_value
+#   }
+#
+#   # If variable was log-transformed, back-transform to the original data scale
+#   if (was_log_transformed) {
+#     original_value <- exp(original_value) - 1
+#   }
+#
+#   return(round(original_value, 3))
+# }
 
 
 #' @keywords internal
@@ -759,104 +809,29 @@ transform_label <- function(label, label_mapping = NULL, options = list()) {
   if (identical(label, original_label)) {
     if (remove_tx_prefix)   label <- sub("^t[0-9]+_", "", label)
     if (remove_z_suffix)    label <- sub("_z$", "", label)
-    if (remove_underscores) label <- gsub("_", " ", label)
+    if (remove_underscores) label <- gsub("_", " ", label, fixed = TRUE)
+
     if (use_title_case) {
+      # convert to title case and enforce specific uppercase acronyms
       label <- tools::toTitleCase(label)
-      label <- gsub("Nz", "NZ", label)
+      label <- gsub("Nz",  "NZ",  label, fixed = TRUE)
+      label <- gsub("Sdo", "SDO", label, fixed = TRUE)
+      label <- gsub("Rwa", "RWA", label, fixed = TRUE)
     }
   }
 
+  # log if changed
   if (!identical(label, original_label)) {
     cli::cli_alert_info("Transformed label: {original_label} -> {label}")
   }
+
   label
 }
+
 
 # helper operator for NULL handling
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
-
-# transform_label <- function(label, label_mapping = NULL, options = list()) {
-#   remove_tx_prefix   <- isTRUE(options$remove_tx_prefix)
-#   remove_z_suffix    <- isTRUE(options$remove_z_suffix)
-#   remove_underscores <- isTRUE(options$remove_underscores)
-#   use_title_case     <- isTRUE(options$use_title_case)
-#
-#   original_label <- label
-#
-#   # 1) apply any explicit mappings
-#   if (!is.null(label_mapping)) {
-#     for (pattern in names(label_mapping)) {
-#       if (grepl(pattern, label, fixed = TRUE)) {
-#         replacement <- label_mapping[[pattern]]
-#         label <- gsub(pattern, replacement, label, fixed = TRUE)
-#         cli::cli_alert_info("Mapped label: {pattern} -> {replacement}")
-#       }
-#     }
-#   }
-#
-#   # 2) strip trailing numeric-range suffix if present
-#   label <- sub(" - \\(.*\\]$", "", label)
-#
-#   # 3) if nothing was mapped, apply the defaults
-#   if (identical(label, original_label)) {
-#     if (remove_tx_prefix)   label <- sub("^t[0-9]+_", "", label)
-#     if (remove_z_suffix)    label <- sub("_z$", "", label)
-#     if (remove_underscores) label <- gsub("_", " ", label)
-#     if (use_title_case) {
-#       label <- tools::toTitleCase(label)
-#       # preserve NZ capitalization
-#       label <- gsub("Nz", "NZ", label)
-#     }
-#   }
-#
-#   if (!identical(label, original_label)) {
-#     cli::cli_alert_info("Transformed label: {original_label} -> {label}")
-#   }
-#
-#   label
-# }
-# transform_label <- function(label, label_mapping = NULL, options = list()) {
-#   original_label <- label
-#
-#   # Apply mapping with partial substitutions and remove numbers
-#   if (!is.null(label_mapping)) {
-#     for (pattern in names(label_mapping)) {
-#       if (grepl(pattern, label, fixed = TRUE)) {
-#         replacement <- label_mapping[[pattern]]
-#         label <- gsub(pattern, replacement, label, fixed = TRUE)
-#         cli::cli_alert_info("Mapped label: {pattern} -> {replacement}")
-#       }
-#     }
-#   }
-#
-#   # Remove the numerical part (e.g., " - (3.0,7.0] - [1.0,2.0]")
-#   label <- sub(" - \\(.*\\]$", "", label)
-#
-#   # Apply default transformations if the label wasn't fully replaced
-#   if (label == original_label) {
-#     if (options$remove_tx_prefix) {
-#       label <- sub("^t[0-9]+_", "", label)
-#     }
-#     if (options$remove_z_suffix) {
-#       label <- sub("_z$", "", label)
-#     }
-#     if (options$remove_underscores) {
-#       label <- gsub("_", " ", label)
-#     }
-#     if (options$use_title_case) {
-#       label <- tools::toTitleCase(label)
-#       # Preserve "NZ" capitalization
-#       label <- gsub("Nz", "NZ", label)
-#     }
-#   }
-#
-#   if (label != original_label) {
-#     cli::cli_alert_info("Transformed label: {original_label} -> {label}")
-#   }
-#
-#   return(label)
-# }
 
 
 #' @keywords internal
@@ -942,33 +917,49 @@ transform_to_original_scale <- function(results_df, original_df, label_mapping =
 }
 
 
+#' Transform a variable name into a human-readable label, preserving acronyms
+#'
+#' This function applies explicit mappings, strips numeric-range suffixes,
+#' removes time-prefixes and z-suffixes, replaces underscores, and converts
+#' to title case while preserving NZ, SDO, and RWA acronyms.
+#'
+#' @param var_name Character; the original variable name
+#' @param label_mapping Optional named list for explicit mappings
+#' @param remove_tx_prefix Logical; remove leading 't0_' etc.
+#' @param remove_z_suffix Logical; remove trailing '_z'
+#' @param use_title_case Logical; convert to title case
+#' @param remove_underscores Logical; replace underscores with spaces
+#'
+#' @return A character scalar of the transformed label, or NA if input missing
 #' @keywords internal
 transform_var_name <- function(var_name, label_mapping = NULL,
                                remove_tx_prefix   = TRUE,
                                remove_z_suffix    = TRUE,
                                use_title_case     = TRUE,
                                remove_underscores = TRUE) {
-  # if there's no variable (e.g. root node at depth 1), return NA
   if (is.na(var_name) || length(var_name) == 0) {
     return(NA_character_)
   }
 
   display_name <- var_name
 
-  # only strip "model_" when display_name is non-NA
-  if (!is.na(display_name) && startsWith(display_name, "model_")) {
+  # strip numeric-range suffix
+  display_name <- sub(" - \\(.*\\]$", "", display_name)
+
+  # remove model_ prefix
+  if (startsWith(display_name, "model_")) {
     display_name <- sub("^model_", "", display_name)
   }
 
-  # apply explicit mapping
+  # explicit mapping
   if (!is.null(label_mapping) && display_name %in% names(label_mapping)) {
     mapped_label <- label_mapping[[display_name]]
     cli::cli_alert_info("Applied label mapping: {var_name} -> {mapped_label}")
     return(mapped_label)
   }
 
-  # handle t0_ → t2_ lookup
-  if (!is.na(display_name) && startsWith(display_name, "t0_")) {
+  # t0_ → t2_ fallback
+  if (startsWith(display_name, "t0_")) {
     t2_var <- sub("^t0_", "t2_", display_name)
     if (!is.null(label_mapping) && t2_var %in% names(label_mapping)) {
       mapped_label <- label_mapping[[t2_var]]
@@ -977,24 +968,19 @@ transform_var_name <- function(var_name, label_mapping = NULL,
     }
   }
 
-  # remove prefixes/suffixes/underscores
-  if (remove_tx_prefix   && !is.na(display_name)) {
-    display_name <- sub("^t[0-9]+_", "", display_name)
-  }
-  if (remove_z_suffix    && !is.na(display_name)) {
-    display_name <- sub("_z$", "", display_name)
-  }
-  if (remove_underscores && !is.na(display_name)) {
-    display_name <- gsub("_", " ", display_name)
-  }
+  # strip prefixes/suffixes/underscores
+  if (remove_tx_prefix)   display_name <- sub("^t[0-9]+_", "", display_name)
+  if (remove_z_suffix)    display_name <- sub("_z$", "", display_name)
+  if (remove_underscores) display_name <- gsub("_", " ", display_name, fixed = TRUE)
 
-  # title–case and NZ acronyms
-  if (use_title_case && !is.na(display_name)) {
+  # title-case and preserve acronyms
+  if (use_title_case) {
     display_name <- tools::toTitleCase(display_name)
-    display_name <- gsub("Nz", "NZ", display_name)
+    display_name <- gsub("Nz",  "NZ",  display_name, fixed = TRUE)
+    display_name <- gsub("Sdo", "SDO", display_name, fixed = TRUE)
+    display_name <- gsub("Rwa", "RWA", display_name, fixed = TRUE)
   }
 
-  # log any transformation
   if (!identical(display_name, var_name)) {
     cli::cli_alert_info("Transformed label: {var_name} -> {display_name}")
   }
@@ -1002,7 +988,7 @@ transform_var_name <- function(var_name, label_mapping = NULL,
   display_name
 }
 
-# helper for NULL
+# helper for NULL coalescing
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
 #' @keywords internal

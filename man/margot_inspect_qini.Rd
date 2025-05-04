@@ -34,4 +34,4 @@ a tibble of diagnostics (class `"margot_qini_diag"`).
 \description{
 inspect qini diagnostics for one or several models
 }
-\keyword{margot_inspect_qini}
+\keyword{internal}

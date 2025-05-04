@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_plot_decision_tree.R
 \name{margot_plot_decision_tree}
 \alias{margot_plot_decision_tree}
-\title{Plot a Decision Tree from Margot Causal Forest Results}
+\title{Plot a Decision Tree from Margot Causal-Forest Results}
 \usage{
 margot_plot_decision_tree(
   result_object,
@@ -17,7 +17,6 @@ margot_plot_decision_tree(
   span_ratio = 0.4,
   non_leaf_fill = "lightyellow",
   title = NULL,
-  leaf_palette = NULL,
   plot_margin = grid::unit(c(1, 1, 1, 1), "cm"),
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
@@ -28,47 +27,59 @@ margot_plot_decision_tree(
 )
 }
 \arguments{
-\item{result_object}{A list containing the policy tree object or Margot results.}
+\item{result_object}{A list returned by `margot_causal_forest()`}
 
-\item{model_name}{Character string specifying the model name in the results object. Default is NULL.}
+\item{model_name}{Name of the model in the results to visualise}
 
-\item{max_depth}{Integer, 1 or 2; which stored tree to visualise.}
+\item{max_depth}{Maximum depth of the tree (1L or 2L)}
 
-\item{original_df}{Optional dataframe with untransformed variables, used to display split values on the data scale.}
+\item{original_df}{Optional dataframe with original data for showing untransformed values}
 
-\item{x_padding}{Numeric value for horizontal padding of the plot. Default is 0.12.}
+\item{x_padding}{Horizontal padding for the plot (proportion)}
 
-\item{y_padding}{Numeric value for vertical padding of the plot. Default is 0.12.}
+\item{y_padding}{Vertical padding for the plot (proportion)}
 
-\item{border_size}{Numeric value for the size of node borders. Default is 0.5.}
+\item{border_size}{Size of node borders in lines}
 
-\item{text_size}{Numeric value for the size of text in the plot. Default is 3.}
+\item{text_size}{Size of text in plot elements}
 
-\item{edge_label_offset}{Numeric value for the offset of edge labels. Default is 0.025.}
+\item{edge_label_offset}{Offset for edge labels from connecting lines}
 
-\item{span_ratio}{Numeric value for the aspect ratio of the plot. Default is 0.4.}
+\item{span_ratio}{Controls the aspect ratio of the plot}
 
-\item{non_leaf_fill}{Character string specifying the fill color for non-leaf nodes. Default is "lightyellow".}
+\item{non_leaf_fill}{Colour for non-leaf nodes (decision nodes)}
 
-\item{title}{Character string for the plot title. Default is NULL.}
+\item{title}{Optional custom title for the plot}
 
-\item{leaf_palette}{Vector of colors for leaf nodes. Default is NULL (uses Okabe-Ito palette).}
+\item{plot_margin}{Margins around the plot}
 
-\item{remove_tx_prefix}{Logical indicating whether to remove "tx_" prefix from labels. Default is TRUE.}
+\item{remove_tx_prefix}{Whether to remove treatment prefixes from variable names}
 
-\item{remove_z_suffix}{Logical indicating whether to remove "_z" suffix from labels. Default is TRUE.}
+\item{remove_z_suffix}{Whether to remove z-suffixes from variable names}
 
-\item{use_title_case}{Logical indicating whether to convert labels to title case. Default is TRUE.}
+\item{use_title_case}{Whether to use title case for variable names}
 
-\item{remove_underscores}{Logical indicating whether to remove underscores from labels. Default is TRUE.}
+\item{remove_underscores}{Whether to replace underscores with spaces in variable names}
 
-\item{remove_action_label}{Logical indicating whether to remove "Action: " prefix from leaf node labels. Default is TRUE.}
+\item{remove_action_label}{Whether to remove "Action:" prefix from leaf node labels}
 
-\item{label_mapping}{Optional named list for custom label mappings. Default is NULL.}
+\item{label_mapping}{Optional list for renaming variables in the display}
 }
 \value{
-A ggplot object representing the decision tree.
+A ggplot object with the decision tree visualisation
 }
 \description{
-Plot a Decision Tree from Margot Causal Forest Results
+Creates a visualisation of a policy tree showing the decision rules
+and assigned treatments from causal forest results.
 }
+\keyword{(robust}
+\keyword{Causal-Forest}
+\keyword{Decision}
+\keyword{Margot}
+\keyword{Plot}
+\keyword{Results}
+\keyword{Tree}
+\keyword{a}
+\keyword{from}
+\keyword{internal}
+\keyword{labelling)}
