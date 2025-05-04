@@ -22,4 +22,3 @@ Falls back on `transform_var_name()` when no explicit mapping is found.
 If an entry of `vars` is not present in `label_map`, this function
 calls  `transform_var_name()` to auto-generate a label based on naming conventions.
 }
-\keyword{export}

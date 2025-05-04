@@ -9,7 +9,7 @@
 #' @details If an entry of `vars` is not present in `label_map`, this function
 #' calls  `transform_var_name()` to auto-generate a label based on naming conventions.
 #' @importFrom purrr map_chr
-#' @keywords export
+#' @export
 margot_get_labels <- function(vars, label_map) {
   purrr::map_chr(vars, ~ transform_var_name(.x, label_map))
 }
