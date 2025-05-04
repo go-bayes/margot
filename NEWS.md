@@ -7,11 +7,13 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-05-04] margot 1.0.31
+## New 
+- `margot_get_labels()` utility function for fetching labels. 
+
 # [2025-05-03] margot 1.0.30
 - `margot_plot_decision_tree()`- colours robustly match decisions 'control', 'treat'
 - internal helpers `transform_label()`, and `transform_var_name()` labelling handles SDO and RWA correctly, also `get_original_value_plot()` and `get_original_var_info()`
-
-
 
 # [2025-05-03] margot 1.0.29
 ## New

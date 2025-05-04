@@ -19,15 +19,7 @@ Helper to map a vector of variable names to human-readable labels.
 Falls back on `transform_var_name()` when no explicit mapping is found.
 }
 \details{
-If an entry of `vars` is not present in `label_map`, this function calls
-  `transform_var_name()` to auto-generate a label based on naming conventions.
-}
-\examples{
-# with explicit mappings
-margot_get_labels(
-  c("t2_hlth_sleep_hours_z", "t2_unknown_var_z"),
-  label_mapping_all
-)
-#> [1] "Sleep"      "Unknown Var"
+If an entry of `vars` is not present in `label_map`, this function
+calls  `transform_var_name()` to auto-generate a label based on naming conventions.
 }
 \keyword{export}

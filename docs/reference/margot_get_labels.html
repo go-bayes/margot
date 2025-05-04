@@ -9,7 +9,7 @@ Falls back on `transform_var_name()` when no explicit mapping is found."></head>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.30</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.31</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,21 +63,10 @@ Falls back on `transform_var_name()` when no explicit mapping is found.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>If an entry of `vars` is not present in `label_map`, this function calls
-  `transform_var_name()` to auto-generate a label based on naming conventions.</p>
+    <p>If an entry of `vars` is not present in `label_map`, this function
+calls  `transform_var_name()` to auto-generate a label based on naming conventions.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># with explicit mappings</span></span></span>
-<span class="r-in"><span><span class="fu">margot_get_labels</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"t2_hlth_sleep_hours_z"</span>, <span class="st">"t2_unknown_var_z"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  <span class="va">label_mapping_all</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_get_labels(c("t2_hlth_sleep_hours_z", "t2_unknown_var_z"),     label_mapping_all):</span> could not find function "margot_get_labels"</span>
-<span class="r-in"><span><span class="co">#&gt; [1] "Sleep"      "Unknown Var"</span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -6,17 +6,10 @@
 #' @param vars Character vector of variable names to convert.
 #' @param label_map Named list mapping variable names to labels (e.g., `label_mapping_all`).
 #' @return Character vector of display labels, in the same order as `vars`.
-#' @details If an entry of `vars` is not present in `label_map`, this function calls
-#'   `transform_var_name()` to auto-generate a label based on naming conventions.
-#' @keywords export
+#' @details If an entry of `vars` is not present in `label_map`, this function
+#' calls  `transform_var_name()` to auto-generate a label based on naming conventions.
 #' @importFrom purrr map_chr
-#' @examples
-#' # with explicit mappings
-#' margot_get_labels(
-#'   c("t2_hlth_sleep_hours_z", "t2_unknown_var_z"),
-#'   label_mapping_all
-#' )
-#' #> [1] "Sleep"      "Unknown Var"
+#' @keywords export
 margot_get_labels <- function(vars, label_map) {
   purrr::map_chr(vars, ~ transform_var_name(.x, label_map))
 }
