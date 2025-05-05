@@ -335,7 +335,7 @@ margot_plot_policy_tree_depth2 <- function(
         "text",
         x      = -Inf, y = ysp,
         label  = paste0("(", orig_ysp, ")*"),
-        hjust  = -0.1,
+        hjust  = 0.1, #<- pulled in a bit
         size   = split_label_size / ggplot2::.pt,
         angle  = 90
       ) } +
