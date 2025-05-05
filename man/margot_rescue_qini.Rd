@@ -28,4 +28,3 @@ for any model in a results list whose qini_objects are null or empty,
 this function applies an overlap restriction on the estimated\ n#' propensity scores and recomputes in‑sample Qini curves on the trimmed data,
 without touching the original ATE or forest objects.
 }
-\keyword{export}

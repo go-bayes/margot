@@ -35,7 +35,7 @@
 #' @import patchwork
 #' @importFrom tibble tibble
 #' @importFrom cli cli_h1 cli_alert_info cli_abort
-#' @keywords export
+#' @export
 margot_plot_policy_tree <- function(
     mc_test,
     model_name,

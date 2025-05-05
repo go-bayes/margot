@@ -64,4 +64,3 @@ multi-arm causal-forest result.
 * **Depth 2** – the existing two-panel scatter-plot (hand-off to
   `margot_plot_policy_tree_depth2()`).
 }
-\keyword{export}
