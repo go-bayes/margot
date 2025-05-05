@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_planned_subgroups_batch.R
 \name{margot_planned_subgroups_batch}
 \alias{margot_planned_subgroups_batch}
-\title{Batch process heterogeneity analyses across multiple outcome domains}
+\title{batch process heterogeneity analyses across multiple outcome domains}
 \usage{
 margot_planned_subgroups_batch(
   domain_models,
@@ -12,81 +12,62 @@ margot_planned_subgroups_batch(
   original_df,
   domain_names,
   subtitles,
-  output_dir = NULL,
-  push_mods = FALSE,
-  interpret_all_E_gt1 = TRUE
+  ...
 )
 }
 \arguments{
-\item{domain_models}{list of model sets for different domains (e.g., list(models_binary_health, models_binary_psych))}
+\item{domain_models}{list of model sets; one element per outcome domain
+(e.g., `list(models_binary_health, models_binary_psych)`).}
 
-\item{X}{predictor matrix used in the models}
+\item{X}{model matrix (or data frame) of predictors used when the models were
+fitted; required by lower-level helpers.}
 
-\item{base_defaults}{default parameters for model processing}
+\item{base_defaults}{named list of default arguments passed to the downstream
+plotting / helper functions.}
 
-\item{subset_types}{list of subset specifications (e.g., list(wealth = subsets_standard_wealth))}
+\item{subset_types}{named list of subset specifications, typically produced
+with the *standard subset* helpers (e.g.,
+`list(wealth = subsets_standard_wealth)`).}
 
-\item{original_df}{original dataframe containing all variables}
+\item{original_df}{the raw data frame containing all variables (needed for
+label recovery, plotting on the original scale, etc.).}
 
-\item{domain_names}{character vector of names for the outcome domains}
+\item{domain_names}{character vector naming each element in `domain_models`.}
 
-\item{subtitles}{character vector of subtitles for plots}
+\item{subtitles}{character vector of subtitles used in plot annotations;
+must be the same length as `domain_names`.}
 
-\item{output_dir}{directory to save outputs (defaults to NULL)}
-
-\item{push_mods}{logical; whether to push models (defaults to FALSE)}
-
-\item{interpret_all_E_gt1}{logical; interpretation parameter (defaults to TRUE)}
+\item{...}{any additional arguments forwarded directly to
+[`margot_subset_batch()`] (e.g., `interpret_all_E_gt1 = TRUE`).}
 }
 \value{
-a nested list containing results organized by domain and subset type
+a nested list. the first level is the domain name; the second level
+  is the subset type. each leaf contains the full list returned by
+  `margot_subset_batch()`.
 }
 \description{
-This function streamlines the process of running planned contrasts and
-heterogeneity analyses across multiple outcome domains. It applies the same
-subset analyses (e.g., by wealth, ethnicity, political orientation) to
-different outcome domains, saving results, generating tables, and creating
-visualizations.
+runs the same planned subgroup contrasts (e.g., wealth, ethnicity,
+political orientation) over multiple outcome domains.
+for each domain the specified subset definitions are applied, summaries are
+printed, and composite plots are displayed.
+**no files are written to disk – the former `push_mods`/`output_dir`
+arguments have been retired.**
 }
 \examples{
-# set up lists of models, names, and subtitles
-domain_models <- list(
-  models_binary_health,
-  models_binary_psych,
-  models_binary_present,
-  models_binary_life,
-  models_binary_social
-)
-
-domain_names <- c("health", "psych", "present", "life", "social")
-
-subtitles <- c(
-  subtitle_health,
-  subtitle_psych,
-  subtitle_present,
-  subtitle_life,
-  subtitle_social
-)
-
-# set up subset types in a list
-subset_types <- list(
-  wealth = subsets_standard_wealth,
-  ethnicity = subsets_standard_ethnicity,
-  political = subsets_standard_political,
-  gender = subsets_standard_gender,
-  cohort = subsets_standard_cohort
-)
-
-# run the batch processing for all domains and subsets
+\dontrun{
 results <- margot_planned_subgroups_batch(
-  domain_models = domain_models,
-  X = X,
+  domain_models = list(models_binary_health, models_binary_psych),
+  X             = X,
   base_defaults = base_defaults_binary,
-  subset_types = subset_types,
-  original_df = original_df,
-  domain_names = domain_names,
-  subtitles = subtitles,
-  push_mods = push_mods
+  subset_types  = list(
+    wealth    = subsets_standard_wealth,
+    ethnicity = subsets_standard_ethnicity
+  ),
+  original_df  = original_df,
+  domain_names = c("health", "psych"),
+  subtitles    = c(subtitle_health, subtitle_psych),
+  interpret_all_E_gt1 = TRUE
 )
+}
 
 }

@@ -30,14 +30,13 @@
 #'   (e.g. `title_size`, `jitter_width`, etc.).
 #'
 #' @return A `ggplot` object (depth 1) or a patchwork object (depth 2).
-#' @export
 #'
 #' @import ggplot2
 #' @import patchwork
 #' @importFrom tibble tibble
 #' @importFrom cli cli_h1 cli_alert_info cli_abort
 
-#' @keywords internal
+#' @keywords export
 margot_plot_policy_tree <- function(
     mc_test,
     model_name,
@@ -104,16 +103,21 @@ margot_plot_policy_tree <- function(
   }
 
   if (depth == 1L) {
-    nd  <- tree$nodes[[1L]]
-    sp  <- nd$split_variable
-    cp  <- nd$split_value
+    nd        <- tree$nodes[[1L]]
+    sp        <- nd$split_variable
+    cp        <- nd$split_value
 
-    pd       <- mc_test$results[[model_name]]$plot_data
-    Xt       <- pd$X_test
-    Xt_full  <- pd$X_test_full %||% Xt
+    pd        <- mc_test$results[[model_name]]$plot_data
+    Xt        <- pd$X_test
+    Xt_full   <- pd$X_test_full %||% Xt
 
     # determine var_name
-    if (is.numeric(sp)) var_name <- tree$columns[as.integer(sp)] else var_name <- sp
+    if (is.numeric(sp)) {
+      var_name <- tree$columns[as.integer(sp)]
+    } else {
+      var_name <- sp
+    }
+
     idx <- match(var_name, if (is.matrix(Xt)) colnames(Xt) else names(Xt))
     if (is.na(idx)) {
       cli::cli_alert_info(
@@ -125,16 +129,25 @@ margot_plot_policy_tree <- function(
         cli::cli_abort("split variable '{var_name}' absent from both X_test and X_test_full")
       Xt <- Xt_full
     }
+
     x_vec <- if (is.matrix(Xt)) Xt[, idx] else Xt[[var_name]]
     if (length(x_vec) == 0)
       cli::cli_abort("vector for split variable '{var_name}' is empty (check input data)")
 
-    # get robust labels
+    # get labels
     var_label  <- tv(var_name)
     act_labels <- vapply(tree$action.names, tl, FUN.VALUE = "")
-    preds      <- factor(pd$predictions,
-                         seq_along(act_labels),
-                         act_labels)
+    preds      <- factor(pd$predictions, seq_along(act_labels), act_labels)
+
+    # compute original-scale split value
+    orig_cp <- get_original_value_plot(var_name, cp, original_df)
+
+    # build subtitle, adding original value if available
+    subtitle_txt <- if (!is.null(orig_cp)) {
+      sprintf("%s: split at %.3f (%s)*", var_label, cp, orig_cp)
+    } else {
+      sprintf("%s: split at %.3f", var_label, cp)
+    }
 
     plot_df <- tibble::tibble(x = x_vec, y = 0, pred = preds)
     colour_scale <- build_colour_scale(act_labels)
@@ -153,15 +166,14 @@ margot_plot_policy_tree <- function(
         x        = var_label,
         y        = NULL,
         colour   = "Prediction",
-        subtitle = sprintf("%s: split at %.3f", var_label, cp)
+        subtitle = subtitle_txt
       ) +
       theme_function() +
       ggplot2::theme(
-        axis.text.y    = ggplot2::element_blank(),
-        axis.ticks.y   = ggplot2::element_blank(),
+        axis.text.y     = ggplot2::element_blank(),
+        axis.ticks.y    = ggplot2::element_blank(),
         legend.position = "bottom"
       )
-
   } else {
     do.call(
       margot_plot_policy_tree_depth2,
@@ -182,6 +194,7 @@ margot_plot_policy_tree <- function(
     )
   }
 }
+
 #' @keywords internal
 #' @inheritParams margot_plot_policy_tree
 #' @import patchwork ggplot2
@@ -200,55 +213,49 @@ margot_plot_policy_tree_depth2 <- function(
       remove_underscores = TRUE,
       use_title_case     = TRUE
     ),
-    title_size      = 16,
-    subtitle_size   = 14,
-    axis_title_size = 14,
-    legend_title_size = 14,
-    jitter_width    = 0.3,
-    jitter_height   = 0.3,
-    split_line_color = "red",
-    split_line_alpha = 0.7,
-    split_line_type  = "dashed",
+    title_size         = 16,
+    subtitle_size      = 14,
+    axis_title_size    = 14,
+    legend_title_size  = 14,
+    jitter_width       = 0.3,
+    jitter_height      = 0.3,
+    split_line_color   = "red",
+    split_line_alpha   = 0.7,
+    split_line_type    = "dashed",
     split_line_linewidth = 0.5,
-    split_label_size = 10,
-    split_label_color = "red",
-    custom_action_names = NULL,
-    legend_position = "bottom",
-    plot_selection  = "both",
-    shade_fill      = "#6e6e6e",
-    shade_alpha     = 0.35,
+    split_label_size   = 10,
+    split_label_color  = "red",
+    custom_action_names= NULL,
+    legend_position    = "bottom",
+    plot_selection     = "both",
+    shade_fill         = "#6e6e6e",
+    shade_alpha        = 0.35,
     ...
 ) {
-  # safe wrappers for label transforms
-  tl <- function(x) {
-    tryCatch(
-      transform_label(x, label_mapping, label_options),
-      error = function(e) x
-    )
-  }
-  tv <- function(x) {
-    tryCatch(
-      transform_var_name(
-        x,
-        label_mapping   = label_mapping,
-        remove_tx_prefix   = label_options$remove_tx_prefix,
-        remove_z_suffix    = label_options$remove_z_suffix,
-        use_title_case     = label_options$use_title_case,
-        remove_underscores = label_options$remove_underscores
-      ), error = function(e) x
-    )
-  }
+  # safe wrappers for labels
+  tl <- function(x) tryCatch(
+    transform_label(x, label_mapping, label_options), error = function(e) x
+  )
+  tv <- function(x) tryCatch(
+    transform_var_name(
+      x, label_mapping,
+      remove_tx_prefix   = label_options$remove_tx_prefix,
+      remove_z_suffix    = label_options$remove_z_suffix,
+      use_title_case     = label_options$use_title_case,
+      remove_underscores = label_options$remove_underscores
+    ), error = function(e) x
+  )
 
   tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
   if (is.null(tree_obj))
     cli::cli_abort("no depth-2 tree for model '{model_name}'")
 
-  # action labels and colour scale
-  act_labels <- if (is.null(custom_action_names))
+  # build colour scale
+  act_labels <- if (is.null(custom_action_names)) {
     vapply(tree_obj$action.names, tl, FUN.VALUE = "")
-  else
+  } else {
     vapply(custom_action_names, tl, FUN.VALUE = "")
-
+  }
   if (is.null(color_scale)) {
     okabe <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442",
                "#0072B2", "#D55E00", "#CC79A7", "#000000")
@@ -257,14 +264,15 @@ margot_plot_policy_tree_depth2 <- function(
     )
   }
 
-  # unpack data
-  pd    <- mc_test$results[[model_name]]$plot_data
-  Xt    <- pd$X_test
-  preds <- factor(pd$predictions, seq_along(act_labels), act_labels)
-  nodes <- tree_obj$nodes
-  sv1   <- nodes[[1]]$split_variable; cp1 <- nodes[[1]]$split_value
-  sv2   <- nodes[[2]]$split_variable; cp2 <- nodes[[2]]$split_value
-  sv3   <- nodes[[3]]$split_variable; cp3 <- nodes[[3]]$split_value
+  # unpack data and splits
+  pd      <- mc_test$results[[model_name]]$plot_data
+  Xt      <- pd$X_test
+  preds   <- factor(pd$predictions, seq_along(act_labels), act_labels)
+  nodes   <- tree_obj$nodes
+
+  sv1 <- nodes[[1]]$split_variable; cp1 <- nodes[[1]]$split_value
+  sv2 <- nodes[[2]]$split_variable; cp2 <- nodes[[2]]$split_value
+  sv3 <- nodes[[3]]$split_variable; cp3 <- nodes[[3]]$split_value
 
   varnames <- names(Xt)
   plot_df  <- tibble::tibble(
@@ -274,10 +282,12 @@ margot_plot_policy_tree_depth2 <- function(
     pred = preds
   )
 
-  # panel builder
-  build_panel <- function(x, y, xlab, ylab, xsp, ysp, shade_side) {
+  # panel builder now also takes the raw var names for back-transformation
+  build_panel <- function(x, y, xlab, ylab, xsp, ysp, shade_side, xvar, yvar) {
     sd <- match.arg(shade_side, c("none","left","right"))
     p  <- ggplot2::ggplot()
+
+    # shade non-decision region
     if (shading && sd != "none") {
       xmin <- if (sd == "left") -Inf else xsp
       xmax <- if (sd == "left") xsp  else Inf
@@ -287,46 +297,79 @@ margot_plot_policy_tree_depth2 <- function(
         fill = shade_fill, alpha = shade_alpha
       )
     }
+
+    # back-transform both split points
+    orig_xsp <- get_original_value_plot(xvar, xsp, original_df)
+    orig_ysp <- get_original_value_plot(yvar, ysp, original_df)
+
     p +
       ggplot2::geom_jitter(
         data   = plot_df,
         ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred),
         alpha = point_alpha, width = jitter_width, height = jitter_height
       ) +
-      ggplot2::geom_vline(xintercept = xsp,
-                          colour = split_line_color,
-                          alpha = split_line_alpha,
-                          linetype = split_line_type,
-                          linewidth = split_line_linewidth) +
-      ggplot2::geom_hline(yintercept = ysp,
-                          colour = split_line_color,
-                          alpha = split_line_alpha,
-                          linetype = split_line_type,
-                          linewidth = split_line_linewidth) +
+      # decision boundaries
+      ggplot2::geom_vline(
+        xintercept = xsp,
+        colour     = split_line_color,
+        alpha      = split_line_alpha,
+        linetype   = split_line_type,
+        linewidth  = split_line_linewidth
+      ) +
+      ggplot2::geom_hline(
+        yintercept = ysp,
+        colour     = split_line_color,
+        alpha      = split_line_alpha,
+        linetype   = split_line_type,
+        linewidth  = split_line_linewidth
+      ) +
+      # annotate raw-scale thresholds if available
+      { if (!is.null(orig_xsp)) ggplot2::annotate(
+        "text",
+        x      = xsp, y = Inf,
+        label  = paste0("(", orig_xsp, ")*"),
+        vjust  = 2,
+        size   = split_label_size / ggplot2::.pt
+      ) } +
+      { if (!is.null(orig_ysp)) ggplot2::annotate(
+        "text",
+        x      = -Inf, y = ysp,
+        label  = paste0("(", orig_ysp, ")*"),
+        hjust  = -0.1,
+        size   = split_label_size / ggplot2::.pt,
+        angle  = 90
+      ) } +
+      # styling
       color_scale +
-      ggplot2::labs(x = xlab, y = ylab,
-                    subtitle = paste(xlab, "vs", ylab),
-                    colour = "Prediction") +
+      ggplot2::labs(
+        x        = xlab,
+        y        = ylab,
+        subtitle = paste(xlab, "vs", ylab),
+        colour   = "Prediction"
+      ) +
       theme_function() +
       ggplot2::theme(
         plot.subtitle     = ggplot2::element_text(size = subtitle_size),
         axis.title        = ggplot2::element_text(size = axis_title_size),
         legend.title      = ggplot2::element_text(size = legend_title_size),
-        axis.text.x.top   = ggplot2::element_text(size = split_label_size,
-                                                  colour = split_label_color),
-        axis.text.y.right = ggplot2::element_text(size = split_label_size,
-                                                  colour = split_label_color)
+        axis.text.x.top   = ggplot2::element_text(
+          size = split_label_size, colour = split_label_color
+        ),
+        axis.text.y.right = ggplot2::element_text(
+          size = split_label_size, colour = split_label_color
+        )
       )
   }
 
-  # build panels
+  # build each panel, passing raw varnames
   p1 <- p2 <- NULL
   if (plot_selection %in% c("both", "p1")) {
     p1 <- build_panel(
       "x1", "x2",
       tv(varnames[sv1]), tv(varnames[sv2]),
       cp1, cp2,
-      shade_side = if (shading) "right" else "none"
+      shade_side = if (shading) "right" else "none",
+      xvar = varnames[sv1], yvar = varnames[sv2]
     )
   }
   if (plot_selection %in% c("both", "p2")) {
@@ -334,25 +377,195 @@ margot_plot_policy_tree_depth2 <- function(
       "x1", "x3",
       tv(varnames[sv1]), tv(varnames[sv3]),
       cp1, cp3,
-      shade_side = if (shading) "left" else "none"
+      shade_side = if (shading) "left" else "none",
+      xvar = varnames[sv1], yvar = varnames[sv3]
     )
   }
 
-  # assemble with robust title
+  # assemble panels with title
   main_title <- sprintf("Policy-tree results – %s", tv(model_name))
   patchwork::wrap_plots(p1, p2, ncol = 2) +
     patchwork::plot_annotation(
       title = main_title,
       theme = ggplot2::theme(
-        plot.title = ggplot2::element_text(size = title_size,
-                                           margin = ggplot2::margin(b = 10))
+        plot.title = ggplot2::element_text(
+          size   = title_size,
+          margin = ggplot2::margin(b = 10)
+        )
       )
     ) &
     ggplot2::theme(legend.position = legend_position)
 }
 
-# helper for NULL
-`%||%` <- function(x, y) if (is.null(x)) y else x
+
+# margot_plot_policy_tree_depth2 <- function(
+#     mc_test,
+#     model_name,
+#     original_df     = NULL,
+#     shading         = TRUE,
+#     color_scale     = NULL,
+#     point_alpha     = 0.5,
+#     theme_function  = ggplot2::theme_classic,
+#     label_mapping   = NULL,
+#     label_options   = list(
+#       remove_tx_prefix   = TRUE,
+#       remove_z_suffix    = TRUE,
+#       remove_underscores = TRUE,
+#       use_title_case     = TRUE
+#     ),
+#     title_size      = 16,
+#     subtitle_size   = 14,
+#     axis_title_size = 14,
+#     legend_title_size = 14,
+#     jitter_width    = 0.3,
+#     jitter_height   = 0.3,
+#     split_line_color = "red",
+#     split_line_alpha = 0.7,
+#     split_line_type  = "dashed",
+#     split_line_linewidth = 0.5,
+#     split_label_size = 10,
+#     split_label_color = "red",
+#     custom_action_names = NULL,
+#     legend_position = "bottom",
+#     plot_selection  = "both",
+#     shade_fill      = "#6e6e6e",
+#     shade_alpha     = 0.35,
+#     ...
+# ) {
+#   # safe wrappers for label transforms
+#   tl <- function(x) {
+#     tryCatch(
+#       transform_label(x, label_mapping, label_options),
+#       error = function(e) x
+#     )
+#   }
+#   tv <- function(x) {
+#     tryCatch(
+#       transform_var_name(
+#         x,
+#         label_mapping   = label_mapping,
+#         remove_tx_prefix   = label_options$remove_tx_prefix,
+#         remove_z_suffix    = label_options$remove_z_suffix,
+#         use_title_case     = label_options$use_title_case,
+#         remove_underscores = label_options$remove_underscores
+#       ), error = function(e) x
+#     )
+#   }
+#
+#   tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
+#   if (is.null(tree_obj))
+#     cli::cli_abort("no depth-2 tree for model '{model_name}'")
+#
+#   # action labels and colour scale
+#   act_labels <- if (is.null(custom_action_names))
+#     vapply(tree_obj$action.names, tl, FUN.VALUE = "")
+#   else
+#     vapply(custom_action_names, tl, FUN.VALUE = "")
+#
+#   if (is.null(color_scale)) {
+#     okabe <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442",
+#                "#0072B2", "#D55E00", "#CC79A7", "#000000")
+#     color_scale <- ggplot2::scale_colour_manual(
+#       values = setNames(okabe[seq_along(act_labels)], act_labels)
+#     )
+#   }
+#
+#   # unpack data
+#   pd    <- mc_test$results[[model_name]]$plot_data
+#   Xt    <- pd$X_test
+#   preds <- factor(pd$predictions, seq_along(act_labels), act_labels)
+#   nodes <- tree_obj$nodes
+#   sv1   <- nodes[[1]]$split_variable; cp1 <- nodes[[1]]$split_value
+#   sv2   <- nodes[[2]]$split_variable; cp2 <- nodes[[2]]$split_value
+#   sv3   <- nodes[[3]]$split_variable; cp3 <- nodes[[3]]$split_value
+#
+#   varnames <- names(Xt)
+#   plot_df  <- tibble::tibble(
+#     x1   = Xt[[varnames[sv1]]],
+#     x2   = Xt[[varnames[sv2]]],
+#     x3   = Xt[[varnames[sv3]]],
+#     pred = preds
+#   )
+#
+#   # panel builder
+#   build_panel <- function(x, y, xlab, ylab, xsp, ysp, shade_side) {
+#     sd <- match.arg(shade_side, c("none","left","right"))
+#     p  <- ggplot2::ggplot()
+#     if (shading && sd != "none") {
+#       xmin <- if (sd == "left") -Inf else xsp
+#       xmax <- if (sd == "left") xsp  else Inf
+#       p <- p + ggplot2::annotate(
+#         "rect", xmin = xmin, xmax = xmax,
+#         ymin = -Inf, ymax = Inf,
+#         fill = shade_fill, alpha = shade_alpha
+#       )
+#     }
+#     p +
+#       ggplot2::geom_jitter(
+#         data   = plot_df,
+#         ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred),
+#         alpha = point_alpha, width = jitter_width, height = jitter_height
+#       ) +
+#       ggplot2::geom_vline(xintercept = xsp,
+#                           colour = split_line_color,
+#                           alpha = split_line_alpha,
+#                           linetype = split_line_type,
+#                           linewidth = split_line_linewidth) +
+#       ggplot2::geom_hline(yintercept = ysp,
+#                           colour = split_line_color,
+#                           alpha = split_line_alpha,
+#                           linetype = split_line_type,
+#                           linewidth = split_line_linewidth) +
+#       color_scale +
+#       ggplot2::labs(x = xlab, y = ylab,
+#                     subtitle = paste(xlab, "vs", ylab),
+#                     colour = "Prediction") +
+#       theme_function() +
+#       ggplot2::theme(
+#         plot.subtitle     = ggplot2::element_text(size = subtitle_size),
+#         axis.title        = ggplot2::element_text(size = axis_title_size),
+#         legend.title      = ggplot2::element_text(size = legend_title_size),
+#         axis.text.x.top   = ggplot2::element_text(size = split_label_size,
+#                                                   colour = split_label_color),
+#         axis.text.y.right = ggplot2::element_text(size = split_label_size,
+#                                                   colour = split_label_color)
+#       )
+#   }
+#
+#   # build panels
+#   p1 <- p2 <- NULL
+#   if (plot_selection %in% c("both", "p1")) {
+#     p1 <- build_panel(
+#       "x1", "x2",
+#       tv(varnames[sv1]), tv(varnames[sv2]),
+#       cp1, cp2,
+#       shade_side = if (shading) "right" else "none"
+#     )
+#   }
+#   if (plot_selection %in% c("both", "p2")) {
+#     p2 <- build_panel(
+#       "x1", "x3",
+#       tv(varnames[sv1]), tv(varnames[sv3]),
+#       cp1, cp3,
+#       shade_side = if (shading) "left" else "none"
+#     )
+#   }
+#
+#   # assemble with robust title
+#   main_title <- sprintf("Policy-tree results – %s", tv(model_name))
+#   patchwork::wrap_plots(p1, p2, ncol = 2) +
+#     patchwork::plot_annotation(
+#       title = main_title,
+#       theme = ggplot2::theme(
+#         plot.title = ggplot2::element_text(size = title_size,
+#                                            margin = ggplot2::margin(b = 10))
+#       )
+#     ) &
+#     ggplot2::theme(legend.position = legend_position)
+# }
+#
+# # helper for NULL
+# `%||%` <- function(x, y) if (is.null(x)) y else x
 
 
 # margot_plot_policy_tree <- function(

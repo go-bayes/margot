@@ -6,6 +6,15 @@
 * remove `crayon` and other unnecessary packages
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
+- `margot_interpret_policy_batch()` fix to aling with new functions for depth = 1L. 
+
+
+# [2025-05-04] margot 1.0.32
+## New 
+- `margot_planned_subgroup_batch()` overhauled to work with `margot_plot()` updates. 
+-  restored decision tree plot results labelling
+-  restored margot_interpret_marginal cutpoint results on datascale
+
 
 # [2025-05-04] margot 1.0.31
 ## New 
@@ -277,6 +286,7 @@
 - `group_tab()` function re-factored
 - `margot_interpret_marginal()` corrected order & small improvements
 - `margot_plot()` function refactored for clarity.
+
 
 # [2025-03-18] margot 0.3.1.9
 

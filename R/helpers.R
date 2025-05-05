@@ -542,15 +542,14 @@ create_tau_hat_plot <- function(tau_hat, outcome) {
 }
 
 # label and plotting for causal forest models -----------------------------
-#' @keywords internal
 #' works with transform to original scale
+#' @keywords internal
 determine_transformation <- function(var_name) {
   list(
     was_log_transformed = grepl("_log_", var_name),
     was_z_transformed = grepl("_z$", var_name)
   )
 }
-
 
 #' @keywords internal
 get_original_value <- function(var_name, split_value, original_df) {
@@ -617,168 +616,119 @@ get_original_value <- function(var_name, split_value, original_df) {
   return(round(original_value, 3))
 }
 
+
 #' @keywords internal
 get_original_var_info <- function(var_name, original_df) {
-  # guard
-  if (is.null(original_df) || length(var_name) == 0) {
+  # Create a list of possible variable names
+  orig_var_candidates <- character()
+
+  # Start with var_name
+  orig_var_candidates <- c(orig_var_candidates, var_name)
+
+  # Remove '_z' suffix
+  var_no_z <- sub("_z$", "", var_name)
+  orig_var_candidates <- c(orig_var_candidates, var_no_z)
+
+  # Keep '_log_' in variable name
+  var_with_log <- var_no_z
+  orig_var_candidates <- c(orig_var_candidates, var_with_log)
+
+  # Remove 't0_' prefix
+  var_no_t0 <- sub("^t[0-9]+_", "", var_with_log)
+  orig_var_candidates <- c(orig_var_candidates, var_no_t0)
+
+  # Remove duplicates
+  orig_var_candidates <- unique(orig_var_candidates)
+
+  # Try to find a matching variable in original_df
+  orig_var <- NULL
+  for (candidate in orig_var_candidates) {
+    if (candidate %in% names(original_df)) {
+      orig_var <- candidate
+      break
+    }
+  }
+
+  if (is.null(orig_var)) {
+    cli::cli_warn("Original variable '{var_name}' not found in original_df. Skipping original scale value.")
     return(NULL)
   }
 
-  # 1) strip off any _z, any leading t#_ and any _log_ to get the “bare” name
-  bare <- sub("_z$",     "", var_name)
-  bare <- sub("^t[0-9]+_", "", bare)
-  bare <- sub("_log_",   "", bare)
+  # Check if variable was log-transformed and/or z-transformed
+  was_log_transformed <- grepl("_log_", var_name)
+  was_z_transformed <- grepl("_z$", var_name)
 
-  # 2) build candidates (include lowercase)
-  candidates <- unique(c(var_name, bare, tolower(bare)))
+  orig_data <- original_df[[orig_var]]
 
-  # 3) pick the first that actually exists
-  orig_var <- intersect(candidates, names(original_df))[1]
-  if (is.na(orig_var) || !nzchar(orig_var)) {
-    cli::cli_warn("Original variable '{var_name}' not found; skipping.")
-    return(NULL)
+  if (was_z_transformed) {
+    # Calculate mean and sd from the original data
+    orig_mean <- mean(orig_data, na.rm = TRUE)
+    orig_sd <- sd(orig_data, na.rm = TRUE)
+  } else {
+    orig_mean <- NA
+    orig_sd <- NA
   }
 
-  # 4) only numeric columns can have means/sds
-  data_col <- original_df[[orig_var]]
-  if (!is.numeric(data_col)) {
-    return(NULL)
-  }
-
-  list(
-    orig_var            = orig_var,
-    orig_mean           = mean(data_col, na.rm = TRUE),
-    orig_sd             = sd(data_col, na.rm = TRUE),
-    was_log_transformed = grepl("_log_", var_name),
-    was_z_transformed   = grepl("_z$", var_name)
-  )
+  return(list(
+    orig_mean = orig_mean,
+    orig_sd = orig_sd,
+    was_log_transformed = was_log_transformed,
+    was_z_transformed = was_z_transformed
+  ))
 }
-
-# get_original_var_info <- function(var_name, original_df) {
-#   # Create a list of possible variable names
-#   orig_var_candidates <- character()
-#
-#   # Start with var_name
-#   orig_var_candidates <- c(orig_var_candidates, var_name)
-#
-#   # Remove '_z' suffix
-#   var_no_z <- sub("_z$", "", var_name)
-#   orig_var_candidates <- c(orig_var_candidates, var_no_z)
-#
-#   # Keep '_log_' in variable name
-#   var_with_log <- var_no_z
-#   orig_var_candidates <- c(orig_var_candidates, var_with_log)
-#
-#   # Remove 't0_' prefix
-#   var_no_t0 <- sub("^t[0-9]+_", "", var_with_log)
-#   orig_var_candidates <- c(orig_var_candidates, var_no_t0)
-#
-#   # Remove duplicates
-#   orig_var_candidates <- unique(orig_var_candidates)
-#
-#   # Try to find a matching variable in original_df
-#   orig_var <- NULL
-#   for (candidate in orig_var_candidates) {
-#     if (candidate %in% names(original_df)) {
-#       orig_var <- candidate
-#       break
-#     }
-#   }
-#
-#   if (is.null(orig_var)) {
-#     cli::cli_warn("Original variable '{var_name}' not found in original_df. Skipping original scale value.")
-#     return(NULL)
-#   }
-#
-#   # Check if variable was log-transformed and/or z-transformed
-#   was_log_transformed <- grepl("_log_", var_name)
-#   was_z_transformed <- grepl("_z$", var_name)
-#
-#   orig_data <- original_df[[orig_var]]
-#
-#   if (was_z_transformed) {
-#     # Calculate mean and sd from the original data
-#     orig_mean <- mean(orig_data, na.rm = TRUE)
-#     orig_sd <- sd(orig_data, na.rm = TRUE)
-#   } else {
-#     orig_mean <- NA
-#     orig_sd <- NA
-#   }
-#
-#   return(list(
-#     orig_mean = orig_mean,
-#     orig_sd = orig_sd,
-#     was_log_transformed = was_log_transformed,
-#     was_z_transformed = was_z_transformed
-#   ))
-# }
 
 
 #' @keywords internal
 get_original_value_plot <- function(var_name, split_value, original_df) {
-  info <- get_original_var_info(var_name, original_df)
-  if (is.null(info)) return(NULL)
-  val <- split_value
-  if (info$was_z_transformed) {
-    val <- info$orig_mean + split_value * info$orig_sd
-  }
-  if (info$was_log_transformed) {
-    # if you want exp(x)-1 on the raw scale
-    val <- exp(val) - 1
-  }
-  round(val, 3)
-}
+  if (is.null(original_df)) return(NULL)
 
-# get_original_value_plot <- function(var_name, split_value, original_df) {
-#   if (is.null(original_df)) return(NULL)
-#
-#   # Create list of possible variable names
-#   orig_var_candidates <- c(
-#     var_name,
-#     sub("_z$", "", var_name),
-#     sub("^t[0-9]+_", "", sub("_z$", "", var_name))
-#   )
-#   orig_var_candidates <- unique(orig_var_candidates)
-#
-#   # Try to find a matching variable in original_df
-#   orig_var <- NULL
-#   for (candidate in orig_var_candidates) {
-#     if (candidate %in% names(original_df)) {
-#       orig_var <- candidate
-#       break
-#     }
-#   }
-#
-#   if (is.null(orig_var)) {
-#     cli::cli_warn("Original variable '{var_name}' not found in original_df. Skipping original scale value.")
-#     return(NULL)
-#   }
-#
-#   # Determine transformation types
-#   was_log_transformed <- grepl("_log_", var_name)
-#   was_z_transformed <- grepl("_z$", var_name)
-#
-#   orig_data <- original_df[[orig_var]]
-#
-#   if (was_z_transformed) {
-#     # Calculate mean and sd from the original data
-#     orig_mean <- mean(orig_data, na.rm = TRUE)
-#     orig_sd <- sd(orig_data, na.rm = TRUE)
-#
-#     # Back-transform z-score to the original scale
-#     original_value <- orig_mean + split_value * orig_sd
-#   } else {
-#     # If not z-transformed, the split_value is already on the (log-transformed) scale
-#     original_value <- split_value
-#   }
-#
-#   # If variable was log-transformed, back-transform to the original data scale
-#   if (was_log_transformed) {
-#     original_value <- exp(original_value) - 1
-#   }
-#
-#   return(round(original_value, 3))
-# }
+  # Create list of possible variable names
+  orig_var_candidates <- c(
+    var_name,
+    sub("_z$", "", var_name),
+    sub("^t[0-9]+_", "", sub("_z$", "", var_name))
+  )
+  orig_var_candidates <- unique(orig_var_candidates)
+
+  # Try to find a matching variable in original_df
+  orig_var <- NULL
+  for (candidate in orig_var_candidates) {
+    if (candidate %in% names(original_df)) {
+      orig_var <- candidate
+      break
+    }
+  }
+
+  if (is.null(orig_var)) {
+    cli::cli_warn("Original variable '{var_name}' not found in original_df. Skipping original scale value.")
+    return(NULL)
+  }
+
+  # Determine transformation types
+  was_log_transformed <- grepl("_log_", var_name)
+  was_z_transformed <- grepl("_z$", var_name)
+
+  orig_data <- original_df[[orig_var]]
+
+  if (was_z_transformed) {
+    # Calculate mean and sd from the original data
+    orig_mean <- mean(orig_data, na.rm = TRUE)
+    orig_sd <- sd(orig_data, na.rm = TRUE)
+
+    # Back-transform z-score to the original scale
+    original_value <- orig_mean + split_value * orig_sd
+  } else {
+    # If not z-transformed, the split_value is already on the (log-transformed) scale
+    original_value <- split_value
+  }
+
+  # If variable was log-transformed, back-transform to the original data scale
+  if (was_log_transformed) {
+    original_value <- exp(original_value) - 1
+  }
+
+  return(round(original_value, 3))
+}
 
 
 #' @keywords internal
@@ -835,7 +785,7 @@ transform_label <- function(label, label_mapping = NULL, options = list()) {
 
 
 #' @keywords internal
-transform_to_original_scale <- function(results_df, original_df, label_mapping = NULL) {
+s <- function(results_df, original_df, label_mapping = NULL) {
   # Determine the effect size column based on the data structure
   if ("E[Y(1)]-E[Y(0)]" %in% names(results_df)) {
     effect_size_col <- "E[Y(1)]-E[Y(0)]"
