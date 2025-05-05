@@ -35,7 +35,6 @@
 #' @import patchwork
 #' @importFrom tibble tibble
 #' @importFrom cli cli_h1 cli_alert_info cli_abort
-
 #' @keywords export
 margot_plot_policy_tree <- function(
     mc_test,
@@ -195,9 +194,10 @@ margot_plot_policy_tree <- function(
   }
 }
 
-#' @keywords internal
+
 #' @inheritParams margot_plot_policy_tree
 #' @import patchwork ggplot2
+#' @keywords internal
 margot_plot_policy_tree_depth2 <- function(
     mc_test,
     model_name,
@@ -566,8 +566,6 @@ margot_plot_policy_tree_depth2 <- function(
 #
 # # helper for NULL
 # `%||%` <- function(x, y) if (is.null(x)) y else x
-
-
 # margot_plot_policy_tree <- function(
 #     mc_test,
 #     model_name,
@@ -714,177 +712,167 @@ margot_plot_policy_tree_depth2 <- function(
 #     )
 #   }
 # }
-
-#' #' Depth-2 helper (internal)
-#' #'
-#' #' @keywords internal
-#' #' @inheritParams margot_plot_policy_tree
-#' #' @param title_size Base font size for the main title.
-#' #' @param subtitle_size Base font size for subplot subtitles.
-#' #' … (other graphic-tuning parameters documented here) …
-#' #'
-#' #' @return A patchwork object.
-#' margot_plot_policy_tree_depth2 <- function(
-#'     mc_test,
-#'     model_name,
-#'     original_df     = NULL,
-#'     shading         = TRUE,
-#'     color_scale     = NULL,
-#'     point_alpha     = 0.5,
-#'     theme_function  = ggplot2::theme_classic,
-#'     label_mapping   = NULL,
-#'     label_options   = list(
-#'       remove_tx_prefix   = TRUE,
-#'       remove_z_suffix    = TRUE,
-#'       remove_underscores = TRUE,
-#'       use_title_case     = TRUE
-#'     ),
-#'     # ------ aesthetic tuning args (defaults match previous behaviour) ------
-#'     title_size      = 16,
-#'     subtitle_size   = 14,
-#'     axis_title_size = 14,
-#'     legend_title_size = 14,
-#'     jitter_width    = 0.3,
-#'     jitter_height   = 0.3,
-#'     split_line_color = "red",
-#'     split_line_alpha = 0.7,
-#'     split_line_type  = "dashed",
-#'     split_line_linewidth = 0.5,
-#'     split_label_size = 10,
-#'     split_label_color = "red",
-#'     custom_action_names = NULL,
-#'     legend_position = "bottom",
-#'     plot_selection  = "both",
-#'     shade_fill      = "#6e6e6e",
-#'     shade_alpha     = 0.35,
-#'     ...
-#' ) {
-#'   tf <- function(x) transform_label(x, label_mapping, label_options)
-#'
-#'   tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
-#'   if (is.null(tree_obj))
-#'     cli::cli_abort("no depth-2 tree for model '{model_name}'")
-#'
-#'   # ── action names and colour scale ---------------------------------------
-#'   act_labels <- if (is.null(custom_action_names))
-#'     vapply(tree_obj$action.names, tf, FUN.VALUE = "")
-#'   else
-#'     vapply(custom_action_names, tf, FUN.VALUE = "")
-#'
-#'   n_act      <- length(act_labels)
-#'   if (is.null(color_scale)) {
-#'     okabe <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442",
-#'                "#0072B2", "#D55E00", "#CC79A7", "#000000")
-#'     color_scale <- ggplot2::scale_colour_manual(
-#'       values = setNames(okabe[seq_along(act_labels)], act_labels)
-#'     )
-#'   }
-#'
-#'   # ── unpack data ----------------------------------------------------------
-#'   pd       <- mc_test$results[[model_name]]$plot_data
-#'   Xt       <- pd$X_test
-#'   preds    <- factor(pd$predictions,
-#'                      seq_along(act_labels),
-#'                      act_labels)
-#'   nodes    <- tree_obj$nodes
-#'   idx1     <- nodes[[1]]$split_variable; sv1 <- nodes[[1]]$split_value
-#'   idx2     <- nodes[[2]]$split_variable; sv2 <- nodes[[2]]$split_value
-#'   idx3     <- nodes[[3]]$split_variable; sv3 <- nodes[[3]]$split_value
-#'
-#'   varnames <- names(Xt)
-#'   plot_df  <- tibble::tibble(
-#'     x1 = Xt[[varnames[idx1]]],
-#'     x2 = Xt[[varnames[idx2]]],
-#'     x3 = Xt[[varnames[idx3]]],
-#'     pred = preds
-#'   )
-#'
-#'   # ── helper to build a single panel --------------------------------------
-#'   build_panel <- function(x, y, xlab, ylab,
-#'                           xsp, ysp, xnm, ynm,
-#'                           shade_side = c("none", "left", "right")) {
-#'
-#'     sd <- match.arg(shade_side)
-#'     p  <- ggplot2::ggplot()
-#'
-#'     if (shading && sd != "none") {
-#'       xmin <- if (sd == "left") -Inf else xsp
-#'       xmax <- if (sd == "left") xsp  else Inf
-#'       p <- p + ggplot2::annotate(
-#'         "rect",
-#'         xmin = xmin, xmax = xmax,
-#'         ymin = -Inf, ymax = Inf,
-#'         fill = shade_fill, alpha = shade_alpha
-#'       )
-#'     }
-#'
-#'     p +
-#'       ggplot2::geom_jitter(
-#'         data   = plot_df,
-#'         ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred),
-#'         alpha  = point_alpha,
-#'         width  = jitter_width,
-#'         height = jitter_height
-#'       ) +
-#'       ggplot2::geom_vline(
-#'         xintercept = xsp, colour = split_line_color,
-#'         alpha = split_line_alpha, linetype = split_line_type,
-#'         linewidth = split_line_linewidth
-#'       ) +
-#'       ggplot2::geom_hline(
-#'         yintercept = ysp, colour = split_line_color,
-#'         alpha = split_line_alpha, linetype = split_line_type,
-#'         linewidth = split_line_linewidth
-#'       ) +
-#'       color_scale +
-#'       ggplot2::labs(
-#'         x = xlab, y = ylab,
-#'         subtitle = paste(xlab, "vs", ylab),
-#'         colour = "Prediction"
-#'       ) +
-#'       theme_function() +
-#'       ggplot2::theme(
-#'         plot.subtitle     = ggplot2::element_text(size = subtitle_size),
-#'         axis.title        = ggplot2::element_text(size = axis_title_size),
-#'         legend.title      = ggplot2::element_text(size = legend_title_size),
-#'         axis.text.x.top   = ggplot2::element_text(size = split_label_size,
-#'                                                   colour = split_label_color),
-#'         axis.text.y.right = ggplot2::element_text(size = split_label_size,
-#'                                                   colour = split_label_color)
-#'       )
-#'   }
-#'
-#'   # ── build requested panels ----------------------------------------------
-#'   p1 <- p2 <- NULL
-#'   if (plot_selection %in% c("both", "p1")) {
-#'     p1 <- build_panel(
-#'       "x1", "x2",
-#'       tf(varnames[idx1]), tf(varnames[idx2]),
-#'       sv1, sv2, varnames[idx1], varnames[idx2],
-#'       shade_side = if (shading) "right" else "none"
-#'     )
-#'   }
-#'   if (plot_selection %in% c("both", "p2")) {
-#'     p2 <- build_panel(
-#'       "x1", "x3",
-#'       tf(varnames[idx1]), tf(varnames[idx3]),
-#'       sv1, sv3, varnames[idx1], varnames[idx3],
-#'       shade_side = if (shading) "left" else "none"
-#'     )
-#'   }
-#'
-#'   # ── assemble -------------------------------------------------------------
-#'   main_title <- sprintf("Policy-tree results – %s", tf(model_name))
-#'   patchwork::wrap_plots(p1, p2, ncol = 2) +
-#'     patchwork::plot_annotation(
-#'       title   = main_title,
-#'       theme   = ggplot2::theme(
-#'         plot.title = ggplot2::element_text(size = title_size,
-#'                                            margin = ggplot2::margin(b = 10))
-#'       )
-#'     ) &
-#'     ggplot2::theme(legend.position = legend_position)
-#' }
-#'
-#' # fallback NULL-coalescing operator -----------------------------------------
-#' `%||%` <- function(x, y) if (is.null(x)) y else x
+# margot_plot_policy_tree_depth2 <- function(
+#     mc_test,
+#     model_name,
+#     original_df     = NULL,
+#     shading         = TRUE,
+#     color_scale     = NULL,
+#     point_alpha     = 0.5,
+#     theme_function  = ggplot2::theme_classic,
+#     label_mapping   = NULL,
+#     label_options   = list(
+#       remove_tx_prefix   = TRUE,
+#       remove_z_suffix    = TRUE,
+#       remove_underscores = TRUE,
+#       use_title_case     = TRUE
+#     ),
+#     # ------ aesthetic tuning args (defaults match previous behaviour) ------
+#     title_size      = 16,
+#     subtitle_size   = 14,
+#     axis_title_size = 14,
+#     legend_title_size = 14,
+#     jitter_width    = 0.3,
+#     jitter_height   = 0.3,
+#     split_line_color = "red",
+#     split_line_alpha = 0.7,
+#     split_line_type  = "dashed",
+#     split_line_linewidth = 0.5,
+#     split_label_size = 10,
+#     split_label_color = "red",
+#     custom_action_names = NULL,
+#     legend_position = "bottom",
+#     plot_selection  = "both",
+#     shade_fill      = "#6e6e6e",
+#     shade_alpha     = 0.35,
+#     ...
+# ) {
+#   tf <- function(x) transform_label(x, label_mapping, label_options)
+#
+#   tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
+#   if (is.null(tree_obj))
+#     cli::cli_abort("no depth-2 tree for model '{model_name}'")
+#
+#   # ── action names and colour scale ---------------------------------------
+#   act_labels <- if (is.null(custom_action_names))
+#     vapply(tree_obj$action.names, tf, FUN.VALUE = "")
+#   else
+#     vapply(custom_action_names, tf, FUN.VALUE = "")
+#
+#   n_act      <- length(act_labels)
+#   if (is.null(color_scale)) {
+#     okabe <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442",
+#                "#0072B2", "#D55E00", "#CC79A7", "#000000")
+#     color_scale <- ggplot2::scale_colour_manual(
+#       values = setNames(okabe[seq_along(act_labels)], act_labels)
+#     )
+#   }
+#
+#   # ── unpack data ----------------------------------------------------------
+#   pd       <- mc_test$results[[model_name]]$plot_data
+#   Xt       <- pd$X_test
+#   preds    <- factor(pd$predictions,
+#                      seq_along(act_labels),
+#                      act_labels)
+#   nodes    <- tree_obj$nodes
+#   idx1     <- nodes[[1]]$split_variable; sv1 <- nodes[[1]]$split_value
+#   idx2     <- nodes[[2]]$split_variable; sv2 <- nodes[[2]]$split_value
+#   idx3     <- nodes[[3]]$split_variable; sv3 <- nodes[[3]]$split_value
+#
+#   varnames <- names(Xt)
+#   plot_df  <- tibble::tibble(
+#     x1 = Xt[[varnames[idx1]]],
+#     x2 = Xt[[varnames[idx2]]],
+#     x3 = Xt[[varnames[idx3]]],
+#     pred = preds
+#   )
+#
+#   # ── helper to build a single panel --------------------------------------
+#   build_panel <- function(x, y, xlab, ylab,
+#                           xsp, ysp, xnm, ynm,
+#                           shade_side = c("none", "left", "right")) {
+#
+#     sd <- match.arg(shade_side)
+#     p  <- ggplot2::ggplot()
+#
+#     if (shading && sd != "none") {
+#       xmin <- if (sd == "left") -Inf else xsp
+#       xmax <- if (sd == "left") xsp  else Inf
+#       p <- p + ggplot2::annotate(
+#         "rect",
+#         xmin = xmin, xmax = xmax,
+#         ymin = -Inf, ymax = Inf,
+#         fill = shade_fill, alpha = shade_alpha
+#       )
+#     }
+#
+#     p +
+#       ggplot2::geom_jitter(
+#         data   = plot_df,
+#         ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred),
+#         alpha  = point_alpha,
+#         width  = jitter_width,
+#         height = jitter_height
+#       ) +
+#       ggplot2::geom_vline(
+#         xintercept = xsp, colour = split_line_color,
+#         alpha = split_line_alpha, linetype = split_line_type,
+#         linewidth = split_line_linewidth
+#       ) +
+#       ggplot2::geom_hline(
+#         yintercept = ysp, colour = split_line_color,
+#         alpha = split_line_alpha, linetype = split_line_type,
+#         linewidth = split_line_linewidth
+#       ) +
+#       color_scale +
+#       ggplot2::labs(
+#         x = xlab, y = ylab,
+#         subtitle = paste(xlab, "vs", ylab),
+#         colour = "Prediction"
+#       ) +
+#       theme_function() +
+#       ggplot2::theme(
+#         plot.subtitle     = ggplot2::element_text(size = subtitle_size),
+#         axis.title        = ggplot2::element_text(size = axis_title_size),
+#         legend.title      = ggplot2::element_text(size = legend_title_size),
+#         axis.text.x.top   = ggplot2::element_text(size = split_label_size,
+#                                                   colour = split_label_color),
+#         axis.text.y.right = ggplot2::element_text(size = split_label_size,
+#                                                   colour = split_label_color)
+#       )
+#   }
+#
+#   # ── build requested panels ----------------------------------------------
+#   p1 <- p2 <- NULL
+#   if (plot_selection %in% c("both", "p1")) {
+#     p1 <- build_panel(
+#       "x1", "x2",
+#       tf(varnames[idx1]), tf(varnames[idx2]),
+#       sv1, sv2, varnames[idx1], varnames[idx2],
+#       shade_side = if (shading) "right" else "none"
+#     )
+#   }
+#   if (plot_selection %in% c("both", "p2")) {
+#     p2 <- build_panel(
+#       "x1", "x3",
+#       tf(varnames[idx1]), tf(varnames[idx3]),
+#       sv1, sv3, varnames[idx1], varnames[idx3],
+#       shade_side = if (shading) "left" else "none"
+#     )
+#   }
+#
+#   # ── assemble -------------------------------------------------------------
+#   main_title <- sprintf("Policy-tree results – %s", tf(model_name))
+#   patchwork::wrap_plots(p1, p2, ncol = 2) +
+#     patchwork::plot_annotation(
+#       title   = main_title,
+#       theme   = ggplot2::theme(
+#         plot.title = ggplot2::element_text(size = title_size,
+#                                            margin = ggplot2::margin(b = 10))
+#       )
+#     ) &
+#     ggplot2::theme(legend.position = legend_position)
+# }
+#
+# # fallback NULL-coalescing operator -----------------------------------------
+# `%||%` <- function(x, y) if (is.null(x)) y else x
