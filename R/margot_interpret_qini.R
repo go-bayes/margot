@@ -15,6 +15,7 @@
 #' @return A list with a summary table and a single combined explanation in
 #'         \code{qini_explanation}.
 #'
+#' @export
 margot_interpret_qini <- function(multi_batch,
                                   label_mapping = NULL,
                                   alpha = 0.05,

@@ -287,6 +287,7 @@ margot_plot_policy_tree_depth2 <- function(
     sd <- match.arg(shade_side, c("none","left","right"))
     p  <- ggplot2::ggplot()
 
+
     # shade non-decision region
     if (shading && sd != "none") {
       xmin <- if (sd == "left") -Inf else xsp
@@ -302,6 +303,14 @@ margot_plot_policy_tree_depth2 <- function(
     orig_xsp <- get_original_value_plot(xvar, xsp, original_df)
     orig_ysp <- get_original_value_plot(yvar, ysp, original_df)
 
+    # compute x offset
+    x_range  <- range(plot_df[[x]], na.rm = TRUE)
+    x_offset <- 0.02 * diff(x_range)
+    split_label_nudge_x = 0.02
+    x_offset <- split_label_nudge_x * diff(x_range)
+
+    # protect against a degenerate range (all points identical)
+    if (x_offset == 0) x_offset <- 0.02  # back-up: two hundredths of a unit
     p +
       ggplot2::geom_jitter(
         data   = plot_df,
@@ -326,16 +335,16 @@ margot_plot_policy_tree_depth2 <- function(
       # annotate raw-scale thresholds if available
       { if (!is.null(orig_xsp)) ggplot2::annotate(
         "text",
-        x      = xsp, y = Inf,
+        x = xsp + x_offset, y = Inf,
         label  = paste0("(", orig_xsp, ")*"),
-        vjust  = 2,
+        vjust  = 1,
         size   = split_label_size / ggplot2::.pt
       ) } +
       { if (!is.null(orig_ysp)) ggplot2::annotate(
         "text",
         x      = -Inf, y = ysp,
         label  = paste0("(", orig_ysp, ")*"),
-        hjust  = 0.1, #<- pulled in a bit
+        hjust  = -.1,
         size   = split_label_size / ggplot2::.pt,
         angle  = 90
       ) } +

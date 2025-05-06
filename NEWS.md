@@ -8,6 +8,10 @@
 * remove arrow from "margot_plot_policy_tree()"
 - `margot_interpret_policy_batch()` fix to aling with new functions for depth = 1L. 
 
+# [2025-06-04] margot 1.0.34
+## fixed
+- restored `margot_interpret_qini()`
+
 # [2025-05-04] margot 1.0.33
 ## fixed
 - namespace issues for `margot_plot_policy()` and `margot_rescue_qini()`
