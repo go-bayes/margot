@@ -23,8 +23,8 @@
 #' # specifying a custom directory
 #' here_save(my_df, "my_df", dir_path = "~/custom_dir", compress = "xz")
 #'
-#' @export
 #' @importFrom here here
+#' @export
 here_save <- function(df, name, dir_path = NULL, compress = TRUE, quiet = FALSE) {
   # Use push_mods if dir_path is NULL, maintaining backward compatibility
   save_dir <- if (is.null(dir_path)) push_mods else dir_path
@@ -34,7 +34,7 @@ here_save <- function(df, name, dir_path = NULL, compress = TRUE, quiet = FALSE)
 
   if (!quiet) {
     # Get file size
-    file_size <- margot_size(file_path)
+    file_size <- margot_size(df)
 
     # Print CLI message
     cat(sprintf("Object saved to: %s\n", file_path))
@@ -44,6 +44,4 @@ here_save <- function(df, name, dir_path = NULL, compress = TRUE, quiet = FALSE)
 
   invisible(file_path)
 }
-# here_save <- function(df, name) {
-#   saveRDS(df, here::here(push_mods, paste0(name, "")))
-# }
+

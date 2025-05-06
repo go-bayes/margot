@@ -4,7 +4,7 @@
 #' Visualise the top-two splits of a policy tree with scatterplots of the two split variables,
 #' points coloured by predicted action, and optional shading for non-decision regions.
 #'
-#' @param mc_test List from a multi-arm causal forest run containing
+#' @param result_object List from a multi-arm causal forest run containing
 #'   \code{$results[[model_name]]$policy_tree_depth_2} and
 #'   \code{$results[[model_name]]$plot_data}.
 #' @param model_name String name of the model in \code{mc_test$results}.
@@ -42,7 +42,7 @@
 #' @import patchwork
 #' @import cli
 margot_plot_policy_tree <- function(
-    mc_test,
+    result_object,
     model_name,
     original_df        = NULL,
     shading            = TRUE,
@@ -84,7 +84,7 @@ margot_plot_policy_tree <- function(
   cli::cli_alert_info("using title: {title}")
 
   # extract policy tree object
-  tree_obj <- mc_test$results[[model_name]]$policy_tree_depth_2
+  tree_obj <- result_object$results[[model_name]]$policy_tree_depth_2
   if (is.null(tree_obj)) cli::cli_abort("Policy tree object not found for '{model_name}'")
   cli::cli_alert_success("policy tree object extracted")
 
@@ -118,7 +118,7 @@ margot_plot_policy_tree <- function(
   }
 
   # prepare data
-  plot_data <- mc_test$results[[model_name]]$plot_data
+  plot_data <- result_object$results[[model_name]]$plot_data
   X_test     <- plot_data$X_test
   preds      <- plot_data$predictions
   nodes      <- tree_obj$nodes

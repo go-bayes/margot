@@ -39,7 +39,7 @@ here_read_qs <- function(name, dir_path = NULL, nthreads = 1, quiet = FALSE) {
 
   if (!quiet) {
     # Get file size
-    file_size <- margot_size(file_path)
+    file_size <- margot_size(obj)
 
     # Print CLI message
     cat(sprintf("Object read from: %s\n", file_path))
@@ -49,7 +49,4 @@ here_read_qs <- function(name, dir_path = NULL, nthreads = 1, quiet = FALSE) {
 
   return(obj)
 }
-# here_read_qs <- function(name, dir_path) {
-#   df <- qs::qread(here::here(dir_path, paste0(name, ".qs")))
-#   return(df)
-# }
+

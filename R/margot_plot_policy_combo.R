@@ -71,7 +71,7 @@ margot_plot_policy_combo <- function(result_object,
       margot_plot_policy_tree,
       c(
         list(
-          mc_test       = result_object,
+          result_object       = result_object,
           model_name    = model_name,
           max_depth     = max_depth,
           original_df   = original_df,
