@@ -8,6 +8,9 @@
 * remove arrow from "margot_plot_policy_tree()"
 - `margot_interpret_policy_batch()` fix to aling with new functions for depth = 1L. 
 
+# [2025-05-07] margot 1.0.37
+- `margot_policy_tree_combo()` now exported
+
 # [2025-05-07] margot 1.0.36
 - `margot_policy_tree()` level 2 fixed
 
