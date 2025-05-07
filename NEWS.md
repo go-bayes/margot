@@ -8,13 +8,16 @@
 * remove arrow from "margot_plot_policy_tree()"
 - `margot_interpret_policy_batch()` fix to aling with new functions for depth = 1L. 
 
-# [2025-06-04] margot 1.0.35
+# [2025-05-07] margot 1.0.36
+- `margot_policy_tree()` level 2 fixed
+
+# [2025-05-06] margot 1.0.35
 ## improved
 - `here_save()` and  `here_save_qs()` now correctly reports size of saved file.
 -  tidying of roxogen2 code ('mc_test' removed and replaced with 'result_object')
 - `margot_plot_policy_tree()` nicer label placement.
 
-# [2025-06-04] margot 1.0.34
+# [2025-05-04] margot 1.0.34
 ## fixed
 - restored `margot_interpret_qini()`
 

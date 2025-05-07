@@ -1,6 +1,6 @@
 # helpers for margot plot -------------------------------------------------
 
-# #' @keywords internal
+#' @keywords internal
 back_transform_estimates <- function(results_df, original_df) {
   # Determine the effect size column
   if ("E[Y(1)]-E[Y(0)]" %in% names(results_df)) {
@@ -146,400 +146,6 @@ back_transform_estimates <- function(results_df, original_df) {
   return(results_df)
 }
 
-
-# read utilities ----------------------------------------------------------
-
-#' @title Read Data Frame from Parquet File in a Specified Directory (Deprecated)
-#'
-#' @description This function is deprecated and will be removed in future releases.
-#' For reading data frames, consider using the `here_read_qs` function.
-#'
-#' @param name Character string specifying the name of the Parquet file to be read.
-#'
-#' @examples
-#' \dontrun{
-#' my_df <- here_read_arrow("my_dataset")
-#' }
-#'
-#' @export
-#' @keywords internal
-here_read_arrow <- function(name) {
-  .Deprecated("here_read_qs")
-  message("here_read_arrow is deprecated and will be removed in a future release. Please use here_read_qs instead.")
-  # function logic
-  df <- arrow::read_parquet(here::here(name, ".parquet"))
-  return(df)
-}
-
-
-#' @title Save Data Frame to Parquet File in a Specified Directory (Deprecated)
-#'
-#' @description This function is deprecated and will be removed in future releases.
-#' For saving data frames, consider using the `here_save_qs` function.
-#'
-#' @param df Data frame to be saved.
-#' @param name Character string specifying the base name of the file.
-#'
-#' @examples
-#' \dontrun{
-#' my_df <- data.frame(x = 1:5, y = letters[1:5])
-#' here_save_arrow(my_df, "my_saved_dataframe")
-#' }
-#'
-#' @export
-#' @keywords internal
-here_save_arrow <- function(df, name) {
-  .Deprecated("here_save_qs", package = "margot")
-  message("here_save_arrow is deprecated and will be removed in a future release. Please use here_save_qs instead.")
-  # function logic
-  arrow::write_parquet(df, here::here(name, ".parquet"))
-}
-
-
-
-
-# causal effects tables ---------------------------------------------------
-#' Group and Annotate Treatment Effect Estimates
-#'
-#' This function arranges and annotates a data frame based on specified
-#' types of treatment effect estimates (RR or RD). It supports a variety of sorting
-#' options including alphabetical, magnitude (ascending or descending), E-value bound
-#' (ascending or descending), custom order, and a default alias for backward compatibility.
-#' It also handles original scale estimates when available.
-#'
-#' @param df Data frame containing the variables of interest, or a list containing
-#'   the results data frame and label mapping from transform_to_original_scale().
-#' @param type Type of treatment effect to analyze. One of 'RR' (Risk Ratio) or
-#'   'RD' (Risk Difference). Defaults to 'RD'.
-#' @param order Sorting option for outcomes. Options are:
-#'   \itemize{
-#'     \item 'alphabetical': sort by outcome name (A–Z)
-#'     \item 'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')
-#'     \item 'magnitude_asc': sort by absolute effect size, ascending
-#'     \item 'evaluebound_desc': sort by E-value bound, descending
-#'     \item 'evaluebound_asc': sort by E-value bound, ascending
-#'     \item 'custom': user-defined order (requires custom_order)
-#'     \item 'default': alias for 'magnitude_desc' (deprecated)
-#'   }
-#'   Default is 'default'.
-#' @param custom_order Character vector specifying a custom outcome ordering,
-#'   used when order = 'custom'. Must contain all outcomes exactly once.
-#'
-#' @return A data frame arranged according to `order`, annotated with:
-#'   \itemize{
-#'     \item Estimate category (positive, negative, not reliable)
-#'     \item Formatted label for the effect and confidence interval
-#'     \item Optional original-scale label if _original columns are present
-#'   }
-#'
-#' @details
-#' The function detects whether `df` is a list output from transform_to_original_scale()
-#' and extracts `results_df` and `label_mapping` accordingly. It then ensures an `outcome`
-#' column, applies any label mapping, and sorts based on the chosen `order`. New options
-#' 'magnitude_desc' and 'magnitude_asc' sort by absolute effect size; 'evaluebound_desc'
-#' and 'evaluebound_asc' sort by the E-Value bound; 'alphabetical' sorts by outcome
-#' name; 'custom' respects a user-provided vector; 'default' is an alias for 'magnitude_desc'.
-#'
-#' @examples
-#' # descending magnitude (default for 'default')
-#' result_df <- group_tab(df = analysis_df, order = 'default')
-#'
-#' # ascending magnitude
-#' result_df <- group_tab(df = analysis_df, order = 'magnitude_asc')
-#'
-#' # strongest E-value bound first
-#' result_df <- group_tab(df = analysis_df, order = 'evaluebound_desc')
-#'
-#' # alphabetical
-#' result_df <- group_tab(df = analysis_df, order = 'alphabetical')
-#'
-#' # custom ordering
-#' custom_order <- c('Outcome3','Outcome1','Outcome2')
-#' result_df <- group_tab(df = analysis_df, order = 'custom', custom_order = custom_order)
-#'
-#' @importFrom dplyr arrange desc mutate slice
-#' @importFrom tibble rownames_to_column
-#' @importFrom rlang sym
-#' @keywords internal
-group_tab <- function(
-    df,
-    type = c("RD","RR"),
-    order = c(
-      "alphabetical",
-      "magnitude_desc",
-      "magnitude_asc",
-      "evaluebound_desc",
-      "evaluebound_asc",
-      "custom",
-      "default"
-    ),
-    custom_order = NULL
-) {
-  # load dplyr verbs
-  require(dplyr)
-
-  # match arguments
-  type  <- match.arg(type)
-  order <- match.arg(order)
-
-  # alias old magnitude and default to magnitude_desc
-  if (order %in% c("default")) {
-    warning("'default' is deprecated; using 'magnitude_desc' instead.")
-    order <- "magnitude_desc"
-  }
-
-  # handle list input
-  if (is.list(df) && "results_df" %in% names(df)) {
-    results_df   <- df$results_df
-    label_mapping <- df$label_mapping
-  } else {
-    results_df   <- df
-    label_mapping <- NULL
-  }
-
-  # ensure outcome column
-  if (!"outcome" %in% names(results_df) && !is.null(rownames(results_df))) {
-    results_df <- results_df %>% tibble::rownames_to_column(var = "outcome")
-  } else if (!"outcome" %in% names(results_df)) {
-    stop("No 'outcome' column or row names to convert.")
-  }
-
-  # apply label mapping
-  if (!is.null(label_mapping)) {
-    results_df <- results_df %>% mutate(outcome = dplyr::recode(outcome, !!!label_mapping))
-  }
-
-  # columns for sorting
-  effect_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
-  ev_bound   <- "E_Val_bound"
-
-  # apply ordering
-  results_df <- switch(order,
-                       alphabetical      = results_df %>% arrange(outcome),
-                       magnitude_desc    = results_df %>% arrange(desc(abs(!!sym(effect_col)))),
-                       magnitude_asc     = results_df %>% arrange(abs(!!sym(effect_col))),
-                       evaluebound_desc  = results_df %>% arrange(desc(!!sym(ev_bound))),
-                       evaluebound_asc   = results_df %>% arrange(!!sym(ev_bound)),
-                       custom            = {
-                         if (is.null(custom_order)) stop("custom_order must be provided for 'custom' order")
-                         results_df %>% slice(match(custom_order, outcome))
-                       }
-  )
-
-  # annotate estimates
-  results_df <- results_df %>% mutate(
-    Estimate = factor(
-      if (type == "RR") {
-        ifelse(`E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
-               "positive",
-               ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1,
-                      "negative",
-                      "not reliable"))
-      } else {
-        ifelse(`E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
-               "positive",
-               ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0,
-                      "negative",
-                      "not reliable"))
-      }
-    ),
-    estimate_lab = if (type == "RR") {
-      paste0(
-        round(`E[Y(1)]/E[Y(0)]`, 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
-      )
-    } else {
-      paste0(
-        round(`E[Y(1)]-E[Y(0)]`, 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
-      )
-    }
-  )
-
-  # add original-scale label if present
-  if (paste0(effect_col, "_original") %in% names(results_df)) {
-    results_df <- results_df %>% mutate(
-      estimate_lab_original = paste0(
-        round(.data[[paste0(effect_col, "_original")]], 3), " (",
-        round(.data[["2.5 %_original"]], 3), "-",
-        round(.data[["97.5 %_original"]], 3), ")"
-      )
-    )
-  }
-
-  results_df
-}
-
-
-
-#' Tabulate Marginal Effects with E-Values
-#'
-#' This function processes simulation results to tabulate marginal effects along with E-values,
-#' providing a summary suited for reporting. It supports both risk difference (RD) and risk ratio (RR)
-#' types of estimates and handles continuous and categorical treatment variables.
-#'
-#' @param x A data frame or matrix containing simulation results to be processed.
-#' @param new_name A new name to assign to the output row, typically describing the variable or model.
-#' @param delta The assumed smallest worthwhile effect, used for E-value calculations.
-#' @param sd The standard deviation of the effect estimate, used for E-value calculations.
-#' @param type Character vector specifying the scale of effect size, either "RD" or "RR".
-#'        This parameter determines how the effects are calculated and presented.
-#' @param continuous_X Logical indicating whether the treatment variable X is continuous.
-#'        If TRUE, adjusts row names based on the type parameter.
-#'
-#' @return A data frame with the specified new_name as a row name. The data frame includes
-#'         effect estimates, confidence intervals, E-values, and other relevant statistics formatted
-#'         for easy reporting.
-#'
-#' @examples
-#' # Assuming you have results from a simulation or model in `results_df`
-#' tabulated_results <- tab_engine_marginal(x = results_df,
-#'                                          new_name = "Treatment Effect",
-#'                                          delta = 1,
-#'                                          sd = 0.2,
-#'                                          type = "RD")  # Corrected 'scale' to 'type'
-#'
-#' @importFrom dplyr filter mutate rename select
-#' @importFrom EValue evalues.OLS evalues.RR
-#' @keywords internal
-tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "RR"), continuous_X = FALSE) {
-
-  type <- match.arg(type, choices = c("RD", "RR"))
-  x <- as.data.frame(x)
-
-  if (continuous_X) {
-    rownames(x) <- type
-  }
-
-  out <- x %>%
-    dplyr::filter(row.names(x) == type) %>%
-    dplyr::mutate(across(where(is.numeric), round, digits = 4))
-
-  if (type == "RD") {
-    out <- out %>%
-      dplyr::rename("E[Y(1)]-E[Y(0)]" = Estimate)
-  } else {
-    out <- out %>%
-      dplyr::rename("E[Y(1)]/E[Y(0)]" = Estimate)
-  }
-
-  if (!"outcome" %in% names(out)) {
-    out <- out %>%
-      dplyr::mutate(outcome = new_name)
-  } else {
-    out$outcome <- new_name  # Just update the existing 'outcome' column instead of adding a new one
-  }
-
-  out <- dplyr::select(out, outcome, everything())
-
-  if (type == "RD") {
-    out <- out %>%
-      dplyr::mutate(standard_error = abs(`2.5 %` - `97.5 %`) / 3.92)
-    evalout <- as.data.frame(round(EValue::evalues.OLS(out[1, "E[Y(1)]-E[Y(0)]"], se = out$standard_error, sd = sd, delta = delta, true = 0), 3))
-  } else {
-    evalout <- as.data.frame(round(EValue::evalues.RR(out[1, "E[Y(1)]/E[Y(0)]"], lo = out[1, "2.5 %"], hi = out[1, "97.5 %"], true = 1), 3))
-  }
-
-  evalout2 <- subset(evalout[2, ])
-  evalout3 <- evalout2 %>% dplyr::select_if(~ !any(is.na(.)))
-  colnames(evalout3) <- c("E_Value", "E_Val_bound")
-
-  out <- cbind.data.frame(out, evalout3)
-  return(out)
-}
-
-
-
-
-
-# causal forest helpers ---------------------------------------------------
-
-#' Group Results by Comparison
-#'
-#' @description
-#' Groups the results of multi-arm causal forest analysis by comparison levels.
-#'
-#' @param results_list A list of results from margot_multi_arm_causal_forest.
-#'
-#' @return A list of grouped results by comparison levels.
-#'
-#' @keywords internal
-group_results_by_comparison <- function(results_list) {
-  # extract all custom tables
-  custom_tables <- lapply(results_list, function(x) x$custom_table)
-
-  # get all unique comparisons (exposure levels)
-  all_comparisons <- unique(unlist(lapply(custom_tables, function(table) {
-    if(!is.null(table) && nrow(table) > 0) {
-      sub(".*? - ", "", rownames(table))
-    } else {
-      character(0)
-    }
-  })))
-
-  # initialise a list to store grouped results
-  grouped_results <- vector("list", length(all_comparisons))
-  names(grouped_results) <- all_comparisons
-
-  # for each comparison, combine results from all outcomes
-  for (comparison in all_comparisons) {
-    comparison_results <- lapply(names(custom_tables), function(outcome) {
-      table <- custom_tables[[outcome]]
-      if(!is.null(table) && nrow(table) > 0) {
-        row_index <- which(sub(".*? - ", "", rownames(table)) == comparison)
-        if (length(row_index) > 0) {
-          result <- table[row_index, , drop = FALSE]
-          rownames(result) <- sub(" - .*$", "", rownames(result))  # remove comparison from rowname
-          result
-        } else {
-          NULL
-        }
-      } else {
-        NULL
-      }
-    })
-    # remove null entries and combine
-    comparison_results <- do.call(rbind, comparison_results[!sapply(comparison_results, is.null)])
-    if(nrow(comparison_results) > 0) {
-      grouped_results[[comparison]] <- comparison_results
-    }
-  }
-
-  # remove any null entries from grouped_results
-  grouped_results <- grouped_results[!sapply(grouped_results, is.null)]
-
-  return(grouped_results)
-}
-
-
-#' Create Tau Hat Plot
-#'
-#' @description
-#' Creates a histogram plot of tau hat values for each treatment comparison.
-#'
-#' @param tau_hat A matrix of estimated treatment effects.
-#' @param outcome A character string specifying the name of the outcome variable.
-#'
-#' @return A ggplot object representing the distribution of tau hat values.
-#'
-#' @importFrom ggplot2 ggplot geom_histogram theme_minimal labs facet_wrap
-#' @importFrom tidyr pivot_longer
-#'
-#' @keywords internal
-create_tau_hat_plot <- function(tau_hat, outcome) {
-  tau_hat_df <- as.data.frame(tau_hat)
-  tau_hat_df_long <- tau_hat_df %>%
-    tidyr::pivot_longer(cols = everything(), names_to = "comparison", values_to = "tau_value")
-
-  ggplot2::ggplot(tau_hat_df_long, ggplot2::aes(x = tau_value, fill = comparison)) +
-    ggplot2::geom_histogram(bins = 30, position = "dodge", alpha = 0.7) +
-    ggplot2::theme_minimal() +
-    ggplot2::labs(title = paste("Distribution of tau.hat for", outcome),
-                  x = "tau.hat", y = "Count") +
-    ggplot2::facet_wrap(~ comparison, scales = "free_y")
-}
 
 # label and plotting for causal forest models -----------------------------
 #' works with transform to original scale
@@ -940,6 +546,403 @@ transform_var_name <- function(var_name, label_mapping = NULL,
 
 # helper for NULL coalescing
 `%||%` <- function(x, y) if (is.null(x)) y else x
+
+
+# read utilities ----------------------------------------------------------
+
+#' @title Read Data Frame from Parquet File in a Specified Directory (Deprecated)
+#'
+#' @description This function is deprecated and will be removed in future releases.
+#' For reading data frames, consider using the `here_read_qs` function.
+#'
+#' @param name Character string specifying the name of the Parquet file to be read.
+#'
+#' @examples
+#' \dontrun{
+#' my_df <- here_read_arrow("my_dataset")
+#' }
+#'
+#' @export
+#' @keywords internal
+here_read_arrow <- function(name) {
+  .Deprecated("here_read_qs")
+  message("here_read_arrow is deprecated and will be removed in a future release. Please use here_read_qs instead.")
+  # function logic
+  df <- arrow::read_parquet(here::here(name, ".parquet"))
+  return(df)
+}
+
+
+#' @title Save Data Frame to Parquet File in a Specified Directory (Deprecated)
+#'
+#' @description This function is deprecated and will be removed in future releases.
+#' For saving data frames, consider using the `here_save_qs` function.
+#'
+#' @param df Data frame to be saved.
+#' @param name Character string specifying the base name of the file.
+#'
+#' @examples
+#' \dontrun{
+#' my_df <- data.frame(x = 1:5, y = letters[1:5])
+#' here_save_arrow(my_df, "my_saved_dataframe")
+#' }
+#'
+#' @export
+#' @keywords internal
+here_save_arrow <- function(df, name) {
+  .Deprecated("here_save_qs", package = "margot")
+  message("here_save_arrow is deprecated and will be removed in a future release. Please use here_save_qs instead.")
+  # function logic
+  arrow::write_parquet(df, here::here(name, ".parquet"))
+}
+
+
+
+
+# causal effects tables ---------------------------------------------------
+#' Group and Annotate Treatment Effect Estimates
+#'
+#' This function arranges and annotates a data frame based on specified
+#' types of treatment effect estimates (RR or RD). It supports a variety of sorting
+#' options including alphabetical, magnitude (ascending or descending), E-value bound
+#' (ascending or descending), custom order, and a default alias for backward compatibility.
+#' It also handles original scale estimates when available.
+#'
+#' @param df Data frame containing the variables of interest, or a list containing
+#'   the results data frame and label mapping from transform_to_original_scale().
+#' @param type Type of treatment effect to analyze. One of 'RR' (Risk Ratio) or
+#'   'RD' (Risk Difference). Defaults to 'RD'.
+#' @param order Sorting option for outcomes. Options are:
+#'   \itemize{
+#'     \item 'alphabetical': sort by outcome name (A–Z)
+#'     \item 'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')
+#'     \item 'magnitude_asc': sort by absolute effect size, ascending
+#'     \item 'evaluebound_desc': sort by E-value bound, descending
+#'     \item 'evaluebound_asc': sort by E-value bound, ascending
+#'     \item 'custom': user-defined order (requires custom_order)
+#'     \item 'default': alias for 'magnitude_desc' (deprecated)
+#'   }
+#'   Default is 'default'.
+#' @param custom_order Character vector specifying a custom outcome ordering,
+#'   used when order = 'custom'. Must contain all outcomes exactly once.
+#'
+#' @return A data frame arranged according to `order`, annotated with:
+#'   \itemize{
+#'     \item Estimate category (positive, negative, not reliable)
+#'     \item Formatted label for the effect and confidence interval
+#'     \item Optional original-scale label if _original columns are present
+#'   }
+#'
+#' @details
+#' The function detects whether `df` is a list output from transform_to_original_scale()
+#' and extracts `results_df` and `label_mapping` accordingly. It then ensures an `outcome`
+#' column, applies any label mapping, and sorts based on the chosen `order`. New options
+#' 'magnitude_desc' and 'magnitude_asc' sort by absolute effect size; 'evaluebound_desc'
+#' and 'evaluebound_asc' sort by the E-Value bound; 'alphabetical' sorts by outcome
+#' name; 'custom' respects a user-provided vector; 'default' is an alias for 'magnitude_desc'.
+#'
+#' @examples
+#' # descending magnitude (default for 'default')
+#' result_df <- group_tab(df = analysis_df, order = 'default')
+#'
+#' # ascending magnitude
+#' result_df <- group_tab(df = analysis_df, order = 'magnitude_asc')
+#'
+#' # strongest E-value bound first
+#' result_df <- group_tab(df = analysis_df, order = 'evaluebound_desc')
+#'
+#' # alphabetical
+#' result_df <- group_tab(df = analysis_df, order = 'alphabetical')
+#'
+#' # custom ordering
+#' custom_order <- c('Outcome3','Outcome1','Outcome2')
+#' result_df <- group_tab(df = analysis_df, order = 'custom', custom_order = custom_order)
+#'
+#' @importFrom dplyr arrange desc mutate slice
+#' @importFrom tibble rownames_to_column
+#' @importFrom rlang sym
+#' @keywords internal
+group_tab <- function(
+    df,
+    type = c("RD","RR"),
+    order = c(
+      "alphabetical",
+      "magnitude_desc",
+      "magnitude_asc",
+      "evaluebound_desc",
+      "evaluebound_asc",
+      "custom",
+      "default"
+    ),
+    custom_order = NULL
+) {
+  # load dplyr verbs
+  require(dplyr)
+
+  # match arguments
+  type  <- match.arg(type)
+  order <- match.arg(order)
+
+  # alias old magnitude and default to magnitude_desc
+  if (order %in% c("default")) {
+    warning("'default' is deprecated; using 'magnitude_desc' instead.")
+    order <- "magnitude_desc"
+  }
+
+  # handle list input
+  if (is.list(df) && "results_df" %in% names(df)) {
+    results_df   <- df$results_df
+    label_mapping <- df$label_mapping
+  } else {
+    results_df   <- df
+    label_mapping <- NULL
+  }
+
+  # ensure outcome column
+  if (!"outcome" %in% names(results_df) && !is.null(rownames(results_df))) {
+    results_df <- results_df %>% tibble::rownames_to_column(var = "outcome")
+  } else if (!"outcome" %in% names(results_df)) {
+    stop("No 'outcome' column or row names to convert.")
+  }
+
+  # apply label mapping
+  if (!is.null(label_mapping)) {
+    results_df <- results_df %>% mutate(outcome = dplyr::recode(outcome, !!!label_mapping))
+  }
+
+  # columns for sorting
+  effect_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
+  ev_bound   <- "E_Val_bound"
+
+  # apply ordering
+  results_df <- switch(order,
+                       alphabetical      = results_df %>% arrange(outcome),
+                       magnitude_desc    = results_df %>% arrange(desc(abs(!!sym(effect_col)))),
+                       magnitude_asc     = results_df %>% arrange(abs(!!sym(effect_col))),
+                       evaluebound_desc  = results_df %>% arrange(desc(!!sym(ev_bound))),
+                       evaluebound_asc   = results_df %>% arrange(!!sym(ev_bound)),
+                       custom            = {
+                         if (is.null(custom_order)) stop("custom_order must be provided for 'custom' order")
+                         results_df %>% slice(match(custom_order, outcome))
+                       }
+  )
+
+  # annotate estimates
+  results_df <- results_df %>% mutate(
+    Estimate = factor(
+      if (type == "RR") {
+        ifelse(`E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
+               "positive",
+               ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1,
+                      "negative",
+                      "not reliable"))
+      } else {
+        ifelse(`E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
+               "positive",
+               ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0,
+                      "negative",
+                      "not reliable"))
+      }
+    ),
+    estimate_lab = if (type == "RR") {
+      paste0(
+        round(`E[Y(1)]/E[Y(0)]`, 3), " (",
+        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
+        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
+      )
+    } else {
+      paste0(
+        round(`E[Y(1)]-E[Y(0)]`, 3), " (",
+        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
+        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
+      )
+    }
+  )
+
+  # add original-scale label if present
+  if (paste0(effect_col, "_original") %in% names(results_df)) {
+    results_df <- results_df %>% mutate(
+      estimate_lab_original = paste0(
+        round(.data[[paste0(effect_col, "_original")]], 3), " (",
+        round(.data[["2.5 %_original"]], 3), "-",
+        round(.data[["97.5 %_original"]], 3), ")"
+      )
+    )
+  }
+
+  results_df
+}
+
+
+
+#' Tabulate Marginal Effects with E-Values
+#'
+#' This function processes simulation results to tabulate marginal effects along with E-values,
+#' providing a summary suited for reporting. It supports both risk difference (RD) and risk ratio (RR)
+#' types of estimates and handles continuous and categorical treatment variables.
+#'
+#' @param x A data frame or matrix containing simulation results to be processed.
+#' @param new_name A new name to assign to the output row, typically describing the variable or model.
+#' @param delta The assumed smallest worthwhile effect, used for E-value calculations.
+#' @param sd The standard deviation of the effect estimate, used for E-value calculations.
+#' @param type Character vector specifying the scale of effect size, either "RD" or "RR".
+#'        This parameter determines how the effects are calculated and presented.
+#' @param continuous_X Logical indicating whether the treatment variable X is continuous.
+#'        If TRUE, adjusts row names based on the type parameter.
+#'
+#' @return A data frame with the specified new_name as a row name. The data frame includes
+#'         effect estimates, confidence intervals, E-values, and other relevant statistics formatted
+#'         for easy reporting.
+#'
+#' @examples
+#' # Assuming you have results from a simulation or model in `results_df`
+#' tabulated_results <- tab_engine_marginal(x = results_df,
+#'                                          new_name = "Treatment Effect",
+#'                                          delta = 1,
+#'                                          sd = 0.2,
+#'                                          type = "RD")  # Corrected 'scale' to 'type'
+#'
+#' @importFrom dplyr filter mutate rename select
+#' @importFrom EValue evalues.OLS evalues.RR
+#' @keywords internal
+tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "RR"), continuous_X = FALSE) {
+
+  type <- match.arg(type, choices = c("RD", "RR"))
+  x <- as.data.frame(x)
+
+  if (continuous_X) {
+    rownames(x) <- type
+  }
+
+  out <- x %>%
+    dplyr::filter(row.names(x) == type) %>%
+    dplyr::mutate(across(where(is.numeric), round, digits = 4))
+
+  if (type == "RD") {
+    out <- out %>%
+      dplyr::rename("E[Y(1)]-E[Y(0)]" = Estimate)
+  } else {
+    out <- out %>%
+      dplyr::rename("E[Y(1)]/E[Y(0)]" = Estimate)
+  }
+
+  if (!"outcome" %in% names(out)) {
+    out <- out %>%
+      dplyr::mutate(outcome = new_name)
+  } else {
+    out$outcome <- new_name  # Just update the existing 'outcome' column instead of adding a new one
+  }
+
+  out <- dplyr::select(out, outcome, everything())
+
+  if (type == "RD") {
+    out <- out %>%
+      dplyr::mutate(standard_error = abs(`2.5 %` - `97.5 %`) / 3.92)
+    evalout <- as.data.frame(round(EValue::evalues.OLS(out[1, "E[Y(1)]-E[Y(0)]"], se = out$standard_error, sd = sd, delta = delta, true = 0), 3))
+  } else {
+    evalout <- as.data.frame(round(EValue::evalues.RR(out[1, "E[Y(1)]/E[Y(0)]"], lo = out[1, "2.5 %"], hi = out[1, "97.5 %"], true = 1), 3))
+  }
+
+  evalout2 <- subset(evalout[2, ])
+  evalout3 <- evalout2 %>% dplyr::select_if(~ !any(is.na(.)))
+  colnames(evalout3) <- c("E_Value", "E_Val_bound")
+
+  out <- cbind.data.frame(out, evalout3)
+  return(out)
+}
+
+
+
+
+
+# causal forest helpers ---------------------------------------------------
+
+#' Group Results by Comparison
+#'
+#' @description
+#' Groups the results of multi-arm causal forest analysis by comparison levels.
+#'
+#' @param results_list A list of results from margot_multi_arm_causal_forest.
+#'
+#' @return A list of grouped results by comparison levels.
+#'
+#' @keywords internal
+group_results_by_comparison <- function(results_list) {
+  # extract all custom tables
+  custom_tables <- lapply(results_list, function(x) x$custom_table)
+
+  # get all unique comparisons (exposure levels)
+  all_comparisons <- unique(unlist(lapply(custom_tables, function(table) {
+    if(!is.null(table) && nrow(table) > 0) {
+      sub(".*? - ", "", rownames(table))
+    } else {
+      character(0)
+    }
+  })))
+
+  # initialise a list to store grouped results
+  grouped_results <- vector("list", length(all_comparisons))
+  names(grouped_results) <- all_comparisons
+
+  # for each comparison, combine results from all outcomes
+  for (comparison in all_comparisons) {
+    comparison_results <- lapply(names(custom_tables), function(outcome) {
+      table <- custom_tables[[outcome]]
+      if(!is.null(table) && nrow(table) > 0) {
+        row_index <- which(sub(".*? - ", "", rownames(table)) == comparison)
+        if (length(row_index) > 0) {
+          result <- table[row_index, , drop = FALSE]
+          rownames(result) <- sub(" - .*$", "", rownames(result))  # remove comparison from rowname
+          result
+        } else {
+          NULL
+        }
+      } else {
+        NULL
+      }
+    })
+    # remove null entries and combine
+    comparison_results <- do.call(rbind, comparison_results[!sapply(comparison_results, is.null)])
+    if(nrow(comparison_results) > 0) {
+      grouped_results[[comparison]] <- comparison_results
+    }
+  }
+
+  # remove any null entries from grouped_results
+  grouped_results <- grouped_results[!sapply(grouped_results, is.null)]
+
+  return(grouped_results)
+}
+
+
+#' Create Tau Hat Plot
+#'
+#' @description
+#' Creates a histogram plot of tau hat values for each treatment comparison.
+#'
+#' @param tau_hat A matrix of estimated treatment effects.
+#' @param outcome A character string specifying the name of the outcome variable.
+#'
+#' @return A ggplot object representing the distribution of tau hat values.
+#'
+#' @importFrom ggplot2 ggplot geom_histogram theme_minimal labs facet_wrap
+#' @importFrom tidyr pivot_longer
+#'
+#' @keywords internal
+create_tau_hat_plot <- function(tau_hat, outcome) {
+  tau_hat_df <- as.data.frame(tau_hat)
+  tau_hat_df_long <- tau_hat_df %>%
+    tidyr::pivot_longer(cols = everything(), names_to = "comparison", values_to = "tau_value")
+
+  ggplot2::ggplot(tau_hat_df_long, ggplot2::aes(x = tau_value, fill = comparison)) +
+    ggplot2::geom_histogram(bins = 30, position = "dodge", alpha = 0.7) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(title = paste("Distribution of tau.hat for", outcome),
+                  x = "tau.hat", y = "Count") +
+    ggplot2::facet_wrap(~ comparison, scales = "free_y")
+}
+
+
 
 #' @keywords internal
 margot_batch_glm <- function(
