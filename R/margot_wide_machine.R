@@ -48,22 +48,22 @@ margot_wide_machine <- function(.data,
   start_time <- Sys.time()
   cli::cli_alert_info("starting data transformation...")
 
-  # validate id and wave columns
+  # validate id and wave
   if (!id %in% names(.data) || !wave %in% names(.data)) {
     cli::cli_abort("`{id}` or `{wave}` not found in `.data`.")
   }
 
-  # identify waves and map to 0-based
+  # define waves
   waves <- sort(unique(.data[[wave]]))
   n_waves <- length(waves)
   wave_map <- setNames(seq_along(waves) - 1, waves)
 
-  # add numeric time variable
+  # add numeric time and sort
   df <- .data %>%
     dplyr::mutate(.time = wave_map[as.character(.data[[wave]])]) %>%
     dplyr::arrange(.data[[id]], .time)
 
-  # build list of per-wave subsets
+  # split data by time
   df_list <- lapply(0:(n_waves - 1), function(t) {
     vars <- id
     if (t == 0) {
@@ -81,12 +81,12 @@ margot_wide_machine <- function(.data,
     vars <- unique(vars[vars %in% names(df)])
     df %>%
       dplyr::filter(.time == t) %>%
-      dplyr::select(dplyr::all_of(c(vars))) %>%
+      dplyr::select(dplyr::all_of(vars)) %>%
       dplyr::mutate(time = t)
   })
   df_filt <- dplyr::bind_rows(df_list)
 
-  # pivot to wide format
+  # pivot to wide
   cli::cli_alert_info("reshaping to wide format...")
   data_wide <- df_filt %>%
     tidyr::pivot_wider(
@@ -96,7 +96,7 @@ margot_wide_machine <- function(.data,
       names_glue = "t{time}_{.value}"
     )
 
-  # baseline NA indicators if requested
+  # add NA indicators
   if (include_na_indicators) {
     cli::cli_alert_info("creating NA indicators at baseline...")
     base_vars <- unique(c(baseline_vars,
@@ -112,7 +112,7 @@ margot_wide_machine <- function(.data,
     }
   }
 
-  # impute baseline vars if requested
+  # impute baseline if requested
   if (imputation_method != 'none') {
     cli::cli_alert_info(sprintf("performing %s imputation at baseline...", imputation_method))
     imp_cols <- intersect(paste0("t0_", unique(c(baseline_vars,
@@ -120,11 +120,19 @@ margot_wide_machine <- function(.data,
                                                  if (include_outcome_vars_baseline) outcome_vars))),
                           names(data_wide))
     if (imputation_method == 'mice') {
-      try({
-        imp <- mice::mice(data_wide[imp_cols], m = 1, maxit = 5, method = 'pmm', printFlag = FALSE)
-        data_wide[imp_cols] <- mice::complete(imp)
-        cli::cli_alert_success("mice imputation completed")
-      }, silent = TRUE)
+      # ensure mice prints its progress
+      cli::cli_alert_info("running mice imputation; progress will appear below:")
+      old_opt <- options(mice.trace = TRUE)
+      on.exit(options(old_opt), add = TRUE)
+      imp <- mice::mice(
+        data_wide[imp_cols],
+        m = 1,
+        maxit = 5,
+        method = 'pmm',
+        printFlag = TRUE
+      )
+      data_wide[imp_cols] <- mice::complete(imp)
+      cli::cli_alert_success("mice imputation completed")
     }
     if (imputation_method == 'median' || !exists('imp')) {
       for (col in imp_cols) {
@@ -139,7 +147,7 @@ margot_wide_machine <- function(.data,
     }
   }
 
-  # reorder columns: interleave baseline vars & indicators if included, then wave-specific
+  # reorder columns
   cli::cli_alert_info("reordering columns...")
   final_order <- id
   for (t in 0:(n_waves - 1)) {
@@ -170,9 +178,152 @@ margot_wide_machine <- function(.data,
   final_order <- unique(final_order[final_order %in% names(data_wide)])
   data_wide <- data_wide[, final_order]
 
-  cli::cli_alert_success(sprintf("completed in %.2f seconds", difftime(Sys.time(), start_time, units='secs')))
+  cli::cli_alert_success(sprintf("completed in %.2f seconds",
+                                 difftime(Sys.time(), start_time, units = 'secs')))
   return(as.data.frame(data_wide))
 }
+
+# margot_wide_machine <- function(.data,
+#                                 id = "id",
+#                                 wave = "wave",
+#                                 baseline_vars,
+#                                 exposure_var,
+#                                 outcome_vars,
+#                                 confounder_vars = NULL,
+#                                 imputation_method = c("median", "mice", "none"),
+#                                 include_exposure_var_baseline = TRUE,
+#                                 include_outcome_vars_baseline = TRUE,
+#                                 extend_baseline = FALSE,
+#                                 include_na_indicators = TRUE) {
+#   imputation_method <- match.arg(imputation_method)
+#   start_time <- Sys.time()
+#   cli::cli_alert_info("starting data transformation...")
+#
+#   # validate id and wave columns
+#   if (!id %in% names(.data) || !wave %in% names(.data)) {
+#     cli::cli_abort("`{id}` or `{wave}` not found in `.data`.")
+#   }
+#
+#   # identify waves and map to 0-based
+#   waves <- sort(unique(.data[[wave]]))
+#   n_waves <- length(waves)
+#   wave_map <- setNames(seq_along(waves) - 1, waves)
+#
+#   # add numeric time variable
+#   df <- .data %>%
+#     dplyr::mutate(.time = wave_map[as.character(.data[[wave]])]) %>%
+#     dplyr::arrange(.data[[id]], .time)
+#
+#   # build list of per-wave subsets
+#   df_list <- lapply(0:(n_waves - 1), function(t) {
+#     vars <- id
+#     if (t == 0) {
+#       vars <- c(vars, baseline_vars,
+#                 if (include_exposure_var_baseline) exposure_var,
+#                 if (include_outcome_vars_baseline) outcome_vars)
+#     } else if (t < (n_waves - 1)) {
+#       vars <- c(vars, exposure_var,
+#                 if (!is.null(confounder_vars)) confounder_vars,
+#                 if (extend_baseline) baseline_vars)
+#     } else {
+#       vars <- c(vars, outcome_vars,
+#                 if (extend_baseline) baseline_vars)
+#     }
+#     vars <- unique(vars[vars %in% names(df)])
+#     df %>%
+#       dplyr::filter(.time == t) %>%
+#       dplyr::select(dplyr::all_of(c(vars))) %>%
+#       dplyr::mutate(time = t)
+#   })
+#   df_filt <- dplyr::bind_rows(df_list)
+#
+#   # pivot to wide format
+#   cli::cli_alert_info("reshaping to wide format...")
+#   data_wide <- df_filt %>%
+#     tidyr::pivot_wider(
+#       id_cols = id,
+#       names_from = time,
+#       values_from = -c(id, time),
+#       names_glue = "t{time}_{.value}"
+#     )
+#
+#   # baseline NA indicators if requested
+#   if (include_na_indicators) {
+#     cli::cli_alert_info("creating NA indicators at baseline...")
+#     base_vars <- unique(c(baseline_vars,
+#                           if (include_exposure_var_baseline) exposure_var,
+#                           if (include_outcome_vars_baseline) outcome_vars))
+#     base_cols <- paste0("t0_", base_vars)
+#     for (col in intersect(base_cols, names(data_wide))) {
+#       if (any(is.na(data_wide[[col]]))) {
+#         na_col <- paste0(col, "_na")
+#         data_wide[[na_col]] <- as.integer(is.na(data_wide[[col]]))
+#         cli::cli_alert_success(sprintf("created NA indicator for %s", col))
+#       }
+#     }
+#   }
+#
+#   # impute baseline vars if requested
+#   if (imputation_method != 'none') {
+#     cli::cli_alert_info(sprintf("performing %s imputation at baseline...", imputation_method))
+#     imp_cols <- intersect(paste0("t0_", unique(c(baseline_vars,
+#                                                  if (include_exposure_var_baseline) exposure_var,
+#                                                  if (include_outcome_vars_baseline) outcome_vars))),
+#                           names(data_wide))
+#     if (imputation_method == 'mice') {
+#       try({
+#         imp <- mice::mice(data_wide[imp_cols], m = 1, maxit = 5, method = 'pmm', printFlag = FALSE)
+#         data_wide[imp_cols] <- mice::complete(imp)
+#         cli::cli_alert_success("mice imputation completed")
+#       }, silent = TRUE)
+#     }
+#     if (imputation_method == 'median' || !exists('imp')) {
+#       for (col in imp_cols) {
+#         if (is.numeric(data_wide[[col]])) {
+#           data_wide[[col]][is.na(data_wide[[col]])] <- median(data_wide[[col]], na.rm = TRUE)
+#         } else {
+#           mode_val <- names(sort(table(data_wide[[col]]), decreasing = TRUE))[1]
+#           data_wide[[col]][is.na(data_wide[[col]])] <- mode_val
+#         }
+#       }
+#       cli::cli_alert_success("median imputation completed")
+#     }
+#   }
+#
+#   # reorder columns: interleave baseline vars & indicators if included, then wave-specific
+#   cli::cli_alert_info("reordering columns...")
+#   final_order <- id
+#   for (t in 0:(n_waves - 1)) {
+#     prefix <- paste0("t", t, "_")
+#     if (t == 0) {
+#       cols <- intersect(paste0(prefix, unique(c(baseline_vars,
+#                                                 if (include_exposure_var_baseline) exposure_var,
+#                                                 if (include_outcome_vars_baseline) outcome_vars))),
+#                         names(data_wide))
+#       if (include_na_indicators) {
+#         na_cols <- paste0(cols, "_na")
+#         interleaved <- unlist(lapply(cols, function(x) c(x, na_cols[na_cols %in% names(data_wide)])))
+#         final_order <- c(final_order, interleaved)
+#       } else {
+#         final_order <- c(final_order, cols)
+#       }
+#     } else if (t < (n_waves - 1)) {
+#       vars_t <- c(exposure_var,
+#                   if (!is.null(confounder_vars)) confounder_vars,
+#                   if (extend_baseline) baseline_vars)
+#       cols <- intersect(paste0(prefix, vars_t), names(data_wide))
+#       final_order <- c(final_order, cols)
+#     } else {
+#       cols <- intersect(paste0(prefix, outcome_vars), names(data_wide))
+#       final_order <- c(final_order, cols)
+#     }
+#   }
+#   final_order <- unique(final_order[final_order %in% names(data_wide)])
+#   data_wide <- data_wide[, final_order]
+#
+#   cli::cli_alert_success(sprintf("completed in %.2f seconds", difftime(Sys.time(), start_time, units='secs')))
+#   return(as.data.frame(data_wide))
+# }
 
 
 # old

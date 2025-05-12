@@ -2,14 +2,14 @@
 % Please edit documentation in R/margot_wide_impute_baseline.R
 \name{margot_wide_impute_baseline}
 \alias{margot_wide_impute_baseline}
-\title{Transform to wide data with labels and impute baseline missing values}
+\title{Transform longitudinal data to wide format and impute baseline (soft-deprecated)}
 \usage{
 margot_wide_impute_baseline(.data, baseline_vars, exposure_var, outcome_vars)
 }
 \arguments{
-\item{.data}{A dataframe containing the longitudinal data.}
+\item{.data}{A data frame containing the longitudinal data in long format.}
 
-\item{baseline_vars}{A character vector of baseline variable names to include and impute if necessary.}
+\item{baseline_vars}{A character vector of baseline variable names to include and impute.}
 
 \item{exposure_var}{A character vector specifying the names of exposure variables.}
 
@@ -19,20 +19,21 @@ margot_wide_impute_baseline(.data, baseline_vars, exposure_var, outcome_vars)
 A data frame in wide format with imputed baseline variables.
 }
 \description{
-This function transforms longitudinal data into a wide format and performs imputation on baseline variables.
-It leverages the `mice` package for imputation, ensuring that missing baseline data are appropriately handled.
-The function arranges data by participant id and time, filters based on time conditions, and reshapes the data into wide format.
-Imputed data are then merged back, maintaining the structure suitable for analysis.
+**Deprecated**: Use `margot_wide_machine(imputation_method = "mice")` instead.
 }
-\examples{
-# df_nz is a synthetic dataset included in this package
-data(df_nz, package = "margot")
+\section{Deprecated}{
 
-df_nz <- data.frame(df_nz)
-wide_data_imputed <- margot_wide_impute_baseline(df_nz,
-  baseline_vars = c("age", "male", "religion_believe_god"),
-  exposure_var = ("forgiveness"),
-  outcome_vars = ("kessler_latent_anxiety")
-  )
+This function was soft-deprecated in version 1.0.38 and will be removed in a future major release.
+}
+
+\examples{
+# Preferred: use margot_wide_machine with mice imputation
+# wide_df <- margot_wide_machine(
+#   df,
+#   baseline_vars = c("age", "male"),
+#   exposure_var = "forgiveness",
+#   outcome_vars = "kessler_latent_anxiety",
+#   imputation_method = "mice"
+# )
 
 }

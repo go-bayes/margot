@@ -9,44 +9,20 @@ margot_wide(.data, baseline_vars, exposure_var, outcome_vars)
 \arguments{
 \item{.data}{A data frame containing the longitudinal data in long format.}
 
-\item{baseline_vars}{A character vector of baseline variable names to be included at t0.}
+\item{baseline_vars}{A character vector of baseline variable names to include.}
 
-\item{exposure_var}{A character vector of exposure variable names to be tracked across time.}
+\item{exposure_var}{A character vector of exposure variable names.}
 
-\item{outcome_vars}{A character vector of outcome variable names to be tracked across time.}
+\item{outcome_vars}{A character vector of outcome variable names.}
 }
 \value{
-A wide-format data frame with each subject's observations across time points
-        represented in a single row, and variables prefixed by their respective
-        time of measurement.
+A wide-format data frame with prefixed time-stamped columns.
 }
 \description{
-This function transforms longitudinal data from long format to wide format,
-ensuring that baseline measurements are correctly labelled and included.
-It handles multiple observations per subject across different waves,
-and allows for the specification of baseline variables, exposure variables,
-and outcome variables. It ensures that all specified variables are
-included in the resulting wide-format data frame, with columns prefixed
-by the time of measurement.
+**Deprecated**: Use `margot_wide_machine()` instead.
 }
-\examples{
-# defining variables as per the function's documentation
-baseline_vars <- c(
-  "male", "age",  "eth_cat",
-  "partner", "agreeableness",
-  "conscientiousness", "extraversion", "honesty_humility",
-  "openness", "neuroticism", "sample_weights"
-)
+\section{Deprecated}{
 
-exposure_var <- c("forgiveness")
-
-outcome_vars <- c(
-  "alcohol_frequency", "alcohol_intensity",
-  "hlth_bmi", "hours_exercise"
-)
-
-# df_nz is a synthetic dataset included in this package
-# wide_data <- margot_wide(df_nz, baseline_vars, exposure_var, outcome_vars)
-# print(wide_data)
-
+This function was soft-deprecated in version 1.0.38 and will be removed in a future release.
 }
+

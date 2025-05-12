@@ -12,54 +12,79 @@ margot_process_longitudinal_data_wider(
   exposure_vars = NULL,
   scale_exposure = FALSE,
   scale_continuous = TRUE,
+  censor_if_missing_exposure = TRUE,
   not_lost_in_following_wave = "not_lost_following_wave",
   lost_in_following_wave = NULL,
   remove_selected_columns = TRUE,
   time_point_prefixes = NULL,
   time_point_regex = NULL,
-  save_observed_y = FALSE,
-  censored_if_any_lost = TRUE
+  save_observed_y = FALSE
+)
+
+margot_process_longitudinal_data_wider(
+  df_wide,
+  relationship_id = "NULL",
+  ordinal_columns = NULL,
+  continuous_columns_keep = NULL,
+  exposure_vars = NULL,
+  scale_exposure = FALSE,
+  scale_continuous = TRUE,
+  censor_if_missing_exposure = TRUE,
+  not_lost_in_following_wave = "not_lost_following_wave",
+  lost_in_following_wave = NULL,
+  remove_selected_columns = TRUE,
+  time_point_prefixes = NULL,
+  time_point_regex = NULL,
+  save_observed_y = FALSE
 )
 }
 \arguments{
-\item{df_wide}{a wide-format dataframe containing longitudinal data.}
+\item{df_wide}{A data.frame in wide format containing time-point–prefixed columns (e.g., t0_x).}
 
-\item{relationship_id}{a string naming the column that identifies dyads. defaults to "NULL".}
+\item{relationship_id}{Column name identifying dyads; if present, dyadic censoring is applied. Default: "NULL".}
 
-\item{ordinal_columns}{a character vector of column names to be treated as ordinal and dummy-coded.}
+\item{ordinal_columns}{Character vector of ordinal column bases to dummy-encode after processing.}
 
-\item{continuous_columns_keep}{a character vector of continuous column names to keep without scaling.}
+\item{continuous_columns_keep}{Character vector of continuous column names to retain without scaling.}
 
-\item{exposure_vars}{a character vector of exposure variable names that determine attrition.}
+\item{exposure_vars}{Character vector of exposure base names (without time prefixes).}
 
-\item{scale_exposure}{logical. if TRUE, scales the exposure variable(s). default is FALSE.}
+\item{scale_exposure}{Logical; if TRUE, scales exposure variables. Default: FALSE.}
 
-\item{scale_continuous}{logical. if TRUE, scales continuous variables. if FALSE, no variables are scaled.
-default is TRUE.}
+\item{scale_continuous}{Logical; if TRUE, scales continuous variables. Default: TRUE.}
 
-\item{not_lost_in_following_wave}{character string with the suffix for the "not lost" indicator.
-default is "not_lost_following_wave".}
+\item{censor_if_missing_exposure}{Logical; if TRUE, missing exposures at next wave cause censoring. Default: TRUE.}
 
-\item{lost_in_following_wave}{character string with the suffix for the "lost" indicator.
-if NULL, no 'lost' indicator is created.}
+\item{not_lost_in_following_wave}{Suffix for the not-lost indicator. Default: "not_lost_following_wave".}
 
-\item{remove_selected_columns}{logical. if TRUE, removes selected columns after encoding. default is TRUE.}
+\item{lost_in_following_wave}{Suffix for the lost indicator; if NULL no lost indicator is added. Default: NULL.}
 
-\item{time_point_prefixes}{a character vector of time point prefixes. if NULL, inferred from the data.}
+\item{remove_selected_columns}{Logical; if TRUE, removes original columns after dummy encoding. Default: TRUE.}
 
-\item{time_point_regex}{a regex pattern for identifying time points. used if time_point_prefixes is NULL.}
+\item{time_point_prefixes}{Optional vector of time-point prefixes (e.g., c("t0","t1")). If NULL, inferred.}
 
-\item{save_observed_y}{logical. if TRUE, retains observed outcome values in the final wave even if lost. default FALSE.}
+\item{time_point_regex}{Regex pattern to identify time-point prefixes. Used if time_point_prefixes is NULL.}
+
+\item{save_observed_y}{Logical; if TRUE, retains observed outcome in final wave even if censored. Default: FALSE.}
 
 \item{censored_if_any_lost}{logical. if TRUE, sets "not_lost_in_following_wave" = 0 if any data are NA in wave $t+1$.}
 }
 \value{
 a processed dataframe suitable for longitudinal analyses.
+
+A data.frame with processed and optionally scaled and encoded columns, ready for longitudinal analysis.
 }
 \description{
 this function processes longitudinal data (wide format) across multiple waves,
 handling dyadic censoring: if one partner in a dyad is lost at wave $t$, the entire
 dyad is set to lost at wave $t$. all subsequent wave data are then set to NA.
+
+This function processes longitudinal data (wide format) across multiple waves,
+handling dyadic censoring and optional censoring when the exposure is missing.
+
+If `censor_if_missing_exposure = TRUE`, any record with a missing exposure at wave t+1
+is considered lost at wave t and all subsequent wave data are set to NA.  Dyadic logic
+ensures that if any member of a dyad is lost, the entire dyad is censored.
 }
 \details{
 the dyadic logic occurs after computing each wave's "not_lost" indicator.

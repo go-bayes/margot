@@ -6,7 +6,22 @@
 * remove `crayon` and other unnecessary packages
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
-- `margot_interpret_policy_batch()` fix to aling with new functions for depth = 1L. 
+* get progress bars back into `margot_wide_impute_machine()`
+
+# [2025-05-12] margot 1.0.38
+## improved
+- `margot_impute_carry_forward()`
+  - eligibility now requires an observed value in the **current** or a following wave, rather than only in a future wave.  
+  - The baseline wave (`t0_`) is always checked and reported --even when no later waves exist—preventing silent skips.  
+  - Internal check now uses  
+    ```r
+    cols_check <- c(col, future_cols)
+    ok         <- rowSums(!is.na(out[, cols_check, drop = FALSE])) > 0
+    ```  
+    to align behaviour with the documentation.
+- `margot_wide_impute_machine()` print flags now set to true
+- `margot_wide_impute_baseline()` soft deprecated
+- `margot_wide()` soft deprecated
 
 # [2025-05-07] margot 1.0.37
 - `margot_policy_tree_combo()` now exported
