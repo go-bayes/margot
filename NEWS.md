@@ -7,6 +7,8 @@
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 
+# [2025-05-13] margot 1.0.40
+- exported `margot_causal_forest_parallele()`
 
 # [2025-05-13] margot 1.0.39
 
