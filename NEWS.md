@@ -6,7 +6,17 @@
 * remove `crayon` and other unnecessary packages
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
-* get progress bars back into `margot_wide_impute_machine()`
+
+
+# [2025-05-13] margot 1.0.39
+
+## New
+- `margot_causal_forest_parallel()`  parallel implementation of `margot_causal_forest`. 
+- `margot_flip_forests_parallel()` parallel implementatino of `margot_flip_forests()`
+
+## improved
+- `margot_process_longitudinal_data_wider()` - removes otios warnings from fastDummies.
+- `margot_bind_tables()` - now accepts a dataframe and will work with single outputs. 
 
 # [2025-05-12] margot 1.0.38
 ## improved

@@ -97,6 +97,7 @@ reference:
     - causal_contrast_marginal
     - double_robust_marginal
     - margot_causal_forest
+    - margot_causal_forest_parallel
     - margot_lmtp
     - margot_multi_arm_causal_forest
 
@@ -106,6 +107,7 @@ reference:
     - margot_bind_models
     - margot_compare_groups
     - margot_flip_forests
+    - margot_flip_forests_parallel
     - margot_inspect_qini
     - margot_interpret_policy_batch
     - margot_interpret_policy_tree

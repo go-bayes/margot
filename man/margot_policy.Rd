@@ -17,7 +17,9 @@ margot_policy(
   spend = c(0.2, 0.5),
   label_mapping = NULL,
   original_df = NULL,
-  model_names = NULL
+  model_names = NULL,
+  output_objects = c("policy_tree", "decision_tree", "combined_plot", "qini_plot",
+    "diff_gain_summaries")
 )
 }
 \arguments{
@@ -46,18 +48,17 @@ margot_policy(
 \item{original_df}{Optional data.frame of untransformed variables for axis annotations. Default: NULL.}
 
 \item{model_names}{Character vector of model names to process; NULL = all. Default: NULL.}
+
+\item{output_objects}{Character vector specifying which outputs to include.
+Options: "policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries".
+Default: all.}
 }
 \value{
-A named list; each element corresponds to a model and contains:
-  \describe{
-    \item{policy_tree_plot}{ggplot of the policy-tree plot}
-    \item{qini_plot}{ggplot of the Qini curve}
-    \item{decision_tree}{ggplot of the decision tree at the chosen depth}
-    \item{combined_plot}{ggplot of combined policy vs decision}
-    \item{diff_gain_summaries}{list of difference-gain summaries per spend}
-  }
+A named list; each element corresponds to a model and contains only
+the requested outputs.
 }
 \description{
-Process a list of multi-arm causal forest results: generate policy-tree and decision-tree plots,
-Qini curves, and difference-gain summaries, optionally saving each to disk.
+Process a list of multi-arm causal forest results: generate policy-tree and
+decision-tree plots, Qini curves, and difference-gain summaries.
+Users can toggle which outputs to include via the `output_objects` parameter.
 }

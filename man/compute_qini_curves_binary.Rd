@@ -6,24 +6,7 @@
 \usage{
 compute_qini_curves_binary(tau_hat, Y, W, verbose = TRUE)
 }
-\arguments{
-\item{tau_hat}{Numeric vector of estimated treatment effects.}
-
-\item{Y}{Vector or matrix of observed outcomes.}
-
-\item{W}{Vector of treatment assignments (binary).}
-
-\item{verbose}{Logical; if TRUE, print diagnostic information during execution.}
-}
-\value{
-A list containing two elements:
-  \item{qini_data}{A data frame containing Qini curve data for plotting.}
-  \item{qini_objects}{A list of maq objects for CATE and ATE Qini curves.}
-  Returns NULL if an error occurs or if the resulting Qini data is empty.
-}
 \description{
-Computes Qini curves for binary treatments using the maq package. This function
-calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
-Effect (ATE) Qini curves.
+Compute Qini Curves for Binary Treatments
 }
 \keyword{internal}

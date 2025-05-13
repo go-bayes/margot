@@ -1,3 +1,305 @@
+#' Run Multiple Generalised Random Forest (GRF) Causal Forest Models in Parallel
+#'
+#' Parallelised, diagnostic‑rich variant of `margot_causal_forest()`.  Each
+#' outcome‑specific forest is estimated in its own R worker via **future**.  All
+#' the `cli` messages and checks from the sequential original are preserved, so
+#' you still get the same granular reporting (dimension checks, Qini status,
+#' warnings, etc.).  Live progress bars are emitted with **progressr** using a
+#' `cli` handler.
+#'
+#' @inheritParams margot_causal_forest
+#' @param n_cores integer. number of parallel workers (default = all cores − 1).
+#'
+#' @return list with elements:
+#'   * `results`         – per‑outcome diagnostics and objects
+#'   * `combined_table`  – rbind‑ed e‑value table across outcomes
+#'   * `outcome_vars`    – vector of (successful) outcome names
+#'   * `not_missing`     – indices of complete‑case rows
+#'   * (`data`, `covariates`, `weights`) when `save_data = TRUE`
+#'   * `full_models` when `save_models = TRUE`
+#'
+#' @details Messages produced inside workers are captured by **future** and
+#'   dispatched to the master session.  Progress bars update in real time.  To
+#'   silence progress, call `progressr::handlers("off")` before running.
+#'
+#' @importFrom future plan multisession availableCores
+#' @importFrom future.apply future_lapply
+#' @importFrom progressr with_progress progressor handlers
+#' @importFrom grf causal_forest average_treatment_effect test_calibration
+#'   rank_average_treatment_effect variable_importance best_linear_projection
+#' @importFrom policytree double_robust_scores policy_tree
+#' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_alert_danger cli_h3
+#'   cli_progress_bar cli_progress_update cli_progress_done
+#' @importFrom crayon bold green red yellow
+#' @importFrom purrr map walk
+margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, weights,
+                                 grf_defaults    = list(),
+                                 save_data       = FALSE,
+                                 compute_rate    = TRUE,
+                                 top_n_vars      = 15,
+                                 save_models     = TRUE,
+                                 train_proportion= 0.7,
+                                 qini_split      = TRUE,
+                                 qini_train_prop = 0.7,
+                                 n_cores         = future::availableCores() - 1,
+                                 verbose         = TRUE) {
+  # dimension checks
+  n_rows <- nrow(covariates)
+  if (verbose) cli::cli_alert_info(paste0("rows in covariates: ", n_rows))
+  if (length(W) != n_rows) stop("length of W does not match covariates rows")
+  if (!is.null(weights) && length(weights) != n_rows) stop("length of weights does not match")
+  for (o in outcome_vars) {
+    if (nrow(as.matrix(data[[o]])) != n_rows)
+      stop("rows in outcome ", o, " do not match covariates")
+  }
+  if (qini_split && (qini_train_prop <= 0 || qini_train_prop >= 1))
+    stop("qini_train_prop must be in (0,1)")
+  if (verbose) cli::cli_alert_info("starting margot_causal_forest()")
+
+  # complete cases
+  not_missing <- which(complete.cases(covariates))
+  if (length(not_missing)==0) stop("no complete cases in covariates")
+  if (verbose) cli::cli_alert_info(paste0("complete cases: ", length(not_missing)))
+
+  # parallel setup
+  future::plan(future::multisession, workers = n_cores)
+  if (verbose) cli::cli_alert_info(paste0("using ", n_cores, " workers"))
+
+  # parallel loop with CLI logging
+  results_list <- future.apply::future_lapply(outcome_vars, function(outcome) {
+    t0 <- Sys.time()
+    cli::cli_alert_info(paste0("↗ starting ", outcome))
+
+    res <- tryCatch({
+      # fit forest
+      model <- do.call(grf::causal_forest,
+                       c(list(X = covariates,
+                              Y = as.matrix(data[[outcome]]),
+                              W = W,
+                              sample.weights = weights),
+                         grf_defaults))
+      # core metrics
+      ate    <- round(grf::average_treatment_effect(model),3)
+      calib  <- round(grf::test_calibration(model),3)
+      table  <- margot::margot_model_evalue(model, scale="RD",
+                                            new_name=outcome, subset=NULL)
+      tau    <- predict(model)$predictions
+
+      # RATE
+      if (compute_rate) {
+        rate     <- grf::rank_average_treatment_effect(model, tau)
+        rate_qini<- grf::rank_average_treatment_effect(model, tau, target="QINI")
+      }
+      # DR scores + policy tree 1
+      dr   <- policytree::double_robust_scores(model)
+      pt1  <- policytree::policy_tree(covariates[not_missing,,drop=FALSE],
+                                      dr[not_missing,], depth=1)
+      # var importance + BLP
+      vi     <- grf::variable_importance(model)
+      ord    <- order(vi, decreasing=TRUE)
+      top    <- if(is.null(colnames(covariates))) ord[1:top_n_vars] else colnames(covariates)[ord[1:top_n_vars]]
+      blp    <- grf::best_linear_projection(model, covariates[,top,drop=FALSE], target.sample="all")
+      # policy tree 2 + plot data
+      train_idx <- sample(not_missing, floor(train_proportion*length(not_missing)))
+      pt2    <- policytree::policy_tree(covariates[train_idx,top,drop=FALSE], dr[train_idx,], depth=2)
+      test_idx<- setdiff(not_missing, train_idx)
+      plotd  <- list(X_test=covariates[test_idx,top,drop=FALSE],
+                     X_test_full=covariates[test_idx,,drop=FALSE],
+                     predictions=predict(pt2, covariates[test_idx,top,drop=FALSE]))
+      # Qini
+      if (!qini_split) {
+        qres <- compute_qini_curves_binary(tau, as.matrix(data[[outcome]]), W, verbose)
+      } else {
+        qtr <- sample(not_missing, floor(qini_train_prop*length(not_missing)))
+        qte <- setdiff(not_missing, qtr)
+        qmod<- do.call(grf::causal_forest,
+                       c(list(X=covariates[qtr,,drop=FALSE],
+                              Y=as.matrix(data[[outcome]])[qtr],
+                              W=W[qtr], sample.weights=weights[qtr]),
+                         grf_defaults))
+        qtau<- predict(qmod, newdata=covariates[qte,,drop=FALSE])$predictions
+        qres <- compute_qini_curves_binary(qtau, as.matrix(data[[outcome]])[qte], W[qte], verbose)
+      }
+      qdata   <- if(!is.null(qres)) qres$qini_data else NULL
+      qobjs   <- if(!is.null(qres)) qres$qini_objects else NULL
+
+      out <- list(
+        ate=ate, test_calibration=calib, custom_table=table, tau_hat=tau,
+        rate_result=if(compute_rate) rate else NULL,
+        rate_qini=if(compute_rate) rate_qini else NULL,
+        dr_scores=dr, policy_tree_depth_1=pt1,
+        top_vars=top, blp_top=blp,
+        policy_tree_depth_2=pt2, plot_data=plotd,
+        qini_data=qdata, qini_objects=qobjs,
+        model=if(save_models) model else NULL
+      )
+      dt <- difftime(Sys.time(), t0, units="secs")
+      cli::cli_alert_success(sprintf("✓ worker finished %s (%.1f s)", outcome, as.numeric(dt)))
+      out
+    }, error=function(e) {
+      cli::cli_alert_danger(paste0("✗ error in ", outcome, ": ", e$message))
+      NULL
+    })
+    res
+  })
+  names(results_list) <- paste0("model_", outcome_vars)
+
+  # drop failures
+  ok <- !vapply(results_list, is.null, logical(1))
+  if (!all(ok)) {
+    cli::cli_alert_warning(paste(sum(!ok), "outcome(s) failed and were dropped"))
+    results_list <- results_list[ok]
+    outcome_vars <- outcome_vars[ok]
+  }
+
+  # combine
+  combined_table <- do.call(rbind, lapply(results_list, `[[`, "custom_table"))
+  rownames(combined_table) <- gsub("model_", "", names(results_list))
+  if (verbose) cli::cli_alert_success("all model runs completed")
+
+  output <- list(
+    results=results_list,
+    combined_table=combined_table,
+    outcome_vars=outcome_vars,
+    not_missing=not_missing
+  )
+  if (save_data) {
+    output$data<-data; output$covariates<-covariates; output$weights<-weights
+    if (verbose) cli::cli_alert_info("raw data/covariates/weights saved")
+  }
+  if (save_models) {
+    output$full_models<-purrr::map(results_list, `[[`, "model")
+    if (verbose) cli::cli_alert_info("full model objects saved")
+  }
+  if (verbose) cli::cli_alert_success("margot_causal_forest() completed")
+  output
+}
+
+
+# -----------------------------------------------------------------------------
+# helper: compute_qini_curves_binary
+# -----------------------------------------------------------------------------
+
+#' Compute Qini Curves for Binary Treatments
+#' @keywords internal
+compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
+  tryCatch({
+    if (verbose) cli::cli_alert_info("computing Qini curves …")
+    tau_hat    <- as.vector(tau_hat)
+    treatment  <- as.factor(W)
+    IPW_scores <- maq::get_ipw_scores(Y, treatment)
+    cate_qini  <- maq::maq(tau_hat, 1, IPW_scores, R = 200)
+    ate_qini   <- maq::maq(rep(mean(tau_hat), length(tau_hat)), 1, IPW_scores, R = 200)
+    qini_objs  <- list(cate = cate_qini, ate = ate_qini)
+    max_idx    <- max(sapply(qini_objs, function(q) length(q[["_path"]]$gain)))
+    if (!max_idx) return(NULL)
+    qini_dat   <- purrr::map2_dfr(qini_objs, names(qini_objs),
+                                  ~ extract_qini_data_binary(.x, .y, max_idx, verbose))
+    if (!nrow(qini_dat)) return(NULL)
+    list(qini_data = qini_dat, qini_objects = qini_objs)
+  }, error = function(e) {
+    if (verbose) cli::cli_alert_warning("qini error: {e$message}")
+    NULL
+  })
+}
+
+#' Extract Qini Data for Binary Treatment Plotting
+#' @keywords internal
+extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) {
+  if (name == "ate") {
+    max_gain   <- max(qini_obj[["_path"]]$gain, na.rm = TRUE)
+    proportion <- seq(0, 1, length.out = max_index)
+    gain       <- proportion * max_gain
+  } else if (name == "cate") {
+    gain <- qini_obj[["_path"]]$gain
+    if (length(gain) < max_index)
+      gain <- c(gain, rep(tail(gain, 1), max_index - length(gain)))
+    gain[gain > max(gain)] <- max(gain)
+    proportion <- seq_len(max_index) / max_index
+  } else {
+    if (verbose) cli::cli_alert_warning("unknown curve type {name}")
+    return(NULL)
+  }
+  data.frame(proportion = proportion, gain = gain, curve = name)
+}
+
+#' Inspect qini diagnostics for one or several models
+#'
+#' @param model_results list returned by `margot_causal_forest()` **with**
+#'        `save_models = TRUE, save_data = TRUE`.
+#' @param model_names  optional character vector of outcome names
+#'        (with or without the `model_` prefix).  default = *all*.
+#' @param test_prop    fraction of trimmed rows to allocate to the
+#'        validation/Qini test set.  default 0.5.
+#' @param propensity_bounds numeric length-2 vector giving the lower
+#'        and upper trimming thresholds for `forest$W.hat`.  default
+#'        c(0.05, 0.95).
+#' @param seed integer for reproducibility.
+#'
+#' @return a tibble of diagnostics (class `"margot_qini_diag"`).
+#' @export
+margot_inspect_qini <- function(model_results,
+                                model_names        = NULL,
+                                test_prop          = 0.5,
+                                propensity_bounds  = c(0.05, 0.95),
+                                seed               = 2025) {
+
+  stopifnot(is.list(model_results),
+            "full_models" %in% names(model_results),
+            "data"        %in% names(model_results))
+
+  # make sure tidyverse is on board
+  requireNamespace("dplyr", quietly = TRUE)
+  requireNamespace("tibble", quietly = TRUE)
+  requireNamespace("policytree", quietly = TRUE)
+
+  if (is.null(model_names))
+    model_names <- names(model_results$full_models)
+  model_names <- ifelse(grepl("^model_", model_names),
+                        model_names,
+                        paste0("model_", model_names))
+
+  set.seed(seed)
+
+  purrr::map_dfr(model_names, function(mn) {
+
+    forest <- model_results$full_models[[mn]]
+    if (is.null(forest))
+      return(NULL)
+
+    outcome_name <- sub("^model_", "", mn)
+
+    Y  <- model_results$data[[outcome_name]]
+    W  <- forest$W
+    eh <- forest$W.hat
+    th <- predict(forest)$predictions               # tau_hat
+    dr <- policytree::double_robust_scores(forest)  # n x 2 matrix
+    dr <- dr[, 2] - dr[, 1]                         # treated – control
+
+    keep <- which(!is.na(Y) &
+                    eh > propensity_bounds[1] &
+                    eh < propensity_bounds[2])
+
+    n_trimmed <- length(Y) - length(keep)
+    if (length(keep) < 10)
+      return(tibble::tibble(model      = mn,
+                            outcome    = outcome_name,
+                            note       = "too little data after trimming"))
+
+    idx_test <- sample(keep, size = floor(test_prop * length(keep)))
+    ord      <- order(-th[idx_test])                # best-to-worst ranking
+    gain     <- cumsum(dr[idx_test][ord])
+
+    tibble::tibble(model       = mn,
+                   outcome     = outcome_name,
+                   sd_tau      = sd(th[idx_test]),
+                   min_gain    = min(gain),
+                   final_gain  = gain[length(gain)],
+                   n_test      = length(idx_test),
+                   n_trimmed   = n_trimmed)
+  }) %>% dplyr::arrange(dplyr::desc(abs(final_gain)))
+}
+
 #' Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Qini Cross-Validation
 #'
 #' This function runs multiple GRF causal forest models with enhanced features. In addition to estimating
@@ -28,7 +330,6 @@
 #' @importFrom policytree double_robust_scores policy_tree
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_progress_bar cli_progress_update cli_progress_done
 #' @importFrom crayon bold green red yellow
-#'
 #' @export
 margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  grf_defaults = list(),
@@ -236,188 +537,278 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
   return(output)
 }
 
-#' Compute Qini Curves for Binary Treatments
+#' #' Compute Qini Curves for Binary Treatments
+#' #'
+#' #' @description
+#' #' Computes Qini curves for binary treatments using the maq package. This function
+#' #' calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
+#' #' Effect (ATE) Qini curves.
+#' #'
+#' #' @param tau_hat Numeric vector of estimated treatment effects.
+#' #' @param Y Vector or matrix of observed outcomes.
+#' #' @param W Vector of treatment assignments (binary).
+#' #' @param verbose Logical; if TRUE, print diagnostic information during execution.
+#' #'
+#' #' @return A list containing two elements:
+#' #'   \item{qini_data}{A data frame containing Qini curve data for plotting.}
+#' #'   \item{qini_objects}{A list of maq objects for CATE and ATE Qini curves.}
+#' #'   Returns NULL if an error occurs or if the resulting Qini data is empty.
+#' #'
+#' #' @importFrom maq get_ipw_scores maq
+#' #' @importFrom purrr map2_dfr
+#' #' @importFrom cli cli_alert_info cli_alert_warning
+#' #'
+#' #' @keywords internal
+#' compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
+#'   tryCatch({
+#'     if (verbose) {
+#'       cli::cli_alert_info(paste("tau_hat class:", class(tau_hat)))
+#'       cli::cli_alert_info(paste("tau_hat length:", length(tau_hat)))
+#'       cli::cli_alert_info(paste("y class:", class(Y)))
+#'       cli::cli_alert_info(paste("y dimensions:", paste(dim(Y), collapse = "x")))
+#'       cli::cli_alert_info(paste("w class:", class(W)))
+#'       cli::cli_alert_info(paste("w length:", length(W)))
+#'     }
 #'
-#' @description
-#' Computes Qini curves for binary treatments using the maq package. This function
-#' calculates both Conditional Average Treatment Effect (CATE) and Average Treatment
-#' Effect (ATE) Qini curves.
+#'     tau_hat <- as.vector(tau_hat)
+#'     treatment <- as.factor(W)
+#'     IPW_scores <- maq::get_ipw_scores(Y, treatment)
+#'     cost <- 1
 #'
-#' @param tau_hat Numeric vector of estimated treatment effects.
-#' @param Y Vector or matrix of observed outcomes.
-#' @param W Vector of treatment assignments (binary).
-#' @param verbose Logical; if TRUE, print diagnostic information during execution.
+#'     if (verbose) {
+#'       cli::cli_alert_info(paste("tau_hat length:", length(tau_hat)))
+#'       cli::cli_alert_info(paste("cost length:", length(cost)))
+#'       cli::cli_alert_info(paste("IPW_scores dimensions:", paste(dim(IPW_scores), collapse = "x")))
+#'     }
 #'
-#' @return A list containing two elements:
-#'   \item{qini_data}{A data frame containing Qini curve data for plotting.}
-#'   \item{qini_objects}{A list of maq objects for CATE and ATE Qini curves.}
-#'   Returns NULL if an error occurs or if the resulting Qini data is empty.
+#'     cate_qini <- maq::maq(tau_hat, cost, IPW_scores, R = 200)
+#'     ate_qini <- maq::maq(rep(mean(tau_hat), length(tau_hat)), cost, IPW_scores, R = 200)
+#'     qini_objects <- list(cate = cate_qini, ate = ate_qini)
 #'
-#' @importFrom maq get_ipw_scores maq
-#' @importFrom purrr map2_dfr
-#' @importFrom cli cli_alert_info cli_alert_warning
+#'     max_index <- max(sapply(qini_objects, function(qini_obj) {
+#'       if (is.null(qini_obj) || is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain))
+#'         return(0)
+#'       length(qini_obj[["_path"]]$gain)
+#'     }))
+#'     if (max_index == 0) {
+#'       if (verbose) cli::cli_alert_warning("all qini objects have empty gain. returning NULL.")
+#'       return(NULL)
+#'     }
 #'
-#' @keywords internal
-compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
-  tryCatch({
-    if (verbose) {
-      cli::cli_alert_info(paste("tau_hat class:", class(tau_hat)))
-      cli::cli_alert_info(paste("tau_hat length:", length(tau_hat)))
-      cli::cli_alert_info(paste("y class:", class(Y)))
-      cli::cli_alert_info(paste("y dimensions:", paste(dim(Y), collapse = "x")))
-      cli::cli_alert_info(paste("w class:", class(W)))
-      cli::cli_alert_info(paste("w length:", length(W)))
-    }
-
-    tau_hat <- as.vector(tau_hat)
-    treatment <- as.factor(W)
-    IPW_scores <- maq::get_ipw_scores(Y, treatment)
-    cost <- 1
-
-    if (verbose) {
-      cli::cli_alert_info(paste("tau_hat length:", length(tau_hat)))
-      cli::cli_alert_info(paste("cost length:", length(cost)))
-      cli::cli_alert_info(paste("IPW_scores dimensions:", paste(dim(IPW_scores), collapse = "x")))
-    }
-
-    cate_qini <- maq::maq(tau_hat, cost, IPW_scores, R = 200)
-    ate_qini <- maq::maq(rep(mean(tau_hat), length(tau_hat)), cost, IPW_scores, R = 200)
-    qini_objects <- list(cate = cate_qini, ate = ate_qini)
-
-    max_index <- max(sapply(qini_objects, function(qini_obj) {
-      if (is.null(qini_obj) || is.null(qini_obj[["_path"]]) || is.null(qini_obj[["_path"]]$gain))
-        return(0)
-      length(qini_obj[["_path"]]$gain)
-    }))
-    if (max_index == 0) {
-      if (verbose) cli::cli_alert_warning("all qini objects have empty gain. returning NULL.")
-      return(NULL)
-    }
-
-    qini_data <- purrr::map2_dfr(qini_objects, names(qini_objects),
-                                 ~ extract_qini_data_binary(.x, .y, max_index))
-    if (nrow(qini_data) == 0) {
-      if (verbose) cli::cli_alert_warning("extracted qini data is empty. returning NULL.")
-      return(NULL)
-    }
-    return(list(qini_data = qini_data, qini_objects = qini_objects))
-  }, error = function(e) {
-    if (verbose) cli::cli_alert_warning(paste("error in compute_qini_curves_binary:", e$message))
-    return(NULL)
-  })
-}
-
+#'     qini_data <- purrr::map2_dfr(qini_objects, names(qini_objects),
+#'                                  ~ extract_qini_data_binary(.x, .y, max_index))
+#'     if (nrow(qini_data) == 0) {
+#'       if (verbose) cli::cli_alert_warning("extracted qini data is empty. returning NULL.")
+#'       return(NULL)
+#'     }
+#'     return(list(qini_data = qini_data, qini_objects = qini_objects))
+#'   }, error = function(e) {
+#'     if (verbose) cli::cli_alert_warning(paste("error in compute_qini_curves_binary:", e$message))
+#'     return(NULL)
+#'   })
+#' }
 #' Extract Qini Data for Binary Treatment Plotting
-#'
-#' @description
-#' Extracts Qini curve data from a Qini object for binary treatments and prepares it for plotting.
-#'
-#' @param qini_obj A Qini object.
-#' @param name Name of the curve type (either "ate" or "cate").
-#' @param max_index Maximum index to extend the curve to.
-#' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
-#'
-#' @return A data frame with extracted Qini data.
-#'
-#' @keywords internal
-extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) {
-  if (name == "ate") {
-    max_gain <- max(qini_obj[["_path"]]$gain, na.rm = TRUE)
-    proportion <- seq(0, 1, length.out = max_index)
-    gain <- proportion * max_gain
-  } else if (name == "cate") {
-    gain <- qini_obj[["_path"]]$gain
-    gain_length <- length(gain)
-    if (gain_length < max_index) {
-      gain <- c(gain, rep(tail(gain, 1), max_index - gain_length))
-    } else if (gain_length > max_index) {
-      gain <- gain[1:max_index]
-    }
-    proportion <- seq_len(max_index) / max_index
-  } else {
-    if (verbose) cli::cli_alert_warning(paste("unknown curve type:", name))
-    return(NULL)
-  }
-  data.frame(
-    proportion = proportion,
-    gain = gain,
-    curve = name
-  )
-}
-
-#' Inspect qini diagnostics for one or several models
-#'
-#' @param model_results list returned by `margot_causal_forest()` **with**
-#'        `save_models = TRUE, save_data = TRUE`.
-#' @param model_names  optional character vector of outcome names
-#'        (with or without the `model_` prefix).  default = *all*.
-#' @param test_prop    fraction of trimmed rows to allocate to the
-#'        validation/Qini test set.  default 0.5.
-#' @param propensity_bounds numeric length-2 vector giving the lower
-#'        and upper trimming thresholds for `forest$W.hat`.  default
-#'        c(0.05, 0.95).
-#' @param seed integer for reproducibility.
-#'
-#' @return a tibble of diagnostics (class `"margot_qini_diag"`).
-#' @export
-margot_inspect_qini <- function(model_results,
-                                model_names        = NULL,
-                                test_prop          = 0.5,
-                                propensity_bounds  = c(0.05, 0.95),
-                                seed               = 2025) {
-
-  stopifnot(is.list(model_results),
-            "full_models" %in% names(model_results),
-            "data"        %in% names(model_results))
-
-  # make sure tidyverse is on board
-  requireNamespace("dplyr", quietly = TRUE)
-  requireNamespace("tibble", quietly = TRUE)
-  requireNamespace("policytree", quietly = TRUE)
-
-  if (is.null(model_names))
-    model_names <- names(model_results$full_models)
-  model_names <- ifelse(grepl("^model_", model_names),
-                        model_names,
-                        paste0("model_", model_names))
-
-  set.seed(seed)
-
-  purrr::map_dfr(model_names, function(mn) {
-
-    forest <- model_results$full_models[[mn]]
-    if (is.null(forest))
-      return(NULL)
-
-    outcome_name <- sub("^model_", "", mn)
-
-    Y  <- model_results$data[[outcome_name]]
-    W  <- forest$W
-    eh <- forest$W.hat
-    th <- predict(forest)$predictions               # tau_hat
-    dr <- policytree::double_robust_scores(forest)  # n x 2 matrix
-    dr <- dr[, 2] - dr[, 1]                         # treated – control
-
-    keep <- which(!is.na(Y) &
-                    eh > propensity_bounds[1] &
-                    eh < propensity_bounds[2])
-
-    n_trimmed <- length(Y) - length(keep)
-    if (length(keep) < 10)
-      return(tibble::tibble(model      = mn,
-                            outcome    = outcome_name,
-                            note       = "too little data after trimming"))
-
-    idx_test <- sample(keep, size = floor(test_prop * length(keep)))
-    ord      <- order(-th[idx_test])                # best-to-worst ranking
-    gain     <- cumsum(dr[idx_test][ord])
-
-    tibble::tibble(model       = mn,
-                   outcome     = outcome_name,
-                   sd_tau      = sd(th[idx_test]),
-                   min_gain    = min(gain),
-                   final_gain  = gain[length(gain)],
-                   n_test      = length(idx_test),
-                   n_trimmed   = n_trimmed)
-  }) %>% dplyr::arrange(dplyr::desc(abs(final_gain)))
-}
+#' #'
+#' #' @description
+#' #' Extracts Qini curve data from a Qini object for binary treatments and prepares it for plotting.
+#' #'
+#' #' @param qini_obj A Qini object.
+#' #' @param name Name of the curve type (either "ate" or "cate").
+#' #' @param max_index Maximum index to extend the curve to.
+#' #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
+#' #'
+#' #' @return A data frame with extracted Qini data.
+#' #'
+#' extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) {
+#'   if (name == "ate") {
+#'     max_gain <- max(qini_obj[["_path"]]$gain, na.rm = TRUE)
+#'     proportion <- seq(0, 1, length.out = max_index)
+#'     gain <- proportion * max_gain
+#'   } else if (name == "cate") {
+#'     gain <- qini_obj[["_path"]]$gain
+#'     gain_length <- length(gain)
+#'     if (gain_length < max_index) {
+#'       gain <- c(gain, rep(tail(gain, 1), max_index - gain_length))
+#'     } else if (gain_length > max_index) {
+#'       gain <- gain[1:max_index]
+#'     }
+#'     proportion <- seq_len(max_index) / max_index
+#'   } else {
+#'     if (verbose) cli::cli_alert_warning(paste("unknown curve type:", name))
+#'     return(NULL)
+#'   }
+#'   data.frame(
+#'     proportion = proportion,
+#'     gain = gain,
+#'     curve = name
+#'   )
+#' }
+# margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
+#                                  grf_defaults     = list(),
+#                                  save_data        = FALSE,
+#                                  compute_rate     = TRUE,
+#                                  top_n_vars       = 15,
+#                                  save_models      = TRUE,
+#                                  train_proportion = 0.7,
+#                                  qini_split       = TRUE,
+#                                  qini_train_prop  = 0.7,
+#                                  n_cores          = future::availableCores() - 1,
+#                                  verbose          = TRUE) {
+#
+#   # ---- dimension checks ----------------------------------------------------
+#   n_rows <- nrow(covariates)
+#   if (verbose) cli::cli_alert_info("rows in covariates: {.val {n_rows}}")
+#   if (length(W) != n_rows)               stop("length of W does not match rows")
+#   if (!is.null(weights) && length(weights) != n_rows)
+#     stop("length of weights does not match rows")
+#   purrr::walk(outcome_vars, function(o) {
+#     if (nrow(as.matrix(data[[o]])) != n_rows)
+#       stop("rows in outcome ", o, " do not match covariates")
+#   })
+#   if (qini_split && (qini_train_prop <= 0 || qini_train_prop >= 1))
+#     stop("qini_train_prop must be in (0,1)")
+#   if (verbose) cli::cli_alert_info("starting margot_causal_forest() …")
+#
+#   # ---- complete cases ------------------------------------------------------
+#   not_missing <- which(complete.cases(covariates))
+#   if (!length(not_missing)) stop("no complete cases in covariates")
+#   if (verbose) cli::cli_alert_info("complete cases: {.val {length(not_missing)}}")
+#
+#   # ---- parallel plan -------------------------------------------------------
+#   future::plan(future::multisession, workers = n_cores)
+#   progressr::handlers(global = TRUE); progressr::handlers("cli")
+#   if (verbose) cli::cli_alert_info("parallel backend: {.val {n_cores}} workers")
+#
+#   # ---- fit per‑outcome models in parallel ----------------------------------
+#   results_list <- progressr::with_progress({
+#     p <- progressr::progressor(steps = length(outcome_vars))
+#
+#     future.apply::future_lapply(outcome_vars, function(outcome) {
+#       p(sprintf("%s", outcome))  # progress update
+#       model_name <- paste0("model_", outcome)
+#       Y          <- as.matrix(data[[outcome]])
+#
+#       if (verbose) cli::cli_h3("{.val {outcome}} — fitting causal forest")
+#
+#       tryCatch({
+#         model <- do.call(grf::causal_forest,
+#                          c(list(X = covariates, Y = Y, W = W,
+#                                 sample.weights = weights),
+#                            grf_defaults))
+#         if (verbose) cli::cli_alert_success("forest fitted for {.val {outcome}}")
+#
+#         res <- list(
+#           ate              = round(grf::average_treatment_effect(model), 3),
+#           test_calibration = round(grf::test_calibration(model), 3),
+#           custom_table     = margot::margot_model_evalue(model, scale = "RD",
+#                                                          new_name = outcome,
+#                                                          subset   = NULL),
+#           tau_hat          = predict(model)$predictions
+#         )
+#         tau_hat <- res$tau_hat
+#
+#         # ---- RATE ----------------------------------------------------------
+#         if (compute_rate) {
+#           res$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
+#           res$rate_qini   <- grf::rank_average_treatment_effect(model, tau_hat, target = "QINI")
+#         }
+#
+#         # ---- DR scores + policy tree depth‑1 ------------------------------
+#         res$dr_scores <- policytree::double_robust_scores(model)
+#         res$policy_tree_depth_1 <- policytree::policy_tree(
+#           covariates[not_missing, , drop = FALSE],
+#           res$dr_scores[not_missing, ],
+#           depth = 1
+#         )
+#
+#         # ---- variable importance & BLP ------------------------------------
+#         varimp   <- grf::variable_importance(model)
+#         ranked   <- order(varimp, decreasing = TRUE)
+#         top_vars <- if (is.null(colnames(covariates))) ranked[1:top_n_vars]
+#         else colnames(covariates)[ranked[1:top_n_vars]]
+#         res$top_vars <- top_vars
+#         res$blp_top  <- grf::best_linear_projection(model,
+#                                                     covariates[, top_vars, drop = FALSE],
+#                                                     target.sample = "all")
+#
+#         # ---- policy tree depth‑2 & plot data ------------------------------
+#         train_idx <- sample(not_missing, floor(train_proportion * length(not_missing)))
+#         tree2     <- policytree::policy_tree(
+#           covariates[train_idx, top_vars, drop = FALSE],
+#           res$dr_scores[train_idx, ],
+#           depth = 2
+#         )
+#         res$policy_tree_depth_2 <- tree2
+#         test_idx <- setdiff(not_missing, train_idx)
+#         res$plot_data <- list(
+#           X_test       = covariates[test_idx, top_vars, drop = FALSE],
+#           X_test_full  = covariates[test_idx, , drop = FALSE],
+#           predictions  = predict(tree2, covariates[test_idx, top_vars, drop = FALSE])
+#         )
+#
+#         # ---- Qini ---------------------------------------------------------
+#         if (!qini_split) {
+#           qini_res <- compute_qini_curves_binary(tau_hat, Y, W, verbose)
+#         } else {
+#           q_train <- sample(not_missing, floor(qini_train_prop * length(not_missing)))
+#           q_test  <- setdiff(not_missing, q_train)
+#           q_mod   <- do.call(grf::causal_forest,
+#                              c(list(X = covariates[q_train, , drop = FALSE],
+#                                     Y = Y[q_train], W = W[q_train],
+#                                     sample.weights = weights[q_train]),
+#                                grf_defaults))
+#           q_tau   <- predict(q_mod, newdata = covariates[q_test, , drop = FALSE])$predictions
+#           qini_res <- compute_qini_curves_binary(q_tau, Y[q_test], W[q_test], verbose)
+#         }
+#         if (!is.null(qini_res)) {
+#           res$qini_data    <- qini_res$qini_data
+#           res$qini_objects <- qini_res$qini_objects
+#         }
+#
+#         # ---- keep model ----------------------------------------------------
+#         if (save_models) res$model <- model
+#         res
+#
+#       }, error = function(e) {
+#         if (verbose) cli::cli_alert_danger(crayon::red("error in {.val {outcome}}: {e$message}"))
+#         NULL
+#       })  # end tryCatch
+#     })  # end future_lapply
+#   })  # end with_progress
+#   names(results_list) <- paste0("model_", outcome_vars)
+#
+#   # ---- drop failed fits ----------------------------------------------------
+#   ok <- !vapply(results_list, is.null, logical(1))
+#   if (!all(ok)) {
+#     cli::cli_alert_warning("{sum(!ok)} outcome(s) failed and were dropped")
+#     results_list <- results_list[ok]
+#     outcome_vars <- outcome_vars[ok]
+#   }
+#
+#   # ---- combined table ------------------------------------------------------
+#   combined_table <- do.call(rbind, lapply(results_list, `[[`, "custom_table"))
+#   rownames(combined_table) <- gsub("model_", "", names(results_list))
+#
+#   if (verbose) cli::cli_alert_success(crayon::green("model runs completed"))
+#
+#   output <- list(
+#     results        = results_list,
+#     combined_table = combined_table,
+#     outcome_vars   = outcome_vars,
+#     not_missing    = not_missing
+#   )
+#
+#   if (save_data) {
+#     output$data       <- data
+#     output$covariates <- covariates
+#     output$weights    <- weights
+#     if (verbose) cli::cli_alert_info("raw data/covariates/weights saved")
+#   }
+#   if (save_models) {
+#     output$full_models <- purrr::map(results_list, `[[`, "model")
+#     if (verbose) cli::cli_alert_info("full model objects saved")
+#   }
+#
+#   if (verbose) cli::cli_alert_success("margot_causal_forest() finished \U1F44D")
+#   return(output)
+# }

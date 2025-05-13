@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_bind_tables.R
 \name{margot_bind_tables}
 \alias{margot_bind_tables}
-\title{Bind and format domain-specific tables}
+\title{Bind and format domain-specific tables or a single table}
 \usage{
 margot_bind_tables(
   tables_list,
@@ -15,12 +15,12 @@ margot_bind_tables(
   col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
   rename_ate = FALSE,
   threshold_col = "E_Val_bound",
-  kbl_args = list(booktabs = TRUE, caption = "Combined Results by Domain", align = NULL)
+  kbl_args = list(booktabs = TRUE, caption = "Combined Results", align = NULL)
 )
 }
 \arguments{
-\item{tables_list}{a named list of data frames; each element is a domain table.
-row-names are captured as an "Outcome" column.}
+\item{tables_list}{a named list of data frames, each a domain table, or a single data frame.
+For lists, row names are captured as an "Outcome" column; for data frames, same applies.}
 
 \item{sort_E_val_bound}{character: one of "none", "asc", or "desc". default "none".}
 
@@ -30,23 +30,21 @@ row-names are captured as an "Outcome" column.}
 
 \item{bold}{logical; whether to bold highlighted rows. default TRUE.}
 
-\item{output_format}{character; one of "latex", "html", or "markdown". default "latex".}
+\item{output_format}{character; one of "latex", "html", or "markdown". default "markdown".}
 
 \item{rename_cols}{logical; whether to apply column renaming. default TRUE.}
 
 \item{col_renames}{named list; mapping new_name = old_name for renaming.
-default list("E-Value"="E_Value","E-Value bound"="E_Val_bound").}
+default list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound").}
 
 \item{rename_ate}{logical; if TRUE, renames the effect column to "ATE". default FALSE.}
 
 \item{threshold_col}{character; name of the (pre-rename) column to test. default "E_Val_bound".}
 
-\item{kbl_args}{list; extra arguments for kableExtra::kbl(),
-e.g. list(booktabs=TRUE, caption="Combined Results by Domain", align=NULL).}
+\item{kbl_args}{list; extra arguments for kableExtra::kbl(). default list(booktabs=TRUE, caption="Combined Results", align=NULL).}
 }
 \description{
-This function binds a named list of domain-specific tables, optionally
-sorts by the raw E_Val_bound column (ascending or descending),
-optionally renames columns, highlights rows above a threshold, and
-groups rows by domain. works for latex, html, or markdown output.
+This function binds a named list of domain-specific tables, or handles a single data frame.
+It optionally sorts by the raw E_Val_bound column, renames columns, highlights rows above a threshold,
+and groups rows by domain when provided. Works for latex, html, or markdown output.
 }
