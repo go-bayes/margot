@@ -309,6 +309,7 @@ margot_lighten_for_flip <- function(cf_out, models) {
 #' @param n_policy_cores integer. number of workers for policy-tree refits.
 #' @importFrom future plan multisession availableCores
 #' @importFrom future.apply future_lapply
+#' @name margot_flip_forests_parallel
 #' @export
 margot_flip_forests_parallel <- function(model_results,
                                          flip_outcomes,

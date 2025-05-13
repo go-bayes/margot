@@ -32,6 +32,7 @@
 #'   cli_progress_bar cli_progress_update cli_progress_done
 #' @importFrom crayon bold green red yellow
 #' @importFrom purrr map walk
+#' @name margot_causal_forest_parallel
 #' @export
 margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, weights,
                                  grf_defaults    = list(),
