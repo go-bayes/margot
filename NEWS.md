@@ -13,7 +13,7 @@
 # [2025-05-13] margot 1.0.39
 
 ## New
-- `margot_causal_forest_parallel()`  parallel implementation of `margot_causal_forest`. 
+- `margot_causal_forest_paralle()`  parallel implementation of `margot_causal_forest`. 
 - `margot_flip_forests_parallel()` parallel implementatino of `margot_flip_forests()`
 
 ## improved
