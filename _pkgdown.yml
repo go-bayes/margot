@@ -106,6 +106,8 @@ reference:
     - margot_bind_tables
     - margot_bind_models
     - margot_compare_groups
+    - margot_compute_policy_value
+    - margot_correct_combined_table
     - margot_flip_forests
     - margot_flip_forests_parallel
     - margot_inspect_qini
@@ -123,6 +125,8 @@ reference:
     - margot_rate
     - margot_rate_batch
     - margot_rescue_qini
+    - margot_screen_models
+    - margot_summarise_all
     - margot_subset_model
     - margot_subset_batch
     - margot_summary_cate_difference_gain
@@ -149,6 +153,7 @@ reference:
     - here_read_qs
     - here_save_qs
     - lmtp_evalue_tab
+    - margot_add_policy_values_batch
     - margot_back_transform_log_z
     - margot_get_labels
     - margot_log_transform_vars
@@ -157,6 +162,7 @@ reference:
     - margot_process_binary_vars
     - margot_prop_missing
     - margot_rescue_qini
+    - margot_report_policy
     - margot_save_png
     - margot_size
     - margot_trim_sample_weights
@@ -174,3 +180,4 @@ reference:
     contents:
     - margot_wide_impute_baseline
     - margot_wide
+

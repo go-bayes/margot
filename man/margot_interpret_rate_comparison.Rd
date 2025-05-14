@@ -2,21 +2,28 @@
 % Please edit documentation in R/margot_rate.R
 \name{margot_interpret_rate_comparison}
 \alias{margot_interpret_rate_comparison}
-\title{Compare and interpret RATE estimates from AUTOC and Qini}
+\title{Compare and interpret RATE estimates from AUTOC and QINI}
 \usage{
 margot_interpret_rate_comparison(autoc_df, qini_df, flipped_outcomes = NULL)
 }
 \arguments{
-\item{autoc_df}{Data frame of AUTOC results produced by `margot_rate()`.}
+\item{autoc_df}{Data frame of AUTOC results from margot_rate().}
 
-\item{qini_df}{Data frame of Qini  results produced by `margot_rate()`.}
+\item{qini_df}{Data frame of QINI results from margot_rate().}
 
 \item{flipped_outcomes}{Character vector of outcomes inverted during preprocessing.}
 }
 \value{
-A list with comparison text, individual summaries, and model name sets.
+A list with elements:
+* comparison: Markdown comparison text
+* autoc_results: Output of margot_interpret_rate() for AUTOC
+* qini_results: Output of margot_interpret_rate() for QINI
+* autoc_model_names: Models with positive AUTOC
+* qini_model_names: Models with positive QINI
+* both_model_names: Models positive in both
+* either_model_names: Models positive in either
 }
 \description{
-Compare and interpret RATE estimates from AUTOC and Qini
+Compare and interpret RATE estimates from AUTOC and QINI
 }
 \keyword{internal}

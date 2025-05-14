@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_rate.R
 \name{margot_rate_batch}
 \alias{margot_rate_batch}
-\title{Batch-compute RATEs for every outcome in a *margot_causal_forest* result}
+\title{Batch-compute RATEs for each outcome in a margot_causal_forest result}
 \usage{
 margot_rate_batch(
   model_results,
@@ -11,33 +11,30 @@ margot_rate_batch(
   level = 0.95,
   round_digits = 3,
   model_prefix = "model_",
-  verbose = TRUE
+  verbose = TRUE,
+  seed = 12345
 )
 }
 \arguments{
-\item{model_results}{List returned by `margot_causal_forest()` (possibly
-flipped by `margot_flip_forests()`), containing `$results` and
-`$full_models`.}
+\item{model_results}{List returned by margot_causal_forest(), containing
+results and full_models.}
 
-\item{policy}{Either `"treat_best"` (default) or `"withhold_best"`.}
+\item{policy}{Character; either "treat_best" (default) or "withhold_best".}
 
-\item{target}{Weighting scheme: `"AUTOC"` (default) or `"QINI"`.}
+\item{target}{Character; weighting scheme: "AUTOC" (default) or "QINI".}
 
-\item{level}{Wald confidence level (default 0.95).}
+\item{level}{Numeric; Wald confidence level (default 0.95).}
 
-\item{round_digits}{Decimal places to keep (default 3).}
+\item{round_digits}{Integer; decimal places to keep (default 3).}
 
-\item{model_prefix}{Common prefix on model names (default `"model_"`).}
+\item{model_prefix}{Character; common prefix on model names (default "model_").}
 
-\item{verbose}{Print progress with **cli**?}
-}
-\value{
-A tibble with columns
-  `model`, `outcome`, `policy`, `target`,
-  `RATE Estimate`, `Std Error`, `2.5%`, `97.5%`.
+\item{verbose}{Logical; print progress with cli (default TRUE).}
+
+\item{seed}{Integer; base seed for reproducible RATE computations (default 12345).}
 }
 \description{
-This replaces the legacy "internal RATE" code and is the only function that
-actually talks to **grf**.  It flips the CATE vector on the fly when
-`policy = "withhold_best"`.
+This replaces the legacy internal RATE code and is the only function that
+actually talks to grf. It flips the CATE vector on the fly when
+policy is "withhold_best".
 }

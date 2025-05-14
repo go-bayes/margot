@@ -9,18 +9,20 @@ margot_interpret_rate(rate_df, flipped_outcomes = NULL, target = "AUTOC")
 margot_interpret_rate(rate_df, flipped_outcomes = NULL, target = "AUTOC")
 }
 \arguments{
-\item{rate_df}{A data frame from `margot_rate()` *or* a list containing
-`rate_autoc` and `rate_qini`.}
+\item{rate_df}{A data frame from margot_rate() or a list containing
+rate_autoc and rate_qini.}
 
-\item{flipped_outcomes}{Character vector of outcomes that were inverted during
+\item{flipped_outcomes}{Character vector of outcomes inverted during
 preprocessing (unused here but kept for API symmetry).}
 
-\item{target}{Either `"AUTOC"` or `"Qini"` (ignored when `rate_df` is a list).}
+\item{target}{Character; either "AUTOC" or "QINI" (ignored when rate_df
+is a list).}
 }
 \value{
 Markdown string (single table) or the comparison list (two tables).
 
-A Markdown string (single method) or a comparison list (two methods).
+If rate_df is a data frame, a Markdown string. If rate_df is a list,
+  returns a list produced by margot_interpret_rate_comparison().
 }
 \description{
 Produce a concise Markdown summary of which outcomes show positive,
@@ -30,4 +32,4 @@ negative, or inconclusive heterogeneous treatment effects under a given
 Produce a compact Markdown summary describing which outcomes show positive,
 negative, or inconclusive heterogeneous treatment effects.
 }
-\keyword{internal}
+\keyword{export}

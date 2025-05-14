@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_rate.R
 \name{margot_rate}
 \alias{margot_rate}
-\title{Assemble RATE tables (AUTOC and Qini)}
+\title{Assemble RATE tables (AUTOC and QINI)}
 \usage{
 margot_rate(
   models,
@@ -13,18 +13,18 @@ margot_rate(
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
-  remove_underscores = TRUE
+  remove_underscores = TRUE,
+  seed = 12345
 )
 }
 \arguments{
-\item{models}{List from `margot_causal_forest()` (possibly flipped).}
+\item{models}{List from margot_causal_forest().}
 
-\item{policy}{`"treat_best"` (default) or `"withhold_best"`.}
+\item{policy}{Character; "treat_best" (default) or "withhold_best".}
 
 \item{round_digits}{Integer; decimal places (default 3).}
 
-\item{highlight_significant}{Logical; bold outcomes whose 95% CI excludes
-0 (default TRUE).}
+\item{highlight_significant}{Logical; bold outcomes whose 95 percent CI excludes 0 (default TRUE).}
 
 \item{label_mapping}{Named character vector for converting variable names to readable labels.}
 
@@ -35,12 +35,15 @@ margot_rate(
 \item{use_title_case}{Logical; convert variable names to title case (default TRUE).}
 
 \item{remove_underscores}{Logical; replace underscores with spaces (default TRUE).}
+
+\item{seed}{Integer; base seed for reproducible RATE computations (default 12345).}
 }
 \value{
-List with elements `rate_autoc`, `rate_qini`.
+A list with elements:
+* rate_autoc: AUTOC RATE table
+* rate_qini: QINI RATE table
 }
 \description{
-Convenience wrapper around `margot_rate_batch()`.  Returns two data frames,
-both sorted by descending `RATE Estimate`, and with reliable results
-highlighted in **bold**.
+Convenience wrapper around margot_rate_batch(). Returns two data frames,
+both sorted by descending RATE Estimate, with reliable results highlighted in bold.
 }

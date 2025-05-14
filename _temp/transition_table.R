@@ -42,7 +42,6 @@
 #' @importFrom dplyr mutate arrange
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom knitr kable
-#' @export
 transition_table <- function(data, state_names = NULL) {
   # ensure the data is a dataframe
   if (!is.data.frame(data)) {

@@ -6,9 +6,27 @@
 * remove `crayon` and other unnecessary packages
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
+* improve interpretations in `margot_compare_groups()`
+
+
+# [2025-05-14] margot 1.0.41
+## New
+- `margot_correct_combined_table()` does family–wise-error correction for multiple outcomes (ATE)
+- `margot_add_policy_values()` - attach policy values to forest models (utility)
+- `margot_collect_policy_values()` -- gather policy values from forest models
+- `margot_screen_models()` select models for policy-tree analysis
+- `margot_summarise_all()` summarise (family-wise) corrected analysis for policy trees
+-  `margot_adjust_policy_p()
+## changed
+- `margot_rate()`, and `margot_rate_batch` have deterministic seeds for reproducible results
+- `margot_plot` has two parmaters for `adjust` and `alpha` to describe whether family-wise adjustment has been made. 
+- `margot_bind_table` now has default e_val_bound_threshold = 1.1 (previously 1, which is arguably too liberal).
+- `margot_adjust_policy_p()` - family wise corrections
+- `margot_add_policy_values_batch()` - batch add policy values to models
+- `margot_report_policy()` - succinct reporting of corrected policy values.
 
 # [2025-05-13] margot 1.0.40
-- exported `margot_causal_forest_parallele()`
+- exported `margot_causal_forest_parallel()`
 
 # [2025-05-13] margot 1.0.39
 

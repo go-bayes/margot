@@ -14,6 +14,8 @@ margot_plot(
   include_coefficients = TRUE,
   standardize_label = c("NZ", "US", "none"),
   e_val_bound_threshold = 1.2,
+  adjust = c("none", "bonferroni", "holm"),
+  alpha = 0.05,
   ...,
   options = list(),
   label_mapping = NULL,
@@ -40,8 +42,7 @@ margot_plot(
 
 \item{order}{outcome sorting. Options:
 - `alphabetical`, `magnitude_desc`, `magnitude_asc`,
-- `evaluebound_desc`, `evaluebound_asc`, `custom`, `default`.
-Default: `"alphabetical"`.}
+- `evaluebound_desc`, `evaluebound_asc`, `custom`, `default`. Default: `"alphabetical"`.}
 
 \item{custom_order}{character vector for `order = "custom"`.}
 
@@ -51,8 +52,11 @@ Default: `"alphabetical"`.}
 
 \item{standardize_label}{one of `"NZ"`, `"US"`, or `"none"`. Default: `"NZ"`.}
 
-\item{e_val_bound_threshold}{numeric; minimum `E_Val_bound` to treat an effect as
-reliable. Default: `1.2`.}
+\item{e_val_bound_threshold}{numeric; minimum `E_Val_bound` to treat an effect as reliable. Default: `1.2`.}
+
+\item{adjust}{Character; multiple comparison adjustment method: one of `"none"`, `"bonferroni"`, or `"holm"`. Default: `"none"`.}
+
+\item{alpha}{Numeric; significance level for adjustments. Default: `0.05`.}
 
 \item{...}{additional args passed to `options`.}
 
@@ -60,8 +64,7 @@ reliable. Default: `1.2`.}
 
 \item{label_mapping}{named vector mapping original to display labels.}
 
-\item{save_output}{logical; if `TRUE`, save output via `here_save_qs()`.
-Default: `FALSE`.}
+\item{save_output}{logical; if `TRUE`, save output via `here_save_qs()`. Default: `FALSE`.}
 
 \item{use_timestamp}{logical; append timestamp to filename. Default: `FALSE`.}
 
@@ -77,8 +80,7 @@ Default: `FALSE`.}
 
 \item{rename_cols}{logical; apply `col_renames`. Default: `FALSE`.}
 
-\item{col_renames}{named list mapping new = old. Default:
-`list("E-Value"="E_Value", "E-Value bound"="E_Val_bound")`.}
+\item{col_renames}{named list mapping new = old. Default: `list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound")`.}
 
 \item{rename_ate}{logical; rename effect column to `"ATE"`. Default: `FALSE`.}
 }

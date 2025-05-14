@@ -7,7 +7,7 @@
 #' @param tables_list a named list of data frames, each a domain table, or a single data frame.
 #'   For lists, row names are captured as an "Outcome" column; for data frames, same applies.
 #' @param sort_E_val_bound character: one of "none", "asc", or "desc". default "none".
-#' @param e_val_bound_threshold numeric; threshold for highlighting rows. default 1.
+#' @param e_val_bound_threshold numeric; threshold for highlighting rows. default 1.1.
 #' @param highlight_color character or NULL; background colour for highlighted rows. default "yellow".
 #' @param bold logical; whether to bold highlighted rows. default TRUE.
 #' @param output_format character; one of "latex", "html", or "markdown". default "markdown".
@@ -26,7 +26,7 @@
 margot_bind_tables <- function(
     tables_list,
     sort_E_val_bound      = c("none", "asc", "desc"),
-    e_val_bound_threshold = 1,
+    e_val_bound_threshold = 1.1,
     highlight_color       = "yellow",
     bold                  = TRUE,
     output_format         = "markdown",

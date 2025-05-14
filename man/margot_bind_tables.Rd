@@ -7,7 +7,7 @@
 margot_bind_tables(
   tables_list,
   sort_E_val_bound = c("none", "asc", "desc"),
-  e_val_bound_threshold = 1,
+  e_val_bound_threshold = 1.1,
   highlight_color = "yellow",
   bold = TRUE,
   output_format = "markdown",
@@ -24,7 +24,7 @@ For lists, row names are captured as an "Outcome" column; for data frames, same 
 
 \item{sort_E_val_bound}{character: one of "none", "asc", or "desc". default "none".}
 
-\item{e_val_bound_threshold}{numeric; threshold for highlighting rows. default 1.}
+\item{e_val_bound_threshold}{numeric; threshold for highlighting rows. default 1.1.}
 
 \item{highlight_color}{character or NULL; background colour for highlighted rows. default "yellow".}
 
