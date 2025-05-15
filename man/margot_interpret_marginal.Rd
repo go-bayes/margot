@@ -12,30 +12,21 @@ margot_interpret_marginal(
   original_df = NULL,
   e_val_bound_threshold = 1,
   adjust = c("none", "bonferroni", "holm"),
-  alpha = 0.05
+  alpha = 0.05,
+  include_adjust_note = TRUE
 )
 }
 \arguments{
-\item{df}{Data frame containing the variables to interpret.}
-
-\item{type}{Character; one of "RD" or "RR". Default: "RD".}
-
-\item{order}{Character; sorting option for outcomes. See `margot_plot` for details.}
-
-\item{original_df}{Data frame; if provided, back-transformed estimates will be included.}
-
-\item{e_val_bound_threshold}{Numeric; minimum E-Value bound to treat an effect as reliable. Default: 1.}
-
-\item{adjust}{Character; multiple comparison adjustment method: one of "none", "bonferroni", or "holm". Default: "none".}
-
-\item{alpha}{Numeric; significance level for adjustments. Default: 0.05. Used when `adjust` is "bonferroni" or "holm".}
+\item{include_adjust_note}{logical; if `FALSE`, any reference to adjustment
+methods is omitted. default `TRUE`.}
 }
 \value{
-A list with:
-* `interpretation`: markdown string including any adjustment notes and reliable outcomes.
+list with one element, `interpretation` (a character string).
 }
 \description{
-Interpretation helper that reports estimates on both transformed and original scales,
-with optional family-wise-error rate adjustment notes for confidence intervals and E-values.
+helper that assembles a concise markdown‑style interpretation of the results.
+when `include_adjust_note = FALSE` (the default for a single‑outcome call
+from `margot_plot()`), statements about multiplicity correction are
+suppressed to avoid unnecessary noise.
 }
 \keyword{internal}

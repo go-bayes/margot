@@ -31,66 +31,16 @@ margot_plot(
   rename_ate = FALSE
 )
 }
-\arguments{
-\item{.data}{a data frame with:
-- `outcome` column,
-- effect columns: `E[Y(1)]-E[Y(0)]` or `E[Y(1)]/E[Y(0)]`,
-- confidence limits: `2.5 %`, `97.5 %`,
-- `E_Value`, `E_Val_bound`, and optional `unit`.}
-
-\item{type}{one of `"RD"` (risk difference) or `"RR"` (risk ratio). Default: `"RD"`.}
-
-\item{order}{outcome sorting. Options:
-- `alphabetical`, `magnitude_desc`, `magnitude_asc`,
-- `evaluebound_desc`, `evaluebound_asc`, `custom`, `default`. Default: `"alphabetical"`.}
-
-\item{custom_order}{character vector for `order = "custom"`.}
-
-\item{title_binary}{optional title for binary plots.}
-
-\item{include_coefficients}{logical; include effect values on plot. Default: `TRUE`.}
-
-\item{standardize_label}{one of `"NZ"`, `"US"`, or `"none"`. Default: `"NZ"`.}
-
-\item{e_val_bound_threshold}{numeric; minimum `E_Val_bound` to treat an effect as reliable. Default: `1.2`.}
-
-\item{adjust}{Character; multiple comparison adjustment method: one of `"none"`, `"bonferroni"`, or `"holm"`. Default: `"none"`.}
-
-\item{alpha}{Numeric; significance level for adjustments. Default: `0.05`.}
-
-\item{...}{additional args passed to `options`.}
-
-\item{options}{list of plot & label options.}
-
-\item{label_mapping}{named vector mapping original to display labels.}
-
-\item{save_output}{logical; if `TRUE`, save output via `here_save_qs()`. Default: `FALSE`.}
-
-\item{use_timestamp}{logical; append timestamp to filename. Default: `FALSE`.}
-
-\item{base_filename}{base of output filename. Default: `"margot_plot_output"`.}
-
-\item{prefix}{optional filename prefix.}
-
-\item{save_path}{directory for saving. Default: `here::here("push_mods")`.}
-
-\item{original_df}{optional data frame for back-transformation.}
-
-\item{bold_rows}{logical; bold row-names above threshold. Default: `FALSE`.}
-
-\item{rename_cols}{logical; apply `col_renames`. Default: `FALSE`.}
-
-\item{col_renames}{named list mapping new = old. Default: `list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound")`.}
-
-\item{rename_ate}{logical; rename effect column to `"ATE"`. Default: `FALSE`.}
-}
 \value{
-A list with:
-* `plot`:   a `ggplot2` object
-* `interpretation`: markdown string
-* `transformed_table`: input `.data` with transformed row-names
+list containing the ggplot object (`plot`), an interpretation string
+  (`interpretation`), and the transformed results table
+  (`transformed_table`).
 }
 \description{
-Create a Margot plot for visualising causal effects with flexible sorting,
+create a margot plot for visualising causal effects with flexible sorting,
 embed a compact interpretation, and return a transformed table.
+
+this revision auto‑disables multiplicity correction when only one outcome is
+supplied and suppresses any mention of such corrections in the
+interpretation. all comments are in lower‑case nz english.
 }

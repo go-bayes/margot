@@ -9,6 +9,10 @@
 * improve interpretations in `margot_compare_groups()`
 
 
+# [2025-05-15] margot 1.0.44
+- `margot_plot()` only uses correction method if there is more than one outcome. 
+- `margot_interpret_marginal()` also updated. 
+
 # [2025-05-15] margot 1.0.43
 - `margot_compare_groups()` computation for relative risk fixed. 
 - `margot_plot()` no passes to `margot_correct_combined_tables()` automatically (no need for a separate call)
