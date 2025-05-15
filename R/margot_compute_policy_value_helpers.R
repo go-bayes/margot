@@ -185,12 +185,11 @@ margot_collect_policy_values <- function(cf_out, depths = c(1L, 2L)) {
 #' @param parallel logical; run in parallel via **furrr**? default `FALSE`.
 #'
 #' @return invisibly returns the modified `cf_out`.
-#' @keywords internal
-#'
 #' @importFrom purrr map
 #' @importFrom future plan multisession
 #' @importFrom parallel detectCores
 #' @importFrom furrr future_map furrr_options
+#' @export
 margot_add_policy_values_batch <- function(cf_out,
                                            outcomes = NULL,
                                            depths   = c(1L, 2L),
