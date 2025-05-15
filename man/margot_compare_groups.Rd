@@ -2,63 +2,30 @@
 % Please edit documentation in R/margot_compare_groups.R
 \name{margot_compare_groups}
 \alias{margot_compare_groups}
-\title{Compare Treatment Effects Between Groups}
+\title{Compare two groups of treatment-effect estimates}
 \usage{
 margot_compare_groups(
   group,
   subgroup,
-  type = "RD",
+  type = c("RD", "RR"),
   label_mapping = NULL,
-  decimal_places = 4
+  decimal_places = 3
 )
 }
 \arguments{
-\item{group}{A data frame containing the first group's treatment effects and confidence intervals.}
+\item{group}{data frame with treatment effects and confidence intervals}
 
-\item{subgroup}{A data frame containing the second group's treatment effects and confidence intervals.}
+\item{subgroup}{data frame with treatment effects and confidence intervals}
 
-\item{type}{Character string specifying the type of comparison. Either "RD" for risk difference (default) or "RR" for relative risk ratio.}
+\item{type}{Character; "RD" or "RR"}
 
-\item{label_mapping}{Optional list for mapping original variable names to more readable labels.}
+\item{label_mapping}{Optional named vector for nicer row labels}
 
-\item{decimal_places}{Number of decimal places for rounding outputs.}
+\item{decimal_places}{Number of digits for CI formatting (default 3)}
 }
 \value{
-A list containing two elements:
-  \item{results}{A data frame with the computed statistics for each comparison.}
-  \item{interpretations}{A named vector of interpretation strings for each comparison.}
+A list with results (data frame with Outcomes and Group Differences) and interpretation (character string)
 }
 \description{
-This function compares treatment effects between two groups, calculating either
-the risk difference (RD) or relative risk ratio (RR). It supports label mapping
-and transformation for better interpretability of results.
-}
-\examples{
-\dontrun{
-# Assuming you have group_full and group_rels data frames
-
-# Define label mapping
-label_mapping <- list(
-  "t2_env_not_climate_chg_concern_z" = "Deny Climate Change Concern",
-  "t2_env_not_climate_chg_cause_z" = "Deny Humans Cause Climate Change",
-  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real",
-  "t2_env_not_env_efficacy_z" = "Deny Personal Env Efficacy",
-  "t2_env_not_sat_nz_environment_z" = "Not Sat with NZ Environment"
-)
-
-# Compare groups using Risk Difference (default)
-rd_results <- margot_compare_groups(group_full, group_rels,
-                                    type = "RD",
-                                    label_mapping = label_mapping)
-print(rd_results$results)
-print(rd_results$interpretations)
-
-# Compare groups using Relative Risk
-rr_results <- margot_compare_groups(group_full, group_rels,
-                                    type = "RR",
-                                    label_mapping = label_mapping)
-print(rr_results$results)
-print(rr_results$interpretations)
-}
-
+Compare subgroups from a causal forest model.
 }

@@ -20,5 +20,5 @@ other options include "holm" or any supported by [stats::p.adjust()].}
 Adjusted summary `tibble` filtered to requested depths.
 }
 \description{
-Combines [margot_collect_policy_values()] and [margot_adjust_policy_p()] into a single summary step.
+Combines [margot_collect_policy_values()] and [margot_adjust_policy_p()] into a single summary step. Keep only outcomes where the learned policy improves on treat-all
 }

@@ -17,8 +17,8 @@ margot_adjust_policy_p <- function(tbl,
                                    method = "bonferroni",
                                    alpha  = 0.05) {
   dplyr::mutate(tbl,
-                p_adj = stats::p.adjust(p_value, method = method),
-                pass  = p_adj < alpha)
+                p_adj        = stats::p.adjust(p_value, method = method),
+                significant  = p_adj < alpha)
 }
 
 
@@ -67,15 +67,18 @@ margot_add_policy_p <- function(model,
 #' }
 #'
 #' @importFrom stats complete.cases pnorm sd
+#' @importFrom stats predict
 #' @keywords internal
 margot_compute_policy_value <- function(model,
                                         depth = 2L,
                                         R     = 499L,
                                         seed  = NULL) {
   if (!is.null(seed)) set.seed(seed)
+
   tag <- paste0("policy_tree_depth_", depth)
   pol <- model[[tag]]
-  if (is.null(pol)) stop("no ", tag, " slot present – run `margot_policy()` first")
+  if (is.null(pol))
+    stop("no ", tag, " slot present – run `margot_policy()` first")
 
   dr   <- model$dr_scores
   full <- model$plot_data$X_test_full
@@ -91,15 +94,17 @@ margot_compute_policy_value <- function(model,
     mat[cbind(seq_along(a), a)]
   }
 
-  a_hat   <- policytree::predict(pol, X)
+  # —— changed lines —— #
+  a_hat   <- predict(pol, X)
   ate_hat <- mean(dr[, 2] - dr[, 1])
   pv_hat  <- mean(pick(a_hat, dr)) - ate_hat
 
   reps <- replicate(R, {
     idx  <- sample.int(n, n, TRUE)
-    a_bs <- policytree::predict(pol, X[idx, , drop = FALSE])
+    a_bs <- predict(pol, X[idx, , drop = FALSE])
     mean(pick(a_bs, dr[idx, , drop = FALSE])) - ate_hat
   })
+  # —— end changes —— #
 
   se <- sd(reps)
   p  <- 2 * pnorm(-abs(pv_hat / se))
@@ -114,7 +119,6 @@ margot_compute_policy_value <- function(model,
     class = "policy_value_test"
   )
 }
-
 
 #' Add bootstrap policy-value tests for multiple depths
 #'
@@ -167,38 +171,72 @@ margot_collect_policy_values <- function(cf_out, depths = c(1L, 2L)) {
   })
 }
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  4. vectorised wrapper for a set of outcomes --------------------------------
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-#' attach policy-value tests to a subset of outcomes
+#' attach policy-value tests to a batch of models
 #'
-#' this is the pared-back replacement for the earlier, more complex batch
-#' helper. it simply iterates over the outcomes you pass in `keep`, calls
-#' `margot_add_policy_p()` on each model, and invisibly returns the updated
-#' `cf_out` so you can keep piping.
+#' runs `margot_compute_policy_value()` at the requested depths for each
+#' outcome, in parallel (via **future**/**furrr**) or sequentially.
 #'
-#' @param cf_out list. full **margot** result.
-#' @param keep   character. outcome names to update (without the `model_` prefix).
-#' @param depth  integer. policy-tree depth. default 2.
-#' @param R,seed bootstrap settings for the underlying test (defaults 999 / 2025).
+#' @param cf_out   list. a margot result containing `$results` and `$outcome_vars`.
+#' @param outcomes character or NULL; outcome names without the `model_` prefix.
+#'                 `NULL` → all outcomes.
+#' @param depths   integer vector; tree depths to evaluate. default `c(1L, 2L)`.
+#' @param R        integer ≥ 199; bootstrap replicates. default `499L`.
+#' @param seed     integer; rng seed. default `42L`.
+#' @param parallel logical; run in parallel via **furrr**? default `FALSE`.
 #'
-#' @return the modified `cf_out` (invisibly).
-#' @export
+#' @return invisibly returns the modified `cf_out`.
+#' @keywords internal
+#'
 #' @importFrom purrr map
-margot_add_policy_batch <- function(cf_out,
-                                    keep,
-                                    depth = 2L,
-                                    R     = 999L,
-                                    seed  = 2025L) {
+#' @importFrom future plan multisession
+#' @importFrom parallel detectCores
+#' @importFrom furrr future_map furrr_options
+margot_add_policy_values_batch <- function(cf_out,
+                                           outcomes = NULL,
+                                           depths   = c(1L, 2L),
+                                           R        = 499L,
+                                           seed     = 42L,
+                                           parallel = FALSE) {
 
-  idx <- paste0("model_", keep)
+  stopifnot(is.list(cf_out), "results" %in% names(cf_out))
 
-  cf_out$results[idx] <- purrr::map(cf_out$results[idx],
-                                    margot_add_policy_p,
-                                    depth = depth,
-                                    R     = R,
-                                    seed  = seed)
+  if (is.null(outcomes))
+    outcomes <- cf_out$outcome_vars
+  model_keys <- paste0("model_", outcomes)
+
+  # choose sequential or parallel mapper ---------------------------------
+  if (parallel &&
+      requireNamespace("future", quietly = TRUE) &&
+      requireNamespace("furrr",  quietly = TRUE)) {
+
+    ncores <- parallel::detectCores(logical = FALSE)
+    future::plan(future::multisession, workers = max(1, ncores - 1))
+
+    mapper      <- furrr::future_map
+    mapper_opts <- furrr::furrr_options(seed = seed,
+                                        packages = "margot")
+    map_args <- list(.options = mapper_opts)
+
+  } else {
+    mapper   <- purrr::map
+    map_args <- list()
+  }
+
+  # add tests that are still missing -------------------------------------
+  add_missing <- function(model) {
+    missing <- depths[vapply(depths, function(d)
+      is.null(model[[paste0("policy_value_depth_", d)]]),
+      logical(1))]
+    if (length(missing))
+      model <- margot_add_policy_values(model,
+                                        depths = missing,
+                                        R      = R,
+                                        seed   = seed)
+    model
+  }
+
+  cf_out$results[model_keys] <-
+    do.call(mapper, c(list(cf_out$results[model_keys], add_missing), map_args))
 
   invisible(cf_out)
 }
@@ -313,7 +351,7 @@ margot_summarise_all <- function(cf_out,
 
   res <- dplyr::mutate(res,
                        p_adj = stats::p.adjust(policy_p, method = adjust),
-                       pass  = p_adj < alpha)
+                       significant  = p_adj < alpha)
 
   if (target == "AUTOC") {
     res <- dplyr::select(res, -dplyr::starts_with("rate_qini"))
@@ -483,7 +521,7 @@ margot_add_policy_values_batch <- function(cf_out,
 
 #' Collect and adjust policy-value tests, focusing on desired depths
 #'
-#' Combines [margot_collect_policy_values()] and [margot_adjust_policy_p()] into a single summary step.
+#' Combines [margot_collect_policy_values()] and [margot_adjust_policy_p()] into a single summary step. Keep only outcomes where the learned policy improves on treat-all
 #'
 #' @param cf_out margot result list (after running batch helper).
 #' @param depths integer vector. Depths to include. Default 2.
@@ -497,7 +535,24 @@ margot_policy_summary <- function(cf_out,
                                   depths = 2L,
                                   adjust = "bonferroni",
                                   alpha  = 0.05) {
+
   cf_out |>
     margot_collect_policy_values(depths = depths) |>
-    margot_adjust_policy_p(method = adjust, alpha = alpha)
+    margot_adjust_policy_p(method = adjust, alpha = alpha) |>
+    dplyr::filter(estimate > 0)        # <- new line: keep positive gain only
+}
+
+
+
+# @keywords internal
+margot_add_policy_batch <- function(cf_out, keep,
+                                    depth = 2L, R = 999L, seed = 2025L) {
+
+  idx <- paste0("model_", keep)
+  cf_out$results[idx] <- purrr::map(cf_out$results[idx],
+                                    margot_add_policy_p,
+                                    depth = depth,
+                                    R     = R,
+                                    seed  = seed)
+  invisible(cf_out)
 }

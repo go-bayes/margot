@@ -109,7 +109,7 @@ margot_correct_combined_table <- function(combined_table,
 
   tbl <- combined_table
 
-  ## ---- 1 • adjust the CI ----------------------------------------------------
+  ## ---- 1  adjust the CI ----------------------------------------------------
   if (adjust == "bonferroni") {
 
     z_star <- stats::qnorm(1 - alpha / (2 * m))
@@ -140,7 +140,7 @@ margot_correct_combined_table <- function(combined_table,
       )
   }
 
-  ## ---- 2 • recompute E-values ----------------------------------------------
+  ## ---- 2  recompute E-values ----------------------------------------------
   new_EV <- purrr::pmap_dfr(
     list(est = tbl[[est_col]],
          lo  = tbl$`2.5 %`,
@@ -158,7 +158,7 @@ margot_correct_combined_table <- function(combined_table,
     }
   )
 
-  ## ---- 3 • bind & round -----------------------------------------------------
+  ## ---- 3 bind & round -----------------------------------------------------
   tbl |>
     dplyr::select(-dplyr::any_of(c("E_Value", "E_Val_bound"))) |>
     dplyr::bind_cols(new_EV) |>

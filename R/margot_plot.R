@@ -62,7 +62,7 @@ margot_plot <- function(
     save_path = here::here("push_mods"),
     original_df = NULL,
 
-    # ── NEW ARGS ───────────────────────────────────────────────
+    # ── new args ───────────────────────────────────────────────
     bold_rows    = FALSE,
     rename_cols  = FALSE,
     col_renames  = list("E-Value" = "E_Value",
@@ -82,6 +82,21 @@ margot_plot <- function(
 
   # keep a copy of raw data for the table
   raw_table_df <- .data
+
+  # optionally apply multiplicity correction to combined table
+  # - apply bonferroni or holm via margot_correct_combined_table
+  if (adjust != "none") {
+    cli::cli_alert_info("applying {adjust} correction (α = {alpha}) to confidence intervals and e-values")
+    corrected_table_df <- margot_correct_combined_table(
+      raw_table_df,
+      adjust = adjust,
+      alpha  = alpha,
+      scale  = type
+    )
+    .data <- corrected_table_df
+  } else {
+    cli::cli_alert_info("no multiplicity adjustment applied")
+  }
 
   # merge user options with defaults
   default_opts <- list(
@@ -216,26 +231,22 @@ margot_plot <- function(
   )
 
   # 3b-i) reorder to match the plot’s y-axis (top → bottom):
-  plot_levels   <- levels(sorted_df$outcome)   # bottom→top
-  outcome_order <- rev(plot_levels)            # top→bottom
+  plot_levels   <- levels(sorted_df$outcome)
+  outcome_order <- rev(plot_levels)
   transformed_table <- transformed_table[outcome_order, , drop = FALSE]
 
   # 3c) keep only your core five columns
   keep_cols <- c(eff_col, "2.5 %", "97.5 %", "E_Value", "E_Val_bound")
   transformed_table <- transformed_table[, intersect(keep_cols, names(transformed_table)), drop = FALSE]
 
-  # 4) optional: rename to "ATE", then rename_cols, then bold_rows…
-
-  # ── 4) OPTIONAL: rename the effect column to "ATE" ──────────
+  # ── optional: rename column to 'ATE', apply col_renames, bold_rows ─────
   if (rename_ate) {
     old_eff <- eff_col
     if (old_eff %in% names(transformed_table)) {
       names(transformed_table)[names(transformed_table)==old_eff] <- "ATE"
-      eff_col <- "ATE"  # so if we later refer to it, you get the new name
+      eff_col <- "ATE"
     }
   }
-
-  # ── 5) OPTIONAL: apply your column‐renaming map ─────────────
   if (rename_cols && length(col_renames)>0) {
     for (new_nm in names(col_renames)) {
       old_nm <- col_renames[[new_nm]]
@@ -244,10 +255,7 @@ margot_plot <- function(
       }
     }
   }
-
-  # ── 6) OPTIONAL: bold rownames above the E-value threshold ──
   if (bold_rows) {
-    # figure out which column now holds the bound
     bound_nm <- if (rename_cols && "E-Value bound" %in% names(transformed_table))
       "E-Value bound" else "E_Val_bound"
     above    <- transformed_table[[bound_nm]] > e_val_bound_threshold
@@ -257,7 +265,7 @@ margot_plot <- function(
     }
   }
 
-  # ── 7) optionally save, then return ────────────────────────
+  # optionally save, then return
   if (save_output) {
     filename <- paste0(
       prefix %||% "",
@@ -281,239 +289,7 @@ margot_plot <- function(
 }
 
 
-# margot_plot <- function(
-#     .data,
-#     type = c("RD","RR"),
-#     order = c("alphabetical","magnitude_desc","magnitude_asc",
-#               "evaluebound_desc","evaluebound_asc","custom","default"),
-#     custom_order = NULL,
-#     title_binary = NULL,
-#     include_coefficients = TRUE,
-#     standardize_label = c("NZ","US","none"),
-#     e_val_bound_threshold = 1.2,
-#     ...,
-#     options = list(),
-#     label_mapping = NULL,
-#     save_output = FALSE,
-#     use_timestamp = FALSE,
-#     base_filename = "margot_plot_output",
-#     prefix = NULL,
-#     save_path = here::here("push_mods"),
-#     original_df = NULL,
-#
-#     # ── NEW ARGS ───────────────────────────────────────────────
-#     bold_rows    = FALSE,
-#     rename_cols  = FALSE,
-#     col_renames  = list("E-Value" = "E_Value",
-#                         "E-Value bound" = "E_Val_bound"),
-#     rename_ate   = FALSE
-# ) {
-#   # match and validate arguments
-#   type            <- match.arg(type)
-#   order           <- match.arg(order)
-#   if (order == "default") {
-#     warning("'default' is deprecated; using 'magnitude_desc' instead.")
-#     order <- "magnitude_desc"
-#   }
-#   standardize_label <- match.arg(standardize_label)
-#
-#   # keep a copy of raw data for the table
-#   raw_table_df <- .data
-#
-#   # merge user options with defaults
-#   default_opts <- list(
-#     title = NULL, subtitle = NULL, estimate_scale = 1,
-#     base_size = 18, text_size = 2.75, point_size = 3,
-#     title_size = 20, subtitle_size = 18,
-#     legend_text_size = 10, legend_title_size = 10,
-#     x_offset = NULL, x_lim_lo = NULL, x_lim_hi = NULL,
-#     linewidth = 0.4, plot_theme = NULL,
-#     colors = c("positive"="#E69F00","not reliable"="black","negative"="#56B4E9"),
-#     facet_var = NULL, confidence_level = 0.95,
-#     annotations = NULL, show_evalues = TRUE, evalue_digits = 2,
-#     remove_tx_prefix = TRUE, remove_z_suffix = TRUE,
-#     use_title_case = TRUE, remove_underscores = TRUE
-#   )
-#   opts <- modifyList(modifyList(default_opts, options), list(...))
-#   # coerce logical flags
-#   for (nm in c("remove_tx_prefix","remove_z_suffix","use_title_case","remove_underscores")) {
-#     opts[[nm]] <- as.logical(opts[[nm]])[1]
-#   }
-#
-#   # determine which effect column to use
-#   eff_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data))
-#     "E[Y(1)]-E[Y(0)]" else "E[Y(1)]/E[Y(0)]"
-#
-#   # add outcome column if missing
-#   if (!"outcome" %in% names(.data)) {
-#     .data$outcome <- rownames(.data)
-#     message("Added 'outcome' column.")
-#   }
-#
-#   # back-transform to original scale if requested
-#   if (!is.null(original_df)) {
-#     .data <- back_transform_estimates(.data, original_df)
-#   }
-#
-#   # apply label transformations
-#   .data$outcome <- sapply(.data$outcome, transform_label, label_mapping, opts)
-#
-#   # pull threshold into a plain variable
-#   thresh   <- e_val_bound_threshold
-#   null_val <- ifelse(type=="RR", 1, 0)
-#
-#   # sort data for plotting & interpretation
-#   sorted_df <- group_tab(.data, type=type, order=order, custom_order=custom_order)
-#   sorted_df$outcome <- factor(sorted_df$outcome, levels = sorted_df$outcome)
-#
-#   # sort raw data for the table in the same way
-#   table_sorted_df <- group_tab(raw_table_df, type=type, order=order, custom_order=custom_order)
-#
-#   # compute estimate categories using threshold
-#   cat_vec <- with(sorted_df,
-#                   ifelse(
-#                     E_Val_bound > thresh & `2.5 %` > null_val & `97.5 %` > null_val, "positive",
-#                     ifelse(
-#                       E_Val_bound > thresh & `2.5 %` < null_val & `97.5 %` < null_val, "negative",
-#                       "not reliable"
-#                     )
-#                   )
-#   )
-#   sorted_df$Estimate <- factor(cat_vec, levels = c("positive","not reliable","negative"))
-#
-#   # set up x-axis label
-#   lw   <- switch(standardize_label, NZ="Standardised", US="Standardized", none="Effect")
-#   xlab <- if (type=="RR") "Effect (Risk Ratio)" else
-#     if (lw!="Effect") paste0(lw," Effect (Difference Scale)") else "Effect (Difference Scale)"
-#
-#   # build the ggplot
-#   out <- ggplot2::ggplot(sorted_df, ggplot2::aes(
-#     y = outcome, x = !!rlang::sym(eff_col),
-#     xmin = `2.5 %`, xmax = `97.5 %`, colour = Estimate
-#   )) +
-#     ggplot2::geom_errorbarh(
-#       height = 0.3, linewidth = opts$linewidth,
-#       position = ggplot2::position_dodge(0.3)
-#     ) +
-#     ggplot2::geom_point(
-#       size = opts$point_size,
-#       position = ggplot2::position_dodge(0.3)
-#     ) +
-#     ggplot2::geom_vline(xintercept = null_val) +
-#     ggplot2::scale_color_manual(values = opts$colors) +
-#     ggplot2::labs(x = xlab, title = opts$title, subtitle = opts$subtitle) +
-#     ggplot2::coord_cartesian(xlim = c(opts$x_lim_lo, opts$x_lim_hi)) +
-#     ggplot2::theme_classic(base_size = opts$base_size) +
-#     ggplot2::theme(
-#       legend.position = "top",
-#       legend.direction = "horizontal",
-#       axis.ticks = ggplot2::element_blank(),
-#       plot.title = ggplot2::element_text(face = "bold", size = opts$title_size)
-#     )
-#
-#   if (type == "RR") {
-#     out <- out + ggplot2::scale_x_continuous(
-#       labels = function(x) ifelse(x < 0, "", as.character(x))
-#     )
-#   }
-#
-#   if (include_coefficients) {
-#     out <- out + ggplot2::geom_text(
-#       ggplot2::aes(
-#         x = !!rlang::sym(eff_col) + opts$x_offset * opts$estimate_scale,
-#         label = sprintf("%.2f", !!rlang::sym(eff_col))
-#       ),
-#       size = opts$text_size, hjust = ifelse(type=="RR", 0, 1), fontface = "bold"
-#     )
-#   }
-#
-#   # generate interpretation
-#   interpretation <- margot_interpret_marginal(
-#     df                    = sorted_df,
-#     type                  = type,
-#     order                 = order,
-#     original_df           = original_df,
-#     e_val_bound_threshold = thresh
-#   )$interpretation
-#
-#   # transform and return the table to match plot order
-#   table_for_transform <- table_sorted_df
-#   if ("outcome" %in% colnames(table_for_transform)) {
-#     rownames(table_for_transform) <- table_for_transform$outcome
-#     table_for_transform$outcome <- NULL
-#   }
-#
-#   # 3b) now transform those rownames
-#   transformed_table <- transform_table_rownames(
-#     table_for_transform,
-#     label_mapping = label_mapping,
-#     options       = opts
-#   )
-#
-#   # 3b-i) reorder to match the plot’s y-axis (top → bottom):
-#   plot_levels   <- levels(sorted_df$outcome)   # bottom→top
-#   outcome_order <- rev(plot_levels)            # top→bottom
-#   transformed_table <- transformed_table[outcome_order, , drop = FALSE]
-#
-#   # 3c) keep only your core five columns
-#   keep_cols <- c(eff_col, "2.5 %", "97.5 %", "E_Value", "E_Val_bound")
-#   transformed_table <- transformed_table[, intersect(keep_cols, names(transformed_table)), drop = FALSE]
-#
-#   # 4) optional: rename to "ATE", then rename_cols, then bold_rows…
-#
-#   # ── 4) OPTIONAL: rename the effect column to "ATE" ──────────
-#   if (rename_ate) {
-#     old_eff <- eff_col
-#     if (old_eff %in% names(transformed_table)) {
-#       names(transformed_table)[names(transformed_table)==old_eff] <- "ATE"
-#       eff_col <- "ATE"  # so if we later refer to it, you get the new name
-#     }
-#   }
-#
-#   # ── 5) OPTIONAL: apply your column‐renaming map ─────────────
-#   if (rename_cols && length(col_renames)>0) {
-#     for (new_nm in names(col_renames)) {
-#       old_nm <- col_renames[[new_nm]]
-#       if (old_nm %in% names(transformed_table)) {
-#         names(transformed_table)[names(transformed_table)==old_nm] <- new_nm
-#       }
-#     }
-#   }
-#
-#   # ── 6) OPTIONAL: bold rownames above the E-value threshold ──
-#   if (bold_rows) {
-#     # figure out which column now holds the bound
-#     bound_nm <- if (rename_cols && "E-Value bound" %in% names(transformed_table))
-#       "E-Value bound" else "E_Val_bound"
-#     above    <- transformed_table[[bound_nm]] > e_val_bound_threshold
-#     if (any(above)) {
-#       rn <- rownames(transformed_table)
-#       rownames(transformed_table)[above] <- paste0("**", rn[above], "**")
-#     }
-#   }
-#
-#   # ── 7) optionally save, then return ────────────────────────
-#   if (save_output) {
-#     filename <- paste0(
-#       prefix %||% "",
-#       base_filename,
-#       if (use_timestamp) paste0("_", format(Sys.time(), "%Y%m%d%H%M%S")) else "",
-#       ".qs"
-#     )
-#     here_save_qs(
-#       list(plot              = out,
-#            interpretation    = interpretation,
-#            transformed_table = transformed_table),
-#       file.path(save_path, filename)
-#     )
-#   }
-#
-#   list(
-#     plot              = out,
-#     interpretation    = interpretation,
-#     transformed_table = transformed_table
-#   )
-# }
+
 
 #’ Transform Table Row Names with CLI Feedback
 #’
@@ -612,11 +388,11 @@ margot_interpret_marginal <- function(
     none = "No adjustment was made for family-wise error rates to confidence intervals.",
     bonferroni = paste0(
       "Confidence intervals were adjusted for multiple comparisons using Bonferroni correction",
-      " (\u03B1 = ", alpha, ")."
+      " ($\\alpha$  = ", alpha, ")."
     ),
     holm = paste0(
       "Confidence intervals were adjusted for multiple comparisons using Holm correction",
-      " (\u03B1 = ", alpha, ")."
+      " ($\\alpha$  = ", alpha, ")."
     )
   )
   ev_sentence <- switch(
@@ -624,11 +400,11 @@ margot_interpret_marginal <- function(
     none = "No adjustment was made for family-wise error rates to E-values.",
     bonferroni = paste0(
       "E-values were also adjusted using Bonferroni correction",
-      " (\u03B1 = ", alpha, ")."
+      " ($\\alpha$ = ", alpha, ")."
     ),
     holm = paste0(
       "E-values were also adjusted using Holm correction",
-      " (\u03B1 = ", alpha, ")."
+      " ($\\alpha$ = ", alpha, ")."
     )
   )
   adj_note <- paste(ci_sentence, ev_sentence)
@@ -705,93 +481,6 @@ margot_interpret_marginal <- function(
   list(interpretation = interpretation_text)
 }
 
-
-# #’ @keywords internal
-# # ── Updated interpretation helper ─────────────────────────────────────────────
-# #’ @keywords internal
-# #’ @keywords internal
-# #’ @description
-# #’ Interpretation helper that reports estimates on both transformed and original scales.
-# margot_interpret_marginal <- function(
-#     df,
-#     type = c("RD", "RR"),
-#     order = c(
-#       "alphabetical", "magnitude_desc", "magnitude_asc",
-#       "evaluebound_desc", "evaluebound_asc", "custom", "default"
-#     ),
-#     original_df = NULL,
-#     e_val_bound_threshold = 1
-# ) {
-#   type  <- match.arg(type)
-#   order <- match.arg(order)
-#   if (order == "default") {
-#     warning("'default' is deprecated; using 'magnitude_desc' instead.")
-#     order <- "magnitude_desc"
-#   }
-#   message(glue::glue("starting interpretation with threshold = {e_val_bound_threshold}..."))
-#
-#   # sort and back-transform if requested
-#   df <- group_tab(df, type = type, order = order)
-#   if (!"unit" %in% names(df)) df$unit <- ""
-#   if (!is.null(original_df)) df <- back_transform_estimates(df, original_df)
-#
-#   # identify the effect column and whether original‐scale cols exist
-#   effect_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(df)) {
-#     "E[Y(1)]-E[Y(0)]"
-#   } else {
-#     "E[Y(1)]/E[Y(0)]"
-#   }
-#   has_orig <- paste0(effect_col, "_original") %in% names(df)
-#   null_val  <- if (type == "RR") 1 else 0
-#
-#   # filter to reliable effects
-#   df_f <- df %>%
-#     filter(E_Value > 1, E_Val_bound > e_val_bound_threshold)
-#   if (nrow(df_f) == 0) {
-#     return(list(
-#       interpretation = paste0(
-#         "No outcomes had E-Value > 1 and E-Value bound > ",
-#         e_val_bound_threshold, "."
-#       )
-#     ))
-#   }
-#
-#   # preserve ordering for asc/desc
-#   if (grepl("_(asc|desc)$", order)) {
-#     df_f <- df_f[nrow(df_f):1, ]
-#   }
-#
-#   intro <- glue::glue(
-#     "The following outcomes showed reliable causal evidence",
-#     " (E-Value lower bound > {e_val_bound_threshold}):\n\n"
-#   )
-#
-#   bullets <- df_f %>%
-#     rowwise() %>%
-#     mutate(
-#       # effect on transformed scale
-#       lab = glue::glue(
-#         "{round(.data[[effect_col]], 3)} (",
-#         round(`2.5 %`, 3), ", ", round(`97.5 %`, 3), ")"
-#       ),
-#       # effect on original scale, if available
-#       lab_orig = if (has_orig) glue::glue(
-#         "{round(.data[[paste0(effect_col, '_original')]], 3)} {unit} (",
-#         round(.data[[paste0("2.5 %_original")]], 3), ", ",
-#         round(.data[[paste0("97.5 %_original")]], 3), ")"
-#       ) else NA_character_,
-#       # assemble bullet text
-#       text = glue::glue(
-#         "- {outcome}: {lab}; ",
-#         "{if (has_orig) paste0('On original scale, ', lab_orig, '. ')}",
-#         "E-Value bound = {E_Val_bound}"
-#       )
-#     ) %>%
-#     pull(text)
-#
-#   message("interpretation complete 👍")
-#   list(interpretation = paste0(intro, paste(bullets, collapse = "\n")))
-# }
 
 # causal effects tables ---------------------------------------------------
 #' Group and Annotate Treatment Effect Estimates
@@ -981,140 +670,6 @@ group_tab <- function(
 # •	transform_table_rownames()
 # 6.	Saving helper
 # •	here_save_qs() (from  I/O utilities)
+# 7. to add - calls margot_correct_combined_table() - not in this file
 
 
-## old marginal table
-#' #' Interpret Marginal Causal Effect Estimates
-#' #'
-#' #' @md
-#' #' @description
-#' #' This function takes the output of `group_tab()` (with RD or RR estimates
-#' #' plus E‑values) and produces a compact, per‑outcome markdown report. It only
-#' #' reports those estimates with **Evidence** or **Strong evidence**, unless
-#' #' `interpret_all_E_gt1 = TRUE`. Outcomes appear in the same order as you passed
-#' #' via `order` (e.g. `"magnitude_desc"`, `"evaluebound_desc"`).
-#' #'
-#' #' @param df A data frame from `group_tab()`, including `outcome`, an effect column,
-#' #'   `2.5 %`, `97.5 %`, `E_Value`, `E_Val_bound`, and optionally `unit`.
-#' #' @param type One of `"RD"` or `"RR"`. Default: `"RD"`.
-#' #' @param order One of
-#' #'   `"alphabetical"`, `"magnitude_desc"`, `"magnitude_asc"`,
-#' #'   `"evaluebound_desc"`, `"evaluebound_asc"`, `"custom"`, or `"default"`.
-#' #'   (`"default"` → `"magnitude_desc"`; deprecated.)
-#' #' @param original_df Optional raw data frame for back‑transforming to original scale.
-#' #' @param interpret_all_E_gt1 Logical; if `TRUE`, include _all_ estimates with
-#' #'   `E_Value > 1` & `E_Val_bound > 1`. Default: `FALSE`.
-#' #'
-#' #' @return A list with the following element:
-#' #' \describe{
-#' #'   \item{interpretation}{A markdown string with per‐outcome headings and
-#' #'     sentences, plus a closing note about any remaining estimates.}
-#' #' }
-#' #'
-#' #' @importFrom dplyr filter mutate case_when rowwise ungroup
-#' #' @importFrom glue glue
-#' #' @importFrom stringr str_to_sentence
-#' #' @importFrom rlang sym
-#' margot_interpret_marginal <- function(
-#'     df,
-#'     type = c("RD", "RR"),
-#'     order = c(
-#'       "alphabetical", "magnitude_desc", "magnitude_asc",
-#'       "evaluebound_desc", "evaluebound_asc", "custom", "default"
-#'     ),
-#'     original_df = NULL,
-#'     interpret_all_E_gt1 = FALSE
-#' ) {
-#'   # validate arguments
-#'   type  <- match.arg(type)
-#'   order <- match.arg(order)
-#'   if (order == "default") {
-#'     warning("'default' is deprecated; using 'magnitude_desc' instead.")
-#'     order <- "magnitude_desc"
-#'   }
-#'
-#'   message(glue::glue("starting interpretation with order = '{order}'..."))
-#'
-#'   # apply sorting
-#'   df <- group_tab(df, type = type, order = order)
-#'
-#'   # ensure unit column
-#'   if (!"unit" %in% names(df)) df$unit <- ""
-#'
-#'   # back-transform if requested
-#'   if (!is.null(original_df)) df <- back_transform_estimates(df, original_df)
-#'
-#'   # identify effect column
-#'   effect_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(df)) {
-#'     "E[Y(1)]-E[Y(0)]"
-#'   } else {
-#'     "E[Y(1)]/E[Y(0)]"
-#'   }
-#'   has_orig <- paste0(effect_col, "_original") %in% names(df)
-#'   null_val <- ifelse(type == "RR", 1, 0)
-#'
-#'   # filter by evidence
-#'   if (interpret_all_E_gt1) {
-#'     df_f <- df %>%
-#'       filter(E_Value > 1, E_Val_bound > 1) %>%
-#'       mutate(evidence_strength = "Evidence")
-#'   } else {
-#'     df_f <- df %>%
-#'       mutate(
-#'         evidence_strength = case_when(
-#'           (`2.5 %` > null_val & E_Val_bound > 2) |
-#'             (`97.5 %` < null_val & E_Val_bound > 2) ~ "Strong evidence",
-#'           (`2.5 %` > null_val & E_Val_bound > 1.1) |
-#'             (`97.5 %` < null_val & E_Val_bound > 1.1) ~ "Evidence",
-#'           TRUE ~ NA_character_
-#'         )
-#'       ) %>%
-#'       filter(!is.na(evidence_strength))
-#'   }
-#'
-#'   # if nothing to report
-#'   if (nrow(df_f) == 0) {
-#'     message("no estimates meet evidence criteria.")
-#'     return(list(
-#'       interpretation = "No reliable causal evidence detected."
-#'     ))
-#'   }
-#'
-#'   # build per-outcome text
-#'   interp <- df_f %>%
-#'     rowwise() %>%
-#'     mutate(
-#'       lab = glue::glue(
-#'         "{round(.data[[effect_col]],3)} (",
-#'         round(`2.5 %`,3), ", ", round(`97.5 %`,3), ")"
-#'       ),
-#'       lab_orig = if (has_orig) glue::glue(
-#'         "{round(.data[[paste0(effect_col,'_original')]],3)} {unit} (",
-#'         round(`2.5 %_original`,3), ", ", round(`97.5 %_original`,3), ")"
-#'       ) else NA_character_,
-#'       text = glue::glue(
-#'         "#### {outcome}\n\n",
-#'         "The effect ({type}) is {lab}. ",
-#'         "{if (has_orig) paste0('On original scale, ', lab_orig, '. ')}",
-#'         "E-value lower bound is {E_Val_bound}, indicating {tolower(evidence_strength)}."
-#'       ),
-#'       text = str_to_sentence(text)
-#'     ) %>%
-#'     ungroup()
-#'
-#'   # combine
-#'   body <- paste(interp$text, collapse = "\n\n")
-#'
-#'   rem <- nrow(df) - nrow(df_f)
-#'   if (rem > 0) {
-#'     concl <- if (interpret_all_E_gt1) {
-#'       "All other estimates presented unreliable evidence."
-#'     } else {
-#'       "All other estimates presented weak or unreliable evidence."
-#'     }
-#'     body <- paste(body, concl, sep = "\n\n")
-#'   }
-#'
-#'   message("interpretation complete 👍")
-#'   list(interpretation = body)
-#' }

@@ -9,6 +9,10 @@
 * improve interpretations in `margot_compare_groups()`
 
 
+# [2025-05-15] margot 1.0.43
+- `margot_compare_groups()` computation for relative risk fixed. 
+- `margot_plot()` no passes to `margot_correct_combined_tables()` automatically (no need for a separate call)
+
 # [2025-05-15] margot 1.0.42
 ## changed
 - `margot_process_longitudinal_data_wider` fixed error in warnings that was causing the function to fail when ordinal data are passed. 
