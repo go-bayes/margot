@@ -9,6 +9,11 @@
 * improve interpretations in `margot_compare_groups()`
 
 
+# [2025-05-15] margot 1.0.42
+## changed
+- `margot_process_longitudinal_data_wider` fixed error in warnings that was causing the function to fail when ordinal data are passed. 
+
+
 # [2025-05-14] margot 1.0.41
 ## New
 - `margot_correct_combined_table()` does family–wise-error correction for multiple outcomes (ATE)

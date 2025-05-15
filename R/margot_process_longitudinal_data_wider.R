@@ -161,20 +161,43 @@ margot_process_longitudinal_data_wider <- function(
   # step 5: encode ordinal columns quietly
   cli::cli_h2("step 5: encoding ordinal columns")
   if (!is.null(ordinal_columns)) {
-    df <- fastDummies::dummy_cols(
-      df,
-      select_columns          = ordinal_columns,
-      remove_selected_columns = remove_selected_columns,
-      ignore_na               = TRUE,
-      quiet                   = TRUE   # suppress NOTE messages
-    )
-    for (oc in ordinal_columns) {
-      oc_vars <- grep(paste0("^", oc, "_"), names(df), value = TRUE)
-      df <- df %>%
-        dplyr::rename_at(dplyr::vars(dplyr::all_of(oc_vars)), ~ paste0(., "_binary"))
+    # filter to only columns that actually exist in the data
+    existing_ordinal_cols <- intersect(ordinal_columns, names(df))
+
+    if (length(existing_ordinal_cols) > 0) {
+      df <- suppressWarnings(
+        fastDummies::dummy_cols(
+          df,
+          select_columns          = existing_ordinal_cols,
+          remove_selected_columns = remove_selected_columns,
+          ignore_na               = TRUE
+        )
+      )
+      for (oc in existing_ordinal_cols) {
+        oc_vars <- grep(paste0("^", oc, "_"), names(df), value = TRUE)
+        df <- df %>%
+          dplyr::rename_at(dplyr::vars(dplyr::all_of(oc_vars)), ~ paste0(., "_binary"))
+      }
     }
     cli::cli_alert_success("encoded ordinal columns")
   }
+
+  # # step 5: encode ordinal columns quietly
+  # cli::cli_h2("step 5: encoding ordinal columns")
+  # if (!is.null(ordinal_columns)) {
+  #   df <- fastDummies::dummy_cols(
+  #     df,
+  #     select_columns          = ordinal_columns,
+  #     remove_selected_columns = remove_selected_columns,
+  #     ignore_na               = TRUE
+  #   )
+  #   for (oc in ordinal_columns) {
+  #     oc_vars <- grep(paste0("^", oc, "_"), names(df), value = TRUE)
+  #     df <- df %>%
+  #       dplyr::rename_at(dplyr::vars(dplyr::all_of(oc_vars)), ~ paste0(., "_binary"))
+  #   }
+  #   cli::cli_alert_success("encoded ordinal columns")
+  # }
 
   # step 6: reorder columns
   cli::cli_h2("step 6: reordering columns")
