@@ -2,25 +2,27 @@
 % Please edit documentation in R/margot_compute_policy_value_helpers.R
 \name{margot_adjust_policy_p}
 \alias{margot_adjust_policy_p}
-\title{Adjust policy-value p-values for multiplicity}
+\title{adjust policy-value p-values for multiplicity}
 \usage{
 margot_adjust_policy_p(tbl, method = "bonferroni", alpha = 0.05)
 }
 \arguments{
-\item{tbl}{Data frame from [margot_collect_policy_values()].}
+\item{tbl}{data frame returned by [margot_collect_policy_values()]. must
+include columns `p_value` (raw two-sided) and `estimate`.}
 
-\item{method}{Character; correction method as in [stats::p.adjust()]. Default: "bonferroni".}
+\item{method}{character. multiplicity correction for the `p_adj` column: any
+option of [stats::p.adjust()].
+default "bonferroni".}
 
-\item{alpha}{Numeric; significance threshold after adjustment. Default: 0.05.}
+\item{alpha}{numeric. threshold that defines the `significant` flag.
+default 0.05.}
 }
 \value{
-A tibble: the input `tbl` with two new columns:
-\describe{
-  \item{p_adj}{Adjusted p-value.}
-  \item{pass}{Logical; `TRUE` if `p_adj < alpha`.}
-}
+`tbl` with two extra columns:
+* `p_adj`        – adjusted p-value
+* `significant`  – logical; TRUE if p_adj < `alpha`.
 }
 \description{
-Adjust policy-value p-values for multiplicity
+adds adjusted p-values. the caller can flag a result as significant using this metric.
 }
 \keyword{internal}

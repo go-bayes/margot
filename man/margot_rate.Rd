@@ -6,6 +6,7 @@
 \usage{
 margot_rate(
   models,
+  model_names = NULL,
   policy = c("treat_best", "withhold_best"),
   round_digits = 3,
   highlight_significant = TRUE,
@@ -14,17 +15,24 @@ margot_rate(
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
   remove_underscores = TRUE,
+  adjust = NULL,
+  alpha = 0.05,
+  apply_adjustment = !is.null(adjust),
   seed = 12345
 )
 }
 \arguments{
 \item{models}{List from margot_causal_forest().}
 
+\item{model_names}{Optional character vector specifying which models to process.
+Default NULL (all models).}
+
 \item{policy}{Character; "treat_best" (default) or "withhold_best".}
 
 \item{round_digits}{Integer; decimal places (default 3).}
 
-\item{highlight_significant}{Logical; bold outcomes whose 95 percent CI excludes 0 (default TRUE).}
+\item{highlight_significant}{Logical; bold outcomes whose 95 percent CI excludes 0 (default TRUE).
+Note: Only positive significant effects are bolded, negative effects are not bolded.}
 
 \item{label_mapping}{Named character vector for converting variable names to readable labels.}
 
@@ -35,6 +43,16 @@ margot_rate(
 \item{use_title_case}{Logical; convert variable names to title case (default TRUE).}
 
 \item{remove_underscores}{Logical; replace underscores with spaces (default TRUE).}
+
+\item{adjust}{Character; method for adjusting p-values, passed to stats::p.adjust().
+Options include "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none".
+Default is NULL (no adjustment).}
+
+\item{alpha}{Numeric; significance threshold (default 0.05).}
+
+\item{apply_adjustment}{Logical; if TRUE, compute p-values and apply adjustment method.
+If FALSE, just document the adjustment method without recomputing. Default is TRUE when
+adjust parameter is provided, FALSE otherwise.}
 
 \item{seed}{Integer; base seed for reproducible RATE computations (default 12345).}
 }

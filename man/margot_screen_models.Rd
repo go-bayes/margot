@@ -2,46 +2,34 @@
 % Please edit documentation in R/margot_compute_policy_value_helpers.R
 \name{margot_screen_models}
 \alias{margot_screen_models}
-\title{Screen outcomes by ATE and/or rate significance with multiplicity control}
+\title{Screen margot models by p-value tests with robust handling of missing components}
 \usage{
 margot_screen_models(
   model_results,
   rule = c("ate_or_rate", "ate", "rate"),
   target = c("AUTOC", "QINI", "either", "both"),
   alpha = 0.05,
-  adjust = c("none", "bonferroni", "holm", "BH", "fdr", "BY")
+  adjust = c("none", "bonferroni", "holm", "BH", "fdr", "BY"),
+  use_boot = FALSE
 )
 }
 \arguments{
-\item{model_results}{List; a margot result containing `$results` with each element
-having `ate`, `rate_result`, and `rate_qini` entries.}
+\item{model_results}{list. output of `margot_causal_forest()`, containing $results}
 
-\item{rule}{Character; one of:
-* "ate_or_rate" – keep if either ATE or the selected rate test is significant;
-* "ate"          – keep only if the ATE is significant;
-* "rate"         – keep only if the selected rate test is significant.}
+\item{rule}{character; choose among "ate_or_rate", "ate", "rate"}
 
-\item{target}{Character; which rate metric defines “rate significant?”:
-* "AUTOC"  – test only AUTOC rate;
-* "QINI"   – test only QINI rate;
-* "either" – significant if either AUTOC or QINI passes;
-* "both"   – significant only if both AUTOC and QINI pass.}
+\item{target}{character; one of "AUTOC", "QINI", "either", "both"}
 
-\item{alpha}{Numeric; two-sided significance level (default 0.05).}
+\item{alpha}{numeric; significance threshold after adjustment}
 
-\item{adjust}{Character; multiplicity adjustment method for p-values:
-"none", "bonferroni", "holm", "BH"/"fdr", or "BY". Default "none".}
+\item{adjust}{character; p.adjust method: "none", "bonferroni", "holm", "BH", "fdr", "BY"}
+
+\item{use_boot}{logical; if TRUE, use bootstrap tests when available. Default = FALSE}
 }
 \value{
-Character vector of outcome names to keep (without the `model_` prefix).
+tibble with outcomes, raw and adjusted p-values, and a 'keep' flag
 }
 \description{
-Returns the names of outcome variables whose policy test passes the adjusted threshold,
-applying rules based on ATE and rate metrics with optional multiplicity adjustment.
+Screen margot models by p-value tests with robust handling of missing components
 }
-\details{
-If `adjust != "none"`, p-values for ATE, AUTOC rate, and QINI rate
-are each adjusted across outcomes using `stats::p.adjust()`. Significance flags are
-determined by comparing adjusted p-values to `alpha`. Outcomes are then filtered
-according to `rule` and `target` as described above.
-}
+\keyword{internal}

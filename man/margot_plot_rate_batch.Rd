@@ -2,8 +2,7 @@
 % Please edit documentation in R/margot_plot_rate_batch.R
 \name{margot_plot_rate_batch}
 \alias{margot_plot_rate_batch}
-\alias{margot_plot_batch_rate}
-\title{Batch Process and Plot RATE Curves for Multiple Models (New Function)}
+\title{Batch Process and Plot RATE Curves for Multiple Models}
 \usage{
 margot_plot_rate_batch(
   models_binary,
@@ -12,17 +11,12 @@ margot_plot_rate_batch(
   width = 12,
   height = 8,
   save_plots = TRUE,
-  output_dir = "rate_plots"
-)
-
-margot_plot_batch_rate(
-  models_binary,
-  model_names = NULL,
-  dpi = 300,
-  width = 12,
-  height = 8,
-  save_plots = TRUE,
-  output_dir = "rate_plots"
+  output_dir = "rate_plots",
+  remove_tx_prefix = TRUE,
+  remove_z_suffix = TRUE,
+  use_title_case = TRUE,
+  remove_underscores = TRUE,
+  label_mapping = NULL
 )
 }
 \arguments{
@@ -39,6 +33,17 @@ margot_plot_batch_rate(
 \item{save_plots}{Logical indicating whether to save the plots to disk. Default is TRUE.}
 
 \item{output_dir}{The directory where plots should be saved. Default is "rate_plots".}
+
+\item{remove_tx_prefix}{Logical value indicating whether to remove the "tx_" prefix from labels. Default is TRUE.}
+
+\item{remove_z_suffix}{Logical value indicating whether to remove the "_z" suffix from labels. Default is TRUE.}
+
+\item{use_title_case}{Logical value indicating whether to convert labels to title case. Default is TRUE.}
+
+\item{remove_underscores}{Logical value indicating whether to remove underscores from labels. Default is TRUE.}
+
+\item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
+(with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
 }
 \value{
 A list containing the generated ggplot objects for each processed model.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_compute_policy_value_helpers.R
 \name{margot_add_policy_values_batch}
 \alias{margot_add_policy_values_batch}
-\title{attach policy-value tests to a batch of models}
+\title{Attach policy-value tests to a batch of models}
 \usage{
 margot_add_policy_values_batch(
   cf_out,
@@ -23,28 +23,29 @@ margot_add_policy_values_batch(
 )
 }
 \arguments{
-\item{cf_out}{list; a margot result containing `$results` and `$outcome_vars`}
+\item{cf_out}{list. a margot result containing `$results` and `$outcome_vars`.}
 
-\item{outcomes}{character vector or NULL; outcome names (without `model_` prefix). NULL means all.}
+\item{outcomes}{character or NULL; outcome names without the `model_` prefix.
+`NULL` → all outcomes.}
 
-\item{depths}{integer vector; tree depths to evaluate. default c(1L, 2L)}
+\item{depths}{integer vector; tree depths to evaluate. default `c(1L, 2L)`.}
 
-\item{R}{integer ≥ 199; bootstrap replicates. default 499L}
+\item{R}{integer ≥ 199; bootstrap replicates. default `499L`.}
 
-\item{seed}{integer; RNG seed for reproducibility. default 42L}
+\item{seed}{integer; rng seed. default `42L`.}
 
-\item{parallel}{logical; whether to use parallel processing. default FALSE}
+\item{parallel}{logical; run in parallel via **furrr**? default `FALSE`.}
 }
 \value{
-invisibly returns the modified `cf_out`.
-
 invisibly returns modified `cf_out` with added policy-value tests
+
+invisibly returns the modified `cf_out`.
 }
 \description{
-runs `margot_compute_policy_value()` at the requested depths for each
-outcome, in parallel (via **future**/**furrr**) or sequentially.
-
 Runs `margot_compute_policy_value()` at specified depths for each outcome,
 optionally in parallel via **future**/**furrr**.
+
+runs `margot_compute_policy_value()` at the requested depths for each
+outcome, in parallel (via **future**/**furrr**) or sequentially.
 }
 \keyword{internal}

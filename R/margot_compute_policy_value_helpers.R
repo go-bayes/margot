@@ -1,40 +1,151 @@
-#' Adjust policy-value p-values for multiplicity
+
+#' Attach policy-value tests to a batch of models
 #'
-#' @param tbl Data frame from [margot_collect_policy_values()].
-#' @param method Character; correction method as in [stats::p.adjust()]. Default: "bonferroni".
-#' @param alpha Numeric; significance threshold after adjustment. Default: 0.05.
+#' Runs `margot_compute_policy_value()` at specified depths for each outcome,
+#' optionally in parallel via **future**/**furrr**.
 #'
-#' @return A tibble: the input `tbl` with two new columns:
-#' \describe{
-#'   \item{p_adj}{Adjusted p-value.}
-#'   \item{pass}{Logical; `TRUE` if `p_adj < alpha`.}
-#' }
+#' @param cf_out   list; a margot result containing `$results` and `$outcome_vars`
+#' @param outcomes character vector or NULL; outcome names (without `model_` prefix). NULL means all.
+#' @param depths   integer vector; tree depths to evaluate. default c(1L, 2L)
+#' @param R        integer ≥ 199; bootstrap replicates. default 499L
+#' @param seed     integer; RNG seed for reproducibility. default 42L
+#' @param parallel logical; whether to use parallel processing. default FALSE
 #'
-#' @importFrom dplyr mutate
-#' @importFrom stats p.adjust
+#' @return invisibly returns modified `cf_out` with added policy-value tests
 #' @keywords internal
-margot_adjust_policy_p <- function(tbl,
-                                   method = "bonferroni",
-                                   alpha  = 0.05) {
-  dplyr::mutate(tbl,
-                p_adj        = stats::p.adjust(p_value, method = method),
-                significant  = p_adj < alpha)
+#' @importFrom purrr map
+#' @importFrom future plan multisession
+#' @importFrom furrr future_map furrr_options
+margot_add_policy_values_batch <- function(cf_out,
+                                           outcomes = NULL,
+                                           depths   = c(1L, 2L),
+                                           R        = 499L,
+                                           seed     = 42L,
+                                           parallel = FALSE) {
+  stopifnot(is.list(cf_out), "results" %in% names(cf_out))
+  if (is.null(outcomes)) {
+    outcomes <- cf_out$outcome_vars
+  }
+  model_keys <- paste0("model_", outcomes)
+
+  # choose mapper based on parallel flag
+  if (parallel && requireNamespace("future", quietly = TRUE) && requireNamespace("furrr", quietly = TRUE)) {
+    ncores <- parallel::detectCores(logical = FALSE)
+    future::plan(future::multisession, workers = max(1, ncores - 1))
+    mapper <- furrr::future_map
+    mapper_opts <- furrr::furrr_options(seed = seed)
+    map_args <- list(.options = mapper_opts)
+  } else {
+    mapper <- purrr::map
+    map_args <- list()
+  }
+
+  # helper to add only missing depths
+  add_missing <- function(model) {
+    missing_depths <- depths[vapply(depths, function(d) {
+      is.null(model[[paste0("policy_value_depth_", d)]])
+    }, logical(1))]
+
+    if (length(missing_depths) > 0L) {
+      model <- margot_add_policy_values(
+        model,
+        depths = missing_depths,
+        R      = R,
+        seed   = seed
+      )
+    }
+    model
+  }
+
+  # apply to each selected model
+  cf_out$results[model_keys] <- do.call(
+    mapper,
+    c(list(cf_out$results[model_keys], add_missing), map_args)
+  )
+
+  invisible(cf_out)
+}
+
+
+#' Collect and adjust policy-value tests, focusing on desired depths
+#'
+#' Combines [margot_collect_policy_values()] and [margot_adjust_policy_p()] into a single summary step. Keep only outcomes where the learned policy improves on treat-all
+#'
+#' @param cf_out margot result list (after running batch helper).
+#' @param depths integer vector. Depths to include. Default 2.
+#' @param adjust character. Multiplicity adjustment method. Default "bonferroni";
+#'   other options include "holm" or any supported by [stats::p.adjust()].
+#' @param alpha numeric. Significance threshold after adjustment. Default 0.05.
+#'
+#' @return Adjusted summary `tibble` filtered to requested depths.
+#' @export
+margot_policy_summary <- function(cf_out,
+                                  depths = 2L,
+                                  adjust = "bonferroni",
+                                  alpha  = 0.05) {
+
+  cf_out |>
+    margot_collect_policy_values(depths = depths) |>
+    margot_adjust_policy_p(method = adjust, alpha = alpha) |>
+    dplyr::filter(estimate > 0)        # <- new line: keep positive gain only
 }
 
 
 
-#' Add or refresh a policy-value test for one model
+# @keywords internal
+margot_add_policy_batch <- function(cf_out, keep,
+                                    depth = 2L, R = 999L, seed = 2025L) {
+
+  idx <- paste0("model_", keep)
+  cf_out$results[idx] <- purrr::map(cf_out$results[idx],
+                                    margot_add_policy_p,
+                                    depth = depth,
+                                    R     = R,
+                                    seed  = seed)
+  invisible(cf_out)
+}
+
+
+#' adjust policy-value p-values for multiplicity
 #'
-#' Thin wrapper around `margot_add_policy_values()` that evaluates a single
-#' tree depth (default: 2). It preserves the original function’s seed and
-#' bootstrap settings but uses friendlier defaults for interactive workflows.
+#' adds adjusted p-values. the caller can flag a result as significant using this metric.
 #'
-#' @param model List; one outcome-specific element of `cf_out$results`.
-#' @param depth Integer; policy-tree depth to evaluate. Default: 2.
-#' @param R Integer; number of bootstrap replicates. Default: 999.
-#' @param seed Integer; RNG seed. Default: 2025.
+#' @param tbl data frame returned by [margot_collect_policy_values()]. must
+#'   include columns `p_value` (raw two-sided) and `estimate`.
+#' @param method character. multiplicity correction for the `p_adj` column: any
+#'   option of [stats::p.adjust()].
+#'   default "bonferroni".
+#' @param alpha numeric. threshold that defines the `significant` flag.
+#'   default 0.05.
 #'
-#' @return Invisibly returns the modified `model` list.
+#' @return `tbl` with two extra columns:
+#' * `p_adj`        – adjusted p-value
+#' * `significant`  – logical; TRUE if p_adj < `alpha`.
+#'
+#' @keywords internal
+#'
+#' @importFrom dplyr mutate
+#' @importFrom stats p.adjust
+margot_adjust_policy_p <- function(tbl,
+                                   method = "bonferroni",
+                                   alpha  = 0.05) {
+  stopifnot(is.data.frame(tbl), "p_value" %in% names(tbl))
+  method <- match.arg(tolower(method),
+                      c("bonferroni", "holm", "hochberg", "hommel",
+                        "BH", "fdr", "BY", "none"))
+  out <- dplyr::mutate(tbl,
+                       p_adj = stats::p.adjust(p_value, method = method),
+                       significant = p_adj < alpha
+  )
+  out
+}
+
+# -------------------------------------------------------------------------
+# thin wrap remains unchanged ---------------------------------------------
+
+#' add or refresh a policy‑value test for one model
+#'
+#' @inheritParams margot_add_policy_values
 #' @keywords internal
 margot_add_policy_p <- function(model,
                                 depth = 2L,
@@ -362,77 +473,75 @@ margot_summarise_all <- function(cf_out,
 }
 
 
-#' Screen outcomes by ATE and/or rate significance with multiplicity control
+#' Screen margot models by p-value tests with robust handling of missing components
 #'
-#' Returns the names of outcome variables whose policy test passes the adjusted threshold,
-#' applying rules based on ATE and rate metrics with optional multiplicity adjustment.
+#' @param model_results list. output of `margot_causal_forest()`, containing $results
+#' @param rule         character; choose among "ate_or_rate", "ate", "rate"
+#' @param target       character; one of "AUTOC", "QINI", "either", "both"
+#' @param alpha        numeric; significance threshold after adjustment
+#' @param adjust       character; p.adjust method: "none", "bonferroni", "holm", "BH", "fdr", "BY"
+#' @param use_boot     logical; if TRUE, use bootstrap tests when available. Default = FALSE
 #'
-#' @param model_results List; a margot result containing `$results` with each element
-#'   having `ate`, `rate_result`, and `rate_qini` entries.
-#' @param rule Character; one of:
-#'   * "ate_or_rate" – keep if either ATE or the selected rate test is significant;
-#'   * "ate"          – keep only if the ATE is significant;
-#'   * "rate"         – keep only if the selected rate test is significant.
-#' @param target Character; which rate metric defines “rate significant?”:
-#'   * "AUTOC"  – test only AUTOC rate;
-#'   * "QINI"   – test only QINI rate;
-#'   * "either" – significant if either AUTOC or QINI passes;
-#'   * "both"   – significant only if both AUTOC and QINI pass.
-#' @param alpha Numeric; two-sided significance level (default 0.05).
-#' @param adjust Character; multiplicity adjustment method for p-values:
-#'   "none", "bonferroni", "holm", "BH"/"fdr", or "BY". Default "none".
-#'
-#' @return Character vector of outcome names to keep (without the `model_` prefix).
-#'
-#' @details
-#' If `adjust != "none"`, p-values for ATE, AUTOC rate, and QINI rate
-#' are each adjusted across outcomes using `stats::p.adjust()`. Significance flags are
-#' determined by comparing adjusted p-values to `alpha`. Outcomes are then filtered
-#' according to `rule` and `target` as described above.
-#'
-#' @export
-#' @importFrom stats pnorm p.adjust
+#' @return tibble with outcomes, raw and adjusted p-values, and a 'keep' flag
+#' @keywords internal
+#' @importFrom stats p.adjust pnorm
+#' @importFrom purrr imap_dfr pluck
+#' @importFrom tibble tibble
+#' @importFrom dplyr mutate
 margot_screen_models <- function(model_results,
                                  rule   = c("ate_or_rate", "ate", "rate"),
                                  target = c("AUTOC", "QINI", "either", "both"),
                                  alpha  = 0.05,
-                                 adjust = c("none", "bonferroni", "holm", "BH", "fdr", "BY")) {
-  stopifnot(is.list(model_results), "results" %in% names(model_results))
+                                 adjust = c("none", "bonferroni", "holm", "BH", "fdr", "BY"),
+                                 use_boot = FALSE) {
   rule   <- match.arg(rule)
   target <- toupper(match.arg(target))
   adjust <- match.arg(adjust)
 
-  outcomes      <- names(model_results$results)
-  n_outcomes    <- length(outcomes)
-  ate_p_raw     <- rep(NA_real_, n_outcomes)
-  rate_a_p_raw  <- rep(NA_real_, n_outcomes)
-  rate_q_p_raw  <- rep(NA_real_, n_outcomes)
-
-  for (i in seq_along(outcomes)) {
-    res <- model_results$results[[outcomes[i]]]
-    if (is.null(res$ate) || is.null(res$rate_result) || is.null(res$rate_qini)) next
-
-    ate_est <- unname(res$ate["estimate"])
-    ate_se  <- unname(res$ate["std.err"])
-    ate_p_raw[i] <- 2 * stats::pnorm(-abs(ate_est / ate_se))
-
-    rate_a_p_raw[i] <- 2 * stats::pnorm(-abs(res$rate_result$estimate / res$rate_result$std.err))
-    rate_q_p_raw[i] <- 2 * stats::pnorm(-abs(res$rate_qini$estimate   / res$rate_qini$std.err))
+  # helper: compute p-value, fallback to analytic if no bootstrap
+  # boot yet to be developed
+  get_p <- function(est, se, boot = NULL) {
+    if (!use_boot || is.null(boot)) {
+      2 * stats::pnorm(-abs(est / se))
+    } else {
+      mean(abs(boot) >= abs(est))
+    }
   }
 
-  if (adjust != "none") {
-    ate_p_adj    <- stats::p.adjust(ate_p_raw,    method = adjust)
-    rate_a_p_adj <- stats::p.adjust(rate_a_p_raw, method = adjust)
-    rate_q_p_adj <- stats::p.adjust(rate_q_p_raw, method = adjust)
-  } else {
-    ate_p_adj    <- ate_p_raw
-    rate_a_p_adj <- rate_a_p_raw
-    rate_q_p_adj <- rate_q_p_raw
-  }
+  # map over each named result element
+  res <- purrr::imap_dfr(model_results$results, function(m, nm) {
+    ate_est   <- purrr::pluck(m, "ate",          "estimate",       .default = NA_real_)
+    ate_se    <- purrr::pluck(m, "ate",          "std.err",        .default = NA_real_)
+    ate_boot  <- purrr::pluck(m, "ate",          "boot_estimates", .default = NULL)
 
-  ate_sig <- ate_p_adj < alpha
-  sig_a   <- rate_a_p_adj < alpha
-  sig_q   <- rate_q_p_adj < alpha
+    autoc_est <- purrr::pluck(m, "rate_result",  "estimate",       .default = NA_real_)
+    autoc_se  <- purrr::pluck(m, "rate_result",  "std.err",        .default = NA_real_)
+    autoc_boot<- purrr::pluck(m, "rate_result",  "boot_est",       .default = NULL)
+
+    qini_est  <- purrr::pluck(m, "rate_qini",    "estimate",       .default = NA_real_)
+    qini_se   <- purrr::pluck(m, "rate_qini",    "std.err",        .default = NA_real_)
+    qini_boot <- purrr::pluck(m, "rate_qini",    "boot_est",       .default = NULL)
+
+    tibble::tibble(
+      outcome   = sub("^model_", "", nm),
+      p_ate     = get_p(ate_est,   ate_se,    ate_boot),
+      p_autoc   = get_p(autoc_est, autoc_se,  autoc_boot),
+      p_qini    = get_p(qini_est,  qini_se,   qini_boot)
+    )
+  })
+
+  # multiplicity adjustment
+  res <- dplyr::mutate(
+    res,
+    p_ate_adj   = stats::p.adjust(p_ate,   method = adjust),
+    p_autoc_adj = stats::p.adjust(p_autoc, method = adjust),
+    p_qini_adj  = stats::p.adjust(p_qini,  method = adjust)
+  )
+
+  # decision logic
+  sig_ate <- res$p_ate_adj   < alpha
+  sig_a   <- res$p_autoc_adj < alpha
+  sig_q   <- res$p_qini_adj  < alpha
 
   rate_sig <- switch(target,
                      AUTOC  = sig_a,
@@ -440,118 +549,10 @@ margot_screen_models <- function(model_results,
                      EITHER = sig_a | sig_q,
                      BOTH   = sig_a & sig_q)
 
-  keep_flag <- switch(rule,
-                      ate_or_rate = ate_sig | rate_sig,
-                      ate         = ate_sig,
-                      rate        = rate_sig)
+  res$keep <- switch(rule,
+                     ate_or_rate = sig_ate | rate_sig,
+                     ate         = sig_ate,
+                     rate        = rate_sig)
 
-  sub("^model_", "", outcomes[keep_flag & !is.na(keep_flag)])
-}
-
-
-
-#' Attach policy-value tests to a batch of models
-#'
-#' Runs `margot_compute_policy_value()` at specified depths for each outcome,
-#' optionally in parallel via **future**/**furrr**.
-#'
-#' @param cf_out   list; a margot result containing `$results` and `$outcome_vars`
-#' @param outcomes character vector or NULL; outcome names (without `model_` prefix). NULL means all.
-#' @param depths   integer vector; tree depths to evaluate. default c(1L, 2L)
-#' @param R        integer ≥ 199; bootstrap replicates. default 499L
-#' @param seed     integer; RNG seed for reproducibility. default 42L
-#' @param parallel logical; whether to use parallel processing. default FALSE
-#'
-#' @return invisibly returns modified `cf_out` with added policy-value tests
-#' @keywords internal
-#' @importFrom purrr map
-#' @importFrom future plan multisession
-#' @importFrom furrr future_map furrr_options
-margot_add_policy_values_batch <- function(cf_out,
-                                           outcomes = NULL,
-                                           depths   = c(1L, 2L),
-                                           R        = 499L,
-                                           seed     = 42L,
-                                           parallel = FALSE) {
-  stopifnot(is.list(cf_out), "results" %in% names(cf_out))
-  if (is.null(outcomes)) {
-    outcomes <- cf_out$outcome_vars
-  }
-  model_keys <- paste0("model_", outcomes)
-
-  # choose mapper based on parallel flag
-  if (parallel && requireNamespace("future", quietly = TRUE) && requireNamespace("furrr", quietly = TRUE)) {
-    ncores <- parallel::detectCores(logical = FALSE)
-    future::plan(future::multisession, workers = max(1, ncores - 1))
-    mapper <- furrr::future_map
-    mapper_opts <- furrr::furrr_options(seed = seed)
-    map_args <- list(.options = mapper_opts)
-  } else {
-    mapper <- purrr::map
-    map_args <- list()
-  }
-
-  # helper to add only missing depths
-  add_missing <- function(model) {
-    missing_depths <- depths[vapply(depths, function(d) {
-      is.null(model[[paste0("policy_value_depth_", d)]])
-    }, logical(1))]
-
-    if (length(missing_depths) > 0L) {
-      model <- margot_add_policy_values(
-        model,
-        depths = missing_depths,
-        R      = R,
-        seed   = seed
-      )
-    }
-    model
-  }
-
-  # apply to each selected model
-  cf_out$results[model_keys] <- do.call(
-    mapper,
-    c(list(cf_out$results[model_keys], add_missing), map_args)
-  )
-
-  invisible(cf_out)
-}
-
-
-#' Collect and adjust policy-value tests, focusing on desired depths
-#'
-#' Combines [margot_collect_policy_values()] and [margot_adjust_policy_p()] into a single summary step. Keep only outcomes where the learned policy improves on treat-all
-#'
-#' @param cf_out margot result list (after running batch helper).
-#' @param depths integer vector. Depths to include. Default 2.
-#' @param adjust character. Multiplicity adjustment method. Default "bonferroni";
-#'   other options include "holm" or any supported by [stats::p.adjust()].
-#' @param alpha numeric. Significance threshold after adjustment. Default 0.05.
-#'
-#' @return Adjusted summary `tibble` filtered to requested depths.
-#' @export
-margot_policy_summary <- function(cf_out,
-                                  depths = 2L,
-                                  adjust = "bonferroni",
-                                  alpha  = 0.05) {
-
-  cf_out |>
-    margot_collect_policy_values(depths = depths) |>
-    margot_adjust_policy_p(method = adjust, alpha = alpha) |>
-    dplyr::filter(estimate > 0)        # <- new line: keep positive gain only
-}
-
-
-
-# @keywords internal
-margot_add_policy_batch <- function(cf_out, keep,
-                                    depth = 2L, R = 999L, seed = 2025L) {
-
-  idx <- paste0("model_", keep)
-  cf_out$results[idx] <- purrr::map(cf_out$results[idx],
-                                    margot_add_policy_p,
-                                    depth = depth,
-                                    R     = R,
-                                    seed  = seed)
-  invisible(cf_out)
+  res
 }

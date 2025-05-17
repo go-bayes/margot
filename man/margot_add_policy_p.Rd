@@ -2,25 +2,16 @@
 % Please edit documentation in R/margot_compute_policy_value_helpers.R
 \name{margot_add_policy_p}
 \alias{margot_add_policy_p}
-\title{Add or refresh a policy-value test for one model}
+\title{add or refresh a policy‑value test for one model}
 \usage{
 margot_add_policy_p(model, depth = 2L, R = 999L, seed = 2025L)
 }
 \arguments{
-\item{model}{List; one outcome-specific element of `cf_out$results`.}
+\item{model}{list. One element of `margot$results`.}
 
-\item{depth}{Integer; policy-tree depth to evaluate. Default: 2.}
-
-\item{R}{Integer; number of bootstrap replicates. Default: 999.}
-
-\item{seed}{Integer; RNG seed. Default: 2025.}
-}
-\value{
-Invisibly returns the modified `model` list.
+\item{R, seed}{Passed to [margot_compute_policy_value()].}
 }
 \description{
-Thin wrapper around `margot_add_policy_values()` that evaluates a single
-tree depth (default: 2). It preserves the original function’s seed and
-bootstrap settings but uses friendlier defaults for interactive workflows.
+add or refresh a policy‑value test for one model
 }
 \keyword{internal}

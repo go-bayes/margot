@@ -1,15 +1,22 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
 <!-- ```{r, include = FALSE} -->
+
 <!-- library(here) -->
+
 <!-- # GitHub pages -->
+
 <!-- file.create("docs/.nojekyll", showWarnings = FALSE) -->
+
 <!-- ``` -->
+
 <!-- badges: start -->
 
 <img src="man/figures/margot.png" width = 600>
 
 <!-- badges: end -->
+
 <!-- badges: end -->
 
 # margot
@@ -78,7 +85,7 @@ bibentry(
   title = "margot: MARGinal Observational Treatment-effects",
   author = person("Joseph A", "Bulbulia"),
   year = "2024",
-  note = "R package version 1.0.44, Functions to obtain MARGinal Observational Treatment-effects from observational data.",
+  note = "R package version 1.0.45, Functions to obtain MARGinal Observational Treatment-effects from observational data.",
   url = "https://go-bayes.github.io/margot/",
   doi = "10.5281/zenodo.10907724"
 )
