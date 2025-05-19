@@ -9,6 +9,10 @@
 * improve interpretations in `margot_compare_groups()`
 * margot_screen_models - develop use_boot option
 
+# [2025-05-16] margot 1.0.46
+## improved
+- `margot_process_longitudinal_data_wider()` correctly creates "NA" value for censoring indicator when unit is lost to follow up.
+
 # [2025-05-15] margot 1.0.45
 # improved
 - `margot_rate()` - allows a subset of models to be passed, allows for adjustment for multiple comparisons, reflected in reporting.(`margot_interpret_rate()` and `margot_interpret_rate_comparison()`) both modified. 

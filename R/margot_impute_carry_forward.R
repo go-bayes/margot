@@ -181,7 +181,7 @@ margot_impute_carry_forward <- function(
 
   return(out)
 }
-# old
+
 #' #' Impute Missing Values Using Carry Forward in Longitudinal Data
 #' #'
 #' #' @description
