@@ -61,7 +61,8 @@ Imports:
     lmtp,
     clarify,
     labelled,
-    tools
+    tools,
+    furrr
 RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 URL: https://go-bayes.github.io/margot
