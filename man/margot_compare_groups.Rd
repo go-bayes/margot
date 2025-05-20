@@ -2,30 +2,38 @@
 % Please edit documentation in R/margot_compare_groups.R
 \name{margot_compare_groups}
 \alias{margot_compare_groups}
-\title{Compare two groups of treatment-effect estimates}
+\title{Compare subgroups from a causal forest model.}
 \usage{
 margot_compare_groups(
   group,
   subgroup,
   type = c("RD", "RR"),
   label_mapping = NULL,
-  decimal_places = 3
+  decimal_places = 3,
+  group1_name = "Group 1",
+  group2_name = "Group 2"
 )
 }
 \arguments{
-\item{group}{data frame with treatment effects and confidence intervals}
+\item{group}{data frame with treatment effects and confidence intervals for primary group}
 
-\item{subgroup}{data frame with treatment effects and confidence intervals}
+\item{subgroup}{data frame with treatment effects and confidence intervals for contrast group}
 
-\item{type}{Character; "RD" or "RR"}
+\item{type}{Character; one of `"RD"` or `"RR"` (default: both allowed)}
 
 \item{label_mapping}{Optional named vector for nicer row labels}
 
-\item{decimal_places}{Number of digits for CI formatting (default 3)}
+\item{decimal_places}{Number of digits for CI formatting (default: 3)}
+
+\item{group1_name}{Character; name to use for primary group (default: "Group 1")}
+
+\item{group2_name}{Character; name to use for contrast group (default: "Group 2")}
 }
 \value{
-A list with results (data frame with Outcomes and Group Differences) and interpretation (character string)
+A list with:
+  - `results`: a data frame with columns `Outcomes` and `Group Differences`
+  - `interpretation`: a character string summarising reliable differences
 }
 \description{
-Compare subgroups from a causal forest model.
+Compare two sets of treatment-effect estimates and report their differences.
 }

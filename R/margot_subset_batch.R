@@ -2,10 +2,10 @@
 #'
 #' We compared treatment effects across multiple subsets derived from causal forest models (using the grf package).
 #' For each subset, the number of participants, the total sample size, and the corresponding percentage are computed,
-#' describing the composition of each targeted subpopulation. In addition, for each subset the plot, interpretation,
-#' and transformed table are generated to summarise the causal effect estimates. Note that exploratory comparisons in causal forest analyses
-#' should be interpreted with caution, as subsetting targeted subpopulations may yield unstable treatment effect estimates,
-#' typically indicated by large standard errors and wide confidence intervals.
+#' describing the composition of each targeted subpopulation. In addition, for each subset the plot, interpretation, and
+#' transformed table are generated to summarise the causal effect estimates. Note that exploratory comparisons in causal
+#' forest analyses should be interpreted with caution, as subsetting targeted subpopulations may yield unstable treatment
+#' effect estimates, typically indicated by large standard errors and wide confidence intervals.
 #'
 #' @param model_results Results from the causal forest model.
 #' @param X Covariate matrix.
@@ -18,7 +18,7 @@
 #'     \item{value}{The value used to define the subset.}
 #'     \item{operator}{(Optional) A comparison operator (default is \code{"=="}).}
 #'     \item{subset_condition}{(Optional) A pre-computed logical vector defining the subset.}
-#'     \item{description}{A character string describing the subset.}
+#'     \item{description}{(Optional) A character string describing the subset.}
 #'     \item{label}{(Optional) A user-friendly label for the subset. If missing, the list name is used.}
 #'   }
 #' @param debug Logical; if \code{TRUE}, prints debugging information.
@@ -46,97 +46,98 @@ margot_subset_batch <- function(model_results,
 
   for (subset_name in names(subsets)) {
     subset_info <- subsets[[subset_name]]
-    # Use user-friendly label if provided; otherwise default to subset_name.
-    subset_label <- if (!is.null(subset_info$label)) subset_info$label else subset_name
 
-    # Check if a pre-computed logical vector is provided.
+    # determine friendly label: label > name
+    subset_label <- if (!is.null(subset_info$label)) subset_info$label else subset_name
+    # determine friendly description: description > label
+    subset_description <- if (!is.null(subset_info$description)) subset_info$description else subset_label
+
+    # subset the data
     if (!is.null(subset_info$subset_condition)) {
       subset_result <- margot_subset_model(
-        model_results = model_results,
-        subset_condition = subset_info$subset_condition,
-        subset_description = subset_info$description,
-        debug = debug
+        model_results     = model_results,
+        subset_condition  = subset_info$subset_condition,
+        subset_description = subset_description,
+        debug             = debug
       )
     } else {
-      # Use operator if provided; otherwise default to "=="
       subset_operator <- if (!is.null(subset_info$operator)) subset_info$operator else "=="
-
       subset_result <- margot_subset_model(
-        model_results = model_results,
-        X = X,
-        subset_var = subset_info$var,
-        subset_value = subset_info$value,
-        subset_operator = subset_operator,
-        subset_description = subset_info$description,
-        debug = debug
+        model_results     = model_results,
+        X                 = X,
+        subset_var        = subset_info$var,
+        subset_value      = subset_info$value,
+        subset_operator   = subset_operator,
+        subset_description = subset_description,
+        debug             = debug
       )
     }
 
-    # Create plot options for this subset, using subset_label in the filename prefix.
+    # create plot options
     options <- margot_plot_create_options(
-      subtitle = subset_result$subset_description,
-      base_defaults = base_defaults,
-      title = title,
+      subtitle       = subset_description,
+      base_defaults  = base_defaults,
+      title          = title,
       filename_prefix = paste0("subset_", subset_label)
     )
 
-    # Generate the plot for the subset model, passing original_df if provided
-    # and forwarding any additional arguments to margot_plot.
+    # generate plot
     plot_result <- margot_plot(
       subset_result$results,
-      options = options,
-      label_mapping = label_mapping,
+      options            = options,
+      label_mapping      = label_mapping,
       include_coefficients = FALSE,
-      original_df = original_df,
+      original_df        = original_df,
       ...
     )
 
-    # Store all outputs along with sample statistics, indexed by the friendly label.
+    # store outputs
     results[[subset_label]] <- list(
-      subset = subset_result,
-      plot = plot_result$plot,
-      interpretation = plot_result$interpretation,
+      subset            = subset_result,
+      plot              = plot_result$plot,
+      interpretation    = plot_result$interpretation,
       transformed_table = plot_result$transformed_table,
-      n = subset_result$subset_info$subset_size,
-      total = subset_result$subset_info$total_size,
-      pct = 100 * subset_result$subset_info$subset_size / subset_result$subset_info$total_size
+      n                 = subset_result$subset_info$subset_size,
+      total             = subset_result$subset_info$total_size,
+      pct               = 100 * subset_result$subset_info$subset_size / subset_result$subset_info$total_size
     )
   }
 
-  # Create a summary data frame of the sample sizes.
+  # summary table
   summary_df <- data.frame(
-    Subset = names(results),
-    Sample_Size = sapply(results, function(x) x$n),
-    Total_Size = sapply(results, function(x) x$total),
-    Percentage = sapply(results, function(x) round(x$pct, 2)),
+    Subset      = names(results),
+    Sample_Size = vapply(results, `[[`, numeric(1), "n"),
+    Total_Size  = vapply(results, `[[`, numeric(1), "total"),
+    Percentage  = vapply(results, function(x) round(x$pct, 2), numeric(1)),
     stringsAsFactors = FALSE
   )
   rownames(summary_df) <- NULL
 
-  # Build summary lines for subsetting explanation.
-  subset_lines <- apply(summary_df, 1, function(row) {
-    sprintf("In the '%s' subset, %s participants were observed out of %s (%.2f%% of the full sample).",
-            row["Subset"], row["Sample_Size"], row["Total_Size"], as.numeric(row["Percentage"]))
-  })
-
-  # Build individual subset interpretation explanations.
-  subset_interpretations <- sapply(names(results), function(subset_label) {
-    paste("###", subset_label, "\n", results[[subset_label]]$interpretation)
-  })
-
-  # Combine subsetting and model results explanations into a full explanation.
+  # explanation
+  subset_lines <- sprintf(
+    "In the '%s' subset, %s participants were observed out of %s (%.2f%% of the full sample).",
+    summary_df$Subset, summary_df$Sample_Size, summary_df$Total_Size, summary_df$Percentage
+  )
+  subset_interpretations <- vapply(
+    names(results),
+    function(lbl) paste0("### ", lbl, "\n", results[[lbl]]$interpretation),
+    character(1)
+  )
   explanation <- paste(
     "We compared treatment effects across multiple subsets derived from causal forest models (using the grf package).",
-    paste(subset_lines, collapse = "\n"),
-    paste(subset_interpretations, collapse = "\n\n"),
+    paste(subset_lines, collapse = "
+"),
+    paste(subset_interpretations, collapse = "
+
+"),
     "These comparisons help assess heterogeneity in treatment effects.",
     "Note that exploratory comparisons in causal forest analyses should be interpreted with caution, as subsetting targeted subpopulations may yield unstable treatment effect estimates, typically indicated by wider confidence intervals.",
-    sep = "\n\n"
+    sep = "
+
+"
   )
 
-  # Print explanation to the console.
   cat("\nExplanation:\n", explanation, "\n")
 
-  # Return a list with results, summary, and explanation.
   return(list(results = results, summary = summary_df, explanation = explanation))
 }

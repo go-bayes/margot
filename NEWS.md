@@ -9,6 +9,14 @@
 * improve interpretations in `margot_compare_groups()`
 * margot_screen_models - develop use_boot option
 
+# [2025-05-17] margot 1.0.47
+## improved
+- `margot_plot_create_options()` defaults for correcting for multiple comparisons,
+  `adjust = "bonferroni"`, `alpha = 0.05`, #<- new
+- `margot_planned_subgroup_batch()` and `margot_subset_batch()` -- numerous enhancements for clear reporting 
+- `margot_compare_groups()` enhanced reporting
+
+
 # [2025-05-16] margot 1.0.46
 ## improved
 - `margot_process_longitudinal_data_wider()` correctly creates "NA" value for censoring indicator when unit is lost to follow up. (under development, defaults to older version, which works fine)

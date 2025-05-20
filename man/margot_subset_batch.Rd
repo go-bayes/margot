@@ -33,7 +33,7 @@ margot_subset_batch(
   \item{value}{The value used to define the subset.}
   \item{operator}{(Optional) A comparison operator (default is \code{"=="}).}
   \item{subset_condition}{(Optional) A pre-computed logical vector defining the subset.}
-  \item{description}{A character string describing the subset.}
+  \item{description}{(Optional) A character string describing the subset.}
   \item{label}{(Optional) A user-friendly label for the subset. If missing, the list name is used.}
 }}
 
@@ -54,8 +54,8 @@ A list with the following elements:
 \description{
 We compared treatment effects across multiple subsets derived from causal forest models (using the grf package).
 For each subset, the number of participants, the total sample size, and the corresponding percentage are computed,
-describing the composition of each targeted subpopulation. In addition, for each subset the plot, interpretation,
-and transformed table are generated to summarise the causal effect estimates. Note that exploratory comparisons in causal forest analyses
-should be interpreted with caution, as subsetting targeted subpopulations may yield unstable treatment effect estimates,
-typically indicated by large standard errors and wide confidence intervals.
+describing the composition of each targeted subpopulation. In addition, for each subset the plot, interpretation, and
+transformed table are generated to summarise the causal effect estimates. Note that exploratory comparisons in causal
+forest analyses should be interpreted with caution, as subsetting targeted subpopulations may yield unstable treatment
+effect estimates, typically indicated by large standard errors and wide confidence intervals.
 }

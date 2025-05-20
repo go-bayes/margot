@@ -96,7 +96,10 @@ margot_plot_create_options <- function(subtitle,
       use_title_case = TRUE,
       remove_underscores = TRUE,
       show_evalues = TRUE,
-      evalue_digits = 2
+      evalue_digits = 2,
+      e_val_bound_threshold = 1.2,
+      adjust = "bonferroni", #<- new
+      alpha = 0.05, # <- new
     )
   }
 

@@ -2,43 +2,49 @@
 % Please edit documentation in R/margot_planned_subgroups_batch.R
 \name{margot_planned_subgroups_batch}
 \alias{margot_planned_subgroups_batch}
-\title{batch process heterogeneity analyses across multiple outcome domains}
+\title{Batch process heterogeneity analyses across multiple outcome domains}
 \usage{
 margot_planned_subgroups_batch(
   domain_models,
   X,
   base_defaults,
+  label_mapping = NULL,
   subset_types,
   original_df,
   domain_names,
   subtitles,
+  adjust = c("none", "bonferroni", "holm"),
+  alpha = 0.05,
   ...
 )
 }
 \arguments{
-\item{domain_models}{list of model sets; one element per outcome domain
-(e.g., `list(models_binary_health, models_binary_psych)`).}
+\item{domain_models}{list of model sets; one element per outcome domain}
 
 \item{X}{model matrix (or data frame) of predictors used when the models were
-fitted; required by lower-level helpers.}
+fitted}
 
 \item{base_defaults}{named list of default arguments passed to the downstream
-plotting / helper functions.}
+plotting / helper functions}
 
-\item{subset_types}{named list of subset specifications, typically produced
-with the *standard subset* helpers (e.g.,
-`list(wealth = subsets_standard_wealth)`).}
+\item{label_mapping}{named list of variable-to-label mappings; passed down to `margot_plot()`}
+
+\item{subset_types}{named list of subset specifications (e.g., list(wealth = subsets_standard_wealth))}
 
 \item{original_df}{the raw data frame containing all variables (needed for
-label recovery, plotting on the original scale, etc.).}
+label recovery, plotting on the original scale, etc.)}
 
-\item{domain_names}{character vector naming each element in `domain_models`.}
+\item{domain_names}{character vector naming each element in `domain_models`}
 
 \item{subtitles}{character vector of subtitles used in plot annotations;
-must be the same length as `domain_names`.}
+must be the same length as `domain_names`}
 
-\item{...}{any additional arguments forwarded directly to
-[`margot_subset_batch()`] (e.g., `interpret_all_E_gt1 = TRUE`).}
+\item{adjust}{character; correction method for multiple comparisons in plots.
+one of "none", "bonferroni", or "holm". default: "none".}
+
+\item{alpha}{numeric; significance threshold for correction. default: 0.05.}
+
+\item{...}{any additional arguments forwarded directly to [`margot_subset_batch()`]}
 }
 \value{
 a nested list. the first level is the domain name; the second level
@@ -47,27 +53,6 @@ a nested list. the first level is the domain name; the second level
 }
 \description{
 runs the same planned subgroup contrasts (e.g., wealth, ethnicity,
-political orientation) over multiple outcome domains.
-for each domain the specified subset definitions are applied, summaries are
-printed, and composite plots are displayed.
-**no files are written to disk – the former `push_mods`/`output_dir`
-arguments have been retired.**
-}
-\examples{
-\dontrun{
-results <- margot_planned_subgroups_batch(
-  domain_models = list(models_binary_health, models_binary_psych),
-  X             = X,
-  base_defaults = base_defaults_binary,
-  subset_types  = list(
-    wealth    = subsets_standard_wealth,
-    ethnicity = subsets_standard_ethnicity
-  ),
-  original_df  = original_df,
-  domain_names = c("health", "psych"),
-  subtitles    = c(subtitle_health, subtitle_psych),
-  interpret_all_E_gt1 = TRUE
-)
-}
-
+political orientation) over multiple outcome domains, with optional
+correction for multiple comparisons.
 }
