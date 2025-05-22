@@ -230,7 +230,7 @@ margot_rate <- function(models,
 #'   only to positive RATEs in comparison output. Default FALSE.
 #' @return If rate_df is a data frame, a Markdown string. If rate_df is a list,
 #'   returns a list produced by margot_interpret_rate_comparison().
-#' @keywords export
+#' @export
 margot_interpret_rate <- function(rate_df,
                                   flipped_outcomes = NULL,
                                   target = "AUTOC",
@@ -361,7 +361,7 @@ margot_interpret_rate <- function(rate_df,
 #' * not_excluded_qini_model_names: QINI models not reliably negative
 #' * not_excluded_both: Models not excluded by both AUTOC and QINI
 #' * not_excluded_either: Models not excluded by either AUTOC or QINI
-#' @keywords internal
+#' @export
 margot_interpret_rate_comparison <- function(autoc_df,
                                              qini_df,
                                              flipped_outcomes = NULL,

@@ -37,4 +37,3 @@ A list with elements:
 \description{
 Compare and interpret RATE estimates from AUTOC and QINI
 }
-\keyword{internal}

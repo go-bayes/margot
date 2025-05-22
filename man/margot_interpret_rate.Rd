@@ -32,4 +32,3 @@ If rate_df is a data frame, a Markdown string. If rate_df is a list,
 Produce a compact Markdown summary describing which outcomes show positive,
 negative, or inconclusive heterogeneous treatment effects.
 }
-\keyword{export}

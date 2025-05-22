@@ -115,6 +115,7 @@ reference:
     - margot_interpret_policy_tree
     - margot_interpret_qini
     - margot_interpret_rate
+    - margot_interpret_rate_comparison
     - margot_lmtp_evalue
     - margot_lmtp_tab
     - margot_model_evalue
