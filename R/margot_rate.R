@@ -226,20 +226,6 @@ margot_rate <- function(models,
 #'   preprocessing (unused here but kept for API symmetry).
 #' @param target Character; either "AUTOC" or "QINI" (ignored when rate_df
 #'   is a list).
-#' @return If rate_df is a data frame, a Markdown string. If rate_df is a list,
-#'   returns a list produced by margot_interpret_rate_comparison().
-#' @keywords export
-#' Interpret RATE estimates
-#'
-#' Produce a compact Markdown summary describing which outcomes show positive,
-#' negative, or inconclusive heterogeneous treatment effects.
-#'
-#' @param rate_df A data frame from margot_rate() or a list containing
-#'   rate_autoc and rate_qini.
-#' @param flipped_outcomes Character vector of outcomes inverted during
-#'   preprocessing (unused here but kept for API symmetry).
-#' @param target Character; either "AUTOC" or "QINI" (ignored when rate_df
-#'   is a list).
 #' @param adjust_positives_only Logical; if TRUE, apply multiple testing correction
 #'   only to positive RATEs in comparison output. Default FALSE.
 #' @return If rate_df is a data frame, a Markdown string. If rate_df is a list,

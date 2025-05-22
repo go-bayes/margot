@@ -11,6 +11,10 @@
 * Get flipped outcome labels into rate graphs 
 
 
+# [2025-05-18] margot 1.0.49
+## fixed
+- `margot_interpret_rate()` - exported
+
 # [2025-05-18] margot 1.0.48
 ## new
 - `margot_reversed_labels()` -- helper that gets display labels and marks reversed outcomes (for policy trees)

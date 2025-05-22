@@ -27,31 +27,9 @@ only to positive RATEs in comparison output. Default FALSE.}
 \value{
 If rate_df is a data frame, a Markdown string. If rate_df is a list,
   returns a list produced by margot_interpret_rate_comparison().
-
-If rate_df is a data frame, a Markdown string. If rate_df is a list,
-  returns a list produced by margot_interpret_rate_comparison().
 }
 \description{
 Produce a compact Markdown summary describing which outcomes show positive,
 negative, or inconclusive heterogeneous treatment effects.
 }
-\keyword{Interpret}
-\keyword{Markdown}
-\keyword{Produce}
-\keyword{RATE}
-\keyword{a}
-\keyword{compact}
-\keyword{describing}
-\keyword{effects.}
-\keyword{estimates}
 \keyword{export}
-\keyword{heterogeneous}
-\keyword{inconclusive}
-\keyword{negative,}
-\keyword{or}
-\keyword{outcomes}
-\keyword{positive,}
-\keyword{show}
-\keyword{summary}
-\keyword{treatment}
-\keyword{which}
