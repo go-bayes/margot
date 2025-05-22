@@ -16,7 +16,7 @@ margot_interpret_rate(
 rate_autoc and rate_qini.}
 
 \item{flipped_outcomes}{Character vector of outcomes inverted during
-preprocessing (unused here but kept for API symmetry).}
+preprocessing.}
 
 \item{target}{Character; either "AUTOC" or "QINI" (ignored when rate_df
 is a list).}

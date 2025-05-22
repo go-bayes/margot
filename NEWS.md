@@ -10,6 +10,11 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+
+# [2025-05-19] margot 1.0.52
+## improved 
+- `margot_interpret_rate()` user may specify flipped outcome labels 
+
 # [2025-05-18] margot 1.0.51
 
 ## improved 

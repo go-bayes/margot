@@ -223,7 +223,7 @@ margot_rate <- function(models,
 #' @param rate_df A data frame from margot_rate() or a list containing
 #'   rate_autoc and rate_qini.
 #' @param flipped_outcomes Character vector of outcomes inverted during
-#'   preprocessing (unused here but kept for API symmetry).
+#'   preprocessing.
 #' @param target Character; either "AUTOC" or "QINI" (ignored when rate_df
 #'   is a list).
 #' @param adjust_positives_only Logical; if TRUE, apply multiple testing correction
@@ -258,13 +258,13 @@ margot_interpret_rate <- function(rate_df,
     rate_df <- dplyr::filter(rate_df, policy == rate_df$policy[1])
   }
 
-  # Get adjustment attributes if any
+  # get adjustment attributes if any
   adjust <- attr(rate_df, "adjust")
   alpha <- attr(rate_df, "alpha")
   apply_adjustment <- attr(rate_df, "apply_adjustment")
   total_hypotheses <- attr(rate_df, "total_hypotheses")
 
-  # Determine pos/neg/inconclusive as before
+  # determine pos/neg/inconclusive as before
   if (!is.null(adjust) && apply_adjustment && "is_significant" %in% names(rate_df)) {
     pos   <- which(rate_df$is_significant & rate_df$`RATE Estimate` > 0)
     neg   <- which(rate_df$is_significant & rate_df$`RATE Estimate` < 0)
@@ -291,6 +291,15 @@ margot_interpret_rate <- function(rate_df,
   }
 
   parts <- list(header, desc)
+
+  # add flipped outcomes explanation if provided
+  if (!is.null(flipped_outcomes) && length(flipped_outcomes) > 0) {
+    flipped_text <- sprintf(
+      "Note: The following outcomes were inverted during preprocessing because higher values of the exposure correspond to worse outcomes: %s.",
+      paste(flipped_outcomes, collapse = ", ")
+    )
+    parts <- c(parts, flipped_text)
+  }
 
   # positive effects
   if (length(pos) > 0) {
@@ -341,6 +350,118 @@ margot_interpret_rate <- function(rate_df,
 
   paste(parts, collapse = "\n\n")
 }
+
+#old
+# margot_interpret_rate <- function(rate_df,
+#                                   flipped_outcomes = NULL,
+#                                   target = "AUTOC",
+#                                   adjust_positives_only = FALSE) {
+#   # comparison case: two-element list
+#   if (is.list(rate_df) && !is.data.frame(rate_df) &&
+#       all(c("rate_autoc", "rate_qini") %in% names(rate_df))) {
+#     return(
+#       margot_interpret_rate_comparison(
+#         rate_df$rate_autoc,
+#         rate_df$rate_qini,
+#         flipped_outcomes,
+#         adjust_positives_only = adjust_positives_only
+#       )
+#     )
+#   }
+#
+#   required <- c("RATE Estimate", "2.5%", "97.5%", "outcome")
+#   if (!all(required %in% names(rate_df))) {
+#     stop("`rate_df` must contain columns: ", paste(required, collapse = ", "))
+#   }
+#
+#   # filter to first policy if present
+#   if ("policy" %in% names(rate_df)) {
+#     rate_df <- dplyr::filter(rate_df, policy == rate_df$policy[1])
+#   }
+#
+#   # Get adjustment attributes if any
+#   adjust <- attr(rate_df, "adjust")
+#   alpha <- attr(rate_df, "alpha")
+#   apply_adjustment <- attr(rate_df, "apply_adjustment")
+#   total_hypotheses <- attr(rate_df, "total_hypotheses")
+#
+#   # Determine pos/neg/inconclusive as before
+#   if (!is.null(adjust) && apply_adjustment && "is_significant" %in% names(rate_df)) {
+#     pos   <- which(rate_df$is_significant & rate_df$`RATE Estimate` > 0)
+#     neg   <- which(rate_df$is_significant & rate_df$`RATE Estimate` < 0)
+#     incon <- setdiff(seq_len(nrow(rate_df)), union(pos, neg))
+#   } else {
+#     low   <- rate_df$`2.5%`
+#     high  <- rate_df$`97.5%`
+#     pos   <- which(low > 0)
+#     neg   <- which(high < 0)
+#     incon <- setdiff(seq_len(nrow(rate_df)), union(pos, neg))
+#   }
+#
+#   # header and base description
+#   header <- sprintf(
+#     "### Evidence for heterogeneous treatment effects (policy = %s) using %s",
+#     if (rate_df$policy[1] == "treat_best")
+#       "treat best responders" else "withhold from best responders",
+#     target
+#   )
+#   desc <- if (target == "AUTOC") {
+#     "AUTOC uses logarithmic weighting to focus treatment on top responders."
+#   } else {
+#     "QINI uses linear weighting to balance effect size and prevalence."
+#   }
+#
+#   parts <- list(header, desc)
+#
+#   # positive effects
+#   if (length(pos) > 0) {
+#     labs <- rate_df$outcome[pos]
+#     ests <- sprintf(
+#       "%s: %.3f (95%% CI %.3f, %.3f)",
+#       labs, rate_df$`RATE Estimate`[pos], rate_df$`2.5%`[pos], rate_df$`97.5%`[pos]
+#     )
+#     parts <- c(parts,
+#                sprintf("Positive RATE estimates for: %s.", paste(labs, collapse = ", ")),
+#                sprintf("Estimates (%s) show robust heterogeneity.", paste(ests, collapse = "; "))
+#     )
+#   }
+#
+#   # negative effects
+#   if (length(neg) > 0) {
+#     labs <- rate_df$outcome[neg]
+#     ests <- sprintf(
+#       "%s: %.3f (95%% CI %.3f, %.3f)",
+#       labs, rate_df$`RATE Estimate`[neg], rate_df$`2.5%`[neg], rate_df$`97.5%`[neg]
+#     )
+#     parts <- c(parts,
+#                sprintf("Negative RATE estimates for: %s.", paste(labs, collapse = ", ")),
+#                sprintf("Estimates (%s) caution against CATE prioritisation.",
+#                        paste(ests, collapse = "; "))
+#     )
+#   }
+#
+#   # inconclusive
+#   if (length(incon) > 0) {
+#     significance_text <- if (!is.null(adjust) && apply_adjustment) {
+#       if (adjust %in% c("BH", "BY", "fdr")) {
+#         sprintf("adjusted p-values not meeting the FDR threshold of q = %.2f", alpha)
+#       } else {
+#         sprintf("adjusted values above threshold %.3f", alpha / total_hypotheses)
+#       }
+#     } else {
+#       "95% CI crossing zero"
+#     }
+#     parts <- c(parts,
+#                sprintf(
+#                  "For outcomes with %s (%s), evidence is inconclusive.",
+#                  significance_text,
+#                  paste(rate_df$outcome[incon], collapse = ", ")
+#                )
+#     )
+#   }
+#
+#   paste(parts, collapse = "\n\n")
+# }
 
 
 #' Compare and interpret RATE estimates from AUTOC and QINI
@@ -417,7 +538,7 @@ margot_interpret_rate_comparison <- function(autoc_df,
   # Build comparison narrative
   parts <- list(
     "### Comparison of targeting operating characteristic (TOC) by rank average treatment effect (RATE): AUTOC vs QINI",
-    "We applied two TOC by RATE methods to the same causal-forest \tau(x) estimates:",
+    "We applied two TOC by RATE methods to the same causal-forest $\\tau(x)$ estimates:",
     "- **AUTOC** intensifies focus on top responders via logarithmic weighting.",
     "- **QINI** balances effect size and prevalence via linear weighting."
   )
