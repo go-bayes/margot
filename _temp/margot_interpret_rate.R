@@ -15,7 +15,6 @@
 #' @param target Character. `"AUTOC"` or `"QINI"` (ignored when `rate_df` is the
 #'   list of tables).
 #' @return Markdown string (single table) or the comparison list (two tables).
-#' @export
 margot_interpret_rate <- function(rate_df,
                                   flipped_outcomes = NULL,
                                   target = "AUTOC") {

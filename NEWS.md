@@ -8,6 +8,13 @@
 * remove arrow from "margot_plot_policy_tree()"
 * improve interpretations in `margot_compare_groups()`
 * margot_screen_models - develop use_boot option
+* Get flipped outcome labels into rate graphs 
+
+
+# [2025-05-18] margot 1.0.48
+## new
+- `margot_reversed_labels()` -- helper that gets display labels and marks reversed outcomes (for policy trees)
+- `margot_interpret_rate()` (`margot_interpret_rate_comparison()`)- now lists models that are not ruled out by the qini and autoc rate analysis.
 
 # [2025-05-17] margot 1.0.47
 ## improved

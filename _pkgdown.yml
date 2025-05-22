@@ -164,6 +164,7 @@ reference:
     - margot_prop_missing
     - margot_rescue_qini
     - margot_report_policy
+    - margot_reversed_labels
     - margot_save_png
     - margot_size
     - margot_trim_sample_weights

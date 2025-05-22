@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.47</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.48</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,12 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_interpret_rate_comparison</span><span class="op">(</span><span class="va">autoc_df</span>, <span class="va">qini_df</span>, flipped_outcomes <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_interpret_rate_comparison</span><span class="op">(</span></span>
+<span>  <span class="va">autoc_df</span>,</span>
+<span>  <span class="va">qini_df</span>,</span>
+<span>  flipped_outcomes <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  adjust_positives_only <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -57,6 +62,10 @@
 <dt id="arg-flipped-outcomes">flipped_outcomes<a class="anchor" aria-label="anchor" href="#arg-flipped-outcomes"></a></dt>
 <dd><p>Character vector of outcomes inverted during preprocessing.</p></dd>
 
+
+<dt id="arg-adjust-positives-only">adjust_positives_only<a class="anchor" aria-label="anchor" href="#arg-adjust-positives-only"></a></dt>
+<dd><p>Logical; if TRUE, apply multiple testing correction only to positive RATE estimates (negative outcomes use unadjusted CIs). Default FALSE.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -67,7 +76,11 @@
 * autoc_model_names: Models with positive AUTOC
 * qini_model_names: Models with positive QINI
 * both_model_names: Models positive in both
-* either_model_names: Models positive in either</p>
+* either_model_names: Models positive in either
+* not_excluded_autoc_model_names: AUTOC models not reliably negative
+* not_excluded_qini_model_names: QINI models not reliably negative
+* not_excluded_both: Models not excluded by both AUTOC and QINI
+* not_excluded_either: Models not excluded by either AUTOC or QINI</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
