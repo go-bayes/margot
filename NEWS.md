@@ -10,6 +10,11 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+# [2025-05-18] margot 1.0.51
+
+## improved 
+- `margot_interpret_qini()` improved to select reliable Qini models
+
 # [2025-05-18] margot 1.0.50
 - `margot_interpret_rate_comparison()` exported.
 

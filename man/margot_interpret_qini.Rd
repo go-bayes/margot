@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_interpret_qini.R
 \name{margot_interpret_qini}
 \alias{margot_interpret_qini}
-\title{Interpret Qini Results for Both Binary and Multi-Arm Treatments}
+\title{Interpret Qini Results}
 \usage{
 margot_interpret_qini(
   multi_batch,
@@ -13,24 +13,20 @@ margot_interpret_qini(
 )
 }
 \arguments{
-\item{multi_batch}{List output from margot_batch_policy() with diff_gain_summaries.}
+\item{multi_batch}{List from margot_batch_policy() with diff_gain_summaries}
 
-\item{label_mapping}{Optional named list mapping model names to readable labels.}
+\item{label_mapping}{Named list mapping model names to readable labels}
 
-\item{alpha}{Significance level for confidence intervals. Default is 0.05.}
+\item{alpha}{Significance level for confidence intervals (default: 0.05)}
 
-\item{decimal_places}{Number of decimal places for rounding. Default is 2.}
+\item{decimal_places}{Decimal places for rounding (default: 2)}
 
-\item{model_names}{Optional character vector specifying models to process.
-Default is NULL (i.e. process all).}
+\item{model_names}{Character vector of models to process (optional)}
 }
 \value{
-A list with a summary table and a single combined explanation in
-        \code{qini_explanation}.
+List with summary_table, qini_explanation, reliable_model_names, reliable_model_ids
 }
 \description{
-This function interprets Qini results for both binary and multi-arm treatments.
-It detects the treatment type based on the input data structure and calls the
-appropriate sub-function. A new parameter, \code{model_names}, restricts the
-analysis to the specified models; if not supplied, all models are processed.
+Interprets Qini results for binary and multi-arm treatments, automatically
+detecting treatment type from input data.
 }

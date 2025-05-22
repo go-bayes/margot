@@ -1,400 +1,192 @@
-#' Interpret Qini Results for Both Binary and Multi-Arm Treatments
+#' Interpret Qini Results
 #'
-#' This function interprets Qini results for both binary and multi-arm treatments.
-#' It detects the treatment type based on the input data structure and calls the
-#' appropriate sub-function. A new parameter, \code{model_names}, restricts the
-#' analysis to the specified models; if not supplied, all models are processed.
+#' Interprets Qini results for binary and multi-arm treatments, automatically
+#' detecting treatment type from input data.
 #'
-#' @param multi_batch List output from margot_batch_policy() with diff_gain_summaries.
-#' @param label_mapping Optional named list mapping model names to readable labels.
-#' @param alpha Significance level for confidence intervals. Default is 0.05.
-#' @param decimal_places Number of decimal places for rounding. Default is 2.
-#' @param model_names Optional character vector specifying models to process.
-#'        Default is NULL (i.e. process all).
-#'
-#' @return A list with a summary table and a single combined explanation in
-#'         \code{qini_explanation}.
-#'
+#' @param multi_batch List from margot_batch_policy() with diff_gain_summaries
+#' @param label_mapping Named list mapping model names to readable labels
+#' @param alpha Significance level for confidence intervals (default: 0.05)
+#' @param decimal_places Decimal places for rounding (default: 2)
+#' @param model_names Character vector of models to process (optional)
+#' @return List with summary_table, qini_explanation, reliable_model_names, reliable_model_ids
 #' @export
-margot_interpret_qini <- function(multi_batch,
-                                  label_mapping = NULL,
-                                  alpha = 0.05,
-                                  decimal_places = 2,
-                                  model_names = NULL) {
-  cli::cli_alert_info("starting qini interpretation...")
+margot_interpret_qini <- function(
+    multi_batch,
+    label_mapping   = NULL,
+    alpha           = 0.05,
+    decimal_places  = 2,
+    model_names     = NULL
+) {
+  cli::cli_alert_info("starting Qini interpretation")
 
-  # detect whether we're dealing with a single model or a batch
+  ##----------------------------------------------------------------##
+  ##  treat single-model objects as a length-1 list               ##
+  ##----------------------------------------------------------------##
   if ("diff_gain_summaries" %in% names(multi_batch)) {
-    # it's a single model result, not a batch
-    cli::cli_alert_info("detected single model result (not a batch)")
-    single_model <- TRUE
-
-    # get spend level names
-    spend_level_names <- names(multi_batch$diff_gain_summaries)
-
-    # convert to batch-like structure for consistent processing
-    model_name <- "model_result"
-    temp_batch <- list()
-    temp_batch[[model_name]] <- multi_batch
-    multi_batch <- temp_batch
-  } else {
-    # it's a batch of models
-    single_model <- FALSE
-
-    # check if multi_batch is empty or not a list
-    if (!is.list(multi_batch) || length(multi_batch) == 0) {
-      cli::cli_alert_danger("multi_batch must be a non-empty list")
-      return(list(
-        summary_table = NULL,
-        qini_explanation = "error: multi_batch must be a non-empty list"
-      ))
-    }
-
-    # restrict processing to selected models if model_names is provided
-    if (!is.null(model_names) && length(model_names) > 0) {
-      # check if model_names exist in multi_batch
-      valid_models <- intersect(names(multi_batch), model_names)
-      if (length(valid_models) == 0) {
-        cli::cli_alert_danger("none of the specified model_names exist in multi_batch")
-        return(list(
-          summary_table = NULL,
-          qini_explanation = "error: none of the specified model_names exist in multi_batch"
-        ))
-      }
-
-      # filter multi_batch to only include specified models
-      multi_batch <- multi_batch[valid_models]
-      cli::cli_alert_info(glue::glue("processing {length(valid_models)} of {length(model_names)} requested models"))
-    }
-
-    # get spend level names from first model
-    first_model <- names(multi_batch)[1]
-    spend_level_names <- names(multi_batch[[first_model]]$diff_gain_summaries)
+    multi_batch <- list(model_result = multi_batch)
   }
 
-  if (length(spend_level_names) == 0) {
-    cli::cli_alert_danger("no spend levels found in diff_gain_summaries")
-    return(list(
-      summary_table = NULL,
-      qini_explanation = "error: no spend levels found in diff_gain_summaries"
-    ))
+  if (!is.null(model_names)) {
+    multi_batch <- multi_batch[intersect(names(multi_batch), model_names)]
+    if (length(multi_batch) == 0)
+      cli::cli_abort("none of the requested model_names found in multi_batch")
   }
+  if (length(multi_batch) == 0)
+    cli::cli_abort("multi_batch is empty")
 
-  cli::cli_alert_info(glue::glue("detected spend levels: {paste(spend_level_names, collapse=', ')}"))
-
-  # determine if the model is binary or multi-arm by checking the diff_gain_summaries structure
-  is_binary <- TRUE  # default assumption
-
-  # safely check the structure
-  first_model <- names(multi_batch)[1]
-  first_spend_level <- spend_level_names[1]
-
-  if (!is.null(multi_batch[[first_model]]$diff_gain_summaries[[first_spend_level]])) {
-    # check if this is a multi-arm treatment
-    if (is.list(multi_batch[[first_model]]$diff_gain_summaries[[first_spend_level]]) &&
-        "all_arms" %in% names(multi_batch[[first_model]]$diff_gain_summaries[[first_spend_level]])) {
-      is_binary <- FALSE
-      cli::cli_alert_success("detected multi-arm treatment model")
-    } else {
-      cli::cli_alert_success("detected binary treatment model")
-    }
-  } else {
-    cli::cli_alert_warning("could not determine treatment type, assuming binary")
-  }
+  ##----------------------------------------------------------------##
+  ##  binary vs multi-arm switch                                  ##
+  ##----------------------------------------------------------------##
+  first_spend <- names(multi_batch[[1]]$diff_gain_summaries)[1]
+  first_obj   <- multi_batch[[1]]$diff_gain_summaries[[first_spend]]
+  is_binary   <- !is.list(first_obj) || !"all_arms" %in% names(first_obj)
 
   if (is_binary) {
-    result <- margot_interpret_qini_binary(multi_batch, label_mapping, alpha, decimal_places)
+    res <- margot_interpret_qini_binary(
+      multi_batch, label_mapping, alpha, decimal_places
+    )
   } else {
-    cli::cli_alert_success("detected multi-arm treatment model")
-    if (exists("margot_interpret_qini_multi_arm", mode = "function")) {
-      result <- margot_interpret_qini_multi_arm(multi_batch, label_mapping, alpha, decimal_places)
-    } else {
-      cli::cli_alert_warning("multi-arm treatment interpretation not implemented")
-      # placeholder for multi-arm implementation
-      result <- list(
-        summary_table = NULL,
-        explanations = list(),
-        qini_explanation = "multi-arm treatment interpretation not implemented yet."
-      )
-    }
+    cli::cli_abort("multi-arm Qini interpretation not yet implemented")
   }
 
-  # create the combined explanation without the header
-  combined_explanation <- paste(
-    result$qini_explanation, "\n",
-    paste(sapply(names(result$explanations), function(model) {
-      paste0("**", model, "**\n", result$explanations[[model]])
-    }), collapse = "\n\n")
+  ##----------------------------------------------------------------##
+  ##  assemble markdown explanation                                ##
+  ##----------------------------------------------------------------##
+  # build each per-model block once
+  model_expls <- vapply(names(res$explanations), function(nm) {
+    paste0("**", nm, "**\n", res$explanations[[nm]])
+  }, character(1))
+
+  # preamble only once, then join
+  full_expl <- paste0(
+    res$qini_explanation,
+    "\n\n",
+    paste(model_expls, collapse = "\n\n")
   )
 
-  cli::cli_alert_info("qini interpretation completed")
-
-  # return the summary table and combined explanation
-  return(list(
-    summary_table = result$summary_table,
-    qini_explanation = combined_explanation
-  ))
+  list(
+    summary_table         = res$summary_table,
+    qini_explanation      = full_expl,
+    reliable_model_names  = res$reliable_model_names,
+    reliable_model_ids    = res$reliable_model_ids
+  )
 }
 
-#' @keywords internal
-margot_interpret_qini_binary <- function(multi_batch, label_mapping = NULL, alpha = 0.05, decimal_places = 2) {
-  cli::cli_alert_info("processing binary treatment model...")
 
-  # use the new general explanation for binary qini curves
+#’ ---------------------------------------------------------------------------
+#’ Binary-treatment implementation (helper)
+#’ ---------------------------------------------------------------------------
+#’ @keywords internal
+margot_interpret_qini_binary <- function(
+    multi_batch,
+    label_mapping   = NULL,
+    alpha           = 0.05,
+    decimal_places  = 2
+) {
+  cli::cli_alert_info("processing binary treatment model…")
+
+  # the single-preamble text
   qini_explanation <- create_qini_explanation_binary()
 
-  # use transform_var_name helper for consistent variable naming
-  transform_model_label <- function(label) {
-    # first check if we have direct access to transform_var_name function
-    if (exists("transform_var_name", mode = "function")) {
-      return(transform_var_name(
-        label,
-        label_mapping = label_mapping,
-        remove_tx_prefix = TRUE,
-        remove_z_suffix = TRUE,
-        use_title_case = TRUE,
-        remove_underscores = TRUE
-      ))
+  ##-------------------  helpers in local scope  ----------------------##
+  extract_estimates <- function(dg) {
+    est <- as.numeric(sub("^\\s*([+-]?[0-9.]+).*", "\\1", dg$diff_gain))
+    se  <- as.numeric(sub(".*SE:?\\s*([0-9.]+)\\).*", "\\1", dg$diff_gain))
+    if (anyNA(c(est, se))) return(c(estimate=NA, ci_lower=NA, ci_upper=NA))
+    z  <- stats::qnorm(1 - alpha/2)
+    c(estimate=est, ci_lower=est - z*se, ci_upper=est + z*se)
+  }
+
+  fmt_est_ci <- function(v) {
+    if (anyNA(v)) return("NA [NA, NA]")
+    txt <- sprintf(paste0("%.", decimal_places, "f [%.", decimal_places,
+                          "f, %.", decimal_places, "f]"),
+                   v["estimate"], v["ci_lower"], v["ci_upper"])
+    if (v["ci_lower"] > 0)      paste0("**", txt, "**")
+    else if (v["ci_upper"] < 0) paste0("*",  txt, "*")
+    else                         txt
+  }
+
+  make_sentence <- function(dg, spend) {
+    v <- extract_estimates(dg)
+    if (anyNA(v)) {
+      sprintf("At %s%% spend: No data available.", spend*100)
+    } else if (v["ci_lower"] * v["ci_upper"] > 0) {
+      if (v["estimate"] > 0) {
+        sprintf("At %s%% spend: CATE prioritisation is beneficial (diff: %.2f [95%% CI %.2f, %.2f]).",
+                spend*100, v["estimate"], v["ci_lower"], v["ci_upper"])
+      } else {
+        sprintf("At %s%% spend: CATE prioritisation worsens outcomes compared to ATE.",
+                spend*100)
+      }
     } else {
-      # fallback if transform_var_name function is not available
-      original_label <- label
-
-      # apply label mapping if available
-      if (!is.null(label_mapping)) {
-        # try direct mapping
-        if (label %in% names(label_mapping)) {
-          mapped <- label_mapping[[label]]
-          cli::cli_alert_info(glue::glue("mapped label: {original_label} -> {mapped}"))
-          return(mapped)
-        }
-
-        # remove "model_" prefix before checking mapping
-        clean_label <- sub("^model_", "", label)
-        if (clean_label %in% names(label_mapping)) {
-          mapped <- label_mapping[[clean_label]]
-          cli::cli_alert_info(glue::glue("mapped label: {original_label} -> {mapped}"))
-          return(mapped)
-        }
-      }
-
-      # apply transformations if no mapping found
-      label <- sub("^model_", "", label)
-      label <- sub("^t[0-9]+_", "", label) # remove tx_ prefix
-      label <- sub("_z$", "", label)       # remove _z suffix
-      label <- gsub("_", " ", label)       # replace underscores with spaces
-
-      # apply title case
-      label <- tools::toTitleCase(label)
-
-      # Special case for NZ
-      label <- gsub("Nz", "NZ", label)
-
-      return(label)
+      sprintf("At %s%% spend: No reliable benefits from CATE prioritisation.",
+              spend*100)
     }
   }
 
-  extract_estimates <- function(diff_gain_summary) {
-    tryCatch({
-      if (is.null(diff_gain_summary$diff_gain)) {
-        cli::cli_alert_warning("diff_gain is NULL in diff_gain_summary")
-        return(c(estimate = NA, ci_lower = NA, ci_upper = NA))
-      }
-      estimate_match <- regexec("^([-]?\\d+\\.?\\d*)", diff_gain_summary$diff_gain)
-      estimate <- as.numeric(regmatches(diff_gain_summary$diff_gain, estimate_match)[[1]][2])
-      se_match <- regexec("\\((SE: )?(\\d+\\.\\d+)\\)", diff_gain_summary$diff_gain)
-      se <- as.numeric(regmatches(diff_gain_summary$diff_gain, se_match)[[1]][3])
-      if (is.na(estimate) || is.na(se)) {
-        cli::cli_alert_warning("unable to extract estimate or SE from diff_gain")
-        return(c(estimate = NA, ci_lower = NA, ci_upper = NA))
-      }
-      ci_lower <- estimate - stats::qnorm(1 - alpha/2) * se
-      ci_upper <- estimate + stats::qnorm(1 - alpha/2) * se
-      return(c(estimate = estimate, ci_lower = ci_lower, ci_upper = ci_upper))
-    }, error = function(e) {
-      cli::cli_alert_warning(paste("error in extract_estimates:", e$message))
-      return(c(estimate = NA, ci_lower = NA, ci_upper = NA))
-    })
+  label_fn <- function(x) {
+    if (exists("transform_var_name", mode="function")) {
+      transform_var_name(x, label_mapping, TRUE, TRUE, TRUE, TRUE)
+    } else {
+      tools::toTitleCase(gsub("_", " ", sub("^model_|_z$", "", x)))
+    }
   }
 
-  create_explanation <- function(diff_gain_summary, model_name, spend) {
-    estimates <- extract_estimates(diff_gain_summary)
-    if (any(is.na(estimates))) {
-      return(paste("Unable to evaluate", spend * 100, "% spend level due to missing estimates."))
-    }
+  ##-------------------  main loop  -----------------------------------##
+  rows     <- list()
+  explains <- list()
+  keep_ids <- character(0)
+  keep_lbl <- character(0)
 
-    # determine direction and reliability
-    direction <- if (estimates["estimate"] > 0) "better" else if (estimates["estimate"] < 0) "worse" else "indistinguishable"
-    reliably <- estimates["ci_lower"] * estimates["ci_upper"] > 0
+  for (nm in names(multi_batch)) {
+    dg_list <- multi_batch[[nm]]$diff_gain_summaries
+    spend_vals <- as.numeric(sub("^spend_", "", names(dg_list)))
+    idx20 <- which(abs(spend_vals - 0.2) < 1e-4)
+    idx50 <- which(abs(spend_vals - 0.5) < 1e-4)
 
-    if (!reliably) {
-      return(paste("At", spend * 100, "% spend: No reliable benefits from CATE prioritisation."))
-    }
+    est20 <- if (length(idx20)) extract_estimates(dg_list[[idx20]]) else c(NA,NA,NA)
+    est50 <- if (length(idx50)) extract_estimates(dg_list[[idx50]]) else c(NA,NA,NA)
 
-    if (direction != "better") {
-      return(paste("At", spend * 100, "% spend: CATE prioritisation worsens outcomes compared to ATE."))
-    }
-
-    # if evidence is reliably positive, output the concise explanation
-    explanation <- glue::glue(
-      "At {spend * 100}% spend: CATE prioritisation is beneficial (diff: {format(round(estimates['estimate'], decimal_places), nsmall = decimal_places)} [95% CI: {format(round(estimates['ci_lower'], decimal_places), nsmall = decimal_places)}, {format(round(estimates['ci_upper'], decimal_places), nsmall = decimal_places)}])."
+    rows[[nm]] <- tibble::tibble(
+      Model       = label_fn(nm),
+      `Spend 20%` = fmt_est_ci(est20),
+      `Spend 50%` = fmt_est_ci(est50)
     )
-    return(explanation)
-  }
 
-  # extract spend values from spend names (for more flexible handling)
-  extract_spend_value <- function(spend_name) {
-    # try to extract numeric value from spend_X.Y format
-    if (grepl("^spend_", spend_name)) {
-      value <- as.numeric(sub("^spend_", "", spend_name))
-      return(value * 100)  # convert to percentage
-    }
+    sent20 <- if (length(idx20)) make_sentence(dg_list[[idx20]], 0.2) else "At 20% spend: No data available."
+    sent50 <- if (length(idx50)) make_sentence(dg_list[[idx50]], 0.5) else "At 50% spend: No data available."
 
-    # fallback: try direct numeric conversion
-    tryCatch({
-      value <- as.numeric(spend_name)
-      return(value * 100)  # convert to percentage
-    }, error = function(e) {
-      # if all else fails, return the original name
-      return(spend_name)
-    })
-  }
-
-  format_estimate_ci <- function(estimate, ci_lower, ci_upper) {
-    if (any(is.na(c(estimate, ci_lower, ci_upper)))) return("NA [NA, NA]")
-    formatted <- sprintf(paste0("%.", decimal_places, "f [%.", decimal_places, "f, %.", decimal_places, "f]"),
-                         estimate, ci_lower, ci_upper)
-    if (ci_lower > 0) {
-      formatted <- paste0("**", formatted, "**")
-    } else if (ci_upper < 0) {
-      formatted <- paste0("*", formatted, "*")
-    }
-    return(formatted)
-  }
-
-  cli::cli_alert_info("processing individual models...")
-
-  # process each model to extract estimates
-  summary_data <- purrr::map_dfr(names(multi_batch), function(model_name) {
-    cli::cli_alert_info(paste("processing model:", model_name))
-
-    # check if diff_gain_summaries exists
-    if (!("diff_gain_summaries" %in% names(multi_batch[[model_name]]))) {
-      cli::cli_alert_warning(paste("diff_gain_summaries not found for model:", model_name))
-      return(data.frame(Model = character(0), Spend = numeric(0), estimate_ci = character(0)))
-    }
-
-    model_results <- multi_batch[[model_name]]$diff_gain_summaries
-
-    # process each spend level
-    spend_data <- purrr::map_dfr(names(model_results), function(spend) {
-      # check if spend results exist
-      if (is.null(model_results[[spend]])) {
-        cli::cli_alert_warning(paste("NULL result for spend level:", spend, "in model:", model_name))
-        return(NULL)
-      }
-
-      # extract estimates
-      estimates <- extract_estimates(model_results[[spend]])
-
-      # create data frame row
-      data.frame(
-        Model = transform_model_label(model_name),
-        Spend = extract_spend_value(spend),
-        estimate_ci = format_estimate_ci(estimates["estimate"], estimates["ci_lower"], estimates["ci_upper"])
-      )
-    })
-
-    # handle empty result
-    if (is.null(spend_data) || nrow(spend_data) == 0) {
-      return(data.frame(Model = character(0), Spend = numeric(0), estimate_ci = character(0)))
-    }
-
-    return(spend_data)
-  })
-
-  # create summary table
-  cli::cli_alert_info("creating summary table...")
-
-  if (nrow(summary_data) == 0) {
-    cli::cli_alert_warning("no valid data found for summary table")
-    summary_table <- NULL
-  } else {
-    # check if we have Spend column (for safety)
-    if (!"Spend" %in% colnames(summary_data)) {
-      cli::cli_alert_warning("spend column not found in summary data")
-      summary_table <- summary_data
+    if (grepl("No reliable benefits", sent20) &&
+        grepl("No reliable benefits", sent50)) {
+      explains[[label_fn(nm)]] <-
+        "No benefits for priority investments as measured by the Qini curve at the twenty or fifty percent spend levels."
     } else {
-      # reshape data into wide format
-      tryCatch({
-        summary_table <- summary_data %>%
-          tidyr::pivot_wider(
-            names_from = Spend,
-            values_from = estimate_ci,
-            names_prefix = "Spend "
-          ) %>%
-          dplyr::rename_with(~paste0(., "%"), -Model)
-      }, error = function(e) {
-        cli::cli_alert_warning(paste("error creating wide format table:", e$message))
-        # fallback to original format
-        summary_table <- summary_data
-      })
+      txt <- paste(sent20, sent50)
+      # strip any accidental duplicate preamble at start of these sentences:
+      txt <- sub("^We computed[^.]*\\.\\s*", "", txt)
+      explains[[label_fn(nm)]] <- txt
+    }
+
+    # keepers = any CI lower > 0
+    if ((!is.na(est20["ci_lower"]) && est20["ci_lower"] > 0) ||
+        (!is.na(est50["ci_lower"]) && est50["ci_lower"] > 0)) {
+      keep_ids <- c(keep_ids, nm)
+      keep_lbl <- c(keep_lbl, label_fn(nm))
     }
   }
 
-  # generate explanations for each model
-  cli::cli_alert_info("generating explanations...")
-
-  explanations <- list()
-  for (model_name in names(multi_batch)) {
-    cli::cli_alert_info(paste("generating explanation for model:", model_name))
-
-    if (!("diff_gain_summaries" %in% names(multi_batch[[model_name]]))) {
-      explanations[[transform_model_label(model_name)]] <- "No data available for this model."
-      next
-    }
-
-    model_results <- multi_batch[[model_name]]$diff_gain_summaries
-    spend_levels <- names(model_results)
-
-    # Check for spend levels that match 0.2 (20%) and 0.5 (50%)
-    spend_values <- as.numeric(gsub("spend_", "", spend_levels))
-    spend_20 <- spend_levels[which(abs(spend_values - 0.2) < 0.01)]
-    spend_50 <- spend_levels[which(abs(spend_values - 0.5) < 0.01)]
-
-    # Get explanations for both spend levels
-    expl_20 <- if(length(spend_20) > 0 && !is.null(model_results[[spend_20]])) {
-      create_explanation(model_results[[spend_20]], model_name, 0.2)
-    } else {
-      "At 20% spend: No data available."
-    }
-
-    expl_50 <- if(length(spend_50) > 0 && !is.null(model_results[[spend_50]])) {
-      create_explanation(model_results[[spend_50]], model_name, 0.5)
-    } else {
-      "At 50% spend: No data available."
-    }
-
-    # Check if both levels show no benefits
-    if (grepl("No reliable benefits", expl_20) && grepl("No reliable benefits", expl_50)) {
-      explanations[[transform_model_label(model_name)]] <-
-        "No benefits for priority investments as measured by the QINI curve at the twenty and fifty percent spend levels."
-    } else {
-      explanations[[transform_model_label(model_name)]] <- paste(expl_20, expl_50, sep = " ")
-    }
-  }
-
-  cli::cli_alert_success("binary treatment model processing completed")
-
-  return(list(
-    summary_table = summary_table,
-    explanations = explanations,
-    qini_explanation = qini_explanation
-  ))
+  list(
+    summary_table         = dplyr::bind_rows(rows),
+    explanations          = explains,
+    qini_explanation      = qini_explanation,
+    reliable_model_names  = keep_lbl,
+    reliable_model_ids    = keep_ids
+  )
 }
 
-#' @keywords internal
+
+#’ @keywords internal
 create_qini_explanation_binary <- function() {
-  # new general comment instead of explanation header
-  explanation <- "We computed the cumulative benefits as we increase the treated fraction by prioritising conditional average treatment effects (CATE) at two different spend levels: 20% of a total budget and 50% of a total budget, where the contrast is no priority assignment."
-  return(explanation)
+  "We computed cumulative gains from prioritising individuals by CATE at 20% and 50% spend levels, comparing against a no-prioritisation baseline."
 }
