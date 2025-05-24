@@ -10,6 +10,9 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+# [2025-05-19] margot 1.0.53
+- `margot_plot_policy_tree_depth2()`, `margot_plot_policy_combo()` - plotting enhancements to 1L and 2L trees (note Rstudio will sometime make panels gray -- just a quirk -- not an issue for final graph project.)
+- 
 
 # [2025-05-19] margot 1.0.52
 ## improved 
