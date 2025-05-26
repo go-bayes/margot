@@ -142,6 +142,7 @@ reference:
     - margot_plot_qini
     - margot_plot_rate
     - margot_plot_rate_batch
+    - margot_plot_tau
 
   - title: "Utility functions"
     contents:

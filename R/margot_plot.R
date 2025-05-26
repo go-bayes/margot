@@ -429,7 +429,7 @@ margot_interpret_marginal <- function(
 
   intro <- glue::glue(
     "The following outcomes showed reliable causal evidence ",
-    "(E‑value lower bound > {e_val_bound_threshold}):\n\n"
+    "(E‑value lower bound > {e_val_bound_threshold}):\n\n\n"
   )
 
   bullets <- df_f %>%

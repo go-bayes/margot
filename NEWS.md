@@ -10,9 +10,16 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
-# [2025-05-19] margot 1.0.53
+# [2025-05-19] margot 1.0.54
+## new
+- `margot_plot_tau()`  creates a faceted grid of histograms showing the distribution of tau hat (individual treatment effects) for multiple models. the range is standardised across all facets to facilitate comparison. Useful for qualitatively displaying heterogenity of causal effects. 
+## improved 
+- `margot_plot()` three paragraph skips before the list
+
+# [2025-05-25] margot 1.0.53
+## improved 
 - `margot_plot_policy_tree_depth2()`, `margot_plot_policy_combo()` - plotting enhancements to 1L and 2L trees (note Rstudio will sometime make panels gray -- just a quirk -- not an issue for final graph project.)
-- 
+
 
 # [2025-05-19] margot 1.0.52
 ## improved 
