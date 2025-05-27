@@ -19,8 +19,11 @@
 #' @param subtitle character; subtitle for the plot. default null.
 #' @param x_label character; label for x-axis. default uses expression for tau.
 #' @param show_zero_line logical; whether to show vertical line at zero. default true.
-#' @param fill_colour character; fill colour for histogram bars. default "white".
-#' @param border_colour character; border colour for histogram bars. default "black".
+#' @param fill_colour character; fill colour for histogram bars when colour_by_sign is false. default "white".
+#' @param border_colour character; border colour for histogram bars. default NA (no border).
+#' @param colour_by_sign logical; whether to colour bars differently above/below zero. default true.
+#' @param colour_below character; colour for bars below zero when colour_by_sign is true. default "#4f88c6".
+#' @param colour_above character; colour for bars above zero when colour_by_sign is true. default "#d8a739".
 #' @param zero_line_colour character; colour for zero line. default "red".
 #' @param zero_line_alpha numeric; transparency for zero line. default 0.5.
 #' @param remove_tx_prefix logical; remove time prefixes from model names. default true.
@@ -29,11 +32,15 @@
 #' @param remove_underscores logical; replace underscores with spaces. default true.
 #' @param free_scales logical; whether to allow free scales in facets. default false
 #'   to maintain fixed range across all facets.
+#' @param theme character; ggplot2 theme to use. options include "classic", "minimal",
+#'   "bw", "light", "dark", "void", "grey", "linedraw". default "void".
 #'
 #' @return a ggplot object with faceted tau hat distributions
 #'
 #' @importFrom ggplot2 ggplot aes geom_histogram geom_vline facet_wrap
-#'   coord_cartesian labs theme_minimal theme element_text element_line
+#'   coord_cartesian labs theme_minimal theme_classic theme_bw theme_light
+#'   theme_dark theme_void theme_grey theme_linedraw theme element_text element_line
+#'   scale_fill_manual
 #' @importFrom dplyr bind_rows group_by summarise mutate count case_when
 #' @importFrom cli cli_alert_warning cli_alert_info cli_alert_success
 #' @importFrom tools toTitleCase
@@ -62,6 +69,39 @@
 #'   title = "Individual Treatment Effects"
 #' )
 #'
+#' # with different theme
+#' tau_plot <- margot_plot_tau(
+#'   models_binary,
+#'   label_mapping = label_map,
+#'   title = "Individual Treatment Effects",
+#'   theme = "minimal"
+#' )
+#'
+#' # without conditional colouring
+#' tau_plot <- margot_plot_tau(
+#'   models_binary,
+#'   label_mapping = label_map,
+#'   title = "Individual Treatment Effects",
+#'   colour_by_sign = FALSE,
+#'   fill_colour = "lightblue"
+#' )
+#'
+#' # with custom colours for above/below zero
+#' tau_plot <- margot_plot_tau(
+#'   models_binary,
+#'   label_mapping = label_map,
+#'   title = "Individual Treatment Effects",
+#'   colour_below = "darkred",
+#'   colour_above = "darkgreen"
+#' )
+#'
+#' # add borders if desired
+#' tau_plot <- margot_plot_tau(
+#'   models_binary,
+#'   label_mapping = label_map,
+#'   border_colour = "grey50"
+#' )
+#'
 #' # without label mapping (auto transform)
 #' tau_plot <- margot_plot_tau(models_binary)
 #' }
@@ -78,19 +118,29 @@ margot_plot_tau <- function(
     x_label            = expression(tau[i]),
     show_zero_line     = TRUE,
     fill_colour        = "white",
-    border_colour      = "black",
+    border_colour      = NA,
+    colour_by_sign     = TRUE,
+    colour_below       = "#4f88c6",
+    colour_above       = "#d8a739",
     zero_line_colour   = "red",
     zero_line_alpha    = 0.5,
     remove_tx_prefix   = TRUE,
     remove_z_suffix    = TRUE,
     use_title_case     = TRUE,
     remove_underscores = TRUE,
-    free_scales        = FALSE
+    free_scales        = FALSE,
+    theme              = "void"
 ) {
 
   # validate inputs --------------------------------------------------------
   if (!is.list(models_list)) {
     stop("models_list must be a list of models")
+  }
+
+  # validate theme input
+  valid_themes <- c("classic", "minimal", "bw", "light", "dark", "void", "grey", "linedraw")
+  if (!theme %in% valid_themes) {
+    stop("theme must be one of: ", paste(valid_themes, collapse = ", "))
   }
 
   # smart handling for models_binary structure -----------------------------
@@ -183,7 +233,11 @@ margot_plot_tau <- function(
   global_min <- min(tau_data_combined$tau_hat, na.rm = TRUE)
   global_max <- max(tau_data_combined$tau_hat, na.rm = TRUE)
 
-  # add small buffer to range
+  # ensure zero is always included in the range
+  global_min <- min(global_min, 0)
+  global_max <- max(global_max, 0)
+
+  # add buffer to range
   range_buffer <- (global_max - global_min) * 0.05
   plot_limits <- c(global_min - range_buffer, global_max + range_buffer)
 
@@ -201,13 +255,35 @@ margot_plot_tau <- function(
   }
 
   # create plot ------------------------------------------------------------
-  p <- ggplot2::ggplot(tau_data_combined, ggplot2::aes(x = tau_hat)) +
-    ggplot2::geom_histogram(
-      binwidth = binwidth,
-      colour   = border_colour,
-      fill     = fill_colour,
-      boundary = 0
+  if (colour_by_sign) {
+    # create a factor variable for cleaner colour mapping
+    tau_data_combined$sign_group <- factor(
+      ifelse(tau_data_combined$tau_hat > 0, "above zero", "below zero"),
+      levels = c("below zero", "above zero")
     )
+
+    p <- ggplot2::ggplot(tau_data_combined, ggplot2::aes(x = tau_hat)) +
+      ggplot2::geom_histogram(
+        ggplot2::aes(fill = sign_group),
+        binwidth = binwidth,
+        colour   = border_colour,
+        boundary = 0,
+        closed   = "left"
+      ) +
+      ggplot2::scale_fill_manual(
+        values = c("below zero" = colour_below, "above zero" = colour_above),
+        guide = "none"
+      )
+  } else {
+    # standard single colour histogram
+    p <- ggplot2::ggplot(tau_data_combined, ggplot2::aes(x = tau_hat)) +
+      ggplot2::geom_histogram(
+        binwidth = binwidth,
+        colour   = border_colour,
+        fill     = fill_colour,
+        boundary = 0
+      )
+  }
 
   # add zero line if requested
   if (show_zero_line) {
@@ -238,22 +314,34 @@ margot_plot_tau <- function(
     p <- p + ggplot2::coord_cartesian(xlim = plot_limits)
   }
 
-  # styling
-  p <- p +
-    ggplot2::labs(
-      x        = x_label,
-      y        = "Count",
-      title    = title,
-      subtitle = subtitle
-    ) +
-    ggplot2::theme_minimal(base_size = base_size) +
-    ggplot2::theme(
-      axis.title       = ggplot2::element_text(face = "bold"),
-      panel.grid.major = ggplot2::element_line(colour = "grey80"),
-      strip.text       = ggplot2::element_text(face = "bold", size = base_size * 0.9),
-      plot.title       = ggplot2::element_text(face = "bold", size = base_size * 1.2),
-      plot.subtitle    = ggplot2::element_text(size = base_size * 0.9)
-    )
+  # add labels
+  p <- p + ggplot2::labs(
+    x        = x_label,
+    y        = "Count",
+    title    = title,
+    subtitle = subtitle
+  )
+
+  # apply selected theme with base_size
+  p <- p + switch(
+    theme,
+    "classic" = ggplot2::theme_classic(base_size = base_size),
+    "minimal" = ggplot2::theme_minimal(base_size = base_size),
+    "bw"      = ggplot2::theme_bw(base_size = base_size),
+    "light"   = ggplot2::theme_light(base_size = base_size),
+    "dark"    = ggplot2::theme_dark(base_size = base_size),
+    "void"    = ggplot2::theme_void(base_size = base_size),
+    "grey"    = ggplot2::theme_grey(base_size = base_size),
+    "linedraw"= ggplot2::theme_linedraw(base_size = base_size)
+  )
+
+  # add custom theme modifications
+  p <- p + ggplot2::theme(
+    axis.title    = ggplot2::element_text(face = "bold"),
+    strip.text    = ggplot2::element_text(face = "bold", size = base_size * 0.9),
+    plot.title    = ggplot2::element_text(face = "bold", size = base_size * 1.2),
+    plot.subtitle = ggplot2::element_text(size = base_size * 0.9)
+  )
 
   # add summary statistics as caption if few models ------------------------
   if (n_models <= 3) {

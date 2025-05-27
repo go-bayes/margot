@@ -10,7 +10,11 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
-# [2025-05-19] margot 1.0.54
+# [2025-05-28] margot 1.0.55
+## new
+- `margot_plot_tau()` - totally ehanced so that (a) zero is always shown (b) colour matches sign
+
+# [2025-05-26] margot 1.0.54
 ## new
 - `margot_plot_tau()`  creates a faceted grid of histograms showing the distribution of tau hat (individual treatment effects) for multiple models. the range is standardised across all facets to facilitate comparison. Useful for qualitatively displaying heterogenity of causal effects. 
 ## improved 

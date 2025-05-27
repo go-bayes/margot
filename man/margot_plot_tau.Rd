@@ -15,14 +15,18 @@ margot_plot_tau(
   x_label = expression(tau[i]),
   show_zero_line = TRUE,
   fill_colour = "white",
-  border_colour = "black",
+  border_colour = NA,
+  colour_by_sign = TRUE,
+  colour_below = "#4f88c6",
+  colour_above = "#d8a739",
   zero_line_colour = "red",
   zero_line_alpha = 0.5,
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
   remove_underscores = TRUE,
-  free_scales = FALSE
+  free_scales = FALSE,
+  theme = "void"
 )
 }
 \arguments{
@@ -49,9 +53,15 @@ determined based on number of models.}
 
 \item{show_zero_line}{logical; whether to show vertical line at zero. default true.}
 
-\item{fill_colour}{character; fill colour for histogram bars. default "white".}
+\item{fill_colour}{character; fill colour for histogram bars when colour_by_sign is false. default "white".}
 
-\item{border_colour}{character; border colour for histogram bars. default "black".}
+\item{border_colour}{character; border colour for histogram bars. default NA (no border).}
+
+\item{colour_by_sign}{logical; whether to colour bars differently above/below zero. default true.}
+
+\item{colour_below}{character; colour for bars below zero when colour_by_sign is true. default "#4f88c6".}
+
+\item{colour_above}{character; colour for bars above zero when colour_by_sign is true. default "#d8a739".}
 
 \item{zero_line_colour}{character; colour for zero line. default "red".}
 
@@ -67,6 +77,9 @@ determined based on number of models.}
 
 \item{free_scales}{logical; whether to allow free scales in facets. default false
 to maintain fixed range across all facets.}
+
+\item{theme}{character; ggplot2 theme to use. options include "classic", "minimal",
+"bw", "light", "dark", "void", "grey", "linedraw". default "void".}
 }
 \value{
 a ggplot object with faceted tau hat distributions
@@ -99,6 +112,39 @@ tau_plot <- margot_plot_tau(
   models_binary$results,
   label_mapping = label_map,
   title = "Individual Treatment Effects"
+)
+
+# with different theme
+tau_plot <- margot_plot_tau(
+  models_binary,
+  label_mapping = label_map,
+  title = "Individual Treatment Effects",
+  theme = "minimal"
+)
+
+# without conditional colouring
+tau_plot <- margot_plot_tau(
+  models_binary,
+  label_mapping = label_map,
+  title = "Individual Treatment Effects",
+  colour_by_sign = FALSE,
+  fill_colour = "lightblue"
+)
+
+# with custom colours for above/below zero
+tau_plot <- margot_plot_tau(
+  models_binary,
+  label_mapping = label_map,
+  title = "Individual Treatment Effects",
+  colour_below = "darkred",
+  colour_above = "darkgreen"
+)
+
+# add borders if desired
+tau_plot <- margot_plot_tau(
+  models_binary,
+  label_mapping = label_map,
+  border_colour = "grey50"
 )
 
 # without label mapping (auto transform)
