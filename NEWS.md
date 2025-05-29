@@ -10,6 +10,11 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+# [2025-05-29] margot 1.0.56
+
+- `margot_make_tables()` now renders variables with hyphens correctly. 
+
+
 # [2025-05-28] margot 1.0.55
 ## new
 - `margot_plot_tau()` - totally ehanced so that (a) zero is always shown (b) colour matches sign
