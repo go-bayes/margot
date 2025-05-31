@@ -10,6 +10,10 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+# [2025-05-30] margot 1.0.57
+
+- `margot_make_tables()` better handling in MS Word through flextable integration
+
 # [2025-05-29] margot 1.0.56
 
 - `margot_make_tables()` now renders variables with hyphens correctly. 

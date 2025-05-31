@@ -11,8 +11,9 @@ margot_make_tables(
   labels = NULL,
   factor_vars = NULL,
   table1_opts = list(),
-  format = c("markdown", "latex"),
+  format = c("markdown", "latex", "flextable"),
   kable_opts = list(),
+  flex_opts = list(),
   quarto_label = NULL
 )
 }
@@ -29,12 +30,21 @@ margot_make_tables(
 
 \item{table1_opts}{A list of additional options to pass to \code{table1::table1()}. For example, \code{list(overall = FALSE, transpose = TRUE)}.}
 
-\item{format}{A character string specifying the output format. Options are \code{"markdown"} (default) or \code{"latex"}.}
+\item{format}{A character string specifying the output format. Options are \code{"markdown"} (default), \code{"latex"}, or \code{"flextable"}.}
 
 \item{kable_opts}{A list of additional options controlling table styling:
 \itemize{
   \item For \code{format = "latex"}, these are passed to \code{kableExtra::kable_styling()}.
   \item For \code{format = "markdown"}, currently only for documentation purposes.
+}}
+
+\item{flex_opts}{A list of additional options for flextable formatting:
+\itemize{
+  \item \code{font_size}: Font size for the table (default: 9)
+  \item \code{font_size_header}: Font size for headers (default: 10)
+  \item \code{theme}: Theme function to apply (default: "theme_vanilla")
+  \item \code{autofit}: Whether to autofit columns (default: TRUE)
+  \item \code{width}: Table width (0-1 for proportion of page width, default: 1)
 }}
 
 \item{quarto_label}{An optional label for Quarto cross-references (e.g., "tbl-demographics"). When specified for LaTeX output,
@@ -45,25 +55,26 @@ A table object formatted for the specified output:
  \itemize{
    \item For \code{format = "latex"}, a kableExtra-formatted LaTeX table with optional Quarto label
    \item For \code{format = "markdown"}, a markdown-formatted kable table with bold variable names
+   \item For \code{format = "flextable"}, a flextable object optimized for Word output
  }
 }
 \description{
 \code{margot_make_tables} is a wrapper for \code{table1::table1()} which simplifies the creation of summary tables.
 It provides custom variable labelling, formatting, factor conversion, and additional table options.
-This function is optimized for \code{"markdown"} and \code{"latex"} outputs, with special support for Quarto documents.
+This function is optimized for \code{"markdown"}, \code{"latex"}, and \code{"flextable"} outputs, with special support for Quarto documents.
 }
 \examples{
 \dontrun{
-  # LaTeX output with Quarto label
-  latex_table <- margot_make_tables(
+  # Flextable output for Word
+  flex_table <- margot_make_tables(
     data = mydata,
     vars = c("age", "gender", "income"),
     by = "group",
     labels = c("age" = "Age", "gender" = "Gender", "income" = "Income"),
     factor_vars = "gender",
     table1_opts = list(overall = FALSE, transpose = TRUE),
-    format = "latex",
-    quarto_label = "tbl-demographics"
+    format = "flextable",
+    flex_opts = list(font_size = 8)
   )
 }
 
