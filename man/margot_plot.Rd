@@ -31,16 +31,73 @@ margot_plot(
   rename_ate = FALSE
 )
 }
+\arguments{
+\item{.data}{data frame containing causal effect estimates with columns for
+effect sizes, confidence intervals, E-values and E-value bounds}
+
+\item{type}{character. type of effect estimate: "RD" (risk difference) or
+"RR" (risk ratio). default "RD"}
+
+\item{order}{character. sorting option for outcomes:
+\itemize{
+  \item 'alphabetical': sort by outcome name (A–Z)
+  \item 'magnitude_desc': sort by absolute effect size, descending
+  \item 'magnitude_asc': sort by absolute effect size, ascending
+  \item 'evaluebound_desc': sort by E-value bound, descending
+  \item 'evaluebound_asc': sort by E-value bound, ascending
+  \item 'custom': user-defined order (requires custom_order)
+  \item 'default': alias for 'magnitude_desc' (deprecated)
+}}
+
+\item{custom_order}{character vector. custom outcome ordering when order = 'custom'}
+
+\item{title_binary}{character. deprecated parameter, kept for compatibility}
+
+\item{include_coefficients}{logical. whether to add numeric labels to plot points}
+
+\item{standardize_label}{character. label style: "NZ", "US", or "none"}
+
+\item{e_val_bound_threshold}{numeric. threshold for reliable causal evidence}
+
+\item{adjust}{character. multiplicity correction method: "none", "bonferroni", "holm"}
+
+\item{alpha}{numeric. significance level for corrections}
+
+\item{...}{additional arguments passed to plot options}
+
+\item{options}{list. plot styling options}
+
+\item{label_mapping}{named character vector. outcome label mappings}
+
+\item{save_output}{logical. whether to save results to file}
+
+\item{use_timestamp}{logical. whether to add timestamp to saved filename}
+
+\item{base_filename}{character. base name for saved file}
+
+\item{prefix}{character. prefix for saved filename}
+
+\item{save_path}{character. directory path for saved file}
+
+\item{original_df}{data frame. original scale data for back-transformation}
+
+\item{bold_rows}{logical. whether to bold rows exceeding E-value threshold}
+
+\item{rename_cols}{logical. whether to rename E-value columns}
+
+\item{col_renames}{named list. column name mappings for renaming}
+
+\item{rename_ate}{logical. whether to rename effect column to "ATE"}
+}
 \value{
-list containing the ggplot object (`plot`), an interpretation string
-  (`interpretation`), and the transformed results table
-  (`transformed_table`).
+list containing:
+  \itemize{
+    \item plot: ggplot object with causal effects visualization
+    \item interpretation: character string with results interpretation
+    \item transformed_table: data frame with formatted results table
+  }
 }
 \description{
-create a margot plot for visualising causal effects with flexible sorting,
+Create a margot plot for visualising causal effects with flexible sorting,
 embed a compact interpretation, and return a transformed table.
-
-this revision auto‑disables multiplicity correction when only one outcome is
-supplied and suppresses any mention of such corrections in the
-interpretation. all comments are in lower‑case nz english.
 }

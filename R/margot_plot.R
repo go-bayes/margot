@@ -1,17 +1,49 @@
 #' @title Create a Margot Plot with Interpretation
 #' @description
-#' create a margot plot for visualising causal effects with flexible sorting,
+#' Create a margot plot for visualising causal effects with flexible sorting,
 #' embed a compact interpretation, and return a transformed table.
 #'
-#' this revision auto‑disables multiplicity correction when only one outcome is
-#' supplied and suppresses any mention of such corrections in the
-#' interpretation. all comments are in lower‑case nz english.
+#' @param .data data frame containing causal effect estimates with columns for
+#'   effect sizes, confidence intervals, E-values and E-value bounds
+#' @param type character. type of effect estimate: "RD" (risk difference) or
+#'   "RR" (risk ratio). default "RD"
+#' @param order character. sorting option for outcomes:
+#'   \itemize{
+#'     \item 'alphabetical': sort by outcome name (A–Z)
+#'     \item 'magnitude_desc': sort by absolute effect size, descending
+#'     \item 'magnitude_asc': sort by absolute effect size, ascending
+#'     \item 'evaluebound_desc': sort by E-value bound, descending
+#'     \item 'evaluebound_asc': sort by E-value bound, ascending
+#'     \item 'custom': user-defined order (requires custom_order)
+#'     \item 'default': alias for 'magnitude_desc' (deprecated)
+#'   }
+#' @param custom_order character vector. custom outcome ordering when order = 'custom'
+#' @param title_binary character. deprecated parameter, kept for compatibility
+#' @param include_coefficients logical. whether to add numeric labels to plot points
+#' @param standardize_label character. label style: "NZ", "US", or "none"
+#' @param e_val_bound_threshold numeric. threshold for reliable causal evidence
+#' @param adjust character. multiplicity correction method: "none", "bonferroni", "holm"
+#' @param alpha numeric. significance level for corrections
+#' @param ... additional arguments passed to plot options
+#' @param options list. plot styling options
+#' @param label_mapping named character vector. outcome label mappings
+#' @param save_output logical. whether to save results to file
+#' @param use_timestamp logical. whether to add timestamp to saved filename
+#' @param base_filename character. base name for saved file
+#' @param prefix character. prefix for saved filename
+#' @param save_path character. directory path for saved file
+#' @param original_df data frame. original scale data for back-transformation
+#' @param bold_rows logical. whether to bold rows exceeding E-value threshold
+#' @param rename_cols logical. whether to rename E-value columns
+#' @param col_renames named list. column name mappings for renaming
+#' @param rename_ate logical. whether to rename effect column to "ATE"
 #'
-#' @inheritParams margot_plot
-#'
-#' @return list containing the ggplot object (`plot`), an interpretation string
-#'   (`interpretation`), and the transformed results table
-#'   (`transformed_table`).
+#' @return list containing:
+#'   \itemize{
+#'     \item plot: ggplot object with causal effects visualization
+#'     \item interpretation: character string with results interpretation
+#'     \item transformed_table: data frame with formatted results table
+#'   }
 #'
 #' @export
 margot_plot <- function(
@@ -37,7 +69,6 @@ margot_plot <- function(
     prefix        = NULL,
     save_path     = here::here("push_mods"),
     original_df   = NULL,
-    # ── new args ─────────────────────────────────────────────────────────
     bold_rows   = FALSE,
     rename_cols = FALSE,
     col_renames = list(
@@ -163,14 +194,6 @@ margot_plot <- function(
   )
   sorted_df$outcome <- factor(sorted_df$outcome, levels = sorted_df$outcome)
 
-  # sort raw table identically for later transformation --------------------
-  table_sorted_df <- group_tab(
-    raw_table_df,
-    type         = type,
-    order        = order,
-    custom_order = custom_order
-  )
-
   # categorise estimates ----------------------------------------------------
   cat_vec <- with(sorted_df,
                   ifelse(
@@ -261,24 +284,20 @@ margot_plot <- function(
   )$interpretation
 
   # transform table for display -------------------------------------------
-  table_for_transform <- table_sorted_df
-  if ("outcome" %in% colnames(table_for_transform)) {
-    rownames(table_for_transform) <- table_for_transform$outcome
-    table_for_transform$outcome  <- NULL
-  }
+  # use the exact same corrected and transformed data as the plot
+  table_for_transform <- sorted_df
 
-  transformed_table <- transform_table_rownames(
-    table_for_transform,
-    label_mapping = label_mapping,
-    options       = opts
-  )
-
-  plot_levels   <- levels(sorted_df$outcome)
-  outcome_order <- rev(plot_levels)
-  transformed_table <- transformed_table[outcome_order, , drop = FALSE]
-
+  # keep only the core columns needed for display
   keep_cols <- c(eff_col, "2.5 %", "97.5 %", "E_Value", "E_Val_bound")
-  transformed_table <- transformed_table[, intersect(keep_cols, names(transformed_table)), drop = FALSE]
+  table_for_transform <- table_for_transform[, intersect(keep_cols, names(table_for_transform)), drop = FALSE]
+
+  # set rownames to outcome names (already transformed)
+  rownames(table_for_transform) <- as.character(sorted_df$outcome)
+
+  # create transformed_table with proper ordering (reverse for ascending order)
+  plot_outcome_names <- as.character(sorted_df$outcome)
+  outcome_order <- rev(plot_outcome_names)
+  transformed_table <- table_for_transform[outcome_order, , drop = FALSE]
 
   # optional renaming -------------------------------------------------------
   if (rename_ate) {
@@ -335,6 +354,8 @@ margot_plot <- function(
     transformed_table = transformed_table
   ))
 }
+
+
 
 # -------------------------------------------------------------------------
 # helper: interpretation with optional adjustment note --------------------
@@ -456,6 +477,146 @@ margot_interpret_marginal <- function(
       )
     ) %>%
     dplyr::pull(text)
+
+  interpretation_text <- paste0(
+    if (nzchar(adj_note)) paste0(adj_note, "\n\n") else "",
+    intro,
+    paste(bullets, collapse = "\n")
+  )
+
+  list(interpretation = interpretation_text)
+}
+
+
+# debugging version -- temporary
+margot_interpret_marginal_debug <- function(
+    df,
+    type = c("RD", "RR"),
+    order = c(
+      "alphabetical", "magnitude_desc", "magnitude_asc",
+      "evaluebound_desc", "evaluebound_asc", "custom", "default"
+    ),
+    original_df = NULL,
+    e_val_bound_threshold = 1,
+    adjust = c("none", "bonferroni", "holm"),
+    alpha = 0.05,
+    include_adjust_note = TRUE
+) {
+  type   <- match.arg(type)
+  order  <- match.arg(order)
+  adjust <- match.arg(adjust)
+  alpha  <- as.numeric(alpha)[1]
+
+  # debug: check input data
+  cat("\n=== DEBUG: input df to margot_interpret_marginal ===\n")
+  print(head(df, 3))
+  cat("\noriginal_df provided:", !is.null(original_df), "\n")
+
+  # build adjustment sentences only when requested ------------------------
+  if (include_adjust_note) {
+    ci_sentence <- switch(
+      adjust,
+      none       = "No adjustment was made for family‑wise error rates to confidence intervals.",
+      bonferroni = paste0(
+        "Confidence intervals were adjusted for multiple comparisons using bonferroni correction",
+        " ($\\alpha$ = ", alpha, ")."
+      ),
+      holm       = paste0(
+        "Confidence intervals were adjusted for multiple comparisons using holm correction",
+        " ($\\alpha$ = ", alpha, ")."
+      )
+    )
+
+    ev_sentence <- switch(
+      adjust,
+      none       = "No adjustment was made for family‑wise error rates to E‑values.",
+      bonferroni = paste0(
+        "E‑values were also adjusted using bonferroni correction",
+        " ($\\alpha$ = ", alpha, ")."
+      ),
+      holm       = paste0(
+        "E‑values were also adjusted using holm correction",
+        " ($\\alpha$ = ", alpha, ")."
+      )
+    )
+    adj_note <- paste(ci_sentence, ev_sentence)
+  } else {
+    adj_note <- ""
+  }
+
+  # sort and optionally back‑transform ------------------------------------
+  df <- group_tab(df, type = type, order = order)
+  if (!"unit" %in% names(df)) df$unit <- ""
+
+  # debug: check after group_tab
+  cat("\n=== DEBUG: after group_tab ===\n")
+  print(head(df, 3))
+
+  if (!is.null(original_df)) {
+    cat("\n=== DEBUG: applying back_transform_estimates ===\n")
+    df <- back_transform_estimates(df, original_df)
+    cat("=== DEBUG: after back_transform_estimates ===\n")
+    print(head(df, 3))
+  }
+
+  # identify columns -------------------------------------------------------
+  effect_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(df)) {
+    "E[Y(1)]-E[Y(0)]"
+  } else {
+    "E[Y(1)]/E[Y(0)]"
+  }
+  null_val <- if (type == "RR") 1 else 0
+
+  # filter reliable effects -----------------------------------------------
+  cat("\n=== DEBUG: filtering criteria ===\n")
+  cat("e_val_bound_threshold:", e_val_bound_threshold, "\n")
+  cat("effect_col:", effect_col, "\n")
+
+  df_f <- df %>%
+    dplyr::filter(E_Value > 1, E_Val_bound > e_val_bound_threshold)
+
+  cat("=== DEBUG: df_f after filtering ===\n")
+  print(df_f)
+
+  if (nrow(df_f) == 0) {
+    return(list(interpretation = adj_note))
+  }
+
+  # preserve requested ordering -------------------------------------------
+  if (grepl("_(asc|desc)$", order)) df_f <- df_f[nrow(df_f):1, ]
+
+  intro <- glue::glue(
+    "The following outcomes showed reliable causal evidence ",
+    "(E‑value lower bound > {e_val_bound_threshold}):\n\n\n"
+  )
+
+  bullets <- df_f %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(
+      lab = glue::glue(
+        "{round(.data[[effect_col]], 3)}(",
+        "{round(`2.5 %`, 3)},",
+        "{round(`97.5 %`, 3)})"
+      ),
+      lab_orig = if (paste0(effect_col, "_original") %in% names(df)) {
+        glue::glue(
+          "{round(.data[[paste0(effect_col, '_original')]], 3)} {unit}(",
+          "{round(.data[[paste0('2.5 %_original')]], 3)},",
+          "{round(.data[[paste0('97.5 %_original')]], 3)})"
+        )
+      } else {
+        NA_character_
+      },
+      text = glue::glue(
+        "- {outcome}: {lab}",
+        "{if (!is.na(lab_orig)) paste0('; on the original scale, ',lab_orig, '.')} ",
+        " E‑value bound = {E_Val_bound}"
+      )
+    ) %>%
+    dplyr::pull(text)
+
+  cat("\n=== DEBUG: bullets created ===\n")
+  cat(paste(bullets, collapse = "\n"), "\n")
 
   interpretation_text <- paste0(
     if (nzchar(adj_note)) paste0(adj_note, "\n\n") else "",

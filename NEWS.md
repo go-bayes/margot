@@ -10,6 +10,9 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+# [2025-06-03] margot 1.0.58
+- `margot_plot()` when data are corrected using e.g. bonferroni the table is also corrected -- so the interpretation text and interpretation table match. 
+
 # [2025-05-30] margot 1.0.57
 
 - `margot_make_tables()` better handling in MS Word through flextable integration

@@ -31,9 +31,9 @@ margot_transition_table(
 
 \item{observed_var}{optional name of a column marking participants still observed.}
 
-\item{observed_val}{value in \code{observed_var} that denotes “observed” (default 1).}
+\item{observed_val}{value in \code{observed_var} that denotes “observed” (default 1).}
 
-\item{table_name}{name for the output object (default "transition_table").}
+\item{table_name}{name for the output object (default "transition_table").}
 }
 \value{
 an object of class \code{margot_transitions} with
