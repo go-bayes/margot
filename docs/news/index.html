@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.58</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.59</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,10 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.59" id="id_2025-06-04-margot-1059">[2025-06-04] margot 1.0.59<a class="anchor" aria-label="anchor" href="#id_2025-06-04-margot-1059"></a></h2>
+<ul><li>removing ‘export’ from purely internal functions/ tidying</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.58" id="id_2025-06-03-margot-1058">[2025-06-03] margot 1.0.58<a class="anchor" aria-label="anchor" href="#id_2025-06-03-margot-1058"></a></h2>
 <ul><li>
@@ -164,13 +168,13 @@
 <ul><li>
 <code><a href="../reference/margot_correct_combined_table.html">margot_correct_combined_table()</a></code> does family–wise-error correction for multiple outcomes (ATE)</li>
 <li>
-<code><a href="../reference/margot_add_policy_values.html">margot_add_policy_values()</a></code> - attach policy values to forest models (utility)</li>
+<code>margot_add_policy_values()</code> - attach policy values to forest models (utility)</li>
 <li>
-<code><a href="../reference/margot_collect_policy_values.html">margot_collect_policy_values()</a></code> – gather policy values from forest models</li>
+<code>margot_collect_policy_values()</code> – gather policy values from forest models</li>
 <li>
-<code><a href="../reference/margot_screen_models.html">margot_screen_models()</a></code> select models for policy-tree analysis</li>
+<code>margot_screen_models()</code> select models for policy-tree analysis</li>
 <li>
-<code><a href="../reference/margot_summarise_all.html">margot_summarise_all()</a></code> summarise (family-wise) corrected analysis for policy trees</li>
+<code>margot_summarise_all()</code> summarise (family-wise) corrected analysis for policy trees</li>
 <li>`margot_adjust_policy_p() ## changed</li>
 <li>
 <code><a href="../reference/margot_rate.html">margot_rate()</a></code>, and <code>margot_rate_batch</code> have deterministic seeds for reproducible results</li>
@@ -179,11 +183,11 @@
 <li>
 <code>margot_bind_table</code> now has default e_val_bound_threshold = 1.1 (previously 1, which is arguably too liberal).</li>
 <li>
-<code><a href="../reference/margot_adjust_policy_p.html">margot_adjust_policy_p()</a></code> - family wise corrections</li>
+<code>margot_adjust_policy_p()</code> - family wise corrections</li>
 <li>
-<code><a href="../reference/margot_add_policy_values_batch.html">margot_add_policy_values_batch()</a></code> - batch add policy values to models</li>
+<code>margot_add_policy_values_batch()</code> - batch add policy values to models</li>
 <li>
-<code><a href="../reference/margot_report_policy.html">margot_report_policy()</a></code> - succinct reporting of corrected policy values.</li>
+<code>margot_report_policy()</code> - succinct reporting of corrected policy values.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -230,7 +234,7 @@
 <li>
 <code><a href="../reference/margot_wide_impute_baseline.html">margot_wide_impute_baseline()</a></code> soft deprecated</li>
 <li>
-<code><a href="../reference/margot_wide.html">margot_wide()</a></code> soft deprecated</li>
+<code>margot_wide()</code> soft deprecated</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -617,7 +621,7 @@
 <div class="section level3">
 <h3 id="improved-0-3-3-3">Improved<a class="anchor" aria-label="anchor" href="#improved-0-3-3-3"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_censor.html">margot_censor()</a></code> - explicit call for ‘cli’ to avoid conflict with crayon</li>
+<code>margot_censor()</code> - explicit call for ‘cli’ to avoid conflict with crayon</li>
 <li>
 <code><a href="../reference/create_ordered_variable.html">create_ordered_variable()</a></code> - removed crayon</li>
 <li>
@@ -625,7 +629,7 @@
 <li>
 <code><a href="../reference/margot_log_transform_vars.html">margot_log_transform_vars()</a></code> removed crayon, made all function calls explicit, removed <code>require</code> for packages.</li>
 <li>
-<code><a href="../reference/margot_summary_tables.html">margot_summary_tables()</a></code> - remove <code>require</code> and explicit function calls now.</li>
+<code>margot_summary_tables()</code> - remove <code>require</code> and explicit function calls now.</li>
 <li>
 <code><a href="../reference/causal_contrast_engine.html">causal_contrast_engine()</a></code> - refactored - removes <code>require</code>
 </li>
@@ -633,7 +637,7 @@
 <code><a href="../reference/margot_wide_machine.html">margot_wide_machine()</a></code> - removes <code>require</code>
 </li>
 <li>
-<code><a href="../reference/margot_wide.html">margot_wide()</a></code> - removes <code>require</code>
+<code>margot_wide()</code> - removes <code>require</code>
 </li>
 </ul></div>
 </div>
@@ -664,7 +668,7 @@
 <ul><li>
 <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code>- refactored to save qini_data and qini_objects for each model. (was not working before).</li>
 <li>
-<code><a href="../reference/margot_multi_arm_causal_forest.html">margot_multi_arm_causal_forest()</a></code> - refactored.</li>
+<code>margot_multi_arm_causal_forest()</code> - refactored.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -795,9 +799,9 @@
 <li>
 <code><a href="../reference/margot_summary_panel.html">margot_summary_panel()</a></code> - specified functions required</li>
 <li>
-<code><a href="../reference/margot_censor.html">margot_censor()</a></code> - specified functions required by data.table (#’ <a href="https://github.com/importFrom" class="external-link">@importFrom</a> data.table as.data.table copy set get uniqueN)</li>
+<code>margot_censor()</code> - specified functions required by data.table (#’ <a href="https://github.com/importFrom" class="external-link">@importFrom</a> data.table as.data.table copy set get uniqueN)</li>
 <li>
-<code><a href="../reference/read_multiple_images.html">read_multiple_images()</a></code> - made internal</li>
+<code>read_multiple_images()</code> - made internal</li>
 <li>
 <code><a href="../reference/margot_wide_machine.html">margot_wide_machine()</a></code> - stated explicit functions in dependencies (removed zoo)</li>
 <li>
@@ -868,7 +872,7 @@
 <div class="section level3">
 <h3 id="improved-0-3-1-3">Improved<a class="anchor" aria-label="anchor" href="#improved-0-3-1-3"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_censor.html">margot_censor()</a></code>: censoring is conditional on both the condition and the wave: if <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="monospace">𝚌𝚎𝚗𝚜𝚘𝚛_𝚏𝚒𝚗𝚊𝚕_𝚠𝚊𝚟𝚎 = 𝙵𝙰𝙻𝚂𝙴</mtext><annotation encoding="application/x-tex">\texttt{censor_final_wave = FALSE}</annotation></semantics></math> then rows in the final wave (determined as <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="monospace">𝚖𝚊𝚡(𝚍𝚝[[𝚠𝚊𝚟𝚎_𝚟𝚊𝚛]])</mtext><annotation encoding="application/x-tex">\texttt{max(dt[[wave_var]])}</annotation></semantics></math>) are preserved (default behaviour). This allows for estimating a per-protocal effect where changing a censoring condition is part of the causal effect of the intervention for the population at baseline.</li>
+<code>margot_censor()</code>: censoring is conditional on both the condition and the wave: if <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="monospace">𝚌𝚎𝚗𝚜𝚘𝚛_𝚏𝚒𝚗𝚊𝚕_𝚠𝚊𝚟𝚎 = 𝙵𝙰𝙻𝚂𝙴</mtext><annotation encoding="application/x-tex">\texttt{censor_final_wave = FALSE}</annotation></semantics></math> then rows in the final wave (determined as <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="monospace">𝚖𝚊𝚡(𝚍𝚝[[𝚠𝚊𝚟𝚎_𝚟𝚊𝚛]])</mtext><annotation encoding="application/x-tex">\texttt{max(dt[[wave_var]])}</annotation></semantics></math>) are preserved (default behaviour). This allows for estimating a per-protocal effect where changing a censoring condition is part of the causal effect of the intervention for the population at baseline.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -1193,7 +1197,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-3-0">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-3-0"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_summary_tables.html">margot_summary_tables()</a></code> - now pass multiple tables, better exposure plots.</li>
+<code>margot_summary_tables()</code> - now pass multiple tables, better exposure plots.</li>
 <li>
 <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> - refactored: now returns results on data scale, better labels.</li>
 <li>
@@ -1327,7 +1331,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-1-55">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-1-55"></a></h3>
 <ul><li>
-<code>extract_qini_data()</code> improved handling of <code><a href="../reference/margot_multi_arm_causal_forest.html">margot_multi_arm_causal_forest()</a></code>
+<code>extract_qini_data()</code> improved handling of <code>margot_multi_arm_causal_forest()</code>
 </li>
 <li>numerous plot functions enhanced to produce “NZ” instead of “Nz”</li>
 </ul></div>
@@ -1342,9 +1346,9 @@
 <div class="section level3">
 <h3 id="improved-0-2-1-54">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-1-54"></a></h3>
 <ul><li>
-<code><a href="../reference/compute_qini_curves_multi_arm.html">compute_qini_curves_multi_arm()</a></code> - modified so that we can now get quantitative estimates for support for CATEs</li>
+<code>compute_qini_curves_multi_arm()</code> - modified so that we can now get quantitative estimates for support for CATEs</li>
 <li>
-<code><a href="../reference/margot_multi_arm_causal_forest.html">margot_multi_arm_causal_forest()</a></code> - enhanced in several ways, for example to support <code>margot_summary_cate_differences()</code>
+<code>margot_multi_arm_causal_forest()</code> - enhanced in several ways, for example to support <code>margot_summary_cate_differences()</code>
 </li>
 <li>
 <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> - likewise enhanced.</li>
@@ -1357,7 +1361,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-1-53">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-1-53"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_summary_tables.html">margot_summary_tables()</a></code> plots take upper case letters, remove ’_’</li>
+<code>margot_summary_tables()</code> plots take upper case letters, remove ’_’</li>
 <li>
 <code><a href="../reference/margot_adjust_weights.html">margot_adjust_weights()</a></code> censored individuals are assigned zero weights, and only uncensored individuals contribute to the final analysis.</li>
 </ul></div>
@@ -1405,15 +1409,15 @@
 <h2 class="pkg-version" data-toc-text="0.2.1.48" id="id_2024-09-12-margot-02148">[2024-09-12] margot 0.2.1.48<a class="anchor" aria-label="anchor" href="#id_2024-09-12-margot-02148"></a></h2>
 <div class="section level3">
 <h3 id="improved-0-2-1-48">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-1-48"></a></h3>
-<ul><li><code><a href="../reference/margot_multi_arm_causal_forest.html">margot_multi_arm_causal_forest()</a></code></li>
+<ul><li><code>margot_multi_arm_causal_forest()</code></li>
 <li>
-<code>extract_qini_data()</code> improved to work with <code><a href="../reference/margot_multi_arm_causal_forest.html">margot_multi_arm_causal_forest()</a></code>
+<code>extract_qini_data()</code> improved to work with <code>margot_multi_arm_causal_forest()</code>
 </li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-0-2-1-48">New<a class="anchor" aria-label="anchor" href="#new-0-2-1-48"></a></h3>
 <ul><li>
-<code><a href="../reference/compute_qini_curves_multi_arm.html">compute_qini_curves_multi_arm()</a></code> internal function to support <code><a href="../reference/margot_multi_arm_causal_forest.html">margot_multi_arm_causal_forest()</a></code>
+<code>compute_qini_curves_multi_arm()</code> internal function to support <code>margot_multi_arm_causal_forest()</code>
 </li>
 </ul></div>
 </div>
@@ -1421,7 +1425,7 @@
 <h2 class="pkg-version" data-toc-text="0.2.1.47" id="id_2024-09-11-margot-02147">[2024-09-11] margot 0.2.1.47<a class="anchor" aria-label="anchor" href="#id_2024-09-11-margot-02147"></a></h2>
 <div class="section level3">
 <h3 id="improved-0-2-1-47">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-1-47"></a></h3>
-<ul><li>Coordinated the following functions to play well with <code><a href="../reference/margot_multi_arm_causal_forest.html">margot_multi_arm_causal_forest()</a></code>
+<ul><li>Coordinated the following functions to play well with <code>margot_multi_arm_causal_forest()</code>
 </li>
 <li><code><a href="../reference/margot_plot_qini.html">margot_plot_qini()</a></code></li>
 <li>`extract_qini_data()``</li>
@@ -1584,7 +1588,7 @@
 <div class="section level3">
 <h3 id="new-0-2-1-33">New<a class="anchor" aria-label="anchor" href="#new-0-2-1-33"></a></h3>
 <ul><li>
-<code><a href="../reference/read_multiple_images.html">read_multiple_images()</a></code> utility function to read batchs of images, for presentations, articles etc.</li>
+<code>read_multiple_images()</code> utility function to read batchs of images, for presentations, articles etc.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -1621,7 +1625,7 @@
 <div class="section level3">
 <h3 id="deprecated-0-2-1-29">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-0-2-1-29"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_grf_subset_table.html">margot_grf_subset_table()</a></code>, functions replaced by <code><a href="../reference/margot_subset_model.html">margot_subset_model()</a></code>, use this new function instead.</li>
+<code>margot_grf_subset_table()</code>, functions replaced by <code><a href="../reference/margot_subset_model.html">margot_subset_model()</a></code>, use this new function instead.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -1685,7 +1689,7 @@
 <li><p><code>margot_create_database()</code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_manage_measures.html" class="external-link">boilerplate::boilerplate_manage_measures()</a></code> instead.</p></li>
 <li><p><code>manager_boilerplate_measures()</code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_manage_measures.html" class="external-link">boilerplate::boilerplate_manage_measures()</a></code> instead.</p></li>
 <li><p><code>margot_create_bibliography()</code> is deprecated. Use <code>boilerplate::boilerplate_report_measures()</code> instead.</p></li>
-<li><p><code><a href="../reference/margot_merge_databases.html">margot_merge_databases()</a></code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_merge_databases.html" class="external-link">boilerplate::boilerplate_merge_databases()</a></code> instead. (Note the plural ‘databases’ in the new function name.)</p></li>
+<li><p><code>margot_merge_databases()</code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_merge_databases.html" class="external-link">boilerplate::boilerplate_merge_databases()</a></code> instead. (Note the plural ‘databases’ in the new function name.)</p></li>
 <li><p>to obtain these new functions, use <code>devtools::install_github("go-bayes/boilerplate")</code></p></li>
 </ul></div>
 </div>

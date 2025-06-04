@@ -63,3 +63,4 @@ Depending on the configuration, returns a summary object containing estimated ca
 Estimates causal contrasts using generalized linear models for different types of treatment effects (ATE, ATT)
 and outcomes (RR, RD). Supports handling multiply imputed datasets and allows flexibility in model specification.
 }
+\keyword{internal}

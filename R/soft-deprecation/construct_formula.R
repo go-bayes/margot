@@ -29,7 +29,7 @@
 #'
 #' @importFrom splines bs
 #' @importFrom stats glm
-#' @export
+#' @keywords internal
 construct_formula <- function(Y, X = 1, baseline_vars, continuous_X = FALSE, splines = FALSE, subclass = NULL) {
   # Early return for simple model
   if (X == 1) {

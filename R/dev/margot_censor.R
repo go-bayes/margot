@@ -13,7 +13,7 @@
 #'
 #' @importFrom data.table as.data.table copy set uniqueN
 #' @importFrom cli cli_abort cli_alert_info cli_alert_success
-#' @export
+#' @keywords internal
 margot_censor <- function(
     dt,
     cluster_id = "rel_num",

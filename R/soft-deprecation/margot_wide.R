@@ -12,7 +12,7 @@
 #'
 #' @return A wide-format data frame with prefixed time-stamped columns.
 #'
-#' @export
+#' @keywords internal
 margot_wide <- function(.data,
                         baseline_vars,
                         exposure_var,

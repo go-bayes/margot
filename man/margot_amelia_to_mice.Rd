@@ -27,3 +27,4 @@ mids_obj <- margot_amelia_to_mice(amelia_output)
 # verify mids object
 print(mids_obj)
 }
+\keyword{internal}

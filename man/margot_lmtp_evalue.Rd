@@ -52,3 +52,4 @@ print(summary_evalues)
 \seealso{
 \code{\link{margot_tab_lmtp}}, \code{\link{lmtp_evalue_tab}} for the underlying functions used.
 }
+\keyword{internal}

@@ -20,7 +20,6 @@
 #' @param vcov Type of variance-covariance matrix for standard error estimation; defaults to "HC2".
 #' @param verbose Whether to print detailed output; defaults to FALSE.
 #' @return Depending on the configuration, returns a summary object containing estimated causal contrasts, confidence intervals, and potentially other diagnostics.
-#' @export
 #'
 #' @importFrom rlang expr sym parse_expr
 #' @importFrom glue glue
@@ -28,6 +27,7 @@
 #' @importFrom mice complete
 #' @importFrom cli cli_abort cli_alert_info cli_alert_warning
 #' @importFrom clarify misim sim sim_ame
+#' @keywords internal
 # compute causal contrasts using glm and clarify simulation
 causal_contrast_engine <- function(df, Y, X, baseline_vars, treat_0, treat_1,
                                    estimand = c("ATE", "ATT"), type = c("RR", "RD"),

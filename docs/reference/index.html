@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.58</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.59</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,29 +32,6 @@
     </div>
 
     <div class="section level2">
-      <h2 id="simulate">Simulate<a class="anchor" aria-label="anchor" href="#simulate"></a></h2>
-
-
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="run_simulations.html">run_simulations()</a></code>
-
-        </dt>
-        <dd>Run Simulations for Estimating ATE</dd>
-      </dl><dl><dt>
-
-          <code><a href="simulate_ate_data_with_weights.html">simulate_ate_data_with_weights()</a></code>
-
-        </dt>
-        <dd>Simulate Data for Average Treatment Effect (ATE) with Sample Weights</dd>
-      </dl></div><div class="section level2">
       <h2 id="describe-longitudinal-data">Describe Longitudinal Data<a class="anchor" aria-label="anchor" href="#describe-longitudinal-data"></a></h2>
 
 
@@ -150,12 +127,6 @@
 
       <dl><dt>
 
-          <code><a href="match_mi_general.html">match_mi_general()</a></code>
-
-        </dt>
-        <dd>General Matching Function for Multiple Imputation Data</dd>
-      </dl><dl><dt>
-
           <code><a href="margot_make_tables.html">margot_make_tables()</a></code>
 
         </dt>
@@ -184,12 +155,6 @@
 
         </dt>
         <dd>Create Propensity Score Model and Associated Plots</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_summary_tables.html">margot_summary_tables()</a></code>
-
-        </dt>
-        <dd>Generate summary tables and plots for longitudinal data</dd>
       </dl><dl><dt>
 
           <code><a href="margot_transition_table.html">margot_transition_table()</a></code>
@@ -225,18 +190,6 @@
 
         </dt>
         <dd>Adjust Weights for Censoring and Sample Design with Progress Reporting</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_amelia_to_mice.html">margot_amelia_to_mice()</a></code>
-
-        </dt>
-        <dd>convert an amelia object to a mice object</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_censor.html">margot_censor()</a></code>
-
-        </dt>
-        <dd>Transform year_measured Variable Based on Clustered Conditions Within Waves</dd>
       </dl><dl><dt>
 
           <code><a href="margot_compute_gender_weights_by_wave.html">margot_compute_gender_weights_by_wave()</a></code>
@@ -298,46 +251,16 @@
 
       <dl><dt>
 
-          <code><a href="causal_contrast_engine.html">causal_contrast_engine()</a></code>
-
-        </dt>
-        <dd>Compute Causal Contrasts</dd>
-      </dl><dl><dt>
-
-          <code><a href="causal_contrast_marginal.html">causal_contrast_marginal()</a></code>
-
-        </dt>
-        <dd>Causal Contrast Marginal Effects Estimation</dd>
-      </dl><dl><dt>
-
-          <code><a href="double_robust_marginal.html">double_robust_marginal()</a></code>
-
-        </dt>
-        <dd>Double Robust Marginal Estimation and Tabulation</dd>
-      </dl><dl><dt>
-
           <code><a href="margot_causal_forest.html">margot_causal_forest()</a></code>
 
         </dt>
         <dd>Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Qini Cross-Validation</dd>
       </dl><dl><dt>
 
-          <code><a href="margot_causal_forest_parallel.html">margot_causal_forest_parallel()</a></code>
-
-        </dt>
-        <dd>Run Multiple Generalised Random Forest (GRF) Causal Forest Models in Parallel</dd>
-      </dl><dl><dt>
-
           <code><a href="margot_lmtp.html">margot_lmtp()</a></code>
 
         </dt>
         <dd>Batch Process LMTP Models</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_multi_arm_causal_forest.html">margot_multi_arm_causal_forest()</a></code>
-
-        </dt>
-        <dd>Run Multiple Generalized Random Forest (GRF) Multi-Arm Causal Forest Models with Enhanced Features</dd>
       </dl></div><div class="section level2">
       <h2 id="interpret-and-report-results">Interpret and Report Results<a class="anchor" aria-label="anchor" href="#interpret-and-report-results"></a></h2>
 
@@ -369,12 +292,6 @@
         <dd>Compare subgroups from a causal forest model.</dd>
       </dl><dl><dt>
 
-          <code><a href="margot_compute_policy_value.html">margot_compute_policy_value()</a></code>
-
-        </dt>
-        <dd>Bootstrap test-set policy value</dd>
-      </dl><dl><dt>
-
           <code><a href="margot_correct_combined_table.html">margot_correct_combined_table()</a></code>
 
         </dt>
@@ -385,12 +302,6 @@
 
         </dt>
         <dd>Flip CATE Estimates and Recalculate Policy Trees for Selected Outcomes</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_flip_forests_parallel.html">margot_flip_forests_parallel()</a></code>
-
-        </dt>
-        <dd>Parallel flip of CATE estimates with reproducible RNG and memory guard</dd>
       </dl><dl><dt>
 
           <code><a href="margot_inspect_qini.html">margot_inspect_qini()</a></code>
@@ -429,28 +340,10 @@
         <dd>Compare and interpret RATE estimates from AUTOC and QINI</dd>
       </dl><dl><dt>
 
-          <code><a href="margot_lmtp_evalue.html">margot_lmtp_evalue()</a></code>
-
-        </dt>
-        <dd>Combine LMTP Summary and E-Value Calculation</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_lmtp_tab.html">margot_lmtp_tab()</a></code>
-
-        </dt>
-        <dd>Summarise LMTP Output into a Data Frame</dd>
-      </dl><dl><dt>
-
           <code><a href="margot_model_evalue.html">margot_model_evalue()</a></code>
 
         </dt>
         <dd>Combine Model Summary and E-Value Calculation for Various Causal Models</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_model_tab.html">margot_model_tab()</a></code>
-
-        </dt>
-        <dd>Summarise LMTP or Causal Forest Output into a Data Frame</dd>
       </dl><dl><dt>
 
           <code><a href="margot_omnibus_hetero_test.html">margot_omnibus_hetero_test()</a></code>
@@ -487,18 +380,6 @@
 
         </dt>
         <dd>Post-process models to recover Qini curves via propensity trimming</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_screen_models.html">margot_screen_models()</a></code>
-
-        </dt>
-        <dd>Screen margot models by p-value tests with robust handling of missing components</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_summarise_all.html">margot_summarise_all()</a></code>
-
-        </dt>
-        <dd>summarise ate, rate and policy tests across all outcomes</dd>
       </dl><dl><dt>
 
           <code><a href="margot_subset_model.html">margot_subset_model()</a></code>
@@ -613,12 +494,6 @@
         <dd>Back Transform Z-Score to Original Scale</dd>
       </dl><dl><dt>
 
-          <code><a href="construct_formula.html">construct_formula()</a></code>
-
-        </dt>
-        <dd>Construct a Formula for Regression Models</dd>
-      </dl><dl><dt>
-
           <code><a href="here_read.html">here_read()</a></code>
 
         </dt>
@@ -647,12 +522,6 @@
 
         </dt>
         <dd>Calculate E-values for LMTP Output</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_add_policy_values_batch.html">margot_add_policy_values_batch()</a></code>
-
-        </dt>
-        <dd>Attach policy-value tests to a batch of models</dd>
       </dl><dl><dt>
 
           <code><a href="margot_back_transform_log_z.html">margot_back_transform_log_z()</a></code>
@@ -685,12 +554,6 @@
         <dd>Create a separate exposure plot</dd>
       </dl><dl><dt>
 
-          <code><a href="margot_policy_summary.html">margot_policy_summary()</a></code>
-
-        </dt>
-        <dd>Collect and adjust policy-value tests, focusing on desired depths</dd>
-      </dl><dl><dt>
-
           <code><a href="margot_process_binary_vars.html">margot_process_binary_vars()</a></code>
 
         </dt>
@@ -707,12 +570,6 @@
 
         </dt>
         <dd>Post-process models to recover Qini curves via propensity trimming</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_report_policy.html">margot_report_policy()</a></code>
-
-        </dt>
-        <dd>summarise policy tests (add if absent, adjust, return tidy table)</dd>
       </dl><dl><dt>
 
           <code><a href="margot_reversed_labels.html">margot_reversed_labels()</a></code>
@@ -784,29 +641,6 @@
 
         </dt>
         <dd>df_nz: Example Data Frame</dd>
-      </dl></div><div class="section level2">
-      <h2 id="deprecated-functions">Deprecated Functions<a class="anchor" aria-label="anchor" href="#deprecated-functions"></a></h2>
-
-
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="margot_wide_impute_baseline.html">margot_wide_impute_baseline()</a></code>
-
-        </dt>
-        <dd>Transform longitudinal data to wide format and impute baseline (soft-deprecated)</dd>
-      </dl><dl><dt>
-
-          <code><a href="margot_wide.html">margot_wide()</a></code>
-
-        </dt>
-        <dd>Transform longitudinal data to wide format with labels</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -310,7 +310,7 @@ margot_lighten_for_flip <- function(cf_out, models) {
 #' @importFrom future plan multisession availableCores
 #' @importFrom future.apply future_lapply
 #' @name margot_flip_forests_parallel
-#' @export
+#' @keywords internal
 margot_flip_forests_parallel <- function(model_results,
                                          flip_outcomes,
                                          model_prefix   = "model_",

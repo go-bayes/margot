@@ -54,7 +54,7 @@
 #' @note Setting save_models = TRUE typically results in very large objects (often several GB).
 #'       Ensure you have sufficient memory available when using this option.
 #'
-#' @export
+#' @keywords internal
 margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_multi, weights,
                                            exposure_name, grf_defaults = list(),
                                            save_data = FALSE, top_n_vars = 20,

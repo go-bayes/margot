@@ -78,7 +78,7 @@ margot_add_policy_values_batch <- function(cf_out,
 #' @param alpha numeric. Significance threshold after adjustment. Default 0.05.
 #'
 #' @return Adjusted summary `tibble` filtered to requested depths.
-#' @export
+#' @keywords internal
 margot_policy_summary <- function(cf_out,
                                   depths = 2L,
                                   adjust = "bonferroni",
@@ -300,7 +300,7 @@ margot_collect_policy_values <- function(cf_out, depths = c(1L, 2L)) {
 #' @importFrom future plan multisession
 #' @importFrom parallel detectCores
 #' @importFrom furrr future_map furrr_options
-#' @export
+#' @keywords internal
 margot_add_policy_values_batch <- function(cf_out,
                                            outcomes = NULL,
                                            depths   = c(1L, 2L),
@@ -375,7 +375,7 @@ margot_add_policy_values_batch <- function(cf_out,
 #' @param R,seed  bootstrap settings if tests need to be (re)run.
 #'
 #' @return tibble. one row per outcome with adjusted *p*-values and pass flag.
-#' @export
+#' @keywords internal
 margot_report_policy <- function(cf_out,
                                  keep   = NULL,
                                  depth  = 2L,
@@ -415,7 +415,7 @@ margot_report_policy <- function(cf_out,
 #'        [stats::p.adjust()]). default "bonferroni".
 #' @param alpha  numeric. confidence level for rate intervals (default 0.05).
 #' @return tibble. one row per outcome.
-#' @export
+#' @keywords internal
 #' @importFrom purrr map_dfr
 #' @importFrom tibble tibble
 #' @importFrom dplyr mutate select starts_with

@@ -37,7 +37,7 @@
 #' @importFrom purrr map
 #' @importFrom glue glue
 #' @importFrom rlang .data quo enquo eval_tidy
-#' @export
+#' @keywords internal
 causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0, treat_1,
                                      estimand = c("ATE", "ATT"), type = c("RR", "RD"),
                                      nsims = 200, cores = parallel::detectCores(), family = "gaussian",

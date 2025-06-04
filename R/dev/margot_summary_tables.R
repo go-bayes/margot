@@ -17,7 +17,7 @@
 #' @param show_progress Logical, whether to show a progress bar (default: TRUE)
 #'
 #' @return A list containing summary tables, information, and optional plots
-#' @export
+#' @keywords internal
 #'
 #' @importFrom dplyr filter select all_of
 #' @importFrom gtsummary tbl_summary modify_header bold_labels

@@ -12,7 +12,7 @@
 #' @param method Character, method for IPTW and DR adjustment ("ps" or other).
 #' @return A tibble containing the estimated ATEs and their confidence intervals for each method.
 #'
-#' @export
+#' @keywords internal
 run_simulations <- function(num_simulations, N, prob_L1, A_on_Y, L_on_A, L_on_Y, method = "ps") {
   if (!is.numeric(num_simulations) || num_simulations < 1)
     stop("num_simulations must be a positive integer.")

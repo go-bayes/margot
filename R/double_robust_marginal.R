@@ -53,7 +53,7 @@
 #'   sd = 1
 #' )
 #'
-#' @export
+#' @keywords internal
 #' @importFrom parallel detectCores
 #' @importFrom stats glm
 #' @importFrom dplyr filter mutate rename
@@ -102,48 +102,3 @@ double_robust_marginal <- function(df, Y, X, baseline_vars, treat_0, treat_1, ns
 
   return(list(causal_results = causal_results, tab_results = tab_results))
 }
-# double_robust_marginal <- function(df, Y, X, baseline_vars, treat_0, treat_1, nsims, cores, family,
-#                                    weights = TRUE, continuous_X = FALSE, splines = FALSE, vcov = "HC2",
-#                                    verbose = FALSE, delta = 1, sd = 1, new_name, estimand = c("ATE", "ATT"),
-#                                    type_causal = c("RR", "RD"), type_tab = c("RR", "RD")) {
-#   # type <- match.arg(type)  # This selects the first element of the vector as the default
-#
-#   # # make sure this is set
-#   # type_causal <- match.arg(type_causal, choices = c("RR", "RD"))
-#   # type_tab <- match.arg(type_tab, choices = c("RR", "RD"))
-#
-#
-#   # First, run the causal_contrast_marginal function with its specific type argument
-#   causal_results <- causal_contrast_marginal(
-#     df = df,
-#     Y = Y,
-#     X = X,
-#     baseline_vars = baseline_vars,
-#     treat_0 = treat_0,
-#     treat_1 = treat_1,
-#     estimand = estimand,
-#     type = type_causal,
-#     nsims = nsims,
-#     cores = cores,
-#     family = family,
-#     weights = weights,
-#     continuous_X = continuous_X,
-#     splines = splines,
-#     vcov = vcov,
-#     verbose = verbose
-#   )
-#
-#   # Then, feed the results into tab_engine_marginal with its specific type argument
-#   tab_results <- tab_engine_marginal(
-#     x = causal_results,
-#     new_name = new_name,
-#     delta = delta,
-#     sd = sd,
-#     type = type_tab,
-#     continuous_X = continuous_X
-#   )
-#
-#   # Return both results in a list for further usage or examination
-#   return(list(causal_results = causal_results, tab_results = tab_results))
-# }
-

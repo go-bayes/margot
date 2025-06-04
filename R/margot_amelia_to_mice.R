@@ -3,7 +3,7 @@
 #' @param amelia_output an object of class `amelia`, containing imputed datasets from the Amelia package
 #'
 #' @return a `mids` object compatible with the `mice` package, structured with the original dataset and imputed values
-#' @export
+#' @keywords internal
 #'
 #' @examples
 #' # load Amelia package and perform imputation

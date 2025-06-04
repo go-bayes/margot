@@ -44,11 +44,6 @@ development:
 vignette_engine: quarto
 
 reference:
-  - title: "Simulate"
-    contents:
-      - run_simulations
-      - simulate_ate_data_with_weights
-
   - title: "Describe Longitudinal Data"
     contents:
     - margot_count_dyads
@@ -66,13 +61,11 @@ reference:
 
   - title: "Check assumptions"
     contents:
-    - match_mi_general
     - margot_make_tables
     - margot_plot_categorical
     - margot_plot_individual_responses
     - margot_plot_shift
     - margot_propensity_model_and_plots
-    - margot_summary_tables
     - margot_transition_table
 
   - title: "Prepare data for models"
@@ -80,8 +73,6 @@ reference:
     - create_ordered_variable
     - impute_and_combine
     - margot_adjust_weights
-    - margot_amelia_to_mice
-    - margot_censor
     - margot_compute_gender_weights_by_wave
     - margot_filter
     - margot_impute_carry_forward
@@ -93,41 +84,29 @@ reference:
 
   - title: "Treatment effect estimation"
     contents:
-    - causal_contrast_engine
-    - causal_contrast_marginal
-    - double_robust_marginal
     - margot_causal_forest
-    - margot_causal_forest_parallel
     - margot_lmtp
-    - margot_multi_arm_causal_forest
 
   - title: "Interpret and Report Results"
     contents:
     - margot_bind_tables
     - margot_bind_models
     - margot_compare_groups
-    - margot_compute_policy_value
     - margot_correct_combined_table
     - margot_flip_forests
-    - margot_flip_forests_parallel
     - margot_inspect_qini
     - margot_interpret_policy_batch
     - margot_interpret_policy_tree
     - margot_interpret_qini
     - margot_interpret_rate
     - margot_interpret_rate_comparison
-    - margot_lmtp_evalue
-    - margot_lmtp_tab
     - margot_model_evalue
-    - margot_model_tab
     - margot_omnibus_hetero_test
     - margot_planned_subgroups_batch
     - margot_policy
     - margot_rate
     - margot_rate_batch
     - margot_rescue_qini
-    - margot_screen_models
-    - margot_summarise_all
     - margot_subset_model
     - margot_subset_batch
     - margot_summary_cate_difference_gain
@@ -149,23 +128,19 @@ reference:
     - back_transform_logmean
     - back_transform_log_z
     - back_transform_zscore
-    - construct_formula
     - here_read
     - here_save
     - here_read_qs
     - here_save_qs
     - lmtp_evalue_tab
-    - margot_add_policy_values_batch
     - margot_back_transform_log_z
     - margot_get_labels
     - margot_log_transform_vars
     - margot_plot_create_options
     - margot_plot_exposure
-    - margot_policy_summary
     - margot_process_binary_vars
     - margot_prop_missing
     - margot_rescue_qini
-    - margot_report_policy
     - margot_reversed_labels
     - margot_save_png
     - margot_size
@@ -180,8 +155,4 @@ reference:
     contents:
     - df_nz
 
-  - title: "Deprecated Functions"
-    contents:
-    - margot_wide_impute_baseline
-    - margot_wide
 

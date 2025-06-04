@@ -75,3 +75,4 @@ result <- causal_contrast_marginal(df = df, Y = "outcome", X = "treatment",
                                    vcov = "HC3", verbose = TRUE)
 
 }
+\keyword{internal}

@@ -23,3 +23,4 @@ This function takes the output from `lmtp::lmtp_contrast()` and creates a data f
 estimates. It allows for scaling the estimates as either risk differences (RD) or risk ratios (RR).
 The resulting data frame includes the estimate, standard error, and 95% confidence interval.
 }
+\keyword{internal}

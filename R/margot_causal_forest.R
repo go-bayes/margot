@@ -33,18 +33,18 @@
 #' @importFrom crayon bold green red yellow
 #' @importFrom purrr map walk
 #' @name margot_causal_forest_parallel
-#' @export
+#' @keywords internal
 margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, weights,
-                                 grf_defaults    = list(),
-                                 save_data       = FALSE,
-                                 compute_rate    = TRUE,
-                                 top_n_vars      = 15,
-                                 save_models     = TRUE,
-                                 train_proportion= 0.7,
-                                 qini_split      = TRUE,
-                                 qini_train_prop = 0.7,
-                                 n_cores         = future::availableCores() - 1,
-                                 verbose         = TRUE) {
+                                           grf_defaults    = list(),
+                                           save_data       = FALSE,
+                                           compute_rate    = TRUE,
+                                           top_n_vars      = 15,
+                                           save_models     = TRUE,
+                                           train_proportion= 0.7,
+                                           qini_split      = TRUE,
+                                           qini_train_prop = 0.7,
+                                           n_cores         = future::availableCores() - 1,
+                                           verbose         = TRUE) {
   # dimension checks
   n_rows <- nrow(covariates)
   if (verbose) cli::cli_alert_info(paste0("rows in covariates: ", n_rows))

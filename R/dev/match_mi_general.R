@@ -43,7 +43,7 @@
 #' Detailed methodology and additional options can be found in:
 #' - \code{\link[WeightIt]{WeightIt}} package for propensity score estimation.
 #' - \code{\link[MatchThem]{MatchThem}} package for matching within imputed datasets.
-#' @export
+#' @keywords internal
 match_mi_general <-
   function(data,
            X,

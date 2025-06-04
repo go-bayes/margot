@@ -23,7 +23,7 @@
 #' # )
 #'
 #' @importFrom lifecycle deprecate_soft
-#' @export
+#' @keywords internal
 margot_wide_impute_baseline <- function(.data,
                                         baseline_vars,
                                         exposure_var,

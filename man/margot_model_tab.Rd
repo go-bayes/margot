@@ -40,3 +40,4 @@ tab_contrast_hours_charity_z_null <- margot_model_tab(
 print(tab_contrast_hours_charity_z_null)
 }
 }
+\keyword{internal}

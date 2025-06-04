@@ -77,3 +77,4 @@ Messages produced inside workers are captured by **future** and
   dispatched to the master session.  Progress bars update in real time.  To
   silence progress, call `progressr::handlers("off")` before running.
 }
+\keyword{internal}

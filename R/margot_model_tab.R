@@ -22,7 +22,7 @@
 #' )
 #' print(tab_contrast_hours_charity_z_null)
 #' }
-#' @export
+#' @keywords internal
 margot_model_tab <- function(model_output, scale = c("RD", "RR"), new_name = "character_string") {
   scale <- match.arg(scale)
 

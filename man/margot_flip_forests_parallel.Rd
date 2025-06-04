@@ -39,3 +39,4 @@ margot_flip_forests_parallel(
 \description{
 Parallel flip of CATE estimates with reproducible RNG and memory guard
 }
+\keyword{internal}

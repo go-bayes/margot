@@ -11,7 +11,7 @@ use of spline transformations, and adjustments for multiple imputation datasets.
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.58</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.59</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,7 +148,7 @@ use of spline transformations, and adjustments for multiple imputation datasets.
 <span class="r-in"><span>                                   cores <span class="op">=</span> <span class="fl">2</span>, family <span class="op">=</span> <span class="st">"gaussian"</span>, weights <span class="op">=</span> <span class="st">"weight_var"</span>,</span></span>
 <span class="r-in"><span>                                   continuous_X <span class="op">=</span> <span class="cn">FALSE</span>, splines <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>                                   vcov <span class="op">=</span> <span class="st">"HC3"</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in model.frame.default(formula = as.formula(formula_str), data = imputed_data,     weights = weights, drop.unused.levels = TRUE):</span> 'data' must be a data.frame, environment, or list</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in causal_contrast_marginal(df = df, Y = "outcome", X = "treatment",     baseline_vars = c("age", "gender"), treat_0 = "control",     treat_1 = "exposed", estimand = "ATE", type = "RD", nsims = 100,     cores = 2, family = "gaussian", weights = "weight_var", continuous_X = FALSE,     splines = FALSE, vcov = "HC3", verbose = TRUE):</span> could not find function "causal_contrast_marginal"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
