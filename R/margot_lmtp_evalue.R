@@ -29,7 +29,7 @@
 #' print(summary_evalues)
 #' }
 #'
-#' @keywords internal
+#' @export
 #' @importFrom EValue evalues.OLS evalues.RR
 #' @importFrom dplyr %>% mutate select filter
 #' @seealso \code{\link{margot_tab_lmtp}}, \code{\link{lmtp_evalue_tab}} for the underlying functions used.
