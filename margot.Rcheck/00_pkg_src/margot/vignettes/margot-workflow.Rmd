@@ -1,0 +1,212 @@
+---
+title: "Complete Margot Workflow: From Data to Interpretation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Complete Margot Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Overview
+
+This vignette demonstrates the complete margot workflow for causal inference, based on the teaching materials from PSYCH 434. The workflow consists of three main stages:
+
+1. **Data Preparation**: Converting longitudinal data to wide format
+2. **Causal Inference**: Estimating treatment effects using causal forests
+3. **Interpretation**: Visualising and understanding results
+
+## Installation
+
+The margot package has a modular design. Install only what you need:
+
+```{r}
+# core package (data manipulation and basic functions)
+install.packages("margot")
+
+# for causal inference models (optional)
+install.packages(c("grf", "lmtp", "policytree", "maq"))
+
+# for visualisation (optional)
+install.packages(c("ggplot2", "patchwork", "ggokabeito"))
+
+# for reporting tables (optional)
+install.packages(c("gt", "gtsummary", "flextable"))
+
+# or install everything at once (future)
+# install.packages("margot.models")  # all estimation packages
+# install.packages("margot.viz")     # all visualisation packages
+# install.packages("margot.report")  # all reporting packages
+```
+
+## Stage 1: Data Preparation
+
+### Loading and Exploring Data
+
+```{r}
+library(margot)
+library(dplyr)
+
+# the package includes example data
+data(df_nz)
+
+# define variable groups
+baseline_vars <- c(
+  "male", "age", "eth_cat", "partner", "agreeableness",
+  "conscientiousness", "extraversion", "honesty_humility", 
+  "openness", "neuroticism", "sample_weights"
+)
+
+exposure_var <- "forgiveness"
+
+outcome_vars <- c(
+  "alcohol_frequency", "alcohol_intensity", 
+  "hours_exercise", "hours_work", "ego_rubin"
+)
+```
+
+### Converting to Wide Format
+
+The `margot_wide_machine()` function handles the complete data preparation pipeline:
+
+```{r}
+# prepare data for causal inference
+wide_data <- margot_wide_machine(
+  data = df_nz,
+  baseline_vars = baseline_vars,
+  exposure_var = exposure_var,
+  outcome_vars = outcome_vars
+)
+
+# check the structure
+str(wide_data)
+```
+
+## Stage 2: Causal Inference
+
+### Estimating Treatment Effects
+
+```{r}
+# run causal forest (requires grf package)
+results <- margot_causal_forest(
+  data = wide_data,
+  exposure = exposure_var,
+  outcomes = outcome_vars,
+  baseline_vars = baseline_vars,
+  weights = "sample_weights"
+)
+```
+
+### Screening for Heterogeneity
+
+```{r}
+# identify which outcomes show treatment effect heterogeneity
+heterogeneity_results <- margot_rate(results)
+```
+
+### Policy Learning
+
+```{r}
+# learn optimal treatment policies
+policy_results <- margot_policy(
+  results,
+  outcomes = outcome_vars,
+  baseline_vars = baseline_vars
+)
+```
+
+## Stage 3: Interpretation and Visualisation
+
+### Visualising Treatment Effects
+
+```{r}
+# plot average treatment effects (requires ggplot2)
+margot_plot(
+  results,
+  type = "effects",
+  title = "Average Treatment Effects of Forgiveness"
+)
+
+# create table output (requires gt)
+margot_plot(
+  results,
+  type = "table",
+  format = "publication"
+)
+```
+
+### Understanding Heterogeneity
+
+```{r}
+# visualise policy trees
+margot_plot_policy_tree(
+  policy_results,
+  outcome = "ego_rubin"
+)
+
+# plot qini curves
+margot_plot_qini(
+  policy_results,
+  outcome = "ego_rubin"
+)
+```
+
+## Working with Missing Packages
+
+If you haven't installed optional packages, margot provides helpful error messages:
+
+```{r, eval = TRUE, error = TRUE}
+# example: trying to use causal forest without grf installed
+# margot_causal_forest(wide_data)
+# Error: Package 'grf' is required for margot_causal_forest() (causal forest estimation).
+# Install it with: install.packages('grf')
+# For all estimation packages: install.packages('margot.models')
+```
+
+## Complete Example Script
+
+Here's a minimal complete workflow:
+
+```{r}
+# load packages
+library(margot)
+library(dplyr)
+
+# prepare data
+data(df_nz)
+
+# define variables
+baseline_vars <- c("male", "age", "partner")
+exposure_var <- "forgiveness"
+outcome_vars <- c("ego_rubin")
+
+# run complete pipeline
+wide_data <- margot_wide_machine(
+  df_nz, baseline_vars, exposure_var, outcome_vars
+)
+
+# estimate effects (requires grf)
+if (requireNamespace("grf", quietly = TRUE)) {
+  results <- margot_causal_forest(
+    wide_data, exposure_var, outcome_vars, baseline_vars
+  )
+  
+  # visualise (requires ggplot2)
+  if (requireNamespace("ggplot2", quietly = TRUE)) {
+    margot_plot(results)
+  }
+}
+```
+
+## Further Resources
+
+- Full course materials: https://go-bayes.github.io/psych-434-2025/
+- Package documentation: https://go-bayes.github.io/margot/
+- GitHub repository: https://github.com/go-bayes/margot

@@ -6,3 +6,17 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^\.github$
+^\.claude$
+^REFACTOR_PLAN\.md$
+^CLAUDE\.md$
+^doc$
+^Meta$
+^man/figures/margot-hex\.jpeg$
+^man/figures/margot-hex-2\.png$
+^man/figures/margot-stencil\.png$
+^man/figures/margot-stencil-2\.png$
+^man/figures/margot-photoreal\.png$
+^man/figures/margot\.pdf$
+^man/figures/margot-image\.pdf$
+^man/figures/margot_hex_sticker\.png$

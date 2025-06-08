@@ -10,6 +10,10 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+
+# [2025-06-04] margot 1.0.61
+- added simulation function `magot_simulate()` + units tests plus vignette
+
 # [2025-06-04] margot 1.0.60 
 - fixed namespace issue/ margot_model_evalue now exported. 
 

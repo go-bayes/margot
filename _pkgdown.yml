@@ -8,6 +8,19 @@ home:
   - text: Report Issues
     href: https://github.com/go-bayes/margot/issues
 
+navbar:
+  structure:
+    left: [intro, reference, articles, tutorials, news]
+    right: [search, github]
+  components:
+    articles:
+      text: Vignettes
+      menu:
+      - text: "Getting Started"
+        href: articles/margot-workflow.html
+      - text: "Simulating Data"
+        href: articles/margot-simulation.html
+
 template:
   bootstrap: 5
   bslib:
@@ -41,7 +54,12 @@ development:
   version_label: default
   version_tooltip: "Version"
 
-vignette_engine: quarto
+articles:
+  - title: "Getting Started"
+    navbar: ~
+    contents:
+    - margot-workflow
+    - margot-simulation
 
 reference:
   - title: "Describe Longitudinal Data"
@@ -152,8 +170,13 @@ reference:
     - regress_with_covariates
     - select_and_rename_cols
 
-  - title: "Simulated data"
+  - title: "Data and Simulation"
     contents:
     - df_nz
+    - df_margot_example
+    - fetch_margot_data
+    - list_margot_data
+    - clear_margot_cache
+    - margot_simulate
 
 

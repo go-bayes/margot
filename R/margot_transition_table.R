@@ -101,8 +101,18 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
   results
 }
 
-#' @describeIn transition_table helper to format a single transition data frame
-#' @export
+#' Format Transition Table
+#'
+#' Helper function to format a single transition data frame into a markdown table.
+#'
+#' @param trans_df A data frame with columns 'from', 'to', and 'Freq'
+#' @param state_names Optional vector of state names
+#' @param wave_info Optional wave information string
+#' @param table_name Name for the table (default "transition_table")
+#'
+#' @return A list with formatted table and explanation
+#' @keywords internal
+#' @noRd
 transition_table <- function(trans_df, state_names = NULL,
                              wave_info = NULL, table_name = "transition_table") {
   required_cols <- c("from", "to", "Freq")

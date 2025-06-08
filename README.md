@@ -13,7 +13,7 @@
 
 <!-- badges: start -->
 
-<img src="man/figures/margot.png" width = 600>
+<img src="man/figures/margot.png" width = 600 alt="Margot package logo showing the package name">
 
 <!-- badges: end -->
 
