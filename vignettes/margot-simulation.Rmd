@@ -1,5 +1,5 @@
 ---
-title: "Simulating Longitudinal Data with *margot*"
+title: "Simulating Longitudinal Data"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Simulating Longitudinal Data}
@@ -19,6 +19,7 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(margot)   # core simulation + estimation tools
 library(dplyr)    # tidy manipulation
+library(tidyr)    # data reshaping
 library(ggplot2)  # graphics for examples
 ```
 
@@ -72,7 +73,7 @@ Key arguments (non-exhaustive):
 | `y_feedback`        | strength of *Y → A* path (0 disables)                             | 0–1            |
 | `censoring`         | dropout mechanism: `rate`, `exposure_dependence`, …               | list           |
 | `item_missing_rate` | MCAR missingness on observed values                               | 0–0.5          |
-| `wide`              | return wide (TRUE) or long (FALSE) format                         | TRUE / FALSE   |
+| `wide`              | return wide format (TRUE recommended; long format under development) | TRUE   |
 
 The default coefficient set is returned by `.default_sim_params()`.  Supply a
 named list to the `params` argument to override any subset.
@@ -81,14 +82,14 @@ named list to the `params` argument to override any subset.
 
 ### 3.1 Baseline: simple continuous outcome
 ```{r simple-example}
+# generate data in wide format (default)
 basic_dat <- margot_simulate(n = 500, waves = 3, seed = 2025)
-basic_dat %>%
-  group_by(wave) %>%
-  summarise(
-    n_obs        = dplyr::n(),
-    prop_treated = mean(a),
-    mean_Y       = mean(y, na.rm = TRUE)
-  )
+
+# examine structure
+str(basic_dat[, 1:10])
+
+# summarize treatment and outcome
+summary(basic_dat[c("t1_A1", "t2_A1", "t3_A1", "t4_Y")])
 ```
 
 ### 3.2 Heterogeneous treatment effects (effect modification)
@@ -133,34 +134,48 @@ fb_dat <- margot_simulate(
   waves       = 5,
   y_feedback  = 0.8,   # strong Y → A dependency
   covar_feedback = 0.3, # optional A → L feedback
-  wide        = FALSE,
+  wide        = TRUE,  # use wide format for now
   seed        = 101
 )
 ```
 
-Visualise treatment rates by quartiles of the previous outcome:
+Visualise treatment rates by examining how previous outcomes affect treatment:
 
-```{r feedback-plot, fig.alt = "Treatment probability across waves stratified by previous-wave outcome quartile"}
-fb_plot <- fb_dat %>%
-  filter(wave > 1) %>%
-  group_by(id) %>%
-  mutate(prev_Y = lag(y)) %>%
-  ungroup() %>%
-  filter(!is.na(prev_Y)) %>%
-  mutate(q = ntile(prev_Y, 4L)) %>%
-  group_by(wave, q) %>%
-  summarise(prop_A = mean(a), .groups = "drop")
+```{r feedback-plot, fig.alt = "Treatment probability trends across waves"}
+# With y_feedback, treatment rates should increase over time
+# as the simulation progresses
+treatment_trends <- fb_dat %>%
+  summarise(
+    wave_1 = mean(t1_A1),
+    wave_2 = mean(t2_A1),
+    wave_3 = mean(t3_A1),
+    wave_4 = mean(t4_A1),
+    wave_5 = mean(t5_A1)
+  ) %>%
+  tidyr::pivot_longer(
+    cols = everything(),
+    names_to = "wave",
+    values_to = "prop_treated",
+    names_prefix = "wave_"
+  ) %>%
+  mutate(wave = as.numeric(wave))
 
-ggplot(fb_plot, aes(wave, prop_A, colour = factor(q))) +
-  geom_line(linewidth = 1.1) +
-  geom_point(size = 2) +
-  scale_colour_brewer(name = "Prev. Y quartile", palette = "Dark2") +
-  labs(y = "Pr(A = 1)", x = "Wave") +
-  theme_minimal()
+ggplot(treatment_trends, aes(x = wave, y = prop_treated)) +
+  geom_line(linewidth = 1.2, color = "steelblue") +
+  geom_point(size = 3, color = "steelblue") +
+  labs(
+    title = "Treatment Assignment Rates Across Waves",
+    subtitle = "With y_feedback = 0.8, treatment probability increases over time",
+    x = "Wave",
+    y = "Proportion Treated"
+  ) +
+  theme_minimal() +
+  ylim(0, 1)
 ```
 
-Higher past outcomes (quartiles 3–4) increase the probability of treatment in
-later waves, demonstrating the induced time-varying confounding.
+The increasing treatment probability across waves demonstrates how the y_feedback
+parameter induces time-varying confounding, where past outcomes influence future
+treatment decisions.
 
 ## 3.4 Positivity diagnostics
 
@@ -169,12 +184,16 @@ overlap (positivity) of treatment probabilities across strata of measured
 covariates.  Below we inspect estimated propensity scores at the final
 observed wave in the heterogeneous-effects example.
 
-```{r positivity-plot}
+```{r positivity-plot, fig.alt="Histogram showing propensity score distributions for treated and control groups with good overlap"}
 # wave-3 propensity model: A1 ~ B2
-ps_mod <- glm(t3_A1 ~ B2, family = binomial, data = het_dat)
-het_dat$ps3 <- predict(ps_mod, type = "response")
+# Filter to complete cases for this analysis
+het_complete <- het_dat %>%
+  filter(!is.na(t3_A1) & !is.na(B2))
 
-ggplot(het_dat, aes(ps3, fill = factor(t3_A1))) +
+ps_mod <- glm(t3_A1 ~ B2, family = binomial, data = het_complete)
+het_complete$ps3 <- predict(ps_mod, type = "response")
+
+ggplot(het_complete, aes(ps3, fill = factor(t3_A1))) +
   geom_histogram(position = "identity", alpha = 0.4, bins = 30) +
   labs(
     x    = "estimated propensity score",
@@ -203,7 +222,7 @@ power_grid$power <- vapply(power_grid$N, function(n) {
                            exposures = list(A1 = list(type = "binary",
                                                       het = list(modifier = "B1", coef = 0.5))),
                            exposure_outcome = 0.3, wide = TRUE))
-    t.test(y ~ t3_A1, data = dat)$p.value < 0.05
+    t.test(t5_Y ~ t3_A1, data = dat)$p.value < 0.05
   }))
 }, numeric(1))
 
