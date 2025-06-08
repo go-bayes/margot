@@ -142,25 +142,23 @@ fb_dat <- margot_simulate(
 Visualise treatment rates by examining how previous outcomes affect treatment:
 
 ```{r feedback-plot, fig.alt = "Treatment probability trends across waves"}
-# With y_feedback, treatment rates should increase over time
-# as the simulation progresses
-treatment_trends <- fb_dat %>%
-  summarise(
-    wave_1 = mean(t1_A1),
-    wave_2 = mean(t2_A1),
-    wave_3 = mean(t3_A1),
-    wave_4 = mean(t4_A1),
-    wave_5 = mean(t5_A1)
-  ) %>%
+# Extract treatment rates across waves
+# The exposure columns follow the pattern t0_A1, t1_A1, t2_A1, etc.
+treatment_data <- fb_dat %>%
+  select(starts_with("t") & ends_with("_A1")) %>%
+  summarise(across(everything(), ~ mean(.x, na.rm = TRUE))) %>%
   tidyr::pivot_longer(
     cols = everything(),
-    names_to = "wave",
-    values_to = "prop_treated",
-    names_prefix = "wave_"
+    names_to = "wave_var",
+    values_to = "prop_treated"
   ) %>%
-  mutate(wave = as.numeric(wave))
+  mutate(
+    wave = as.numeric(sub("t([0-9]+)_A1", "\\1", wave_var))
+  ) %>%
+  filter(wave > 0)  # Exclude baseline (t0)
 
-ggplot(treatment_trends, aes(x = wave, y = prop_treated)) +
+# Plot treatment rates
+ggplot(treatment_data, aes(x = wave, y = prop_treated)) +
   geom_line(linewidth = 1.2, color = "steelblue") +
   geom_point(size = 3, color = "steelblue") +
   labs(
@@ -170,7 +168,7 @@ ggplot(treatment_trends, aes(x = wave, y = prop_treated)) +
     y = "Proportion Treated"
   ) +
   theme_minimal() +
-  ylim(0, 1)
+  scale_y_continuous(limits = c(0, 1))
 ```
 
 The increasing treatment probability across waves demonstrates how the y_feedback
