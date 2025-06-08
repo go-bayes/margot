@@ -230,7 +230,7 @@ development)</td>
 <span><span class="co">#&gt;  $ B9: num [1:500] -1.0513 0.0444 0.6933 0.0259 -0.7786 ...</span></span>
 <span><span class="co">#&gt;  - attr(*, "margot_meta")=List of 2</span></span>
 <span><span class="co">#&gt;   ..$ args     : language margot_simulate(n = 500, waves = 3, seed = 2025)</span></span>
-<span><span class="co">#&gt;   ..$ timestamp: POSIXct[1:1], format: "2025-06-09 01:55:08"</span></span>
+<span><span class="co">#&gt;   ..$ timestamp: POSIXct[1:1], format: "2025-06-09 02:02:53"</span></span>
 <span></span>
 <span><span class="co"># summarize treatment and outcome</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">basic_dat</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"t1_A1"</span>, <span class="st">"t2_A1"</span>, <span class="st">"t3_A1"</span>, <span class="st">"t4_Y"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
@@ -289,35 +289,30 @@ outcomes influence future treatment uptake. Activate this with
 <span>  n           <span class="op">=</span> <span class="fl">2000</span>,</span>
 <span>  waves       <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  y_feedback  <span class="op">=</span> <span class="fl">0.8</span>,   <span class="co"># strong Y → A dependency</span></span>
-<span>  covar_feedback <span class="op">=</span> <span class="fl">0.3</span>, <span class="co"># optional A → L feedback</span></span>
+<span>  params      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>exp_L1_coef <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span>, <span class="co"># optional A → L feedback</span></span>
 <span>  wide        <span class="op">=</span> <span class="cn">TRUE</span>,  <span class="co"># use wide format for now</span></span>
 <span>  seed        <span class="op">=</span> <span class="fl">101</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in margot_simulate(n = 2000, waves = 5, y_feedback = 0.8,</span></span>
-<span><span class="co">#&gt; covar_feedback = 0.3, : `covar_feedback` is deprecated; use params$exp_L1_coef</span></span>
-<span><span class="co">#&gt; instead.</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Visualise treatment rates by examining how previous outcomes affect
 treatment:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># With y_feedback, treatment rates should increase over time</span></span>
-<span><span class="co"># as the simulation progresses</span></span>
-<span><span class="va">treatment_trends</span> <span class="op">&lt;-</span> <span class="va">fb_dat</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
-<span>    wave_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">t1_A1</span><span class="op">)</span>,</span>
-<span>    wave_2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">t2_A1</span><span class="op">)</span>,</span>
-<span>    wave_3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">t3_A1</span><span class="op">)</span>,</span>
-<span>    wave_4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">t4_A1</span><span class="op">)</span>,</span>
-<span>    wave_5 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">t5_A1</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<code class="sourceCode R"><span><span class="co"># Extract treatment rates across waves</span></span>
+<span><span class="co"># The exposure columns follow the pattern t0_A1, t1_A1, t2_A1, etc.</span></span>
+<span><span class="va">treatment_data</span> <span class="op">&lt;-</span> <span class="va">fb_dat</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span> <span class="op">&amp;</span> <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">ends_with</a></span><span class="op">(</span><span class="st">"_A1"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/across.html" class="external-link">across</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything</a></span><span class="op">(</span><span class="op">)</span>, <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.x</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span></span>
 <span>    cols <span class="op">=</span> <span class="fu"><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>    names_to <span class="op">=</span> <span class="st">"wave"</span>,</span>
-<span>    values_to <span class="op">=</span> <span class="st">"prop_treated"</span>,</span>
-<span>    names_prefix <span class="op">=</span> <span class="st">"wave_"</span></span>
+<span>    names_to <span class="op">=</span> <span class="st">"wave_var"</span>,</span>
+<span>    values_to <span class="op">=</span> <span class="st">"prop_treated"</span></span>
 <span>  <span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>wave <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">wave</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    wave <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"t([0-9]+)_A1"</span>, <span class="st">"\\1"</span>, <span class="va">wave_var</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">wave</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span>  <span class="co"># Exclude baseline (t0)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">treatment_trends</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wave</span>, y <span class="op">=</span> <span class="va">prop_treated</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="co"># Plot treatment rates</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">treatment_data</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wave</span>, y <span class="op">=</span> <span class="va">prop_treated</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">1.2</span>, color <span class="op">=</span> <span class="st">"steelblue"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span>, color <span class="op">=</span> <span class="st">"steelblue"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
@@ -327,11 +322,7 @@ treatment:</p>
 <span>    y <span class="op">=</span> <span class="st">"Proportion Treated"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Removed 5 rows containing missing values or values outside the scale range</span></span>
-<span><span class="co">#&gt; (`geom_line()`).</span></span>
-<span><span class="co">#&gt; Warning: Removed 5 rows containing missing values or values outside the scale range</span></span>
-<span><span class="co">#&gt; (`geom_point()`).</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="margot-simulation_files/figure-html/feedback-plot-1.png" alt="Treatment probability trends across waves" width="672"></p>
 <p>The increasing treatment probability across waves demonstrates how
 the y_feedback parameter induces time-varying confounding, where past

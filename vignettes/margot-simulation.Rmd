@@ -126,54 +126,87 @@ summary(fit_het)$coefficients
 ### 3.3 Outcome → Treatment feedback
 
 Realistic behavioural processes often exhibit reflexivity: past outcomes
-influence future treatment uptake.  Activate this with `y_feedback`:
+influence future treatment uptake.  Let's compare simulations with and 
+without `y_feedback`:
 
 ```{r feedback-sim}
+# Without feedback
+no_fb_dat <- margot_simulate(
+  n          = 2000,
+  waves      = 5,
+  y_feedback = 0,     # no Y → A dependency
+  wide       = TRUE,
+  seed       = 101
+)
+
+# With feedback
 fb_dat <- margot_simulate(
   n           = 2000,
   waves       = 5,
   y_feedback  = 0.8,   # strong Y → A dependency
   params      = list(exp_L1_coef = 0.3), # optional A → L feedback
-  wide        = TRUE,  # use wide format for now
+  wide        = TRUE,
   seed        = 101
 )
 ```
 
-Visualise treatment rates by examining how previous outcomes affect treatment:
+Let's examine how y_feedback affects treatment patterns:
 
-```{r feedback-plot, fig.alt = "Treatment probability trends across waves"}
-# Extract treatment rates across waves
-# The exposure columns follow the pattern t0_A1, t1_A1, t2_A1, etc.
-treatment_data <- fb_dat %>%
-  select(starts_with("t") & ends_with("_A1")) %>%
-  summarise(across(everything(), ~ mean(.x, na.rm = TRUE))) %>%
-  tidyr::pivot_longer(
-    cols = everything(),
-    names_to = "wave_var",
-    values_to = "prop_treated"
-  ) %>%
-  mutate(
-    wave = as.numeric(sub("t([0-9]+)_A1", "\\1", wave_var))
-  ) %>%
-  filter(wave > 0)  # Exclude baseline (t0)
+```{r feedback-analysis}
+# Calculate treatment rates for both datasets
+get_treatment_rates <- function(data, label) {
+  data %>%
+    select(starts_with("t") & ends_with("_A1")) %>%
+    summarise(across(everything(), ~ mean(.x, na.rm = TRUE))) %>%
+    tidyr::pivot_longer(
+      cols = everything(),
+      names_to = "wave_var",
+      values_to = "prop_treated"
+    ) %>%
+    mutate(
+      wave = as.numeric(sub("t([0-9]+)_A1", "\\1", wave_var)),
+      feedback = label
+    )
+}
 
-# Plot treatment rates
-ggplot(treatment_data, aes(x = wave, y = prop_treated)) +
-  geom_line(linewidth = 1.2, color = "steelblue") +
-  geom_point(size = 3, color = "steelblue") +
-  labs(
-    title = "Treatment Assignment Rates Across Waves",
-    subtitle = "With y_feedback = 0.8, treatment probability increases over time",
-    x = "Wave",
-    y = "Proportion Treated"
-  ) +
-  theme_minimal() +
-  scale_y_continuous(limits = c(0, 1))
+# Combine rates from both simulations
+combined_rates <- bind_rows(
+  get_treatment_rates(no_fb_dat, "No feedback"),
+  get_treatment_rates(fb_dat, "With feedback (0.8)")
+)
+
+# Display the comparison
+combined_rates %>%
+  filter(wave > 0) %>%
+  tidyr::pivot_wider(names_from = feedback, values_from = prop_treated) %>%
+  arrange(wave)
 ```
 
-The increasing treatment probability across waves demonstrates how the y_feedback
-parameter induces time-varying confounding, where past outcomes influence future
-treatment decisions.
+Visualise treatment rates across waves:
+
+```{r feedback-plot, fig.alt = "Comparison of treatment probability trends"}
+# Plot comparison
+ggplot(combined_rates %>% filter(wave > 0), 
+       aes(x = wave, y = prop_treated, color = feedback, group = feedback)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  labs(
+    title = "Treatment Assignment Rates Across Waves",
+    subtitle = "Comparing simulations with and without outcome feedback",
+    x = "Wave",
+    y = "Proportion Treated",
+    color = "Simulation"
+  ) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 1)) +
+  scale_color_manual(values = c("No feedback" = "darkgray", 
+                                "With feedback (0.8)" = "steelblue"))
+```
+
+Note: The `y_feedback` parameter affects how past outcomes influence future treatment
+assignment. The specific pattern depends on the interaction between outcome values,
+baseline covariates, and the simulation parameters. In practice, y_feedback creates
+time-varying confounding by making treatment assignment depend on past outcomes.
 
 ## 3.4 Positivity diagnostics
 
