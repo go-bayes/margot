@@ -53,6 +53,9 @@
 #' @importFrom dplyr mutate across where select bind_rows
 #' @importFrom kableExtra kbl group_rows
 #' @keywords internal
+#' @note The group_rows function exists in both dplyr and kableExtra packages.
+#'   This function uses kableExtra::group_rows, which causes a harmless namespace
+#'   warning when loading the package.
 margot_combine_results <- function(
     results,
     options = NULL,
