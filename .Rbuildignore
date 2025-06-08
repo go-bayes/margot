@@ -20,3 +20,8 @@
 ^man/figures/margot\.pdf$
 ^man/figures/margot-image\.pdf$
 ^man/figures/margot_hex_sticker\.png$
+^R/dev$
+^\.DS_Store$
+^.*\.Rcheck$
+^\.\.$
+^margot\.Rcheck$

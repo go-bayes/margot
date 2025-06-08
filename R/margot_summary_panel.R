@@ -4,7 +4,7 @@
 #' participant wave summary, and grouped participant wave summary.
 #'
 #' @param data A data frame containing the panel study data.
-#' @param output_format Character string specifying the output format: "html" (default) or "markdown".
+#' @param output_format Character string specifying the output format: "markdown" (default) or "kable".
 #' @param group_waves_at Numeric value specifying at which number of waves to start grouping (default is 3).
 #' @param id_col Character string specifying the name of the ID column (default is "id").
 #' @param wave_col Character string specifying the name of the wave column (default is "wave").
@@ -16,7 +16,6 @@
 #' @importFrom tidyr pivot_wider
 #' @importFrom magrittr %>%
 #' @importFrom rlang sym
-#' @importFrom gt gt tab_header fmt_number cols_label tab_options
 #' @import cli
 #' @importFrom kableExtra kable
 #'
@@ -48,7 +47,7 @@
 #' cat(custom_results$participant_wave_summary_grouped)
 #' }
 margot_summary_panel <- function(data,
-                                 output_format = "html",
+                                 output_format = "markdown",
                                  group_waves_at = 3,
                                  id_col = "id",
                                  wave_col = "wave",
@@ -75,16 +74,7 @@ margot_summary_panel <- function(data,
     group_by(!!sym(wave_col)) %>%
     summarize(number = n_distinct(!!sym(id_col)))
 
-  if (output_format == "html") {
-    table1 <- df_unique_ids %>%
-      gt() %>%
-      tab_header(title = "Unique IDs by Wave",
-                 subtitle = "Year given starts in October and runs to October the following year") %>%
-      fmt_number(columns = c(number), decimals = 0) %>%
-      cols_label(!!sym(wave_col) := "Wave", number = "Number of Unique IDs")
-  } else {
-    table1 <- create_kable_table(df_unique_ids, "Unique IDs by Wave\nYear given starts in October and runs to October the following year")
-  }
+  table1 <- create_kable_table(df_unique_ids, "Unique IDs by Wave\nYear given starts in October and runs to October the following year")
 
   cli::cli_alert_success("Calculating participant wave summary")
 
@@ -98,20 +88,7 @@ margot_summary_panel <- function(data,
     group_by(wave_count) %>%
     summarize(number_of_participants = n())
 
-  if (output_format == "html") {
-    table2 <- wave_summary %>%
-      gt() %>%
-      tab_header(title = "Participant Wave Summary",
-                 subtitle = "Number of participants by the number of waves they participated in") %>%
-      cols_label(wave_count = "Number of Waves",
-                 number_of_participants = "Number of Participants") %>%
-      fmt_number(columns = c(number_of_participants), decimals = 0) %>%
-      tab_options(table.font.size = 12,
-                  heading.title.font.size = 14,
-                  heading.subtitle.font.size = 12)
-  } else {
-    table2 <- create_kable_table(wave_summary, "Participant Wave Summary\nNumber of participants by the number of waves they participated in")
-  }
+  table2 <- create_kable_table(wave_summary, "Participant Wave Summary\nNumber of participants by the number of waves they participated in")
 
   cli::cli_alert_success("Calculating grouped participant wave summary")
 
@@ -123,20 +100,7 @@ margot_summary_panel <- function(data,
     summarize(number_of_participants = n()) %>%
     ungroup()
 
-  if (output_format == "html") {
-    table3 <- wave_summary_grouped %>%
-      gt() %>%
-      tab_header(title = "Participant Wave Summary (Grouped)",
-                 subtitle = paste("Number of participants by the number of waves they participated in (grouped at", group_waves_at, "or more)")) %>%
-      cols_label(wave_count = "Number of Waves",
-                 number_of_participants = "Number of Participants") %>%
-      fmt_number(columns = c(number_of_participants), decimals = 0) %>%
-      tab_options(table.font.size = 12,
-                  heading.title.font.size = 14,
-                  heading.subtitle.font.size = 12)
-  } else {
-    table3 <- create_kable_table(wave_summary_grouped, paste("Participant Wave Summary (Grouped at", group_waves_at, "or more)\nNumber of participants by the number of waves they participated in"))
-  }
+  table3 <- create_kable_table(wave_summary_grouped, paste("Participant Wave Summary (Grouped at", group_waves_at, "or more)\nNumber of participants by the number of waves they participated in"))
 
   cli::cli_alert_success("Function completed successfully!")
   cli::cli_alert_info(paste("Total unique participants:", nrow(id_wave_counts)))

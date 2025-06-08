@@ -110,7 +110,7 @@ devtools::check_win_devel() # check on windows development version
 The package expects longitudinal data in wide format with time-prefixed variables:
 - Baseline: `t0_variable`
 - Follow-ups: `t1_variable`, `t2_variable`, etc.
-- The included `df_nz` dataset demonstrates the expected structure
+- ~~The included `df_nz` dataset demonstrates the expected structure~~ We will remove `df_nz` from the package and move it to Zenodo. Data can now be fetched using `fetch_margot_data()` and converted to a quickstart object using `here_read_qs()` function.
 - ID variable should be named `id`
 - Sample weights: `sample_weights` or time-specific weights
 
@@ -143,7 +143,7 @@ Experimental or internal development functions:
 
 ### Testing Workflow
 - Default to writing unit tests for all functions using testthat, and storing them in the tests folder
-- Use the included `df_nz` dataset for testing examples
+- ~~Use the included `df_nz` dataset for testing examples~~ Use `fetch_margot_data()` to get test data
 - Test both expected behaviour and edge cases
 - Include tests for error messages and warnings
 
@@ -156,3 +156,5 @@ Experimental or internal development functions:
 5. Write unit tests for new functionality
 6. Update NEWS.md with user-facing changes
 7. Run `devtools::check()` before submitting changes
+```
+- lets call the fetch data function 'margot_data_fetch()'

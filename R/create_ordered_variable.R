@@ -184,7 +184,6 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
 #' #'         are 2 divisions, or "_cat" otherwise.
 #' #'
 #' #' @importFrom stats quantile
-#' #' @importFrom crayon red yellow blue bold
 #' #' @importFrom cli rule
 #' #' @importFrom knitr kable
 #' #' @export

@@ -30,7 +30,6 @@
 #' @importFrom policytree double_robust_scores policy_tree
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_alert_danger cli_h3
 #'   cli_progress_bar cli_progress_update cli_progress_done
-#' @importFrom crayon bold green red yellow
 #' @importFrom purrr map walk
 #' @name margot_causal_forest_parallel
 #' @keywords internal
@@ -331,7 +330,6 @@ margot_inspect_qini <- function(model_results,
 #' @importFrom grf causal_forest average_treatment_effect test_calibration rank_average_treatment_effect variable_importance best_linear_projection
 #' @importFrom policytree double_robust_scores policy_tree
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_progress_bar cli_progress_update cli_progress_done
-#' @importFrom crayon bold green red yellow
 #' @export
 margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  grf_defaults = list(),

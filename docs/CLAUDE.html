@@ -179,7 +179,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="data-structure">Data Structure<a class="anchor" aria-label="anchor" href="#data-structure"></a></h3>
-<p>The package expects longitudinal data in wide format with time-prefixed variables: - Baseline: <code>t0_variable</code> - Follow-ups: <code>t1_variable</code>, <code>t2_variable</code>, etc. - The included <code>df_nz</code> dataset demonstrates the expected structure - ID variable should be named <code>id</code> - Sample weights: <code>sample_weights</code> or time-specific weights</p>
+<p>The package expects longitudinal data in wide format with time-prefixed variables: - Baseline: <code>t0_variable</code> - Follow-ups: <code>t1_variable</code>, <code>t2_variable</code>, etc. - <del>The included <code>df_nz</code> dataset demonstrates the expected structure</del> We will remove <code>df_nz</code> from the package and move it to Zenodo. Data can now be fetched using <code><a href="reference/fetch_margot_data.html">fetch_margot_data()</a></code> and converted to a quickstart object using <code><a href="reference/here_read_qs.html">here_read_qs()</a></code> function. - ID variable should be named <code>id</code> - Sample weights: <code>sample_weights</code> or time-specific weights</p>
 </div>
 <div class="section level3">
 <h3 id="development-tools-rdev">Development Tools (R/dev/)<a class="anchor" aria-label="anchor" href="#development-tools-rdev"></a></h3>
@@ -211,7 +211,8 @@
 <div class="section level3">
 <h3 id="testing-workflow">Testing Workflow<a class="anchor" aria-label="anchor" href="#testing-workflow"></a></h3>
 <ul><li>Default to writing unit tests for all functions using testthat, and storing them in the tests folder</li>
-<li>Use the included <code>df_nz</code> dataset for testing examples</li>
+<li>
+<del>Use the included <code>df_nz</code> dataset for testing examples</del> Use <code><a href="reference/fetch_margot_data.html">fetch_margot_data()</a></code> to get test data</li>
 <li>Test both expected behaviour and edge cases</li>
 <li>Include tests for error messages and warnings</li>
 </ul></div>
@@ -225,8 +226,9 @@
 </li>
 <li>Write unit tests for new functionality</li>
 <li>Update NEWS.md with user-facing changes</li>
-<li>Run <code><a href="https://devtools.r-lib.org/reference/check.html" class="external-link">devtools::check()</a></code> before submitting changes</li>
-</ol></div>
+<li>Run <code><a href="https://devtools.r-lib.org/reference/check.html" class="external-link">devtools::check()</a></code> before submitting changes ```</li>
+</ol><ul><li>lets call the fetch data function ‘margot_data_fetch()’</li>
+</ul></div>
 </div>
 </div>
 

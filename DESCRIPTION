@@ -3,6 +3,8 @@ Type: Package
 Title: MARGinal Observational Treatment-effects
 Version: 1.0.61
 Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
+Author: Joseph A Bulbulia [aut, cre]
+Maintainer: Joseph A Bulbulia <joseph.bulbulia@gmail.com>
 Description: Functions to obtain MARGinal Observational Treatment-effects from observational data. The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.
 License: CC BY 4.0
 Encoding: UTF-8
@@ -12,7 +14,6 @@ Depends:
 Imports:
     cli,
     cobalt,
-    crayon,
     data.table,
     DiagrammeR,
     doParallel,
@@ -24,8 +25,6 @@ Imports:
     ggokabeito,
     ggplot2,
     ggeffects,
-    gt,
-    gtsummary,
     grf,
     glue,
     here,

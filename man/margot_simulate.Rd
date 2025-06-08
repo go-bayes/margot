@@ -2,112 +2,126 @@
 % Please edit documentation in R/margot_simulate.R
 \name{margot_simulate}
 \alias{margot_simulate}
-\title{Simulate Longitudinal Panel Data for Causal Inference}
+\title{Simulate longitudinal exposures, outcomes, and covariates}
 \usage{
 margot_simulate(
-  n = 500,
-  waves = 3,
-  p_covars = 1,
-  censoring = list(rate = 0.2, exposure_dependence = FALSE, latent_dependence = FALSE,
-    latent_rho = 0.5),
+  n,
+  waves,
+  exposures = NULL,
+  outcomes = NULL,
+  p_covars = 20,
+  censoring = list(rate = 0.25),
   item_missing_rate = 0,
-  positivity = c("good", "edge", "violated"),
-  exposure_outcome = 0.6,
-  covar_feedback = 0,
-  y_feedback = 0,
-  outcome_type = c("binary", "continuous"),
-  wide = FALSE,
-  seed = NULL
+  exposure_outcome = 0.5,
+  y_feedback = 0.4,
+  positivity = "good",
+  outcome_type = NULL,
+  wide = TRUE,
+  seed = NULL,
+  params = list(),
+  ...
 )
 }
 \arguments{
-\item{n}{Integer. Number of individuals (default: 500).}
+\item{n}{Number of individuals.}
 
-\item{waves}{Integer. Number of measurement waves (1-20, default: 3).}
+\item{waves}{Number of follow-up waves (outcomes are
+produced for wave \code{waves + 1}).}
 
-\item{p_covars}{Integer. Number of time-varying covariates (default: 1).}
+\item{exposures}{Named list describing each exposure.  Every
+element must contain a \code{type} field (`"binary"` or `"normal"`).
+Optional elements: \code{het} (baseline modifiers) and
+\code{lag_Y = TRUE} to enable outcome-to-exposure feedback.}
 
-\item{censoring}{List with components:
-\describe{
-  \item{rate}{Baseline censoring rate (default: 0.2)}
-  \item{exposure_dependence}{Logical. Does censoring depend on prior exposure? (default: FALSE)}
-  \item{latent_dependence}{Logical. Does censoring depend on latent factor? (default: FALSE)}
-  \item{latent_rho}{Correlation with latent factor if latent_dependence = TRUE (default: 0.5)}
-}}
+\item{outcomes}{Named list describing outcomes.  Defaults to a
+single normal outcome called `"Y"`.}
 
-\item{item_missing_rate}{Numeric. MCAR rate for covariates (0-1, default: 0).}
+\item{p_covars}{Number of baseline (`B`) covariates.}
 
-\item{positivity}{Character. Positivity assumption scenario:
-\describe{
-  \item{"good"}{Well-behaved propensity scores}
-  \item{"edge"}{Near-violation of positivity}
-  \item{"violated"}{Deterministic treatment assignment}
-}}
+\item{censoring}{List controlling attrition.  Must include
+\code{rate}; optional logical flags \code{exposure_dependence},
+\code{latent_dependence}, numeric \code{latent_rho}, and logical
+\code{indicator} to append \code{tX_not_censored} columns.}
 
-\item{exposure_outcome}{Numeric. Effect of treatment on outcome (default: 0.6).}
+\item{item_missing_rate}{MCAR probability an observed value is replaced
+by \code{NA}.}
 
-\item{covar_feedback}{Numeric. Effect of treatment on future covariates (default: 0).}
+\item{exposure_outcome}{Coefficient for the exposure → outcome path.}
 
-\item{y_feedback}{Numeric. Effect of previous outcome on next treatment (default: 0).}
+\item{y_feedback}{Coefficient for lagged outcome feedback when
+an exposure lists \code{lag_Y = TRUE}.}
 
-\item{outcome_type}{Character. Type of outcome variable ("binary" or "continuous").}
+\item{positivity}{`"good"`, `"poor"`, or a numeric probability
+in (0, 1) governing baseline exposure prevalence.}
 
-\item{wide}{Logical. Return wide format if TRUE, long format if FALSE (default: FALSE).}
+\item{outcome_type}{Shortcut for a single outcome:
+`"continuous"` (default) or `"binary"`.  Ignored when
+\code{outcomes} is supplied.}
 
-\item{seed}{Integer. Random seed for reproducibility (default: NULL).}
+\item{wide}{If \code{TRUE} (default) return a wide data
+set; otherwise long format.}
+
+\item{seed}{Integer seed for reproducibility.}
+
+\item{params}{Named list of scalar coefficients (see above).}
+
+\item{...}{Deprecated arguments; ignored with a warning.}
 }
 \value{
-A tibble with simulated data. Format depends on \code{wide} parameter:
-  \describe{
-    \item{Wide format}{Columns: id, t0_l*, t0_y, t0_a, t1_l*, t1_y, t1_a, ..., y}
-    \item{Long format}{Columns: id, wave, l1...lp, y, a, y_end}
-  }
-  
-  In long format, \code{y_end} contains the final outcome (non-NA only at the 
-  last observed wave for each individual).
+A `tibble` in wide or long form containing baseline `B`
+  variables, time-varying `L` covariates, `A` exposures, optional
+  censoring indicators, and lead outcomes `Y`.  The object carries an
+  attribute \code{"margot_meta"} with the matched call and a timestamp.
 }
 \description{
-Generates synthetic longitudinal panel data with flexible options for treatment
-assignment, outcome generation, censoring, and missing data patterns. Useful for
-testing causal inference methods and teaching.
+`margot_simulate()` draws baseline covariates (`B`), time-varying
+covariates (`L`), exposures (`A`), and lead outcomes (`Y`) for a
+synthetic panel study.  Monotone attrition can depend on past exposure
+and/or a latent shared frailty, and an optional indicator column
+records whether each unit remains uncensored at every wave.  The
+simulator supports heterogeneous treatment effects, feedback from
+previous outcomes into future exposures, and marginal item
+missingness.
 }
 \details{
-The simulation generates:
-\itemize{
-  \item A latent baseline factor \code{u} affecting treatment and outcomes
-  \item Time-varying covariates with optional AR(1) structure
-  \item Treatment assignment based on covariates and latent factor
-  \item Outcomes influenced by treatment, covariates, and latent factor
-  \item Censoring patterns (MCAR or dependent on covariates/treatment)
+The default parameter set is
+\preformatted{
+ .default_sim_params()
+ ## $cens_exp_coef   0.4
+ ## $cens_latent_rho 0.5
+ ## $exp_intercept   -0.2
+ ## $exp_L1_coef     0.2
+ ## $out_B1_coef     0.1
 }
 }
+\section{The `params` argument}{
+
+Supply a named list to override the internal defaults given by
+\code{.default_sim_params()}.  Typical entries include
+\code{cens_exp_coef}, \code{exp_L1_coef}, and \code{out_B1_coef}.
+}
+
 \examples{
-# basic simulation with default settings
-dat <- margot_simulate(n = 200, waves = 3, seed = 123)
+## basic usage
+dat <- margot_simulate(n = 200, waves = 3, seed = 1)
+dplyr::glimpse(dat)
 
-# simulate with treatment feedback and edge positivity
-dat_complex <- margot_simulate(
-  n = 500, 
+## heterogeneous treatment effect with censoring indicator
+dat2 <- margot_simulate(
+  n = 800,
   waves = 4,
-  p_covars = 2,
-  positivity = "edge",
-  y_feedback = 0.5,
-  covar_feedback = 0.3,
-  wide = TRUE,
-  seed = 2025
-)
-
-# simulate with censoring dependent on treatment
-dat_censor <- margot_simulate(
-  n = 300,
-  waves = 5,
-  censoring = list(
-    rate = 0.3,
-    exposure_dependence = TRUE,
-    latent_dependence = TRUE,
-    latent_rho = 0.7
+  exposures = list(
+    A1 = list(
+      type = "binary",
+      het  = list(modifier = "B2", coef = 0.6)
+    )
   ),
-  seed = 999
+  censoring = list(rate = 0.25, exposure_dependence = TRUE,
+                   indicator = TRUE),
+  seed = 42
 )
 
+}
+\seealso{
+\code{\link{.default_sim_params}}
 }

@@ -1,5 +1,5 @@
 ---
-title: "Simulating Longitudinal Data"
+title: "Simulating Longitudinal Data with *margot*"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Simulating Longitudinal Data}
@@ -10,409 +10,215 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>",
-  fig.width = 7,
+  comment  = "#>",
+  fig.width  = 7,
   fig.height = 5
 )
 ```
 
 ```{r setup}
-library(margot)
-library(dplyr)
-library(ggplot2)
+library(margot)   # core simulation + estimation tools
+library(dplyr)    # tidy manipulation
+library(ggplot2)  # graphics for examples
 ```
 
-## Overview
+## 1. Why simulate longitudinal data?
 
-The `margot_simulate()` function generates synthetic longitudinal panel data with known causal effects. This is invaluable for:
+Synthetic panel data with *known* data-generating mechanisms are invaluable for
 
-- **Teaching**: Demonstrating causal inference concepts with ground truth
-- **Testing**: Validating methods against known parameters
-- **Development**: Creating test cases without large datasets
-- **Power analysis**: Estimating sample sizes for studies
+- **Teaching**: illustrate causal ideas where the ground truth is visible;
+- **Software testing**: ensure estimators recover the truth under controlled violations;
+- **Power & design**: gauge sample-size or wave-number requirements;
+- **Method development**: iterate quickly without large, confidential datasets.
 
-## Basic Usage
+`margot_simulate()` is our workhorse; the sections below unpack its interface
+and demonstrate common scenarios.
 
-### Simple Simulation
+## 2. Anatomy of `margot_simulate()`
 
-Generate a basic dataset with default settings:
+The simulator draws baseline covariates **B**, time-varying covariates **L**,
+exposures **A**, and lead outcomes **Y** across a user-specified number of
+waves.  *Figure 1* gives a high-level schematic.
 
-```{r basic-sim}
-# simulate 500 individuals over 3 waves
-sim_data <- margot_simulate(
-  n = 500,
-  waves = 3,
-  seed = 2025
-)
-
-# check structure
-str(sim_data)
-
-# summary by wave
-sim_data %>%
-  group_by(wave) %>%
-  summarise(
-    n_obs = n(),
-    prop_treated = mean(a),
-    mean_outcome = mean(y, na.rm = TRUE),
-    prop_censored = mean(is.na(y))
+```{r fig.cap = "Figure 1: data-generating process underlying `margot_simulate()`. Solid arrows are structural paths; dashed arrows indicate optional feedback loops and censoring."}
+# build a toy DAG with DiagrammeR for illustration only (not evaluated when package is built)
+if (requireNamespace("DiagrammeR", quietly = TRUE)) {
+  DiagrammeR::grViz(
+    "digraph {graph [rankdir = LR, bgcolor = none]
+      node [shape = box, fontname = Helvetica]
+      subgraph cluster0 {label = \"Wave 0\"; style = dashed; B; t0_L;}
+      subgraph cluster1 {label = \"Wave 1\"; style = dashed; t1_A; t1_L; t1_Y;}
+      subgraph cluster2 {label = \"Wave 2\"; style = dashed; t2_A; t2_L; t2_Y;}
+      B -> t1_L -> t1_A -> t1_Y
+      B -> t1_A
+      t1_Y -> t2_A [style = dashed]  // optional y_feedback
+      t1_A -> t2_L [style = dashed]  // covar_feedback
+      t1_A -> censor1 [style = dashed]
+      censor1 [shape = circle, label = \"C\"]
+    }"
   )
-```
-
-### Wide Format for Analysis
-
-Most margot functions expect wide format data:
-
-```{r wide-format}
-# generate wide format directly
-wide_sim <- margot_simulate(
-  n = 300,
-  waves = 4,
-  p_covars = 2,        # 2 time-varying covariates
-  exposure_outcome = 0.5,  # true effect size
-  wide = TRUE,
-  seed = 123
-)
-
-# examine structure
-names(wide_sim)
-
-# ready for margot_causal_forest
-head(wide_sim[, c("id", "t0_l1", "t0_l2", "t0_y", "t0_a", "t1_a", "y")])
-```
-
-## Causal Scenarios
-
-### Testing Positivity Assumptions
-
-Simulate different positivity scenarios to test method robustness:
-
-```{r positivity, fig.alt="Histogram showing propensity score distributions for good and edge positivity scenarios, with treated and control groups displayed in different colors"}
-# good positivity
-good_pos <- margot_simulate(
-  n = 500, 
-  positivity = "good",
-  wide = TRUE,
-  seed = 1
-)
-
-# near violation
-edge_pos <- margot_simulate(
-  n = 500,
-  positivity = "edge", 
-  wide = TRUE,
-  seed = 1
-)
-
-# violated positivity (deterministic treatment)
-viol_pos <- margot_simulate(
-  n = 500,
-  positivity = "violated",
-  wide = TRUE, 
-  seed = 1
-)
-
-# compare propensity score distributions
-if (requireNamespace("ggplot2", quietly = TRUE)) {
-  # calculate simple propensity scores for non-missing data
-  good_complete <- good_pos[!is.na(good_pos$t0_a) & !is.na(good_pos$t0_l1), ]
-  edge_complete <- edge_pos[!is.na(edge_pos$t0_a) & !is.na(edge_pos$t0_l1), ]
-  
-  ps_good <- glm(t0_a ~ t0_l1, data = good_complete, family = binomial)$fitted.values
-  ps_edge <- glm(t0_a ~ t0_l1, data = edge_complete, family = binomial)$fitted.values
-  
-  ps_df <- data.frame(
-    propensity = c(ps_good, ps_edge),
-    scenario = rep(c("Good", "Edge"), c(length(ps_good), length(ps_edge))),
-    treated = c(good_complete$t0_a, edge_complete$t0_a)
-  )
-  
-  ggplot(ps_df, aes(x = propensity, fill = factor(treated))) +
-    geom_histogram(alpha = 0.7, position = "identity", bins = 30) +
-    facet_wrap(~scenario) +
-    theme_minimal() +
-    labs(title = "Propensity Score Overlap",
-         x = "Propensity Score", 
-         fill = "Treated") +
-    scale_fill_manual(values = c("0" = "coral", "1" = "steelblue"))
 }
 ```
 
-### Treatment Feedback Loops
+Key arguments (non-exhaustive):
 
-Simulate realistic scenarios where past outcomes affect future treatment:
+| Argument            | Purpose                                                           | Typical values |
+|---------------------|-------------------------------------------------------------------|----------------|
+| `n`                 | number of individuals                                             | 100–10 000     |
+| `waves`             | follow-up waves (outcomes measured at `waves + 1`)                | 3–10           |
+| `p_covars`          | # of time-varying **L** covariates                                | 0–5            |
+| `exposures`         | list describing each **A** variable                               | see §3         |
+| `outcomes`          | list describing **Y** variables                                   | rarely needed  |
+| `y_feedback`        | strength of *Y → A* path (0 disables)                             | 0–1            |
+| `censoring`         | dropout mechanism: `rate`, `exposure_dependence`, …               | list           |
+| `item_missing_rate` | MCAR missingness on observed values                               | 0–0.5          |
+| `wide`              | return wide (TRUE) or long (FALSE) format                         | TRUE / FALSE   |
 
-```{r feedback, fig.alt="Line plot showing treatment assignment rates across waves, grouped by previous outcome levels (Low, Medium, High)"}
-# simulate with outcome feedback on treatment
-feedback_data <- margot_simulate(
-  n = 1000,
-  waves = 5,
-  y_feedback = 0.8,        # strong feedback effect
-  covar_feedback = 0.3,    # treatment affects covariates
-  wide = FALSE,            # long format to see dynamics
-  seed = 999
-)
+The default coefficient set is returned by `.default_sim_params()`.  Supply a
+named list to the `params` argument to override any subset.
 
-# examine treatment patterns by previous outcome
-feedback_data %>%
-  filter(wave > 1) %>%
+## 3. Worked examples
+
+### 3.1 Baseline: simple continuous outcome
+```{r simple-example}
+basic_dat <- margot_simulate(n = 500, waves = 3, seed = 2025)
+basic_dat %>%
   group_by(wave) %>%
-  mutate(prev_y_cat = cut(lag(y), breaks = 3, labels = c("Low", "Med", "High"))) %>%
-  filter(!is.na(prev_y_cat)) %>%
-  group_by(wave, prev_y_cat) %>%
   summarise(
+    n_obs        = dplyr::n(),
     prop_treated = mean(a),
-    n = n(),
-    .groups = "drop"
-  ) %>%
-  ggplot(aes(x = wave, y = prop_treated, color = prev_y_cat)) +
-  geom_line(size = 1.2) +
-  geom_point(size = 3) +
-  theme_minimal() +
-  labs(title = "Treatment Assignment by Previous Outcome",
-       x = "Wave",
-       y = "Proportion Treated",
-       color = "Previous\nOutcome") +
-  scale_color_brewer(palette = "Set1")
+    mean_Y       = mean(y, na.rm = TRUE)
+  )
 ```
 
-## Censoring and Missing Data
+### 3.2 Heterogeneous treatment effects (effect modification)
 
-### Differential Censoring
+Suppose the causal effect of exposure `A1` varies with baseline covariate `B2`.
+We encode this via the `het` sub-list:
 
-Test methods under various censoring mechanisms:
-
-```{r censoring}
-# censoring dependent on treatment
-censor_data <- margot_simulate(
-  n = 500,
-  waves = 6,
-  censoring = list(
-    rate = 0.3,                    # base rate 30%
-    exposure_dependence = TRUE,     # treated more likely censored
-    latent_dependence = TRUE,       # unmeasured factors
-    latent_rho = 0.6               # correlation strength
+```{r het-sim}
+het_dat <- margot_simulate(
+  n        = 4000,
+  waves    = 3,
+  exposures = list(
+    A1 = list(
+      type = "binary",
+      het  = list(modifier = "B2",  # effect modifier
+                  coef     = 0.6)    # γ: interaction strength
+    )
   ),
-  wide = FALSE,
-  seed = 456
+  exposure_outcome = 0.4,  # marginal main effect β
+  seed = 2027
 )
+```
 
-# censoring patterns
-censor_summary <- censor_data %>%
+Verify the interaction:
+
+```{r het-check}
+fit_het <- lm(t4_Y ~ t3_A1 * B2, data = het_dat)
+summary(fit_het)$coefficients
+```
+
+> **Take-away.** The interaction term (`t3_A1:B2`) recovers  
+> $\\beta_{\\text{het}} \\approx 0.6$, matching the data-generating value.
+
+### 3.3 Outcome → Treatment feedback
+
+Realistic behavioural processes often exhibit reflexivity: past outcomes
+influence future treatment uptake.  Activate this with `y_feedback`:
+
+```{r feedback-sim}
+fb_dat <- margot_simulate(
+  n           = 2000,
+  waves       = 5,
+  y_feedback  = 0.8,   # strong Y → A dependency
+  covar_feedback = 0.3, # optional A → L feedback
+  wide        = FALSE,
+  seed        = 101
+)
+```
+
+Visualise treatment rates by quartiles of the previous outcome:
+
+```{r feedback-plot, fig.alt = "Treatment probability across waves stratified by previous-wave outcome quartile"}
+fb_plot <- fb_dat %>%
+  filter(wave > 1) %>%
   group_by(id) %>%
-  summarise(
-    last_obs = max(wave[!is.na(y)]),
-    ever_treated = as.integer(any(a == 1, na.rm = TRUE))
-  ) %>%
-  mutate(censored = last_obs < 5)
+  mutate(prev_Y = lag(y)) %>%
+  ungroup() %>%
+  filter(!is.na(prev_Y)) %>%
+  mutate(q = ntile(prev_Y, 4L)) %>%
+  group_by(wave, q) %>%
+  summarise(prop_A = mean(a), .groups = "drop")
 
-# compare censoring by treatment
-censor_summary %>%
-  group_by(ever_treated) %>%
-  summarise(
-    n = n(),
-    prop_censored = mean(censored),
-    mean_last_wave = mean(last_obs)
-  )
+ggplot(fb_plot, aes(wave, prop_A, colour = factor(q))) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2) +
+  scale_colour_brewer(name = "Prev. Y quartile", palette = "Dark2") +
+  labs(y = "Pr(A = 1)", x = "Wave") +
+  theme_minimal()
 ```
 
-### Item-level Missing Data
+Higher past outcomes (quartiles 3–4) increase the probability of treatment in
+later waves, demonstrating the induced time-varying confounding.
 
-Add realistic MCAR patterns to covariates:
+## 3.4 Positivity diagnostics
 
-```{r missing-items}
-miss_data <- margot_simulate(
-  n = 300,
-  waves = 4,
-  p_covars = 3,
-  item_missing_rate = 0.2,  # 20% MCAR
-  seed = 789
-)
+Estimators grounded in the g-formula, IPW, or TMLE require sufficient
+overlap (positivity) of treatment probabilities across strata of measured
+covariates.  Below we inspect estimated propensity scores at the final
+observed wave in the heterogeneous-effects example.
 
-# missing data patterns
-miss_data %>%
-  summarise(
-    across(starts_with("l"), ~mean(is.na(.)), .names = "miss_{.col}")
-  )
+```{r positivity-plot}
+# wave-3 propensity model: A1 ~ B2
+ps_mod <- glm(t3_A1 ~ B2, family = binomial, data = het_dat)
+het_dat$ps3 <- predict(ps_mod, type = "response")
+
+ggplot(het_dat, aes(ps3, fill = factor(t3_A1))) +
+  geom_histogram(position = "identity", alpha = 0.4, bins = 30) +
+  labs(
+    x    = "estimated propensity score",
+    fill = "A1 at wave 3"
+  ) +
+  theme_minimal()
 ```
 
-## Integration with margot Workflow
+## 4. Censoring & missingness
 
-### Complete Analysis Pipeline
+Attrition can depend on exposure, a latent frailty shared within individuals,
+or both.  For brevity, see the dedicated *Censoring* vignette.
 
-```{r full-workflow, eval = FALSE}
-# 1. simulate data with known effect
-sim_wide <- margot_simulate(
-  n = 1000,
-  waves = 3,
-  p_covars = 3,
-  exposure_outcome = 0.4,  # true ATE = 0.4
-  positivity = "good",
-  wide = TRUE,
-  seed = 2025
-)
+## 5. Power analysis template
 
-# 2. prepare for analysis
-baseline_vars <- c("t0_l1", "t0_l2", "t0_l3")
-exposure_var <- "t1_a"
-outcome_var <- "y"
+Combined heterogeneity and feedback can inflate sample-size requirements.  Use
+batched simulations to trace operating characteristics; skeleton:
 
-# 3. estimate causal effects (requires grf)
-if (requireNamespace("grf", quietly = TRUE)) {
-  # estimate with causal forest
-  results <- margot_causal_forest(
-    data = sim_wide,
-    exposure = exposure_var,
-    outcome = outcome_var,
-    covariates = baseline_vars
-  )
-  
-  # compare to truth
-  ate_est <- results$ate
-  ate_true <- 0.4
-  
-  cat("True ATE:", ate_true, "\n")
-  cat("Estimated ATE:", round(ate_est$estimate, 3), "\n")
-  cat("95% CI:", round(ate_est$ci_lower, 3), "-", round(ate_est$ci_upper, 3), "\n")
-  cat("Covers truth:", ate_true >= ate_est$ci_lower & ate_true <= ate_est$ci_upper, "\n")
-}
+```{r power-template, eval = FALSE}
+power_grid <- tibble::tibble(N = seq(500, 5000, by = 500))
+
+power_grid$power <- vapply(power_grid$N, function(n) {
+  mean(replicate(300, {
+    dat <- margot_simulate(n = n, waves = 4,
+                           y_feedback = 0.7,
+                           exposures = list(A1 = list(type = "binary",
+                                                      het = list(modifier = "B1", coef = 0.5))),
+                           exposure_outcome = 0.3, wide = TRUE))
+    t.test(y ~ t3_A1, data = dat)$p.value < 0.05
+  }))
+}, numeric(1))
+
+ggplot(power_grid, aes(N, power)) +
+  geom_line() +
+  geom_hline(yintercept = 0.8, linetype = "dashed") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(y = "Power", x = "Sample size")
 ```
 
-### Power Analysis Example
+## 6. Further reading
 
-Use simulation to determine required sample size:
+- *Hernán & Robins (2020)* — *Causal Inference: What If*.
+- *Daniel et al. (2013)* — methods for time-varying confounding.
 
-```{r power-analysis, fig.alt="Line plot showing statistical power increasing with sample size, with a horizontal dashed line at 80% power"}
-# function to run one simulation and test
-run_power_sim <- function(n, effect_size = 0.3, alpha = 0.05) {
-  # simulate data
-  dat <- margot_simulate(
-    n = n,
-    waves = 3,
-    exposure_outcome = effect_size,
-    wide = TRUE
-  )
-  
-  # simple t-test on final outcome
-  treated <- dat$y[dat$t1_a == 1]
-  control <- dat$y[dat$t1_a == 0]
-  
-  # check if we reject null
-  t.test(treated, control)$p.value < alpha
-}
+---
 
-# test different sample sizes
-set.seed(100)
-sample_sizes <- c(100, 200, 500, 1000)
-power_results <- sapply(sample_sizes, function(n) {
-  # run 100 simulations per sample size
-  rejections <- replicate(100, run_power_sim(n, effect_size = 0.3))
-  mean(rejections)
-})
-
-# display results
-power_df <- data.frame(
-  n = sample_sizes,
-  power = power_results
-)
-
-print(power_df)
-
-# plot if ggplot2 available
-if (requireNamespace("ggplot2", quietly = TRUE)) {
-  ggplot(power_df, aes(x = n, y = power)) +
-    geom_line(size = 1.2) +
-    geom_point(size = 3) +
-    geom_hline(yintercept = 0.8, linetype = "dashed", color = "red") +
-    scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
-    theme_minimal() +
-    labs(title = "Power Analysis for Detecting ATE = 0.3",
-         x = "Sample Size",
-         y = "Statistical Power") +
-    annotate("text", x = 750, y = 0.85, label = "80% power", color = "red")
-}
-```
-
-## Advanced Scenarios
-
-### Multi-wave Feedback Dynamics
-
-```{r complex-dynamics}
-# complex scenario with multiple feedback loops
-complex_sim <- margot_simulate(
-  n = 500,
-  waves = 10,
-  p_covars = 2,
-  y_feedback = 0.5,         # outcomes affect treatment
-  covar_feedback = 0.4,     # treatment affects covariates  
-  exposure_outcome = 0.3,   # direct effect
-  outcome_type = "continuous",
-  seed = 555
-)
-
-# extract one individual's trajectory
-id_10 <- complex_sim %>% 
-  filter(id == 10) %>%
-  select(wave, l1, l2, a, y)
-
-print(id_10)
-```
-
-### Binary vs Continuous Outcomes
-
-```{r outcome-types, fig.alt="Two histograms side by side: left showing binary outcome distribution (0 or 1 values only), right showing continuous outcome distribution with a normal-like shape"}
-# binary outcome
-binary_sim <- margot_simulate(
-  n = 500,
-  outcome_type = "binary",
-  exposure_outcome = 0.6,  # on log-odds scale
-  seed = 111
-)
-
-# continuous outcome  
-cont_sim <- margot_simulate(
-  n = 500,
-  outcome_type = "continuous",
-  exposure_outcome = 0.6,  # on natural scale
-  seed = 111
-)
-
-# compare distributions
-par(mfrow = c(1, 2))
-hist(binary_sim$y, main = "Binary Outcome", xlab = "Y", col = "lightblue")
-hist(cont_sim$y, main = "Continuous Outcome", xlab = "Y", col = "lightgreen")
-```
-
-## Tips and Best Practices
-
-1. **Always set a seed** for reproducibility
-2. **Start simple** and add complexity gradually
-3. **Validate assumptions** by checking generated data
-4. **Match your simulation** to your analysis plan
-5. **Use wide format** for margot analysis functions
-
-## Parameter Reference
-
-Key parameters and their effects:
-
-- `n`: Sample size (individuals)
-- `waves`: Number of time points
-- `p_covars`: Number of time-varying covariates
-- `exposure_outcome`: True causal effect size
-- `positivity`: Treatment assignment mechanism
-- `censoring`: Dropout patterns
-- `y_feedback`: Dynamic treatment regimes
-- `covar_feedback`: Post-treatment confounding
-- `outcome_type`: Binary or continuous outcomes
-- `wide`: Output format
-
-## Conclusion
-
-`margot_simulate()` provides a flexible framework for generating realistic longitudinal data. Use it to:
-
-- Test your analysis code before applying to real data
-- Understand method performance under various scenarios
-- Teach causal inference concepts with known ground truth
-- Design studies with appropriate power
-
-For more examples, see the main margot workflow vignette.
+Happy simulating — and remember to set a seed!  
