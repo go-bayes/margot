@@ -34,6 +34,11 @@ A kable object that can be further customized using kableExtra functions.
 Takes multiple results tables from `margot_plot` objects and combines them into a single
 formatted table using kableExtra, with optional group headers for each section.
 }
+\note{
+The group_rows function exists in both dplyr and kableExtra packages.
+  This function uses kableExtra::group_rows, which causes a harmless namespace
+  warning when loading the package.
+}
 \examples{
 \dontrun{
 # Suppose we have domain-based results:
