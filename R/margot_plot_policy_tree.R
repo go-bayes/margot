@@ -32,7 +32,7 @@
 #' @return A `ggplot` object (depth 1) or a patchwork object (depth 2).
 #'
 #' @import ggplot2
-#' @import patchwork
+#' @importFrom patchwork wrap_plots plot_layout plot_annotation
 #' @importFrom tibble tibble
 #' @importFrom cli cli_h1 cli_alert_info cli_abort
 #' @export
@@ -540,7 +540,7 @@ margot_plot_policy_tree_depth2 <- function(
 #'   \item{combined_plot}{A ggplot object representing the combined plot (if both plots are generated)}
 #'
 #' @import ggplot2
-#' @import patchwork
+#' @importFrom patchwork wrap_plots plot_layout plot_annotation
 #' @import cli
 #' @export
 margot_plot_policy_combo <- function(

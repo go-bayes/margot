@@ -141,7 +141,8 @@ calc_lp <- function(base_lp, idx, prev_A, cens_spec, params) {
 #'   seed = 42
 #' )
 #'
-#' @import dplyr tibble MASS
+#' @import dplyr tibble
+#' @importFrom MASS mvrnorm
 #' @importFrom stats rnorm rbinom qlogis plogis pnorm
 #' @seealso \code{\link{.default_sim_params}}
 #' @export

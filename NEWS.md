@@ -3,13 +3,29 @@
 
 * Begin writing tutorials for use cases.
 * fix decision tree layout
-* remove `crayon` and other unnecessary packages
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 * improve interpretations in `margot_compare_groups()`
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+
+# [2025-06-09] margot 1.0.62
+
+## New
+- Complete refactor of `margot_simulate()` with clearer data generation process
+- Added support for heterogeneous treatment effects in simulations
+- Enhanced vignette with comprehensive examples and power analysis templates
+
+## Improved
+- Fixed syntax errors in vignettes (removed numeric underscores)
+- Improved test structure with cleaner helper functions
+- Better documentation of simulation parameters and options
+
+## Removed
+- Removed `crayon` package dependency (down to 51 dependencies)
+- Removed `gt` and `gtsummary` package dependencies
+- Updated `margot_summary_panel()` to output markdown tables by default
 
 # [2025-06-04] margot 1.0.61
 - added simulation function `magot_simulate()` + units tests plus vignette
