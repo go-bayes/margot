@@ -101,6 +101,11 @@ margot_plot_policy_tree <- function(
     )
   }
 
+  # add this after building the colour scale
+  shape_scale <- ggplot2::scale_shape_manual(
+    values = setNames(c(16, 17, 15, 3, 4, 18)[seq_along(act_labels)], act_labels)
+  )
+
   if (depth == 1L) {
     nd        <- tree$nodes[[1L]]
     sp        <- nd$split_variable
@@ -151,20 +156,29 @@ margot_plot_policy_tree <- function(
     plot_df <- tibble::tibble(x = x_vec, y = 0, pred = preds)
     colour_scale <- build_colour_scale(act_labels)
 
+    # build shape scale (now that act_labels is available)
+    shape_scale <- ggplot2::scale_shape_manual(
+      values = setNames(c(16, 17, 15, 3, 4, 18)[seq_along(act_labels)], act_labels)
+    )
+
+    # create the plot
     ggplot2::ggplot() +
       ggplot2::geom_jitter(
         data   = plot_df,
-        ggplot2::aes(x = .data$x, y = .data$y, colour = .data$pred),
+        ggplot2::aes(x = .data$x, y = .data$y, colour = .data$pred, shape = .data$pred),
         width  = 0.30,
         height = 0.06,
-        alpha  = point_alpha
+        alpha  = point_alpha,
+        size   = 1.5  # slightly larger to make shapes visible
       ) +
       ggplot2::geom_vline(xintercept = cp, linetype = "dashed") +
       colour_scale +
+      shape_scale +
       ggplot2::labs(
         x        = var_label,
         y        = NULL,
         colour   = "Prediction",
+        shape    = "Prediction",  # add shape to legend
         subtitle = subtitle_txt
       ) +
       theme_function() +
@@ -173,24 +187,6 @@ margot_plot_policy_tree <- function(
         axis.ticks.y    = ggplot2::element_blank(),
         legend.position = "bottom"
       )
-  } else {
-    do.call(
-      margot_plot_policy_tree_depth2,
-      c(
-        list(
-          result_object        = result_object,
-          model_name     = model_name,
-          original_df    = original_df,
-          shading        = shading,
-          color_scale    = color_scale,
-          point_alpha    = point_alpha,
-          theme_function = theme_function,
-          label_mapping  = label_mapping,
-          label_options  = label_options
-        ),
-        list(...)
-      )
-    )
   }
 }
 
@@ -297,6 +293,7 @@ margot_plot_policy_tree_depth2 <- function(
   )
 
   # ---- panel constructor -----------------------------------------------
+  # ---- panel constructor -----------------------------------------------
   build_panel <- function(x, y, xlab, ylab, xsp, ysp,
                           shade_side, xvar, yvar) {
 
@@ -304,16 +301,16 @@ margot_plot_policy_tree_depth2 <- function(
 
     # --- shading ---------------------------------------------------------
     if (shade_enabled && shade_side != "none") {
-      # Get the actual data range to ensure shading stays within bounds
+      # get the actual data range to ensure shading stays within bounds
       x_range <- range(plot_df[[x]], na.rm = TRUE)
       y_range <- range(plot_df[[y]], na.rm = TRUE)
 
-      # Add small buffer to ensure we cover the plot area
+      # add small buffer to ensure we cover the plot area
       x_buffer <- diff(x_range) * 0.05
       y_buffer <- diff(y_range) * 0.05
 
       if (shade_side == "left") {
-        # Shade left side of vertical split
+        # shade left side of vertical split
         p <- p + ggplot2::annotate(
           "rect",
           xmin = x_range[1] - x_buffer,
@@ -324,7 +321,7 @@ margot_plot_policy_tree_depth2 <- function(
           alpha = shade_alpha
         )
       } else if (shade_side == "right") {
-        # Shade right side of vertical split
+        # shade right side of vertical split
         p <- p + ggplot2::annotate(
           "rect",
           xmin = xsp,
@@ -336,33 +333,33 @@ margot_plot_policy_tree_depth2 <- function(
         )
       }
     }
-  # build_panel <- function(x, y, xlab, ylab, xsp, ysp,
-  #                         shade_side, xvar, yvar) {
-  #
-  #   p <- ggplot2::ggplot()
-  #
-  #   # --- shading ---------------------------------------------------------
-  #   if (shade_enabled && shade_side != "none") {
-  #     xmin <- if (shade_side == "left") -Inf else xsp
-  #     xmax <- if (shade_side == "left")  xsp else Inf
-  #     p <- p + ggplot2::annotate(
-  #       "rect", xmin = xmin, xmax = xmax,
-  #       ymin  = -Inf, ymax = Inf,
-  #       fill  = shade_fill, alpha = shade_alpha
-  #     )
-  #   }
 
     # --- back-transformed thresholds for annotation ----------------------
     orig_xsp <- get_original_value_plot(xvar, xsp, original_df)
     orig_ysp <- get_original_value_plot(yvar, ysp, original_df)
 
-    # --- points ----------------------------------------------------------
+    # --- filter data based on shading to improve masking -----------------
+    plot_data_filtered <- if (shade_enabled && shade_side == "left") {
+      plot_df[plot_df[[x]] >= xsp, ]  # only show right side (non-shaded)
+    } else if (shade_enabled && shade_side == "right") {
+      plot_df[plot_df[[x]] <= xsp, ]  # only show left side (non-shaded)
+    } else {
+      plot_df  # show all data if no shading
+    }
+
+    # --- build shape scale ------------------------------------------------
+    shape_scale <- ggplot2::scale_shape_manual(
+      values = setNames(c(16, 17, 15, 3, 4, 18)[seq_along(act_labels)], act_labels)
+    )
+
+    # --- points with both colour and shape --------------------------------
     p <- p + ggplot2::geom_jitter(
-      data   = plot_df,
-      ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred),
+      data   = plot_data_filtered,
+      ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred, shape = pred),
       alpha  = point_alpha,
       width  = jitter_width,
-      height = jitter_height
+      height = jitter_height,
+      size   = 1.5  # slightly larger to make shapes visible
     )
 
     # --- split lines -----------------------------------------------------
@@ -380,7 +377,7 @@ margot_plot_policy_tree_depth2 <- function(
       )
 
     # --- offsets for text ------------------------------------------------
-    x_rng <- range(plot_df[[x]], na.rm = TRUE)
+    x_rng <- range(plot_data_filtered[[x]], na.rm = TRUE)
     off_x <- nudge_frac_x * diff(x_rng)
     off_y <- nudge_frac_y * diff(x_rng)
     if (off_x == 0) off_x <- 0.05
@@ -408,12 +405,13 @@ margot_plot_policy_tree_depth2 <- function(
       )
 
     # --- final styling ---------------------------------------------------
-    p + color_scale +
+    p + color_scale + shape_scale +
       ggplot2::labs(
         x        = xlab,
         y        = ylab,
         subtitle = paste(xlab, "vs", ylab),
-        colour   = "Prediction"
+        colour   = "Prediction",
+        shape    = "Prediction"  # add shape to legend
       ) +
       theme_function() +
       ggplot2::theme(
@@ -426,8 +424,6 @@ margot_plot_policy_tree_depth2 <- function(
                                                   colour = split_label_color)
       )
   }
-
-  # ---- build panels -----------------------------------------------------
 
   # ---- build panels ----------------------------------------------------------
   p1 <- p2 <- NULL
@@ -477,41 +473,6 @@ margot_plot_policy_tree_depth2 <- function(
     )
 
   combined
-
-  # old
-  # p1 <- p2 <- NULL
-  # if (plot_selection %in% c("both", "p1")) {
-  #   p1 <- build_panel(
-  #     "x1", "x2",
-  #     tv(varnames[sv1]), tv(varnames[sv2]),
-  #     cp1, cp2,
-  #     shade_side = if (shade_enabled) "right" else "none",
-  #     xvar = varnames[sv1], yvar = varnames[sv2]
-  #   )
-  # }
-  # if (plot_selection %in% c("both", "p2")) {
-  #   p2 <- build_panel(
-  #     "x1", "x3",
-  #     tv(varnames[sv1]), tv(varnames[sv3]),
-  #     cp1, cp3,
-  #     shade_side = if (shade_enabled) "left" else "none",
-  #     xvar = varnames[sv1], yvar = varnames[sv3]
-  #   )
-  # }
-  #
-  # # ---- assemble layout --------------------------------------------------
-  # main_title <- sprintf("Policy-tree results – %s", tv(model_name))
-  # patchwork::wrap_plots(p1, p2, ncol = 2) +
-  #   patchwork::plot_annotation(
-  #     title = main_title,
-  #     theme = ggplot2::theme(
-  #       plot.title = ggplot2::element_text(size = title_size,
-  #                                          margin = ggplot2::margin(b = 10))
-  #     )
-  #   ) &
-  #   ggplot2::theme(legend.position = legend_position)
-}
-
 
 
 

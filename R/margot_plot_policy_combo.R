@@ -25,6 +25,7 @@
 #' @import ggplot2
 #' @import patchwork
 #' @import cli
+#' @export
 margot_plot_policy_combo <- function(result_object,
                                      model_name,
                                      max_depth             = 2L,

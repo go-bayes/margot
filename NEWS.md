@@ -9,14 +9,22 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+## [2025-06-18] margot 1.0.65
+- `margot_plot_policy_tree()` better graphs
+  - Shape + Color coding - Points use both different shapes AND colors for better distinction
+  - Clean masking - Shaded regions properly filter out points (no more overlapping mess)
+  - Visible annotations - Split values appear as readable horizontal text near the dashed lines
+  - Proper positioning - Annotations stay within plot boundaries
 
-# [2025-06-18] margot 1.0.64
+
+
+## [2025-06-18] margot 1.0.64
 - `margot_plot_categorical()` handles binary data
 
-# [2025-06-09] margot 1.0.63
+## [2025-06-09] margot 1.0.63
 - developing simulation within margot
 
-# [2025-06-09] margot 1.0.62
+## [2025-06-09] margot 1.0.62
 
 ## New
 - Complete refactor of `margot_simulate()` with clearer data generation process
