@@ -50,21 +50,54 @@ margot_plot_categorical <- function(
     df <- df[!is.na(df[[col_name]]), ]
     if (n0 - nrow(df) > 0) cli::cli_alert_info("removed NA rows: {n0 - nrow(df)}")
 
-    result <- create_ordered_variable(
-      df,
-      col_name,
-      n_divisions        = n_divisions,
-      custom_breaks      = custom_breaks,
-      cutpoint_inclusive = cutpoint_inclusive,
-      ties.method        = ties.method
-    )
+    # check if data is already binary
+    unique_vals <- unique(df[[col_name]][!is.na(df[[col_name]])])
+    is_binary <- length(unique_vals) == 2 &&
+      (all(unique_vals %in% c(0, 1)) ||
+         all(unique_vals %in% c(TRUE, FALSE)) ||
+         (is.factor(df[[col_name]]) && length(levels(df[[col_name]])) == 2))
 
-    suffix <- if (!is.null(custom_breaks) && length(custom_breaks) - 1 == 2) "_binary" else "_cat"
-    cat_col <- paste0(col_name, suffix)
-    if (!cat_col %in% names(result)) {
-      alt <- if (suffix=="_binary") paste0(col_name, "_cat") else paste0(col_name, "_binary")
-      cat_col <- grep(paste0("^",alt,"$"), names(result), value=TRUE)[1]
-      if (is.na(cat_col)) stop("no categorical column for {col_name}")
+    if (is_binary) {
+      # use data as-is for binary variables
+      cli::cli_alert_info("binary data detected - using original values")
+      result <- df
+
+      # create a factor version for plotting if not already a factor
+      if (!is.factor(df[[col_name]])) {
+        if (all(unique_vals %in% c(0, 1))) {
+          result[[paste0(col_name, "_binary")]] <- factor(df[[col_name]],
+                                                          levels = c(0, 1),
+                                                          labels = c("0", "1"))
+        } else if (all(unique_vals %in% c(TRUE, FALSE))) {
+          result[[paste0(col_name, "_binary")]] <- factor(df[[col_name]],
+                                                          levels = c(FALSE, TRUE),
+                                                          labels = c("FALSE", "TRUE"))
+        } else {
+          result[[paste0(col_name, "_binary")]] <- as.factor(df[[col_name]])
+        }
+      } else {
+        result[[paste0(col_name, "_binary")]] <- df[[col_name]]
+      }
+
+      cat_col <- paste0(col_name, "_binary")
+    } else {
+      # use cutpoint processing for non-binary data
+      result <- create_ordered_variable(
+        df,
+        col_name,
+        n_divisions        = n_divisions,
+        custom_breaks      = custom_breaks,
+        cutpoint_inclusive = cutpoint_inclusive,
+        ties.method        = ties.method
+      )
+
+      suffix <- if (!is.null(custom_breaks) && length(custom_breaks) - 1 == 2) "_binary" else "_cat"
+      cat_col <- paste0(col_name, suffix)
+      if (!cat_col %in% names(result)) {
+        alt <- if (suffix=="_binary") paste0(col_name, "_cat") else paste0(col_name, "_binary")
+        cat_col <- grep(paste0("^",alt,"$"), names(result), value=TRUE)[1]
+        if (is.na(cat_col)) stop("no categorical column for {col_name}")
+      }
     }
 
     levels_vec <- levels(result[[cat_col]])
@@ -73,7 +106,13 @@ margot_plot_categorical <- function(
       colour_palette <- pal[seq_along(levels_vec)]
     }
 
-    if (is.null(binwidth)) binwidth <- diff(range(df[[col_name]], na.rm=TRUE))/30
+    if (is.null(binwidth)) {
+      if (is_binary) {
+        binwidth <- 0.5  # appropriate binwidth for binary data
+      } else {
+        binwidth <- diff(range(df[[col_name]], na.rm=TRUE))/30
+      }
+    }
 
     formatted <- transform_var_name(col_name, label_mapping = label_mapping)
     stats <- list(
@@ -148,103 +187,6 @@ margot_plot_categorical <- function(
       cli::cli_alert_info("saving: {fn}.png")
       ggsave(filename=file.path(save_path, paste0(fn, ".png")),
              plot=p, width=width, height=height, units="in", dpi=300)
-      margot::here_save_qs(p, fn, save_path, preset="high", nthreads=1)
-      cli::cli_alert_success("saved: {fn}.png")
-    }
-    p
-  }, error=function(e){
-    cli::cli_alert_danger("error: {conditionMessage(e)}")
-    NULL
-  })
-}
-
-#' Visualise shifts in data distributions with highlighted ranges
-#'
-#' @inheritParams margot_plot_categorical
-#' @export
-margot_plot_shift <- function(
-    df,
-    col_name,
-    label_mapping   = NULL,
-    binwidth        = 1,
-    range_highlight = NULL,
-    shift           = "up",
-    show_avg_line   = TRUE,
-    print_avg_value = TRUE,
-    show_sd_line    = TRUE,
-    title           = NULL,
-    subtitle        = NULL,
-    x_lab           = NULL,
-    y_lab           = "Count",
-    save_path       = NULL,
-    width           = 12,
-    height          = 8,
-    include_timestamp = FALSE
-) {
-  cli::cli_h1("margot plot shift")
-  tryCatch({
-    if (!col_name %in% names(df)) stop("column not found in dataframe")
-    if (all(is.na(df[[col_name]]))) stop("column contains only NA")
-    if (!shift %in% c("up","down")) stop("shift must be up or down")
-
-    formatted <- transform_var_name(col_name, label_mapping = label_mapping)
-    stats <- list(
-      mean = mean(df[[col_name]], na.rm=TRUE),
-      sd   = sd(df[[col_name]], na.rm=TRUE)
-    )
-    if (show_avg_line) cli::cli_alert_info("average: {round(stats$mean,2)}")
-
-    df$fill_color <- "lightgray"
-    if (!is.null(range_highlight) && length(range_highlight)==2) {
-      mask <- df[[col_name]] >= range_highlight[1] & df[[col_name]] <= range_highlight[2]
-      df$fill_color[mask] <- if (shift=="up") "gold2" else "dodgerblue"
-      cli::cli_alert_info("highlight: [{range_highlight[1]}, {range_highlight[2]}]")
-    }
-
-    if (is.null(subtitle)) {
-      subtitle <- paste0(
-        if (shift=="up") "shifts up" else "shifts down",
-        if (show_avg_line) "\nred dashed = mean" else "",
-        if (show_sd_line) "\ngrey dashed = ±1 sd" else ""
-      )
-    }
-
-    p <- ggplot(df, aes(x=!!rlang::sym(col_name), fill=fill_color)) +
-      geom_histogram(binwidth=binwidth, alpha=0.7, linewidth=0.5) +
-      scale_fill_identity() +
-      labs(
-        title    = title %||% paste(formatted, "Distribution"),
-        subtitle = subtitle,
-        x        = x_lab %||% formatted,
-        y        = y_lab,
-        caption  = sprintf("N = %d", nrow(df))
-      ) +
-      theme_minimal() +
-      theme(
-        text        = element_text(size=12),
-        axis.text.x = element_text(angle=45, hjust=1)
-      )
-
-    if (show_avg_line) {
-      p <- p + geom_vline(xintercept=stats$mean, linetype="dashed", linewidth=0.75)
-      if (print_avg_value) {
-        p <- p + annotate("text", x=stats$mean, y=0,
-                          label=round(stats$mean,2), hjust=1.1, vjust=-0.5)
-      }
-    }
-    if (show_sd_line) {
-      p <- p + geom_vline(xintercept=stats$mean-stats$sd, linetype="dashed", linewidth=0.5) +
-        geom_vline(xintercept=stats$mean+stats$sd, linetype="dashed", linewidth=0.5)
-    }
-
-    if (!is.null(save_path)) {
-      fn <- paste0(
-        "shift_", col_name,
-        if (include_timestamp) paste0("_", format(Sys.Date(),"%Y%m%d")) else ""
-      )
-      cli::cli_alert_info("saving: {fn}.png")
-      ggsave(filename=file.path(save_path,paste0(fn,".png")), plot=p,
-             width=width, height=height, units="in", dpi=300)
       margot::here_save_qs(p, fn, save_path, preset="high", nthreads=1)
       cli::cli_alert_success("saved: {fn}.png")
     }

@@ -271,4 +271,4 @@ ggplot(power_grid, aes(N, power)) +
 
 ---
 
-Happy simulating — and remember to set a seed!  
+Happy simulating — and remember to set a seed.

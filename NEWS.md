@@ -9,6 +9,10 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+
+# [2025-06-18] margot 1.0.64
+- `margot_plot_categorical()` handles binary data
+
 # [2025-06-09] margot 1.0.63
 - developing simulation within margot
 
