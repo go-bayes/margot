@@ -61,6 +61,9 @@ lubridate, here, tools, tibble
 grf, lmtp, policytree, maq, SuperLearner,
 clarify, EValue, WeightIt, MatchIt, MatchThem
 ```
+**Note**: Rather than creating a single `margot.models` meta-package, we will create
+focused packages `margot.lmtp` and `margot.grf` for our core causal inference methods.
+Traditional parametric approaches are available through LMTP for comparison purposes.
 
 ### Visualisation Stack
 ```
@@ -93,7 +96,8 @@ check_suggests <- function(pkg, fun = NULL, purpose = NULL) {
     cli::cli_abort(c(
       "Package {.pkg {pkg}} is required{fun_msg}{purpose_msg}.",
       "i" = "Install it with: {.code install.packages('{pkg}')}",
-      "i" = "For all estimation packages: {.code install.packages('margot.models')}",
+      "i" = "For causal forest methods: {.code install.packages('margot.grf')}",
+      "i" = "For LMTP methods: {.code install.packages('margot.lmtp')}",
       "i" = "For all visualisation packages: {.code install.packages('margot.viz')}",
       "i" = "For all reporting packages: {.code install.packages('margot.report')}"
     ))
