@@ -634,7 +634,7 @@
 <div class="section level3">
 <h3 id="improved-0-3-3-3">Improved<a class="anchor" aria-label="anchor" href="#improved-0-3-3-3"></a></h3>
 <ul><li>
-<code>margot_censor()</code> - explicit call for ‘cli’ to avoid conflict with crayon</li>
+<code><a href="../reference/margot_censor.html">margot_censor()</a></code> - explicit call for ‘cli’ to avoid conflict with crayon</li>
 <li>
 <code><a href="../reference/create_ordered_variable.html">create_ordered_variable()</a></code> - removed crayon</li>
 <li>
@@ -812,7 +812,7 @@
 <li>
 <code><a href="../reference/margot_summary_panel.html">margot_summary_panel()</a></code> - specified functions required</li>
 <li>
-<code>margot_censor()</code> - specified functions required by data.table (#’ <a href="https://github.com/importFrom" class="external-link">@importFrom</a> data.table as.data.table copy set get uniqueN)</li>
+<code><a href="../reference/margot_censor.html">margot_censor()</a></code> - specified functions required by data.table (#’ <a href="https://github.com/importFrom" class="external-link">@importFrom</a> data.table as.data.table copy set get uniqueN)</li>
 <li>
 <code>read_multiple_images()</code> - made internal</li>
 <li>
@@ -885,7 +885,7 @@
 <div class="section level3">
 <h3 id="improved-0-3-1-3">Improved<a class="anchor" aria-label="anchor" href="#improved-0-3-1-3"></a></h3>
 <ul><li>
-<code>margot_censor()</code>: censoring is conditional on both the condition and the wave: if <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="monospace">𝚌𝚎𝚗𝚜𝚘𝚛_𝚏𝚒𝚗𝚊𝚕_𝚠𝚊𝚟𝚎 = 𝙵𝙰𝙻𝚂𝙴</mtext><annotation encoding="application/x-tex">\texttt{censor_final_wave = FALSE}</annotation></semantics></math> then rows in the final wave (determined as <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="monospace">𝚖𝚊𝚡(𝚍𝚝[[𝚠𝚊𝚟𝚎_𝚟𝚊𝚛]])</mtext><annotation encoding="application/x-tex">\texttt{max(dt[[wave_var]])}</annotation></semantics></math>) are preserved (default behaviour). This allows for estimating a per-protocal effect where changing a censoring condition is part of the causal effect of the intervention for the population at baseline.</li>
+<code><a href="../reference/margot_censor.html">margot_censor()</a></code>: censoring is conditional on both the condition and the wave: if <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="monospace">𝚌𝚎𝚗𝚜𝚘𝚛_𝚏𝚒𝚗𝚊𝚕_𝚠𝚊𝚟𝚎 = 𝙵𝙰𝙻𝚂𝙴</mtext><annotation encoding="application/x-tex">\texttt{censor_final_wave = FALSE}</annotation></semantics></math> then rows in the final wave (determined as <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="monospace">𝚖𝚊𝚡(𝚍𝚝[[𝚠𝚊𝚟𝚎_𝚟𝚊𝚛]])</mtext><annotation encoding="application/x-tex">\texttt{max(dt[[wave_var]])}</annotation></semantics></math>) are preserved (default behaviour). This allows for estimating a per-protocal effect where changing a censoring condition is part of the causal effect of the intervention for the population at baseline.</li>
 </ul></div>
 </div>
     <div class="section level2">

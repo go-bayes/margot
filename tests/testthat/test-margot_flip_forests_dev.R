@@ -374,3 +374,181 @@ test_that("margot_flip_forests_dev handles single covariate case", {
   # policytree can create depth-2 tree even with 1 covariate (using same var at both levels)
   expect_false(result_truly_single$results$model_Y$policy_tree_depth_2_auto_expanded)
 })
+
+test_that("margot_flip_forests_dev handles covariate exclusions", {
+  # create test data with various covariate types
+  set.seed(111)
+  n <- 250
+  p <- 10
+  
+  # create covariates with specific patterns
+  X <- matrix(rnorm(n * p), n, p)
+  colnames(X) <- c(
+    "X1", "X2", "X3",                    # regular covariates
+    "t0_log_hours", "t0_log_income",     # log-transformed
+    "t0_hlth_bmi", "t0_hlth_sleep",      # health measures
+    "age", "gender", "education"         # demographics
+  )
+  X_df <- as.data.frame(X)
+  
+  W <- rbinom(n, 1, 0.5)
+  Y <- X[, 1] + W * X[, 2] + rnorm(n)
+  
+  df <- data.frame(Y = Y, W = W, X_df)
+  
+  # run margot_causal_forest
+  cf_results <- margot::margot_causal_forest(
+    data = df,
+    outcome_vars = "Y",
+    covariates = X_df,
+    W = W,
+    weights = rep(1, n),
+    grf_defaults = list(num.trees = 100),
+    save_data = TRUE,
+    save_models = TRUE,
+    top_n_vars = 5
+  )
+  
+  # test 1: exclude specific variables
+  result_exclude_specific <- margot_flip_forests_dev(
+    cf_results,
+    exclude_covariates = c("t0_hlth_bmi", "gender"),
+    covariate_mode = "all",
+    verbose = FALSE
+  )
+  
+  # check that excluded variables are not in policy tree covariates
+  policy_covars <- result_exclude_specific$results$model_Y$policy_tree_covariates
+  expect_false("t0_hlth_bmi" %in% policy_covars)
+  expect_false("gender" %in% policy_covars)
+  
+  # test 2: exclude by pattern (all log variables)
+  result_exclude_pattern <- margot_flip_forests_dev(
+    cf_results,
+    exclude_covariates = "^t0_log_",
+    covariate_mode = "all",
+    verbose = FALSE
+  )
+  
+  policy_covars_pattern <- result_exclude_pattern$results$model_Y$policy_tree_covariates
+  # debug
+  # print(policy_covars_pattern)
+  expect_false(any(grepl("^t0_log_", policy_covars_pattern)))
+  
+  # test 3: combine custom covariates with exclusions
+  result_custom_exclude <- margot_flip_forests_dev(
+    cf_results,
+    custom_covariates = c("X1", "X2", "t0_log_hours", "t0_hlth_bmi"),
+    exclude_covariates = c("^t0_log_", "t0_hlth_bmi"),
+    covariate_mode = "custom",
+    verbose = FALSE
+  )
+  
+  # should only have X1 and X2 after exclusions
+  custom_policy_covars <- result_custom_exclude$results$model_Y$policy_tree_covariates
+  expect_equal(sort(custom_policy_covars), sort(c("X1", "X2")))
+  
+  # test 4: error when all covariates excluded
+  expect_error(
+    margot_flip_forests_dev(
+      cf_results,
+      custom_covariates = c("t0_log_hours", "t0_log_income"),
+      exclude_covariates = "^t0_log_",
+      covariate_mode = "custom",
+      verbose = FALSE
+    ),
+    "no covariates remaining"
+  )
+})
+
+# NEW TEST: test optimized exclusion-only path
+test_that("margot_flip_forests_dev uses optimized path for exclusion-only operations", {
+  # create test data
+  set.seed(222)
+  n <- 300
+  p <- 8
+  
+  X <- matrix(rnorm(n * p), n, p)
+  colnames(X) <- c("var1", "var2", "var3", "var4", "var5", "var6", "var7", "var8")
+  X_df <- as.data.frame(X)
+  
+  W <- rbinom(n, 1, 0.5)
+  Y <- X[, 1] + W * X[, 2] + rnorm(n)
+  
+  df <- data.frame(Y = Y, W = W, X_df)
+  
+  # run margot_causal_forest with top_n_vars = 5
+  cf_results <- margot::margot_causal_forest(
+    data = df,
+    outcome_vars = "Y",
+    covariates = X_df,
+    W = W,
+    weights = rep(1, n),
+    grf_defaults = list(num.trees = 100),
+    save_data = TRUE,
+    save_models = TRUE,
+    top_n_vars = 5
+  )
+  
+  # test 1: exclusion-only should use optimized path
+  result_excl_only <- margot_flip_forests_dev(
+    cf_results,
+    exclude_covariates = c("var1", "var2"),
+    verbose = FALSE
+  )
+  
+  # check that optimization was used
+  expect_true(result_excl_only$exclusion_only_optimization)
+  expect_true(result_excl_only$results$model_Y$policy_tree_exclusion_applied)
+  
+  # should have filtered top_vars
+  filtered_vars <- result_excl_only$results$model_Y$policy_tree_covariates
+  expect_false("var1" %in% filtered_vars)
+  expect_false("var2" %in% filtered_vars)
+  expect_true(length(filtered_vars) <= 5)  # filtered from original top_n_vars
+  
+  # test 2: exclusion leaving only 1 variable
+  # first, create a mock where we know exactly which vars are in top_vars
+  mock_results <- list(
+    results = list(
+      model_Y = list(
+        tau_hat = rnorm(100),
+        dr_scores = matrix(rnorm(200), 100, 2),
+        top_vars = c("A", "B", "C", "D", "E"),
+        policy_tree_depth_1 = list(placeholder = TRUE),
+        policy_tree_depth_2 = list(placeholder = TRUE),
+        plot_data = list(
+          X_test_full = data.frame(A = rnorm(30), B = rnorm(30), C = rnorm(30), 
+                                   D = rnorm(30), E = rnorm(30)),
+          predictions = rep(1, 30)
+        )
+      )
+    ),
+    covariates = data.frame(
+      A = rnorm(100), B = rnorm(100), C = rnorm(100), 
+      D = rnorm(100), E = rnorm(100), F = rnorm(100)
+    )
+  )
+  
+  result_one_var <- suppressWarnings(margot_flip_forests_dev(
+    mock_results,
+    exclude_covariates = c("A", "B", "C", "D"),
+    verbose = FALSE
+  ))
+  
+  expect_equal(result_one_var$results$model_Y$policy_tree_covariates, "E")
+  expect_null(result_one_var$results$model_Y$policy_tree_depth_2)
+  expect_true(!is.null(result_one_var$results$model_Y$policy_tree_depth_1))
+  
+  # test 3: exclusion leaving 0 variables
+  result_no_vars <- suppressWarnings(margot_flip_forests_dev(
+    mock_results,
+    exclude_covariates = c("A", "B", "C", "D", "E"),
+    verbose = FALSE
+  ))
+  
+  expect_equal(length(result_no_vars$results$model_Y$policy_tree_covariates), 0)
+  expect_null(result_no_vars$results$model_Y$policy_tree_depth_1)
+  expect_null(result_no_vars$results$model_Y$policy_tree_depth_2)
+  expect_null(result_no_vars$results$model_Y$plot_data)
+})

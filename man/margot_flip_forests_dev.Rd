@@ -8,6 +8,7 @@ margot_flip_forests_dev(
   model_results,
   flip_outcomes = NULL,
   custom_covariates = NULL,
+  exclude_covariates = NULL,
   covariate_mode = c("custom", "add", "all"),
   model_prefix = "model_",
   recalc_policy = TRUE,
@@ -22,6 +23,10 @@ Can be NULL if only recalculating policy trees with custom covariates.}
 
 \item{custom_covariates}{A character vector of covariate names to use for policy tree calculation.
 If NULL, uses the original top_n_vars from the model.}
+
+\item{exclude_covariates}{A character vector of covariate names or patterns to exclude from policy trees.
+Supports exact matches and regex patterns (e.g., "^t0_log_" to exclude all variables starting with "t0_log_").
+Exclusions are applied after covariate selection/combination.}
 
 \item{covariate_mode}{Character string specifying how to use custom covariates:
 \itemize{
@@ -44,6 +49,11 @@ This development function extends margot_flip_forests to allow custom covariate
 specification for policy tree recalculation. Users can flip CATE estimates,
 recalculate RATE/QINI results, and explore policy trees with different sets of
 covariates than those originally selected by margot_causal_forest.
+}
+\details{
+When only \code{exclude_covariates} is specified (no flipping or custom covariates), the function
+uses an optimized path that filters the existing top_vars without recalculating policy trees.
+This significantly improves performance for sensitivity analyses.
 }
 \examples{
 \dontrun{
