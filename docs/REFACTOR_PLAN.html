@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.65</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.70</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,6 +113,7 @@ lubridate, here, tools, tibble</code></pre>
 <h3 id="estimation-stack">Estimation Stack<a class="anchor" aria-label="anchor" href="#estimation-stack"></a></h3>
 <pre><code>grf, lmtp, policytree, maq, SuperLearner,
 clarify, EValue, WeightIt, MatchIt, MatchThem</code></pre>
+<p><strong>Note</strong>: Rather than creating a single <code>margot.models</code> meta-package, we will create focused packages <code>margot.lmtp</code> and <code>margot.grf</code> for our core causal inference methods. Traditional parametric approaches are available through LMTP for comparison purposes.</p>
 </div>
 <div class="section level3">
 <h3 id="visualisation-stack">Visualisation Stack<a class="anchor" aria-label="anchor" href="#visualisation-stack"></a></h3>
@@ -144,7 +145,8 @@ future.apply, vctrs, furrr, labelled</code></pre>
 <span>    <span class="fu">cli</span><span class="fu">::</span><span class="fu"><a href="https://cli.r-lib.org/reference/cli_abort.html" class="external-link">cli_abort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>      <span class="st">"Package {.pkg {pkg}} is required{fun_msg}{purpose_msg}."</span>,</span>
 <span>      <span class="st">"i"</span> <span class="op">=</span> <span class="st">"Install it with: {.code install.packages('{pkg}')}"</span>,</span>
-<span>      <span class="st">"i"</span> <span class="op">=</span> <span class="st">"For all estimation packages: {.code install.packages('margot.models')}"</span>,</span>
+<span>      <span class="st">"i"</span> <span class="op">=</span> <span class="st">"For causal forest methods: {.code install.packages('margot.grf')}"</span>,</span>
+<span>      <span class="st">"i"</span> <span class="op">=</span> <span class="st">"For LMTP methods: {.code install.packages('margot.lmtp')}"</span>,</span>
 <span>      <span class="st">"i"</span> <span class="op">=</span> <span class="st">"For all visualisation packages: {.code install.packages('margot.viz')}"</span>,</span>
 <span>      <span class="st">"i"</span> <span class="op">=</span> <span class="st">"For all reporting packages: {.code install.packages('margot.report')}"</span></span>
 <span>    <span class="op">)</span><span class="op">)</span></span>
@@ -218,7 +220,7 @@ future.apply, vctrs, furrr, labelled</code></pre>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

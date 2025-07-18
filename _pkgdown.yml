@@ -91,6 +91,7 @@ reference:
     - create_ordered_variable
     - impute_and_combine
     - margot_adjust_weights
+    - margot_censor
     - margot_compute_gender_weights_by_wave
     - margot_filter
     - margot_impute_carry_forward
@@ -112,6 +113,7 @@ reference:
     - margot_compare_groups
     - margot_correct_combined_table
     - margot_flip_forests
+    - margot_flip_forests_dev
     - margot_inspect_qini
     - margot_interpret_policy_batch
     - margot_interpret_policy_tree

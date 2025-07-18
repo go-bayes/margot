@@ -11,7 +11,7 @@ If no wave column is found, it issues a warning and uses the entire dataset."></
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.65</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.70</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,9 +74,9 @@ The default is "wave".</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example using a dataset with a wave column</span></span></span>
-<span class="r-in"><span><span class="co"># assume dat_long_amelia_log has a column called wave</span></span></span>
-<span class="r-in"><span><span class="fu">margot_prop_missing</span><span class="op">(</span><span class="va">dat_long_amelia_log</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'dat_long_amelia_log' not found</span>
+<span class="r-in"><span><span class="co"># assume dat_long has a column called wave</span></span></span>
+<span class="r-in"><span><span class="fu">margot_prop_missing</span><span class="op">(</span><span class="va">dat_long</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'dat_long' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Example using a dataset without a wave column</span></span></span>
 <span class="r-in"><span><span class="co"># assume some_data is a dataset with no wave column</span></span></span>
@@ -93,7 +93,7 @@ The default is "wave".</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

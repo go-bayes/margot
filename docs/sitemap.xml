@@ -96,6 +96,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_create_database.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_filter.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_flip_forests.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_flip_forests_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_flip_forests_parallel.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_get_labels.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_causal_forest.html</loc></url>

@@ -9,6 +9,9 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+## [2025-07-17] margot 1.0.70
+- `margot_flip_forests_dev()` allows custom policy trees 
+
 ## [2025-06-18] margot 1.0.65
 - `margot_plot_policy_tree()` better graphs
   - Shape + Color coding - Points use both different shapes AND colors for better distinction
