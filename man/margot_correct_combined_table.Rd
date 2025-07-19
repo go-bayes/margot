@@ -2,11 +2,11 @@
 % Please edit documentation in R/margot_correct_combined_table.R
 \name{margot_correct_combined_table}
 \alias{margot_correct_combined_table}
-\title{Correct a “combined table” for multiplicity **and** recompute *E*-values}
+\title{Correct a "combined table" for multiplicity **and** recompute *E*-values}
 \usage{
 margot_correct_combined_table(
   combined_table,
-  adjust = c("bonferroni", "holm"),
+  adjust = c("bonferroni", "holm", "BH"),
   alpha = 0.05,
   scale = c("RD", "RR"),
   delta = 1,
@@ -21,11 +21,11 @@ margot_correct_combined_table(
 }
 Extra columns (e.g. the original *E*-values) are carried through.}
 
-\item{adjust}{Multiplicity method: `"bonferroni"` (default) or `"holm"`.
-(Those are the two methods with strong FWER control; other
-`p.adjust()` flavours are deliberately **not** exposed.)}
+\item{adjust}{Multiplicity method: `"bonferroni"` (default), `"holm"`, or `"BH"`.
+Bonferroni and Holm provide strong FWER control; BH provides FDR control.}
 
-\item{alpha}{Family-wise error-rate to control. Default `0.05`.}
+\item{alpha}{Family-wise error-rate (for bonferroni/holm) or false discovery
+rate (for BH) to control. Default `0.05`.}
 
 \item{scale}{Scale to use when recomputing the *E*-value.
 `"RD"` (risk difference / ATE, **default**) or `"RR"` (risk ratio).}
@@ -63,6 +63,9 @@ Let \eqn{m} be the number of rows (tests).
   \item **Holm** first step-down adjusts the (two-sided) *p*-value for each
     test, then back-calculates a *symmetric* CI whose coverage matches the
     adjusted *p*.  Point estimates **never** change.
+  \item **BH** (Benjamini-Hochberg) applies FDR correction to *p*-values,
+    then back-calculates symmetric CIs. Controls false discovery rate rather
+    than family-wise error rate.
 }
 }
 

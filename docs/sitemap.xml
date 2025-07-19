@@ -90,6 +90,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compute_gender_weights_by_wave.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compute_policy_value.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_correct_combined_table.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_correct_multcomp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_count_dyads.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_count_ids.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_create_bibliography.html</loc></url>
@@ -129,6 +130,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_categorical.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_create_options.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_decision_tree.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_discontinuity.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_exposure.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_grf_rate.html</loc></url>
@@ -191,6 +193,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/prepare_panel_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/pretty_number.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/read_multiple_images.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/recalculate_evalues.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/regress_with_covariates.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/remove_numeric_attributes.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/run_simulations.html</loc></url>

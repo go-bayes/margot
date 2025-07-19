@@ -135,6 +135,7 @@ reference:
   - title: "Visualise Causal Effect Estimates"
     contents:
     - margot_plot
+    - margot_plot_dev
     - margot_plot_decision_tree
     - margot_plot_multi_arm
     - margot_plot_policy_combo
