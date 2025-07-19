@@ -14,7 +14,10 @@ margot_interpret_policy_tree(
   original_df = NULL,
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
-  use_title_case = TRUE
+  use_title_case = TRUE,
+  include_conditional_means = TRUE,
+  use_math_notation = FALSE,
+  output_format = c("prose", "bullet")
 )
 }
 \arguments{
@@ -37,6 +40,12 @@ margot_interpret_policy_tree(
 \item{remove_z_suffix}{Logical indicating whether to remove the _z suffix from variable names. Default is TRUE.}
 
 \item{use_title_case}{Logical indicating whether to convert variable names to title case. Default is TRUE.}
+
+\item{include_conditional_means}{Logical indicating whether to include conditional means information if available. Default is TRUE.}
+
+\item{use_math_notation}{Logical indicating whether to use mathematical notation (E[Y(a)|X]) or plain language. Default is FALSE for clarity.}
+
+\item{output_format}{Character string specifying output format: "prose" (default) for flowing narrative text, or "bullet" for structured bullet points.}
 }
 \value{
 Invisibly returns a string containing the interpretation; also prints it to the console.

@@ -6,7 +6,23 @@ widens the confidence interval according to the chosen
 recalculates *E*-values (and their lower bounds) so they match the
         new interval.
 By default it implements the single–step **Bonferroni** correction at
+\(\alpha = 0.05\) as advocated by VanderWeele &amp;amp; Mathur (2019).
+`margot_correct_combined_table()` takes the **combined_table** produced by the
+various *margot* models (or by your own code) and
+widens the confidence interval according to the chosen
+        family–wise-error correction, **and**
+recalculates *E*-values (and their lower bounds) so they match the
+        new interval.
+By default it implements the single–step **Bonferroni** correction at
 \(\alpha = 0.05\) as advocated by VanderWeele &amp;amp; Mathur (2019)."><meta property="og:description" content="`margot_correct_combined_table()` takes the **combined_table** produced by the
+various *margot* models (or by your own code) and
+widens the confidence interval according to the chosen
+        family–wise-error correction, **and**
+recalculates *E*-values (and their lower bounds) so they match the
+        new interval.
+By default it implements the single–step **Bonferroni** correction at
+\(\alpha = 0.05\) as advocated by VanderWeele &amp;amp; Mathur (2019).
+`margot_correct_combined_table()` takes the **combined_table** produced by the
 various *margot* models (or by your own code) and
 widens the confidence interval according to the chosen
         family–wise-error correction, **and**
@@ -21,7 +37,7 @@ By default it implements the single–step **Bonferroni** correction at
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.70</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.80</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,12 +64,19 @@ By default it implements the single–step **Bonferroni** correction at
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Correct a "combined table" for multiplicity **and** recompute *E*-values</h1>
-      <small class="dont-index">Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/R/margot_correct_combined_table.R" class="external-link"><code>R/margot_correct_combined_table.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/R/margot_correct_combined_table.R" class="external-link"><code>R/margot_correct_combined_table.R</code></a>, <a href="https://github.com/go-bayes/margot/blob/HEAD/R/margot_plot.R" class="external-link"><code>R/margot_plot.R</code></a></small>
       <div class="d-none name"><code>margot_correct_combined_table.Rd</code></div>
     </div>
 
     <div class="ref-description section level2">
     <p>`margot_correct_combined_table()` takes the **combined_table** produced by the
+various *margot* models (or by your own code) and</p><ol><li><p>widens the confidence interval according to the chosen
+        family–wise-error correction, **and**</p></li>
+<li><p>recalculates *E*-values (and their lower bounds) so they match the
+        new interval.</p></li>
+</ol><p>By default it implements the single–step **Bonferroni** correction at
+\(\alpha = 0.05\) as advocated by VanderWeele &amp; Mathur (2019).</p>
+<p>`margot_correct_combined_table()` takes the **combined_table** produced by the
 various *margot* models (or by your own code) and</p><ol><li><p>widens the confidence interval according to the chosen
         family–wise-error correction, **and**</p></li>
 <li><p>recalculates *E*-values (and their lower bounds) so they match the
@@ -66,7 +89,16 @@ various *margot* models (or by your own code) and</p><ol><li><p>widens the confi
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_correct_combined_table</span><span class="op">(</span></span>
 <span>  <span class="va">combined_table</span>,</span>
-<span>  adjust <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bonferroni"</span>, <span class="st">"holm"</span>, <span class="st">"BH"</span><span class="op">)</span>,</span>
+<span>  adjust <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bonferroni"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RD"</span>, <span class="st">"RR"</span><span class="op">)</span>,</span>
+<span>  delta <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  sd <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">margot_correct_combined_table</span><span class="op">(</span></span>
+<span>  <span class="va">combined_table</span>,</span>
+<span>  adjust <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bonferroni"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RD"</span>, <span class="st">"RR"</span><span class="op">)</span>,</span>
 <span>  delta <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -85,13 +117,12 @@ various *margot* models (or by your own code) and</p><ol><li><p>widens the confi
 
 
 <dt id="arg-adjust">adjust<a class="anchor" aria-label="anchor" href="#arg-adjust"></a></dt>
-<dd><p>Multiplicity method: `"bonferroni"` (default), `"holm"`, or `"BH"`.
-Bonferroni and Holm provide strong FWER control; BH provides FDR control.</p></dd>
+<dd><p>multiplicity correction method: "none", "bonferroni"
+Bonferroni provides conservative family-wise error rate control.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Family-wise error-rate (for bonferroni/holm) or false discovery
-rate (for BH) to control. Default `0.05`.</p></dd>
+<dd><p>Family-wise error-rate for bonferroni. Default `0.05`.</p></dd>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
@@ -109,6 +140,9 @@ rate (for BH) to control. Default `0.05`.</p></dd>
     <p>A data frame with the same rows (and order) as `combined_table`, but
   with</p><ul><li><p>updated `2.5 <!-- %` and `97.5 %` columns, and --></p></li>
 <li><p>freshly computed `E_Value` and `E_Val_bound`.</p></li>
+</ul><p>A data frame with the same rows (and order) as `combined_table`, but
+  with</p><ul><li><p>updated `2.5 <!-- %` and `97.5 %` columns, and --></p></li>
+<li><p>freshly computed `E_Value` and `E_Val_bound`.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="how-the-correction-is-applied">How the correction is applied<a class="anchor" aria-label="anchor" href="#how-the-correction-is-applied"></a></h2>
@@ -123,10 +157,18 @@ rate (for BH) to control. Default `0.05`.</p></dd>
 <li><p>**BH** (Benjamini-Hochberg) applies FDR correction to *p*-values,
     then back-calculates symmetric CIs. Controls false discovery rate rather
     than family-wise error rate.</p></li>
+</ul><p>Let \(m\) be the number of rows (tests).</p><ul><li><p>**Bonferroni** uses
+    $$ z^* = \Phi^{-1}\!\bigl(1-\alpha/(2m)\bigr) $$
+    and rescales the original half-width.</p></li>
+<li><p>**none** applies no correction, keeping the original confidence intervals.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>VanderWeele TJ, Mathur MB (2019).
+*Some desirable properties of the Bonferroni correction:
+Is the Bonferroni correction really so bad?*
+**Am J Epidemiol** 188(3): 617–618.</p>
+<p>VanderWeele TJ, Mathur MB (2019).
 *Some desirable properties of the Bonferroni correction:
 Is the Bonferroni correction really so bad?*
 **Am J Epidemiol** 188(3): 617–618.</p>

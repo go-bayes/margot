@@ -18,6 +18,7 @@ margot_causal_forest_parallel(
   train_proportion = 0.7,
   qini_split = TRUE,
   qini_train_prop = 0.7,
+  compute_conditional_means = TRUE,
   n_cores = future::availableCores() - 1,
   verbose = TRUE
 )
@@ -50,6 +51,9 @@ training policy trees. Default is 0.7.}
 calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
 
 \item{qini_train_prop}{Proportion of data to use for the Qini training set (if \code{qini_split=TRUE}). Default is 0.7.}
+
+\item{compute_conditional_means}{Logical indicating whether to compute conditional means using 
+\code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.}
 
 \item{n_cores}{integer. number of parallel workers (default = all cores − 1).}
 

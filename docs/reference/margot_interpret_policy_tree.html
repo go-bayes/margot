@@ -9,7 +9,7 @@ It generates a formatted description of the policy tree, including the main spli
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.70</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.80</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,10 @@ It generates a formatted description of the policy tree, including the main spli
 <span>  original_df <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  remove_tx_prefix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  remove_z_suffix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  use_title_case <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  include_conditional_means <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  use_math_notation <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  output_format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"prose"</span>, <span class="st">"bullet"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -103,6 +106,18 @@ It generates a formatted description of the policy tree, including the main spli
 
 <dt id="arg-use-title-case">use_title_case<a class="anchor" aria-label="anchor" href="#arg-use-title-case"></a></dt>
 <dd><p>Logical indicating whether to convert variable names to title case. Default is TRUE.</p></dd>
+
+
+<dt id="arg-include-conditional-means">include_conditional_means<a class="anchor" aria-label="anchor" href="#arg-include-conditional-means"></a></dt>
+<dd><p>Logical indicating whether to include conditional means information if available. Default is TRUE.</p></dd>
+
+
+<dt id="arg-use-math-notation">use_math_notation<a class="anchor" aria-label="anchor" href="#arg-use-math-notation"></a></dt>
+<dd><p>Logical indicating whether to use mathematical notation (E[Y(a)|X]) or plain language. Default is FALSE for clarity.</p></dd>
+
+
+<dt id="arg-output-format">output_format<a class="anchor" aria-label="anchor" href="#arg-output-format"></a></dt>
+<dd><p>Character string specifying output format: "prose" (default) for flowing narrative text, or "bullet" for structured bullet points.</p></dd>
 
 </dl></div>
     <div class="section level2">

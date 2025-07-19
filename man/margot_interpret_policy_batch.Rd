@@ -27,7 +27,10 @@ margot_interpret_policy_batch(
 
 \item{include_timestamp}{Logical; whether to include a timestamp in the filename (if desired).}
 
-\item{...}{Additional arguments to pass to margot_interpret_policy_tree().}
+\item{...}{Additional arguments to pass to margot_interpret_policy_tree(), including
+include_conditional_means (default TRUE) to add conditional means interpretation,
+use_math_notation (default FALSE) for clear, simple output format,
+and output_format ("bullet" or "prose") for different text styles.}
 }
 \value{
 A single character string containing the combined markdown output.

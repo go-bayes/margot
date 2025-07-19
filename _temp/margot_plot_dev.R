@@ -10,7 +10,6 @@
 #' #' @param alpha numeric. significance level for corrections
 #' #' @param ... other parameters as in original function
 #' #'
-#' #' @export
 #' margot_plot_dev <- function(
 #'     .data,
 #'     type = c("RD", "RR"),

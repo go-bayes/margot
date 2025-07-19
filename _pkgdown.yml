@@ -79,6 +79,7 @@ reference:
 
   - title: "Check assumptions"
     contents:
+    - margot_assess_overlap
     - margot_make_tables
     - margot_plot_categorical
     - margot_plot_individual_responses
@@ -105,6 +106,7 @@ reference:
     contents:
     - margot_causal_forest
     - margot_lmtp
+    - margot_recalculate_policy_trees
 
   - title: "Interpret and Report Results"
     contents:
@@ -113,7 +115,6 @@ reference:
     - margot_compare_groups
     - margot_correct_combined_table
     - margot_flip_forests
-    - margot_flip_forests_dev
     - margot_inspect_qini
     - margot_interpret_policy_batch
     - margot_interpret_policy_tree
@@ -135,7 +136,6 @@ reference:
   - title: "Visualise Causal Effect Estimates"
     contents:
     - margot_plot
-    - margot_plot_dev
     - margot_plot_decision_tree
     - margot_plot_multi_arm
     - margot_plot_policy_combo

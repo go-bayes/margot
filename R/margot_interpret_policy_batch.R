@@ -11,7 +11,10 @@
 #' @param save_path The path where the combined interpretation will be saved. If NULL, nothing is saved.
 #' @param prefix An optional prefix for the filename.
 #' @param include_timestamp Logical; whether to include a timestamp in the filename (if desired).
-#' @param ... Additional arguments to pass to margot_interpret_policy_tree().
+#' @param ... Additional arguments to pass to margot_interpret_policy_tree(), including
+#'   include_conditional_means (default TRUE) to add conditional means interpretation,
+#'   use_math_notation (default FALSE) for clear, simple output format,
+#'   and output_format ("bullet" or "prose") for different text styles.
 #'
 #' @return A single character string containing the combined markdown output.
 #' @export
@@ -61,18 +64,39 @@ margot_interpret_policy_batch <- function(models,
   cli::cli_progress_done()
   cli::cli_alert_success("Batch processing completed (depth {max_depth})")
 
+  # Filter out NULL interpretations
+  valid_interpretations <- Filter(Negate(is.null), interpretations_list)
+  
+  if (length(valid_interpretations) == 0) {
+    cli::cli_alert_warning("No valid interpretations were generated")
+    return("")
+  }
+
   # Extract common intro: everything up to the first "**Findings for"
-  first_txt <- interpretations_list[[1]]
-  split_at  <- strsplit(first_txt, "\\*\\*Findings for", perl = TRUE)[[1]]
-  common_intro <- split_at[1]
+  first_txt <- valid_interpretations[[1]]
+  if (is.null(first_txt) || !is.character(first_txt)) {
+    cli::cli_alert_warning("First interpretation is not valid text")
+    return("")
+  }
+  
+  if (grepl("\\*\\*Findings for", first_txt)) {
+    split_at <- strsplit(first_txt, "\\*\\*Findings for", perl = TRUE)[[1]]
+    common_intro <- split_at[1]
+  } else {
+    common_intro <- "Policy tree analysis results:\n\n"
+  }
 
   # Now pull out each model's specific section
-  model_specifics <- lapply(interpretations_list, function(txt) {
-    if (grepl("\\*\\*Findings for", txt)) {
+  model_specifics <- lapply(valid_interpretations, function(txt) {
+    if (!is.null(txt) && is.character(txt) && grepl("\\*\\*Findings for", txt)) {
       parts <- strsplit(txt, "\\*\\*Findings for", perl = TRUE)[[1]]
-      paste0("**Findings for", parts[2])
+      if (length(parts) > 1) {
+        paste0("**Findings for", parts[2])
+      } else {
+        txt
+      }
     } else {
-      # if no Findings header, just return the whole thing
+      # if no Findings header or invalid, just return the whole thing
       txt
     }
   })

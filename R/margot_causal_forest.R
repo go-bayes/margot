@@ -42,6 +42,7 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
                                            train_proportion= 0.7,
                                            qini_split      = TRUE,
                                            qini_train_prop = 0.7,
+                                           compute_conditional_means = TRUE,
                                            n_cores         = future::availableCores() - 1,
                                            verbose         = TRUE) {
   # dimension checks
@@ -91,6 +92,18 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
         rate     <- grf::rank_average_treatment_effect(model, tau)
         rate_qini<- grf::rank_average_treatment_effect(model, tau, target="QINI")
       }
+      # conditional means
+      cond_means <- NULL
+      if (compute_conditional_means) {
+        if (requireNamespace("policytree", quietly = TRUE)) {
+          tryCatch({
+            cond_means <- policytree::conditional_means(model)
+            if (verbose) cli::cli_alert_info("computed conditional means for {outcome}")
+          }, error = function(e) {
+            if (verbose) cli::cli_alert_warning("could not compute conditional means for {outcome}: {e$message}")
+          })
+        }
+      }
       # DR scores + policy tree 1
       dr   <- policytree::double_robust_scores(model)
       pt1  <- policytree::policy_tree(covariates[not_missing,,drop=FALSE],
@@ -126,6 +139,7 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
 
       out <- list(
         ate=ate, test_calibration=calib, custom_table=table, tau_hat=tau,
+        conditional_means=cond_means,
         rate_result=if(compute_rate) rate else NULL,
         rate_qini=if(compute_rate) rate_qini else NULL,
         dr_scores=dr, policy_tree_depth_1=pt1,
@@ -323,6 +337,8 @@ margot_inspect_qini <- function(model_results,
 #' @param qini_split Logical indicating whether to do a separate train/test split exclusively for the Qini
 #'   calculation. Default is TRUE (i.e., Qini is computed out-of-sample).
 #' @param qini_train_prop Proportion of data to use for the Qini training set (if \code{qini_split=TRUE}). Default is 0.7.
+#' @param compute_conditional_means Logical indicating whether to compute conditional means using 
+#'   \code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
 #'
 #' @return A list containing model results, a combined table, and other relevant information.
@@ -340,6 +356,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  train_proportion = 0.7,
                                  qini_split = TRUE,
                                  qini_train_prop = 0.7,  # renamed from qini_test_prop to qini_train_prop
+                                 compute_conditional_means = TRUE,
                                  verbose = TRUE) {
 
   # value:
@@ -408,6 +425,21 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       if (compute_rate) {
         results[[model_name]]$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
         results[[model_name]]$rate_qini   <- grf::rank_average_treatment_effect(model, tau_hat, target = "QINI")
+      }
+
+      # --- compute conditional means if requested ---
+      if (compute_conditional_means && save_models) {
+        if (requireNamespace("policytree", quietly = TRUE)) {
+          tryCatch({
+            results[[model_name]]$conditional_means <- policytree::conditional_means(model)
+            if (verbose) cli::cli_alert_info("computed conditional means for {outcome}")
+          }, error = function(e) {
+            if (verbose) cli::cli_alert_warning("could not compute conditional means for {outcome}: {e$message}")
+            results[[model_name]]$conditional_means <- NULL
+          })
+        } else {
+          if (verbose) cli::cli_alert_warning("policytree package not available for conditional means")
+        }
       }
 
       # --- 2) compute doubly robust scores and policy trees ---

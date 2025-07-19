@@ -4,18 +4,30 @@
 \alias{margot_reversed_labels}
 \title{Update label map by marking reversed outcomes}
 \usage{
-margot_reversed_labels(label_map, reversed)
+margot_reversed_labels(
+  label_map,
+  reversed,
+  use_r_suffix = TRUE,
+  remove_original = FALSE
+)
 }
 \arguments{
 \item{label_map}{named list mapping variable names to human-readable labels}
 
 \item{reversed}{character vector of variable names that have been flipped}
+
+\item{use_r_suffix}{logical; if TRUE (default), creates new entries with "_r" suffix 
+for flipped outcomes. If FALSE, uses the old behavior of modifying in-place.}
+
+\item{remove_original}{logical; if TRUE and use_r_suffix is TRUE, removes the original
+(non-flipped) entries from the label map. Default is FALSE.}
 }
 \value{
 named list of labels, with "(reversed)" appended to specified entries
 }
 \description{
 Helper to tag reversed outcomes by appending "(reversed)" to labels.
+This function now handles the new "_r" suffix convention for flipped models.
 }
 \examples{
 label_mapping_all <- list(
@@ -43,14 +55,20 @@ flip_outcomes <- c(
   "t2_rumination_z"
 )
 
-# update mapping
-label_mapping_all <- mark_reversed_labels(label_mapping_all, flip_outcomes)
-
-print(label_mapping_all)
-#> $t2_log_hours_exercise_z
-#> [1] "Hours of Exercise (log)"
-#> ...
+# new behavior (default): creates entries with _r suffix
+label_mapping_new <- margot_reversed_labels(label_mapping_all, flip_outcomes)
+print(label_mapping_new[c("t2_kessler_latent_anxiety_z", "t2_kessler_latent_anxiety_z_r")])
 #> $t2_kessler_latent_anxiety_z
+#> [1] "Anxiety"
+#> $t2_kessler_latent_anxiety_z_r
 #> [1] "Anxiety (reversed)"
-#> ...
+
+# old behavior: modifies in place
+label_mapping_old <- margot_reversed_labels(label_mapping_all, flip_outcomes, use_r_suffix = FALSE)
+print(label_mapping_old[["t2_kessler_latent_anxiety_z"]])
+#> [1] "Anxiety (reversed)"
+
+# remove original entries
+label_mapping_clean <- margot_reversed_labels(label_mapping_all, flip_outcomes, remove_original = TRUE)
+# original anxiety entry removed, only _r version remains
 }

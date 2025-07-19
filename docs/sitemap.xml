@@ -10,6 +10,7 @@
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/news/index.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/apply_covariate_exclusions.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/back_transform_log_z.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/back_transform_logmean.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/back_transform_zscore.html</loc></url>
@@ -26,6 +27,9 @@
 <url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_target_population.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/boilerplate_methods_variables.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/build_margot_plot.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/calculate_covariate_balance.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/calculate_overlap_statistics.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/calculate_trimming_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/causal_contrast_engine.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/causal_contrast_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/clear_margot_cache.html</loc></url>
@@ -33,8 +37,10 @@
 <url><loc>https://go-bayes.github.io/margot/reference/coloured_histogram_quantiles.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/coloured_histogram_sd.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/coloured_histogram_shift.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/compute_conditional_means_interpretation.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_difference.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_difference_means.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/compute_leaf_means.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_binary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_multi_arm.html</loc></url>
@@ -44,6 +50,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/create_filtered_wide_dataframes.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_ordered_variable.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_ordered_variable_custom.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/create_propensity_plot.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_tau_hat_plot.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_transition_matrix.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/debug_node_data_with_positions.html</loc></url>
@@ -76,6 +83,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_adjust_policy_p.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_adjust_weights.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_amelia_to_mice.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_assess_overlap.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_back_transform_log_z.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_batch_policy.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_bind_models.html</loc></url>
@@ -194,6 +202,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/pretty_number.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/read_multiple_images.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/recalculate_evalues.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/recalculate_policy_trees_single.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/regress_with_covariates.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/remove_numeric_attributes.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/run_simulations.html</loc></url>

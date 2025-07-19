@@ -9,6 +9,33 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+## [2025-07-19] margot 1.0.80
+- Added experimental support for conditional means computation via `policytree::conditional_means()`
+- New `compute_conditional_means` parameter in `margot_causal_forest()` (default TRUE)
+- Conditional means are stored in model results when computed
+- Enhanced `margot_interpret_policy_tree()` to include conditional means interpretation
+  - Shows expected outcomes under each treatment within policy tree leaves
+  - Computes average treatment effects within each leaf
+  - New `include_conditional_means` parameter (default TRUE)
+  - Changed default output to clear, simple language (new `use_math_notation` parameter, default FALSE)
+  - Added `output_format` parameter: "bullet" (default) or "prose" for flowing narrative text
+  - Enhanced leaf output with sample sizes, percentages, and effect interpretations
+  - Removed uncertainty quantification disclaimer
+- `margot_flip_forests()` completely rewritten to create new models with "_r" suffix
+  - Properly recomputes all statistics (ATE, RATE, E-values, policy trees, QINI)
+  - Flips conditional means columns for binary treatment
+  - Removes original models and rebuilds combined_table
+- New `margot_recalculate_policy_trees()` function for customizing policy tree covariates
+  - Multiple covariate modes: "original", "custom", "add", "all"
+  - Regex-based covariate exclusion support
+  - Automatic covariate expansion for depth-2 trees
+  - Parallel processing capability
+- Updated `margot_reversed_labels()` to handle new "_r" suffix convention
+  - Creates new label entries with "_r" suffix by default
+  - Maintains backward compatibility with `use_r_suffix = FALSE`
+  - Option to remove original entries with `remove_original = TRUE`
+- Removed `margot_flip_forests_dev()` as functionality now available in `margot_recalculate_policy_trees()`
+
 ## [2025-07-17] margot 1.0.70
 - `margot_flip_forests_dev()` allows custom policy trees 
 
