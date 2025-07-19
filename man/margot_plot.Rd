@@ -14,7 +14,7 @@ margot_plot(
   include_coefficients = TRUE,
   standardize_label = c("NZ", "US", "none"),
   e_val_bound_threshold = 1.2,
-  adjust = c("none", "bonferroni", "BH"),
+  adjust = c("none", "bonferroni"),
   alpha = 0.05,
   ...,
   options = list(),
@@ -37,7 +37,7 @@ effect sizes, confidence intervals, E-values and E-value bounds}
 
 \item{type}{character. type of effect estimate: "RD" (risk difference) or "RR" (risk ratio)}
 
-\item{adjust}{character. multiplicity correction method: "none", "bonferroni", "BH"}
+\item{adjust}{character. multiplicity correction method: "none", "bonferroni"}
 
 \item{alpha}{numeric. significance level for corrections}
 
