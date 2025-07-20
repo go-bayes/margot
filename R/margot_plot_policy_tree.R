@@ -143,9 +143,9 @@ margot_plot_policy_tree <- function(
 
     # build subtitle, adding original value if available
     subtitle_txt <- if (!is.null(orig_cp)) {
-      sprintf("%s: split at %.3f (%s)*", var_label, cp, orig_cp)
+      sprintf("%s (baseline): split at %.3f (%s)*", var_label, cp, orig_cp)
     } else {
-      sprintf("%s: split at %.3f", var_label, cp)
+      sprintf("%s (baseline): split at %.3f", var_label, cp)
     }
 
     plot_df <- tibble::tibble(x = x_vec, y = 0, pred = preds)
@@ -170,7 +170,7 @@ margot_plot_policy_tree <- function(
       colour_scale +
       shape_scale +
       ggplot2::labs(
-        x        = var_label,
+        x        = paste0(var_label, " (baseline)"),
         y        = NULL,
         colour   = "Prediction",
         shape    = "Prediction",  # add shape to legend
@@ -433,9 +433,9 @@ margot_plot_policy_tree_depth2 <- function(
     # --- final styling ---------------------------------------------------
     p + color_scale + shape_scale +
       ggplot2::labs(
-        x        = xlab,
-        y        = ylab,
-        subtitle = paste(xlab, "vs", ylab),
+        x        = paste0(xlab, " (baseline)"),
+        y        = paste0(ylab, " (baseline)"),
+        subtitle = paste(xlab, "(baseline) vs", ylab, "(baseline)"),
         colour   = "Prediction",
         shape    = "Prediction"  # add shape to legend
       ) +
@@ -473,7 +473,7 @@ margot_plot_policy_tree_depth2 <- function(
   }
 
   # ---- assemble layout with collected legend ---------------------------------
-  main_title <- sprintf("Policy-tree results – %s", tv(model_name))
+  main_title <- sprintf("Policy-tree results (baseline) – %s", tv(model_name))
 
   # Remove individual legends from panels before combining
   if (!is.null(p1)) p1 <- p1 + ggplot2::theme(legend.position = "none")

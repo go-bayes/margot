@@ -98,17 +98,17 @@ margot_interpret_policy_tree <- function(model,
 
     if (output_format == "prose") {
       text <- glue::glue(
-        "#### Findings for {transform_var(model_name)}\n\n",
-        "The policy-tree analysis divided the sample on {transform_var(var1)}. ",
+        "#### Findings for {transform_var(model_name)} at the end of study\n\n",
+        "The policy-tree analysis divided the sample on baseline {transform_var(var1)}. ",
         "Respondents who scored ≤ {sp1} formed one branch and were assigned to the {act_labels[leaf_left]} policy. ",
-        "Those with {transform_var(var1)} > {sp1} formed the second branch and were assigned to {act_labels[leaf_right]}.\n\n"
+        "Those with baseline {transform_var(var1)} > {sp1} formed the second branch and were assigned to {act_labels[leaf_right]}.\n\n"
       )
     } else {
       text <- glue::glue(
-        "**Findings for {transform_var(model_name)}:**\n\n",
-        "Participants are split on {transform_var(var1)} at {sp1}. ",
-        "Those with {transform_var(var1)} ≤ threshold are recommended **{act_labels[leaf_left]}**, ",
-        "and those with {transform_var(var1)} > threshold are recommended **{act_labels[leaf_right]}**.\n"
+        "**Findings for {transform_var(model_name)} at the end of study:**\n\n",
+        "Participants are split on baseline {transform_var(var1)} at {sp1}. ",
+        "Those with baseline {transform_var(var1)} ≤ threshold are recommended **{act_labels[leaf_left]}**, ",
+        "and those with baseline {transform_var(var1)} > threshold are recommended **{act_labels[leaf_right]}**.\n"
       )
     }
   } else {
@@ -123,28 +123,28 @@ margot_interpret_policy_tree <- function(model,
 
     if (output_format == "prose") {
       text <- glue::glue(
-        "#### Findings for {transform_var(model_name)}\n\n",
-        "The policy-tree analysis first divided the sample on {transform_var(var1)}. ",
+        "#### Findings for {transform_var(model_name)} at the end of study\n\n",
+        "The policy-tree analysis first divided the sample on baseline {transform_var(var1)}. ",
         "Respondents who scored ≤ {sp1} formed one branch. ",
-        "Within this subgroup, a second split occurred on {transform_var(var2)}: ",
-        "individuals with {transform_var(var2)} ≤ {sp2} were assigned to the {act_labels[leaf_22]} policy, ",
-        "whereas those with {transform_var(var2)} > {sp2} were assigned to {act_labels[leaf_23]}.\n\n",
-        "Participants with {transform_var(var1)} scores > {sp1} formed the second major branch. ",
-        "In that branch, the tree split on {transform_var(var3)}: ",
-        "respondents whose {transform_var(var3)} was ≤ {sp3} were routed to the {act_labels[leaf_32]} policy, ",
+        "Within this subgroup, a second split occurred on baseline {transform_var(var2)}: ",
+        "individuals with baseline {transform_var(var2)} ≤ {sp2} were assigned to the {act_labels[leaf_22]} policy, ",
+        "whereas those with baseline {transform_var(var2)} > {sp2} were assigned to {act_labels[leaf_23]}.\n\n",
+        "Participants with baseline {transform_var(var1)} scores > {sp1} formed the second major branch. ",
+        "In that branch, the tree split on baseline {transform_var(var3)}: ",
+        "respondents whose baseline {transform_var(var3)} was ≤ {sp3} were routed to the {act_labels[leaf_32]} policy, ",
         "and those scoring above that threshold were routed to {act_labels[leaf_33]}.\n\n"
       )
     } else {
       text <- glue::glue(
-        "**Findings for {transform_var(model_name)}:**\n\n",
-        "Split 1: {transform_var(var1)} ≤ {sp1}.  ",
-        "Within that subgroup, split 2a: {transform_var(var2)} ≤ {sp2}, ",
+        "**Findings for {transform_var(model_name)} at the end of study:**\n\n",
+        "Split 1: baseline {transform_var(var1)} ≤ {sp1}.  ",
+        "Within that subgroup, split 2a: baseline {transform_var(var2)} ≤ {sp2}, ",
         "→ **{act_labels[leaf_22]}**; ",
-        "{transform_var(var2)} > {sp2} → **{act_labels[leaf_23]}**.\n\n",
-        "Split 2: {transform_var(var1)} > {sp1}.  ",
-        "Within that subgroup, split 2b: {transform_var(var3)} ≤ {sp3}, ",
+        "baseline {transform_var(var2)} > {sp2} → **{act_labels[leaf_23]}**.\n\n",
+        "Split 2: baseline {transform_var(var1)} > {sp1}.  ",
+        "Within that subgroup, split 2b: baseline {transform_var(var3)} ≤ {sp3}, ",
         "→ **{act_labels[leaf_32]}**; ",
-        "{transform_var(var3)} > {sp3} → **{act_labels[leaf_33]}**.\n"
+        "baseline {transform_var(var3)} > {sp3} → **{act_labels[leaf_33]}**.\n"
       )
     }
   }
@@ -314,8 +314,8 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
         conditional_means = test_conditional_means,
         act_labels = act_labels,
         leaf_names = c(
-          paste0(transform_var(var1), " ≤ ", round(split1, 3)),
-          paste0(transform_var(var1), " > ", round(split1, 3))
+          paste0("baseline ", transform_var(var1), " ≤ ", round(split1, 3)),
+          paste0("baseline ", transform_var(var1), " > ", round(split1, 3))
         ),
         use_math_notation = use_math_notation,
         output_format = output_format
@@ -405,13 +405,13 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
       # compute average conditional means for each leaf
       leaf_indices <- list(leaf1_idx, leaf2_idx, leaf3_idx, leaf4_idx)
       leaf_names <- c(
-        paste0(transform_var(var1), " ≤ ", round(split1, 3), " & ", 
+        paste0("baseline ", transform_var(var1), " ≤ ", round(split1, 3), " & baseline ", 
                transform_var(var2), " ≤ ", round(split2, 3)),
-        paste0(transform_var(var1), " ≤ ", round(split1, 3), " & ", 
+        paste0("baseline ", transform_var(var1), " ≤ ", round(split1, 3), " & baseline ", 
                transform_var(var2), " > ", round(split2, 3)),
-        paste0(transform_var(var1), " > ", round(split1, 3), " & ", 
+        paste0("baseline ", transform_var(var1), " > ", round(split1, 3), " & baseline ", 
                transform_var(var3), " ≤ ", round(split3, 3)),
-        paste0(transform_var(var1), " > ", round(split1, 3), " & ", 
+        paste0("baseline ", transform_var(var1), " > ", round(split1, 3), " & baseline ", 
                transform_var(var3), " > ", round(split3, 3))
       )
       
@@ -589,26 +589,8 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
         text <- paste0(text,
           "The mean outcome under control was ", sprintf("%.3f", avg_cm[1]), ", ",
           "the mean under treatment was ", sprintf("%.3f", avg_cm[2]), ", ",
-          "yielding a CATE of ", sprintf("%.3f", treatment_effect), ". "
+          "yielding a CATE of ", sprintf("%.3f", treatment_effect), ".\n\n"
         )
-        
-        # add interpretation
-        if (abs(treatment_effect) > 0.001) {
-          effect_word <- if (avg_cm[1] < 0 && avg_cm[2] < 0 && treatment_effect > 0) {
-            "reduces negative outcomes"
-          } else if (treatment_effect > 0) {
-            "improves outcomes"
-          } else {
-            "worsens outcomes"
-          }
-          
-          text <- paste0(text,
-            "Thus, treatment ", effect_word, " by ",
-            sprintf("%.2f", abs(treatment_effect)), " units in this subgroup.\n\n"
-          )
-        } else {
-          text <- paste0(text, "Treatment has minimal effect in this subgroup.\n\n")
-        }
         
       } else if (use_math_notation) {
         text <- paste0(text,
@@ -632,16 +614,6 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
           "Treatment effect (CATE): ", sprintf("%.3f", treatment_effect), "\n"
         )
         
-        # add interpretation if meaningful
-        if (abs(treatment_effect) > 0.001) {
-          if (treatment_effect > 0) {
-            text <- paste0(text, "→ Treatment improves outcomes by ", sprintf("%.3f", abs(treatment_effect)), " units in this subgroup\n")
-          } else {
-            text <- paste0(text, "→ Treatment worsens outcomes by ", sprintf("%.3f", abs(treatment_effect)), " units in this subgroup\n")
-          }
-        } else {
-          text <- paste0(text, "→ Treatment has minimal effect in this subgroup\n")
-        }
         text <- paste0(text, "\n")
       }
     }

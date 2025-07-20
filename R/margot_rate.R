@@ -538,59 +538,135 @@ margot_interpret_rate_comparison <- function(autoc_df,
   # Build comparison narrative
   parts <- list(
     "### Comparison of targeting operating characteristic (TOC) by rank average treatment effect (RATE): AUTOC vs QINI",
-    "We applied two TOC by RATE methods to the same causal-forest $\\tau(x)$ estimates:",
-    "- **AUTOC** intensifies focus on top responders via logarithmic weighting.",
-    "- **QINI** balances effect size and prevalence via linear weighting."
+    "We applied two TOC by RATE methods to the same causal-forest $\\tau(x)$ estimates. AUTOC intensifies focus on top responders via logarithmic weighting, while QINI balances effect size and prevalence via linear weighting."
   )
 
-  # Pre-specification note
+  # Pre-specification and adjustment details
   if (is.null(adjust) || !apply_adjustment) {
     parts <- c(parts,
-               sprintf("All %d outcomes were prespecified. Interpretations based on 95%% CIs without multiple testing correction.",
+               sprintf("All %d outcomes were prespecified, and interpretations are based on 95%% confidence intervals without multiple testing correction.",
                        length(all_autoc))
     )
-  }
-
-  # Adjustment details
-  if (!is.null(adjust) && adjust != "none") {
+  } else if (!is.null(adjust) && adjust != "none") {
     is_fdr <- adjust %in% c("BH","BY","fdr")
     if (is_fdr) {
       parts <- c(parts,
-                 sprintf("Exploratory RATE analysis; controlled FDR at q=%.2f over %d outcomes.",
+                 sprintf("We treated the RATE analysis as exploratory and controlled the false discovery rate at q=%.2f over %d outcomes.",
                          alpha, total_hypotheses)
       )
     } else {
       parts <- c(parts,
-                 sprintf("Adjusted for multiple testing (%s) over %d hypotheses; threshold = %.3f.",
+                 sprintf("Results were adjusted for multiple testing using the %s method over %d hypotheses, yielding an adjusted threshold of %.3f.",
                          adjust, total_hypotheses, alpha/total_hypotheses)
       )
     }
   }
 
-  # Concordance statements
+  # Concordance statements with estimates
   if (length(both_models)>0) {
+    # Get the estimates for concordant models
+    concordant_details <- character()
+    for (m in both_models) {
+      autoc_row <- autoc_df[autoc_df$model == m, ]
+      qini_row <- qini_df[qini_df$model == m, ]
+      concordant_details <- c(concordant_details,
+        sprintf("%s (AUTOC: %.3f [95%% CI: %.3f, %.3f]; QINI: %.3f [95%% CI: %.3f, %.3f])",
+                label_map[m], 
+                autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`,
+                qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
+      )
+    }
     parts <- c(parts,
-               sprintf("Both methods yield positive RATE estimates for: %s.",
-                       paste(label_map[both_models], collapse=", ")),
-               "This concordance indicates robust heterogeneity evidence."
+               sprintf("Both methods yield positive RATE estimates for %s, indicating robust evidence of treatment effect heterogeneity through this concordance.",
+                       paste(concordant_details, collapse="; "))
     )
   }
   pos_only_a <- setdiff(autoc_models, qini_models)
   pos_only_q <- setdiff(qini_models, autoc_models)
   if (length(pos_only_a)|length(pos_only_q)) {
-    desc <- c()
-    if (length(pos_only_a)) desc <- c(desc,
-                                      sprintf("only AUTOC yields positive RATE for %s", paste(label_map[pos_only_a], collapse=", ")))
-    if (length(pos_only_q)) desc <- c(desc,
-                                      sprintf("only QINI yields positive RATE for %s", paste(label_map[pos_only_q], collapse=", ")))
+    disagreement_parts <- character()
+    if (length(pos_only_a)) {
+      autoc_only_details <- character()
+      for (m in pos_only_a) {
+        autoc_row <- autoc_df[autoc_df$model == m, ]
+        autoc_only_details <- c(autoc_only_details,
+          sprintf("%s (%.3f [95%% CI: %.3f, %.3f])",
+                  label_map[m], autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`)
+        )
+      }
+      disagreement_parts <- c(disagreement_parts,
+                sprintf("AUTOC alone yields positive RATE for %s", paste(autoc_only_details, collapse=", ")))
+    }
+    if (length(pos_only_q)) {
+      qini_only_details <- character()
+      for (m in pos_only_q) {
+        qini_row <- qini_df[qini_df$model == m, ]
+        qini_only_details <- c(qini_only_details,
+          sprintf("%s (%.3f [95%% CI: %.3f, %.3f])",
+                  label_map[m], qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
+        )
+      }
+      disagreement_parts <- c(disagreement_parts,
+                sprintf("QINI alone yields positive RATE for %s", paste(qini_only_details, collapse=", ")))
+    }
     parts <- c(parts,
-               sprintf("When methods disagree (%s), choose **QINI** for overall benefit or **AUTOC** to focus top responders.",
-                       paste(desc, collapse="; "))
+               sprintf("When the methods disagree, %s. In such cases, researchers should choose QINI to maximise overall benefit or AUTOC to focus resources on top responders.",
+                       paste(disagreement_parts, collapse=", while "))
     )
   }
   if (length(either_models)==0) {
     parts <- c(parts,
-               "Neither AUTOC nor QINI yields positive RATE; evidence is inconclusive."
+               "Neither AUTOC nor QINI yields a positive RATE estimate for any outcome, suggesting that evidence for treatment effect heterogeneity is inconclusive across all examined outcomes."
+    )
+  }
+  
+  # Add section for negative results
+  neg_either <- union(neg_autoc, neg_qini)
+  if (length(neg_either) > 0) {
+    neg_details <- character()
+    for (m in neg_either) {
+      in_autoc <- m %in% neg_autoc
+      in_qini <- m %in% neg_qini
+      
+      if (in_autoc && in_qini) {
+        autoc_row <- autoc_df[autoc_df$model == m, ]
+        qini_row <- qini_df[qini_df$model == m, ]
+        neg_details <- c(neg_details,
+          sprintf("%s (AUTOC: %.3f [95%% CI: %.3f, %.3f]; QINI: %.3f [95%% CI: %.3f, %.3f])",
+                  label_map[m], 
+                  autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`,
+                  qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
+        )
+      } else if (in_autoc) {
+        autoc_row <- autoc_df[autoc_df$model == m, ]
+        neg_details <- c(neg_details,
+          sprintf("%s (AUTOC: %.3f [95%% CI: %.3f, %.3f])",
+                  label_map[m], autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`)
+        )
+      } else {
+        qini_row <- qini_df[qini_df$model == m, ]
+        neg_details <- c(neg_details,
+          sprintf("%s (QINI: %.3f [95%% CI: %.3f, %.3f])",
+                  label_map[m], qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
+        )
+      }
+    }
+    parts <- c(parts,
+               sprintf("**Caution**: We found reliably negative RATE estimates for %s, which strongly caution against CATE-based prioritisation for these outcomes. Targeting individuals based on predicted treatment effects would worsen outcomes compared to random assignment in these cases.",
+                       paste(neg_details, collapse="; "))
+    )
+  }
+  
+  # Add section for unreliable outcomes
+  all_models <- unique(c(autoc_df$model, qini_df$model))
+  reliable_models <- union(either_models, neg_either)
+  unreliable_models <- setdiff(all_models, reliable_models)
+  
+  if (length(unreliable_models) > 0) {
+    unreliable_labels <- label_map[unreliable_models]
+    parts <- c(parts,
+               sprintf("Finally, for the remaining outcomes of %s, neither AUTOC nor QINI provided reliable evidence of treatment effect heterogeneity, with confidence intervals crossing zero for both methods.",
+                       paste(unreliable_labels, collapse=", "))
     )
   }
 

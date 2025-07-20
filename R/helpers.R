@@ -527,6 +527,8 @@ transform_var_name <- function(var_name, label_mapping = NULL,
   # strip prefixes/suffixes/underscores
   if (remove_tx_prefix)   display_name <- sub("^t[0-9]+_", "", display_name)
   if (remove_z_suffix)    display_name <- sub("_z$", "", display_name)
+  # remove _l suffix
+  display_name <- sub("_l$", "", display_name)
   if (remove_underscores) display_name <- gsub("_", " ", display_name, fixed = TRUE)
 
   # title-case and preserve acronyms
@@ -535,6 +537,9 @@ transform_var_name <- function(var_name, label_mapping = NULL,
     display_name <- gsub("Nz",  "NZ",  display_name, fixed = TRUE)
     display_name <- gsub("Sdo", "SDO", display_name, fixed = TRUE)
     display_name <- gsub("Rwa", "RWA", display_name, fixed = TRUE)
+    # capitalize NZSEI and NZDEP
+    display_name <- gsub("Nzsei", "NZSEI", display_name, fixed = TRUE)
+    display_name <- gsub("Nzdep", "NZDEP", display_name, fixed = TRUE)
   }
 
   if (!identical(display_name, var_name)) {

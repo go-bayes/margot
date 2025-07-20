@@ -9,6 +9,30 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+## [2025-07-20] margot 1.0.100
+
+### Policy Tree Enhancements
+- **Policy tree interpretation improvements**:
+  - Modified `margot_interpret_policy_batch()` to remove redundant "Policy tree analysis results:" line
+  - Added "at the end of study" to all Findings headings for temporal clarity
+  - Added "baseline" prefix to all variable names in tree splits and leaf descriptions
+  - Clarifies that splits are based on baseline characteristics, not outcomes
+  - Simplified CATE reporting to just state values without subjective interpretation
+  - More appropriate for standardized outcomes where negative values are common
+
+- **Policy tree plotting updates**:
+  - Enhanced `margot_plot_policy_tree()` to add "(baseline)" to all axis labels
+  - Added "(baseline)" to plot titles and subtitles for clarity
+  - Updated both depth-1 and depth-2 plots for consistency
+  - Ensures users understand splits are made on baseline measures
+
+### Label Transformation Improvements
+- Updated `transform_var_name()` helper function:
+  - Now removes "_l" suffix from variable names
+  - Properly capitalizes NZSEI and NZDEP acronyms
+  - Example: "t0_nzsei_13_l" now displays as "NZSEI 13 (baseline)"
+
+
 ## [2025-07-19] margot 1.0.90
 
 ### new functions

@@ -102,9 +102,11 @@ margot_interpret_policy_batch <- function(models,
   })
 
   # Assemble final markdown
+  # Remove "Policy tree analysis results:" from common_intro if present
+  common_intro <- gsub("Policy tree analysis results:\n\n", "", common_intro, fixed = TRUE)
+  
   final_output <- paste0(
     "### Policy Tree Interpretations (depth ", max_depth, ")\n\n",
-    common_intro, "\n\n",
     paste(unlist(model_specifics), collapse = "\n\n")
   )
 

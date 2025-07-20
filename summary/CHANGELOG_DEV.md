@@ -143,6 +143,42 @@
   - Now tries exact match first before falling back to transform_label pattern matching
   - Handles both "model_outcome" and "outcome" key formats in label_mapping
 
+### Minor Improvements
+- Updated `margot_reversed_labels()` to use "(reduced)" instead of "(reversed)" suffix
+  - Makes interpretation clearer that the outcome direction has been reduced/flipped
+  - Affects all flipped outcome labels throughout the package
+- Enhanced `margot_interpret_rate_comparison()` output with richer information
+  - Now includes RATE estimates and 95% CIs for all reported outcomes
+  - Added section for negative RATE estimates with explicit caution against CATE prioritisation
+  - Added summary of unreliable outcomes where neither method found significant heterogeneity
+  - More informative comparison text suitable for academic reporting
+  - Reformatted output to use flowing paragraph text instead of bullets and choppy sentences
+  - All information now presented as cohesive paragraphs suitable for direct inclusion in academic papers
+
+### Policy Tree Interpretation Updates (2025-07-20)
+- Modified `margot_interpret_policy_batch()` output formatting:
+  - Removed "Policy tree analysis results:" line after the heading
+  - Now displays clean output with just the heading followed by findings
+- Enhanced `margot_interpret_policy_tree()` clarity:
+  - Added "at the end of study" to all Findings headings for temporal clarity
+  - Added "baseline" prefix to all variable names in tree splits and leaf descriptions
+  - This disambiguation makes it clear that splits are based on baseline characteristics, not outcomes
+- Simplified CATE reporting in leaf descriptions:
+  - Removed confusing interpretations about treatment "improving" or "worsening" outcomes
+  - Now simply states the CATE value without subjective interpretation
+  - More appropriate for standardized outcomes where negative values are common
+  - Overall policy advice remains in the summary section
+
+### Policy Tree Plotting Updates (2025-07-20)
+- Enhanced `margot_plot_policy_tree()` to clarify baseline variables:
+  - Added "(baseline)" to axis labels on all policy tree plots
+  - Added "(baseline)" to plot titles and subtitles
+  - Updated both depth-1 and depth-2 plots for consistency
+- Updated `transform_var_name()` helper function:
+  - Now removes "_l" suffix from variable names
+  - Capitalizes NZSEI and NZDEP acronyms properly
+  - Example: "t0_nzsei_13_l" now displays as "NZSEI 13"
+
 ### Still To Do
 - Add comprehensive tests for new functionality
 
