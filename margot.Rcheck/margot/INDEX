@@ -3,10 +3,14 @@ back_transform_log_z    Back Transform Z-Score to Original
 back_transform_logmean
                         Back-transform Log-transformed Mean
 back_transform_zscore   Back Transform Z-Score to Original Scale
+clear_margot_cache      Clear Margot Data Cache
 create_ordered_variable
                         Create Ordered Variable Based on Quantile
                         Breaks or Custom Breaks with Informative Labels
-df_nz                   df_nz: Example Data Frame
+df_margot_example       Margot Example Dataset
+df_nz                   Legacy New Zealand Attitudes and Values Study
+                        (NZAVS) Simulated Data
+fetch_margot_data       Fetch Margot Example Data
 here_read               Read Data Frame or Object from RDS File in a
                         Specified Directory
 here_read_qs            Read Data Frame or Object from qs File in a
@@ -17,9 +21,12 @@ here_save_qs            Save Data Frame or Object to qs File in a
                         Specified Directory with Enhanced Compression
 impute_and_combine      Perform multiple imputation on a list of data
                         frames and combine the results
+list_margot_data        List Available Margot Datasets
 lmtp_evalue_tab         Calculate E-values for LMTP Output
 margot_adjust_weights   Adjust Weights for Censoring and Sample Design
                         with Progress Reporting
+margot_assess_overlap   Assess Covariate Overlap from Causal Forest
+                        Models
 margot_back_transform_log_z
                         Create Z-score to Original Scale Mapping for
                         Log-Transformed Data
@@ -35,14 +42,13 @@ margot_compute_gender_weights_by_wave
                         Compute Gender-Based Sample Weights Using
                         Baseline Wave Proportions
 margot_correct_combined_table
-                        Correct a “combined table” for multiplicity
+                        Correct a "combined table" for multiplicity
                         **and** recompute *E*-values
 margot_count_dyads      count dyads in longitudinal data
 margot_count_ids        count individual participants in longitudinal
                         data
 margot_filter           Filter Data Based on Exposure Variables
-margot_flip_forests     Flip CATE Estimates and Recalculate Policy
-                        Trees for Selected Outcomes
+margot_flip_forests     Flip (Reverse) Causal Forest Treatment Effects
 margot_get_labels       Get display labels for multiple variable names
 margot_impute_carry_forward
                         Impute Missing Values Using Carry Forward in
@@ -71,7 +77,8 @@ margot_omnibus_hetero_test
 margot_planned_subgroups_batch
                         Batch process heterogeneity analyses across
                         multiple outcome domains
-margot_plot             Create a Margot Plot with Interpretation
+margot_plot             Create a Margot Plot with Proper Multiplicity
+                        Correction
 margot_plot_boxplot     Create panel data Boxplots using ggplot2
 margot_plot_boxplot_covariate
                         create boxplots with covariates using ggplot2
@@ -102,8 +109,8 @@ margot_plot_rate_batch
                         Models
 margot_plot_response_timeline
                         Plot Panel Study Response Timeline
-margot_plot_shift       Visualise shifts in data distributions with
-                        highlighted ranges
+margot_plot_shift       Visualise Shifts in Data Distributions with
+                        Highlighted Ranges
 margot_plot_slope       Create a Slope Plot for Multiple Variables
 margot_plot_slope_covariate
                         Create a Slope Plot using ggeffects
@@ -131,11 +138,15 @@ margot_propensity_model_and_plots
 margot_rate             Assemble RATE tables (AUTOC and QINI)
 margot_rate_batch       Batch-compute RATEs for each outcome in a
                         margot_causal_forest result
+margot_recalculate_policy_trees
+                        Recalculate Policy Trees with Custom Covariates
 margot_rescue_qini      Post-process models to recover Qini curves via
                         propensity trimming
 margot_reversed_labels
                         Update label map by marking reversed outcomes
 margot_save_png         Save Margot Plot as PNG
+margot_simulate         Simulate longitudinal exposures, outcomes, and
+                        covariates
 margot_size             Calculate the size of an R object in megabytes
 margot_subset_batch     Batch Process Subset Models for Causal Forests
 margot_subset_model     Subset Model Results for Binary and Categorical

@@ -6,7 +6,7 @@
 \usage{
 margot_summary_panel(
   data,
-  output_format = "html",
+  output_format = "markdown",
   group_waves_at = 3,
   id_col = "id",
   wave_col = "wave",
@@ -16,7 +16,7 @@ margot_summary_panel(
 \arguments{
 \item{data}{A data frame containing the panel study data.}
 
-\item{output_format}{Character string specifying the output format: "html" (default) or "markdown".}
+\item{output_format}{Character string specifying the output format: "markdown" (default) or "kable".}
 
 \item{group_waves_at}{Numeric value specifying at which number of waves to start grouping (default is 3).}
 

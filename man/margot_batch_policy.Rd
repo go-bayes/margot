@@ -13,7 +13,7 @@ margot_batch_policy(
   height = 12,
   save_plots = TRUE,
   output_dir = here::here(push_mods),
-  spend = c(0.2, 0.5),
+  spend_levels = c(0.2, 0.5),
   label_mapping = NULL
 )
 }
@@ -34,7 +34,7 @@ margot_batch_policy(
 
 \item{output_dir}{The directory to save plots in. Default is here::here(push_mods).}
 
-\item{spend}{A vector of spend levels to use for difference gain summaries. Default is c(0.2, 0.5).}
+\item{spend_levels}{A vector of spend levels to use for difference gain summaries. Default is c(0.2, 0.5).}
 
 \item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
 (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}

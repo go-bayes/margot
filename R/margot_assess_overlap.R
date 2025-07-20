@@ -7,9 +7,12 @@
 #'
 #' @param model_results Output from margot_causal_forest() or margot_flip_forests()
 #' @param model_names Character vector of model names to assess. If NULL, all models.
+#' @param exposure_name Character string naming the exposure/treatment variable. If NULL, defaults to "Treatment".
+#' @param label_mapping Named list mapping variable names to custom labels for the exposure.
 #' @param plot Logical indicating whether to create overlap plots. Default is TRUE.
 #' @param save_plots Logical indicating whether to save plots. Default is FALSE.
 #' @param output_dir Directory to save plots if save_plots is TRUE.
+#' @param theme Character string specifying the ggplot2 theme. Default is "classic". Options include "classic", "minimal", "bw", "gray", "light", "dark", "void".
 #' @param verbose Logical for detailed messages. Default is TRUE.
 #'
 #' @return A list containing:
@@ -18,6 +21,7 @@
 #'   \item{propensity_plots}{List of ggplot objects (if plot = TRUE)}
 #'   \item{balance_tables}{Covariate balance tables for each model}
 #'   \item{trimming_summary}{Summary of observations trimmed due to poor overlap}
+#'   \item{text_summary}{Character string with a prose summary suitable for reports}
 #' }
 #'
 #' @details
@@ -49,6 +53,15 @@
 #'   save_plots = TRUE,
 #'   output_dir = "output/overlap_diagnostics"
 #' )
+#' 
+#' # use text summary in a report
+#' cat(overlap_results$text_summary)
+#' 
+#' # use different theme
+#' overlap_results <- margot_assess_overlap(
+#'   model_results,
+#'   theme = "minimal"
+#' )
 #' }
 #'
 #' @export
@@ -58,9 +71,12 @@
 #' @importFrom stats quantile
 margot_assess_overlap <- function(model_results,
                                 model_names = NULL,
+                                exposure_name = NULL,
+                                label_mapping = NULL,
                                 plot = TRUE,
                                 save_plots = FALSE,
                                 output_dir = NULL,
+                                theme = "classic",
                                 verbose = TRUE) {
   
   # validate inputs
@@ -86,8 +102,28 @@ margot_assess_overlap <- function(model_results,
     stop("no valid models found to assess")
   }
   
+  # set up exposure name and label
+  if (is.null(exposure_name)) {
+    exposure_name <- "Treatment"
+    if (verbose) {
+      cli::cli_alert_info("no exposure_name specified, using default: 'Treatment'")
+    }
+  }
+  
+  # get exposure label using transform_label helper
+  exposure_label <- transform_label(
+    label = exposure_name,
+    label_mapping = label_mapping,
+    options = list(
+      remove_tx_prefix = TRUE,
+      remove_z_suffix = TRUE,
+      remove_underscores = TRUE,
+      use_title_case = TRUE
+    )
+  )
+  
   if (verbose) {
-    cli::cli_alert_info("assessing overlap for {length(model_names)} models")
+    cli::cli_alert_info("assessing overlap for exposure: {exposure_label}")
   }
   
   # create output directory if needed
@@ -103,45 +139,71 @@ margot_assess_overlap <- function(model_results,
   balance_tables <- list()
   trimming_summary <- list()
   
-  # process each model
+  # extract treatment and propensity scores from first model (same for all)
+  first_model <- model_results$full_models[[model_names[1]]]
+  W <- first_model$W.orig
+  W_hat <- first_model$W.hat
+  
+  # calculate overlap statistics once (for the exposure)
+  overlap_stats <- calculate_overlap_statistics(W, W_hat, exposure_label)
+  
+  # create propensity score plot if requested
+  if (plot) {
+    p <- create_propensity_plot(W, W_hat, exposure_label, theme)
+    propensity_plots[["exposure"]] <- p
+    
+    if (save_plots && !is.null(output_dir)) {
+      filename <- file.path(output_dir, paste0("propensity_", exposure_name, ".png"))
+      ggplot2::ggsave(filename, p, width = 8, height = 6, dpi = 300)
+      if (verbose) cli::cli_alert_success("saved plot to {filename}")
+    }
+  }
+  
+  # calculate covariate balance if available
+  if (!is.null(model_results$covariates)) {
+    # use first model's top vars or all covariates
+    top_vars <- NULL
+    if (length(model_names) > 0 && !is.null(model_results$results[[model_names[1]]]$top_vars)) {
+      top_vars <- model_results$results[[model_names[1]]]$top_vars
+    }
+    
+    balance <- calculate_covariate_balance(
+      covariates = model_results$covariates,
+      W = W,
+      W_hat = W_hat,
+      top_vars = top_vars
+    )
+    balance_tables[["exposure"]] <- balance
+  }
+  
+  # calculate trimming summary
+  trim_summary <- calculate_trimming_summary(W_hat)
+  trimming_summary[["exposure"]] <- trim_summary
+  
+  # process each model for test calibration and other model-specific metrics
   for (model_name in model_names) {
-    if (verbose) cli::cli_alert_info("processing {model_name}")
-    
-    # get the grf model
-    grf_model <- model_results$full_models[[model_name]]
-    
-    # extract propensity scores and treatment
-    W <- grf_model$W.orig
-    W_hat <- grf_model$W.hat
+    if (verbose) cli::cli_alert_info("processing test calibration for {model_name}")
     
     # get outcome name
     outcome_name <- gsub("^model_", "", model_name)
     
-    # calculate overlap statistics
-    overlap_stats <- calculate_overlap_statistics(W, W_hat, outcome_name)
-    
-    # create propensity score plot if requested
-    if (plot) {
-      p <- create_propensity_plot(W, W_hat, outcome_name)
-      propensity_plots[[model_name]] <- p
-      
-      if (save_plots && !is.null(output_dir)) {
-        filename <- file.path(output_dir, paste0("propensity_", model_name, ".png"))
-        ggplot2::ggsave(filename, p, width = 8, height = 6, dpi = 300)
-        if (verbose) cli::cli_alert_success("saved plot to {filename}")
-      }
-    }
-    
-    # calculate covariate balance
-    if (!is.null(model_results$covariates)) {
-      balance <- calculate_covariate_balance(
-        covariates = model_results$covariates,
-        W = W,
-        W_hat = W_hat,
-        top_vars = model_results$results[[model_name]]$top_vars
+    # apply transform_label to outcome if no label_mapping provided
+    outcome_label <- transform_label(
+      label = outcome_name,
+      label_mapping = label_mapping,
+      options = list(
+        remove_tx_prefix = TRUE,
+        remove_z_suffix = TRUE,
+        remove_underscores = TRUE,
+        use_title_case = TRUE
       )
-      balance_tables[[model_name]] <- balance
-    }
+    )
+    
+    # create model-specific stats with overlap info
+    model_stats <- overlap_stats
+    model_stats$model <- model_name
+    model_stats$outcome <- outcome_name
+    model_stats$outcome_label <- outcome_label
     
     # get test calibration
     test_cal <- model_results$results[[model_name]]$test_calibration
@@ -150,35 +212,47 @@ margot_assess_overlap <- function(model_results,
       if (is.matrix(test_cal) || (is.numeric(test_cal) && length(test_cal) > 1)) {
         # if multiple values, store the p-value (typically the second element)
         if (length(test_cal) >= 2) {
-          overlap_stats$test_calibration_pvalue <- test_cal[2]
+          model_stats$test_calibration_pvalue <- test_cal[2]
         }
       } else {
-        overlap_stats$test_calibration_pvalue <- test_cal
+        model_stats$test_calibration_pvalue <- test_cal
       }
     }
     
-    # store the overlap statistics
-    overlap_summary[[model_name]] <- overlap_stats
-    
-    # calculate trimming summary
-    trim_summary <- calculate_trimming_summary(W_hat)
-    trimming_summary[[model_name]] <- trim_summary
+    # store the model-specific statistics
+    overlap_summary[[model_name]] <- model_stats
   }
   
   # combine summaries
   combined_summary <- dplyr::bind_rows(overlap_summary, .id = "model")
   
+  # create text summary for easy document inclusion
+  if (overlap_stats$poor_overlap_pct > 10) {
+    text_summary <- sprintf(
+      "Overlap refers to the extent to which treated and control groups have similar baseline characteristics. Poor overlap means some individuals have characteristics that make them almost certain to be in one group or the other, making it difficult to estimate causal effects reliably for these individuals. The exposure '%s' has %s%% of observations with poor overlap (propensity scores <0.05 or >0.95), suggesting limited comparability between treatment groups for %s%% of the sample.",
+      exposure_label,
+      overlap_stats$poor_overlap_pct,
+      overlap_stats$poor_overlap_pct
+    )
+  } else {
+    text_summary <- sprintf(
+      "Overlap refers to the extent to which treated and control groups have similar baseline characteristics. Good overlap means we can find comparable individuals in both treatment and control groups, which strengthens our ability to estimate causal effects. The exposure '%s' has good overlap, with %s%% of observations having propensity scores between 0.1 and 0.9, indicating strong comparability between treatment groups.",
+      exposure_label,
+      overlap_stats$good_overlap_pct
+    )
+  }
+  
   if (verbose) {
     cli::cli_alert_success("overlap assessment complete")
     
-    # print summary
-    models_with_poor_overlap <- combined_summary$model[
-      combined_summary$poor_overlap_pct > 10
-    ]
-    
-    if (length(models_with_poor_overlap) > 0) {
+    # print summary of overlap
+    if (overlap_stats$poor_overlap_pct > 10) {
       cli::cli_alert_warning(
-        "models with >10% poor overlap: {paste(models_with_poor_overlap, collapse = ', ')}"
+        "exposure '{exposure_label}' has {overlap_stats$poor_overlap_pct}% of observations with poor overlap (propensity scores <0.05 or >0.95)"
+      )
+    } else {
+      cli::cli_alert_success(
+        "exposure '{exposure_label}' has good overlap ({overlap_stats$good_overlap_pct}% of observations have propensity scores between 0.1 and 0.9)"
       )
     }
   }
@@ -187,13 +261,14 @@ margot_assess_overlap <- function(model_results,
     overlap_summary = combined_summary,
     propensity_plots = propensity_plots,
     balance_tables = balance_tables,
-    trimming_summary = trimming_summary
+    trimming_summary = trimming_summary,
+    text_summary = text_summary
   ))
 }
 
 #' Calculate overlap statistics
 #' @keywords internal
-calculate_overlap_statistics <- function(W, W_hat, outcome_name) {
+calculate_overlap_statistics <- function(W, W_hat, exposure_name) {
   # define overlap regions
   good_overlap <- W_hat > 0.1 & W_hat < 0.9
   moderate_overlap <- (W_hat > 0.05 & W_hat <= 0.1) | (W_hat >= 0.9 & W_hat < 0.95)
@@ -204,7 +279,7 @@ calculate_overlap_statistics <- function(W, W_hat, outcome_name) {
   control_props <- W_hat[W == 0]
   
   stats <- data.frame(
-    outcome = outcome_name,
+    exposure = exposure_name,
     n_total = length(W),
     n_treated = sum(W == 1),
     n_control = sum(W == 0),
@@ -226,7 +301,7 @@ calculate_overlap_statistics <- function(W, W_hat, outcome_name) {
 
 #' Create propensity score plot
 #' @keywords internal
-create_propensity_plot <- function(W, W_hat, outcome_name) {
+create_propensity_plot <- function(W, W_hat, exposure_name, theme = "classic") {
   # create data frame for plotting
   plot_data <- data.frame(
     propensity_score = W_hat,
@@ -236,22 +311,33 @@ create_propensity_plot <- function(W, W_hat, outcome_name) {
   # create plot
   p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = propensity_score, fill = treatment)) +
     ggplot2::geom_histogram(
-      alpha = 0.6, 
+      alpha = 0.85, 
       position = "identity", 
       bins = 30,
-      color = "white"
+      color = "white",
+      linewidth = 0.5
     ) +
     ggplot2::facet_wrap(~ treatment, ncol = 1, scales = "free_y") +
-    ggplot2::scale_fill_manual(values = c("Control" = "#2166AC", "Treated" = "#B2182B")) +
-    ggplot2::geom_vline(xintercept = c(0.1, 0.9), linetype = "dashed", alpha = 0.5) +
+    ggplot2::scale_fill_manual(values = c("Control" = "#4f88c6", "Treated" = "#d8a739")) +
+    ggplot2::geom_vline(xintercept = c(0.1, 0.9), linetype = "dashed", alpha = 0.7, color = "black", linewidth = 0.7) +
     ggplot2::labs(
-      title = paste("Propensity Score Distribution:", outcome_name),
+      title = paste("Propensity Score Distribution:", exposure_name),
       subtitle = "Dashed lines indicate common support region (0.1, 0.9)",
       x = "Propensity Score",
       y = "Count",
       fill = "Treatment"
     ) +
-    ggplot2::theme_minimal() +
+    # apply selected theme
+    switch(theme,
+      "classic" = ggplot2::theme_classic(),
+      "minimal" = ggplot2::theme_minimal(),
+      "bw" = ggplot2::theme_bw(),
+      "gray" = ggplot2::theme_gray(),
+      "light" = ggplot2::theme_light(),
+      "dark" = ggplot2::theme_dark(),
+      "void" = ggplot2::theme_void(),
+      ggplot2::theme_classic()  # default fallback
+    ) +
     ggplot2::theme(legend.position = "none")
   
   return(p)

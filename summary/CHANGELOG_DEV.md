@@ -79,9 +79,66 @@
   - Gracefully handles cases where all interpretations fail
 - Added error handling around conditional means computation
   - Prevents entire interpretation from failing if conditional means error
+- Fixed parameter naming error in `margot_flip_forests_parallel`
+  - Changed `n_cores_policy` to `n_cores` to match `margot_recalculate_policy_trees` signature
+- Fixed propensity plot title in `margot_assess_overlap`
+  - Now correctly shows exposure name instead of undefined outcome_name
 
 ### Cleanup Completed
 - Removed `margot_flip_forests_dev()` and its artifacts since functionality exists in `margot_recalculate_policy_trees()`
+
+### New Diagnostic Function: margot_assess_overlap
+- Added `margot_assess_overlap()` function for evaluating propensity score overlap
+  - Analyzes common support regions for treatment validity
+  - Provides comprehensive diagnostics for causal estimate reliability
+  - Generates propensity score distribution plots by treatment group
+  - Includes covariate balance tables within propensity score strata
+  - Reports test calibration p-values from grf
+  - Provides trimming summaries for poor overlap regions
+  - Added `exposure_name` parameter to specify the treatment variable
+  - Added `label_mapping` parameter for custom exposure labels
+  - **Refactored to focus on exposure overlap rather than outcome overlap**
+  - Now correctly calculates overlap statistics once for the exposure variable
+  - Fixed conceptual issue where overlap was incorrectly assessed per outcome
+  - Now uses `transform_label` helper for automatic label formatting
+  - Applies label transformation to both exposure and outcome names when no custom mapping provided
+  - Added `text_summary` return value with prose description suitable for dropping into documents
+  - Text summary can be used with `cat(overlap_results$text_summary)` for easy report inclusion
+  - Added `theme` parameter to allow customization of ggplot2 theme (default: "classic")
+  - Updated propensity plot colors to use package-consistent colors: treatment (#d8a739) and control (#4f88c6)
+  - Enhanced text summary with interpretation of what overlap means in causal inference context
+  - Increased color opacity (0.85) and line weights for clearer, more vibrant visualizations
+
+### Enhanced Qini Analysis Functions
+- **margot_interpret_qini()** major improvements:
+  - Added `spend_levels` parameter to analyze custom spend levels (default: c(0.2, 0.5))
+  - Added `include_intro` parameter to control explanatory text about CATE and Qini curves
+  - New `concise_summary` output provides brief summary grouping outcomes by benefit/harm/no effect
+  - Enhanced explanatory text describes how Qini curves work for beneficial vs detrimental exposures
+  - Dynamic handling of any number of spend levels
+  - Automatic detection of available spend levels with warnings when requested levels don't exist
+  - Function will use available spend levels if requested ones are not found in the data
+  - Backward compatible with existing code
+
+- **margot_plot_qini()** enhanced visualization:
+  - Added vertical dashed lines at spend levels (customizable via `show_spend_lines`, `spend_line_color`, `spend_line_alpha`)
+  - Replaced multiple label parameters with single `label_mapping` using `transform_label` helper
+  - Added `theme` parameter for ggplot2 theme selection (matches margot_assess_overlap)
+  - Spend levels shown in plot match those analyzed in margot_interpret_qini
+  - Cleaner function signature with fewer parameters
+  - Added text annotations to label spend level lines (e.g., "20% spend", "50% spend")
+  - Labels positioned to avoid overlap when multiple spend levels are shown
+
+### API Consistency Improvements
+- Renamed `spend` parameter to `spend_levels` in both `margot_policy()` and `margot_batch_policy()`
+  - This creates consistency with `margot_interpret_qini()` which uses `spend_levels`
+  - Makes the API more intuitive and predictable
+  - Backward compatibility note: users need to update their code to use `spend_levels` instead of `spend`
+
+### Bug Fixes (Additional)
+- Fixed `margot_policy()` and `margot_batch_policy()` to pass `spend_levels` to `margot_plot_qini()`
+  - Previously, Qini plots always showed vertical lines at 20% and 50% regardless of the spend_levels parameter
+  - Now the vertical lines in Qini plots correctly match the spend levels used for diff_gain_summaries
 
 ### Still To Do
 - Add comprehensive tests for new functionality

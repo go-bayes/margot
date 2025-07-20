@@ -7,11 +7,12 @@
 margot_plot_qini(
   mc_result,
   outcome_var,
-  remove_tx_prefix = TRUE,
-  remove_z_suffix = TRUE,
-  use_title_case = TRUE,
-  remove_underscores = TRUE,
-  label_mapping = NULL
+  label_mapping = NULL,
+  spend_levels = c(0.2, 0.5),
+  show_spend_lines = TRUE,
+  spend_line_color = "red",
+  spend_line_alpha = 0.5,
+  theme = "classic"
 )
 }
 \arguments{
@@ -20,16 +21,18 @@ margot_plot_qini(
 \item{outcome_var}{A character string specifying the name of the outcome variable
 to plot. This should match one of the model names in mc_result$results.}
 
-\item{remove_tx_prefix}{Logical value indicating whether to remove the "tx_" prefix from labels. Default is TRUE.}
-
-\item{remove_z_suffix}{Logical value indicating whether to remove the "_z" suffix from labels. Default is TRUE.}
-
-\item{use_title_case}{Logical value indicating whether to convert labels to title case. Default is TRUE.}
-
-\item{remove_underscores}{Logical value indicating whether to remove underscores from labels. Default is TRUE.}
-
 \item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
 (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
+
+\item{spend_levels}{Numeric vector of spend levels to show with vertical lines. Default is c(0.2, 0.5).}
+
+\item{show_spend_lines}{Logical indicating whether to show vertical lines at spend levels. Default is TRUE.}
+
+\item{spend_line_color}{Color for spend level lines. Default is "red".}
+
+\item{spend_line_alpha}{Alpha transparency for spend lines. Default is 0.5.}
+
+\item{theme}{Character string specifying the ggplot2 theme. Default is "classic". Options include "classic", "minimal", "bw", "gray", "light", "dark", "void".}
 }
 \value{
 A ggplot object representing the Qini curves for the specified outcome variable.

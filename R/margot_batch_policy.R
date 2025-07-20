@@ -8,7 +8,7 @@
 #' @param height The height of saved plots in inches. Default is 12.
 #' @param save_plots Logical indicating whether to save plots to disk. Default is TRUE.
 #' @param output_dir The directory to save plots in. Default is here::here(push_mods).
-#' @param spend A vector of spend levels to use for difference gain summaries. Default is c(0.2, 0.5).
+#' @param spend_levels A vector of spend levels to use for difference gain summaries. Default is c(0.2, 0.5).
 #' @param label_mapping Optional named list for custom label mappings. Keys should be original variable names
 #'        (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.
 #' @return A list where each element corresponds to a model in the input
@@ -33,7 +33,7 @@ margot_batch_policy <- function(result_outcomes,
                                 height = 12,
                                 save_plots = TRUE,
                                 output_dir = here::here(push_mods),
-                                spend = c(0.2, 0.5),
+                                spend_levels = c(0.2, 0.5),
                                 label_mapping = NULL) {
   # Deprecation warning
   warning("The margot_batch_policy() function is deprecated as of margot 0.2.1.65. Please use margot_policy() instead.",
@@ -70,7 +70,8 @@ margot_batch_policy <- function(result_outcomes,
       model_output$qini_plot <- margot_plot_qini(
         mc_result = result_outcomes,
         outcome_var = model_name,
-        label_mapping = label_mapping
+        label_mapping = label_mapping,
+        spend_levels = spend_levels
       )
 
       # Add difference gain summary for each spend level
@@ -79,7 +80,7 @@ margot_batch_policy <- function(result_outcomes,
 
       if (is_binary) {
         model_output$diff_gain_summaries <- list()
-        for (s in spend) {
+        for (s in spend_levels) {
           diff_gain_summary <- margot_summary_cate_difference_gain(
             result_outcomes,
             outcome_var = model_name,
@@ -93,7 +94,7 @@ margot_batch_policy <- function(result_outcomes,
         # Multi-arm treatment
         model_output$diff_gain_summaries <- list()
 
-        for (s in spend) {
+        for (s in spend_levels) {
           spend_summaries <- list()
 
           # Compare 'all_arms' with 'baseline'
@@ -183,7 +184,7 @@ margot_batch_policy <- function(result_outcomes,
 #
 #       if (is_binary) {
 #         model_output$diff_gain_summaries <- list()
-#         for (s in spend) {
+#         for (s in spend_levels) {
 #           diff_gain_summary <- margot_summary_cate_difference_gain(
 #             result_outcomes,
 #             outcome_var = model_name,
@@ -197,7 +198,7 @@ margot_batch_policy <- function(result_outcomes,
 #         # Multi-arm treatment
 #         model_output$diff_gain_summaries <- list()
 #
-#         for (s in spend) {
+#         for (s in spend_levels) {
 #           spend_summaries <- list()
 #
 #           # Compare 'all_arms' with 'baseline'

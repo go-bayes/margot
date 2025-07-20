@@ -9,7 +9,7 @@ detecting treatment type from input data."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.80</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.90</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,9 @@ detecting treatment type from input data.</p>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  decimal_places <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  model_names <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  model_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  spend_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>  include_intro <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -79,10 +81,26 @@ detecting treatment type from input data.</p>
 <dt id="arg-model-names">model_names<a class="anchor" aria-label="anchor" href="#arg-model-names"></a></dt>
 <dd><p>Character vector of models to process (optional)</p></dd>
 
+
+<dt id="arg-spend-levels">spend_levels<a class="anchor" aria-label="anchor" href="#arg-spend-levels"></a></dt>
+<dd><p>Numeric vector of spend levels to analyze (default: c(0.2, 0.5)).
+If requested levels don't exist in the data, the function will use available levels instead.</p></dd>
+
+
+<dt id="arg-include-intro">include_intro<a class="anchor" aria-label="anchor" href="#arg-include-intro"></a></dt>
+<dd><p>Logical whether to include explanatory text about CATE and Qini curves (default: TRUE)</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>List with summary_table, qini_explanation, reliable_model_names, reliable_model_ids</p>
+    <p>List with summary_table, qini_explanation, concise_summary, reliable_model_names, reliable_model_ids</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The function automatically detects available spend levels in the data. If requested
+spend levels are not available, it will use the closest available levels and warn
+the user. To see what spend levels are available, check the names of
+`multi_batch[[1]]$diff_gain_summaries`.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

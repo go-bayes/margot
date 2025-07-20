@@ -1,72 +1,75 @@
 * using log directory ‘/Users/joseph/GIT/margot/margot.Rcheck’
-* using R version 4.5.0 (2025-04-11)
+* using R version 4.5.1 (2025-06-13)
 * using platform: aarch64-apple-darwin20
 * R was compiled by
-    Apple clang version 14.0.0 (clang-1400.0.29.202)
+    Apple clang version 16.0.0 (clang-1600.0.26.6)
     GNU Fortran (GCC) 14.2.0
 * running under: macOS Sequoia 15.5
 * using session charset: UTF-8
-* using option ‘--as-cran’
+* using options ‘--no-manual --no-build-vignettes’
 * checking for file ‘margot/DESCRIPTION’ ... OK
 * checking extension type ... Package
-* this is package ‘margot’ version ‘1.0.60’
+* this is package ‘margot’ version ‘1.0.80’
 * package encoding: UTF-8
-* checking CRAN incoming feasibility ... [3s/22s] NOTE
-Maintainer: ‘Joseph A Bulbulia <joseph.bulbulia@gmail.com>’
-
-New submission
-
-Found the following (possibly) invalid URLs:
-  URL: https://go-bayes.github.io/margot (moved to https://go-bayes.github.io/margot/)
-    From: DESCRIPTION
-    Status: 200
-    Message: OK
-
-The Title field should be in title case. Current version is:
-  ‘MARGinal Observational Treatment-effects’
-In title case that is:
-  ‘MARGinal Observational Treatment-Effects’
-
-Size of tarball: 26833921 bytes
 * checking package namespace information ... OK
-* checking package dependencies ... INFO
-Imports includes 53 non-default packages.
-Importing from so many packages makes the package vulnerable to any of
-them becoming unavailable.  Move as many as possible to Suggests and
-use conditionally.
+* checking package dependencies ... OK
 * checking if this is a source package ... OK
 * checking if there is a namespace ... OK
 * checking for executable files ... OK
 * checking for hidden files and directories ... NOTE
 Found the following hidden files and directories:
+  docs/.nojekyll
   .claude
   .github
+  margot/.claude
+  margot/.github
 These were most likely included in error. See section ‘Package
 structure’ in the ‘Writing R Extensions’ manual.
-
-CRAN-pack does not know about
-  .claude
-  .github
 * checking for portable file names ... OK
 * checking for sufficient/correct file permissions ... OK
-* checking whether package ‘margot’ can be installed ... OK
+* checking whether package ‘margot’ can be installed ... WARNING
+Found the following significant warnings:
+  Note: possible error in 'margot_recalculate_policy_trees(model_results = model_results, ': unused argument (n_cores_policy = n_policy_cores) 
+See ‘/Users/joseph/GIT/margot/margot.Rcheck/00install.out’ for details.
+Information on the location(s) of code generating the ‘Note’s can be
+obtained by re-running with environment variable R_KEEP_PKG_SOURCE set
+to ‘yes’.
 * checking installed package size ... INFO
-  installed size is 30.0Mb
+  installed size is 32.4Mb
   sub-directories of 1Mb or more:
     data  27.2Mb
-    help   2.1Mb
+    doc    2.2Mb
+    help   2.2Mb
 * checking package directory ... OK
-* checking for future file timestamps ... OK
-* checking DESCRIPTION meta-information ... OK
-* checking top-level files ... NOTE
-Non-standard files/directories found at top level:
-  ‘CLAUDE.md’ ‘REFACTOR_PLAN.md’ ‘margot.png’
+* checking ‘build’ directory ... OK
+* checking DESCRIPTION meta-information ... NOTE
+Package listed in more than one of Depends, Imports, Suggests, Enhances:
+  ‘knitr’
+A package should be listed in only one of these fields.
+* checking top-level files ... OK
 * checking for left-over files ... OK
 * checking index information ... OK
 * checking package subdirectories ... NOTE
+Found the following CITATION file in a non-standard place:
+  margot/inst/CITATION
+Most likely ‘inst/CITATION’ should be used instead.
 Problems with news in ‘NEWS.md’:
   Cannot extract version info from the following section titles:
+    New
+    Improved
+    Removed
+    new
     improved
+    fixed
+    changed
+    Refactored to accept 1L depth policy trees 👍
+    Improve
+    NEW
+    Fixed
+    Deprecated
+    New features
+    Deprecations
+    Restored
 * checking code files for non-ASCII characters ... WARNING
 Found the following files with non-ASCII characters:
   R/here_read.R
@@ -74,7 +77,6 @@ Found the following files with non-ASCII characters:
   R/here_save.R
   R/here_save_qs.R
   R/margot_causal_forest.R
-  R/margot_correct_combined_table.R
   R/margot_flip_forests.R
   R/margot_impute_carry_forward.R
   R/margot_interpret_policy_tree.R
@@ -87,9 +89,11 @@ Found the following files with non-ASCII characters:
   R/margot_plot_policy_tree.R
   R/margot_plot_qini.R
   R/margot_plot_rate.R
+  R/margot_plot_shift.R
   R/margot_policy.R
   R/margot_process_longitudinal_data_wider.R
   R/margot_rate.R
+  R/margot_recalculate_policy_trees.R
   R/margot_transition_table.R
   R/margot_trim_sample_weights.R
 Portable packages must use only ASCII characters in their R code and
@@ -104,19 +108,21 @@ characters in files.
 * checking whether the namespace can be loaded with stated dependencies ... OK
 * checking whether the namespace can be unloaded cleanly ... OK
 * checking whether startup messages can be suppressed ... OK
-* checking use of S3 registration ... OK
 * checking dependencies in R code ... WARNING
 '::' or ':::' imports not declared from:
-  ‘arrow’ ‘withr’
+  ‘arrow’ ‘crayon’ ‘curl’ ‘margotData’ ‘withr’
 'library' or 'require' calls not declared from:
-  ‘EValue’ ‘cli’ ‘dplyr’ ‘knitr’ ‘mice’ ‘miceadds’ ‘progressr’
+  ‘EValue’ ‘cli’ ‘data.table’ ‘dplyr’ ‘mice’ ‘miceadds’ ‘progressr’
+'loadNamespace' or 'requireNamespace' calls not declared from:
+  ‘gt’ ‘margotData’
 'library' or 'require' calls in package code:
-  ‘EValue’ ‘cli’ ‘dplyr’ ‘knitr’ ‘mice’ ‘miceadds’ ‘progressr’
+  ‘EValue’ ‘cli’ ‘data.table’ ‘dplyr’ ‘knitr’ ‘mice’ ‘miceadds’
+  ‘progressr’
   Please use :: or requireNamespace() instead.
   See section 'Suggested packages' in the 'Writing R Extensions' manual.
 Namespaces in Imports field not imported from:
-  ‘DiagrammeR’ ‘MatchThem’ ‘data.table’ ‘furrr’ ‘gtsummary’ ‘janitor’
-  ‘labelled’ ‘parameters’ ‘report’ ‘tidyverse’ ‘zoo’
+  ‘DiagrammeR’ ‘MatchThem’ ‘furrr’ ‘janitor’ ‘labelled’ ‘parameters’
+  ‘report’ ‘tidyverse’ ‘zoo’
   All declared Imports should be used.
 Missing or unexported object: ‘margot::match_mi_general’
 * checking S3 generic/method consistency ... OK
@@ -126,6 +132,8 @@ Missing or unexported object: ‘margot::match_mi_general’
 .margot_fit_policy_trees: no visible global function definition for
   ‘predict’
 back_transform_estimates: no visible global function definition for
+  ‘sd’
+calculate_overlap_statistics: no visible global function definition for
   ‘sd’
 coloured_histogram_quantiles: no visible global function definition for
   ‘rainbow’
@@ -144,6 +152,12 @@ coloured_histogram_sd: no visible binding for global variable ‘yend’
 coloured_histogram_sd: no visible binding for global variable ‘color’
 coloured_histogram_shift: no visible binding for global variable
   ‘fill_color’
+compute_conditional_means_interpretation: no visible global function
+  definition for ‘complete.cases’
+create_propensity_plot: no visible binding for global variable
+  ‘propensity_score’
+create_propensity_plot: no visible binding for global variable
+  ‘treatment’
 create_tau_hat_plot: no visible binding for global variable ‘tau_value’
 create_tau_hat_plot: no visible binding for global variable
   ‘comparison’
@@ -153,6 +167,8 @@ create_transition_matrix : <anonymous>: no visible global function
   definition for ‘head’
 extract_qini_data_binary: no visible global function definition for
   ‘tail’
+fetch_margot_data: no visible binding for global variable
+  ‘df_margot_example’
 get_original_value: no visible global function definition for ‘sd’
 get_original_value_plot: no visible global function definition for ‘sd’
 get_original_var_info: no visible global function definition for ‘sd’
@@ -188,6 +204,7 @@ margot_causal_forest_parallel: no visible global function definition
   for ‘complete.cases’
 margot_causal_forest_parallel : <anonymous>: no visible global function
   definition for ‘predict’
+margot_censor: no visible global function definition for ‘:=’
 margot_combine_results : <anonymous>: no visible binding for global
   variable ‘Variable’
 margot_combine_results: no visible binding for global variable
@@ -205,6 +222,16 @@ margot_count_dyads: no visible binding for global variable
 margot_count_ids: no visible binding for global variable
   ‘year_measured’
 margot_count_ids: no visible binding for global variable ‘id’
+margot_flip_forests: no visible global function definition for
+  ‘complete.cases’
+margot_flip_forests: no visible global function definition for
+  ‘predict’
+margot_flip_forests_parallel: possible error in
+  margot_recalculate_policy_trees(model_results = model_results,
+  outcomes_to_recalculate = plain, model_prefix = model_prefix, verbose
+  = verbose, parallel = parallel_policy, n_cores_policy =
+  n_policy_cores, seed = if (isTRUE(seed)) NULL else seed): unused
+  argument (n_cores_policy = n_policy_cores)
 margot_inspect_qini : <anonymous>: no visible global function
   definition for ‘predict’
 margot_inspect_qini : <anonymous>: no visible global function
@@ -216,14 +243,6 @@ margot_interpret_marginal: no visible binding for global variable
 margot_interpret_marginal: no visible binding for global variable
   ‘E_Val_bound’
 margot_interpret_marginal: no visible binding for global variable
-  ‘text’
-margot_interpret_marginal_debug: no visible global function definition
-  for ‘head’
-margot_interpret_marginal_debug: no visible binding for global variable
-  ‘E_Value’
-margot_interpret_marginal_debug: no visible binding for global variable
-  ‘E_Val_bound’
-margot_interpret_marginal_debug: no visible binding for global variable
   ‘text’
 margot_interpret_rate: no visible binding for global variable ‘policy’
 margot_interpret_rate_comparison: no visible global function definition
@@ -323,8 +342,12 @@ margot_plot_individual_responses: no visible binding for global
   variable ‘variable’
 margot_plot_policy_tree : build_colour_scale: no visible global
   function definition for ‘setNames’
+margot_plot_policy_tree: no visible global function definition for
+  ‘setNames’
 margot_plot_policy_tree_depth2: no visible global function definition
   for ‘setNames’
+margot_plot_policy_tree_depth2 : build_panel: no visible global
+  function definition for ‘setNames’
 margot_plot_policy_tree_depth2 : build_panel: no visible binding for
   global variable ‘pred’
 margot_plot_qini: no visible global function definition for ‘str’
@@ -392,12 +415,14 @@ margot_save_png: no visible binding for global variable ‘push_mods’
 margot_save_png: no visible global function definition for ‘png’
 margot_save_png: no visible global function definition for ‘replayPlot’
 margot_save_png: no visible global function definition for ‘dev.off’
-margot_summary_panel: no visible binding for global variable ‘number’
-margot_summary_panel: no visible global function definition for ‘:=’
+margot_simulate: no visible global function definition for ‘modifyList’
+margot_simulate : sprinkle: no visible global function definition for
+  ‘runif’
+margot_simulate: no visible global function definition for ‘:=’
+margot_simulate: no visible binding for global variable ‘id’
+margot_simulate: no visible binding for global variable ‘wave’
 margot_summary_panel: no visible binding for global variable
   ‘wave_count’
-margot_summary_panel: no visible binding for global variable
-  ‘number_of_participants’
 margot_transition_table: no visible global function definition for
   ‘reshape’
 margot_transition_table: no visible binding for global variable ‘from’
@@ -411,6 +436,8 @@ margot_wide_machine: no visible global function definition for ‘median’
 prepare_panel_data: no visible binding for global variable ‘timeline’
 prepare_panel_data: no visible binding for global variable ‘day’
 prepare_panel_data: no visible binding for global variable ‘wave’
+recalculate_policy_trees_single: no visible global function definition
+  for ‘predict’
 tab_engine_marginal: no visible binding for global variable ‘Estimate’
 tab_engine_marginal: no visible binding for global variable ‘outcome’
 tab_engine_marginal: no visible binding for global variable ‘2.5 %’
@@ -421,7 +448,7 @@ Undefined global functions or variables:
   Domain E[Y(1)]-E[Y(0)] E[Y(1)]/E[Y(0)] E_Val_bound E_Value Estimate
   Outcome RATE Estimate Std Error Variable adj_p_value all_missing
   any_lost ave avg_val calibration_status color comparison
-  complete.cases curve day description dev.off
+  complete.cases curve day description dev.off df_margot_example
   differential_prediction_p differential_prediction_p_formatted
   differential_prediction_significant differential_prediction_text
   display_label edge_lab estimate event_condition fill_col fill_color
@@ -429,22 +456,30 @@ Undefined global functions or variables:
   install.packages is_complete label label_x label_y lm lower
   mean_prediction_p mean_prediction_p_formatted
   mean_prediction_significant mean_prediction_text mean_tau median
-  model model_display modifyList n_in_couple n_responses n_waves number
-  number_of_participants outcome p_value png policy pred predict
-  predicted priority proportion push_mods rainbow reliable replayPlot
-  reshape result row_number sd sd_tau setNames sign_group
+  model model_display modifyList n_in_couple n_responses n_waves
+  outcome p_value png policy pred predict predicted priority
+  propensity_score proportion push_mods rainbow reliable replayPlot
+  reshape result row_number runif sd sd_tau setNames sign_group
   standard_error std.err std_val str t0_not_lost t1_not_lost tail
-  tau_hat tau_value text time timeline tscore upper value variable
-  vjust wave wave_count x xend y year_measured yend z_score
+  tau_hat tau_value text time timeline treatment tscore upper value
+  variable vjust wave wave_count x xend y year_measured yend z_score
 Consider adding
   importFrom("grDevices", "dev.off", "png", "rainbow", "replayPlot")
   importFrom("graphics", "curve", "text")
   importFrom("stats", "ave", "complete.cases", "lm", "median", "predict",
-             "reshape", "sd", "setNames", "time")
+             "reshape", "runif", "sd", "setNames", "time")
   importFrom("utils", "head", "install.packages", "modifyList", "str",
              "tail")
 to your NAMESPACE file.
 * checking Rd files ... NOTE
+checkRd: (-1) margot_assess_overlap.Rd:38: Lost braces in \itemize; \value handles \item{}{} directly
+checkRd: (-1) margot_assess_overlap.Rd:39: Lost braces in \itemize; \value handles \item{}{} directly
+checkRd: (-1) margot_assess_overlap.Rd:40: Lost braces in \itemize; \value handles \item{}{} directly
+checkRd: (-1) margot_assess_overlap.Rd:41: Lost braces in \itemize; \value handles \item{}{} directly
+checkRd: (-1) margot_recalculate_policy_trees.Rd:35: Lost braces in \itemize; meant \describe ?
+checkRd: (-1) margot_recalculate_policy_trees.Rd:36: Lost braces in \itemize; meant \describe ?
+checkRd: (-1) margot_recalculate_policy_trees.Rd:37: Lost braces in \itemize; meant \describe ?
+checkRd: (-1) margot_recalculate_policy_trees.Rd:38: Lost braces in \itemize; meant \describe ?
 checkRd: (-1) margot_save_png.Rd:59: Lost braces; missing escapes or markup?
     59 | The final filename will be constructed as: `{prefix}_{base_filename}.png`.
        |                                             ^
@@ -458,16 +493,6 @@ checkRd: (-1) margot_save_png.Rd:64: Lost braces; missing escapes or markup?
     64 | The final filename will be constructed as: `{prefix}_{base_filename}.png`.
        |                                                      ^
 * checking Rd metadata ... OK
-* checking Rd line widths ... NOTE
-Rd file 'regress_with_covariates.Rd':
-  \examples lines wider than 100 characters:
-     model <- regress_with_covariates(df_nz, outcome_var, exposure_var, baseline_vars, family =  gaussian())
-
-Rd file 'transition_table.Rd':
-  \examples lines wider than 100 characters:
-     long_df_transition <- tidyr::pivot_longer(df_transition, cols = -from, names_to = "to", values_to = "Freq")
-
-These lines will be truncated in the PDF manual.
 * checking Rd cross-references ... WARNING
 Missing link(s) in Rd file 'compute_qini_curves.Rd':
   ‘compute_qini_curves_multi_arm’
@@ -475,19 +500,12 @@ Missing link(s) in Rd file 'compute_qini_curves.Rd':
 Missing link(s) in Rd file 'margot_lmtp_evalue.Rd':
   ‘margot_tab_lmtp’
 
-See section 'Cross-references' in the 'Writing R Extensions' manual.
+Missing link(s) in Rd file 'margot_simulate.Rd':
+  ‘.default_sim_params’
 
-Found the following Rd file(s) with Rd \link{} targets missing package
-anchors:
-  compute_qini_curves.Rd: compute_qini_curves_multi_arm
-  margot_lmtp_evalue.Rd: margot_tab_lmtp
-Please provide package anchors for all Rd \link{} targets not in the
-package itself and the base packages.
+See section 'Cross-references' in the 'Writing R Extensions' manual.
 * checking for missing documentation entries ... OK
 * checking for code/documentation mismatches ... WARNING
-Functions or methods with usage in Rd file 'margot_wide_impute_baseline.Rd' but not in code:
-  ‘margot_wide_impute_baseline’
-
 Functions or methods with usage in Rd file 'pipe.Rd' but not in code:
   ‘%>%’
 
@@ -553,6 +571,12 @@ Documented arguments not in \usage in Rd file 'margot_amelia_to_mice.Rd':
 Documented arguments not in \usage in Rd file 'margot_interpret_table.Rd':
   ‘causal_scale’
 
+Undocumented arguments in Rd file 'margot_plot.Rd'
+  ‘order’ ‘custom_order’ ‘title_binary’ ‘include_coefficients’
+  ‘standardize_label’ ‘e_val_bound_threshold’ ‘options’ ‘label_mapping’
+  ‘save_output’ ‘use_timestamp’ ‘base_filename’ ‘prefix’ ‘save_path’
+  ‘original_df’ ‘bold_rows’ ‘rename_cols’ ‘col_renames’ ‘rename_ate’
+
 Undocumented arguments in Rd file 'margot_plot_categorical.Rd'
   ‘df’ ‘col_name’ ‘n_divisions’ ‘custom_breaks’ ‘cutpoint_inclusive’
   ‘ties.method’ ‘colour_palette’ ‘hist_colour’ ‘line_type’ ‘line_width’
@@ -560,11 +584,6 @@ Undocumented arguments in Rd file 'margot_plot_categorical.Rd'
   ‘axis_text_angle’ ‘x_scale_transform’ ‘y_scale_transform’
   ‘additional_layers’ ‘binwidth’ ‘legend_position’ ‘save_path’ ‘width’
   ‘height’ ‘include_timestamp’ ‘file_prefix’
-
-Undocumented arguments in Rd file 'margot_plot_shift.Rd'
-  ‘df’ ‘col_name’ ‘binwidth’ ‘range_highlight’ ‘shift’ ‘show_avg_line’
-  ‘print_avg_value’ ‘show_sd_line’ ‘title’ ‘subtitle’ ‘x_lab’ ‘y_lab’
-  ‘save_path’ ‘width’ ‘height’ ‘include_timestamp’
 
 Undocumented arguments in Rd file 'margot_plot_slope_covariate_batch.Rd'
   ‘caption_size’
@@ -574,9 +593,6 @@ Undocumented arguments in Rd file 'margot_plot_slope_covariate_combo.Rd'
 
 Undocumented arguments in Rd file 'regress_with_covariates.Rd'
   ‘sample_weights’
-
-Documented arguments not in \usage in Rd file 'transition_table.Rd':
-  ‘data’
 
 Functions with \usage entries need to have the appropriate \alias
 entries, and all their arguments documented.
@@ -592,15 +608,12 @@ Extensions’ manual.
   LazyData DB of 27.2 MB without LazyDataCompression set
   See §1.1.6 of 'Writing R Extensions'
 * checking data for ASCII and uncompressed saves ... OK
-* checking files in ‘vignettes’ ... WARNING
-Files in the 'vignettes' directory but no files in 'inst/doc':
-  ‘margot-workflow.Rmd’
-Package has no Sweave vignette sources and no VignetteBuilder field.
+* checking installed files from ‘inst/doc’ ... OK
+* checking files in ‘vignettes’ ... OK
 * checking examples ... ERROR
 Running examples in ‘margot-Ex.R’ failed
 The error most likely occurred in:
 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: back_transform_log_z
 > ### Title: Back Transform Z-Score to Original Log-Transformed Scale
 > ### Aliases: back_transform_log_z
@@ -623,24 +636,28 @@ The error most likely occurred in:
 > log_mean_inc <- mean(original_df$t0_log_household_inc, na.rm = TRUE)
 Error: object 'original_df' not found
 Execution halted
-* checking package vignettes ... NOTE
-Package has ‘vignettes’ subdirectory but apparently no vignettes.
-Perhaps the ‘VignetteBuilder’ information is missing from the
-DESCRIPTION file?
-* checking PDF version of manual ... WARNING
-LaTeX errors when creating PDF version.
-This typically indicates Rd problems.
-LaTeX errors found:
-! LaTeX Error: Unicode character − (U+2212)
-               not set up for use with LaTeX.
+* checking for unstated dependencies in ‘tests’ ... OK
+* checking tests ... OK
+  Running ‘testthat.R’
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes ... OK
+* checking running R code from vignettes ... ERROR
+Errors in running code in vignettes:
+when running code in ‘margot-workflow.Rmd’
+  ...
+> knitr::opts_chunk$set(collapse = TRUE, comment = "#>", 
++     eval = FALSE)
 
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
-* checking PDF version of manual without index ... ERROR
-* checking HTML version of manual ... OK
-* checking for non-standard things in the check directory ... NOTE
-Found the following files/directories:
-  ‘margot-manual.tex’
-* checking for detritus in the temp directory ... OK
+> install.packages("margot")
+Installing package into ‘/Users/joseph/GIT/margot/margot.Rcheck’
+(as ‘lib’ is unspecified)
+
+  When sourcing ‘margot-workflow.R’:
+Error: trying to use CRAN without setting a mirror
+Execution halted
+
+  ‘margot-simulation.Rmd’ using ‘UTF-8’... OK
+  ‘margot-workflow.Rmd’ using ‘UTF-8’... failed
+* checking re-building of vignette outputs ... SKIPPED
 * DONE
-Status: 2 ERRORs, 9 WARNINGs, 9 NOTEs
+Status: 2 ERRORs, 8 WARNINGs, 5 NOTEs

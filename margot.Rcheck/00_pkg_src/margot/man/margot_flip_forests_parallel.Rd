@@ -24,8 +24,6 @@ margot_flip_forests_parallel(
 
 \item{model_prefix}{A character string indicating the prefix used for model names in the results list. Default is "model_".}
 
-\item{recalc_policy}{Logical; if TRUE (default) recalculates policy trees for flipped outcomes.}
-
 \item{parallel_policy}{logical. if TRUE, policy-tree refits are parallelised.}
 
 \item{n_policy_cores}{integer. number of workers for policy-tree refits.}

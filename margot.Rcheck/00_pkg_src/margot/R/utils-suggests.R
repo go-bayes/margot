@@ -68,47 +68,33 @@ check_suggests_multiple <- function(pkgs, fun = NULL, purpose = NULL) {
   invisible(TRUE)
 }
 
-#' Check package availability helpers
-#'
-#' These functions check if specific groups of packages are available.
-#'
-#' @return Logical indicating if packages are available
-#' @keywords internal
-#' @name check_availability
-#' @noRd
-NULL
+# Internal helper functions for checking package availability
+# No documentation needed as these are not exported
 
-#' @rdname check_availability
 has_grf <- function() {
   requireNamespace("grf", quietly = TRUE)
 }
 
-#' @rdname check_availability
 has_lmtp <- function() {
   requireNamespace("lmtp", quietly = TRUE)
 }
 
-#' @rdname check_availability
 has_ggplot2 <- function() {
   requireNamespace("ggplot2", quietly = TRUE)
 }
 
-#' @rdname check_availability
 has_gt <- function() {
   requireNamespace("gt", quietly = TRUE)
 }
 
-#' @rdname check_availability
 has_models <- function() {
   has_grf() && has_lmtp()
 }
 
-#' @rdname check_availability
 has_viz <- function() {
   has_ggplot2() && requireNamespace("patchwork", quietly = TRUE)
 }
 
-#' @rdname check_availability
 has_report <- function() {
   has_gt() || requireNamespace("flextable", quietly = TRUE)
 }

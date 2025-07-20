@@ -11,7 +11,7 @@ It provides diagnostics for assessing the validity of causal estimates."></head>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.80</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.90</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,9 +53,12 @@ It provides diagnostics for assessing the validity of causal estimates.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_assess_overlap</span><span class="op">(</span></span>
 <span>  <span class="va">model_results</span>,</span>
 <span>  model_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  exposure_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  save_plots <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  output_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  theme <span class="op">=</span> <span class="st">"classic"</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -72,6 +75,14 @@ It provides diagnostics for assessing the validity of causal estimates.</p>
 <dd><p>Character vector of model names to assess. If NULL, all models.</p></dd>
 
 
+<dt id="arg-exposure-name">exposure_name<a class="anchor" aria-label="anchor" href="#arg-exposure-name"></a></dt>
+<dd><p>Character string naming the exposure/treatment variable. If NULL, defaults to "Treatment".</p></dd>
+
+
+<dt id="arg-label-mapping">label_mapping<a class="anchor" aria-label="anchor" href="#arg-label-mapping"></a></dt>
+<dd><p>Named list mapping variable names to custom labels for the exposure.</p></dd>
+
+
 <dt id="arg-plot">plot<a class="anchor" aria-label="anchor" href="#arg-plot"></a></dt>
 <dd><p>Logical indicating whether to create overlap plots. Default is TRUE.</p></dd>
 
@@ -84,6 +95,10 @@ It provides diagnostics for assessing the validity of causal estimates.</p>
 <dd><p>Directory to save plots if save_plots is TRUE.</p></dd>
 
 
+<dt id="arg-theme">theme<a class="anchor" aria-label="anchor" href="#arg-theme"></a></dt>
+<dd><p>Character string specifying the ggplot2 theme. Default is "classic". Options include "classic", "minimal", "bw", "gray", "light", "dark", "void".</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical for detailed messages. Default is TRUE.</p></dd>
 
@@ -94,6 +109,7 @@ It provides diagnostics for assessing the validity of causal estimates.</p>
 <li><p>propensity_plotsList of ggplot objects (if plot = TRUE)</p></li>
 <li><p>balance_tablesCovariate balance tables for each model</p></li>
 <li><p>trimming_summarySummary of observations trimmed due to poor overlap</p></li>
+<li><p>text_summaryCharacter string with a prose summary suitable for reports</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -122,6 +138,15 @@ between treatment groups and may lead to unreliable causal estimates.</p>
 <span class="r-in"><span>  <span class="va">model_results</span>,</span></span>
 <span class="r-in"><span>  save_plots <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>  output_dir <span class="op">=</span> <span class="st">"output/overlap_diagnostics"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># use text summary in a report</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">overlap_results</span><span class="op">$</span><span class="va">text_summary</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># use different theme</span></span></span>
+<span class="r-in"><span><span class="va">overlap_results</span> <span class="op">&lt;-</span> <span class="fu">margot_assess_overlap</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">model_results</span>,</span></span>
+<span class="r-in"><span>  theme <span class="op">=</span> <span class="st">"minimal"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

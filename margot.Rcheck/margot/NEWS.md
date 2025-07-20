@@ -3,12 +3,74 @@
 
 * Begin writing tutorials for use cases.
 * fix decision tree layout
-* remove `crayon` and other unnecessary packages
 * write examples
 * remove arrow from "margot_plot_policy_tree()"
 * improve interpretations in `margot_compare_groups()`
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
+
+## [2025-07-19] margot 1.0.80
+- Added experimental support for conditional means computation via `policytree::conditional_means()`
+- New `compute_conditional_means` parameter in `margot_causal_forest()` (default TRUE)
+- Conditional means are stored in model results when computed
+- Enhanced `margot_interpret_policy_tree()` to include conditional means interpretation
+  - Shows expected outcomes under each treatment within policy tree leaves
+  - Computes average treatment effects within each leaf
+  - New `include_conditional_means` parameter (default TRUE)
+  - Changed default output to clear, simple language (new `use_math_notation` parameter, default FALSE)
+  - Added `output_format` parameter: "bullet" (default) or "prose" for flowing narrative text
+  - Enhanced leaf output with sample sizes, percentages, and effect interpretations
+  - Removed uncertainty quantification disclaimer
+- `margot_flip_forests()` completely rewritten to create new models with "_r" suffix
+  - Properly recomputes all statistics (ATE, RATE, E-values, policy trees, QINI)
+  - Flips conditional means columns for binary treatment
+  - Removes original models and rebuilds combined_table
+- New `margot_recalculate_policy_trees()` function for customizing policy tree covariates
+  - Multiple covariate modes: "original", "custom", "add", "all"
+  - Regex-based covariate exclusion support
+  - Automatic covariate expansion for depth-2 trees
+  - Parallel processing capability
+- Updated `margot_reversed_labels()` to handle new "_r" suffix convention
+  - Creates new label entries with "_r" suffix by default
+  - Maintains backward compatibility with `use_r_suffix = FALSE`
+  - Option to remove original entries with `remove_original = TRUE`
+- Removed `margot_flip_forests_dev()` as functionality now available in `margot_recalculate_policy_trees()`
+
+## [2025-07-17] margot 1.0.70
+- `margot_flip_forests_dev()` allows custom policy trees 
+
+## [2025-06-18] margot 1.0.65
+- `margot_plot_policy_tree()` better graphs
+  - Shape + Color coding - Points use both different shapes AND colors for better distinction
+  - Clean masking - Shaded regions properly filter out points (no more overlapping mess)
+  - Visible annotations - Split values appear as readable horizontal text near the dashed lines
+  - Proper positioning - Annotations stay within plot boundaries
+
+## [2025-06-18] margot 1.0.64
+- `margot_plot_categorical()` handles binary data
+
+## [2025-06-09] margot 1.0.63
+- developing simulation within margot
+
+## [2025-06-09] margot 1.0.62
+
+## New
+- Complete refactor of `margot_simulate()` with clearer data generation process
+- Added support for heterogeneous treatment effects in simulations
+- Enhanced vignette with comprehensive examples and power analysis templates
+
+## Improved
+- Fixed syntax errors in vignettes (removed numeric underscores)
+- Improved test structure with cleaner helper functions
+- Better documentation of simulation parameters and options
+
+## Removed
+- Removed `crayon` package dependency (down to 51 dependencies)
+- Removed `gt` and `gtsummary` package dependencies
+- Updated `margot_summary_panel()` to output markdown tables by default
+
+# [2025-06-04] margot 1.0.61
+- added simulation function `magot_simulate()` + units tests plus vignette
 
 # [2025-06-04] margot 1.0.60 
 - fixed namespace issue/ margot_model_evalue now exported. 

@@ -1,11 +1,12 @@
 * installing *source* package ‘margot’ ...
-** this is package ‘margot’ version ‘1.0.60’
+** this is package ‘margot’ version ‘1.0.80’
 ** using staged installation
 ** R
 ** data
 *** moving datasets to lazyload DB
 ** inst
 ** byte-compile and prepare package for lazy loading
+Note: possible error in 'margot_recalculate_policy_trees(model_results = model_results, ': unused argument (n_cores_policy = n_policy_cores) 
 ** help
 *** installing help indices
 *** copying figures

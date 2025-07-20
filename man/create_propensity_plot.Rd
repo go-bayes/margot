@@ -4,7 +4,7 @@
 \alias{create_propensity_plot}
 \title{Create propensity score plot}
 \usage{
-create_propensity_plot(W, W_hat, outcome_name)
+create_propensity_plot(W, W_hat, exposure_name, theme = "classic")
 }
 \description{
 Create propensity score plot

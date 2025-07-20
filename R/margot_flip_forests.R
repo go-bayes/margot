@@ -551,7 +551,7 @@ margot_flip_forests_parallel <- function(model_results,
       model_prefix = model_prefix,
       verbose = verbose,
       parallel = parallel_policy,
-      n_cores_policy = n_policy_cores,
+      n_cores = n_policy_cores,
       seed = if (isTRUE(seed)) NULL else seed
     )
   }

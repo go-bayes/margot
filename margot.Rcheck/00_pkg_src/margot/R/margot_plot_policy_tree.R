@@ -32,7 +32,7 @@
 #' @return A `ggplot` object (depth 1) or a patchwork object (depth 2).
 #'
 #' @import ggplot2
-#' @import patchwork
+#' @importFrom patchwork wrap_plots plot_layout plot_annotation
 #' @importFrom tibble tibble
 #' @importFrom cli cli_h1 cli_alert_info cli_abort
 #' @export
@@ -151,20 +151,29 @@ margot_plot_policy_tree <- function(
     plot_df <- tibble::tibble(x = x_vec, y = 0, pred = preds)
     colour_scale <- build_colour_scale(act_labels)
 
+    # build shape scale (now that act_labels is available)
+    shape_scale <- ggplot2::scale_shape_manual(
+      values = setNames(c(16, 17, 15, 3, 4, 18)[seq_along(act_labels)], act_labels)
+    )
+
+    # create the plot
     ggplot2::ggplot() +
       ggplot2::geom_jitter(
         data   = plot_df,
-        ggplot2::aes(x = .data$x, y = .data$y, colour = .data$pred),
+        ggplot2::aes(x = .data$x, y = .data$y, colour = .data$pred, shape = .data$pred),
         width  = 0.30,
         height = 0.06,
-        alpha  = point_alpha
+        alpha  = point_alpha,
+        size   = 1.5  # slightly larger to make shapes visible
       ) +
       ggplot2::geom_vline(xintercept = cp, linetype = "dashed") +
       colour_scale +
+      shape_scale +
       ggplot2::labs(
         x        = var_label,
         y        = NULL,
         colour   = "Prediction",
+        shape    = "Prediction",  # add shape to legend
         subtitle = subtitle_txt
       ) +
       theme_function() +
@@ -304,16 +313,16 @@ margot_plot_policy_tree_depth2 <- function(
 
     # --- shading ---------------------------------------------------------
     if (shade_enabled && shade_side != "none") {
-      # Get the actual data range to ensure shading stays within bounds
+      # get the actual data range to ensure shading stays within bounds
       x_range <- range(plot_df[[x]], na.rm = TRUE)
       y_range <- range(plot_df[[y]], na.rm = TRUE)
 
-      # Add small buffer to ensure we cover the plot area
+      # add small buffer to ensure we cover the plot area
       x_buffer <- diff(x_range) * 0.05
       y_buffer <- diff(y_range) * 0.05
 
       if (shade_side == "left") {
-        # Shade left side of vertical split
+        # shade left side of vertical split
         p <- p + ggplot2::annotate(
           "rect",
           xmin = x_range[1] - x_buffer,
@@ -324,7 +333,7 @@ margot_plot_policy_tree_depth2 <- function(
           alpha = shade_alpha
         )
       } else if (shade_side == "right") {
-        # Shade right side of vertical split
+        # shade right side of vertical split
         p <- p + ggplot2::annotate(
           "rect",
           xmin = xsp,
@@ -336,33 +345,33 @@ margot_plot_policy_tree_depth2 <- function(
         )
       }
     }
-  # build_panel <- function(x, y, xlab, ylab, xsp, ysp,
-  #                         shade_side, xvar, yvar) {
-  #
-  #   p <- ggplot2::ggplot()
-  #
-  #   # --- shading ---------------------------------------------------------
-  #   if (shade_enabled && shade_side != "none") {
-  #     xmin <- if (shade_side == "left") -Inf else xsp
-  #     xmax <- if (shade_side == "left")  xsp else Inf
-  #     p <- p + ggplot2::annotate(
-  #       "rect", xmin = xmin, xmax = xmax,
-  #       ymin  = -Inf, ymax = Inf,
-  #       fill  = shade_fill, alpha = shade_alpha
-  #     )
-  #   }
 
     # --- back-transformed thresholds for annotation ----------------------
     orig_xsp <- get_original_value_plot(xvar, xsp, original_df)
     orig_ysp <- get_original_value_plot(yvar, ysp, original_df)
 
-    # --- points ----------------------------------------------------------
+    # --- filter data based on shading to improve masking -----------------
+    plot_data_filtered <- if (shade_enabled && shade_side == "left") {
+      plot_df[plot_df[[x]] >= xsp, ]  # only show right side (non-shaded)
+    } else if (shade_enabled && shade_side == "right") {
+      plot_df[plot_df[[x]] <= xsp, ]  # only show left side (non-shaded)
+    } else {
+      plot_df  # show all data if no shading
+    }
+
+    # --- build shape scale ------------------------------------------------
+    shape_scale <- ggplot2::scale_shape_manual(
+      values = setNames(c(16, 17, 15, 3, 4, 18)[seq_along(act_labels)], act_labels)
+    )
+
+    # --- points with both colour and shape --------------------------------
     p <- p + ggplot2::geom_jitter(
-      data   = plot_df,
-      ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred),
+      data   = plot_data_filtered,
+      ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred, shape = pred),
       alpha  = point_alpha,
       width  = jitter_width,
-      height = jitter_height
+      height = jitter_height,
+      size   = 1.5  # slightly larger to make shapes visible
     )
 
     # --- split lines -----------------------------------------------------
@@ -380,40 +389,55 @@ margot_plot_policy_tree_depth2 <- function(
       )
 
     # --- offsets for text ------------------------------------------------
-    x_rng <- range(plot_df[[x]], na.rm = TRUE)
+    x_rng <- range(plot_df[[x]], na.rm = TRUE)  # use original data for text positioning
+    y_rng <- range(plot_df[[y]], na.rm = TRUE)
     off_x <- nudge_frac_x * diff(x_rng)
-    off_y <- nudge_frac_y * diff(x_rng)
+    off_y <- nudge_frac_y * diff(y_rng)
     if (off_x == 0) off_x <- 0.05
     if (off_y == 0) off_y <- 0.05
 
-    # annotate x split (top)
-    if (!is.null(orig_xsp))
-      p <- p + ggplot2::annotate(
-        "text",
-        x      = xsp + off_x, y = Inf,
-        label  = paste0("(", orig_xsp, ")*"),
-        vjust  = 1,
-        size   = split_label_size / ggplot2::.pt
-      )
+    # annotate x split (top) - always show, fallback to transformed value
+    x_label <- if (!is.null(orig_xsp)) {
+      paste0("(", orig_xsp, ")*")
+    } else {
+      sprintf("%.3f", xsp)
+    }
+    p <- p + ggplot2::annotate(
+      "text",
+      x      = xsp + off_x,
+      y      = y_rng[2] - abs(off_y),
+      label  = x_label,
+      vjust  = 1,
+      hjust  = 0,
+      size   = 5,
+      colour = split_label_color
+    )
 
-    # annotate y split (side)
-    if (!is.null(orig_ysp))
-      p <- p + ggplot2::annotate(
-        "text",
-        x      = x_rng[1] + off_y, y = ysp,
-        label  = paste0("(", orig_ysp, ")*"),
-        hjust  = 0,
-        size   = split_label_size / ggplot2::.pt,
-        angle  = 90
-      )
+    # annotate y split (side) - always show, fallback to transformed value
+    y_label <- if (!is.null(orig_ysp)) {
+      paste0("(", orig_ysp, ")*")
+    } else {
+      sprintf("%.3f", ysp)
+    }
+    p <- p + ggplot2::annotate(
+      "text",
+      x      = x_rng[1] + abs(off_x),
+      y      = ysp + off_y,
+      label  = y_label,
+      hjust  = 0,
+      vjust  = 0,
+      size   = 5,
+      colour = split_label_color
+    )
 
     # --- final styling ---------------------------------------------------
-    p + color_scale +
+    p + color_scale + shape_scale +
       ggplot2::labs(
         x        = xlab,
         y        = ylab,
         subtitle = paste(xlab, "vs", ylab),
-        colour   = "Prediction"
+        colour   = "Prediction",
+        shape    = "Prediction"  # add shape to legend
       ) +
       theme_function() +
       ggplot2::theme(
@@ -426,8 +450,6 @@ margot_plot_policy_tree_depth2 <- function(
                                                   colour = split_label_color)
       )
   }
-
-  # ---- build panels -----------------------------------------------------
 
   # ---- build panels ----------------------------------------------------------
   p1 <- p2 <- NULL
@@ -477,171 +499,4 @@ margot_plot_policy_tree_depth2 <- function(
     )
 
   combined
-
-  # old
-  # p1 <- p2 <- NULL
-  # if (plot_selection %in% c("both", "p1")) {
-  #   p1 <- build_panel(
-  #     "x1", "x2",
-  #     tv(varnames[sv1]), tv(varnames[sv2]),
-  #     cp1, cp2,
-  #     shade_side = if (shade_enabled) "right" else "none",
-  #     xvar = varnames[sv1], yvar = varnames[sv2]
-  #   )
-  # }
-  # if (plot_selection %in% c("both", "p2")) {
-  #   p2 <- build_panel(
-  #     "x1", "x3",
-  #     tv(varnames[sv1]), tv(varnames[sv3]),
-  #     cp1, cp3,
-  #     shade_side = if (shade_enabled) "left" else "none",
-  #     xvar = varnames[sv1], yvar = varnames[sv3]
-  #   )
-  # }
-  #
-  # # ---- assemble layout --------------------------------------------------
-  # main_title <- sprintf("Policy-tree results – %s", tv(model_name))
-  # patchwork::wrap_plots(p1, p2, ncol = 2) +
-  #   patchwork::plot_annotation(
-  #     title = main_title,
-  #     theme = ggplot2::theme(
-  #       plot.title = ggplot2::element_text(size = title_size,
-  #                                          margin = ggplot2::margin(b = 10))
-  #     )
-  #   ) &
-  #   ggplot2::theme(legend.position = legend_position)
-}
-
-
-
-
-#' Create a Combined Decision Tree and Policy Relationship Graph
-#'
-#' This function generates a combined plot consisting of a decision tree and a graph
-#' showing relationships between variables in the recommended policy.
-#'
-#' @param result_object An object containing the results from a multi-arm causal forest model.
-#' @param model_name A character string specifying the name of the model.
-#' @param max_depth Integer, 1 or 2; which decision tree depth to plot. Default: 2.
-#' @param label_mapping Optional named list for custom label mappings.
-#' @param original_df Optional dataframe with untransformed variables.
-#' @param layout A list specifying the layout of the combined plot when max_depth==2. Default is
-#'   `list(heights = c(1, 2))`, which sets the relative heights of the two plots.
-#' @param annotation A list specifying the annotation for the combined plot when max_depth==2. Default is
-#'   `list(tag_levels = "A")`, which adds alphabetic tags to the subplots.
-#' @param generate_policy_tree Logical, whether to generate the policy tree plot. Default is TRUE.
-#' @param generate_decision_tree Logical, whether to generate the decision tree plot. Default is TRUE.
-#' @param policy_tree_args A list of arguments to pass to `margot_plot_policy_tree`. Default is list().
-#' @param decision_tree_args A list of arguments to pass to `margot_plot_decision_tree`. Default is list().
-#'
-#' @return A list containing:
-#'   \item{policy_tree}{A ggplot object representing the policy tree (if generated)}
-#'   \item{decision_tree}{A ggplot object representing the decision tree (if generated)}
-#'   \item{combined_plot}{A ggplot object representing the combined plot (if both plots are generated)}
-#'
-#' @import ggplot2
-#' @import patchwork
-#' @import cli
-#' @export
-margot_plot_policy_combo <- function(
-    result_object,
-    model_name,
-    max_depth              = 2L,
-    label_mapping          = NULL,
-    original_df            = NULL,
-    layout                 = list(heights = c(1, 2)),
-    annotation             = list(tag_levels = "A"),
-    generate_policy_tree   = TRUE,
-    generate_decision_tree = TRUE,
-    policy_tree_args       = list(),
-    decision_tree_args     = list()) {
-
-  cli::cli_h1("Margot Plot Policy Combo")
-
-  # ---- legacy: map shade_non_decision -> shading -----------------------
-  if ("shade_non_decision" %in% names(policy_tree_args)) {
-    policy_tree_args$shading <- isTRUE(policy_tree_args$shade_non_decision)
-    policy_tree_args$shade_non_decision <- NULL
-  }
-
-  # ---- (1) decision-tree ----------------------------------------------
-  decision_tree_plot <- NULL
-  if (generate_decision_tree) {
-    cli::cli_alert_info("Generating decision tree (depth {max_depth})...")
-    decision_tree_plot <- do.call(
-      margot_plot_decision_tree,
-      c(
-        list(
-          result_object = result_object,
-          model_name    = model_name,
-          max_depth     = max_depth,
-          original_df   = original_df,
-          label_mapping = label_mapping
-        ),
-        decision_tree_args
-      )
-    )
-    cli::cli_alert_success("Decision tree plot generated.")
-  }
-
-  # ---- (2) policy-tree -------------------------------------------------
-  policy_tree_plot <- NULL
-  if (generate_policy_tree) {
-    cli::cli_alert_info("Generating policy tree (depth {max_depth})...")
-    policy_tree_plot <- do.call(
-      margot_plot_policy_tree,
-      c(
-        list(
-          result_object = result_object,
-          model_name    = model_name,
-          max_depth     = max_depth,
-          original_df   = original_df,
-          label_mapping = label_mapping
-        ),
-        policy_tree_args
-      )
-    )
-    cli::cli_alert_success("Policy tree plot generated.")
-  }
-
-  # ---- (3) combine if both requested -----------------------------------
-  combined_plot <- NULL
-  if (!is.null(decision_tree_plot) && !is.null(policy_tree_plot)) {
-    cli::cli_alert_info("Combining plots...")
-    if (max_depth == 1L) {
-      # For depth 1, use special layout to reduce white space
-      combined_plot <- (decision_tree_plot / policy_tree_plot) +
-        patchwork::plot_layout(heights = c(1, 1)) +
-        patchwork::plot_annotation(tag_levels = annotation$tag_levels) &
-        ggplot2::theme(plot.margin = unit(c(5, 20, 5, 20), "pt"))  # Larger L/R margins
-    } else {
-      combined_plot <- (decision_tree_plot / policy_tree_plot) +
-        patchwork::plot_layout(heights = layout$heights) +
-        patchwork::plot_annotation(tag_levels = annotation$tag_levels)
-    }
-    cli::cli_alert_success("Plots combined successfully.")
-  } else {
-    combined_plot <- decision_tree_plot %||% policy_tree_plot
-  }
-  # old
-  # combined_plot <- NULL
-  # if (!is.null(decision_tree_plot) && !is.null(policy_tree_plot)) {
-  #   cli::cli_alert_info("Combining plots...")
-  #   if (max_depth == 1L) {
-  #     combined_plot <- decision_tree_plot / policy_tree_plot
-  #   } else {
-  #     combined_plot <- (decision_tree_plot / policy_tree_plot) +
-  #       patchwork::plot_layout(heights = layout$heights) +
-  #       patchwork::plot_annotation(tag_levels = annotation$tag_levels)
-  #   }
-  #   cli::cli_alert_success("Plots combined successfully.")
-  # } else {
-  #   combined_plot <- decision_tree_plot %||% policy_tree_plot
-  # }
-
-  list(
-    policy_tree   = policy_tree_plot,
-    decision_tree = decision_tree_plot,
-    combined_plot = combined_plot
-  )
 }

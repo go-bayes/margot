@@ -14,7 +14,7 @@
 #' @param height Height (in inches) for saved plots. Default: 12.
 #' @param save_plots Logical; save plots to disk? Default: TRUE.
 #' @param output_dir Directory for saving plots. Default: \code{here::here(push_mods)}.
-#' @param spend Numeric vector of spend levels for difference-gain summaries. Default: \code{c(0.2, 0.5)}.
+#' @param spend_levels Numeric vector of spend levels for difference-gain summaries. Default: \code{c(0.2, 0.5)}.
 #' @param label_mapping Named list mapping variable names to display labels. Default: NULL.
 #' @param original_df Optional data.frame of untransformed variables for axis annotations. Default: NULL.
 #' @param model_names Character vector of model names to process; NULL = all. Default: NULL.
@@ -39,7 +39,7 @@ margot_policy <- function(
     height             = 12,
     save_plots         = TRUE,
     output_dir         = here::here(push_mods),
-    spend              = c(0.2, 0.5),
+    spend_levels       = c(0.2, 0.5),
     label_mapping      = NULL,
     original_df        = NULL,
     model_names        = NULL,
@@ -103,7 +103,8 @@ margot_policy <- function(
           margot_plot_qini(
             mc_result     = result_outcomes,
             outcome_var   = model_name,
-            label_mapping = label_mapping
+            label_mapping = label_mapping,
+            spend_levels  = spend_levels
           ),
           error = function(e) {
             cli::cli_alert_warning("qini plot failed for {model_name}: {e$message}")
@@ -118,7 +119,7 @@ margot_policy <- function(
         is_binary <- all(c("cate", "ate") %in% names(qini_objs))
         dg <- list()
         if (is_binary) {
-          for (s in spend) {
+          for (s in spend_levels) {
             dg[[paste0("spend_", s)]] <-
               margot_summary_cate_difference_gain(
                 result_outcomes,
@@ -130,7 +131,7 @@ margot_policy <- function(
           }
         } else if ("baseline" %in% names(qini_objs)) {
           arm_names <- setdiff(names(qini_objs), c("all_arms", "baseline"))
-          for (s in spend) {
+          for (s in spend_levels) {
             sums <- list(
               all_arms = margot_summary_cate_difference_gain(
                 result_outcomes,

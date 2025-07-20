@@ -11,7 +11,7 @@ transformations and informative CLI messages."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.80</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.90</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,11 +53,12 @@ transformations and informative CLI messages.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_plot_qini</span><span class="op">(</span></span>
 <span>  <span class="va">mc_result</span>,</span>
 <span>  <span class="va">outcome_var</span>,</span>
-<span>  remove_tx_prefix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  remove_z_suffix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  remove_underscores <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  spend_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>  show_spend_lines <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  spend_line_color <span class="op">=</span> <span class="st">"red"</span>,</span>
+<span>  spend_line_alpha <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  theme <span class="op">=</span> <span class="st">"classic"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -74,25 +75,29 @@ transformations and informative CLI messages.</p>
 to plot. This should match one of the model names in mc_result$results.</p></dd>
 
 
-<dt id="arg-remove-tx-prefix">remove_tx_prefix<a class="anchor" aria-label="anchor" href="#arg-remove-tx-prefix"></a></dt>
-<dd><p>Logical value indicating whether to remove the "tx_" prefix from labels. Default is TRUE.</p></dd>
-
-
-<dt id="arg-remove-z-suffix">remove_z_suffix<a class="anchor" aria-label="anchor" href="#arg-remove-z-suffix"></a></dt>
-<dd><p>Logical value indicating whether to remove the "_z" suffix from labels. Default is TRUE.</p></dd>
-
-
-<dt id="arg-use-title-case">use_title_case<a class="anchor" aria-label="anchor" href="#arg-use-title-case"></a></dt>
-<dd><p>Logical value indicating whether to convert labels to title case. Default is TRUE.</p></dd>
-
-
-<dt id="arg-remove-underscores">remove_underscores<a class="anchor" aria-label="anchor" href="#arg-remove-underscores"></a></dt>
-<dd><p>Logical value indicating whether to remove underscores from labels. Default is TRUE.</p></dd>
-
-
 <dt id="arg-label-mapping">label_mapping<a class="anchor" aria-label="anchor" href="#arg-label-mapping"></a></dt>
 <dd><p>Optional named list for custom label mappings. Keys should be original variable names
 (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.</p></dd>
+
+
+<dt id="arg-spend-levels">spend_levels<a class="anchor" aria-label="anchor" href="#arg-spend-levels"></a></dt>
+<dd><p>Numeric vector of spend levels to show with vertical lines. Default is c(0.2, 0.5).</p></dd>
+
+
+<dt id="arg-show-spend-lines">show_spend_lines<a class="anchor" aria-label="anchor" href="#arg-show-spend-lines"></a></dt>
+<dd><p>Logical indicating whether to show vertical lines at spend levels. Default is TRUE.</p></dd>
+
+
+<dt id="arg-spend-line-color">spend_line_color<a class="anchor" aria-label="anchor" href="#arg-spend-line-color"></a></dt>
+<dd><p>Color for spend level lines. Default is "red".</p></dd>
+
+
+<dt id="arg-spend-line-alpha">spend_line_alpha<a class="anchor" aria-label="anchor" href="#arg-spend-line-alpha"></a></dt>
+<dd><p>Alpha transparency for spend lines. Default is 0.5.</p></dd>
+
+
+<dt id="arg-theme">theme<a class="anchor" aria-label="anchor" href="#arg-theme"></a></dt>
+<dd><p>Character string specifying the ggplot2 theme. Default is "classic". Options include "classic", "minimal", "bw", "gray", "light", "dark", "void".</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -9,7 +9,9 @@ margot_interpret_qini(
   label_mapping = NULL,
   alpha = 0.05,
   decimal_places = 2,
-  model_names = NULL
+  model_names = NULL,
+  spend_levels = c(0.2, 0.5),
+  include_intro = TRUE
 )
 }
 \arguments{
@@ -22,11 +24,22 @@ margot_interpret_qini(
 \item{decimal_places}{Decimal places for rounding (default: 2)}
 
 \item{model_names}{Character vector of models to process (optional)}
+
+\item{spend_levels}{Numeric vector of spend levels to analyze (default: c(0.2, 0.5)). 
+If requested levels don't exist in the data, the function will use available levels instead.}
+
+\item{include_intro}{Logical whether to include explanatory text about CATE and Qini curves (default: TRUE)}
 }
 \value{
-List with summary_table, qini_explanation, reliable_model_names, reliable_model_ids
+List with summary_table, qini_explanation, concise_summary, reliable_model_names, reliable_model_ids
 }
 \description{
 Interprets Qini results for binary and multi-arm treatments, automatically
 detecting treatment type from input data.
+}
+\details{
+The function automatically detects available spend levels in the data. If requested
+spend levels are not available, it will use the closest available levels and warn
+the user. To see what spend levels are available, check the names of 
+`multi_batch[[1]]$diff_gain_summaries`.
 }

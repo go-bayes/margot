@@ -13,7 +13,7 @@
 
 <!-- badges: start -->
 
-<img src="man/figures/margot.png" width = 600>
+<img src="man/figures/margot.png" width = 600 alt="Margot package logo showing the package name">
 
 <!-- badges: end -->
 
@@ -85,7 +85,7 @@ bibentry(
   title = "margot: MARGinal Observational Treatment-effects",
   author = person("Joseph A", "Bulbulia"),
   year = "2024",
-  note = "R package version 1.0.60, Functions to obtain MARGinal Observational Treatment-effects from observational data.",
+  note = "R package version 1.0.70, Functions to obtain MARGinal Observational Treatment-effects from observational data.",
   url = "https://go-bayes.github.io/margot/",
   doi = "10.5281/zenodo.10907724"
 )

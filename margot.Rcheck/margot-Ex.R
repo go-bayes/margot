@@ -1,18 +1,6 @@
 pkgname <- "margot"
 source(file.path(R.home("share"), "R", "examples-header.R"))
 options(warn = 1)
-base::assign(".ExTimings", "margot-Ex.timings", pos = 'CheckExEnv')
-base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
-base::assign(".format_ptime",
-function(x) {
-  if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
-  if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
-  options(OutDec = '.')
-  format(x[1L:3L], digits = 7L)
-},
-pos = 'CheckExEnv')
-
-### * </HEADER>
 library('margot')
 
 base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
@@ -23,7 +11,6 @@ nameEx("back_transform_log_z")
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: back_transform_log_z
 ### Title: Back Transform Z-Score to Original Log-Transformed Scale
 ### Aliases: back_transform_log_z
@@ -70,15 +57,12 @@ print(results_df) # Shows what values on the original scale correspond to each z
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("back_transform_log_z", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("back_transform_logmean")
 ### * back_transform_logmean
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: back_transform_logmean
 ### Title: Back-transform Log-transformed Mean
 ### Aliases: back_transform_logmean
@@ -92,15 +76,12 @@ print(back_transformed_result)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("back_transform_logmean", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("back_transform_zscore")
 ### * back_transform_zscore
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: back_transform_zscore
 ### Title: Back Transform Z-Score to Original Scale
 ### Aliases: back_transform_zscore
@@ -119,15 +100,12 @@ print(original_values)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("back_transform_zscore", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("causal_contrast_marginal")
 ### * causal_contrast_marginal
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: causal_contrast_marginal
 ### Title: Causal Contrast Marginal Effects Estimation
 ### Aliases: causal_contrast_marginal
@@ -147,15 +125,35 @@ result <- causal_contrast_marginal(df = df, Y = "outcome", X = "treatment",
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("causal_contrast_marginal", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("clear_margot_cache")
+### * clear_margot_cache
+
+flush(stderr()); flush(stdout())
+
+### Name: clear_margot_cache
+### Title: Clear Margot Data Cache
+### Aliases: clear_margot_cache
+
+### ** Examples
+
+## Not run: 
+##D # clear specific version
+##D clear_margot_cache("v1")
+##D 
+##D # clear all cached data
+##D clear_margot_cache("all")
+## End(Not run)
+
+
+
+
 cleanEx()
 nameEx("coloured_histogram")
 ### * coloured_histogram
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: coloured_histogram
 ### Title: Create a Coloured Histogram Highlighting Specific Ranges
 ###   (DEPRECATED)
@@ -180,15 +178,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("coloured_histogram", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("coloured_histogram_sd")
 ### * coloured_histogram_sd
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: coloured_histogram_sd
 ### Title: Visualize Distribution with Mean and Standard Deviation
 ###   Highlights
@@ -213,15 +208,12 @@ print(graph_density_of_exposure)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("coloured_histogram_sd", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("coloured_histogram_shift")
 ### * coloured_histogram_shift
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: coloured_histogram_shift
 ### Title: Visualise Shifts in Data Distributions with Highlighted Ranges
 ###   (DEPRECATED)
@@ -248,15 +240,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("coloured_histogram_shift", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("create_transition_matrix")
 ### * create_transition_matrix
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: create_transition_matrix
 ### Title: Create transition matrix for state transitions
 ### Aliases: create_transition_matrix
@@ -279,36 +268,64 @@ print(transition_matrix)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("create_transition_matrix", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("df_margot_example")
+### * df_margot_example
+
+flush(stderr()); flush(stdout())
+
+### Name: df_margot_example
+### Title: Margot Example Dataset
+### Aliases: df_margot_example
+### Keywords: datasets
+
+### ** Examples
+
+# load the example data
+data(df_margot_example)
+
+# check structure
+str(df_margot_example)
+
+# basic summary by wave
+table(df_margot_example$wave)
+
+
+
+
 cleanEx()
 nameEx("df_nz")
 ### * df_nz
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: df_nz
-### Title: df_nz: Example Data Frame
+### Title: Legacy New Zealand Attitudes and Values Study (NZAVS) Simulated
+###   Data
 ### Aliases: df_nz
 ### Keywords: datasets
 
 ### ** Examples
+
+## Not run: 
+##D # old approach (deprecated)
+##D data(df_nz)
+##D 
+##D # new approach
+##D df <- fetch_margot_data(version = "v1")
+## End(Not run)
 
 data(df_nz)
 head(df_nz)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("df_nz", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("double_robust_marginal")
 ### * double_robust_marginal
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: double_robust_marginal
 ### Title: Double Robust Marginal Estimation and Tabulation
 ### Aliases: double_robust_marginal
@@ -342,15 +359,41 @@ results <- double_robust_marginal(
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("double_robust_marginal", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("fetch_margot_data")
+### * fetch_margot_data
+
+flush(stderr()); flush(stdout())
+
+### Name: fetch_margot_data
+### Title: Fetch Margot Example Data
+### Aliases: fetch_margot_data
+
+### ** Examples
+
+# load small example dataset (included in package)
+df_example <- fetch_margot_data()
+
+## Not run: 
+##D # fetch full simulated dataset from OSF
+##D df_full <- fetch_margot_data(version = "v1")
+##D 
+##D # fetch latest version
+##D df_latest <- fetch_margot_data(version = "latest")
+##D 
+##D # force re-download
+##D df_fresh <- fetch_margot_data(version = "v1", cache = FALSE)
+## End(Not run)
+
+
+
+
 cleanEx()
 nameEx("group_tab")
 ### * group_tab
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: group_tab
 ### Title: Group and Annotate Treatment Effect Estimates
 ### Aliases: group_tab
@@ -393,15 +436,12 @@ result_df <- group_tab(df = analysis_df, order = 'custom', custom_order = custom
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("group_tab", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("here_read")
 ### * here_read
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: here_read
 ### Title: Read Data Frame or Object from RDS File in a Specified Directory
 ### Aliases: here_read
@@ -418,15 +458,12 @@ my_df <- here_read("my_df", dir_path = "~/custom_dir")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("here_read", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("here_read_arrow")
 ### * here_read_arrow
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: here_read_arrow
 ### Title: Read Data Frame from Parquet File in a Specified Directory
 ###   (Deprecated)
@@ -442,15 +479,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("here_read_arrow", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("here_read_qs")
 ### * here_read_qs
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: here_read_qs
 ### Title: Read Data Frame or Object from qs File in a Specified Directory
 ### Aliases: here_read_qs
@@ -467,15 +501,12 @@ my_df <- here_read_qs("my_dataset", dir_path = "~/custom_dir", nthreads = 4)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("here_read_qs", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("here_save")
 ### * here_save
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: here_save
 ### Title: Save Data Frame as RDS File in a Specified Directory
 ### Aliases: here_save
@@ -492,15 +523,12 @@ here_save(my_df, "my_df", dir_path = "~/custom_dir", compress = "xz")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("here_save", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("here_save_arrow")
 ### * here_save_arrow
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: here_save_arrow
 ### Title: Save Data Frame to Parquet File in a Specified Directory
 ###   (Deprecated)
@@ -517,15 +545,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("here_save_arrow", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("here_save_qs")
 ### * here_save_qs
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: here_save_qs
 ### Title: Save Data Frame or Object to qs File in a Specified Directory
 ###   with Enhanced Compression
@@ -539,15 +564,12 @@ here_save_qs(my_df, "my_saved_dataframe", "~/mydata")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("here_save_qs", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("impute_and_combine")
 ### * impute_and_combine
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: impute_and_combine
 ### Title: Perform multiple imputation on a list of data frames and combine
 ###   the results
@@ -564,15 +586,33 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("impute_and_combine", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("list_margot_data")
+### * list_margot_data
+
+flush(stderr()); flush(stdout())
+
+### Name: list_margot_data
+### Title: List Available Margot Datasets
+### Aliases: list_margot_data
+
+### ** Examples
+
+# show available datasets
+list_margot_data()
+
+# get as tibble
+datasets <- list_margot_data(verbose = FALSE)
+
+
+
+
 cleanEx()
 nameEx("lmtp_evalue_tab")
 ### * lmtp_evalue_tab
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: lmtp_evalue_tab
 ### Title: Calculate E-values for LMTP Output
 ### Aliases: lmtp_evalue_tab
@@ -587,15 +627,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("lmtp_evalue_tab", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_amelia_to_mice")
 ### * margot_amelia_to_mice
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_amelia_to_mice
 ### Title: convert an amelia object to a mice object
 ### Aliases: margot_amelia_to_mice
@@ -616,15 +653,45 @@ print(mids_obj)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_amelia_to_mice", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("margot_assess_overlap")
+### * margot_assess_overlap
+
+flush(stderr()); flush(stdout())
+
+### Name: margot_assess_overlap
+### Title: Assess Covariate Overlap from Causal Forest Models
+### Aliases: margot_assess_overlap
+
+### ** Examples
+
+## Not run: 
+##D # assess overlap for all models
+##D overlap_results <- margot_assess_overlap(model_results)
+##D 
+##D # assess specific models only
+##D overlap_results <- margot_assess_overlap(
+##D   model_results,
+##D   model_names = c("model_outcome1", "model_outcome2")
+##D )
+##D 
+##D # save plots
+##D overlap_results <- margot_assess_overlap(
+##D   model_results,
+##D   save_plots = TRUE,
+##D   output_dir = "output/overlap_diagnostics"
+##D )
+## End(Not run)
+
+
+
+
 cleanEx()
 nameEx("margot_back_transform_log_z")
 ### * margot_back_transform_log_z
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_back_transform_log_z
 ### Title: Create Z-score to Original Scale Mapping for Log-Transformed
 ###   Data
@@ -656,15 +723,12 @@ print(custom_mapping)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_back_transform_log_z", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_combine_results")
 ### * margot_combine_results
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_combine_results
 ### Title: Combine Multiple Results Tables from margot_plot into a Single
 ###   Formatted Table
@@ -709,15 +773,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_combine_results", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_compute_gender_weights_by_wave")
 ### * margot_compute_gender_weights_by_wave
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_compute_gender_weights_by_wave
 ### Title: Compute Gender-Based Sample Weights Using Baseline Wave
 ###   Proportions
@@ -750,15 +811,12 @@ head(weights)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_compute_gender_weights_by_wave", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_interpret_table")
 ### * margot_interpret_table
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_interpret_table
 ### Title: Interpret and Describe Causal Effect Estimates Using E-values
 ###   (Deprecated)
@@ -781,15 +839,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_interpret_table", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_lmtp")
 ### * margot_lmtp
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_lmtp
 ### Title: Batch Process LMTP Models
 ### Aliases: margot_lmtp
@@ -826,15 +881,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_lmtp", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_lmtp_evalue")
 ### * margot_lmtp_evalue
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_lmtp_evalue
 ### Title: Combine LMTP Summary and E-Value Calculation
 ### Aliases: margot_lmtp_evalue
@@ -854,15 +906,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_lmtp_evalue", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_make_tables")
 ### * margot_make_tables
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_make_tables
 ### Title: Create Summary Tables Using table1 with Custom Formatting
 ### Aliases: margot_make_tables
@@ -886,15 +935,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_make_tables", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_model_evalue")
 ### * margot_model_evalue
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_model_evalue
 ### Title: Combine Model Summary and E-Value Calculation for Various Causal
 ###   Models
@@ -932,15 +978,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_model_evalue", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_model_tab")
 ### * margot_model_tab
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_model_tab
 ### Title: Summarise LMTP or Causal Forest Output into a Data Frame
 ### Aliases: margot_model_tab
@@ -960,15 +1003,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_model_tab", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_boxplot")
 ### * margot_plot_boxplot
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_boxplot
 ### Title: Create panel data Boxplots using ggplot2
 ### Aliases: margot_plot_boxplot
@@ -1030,15 +1070,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_boxplot", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_boxplot_covariate")
 ### * margot_plot_boxplot_covariate
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_boxplot_covariate
 ### Title: create boxplots with covariates using ggplot2
 ### Aliases: margot_plot_boxplot_covariate
@@ -1107,15 +1144,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_boxplot_covariate", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_create_options")
 ### * margot_plot_create_options
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_create_options
 ### Title: Create Plot Options for Margot Plot
 ### Aliases: margot_plot_create_options
@@ -1162,15 +1196,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_create_options", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_discontinuity")
 ### * margot_plot_discontinuity
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_discontinuity
 ### Title: Create a Discontinuity Plot for Multiple Events
 ### Aliases: margot_plot_discontinuity
@@ -1206,15 +1237,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_discontinuity", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_hist")
 ### * margot_plot_hist
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_hist
 ### Title: Create a Coloured Histogram with Quantile or Custom Breaks
 ###   (DEPRECATED)
@@ -1232,15 +1260,12 @@ coloured_histogram_quantiles(df, "value", custom_breaks = c(-2, -1, 0, 1, 2))
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_hist", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_histogram")
 ### * margot_plot_histogram
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_histogram
 ### Title: Create a Histogram with Mean and Standard Deviation Highlights
 ###   for Each Wave and Variable
@@ -1295,15 +1320,12 @@ margot_plot_histogram(
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_histogram", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_individual_responses")
 ### * margot_plot_individual_responses
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_individual_responses
 ### Title: Create Individual Longitudinal Response Plots
 ### Aliases: margot_plot_individual_responses
@@ -1349,15 +1371,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_individual_responses", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_multi_arm")
 ### * margot_plot_multi_arm
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_multi_arm
 ### Title: Create a Multi-arm Margot Plot with User-specified Contrast
 ### Aliases: margot_plot_multi_arm
@@ -1384,15 +1403,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_multi_arm", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_qini")
 ### * margot_plot_qini
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_qini
 ### Title: Plot Qini Curves from margot_multi_arm_causal_forest Results
 ### Aliases: margot_plot_qini
@@ -1414,15 +1430,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_qini", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_rate")
 ### * margot_plot_rate
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_rate
 ### Title: Plot Rank Average Treatment Effect
 ### Aliases: margot_plot_rate
@@ -1447,15 +1460,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_rate", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_response_timeline")
 ### * margot_plot_response_timeline
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_response_timeline
 ### Title: Plot Panel Study Response Timeline
 ### Aliases: margot_plot_response_timeline
@@ -1521,15 +1531,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_response_timeline", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_slope")
 ### * margot_plot_slope
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_slope
 ### Title: Create a Slope Plot for Multiple Variables
 ### Aliases: margot_plot_slope
@@ -1605,15 +1612,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_slope", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_slope_covariate")
 ### * margot_plot_slope_covariate
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_slope_covariate
 ### Title: Create a Slope Plot using ggeffects
 ### Aliases: margot_plot_slope_covariate
@@ -1626,15 +1630,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_slope_covariate", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_slope_covariate_batch")
 ### * margot_plot_slope_covariate_batch
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_slope_covariate_batch
 ### Title: Create a Combined Slope Plot using ggeffects and patchwork
 ### Aliases: margot_plot_slope_covariate_batch
@@ -1668,15 +1669,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_slope_covariate_batch", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_slope_covariate_combo")
 ### * margot_plot_slope_covariate_combo
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_slope_covariate_combo
 ### Title: Create a Combined Slope Plot using ggeffects and patchwork
 ### Aliases: margot_plot_slope_covariate_combo
@@ -1710,15 +1708,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_slope_covariate_combo", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_plot_tau")
 ### * margot_plot_tau
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_plot_tau
 ### Title: Create Faceted Tau Hat Distribution Plots
 ### Aliases: margot_plot_tau
@@ -1788,15 +1783,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_plot_tau", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_process_binary_vars")
 ### * margot_process_binary_vars
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_process_binary_vars
 ### Title: Process Binary Variables in a Data Frame
 ### Aliases: margot_process_binary_vars
@@ -1815,15 +1807,12 @@ processed_df <- margot_process_binary_vars(df, exceptions = "c")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_process_binary_vars", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_process_longitudinal_data")
 ### * margot_process_longitudinal_data
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_process_longitudinal_data
 ### Title: process longitudinal data for three waves
 ### Aliases: margot_process_longitudinal_data
@@ -1839,15 +1828,12 @@ processed_data <- margot_process_longitudinal_data(
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_process_longitudinal_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_prop_missing")
 ### * margot_prop_missing
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_prop_missing
 ### Title: Proportion of missing data at baseline
 ### Aliases: margot_prop_missing
@@ -1855,8 +1841,8 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### ** Examples
 
 # Example using a dataset with a wave column
-# assume dat_long_amelia_log has a column called wave
-margot_prop_missing(dat_long_amelia_log)
+# assume dat_long has a column called wave
+margot_prop_missing(dat_long)
 
 # Example using a dataset without a wave column
 # assume some_data is a dataset with no wave column
@@ -1864,15 +1850,12 @@ margot_prop_missing(some_data)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_prop_missing", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_propensity_model_and_plots")
 ### * margot_propensity_model_and_plots
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_propensity_model_and_plots
 ### Title: Create Propensity Score Model and Associated Plots
 ### Aliases: margot_propensity_model_and_plots
@@ -1905,15 +1888,49 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_propensity_model_and_plots", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("margot_recalculate_policy_trees")
+### * margot_recalculate_policy_trees
+
+flush(stderr()); flush(stdout())
+
+### Name: margot_recalculate_policy_trees
+### Title: Recalculate Policy Trees with Custom Covariates
+### Aliases: margot_recalculate_policy_trees
+
+### ** Examples
+
+## Not run: 
+##D # recalculate with custom covariates
+##D results_custom <- margot_recalculate_policy_trees(
+##D   model_results,
+##D   custom_covariates = c("age", "gender", "income"),
+##D   covariate_mode = "custom"
+##D )
+##D 
+##D # exclude measurement error variables
+##D results_clean <- margot_recalculate_policy_trees(
+##D   model_results,
+##D   exclude_covariates = c("bmi", "^log_"),
+##D   covariate_mode = "original"
+##D )
+##D 
+##D # use all covariates
+##D results_all <- margot_recalculate_policy_trees(
+##D   model_results,
+##D   covariate_mode = "all"
+##D )
+## End(Not run)
+
+
+
+
 cleanEx()
 nameEx("margot_reversed_labels")
 ### * margot_reversed_labels
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_reversed_labels
 ### Title: Update label map by marking reversed outcomes
 ### Aliases: margot_reversed_labels
@@ -1945,28 +1962,31 @@ flip_outcomes <- c(
   "t2_rumination_z"
 )
 
-# update mapping
-label_mapping_all <- mark_reversed_labels(label_mapping_all, flip_outcomes)
-
-print(label_mapping_all)
-#> $t2_log_hours_exercise_z
-#> [1] "Hours of Exercise (log)"
-#> ...
+# new behavior (default): creates entries with _r suffix
+label_mapping_new <- margot_reversed_labels(label_mapping_all, flip_outcomes)
+print(label_mapping_new[c("t2_kessler_latent_anxiety_z", "t2_kessler_latent_anxiety_z_r")])
 #> $t2_kessler_latent_anxiety_z
+#> [1] "Anxiety"
+#> $t2_kessler_latent_anxiety_z_r
 #> [1] "Anxiety (reversed)"
-#> ...
+
+# old behavior: modifies in place
+label_mapping_old <- margot_reversed_labels(label_mapping_all, flip_outcomes, use_r_suffix = FALSE)
+print(label_mapping_old[["t2_kessler_latent_anxiety_z"]])
+#> [1] "Anxiety (reversed)"
+
+# remove original entries
+label_mapping_clean <- margot_reversed_labels(label_mapping_all, flip_outcomes, remove_original = TRUE)
+# original anxiety entry removed, only _r version remains
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_reversed_labels", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_save_png")
 ### * margot_save_png
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_save_png
 ### Title: Save Margot Plot as PNG
 ### Aliases: margot_save_png
@@ -2003,15 +2023,46 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_save_png", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("margot_simulate")
+### * margot_simulate
+
+flush(stderr()); flush(stdout())
+
+### Name: margot_simulate
+### Title: Simulate longitudinal exposures, outcomes, and covariates
+### Aliases: margot_simulate
+
+### ** Examples
+
+## basic usage
+dat <- margot_simulate(n = 200, waves = 3, seed = 1)
+dplyr::glimpse(dat)
+
+## heterogeneous treatment effect with censoring indicator
+dat2 <- margot_simulate(
+  n = 800,
+  waves = 4,
+  exposures = list(
+    A1 = list(
+      type = "binary",
+      het  = list(modifier = "B2", coef = 0.6)
+    )
+  ),
+  censoring = list(rate = 0.25, exposure_dependence = TRUE,
+                   indicator = TRUE),
+  seed = 42
+)
+
+
+
+
 cleanEx()
 nameEx("margot_size")
 ### * margot_size
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_size
 ### Title: Calculate the size of an R object in megabytes
 ### Aliases: margot_size
@@ -2027,15 +2078,12 @@ margot_size(summary_tables, "Summary Tables")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_size", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_subset_model")
 ### * margot_subset_model
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_subset_model
 ### Title: Subset Model Results for Binary and Categorical Exposures
 ### Aliases: margot_subset_model
@@ -2098,15 +2146,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_subset_model", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_summary_cate_difference_gain")
 ### * margot_summary_cate_difference_gain
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_summary_cate_difference_gain
 ### Title: Compute Difference in Gains and Integrated Difference Between
 ###   Reference and Comparison Curves
@@ -2128,15 +2173,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_summary_cate_difference_gain", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_summary_panel")
 ### * margot_summary_panel
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_summary_panel
 ### Title: Generate Summary Panel for Margot Study
 ### Aliases: margot_summary_panel
@@ -2170,15 +2212,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_summary_panel", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("margot_trim_sample_weights")
 ### * margot_trim_sample_weights
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: margot_trim_sample_weights
 ### Title: Standardise and (optionally) trim sample weights at both ends
 ### Aliases: margot_trim_sample_weights
@@ -2212,44 +2251,12 @@ summary(w_std)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_trim_sample_weights", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
-cleanEx()
-nameEx("margot_wide_impute_baseline")
-### * margot_wide_impute_baseline
-
-flush(stderr()); flush(stdout())
-
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
-### Name: margot_wide_impute_baseline
-### Title: Transform longitudinal data to wide format and impute baseline
-###   (soft-deprecated)
-### Aliases: margot_wide_impute_baseline
-### Keywords: internal
-
-### ** Examples
-
-# Preferred: use margot_wide_machine with mice imputation
-# wide_df <- margot_wide_machine(
-#   df,
-#   baseline_vars = c("age", "male"),
-#   exposure_var = "forgiveness",
-#   outcome_vars = "kessler_latent_anxiety",
-#   imputation_method = "mice"
-# )
-
-
-
-
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("margot_wide_impute_baseline", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("prepare_panel_data")
 ### * prepare_panel_data
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: prepare_panel_data
 ### Title: Prepare Panel Data for Timeline Visualization
 ### Aliases: prepare_panel_data
@@ -2270,15 +2277,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("prepare_panel_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("pretty_number")
 ### * pretty_number
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: pretty_number
 ### Title: Format Numbers with Commas
 ### Aliases: pretty_number
@@ -2291,15 +2295,12 @@ pretty_number(numbers)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("pretty_number", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("regress_with_covariates")
 ### * regress_with_covariates
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: regress_with_covariates
 ### Title: Generalized Linear Regression with Covariates
 ### Aliases: regress_with_covariates
@@ -2319,15 +2320,12 @@ base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("regress_with_covariates", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("remove_numeric_attributes")
 ### * remove_numeric_attributes
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: remove_numeric_attributes
 ### Title: Remove Attributes from Numeric Columns in a Data Frame
 ### Aliases: remove_numeric_attributes
@@ -2341,15 +2339,12 @@ str(cleaned_df)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("remove_numeric_attributes", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("select_and_rename_cols")
 ### * select_and_rename_cols
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: select_and_rename_cols
 ### Title: Select and Rename Columns Based on Criteria
 ### Aliases: select_and_rename_cols
@@ -2366,15 +2361,12 @@ print(final_columns)
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("select_and_rename_cols", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 cleanEx()
 nameEx("tab_engine_marginal")
 ### * tab_engine_marginal
 
 flush(stderr()); flush(stdout())
 
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 ### Name: tab_engine_marginal
 ### Title: Tabulate Marginal Effects with E-Values
 ### Aliases: tab_engine_marginal
@@ -2392,49 +2384,6 @@ tabulated_results <- tab_engine_marginal(x = results_df,
 
 
 
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("tab_engine_marginal", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
-cleanEx()
-nameEx("transition_table")
-### * transition_table
-
-flush(stderr()); flush(stdout())
-
-base::assign(".ptime", proc.time(), pos = "CheckExEnv")
-### Name: transition_table
-### Title: Transition Table
-### Aliases: transition_table
-### Keywords: internal
-
-### ** Examples
-
-## Not run: 
-##D df <- read.table(header=TRUE, text="
-##D id wave year_measured religion_believe_god
-##D 3 0 1 0
-##D 3 1 1 1
-##D 4 0 1 0
-##D 4 1 1 1
-##D 5 0 1 1
-##D 5 1 1 0")
-##D 
-##D transition_matrix <- create_transition_matrix(df, "religion_believe_god", "id")
-##D # Assuming `transition_matrix` is a table with the transition counts between states
-##D # First, convert `transition_matrix` to a dataframe suitable for `transition_table`
-##D df_transition <- as.data.frame.matrix(transition_matrix)
-##D df_transition$from <- rownames(df_transition)
-##D long_df_transition <- tidyr::pivot_longer(df_transition, cols = -from, names_to = "to", values_to = "Freq")
-##D 
-##D transition_table_data <- transition_table(long_df_transition)
-##D cat(transition_table_data$explanation)
-##D cat("\n")not
-##D print(transition_table_data$table)
-## End(Not run)
-
-
-
-base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-base::cat("transition_table", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 ### * <FOOTER>
 ###
 cleanEx()

@@ -14,7 +14,7 @@ margot_policy(
   height = 12,
   save_plots = TRUE,
   output_dir = here::here(push_mods),
-  spend = c(0.2, 0.5),
+  spend_levels = c(0.2, 0.5),
   label_mapping = NULL,
   original_df = NULL,
   model_names = NULL,
@@ -41,7 +41,7 @@ margot_policy(
 
 \item{output_dir}{Directory for saving plots. Default: \code{here::here(push_mods)}.}
 
-\item{spend}{Numeric vector of spend levels for difference-gain summaries. Default: \code{c(0.2, 0.5)}.}
+\item{spend_levels}{Numeric vector of spend levels for difference-gain summaries. Default: \code{c(0.2, 0.5)}.}
 
 \item{label_mapping}{Named list mapping variable names to display labels. Default: NULL.}
 

@@ -1,0 +1,11 @@
+
+> knitr::opts_chunk$set(collapse = TRUE, comment = "#>", 
++     eval = FALSE)
+
+> install.packages("margot")
+Installing package into ‘/Users/joseph/GIT/margot/margot.Rcheck’
+(as ‘lib’ is unspecified)
+
+  When sourcing ‘margot-workflow.R’:
+Error: trying to use CRAN without setting a mirror
+Execution halted

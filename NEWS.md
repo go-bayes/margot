@@ -9,7 +9,45 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+## [2025-07-19] margot 1.0.90
+
+### new functions
+- added `margot_assess_overlap()` for evaluating propensity score overlap
+  - shows common support regions for treatment validity
+  - generates propensity score distribution plots by treatment group
+  - uses `transform_label` helper for automatic label formatting
+  - includes `text_summary` output suitable for dropping into documents
+  - added `theme` parameter for ggplot2 theme customization
+  - updated colors to package standards: treatment (#d8a739), control (#4f88c6)
+  - enhanced text summary with interpretation of overlap meaning
+
+### enhanced Qini analysis
+- **margot_interpret_qini()** improvements:
+  - new `spend_levels` parameter for custom spend level analysis
+  - new `concise_summary` output groups outcomes by benefit/harm/no effect
+  - added explanatory text about CATE and Qini curves (`include_intro` parameter)
+  - auto detection of available spend levels with fallback handling
+  - warnings when requested spend levels don't exist in data
+
+- **margot_plot_qini()** enhancements:
+  - new vertical dashed lines at spend levels with text annotations
+  - replace multiple label parameters with single `label_mapping`
+  - added `theme` parameter matching margot_assess_overlap
+  - spend level lines now labeled (e.g., "20% spend", "50% spend")
+  - smart label positioning
+
+### API Consistency
+- renamed `spend` to `spend_levels` in `margot_policy()` and `margot_batch_policy()`
+  - Ccnsistent with `margot_interpret_qini()` parameter naming
+  - **breaking change**: Update code using `spend` parameter
+
+### Bug Fixes
+- fixed `margot_policy()` and `margot_batch_policy()` to pass spend_levels to Qini plots
+  - Qini plot vertical lines now match the spend levels used for calculations
+  - previously always showed 20% and 50% regardless of parameter
+
 ## [2025-07-19] margot 1.0.80
+
 - Added experimental support for conditional means computation via `policytree::conditional_means()`
 - New `compute_conditional_means` parameter in `margot_causal_forest()` (default TRUE)
 - Conditional means are stored in model results when computed
@@ -45,8 +83,6 @@
   - Clean masking - Shaded regions properly filter out points (no more overlapping mess)
   - Visible annotations - Split values appear as readable horizontal text near the dashed lines
   - Proper positioning - Annotations stay within plot boundaries
-
-
 
 ## [2025-06-18] margot 1.0.64
 - `margot_plot_categorical()` handles binary data

@@ -2,20 +2,31 @@
 #'
 #' Interprets Qini results for binary and multi-arm treatments, automatically
 #' detecting treatment type from input data.
+#' 
+#' @details
+#' The function automatically detects available spend levels in the data. If requested
+#' spend levels are not available, it will use the closest available levels and warn
+#' the user. To see what spend levels are available, check the names of 
+#' `multi_batch[[1]]$diff_gain_summaries`.
 #'
 #' @param multi_batch List from margot_batch_policy() with diff_gain_summaries
 #' @param label_mapping Named list mapping model names to readable labels
 #' @param alpha Significance level for confidence intervals (default: 0.05)
 #' @param decimal_places Decimal places for rounding (default: 2)
 #' @param model_names Character vector of models to process (optional)
-#' @return List with summary_table, qini_explanation, reliable_model_names, reliable_model_ids
+#' @param spend_levels Numeric vector of spend levels to analyze (default: c(0.2, 0.5)). 
+#'   If requested levels don't exist in the data, the function will use available levels instead.
+#' @param include_intro Logical whether to include explanatory text about CATE and Qini curves (default: TRUE)
+#' @return List with summary_table, qini_explanation, concise_summary, reliable_model_names, reliable_model_ids
 #' @export
 margot_interpret_qini <- function(
     multi_batch,
     label_mapping   = NULL,
     alpha           = 0.05,
     decimal_places  = 2,
-    model_names     = NULL
+    model_names     = NULL,
+    spend_levels    = c(0.2, 0.5),
+    include_intro   = TRUE
 ) {
   cli::cli_alert_info("starting Qini interpretation")
 
@@ -43,7 +54,7 @@ margot_interpret_qini <- function(
 
   if (is_binary) {
     res <- margot_interpret_qini_binary(
-      multi_batch, label_mapping, alpha, decimal_places
+      multi_batch, label_mapping, alpha, decimal_places, spend_levels, include_intro
     )
   } else {
     cli::cli_abort("multi-arm Qini interpretation not yet implemented")
@@ -67,6 +78,7 @@ margot_interpret_qini <- function(
   list(
     summary_table         = res$summary_table,
     qini_explanation      = full_expl,
+    concise_summary       = res$concise_summary,
     reliable_model_names  = res$reliable_model_names,
     reliable_model_ids    = res$reliable_model_ids
   )
@@ -81,12 +93,43 @@ margot_interpret_qini_binary <- function(
     multi_batch,
     label_mapping   = NULL,
     alpha           = 0.05,
-    decimal_places  = 2
+    decimal_places  = 2,
+    spend_levels    = c(0.2, 0.5),
+    include_intro   = TRUE
 ) {
   cli::cli_alert_info("processing binary treatment model…")
+  
+  # check available spend levels in the data
+  available_spend_levels <- numeric()
+  for (nm in names(multi_batch)) {
+    if (!is.null(multi_batch[[nm]]$diff_gain_summaries)) {
+      spend_names <- names(multi_batch[[nm]]$diff_gain_summaries)
+      spend_vals <- as.numeric(sub("^spend_", "", spend_names))
+      available_spend_levels <- unique(c(available_spend_levels, spend_vals))
+    }
+  }
+  
+  if (length(available_spend_levels) > 0) {
+    available_spend_levels <- sort(available_spend_levels)
+    cli::cli_alert_info("Available spend levels in data: {paste0(available_spend_levels * 100, '%', collapse = ', ')}")
+    
+    # check if requested spend levels exist
+    missing_levels <- setdiff(spend_levels, available_spend_levels)
+    if (length(missing_levels) > 0) {
+      cli::cli_alert_warning(
+        "Requested spend levels not found in data: {paste0(missing_levels * 100, '%', collapse = ', ')}. Using available levels instead."
+      )
+      # use intersection of requested and available
+      spend_levels <- intersect(spend_levels, available_spend_levels)
+      if (length(spend_levels) == 0) {
+        # if no intersection, use all available
+        spend_levels <- available_spend_levels
+      }
+    }
+  }
 
   # the single-preamble text
-  qini_explanation <- create_qini_explanation_binary()
+  qini_explanation <- create_qini_explanation_binary(spend_levels, include_intro)
 
   ##-------------------  helpers in local scope  ----------------------##
   extract_estimates <- function(dg) {
@@ -138,55 +181,171 @@ margot_interpret_qini_binary <- function(
   explains <- list()
   keep_ids <- character(0)
   keep_lbl <- character(0)
+  
+  # for concise summary
+  beneficial_models <- character(0)
+  harmful_models <- character(0)
+  no_effect_models <- character(0)
 
   for (nm in names(multi_batch)) {
     dg_list <- multi_batch[[nm]]$diff_gain_summaries
     spend_vals <- as.numeric(sub("^spend_", "", names(dg_list)))
-    idx20 <- which(abs(spend_vals - 0.2) < 1e-4)
-    idx50 <- which(abs(spend_vals - 0.5) < 1e-4)
-
-    est20 <- if (length(idx20)) extract_estimates(dg_list[[idx20]]) else c(NA,NA,NA)
-    est50 <- if (length(idx50)) extract_estimates(dg_list[[idx50]]) else c(NA,NA,NA)
-
-    rows[[nm]] <- tibble::tibble(
-      Model       = label_fn(nm),
-      `Spend 20%` = fmt_est_ci(est20),
-      `Spend 50%` = fmt_est_ci(est50)
-    )
-
-    sent20 <- if (length(idx20)) make_sentence(dg_list[[idx20]], 0.2) else "At 20% spend: No data available."
-    sent50 <- if (length(idx50)) make_sentence(dg_list[[idx50]], 0.5) else "At 50% spend: No data available."
-
-    if (grepl("No reliable benefits", sent20) &&
-        grepl("No reliable benefits", sent50)) {
-      explains[[label_fn(nm)]] <-
-        "No benefits for priority investments as measured by the Qini curve at the twenty or fifty percent spend levels."
+    
+    # find indices for requested spend levels
+    spend_indices <- list()
+    estimates <- list()
+    sentences <- list()
+    
+    for (spend in spend_levels) {
+      idx <- which(abs(spend_vals - spend) < 1e-4)
+      if (length(idx)) {
+        spend_indices[[as.character(spend)]] <- idx
+        estimates[[as.character(spend)]] <- extract_estimates(dg_list[[idx]])
+        sentences[[as.character(spend)]] <- make_sentence(dg_list[[idx]], spend)
+      } else {
+        estimates[[as.character(spend)]] <- c(NA, NA, NA)
+        sentences[[as.character(spend)]] <- sprintf("At %s%% spend: No data available.", spend * 100)
+      }
+    }
+    
+    # create row for summary table
+    row_data <- list(Model = label_fn(nm))
+    for (spend in spend_levels) {
+      col_name <- sprintf("Spend %s%%", spend * 100)
+      row_data[[col_name]] <- fmt_est_ci(estimates[[as.character(spend)]])
+    }
+    rows[[nm]] <- tibble::tibble(!!!row_data)
+    
+    # create explanation text
+    all_sentences <- unlist(sentences)
+    no_benefits_count <- sum(grepl("No reliable benefits", all_sentences))
+    beneficial_count <- sum(grepl("beneficial", all_sentences))
+    worsens_count <- sum(grepl("worsens", all_sentences))
+    
+    if (no_benefits_count == length(spend_levels)) {
+      spend_text <- paste(paste0(spend_levels * 100, "%"), collapse = " or ")
+      explains[[label_fn(nm)]] <- paste0(
+        "No benefits for priority investments as measured by the Qini curve at the ",
+        spend_text, " spend levels."
+      )
+      no_effect_models <- c(no_effect_models, label_fn(nm))
     } else {
-      txt <- paste(sent20, sent50)
-      # strip any accidental duplicate preamble at start of these sentences:
+      txt <- paste(all_sentences, collapse = " ")
       txt <- sub("^We computed[^.]*\\.\\s*", "", txt)
       explains[[label_fn(nm)]] <- txt
+      
+      # categorize for concise summary
+      if (beneficial_count > worsens_count) {
+        beneficial_models <- c(beneficial_models, label_fn(nm))
+      } else if (worsens_count > beneficial_count) {
+        harmful_models <- c(harmful_models, label_fn(nm))
+      } else {
+        no_effect_models <- c(no_effect_models, label_fn(nm))
+      }
     }
-
-    # keepers = any CI lower > 0
-    if ((!is.na(est20["ci_lower"]) && est20["ci_lower"] > 0) ||
-        (!is.na(est50["ci_lower"]) && est50["ci_lower"] > 0)) {
+    
+    # keepers = any CI lower > 0 across all spend levels
+    has_positive_effect <- FALSE
+    for (est in estimates) {
+      if (!is.na(est["ci_lower"]) && est["ci_lower"] > 0) {
+        has_positive_effect <- TRUE
+        break
+      }
+    }
+    
+    if (has_positive_effect) {
       keep_ids <- c(keep_ids, nm)
       keep_lbl <- c(keep_lbl, label_fn(nm))
     }
   }
 
+  # create concise summary
+  concise_summary <- create_concise_summary(beneficial_models, harmful_models, no_effect_models, spend_levels)
+  
   list(
     summary_table         = dplyr::bind_rows(rows),
     explanations          = explains,
     qini_explanation      = qini_explanation,
+    concise_summary       = concise_summary,
     reliable_model_names  = keep_lbl,
     reliable_model_ids    = keep_ids
   )
 }
 
 
-#’ @keywords internal
-create_qini_explanation_binary <- function() {
-  "We computed cumulative gains from prioritising individuals by CATE at 20% and 50% spend levels, comparing against a no-prioritisation baseline."
+#' @keywords internal
+create_concise_summary <- function(beneficial_models, harmful_models, no_effect_models, spend_levels) {
+  spend_text <- paste(paste0(spend_levels * 100, "%"), collapse = " and ")
+  
+  parts <- character(0)
+  
+  if (length(beneficial_models) > 0) {
+    if (length(beneficial_models) == 1) {
+      parts <- c(parts, paste0("CATE-based targeting improves outcomes for ", beneficial_models, "."))
+    } else if (length(beneficial_models) == 2) {
+      parts <- c(parts, paste0("CATE-based targeting improves outcomes for ", 
+                               paste(beneficial_models, collapse = " and "), "."))
+    } else {
+      last_model <- beneficial_models[length(beneficial_models)]
+      other_models <- beneficial_models[-length(beneficial_models)]
+      parts <- c(parts, paste0("CATE-based targeting improves outcomes for ", 
+                               paste(other_models, collapse = ", "), ", and ", last_model, "."))
+    }
+  }
+  
+  if (length(harmful_models) > 0) {
+    if (length(harmful_models) == 1) {
+      parts <- c(parts, paste0("CATE-based targeting worsens outcomes for ", harmful_models, "."))
+    } else if (length(harmful_models) == 2) {
+      parts <- c(parts, paste0("CATE-based targeting worsens outcomes for ", 
+                               paste(harmful_models, collapse = " and "), "."))
+    } else {
+      last_model <- harmful_models[length(harmful_models)]
+      other_models <- harmful_models[-length(harmful_models)]
+      parts <- c(parts, paste0("CATE-based targeting worsens outcomes for ", 
+                               paste(other_models, collapse = ", "), ", and ", last_model, "."))
+    }
+  }
+  
+  if (length(no_effect_models) > 0) {
+    if (length(no_effect_models) == 1) {
+      parts <- c(parts, paste0("No reliable benefit from CATE-based targeting for ", no_effect_models, "."))
+    } else if (length(no_effect_models) == 2) {
+      parts <- c(parts, paste0("No reliable benefit from CATE-based targeting for ", 
+                               paste(no_effect_models, collapse = " and "), "."))
+    } else {
+      last_model <- no_effect_models[length(no_effect_models)]
+      other_models <- no_effect_models[-length(no_effect_models)]
+      parts <- c(parts, paste0("No reliable benefit from CATE-based targeting for ", 
+                               paste(other_models, collapse = ", "), ", and ", last_model, "."))
+    }
+  }
+  
+  if (length(parts) == 0) {
+    return(paste0("No models analyzed at the ", spend_text, " spend levels."))
+  }
+  
+  summary <- paste(parts, collapse = " ")
+  paste0(summary, " (Based on Qini curve analysis at ", spend_text, " spend levels.)")
+}
+
+
+#' @keywords internal
+create_qini_explanation_binary <- function(spend_levels = c(0.2, 0.5), include_intro = TRUE) {
+  # format spend levels as percentages
+  spend_text <- paste(paste0(spend_levels * 100, "%"), collapse = " and ")
+  
+  if (include_intro) {
+    paste0(
+      "The Qini curve shows the cumulative gain as we expand a targeting rule down the CATE ranking. ",
+      "CATE (Conditional Average Treatment Effect) represents how treatment effects vary across individuals based on their characteristics.\n\n",
+      "For beneficial exposures, we prioritize individuals from the highest positive CATEs downward. ",
+      "For detrimental exposures, we first reverse the outcome direction, then prioritize individuals predicted to experience the most harm. ",
+      "The baseline represents a 'treat everyone' policy.\n\n",
+      "When the Qini curve stays above its baseline, targeted treatment based on individual characteristics yields better outcomes than a one-size-fits-all approach.\n\n",
+      "We computed cumulative gains from prioritising individuals by CATE at ", spend_text, " spend levels, comparing against a no-prioritisation baseline."
+    )
+  } else {
+    paste0("We computed cumulative gains from prioritising individuals by CATE at ", spend_text, " spend levels, comparing against a no-prioritisation baseline.")
+  }
 }

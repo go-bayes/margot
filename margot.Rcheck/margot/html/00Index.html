@@ -12,9 +12,10 @@
 <div style="text-align: center;">
 <a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]" /></a>
 <a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]" /></a>
-</div><h2>Documentation for package &lsquo;margot&rsquo; version 1.0.60</h2>
+</div><h2>Documentation for package &lsquo;margot&rsquo; version 1.0.80</h2>
 
 <ul><li><a href="../DESCRIPTION" type="text/plain; charset=utf-8">DESCRIPTION file</a>.</li>
+<li><a href="../doc/index.html">User guides, package vignettes and other documentation.</a></li>
 <li><a href="../NEWS.md">Package NEWS</a>.</li>
 </ul>
 
@@ -28,10 +29,16 @@
 <td>Back Transform Z-Score to Original Log-Transformed Scale</td></tr>
 <tr><td style="width: 25%;"><a href="back_transform_zscore.html">back_transform_zscore</a></td>
 <td>Back Transform Z-Score to Original Scale</td></tr>
+<tr><td style="width: 25%;"><a href="clear_margot_cache.html">clear_margot_cache</a></td>
+<td>Clear Margot Data Cache</td></tr>
 <tr><td style="width: 25%;"><a href="create_ordered_variable.html">create_ordered_variable</a></td>
 <td>Create Ordered Variable Based on Quantile Breaks or Custom Breaks with Informative Labels</td></tr>
+<tr><td style="width: 25%;"><a href="df_margot_example.html">df_margot_example</a></td>
+<td>Margot Example Dataset</td></tr>
 <tr><td style="width: 25%;"><a href="df_nz.html">df_nz</a></td>
-<td>df_nz: Example Data Frame</td></tr>
+<td>Legacy New Zealand Attitudes and Values Study (NZAVS) Simulated Data</td></tr>
+<tr><td style="width: 25%;"><a href="fetch_margot_data.html">fetch_margot_data</a></td>
+<td>Fetch Margot Example Data</td></tr>
 <tr><td style="width: 25%;"><a href="here_read.html">here_read</a></td>
 <td>Read Data Frame or Object from RDS File in a Specified Directory</td></tr>
 <tr><td style="width: 25%;"><a href="here_read_qs.html">here_read_qs</a></td>
@@ -42,10 +49,14 @@
 <td>Save Data Frame or Object to qs File in a Specified Directory with Enhanced Compression</td></tr>
 <tr><td style="width: 25%;"><a href="impute_and_combine.html">impute_and_combine</a></td>
 <td>Perform multiple imputation on a list of data frames and combine the results</td></tr>
+<tr><td style="width: 25%;"><a href="list_margot_data.html">list_margot_data</a></td>
+<td>List Available Margot Datasets</td></tr>
 <tr><td style="width: 25%;"><a href="lmtp_evalue_tab.html">lmtp_evalue_tab</a></td>
 <td>Calculate E-values for LMTP Output</td></tr>
 <tr><td style="width: 25%;"><a href="margot_adjust_weights.html">margot_adjust_weights</a></td>
 <td>Adjust Weights for Censoring and Sample Design with Progress Reporting</td></tr>
+<tr><td style="width: 25%;"><a href="margot_assess_overlap.html">margot_assess_overlap</a></td>
+<td>Assess Covariate Overlap from Causal Forest Models</td></tr>
 <tr><td style="width: 25%;"><a href="margot_back_transform_log_z.html">margot_back_transform_log_z</a></td>
 <td>Create Z-score to Original Scale Mapping for Log-Transformed Data</td></tr>
 <tr><td style="width: 25%;"><a href="margot_bind_models.html">margot_bind_models</a></td>
@@ -59,7 +70,7 @@
 <tr><td style="width: 25%;"><a href="margot_compute_gender_weights_by_wave.html">margot_compute_gender_weights_by_wave</a></td>
 <td>Compute Gender-Based Sample Weights Using Baseline Wave Proportions</td></tr>
 <tr><td style="width: 25%;"><a href="margot_correct_combined_table.html">margot_correct_combined_table</a></td>
-<td>Correct a “combined table” for multiplicity **and** recompute *E*-values</td></tr>
+<td>Correct a "combined table" for multiplicity **and** recompute *E*-values</td></tr>
 <tr><td style="width: 25%;"><a href="margot_count_dyads.html">margot_count_dyads</a></td>
 <td>count dyads in longitudinal data</td></tr>
 <tr><td style="width: 25%;"><a href="margot_count_ids.html">margot_count_ids</a></td>
@@ -67,7 +78,7 @@
 <tr><td style="width: 25%;"><a href="margot_filter.html">margot_filter</a></td>
 <td>Filter Data Based on Exposure Variables</td></tr>
 <tr><td style="width: 25%;"><a href="margot_flip_forests.html">margot_flip_forests</a></td>
-<td>Flip CATE Estimates and Recalculate Policy Trees for Selected Outcomes</td></tr>
+<td>Flip (Reverse) Causal Forest Treatment Effects</td></tr>
 <tr><td style="width: 25%;"><a href="margot_get_labels.html">margot_get_labels</a></td>
 <td>Get display labels for multiple variable names</td></tr>
 <tr><td style="width: 25%;"><a href="margot_impute_carry_forward.html">margot_impute_carry_forward</a></td>
@@ -99,7 +110,7 @@
 <tr><td style="width: 25%;"><a href="margot_planned_subgroups_batch.html">margot_planned_subgroups_batch</a></td>
 <td>Batch process heterogeneity analyses across multiple outcome domains</td></tr>
 <tr><td style="width: 25%;"><a href="margot_plot.html">margot_plot</a></td>
-<td>Create a Margot Plot with Interpretation</td></tr>
+<td>Create a Margot Plot with Proper Multiplicity Correction</td></tr>
 <tr><td style="width: 25%;"><a href="margot_plot_boxplot.html">margot_plot_boxplot</a></td>
 <td>Create panel data Boxplots using ggplot2</td></tr>
 <tr><td style="width: 25%;"><a href="margot_plot_boxplot_covariate.html">margot_plot_boxplot_covariate</a></td>
@@ -131,7 +142,7 @@
 <tr><td style="width: 25%;"><a href="margot_plot_response_timeline.html">margot_plot_response_timeline</a></td>
 <td>Plot Panel Study Response Timeline</td></tr>
 <tr><td style="width: 25%;"><a href="margot_plot_shift.html">margot_plot_shift</a></td>
-<td>Visualise shifts in data distributions with highlighted ranges</td></tr>
+<td>Visualise Shifts in Data Distributions with Highlighted Ranges</td></tr>
 <tr><td style="width: 25%;"><a href="margot_plot_slope.html">margot_plot_slope</a></td>
 <td>Create a Slope Plot for Multiple Variables</td></tr>
 <tr><td style="width: 25%;"><a href="margot_plot_slope_covariate.html">margot_plot_slope_covariate</a></td>
@@ -158,12 +169,16 @@
 <td>Assemble RATE tables (AUTOC and QINI)</td></tr>
 <tr><td style="width: 25%;"><a href="margot_rate_batch.html">margot_rate_batch</a></td>
 <td>Batch-compute RATEs for each outcome in a margot_causal_forest result</td></tr>
+<tr><td style="width: 25%;"><a href="margot_recalculate_policy_trees.html">margot_recalculate_policy_trees</a></td>
+<td>Recalculate Policy Trees with Custom Covariates</td></tr>
 <tr><td style="width: 25%;"><a href="margot_rescue_qini.html">margot_rescue_qini</a></td>
 <td>Post-process models to recover Qini curves via propensity trimming</td></tr>
 <tr><td style="width: 25%;"><a href="margot_reversed_labels.html">margot_reversed_labels</a></td>
 <td>Update label map by marking reversed outcomes</td></tr>
 <tr><td style="width: 25%;"><a href="margot_save_png.html">margot_save_png</a></td>
 <td>Save Margot Plot as PNG</td></tr>
+<tr><td style="width: 25%;"><a href="margot_simulate.html">margot_simulate</a></td>
+<td>Simulate longitudinal exposures, outcomes, and covariates</td></tr>
 <tr><td style="width: 25%;"><a href="margot_size.html">margot_size</a></td>
 <td>Calculate the size of an R object in megabytes</td></tr>
 <tr><td style="width: 25%;"><a href="margot_subset_batch.html">margot_subset_batch</a></td>

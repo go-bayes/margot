@@ -22,8 +22,8 @@ If no wave column is found, it issues a warning and uses the entire dataset.
 }
 \examples{
 # Example using a dataset with a wave column
-# assume dat_long_amelia_log has a column called wave
-margot_prop_missing(dat_long_amelia_log)
+# assume dat_long has a column called wave
+margot_prop_missing(dat_long)
 
 # Example using a dataset without a wave column
 # assume some_data is a dataset with no wave column
