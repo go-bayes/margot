@@ -25,6 +25,8 @@
   - Added "(baseline)" to plot titles and subtitles for clarity
   - Updated both depth-1 and depth-2 plots for consistency
   - Ensures users understand splits are made on baseline measures
+  - Enhanced `margot_plot_decision_tree()` to append "Outcome" to outcome titles
+  - Example: "Neuroticism" now displays as "Neuroticism Outcome"
 
 ### Label Transformation Improvements
 - Updated `transform_var_name()` helper function:

@@ -237,7 +237,7 @@ margot_plot_decision_tree <- function(
       plot.title   = ggplot2::element_text(hjust=.5,face="bold",margin=ggplot2::margin(b=20)),
       plot.caption = ggplot2::element_text(hjust=1,size=text_size+2)) +
     ggplot2::labs(
-      title   = if (is.null(title)) tv(model_name) else tv(title),
+      title   = if (is.null(title)) paste0(tv(model_name), " Outcome") else paste0(tv(title), " Outcome"),
       caption = if (!is.null(original_df)) "* original scale value" else NULL)
 
   cli::cli_alert_success("🎉 Plot created successfully")

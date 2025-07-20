@@ -174,6 +174,9 @@
   - Added "(baseline)" to axis labels on all policy tree plots
   - Added "(baseline)" to plot titles and subtitles
   - Updated both depth-1 and depth-2 plots for consistency
+- Enhanced `margot_plot_decision_tree()` to clarify temporal context:
+  - Now appends "Outcome" to outcome labels in titles
+  - Example: "Neuroticism" now displays as "Neuroticism Outcome"
 - Updated `transform_var_name()` helper function:
   - Now removes "_l" suffix from variable names
   - Capitalizes NZSEI and NZDEP acronyms properly
