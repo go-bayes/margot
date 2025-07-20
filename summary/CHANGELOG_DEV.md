@@ -139,6 +139,9 @@
 - Fixed `margot_policy()` and `margot_batch_policy()` to pass `spend_levels` to `margot_plot_qini()`
   - Previously, Qini plots always showed vertical lines at 20% and 50% regardless of the spend_levels parameter
   - Now the vertical lines in Qini plots correctly match the spend levels used for diff_gain_summaries
+- Fixed `margot_plot_qini()` to properly use custom label mappings in plot titles
+  - Now tries exact match first before falling back to transform_label pattern matching
+  - Handles both "model_outcome" and "outcome" key formats in label_mapping
 
 ### Still To Do
 - Add comprehensive tests for new functionality

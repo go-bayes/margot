@@ -44,17 +44,46 @@ margot_plot_qini <- function(mc_result, outcome_var,
                              theme = "classic") {
   cli::cli_h1("Margot Plot Qini Curves")
 
-  # Transform the outcome variable name using the transform_label helper
-  transformed_outcome_var <- transform_label(
-    label = outcome_var,
-    label_mapping = label_mapping,
-    options = list(
-      remove_tx_prefix = TRUE,
-      remove_z_suffix = TRUE,
-      remove_underscores = TRUE,
-      use_title_case = TRUE
+  # Transform the outcome variable name
+  # First try direct lookup in label_mapping if provided
+  transformed_outcome_var <- outcome_var
+  
+  if (!is.null(label_mapping)) {
+    # Try exact match first (with model_ prefix)
+    if (outcome_var %in% names(label_mapping)) {
+      transformed_outcome_var <- label_mapping[[outcome_var]]
+    } else {
+      # Try without model_ prefix
+      outcome_var_clean <- sub("^model_", "", outcome_var)
+      if (outcome_var_clean %in% names(label_mapping)) {
+        transformed_outcome_var <- label_mapping[[outcome_var_clean]]
+      } else {
+        # Use transform_label as fallback with label_mapping
+        transformed_outcome_var <- transform_label(
+          label = outcome_var,
+          label_mapping = label_mapping,
+          options = list(
+            remove_tx_prefix = TRUE,
+            remove_z_suffix = TRUE,
+            remove_underscores = TRUE,
+            use_title_case = TRUE
+          )
+        )
+      }
+    }
+  } else {
+    # No label mapping provided, use transform_label for default transformations
+    transformed_outcome_var <- transform_label(
+      label = outcome_var,
+      label_mapping = NULL,
+      options = list(
+        remove_tx_prefix = TRUE,
+        remove_z_suffix = TRUE,
+        remove_underscores = TRUE,
+        use_title_case = TRUE
+      )
     )
-  )
+  }
 
   # Extract the qini data for the specified outcome variable
   if (!outcome_var %in% names(mc_result$results)) {
@@ -125,7 +154,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
 
     # add text annotations for spend levels
     # position labels at different heights to avoid overlap
-    label_y_positions <- seq(from = 0.95, to = 0.85, length.out = length(spend_levels))
+    label_y_positions <- seq(from = 1.5, to = 2.5, length.out = length(spend_levels))
 
     for (i in seq_along(spend_levels)) {
       p <- p + annotate(
