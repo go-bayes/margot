@@ -13,7 +13,7 @@
 #'
 #' @importFrom data.table as.data.table copy set uniqueN setorderv shift
 #' @importFrom cli cli_abort cli_alert_info cli_alert_success
-#' @keywords export
+#' @export
 margot_censor_lead <- function(
     dt,
     cluster_id = NULL,
