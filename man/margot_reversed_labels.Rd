@@ -23,10 +23,10 @@ for flipped outcomes. If FALSE, uses the old behavior of modifying in-place.}
 (non-flipped) entries from the label map. Default is FALSE.}
 }
 \value{
-named list of labels, with "(reduced)" appended to specified entries
+named list of labels, with "(reduced)" prepended to specified entries
 }
 \description{
-Helper to tag reversed outcomes by appending "(reduced)" to labels.
+Helper to tag reversed outcomes by prepending "(reduced)" to labels.
 This function now handles the new "_r" suffix convention for flipped models.
 }
 \examples{
@@ -61,12 +61,12 @@ print(label_mapping_new[c("t2_kessler_latent_anxiety_z", "t2_kessler_latent_anxi
 #> $t2_kessler_latent_anxiety_z
 #> [1] "Anxiety"
 #> $t2_kessler_latent_anxiety_z_r
-#> [1] "Anxiety (reduced)"
+#> [1] "(reduced) Anxiety"
 
 # old behavior: modifies in place
 label_mapping_old <- margot_reversed_labels(label_mapping_all, flip_outcomes, use_r_suffix = FALSE)
 print(label_mapping_old[["t2_kessler_latent_anxiety_z"]])
-#> [1] "Anxiety (reduced)"
+#> [1] "(reduced) Anxiety"
 
 # remove original entries
 label_mapping_clean <- margot_reversed_labels(label_mapping_all, flip_outcomes, remove_original = TRUE)

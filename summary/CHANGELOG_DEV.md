@@ -182,6 +182,12 @@
   - Capitalizes NZSEI and NZDEP acronyms properly
   - Example: "t0_nzsei_13_l" now displays as "NZSEI 13"
 
+### Minor Updates (2025-07-20)
+- Updated `margot_reversed_labels()` formatting:
+  - Changed from "{outcome} (reduced)" to "(reduced) {outcome}"
+  - Example: "Anxiety (reduced)" now displays as "(reduced) Anxiety"
+  - Improves readability and understanding of reduced/flipped outcomes
+
 ### Still To Do
 - Add comprehensive tests for new functionality
 

@@ -1,6 +1,6 @@
 #' Update label map by marking reversed outcomes
 #'
-#' Helper to tag reversed outcomes by appending "(reduced)" to labels.
+#' Helper to tag reversed outcomes by prepending "(reduced)" to labels.
 #' This function now handles the new "_r" suffix convention for flipped models.
 #'
 #' @param label_map named list mapping variable names to human-readable labels
@@ -9,7 +9,7 @@
 #'        for flipped outcomes. If FALSE, uses the old behavior of modifying in-place.
 #' @param remove_original logical; if TRUE and use_r_suffix is TRUE, removes the original
 #'        (non-flipped) entries from the label map. Default is FALSE.
-#' @return named list of labels, with "(reduced)" appended to specified entries
+#' @return named list of labels, with "(reduced)" prepended to specified entries
 #' @export
 #' @examples
 #' label_mapping_all <- list(
@@ -43,12 +43,12 @@
 #' #> $t2_kessler_latent_anxiety_z
 #' #> [1] "Anxiety"
 #' #> $t2_kessler_latent_anxiety_z_r
-#' #> [1] "Anxiety (reduced)"
+#' #> [1] "(reduced) Anxiety"
 #'
 #' # old behavior: modifies in place
 #' label_mapping_old <- margot_reversed_labels(label_mapping_all, flip_outcomes, use_r_suffix = FALSE)
 #' print(label_mapping_old[["t2_kessler_latent_anxiety_z"]])
-#' #> [1] "Anxiety (reduced)"
+#' #> [1] "(reduced) Anxiety"
 #' 
 #' # remove original entries
 #' label_mapping_clean <- margot_reversed_labels(label_mapping_all, flip_outcomes, remove_original = TRUE)
@@ -61,7 +61,7 @@ margot_reversed_labels <- function(label_map, reversed, use_r_suffix = TRUE, rem
     res <- lapply(names(label_map), function(var) {
       lbl <- label_map[[var]]
       if (var %in% reversed) {
-        paste0(lbl, " (reduced)")
+        paste0("(reduced) ", lbl)
       } else {
         lbl
       }
@@ -91,11 +91,11 @@ margot_reversed_labels <- function(label_map, reversed, use_r_suffix = TRUE, rem
     if (!is.null(original_label)) {
       # add new entry with _r suffix
       new_key <- paste0(var_base, "_r")
-      res[[new_key]] <- paste0(original_label, " (reduced)")
+      res[[new_key]] <- paste0("(reduced) ", original_label)
       
       # also add with model_ prefix if that's the pattern
       if (any(grepl("^model_", names(label_map)))) {
-        res[[paste0("model_", new_key)]] <- paste0(original_label, " (reduced)")
+        res[[paste0("model_", new_key)]] <- paste0("(reduced) ", original_label)
       }
     }
   }

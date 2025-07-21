@@ -9,6 +9,21 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+## [2025-07-20] margot 1.0.102
+
+### Policy Tree Enhancements
+- **Decision tree title clarification**:
+  - Enhanced `margot_plot_decision_tree()` to append "Outcome" to titles
+  - Example: "Neuroticism" now displays as "Neuroticism Outcome"
+  - Clarifies that the tree shows policy decisions for the outcome variable
+
+### Label Improvements
+- **Reversed outcome formatting**:
+  - Updated `margot_reversed_labels()` to prepend rather than append "(reduced)"
+  - Changed from "{outcome} (reduced)" to "(reduced) {outcome}"
+  - Example: "Anxiety (reduced)" now displays as "(reduced) Anxiety"
+  - Improves readability and understanding of flipped outcomes
+
 ## [2025-07-20] margot 1.0.101
 
 - **new**: margot_censor_lead() - allows for conditional censoring. 
@@ -37,6 +52,9 @@
   - Now removes "_l" suffix from variable names
   - Properly capitalizes NZSEI and NZDEP acronyms
   - Example: "t0_nzsei_13_l" now displays as "NZSEI 13 (baseline)"
+- Updated `margot_reversed_labels()` formatting:
+  - Changed from "{outcome} (reduced)" to "(reduced) {outcome}"
+  - Example: "Anxiety (reduced)" now displays as "(reduced) Anxiety"
 
 
 ## [2025-07-19] margot 1.0.90
