@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_censor_lead.R
 \name{margot_censor_lead}
 \alias{margot_censor_lead}
-\title{Transform year_measured Variable Based on Lead Conditions Within Waves}
+\title{Apply Lead-Based Censoring to Longitudinal Data}
 \usage{
 margot_censor_lead(
   dt,
@@ -36,5 +36,5 @@ margot_censor_lead(
 A modified data.table with updated year_measured values based on lead conditions.
 }
 \description{
-Transform year_measured Variable Based on Lead Conditions Within Waves
+Apply Lead-Based Censoring to Longitudinal Data
 }

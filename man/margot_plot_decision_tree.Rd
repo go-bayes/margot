@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_plot_decision_tree.R
 \name{margot_plot_decision_tree}
 \alias{margot_plot_decision_tree}
-\title{Plot a Decision Tree from Margot Causal-Forest Results}
+\title{Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)}
 \usage{
 margot_plot_decision_tree(
   result_object,
@@ -65,21 +65,6 @@ margot_plot_decision_tree(
 
 \item{label_mapping}{Optional list for renaming variables in the display}
 }
-\value{
-A ggplot object with the decision tree visualisation
-}
 \description{
-Creates a visualisation of a policy tree showing the decision rules
-and assigned treatments from causal forest results.
+Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)
 }
-\keyword{(robust}
-\keyword{Causal-Forest}
-\keyword{Decision}
-\keyword{Margot}
-\keyword{Plot}
-\keyword{Results}
-\keyword{Tree}
-\keyword{a}
-\keyword{from}
-\keyword{internal}
-\keyword{labelling)}

@@ -1,38 +1,3 @@
-#' Plot a Decision Tree from Margot Causal-Forest Results
-#'
-#' Creates a visualisation of a policy tree showing the decision rules
-#' and assigned treatments from causal forest results.
-#'
-#' @param result_object A list returned by `margot_causal_forest()`
-#' @param model_name Name of the model in the results to visualise
-#' @param max_depth Maximum depth of the tree (1L or 2L)
-#' @param original_df Optional dataframe with original data for showing untransformed values
-#' @param x_padding Horizontal padding for the plot (proportion)
-#' @param y_padding Vertical padding for the plot (proportion)
-#' @param border_size Size of node borders in lines
-#' @param text_size Size of text in plot elements
-#' @param edge_label_offset Offset for edge labels from connecting lines
-#' @param span_ratio Controls the aspect ratio of the plot
-#' @param non_leaf_fill Colour for non-leaf nodes (decision nodes)
-#' @param title Optional custom title for the plot
-#' @param plot_margin Margins around the plot
-#' @param remove_tx_prefix Whether to remove treatment prefixes from variable names
-#' @param remove_z_suffix Whether to remove z-suffixes from variable names
-#' @param use_title_case Whether to use title case for variable names
-#' @param remove_underscores Whether to replace underscores with spaces in variable names
-#' @param remove_action_label Whether to remove "Action:" prefix from leaf node labels
-#' @param label_mapping Optional list for renaming variables in the display
-#'
-#' @importFrom dplyr case_when mutate
-#' @importFrom tibble tibble
-#' @importFrom purrr map_dfr
-#' @importFrom ggplot2 ggplot geom_segment geom_label geom_text aes scale_fill_identity coord_fixed scale_x_continuous scale_y_continuous theme_void theme element_text labs margin expansion
-#' @importFrom grid unit
-#' @importFrom cli cli_h1 cli_abort cli_alert_success cli_alert_info
-#'
-#' @return A ggplot object with the decision tree visualisation
-#' @export
-#' @keywords internal
 #' Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)
 #' @param result_object A list returned by `margot_causal_forest()`
 #' @param model_name Name of the model in the results to visualise
