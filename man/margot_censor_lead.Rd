@@ -38,4 +38,4 @@ A modified data.table with updated year_measured values based on lead conditions
 \description{
 Transform year_measured Variable Based on Lead Conditions Within Waves
 }
-\keyword{internal}
+\keyword{export}
