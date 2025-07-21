@@ -9,6 +9,10 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+## [2025-07-20] margot 1.0.101
+
+- **new**: margot_censor_lead() - allows for conditional censoring. 
+
 ## [2025-07-20] margot 1.0.100
 
 ### Policy Tree Enhancements

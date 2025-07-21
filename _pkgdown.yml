@@ -93,6 +93,7 @@ reference:
     - impute_and_combine
     - margot_adjust_weights
     - margot_censor
+    - margot_censor_lead
     - margot_compute_gender_weights_by_wave
     - margot_filter
     - margot_impute_carry_forward
