@@ -379,6 +379,14 @@
   - Returns list of ggplot objects for further customization
   - Consistent with margot_plot_rate_batch() design
 
+### Bug Fixes (2025-07-22) - v1.0.110 (continued)
+- **Fixed margot_flip_forests() combined_table error**:
+  - Fixed "Couldn't find a point-estimate column" error
+  - Function was incorrectly passing entire results object to margot_correct_combined_table()
+  - Now properly rebuilds combined_table from merged results (original + flipped)
+  - Correctly extracts custom_table from each model result
+  - Maintains proper row names without "model_" prefix
+
 ### Still To Do
 - Implement GRF scores method as alternative to regression forest
 - Add comprehensive tests for new functionality

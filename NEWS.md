@@ -11,42 +11,46 @@
 
 ## [2025-07-22] margot 1.0.110
 
-major improvements to QINI curve visualization, new functions for AIPW/IPW QINI computation, enhanced maq compatibility, and various bug fixes.
+major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI computation, enhanced maq compatibility, and various bug fixes.
 
 ### New Functions
-- **margot_recompute_qini_aipw()**: Recompute QINI curves using AIPW scores for improved robustness
+- **margot_recompute_qini_aipw()**: recompute QINI curves using AIPW scores for improved robustness
   - Provides doubly robust estimates that are consistent if either propensity or outcome model is correct
-  - Especially valuable for observational data with potential confounding
-  - Supports automatic treatment variable detection or manual specification
-  - Handles various data structures including models stored in full_models list
-  - Estimates conditional means using regression forests (mu.hat)
-  - Adds overlap warnings when propensity scores are extreme (<0.05 or >0.95)
-  - Fully compatible with existing QINI plotting and interpretation functions
+  - supports automatic treatment variable detection or manual specification
+  - nandles various data structures including models stored in full_models list
+  - estimates conditional means using regression forests (mu.hat)
+  - adds overlap warnings when propensity scores are extreme (<0.05 or >0.95)
+  - fully compatible with existing QINI plotting and interpretation functions
 
 - **margot_recompute_qini_ipw()**: Recompute QINI curves using IPW scores only
-  - Simpler alternative to AIPW for faster computation
-  - Uses the same modern maq API for consistency
-  - Useful for debugging QINI curve differences
-  - Shares the same flexible data handling as the AIPW version
+  - simpler alternative to AIPW for faster computation
+  - uses the same modern maq API for consistency
+  - useful for debugging QINI curve differences
+  - shares the same flexible data handling as the AIPW version
 
-- **margot_qini_diagnostic()**: Diagnose QINI gain discrepancies
-  - Compares QINI gains from plot data, direct maq calculations, and diff summaries
-  - Helps identify and debug discrepancies between different calculation methods
-  - Flags differences above specified tolerance threshold
-  - Useful for verifying QINI calculations are consistent
+- **margot_qini_diagnostic()**: diagnose QINI gain discrepancies
+  - compares QINI gains from plot data, direct maq calculations, and diff summaries
+  - helps identify and debug discrepancies between different calculation methods
+  - flags differences above specified tolerance threshold
+  - useful for verifying QINI calculations are consistent
 
 - **margot_plot_qini_batch()**: Batch process and plot QINI curves for multiple models
-  - Supports all margot_plot_qini() parameters for consistent visualization
-  - Handles model names with or without "model_" prefix
-  - Automatically filters to models with QINI data
-  - Saves plots to specified directory (default: "qini_plots")
-  - Returns list of ggplot objects for further customization
+  - supports all margot_plot_qini() parameters for consistent visualization
+  - handles model names with or without "model_" prefix
+  - automatically filters to models with QINI data
+  - saves plots to specified directory (default: "qini_plots")
+  - returns list of ggplot objects for further customization
 
 ### Bug Fixes
-- Fixed `margot_plot_qini()` confidence interval computation and display issues
-  - Added `inherit.aes = FALSE` to geom_ribbon to prevent aesthetic inheritance errors
-  - Fixed CI computation to handle both old (treatment/baseline) and new (cate/ate) qini object naming conventions
+- fixed `margot_plot_qini()` confidence interval computation and display issues
+  - added `inherit.aes = FALSE` to geom_ribbon to prevent aesthetic inheritance errors
+  - fixed CI computation to handle both old (treatment/baseline) and new (cate/ate) qini object naming conventions
   - Confidence intervals now compute and display correctly when `show_ci = TRUE`
+- Fixed `margot_flip_forests()` error when rebuilding combined_table
+  - Resolved "Couldn't find a point-estimate column" error that occurred after flipping outcomes
+  - Function now properly rebuilds combined_table from merged results instead of incorrectly passing entire results object
+- Fixed `margot_causal_forest()` to save treatment assignment vector W when save_data=TRUE
+  - Ensures margot_flip_forests() can perform full model recomputation
 
 - Fixed `compute_qini_curves_binary()` to use modern maq API
   - Updated from positional arguments to named parameters (reward, cost, DR.scores)

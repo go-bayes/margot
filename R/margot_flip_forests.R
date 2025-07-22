@@ -258,9 +258,22 @@ margot_flip_forests <- function(model_results,
       }
     }
     
-    # update combined table
+    # rebuild combined table from all results (original + flipped)
     if (!is.null(results_copy$results) && length(results_copy$results) > 0) {
-      results_copy$combined_table <- margot_correct_combined_table(results_copy)
+      all_tables <- lapply(results_copy$results, function(res) {
+        if (!is.null(res$custom_table)) {
+          return(res$custom_table)
+        }
+        NULL
+      })
+      
+      # filter out NULLs
+      all_tables <- all_tables[!sapply(all_tables, is.null)]
+      
+      if (length(all_tables) > 0) {
+        results_copy$combined_table <- do.call(rbind, all_tables)
+        rownames(results_copy$combined_table) <- gsub("^model_", "", names(results_copy$results)[!sapply(all_tables, is.null)])
+      }
     }
     
     if (verbose) {
