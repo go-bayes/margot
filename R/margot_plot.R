@@ -1,3 +1,26 @@
+#' Helper function to detect effect column and type
+#' @keywords internal
+detect_effect_column <- function(data) {
+  # check for new column types first (to prioritize them)
+  new_cols <- c("ATE", "ATT", "ATC", "ATO")
+  for (col in new_cols) {
+    if (col %in% names(data)) {
+      return(list(column = col, type = col))
+    }
+  }
+
+  # check for traditional columns
+  if ("E[Y(1)]-E[Y(0)]" %in% names(data)) {
+    return(list(column = "E[Y(1)]-E[Y(0)]", type = "ATE"))
+  }
+  if ("E[Y(1)]/E[Y(0)]" %in% names(data)) {
+    return(list(column = "E[Y(1)]/E[Y(0)]", type = "ATE"))
+  }
+
+  # if nothing found, return NULL
+  return(NULL)
+}
+
 #' @title Create a Margot Plot with Proper Multiplicity Correction
 #' @description
 #' Create a margot plot for visualising causal effects with proper simultaneous
@@ -40,7 +63,8 @@ margot_plot <- function(
       "E-Value"       = "E_Value",
       "E-Value bound" = "E_Val_bound"
     ),
-    rename_ate  = FALSE
+    rename_ate  = FALSE,
+    rename_evalue = FALSE
 ) {
   # match and validate args -------------------------------------------------
   type              <- match.arg(type)
@@ -128,8 +152,16 @@ margot_plot <- function(
   }
 
   # effect column -----------------------------------------------------------
-  eff_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data))
-    "E[Y(1)]-E[Y(0)]" else "E[Y(1)]/E[Y(0)]"
+  effect_info <- detect_effect_column(.data)
+  if (is.null(effect_info)) {
+    # fallback to old behavior for compatibility
+    eff_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data))
+      "E[Y(1)]-E[Y(0)]" else "E[Y(1)]/E[Y(0)]"
+    effect_type <- "ATE"  # default assumption
+  } else {
+    eff_col <- effect_info$column
+    effect_type <- effect_info$type
+  }
 
   # ensure outcome column ---------------------------------------------------
   if (!"outcome" %in% names(.data)) {
@@ -248,7 +280,8 @@ margot_plot <- function(
     e_val_bound_threshold = thresh,
     adjust                = adjust,
     alpha                 = alpha,
-    include_adjust_note   = !single_outcome
+    include_adjust_note   = !single_outcome,
+    effect_type           = effect_type
   )$interpretation
 
   # transform table for display -------------------------------------------
@@ -268,11 +301,25 @@ margot_plot <- function(
   transformed_table <- table_for_transform[outcome_order, , drop = FALSE]
 
   # optional renaming -------------------------------------------------------
-  if (rename_ate) {
+  # handle rename_ate with enhanced logic
+  if (!isFALSE(rename_ate)) {
     old_eff <- eff_col
     if (old_eff %in% names(transformed_table)) {
-      names(transformed_table)[names(transformed_table) == old_eff] <- "ATE"
-      eff_col <- "ATE"
+      if (is.character(rename_ate)) {
+        # use custom string
+        new_name <- rename_ate
+      } else if (isTRUE(rename_ate)) {
+        # auto-detect appropriate name
+        if (eff_col %in% c("ATE", "ATT", "ATC", "ATO")) {
+          # already has the right name
+          new_name <- eff_col
+        } else {
+          # use detected effect_type or default to ATE
+          new_name <- effect_type
+        }
+      }
+      names(transformed_table)[names(transformed_table) == old_eff] <- new_name
+      eff_col <- new_name
     }
   }
 
@@ -285,11 +332,24 @@ margot_plot <- function(
     }
   }
 
+  # handle rename_evalue
+  if (rename_evalue) {
+    if ("E_Value" %in% names(transformed_table)) {
+      names(transformed_table)[names(transformed_table) == "E_Value"] <- "E-Value"
+    }
+    if ("E_Val_bound" %in% names(transformed_table)) {
+      names(transformed_table)[names(transformed_table) == "E_Val_bound"] <- "E-Value Bound"
+    }
+  }
+
   if (bold_rows) {
-    bound_nm <- if (rename_cols && "E-Value bound" %in% names(transformed_table)) {
-      "E-Value bound"
+    # determine the correct column name for E-value bound
+    bound_nm <- if ("E-Value Bound" %in% names(transformed_table)) {
+      "E-Value Bound"  # from rename_evalue
+    } else if ("E-Value bound" %in% names(transformed_table)) {
+      "E-Value bound"  # from rename_cols
     } else {
-      "E_Val_bound"
+      "E_Val_bound"    # original
     }
     above <- transformed_table[[bound_nm]] > e_val_bound_threshold
     if (any(above)) {
@@ -353,7 +413,8 @@ margot_interpret_marginal <- function(
     e_val_bound_threshold = 1,
     adjust = c("none", "bonferroni"),
     alpha = 0.05,
-    include_adjust_note = TRUE
+    include_adjust_note = TRUE,
+    effect_type = "ATE"
 ) {
   type   <- match.arg(type)
   order  <- match.arg(order)
@@ -390,11 +451,9 @@ margot_interpret_marginal <- function(
   if (!is.null(original_df)) df <- back_transform_estimates(df, original_df)
 
   # identify columns -------------------------------------------------------
-  effect_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(df)) {
-    "E[Y(1)]-E[Y(0)]"
-  } else {
-    "E[Y(1)]/E[Y(0)]"
-  }
+  # use the helper function to detect effect column
+  effect_info <- detect_effect_column(df)
+  effect_col <- effect_info$column
   null_val <- if (type == "RR") 1 else 0
 
   # filter reliable effects -----------------------------------------------
@@ -402,14 +461,29 @@ margot_interpret_marginal <- function(
     dplyr::filter(E_Value > 1, E_Val_bound > e_val_bound_threshold)
 
   if (nrow(df_f) == 0) {
-    return(list(interpretation = adj_note))
+    no_effects_msg <- "No reliable effects are evident."
+    interpretation_text <- if (nzchar(adj_note)) {
+      paste0(adj_note, "\n\n", no_effects_msg)
+    } else {
+      no_effects_msg
+    }
+    return(list(interpretation = interpretation_text))
   }
 
   # preserve requested ordering -------------------------------------------
   if (grepl("_(asc|desc)$", order)) df_f <- df_f[nrow(df_f):1, ]
 
+  # create appropriate description based on effect type
+  effect_desc <- switch(effect_type,
+    "ATE" = "average treatment effects",
+    "ATT" = "average treatment effects on the treated",
+    "ATC" = "average treatment effects on the control",
+    "ATO" = "average treatment effects in the overlap population",
+    "treatment effects"  # fallback
+  )
+
   intro <- glue::glue(
-    "The following outcomes showed reliable causal evidence ",
+    "The following outcomes present reliable causal evidence for {effect_desc} ",
     "(E‑value lower bound > {e_val_bound_threshold}):\n\n\n"
   )
 
@@ -431,9 +505,7 @@ margot_interpret_marginal <- function(
         NA_character_
       },
       text = glue::glue(
-        "- {outcome}: {lab}",
-        "{if (!is.na(lab_orig)) paste0('; on the original scale, ',lab_orig, '.')} ",
-        " E‑value bound = {E_Val_bound}"
+        "- {outcome}: {lab}{if (!is.na(lab_orig)) paste0('; on the original scale, ', lab_orig, '.') else ''} E‑value bound = {E_Val_bound}"
       )
     ) %>%
     dplyr::pull(text)
@@ -568,7 +640,9 @@ transform_table_rownames <- function(df, label_mapping = NULL, options = list())
 #' @importFrom tibble rownames_to_column
 #' @importFrom rlang sym
 #' @keywords internal
-group_tab <- function(
+# Note: group_tab function removed - use the one from helpers.R
+# DEPRECATED - Remove this duplicate function
+group_tab_deprecated <- function(
     df,
     type = c("RD","RR"),
     order = c(

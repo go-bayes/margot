@@ -108,6 +108,8 @@ reference:
     - margot_causal_forest
     - margot_lmtp
     - margot_recalculate_policy_trees
+    - margot_recompute_ate
+    - margot_recompute_ate_batch
 
   - title: "Interpret and Report Results"
     contents:
@@ -129,6 +131,8 @@ reference:
     - margot_policy
     - margot_rate
     - margot_rate_batch
+    - margot_recompute_qini_aipw
+    - margot_recompute_qini_ipw
     - margot_rescue_qini
     - margot_subset_model
     - margot_subset_batch
@@ -142,6 +146,7 @@ reference:
     - margot_plot_policy_combo
     - margot_plot_policy_tree
     - margot_plot_qini
+    - margot_plot_qini_batch
     - margot_plot_rate
     - margot_plot_rate_batch
     - margot_plot_tau
@@ -157,10 +162,12 @@ reference:
     - here_save_qs
     - lmtp_evalue_tab
     - margot_back_transform_log_z
+    - margot_debug_qini
     - margot_get_labels
     - margot_log_transform_vars
     - margot_plot_create_options
     - margot_plot_exposure
+    - margot_qini_diagnostic
     - margot_process_binary_vars
     - margot_prop_missing
     - margot_rescue_qini

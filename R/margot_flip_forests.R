@@ -60,33 +60,36 @@ margot_recalculate_policy_trees <- function(model_results,
 #' Flip (Reverse) Causal Forest Treatment Effects
 #'
 #' @description
-#' Creates new models with reversed treatment effects, appending "_r" to model names.
-#' The original models are removed and replaced with properly flipped versions where
-#' all statistics (ATE, RATE, E-values, conditional means) are recomputed.
+#' Creates new models with reversed treatment effects by flipping the outcome variable
+#' and recomputing the entire causal forest from scratch. New models are appended with
+#' "_r" suffix to indicate reduced/reversed outcomes.
 #'
 #' @param model_results A list containing the model results from margot_causal_forest().
-#' @param flip_outcomes A character vector of outcome variable names for which CATE estimates should be flipped.
+#' @param flip_outcomes A character vector of outcome variable names for which models should be flipped.
 #' @param model_prefix A character string indicating the prefix used for model names in the results list. Default is "model_".
+#' @param parallel Logical indicating whether to use parallel processing. Default is FALSE.
+#' @param n_cores Number of cores to use for parallel processing. Default is availableCores() - 1.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
 #'
-#' @return A modified copy of model_results with flipped models (with "_r" suffix) replacing originals.
+#' @return A modified copy of model_results with flipped models (with "_r" suffix) added.
 #'
 #' @details
-#' This function creates entirely new model entries with "_r" suffix rather than modifying
-#' existing models. All statistics are properly recomputed for the flipped scenario:
-#' - ATE is negated
-#' - CATE estimates (tau_hat) are negated
-#' - E-value table is recomputed with the flipped ATE
-#' - Conditional means columns are swapped (for binary treatment)
-#' - RATE and QINI are recomputed with flipped tau_hat
-#' - Policy trees are marked for recalculation
+#' This function creates entirely new models by:
+#' 1. Extracting the original data for each outcome
+#' 2. Flipping the outcome variable (Y_flipped = -Y)
+#' 3. Calling margot_causal_forest() with the flipped outcome
+#' 4. Storing the result with "_r" suffix
+#' 
+#' This ensures all components (forest model, CATE estimates, QINI curves, policy trees,
+#' E-values, etc.) are consistently computed based on the flipped outcome.
 #'
-#' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_alert_danger
-#' @importFrom grf rank_average_treatment_effect average_treatment_effect
+#' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_h1
 #' @export
 margot_flip_forests <- function(model_results,
                                 flip_outcomes,
                                 model_prefix   = "model_",
+                                parallel       = FALSE,
+                                n_cores        = future::availableCores() - 1,
                                 verbose        = TRUE) {
   # validate inputs
   if (!is.list(model_results) || !("results" %in% names(model_results))) {
@@ -98,298 +101,175 @@ margot_flip_forests <- function(model_results,
   }
   
   # check for required components
-  if (is.null(model_results$full_models)) {
-    stop("full_models not found in model_results. ensure save_models = TRUE in margot_causal_forest")
+  has_data <- !is.null(model_results$data)
+  has_covariates <- !is.null(model_results$covariates)
+  has_W <- !is.null(model_results$W)
+  
+  if (!has_data || !has_covariates || !has_W) {
+    stop("model_results must contain 'data', 'covariates', and 'W' components for full recomputation")
   }
   
-  # check for required data for policy tree and qini recalculation
-  need_recalc <- !is.null(model_results$covariates) || !is.null(model_results$data)
-  if (!need_recalc && verbose) {
-    cli::cli_alert_warning("covariates and/or data not found - policy trees and QINI will not be recalculated")
-  }
-
-  # copy results to avoid side effects
-  results_copy <- model_results
+  # ensure outcomes have model prefix
+  flip_outcomes_prefixed <- ifelse(
+    grepl(paste0("^", model_prefix), flip_outcomes),
+    flip_outcomes,
+    paste0(model_prefix, flip_outcomes)
+  )
   
-  # get covariates and not_missing indices if available
-  covariates <- results_copy$covariates
-  not_missing <- results_copy$not_missing
-  if (is.null(not_missing) && !is.null(covariates)) {
-    not_missing <- which(complete.cases(covariates))
-  }
-
-  # identify models to flip
-  all_models <- names(results_copy$results)
-  models_to_flip <- paste0(ifelse(grepl(paste0("^", model_prefix), flip_outcomes), "", model_prefix),
-                           flip_outcomes)
-  models_to_flip <- models_to_flip[models_to_flip %in% all_models]
-  if (length(models_to_flip) == 0) {
-    warning("none of the specified outcomes match any models in the results")
+  # filter to existing models
+  existing_models <- intersect(flip_outcomes_prefixed, names(model_results$results))
+  
+  if (length(existing_models) == 0) {
+    warning("No matching models found for the specified outcomes")
     return(model_results)
   }
-
+  
   if (verbose) {
-    cli::cli_alert_info(paste("creating flipped models for", length(models_to_flip),
-                              "outcomes:", paste(gsub(model_prefix, "", models_to_flip), collapse = ", ")))
+    cli::cli_h1("Flipping Treatment Effects via Full Recomputation")
+    cli::cli_alert_info("Processing {length(existing_models)} model{?s}")
   }
-
-  # process each model to create new "_r" version
-  new_models <- list()
-  new_full_models <- list()
-  models_to_remove <- c()
   
-  for (model_name in models_to_flip) {
-    if (verbose) cli::cli_alert_info(paste("creating flipped version of", model_name))
+  # create a copy to avoid modifying the original
+  results_copy <- model_results
+  
+  # extract components we'll need for all models
+  covariates <- model_results$covariates
+  W <- model_results$W
+  weights <- model_results$weights %||% NULL
+  
+  # prepare outcome list for margot_causal_forest
+  outcome_list <- list()
+  outcome_names <- character()
+  
+  for (model_name in existing_models) {
+    # extract outcome name without prefix
+    outcome_name <- gsub(paste0("^", model_prefix), "", model_name)
     
-    original_result <- results_copy$results[[model_name]]
-    if (is.null(original_result) || !is.list(original_result)) {
-      if (verbose) cli::cli_alert_warning(paste("skipping", model_name, "- invalid or missing results"))
-      next
-    }
-    
-    # get the grf model object
-    grf_model <- results_copy$full_models[[model_name]]
-    if (is.null(grf_model)) {
-      if (verbose) cli::cli_alert_warning(paste("skipping", model_name, "- no model object found"))
-      next
-    }
-    
-    # create new model name with _r suffix
-    outcome_name <- gsub(model_prefix, "", model_name)
-    flipped_model_name <- paste0(model_prefix, outcome_name, "_r")
-    
-    # create new result object for flipped model
-    flipped_result <- list()
-    
-    # 1. flip and recompute ATE
-    if (!is.null(original_result$ate)) {
-      flipped_result$ate <- -original_result$ate
+    # find the outcome data
+    outcome_data <- NULL
+    if (outcome_name %in% names(model_results$data)) {
+      outcome_data <- model_results$data[[outcome_name]]
+    } else if (model_name %in% names(model_results$data)) {
+      outcome_data <- model_results$data[[model_name]]
     } else {
-      # compute if missing
-      tryCatch({
-        flipped_result$ate <- -round(grf::average_treatment_effect(grf_model), 3)
-      }, error = function(e) {
-        if (verbose) cli::cli_alert_warning("could not compute ATE for {model_name}: {e$message}")
-      })
-    }
-    
-    # 2. recompute custom table (E-values) with flipped ATE
-    tryCatch({
-      # we need to create a new E-value table for the flipped outcome
-      flipped_result$custom_table <- margot::margot_model_evalue(
-        grf_model, 
-        scale = "RD", 
-        new_name = paste0(outcome_name, "_r"), 
-        subset = NULL
+      # try variations
+      possible_keys <- c(
+        paste0("t0_", outcome_name),
+        paste0("t1_", outcome_name),
+        paste0("t2_", outcome_name),
+        gsub("_z$", "", outcome_name)
       )
-      # manually flip the effect estimate in the table
-      if ("E[Y(1)]-E[Y(0)]" %in% colnames(flipped_result$custom_table)) {
-        flipped_result$custom_table[, "E[Y(1)]-E[Y(0)]"] <- -flipped_result$custom_table[, "E[Y(1)]-E[Y(0)]"]
-      }
-    }, error = function(e) {
-      if (verbose) cli::cli_alert_warning("could not recompute E-values for {model_name}: {e$message}")
-      flipped_result$custom_table <- original_result$custom_table
-    })
-    
-    # 3. flip tau_hat
-    if (!is.null(original_result$tau_hat)) {
-      flipped_result$tau_hat <- -original_result$tau_hat
-    } else {
-      flipped_result$tau_hat <- -predict(grf_model)$predictions
-    }
-    
-    # 4. flip conditional means (swap columns for binary treatment)
-    if (!is.null(original_result$conditional_means)) {
-      cm <- original_result$conditional_means
-      if (ncol(cm) == 2) {
-        flipped_result$conditional_means <- cm[, c(2, 1), drop = FALSE]
-        colnames(flipped_result$conditional_means) <- colnames(cm)
-      } else {
-        if (verbose) cli::cli_alert_warning("conditional means has {ncol(cm)} columns, expected 2 for binary treatment")
-        flipped_result$conditional_means <- cm
+      for (key in possible_keys) {
+        if (key %in% names(model_results$data)) {
+          outcome_data <- model_results$data[[key]]
+          break
+        }
       }
     }
     
-    # 5. recompute RATE and QINI RATE with flipped tau
-    if (!is.null(original_result$rate_result)) {
-      tryCatch({
-        flipped_result$rate_result <- grf::rank_average_treatment_effect(grf_model, flipped_result$tau_hat)
-        if (verbose) cli::cli_alert_info("recomputed RATE for {flipped_model_name}")
-      }, error = function(e) {
-        if (verbose) cli::cli_alert_warning("error computing RATE for {flipped_model_name}: {e$message}")
-      })
+    if (is.null(outcome_data)) {
+      if (verbose) cli::cli_alert_warning("Cannot find outcome data for {model_name}, skipping")
+      next
     }
     
-    if (!is.null(original_result$rate_qini)) {
-      tryCatch({
-        flipped_result$rate_qini <- grf::rank_average_treatment_effect(grf_model, 
-                                                                       flipped_result$tau_hat, 
-                                                                       target = "QINI")
-        if (verbose) cli::cli_alert_info("recomputed QINI RATE for {flipped_model_name}")
-      }, error = function(e) {
-        if (verbose) cli::cli_alert_warning("error computing QINI RATE for {flipped_model_name}: {e$message}")
-      })
-    }
+    # flip the outcome
+    flipped_outcome_name <- paste0(outcome_name, "_r")
+    outcome_list[[flipped_outcome_name]] <- -outcome_data
+    outcome_names <- c(outcome_names, flipped_outcome_name)
     
-    # 6. flip DR scores for policy tree recalculation
-    if (!is.null(original_result$dr_scores)) {
-      flipped_result$dr_scores <- -original_result$dr_scores
-      flipped_result$dr_scores_flipped <- flipped_result$dr_scores  # for compatibility
-    }
-    
-    # 7. recalculate policy trees with flipped DR scores
-    if (!is.null(flipped_result$dr_scores) && !is.null(covariates)) {
-      tryCatch({
-        # recalculate depth-1 policy tree
-        flipped_result$policy_tree_depth_1 <- policytree::policy_tree(
-          covariates[not_missing, , drop = FALSE],
-          flipped_result$dr_scores[not_missing, ],
-          depth = 1
-        )
-        
-        # recalculate depth-2 policy tree
-        if (!is.null(original_result$top_vars)) {
-          train_size <- floor(0.7 * length(not_missing))
-          train_idx <- sample(not_missing, train_size)
-          
-          flipped_result$policy_tree_depth_2 <- policytree::policy_tree(
-            covariates[train_idx, original_result$top_vars, drop = FALSE],
-            flipped_result$dr_scores[train_idx, ],
-            depth = 2
-          )
-          
-          # update plot_data with new predictions
-          test_idx <- setdiff(not_missing, train_idx)
-          flipped_result$plot_data <- list(
-            X_test = covariates[test_idx, original_result$top_vars, drop = FALSE],
-            X_test_full = covariates[test_idx, , drop = FALSE],
-            predictions = predict(flipped_result$policy_tree_depth_2, 
-                                covariates[test_idx, original_result$top_vars, drop = FALSE])
-          )
-        }
-        
-        if (verbose) cli::cli_alert_info("recalculated policy trees for {flipped_model_name}")
-      }, error = function(e) {
-        if (verbose) cli::cli_alert_warning("error recalculating policy trees for {flipped_model_name}: {e$message}")
-        flipped_result$policy_trees_need_recalculation <- TRUE
-      })
-    }
-    
-    # 8. recalculate QINI with flipped tau_hat
-    if (!is.null(original_result$qini_data)) {
-      tryCatch({
-        # get treatment assignment
-        W <- results_copy$W
-        
-        # try to get outcome data - check multiple possible locations
-        outcome_data <- NULL
-        
-        # try with outcome name (no prefix)
-        if (!is.null(results_copy$data[[outcome_name]])) {
-          outcome_data <- results_copy$data[[outcome_name]]
-          if (verbose) cli::cli_alert_info("found outcome data using key: {outcome_name}")
-        }
-        # try with full model name
-        else if (!is.null(results_copy$data[[model_name]])) {
-          outcome_data <- results_copy$data[[model_name]]
-          if (verbose) cli::cli_alert_info("found outcome data using key: {model_name}")
-        }
-        # try checking what keys are available
-        else if (!is.null(results_copy$data)) {
-          available_keys <- names(results_copy$data)
-          if (verbose) cli::cli_alert_info("available data keys: {paste(available_keys, collapse = ', ')}")
-          
-          # try to find a matching key
-          possible_keys <- c(outcome_name, model_name, 
-                           gsub("_r$", "", outcome_name),  # try without _r suffix
-                           paste0("t2_", outcome_name),     # try with t2_ prefix
-                           paste0("t2_", gsub("_r$", "", outcome_name)))
-          
-          for (key in possible_keys) {
-            if (key %in% available_keys) {
-              outcome_data <- results_copy$data[[key]]
-              if (verbose) cli::cli_alert_info("found outcome data using key: {key}")
-              break
-            }
-          }
-        }
-        
-        if (!is.null(outcome_data) && !is.null(W)) {
-          # recalculate qini curves with flipped tau
-          qini_result <- compute_qini_curves_binary(
-            flipped_result$tau_hat, 
-            as.matrix(outcome_data), 
-            W, 
-            verbose = FALSE
-          )
-          if (!is.null(qini_result)) {
-            flipped_result$qini_data <- qini_result$qini_data
-            flipped_result$qini_objects <- qini_result$qini_objects
-            if (verbose) cli::cli_alert_info("recalculated QINI curves for {flipped_model_name}")
-          }
-        } else {
-          # fallback: copy original QINI data (it's better than NULL)
-          if (verbose) cli::cli_alert_warning("cannot recalculate QINI for {flipped_model_name}: outcome data or W not found")
-          if (verbose) cli::cli_alert_info("copying original QINI data as fallback")
-          flipped_result$qini_data <- original_result$qini_data
-          flipped_result$qini_objects <- original_result$qini_objects
-          flipped_result$qini_needs_recalculation <- TRUE
-        }
-      }, error = function(e) {
-        if (verbose) cli::cli_alert_warning("error recalculating QINI for {flipped_model_name}: {e$message}")
-        # fallback: copy original QINI data
-        flipped_result$qini_data <- original_result$qini_data
-        flipped_result$qini_objects <- original_result$qini_objects
-        flipped_result$qini_needs_recalculation <- TRUE
-      })
-    }
-    
-    # 9. copy other necessary fields
-    flipped_result$test_calibration <- original_result$test_calibration
-    flipped_result$top_vars <- original_result$top_vars
-    flipped_result$blp_top <- original_result$blp_top  # BLP may need recalculation in future
-    
-    # store the new model
-    new_models[[flipped_model_name]] <- flipped_result
-    new_full_models[[flipped_model_name]] <- grf_model
-    models_to_remove <- c(models_to_remove, model_name)
-    
-    if (verbose) cli::cli_alert_success("created flipped model {flipped_model_name}")
+    if (verbose) cli::cli_alert_info("Prepared flipped outcome: {outcome_name} → {flipped_outcome_name}")
   }
   
-  # add new models and remove originals
-  for (nm in names(new_models)) {
-    results_copy$results[[nm]] <- new_models[[nm]]
-    results_copy$full_models[[nm]] <- new_full_models[[nm]]
+  if (length(outcome_list) == 0) {
+    warning("No outcomes could be processed")
+    return(model_results)
   }
   
-  for (nm in models_to_remove) {
-    results_copy$results[[nm]] <- NULL
-    results_copy$full_models[[nm]] <- NULL
+  # create data frame with flipped outcomes
+  flipped_data <- as.data.frame(outcome_list)
+  
+  # extract other parameters from original run if available
+  first_model <- model_results$results[[existing_models[1]]]
+  grf_defaults <- list()
+  if (!is.null(first_model$grf_params)) {
+    grf_defaults <- first_model$grf_params
   }
   
-  # update outcome_vars to reflect new names
-  if (!is.null(results_copy$outcome_vars)) {
-    flipped_names <- gsub(model_prefix, "", models_to_remove)
-    results_copy$outcome_vars <- setdiff(results_copy$outcome_vars, flipped_names)
-    results_copy$outcome_vars <- c(results_copy$outcome_vars, paste0(flipped_names, "_r"))
+  # determine other parameters
+  save_data <- !is.null(model_results$data)
+  compute_rate <- !is.null(first_model$rate_result)
+  save_models <- !is.null(model_results$full_models)
+  top_n_vars <- length(first_model$top_vars) %||% 15
+  train_proportion <- 0.7  # default
+  compute_conditional_means <- !is.null(first_model$conditional_means)
+  
+  # check if we should use parallel processing
+  if (parallel && length(outcome_names) > 1) {
+    if (verbose) cli::cli_alert_info("Using parallel processing with {n_cores} cores")
+    
+    # call parallel version
+    flipped_results <- margot_causal_forest_parallel(
+      data = flipped_data,
+      outcome_vars = outcome_names,
+      covariates = covariates,
+      W = W,
+      weights = weights,
+      grf_defaults = grf_defaults,
+      save_data = save_data,
+      compute_rate = compute_rate,
+      top_n_vars = top_n_vars,
+      save_models = save_models,
+      train_proportion = train_proportion,
+      compute_conditional_means = compute_conditional_means,
+      n_cores = n_cores,
+      verbose = verbose
+    )
+  } else {
+    # call sequential version
+    flipped_results <- margot_causal_forest(
+      data = flipped_data,
+      outcome_vars = outcome_names,
+      covariates = covariates,
+      W = W,
+      weights = weights,
+      grf_defaults = grf_defaults,
+      save_data = save_data,
+      compute_rate = compute_rate,
+      top_n_vars = top_n_vars,
+      save_models = save_models,
+      train_proportion = train_proportion,
+      compute_conditional_means = compute_conditional_means,
+      verbose = verbose
+    )
   }
   
-  # rebuild combined_table
-  if (!is.null(results_copy$combined_table)) {
-    all_tables <- lapply(results_copy$results, function(x) x$custom_table)
-    all_tables <- all_tables[!sapply(all_tables, is.null)]
-    if (length(all_tables) > 0) {
-      results_copy$combined_table <- do.call(rbind, all_tables)
-      rownames(results_copy$combined_table) <- gsub(model_prefix, "", names(all_tables))
+  # merge flipped results into the original results
+  if (!is.null(flipped_results$results)) {
+    for (flipped_model_name in names(flipped_results$results)) {
+      results_copy$results[[paste0(model_prefix, flipped_model_name)]] <- 
+        flipped_results$results[[flipped_model_name]]
+    }
+    
+    # also merge full_models if present
+    if (!is.null(flipped_results$full_models)) {
+      for (flipped_model_name in names(flipped_results$full_models)) {
+        results_copy$full_models[[paste0(model_prefix, flipped_model_name)]] <- 
+          flipped_results$full_models[[flipped_model_name]]
+      }
+    }
+    
+    # update combined table
+    if (!is.null(results_copy$results) && length(results_copy$results) > 0) {
+      results_copy$combined_table <- margot_correct_combined_table(results_copy)
+    }
+    
+    if (verbose) {
+      cli::cli_alert_success("Flipping complete for {length(flipped_results$results)} model{?s}")
     }
   }
-  
-  if (verbose) cli::cli_alert_success("finished creating flipped models with _r suffix")
   
   return(results_copy)
 }
-
 
 
 # helper: trim cf_out down to essentials for each model

@@ -8,33 +8,39 @@ margot_flip_forests(
   model_results,
   flip_outcomes,
   model_prefix = "model_",
+  parallel = FALSE,
+  n_cores = future::availableCores() - 1,
   verbose = TRUE
 )
 }
 \arguments{
 \item{model_results}{A list containing the model results from margot_causal_forest().}
 
-\item{flip_outcomes}{A character vector of outcome variable names for which CATE estimates should be flipped.}
+\item{flip_outcomes}{A character vector of outcome variable names for which models should be flipped.}
 
 \item{model_prefix}{A character string indicating the prefix used for model names in the results list. Default is "model_".}
+
+\item{parallel}{Logical indicating whether to use parallel processing. Default is FALSE.}
+
+\item{n_cores}{Number of cores to use for parallel processing. Default is availableCores() - 1.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 }
 \value{
-A modified copy of model_results with flipped models (with "_r" suffix) replacing originals.
+A modified copy of model_results with flipped models (with "_r" suffix) added.
 }
 \description{
-Creates new models with reversed treatment effects, appending "_r" to model names.
-The original models are removed and replaced with properly flipped versions where
-all statistics (ATE, RATE, E-values, conditional means) are recomputed.
+Creates new models with reversed treatment effects by flipping the outcome variable
+and recomputing the entire causal forest from scratch. New models are appended with
+"_r" suffix to indicate reduced/reversed outcomes.
 }
 \details{
-This function creates entirely new model entries with "_r" suffix rather than modifying
-existing models. All statistics are properly recomputed for the flipped scenario:
-- ATE is negated
-- CATE estimates (tau_hat) are negated
-- E-value table is recomputed with the flipped ATE
-- Conditional means columns are swapped (for binary treatment)
-- RATE and QINI are recomputed with flipped tau_hat
-- Policy trees are marked for recalculation
+This function creates entirely new models by:
+1. Extracting the original data for each outcome
+2. Flipping the outcome variable (Y_flipped = -Y)
+3. Calling margot_causal_forest() with the flipped outcome
+4. Storing the result with "_r" suffix
+
+This ensures all components (forest model, CATE estimates, QINI curves, policy trees,
+E-values, etc.) are consistently computed based on the flipped outcome.
 }

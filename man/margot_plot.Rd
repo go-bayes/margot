@@ -28,7 +28,8 @@ margot_plot(
   bold_rows = FALSE,
   rename_cols = FALSE,
   col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
-  rename_ate = FALSE
+  rename_ate = FALSE,
+  rename_evalue = FALSE
 )
 }
 \arguments{

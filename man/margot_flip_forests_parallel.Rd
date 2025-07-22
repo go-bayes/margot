@@ -20,7 +20,7 @@ margot_flip_forests_parallel(
 \arguments{
 \item{model_results}{A list containing the model results from margot_causal_forest().}
 
-\item{flip_outcomes}{A character vector of outcome variable names for which CATE estimates should be flipped.}
+\item{flip_outcomes}{A character vector of outcome variable names for which models should be flipped.}
 
 \item{model_prefix}{A character string indicating the prefix used for model names in the results list. Default is "model_".}
 
@@ -29,6 +29,8 @@ margot_flip_forests_parallel(
 \item{n_policy_cores}{integer. number of workers for policy-tree refits.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
+
+\item{n_cores}{Number of cores to use for parallel processing. Default is availableCores() - 1.}
 
 \item{max_size_GB}{numeric. globals cap passed to `future.globals.maxSize` (default 2 GB).}
 

@@ -13,7 +13,8 @@ margot_interpret_marginal(
   e_val_bound_threshold = 1,
   adjust = c("none", "bonferroni"),
   alpha = 0.05,
-  include_adjust_note = TRUE
+  include_adjust_note = TRUE,
+  effect_type = "ATE"
 )
 }
 \arguments{

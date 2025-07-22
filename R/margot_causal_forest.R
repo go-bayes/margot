@@ -15,7 +15,7 @@
 #'   * `combined_table`  – rbind‑ed e‑value table across outcomes
 #'   * `outcome_vars`    – vector of (successful) outcome names
 #'   * `not_missing`     – indices of complete‑case rows
-#'   * (`data`, `covariates`, `weights`) when `save_data = TRUE`
+#'   * (`data`, `covariates`, `weights`, `W`) when `save_data = TRUE`
 #'   * `full_models` when `save_models = TRUE`
 #'
 #' @details Messages produced inside workers are captured by **future** and
@@ -179,8 +179,8 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
     not_missing=not_missing
   )
   if (save_data) {
-    output$data<-data; output$covariates<-covariates; output$weights<-weights
-    if (verbose) cli::cli_alert_info("raw data/covariates/weights saved")
+    output$data<-data; output$covariates<-covariates; output$weights<-weights; output$W<-W
+    if (verbose) cli::cli_alert_info("raw data/covariates/weights/W saved")
   }
   if (save_models) {
     output$full_models<-purrr::map(results_list, `[[`, "model")
@@ -203,11 +203,26 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
     tau_hat    <- as.vector(tau_hat)
     treatment  <- as.factor(W)
     IPW_scores <- maq::get_ipw_scores(Y, treatment)
-    cate_qini  <- maq::maq(tau_hat, 1, IPW_scores, R = 200)
-    ate_qini   <- maq::maq(rep(mean(tau_hat), length(tau_hat)), 1, IPW_scores, R = 200)
+    
+    # use modern maq API with named parameters
+    cate_qini  <- maq::maq(
+      reward = as.matrix(tau_hat),
+      cost = matrix(1, length(tau_hat), 1),
+      DR.scores = IPW_scores,
+      R = 200
+    )
+    
+    ate_qini   <- maq::maq(
+      reward = matrix(rep(mean(tau_hat), length(tau_hat)), ncol = 1),
+      cost = matrix(1, length(tau_hat), 1), 
+      DR.scores = IPW_scores,
+      R = 200
+    )
+    
     qini_objs  <- list(cate = cate_qini, ate = ate_qini)
     max_idx    <- max(sapply(qini_objs, function(q) length(q[["_path"]]$gain)))
     if (!max_idx) return(NULL)
+    if (verbose) cli::cli_alert_info("Extracting qini data for curves: {paste(names(qini_objs), collapse = ', ')}")
     qini_dat   <- purrr::map2_dfr(qini_objs, names(qini_objs),
                                   ~ extract_qini_data_binary(.x, .y, max_idx, verbose))
     if (!nrow(qini_dat)) return(NULL)
@@ -221,20 +236,28 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
 #' Extract Qini Data for Binary Treatment Plotting
 #' @keywords internal
 extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) {
-  if (name == "ate") {
-    max_gain   <- max(qini_obj[["_path"]]$gain, na.rm = TRUE)
-    proportion <- seq(0, 1, length.out = max_index)
-    gain       <- proportion * max_gain
-  } else if (name == "cate") {
-    gain <- qini_obj[["_path"]]$gain
-    if (length(gain) < max_index)
-      gain <- c(gain, rep(tail(gain, 1), max_index - length(gain)))
-    gain[gain > max(gain)] <- max(gain)
-    proportion <- seq_len(max_index) / max_index
-  } else {
-    if (verbose) cli::cli_alert_warning("unknown curve type {name}")
+  # use actual gain values for all curves
+  gain <- qini_obj[["_path"]]$gain
+  
+  if (is.null(gain) || length(gain) == 0) {
+    if (verbose) cli::cli_alert_warning("no gain data found for curve {name}")
     return(NULL)
   }
+  
+  # handle length differences
+  if (length(gain) < max_index) {
+    # pad with last value
+    gain <- c(gain, rep(tail(gain, 1), max_index - length(gain)))
+  } else if (length(gain) > max_index) {
+    # interpolate to max_index points
+    indices <- round(seq(1, length(gain), length.out = max_index))
+    gain <- gain[indices]
+  }
+  
+  # ensure we have exactly max_index points
+  gain <- gain[1:max_index]
+  proportion <- seq(0, 1, length.out = max_index)
+  
   data.frame(proportion = proportion, gain = gain, curve = name)
 }
 
@@ -341,7 +364,13 @@ margot_inspect_qini <- function(model_results,
 #'   \code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
 #'
-#' @return A list containing model results, a combined table, and other relevant information.
+#' @return A list containing:
+#'   * `results` - per-outcome diagnostics and objects
+#'   * `combined_table` - combined e-value table across outcomes
+#'   * `outcome_vars` - vector of outcome names
+#'   * `not_missing` - indices of complete-case rows
+#'   * (`data`, `covariates`, `weights`, `W`) when `save_data = TRUE`
+#'   * `full_models` when `save_models = TRUE`
 #'
 #' @importFrom grf causal_forest average_treatment_effect test_calibration rank_average_treatment_effect variable_importance best_linear_projection
 #' @importFrom policytree double_robust_scores policy_tree
@@ -557,7 +586,8 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
     output$data <- data
     output$covariates <- covariates
     output$weights <- weights
-    if (verbose) cli::cli_alert_info("data, covariates, and weights saved in output")
+    output$W <- W
+    if (verbose) cli::cli_alert_info("data, covariates, weights, and W saved in output")
   }
   if (save_models) {
     output$full_models <- full_models

@@ -19,7 +19,8 @@ margot_policy(
   original_df = NULL,
   model_names = NULL,
   output_objects = c("policy_tree", "decision_tree", "combined_plot", "qini_plot",
-    "diff_gain_summaries")
+    "diff_gain_summaries"),
+  qini_args = list()
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ margot_policy(
 \item{output_objects}{Character vector specifying which outputs to include.
 Options: "policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries".
 Default: all.}
+
+\item{qini_args}{List of additional arguments to pass to margot_plot_qini(). Default: list().}
 }
 \value{
 A named list; each element corresponds to a model and contains only

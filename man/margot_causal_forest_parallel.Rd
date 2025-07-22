@@ -65,7 +65,7 @@ list with elements:
   * `combined_table`  – rbind‑ed e‑value table across outcomes
   * `outcome_vars`    – vector of (successful) outcome names
   * `not_missing`     – indices of complete‑case rows
-  * (`data`, `covariates`, `weights`) when `save_data = TRUE`
+  * (`data`, `covariates`, `weights`, `W`) when `save_data = TRUE`
   * `full_models` when `save_models = TRUE`
 }
 \description{

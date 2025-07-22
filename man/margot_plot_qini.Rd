@@ -12,7 +12,15 @@ margot_plot_qini(
   show_spend_lines = TRUE,
   spend_line_color = "red",
   spend_line_alpha = 0.5,
-  theme = "classic"
+  theme = "classic",
+  show_ci = FALSE,
+  ci_alpha = 0.05,
+  ci_n_points = 20,
+  ci_ribbon_alpha = 0.3,
+  ci_ribbon_color = NULL,
+  horizontal_line = TRUE,
+  grid_step = NULL,
+  return_data = FALSE
 )
 }
 \arguments{
@@ -33,14 +41,55 @@ to plot. This should match one of the model names in mc_result$results.}
 \item{spend_line_alpha}{Alpha transparency for spend lines. Default is 0.5.}
 
 \item{theme}{Character string specifying the ggplot2 theme. Default is "classic". Options include "classic", "minimal", "bw", "gray", "light", "dark", "void".}
+
+\item{show_ci}{Logical indicating whether to show confidence intervals. Default is FALSE.}
+
+\item{ci_alpha}{Significance level for confidence intervals. Default is 0.05.}
+
+\item{ci_n_points}{Number of points at which to compute confidence intervals. Default is 20.}
+
+\item{ci_ribbon_alpha}{Alpha transparency for confidence interval ribbons. Default is 0.3.}
+
+\item{ci_ribbon_color}{Color for confidence interval ribbons. If NULL (default), uses the curve color.}
+
+\item{horizontal_line}{Logical indicating whether to draw horizontal lines where Qini curves plateau
+when the path is complete. Default is TRUE. Consistent with maq::plot() behavior.}
+
+\item{grid_step}{Integer specifying the step size for subsampling the curve data. If NULL (default),
+uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
+
+\item{return_data}{Logical indicating whether to return the plot data as a data.frame instead of
+the ggplot object. Default is FALSE. When TRUE, returns data with columns: proportion, gain,
+lower, upper, curve.}
 }
 \value{
-A ggplot object representing the Qini curves for the specified outcome variable.
+If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,
+  returns a data.frame with the plot data.
 }
 \description{
 This function creates a ggplot object displaying Qini curves based on the
 results of a margot_multi_arm_causal_forest() model. It includes label
-transformations and informative CLI messages.
+transformations and informative CLI messages. The function is designed to be
+consistent with maq::plot() functionality while providing additional features
+like theme selection and spend level indicators.
+}
+\details{
+This function provides maq::plot() compatible features including:
+\itemize{
+  \item Horizontal line extension for complete paths
+  \item Grid step subsampling for large datasets
+  \item Data frame return option matching maq::plot() output format
+  \item Standard error extraction from maq objects
+}
+
+Key differences from maq::plot():
+\itemize{
+  \item Uses ggplot2 instead of base R graphics
+  \item More descriptive axis labels
+  \item Additional features like theme selection and spend indicators
+  \item Confidence intervals computed via maq::average_gain() for accuracy
+  \item Binary treatment colors: CATE = blue (#4f88c6), ATE = gold (#d8a739)
+}
 }
 \examples{
 \dontrun{

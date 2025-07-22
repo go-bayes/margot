@@ -21,6 +21,7 @@
 #' @param output_objects Character vector specifying which outputs to include.
 #'   Options: "policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries".
 #'   Default: all.
+#' @param qini_args List of additional arguments to pass to margot_plot_qini(). Default: list().
 #'
 #' @return A named list; each element corresponds to a model and contains only
 #' the requested outputs.
@@ -43,7 +44,8 @@ margot_policy <- function(
     label_mapping      = NULL,
     original_df        = NULL,
     model_names        = NULL,
-    output_objects     = c("policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries")
+    output_objects     = c("policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries"),
+    qini_args          = list()
 ) {
   cli::cli_alert_info("starting margot_policy function")
 
@@ -99,13 +101,22 @@ margot_policy <- function(
 
       # qini curve
       if ("qini_plot" %in% output_objects) {
+        # prepare qini plot arguments
+        qini_plot_args <- list(
+          mc_result     = result_outcomes,
+          outcome_var   = model_name,
+          label_mapping = label_mapping,
+          spend_levels  = spend_levels
+        )
+        
+        # merge with user-provided qini_args
+        if (length(qini_args) > 0) {
+          # user args override defaults
+          qini_plot_args <- modifyList(qini_plot_args, qini_args)
+        }
+        
         model_output$qini_plot <- tryCatch(
-          margot_plot_qini(
-            mc_result     = result_outcomes,
-            outcome_var   = model_name,
-            label_mapping = label_mapping,
-            spend_levels  = spend_levels
-          ),
+          do.call(margot_plot_qini, qini_plot_args),
           error = function(e) {
             cli::cli_alert_warning("qini plot failed for {model_name}: {e$message}")
             NULL

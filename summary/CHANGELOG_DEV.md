@@ -188,8 +188,203 @@
   - Example: "Anxiety (reduced)" now displays as "(reduced) Anxiety"
   - Improves readability and understanding of reduced/flipped outcomes
 
+### New Functions (2025-07-21)
+- Added `margot_recompute_ate()` function for recomputing ATEs with different target samples:
+  - Allows recomputation without refitting expensive causal forest models
+  - Supports target_sample options: "all", "treated", "control", "overlap"
+  - Recomputes E-values with the new ATE estimates
+  - Preserves all original model structure while updating estimates
+  - Includes metadata about recomputation parameters
+  - Uses margot-style parameter naming (target_sample not target.sample)
+  - Renames effect columns to ATE/ATT/ATC/ATO based on target sample
+- Added `margot_recompute_ate_batch()` for comparing ATEs across multiple target samples:
+  - Convenience function to compute ATEs for all target sample types
+  - Creates comparison table showing estimates and E-values side by side
+  - Uses clear column names: ATE, ATT, ATC, ATO with corresponding E-values
+  - Useful for sensitivity analysis and exploring treatment effect heterogeneity
+
+### margot_plot() Enhancements (2025-07-21)
+- **New Column Support**: margot_plot() now accepts ATE/ATT/ATC/ATO column names in addition to traditional E[Y(1)]-E[Y(0)] format
+  - Automatically detects and uses the appropriate effect column
+  - Maintains full backwards compatibility with existing code
+- **Enhanced rename_ate Parameter**: 
+  - Now accepts boolean (TRUE uses appropriate label based on column type)
+  - Accepts custom string for complete control
+  - Auto-detects appropriate label (ATE/ATT/ATC/ATO) when set to TRUE
+- **New rename_evalue Parameter**: 
+  - When TRUE, renames E_Value to "E-Value" and E_Val_bound to "E-Value Bound"
+  - Makes column names more publication-ready
+- **Updated Supporting Functions**:
+  - margot_interpret_marginal() now correctly describes treatment effect type
+  - back_transform_estimates() handles new column types for original scale transformations
+  - group_tab() detects and processes new effect column types
+  - All changes maintain backwards compatibility
+
+### margot_interpret_marginal() Improvements (2025-07-21)
+- **Clearer messaging when no reliable effects found**:
+  - Now explicitly states "No reliable effects are evident." when no outcomes meet reliability threshold
+  - Previously returned only adjustment notes without clear indication of no effects
+- **Updated language for presenting effects**:
+  - Changed from "showed reliable causal evidence" to "present reliable causal evidence"
+  - More direct and present-tense wording improves clarity
+
+### Qini Plot Enhancements (2025-07-21)
+- **margot_plot_qini()**: Added confidence interval support
+  - New parameters: show_ci, ci_alpha, ci_n_points, ci_ribbon_alpha, ci_ribbon_color
+  - Confidence intervals computed using maq::average_gain()
+  - Visualized with ggplot2::geom_ribbon()
+  - Maintains backwards compatibility (CI display off by default)
+  - Fixed geom_ribbon aesthetic inheritance issue with inherit.aes = FALSE
+  
+- **margot_policy()**: Added qini_args parameter
+  - Allows passing additional arguments to margot_plot_qini()
+  - Enables confidence interval display in policy batch processing
+  - User-provided args override defaults via modifyList()
+
+### New AIPW Enhancement (2025-07-21)
+- **margot_recompute_qini_aipw()**: New function to recompute QINI curves using AIPW scores
+  - Provides doubly robust estimates (consistent if either propensity or outcome model is correct)
+  - Especially valuable for observational data with potential confounding
+  - Implements regression forest method for estimating conditional means (mu.hat)
+  - Trains separate forests on control/treated units to estimate E[Y|W=0,X] and E[Y|W=1,X]
+  - Fully compatible with existing plotting and interpretation functions
+  - Adds metadata tracking (qini_method = "AIPW", timestamp, details)
+  - Created example script in inst/examples/test_aipw_qini.R
+
+### AIPW Implementation Updates (2025-07-22) - v1.0.110
+- **Fixed maq parameter names**: Changed from tau.hat/evaluation.scores to reward/DR.scores
+- **Enhanced data extraction**: Function now handles multiple data storage patterns:
+  - Models stored in result$model or full_models list
+  - Data stored at top level (data, covariates, not_missing)
+  - Automatic reconstruction of X, Y, W from saved components
+- **Smart treatment detection**: 
+  - Added treatment_var parameter for manual specification
+  - Auto-detects binary treatment variables when not specified
+  - Provides informative messages about detected variables
+- **Propensity score handling**:
+  - Uses model's W.hat when available
+  - Estimates via regression forest when missing
+  - Trims extreme values (0.01, 0.99) for stability
+- **Overlap diagnostics**: Warns when propensity scores < 0.05 or > 0.95
+
+### QINI API Modernization (2025-07-22) - v1.0.110
+- **Fixed compute_qini_curves_binary()**: Updated to use modern maq API
+  - Changed from positional args: `maq(tau_hat, 1, IPW_scores, R = 200)`
+  - To named parameters: `maq(reward = ..., cost = ..., DR.scores = ..., R = 200)`
+  - Affects all QINI computations in margot_causal_forest and margot_flip_forests
+  - Resolves inconsistencies between different QINI computations
+- **Created margot_recompute_qini_ipw()**: IPW-only version
+  - Simpler alternative to AIPW for debugging and speed
+  - Uses same modern API and data handling patterns
+  - Useful for comparing IPW vs AIPW approaches
+
+### Confidence Interval Fix (2025-07-22) - v1.0.110
+- **Fixed margot_plot_qini CI computation**: Updated to handle both naming conventions
+  - Now checks for both new names (cate/ate) and old names (treatment/baseline)
+  - Fixes issue where CIs weren't computed when using modernized maq API
+  - Ensures backward compatibility with older models
+
+### QINI Gain Calculation Fixes (2025-07-22) - v1.0.110
+- **Fixed extract_qini_data_binary()**: Now uses actual gain values for both CATE and ATE curves
+  - Removed linear approximation for ATE that caused discrepancies
+  - Ensures plotted values match `maq::average_gain()` results
+  - Properly handles gain vector length differences through interpolation
+- **Fixed margot_flip_forests() QINI recalculation**: Now correctly flips outcome values
+  - Previously used original (non-flipped) outcomes, causing incorrect QINI curves
+  - Now applies outcome flipping: `flipped_outcome_data <- -outcome_data`
+  - Ensures consistency between flipped models and their QINI calculations
+- **Added margot_qini_diagnostic()**: New diagnostic function to compare QINI gains
+  - Compares gains from plot data, direct maq calculations, and diff summaries
+  - Helps identify discrepancies between different calculation methods
+  - Flags differences above specified tolerance threshold
+  - Supports both old (treatment/baseline) and new (cate/ate) naming conventions
+
+### QINI Visualization Fixes (2025-07-22) - v1.0.110 (continued)
+- **Fixed ATE line in QINI plots**: 
+  - ATE (Average Treatment Effect) line now correctly displays as straight
+  - Previously showed jagged line due to using raw gain values from maq
+  - Now computes linear gains: `gain = proportion * ATE` for the baseline curve
+  - Ensures visual clarity that ATE represents constant treatment effect
+- **Fixed CI coverage at plot extremes**:
+  - Extended CI computation range from 0.05-0.95 to 0.01-0.99
+  - Added endpoint extrapolation for 0% and 100% coverage
+  - Ensures confidence ribbons span the full plot range
+  - Fixed missing CIs at plot boundaries
+
+### Enhanced maq::plot() Compatibility (2025-07-22) - v1.0.110 (continued)
+- **Added horizontal_line parameter** (default TRUE):
+  - Extends Qini curves horizontally when path is complete
+  - Consistent with maq::plot() behavior for complete budget paths
+  - Automatically detects complete paths from qini objects
+- **Added grid_step parameter** (default auto-calculated):
+  - Subsamples curve data for better performance with large datasets
+  - Default: max(floor(nrow(data) / 1000), 1)
+  - Ensures last point of each curve is always included
+- **Added return_data parameter** (default FALSE):
+  - When TRUE, returns data.frame instead of ggplot object
+  - Output format matches maq::plot(): proportion, gain, lower, upper, curve
+  - Enables custom plotting and further analysis
+- **Enhanced std.err extraction**:
+  - Now extracts std.err directly from maq objects when available
+  - Provides additional consistency with maq package
+  - Uses interpolation to match proportions with main data
+
+### Bug Fix for margot_flip_forests() (2025-07-22) - v1.0.110 (continued)
+- **Fixed missing W component error**:
+  - `margot_causal_forest()` now saves treatment assignment vector `W` when `save_data = TRUE`
+  - Applies to both regular and parallel versions
+  - Fixes error: "model_results must contain 'data', 'covariates', and 'W' components"
+  - Updated documentation to reflect that W is included in saved output
+  - Ensures `margot_flip_forests()` can perform full model recomputation
+
+### Debugging Tools Added (2025-07-22) - v1.0.110 (continued)
+- **Added margot_debug_qini() function**:
+  - Helps diagnose issues with QINI curves
+  - Analyzes ATE straightness and deviations
+  - Shows raw maq object data
+  - Creates diagnostic plots
+  - Useful for troubleshooting QINI visualization issues
+
+### QINI Plot Improvements (2025-07-22) - v1.0.110 (continued)
+- **Fixed CI computation error when only CATE exists**:
+  - Added check for empty data before accessing proportion values
+  - Fixed case sensitivity issue (cate vs CATE) in curve naming
+  - Now properly handles single-curve scenarios
+  - Fixed interpolation error when insufficient std.err values
+- **Fixed CI centering issue**:
+  - CIs now properly centered on actual gain values from qini_data
+  - Uses std.err from maq::average_gain() but re-centers on plotted values
+  - Fixes issue where CI bands appeared disconnected from the curves
+- **Improved outcome variable handling**:
+  - Now accepts outcome variables with or without "model_" prefix
+  - Automatically tries both versions before failing
+- **Updated color scheme for binary treatments**:
+  - CATE curve: blue (#4f88c6)
+  - ATE curve: gold (#d8a739)
+  - Replaced Okabe-Ito palette for binary plots with fixed colors
+  - Fixed color/fill scale consistency so lines and ribbons match
+  - Multi-arm treatments still use Okabe-Ito palette
+- **Reverted to maq-style jagged curves**:
+  - Removed forced straight line for ATE
+  - Now shows actual gain paths as computed by maq
+  - Maintains consistency with maq::plot() behavior
+
+### New Functions (2025-07-22) - v1.0.110 (continued)
+- **Added margot_plot_qini_batch()**:
+  - Batch process and plot QINI curves for multiple models
+  - Supports all parameters from margot_plot_qini()
+  - Handles model names with or without "model_" prefix
+  - Automatically filters to models with QINI data
+  - Saves plots to specified directory (default: "qini_plots")
+  - Returns list of ggplot objects for further customization
+  - Consistent with margot_plot_rate_batch() design
+
 ### Still To Do
+- Implement GRF scores method as alternative to regression forest
 - Add comprehensive tests for new functionality
+- Remove deprecated group_tab function from margot_plot.R
+- Test confidence interval functionality
+- Update documentation for CI features
 
 ### Infrastructure
 - Created summary directory for development documentation

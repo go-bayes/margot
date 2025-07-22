@@ -67,6 +67,8 @@ margot_batch_policy <- function(result_outcomes,
       )
 
       # Add Qini plot
+      # Note: margot_batch_policy is deprecated and doesn't support qini_args
+      # For CI support, use margot_policy() instead
       model_output$qini_plot <- margot_plot_qini(
         mc_result = result_outcomes,
         outcome_var = model_name,

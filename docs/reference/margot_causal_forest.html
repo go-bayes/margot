@@ -13,7 +13,7 @@ held-out data, thereby avoiding in-sample optimism in the Qini plots.'></head><b
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.102</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.110</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,7 +141,13 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list containing model results, a combined table, and other relevant information.</p>
+    <p>A list containing:
+  * `results` - per-outcome diagnostics and objects
+  * `combined_table` - combined e-value table across outcomes
+  * `outcome_vars` - vector of outcome names
+  * `not_missing` - indices of complete-case rows
+  * (`data`, `covariates`, `weights`, `W`) when `save_data = TRUE`
+  * `full_models` when `save_models = TRUE`</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

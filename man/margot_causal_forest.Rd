@@ -57,7 +57,13 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 }
 \value{
-A list containing model results, a combined table, and other relevant information.
+A list containing:
+  * `results` - per-outcome diagnostics and objects
+  * `combined_table` - combined e-value table across outcomes
+  * `outcome_vars` - vector of outcome names
+  * `not_missing` - indices of complete-case rows
+  * (`data`, `covariates`, `weights`, `W`) when `save_data = TRUE`
+  * `full_models` when `save_models = TRUE`
 }
 \description{
 This function runs multiple GRF causal forest models with enhanced features. In addition to estimating

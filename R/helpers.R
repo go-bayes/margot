@@ -2,13 +2,27 @@
 
 #' @keywords internal
 back_transform_estimates <- function(results_df, original_df) {
-  # Determine the effect size column
-  if ("E[Y(1)]-E[Y(0)]" %in% names(results_df)) {
-    effect_size_col <- "E[Y(1)]-E[Y(0)]"
-  } else if ("E[Y(1)]/E[Y(0)]" %in% names(results_df)) {
-    effect_size_col <- "E[Y(1)]/E[Y(0)]"
-  } else {
-    stop("Data must contain either 'E[Y(1)]-E[Y(0)]' or 'E[Y(1)]/E[Y(0)]' column")
+  # Determine the effect size column - check new types first, then traditional
+  effect_size_col <- NULL
+  new_cols <- c("ATE", "ATT", "ATC", "ATO")
+  
+  # check for new column types
+  for (col in new_cols) {
+    if (col %in% names(results_df)) {
+      effect_size_col <- col
+      break
+    }
+  }
+  
+  # if not found, check for traditional columns
+  if (is.null(effect_size_col)) {
+    if ("E[Y(1)]-E[Y(0)]" %in% names(results_df)) {
+      effect_size_col <- "E[Y(1)]-E[Y(0)]"
+    } else if ("E[Y(1)]/E[Y(0)]" %in% names(results_df)) {
+      effect_size_col <- "E[Y(1)]/E[Y(0)]"
+    } else {
+      stop("Data must contain either 'E[Y(1)]-E[Y(0)]', 'E[Y(1)]/E[Y(0)]', or one of: ATE, ATT, ATC, ATO")
+    }
   }
 
   # ensure that results_df has an 'outcome' column
@@ -715,8 +729,29 @@ group_tab <- function(
     results_df <- results_df %>% mutate(outcome = dplyr::recode(outcome, !!!label_mapping))
   }
 
-  # columns for sorting
-  effect_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
+  # columns for sorting - check for new column types first
+  effect_col <- NULL
+  if (type == "RR") {
+    # check for RR columns
+    if ("E[Y(1)]/E[Y(0)]" %in% names(results_df)) {
+      effect_col <- "E[Y(1)]/E[Y(0)]"
+    }
+  } else {
+    # check for RD columns (including new types)
+    possible_cols <- c("ATE", "ATT", "ATC", "ATO", "E[Y(1)]-E[Y(0)]")
+    for (col in possible_cols) {
+      if (col %in% names(results_df)) {
+        effect_col <- col
+        break
+      }
+    }
+  }
+  
+  # fallback to traditional columns if nothing found
+  if (is.null(effect_col)) {
+    effect_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
+  }
+  
   ev_bound   <- "E_Val_bound"
 
   # apply ordering
@@ -736,28 +771,28 @@ group_tab <- function(
   results_df <- results_df %>% mutate(
     Estimate = factor(
       if (type == "RR") {
-        ifelse(`E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
+        ifelse(.data[[effect_col]] > 1 & `2.5 %` > 1,
                "positive",
-               ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1,
+               ifelse(.data[[effect_col]] < 1 & `97.5 %` < 1,
                       "negative",
                       "not reliable"))
       } else {
-        ifelse(`E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
+        ifelse(.data[[effect_col]] > 0 & `2.5 %` > 0,
                "positive",
-               ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0,
+               ifelse(.data[[effect_col]] < 0 & `97.5 %` < 0,
                       "negative",
                       "not reliable"))
       }
     ),
     estimate_lab = if (type == "RR") {
       paste0(
-        round(`E[Y(1)]/E[Y(0)]`, 3), " (",
+        round(.data[[effect_col]], 3), " (",
         round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
         " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
       )
     } else {
       paste0(
-        round(`E[Y(1)]-E[Y(0)]`, 3), " (",
+        round(.data[[effect_col]], 3), " (",
         round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
         " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
       )
