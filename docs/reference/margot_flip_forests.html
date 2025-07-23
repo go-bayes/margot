@@ -11,7 +11,7 @@ and recomputing the entire causal forest from scratch. New models are appended w
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.110</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.115</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,9 +54,11 @@ and recomputing the entire causal forest from scratch. New models are appended w
 <span>  <span class="va">model_results</span>,</span>
 <span>  <span class="va">flip_outcomes</span>,</span>
 <span>  model_prefix <span class="op">=</span> <span class="st">"model_"</span>,</span>
+<span>  grf_defaults <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">availableCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  remove_original <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -76,6 +78,13 @@ and recomputing the entire causal forest from scratch. New models are appended w
 <dd><p>A character string indicating the prefix used for model names in the results list. Default is "model_".</p></dd>
 
 
+<dt id="arg-grf-defaults">grf_defaults<a class="anchor" aria-label="anchor" href="#arg-grf-defaults"></a></dt>
+<dd><p>A list of parameters to pass to the GRF causal forest models. Default is NULL,
+which attempts to extract parameters from the original fitted models. Providing explicit values
+ensures consistency between original and flipped models. Common parameters include num.trees,
+honesty, honesty.fraction, alpha, min.node.size, and mtry.</p></dd>
+
+
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
 <dd><p>Logical indicating whether to use parallel processing. Default is FALSE.</p></dd>
 
@@ -87,10 +96,17 @@ and recomputing the entire causal forest from scratch. New models are appended w
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical indicating whether to display detailed messages during execution. Default is TRUE.</p></dd>
 
+
+<dt id="arg-remove-original">remove_original<a class="anchor" aria-label="anchor" href="#arg-remove-original"></a></dt>
+<dd><p>Logical indicating whether to remove the original (non-flipped) models after
+creating their flipped versions. Default is TRUE. When TRUE, only the flipped models with "_r"
+suffix remain; when FALSE, both original and flipped models are kept.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A modified copy of model_results with flipped models (with "_r" suffix) added.</p>
+    <p>A modified copy of model_results with flipped models (with "_r" suffix). If remove_original
+        is TRUE (default), original models are removed; otherwise both versions are kept.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -98,11 +114,42 @@ and recomputing the entire causal forest from scratch. New models are appended w
 1. Extracting the original data for each outcome
 2. Flipping the outcome variable (Y_flipped = -Y)
 3. Calling margot_causal_forest() with the flipped outcome
-4. Storing the result with "_r" suffix</p>
+4. Storing the result with "_r" suffix
+5. Optionally removing the original models (default behavior)</p>
 <p>This ensures all components (forest model, CATE estimates, QINI curves, policy trees,
 E-values, etc.) are consistently computed based on the flipped outcome.</p>
+<p>When grf_defaults is NULL, the function attempts to extract key GRF parameters from
+the first fitted model to ensure consistency between original and flipped models.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Flip models and remove originals (default)</span></span></span>
+<span class="r-in"><span><span class="va">results_flipped</span> <span class="op">&lt;-</span> <span class="fu">margot_flip_forests</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">results</span>, </span></span>
+<span class="r-in"><span>  flip_outcomes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"anxiety"</span>, <span class="st">"depression"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Results now contain anxiety_r and depression_r, originals removed</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Keep both original and flipped models</span></span></span>
+<span class="r-in"><span><span class="va">results_both</span> <span class="op">&lt;-</span> <span class="fu">margot_flip_forests</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">results</span>, </span></span>
+<span class="r-in"><span>  flip_outcomes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"anxiety"</span>, <span class="st">"depression"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  remove_original <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Results contain both anxiety/depression and anxiety_r/depression_r</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Use custom GRF parameters for flipped models</span></span></span>
+<span class="r-in"><span><span class="va">results_custom</span> <span class="op">&lt;-</span> <span class="fu">margot_flip_forests</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">results</span>, </span></span>
+<span class="r-in"><span>  flip_outcomes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"anxiety"</span>, <span class="st">"depression"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  grf_defaults <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">4000</span>, honesty <span class="op">=</span> <span class="cn">TRUE</span>, honesty.fraction <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

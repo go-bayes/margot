@@ -25,7 +25,7 @@ margot_interpret_qini(
 
 \item{model_names}{Character vector of models to process (optional)}
 
-\item{spend_levels}{Numeric vector of spend levels to analyze (default: c(0.2, 0.5)). 
+\item{spend_levels}{Numeric vector of spend levels to analyze (default: c(0.2, 0.5)).
 If requested levels don't exist in the data, the function will use available levels instead.}
 
 \item{include_intro}{Logical whether to include explanatory text about CATE and Qini curves (default: TRUE)}
@@ -40,6 +40,6 @@ detecting treatment type from input data.
 \details{
 The function automatically detects available spend levels in the data. If requested
 spend levels are not available, it will use the closest available levels and warn
-the user. To see what spend levels are available, check the names of 
+the user. To see what spend levels are available, check the names of
 `multi_batch[[1]]$diff_gain_summaries`.
 }

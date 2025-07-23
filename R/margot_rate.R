@@ -683,7 +683,9 @@ margot_interpret_rate_comparison <- function(autoc_df,
     not_excluded_autoc_model_names = not_excl_autoc,
     not_excluded_qini_model_names  = not_excl_qini,
     not_excluded_both              = not_excl_both,
-    not_excluded_either            = not_excl_either
+    not_excluded_either            = not_excl_either,
+    excluded_both                  = intersect(neg_autoc, neg_qini),
+    excluded_either                = union(neg_autoc, neg_qini)
   )
 }
 

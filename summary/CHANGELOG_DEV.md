@@ -1,5 +1,54 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.115 (2025-07-23)
+
+### New Features
+- **margot_interpret_heterogeneity()**: Comprehensive function to combine heterogeneity evidence
+  - Integrates RATE AUTOC, RATE QINI, QINI curves, and omnibus calibration tests
+  - Provides unified model selection based on multiple evidence sources
+  - Includes concordance analysis showing which methods agree/disagree
+  - Generates interpretation text with specific recommendations
+  - Flexible selection criteria with `require_any_positive` and `exclude_negative_any` parameters
+  - Returns detailed evidence summary table for transparency
+  - Simplified interface: takes models directly instead of requiring pre-computed interpretations
+  - New evidence categorisation: "evidence_for_heterogeneity", "targeting_opportunity", "statistical_only", etc.
+  - Added `include_extended_report` parameter for detailed academic-style report with full statistics
+  - Extended report includes confidence intervals, p-values, and detailed method descriptions
+  - Uses proper LaTeX escaping for mathematical notation (e.g., $\\hat{\\tau}(x)$)
+  - New Zealand English spelling throughout extended report
+  - Evidence summary table now includes model_id column for reliable internal matching
+  - Fixed omnibus test computation to include flipped models from margot_flip_forests()
+  - Improved omnibus test matching logic to use original outcome names for reliable matching
+  - Simplified main interpretation and enhanced extended report with complementary methods explanation
+  - Updated omnibus calibration test description to match grf manual clarity
+
+- **margot_plot_qini_batch()**: Batch processing for QINI plots
+  - Process multiple models in one function call
+  - Supports all parameters from margot_plot_qini()
+  - Automatically saves plots to specified directory
+  - Returns list of ggplot objects for further customization
+
+### Enhancements
+- **margot_interpret_rate()**: Added excluded model lists to output
+  - New fields: `excluded_both` (models negative in both AUTOC and QINI)
+  - New fields: `excluded_either` (models negative in either AUTOC or QINI)
+
+- **margot_interpret_qini()**: Enhanced output structure
+  - Added `harmful_model_ids` and `harmful_model_names` for negative QINI gains
+  - Added `no_effect_model_ids` and `no_effect_model_names` for inconclusive results
+  - Parallel structure to margot_interpret_rate() for easier integration
+
+## margot 1.0.112 (2025-07-23)
+
+### New Features
+- **margot_flip_forests() GRF parameter support**: 
+  - Added `grf_defaults` parameter to allow users to specify GRF model parameters
+  - When NULL (default), automatically extracts parameters from original fitted models
+  - Ensures consistency between original and flipped models
+  - Extracts common parameters: num.trees, honesty, honesty.fraction, alpha, min.node.size, mtry, etc.
+  - Provides verbose output about which parameters are being used
+  - Example usage: `margot_flip_forests(results, flip_outcomes = c("anxiety"), grf_defaults = list(num.trees = 4000, honesty = TRUE))`
+
 ## margot 1.0.80 (2025-07-19)
 
 ### New Features
@@ -386,6 +435,29 @@
   - Now properly rebuilds combined_table from merged results (original + flipped)
   - Correctly extracts custom_table from each model result
   - Maintains proper row names without "model_" prefix
+
+### New Features (2025-07-23) - v1.0.111
+- **Enhanced margot_flip_forests() with automatic model removal**:
+  - Added `remove_original` parameter (default TRUE) to automatically remove original models after flipping
+  - When TRUE, only flipped models with "_r" suffix remain in results
+  - When FALSE, both original and flipped models are kept (old behavior)
+  - Helps reduce memory usage and simplifies downstream analyses
+  - Provides clearer outputs in tables and plots without duplicate entries
+  - Removal works for both results and full_models lists
+  - Note: The parallel version (margot_flip_forests_parallel) modifies models in place rather than creating new ones
+
+### Bug Fixes (2025-07-23) - v1.0.111 (continued)
+- **Fixed double "model_" prefix in margot_flip_forests()**:
+  - Removed duplicate prefix addition that caused results like "model_model_t2_anxiety_z_r"
+  - margot_causal_forest() already adds "model_" prefix, so margot_flip_forests() now uses the names as-is
+  - Results now correctly show as "model_t2_anxiety_z_r" instead of "model_model_t2_anxiety_z_r"
+
+### QINI Interpretation Improvements (2025-07-23) - v1.0.111 (continued)
+- **Enhanced QINI curve explanations**:
+  - Clarified that QINI compares "targeted treatment allocation" vs "uniform allocation (based on average treatment effect)"
+  - Added explanation about expected differences at 100% spend due to out-of-sample cross-validation
+  - Added note about CATE/ATE paradox: CATE-based targeting may show benefits even when average treatment effect is unreliable
+  - Improved clarity for interpreting heterogeneous treatment effects
 
 ### Still To Do
 - Implement GRF scores method as alternative to regression forest

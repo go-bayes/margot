@@ -10,6 +10,7 @@
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/news/index.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/analyze_concordance.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/apply_covariate_exclusions.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/back_transform_log_z.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/back_transform_logmean.html</loc></url>
@@ -45,6 +46,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_binary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_multi_arm.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/construct_formula.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/create_evidence_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_fallback_qini_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_fallback_qini_objects.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_filtered_wide_dataframes.html</loc></url>
@@ -62,10 +64,19 @@
 <url><loc>https://go-bayes.github.io/margot/reference/double_robust_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/extract_from_diff_gain.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/extract_gain_from_plot_data.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/extract_grf_params.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/extract_qini_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/extract_qini_data_binary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/extract_qini_data_multi.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/fetch_margot_data.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/format_ate_value.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/format_evidence_section.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/format_omnibus_results.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/format_outcome_details.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/format_qini_differences.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/format_rate_with_ci.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/generate_extended_report.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/generate_interpretation.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/group_results_by_comparison.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/group_tab.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/group_tab_deprecated.html</loc></url>
@@ -119,6 +130,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_impute_carry_forward.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_inspect_model.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_inspect_qini.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_heterogeneity.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_policy_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_policy_tree.html</loc></url>
@@ -220,6 +232,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/run_simulations.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/save_margot_output.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/select_and_rename_cols.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/select_models.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/setup_margot_plot_options.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/simulate_ate_data_with_weights.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/strict_exposure_outcome_censoring.html</loc></url>

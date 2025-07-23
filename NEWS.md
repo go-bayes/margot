@@ -9,6 +9,35 @@
 * margot_screen_models - develop use_boot option
 * Get flipped outcome labels into rate graphs 
 
+## [2025-07-23] margot 1.0.115
+
+
+### Major Features
+- **margot_interpret_heterogeneity()**: comprehensive function to combine evidence from multiple heterogeneity tests
+  - Integrates RATE (AUTOC & QINI), QINI curves, and omnibus calibration tests
+  - Simplified interface: takes models directly, computes all analyses internally
+  - Provides unified recommendations for model selection
+  - Includes concordance analysis and detailed evidence summary
+  - New evidence categorisation system for nuanced interpretation
+  - Added `include_extended_report` parameter for detailed academic-style reports with full statistics
+  - Evidence summary table now includes model_id column for reliable internal matching
+  - Fixed omnibus test computation to include flipped models from margot_flip_forests()
+  - Improved omnibus test matching logic to use original outcome names for reliable matching
+  - Simplified main interpretation and enhanced extended report with complementary methods explanation
+  - Updated omnibus calibration test description to match grf manual clarity
+  - **margot_plot_qini_batch()**: batch processing for QINI plots across multiple models
+  - **margot_flip_forests()**: enhanced with `grf_defaults` parameter for consistent GRF settings
+
+### Improvements  
+- `margot_interpret_rate()` now includes `excluded_both` and `excluded_either` lists
+- `margot_interpret_qini()` now exposes harmful and no-effect model categorizations
+- Improvements to internal naming in `margot_flip_forests()`
+- Improvements interpretation for qini curve analysis:
+  - Clarified QINI compares targeted vs uniform treatment allocation
+  - Added explanation for small differences at 100% spend
+  - Added note about CATE benefits even with unreliable ATE
+
+
 ## [2025-07-22] margot 1.0.110
 
 major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI computation, enhanced maq compatibility, and various bug fixes.
@@ -51,11 +80,18 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - Function now properly rebuilds combined_table from merged results instead of incorrectly passing entire results object
 - Fixed `margot_causal_forest()` to save treatment assignment vector W when save_data=TRUE
   - Ensures margot_flip_forests() can perform full model recomputation
-
 - Fixed `compute_qini_curves_binary()` to use modern maq API
   - Updated from positional arguments to named parameters (reward, cost, DR.scores)
   - Ensures consistency with current maq package expectations
   - Resolves potential inconsistencies in QINI curve computations
+
+### Enhancements
+- Enhanced `margot_flip_forests()` with automatic removal of original models
+  - New `remove_original` parameter (default TRUE) removes originals after flipping
+  - Reduces memory usage and provides cleaner outputs
+  - Set to FALSE to keep both original and flipped models
+- Fixed double "model_" prefix bug in `margot_flip_forests()`
+  - Results now correctly show as "model_outcome_r" instead of "model_model_outcome_r"
 
 - Fixed QINI gain calculation discrepancies
   - `extract_qini_data_binary()` now uses actual gain values instead of linear approximation for ATE curves
