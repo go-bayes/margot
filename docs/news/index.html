@@ -38,6 +38,437 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.115" id="id_2025-07-23-margot-10115">[2025-07-23] margot 1.0.115<a class="anchor" aria-label="anchor" href="#id_2025-07-23-margot-10115"></a></h2>
+<div class="section level4">
+<h4 id="major-features-1-0-115">Major Features<a class="anchor" aria-label="anchor" href="#major-features-1-0-115"></a></h4>
+<ul><li>
+<strong>margot_interpret_heterogeneity()</strong>: comprehensive function to combine evidence from multiple heterogeneity tests
+<ul><li>Integrates RATE (AUTOC &amp; QINI), QINI curves, and omnibus calibration tests</li>
+<li>Simplified interface: takes models directly, computes all analyses internally</li>
+<li>Provides unified recommendations for model selection</li>
+<li>Includes concordance analysis and detailed evidence summary</li>
+<li>New evidence categorisation system for nuanced interpretation</li>
+<li>Added <code>include_extended_report</code> parameter for detailed academic-style reports with full statistics</li>
+<li>Evidence summary table now includes model_id column for reliable internal matching</li>
+<li>Fixed omnibus test computation to include flipped models from margot_flip_forests()</li>
+<li>Improved omnibus test matching logic to use original outcome names for reliable matching</li>
+<li>Simplified main interpretation and enhanced extended report with complementary methods explanation</li>
+<li>Updated omnibus calibration test description to match grf manual clarity</li>
+<li>
+<strong>margot_plot_qini_batch()</strong>: batch processing for QINI plots across multiple models</li>
+<li>
+<strong>margot_flip_forests()</strong>: enhanced with <code>grf_defaults</code> parameter for consistent GRF settings</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-115">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-115"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_rate.html">margot_interpret_rate()</a></code> now includes <code>excluded_both</code> and <code>excluded_either</code> lists</li>
+<li>
+<code><a href="../reference/margot_interpret_qini.html">margot_interpret_qini()</a></code> now exposes harmful and no-effect model categorizations</li>
+<li>Improvements to internal naming in <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code>
+</li>
+<li>Improvements interpretation for qini curve analysis:
+<ul><li>Clarified QINI compares targeted vs uniform treatment allocation</li>
+<li>Added explanation for small differences at 100% spend</li>
+<li>Added note about CATE benefits even with unreliable ATE</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.110" id="id_2025-07-22-margot-10110">[2025-07-22] margot 1.0.110<a class="anchor" aria-label="anchor" href="#id_2025-07-22-margot-10110"></a></h2>
+<p>major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI computation, enhanced maq compatibility, and various bug fixes.</p>
+<div class="section level4">
+<h4 id="new-functions-1-0-110">New Functions<a class="anchor" aria-label="anchor" href="#new-functions-1-0-110"></a></h4>
+<ul><li>
+<strong>margot_recompute_qini_aipw()</strong>: recompute QINI curves using AIPW scores for improved robustness
+<ul><li>Provides doubly robust estimates that are consistent if either propensity or outcome model is correct</li>
+<li>supports automatic treatment variable detection or manual specification</li>
+<li>nandles various data structures including models stored in full_models list</li>
+<li>estimates conditional means using regression forests (mu.hat)</li>
+<li>adds overlap warnings when propensity scores are extreme (&lt;0.05 or &gt;0.95)</li>
+<li>fully compatible with existing QINI plotting and interpretation functions</li>
+</ul></li>
+<li>
+<strong>margot_recompute_qini_ipw()</strong>: Recompute QINI curves using IPW scores only
+<ul><li>simpler alternative to AIPW for faster computation</li>
+<li>uses the same modern maq API for consistency</li>
+<li>useful for debugging QINI curve differences</li>
+<li>shares the same flexible data handling as the AIPW version</li>
+</ul></li>
+<li>
+<strong>margot_qini_diagnostic()</strong>: diagnose QINI gain discrepancies
+<ul><li>compares QINI gains from plot data, direct maq calculations, and diff summaries</li>
+<li>helps identify and debug discrepancies between different calculation methods</li>
+<li>flags differences above specified tolerance threshold</li>
+<li>useful for verifying QINI calculations are consistent</li>
+</ul></li>
+<li>
+<strong>margot_plot_qini_batch()</strong>: Batch process and plot QINI curves for multiple models
+<ul><li>supports all margot_plot_qini() parameters for consistent visualization</li>
+<li>handles model names with or without “model_” prefix</li>
+<li>automatically filters to models with QINI data</li>
+<li>saves plots to specified directory (default: “qini_plots”)</li>
+<li>returns list of ggplot objects for further customization</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-110">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-110"></a></h4>
+<ul><li>fixed <code><a href="../reference/margot_plot_qini.html">margot_plot_qini()</a></code> confidence interval computation and display issues
+<ul><li>added <code>inherit.aes = FALSE</code> to geom_ribbon to prevent aesthetic inheritance errors</li>
+<li>fixed CI computation to handle both old (treatment/baseline) and new (cate/ate) qini object naming conventions</li>
+<li>Confidence intervals now compute and display correctly when <code>show_ci = TRUE</code>
+</li>
+</ul></li>
+<li>Fixed <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> error when rebuilding combined_table
+<ul><li>Resolved “Couldn’t find a point-estimate column” error that occurred after flipping outcomes</li>
+<li>Function now properly rebuilds combined_table from merged results instead of incorrectly passing entire results object</li>
+</ul></li>
+<li>Fixed <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> to save treatment assignment vector W when save_data=TRUE
+<ul><li>Ensures margot_flip_forests() can perform full model recomputation</li>
+</ul></li>
+<li>Fixed <code><a href="../reference/compute_qini_curves_binary.html">compute_qini_curves_binary()</a></code> to use modern maq API
+<ul><li>Updated from positional arguments to named parameters (reward, cost, DR.scores)</li>
+<li>Ensures consistency with current maq package expectations</li>
+<li>Resolves potential inconsistencies in QINI curve computations</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="enhancements-1-0-110">Enhancements<a class="anchor" aria-label="anchor" href="#enhancements-1-0-110"></a></h4>
+<ul><li>Enhanced <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> with automatic removal of original models
+<ul><li>New <code>remove_original</code> parameter (default TRUE) removes originals after flipping</li>
+<li>Reduces memory usage and provides cleaner outputs</li>
+<li>Set to FALSE to keep both original and flipped models</li>
+</ul></li>
+<li>Fixed double “model_” prefix bug in <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code>
+<ul><li>Results now correctly show as “model_outcome_r” instead of “model_model_outcome_r”</li>
+</ul></li>
+<li>Fixed QINI gain calculation discrepancies
+<ul><li>
+<code><a href="../reference/extract_qini_data_binary.html">extract_qini_data_binary()</a></code> now uses actual gain values instead of linear approximation for ATE curves</li>
+<li>
+<code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> now correctly flips outcome values when recalculating QINI curves</li>
+<li>Resolves ~2x discrepancy between plotted QINI curves and <code><a href="../reference/margot_interpret_qini.html">margot_interpret_qini()</a></code> gain summaries</li>
+</ul></li>
+<li>Fixed QINI plot visualization issues
+<ul><li>ATE line now correctly displays as straight line (representing constant treatment effect)</li>
+<li>Confidence intervals now cover full 0-100% range (previously missing 0-5% and 95-100%)</li>
+<li>Added endpoint extrapolation to ensure complete CI coverage</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="enhancements-to-margot_plot_qini-1-0-110">Enhancements to margot_plot_qini()<a class="anchor" aria-label="anchor" href="#enhancements-to-margot_plot_qini-1-0-110"></a></h4>
+<ul><li>Added <code>horizontal_line</code> parameter for maq::plot() compatibility
+<ul><li>Extends curves horizontally when path is complete</li>
+</ul></li>
+<li>Added <code>grid_step</code> parameter for data subsampling
+<ul><li>Improves performance with large datasets</li>
+</ul></li>
+<li>Added <code>return_data</code> parameter to return plot data as data.frame
+<ul><li>Matches maq::plot() output format for interoperability</li>
+</ul></li>
+<li>Enhanced std.err extraction from maq objects
+<ul><li>Provides additional consistency checks</li>
+</ul></li>
+<li>Fixed <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> missing W component error
+<ul><li>
+<code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> now saves treatment vector W when save_data = TRUE</li>
+<li>Ensures compatibility with model flipping functionality</li>
+</ul></li>
+<li>Updated <code><a href="../reference/margot_plot_qini.html">margot_plot_qini()</a></code> visualization
+<ul><li>Fixed CI computation error when only CATE curve exists (no ATE)</li>
+<li>Fixed case sensitivity in curve naming (cate/CATE)</li>
+<li>Fixed colors for binary treatments: CATE = blue (<a href="https://github.com/go-bayes/margot/issues/4" class="external-link">#4</a>f88c6), ATE = gold (#d8a739)</li>
+<li>Ensured color/fill scales match so lines and CI ribbons have same colors</li>
+<li>Multi-arm treatments continue to use Okabe-Ito palette</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="enhancements-1-0-110-1">Enhancements<a class="anchor" aria-label="anchor" href="#enhancements-1-0-110-1"></a></h4>
+<ul><li>Updated <code><a href="../reference/margot_recompute_qini_aipw.html">margot_recompute_qini_aipw()</a></code> to handle multiple data storage patterns
+<ul><li>Supports models in both result objects and full_models list</li>
+<li>Can extract data from top-level storage when models lack original data</li>
+<li>Smart treatment variable detection with binary preference</li>
+<li>Automatic propensity score estimation when not available</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.105" id="id_2025-07-21-margot-10105">[2025-07-21] margot 1.0.105<a class="anchor" aria-label="anchor" href="#id_2025-07-21-margot-10105"></a></h2>
+<div class="section level4">
+<h4 id="new-functions-1-0-105">New Functions<a class="anchor" aria-label="anchor" href="#new-functions-1-0-105"></a></h4>
+<ul><li>
+<strong>margot_recompute_ate()</strong>: Recompute average treatment effects with different target samples
+<ul><li>Allows recomputation without refitting expensive causal forest models</li>
+<li>Supports target_sample options: “all” (ATE), “treated” (ATT), “control” (ATC), “overlap” (ATO)</li>
+<li>Automatically renames effect columns based on target sample</li>
+<li>Recomputes E-values with the new estimates</li>
+<li>Uses margot-style parameter naming (target_sample not target.sample)</li>
+</ul></li>
+<li>
+<strong>margot_recompute_ate_batch()</strong>: Compare ATEs across multiple target samples
+<ul><li>Convenience function to compute all target sample types at once</li>
+<li>Creates comparison table with side-by-side estimates and E-values</li>
+<li>Useful for sensitivity analysis and exploring treatment effect heterogeneity</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="margot_plot-enhancements-1-0-105">margot_plot() Enhancements<a class="anchor" aria-label="anchor" href="#margot_plot-enhancements-1-0-105"></a></h4>
+<ul><li>
+<strong>New Column Support</strong>: Now accepts ATE/ATT/ATC/ATO column names in addition to traditional E[Y(1)]-E[Y(0)] format
+<ul><li>Automatically detects and uses the appropriate effect column</li>
+<li>Maintains full backwards compatibility</li>
+</ul></li>
+<li>
+<strong>Enhanced rename_ate Parameter</strong>:
+<ul><li>Accepts boolean (TRUE auto-detects appropriate label based on column type)</li>
+<li>Accepts custom string for complete control</li>
+<li>Auto-detects ATE/ATT/ATC/ATO when set to TRUE</li>
+</ul></li>
+<li>
+<strong>New rename_evalue Parameter</strong>:
+<ul><li>When TRUE, renames E_Value to “E-Value” and E_Val_bound to “E-Value Bound”</li>
+<li>Makes column names more publication-ready</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="supporting-function-updates-1-0-105">Supporting Function Updates<a class="anchor" aria-label="anchor" href="#supporting-function-updates-1-0-105"></a></h4>
+<ul><li>
+<strong>margot_interpret_marginal()</strong>:
+<ul><li>Now correctly describes treatment effect type (ATE/ATT/ATC/ATO)</li>
+<li>Explicitly states “No reliable effects are evident.” when no outcomes meet reliability threshold</li>
+<li>Updated wording from “showed” to “present” for clearer communication</li>
+</ul></li>
+<li>
+<strong>back_transform_estimates()</strong>: Handles new column types for original scale transformations</li>
+<li>
+<strong>group_tab()</strong>: Detects and processes new effect column types</li>
+<li>All changes maintain backwards compatibility</li>
+</ul></div>
+<div class="section level4">
+<h4 id="qini-plot-enhancements-1-0-105">Qini Plot Enhancements<a class="anchor" aria-label="anchor" href="#qini-plot-enhancements-1-0-105"></a></h4>
+<ul><li>
+<strong>margot_plot_qini()</strong>: Added confidence interval support
+<ul><li>New parameters: show_ci, ci_alpha, ci_n_points, ci_ribbon_alpha, ci_ribbon_color</li>
+<li>Confidence intervals computed using maq::average_gain()</li>
+<li>Visualized with ggplot2::geom_ribbon()</li>
+<li>Maintains backwards compatibility (CI display off by default)</li>
+<li>Fixed geom_ribbon aesthetic inheritance issue</li>
+</ul></li>
+<li>
+<strong>margot_policy()</strong>: Added qini_args parameter
+<ul><li>Allows passing additional arguments to margot_plot_qini()</li>
+<li>Enables confidence interval display in policy batch processing</li>
+<li>User-provided args override defaults via modifyList()</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="new-functions-1-0-105-1">New Functions<a class="anchor" aria-label="anchor" href="#new-functions-1-0-105-1"></a></h4>
+<ul><li>
+<strong>margot_recompute_qini_aipw()</strong>: Recompute QINI curves using AIPW scores
+<ul><li>Provides more robust estimates than IPW, especially for observational data</li>
+<li>Supports regression forest method for estimating conditional means</li>
+<li>Compatible with all existing QINI plotting and interpretation functions</li>
+<li>Adds metadata tracking to indicate AIPW was used</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.102" id="id_2025-07-20-margot-10102">[2025-07-20] margot 1.0.102<a class="anchor" aria-label="anchor" href="#id_2025-07-20-margot-10102"></a></h2>
+<div class="section level4">
+<h4 id="policy-tree-enhancements-1-0-102">Policy Tree Enhancements<a class="anchor" aria-label="anchor" href="#policy-tree-enhancements-1-0-102"></a></h4>
+<ul><li>
+<strong>Decision tree title clarification</strong>:
+<ul><li>Enhanced <code><a href="../reference/margot_plot_decision_tree.html">margot_plot_decision_tree()</a></code> to append “Outcome” to titles</li>
+<li>Example: “Neuroticism” now displays as “Neuroticism Outcome”</li>
+<li>Clarifies that the tree shows policy decisions for the outcome variable</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="label-improvements-1-0-102">Label Improvements<a class="anchor" aria-label="anchor" href="#label-improvements-1-0-102"></a></h4>
+<ul><li>
+<strong>Reversed outcome formatting</strong>:
+<ul><li>Updated <code><a href="../reference/margot_reversed_labels.html">margot_reversed_labels()</a></code> to prepend rather than append “(reduced)”</li>
+<li>Changed from “{outcome} (reduced)” to “(reduced) {outcome}”</li>
+<li>Example: “Anxiety (reduced)” now displays as “(reduced) Anxiety”</li>
+<li>Improves readability and understanding of flipped outcomes</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.101" id="id_2025-07-20-margot-10101">[2025-07-20] margot 1.0.101<a class="anchor" aria-label="anchor" href="#id_2025-07-20-margot-10101"></a></h2>
+<ul><li>
+<strong>new</strong>: margot_censor_lead() - allows for conditional censoring.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.100" id="id_2025-07-20-margot-10100">[2025-07-20] margot 1.0.100<a class="anchor" aria-label="anchor" href="#id_2025-07-20-margot-10100"></a></h2>
+<div class="section level4">
+<h4 id="policy-tree-enhancements-1-0-100">Policy Tree Enhancements<a class="anchor" aria-label="anchor" href="#policy-tree-enhancements-1-0-100"></a></h4>
+<ul><li>
+<strong>Policy tree interpretation improvements</strong>:
+<ul><li>Modified <code><a href="../reference/margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code> to remove redundant “Policy tree analysis results:” line</li>
+<li>Added “at the end of study” to all Findings headings for temporal clarity</li>
+<li>Added “baseline” prefix to all variable names in tree splits and leaf descriptions</li>
+<li>Clarifies that splits are based on baseline characteristics, not outcomes</li>
+<li>Simplified CATE reporting to just state values without subjective interpretation</li>
+<li>More appropriate for standardized outcomes where negative values are common</li>
+</ul></li>
+<li>
+<strong>Policy tree plotting updates</strong>:
+<ul><li>Enhanced <code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code> to add “(baseline)” to all axis labels</li>
+<li>Added “(baseline)” to plot titles and subtitles for clarity</li>
+<li>Updated both depth-1 and depth-2 plots for consistency</li>
+<li>Ensures users understand splits are made on baseline measures</li>
+<li>Enhanced <code><a href="../reference/margot_plot_decision_tree.html">margot_plot_decision_tree()</a></code> to append “Outcome” to outcome titles</li>
+<li>Example: “Neuroticism” now displays as “Neuroticism Outcome”</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="label-transformation-improvements-1-0-100">Label Transformation Improvements<a class="anchor" aria-label="anchor" href="#label-transformation-improvements-1-0-100"></a></h4>
+<ul><li>Updated <code><a href="../reference/transform_var_name.html">transform_var_name()</a></code> helper function:
+<ul><li>Now removes “_l” suffix from variable names</li>
+<li>Properly capitalizes NZSEI and NZDEP acronyms</li>
+<li>Example: “t0_nzsei_13_l” now displays as “NZSEI 13 (baseline)”</li>
+</ul></li>
+<li>Updated <code><a href="../reference/margot_reversed_labels.html">margot_reversed_labels()</a></code> formatting:
+<ul><li>Changed from “{outcome} (reduced)” to “(reduced) {outcome}”</li>
+<li>Example: “Anxiety (reduced)” now displays as “(reduced) Anxiety”</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.90" id="id_2025-07-19-margot-1090">[2025-07-19] margot 1.0.90<a class="anchor" aria-label="anchor" href="#id_2025-07-19-margot-1090"></a></h2>
+<div class="section level4">
+<h4 id="new-functions-1-0-90">new functions<a class="anchor" aria-label="anchor" href="#new-functions-1-0-90"></a></h4>
+<ul><li>added <code><a href="../reference/margot_assess_overlap.html">margot_assess_overlap()</a></code> for evaluating propensity score overlap
+<ul><li>shows common support regions for treatment validity</li>
+<li>generates propensity score distribution plots by treatment group</li>
+<li>uses <code>transform_label</code> helper for automatic label formatting</li>
+<li>includes <code>text_summary</code> output suitable for dropping into documents</li>
+<li>added <code>theme</code> parameter for ggplot2 theme customization</li>
+<li>updated colors to package standards: treatment (#d8a739), control (<a href="https://github.com/go-bayes/margot/issues/4" class="external-link">#4</a>f88c6)</li>
+<li>enhanced text summary with interpretation of overlap meaning</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="enhanced-qini-analysis-1-0-90">enhanced Qini analysis<a class="anchor" aria-label="anchor" href="#enhanced-qini-analysis-1-0-90"></a></h4>
+<ul><li>
+<strong>margot_interpret_qini()</strong> improvements:
+<ul><li>new <code>spend_levels</code> parameter for custom spend level analysis</li>
+<li>new <code>concise_summary</code> output groups outcomes by benefit/harm/no effect</li>
+<li>added explanatory text about CATE and Qini curves (<code>include_intro</code> parameter)</li>
+<li>auto detection of available spend levels with fallback handling</li>
+<li>warnings when requested spend levels don’t exist in data</li>
+</ul></li>
+<li>
+<strong>margot_plot_qini()</strong> enhancements:
+<ul><li>new vertical dashed lines at spend levels with text annotations</li>
+<li>replace multiple label parameters with single <code>label_mapping</code>
+</li>
+<li>added <code>theme</code> parameter matching margot_assess_overlap</li>
+<li>spend level lines now labeled (e.g., “20% spend”, “50% spend”)</li>
+<li>smart label positioning</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="api-consistency-1-0-90">API Consistency<a class="anchor" aria-label="anchor" href="#api-consistency-1-0-90"></a></h4>
+<ul><li>renamed <code>spend</code> to <code>spend_levels</code> in <code><a href="../reference/margot_policy.html">margot_policy()</a></code> and <code><a href="../reference/margot_batch_policy.html">margot_batch_policy()</a></code>
+<ul><li>Ccnsistent with <code><a href="../reference/margot_interpret_qini.html">margot_interpret_qini()</a></code> parameter naming</li>
+<li>
+<strong>breaking change</strong>: Update code using <code>spend</code> parameter</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-90">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-90"></a></h4>
+<ul><li>fixed <code><a href="../reference/margot_policy.html">margot_policy()</a></code> and <code><a href="../reference/margot_batch_policy.html">margot_batch_policy()</a></code> to pass spend_levels to Qini plots
+<ul><li>Qini plot vertical lines now match the spend levels used for calculations</li>
+<li>previously always showed 20% and 50% regardless of parameter</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.80" id="id_2025-07-19-margot-1080">[2025-07-19] margot 1.0.80<a class="anchor" aria-label="anchor" href="#id_2025-07-19-margot-1080"></a></h2>
+<ul><li>Added experimental support for conditional means computation via <code><a href="https://rdrr.io/pkg/policytree/man/conditional_means.html" class="external-link">policytree::conditional_means()</a></code>
+</li>
+<li>New <code>compute_conditional_means</code> parameter in <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> (default TRUE)</li>
+<li>Conditional means are stored in model results when computed</li>
+<li>Enhanced <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> to include conditional means interpretation
+<ul><li>Shows expected outcomes under each treatment within policy tree leaves</li>
+<li>Computes average treatment effects within each leaf</li>
+<li>New <code>include_conditional_means</code> parameter (default TRUE)</li>
+<li>Changed default output to clear, simple language (new <code>use_math_notation</code> parameter, default FALSE)</li>
+<li>Added <code>output_format</code> parameter: “bullet” (default) or “prose” for flowing narrative text</li>
+<li>Enhanced leaf output with sample sizes, percentages, and effect interpretations</li>
+<li>Removed uncertainty quantification disclaimer</li>
+</ul></li>
+<li>
+<code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> completely rewritten to create new models with “_r” suffix
+<ul><li>Properly recomputes all statistics (ATE, RATE, E-values, policy trees, QINI)</li>
+<li>Flips conditional means columns for binary treatment</li>
+<li>Removes original models and rebuilds combined_table</li>
+</ul></li>
+<li>New <code><a href="../reference/margot_recalculate_policy_trees.html">margot_recalculate_policy_trees()</a></code> function for customizing policy tree covariates
+<ul><li>Multiple covariate modes: “original”, “custom”, “add”, “all”</li>
+<li>Regex-based covariate exclusion support</li>
+<li>Automatic covariate expansion for depth-2 trees</li>
+<li>Parallel processing capability</li>
+</ul></li>
+<li>Updated <code><a href="../reference/margot_reversed_labels.html">margot_reversed_labels()</a></code> to handle new “_r” suffix convention
+<ul><li>Creates new label entries with “_r” suffix by default</li>
+<li>Maintains backward compatibility with <code>use_r_suffix = FALSE</code>
+</li>
+<li>Option to remove original entries with <code>remove_original = TRUE</code>
+</li>
+</ul></li>
+<li>Removed <code>margot_flip_forests_dev()</code> as functionality now available in <code><a href="../reference/margot_recalculate_policy_trees.html">margot_recalculate_policy_trees()</a></code>
+</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.70" id="id_2025-07-17-margot-1070">[2025-07-17] margot 1.0.70<a class="anchor" aria-label="anchor" href="#id_2025-07-17-margot-1070"></a></h2>
+<ul><li>
+<code>margot_flip_forests_dev()</code> allows custom policy trees</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.65" id="id_2025-06-18-margot-1065">[2025-06-18] margot 1.0.65<a class="anchor" aria-label="anchor" href="#id_2025-06-18-margot-1065"></a></h2>
+<ul><li>
+<code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code> better graphs
+<ul><li>Shape + Color coding - Points use both different shapes AND colors for better distinction</li>
+<li>Clean masking - Shaded regions properly filter out points (no more overlapping mess)</li>
+<li>Visible annotations - Split values appear as readable horizontal text near the dashed lines</li>
+<li>Proper positioning - Annotations stay within plot boundaries</li>
+</ul></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.64" id="id_2025-06-18-margot-1064">[2025-06-18] margot 1.0.64<a class="anchor" aria-label="anchor" href="#id_2025-06-18-margot-1064"></a></h2>
+<ul><li>
+<code><a href="../reference/margot_plot_categorical.html">margot_plot_categorical()</a></code> handles binary data</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.63" id="id_2025-06-09-margot-1063">[2025-06-09] margot 1.0.63<a class="anchor" aria-label="anchor" href="#id_2025-06-09-margot-1063"></a></h2>
+<ul><li>developing simulation within margot</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.62" id="id_2025-06-09-margot-1062">[2025-06-09] margot 1.0.62<a class="anchor" aria-label="anchor" href="#id_2025-06-09-margot-1062"></a></h2>
+<div class="section level3">
+<h3 id="new-1-0-62">New<a class="anchor" aria-label="anchor" href="#new-1-0-62"></a></h3>
+<ul><li>Complete refactor of <code><a href="../reference/margot_simulate.html">margot_simulate()</a></code> with clearer data generation process</li>
+<li>Added support for heterogeneous treatment effects in simulations</li>
+<li>Enhanced vignette with comprehensive examples and power analysis templates</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improved-1-0-62">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-62"></a></h3>
+<ul><li>Fixed syntax errors in vignettes (removed numeric underscores)</li>
+<li>Improved test structure with cleaner helper functions</li>
+<li>Better documentation of simulation parameters and options</li>
+</ul></div>
+<div class="section level3">
+<h3 id="removed-1-0-62">Removed<a class="anchor" aria-label="anchor" href="#removed-1-0-62"></a></h3>
+<ul><li>Removed <code>crayon</code> package dependency (down to 51 dependencies)</li>
+<li>Removed <code>gt</code> and <code>gtsummary</code> package dependencies</li>
+<li>Updated <code><a href="../reference/margot_summary_panel.html">margot_summary_panel()</a></code> to output markdown tables by default</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.61" id="id_2025-06-04-margot-1061">[2025-06-04] margot 1.0.61<a class="anchor" aria-label="anchor" href="#id_2025-06-04-margot-1061"></a></h2>
 <ul><li>added simulation function <code>magot_simulate()</code> + units tests plus vignette</li>
 </ul></div>

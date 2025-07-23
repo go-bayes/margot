@@ -1,15 +1,5 @@
 
-# To do
-
-* Begin writing tutorials for use cases.
-* fix decision tree layout
-* write examples
-* remove arrow from "margot_plot_policy_tree()"
-* improve interpretations in `margot_compare_groups()`
-* margot_screen_models - develop use_boot option
-* Get flipped outcome labels into rate graphs 
-
-## [2025-07-23] margot 1.0.115
+# [2025-07-23] margot 1.0.115
 
 
 ### Major Features
@@ -38,7 +28,7 @@
   - Added note about CATE benefits even with unreliable ATE
 
 
-## [2025-07-22] margot 1.0.110
+# [2025-07-22] margot 1.0.110
 
 major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI computation, enhanced maq compatibility, and various bug fixes.
 
@@ -131,7 +121,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - Smart treatment variable detection with binary preference
   - Automatic propensity score estimation when not available
 
-## [2025-07-21] margot 1.0.105
+# [2025-07-21] margot 1.0.105
 
 ### New Functions
 - **margot_recompute_ate()**: Recompute average treatment effects with different target samples
@@ -189,7 +179,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - Compatible with all existing QINI plotting and interpretation functions
   - Adds metadata tracking to indicate AIPW was used
 
-## [2025-07-20] margot 1.0.102
+# [2025-07-20] margot 1.0.102
 
 ### Policy Tree Enhancements
 - **Decision tree title clarification**:
@@ -204,11 +194,11 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - Example: "Anxiety (reduced)" now displays as "(reduced) Anxiety"
   - Improves readability and understanding of flipped outcomes
 
-## [2025-07-20] margot 1.0.101
+# [2025-07-20] margot 1.0.101
 
 - **new**: margot_censor_lead() - allows for conditional censoring. 
 
-## [2025-07-20] margot 1.0.100
+# [2025-07-20] margot 1.0.100
 
 ### Policy Tree Enhancements
 - **Policy tree interpretation improvements**:
@@ -237,7 +227,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - Example: "Anxiety (reduced)" now displays as "(reduced) Anxiety"
 
 
-## [2025-07-19] margot 1.0.90
+# [2025-07-19] margot 1.0.90
 
 ### new functions
 - added `margot_assess_overlap()` for evaluating propensity score overlap
@@ -274,7 +264,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - Qini plot vertical lines now match the spend levels used for calculations
   - previously always showed 20% and 50% regardless of parameter
 
-## [2025-07-19] margot 1.0.80
+# [2025-07-19] margot 1.0.80
 
 - Added experimental support for conditional means computation via `policytree::conditional_means()`
 - New `compute_conditional_means` parameter in `margot_causal_forest()` (default TRUE)
@@ -302,23 +292,23 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - Option to remove original entries with `remove_original = TRUE`
 - Removed `margot_flip_forests_dev()` as functionality now available in `margot_recalculate_policy_trees()`
 
-## [2025-07-17] margot 1.0.70
+# [2025-07-17] margot 1.0.70
 - `margot_flip_forests_dev()` allows custom policy trees 
 
-## [2025-06-18] margot 1.0.65
+# [2025-06-18] margot 1.0.65
 - `margot_plot_policy_tree()` better graphs
   - Shape + Color coding - Points use both different shapes AND colors for better distinction
   - Clean masking - Shaded regions properly filter out points (no more overlapping mess)
   - Visible annotations - Split values appear as readable horizontal text near the dashed lines
   - Proper positioning - Annotations stay within plot boundaries
 
-## [2025-06-18] margot 1.0.64
+# [2025-06-18] margot 1.0.64
 - `margot_plot_categorical()` handles binary data
 
-## [2025-06-09] margot 1.0.63
+# [2025-06-09] margot 1.0.63
 - developing simulation within margot
 
-## [2025-06-09] margot 1.0.62
+# [2025-06-09] margot 1.0.62
 
 ## New
 - Complete refactor of `margot_simulate()` with clearer data generation process
