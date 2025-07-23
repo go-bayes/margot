@@ -1,0 +1,194 @@
+
+url: https://go-bayes.github.io/margot
+
+home:
+  links:
+  - text: Source Code
+    href: https://github.com/go-bayes/margot
+  - text: Report Issues
+    href: https://github.com/go-bayes/margot/issues
+
+navbar:
+  structure:
+    left: [intro, reference, articles, tutorials, news]
+    right: [search, github]
+  components:
+    articles:
+      text: Vignettes
+      menu:
+      - text: "Getting Started"
+        href: articles/margot-workflow.html
+      - text: "Simulating Data"
+        href: articles/margot-simulation.html
+
+template:
+  bootstrap: 5
+  bslib:
+    # set the base font family using a Google Font
+    base_font: {google: "Fira Code"}
+    # set the font for headings
+    heading_font: {google: "Fira Sans"}
+    # set the font for code elements
+    code_font: {google: "Fira Code"}
+
+    # adjust the overall font size scale
+    font_scale: 0.75  # makes the font smaller; 1 is the default size
+    bg: "#ffffff"      # white background
+    fg: "#333333"      # dark gray font color for better readability
+    primary: "#007bff" # primary blue theme color for links, buttons, etc.
+    secondary: "#6c757d" # secondary color (used for muted text, etc.)
+    # Additional color settings for a cohesive blue theme
+    info: "#17a2b8"    # info color (light blue)
+    success: "#28a745" # success color (green)
+    warning: "#ffc107" # warning color (yellow)
+    danger: "#dc3545"  # danger color (red)
+    light: "#f8f9fa"   # light color for contrasts
+    dark: "#343a40"    # dark color for contrasts
+
+
+authors:
+  Joseph A Bulbulia:
+    href: https://github.com/go-bayes
+
+development:
+  version_label: default
+  version_tooltip: "Version"
+
+articles:
+  - title: "Getting Started"
+    navbar: ~
+    contents:
+    - margot-workflow
+    - margot-simulation
+
+reference:
+  - title: "Describe Longitudinal Data"
+    contents:
+    - margot_count_dyads
+    - margot_count_ids
+    - margot_plot_boxplot
+    - margot_plot_boxplot_covariate
+    - margot_plot_discontinuity
+    - margot_plot_histogram
+    - margot_plot_response_timeline
+    - margot_plot_slope
+    - margot_plot_slope_covariate
+    - margot_plot_slope_covariate_batch
+    - margot_plot_slope_covariate_combo
+    - margot_summary_panel
+
+  - title: "Check assumptions"
+    contents:
+    - margot_assess_overlap
+    - margot_make_tables
+    - margot_plot_categorical
+    - margot_plot_individual_responses
+    - margot_plot_shift
+    - margot_propensity_model_and_plots
+    - margot_transition_table
+
+  - title: "Prepare data for models"
+    contents:
+    - create_ordered_variable
+    - impute_and_combine
+    - margot_adjust_weights
+    - margot_censor
+    - margot_censor_lead
+    - margot_compute_gender_weights_by_wave
+    - margot_filter
+    - margot_impute_carry_forward
+    - margot_log_transform_vars
+    - margot_process_binary_vars
+    - margot_process_longitudinal_data
+    - margot_process_longitudinal_data_wider
+    - margot_wide_machine
+
+  - title: "Treatment effect estimation"
+    contents:
+    - margot_causal_forest
+    - margot_lmtp
+    - margot_recalculate_policy_trees
+    - margot_recompute_ate
+    - margot_recompute_ate_batch
+
+  - title: "Interpret and Report Results"
+    contents:
+    - margot_bind_tables
+    - margot_bind_models
+    - margot_compare_groups
+    - margot_correct_combined_table
+    - margot_flip_forests
+    - margot_inspect_qini
+    - margot_interpret_policy_batch
+    - margot_interpret_policy_tree
+    - margot_interpret_qini
+    - margot_interpret_rate
+    - margot_interpret_heterogeneity
+    - margot_interpret_rate_comparison
+    - margot_lmtp_evalue
+    - margot_model_evalue
+    - margot_omnibus_hetero_test
+    - margot_planned_subgroups_batch
+    - margot_policy
+    - margot_rate
+    - margot_rate_batch
+    - margot_recompute_qini_aipw
+    - margot_recompute_qini_ipw
+    - margot_rescue_qini
+    - margot_subset_model
+    - margot_subset_batch
+    - margot_summary_cate_difference_gain
+
+  - title: "Visualise Causal Effect Estimates"
+    contents:
+    - margot_plot
+    - margot_plot_decision_tree
+    - margot_plot_multi_arm
+    - margot_plot_policy_combo
+    - margot_plot_policy_tree
+    - margot_plot_qini
+    - margot_plot_qini_batch
+    - margot_plot_rate
+    - margot_plot_rate_batch
+    - margot_plot_tau
+
+  - title: "Utility functions"
+    contents:
+    - back_transform_logmean
+    - back_transform_log_z
+    - back_transform_zscore
+    - here_read
+    - here_save
+    - here_read_qs
+    - here_save_qs
+    - lmtp_evalue_tab
+    - margot_back_transform_log_z
+    - margot_debug_qini
+    - margot_get_labels
+    - margot_log_transform_vars
+    - margot_plot_create_options
+    - margot_plot_exposure
+    - margot_qini_diagnostic
+    - margot_process_binary_vars
+    - margot_prop_missing
+    - margot_rescue_qini
+    - margot_reversed_labels
+    - margot_save_png
+    - margot_size
+    - margot_trim_sample_weights
+    - prepare_panel_data
+    - pretty_number
+    - remove_numeric_attributes
+    - regress_with_covariates
+    - select_and_rename_cols
+
+  - title: "Data and Simulation"
+    contents:
+    - df_nz
+    - df_margot_example
+    - fetch_margot_data
+    - list_margot_data
+    - clear_margot_cache
+    - margot_simulate
+
+

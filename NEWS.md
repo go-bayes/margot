@@ -255,11 +255,13 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - smart label positioning
 
 ### API Consistency
+
 - renamed `spend` to `spend_levels` in `margot_policy()` and `margot_batch_policy()`
   - Ccnsistent with `margot_interpret_qini()` parameter naming
   - **breaking change**: Update code using `spend` parameter
 
 ### Bug Fixes
+
 - fixed `margot_policy()` and `margot_batch_policy()` to pass spend_levels to Qini plots
   - Qini plot vertical lines now match the spend levels used for calculations
   - previously always showed 20% and 50% regardless of parameter
