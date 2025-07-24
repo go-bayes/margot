@@ -25,6 +25,8 @@
 #' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
 #' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
 #'   "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().
+#' @param cate_color Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).
+#' @param ate_color Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).
 #'
 #' @return A list containing the generated ggplot objects for each processed model.
 #' 
@@ -69,7 +71,9 @@ margot_plot_qini_batch <- function(mc_result,
                                    horizontal_line = TRUE,
                                    grid_step = NULL,
                                    ylim = NULL,
-                                   baseline_method = "maq_no_covariates") {
+                                   baseline_method = "maq_no_covariates",
+                                   cate_color = "#d8a739",
+                                   ate_color = "#4d4d4d") {
   
   cli::cli_h1("Margot Batch QINI Plots")
   
@@ -124,7 +128,9 @@ margot_plot_qini_batch <- function(mc_result,
         horizontal_line = horizontal_line,
         grid_step = grid_step,
         ylim = ylim,
-        baseline_method = baseline_method
+        baseline_method = baseline_method,
+        cate_color = cate_color,
+        ate_color = ate_color
       )
       
       # store plot in list

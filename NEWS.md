@@ -1,4 +1,10 @@
 
+
+# [2025-07-25] margot 1.0.140
+
+### new features
+- users may customise colour for margot_plot_qini() and margot_plot_qini_batch(), parameters are: 'cate_color = "", ate_color = ""
+
 # [2025-07-24] margot 1.0.130
 
 ### new features

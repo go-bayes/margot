@@ -22,7 +22,9 @@ margot_plot_qini(
   grid_step = NULL,
   return_data = FALSE,
   ylim = NULL,
-  baseline_method = "maq_no_covariates"
+  baseline_method = "maq_no_covariates",
+  cate_color = "#d8a739",
+  ate_color = "#4d4d4d"
 )
 }
 \arguments{
@@ -68,6 +70,10 @@ lower, upper, curve.}
 
 \item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
 "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
+
+\item{cate_color}{Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).}
+
+\item{ate_color}{Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).}
 }
 \value{
 If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,
@@ -95,7 +101,7 @@ Key differences from maq::plot():
   \item More descriptive axis labels
   \item Additional features like theme selection and spend indicators
   \item Confidence intervals computed via maq::average_gain() for accuracy
-  \item Binary treatment colors: CATE = green (#009E73), ATE = gold (#d8a739)
+  \item Binary treatment colors: Customizable via cate_color and ate_color parameters
 }
 }
 \examples{

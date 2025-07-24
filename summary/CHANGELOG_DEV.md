@@ -68,6 +68,9 @@
     - Implements graceful fallback to existing QINI data when regeneration fails
     - Preserves QINI metadata (test indices, sample sizes) to ensure consistent regeneration
     - Uses stored test indices when regenerating to match original sample size
+  - **Customizable QINI plot colors**: Added `cate_color` and `ate_color` parameters to margot_plot_qini() 
+    and margot_plot_qini_batch() for full color customization. New defaults: gold (#d8a739) for CATE 
+    (targeted treatment) and dark gray (#4d4d4d) for ATE (no-priority assignment)
 
 ## margot 1.0.125 (2025-07-24)
 
