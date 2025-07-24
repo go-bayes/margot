@@ -130,6 +130,7 @@ reference:
     - margot_omnibus_hetero_test
     - margot_planned_subgroups_batch
     - margot_policy
+    - margot_qini
     - margot_rate
     - margot_rate_batch
     - margot_recompute_qini_aipw

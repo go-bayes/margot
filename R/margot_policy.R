@@ -17,8 +17,8 @@
 #'   Options: "policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries".
 #'   Default: all.
 #' @param qini_args List of additional arguments to pass to margot_plot_qini(). Default: list().
-#' @param baseline_method Method for generating baseline: "auto" (default), "simple", 
-#'   "maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().
+#' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
+#'   "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().
 #'
 #' @return A named list; each element corresponds to a model and contains only
 #' the requested outputs.
@@ -38,7 +38,7 @@ margot_policy <- function(
     model_names        = NULL,
     output_objects     = c("policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries"),
     qini_args          = list(),
-    baseline_method    = "auto"
+    baseline_method    = "maq_no_covariates"
 ) {
   cli::cli_alert_info("starting margot_policy function")
 
@@ -124,9 +124,13 @@ margot_policy <- function(
           # extract necessary components
           model_result <- result_outcomes$results[[model_name]]
           outcome_name_clean <- gsub("^model_", "", model_name)
+          is_flipped <- grepl("_r$", outcome_name_clean)
           outcome_data <- NULL
           
-          if (!is.null(result_outcomes$data) && outcome_name_clean %in% names(result_outcomes$data)) {
+          # for flipped models, prioritize getting data from forest object
+          if (is_flipped && !is.null(model_result$model) && !is.null(model_result$model$Y.orig)) {
+            outcome_data <- model_result$model$Y.orig
+          } else if (!is.null(result_outcomes$data) && outcome_name_clean %in% names(result_outcomes$data)) {
             outcome_data <- result_outcomes$data[[outcome_name_clean]]
           } else if (!is.null(result_outcomes$data) && model_name %in% names(result_outcomes$data)) {
             outcome_data <- result_outcomes$data[[model_name]]

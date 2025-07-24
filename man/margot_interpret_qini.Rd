@@ -15,7 +15,7 @@ margot_interpret_qini(
 )
 }
 \arguments{
-\item{multi_batch}{List from margot_batch_policy() with diff_gain_summaries}
+\item{multi_batch}{List from margot_policy() or margot_qini() with diff_gain_summaries}
 
 \item{label_mapping}{Named list mapping model names to readable labels}
 
@@ -42,4 +42,10 @@ The function automatically detects available spend levels in the data. If reques
 spend levels are not available, it will use the closest available levels and warn
 the user. To see what spend levels are available, check the names of
 `multi_batch[[1]]$diff_gain_summaries`.
+
+This function accepts output from either:
+\itemize{
+  \item margot_policy() - which includes policy trees and Qini results
+  \item margot_qini() - which focuses solely on Qini curves and gains
+}
 }

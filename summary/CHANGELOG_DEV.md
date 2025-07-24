@@ -1,5 +1,74 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.130 (2025-07-24)
+
+### New Features
+- **margot_qini()**: New standalone function for generating QINI curves and difference gain summaries
+  - Takes causal forest results as input (like margot_rate does)
+  - Generates QINI curves using margot_generate_qini_data()
+  - Computes difference gain summaries at specified spend levels
+  - Returns structured output suitable for margot_interpret_qini()
+  - Supports baseline_method parameter for flexibility
+  - Includes label_mapping and formatting options
+  - Provides direct access to QINI analysis without full policy analysis
+
+- **margot_interpret_rate()**: Moved from _temp folder to main R package
+  - Now properly exported and documented
+  - Interprets RATE estimates from margot_rate()
+  - Handles both single method (AUTOC or QINI) and comparison of both
+  - Provides markdown-formatted summaries
+  - Includes margot_interpret_rate_comparison() for comparing AUTOC vs QINI
+
+### Improvements
+- **margot_interpret_qini()**: Updated to accept output from both margot_policy() and margot_qini()
+  - Added documentation about dual compatibility
+  - No breaking changes to existing functionality
+
+- **Consistent API design**:
+  - margot_rate() → margot_interpret_rate() for RATE analysis
+  - margot_qini() → margot_interpret_qini() for QINI analysis  
+  - Both follow the same pattern for generation and interpretation
+
+### Documentation
+- Updated _pkgdown.yml to include margot_qini in "Interpret and Report Results" section
+- All new functions properly documented with examples
+
+### Default Changes
+- Changed default baseline_method from "auto" to "maq_no_covariates" in all QINI functions:
+  - margot_generate_qini_data()
+  - margot_qini()
+  - margot_plot_qini()
+  - margot_plot_qini_batch()
+  - margot_policy()
+- This makes the default behavior more theoretically sound and predictable
+- **Important**: "maq_no_covariates" now automatically falls back to simple baseline if maq fails
+  - Provides robustness while maintaining theoretical preference
+  - Clear warning messages when fallback occurs
+  - Users always get a baseline curve with the default setting
+
+### Bug Fixes
+- Fixed outcome data retrieval for flipped models (those with _r suffix)
+  - margot_plot_qini(), margot_qini(), and margot_policy() now prioritize getting data from forest objects for flipped models
+  - Flipped models use the same outcome data as stored in their GRF forest objects (Y.orig)
+  - This ensures QINI curves are computed with the correct data that was used to train the model
+  - Resolves "Cannot find outcome data" errors for reversed/flipped models
+  - **Note on flipped model data**: When models are created via margot_flip_forests(), the outcome
+    is negated ONCE during model creation. The forest's Y.orig contains the already-negated values.
+    QINI calculations correctly use this pre-negated data without additional flipping, ensuring
+    consistency between model training and QINI curve generation.
+  - **Fixed QINI regeneration for flipped models**: Previously, QINI regeneration with different baseline
+    methods would fail for flipped models when mc_result$data was NULL. Now allows regeneration by
+    accessing outcome data from forest objects (Y.orig) even when the main data object is unavailable.
+  - **Improved margot_flip_forests() data handling**: Now properly merges flipped outcome data into the
+    main data object, and removes original outcome data when remove_original=TRUE. This ensures
+    downstream functions can find flipped outcome data in the expected locations.
+  - **Enhanced QINI regeneration with better debugging and fallback**:
+    - Added detailed debugging messages when forest objects can't be found for flipped models
+    - Checks multiple locations for forest objects (model_result$model, model_result$full_model, mc_result$full_models)
+    - Implements graceful fallback to existing QINI data when regeneration fails
+    - Preserves QINI metadata (test indices, sample sizes) to ensure consistent regeneration
+    - Uses stored test indices when regenerating to match original sample size
+
 ## margot 1.0.125 (2025-07-24)
 
 ### Enhancements

@@ -9,7 +9,7 @@ margot_generate_qini_data(
   outcome_data,
   treatment,
   weights = NULL,
-  baseline_method = c("auto", "simple", "maq_no_covariates", "maq_only", "none"),
+  baseline_method = c("maq_no_covariates", "auto", "simple", "maq_only", "none"),
   verbose = FALSE
 )
 }
@@ -22,8 +22,8 @@ margot_generate_qini_data(
 
 \item{weights}{Optional weights vector}
 
-\item{baseline_method}{Method for generating baseline: "auto" (default), "simple", 
-"maq_no_covariates", "maq_only", or "none". See details.}
+\item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
+"auto", "simple", "maq_only", or "none". See details.}
 
 \item{verbose}{Logical for verbose output}
 }
@@ -40,10 +40,11 @@ and creates a baseline following various methods.
 \details{
 The baseline_method parameter controls how the no-prioritization baseline is generated:
 \itemize{
+  \item "maq_no_covariates": Use maq with target.with.covariates = FALSE (default). 
+    Automatically falls back to simple baseline if maq fails.
   \item "auto": Try maq with target.with.covariates = FALSE first, fall back to simple baseline if it fails
   \item "simple": Always use simple baseline (straight line from (0,0) to (1, mean(tau_hat)))
-  \item "maq_no_covariates": Use maq with target.with.covariates = FALSE (may fail)
-  \item "maq_only": Use standard maq with constant rewards (may fail)
+  \item "maq_only": Use standard maq with constant rewards (may fail with no fallback)
   \item "none": No baseline curve
 }
 

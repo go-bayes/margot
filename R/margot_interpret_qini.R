@@ -9,7 +9,13 @@
 #' the user. To see what spend levels are available, check the names of
 #' `multi_batch[[1]]$diff_gain_summaries`.
 #'
-#' @param multi_batch List from margot_batch_policy() with diff_gain_summaries
+#' This function accepts output from either:
+#' \itemize{
+#'   \item margot_policy() - which includes policy trees and Qini results
+#'   \item margot_qini() - which focuses solely on Qini curves and gains
+#' }
+#'
+#' @param multi_batch List from margot_policy() or margot_qini() with diff_gain_summaries
 #' @param label_mapping Named list mapping model names to readable labels
 #' @param alpha Significance level for confidence intervals (default: 0.05)
 #' @param decimal_places Decimal places for rounding (default: 2)

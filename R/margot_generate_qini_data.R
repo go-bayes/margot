@@ -8,17 +8,18 @@
 #' @param outcome_data The outcome data (Y) for the model
 #' @param treatment The treatment assignment vector (W)
 #' @param weights Optional weights vector
-#' @param baseline_method Method for generating baseline: "auto" (default), "simple", 
-#'   "maq_no_covariates", "maq_only", or "none". See details.
+#' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
+#'   "auto", "simple", "maq_only", or "none". See details.
 #' @param verbose Logical for verbose output
 #'
 #' @details
 #' The baseline_method parameter controls how the no-prioritization baseline is generated:
 #' \itemize{
+#'   \item "maq_no_covariates": Use maq with target.with.covariates = FALSE (default). 
+#'     Automatically falls back to simple baseline if maq fails.
 #'   \item "auto": Try maq with target.with.covariates = FALSE first, fall back to simple baseline if it fails
 #'   \item "simple": Always use simple baseline (straight line from (0,0) to (1, mean(tau_hat)))
-#'   \item "maq_no_covariates": Use maq with target.with.covariates = FALSE (may fail)
-#'   \item "maq_only": Use standard maq with constant rewards (may fail)
+#'   \item "maq_only": Use standard maq with constant rewards (may fail with no fallback)
 #'   \item "none": No baseline curve
 #' }
 #' 
@@ -35,7 +36,7 @@ margot_generate_qini_data <- function(model_result,
                                      outcome_data, 
                                      treatment,
                                      weights = NULL,
-                                     baseline_method = c("auto", "simple", "maq_no_covariates", "maq_only", "none"),
+                                     baseline_method = c("maq_no_covariates", "auto", "simple", "maq_only", "none"),
                                      verbose = FALSE) {
   
   baseline_method <- match.arg(baseline_method)
@@ -44,6 +45,26 @@ margot_generate_qini_data <- function(model_result,
   tau_hat <- model_result$tau_hat
   if (is.null(tau_hat)) {
     stop("tau_hat not found in model result")
+  }
+  
+  # check if we should use a subset of data based on qini_metadata
+  if (!is.null(model_result$qini_metadata) && !is.null(model_result$qini_metadata$test_indices)) {
+    test_indices <- model_result$qini_metadata$test_indices
+    if (verbose) {
+      cli::cli_alert_info("Using QINI test indices from metadata (n={length(test_indices)})")
+    }
+    # subset all data to match original QINI generation
+    if (length(tau_hat) == length(test_indices)) {
+      # tau_hat is already for test set only, no subsetting needed
+    } else if (length(outcome_data) > length(test_indices)) {
+      # need to subset the data
+      tau_hat <- tau_hat[test_indices]
+      outcome_data <- outcome_data[test_indices]
+      treatment <- treatment[test_indices]
+      if (!is.null(weights)) {
+        weights <- weights[test_indices]
+      }
+    }
   }
   
   # ensure vectors
@@ -84,7 +105,7 @@ margot_generate_qini_data <- function(model_result,
     )
     if (verbose) cli::cli_alert_info("Using simple baseline from (0,0) to (1, {round(mean_tau, 3)})")
   } else if (baseline_method == "maq_no_covariates") {
-    # use maq with target.with.covariates = FALSE
+    # use maq with target.with.covariates = FALSE, with automatic fallback
     ate_qini <- tryCatch({
       result <- maq::maq(
         reward = as.matrix(tau_hat),
@@ -97,8 +118,18 @@ margot_generate_qini_data <- function(model_result,
       if (verbose) cli::cli_alert_info("Generated baseline using maq with target.with.covariates = FALSE")
       result
     }, error = function(e) {
-      if (verbose) cli::cli_alert_warning("Failed to generate baseline with maq (no covariates): {e$message}")
-      NULL  # will handle below
+      if (verbose) {
+        cli::cli_alert_warning("Failed to generate baseline with maq (no covariates): {e$message}")
+        cli::cli_alert_info("Falling back to simple baseline from (0,0) to (1, {round(mean_tau, 3)})")
+      }
+      # fallback to simple baseline
+      simple_baseline <- margot_qini_simple_baseline(
+        mean_tau = mean_tau,
+        n_points = 100,
+        n_units = length(tau_hat)
+      )
+      simple_baseline$baseline_type <- "simple_fallback"
+      simple_baseline
     })
   } else if (baseline_method == "maq_only") {
     # try standard maq with constant rewards

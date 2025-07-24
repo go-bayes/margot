@@ -6,10 +6,12 @@ QINI curves visualize treatment prioritization strategies by showing the cumulat
 
 ## Baseline Method Options
 
-### 1. "auto" (default)
-- Tries `maq` with `target.with.covariates = FALSE` first
-- Falls back to simple baseline if maq fails
-- Best for most use cases
+### 1. "maq_no_covariates" (default)
+- Uses `maq` with `target.with.covariates = FALSE`
+- Creates baseline using maq's optimization without covariate information
+- **Automatically falls back to simple baseline if maq fails**
+- Default choice for theoretical consistency with robustness
+- You'll see a warning message if fallback occurs
 
 ### 2. "simple"
 - Always generates a straight line from (0,0) to (1, mean(tau_hat))
@@ -17,10 +19,10 @@ QINI curves visualize treatment prioritization strategies by showing the cumulat
 - **Always succeeds** - cannot fail
 - Ideal when you need guaranteed results
 
-### 3. "maq_no_covariates"
-- Uses `maq` with `target.with.covariates = FALSE`
-- Creates baseline using maq's optimization without covariate information
-- May fail if maq encounters numerical issues
+### 3. "auto"
+- Tries `maq` with `target.with.covariates = FALSE` first
+- Falls back to simple baseline if maq fails
+- Good choice when you want robustness with automatic fallback
 
 ### 4. "maq_only"
 - Uses standard `maq` with constant rewards

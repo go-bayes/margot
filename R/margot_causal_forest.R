@@ -529,6 +529,13 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         if (!is.null(qini_result)) {
           results[[model_name]]$qini_data <- qini_result$qini_data
           results[[model_name]]$qini_objects <- qini_result$qini_objects
+          # store metadata about qini generation
+          results[[model_name]]$qini_metadata <- list(
+            n_test = length(not_missing),
+            n_train = 0,  # no separate train set
+            test_indices = not_missing,
+            qini_split = FALSE
+          )
         } else {
           if (verbose) cli::cli_alert_warning(crayon::yellow(paste("unable to compute binary qini curves for", outcome)))
         }
@@ -554,6 +561,13 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         qini_result <- compute_qini_curves_binary(qini_tau_hat, Y[qini_test_idxs], W[qini_test_idxs], verbose = verbose)
         results[[model_name]]$qini_data <- qini_result$qini_data
         results[[model_name]]$qini_objects <- qini_result$qini_objects
+        # store metadata about qini generation
+        results[[model_name]]$qini_metadata <- list(
+          n_test = length(qini_test_idxs),
+          n_train = length(qini_train_idxs),
+          test_indices = qini_test_idxs,
+          qini_split = TRUE
+        )
       }
 
       # --- 5) save the main model object if requested ---
