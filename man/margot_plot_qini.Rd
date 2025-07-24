@@ -21,7 +21,8 @@ margot_plot_qini(
   horizontal_line = TRUE,
   grid_step = NULL,
   return_data = FALSE,
-  ylim = NULL
+  ylim = NULL,
+  baseline_method = "auto"
 )
 }
 \arguments{
@@ -64,6 +65,9 @@ the ggplot object. Default is FALSE. When TRUE, returns data with columns: propo
 lower, upper, curve.}
 
 \item{ylim}{Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).}
+
+\item{baseline_method}{Method for generating baseline: "auto" (default), "simple", 
+"maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().}
 }
 \value{
 If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,

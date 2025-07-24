@@ -18,6 +18,34 @@
   - Added ylim parameter for manual y-axis control (defaults to automatic scaling)
   - ylim parameter also added to margot_plot_qini_batch() for consistency
 
+### Major Architecture Change
+- **QINI curve generation moved to on-demand**: 
+  - Created margot_generate_qini_data() helper function for on-demand generation
+  - margot_plot_qini() now generates QINI data when needed instead of requiring pre-computed data
+  - margot_plot_qini_batch() updated to work with on-demand generation
+  - margot_policy() and margot_summary_cate_difference_gain() generate QINI objects as needed
+  - This approach is more robust and handles edge cases better
+  - Follows maq's mathematical approach for ATE baselines (straight line)
+  - Future: can remove QINI generation from margot_causal_forest() entirely
+- **Robust baseline methods for QINI curves**:
+  - Created margot_qini_simple_baseline() function that generates baseline curves that cannot fail
+  - Implemented hybrid approach in margot_generate_qini_data() with options:
+    - "auto" (default): Try maq with target.with.covariates = FALSE, fall back to simple baseline
+    - "simple": Always use simple baseline (straight line from (0,0) to (1, mean(tau_hat)))
+    - "maq_no_covariates": Use maq with target.with.covariates = FALSE (may fail)
+    - "maq_only": Use standard maq with constant rewards (may fail)
+    - "none": No baseline curve
+  - Simple baseline implements average_gain() method for compatibility with diff_gain_summaries
+  - Updated margot_summary_cate_difference_gain() to handle both maq and simple baseline objects
+  - Added integrated_difference_simple() function for computing differences with simple baselines
+  - Enhanced data extraction to find Y and W data in grf forest objects when mc_result$data is NULL
+  - Baseline method parameter added to margot_plot_qini(), margot_plot_qini_batch(), and margot_policy()
+  - Simple baseline represents expected gain under random allocation: gain(B) = B * E[tau]
+  - Smart fallback logic in margot_plot_qini(): when data regeneration fails but simple baseline is requested,
+    adds baseline to existing QINI data by extracting ATE from multiple sources
+  - Improved regeneration logic: only regenerates when data is available or when changing baseline types
+  - Better error messages showing available fields when baseline generation fails
+
 ### Bug Fixes
 - Fixed omnibus test matching for flipped models from margot_flip_forests()
 - Improved matching logic using original outcome names for reliability

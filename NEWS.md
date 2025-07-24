@@ -16,7 +16,21 @@
   - changed CATE curve colour from blue (#4f88c6) to green (#009E73) to avoid "control" association
   - added ylim parameter for manual y-axis control (defaults to automatic scaling)
   - ylim parameter also added to margot_plot_qini_batch() for consistency
+  - added baseline_method parameter for flexible baseline generation ("auto", "simple", "maq_no_covariates", "maq_only", "none")
+  - robust simple baseline implementation that always succeeds
+  - smart fallback logic: adds simple baseline to existing QINI data when regeneration isn't possible
+  - improved data extraction from grf forest objects (Y.orig, W.orig) when mc_result$data is NULL
+  - better error messages with available data fields when baseline generation fails
 
+### major architecture change
+- **QINI curve generation moved to on-demand**: 
+  - created margot_generate_qini_data() helper function for on-demand generation
+  - margot_plot_qini() now generates QINI data when needed
+  - margot_plot_qini_batch() updated to work with on-demand generation
+  - margot_policy() and margot_summary_cate_difference_gain() generate QINI objects as needed
+  - more robust approach that handles edge cases better
+  - follows maq's mathematical approach for ATE baselines
+  
 ### fixes
 - fixed omnibus test matching for flipped models from margot_flip_forests()
 - better matching logic using original outcome names for reliability

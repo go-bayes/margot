@@ -22,6 +22,8 @@
 #'   Options: "policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries".
 #'   Default: all.
 #' @param qini_args List of additional arguments to pass to margot_plot_qini(). Default: list().
+#' @param baseline_method Method for generating baseline: "auto" (default), "straight", 
+#'   "maq_no_covariates", or "none". See details in margot_generate_qini_data().
 #'
 #' @return A named list; each element corresponds to a model and contains only
 #' the requested outputs.
@@ -45,7 +47,8 @@ margot_policy <- function(
     original_df        = NULL,
     model_names        = NULL,
     output_objects     = c("policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries"),
-    qini_args          = list()
+    qini_args          = list(),
+    baseline_method    = "auto"
 ) {
   cli::cli_alert_info("starting margot_policy function")
 
@@ -106,7 +109,8 @@ margot_policy <- function(
           mc_result     = result_outcomes,
           outcome_var   = model_name,
           label_mapping = label_mapping,
-          spend_levels  = spend_levels
+          spend_levels  = spend_levels,
+          baseline_method = baseline_method
         )
         
         # merge with user-provided qini_args
@@ -127,9 +131,42 @@ margot_policy <- function(
       # difference-gain summaries
       if ("diff_gain_summaries" %in% output_objects) {
         qini_objs <- result_outcomes$results[[model_name]]$qini_objects
-        is_binary <- all(c("cate", "ate") %in% names(qini_objs))
-        dg <- list()
-        if (is_binary) {
+        
+        # generate qini objects if missing
+        if (is.null(qini_objs)) {
+          cli::cli_alert_info("Generating QINI objects on-demand for diff_gain_summaries")
+          
+          # extract necessary components
+          model_result <- result_outcomes$results[[model_name]]
+          outcome_name_clean <- gsub("^model_", "", model_name)
+          outcome_data <- NULL
+          
+          if (!is.null(result_outcomes$data) && outcome_name_clean %in% names(result_outcomes$data)) {
+            outcome_data <- result_outcomes$data[[outcome_name_clean]]
+          } else if (!is.null(result_outcomes$data) && model_name %in% names(result_outcomes$data)) {
+            outcome_data <- result_outcomes$data[[model_name]]
+          }
+          
+          if (!is.null(outcome_data) && !is.null(result_outcomes$W)) {
+            qini_result <- margot_generate_qini_data(
+              model_result = model_result,
+              outcome_data = outcome_data,
+              treatment = result_outcomes$W,
+              weights = result_outcomes$weights,
+              baseline_method = baseline_method,
+              verbose = FALSE
+            )
+            qini_objs <- qini_result$qini_objects
+          }
+        }
+        
+        if (is.null(qini_objs)) {
+          cli::cli_alert_warning("Could not generate QINI objects for {model_name}, skipping diff_gain_summaries")
+          model_output$diff_gain_summaries <- NULL
+        } else {
+          is_binary <- all(c("cate", "ate") %in% names(qini_objs))
+          dg <- list()
+          if (is_binary) {
           for (s in spend_levels) {
             dg[[paste0("spend_", s)]] <-
               margot_summary_cate_difference_gain(
@@ -163,8 +200,9 @@ margot_policy <- function(
             }
             dg[[paste0("spend_", s)]] <- sums
           }
+          }
+          model_output$diff_gain_summaries <- dg
         }
-        model_output$diff_gain_summaries <- dg
       }
 
       # save plots if requested

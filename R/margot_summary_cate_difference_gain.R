@@ -41,9 +41,34 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
   # Get the qini_objects
   qini_objects <- mc_result$results[[outcome_var]]$qini_objects
 
-  # Check that qini_objects is not NULL
+  # Generate qini objects if missing
   if (is.null(qini_objects)) {
-    stop("Qini objects not found for the specified outcome variable: ", outcome_var)
+    # try to generate on-demand
+    model_result <- mc_result$results[[outcome_var]]
+    outcome_name_clean <- gsub("^model_", "", outcome_var)
+    outcome_data <- NULL
+    
+    if (!is.null(mc_result$data) && outcome_name_clean %in% names(mc_result$data)) {
+      outcome_data <- mc_result$data[[outcome_name_clean]]
+    } else if (!is.null(mc_result$data) && outcome_var %in% names(mc_result$data)) {
+      outcome_data <- mc_result$data[[outcome_var]]
+    }
+    
+    if (!is.null(outcome_data) && !is.null(mc_result$W)) {
+      qini_result <- margot_generate_qini_data(
+        model_result = model_result,
+        outcome_data = outcome_data,
+        treatment = mc_result$W,
+        weights = mc_result$weights,
+        baseline_method = "auto",
+        verbose = FALSE
+      )
+      qini_objects <- qini_result$qini_objects
+    }
+    
+    if (is.null(qini_objects)) {
+      stop("Qini objects not found and could not be generated for: ", outcome_var)
+    }
   }
 
   # Check that the specified curves are in qini_objects
@@ -67,8 +92,18 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
   }
 
   # Compute the average gains for both curves
-  avg_gain_ref <- maq::average_gain(maq_object_ref, spend = spend)
-  avg_gain_comp <- maq::average_gain(maq_object_comp, spend = spend)
+  # Handle both maq objects and simple baselines
+  if (inherits(maq_object_ref, "qini_simple_baseline")) {
+    avg_gain_ref <- average_gain.qini_simple_baseline(maq_object_ref, spend = spend)
+  } else {
+    avg_gain_ref <- maq::average_gain(maq_object_ref, spend = spend)
+  }
+  
+  if (inherits(maq_object_comp, "qini_simple_baseline")) {
+    avg_gain_comp <- average_gain.qini_simple_baseline(maq_object_comp, spend = spend)
+  } else {
+    avg_gain_comp <- maq::average_gain(maq_object_comp, spend = spend)
+  }
 
   # Check if the result is an atomic vector and convert to list if necessary
   if (is.atomic(avg_gain_ref)) {
@@ -87,7 +122,30 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
   diff_std_err <- round(diff_std_err, digits)
 
   # Compute the integrated difference between the two curves
-  integrated_diff <- maq::integrated_difference(maq_object_comp, maq_object_ref, spend = spend)
+  # Handle different combinations of maq objects and simple baselines
+  if (inherits(maq_object_ref, "qini_simple_baseline") || 
+      inherits(maq_object_comp, "qini_simple_baseline")) {
+    # if either is a simple baseline, we need special handling
+    if (inherits(maq_object_ref, "qini_simple_baseline") && 
+        !inherits(maq_object_comp, "qini_simple_baseline")) {
+      # reference is simple, comparison is maq
+      integrated_diff <- integrated_difference_simple(maq_object_comp, maq_object_ref, spend = spend)
+    } else if (!inherits(maq_object_ref, "qini_simple_baseline") && 
+               inherits(maq_object_comp, "qini_simple_baseline")) {
+      # reference is maq, comparison is simple - reverse and negate
+      temp_diff <- integrated_difference_simple(maq_object_ref, maq_object_comp, spend = spend)
+      integrated_diff <- list(
+        estimate = -temp_diff$estimate,
+        std.err = temp_diff$std.err
+      )
+    } else {
+      # both are simple baselines - difference is 0
+      integrated_diff <- list(estimate = 0, std.err = 0)
+    }
+  } else {
+    # both are maq objects - use standard function
+    integrated_diff <- maq::integrated_difference(maq_object_comp, maq_object_ref, spend = spend)
+  }
 
   # Check if the integrated difference result is an atomic vector
   if (is.atomic(integrated_diff)) {

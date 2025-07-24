@@ -28,6 +28,8 @@
 #' @param grid_step Integer specifying the step size for subsampling the curve data. If NULL (default),
 #'   uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.
 #' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
+#' @param baseline_method Method for generating baseline: "auto" (default), "straight", 
+#'   "maq_no_covariates", or "none". See details in margot_generate_qini_data().
 #'
 #' @return A list containing the generated ggplot objects for each processed model.
 #' 
@@ -76,7 +78,8 @@ margot_plot_qini_batch <- function(mc_result,
                                    ci_ribbon_color = NULL,
                                    horizontal_line = TRUE,
                                    grid_step = NULL,
-                                   ylim = NULL) {
+                                   ylim = NULL,
+                                   baseline_method = "auto") {
   
   cli::cli_h1("Margot Batch QINI Plots")
   
@@ -106,23 +109,16 @@ margot_plot_qini_batch <- function(mc_result,
     selected_models <- all_models
   }
   
-  # filter to models that have qini data
-  models_with_qini <- selected_models[sapply(selected_models, function(m) {
-    !is.null(mc_result$results[[m]]$qini_data)
-  })]
+  # all selected models can now be processed since we generate QINI data on-demand
+  models_to_process <- selected_models
   
-  if (length(models_with_qini) < length(selected_models)) {
-    missing_qini <- setdiff(selected_models, models_with_qini)
-    cli::cli_alert_warning("{length(missing_qini)} model(s) have no QINI data: {paste(gsub('model_', '', missing_qini), collapse = ', ')}")
-  }
-  
-  cli::cli_alert_info("Processing {length(models_with_qini)} models with QINI data")
+  cli::cli_alert_info("Processing {length(models_to_process)} models")
   
   # initialise list to store plots
   qini_plots <- list()
   
   # loop through each selected model
-  for (model_name in models_with_qini) {
+  for (model_name in models_to_process) {
     cli::cli_h2("Processing model: {gsub('model_', '', model_name)}")
     
     tryCatch({
@@ -143,7 +139,8 @@ margot_plot_qini_batch <- function(mc_result,
         ci_ribbon_color = ci_ribbon_color,
         horizontal_line = horizontal_line,
         grid_step = grid_step,
-        ylim = ylim
+        ylim = ylim,
+        baseline_method = baseline_method
       )
       
       # store plot in list

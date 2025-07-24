@@ -29,6 +29,8 @@
 #'   the ggplot object. Default is FALSE. When TRUE, returns data with columns: proportion, gain,
 #'   lower, upper, curve.
 #' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
+#' @param baseline_method Method for generating baseline: "auto" (default), "simple", 
+#'   "maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().
 #'
 #' @return If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,
 #'   returns a data.frame with the plot data.
@@ -85,7 +87,8 @@ margot_plot_qini <- function(mc_result, outcome_var,
                              horizontal_line = TRUE,
                              grid_step = NULL,
                              return_data = FALSE,
-                             ylim = NULL) {
+                             ylim = NULL,
+                             baseline_method = "auto") {
   cli::cli_h1("Margot Plot Qini Curves")
 
   # Transform the outcome variable name
@@ -141,12 +144,161 @@ margot_plot_qini <- function(mc_result, outcome_var,
     }
   }
 
+  # check if qini_data already exists, otherwise generate it
   qini_data <- mc_result$results[[outcome_var]]$qini_data
-  if (is.null(qini_data)) {
-    cli::cli_abort("Qini data not found for the specified outcome variable: {outcome_var}")
+  qini_objects <- mc_result$results[[outcome_var]]$qini_objects
+  
+  # check if we need to regenerate due to different baseline method
+  regenerate_needed <- FALSE
+  if (!is.null(qini_data)) {
+    # check if current data matches requested baseline method
+    has_ate <- "ate" %in% unique(qini_data$curve) || "ATE" %in% unique(qini_data$curve)
+    
+    if (baseline_method == "none" && has_ate) {
+      # want no baseline but have one
+      regenerate_needed <- TRUE
+      cli::cli_alert_info("Regenerating QINI data without baseline curve")
+    } else if (baseline_method != "none" && !has_ate) {
+      # want baseline but don't have one
+      regenerate_needed <- TRUE
+      cli::cli_alert_info("Regenerating QINI data with {baseline_method} baseline")
+    } else if (baseline_method == "simple" || baseline_method == "maq_no_covariates" || baseline_method == "maq_only") {
+      # for specific baseline methods, always regenerate to ensure we get the right type
+      regenerate_needed <- TRUE
+      cli::cli_alert_info("Regenerating QINI data with {baseline_method} baseline")
+    }
   }
-
-  cli::cli_alert_success("Qini data extracted for outcome variable: {outcome_var}")
+  
+  # Try to regenerate if needed and possible
+  if (is.null(qini_data) || (regenerate_needed && !is.null(mc_result$data))) {
+    cli::cli_alert_info("Generating QINI curves on-demand for {outcome_var}")
+    
+    # extract necessary components
+    model_result <- mc_result$results[[outcome_var]]
+    
+    # find outcome data - try various locations
+    outcome_name_clean <- gsub("^model_", "", outcome_var)
+    outcome_data <- NULL
+    
+    if (is.null(mc_result$data)) {
+      cli::cli_alert_warning("mc_result$data is NULL - checking for data in model result")
+      # try to get data from the model result itself
+      if (!is.null(model_result$Y)) {
+        outcome_data <- model_result$Y
+      } else if (!is.null(model_result$model) && !is.null(model_result$model$Y.orig)) {
+        # try to get from the grf forest object
+        outcome_data <- model_result$model$Y.orig
+        cli::cli_alert_info("Found outcome data in forest object (Y.orig)")
+      } else if (!is.null(model_result$full_model) && !is.null(model_result$full_model$Y.orig)) {
+        # try full_model as well
+        outcome_data <- model_result$full_model$Y.orig
+        cli::cli_alert_info("Found outcome data in full_model forest object")
+      }
+    } else if (outcome_name_clean %in% names(mc_result$data)) {
+      outcome_data <- mc_result$data[[outcome_name_clean]]
+    } else if (outcome_var %in% names(mc_result$data)) {
+      outcome_data <- mc_result$data[[outcome_var]]
+    }
+    
+    if (is.null(outcome_data)) {
+      # provide more helpful error message
+      available_outcomes <- names(mc_result$data)
+      cli::cli_abort(c(
+        "Cannot find outcome data for {outcome_var}",
+        "i" = "Looked for: {outcome_name_clean} and {outcome_var}",
+        "i" = "Available outcomes in data: {paste(available_outcomes, collapse = ', ')}"
+      ))
+    }
+    
+    # get treatment and weights
+    W <- mc_result$W
+    weights <- mc_result$weights
+    
+    if (is.null(W)) {
+      # try to get from forest object
+      if (!is.null(model_result$model) && !is.null(model_result$model$W.orig)) {
+        W <- model_result$model$W.orig
+        cli::cli_alert_info("Found treatment data in forest object (W.orig)")
+      } else if (!is.null(model_result$full_model) && !is.null(model_result$full_model$W.orig)) {
+        W <- model_result$full_model$W.orig
+        cli::cli_alert_info("Found treatment data in full_model forest object")
+      } else {
+        cli::cli_abort("Treatment assignment vector (W) not found in mc_result or forest objects")
+      }
+    }
+    
+    # generate qini data
+    qini_result <- margot_generate_qini_data(
+      model_result = model_result,
+      outcome_data = outcome_data,
+      treatment = W,
+      weights = weights,
+      baseline_method = baseline_method,
+      verbose = TRUE
+    )
+    
+    qini_data <- qini_result$qini_data
+    qini_objects <- qini_result$qini_objects
+    
+    if (is.null(qini_data)) {
+      cli::cli_abort("Failed to generate QINI data for {outcome_var}")
+    }
+  }
+  
+  # Handle case where we want a different baseline but can't regenerate
+  if (regenerate_needed && is.null(mc_result$data) && !is.null(qini_data)) {
+    if (baseline_method == "simple") {
+      # Special case: can't regenerate but want simple baseline
+      # If we have CATE data, we can add a simple baseline
+      has_cate <- "cate" %in% unique(qini_data$curve) || "CATE" %in% unique(qini_data$curve)
+      has_ate <- "ate" %in% unique(qini_data$curve) || "ATE" %in% unique(qini_data$curve)
+      
+      if (has_cate) {
+        cli::cli_alert_info("Cannot regenerate data, but adding simple baseline to existing QINI data")
+        
+        # Get model result
+        model_result <- mc_result$results[[outcome_var]]
+        
+        # Try to get mean tau from existing objects or model
+        mean_tau <- NULL
+        if (!is.null(model_result$tau_hat)) {
+          mean_tau <- mean(model_result$tau_hat)
+        } else if (!is.null(model_result$ATE) && is.numeric(model_result$ATE)) {
+          mean_tau <- model_result$ATE
+        } else if (!is.null(model_result$ate) && is.numeric(model_result$ate)) {
+          mean_tau <- model_result$ate
+        } else if (!is.null(model_result$estimate) && is.numeric(model_result$estimate)) {
+          # Try the estimate field (common in causal forest output)
+          mean_tau <- model_result$estimate
+        } else if (!is.null(model_result$custom_table) && "E[Y(1)]-E[Y(0)]" %in% rownames(model_result$custom_table)) {
+          # Try to extract from custom_table
+          ate_row <- model_result$custom_table["E[Y(1)]-E[Y(0)]", , drop = FALSE]
+          if ("Estimate" %in% colnames(ate_row)) {
+            mean_tau <- ate_row[1, "Estimate"]
+          }
+        }
+        
+        if (!is.null(mean_tau)) {
+          # Add simple baseline to existing data
+          n_points <- length(unique(qini_data$proportion))
+          baseline_data <- data.frame(
+            proportion = seq(0, 1, length.out = n_points),
+            gain = seq(0, 1, length.out = n_points) * mean_tau,
+            curve = "ate"
+          )
+          # Remove any existing ate curve and add the new one
+          qini_data <- qini_data[!(qini_data$curve %in% c("ate", "ATE")), ]
+          qini_data <- rbind(qini_data, baseline_data)
+          cli::cli_alert_success("Added simple baseline with mean_tau = {round(mean_tau, 4)}")
+        } else {
+          cli::cli_alert_warning("Could not find mean_tau to create simple baseline")
+          cli::cli_alert_info("Available fields in model_result: {paste(names(model_result), collapse = ', ')}")
+        }
+      }
+    }
+  }
+  
+  cli::cli_alert_success("Qini data ready for outcome variable: {outcome_var}")
   cli::cli_alert_info("Structure of qini_data:")
   print(str(qini_data))
 
@@ -232,8 +384,8 @@ margot_plot_qini <- function(mc_result, outcome_var,
   if (show_ci) {
     cli::cli_alert_info("Computing confidence intervals...")
     
-    # extract qini objects from the model results
-    qini_objects <- mc_result$results[[outcome_var]]$qini_objects
+    # qini_objects should already be available from the generation above
+    # no need to re-extract
     
     if (!is.null(qini_objects)) {
       # create spend sequence for CI computation
@@ -242,19 +394,6 @@ margot_plot_qini <- function(mc_result, outcome_var,
       
       # function to compute CIs for a single qini object
       compute_curve_ci <- function(qini_obj, curve_name) {
-        # special handling for simplified ATE baseline
-        if (!is.null(qini_obj$mean_tau) && curve_name %in% c("ATE", "ate")) {
-          # for straight line ATE, CI is 0 at all points (no variability in constant allocation)
-          return(data.frame(
-            proportion = spend_seq,
-            estimate = spend_seq * qini_obj$mean_tau,
-            std_err = 0,
-            lower = spend_seq * qini_obj$mean_tau,
-            upper = spend_seq * qini_obj$mean_tau,
-            curve = curve_name
-          ))
-        }
-        
         ci_list <- lapply(spend_seq, function(s) {
           tryCatch({
             avg_gain_result <- maq::average_gain(qini_obj, spend = s)
@@ -463,8 +602,8 @@ margot_plot_qini <- function(mc_result, outcome_var,
   }
   
   # check for complete paths and extend with horizontal lines if needed
-  if (horizontal_line && !is.null(mc_result$results[[outcome_var]]$qini_objects)) {
-    qini_objects <- mc_result$results[[outcome_var]]$qini_objects
+  if (horizontal_line && !is.null(qini_objects)) {
+    # qini_objects already available from generation above
     extended_data <- NULL
     
     for (crv in unique(qini_data$curve)) {
@@ -487,15 +626,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
         qini_obj <- qini_objects[[qini_obj_name]]
         
         # check if path is complete
-        # for simplified ATE baseline, the path is always complete
-        is_complete <- FALSE
-        if (!is.null(qini_obj$mean_tau) && crv == "ATE") {
-          is_complete <- TRUE  # ATE baseline is always complete
-        } else if (!is.null(qini_obj[["_path"]]$complete.path)) {
-          is_complete <- qini_obj[["_path"]]$complete.path
-        }
-        
-        if (is_complete) {
+        if (!is.null(qini_obj[["_path"]]$complete.path) && qini_obj[["_path"]]$complete.path) {
           # check if we need to extend to proportion = 1
           max_prop <- max(crv_data$proportion)
           if (max_prop < 1) {

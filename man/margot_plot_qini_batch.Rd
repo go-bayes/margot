@@ -25,7 +25,8 @@ margot_plot_qini_batch(
   ci_ribbon_color = NULL,
   horizontal_line = TRUE,
   grid_step = NULL,
-  ylim = NULL
+  ylim = NULL,
+  baseline_method = "auto"
 )
 }
 \arguments{
@@ -74,6 +75,9 @@ when the path is complete. Default is TRUE.}
 uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
 
 \item{ylim}{Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).}
+
+\item{baseline_method}{Method for generating baseline: "auto" (default), "straight", 
+"maq_no_covariates", or "none". See details in margot_generate_qini_data().}
 }
 \value{
 A list containing the generated ggplot objects for each processed model.
