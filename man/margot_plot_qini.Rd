@@ -20,7 +20,8 @@ margot_plot_qini(
   ci_ribbon_color = NULL,
   horizontal_line = TRUE,
   grid_step = NULL,
-  return_data = FALSE
+  return_data = FALSE,
+  ylim = NULL
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
 \item{return_data}{Logical indicating whether to return the plot data as a data.frame instead of
 the ggplot object. Default is FALSE. When TRUE, returns data with columns: proportion, gain,
 lower, upper, curve.}
+
+\item{ylim}{Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).}
 }
 \value{
 If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,
@@ -88,7 +91,7 @@ Key differences from maq::plot():
   \item More descriptive axis labels
   \item Additional features like theme selection and spend indicators
   \item Confidence intervals computed via maq::average_gain() for accuracy
-  \item Binary treatment colors: CATE = blue (#4f88c6), ATE = gold (#d8a739)
+  \item Binary treatment colors: CATE = green (#009E73), ATE = gold (#d8a739)
 }
 }
 \examples{

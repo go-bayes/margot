@@ -15,7 +15,7 @@ like theme selection and spend level indicators."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.115</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.125</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,8 @@ like theme selection and spend level indicators.</p>
 <span>  ci_ribbon_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  horizontal_line <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  grid_step <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  return_data <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  return_data <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ylim <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -149,6 +150,10 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.</p></dd
 the ggplot object. Default is FALSE. When TRUE, returns data with columns: proportion, gain,
 lower, upper, curve.</p></dd>
 
+
+<dt id="arg-ylim">ylim<a class="anchor" aria-label="anchor" href="#arg-ylim"></a></dt>
+<dd><p>Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -165,7 +170,7 @@ lower, upper, curve.</p></dd>
 <li><p>More descriptive axis labels</p></li>
 <li><p>Additional features like theme selection and spend indicators</p></li>
 <li><p>Confidence intervals computed via maq::average_gain() for accuracy</p></li>
-<li><p>Binary treatment colors: CATE = blue (#4f88c6), ATE = gold (#d8a739)</p></li>
+<li><p>Binary treatment colors: CATE = green (#009E73), ATE = gold (#d8a739)</p></li>
 </ul></div>
 
     <div class="section level2">

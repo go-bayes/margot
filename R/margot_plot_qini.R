@@ -28,6 +28,7 @@
 #' @param return_data Logical indicating whether to return the plot data as a data.frame instead of
 #'   the ggplot object. Default is FALSE. When TRUE, returns data with columns: proportion, gain,
 #'   lower, upper, curve.
+#' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
 #'
 #' @return If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,
 #'   returns a data.frame with the plot data.
@@ -47,7 +48,7 @@
 #'   \item More descriptive axis labels
 #'   \item Additional features like theme selection and spend indicators
 #'   \item Confidence intervals computed via maq::average_gain() for accuracy
-#'   \item Binary treatment colors: CATE = blue (#4f88c6), ATE = gold (#d8a739)
+#'   \item Binary treatment colors: CATE = green (#009E73), ATE = gold (#d8a739)
 #' }
 #'
 #' @import ggplot2
@@ -83,7 +84,8 @@ margot_plot_qini <- function(mc_result, outcome_var,
                              ci_ribbon_color = NULL,
                              horizontal_line = TRUE,
                              grid_step = NULL,
-                             return_data = FALSE) {
+                             return_data = FALSE,
+                             ylim = NULL) {
   cli::cli_h1("Margot Plot Qini Curves")
 
   # Transform the outcome variable name
@@ -240,6 +242,19 @@ margot_plot_qini <- function(mc_result, outcome_var,
       
       # function to compute CIs for a single qini object
       compute_curve_ci <- function(qini_obj, curve_name) {
+        # special handling for simplified ATE baseline
+        if (!is.null(qini_obj$mean_tau) && curve_name %in% c("ATE", "ate")) {
+          # for straight line ATE, CI is 0 at all points (no variability in constant allocation)
+          return(data.frame(
+            proportion = spend_seq,
+            estimate = spend_seq * qini_obj$mean_tau,
+            std_err = 0,
+            lower = spend_seq * qini_obj$mean_tau,
+            upper = spend_seq * qini_obj$mean_tau,
+            curve = curve_name
+          ))
+        }
+        
         ci_list <- lapply(spend_seq, function(s) {
           tryCatch({
             avg_gain_result <- maq::average_gain(qini_obj, spend = s)
@@ -472,7 +487,15 @@ margot_plot_qini <- function(mc_result, outcome_var,
         qini_obj <- qini_objects[[qini_obj_name]]
         
         # check if path is complete
-        if (!is.null(qini_obj[["_path"]]$complete.path) && qini_obj[["_path"]]$complete.path) {
+        # for simplified ATE baseline, the path is always complete
+        is_complete <- FALSE
+        if (!is.null(qini_obj$mean_tau) && crv == "ATE") {
+          is_complete <- TRUE  # ATE baseline is always complete
+        } else if (!is.null(qini_obj[["_path"]]$complete.path)) {
+          is_complete <- qini_obj[["_path"]]$complete.path
+        }
+        
+        if (is_complete) {
           # check if we need to extend to proportion = 1
           max_prop <- max(crv_data$proportion)
           if (max_prop < 1) {
@@ -593,8 +616,8 @@ margot_plot_qini <- function(mc_result, outcome_var,
     # use hardcoded colors for binary treatments
     {if (is_binary) {
       list(
-        scale_color_manual(values = c("CATE" = "#4f88c6", "ATE" = "#d8a739")),
-        scale_fill_manual(values = c("CATE" = "#4f88c6", "ATE" = "#d8a739"))
+        scale_color_manual(values = c("CATE" = "#009E73", "ATE" = "#d8a739")),
+        scale_fill_manual(values = c("CATE" = "#009E73", "ATE" = "#d8a739"))
       )
     } else {
       list(
@@ -603,7 +626,8 @@ margot_plot_qini <- function(mc_result, outcome_var,
       )
     }} +
     guides(colour = guide_legend(title = if(is_binary) "Curve Type" else "Treatment Arm"),
-           linetype = guide_legend(title = if(is_binary) "Curve Type" else "Treatment Arm"))
+           linetype = guide_legend(title = if(is_binary) "Curve Type" else "Treatment Arm")) +
+    {if (!is.null(ylim)) coord_cartesian(ylim = ylim)}
 
   cli::cli_alert_success("Qini curves plot created successfully 👍")
   

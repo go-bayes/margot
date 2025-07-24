@@ -204,7 +204,7 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
     treatment  <- as.factor(W)
     IPW_scores <- maq::get_ipw_scores(Y, treatment)
     
-    # use modern maq API with named parameters
+    # use modern maq API with named parameters for CATE curve
     cate_qini  <- maq::maq(
       reward = as.matrix(tau_hat),
       cost = matrix(1, length(tau_hat), 1),
@@ -212,16 +212,24 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
       R = 200
     )
     
-    ate_qini   <- maq::maq(
-      reward = matrix(rep(mean(tau_hat), length(tau_hat)), ncol = 1),
-      cost = matrix(1, length(tau_hat), 1), 
-      DR.scores = IPW_scores,
-      R = 200
+    # for ATE baseline, we'll generate a straight line directly
+    mean_tau <- mean(tau_hat)
+    
+    # create a simple object that mimics maq structure for compatibility
+    ate_qini <- list(
+      "_path" = list(
+        gain = c(0, mean_tau),  # gain at 0% and 100%
+        proportion = c(0, 1)
+      ),
+      mean_tau = mean_tau  # store for reference
     )
     
     qini_objs  <- list(cate = cate_qini, ate = ate_qini)
-    max_idx    <- max(sapply(qini_objs, function(q) length(q[["_path"]]$gain)))
+    
+    # determine max index based on CATE curve
+    max_idx <- length(cate_qini[["_path"]]$gain)
     if (!max_idx) return(NULL)
+    
     if (verbose) cli::cli_alert_info("Extracting qini data for curves: {paste(names(qini_objs), collapse = ', ')}")
     qini_dat   <- purrr::map2_dfr(qini_objs, names(qini_objs),
                                   ~ extract_qini_data_binary(.x, .y, max_idx, verbose))
@@ -236,7 +244,15 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
 #' Extract Qini Data for Binary Treatment Plotting
 #' @keywords internal
 extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) {
-  # use actual gain values for all curves
+  # special handling for ATE baseline (straight line)
+  if (name == "ate" && !is.null(qini_obj$mean_tau)) {
+    # generate straight line from (0,0) to (1, mean_tau)
+    proportion <- seq(0, 1, length.out = max_index)
+    gain <- proportion * qini_obj$mean_tau
+    return(data.frame(proportion = proportion, gain = gain, curve = name))
+  }
+  
+  # use actual gain values for CATE curve
   gain <- qini_obj[["_path"]]$gain
   
   if (is.null(gain) || length(gain) == 0) {

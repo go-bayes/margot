@@ -68,7 +68,7 @@ A list containing:
   \item{selected_model_names}{Character vector of human-readable model names}
   \item{excluded_model_ids}{Character vector of model IDs to exclude}
   \item{excluded_model_names}{Character vector of human-readable excluded model names}
-  \item{evidence_summary}{Data frame with detailed evidence by source including evidence_type categorization. Note: includes model_id column for internal matching reliability; users should primarily refer to model_name}
+  \item{evidence_summary}{Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring}
   \item{interpretation}{Character string with main interpretation text organized by evidence categories}
   \item{summary}{Character string with brief summary}
   \item{recommendations}{Character string with actionable recommendations}

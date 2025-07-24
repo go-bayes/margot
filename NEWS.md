@@ -1,6 +1,27 @@
 
-# [2025-07-23] margot 1.0.115
+# [2025-07-24] margot 1.0.125
 
+### improved
+- **margot_interpret_heterogeneity()**: improved clarity of test results
+  - renamed "omnibus_test" column to "differential_prediction_test" for clarity
+  - added "mean_prediction_test" column to show calibration status (informational only)
+  - simplified main interpretation and enhanced extended report with complementary methods explanation
+  - updated omnibus calibration test description to match `grf` manual clarity
+- **QINI ATE baseline**: improved reliability and consistency
+  - ATE baseline now always generated as straight line using mean(tau_hat)
+  - ensures fair comparison between CATE and ATE curves
+  - more robust than relying on maq output for constant rewards
+  - aligns with maq conceptual approach while being more predictable
+- **margot_plot_qini() enhancements**:
+  - changed CATE curve colour from blue (#4f88c6) to green (#009E73) to avoid "control" association
+  - added ylim parameter for manual y-axis control (defaults to automatic scaling)
+  - ylim parameter also added to margot_plot_qini_batch() for consistency
+
+### fixes
+- fixed omnibus test matching for flipped models from margot_flip_forests()
+- better matching logic using original outcome names for reliability
+
+# [2025-07-23] margot 1.0.115
 
 ### Major Features
 - **margot_interpret_heterogeneity()**: comprehensive function to combine evidence from multiple heterogeneity tests
@@ -10,11 +31,6 @@
   - Includes concordance analysis and detailed evidence summary
   - New evidence categorisation system for nuanced interpretation
   - Added `include_extended_report` parameter for detailed academic-style reports with full statistics
-  - Evidence summary table now includes model_id column for reliable internal matching
-  - Fixed omnibus test computation to include flipped models from margot_flip_forests()
-  - Improved omnibus test matching logic to use original outcome names for reliable matching
-  - Simplified main interpretation and enhanced extended report with complementary methods explanation
-  - Updated omnibus calibration test description to match grf manual clarity
   - **margot_plot_qini_batch()**: batch processing for QINI plots across multiple models
   - **margot_flip_forests()**: enhanced with `grf_defaults` parameter for consistent GRF settings
 

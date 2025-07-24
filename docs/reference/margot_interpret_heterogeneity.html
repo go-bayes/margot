@@ -11,7 +11,7 @@ about which models show treatment effect heterogeneity."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.115</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.125</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -156,7 +156,7 @@ with full statistics and confidence intervals. Default is FALSE.</p></dd>
 <dd><p>Character vector of human-readable excluded model names</p></dd>
 
   <dt>evidence_summary</dt>
-<dd><p>Data frame with detailed evidence by source including evidence_type categorization. Note: includes model_id column for internal matching reliability; users should primarily refer to model_name</p></dd>
+<dd><p>Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring</p></dd>
 
   <dt>interpretation</dt>
 <dd><p>Character string with main interpretation text organized by evidence categories</p></dd>

@@ -24,7 +24,8 @@ margot_plot_qini_batch(
   ci_ribbon_alpha = 0.3,
   ci_ribbon_color = NULL,
   horizontal_line = TRUE,
-  grid_step = NULL
+  grid_step = NULL,
+  ylim = NULL
 )
 }
 \arguments{
@@ -71,6 +72,8 @@ when the path is complete. Default is TRUE.}
 
 \item{grid_step}{Integer specifying the step size for subsampling the curve data. If NULL (default),
 uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
+
+\item{ylim}{Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).}
 }
 \value{
 A list containing the generated ggplot objects for each processed model.

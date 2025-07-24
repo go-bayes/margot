@@ -27,6 +27,7 @@
 #'   when the path is complete. Default is TRUE.
 #' @param grid_step Integer specifying the step size for subsampling the curve data. If NULL (default),
 #'   uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.
+#' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
 #'
 #' @return A list containing the generated ggplot objects for each processed model.
 #' 
@@ -74,7 +75,8 @@ margot_plot_qini_batch <- function(mc_result,
                                    ci_ribbon_alpha = 0.3,
                                    ci_ribbon_color = NULL,
                                    horizontal_line = TRUE,
-                                   grid_step = NULL) {
+                                   grid_step = NULL,
+                                   ylim = NULL) {
   
   cli::cli_h1("Margot Batch QINI Plots")
   
@@ -140,7 +142,8 @@ margot_plot_qini_batch <- function(mc_result,
         ci_ribbon_alpha = ci_ribbon_alpha,
         ci_ribbon_color = ci_ribbon_color,
         horizontal_line = horizontal_line,
-        grid_step = grid_step
+        grid_step = grid_step,
+        ylim = ylim
       )
       
       # store plot in list

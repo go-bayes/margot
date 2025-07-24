@@ -1,5 +1,27 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.125 (2025-07-24)
+
+### Enhancements
+- **margot_interpret_heterogeneity()**: Improved clarity of test results
+  - Renamed "omnibus_test" column to "differential_prediction_test" for clarity
+  - Added "mean_prediction_test" column to show calibration status (informational only)
+  - Simplified main interpretation and enhanced extended report with complementary methods explanation
+  - Updated omnibus calibration test description to match grf manual clarity
+- **QINI ATE Baseline**: Improved reliability and consistency
+  - ATE baseline now always generated as straight line using mean(tau_hat)
+  - Ensures fair comparison between CATE and ATE curves
+  - More robust than relying on maq output for constant rewards
+  - Aligns with maq conceptual approach while being more predictable
+- **margot_plot_qini() enhancements**:
+  - Changed CATE curve color from blue (#4f88c6) to green (#009E73) to avoid "control" association
+  - Added ylim parameter for manual y-axis control (defaults to automatic scaling)
+  - ylim parameter also added to margot_plot_qini_batch() for consistency
+
+### Bug Fixes
+- Fixed omnibus test matching for flipped models from margot_flip_forests()
+- Improved matching logic using original outcome names for reliability
+
 ## margot 1.0.115 (2025-07-23)
 
 ### New Features
@@ -21,6 +43,8 @@
   - Improved omnibus test matching logic to use original outcome names for reliable matching
   - Simplified main interpretation and enhanced extended report with complementary methods explanation
   - Updated omnibus calibration test description to match grf manual clarity
+  - Renamed "omnibus_test" column to "differential_prediction_test" for clarity
+  - Added "mean_prediction_test" column to show calibration status (informational only, not used in scoring)
 
 - **margot_plot_qini_batch()**: Batch processing for QINI plots
   - Process multiple models in one function call

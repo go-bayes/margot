@@ -9,7 +9,7 @@ plots for each model using the margot package, and optionally saves the plots.">
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.115</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.125</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,8 @@ plots for each model using the margot package, and optionally saves the plots.</
 <span>  ci_ribbon_alpha <span class="op">=</span> <span class="fl">0.3</span>,</span>
 <span>  ci_ribbon_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  horizontal_line <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  grid_step <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  grid_step <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ylim <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -157,6 +158,10 @@ when the path is complete. Default is TRUE.</p></dd>
 <dt id="arg-grid-step">grid_step<a class="anchor" aria-label="anchor" href="#arg-grid-step"></a></dt>
 <dd><p>Integer specifying the step size for subsampling the curve data. If NULL (default),
 uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.</p></dd>
+
+
+<dt id="arg-ylim">ylim<a class="anchor" aria-label="anchor" href="#arg-ylim"></a></dt>
+<dd><p>Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).</p></dd>
 
 </dl></div>
     <div class="section level2">

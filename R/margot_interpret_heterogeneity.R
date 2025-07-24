@@ -37,7 +37,7 @@
 #'   \item{selected_model_names}{Character vector of human-readable model names}
 #'   \item{excluded_model_ids}{Character vector of model IDs to exclude}
 #'   \item{excluded_model_names}{Character vector of human-readable excluded model names}
-#'   \item{evidence_summary}{Data frame with detailed evidence by source including evidence_type categorization. Note: includes model_id column for internal matching reliability; users should primarily refer to model_name}
+#'   \item{evidence_summary}{Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring}
 #'   \item{interpretation}{Character string with main interpretation text organized by evidence categories}
 #'   \item{summary}{Character string with brief summary}
 #'   \item{recommendations}{Character string with actionable recommendations}
@@ -303,8 +303,10 @@ create_evidence_summary <- function(model_ids, rate_results, qini_results,
       TRUE ~ "not_tested"
     )
     
-    # omnibus test status
-    omnibus_status <- "not_tested"
+    # omnibus test results - both mean and differential prediction
+    mean_pred_status <- "not_tested"
+    diff_pred_status <- "not_tested"
+    
     if (!is.null(omnibus_results)) {
       # extract model name without prefix
       clean_id <- sub("^model_", "", id)
@@ -315,12 +317,21 @@ create_evidence_summary <- function(model_ids, rate_results, qini_results,
         omnibus_row <- omnibus_results$results_table[omnibus_results$results_table$outcome == clean_id, ]
         
         if (!is.null(omnibus_row) && nrow(omnibus_row) > 0) {
+          # check mean prediction significance for calibration
+          if ("mean_prediction_significant" %in% names(omnibus_row)) {
+            if (isTRUE(omnibus_row$mean_prediction_significant[1])) {
+              mean_pred_status <- "calibrated"
+            } else {
+              mean_pred_status <- "not_calibrated"
+            }
+          }
+          
           # check differential prediction significance for heterogeneity
           if ("differential_prediction_significant" %in% names(omnibus_row)) {
             if (isTRUE(omnibus_row$differential_prediction_significant[1])) {
-              omnibus_status <- "positive"
+              diff_pred_status <- "positive"
             } else {
-              omnibus_status <- "inconclusive"
+              diff_pred_status <- "inconclusive"
             }
           }
         }
@@ -332,12 +343,23 @@ create_evidence_summary <- function(model_ids, rate_results, qini_results,
         ]
         
         if (!is.null(omnibus_row) && nrow(omnibus_row) > 0) {
+          # check mean status column
+          mean_col <- names(omnibus_row)[grep("Mean Status", names(omnibus_row))]
+          if (length(mean_col) > 0 && !is.na(omnibus_row[[mean_col[1]]][1])) {
+            if (grepl("Calibrated", omnibus_row[[mean_col[1]]][1], ignore.case = TRUE)) {
+              mean_pred_status <- "calibrated"
+            } else {
+              mean_pred_status <- "not_calibrated"
+            }
+          }
+          
+          # check heterogeneity column
           hetero_col <- names(omnibus_row)[grep("Heterogeneity|heterogeneity", names(omnibus_row))]
           if (length(hetero_col) > 0 && !is.na(omnibus_row[[hetero_col[1]]][1])) {
             if (grepl("Heterogeneity present|present", omnibus_row[[hetero_col[1]]][1])) {
-              omnibus_status <- "positive"
+              diff_pred_status <- "positive"
             } else {
-              omnibus_status <- "inconclusive"
+              diff_pred_status <- "inconclusive"
             }
           }
         }
@@ -347,7 +369,8 @@ create_evidence_summary <- function(model_ids, rate_results, qini_results,
     tibble::tibble(
       model_id = id,  # keep for internal use but will remove later
       model_name = get_model_name(id),
-      omnibus_test = omnibus_status,
+      mean_prediction_test = mean_pred_status,
+      differential_prediction_test = diff_pred_status,
       rate_autoc = rate_autoc_status,
       rate_qini = rate_qini_status,
       qini_curve = qini_curve_status
@@ -367,33 +390,33 @@ select_models <- function(evidence_summary, require_any_positive,
   evidence_summary <- evidence_summary %>%
     dplyr::mutate(
       positive_count = rowSums(
-        dplyr::select(., rate_autoc, rate_qini, qini_curve, omnibus_test) == "positive"
+        dplyr::select(., rate_autoc, rate_qini, qini_curve, differential_prediction_test) == "positive"
       ),
       negative_count = rowSums(
-        dplyr::select(., rate_autoc, rate_qini, qini_curve, omnibus_test) == "negative"
+        dplyr::select(., rate_autoc, rate_qini, qini_curve, differential_prediction_test) == "negative"
       ),
       evidence_type = dplyr::case_when(
         # Mixed evidence with caution - any positive but also has negatives
         positive_count > 0 & negative_count > 0 ~ "mixed_evidence_caution",
         
-        # Evidence for heterogeneity - RATE positive and omnibus confirms
+        # Evidence for heterogeneity - RATE positive and differential prediction confirms
         (rate_autoc == "positive" | rate_qini == "positive") & 
-        omnibus_test == "positive" ~ "evidence_for_heterogeneity",
+        differential_prediction_test == "positive" ~ "evidence_for_heterogeneity",
         
         # Targeting opportunity - QINI works despite weak heterogeneity
         qini_curve == "positive" & 
         rate_autoc != "positive" & 
         rate_qini != "positive" ~ "targeting_opportunity",
         
-        # Statistical only - omnibus positive but no practical benefit
-        omnibus_test == "positive" & 
+        # Statistical only - differential prediction positive but no practical benefit
+        differential_prediction_test == "positive" & 
         qini_curve != "positive" & 
         rate_autoc != "positive" & 
         rate_qini != "positive" ~ "statistical_only",
         
-        # Unconfirmed heterogeneity - RATE positive but not confirmed by omnibus
+        # Unconfirmed heterogeneity - RATE positive but not confirmed by differential prediction
         (rate_autoc == "positive" | rate_qini == "positive") & 
-        omnibus_test != "positive" ~ "unconfirmed_heterogeneity",
+        differential_prediction_test != "positive" ~ "unconfirmed_heterogeneity",
         
         # No evidence - only negative or inconclusive results
         TRUE ~ "no_evidence"
@@ -406,7 +429,7 @@ select_models <- function(evidence_summary, require_any_positive,
     selected_rows <- evidence_summary$positive_count > 0
   } else {
     # include if ALL tested methods show positive
-    tested_cols <- c("rate_autoc", "rate_qini", "qini_curve", "omnibus_test")
+    tested_cols <- c("rate_autoc", "rate_qini", "qini_curve", "differential_prediction_test")
     selected_rows <- apply(evidence_summary[tested_cols], 1, function(row) {
       tested <- row != "not_tested"
       positive <- row == "positive"
@@ -420,7 +443,7 @@ select_models <- function(evidence_summary, require_any_positive,
     selected_rows <- selected_rows & (evidence_summary$negative_count == 0)
   } else {
     # exclude if ALL tested methods show negative
-    tested_cols <- c("rate_autoc", "rate_qini", "qini_curve", "omnibus_test")
+    tested_cols <- c("rate_autoc", "rate_qini", "qini_curve", "differential_prediction_test")
     all_negative <- apply(evidence_summary[tested_cols], 1, function(row) {
       tested <- row != "not_tested"
       negative <- row == "negative"
@@ -431,7 +454,7 @@ select_models <- function(evidence_summary, require_any_positive,
   
   # require omnibus if specified
   if (require_omnibus) {
-    selected_rows <- selected_rows & (evidence_summary$omnibus_test == "positive")
+    selected_rows <- selected_rows & (evidence_summary$differential_prediction_test == "positive")
   }
   
   # extract results
@@ -445,15 +468,15 @@ select_models <- function(evidence_summary, require_any_positive,
     rate_autoc = sum(evidence_summary$rate_autoc == "positive"),
     rate_qini = sum(evidence_summary$rate_qini == "positive"),
     qini_curve = sum(evidence_summary$qini_curve == "positive"),
-    omnibus = sum(evidence_summary$omnibus_test == "positive"),
+    differential_prediction = sum(evidence_summary$differential_prediction_test == "positive"),
     any_method = sum(evidence_summary$positive_count > 0),
     all_methods = sum(evidence_summary$positive_count == 4)
   )
   
   # reorder columns with model_id first for internal matching reliability
   evidence_summary_final <- evidence_summary %>%
-    dplyr::select(model_id, model_name, omnibus_test, rate_autoc, rate_qini, 
-                  qini_curve, positive_count, negative_count, evidence_type)
+    dplyr::select(model_id, model_name, mean_prediction_test, differential_prediction_test, 
+                  rate_autoc, rate_qini, qini_curve, positive_count, negative_count, evidence_type)
   
   list(
     selected_ids = selected_ids,
@@ -482,7 +505,7 @@ analyze_concordance <- function(evidence_summary) {
   ]
   
   # create concordance matrix
-  methods <- c("rate_autoc", "rate_qini", "qini_curve", "omnibus_test")
+  methods <- c("rate_autoc", "rate_qini", "qini_curve", "differential_prediction_test")
   concordance_matrix <- matrix(0, nrow = 4, ncol = 4, 
                                dimnames = list(methods, methods))
   
