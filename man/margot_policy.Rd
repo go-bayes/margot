@@ -9,11 +9,6 @@ margot_policy(
   policy_tree_args = list(),
   decision_tree_args = list(),
   max_depth = 2L,
-  dpi = 600,
-  width = 12,
-  height = 12,
-  save_plots = TRUE,
-  output_dir = here::here(push_mods),
   spend_levels = c(0.2, 0.5),
   label_mapping = NULL,
   original_df = NULL,
@@ -33,16 +28,6 @@ margot_policy(
 
 \item{max_depth}{Integer, 1 or 2; which decision tree depth to plot. Default: 2.}
 
-\item{dpi}{Resolution (dpi) for saved plots. Default: 600.}
-
-\item{width}{Width (in inches) for saved plots. Default: 12.}
-
-\item{height}{Height (in inches) for saved plots. Default: 12.}
-
-\item{save_plots}{Logical; save plots to disk? Default: TRUE.}
-
-\item{output_dir}{Directory for saving plots. Default: \code{here::here(push_mods)}.}
-
 \item{spend_levels}{Numeric vector of spend levels for difference-gain summaries. Default: \code{c(0.2, 0.5)}.}
 
 \item{label_mapping}{Named list mapping variable names to display labels. Default: NULL.}
@@ -57,8 +42,8 @@ Default: all.}
 
 \item{qini_args}{List of additional arguments to pass to margot_plot_qini(). Default: list().}
 
-\item{baseline_method}{Method for generating baseline: "auto" (default), "straight", 
-"maq_no_covariates", or "none". See details in margot_generate_qini_data().}
+\item{baseline_method}{Method for generating baseline: "auto" (default), "simple", 
+"maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().}
 }
 \value{
 A named list; each element corresponds to a model and contains only

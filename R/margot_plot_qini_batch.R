@@ -1,16 +1,11 @@
 #' Batch Process and Plot QINI Curves for Multiple Models
 #'
 #' This function processes a subset of models (or all models by default), creates QINI (Qini coefficient)
-#' plots for each model using the margot package, and optionally saves the plots.
+#' plots for each model using the margot package.
 #'
 #' @param mc_result A list containing the results from margot_causal_forest().
 #' @param model_names Optional character vector of model names to process. Can be specified with or without
 #'        the "model_" prefix. Default NULL (all models).
-#' @param dpi The resolution of the saved plots in dots per inch. Default is 300.
-#' @param width The width of the saved plots in inches. Default is 12.
-#' @param height The height of the saved plots in inches. Default is 8.
-#' @param save_plots Logical indicating whether to save the plots to disk. Default is TRUE.
-#' @param output_dir The directory where plots should be saved. Default is "qini_plots".
 #' @param label_mapping Optional named list for custom label mappings. Keys should be original variable names
 #'        (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.
 #' @param spend_levels Numeric vector of spend levels to show with vertical lines. Default is c(0.2, 0.5).
@@ -28,8 +23,8 @@
 #' @param grid_step Integer specifying the step size for subsampling the curve data. If NULL (default),
 #'   uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.
 #' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
-#' @param baseline_method Method for generating baseline: "auto" (default), "straight", 
-#'   "maq_no_covariates", or "none". See details in margot_generate_qini_data().
+#' @param baseline_method Method for generating baseline: "auto" (default), "simple", 
+#'   "maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().
 #'
 #' @return A list containing the generated ggplot objects for each processed model.
 #' 
@@ -60,11 +55,6 @@
 #' @export
 margot_plot_qini_batch <- function(mc_result,
                                    model_names = NULL,
-                                   dpi = 300,
-                                   width = 12,
-                                   height = 8,
-                                   save_plots = TRUE,
-                                   output_dir = "qini_plots",
                                    label_mapping = NULL,
                                    spend_levels = c(0.2, 0.5),
                                    show_spend_lines = TRUE,
@@ -82,12 +72,6 @@ margot_plot_qini_batch <- function(mc_result,
                                    baseline_method = "auto") {
   
   cli::cli_h1("Margot Batch QINI Plots")
-  
-  # create output directory if it doesn't exist
-  if (save_plots && !dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE)
-    cli::cli_alert_success("Created output directory: {output_dir}")
-  }
   
   # determine which models to process
   all_models <- names(mc_result$results)
@@ -145,19 +129,6 @@ margot_plot_qini_batch <- function(mc_result,
       
       # store plot in list
       qini_plots[[model_name]] <- plot
-      
-      # save plot to disk if requested
-      if (save_plots) {
-        # clean model name for filename
-        clean_name <- gsub("^model_", "", model_name)
-        file_name <- file.path(output_dir, paste0(
-          gsub("[^a-zA-Z0-9_]", "", gsub(" ", "_", clean_name)),
-          "_qini_plot.png"
-        ))
-        
-        ggplot2::ggsave(file_name, plot, dpi = dpi, width = width, height = height)
-        cli::cli_alert_success("Saved {file_name}")
-      }
     },
     error = function(e) {
       cli::cli_alert_danger("Error processing model {model_name}: {e$message}")
