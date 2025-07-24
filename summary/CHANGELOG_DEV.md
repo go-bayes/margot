@@ -46,6 +46,15 @@
   - Improved regeneration logic: only regenerates when data is available or when changing baseline types
   - Better error messages showing available fields when baseline generation fails
 
+### Breaking Changes
+- **Removed save_plot parameters**: 
+  - Removed save_plot and related parameters (dpi, width, height, output_dir) from:
+    - margot_plot_qini_batch()
+    - margot_policy()
+    - margot_plot_rate_batch()
+  - Users should save plots manually using ggplot2::ggsave() if needed
+  - Simplifies functions and reduces maintenance burden
+
 ### Bug Fixes
 - Fixed omnibus test matching for flipped models from margot_flip_forests()
 - Improved matching logic using original outcome names for reliability

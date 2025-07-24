@@ -7,11 +7,6 @@
 margot_plot_qini_batch(
   mc_result,
   model_names = NULL,
-  dpi = 300,
-  width = 12,
-  height = 8,
-  save_plots = TRUE,
-  output_dir = "qini_plots",
   label_mapping = NULL,
   spend_levels = c(0.2, 0.5),
   show_spend_lines = TRUE,
@@ -34,16 +29,6 @@ margot_plot_qini_batch(
 
 \item{model_names}{Optional character vector of model names to process. Can be specified with or without
 the "model_" prefix. Default NULL (all models).}
-
-\item{dpi}{The resolution of the saved plots in dots per inch. Default is 300.}
-
-\item{width}{The width of the saved plots in inches. Default is 12.}
-
-\item{height}{The height of the saved plots in inches. Default is 8.}
-
-\item{save_plots}{Logical indicating whether to save the plots to disk. Default is TRUE.}
-
-\item{output_dir}{The directory where plots should be saved. Default is "qini_plots".}
 
 \item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
 (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
@@ -76,15 +61,15 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
 
 \item{ylim}{Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).}
 
-\item{baseline_method}{Method for generating baseline: "auto" (default), "straight", 
-"maq_no_covariates", or "none". See details in margot_generate_qini_data().}
+\item{baseline_method}{Method for generating baseline: "auto" (default), "simple", 
+"maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().}
 }
 \value{
 A list containing the generated ggplot objects for each processed model.
 }
 \description{
 This function processes a subset of models (or all models by default), creates QINI (Qini coefficient)
-plots for each model using the margot package, and optionally saves the plots.
+plots for each model using the margot package.
 }
 \examples{
 \dontrun{

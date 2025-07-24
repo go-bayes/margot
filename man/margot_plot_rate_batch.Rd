@@ -7,11 +7,6 @@
 margot_plot_rate_batch(
   models_binary,
   model_names = NULL,
-  dpi = 300,
-  width = 12,
-  height = 8,
-  save_plots = TRUE,
-  output_dir = "rate_plots",
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
@@ -23,16 +18,6 @@ margot_plot_rate_batch(
 \item{models_binary}{A list of model results, where each element contains a 'rate_result' component.}
 
 \item{model_names}{Optional character vector of model names to process. Default NULL (all models).}
-
-\item{dpi}{The resolution of the saved plots in dots per inch. Default is 300.}
-
-\item{width}{The width of the saved plots in inches. Default is 12.}
-
-\item{height}{The height of the saved plots in inches. Default is 8.}
-
-\item{save_plots}{Logical indicating whether to save the plots to disk. Default is TRUE.}
-
-\item{output_dir}{The directory where plots should be saved. Default is "rate_plots".}
 
 \item{remove_tx_prefix}{Logical value indicating whether to remove the "tx_" prefix from labels. Default is TRUE.}
 
@@ -50,5 +35,5 @@ A list containing the generated ggplot objects for each processed model.
 }
 \description{
 This function processes a subset of models (or all models by default), creates RATE (Rank Average Treatment Effect)
-plots for each model using the margot package, and optionally saves the plots.
+plots for each model using the margot package.
 }

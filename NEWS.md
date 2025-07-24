@@ -22,6 +22,13 @@
   - improved data extraction from grf forest objects (Y.orig, W.orig) when mc_result$data is NULL
   - better error messages with available data fields when baseline generation fails
 
+### breaking changes
+- **removed save_plot parameters**: removed save_plot and related parameters (dpi, width, height, output_dir) from:
+  - margot_plot_qini_batch()
+  - margot_policy()
+  - margot_plot_rate_batch()
+  - users should save plots manually using ggplot2::ggsave() if needed
+
 ### major architecture change
 - **QINI curve generation moved to on-demand**: 
   - created margot_generate_qini_data() helper function for on-demand generation

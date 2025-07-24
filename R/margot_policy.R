@@ -9,11 +9,6 @@
 #' @param policy_tree_args List of args for \code{margot_plot_policy_tree()}. Default: \code{list()}.
 #' @param decision_tree_args List of args for \code{margot_plot_decision_tree()}. Default: \code{list()}.
 #' @param max_depth Integer, 1 or 2; which decision tree depth to plot. Default: 2.
-#' @param dpi Resolution (dpi) for saved plots. Default: 600.
-#' @param width Width (in inches) for saved plots. Default: 12.
-#' @param height Height (in inches) for saved plots. Default: 12.
-#' @param save_plots Logical; save plots to disk? Default: TRUE.
-#' @param output_dir Directory for saving plots. Default: \code{here::here(push_mods)}.
 #' @param spend_levels Numeric vector of spend levels for difference-gain summaries. Default: \code{c(0.2, 0.5)}.
 #' @param label_mapping Named list mapping variable names to display labels. Default: NULL.
 #' @param original_df Optional data.frame of untransformed variables for axis annotations. Default: NULL.
@@ -22,8 +17,8 @@
 #'   Options: "policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries".
 #'   Default: all.
 #' @param qini_args List of additional arguments to pass to margot_plot_qini(). Default: list().
-#' @param baseline_method Method for generating baseline: "auto" (default), "straight", 
-#'   "maq_no_covariates", or "none". See details in margot_generate_qini_data().
+#' @param baseline_method Method for generating baseline: "auto" (default), "simple", 
+#'   "maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().
 #'
 #' @return A named list; each element corresponds to a model and contains only
 #' the requested outputs.
@@ -37,11 +32,6 @@ margot_policy <- function(
     policy_tree_args   = list(),
     decision_tree_args = list(),
     max_depth          = 2L,
-    dpi                = 600,
-    width              = 12,
-    height             = 12,
-    save_plots         = TRUE,
-    output_dir         = here::here(push_mods),
     spend_levels       = c(0.2, 0.5),
     label_mapping      = NULL,
     original_df        = NULL,
@@ -64,11 +54,6 @@ margot_policy <- function(
     model_names <- names(result_outcomes$results)
   }
 
-  # prepare output directory
-  if (save_plots && !dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE)
-    cli::cli_alert_success("created output directory: {output_dir}")
-  }
 
   cli::cli_alert_info("processing {length(model_names)} models")
   pb <- cli::cli_progress_bar(
@@ -205,24 +190,6 @@ margot_policy <- function(
         }
       }
 
-      # save plots if requested
-      if (save_plots) {
-        to_save <- intersect(output_objects, c("policy_tree", "decision_tree", "combined_plot", "qini_plot"))
-        for (pn in to_save) {
-          plt <- model_output[[pn]]
-          if (!is.null(plt)) {
-            fname <- file.path(output_dir, paste0(model_name, "_", pn, ".png"))
-            ggplot2::ggsave(
-              filename = fname,
-              plot     = plt,
-              dpi      = dpi,
-              width    = width,
-              height   = height
-            )
-            cli::cli_alert_success("saved plot to {fname}")
-          }
-        }
-      }
 
       output_list[[model_name]] <- model_output
       cli::cli_alert_success("successfully processed {model_name}")
