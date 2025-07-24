@@ -1,5 +1,37 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.140 (2025-07-24)
+
+### QINI Curve Improvements
+
+- **Consistent baseline method across package**: 
+  - Updated `margot_causal_forest()` to use "maq_no_covariates" as default baseline method
+  - Previously used constant rewards ("maq_constant"), now matches visualization functions
+  - Includes automatic fallback to constant rewards if maq_no_covariates fails
+  - This makes the theoretically preferred method consistent throughout the package
+
+- **Fixed QINI regeneration for flipped models**: Resolved issue where flipped models (with _r suffix) failed to regenerate QINI curves when baseline_method was changed
+  - Removed conditional check that prevented regeneration when mc_result$data was NULL
+  - Added fallback to existing QINI data when regeneration fails
+  - Enhanced debugging for forest object retrieval
+  
+- **Added customizable QINI plot colors**: 
+  - New parameters `cate_color` (default: gold #d8a739) and `ate_color` (default: dark gray #4d4d4d)
+  - Available in both `margot_plot_qini()` and `margot_plot_qini_batch()`
+  - Improves visual distinction between CATE-based targeting and no-priority assignment
+  
+- **Ensured QINI consistency with metadata storage**:
+  - Store QINI generation metadata including test indices, baseline method, and data split info
+  - `margot_summary_cate_difference_gain()` now uses stored metadata to ensure average gains use same data subset as original QINI curves
+  - Added informative CLI messages throughout for transparency
+  - Fixed baseline_method metadata to correctly reflect "maq_constant" for compute_qini_curves_binary
+  
+- **Fixed breaking change in QINI regeneration**: 
+  - Added check to verify data availability before attempting QINI regeneration
+  - When data is not available (e.g., save_data = FALSE), falls back to existing QINI curves with warning
+  - Prevents errors when trying to change baseline_method without available data
+  - Users now get clear warnings instead of cryptic errors
+
 ## margot 1.0.130 (2025-07-24)
 
 ### New Features

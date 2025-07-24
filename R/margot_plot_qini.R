@@ -175,6 +175,40 @@ margot_plot_qini <- function(mc_result, outcome_var,
   
   # Try to regenerate if needed and possible
   if (is.null(qini_data) || regenerate_needed) {
+    # First check if we can actually regenerate before trying
+    can_regenerate <- FALSE
+    
+    # Quick check if data is available
+    model_result <- mc_result$results[[outcome_var]]
+    outcome_name_clean <- gsub("^model_", "", outcome_var)
+    
+    # Check various data sources
+    if (!is.null(mc_result$data) && (outcome_name_clean %in% names(mc_result$data) || outcome_var %in% names(mc_result$data))) {
+      can_regenerate <- TRUE
+    } else if (!is.null(model_result$model) && !is.null(model_result$model$Y.orig)) {
+      can_regenerate <- TRUE
+    } else if (!is.null(model_result$full_model) && !is.null(model_result$full_model$Y.orig)) {
+      can_regenerate <- TRUE
+    } else if (!is.null(mc_result$full_models) && outcome_var %in% names(mc_result$full_models)) {
+      full_model <- mc_result$full_models[[outcome_var]]
+      if (!is.null(full_model) && !is.null(full_model$Y.orig)) {
+        can_regenerate <- TRUE
+      }
+    }
+    
+    if (!can_regenerate && regenerate_needed) {
+      # Can't regenerate - use existing data if available
+      if (!is.null(qini_data)) {
+        cli::cli_alert_warning("Cannot regenerate QINI with {baseline_method} baseline - data not available. Using existing QINI data.")
+        regenerate_needed <- FALSE
+      } else {
+        cli::cli_abort("Cannot generate QINI curves - no data available for {outcome_var}")
+      }
+    }
+  }
+  
+  # Now proceed with regeneration if still needed
+  if (is.null(qini_data) || regenerate_needed) {
     cli::cli_alert_info("Generating QINI curves on-demand for {outcome_var}")
     
     # extract necessary components

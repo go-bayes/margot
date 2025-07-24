@@ -212,12 +212,25 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
       R = 200
     )
     
-    ate_qini   <- maq::maq(
-      reward = matrix(rep(mean(tau_hat), length(tau_hat)), ncol = 1),
-      cost = matrix(1, length(tau_hat), 1), 
-      DR.scores = IPW_scores,
-      R = 200
-    )
+    # try maq with target.with.covariates = FALSE first (maq_no_covariates approach)
+    ate_qini <- tryCatch({
+      maq::maq(
+        reward = as.matrix(tau_hat),
+        cost = matrix(1, length(tau_hat), 1),
+        DR.scores = IPW_scores,
+        target.with.covariates = FALSE,
+        R = 200
+      )
+    }, error = function(e) {
+      if (verbose) cli::cli_alert_warning("Failed to generate baseline with maq (no covariates), falling back to constant rewards: {e$message}")
+      # fallback to constant rewards
+      maq::maq(
+        reward = matrix(rep(mean(tau_hat), length(tau_hat)), ncol = 1),
+        cost = matrix(1, length(tau_hat), 1), 
+        DR.scores = IPW_scores,
+        R = 200
+      )
+    })
     
     qini_objs  <- list(cate = cate_qini, ate = ate_qini)
     max_idx    <- max(sapply(qini_objs, function(q) length(q[["_path"]]$gain)))
@@ -534,7 +547,8 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
             n_test = length(not_missing),
             n_train = 0,  # no separate train set
             test_indices = not_missing,
-            qini_split = FALSE
+            qini_split = FALSE,
+            baseline_method = "maq_no_covariates"  # compute_qini_curves_binary now uses maq_no_covariates with fallback
           )
         } else {
           if (verbose) cli::cli_alert_warning(crayon::yellow(paste("unable to compute binary qini curves for", outcome)))
@@ -566,7 +580,8 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
           n_test = length(qini_test_idxs),
           n_train = length(qini_train_idxs),
           test_indices = qini_test_idxs,
-          qini_split = TRUE
+          qini_split = TRUE,
+          baseline_method = "maq_no_covariates"  # compute_qini_curves_binary now uses maq_no_covariates with fallback
         )
       }
 

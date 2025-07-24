@@ -39,7 +39,19 @@ margot_generate_qini_data <- function(model_result,
                                      baseline_method = c("maq_no_covariates", "auto", "simple", "maq_only", "none"),
                                      verbose = FALSE) {
   
-  baseline_method <- match.arg(baseline_method)
+  # if baseline_method is not explicitly provided and we have metadata, use the stored method
+  if (missing(baseline_method) && !is.null(model_result$qini_metadata$baseline_method)) {
+    baseline_method <- model_result$qini_metadata$baseline_method
+    if (verbose) {
+      cli::cli_alert_info("Using stored baseline method from metadata: {baseline_method}")
+    }
+  } else {
+    baseline_method <- match.arg(baseline_method)
+  }
+  
+  if (verbose) {
+    cli::cli_alert_info("Generating QINI curves with baseline method: {baseline_method}")
+  }
   
   # extract tau_hat from the model result
   tau_hat <- model_result$tau_hat
@@ -177,7 +189,7 @@ margot_generate_qini_data <- function(model_result,
   if (!is.null(ate_qini)) qini_objs$ate <- ate_qini
   
   if (length(qini_objs) == 0) {
-    return(list(qini_data = NULL, qini_objects = NULL))
+    return(list(qini_data = NULL, qini_objects = NULL, baseline_method = baseline_method))
   }
   
   # extract data for plotting
@@ -186,7 +198,7 @@ margot_generate_qini_data <- function(model_result,
   }))
   
   if (max_idx == 0) {
-    return(list(qini_data = NULL, qini_objects = NULL))
+    return(list(qini_data = NULL, qini_objects = NULL, baseline_method = baseline_method))
   }
   
   # extract data from each curve
@@ -235,8 +247,8 @@ margot_generate_qini_data <- function(model_result,
   }
   
   if (is.null(qini_data) || nrow(qini_data) == 0) {
-    return(list(qini_data = NULL, qini_objects = NULL))
+    return(list(qini_data = NULL, qini_objects = NULL, baseline_method = baseline_method))
   }
   
-  return(list(qini_data = qini_data, qini_objects = qini_objs))
+  return(list(qini_data = qini_data, qini_objects = qini_objs, baseline_method = baseline_method))
 }

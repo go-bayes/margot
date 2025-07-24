@@ -40,11 +40,30 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
 
   # Get the qini_objects
   qini_objects <- mc_result$results[[outcome_var]]$qini_objects
-
-  # Generate qini objects if missing
-  if (is.null(qini_objects)) {
+  model_result <- mc_result$results[[outcome_var]]
+  
+  # Check if we have existing QINI objects
+  if (!is.null(qini_objects)) {
+    cli::cli_alert_info("Using existing QINI objects for {outcome_var}")
+  } else {
+    # Generate qini objects if missing
+    cli::cli_alert_warning("QINI objects missing for {outcome_var}, regenerating...")
+    
+    # Check for stored metadata to ensure consistency
+    qini_metadata <- model_result$qini_metadata
+    baseline_method_to_use <- "auto"  # default
+    
+    if (!is.null(qini_metadata)) {
+      if (!is.null(qini_metadata$baseline_method)) {
+        baseline_method_to_use <- qini_metadata$baseline_method
+        cli::cli_alert_info("Using original baseline method: {baseline_method_to_use}")
+      }
+      if (!is.null(qini_metadata$test_indices)) {
+        cli::cli_alert_info("Original QINI used {length(qini_metadata$test_indices)} observations")
+      }
+    }
+    
     # try to generate on-demand
-    model_result <- mc_result$results[[outcome_var]]
     outcome_name_clean <- gsub("^model_", "", outcome_var)
     outcome_data <- NULL
     
@@ -55,13 +74,27 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
     }
     
     if (!is.null(outcome_data) && !is.null(mc_result$W)) {
+      # Use test indices if available
+      if (!is.null(qini_metadata$test_indices)) {
+        test_idx <- qini_metadata$test_indices
+        outcome_data_subset <- outcome_data[test_idx]
+        treatment_subset <- mc_result$W[test_idx]
+        weights_subset <- if (!is.null(mc_result$weights)) mc_result$weights[test_idx] else NULL
+        
+        cli::cli_alert_info("Regenerating QINI with {length(test_idx)} observations from original subset")
+      } else {
+        outcome_data_subset <- outcome_data
+        treatment_subset <- mc_result$W
+        weights_subset <- mc_result$weights
+      }
+      
       qini_result <- margot_generate_qini_data(
         model_result = model_result,
-        outcome_data = outcome_data,
-        treatment = mc_result$W,
-        weights = mc_result$weights,
-        baseline_method = "auto",
-        verbose = FALSE
+        outcome_data = outcome_data_subset,
+        treatment = treatment_subset,
+        weights = weights_subset,
+        baseline_method = baseline_method_to_use,
+        verbose = TRUE
       )
       qini_objects <- qini_result$qini_objects
     }

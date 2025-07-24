@@ -1,9 +1,38 @@
 
+# [2025-07-24] margot 1.0.140
 
-# [2025-07-25] margot 1.0.140
+### Breaking Changes (Improvements)
+- **Consistent QINI baseline method**: `margot_causal_forest()` now uses "maq_no_covariates" as default
+  - Previously used constant rewards approach
+  - Now matches the default in visualization and analysis functions
+  - More theoretically sound as noted in literature
+  - Includes automatic fallback to ensure robustness
+  - **Action required**: Re-run `margot_causal_forest()` to get the new baseline method
 
-### new features
-- users may customise colour for margot_plot_qini() and margot_plot_qini_batch(), parameters are: 'cate_color = "", ate_color = ""
+### New Features
+- **Customizable QINI plot colours**: Added `cate_color` and `ate_color` parameters to `margot_plot_qini()` and `margot_plot_qini_batch()`
+  - Default colours: gold (#d8a739) for CATE (targeted treatment) and dark gray (#4d4d4d) for ATE (no-priority assignment)
+  - Improves visual distinction between targeting strategies
+  - Example: `margot_plot_qini(mc_result, "model_outcome", cate_color = "blue", ate_color = "red")`
+
+### Bug Fixes
+- **Fixed QINI regeneration for flipped models**: Resolved critical issue where flipped models (with _r suffix) failed to regenerate QINI curves
+  - Models like `model_t2_neuroticism_z_r` now correctly regenerate QINI curves with different baseline methods
+  - Removed blocking condition that prevented regeneration when mc_result$data was NULL
+  - Added graceful fallback to existing QINI data when regeneration fails
+  - Enhanced debugging messages for forest object retrieval
+
+### Improvements
+- **QINI data consistency**: Ensured average gain calculations use the same data subset as original QINI curves
+  - Store QINI generation metadata (test indices, baseline method, data split info) during initial generation
+  - `margot_summary_cate_difference_gain()` now uses stored metadata for consistency
+  - Added informative CLI messages throughout the process
+  - Fixed baseline_method metadata to correctly reflect "maq_constant" for compute_qini_curves_binary
+  - Note: Re-run `margot_causal_forest()` to get full metadata benefits for existing models
+- **Fixed breaking change**: QINI regeneration now checks data availability before attempting
+  - When models were created with `save_data = FALSE`, changing baseline_method no longer causes errors
+  - Falls back to existing QINI curves with clear warning when data is unavailable
+  - Users get informative messages instead of cryptic "Cannot find outcome data" errors
 
 # [2025-07-24] margot 1.0.130
 
