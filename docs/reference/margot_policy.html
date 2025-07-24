@@ -11,7 +11,7 @@ Users can toggle which outputs to include via the `output_objects` parameter."><
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.125</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.130</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,18 +55,14 @@ Users can toggle which outputs to include via the `output_objects` parameter.</p
 <span>  policy_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  decision_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  max_depth <span class="op">=</span> <span class="fl">2L</span>,</span>
-<span>  dpi <span class="op">=</span> <span class="fl">600</span>,</span>
-<span>  width <span class="op">=</span> <span class="fl">12</span>,</span>
-<span>  height <span class="op">=</span> <span class="fl">12</span>,</span>
-<span>  save_plots <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  output_dir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="va">push_mods</span><span class="op">)</span>,</span>
 <span>  spend_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  original_df <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  model_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  output_objects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"policy_tree"</span>, <span class="st">"decision_tree"</span>, <span class="st">"combined_plot"</span>, <span class="st">"qini_plot"</span>,</span>
 <span>    <span class="st">"diff_gain_summaries"</span><span class="op">)</span>,</span>
-<span>  qini_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  qini_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  baseline_method <span class="op">=</span> <span class="st">"maq_no_covariates"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -88,26 +84,6 @@ Users can toggle which outputs to include via the `output_objects` parameter.</p
 
 <dt id="arg-max-depth">max_depth<a class="anchor" aria-label="anchor" href="#arg-max-depth"></a></dt>
 <dd><p>Integer, 1 or 2; which decision tree depth to plot. Default: 2.</p></dd>
-
-
-<dt id="arg-dpi">dpi<a class="anchor" aria-label="anchor" href="#arg-dpi"></a></dt>
-<dd><p>Resolution (dpi) for saved plots. Default: 600.</p></dd>
-
-
-<dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>
-<dd><p>Width (in inches) for saved plots. Default: 12.</p></dd>
-
-
-<dt id="arg-height">height<a class="anchor" aria-label="anchor" href="#arg-height"></a></dt>
-<dd><p>Height (in inches) for saved plots. Default: 12.</p></dd>
-
-
-<dt id="arg-save-plots">save_plots<a class="anchor" aria-label="anchor" href="#arg-save-plots"></a></dt>
-<dd><p>Logical; save plots to disk? Default: TRUE.</p></dd>
-
-
-<dt id="arg-output-dir">output_dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>
-<dd><p>Directory for saving plots. Default: <code>here::here(push_mods)</code>.</p></dd>
 
 
 <dt id="arg-spend-levels">spend_levels<a class="anchor" aria-label="anchor" href="#arg-spend-levels"></a></dt>
@@ -134,6 +110,11 @@ Default: all.</p></dd>
 
 <dt id="arg-qini-args">qini_args<a class="anchor" aria-label="anchor" href="#arg-qini-args"></a></dt>
 <dd><p>List of additional arguments to pass to margot_plot_qini(). Default: list().</p></dd>
+
+
+<dt id="arg-baseline-method">baseline_method<a class="anchor" aria-label="anchor" href="#arg-baseline-method"></a></dt>
+<dd><p>Method for generating baseline: "maq_no_covariates" (default),
+"auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().</p></dd>
 
 </dl></div>
     <div class="section level2">

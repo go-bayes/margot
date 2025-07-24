@@ -29,8 +29,8 @@
 #'   the ggplot object. Default is FALSE. When TRUE, returns data with columns: proportion, gain,
 #'   lower, upper, curve.
 #' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
-#' @param baseline_method Method for generating baseline: "auto" (default), "simple", 
-#'   "maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().
+#' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
+#'   "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().
 #'
 #' @return If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,
 #'   returns a data.frame with the plot data.
@@ -88,7 +88,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
                              grid_step = NULL,
                              return_data = FALSE,
                              ylim = NULL,
-                             baseline_method = "auto") {
+                             baseline_method = "maq_no_covariates") {
   cli::cli_h1("Margot Plot Qini Curves")
 
   # Transform the outcome variable name
@@ -170,7 +170,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
   }
   
   # Try to regenerate if needed and possible
-  if (is.null(qini_data) || (regenerate_needed && !is.null(mc_result$data))) {
+  if (is.null(qini_data) || regenerate_needed) {
     cli::cli_alert_info("Generating QINI curves on-demand for {outcome_var}")
     
     # extract necessary components
@@ -178,36 +178,78 @@ margot_plot_qini <- function(mc_result, outcome_var,
     
     # find outcome data - try various locations
     outcome_name_clean <- gsub("^model_", "", outcome_var)
+    is_flipped <- grepl("_r$", outcome_name_clean)
     outcome_data <- NULL
     
-    if (is.null(mc_result$data)) {
-      cli::cli_alert_warning("mc_result$data is NULL - checking for data in model result")
-      # try to get data from the model result itself
-      if (!is.null(model_result$Y)) {
-        outcome_data <- model_result$Y
-      } else if (!is.null(model_result$model) && !is.null(model_result$model$Y.orig)) {
-        # try to get from the grf forest object
+    # For flipped models, prioritize data from forest object which has the correct data
+    if (is_flipped) {
+      if (!is.null(model_result$model) && !is.null(model_result$model$Y.orig)) {
         outcome_data <- model_result$model$Y.orig
-        cli::cli_alert_info("Found outcome data in forest object (Y.orig)")
+        cli::cli_alert_info("Using outcome data from forest object for flipped model")
       } else if (!is.null(model_result$full_model) && !is.null(model_result$full_model$Y.orig)) {
-        # try full_model as well
         outcome_data <- model_result$full_model$Y.orig
-        cli::cli_alert_info("Found outcome data in full_model forest object")
+        cli::cli_alert_info("Using outcome data from full_model forest object for flipped model")
+      } else {
+        # check if model is in full_models
+        if (!is.null(mc_result$full_models) && outcome_var %in% names(mc_result$full_models)) {
+          full_model <- mc_result$full_models[[outcome_var]]
+          if (!is.null(full_model) && !is.null(full_model$Y.orig)) {
+            outcome_data <- full_model$Y.orig
+            cli::cli_alert_info("Using outcome data from full_models storage for flipped model")
+          } else {
+            cli::cli_alert_warning("Forest object found in full_models but Y.orig is NULL")
+          }
+        } else {
+          cli::cli_alert_warning("No forest object found for flipped model {outcome_var}")
+          cli::cli_alert_info("model_result$model exists: {!is.null(model_result$model)}")
+          cli::cli_alert_info("model_result$full_model exists: {!is.null(model_result$full_model)}")
+          cli::cli_alert_info("mc_result$full_models exists: {!is.null(mc_result$full_models)}")
+          if (!is.null(mc_result$full_models)) {
+            cli::cli_alert_info("Models in full_models: {paste(names(mc_result$full_models), collapse = ', ')}")
+          }
+        }
       }
-    } else if (outcome_name_clean %in% names(mc_result$data)) {
-      outcome_data <- mc_result$data[[outcome_name_clean]]
-    } else if (outcome_var %in% names(mc_result$data)) {
-      outcome_data <- mc_result$data[[outcome_var]]
+    }
+    
+    # If not found yet, try standard locations
+    if (is.null(outcome_data)) {
+      if (is.null(mc_result$data)) {
+        cli::cli_alert_warning("mc_result$data is NULL - checking for data in model result")
+        # try to get data from the model result itself
+        if (!is.null(model_result$Y)) {
+          outcome_data <- model_result$Y
+        } else if (!is.null(model_result$model) && !is.null(model_result$model$Y.orig)) {
+          # try to get from the grf forest object
+          outcome_data <- model_result$model$Y.orig
+          cli::cli_alert_info("Found outcome data in forest object (Y.orig)")
+        } else if (!is.null(model_result$full_model) && !is.null(model_result$full_model$Y.orig)) {
+          # try full_model as well
+          outcome_data <- model_result$full_model$Y.orig
+          cli::cli_alert_info("Found outcome data in full_model forest object")
+        }
+      } else if (outcome_name_clean %in% names(mc_result$data)) {
+        outcome_data <- mc_result$data[[outcome_name_clean]]
+      } else if (outcome_var %in% names(mc_result$data)) {
+        outcome_data <- mc_result$data[[outcome_var]]
+      }
     }
     
     if (is.null(outcome_data)) {
       # provide more helpful error message
-      available_outcomes <- names(mc_result$data)
-      cli::cli_abort(c(
-        "Cannot find outcome data for {outcome_var}",
-        "i" = "Looked for: {outcome_name_clean} and {outcome_var}",
-        "i" = "Available outcomes in data: {paste(available_outcomes, collapse = ', ')}"
-      ))
+      if (!is.null(mc_result$data)) {
+        available_outcomes <- names(mc_result$data)
+        cli::cli_abort(c(
+          "Cannot find outcome data for {outcome_var}",
+          "i" = "Looked for: {outcome_name_clean} and {outcome_var}",
+          "i" = "Available outcomes in data: {paste(available_outcomes, collapse = ', ')}"
+        ))
+      } else {
+        cli::cli_abort(c(
+          "Cannot find outcome data for {outcome_var}",
+          "i" = "mc_result$data is NULL and no data found in forest objects",
+          "i" = "For flipped models, ensure forest objects contain Y.orig"
+        ))
+      }
     }
     
     # get treatment and weights
@@ -228,20 +270,35 @@ margot_plot_qini <- function(mc_result, outcome_var,
     }
     
     # generate qini data
-    qini_result <- margot_generate_qini_data(
-      model_result = model_result,
-      outcome_data = outcome_data,
-      treatment = W,
-      weights = weights,
-      baseline_method = baseline_method,
-      verbose = TRUE
-    )
+    qini_result <- tryCatch({
+      margot_generate_qini_data(
+        model_result = model_result,
+        outcome_data = outcome_data,
+        treatment = W,
+        weights = weights,
+        baseline_method = baseline_method,
+        verbose = TRUE
+      )
+    }, error = function(e) {
+      cli::cli_alert_warning("Failed to regenerate QINI data: {e$message}")
+      
+      # try to use existing QINI data if available
+      if (!is.null(mc_result$results[[outcome_var]]$qini_data)) {
+        cli::cli_alert_info("Falling back to existing QINI data (baseline method may differ)")
+        list(
+          qini_data = mc_result$results[[outcome_var]]$qini_data,
+          qini_objects = mc_result$results[[outcome_var]]$qini_objects
+        )
+      } else {
+        NULL
+      }
+    })
     
-    qini_data <- qini_result$qini_data
-    qini_objects <- qini_result$qini_objects
-    
-    if (is.null(qini_data)) {
-      cli::cli_abort("Failed to generate QINI data for {outcome_var}")
+    if (!is.null(qini_result)) {
+      qini_data <- qini_result$qini_data
+      qini_objects <- qini_result$qini_objects
+    } else {
+      cli::cli_abort("Failed to generate QINI data for {outcome_var} and no existing data available")
     }
   }
   

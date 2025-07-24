@@ -21,7 +21,7 @@ margot_plot_qini_batch(
   horizontal_line = TRUE,
   grid_step = NULL,
   ylim = NULL,
-  baseline_method = "auto"
+  baseline_method = "maq_no_covariates"
 )
 }
 \arguments{
@@ -61,8 +61,8 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
 
 \item{ylim}{Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).}
 
-\item{baseline_method}{Method for generating baseline: "auto" (default), "simple", 
-"maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().}
+\item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
+"auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
 }
 \value{
 A list containing the generated ggplot objects for each processed model.

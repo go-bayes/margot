@@ -16,7 +16,7 @@ margot_policy(
   output_objects = c("policy_tree", "decision_tree", "combined_plot", "qini_plot",
     "diff_gain_summaries"),
   qini_args = list(),
-  baseline_method = "auto"
+  baseline_method = "maq_no_covariates"
 )
 }
 \arguments{
@@ -42,8 +42,8 @@ Default: all.}
 
 \item{qini_args}{List of additional arguments to pass to margot_plot_qini(). Default: list().}
 
-\item{baseline_method}{Method for generating baseline: "auto" (default), "simple", 
-"maq_no_covariates", "maq_only", or "none". See details in margot_generate_qini_data().}
+\item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
+"auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
 }
 \value{
 A named list; each element corresponds to a model and contains only

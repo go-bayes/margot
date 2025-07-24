@@ -1,4 +1,35 @@
 
+# [2025-07-24] margot 1.0.130
+
+### new features
+- **margot_qini()**: new function for generating QINI curves and difference gain summaries
+  - provides direct access to QINI analysis without running full policy analysis
+  - parallels the functionality of margot_rate() for consistency
+  - outputs are compatible with margot_interpret_qini()
+  - supports all baseline methods: "auto", "simple", "maq_no_covariates", "maq_only", "none"
+- **margot_interpret_rate()**: moved from _temp folder to main package
+  - now properly exported for interpreting RATE results
+  - handles both single method (AUTOC or QINI) and comparison of both
+  - provides clear markdown-formatted summaries
+
+### improvements
+- **margot_interpret_qini()**: now accepts output from both margot_policy() and margot_qini()
+- **consistent API**: users can now use:
+  - margot_rate() → margot_interpret_rate() for RATE analysis
+  - margot_qini() → margot_interpret_qini() for QINI analysis
+
+### default changes
+- **baseline_method**: changed default from "auto" to "maq_no_covariates" in all QINI functions
+  - provides more theoretically sound default behavior
+  - "maq_no_covariates" now includes automatic fallback to simple baseline if maq fails
+  - users always get a baseline curve with clear warning when fallback occurs
+  - affects: margot_generate_qini_data(), margot_qini(), margot_plot_qini(), margot_plot_qini_batch(), margot_policy()
+
+### bug fixes
+- **flipped model data lookup**: fixed issue where QINI functions couldn't find outcome data for flipped models
+  - models with "_r" suffix (e.g., "model_t2_neuroticism_z_r") now correctly find data under the base name
+  - affects: margot_plot_qini(), margot_qini(), margot_policy()
+
 # [2025-07-24] margot 1.0.125
 
 ### improved

@@ -350,6 +350,13 @@ margot_flip_forests <- function(model_results,
       }
     }
     
+    # also merge flipped data if present
+    if (!is.null(flipped_results$data) && !is.null(results_copy$data)) {
+      for (outcome_name in names(flipped_results$data)) {
+        results_copy$data[[outcome_name]] <- flipped_results$data[[outcome_name]]
+      }
+    }
+    
     # remove original models if requested
     if (remove_original) {
       # remove from results
@@ -364,6 +371,16 @@ margot_flip_forests <- function(model_results,
       if (!is.null(results_copy$full_models)) {
         for (model_name in existing_models) {
           results_copy$full_models[[model_name]] <- NULL
+        }
+      }
+      
+      # remove from data if present
+      if (!is.null(results_copy$data)) {
+        for (model_name in existing_models) {
+          # remove data with various possible keys
+          outcome_name <- gsub(paste0("^", model_prefix), "", model_name)
+          results_copy$data[[outcome_name]] <- NULL
+          results_copy$data[[model_name]] <- NULL
         }
       }
     }

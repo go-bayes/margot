@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.125</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.130</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,53 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.130" id="id_2025-07-24-margot-10130">[2025-07-24] margot 1.0.130<a class="anchor" aria-label="anchor" href="#id_2025-07-24-margot-10130"></a></h2>
+<div class="section level4">
+<h4 id="new-features-1-0-130">new features<a class="anchor" aria-label="anchor" href="#new-features-1-0-130"></a></h4>
+<ul><li>
+<strong>margot_qini()</strong>: new function for generating QINI curves and difference gain summaries
+<ul><li>provides direct access to QINI analysis without running full policy analysis</li>
+<li>parallels the functionality of margot_rate() for consistency</li>
+<li>outputs are compatible with margot_interpret_qini()</li>
+<li>supports all baseline methods: “auto”, “simple”, “maq_no_covariates”, “maq_only”, “none”</li>
+</ul></li>
+<li>
+<strong>margot_interpret_rate()</strong>: moved from _temp folder to main package
+<ul><li>now properly exported for interpreting RATE results</li>
+<li>handles both single method (AUTOC or QINI) and comparison of both</li>
+<li>provides clear markdown-formatted summaries</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-130">improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-130"></a></h4>
+<ul><li>
+<strong>margot_interpret_qini()</strong>: now accepts output from both margot_policy() and margot_qini()</li>
+<li>
+<strong>consistent API</strong>: users can now use:
+<ul><li>margot_rate() → margot_interpret_rate() for RATE analysis</li>
+<li>margot_qini() → margot_interpret_qini() for QINI analysis</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="default-changes-1-0-130">default changes<a class="anchor" aria-label="anchor" href="#default-changes-1-0-130"></a></h4>
+<ul><li>
+<strong>baseline_method</strong>: changed default from “auto” to “maq_no_covariates” in all QINI functions
+<ul><li>provides more theoretically sound default behavior</li>
+<li>“maq_no_covariates” now includes automatic fallback to simple baseline if maq fails</li>
+<li>users always get a baseline curve with clear warning when fallback occurs</li>
+<li>affects: margot_generate_qini_data(), margot_qini(), margot_plot_qini(), margot_plot_qini_batch(), margot_policy()</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-130">bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-130"></a></h4>
+<ul><li>
+<strong>flipped model data lookup</strong>: fixed issue where QINI functions couldn’t find outcome data for flipped models
+<ul><li>models with “_r” suffix (e.g., “model_t2_neuroticism_z_r”) now correctly find data under the base name</li>
+<li>affects: margot_plot_qini(), margot_qini(), margot_policy()</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.125" id="id_2025-07-24-margot-10125">[2025-07-24] margot 1.0.125<a class="anchor" aria-label="anchor" href="#id_2025-07-24-margot-10125"></a></h2>
 <div class="section level4">
 <h4 id="improved-1-0-125">improved<a class="anchor" aria-label="anchor" href="#improved-1-0-125"></a></h4>
@@ -60,6 +107,33 @@
 <ul><li>changed CATE curve colour from blue (<a href="https://github.com/go-bayes/margot/issues/4" class="external-link">#4</a>f88c6) to green (<a href="https://github.com/go-bayes/margot/issues/009" class="external-link">#009</a>E73) to avoid “control” association</li>
 <li>added ylim parameter for manual y-axis control (defaults to automatic scaling)</li>
 <li>ylim parameter also added to margot_plot_qini_batch() for consistency</li>
+<li>added baseline_method parameter for flexible baseline generation (“auto”, “simple”, “maq_no_covariates”, “maq_only”, “none”)</li>
+<li>robust simple baseline implementation that always succeeds</li>
+<li>smart fallback logic: adds simple baseline to existing QINI data when regeneration isn’t possible</li>
+<li>improved data extraction from grf forest objects (Y.orig, W.orig) when mc_result$data is NULL</li>
+<li>better error messages with available data fields when baseline generation fails</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-125">breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-125"></a></h4>
+<ul><li>
+<strong>removed save_plot parameters</strong>: removed save_plot and related parameters (dpi, width, height, output_dir) from:
+<ul><li>margot_plot_qini_batch()</li>
+<li>margot_policy()</li>
+<li>margot_plot_rate_batch()</li>
+<li>users should save plots manually using ggplot2::ggsave() if needed</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="major-architecture-change-1-0-125">major architecture change<a class="anchor" aria-label="anchor" href="#major-architecture-change-1-0-125"></a></h4>
+<ul><li>
+<strong>QINI curve generation moved to on-demand</strong>:
+<ul><li>created margot_generate_qini_data() helper function for on-demand generation</li>
+<li>margot_plot_qini() now generates QINI data when needed</li>
+<li>margot_plot_qini_batch() updated to work with on-demand generation</li>
+<li>margot_policy() and margot_summary_cate_difference_gain() generate QINI objects as needed</li>
+<li>more robust approach that handles edge cases better</li>
+<li>follows maq’s mathematical approach for ATE baselines</li>
 </ul></li>
 </ul></div>
 <div class="section level4">
