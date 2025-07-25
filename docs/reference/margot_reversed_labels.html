@@ -106,13 +106,9 @@ for flipped outcomes. If FALSE, uses the old behavior of modifying in-place.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># new behavior (default): creates entries with _r suffix</span></span></span>
 <span class="r-in"><span><span class="va">label_mapping_new</span> <span class="op">&lt;-</span> <span class="fu">margot_reversed_labels</span><span class="op">(</span><span class="va">label_mapping_all</span>, <span class="va">flip_outcomes</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_reversed_labels(label_mapping_all, flip_outcomes):</span> could not find function "margot_reversed_labels"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">label_mapping_new</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"t2_kessler_latent_anxiety_z"</span>, <span class="st">"t2_kessler_latent_anxiety_z_r"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $t2_kessler_latent_anxiety_z</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Anxiety"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $t2_kessler_latent_anxiety_z_r</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "(reduced) Anxiety"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'label_mapping_new' not found</span>
 <span class="r-in"><span><span class="co">#&gt; $t2_kessler_latent_anxiety_z</span></span></span>
 <span class="r-in"><span><span class="co">#&gt; [1] "Anxiety"</span></span></span>
 <span class="r-in"><span><span class="co">#&gt; $t2_kessler_latent_anxiety_z_r</span></span></span>
@@ -120,12 +116,14 @@ for flipped outcomes. If FALSE, uses the old behavior of modifying in-place.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># old behavior: modifies in place</span></span></span>
 <span class="r-in"><span><span class="va">label_mapping_old</span> <span class="op">&lt;-</span> <span class="fu">margot_reversed_labels</span><span class="op">(</span><span class="va">label_mapping_all</span>, <span class="va">flip_outcomes</span>, use_r_suffix <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_reversed_labels(label_mapping_all, flip_outcomes, use_r_suffix = FALSE):</span> could not find function "margot_reversed_labels"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">label_mapping_old</span><span class="op">[[</span><span class="st">"t2_kessler_latent_anxiety_z"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "(reduced) Anxiety"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'label_mapping_old' not found</span>
 <span class="r-in"><span><span class="co">#&gt; [1] "(reduced) Anxiety"</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># remove original entries</span></span></span>
 <span class="r-in"><span><span class="va">label_mapping_clean</span> <span class="op">&lt;-</span> <span class="fu">margot_reversed_labels</span><span class="op">(</span><span class="va">label_mapping_all</span>, <span class="va">flip_outcomes</span>, remove_original <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_reversed_labels(label_mapping_all, flip_outcomes, remove_original = TRUE):</span> could not find function "margot_reversed_labels"</span>
 <span class="r-in"><span><span class="co"># original anxiety entry removed, only _r version remains</span></span></span>
 </code></pre></div>
     </div>

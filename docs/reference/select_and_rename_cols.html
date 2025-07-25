@@ -96,8 +96,9 @@ and underscore, e.g., "t0_".</p></dd>
 <span class="r-in"><span><span class="va">outcome_var</span> <span class="op">&lt;-</span> <span class="st">"t2_outcome"</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">final_columns</span> <span class="op">&lt;-</span> <span class="fu">select_and_rename_cols</span><span class="op">(</span><span class="va">names_base</span>, <span class="va">baseline_vars</span>, <span class="va">outcome_var</span>, <span class="st">"t2"</span>, <span class="st">"t0"</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in select_and_rename_cols(names_base, baseline_vars, outcome_var,     "t2", "t0"):</span> could not find function "select_and_rename_cols"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">final_columns</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "t0_age"     "t0_weight"  "t0_outcome"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'final_columns' not found</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

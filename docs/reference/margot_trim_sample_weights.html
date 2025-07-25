@@ -97,31 +97,27 @@ of implausibly small or large weights, trading a bit of bias for lower variance.
 <span class="r-in"><span>  lower_quantile <span class="op">=</span> <span class="fl">0.01</span>,</span></span>
 <span class="r-in"><span>  upper_quantile <span class="op">=</span> <span class="fl">0.99</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Raised 1 weight(s) below the 1.0% quantile (threshold = 0.00286206).</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Lowered 1 weight(s) above the 99.0% quantile (threshold = 17.9478).</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_trim_sample_weights(w, lower_quantile = 0.01, upper_quantile = 0.99):</span> could not find function "margot_trim_sample_weights"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">w_both</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.      NA's </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.001637  0.410874  0.612776  1.000000  0.823926 10.264162         1 </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'w_both' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># only upper trim at 95th percentile</span></span></span>
 <span class="r-in"><span><span class="va">w_up95</span> <span class="op">&lt;-</span> <span class="fu">margot_trim_sample_weights</span><span class="op">(</span><span class="va">w</span>, lower_quantile <span class="op">=</span> <span class="cn">NULL</span>, upper_quantile <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Lowered 5 weight(s) above the 95.0% quantile (threshold = 3.42476).</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_trim_sample_weights(w, lower_quantile = NULL, upper_quantile = 0.95):</span> could not find function "margot_trim_sample_weights"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">w_up95</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.     NA's </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 0.001099 0.592212 0.883222 1.000000 1.187563 2.823008        1 </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'w_up95' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># only lower trim at 5th percentile</span></span></span>
 <span class="r-in"><span><span class="va">w_low5</span> <span class="op">&lt;-</span> <span class="fu">margot_trim_sample_weights</span><span class="op">(</span><span class="va">w</span>, lower_quantile <span class="op">=</span> <span class="fl">0.05</span>, upper_quantile <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Raised 5 weight(s) below the 5.0% quantile (threshold = 0.213166).</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_trim_sample_weights(w, lower_quantile = 0.05, upper_quantile = NULL):</span> could not find function "margot_trim_sample_weights"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">w_low5</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.1206  0.4066  0.6063  1.0000  0.8153 10.6220       1 </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'w_low5' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># no trimming (both NULL), only standardise</span></span></span>
 <span class="r-in"><span><span class="va">w_std</span> <span class="op">&lt;-</span> <span class="fu">margot_trim_sample_weights</span><span class="op">(</span><span class="va">w</span>, lower_quantile <span class="op">=</span> <span class="cn">NULL</span>, upper_quantile <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_trim_sample_weights(w, lower_quantile = NULL, upper_quantile = NULL):</span> could not find function "margot_trim_sample_weights"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">w_std</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.      NA's </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7.589e-04 4.090e-01 6.099e-01 1.000e+00 8.201e-01 1.068e+01         1 </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'w_std' not found</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
