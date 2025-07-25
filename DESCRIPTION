@@ -30,7 +30,6 @@ Imports:
     here,
     janitor,
     kableExtra,
-    knitr,
     lifecycle,
     lubridate,
     magrittr,

@@ -5,3 +5,8 @@
 *.DS_Store
 /doc/
 /Meta/
+*.Rcheck/
+*.tar.gz
+*.o
+*.so
+*.dll
