@@ -10,16 +10,16 @@ home:
 
 navbar:
   structure:
-    left: [intro, reference, articles, tutorials, news]
+    left: [intro, reference, news]
     right: [search, github]
   components:
-    articles:
-      text: Vignettes
-      menu:
-      - text: "Getting Started"
-        href: articles/margot-workflow.html
-      - text: "Simulating Data"
-        href: articles/margot-simulation.html
+    # articles:
+    #   text: Vignettes
+    #   menu:
+      # - text: "Getting Started"
+      #   href: articles/margot-workflow.html
+      # - text: "Simulating Data"
+      #   href: articles/margot-simulation.html
 
 template:
   bootstrap: 5
@@ -54,12 +54,12 @@ development:
   version_label: default
   version_tooltip: "Version"
 
-articles:
-  - title: "Getting Started"
-    navbar: ~
-    contents:
-    - margot-workflow
-    - margot-simulation
+# articles:
+#   - title: "Getting Started"
+#     navbar: ~
+#     contents:
+#     - margot-workflow
+#     - margot-simulation
 
 reference:
   - title: "Describe Longitudinal Data"
