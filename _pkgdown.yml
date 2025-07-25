@@ -149,6 +149,8 @@ reference:
     - margot_plot_policy_tree
     - margot_plot_qini
     - margot_plot_qini_batch
+    - margot_qini_scale_note
+    - margot_qini_scale_subtitle
     - margot_plot_rate
     - margot_plot_rate_batch
     - margot_plot_tau

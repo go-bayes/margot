@@ -1,5 +1,47 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.141 (2025-07-25)
+
+### Bug Fixes
+
+- **Fixed scale parameter error in margot_interpret_qini**:
+  - Added missing scale parameter to margot_interpret_qini_binary function
+  - Fixed parameter passing from margot_interpret_qini to margot_interpret_qini_binary
+  - Added validation to ensure scale is always a length-1 vector
+  - Resolves "EXPR must be a length 1 vector" error in switch statement
+
+### MAQ Parameter Updates
+
+- **Added seed and sample.weights support to all maq calls**:
+  - Updated `compute_qini_curves_binary()` to accept and pass weights and seed parameters
+  - Updated `margot_generate_qini_data()` to accept and pass seed parameter
+  - Updated `margot_recompute_qini_ipw()` and `margot_recompute_qini_aipw()` to pass seed
+  - All maq::maq() calls now include seed = 42 for reproducibility
+  - sample.weights parameter properly passed when weights are available
+  - Ensures reproducible QINI curves and correct handling of weighted data
+
+### QINI Scale Transformations
+
+- **Added scale parameter to QINI plot functions**:
+  - New `scale` parameter in `margot_plot_qini()` and `margot_plot_qini_batch()` with options:
+    - "average" (default): Shows average policy effects per unit (maq default implementation)
+    - "cumulative": Shows traditional cumulative gains (multiply by proportion)
+    - "population": Shows total population impact (multiply by proportion and n_units)
+  - Transforms both main curves and confidence intervals appropriately
+  - Y-axis labels update automatically based on selected scale
+  - Documentation explains difference between maq's average gains and traditional QINI cumulative gains
+
+- **Created helper functions for scale interpretation**:
+  - `margot_qini_scale_note()`: Generates explanatory text for what each scale represents
+  - `margot_qini_scale_subtitle()`: Creates brief descriptions for plot subtitles
+  - Helps users understand the meaning of different scale options
+
+- **Updated margot_interpret_qini for scale awareness**:
+  - Added `scale` parameter to affect interpretation text
+  - Uses appropriate terminology ("average policy effects", "cumulative gains", or "total population impact")
+  - Adds explanatory notes when using non-default scales
+  - Ensures consistency between plots and interpretations
+
 ## margot 1.0.140 (2025-07-24)
 
 ### QINI Curve Improvements
@@ -28,9 +70,42 @@
   
 - **Fixed breaking change in QINI regeneration**: 
   - Added check to verify data availability before attempting QINI regeneration
+
+- **Updated default spend levels across package**:
+  - Changed default spend_levels from c(0.2, 0.5) to c(0.1, 0.4) in all functions
+  - Affected functions: margot_plot_qini, margot_plot_qini_batch, margot_interpret_qini, 
+    margot_interpret_heterogeneity, margot_policy, margot_qini, margot_qini_diagnostic, margot_batch_policy
+  - Better reflects typical use cases where 10% and 40% spend levels are more informative than 20% and 50%
+
+### Heterogeneity Interpretation Enhancements
+
+- **Added cautiously selected models category**: `margot_interpret_heterogeneity()` now returns additional outputs:
+  - `cautiously_selected_model_ids` and `cautiously_selected_model_names` for models with mixed evidence
+  - `all_selected_model_ids` and `all_selected_model_names` combine both selected and cautiously selected models
+  - These are models that show positive evidence in some tests but negative in others
+  - Helps users identify models that may benefit from targeting but require careful validation
+  - Example: models showing QINI curve benefits but negative RATE tests
   - When data is not available (e.g., save_data = FALSE), falls back to existing QINI curves with warning
   - Prevents errors when trying to change baseline_method without available data
   - Users now get clear warnings instead of cryptic errors
+
+### QINI Baseline Method Consistency
+
+- **Added baseline_method tracking**: `margot_policy()` and `margot_qini()` now store the baseline method used
+  - Enables detection of mismatches between plots and interpretation summaries
+  - Stored in output structure for each model
+
+- **Enhanced margot_interpret_qini()**: Added baseline_method parameter
+  - Accepts NULL (default) to use stored baseline method
+  - Can specify alternative baseline methods: "maq_no_covariates", "auto", "simple", "maq_only", "none"
+  - Warns when requested baseline method differs from stored method
+  - Future: will support regeneration of summaries with different baseline methods
+
+- **Fixed margot_qini() regeneration**: Now properly regenerates QINI curves when baseline method changes
+  - Detects when stored baseline method differs from requested method
+  - Forces regeneration and updates the original model objects
+  - Ensures diff_gain_summaries use the new baseline method
+  - Prevents mismatch between QINI plots and interpretation tables
 
 ## margot 1.0.130 (2025-07-24)
 

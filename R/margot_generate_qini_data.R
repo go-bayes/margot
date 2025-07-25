@@ -37,6 +37,7 @@ margot_generate_qini_data <- function(model_result,
                                      treatment,
                                      weights = NULL,
                                      baseline_method = c("maq_no_covariates", "auto", "simple", "maq_only", "none"),
+                                     seed = NULL,
                                      verbose = FALSE) {
   
   # if baseline_method is not explicitly provided and we have metadata, use the stored method
@@ -59,18 +60,69 @@ margot_generate_qini_data <- function(model_result,
     stop("tau_hat not found in model result")
   }
   
+  if (verbose) {
+    cli::cli_alert_info("Initial tau_hat length: {length(tau_hat)}")
+    cli::cli_alert_info("qini_metadata present: {!is.null(model_result$qini_metadata)}")
+    if (!is.null(model_result$qini_metadata)) {
+      cli::cli_alert_info("test_indices present: {!is.null(model_result$qini_metadata$test_indices)}")
+    }
+  }
+  
   # check if we should use a subset of data based on qini_metadata
   if (!is.null(model_result$qini_metadata) && !is.null(model_result$qini_metadata$test_indices)) {
     test_indices <- model_result$qini_metadata$test_indices
     if (verbose) {
       cli::cli_alert_info("Using QINI test indices from metadata (n={length(test_indices)})")
     }
-    # subset all data to match original QINI generation
-    if (length(tau_hat) == length(test_indices)) {
-      # tau_hat is already for test set only, no subsetting needed
-    } else if (length(outcome_data) > length(test_indices)) {
-      # need to subset the data
-      tau_hat <- tau_hat[test_indices]
+    
+    # when qini_split = TRUE, we need to handle tau_hat differently
+    # the stored tau_hat is for the full dataset, but we need predictions for test indices only
+    if (!is.null(model_result$qini_metadata$qini_split) && model_result$qini_metadata$qini_split) {
+      if (verbose) {
+        cli::cli_alert_info("qini_split = TRUE detected, will regenerate tau_hat for test indices")
+      }
+      
+      # check if we have the model to regenerate predictions
+      if (!is.null(model_result$model)) {
+        if (verbose) {
+          cli::cli_alert_info("Regenerating tau_hat predictions for test subset")
+        }
+        # get covariates for test indices
+        if (!is.null(model_result$model$X.orig)) {
+          test_covariates <- model_result$model$X.orig[test_indices, , drop = FALSE]
+          tau_hat <- predict(model_result$model, newdata = test_covariates)$predictions
+          if (verbose) {
+            cli::cli_alert_info("Regenerated tau_hat for {length(tau_hat)} test observations")
+          }
+        } else {
+          cli::cli_alert_warning("Cannot regenerate tau_hat: model$X.orig not available")
+          # fall back to subsetting
+          tau_hat <- tau_hat[test_indices]
+        }
+      } else {
+        if (verbose) {
+          cli::cli_alert_info("Model not available, subsetting existing tau_hat")
+        }
+        tau_hat <- tau_hat[test_indices]
+      }
+    } else {
+      # standard subsetting for non-qini_split cases
+      if (length(tau_hat) == length(test_indices)) {
+        # tau_hat is already for test set only, no subsetting needed
+        if (verbose) {
+          cli::cli_alert_info("tau_hat already matches test set size, no subsetting needed")
+        }
+      } else if (length(tau_hat) > length(test_indices)) {
+        # need to subset the data
+        if (verbose) {
+          cli::cli_alert_info("Subsetting tau_hat to match test indices: {length(tau_hat)} -> {length(test_indices)}")
+        }
+        tau_hat <- tau_hat[test_indices]
+      }
+    }
+    
+    # always subset outcome, treatment, and weights to match test indices
+    if (length(outcome_data) > length(test_indices)) {
       outcome_data <- outcome_data[test_indices]
       treatment <- treatment[test_indices]
       if (!is.null(weights)) {
@@ -86,18 +138,53 @@ margot_generate_qini_data <- function(model_result,
   
   # get IPW scores
   treatment_factor <- as.factor(W)
-  IPW_scores <- maq::get_ipw_scores(Y, treatment_factor)
+  if (verbose) {
+    cli::cli_alert_info("Computing IPW scores:")
+    cli::cli_alert_info("  - Y length: {length(Y)}, range: [{round(min(Y), 3)}, {round(max(Y), 3)}]")
+    cli::cli_alert_info("  - W unique values: {paste(sort(unique(W)), collapse = ', ')}")
+    cli::cli_alert_info("  - treatment_factor levels: {paste(levels(treatment_factor), collapse = ', ')}")
+  }
+  
+  IPW_scores <- tryCatch({
+    maq::get_ipw_scores(Y, treatment_factor)
+  }, error = function(e) {
+    if (verbose) {
+      cli::cli_alert_warning("Failed to compute IPW scores: {e$message}")
+    }
+    stop("Cannot proceed without IPW scores: ", e$message)
+  })
   
   # generate CATE curve using maq
   cate_qini <- tryCatch({
+    # add detailed logging
+    if (verbose) {
+      cli::cli_alert_info("Attempting to generate CATE curve:")
+      cli::cli_alert_info("  - tau_hat length: {length(tau_hat)}")
+      cli::cli_alert_info("  - tau_hat range: [{round(min(tau_hat), 3)}, {round(max(tau_hat), 3)}]")
+      cli::cli_alert_info("  - IPW_scores dimensions: {paste(dim(IPW_scores), collapse = ' x ')}")
+      cli::cli_alert_info("  - weights: {if(is.null(weights)) 'NULL' else paste0('length ', length(weights))}")
+      cli::cli_alert_info("  - seed: {if(is.null(seed)) 'NULL' else seed}")
+    }
+    
     maq::maq(
       reward = as.matrix(tau_hat),
       cost = matrix(1, length(tau_hat), 1),
       DR.scores = IPW_scores,
-      R = 200
+      R = 200,
+      sample.weights = weights,
+      seed = seed
     )
   }, error = function(e) {
-    if (verbose) cli::cli_alert_warning("Failed to generate CATE curve: {e$message}")
+    if (verbose) {
+      cli::cli_alert_warning("Failed to generate CATE curve: {e$message}")
+      # add more diagnostic info
+      if (grepl("DR.scores", e$message)) {
+        cli::cli_alert_info("  Issue appears to be with DR.scores (IPW scores)")
+      }
+      if (grepl("reward", e$message)) {
+        cli::cli_alert_info("  Issue appears to be with reward matrix (tau_hat)")
+      }
+    }
     NULL
   })
   
@@ -124,10 +211,18 @@ margot_generate_qini_data <- function(model_result,
         cost = matrix(1, length(tau_hat), 1),
         DR.scores = IPW_scores,
         target.with.covariates = FALSE,
-        R = 200
+        R = 200,
+        sample.weights = weights,
+        seed = seed
       )
       result$baseline_type <- "maq_no_covariates"
-      if (verbose) cli::cli_alert_info("Generated baseline using maq with target.with.covariates = FALSE")
+      if (verbose) {
+        cli::cli_alert_info("Generated baseline using maq with target.with.covariates = FALSE")
+        # debug: check if _path exists
+        if (is.null(result[["_path"]]) || is.null(result[["_path"]]$gain)) {
+          cli::cli_alert_warning("maq baseline result missing _path$gain structure")
+        }
+      }
       result
     }, error = function(e) {
       if (verbose) {
@@ -150,7 +245,9 @@ margot_generate_qini_data <- function(model_result,
         reward = matrix(rep(mean_tau, length(tau_hat)), ncol = 1),
         cost = matrix(1, length(tau_hat), 1),
         DR.scores = IPW_scores,
-        R = 200
+        R = 200,
+        sample.weights = weights,
+        seed = seed
       )
       result$baseline_type <- "maq_constant"
       if (verbose) cli::cli_alert_info("Generated baseline using maq with constant rewards")
@@ -167,7 +264,9 @@ margot_generate_qini_data <- function(model_result,
         cost = matrix(1, length(tau_hat), 1),
         DR.scores = IPW_scores,
         target.with.covariates = FALSE,
-        R = 200
+        R = 200,
+        sample.weights = weights,
+        seed = seed
       )
       result$baseline_type <- "maq_no_covariates"
       if (verbose) cli::cli_alert_info("Generated baseline using maq with target.with.covariates = FALSE")
@@ -226,7 +325,14 @@ margot_generate_qini_data <- function(model_result,
       gain <- qini_obj[["_path"]]$gain
       
       if (is.null(gain) || length(gain) == 0) {
-        if (verbose) cli::cli_alert_warning("No gain data for {curve_name}")
+        if (verbose) {
+          cli::cli_alert_warning("No gain data for {curve_name}")
+          # debug: check structure of qini_obj
+          cli::cli_alert_info("Structure of {curve_name} object: {paste(names(qini_obj), collapse = ', ')}")
+          if ("_path" %in% names(qini_obj)) {
+            cli::cli_alert_info("_path contains: {paste(names(qini_obj[['_path']]), collapse = ', ')}")
+          }
+        }
         next
       }
       

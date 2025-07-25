@@ -4,7 +4,14 @@
 \alias{compute_qini_curves_binary}
 \title{Compute Qini Curves for Binary Treatments}
 \usage{
-compute_qini_curves_binary(tau_hat, Y, W, verbose = TRUE)
+compute_qini_curves_binary(
+  tau_hat,
+  Y,
+  W,
+  weights = NULL,
+  seed = NULL,
+  verbose = TRUE
+)
 }
 \description{
 Compute Qini Curves for Binary Treatments

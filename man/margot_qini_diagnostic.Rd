@@ -7,7 +7,7 @@
 margot_qini_diagnostic(
   mc_result,
   model_names = NULL,
-  spend_levels = c(0.2, 0.5),
+  spend_levels = c(0.1, 0.4),
   tolerance = 0.01,
   verbose = TRUE
 )
@@ -17,7 +17,7 @@ margot_qini_diagnostic(
 
 \item{model_names}{Character vector of models to check (NULL = all models)}
 
-\item{spend_levels}{Numeric vector of spend levels to check (default: c(0.2, 0.5))}
+\item{spend_levels}{Numeric vector of spend levels to check (default: c(0.1, 0.4))}
 
 \item{tolerance}{Numeric tolerance for flagging discrepancies (default: 0.01)}
 

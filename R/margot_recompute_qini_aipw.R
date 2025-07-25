@@ -276,7 +276,8 @@ margot_recompute_qini_aipw <- function(margot_result,
       reward = as.matrix(tau_hat), 
       cost = matrix(1, length(tau_hat), 1), 
       DR.scores = aipw_scores, 
-      R = 200
+      R = 200,
+      seed = 42
     )
     
     # ate-based targeting (uniform treatment)
@@ -284,7 +285,8 @@ margot_recompute_qini_aipw <- function(margot_result,
       reward = matrix(rep(mean(tau_hat), length(tau_hat)), ncol = 1), 
       cost = matrix(1, length(tau_hat), 1), 
       DR.scores = aipw_scores, 
-      R = 200
+      R = 200,
+      seed = 42
     )
     
     # update qini objects

@@ -8,7 +8,7 @@ margot_plot_qini_batch(
   mc_result,
   model_names = NULL,
   label_mapping = NULL,
-  spend_levels = c(0.2, 0.5),
+  spend_levels = c(0.1, 0.4),
   show_spend_lines = TRUE,
   spend_line_color = "red",
   spend_line_alpha = 0.5,
@@ -23,7 +23,8 @@ margot_plot_qini_batch(
   ylim = NULL,
   baseline_method = "maq_no_covariates",
   cate_color = "#d8a739",
-  ate_color = "#4d4d4d"
+  ate_color = "#4d4d4d",
+  scale = "average"
 )
 }
 \arguments{
@@ -35,7 +36,7 @@ the "model_" prefix. Default NULL (all models).}
 \item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
 (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
 
-\item{spend_levels}{Numeric vector of spend levels to show with vertical lines. Default is c(0.2, 0.5).}
+\item{spend_levels}{Numeric vector of spend levels to show with vertical lines. Default is c(0.1, 0.4).}
 
 \item{show_spend_lines}{Logical indicating whether to show vertical lines at spend levels. Default is TRUE.}
 
@@ -69,6 +70,10 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
 \item{cate_color}{Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).}
 
 \item{ate_color}{Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).}
+
+\item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative", 
+or "population". "average" shows average policy effect per unit (maq default), "cumulative" 
+shows traditional cumulative gains, "population" shows total population impact.}
 }
 \value{
 A list containing the generated ggplot objects for each processed model.

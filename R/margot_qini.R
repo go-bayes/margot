@@ -10,7 +10,7 @@
 #' @param model_names Optional character vector specifying which models to process.
 #'   Default NULL (all models).
 #' @param spend_levels Numeric vector of spend levels for difference gain summaries.
-#'   Default is c(0.2, 0.5).
+#'   Default is c(0.1, 0.4).
 #' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
 #'   "auto", "simple", "maq_only", or "none". See margot_generate_qini_data() for details.
 #' @param label_mapping Named character vector for converting variable names to readable labels.
@@ -61,7 +61,7 @@
 #' @importFrom stats setNames
 margot_qini <- function(models,
                        model_names = NULL,
-                       spend_levels = c(0.2, 0.5),
+                       spend_levels = c(0.1, 0.4),
                        baseline_method = "maq_no_covariates",
                        label_mapping = NULL,
                        remove_tx_prefix = TRUE,
@@ -121,6 +121,17 @@ margot_qini <- function(models,
       treatment <- NULL
       weights <- models$weights
       
+      # check if we need to regenerate due to baseline method change
+      force_regenerate <- FALSE
+      if (!is.null(model_result$qini_objects) && !is.null(model_result$qini_metadata$baseline_method)) {
+        if (model_result$qini_metadata$baseline_method != baseline_method) {
+          if (verbose) {
+            cli::cli_alert_info("Baseline method changed from {model_result$qini_metadata$baseline_method} to {baseline_method}, will regenerate QINI curves")
+          }
+          force_regenerate <- TRUE
+        }
+      }
+      
       # try to get outcome data
       if (!is.null(models$data)) {
         if (outcome_name_clean %in% names(models$data)) {
@@ -162,6 +173,12 @@ margot_qini <- function(models,
         next
       }
       
+      # clear existing QINI objects if we need to regenerate
+      if (force_regenerate) {
+        model_result$qini_objects <- NULL
+        model_result$qini_data <- NULL
+      }
+      
       # generate qini data with seed for reproducibility
       withr::with_seed(seed + as.integer(factor(model_name, levels = all_model_names)), {
         qini_result <- margot_generate_qini_data(
@@ -170,9 +187,17 @@ margot_qini <- function(models,
           treatment = treatment,
           weights = weights,
           baseline_method = baseline_method,
-          verbose = FALSE
+          seed = seed,
+          verbose = verbose  # pass through verbose flag
         )
       })
+      
+      # update the models object with the new QINI objects
+      if (force_regenerate && !is.null(qini_result$qini_objects)) {
+        models$results[[model_name]]$qini_objects <- qini_result$qini_objects
+        models$results[[model_name]]$qini_data <- qini_result$qini_data
+        models$results[[model_name]]$qini_metadata$baseline_method <- baseline_method
+      }
       
       # compute difference gain summaries
       diff_gain_summaries <- list()
@@ -181,8 +206,18 @@ margot_qini <- function(models,
         qini_objs <- qini_result$qini_objects
         
         # for binary treatment
-        if (all(c("cate", "ate") %in% names(qini_objs))) {
+        if (verbose) {
+          cli::cli_alert_info("QINI objects available: {paste(names(qini_objs), collapse = ', ')}")
+        }
+        # only compute diff gains if we have both cate and ate curves
+        has_cate <- "cate" %in% names(qini_objs)
+        has_ate <- "ate" %in% names(qini_objs)
+        
+        if (has_cate && has_ate) {
           for (spend in spend_levels) {
+            if (verbose) {
+              cli::cli_alert_info("Computing difference gain at spend={spend} for {model_name}")
+            }
             diff_gain_summaries[[paste0("spend_", spend)]] <- tryCatch({
               margot_summary_cate_difference_gain(
                 models,
@@ -196,6 +231,17 @@ margot_qini <- function(models,
               NULL
             })
           }
+        } else {
+          if (verbose) {
+            missing_curves <- character()
+            if (!has_cate) missing_curves <- c(missing_curves, "cate")
+            if (!has_ate) missing_curves <- c(missing_curves, "ate")
+            cli::cli_alert_warning("Cannot compute difference gains for {model_name}: missing {paste(missing_curves, collapse = ' and ')} curve(s)")
+          }
+        }
+      } else {
+        if (verbose) {
+          cli::cli_alert_warning("No QINI objects found for {model_name}")
         }
       }
       

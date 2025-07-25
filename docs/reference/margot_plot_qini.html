@@ -15,7 +15,7 @@ like theme selection and spend level indicators."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.140</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.150</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ like theme selection and spend level indicators.</p>
 <span>  <span class="va">mc_result</span>,</span>
 <span>  <span class="va">outcome_var</span>,</span>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  spend_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>  spend_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.4</span><span class="op">)</span>,</span>
 <span>  show_spend_lines <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  spend_line_color <span class="op">=</span> <span class="st">"red"</span>,</span>
 <span>  spend_line_alpha <span class="op">=</span> <span class="fl">0.5</span>,</span>
@@ -76,7 +76,8 @@ like theme selection and spend level indicators.</p>
 <span>  ylim <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  baseline_method <span class="op">=</span> <span class="st">"maq_no_covariates"</span>,</span>
 <span>  cate_color <span class="op">=</span> <span class="st">"#d8a739"</span>,</span>
-<span>  ate_color <span class="op">=</span> <span class="st">"#4d4d4d"</span></span>
+<span>  ate_color <span class="op">=</span> <span class="st">"#4d4d4d"</span>,</span>
+<span>  scale <span class="op">=</span> <span class="st">"average"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,7 +100,7 @@ to plot. This should match one of the model names in mc_result$results.</p></dd>
 
 
 <dt id="arg-spend-levels">spend_levels<a class="anchor" aria-label="anchor" href="#arg-spend-levels"></a></dt>
-<dd><p>Numeric vector of spend levels to show with vertical lines. Default is c(0.2, 0.5).</p></dd>
+<dd><p>Numeric vector of spend levels to show with vertical lines. Default is c(0.1, 0.4).</p></dd>
 
 
 <dt id="arg-show-spend-lines">show_spend_lines<a class="anchor" aria-label="anchor" href="#arg-show-spend-lines"></a></dt>
@@ -170,6 +171,12 @@ lower, upper, curve.</p></dd>
 <dt id="arg-ate-color">ate_color<a class="anchor" aria-label="anchor" href="#arg-ate-color"></a></dt>
 <dd><p>Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).</p></dd>
 
+
+<dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
+<dd><p>Character string specifying the scale for gains: "average" (default), "cumulative",
+or "population". "average" shows average policy effect per unit (maq default), "cumulative"
+shows traditional cumulative gains, "population" shows total population impact.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -187,7 +194,13 @@ lower, upper, curve.</p></dd>
 <li><p>Additional features like theme selection and spend indicators</p></li>
 <li><p>Confidence intervals computed via maq::average_gain() for accuracy</p></li>
 <li><p>Binary treatment colors: Customizable via cate_color and ate_color parameters</p></li>
-</ul></div>
+</ul><p><strong>Important Note on Scale:</strong> The y-axis shows <strong>average policy effects per unit</strong>,
+not cumulative gains. This follows the maq package implementation where gains represent
+Q(B) = E[⟨πB(Xi), τ(Xi)⟩], the expected (average) gain from treating units according
+to the policy πB. This differs from traditional uplift modeling QINI curves which show
+cumulative gains. At 100% spend, both CATE and ATE curves converge to similar values
+because the average effect is similar regardless of treatment ordering when everyone is treated.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

@@ -20,9 +20,14 @@
 #' @param alpha Significance level for confidence intervals (default: 0.05)
 #' @param decimal_places Decimal places for rounding (default: 2)
 #' @param model_names Character vector of models to process (optional)
-#' @param spend_levels Numeric vector of spend levels to analyze (default: c(0.2, 0.5)).
+#' @param spend_levels Numeric vector of spend levels to analyze (default: c(0.1, 0.4)).
 #'   If requested levels don't exist in the data, the function will use available levels instead.
 #' @param include_intro Logical whether to include explanatory text about CATE and Qini curves (default: TRUE)
+#' @param baseline_method Method for generating baseline when regenerating summaries: 
+#'   "maq_no_covariates" (default if NULL), "auto", "simple", "maq_only", or "none". 
+#'   If NULL, uses the baseline method from the original QINI generation.
+#' @param scale Character string specifying the scale for gains: "average" (default), "cumulative", 
+#'   or "population". This affects how gains are interpreted in the summary.
 #' @return List with summary_table, qini_explanation, concise_summary, reliable_model_names, reliable_model_ids
 #' @export
 margot_interpret_qini <- function(
@@ -31,8 +36,10 @@ margot_interpret_qini <- function(
     alpha           = 0.05,
     decimal_places  = 2,
     model_names     = NULL,
-    spend_levels    = c(0.2, 0.5),
-    include_intro   = TRUE
+    spend_levels    = c(0.1, 0.4),
+    include_intro   = TRUE,
+    baseline_method = NULL,
+    scale           = "average"
 ) {
   cli::cli_alert_info("starting Qini interpretation")
 
@@ -54,13 +61,23 @@ margot_interpret_qini <- function(
   ##----------------------------------------------------------------##
   ##  binary vs multi-arm switch                                  ##
   ##----------------------------------------------------------------##
+  # check if we have diff_gain_summaries
+  if (is.null(multi_batch[[1]]$diff_gain_summaries) || 
+      length(multi_batch[[1]]$diff_gain_summaries) == 0) {
+    cli::cli_abort(c(
+      "No diff_gain_summaries found in the input data.",
+      "i" = "Make sure margot_qini() was run successfully with valid spend_levels.",
+      "i" = "Check that the QINI curves were generated properly."
+    ))
+  }
+  
   first_spend <- names(multi_batch[[1]]$diff_gain_summaries)[1]
   first_obj   <- multi_batch[[1]]$diff_gain_summaries[[first_spend]]
   is_binary   <- !is.list(first_obj) || !"all_arms" %in% names(first_obj)
 
   if (is_binary) {
     res <- margot_interpret_qini_binary(
-      multi_batch, label_mapping, alpha, decimal_places, spend_levels, include_intro
+      multi_batch, label_mapping, alpha, decimal_places, spend_levels, include_intro, baseline_method, scale
     )
   } else {
     cli::cli_abort("multi-arm Qini interpretation not yet implemented")
@@ -104,8 +121,10 @@ margot_interpret_qini_binary <- function(
     label_mapping   = NULL,
     alpha           = 0.05,
     decimal_places  = 2,
-    spend_levels    = c(0.2, 0.5),
-    include_intro   = TRUE
+    spend_levels    = c(0.1, 0.4),
+    include_intro   = TRUE,
+    baseline_method = NULL,
+    scale           = "average"
 ) {
   cli::cli_alert_info("processing binary treatment model…")
 
@@ -139,7 +158,7 @@ margot_interpret_qini_binary <- function(
   }
 
   # the single-preamble text
-  qini_explanation <- create_qini_explanation_binary(spend_levels, include_intro)
+  qini_explanation <- create_qini_explanation_binary(spend_levels, include_intro, scale)
 
   ##-------------------  helpers in local scope  ----------------------##
   extract_estimates <- function(dg) {
@@ -202,6 +221,30 @@ margot_interpret_qini_binary <- function(
   no_effect_ids <- character(0)
 
   for (nm in names(multi_batch)) {
+    # check if we need to regenerate diff_gain_summaries due to baseline method mismatch
+    current_baseline <- multi_batch[[nm]]$baseline_method
+    regenerate_needed <- FALSE
+    
+    if (!is.null(baseline_method)) {
+      if (is.null(current_baseline)) {
+        cli::cli_alert_info("No baseline method stored for {nm}, will regenerate with {baseline_method}")
+        regenerate_needed <- TRUE
+      } else if (current_baseline != baseline_method) {
+        cli::cli_alert_info("Baseline method mismatch for {nm}: stored={current_baseline}, requested={baseline_method}")
+        regenerate_needed <- TRUE
+      }
+    }
+    
+    if (regenerate_needed) {
+      # attempt to regenerate diff_gain_summaries with new baseline method
+      cli::cli_alert_info("Regenerating diff_gain_summaries for {nm} with baseline_method={baseline_method}")
+      
+      # we need access to the original mc_result structure
+      # for now, we'll skip regeneration and add a warning
+      # TODO: implement full regeneration logic
+      cli::cli_alert_warning("Regeneration not yet implemented - using existing summaries. Results may not match QINI plots with baseline_method={baseline_method}")
+    }
+    
     dg_list <- multi_batch[[nm]]$diff_gain_summaries
     spend_vals <- as.numeric(sub("^spend_", "", names(dg_list)))
 
@@ -354,18 +397,31 @@ create_concise_summary <- function(beneficial_models, harmful_models, no_effect_
 
 
 #' @keywords internal
-create_qini_explanation_binary <- function(spend_levels = c(0.2, 0.5), include_intro = TRUE) {
+create_qini_explanation_binary <- function(spend_levels = c(0.1, 0.4), include_intro = TRUE, scale = "average") {
   # format spend levels as percentages
   spend_text <- paste(paste0(spend_levels * 100, "%"), collapse = " and ")
+  
+  # ensure scale is a single value
+  if (length(scale) != 1 || is.null(scale)) {
+    scale <- "average"
+  }
+  
+  # get scale-specific terminology
+  gain_term <- switch(scale,
+    "average" = "average policy effects",
+    "cumulative" = "cumulative gains",
+    "population" = "total population impact",
+    "gains"  # default
+  )
 
   base_text <- if (include_intro) {
     paste0(
       "The QINI curve compares targeted treatment allocation (based on individual treatment effects) versus uniform allocation (based on average treatment effect). ",
       "Small differences in the expected values of the treatment after the entire population is treated are expected due to out of sample cross-validation (all estimates are tested on data the model has not seen). ",
-      "We computed cumulative gains from prioritising individuals by CATE at ", spend_text, " spend levels."
+      "We computed ", gain_term, " from prioritising individuals by CATE at ", spend_text, " spend levels."
     )
   } else {
-    paste0("We computed cumulative gains from prioritising individuals by CATE at ", spend_text, " spend levels.")
+    paste0("We computed ", gain_term, " from prioritising individuals by CATE at ", spend_text, " spend levels.")
   }
   
   # add note about potential paradox at high spend levels
@@ -374,6 +430,16 @@ create_qini_explanation_binary <- function(spend_levels = c(0.2, 0.5), include_i
       base_text,
       " Note: CATE-based targeting may show benefits even when the average treatment effect is unreliable, as heterogeneous effects can produce valuable targeting opportunities despite an uncertain population average."
     )
+  }
+  
+  # add scale interpretation note if not default
+  if (scale != "average") {
+    scale_note <- switch(scale,
+      "cumulative" = " Values represent the total accumulated benefit from treating all units up to each spend level.",
+      "population" = " Values represent the absolute gain in the outcome metric for the entire population.",
+      ""
+    )
+    base_text <- paste0(base_text, scale_note)
   }
   
   base_text

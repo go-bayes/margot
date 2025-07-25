@@ -10,6 +10,7 @@ margot_generate_qini_data(
   treatment,
   weights = NULL,
   baseline_method = c("maq_no_covariates", "auto", "simple", "maq_only", "none"),
+  seed = NULL,
   verbose = FALSE
 )
 }

@@ -1,4 +1,37 @@
 
+# [2025-07-25] margot 1.0.150
+
+### New Features
+- **Scale transformations for QINI plots**: Added `scale` parameter to `margot_plot_qini()` and `margot_plot_qini_batch()`
+  - "average" (default): Shows average policy effects per unit (maq's Q(B) = E[⟨πB(Xi), τ(Xi)⟩])
+  - "cumulative": Shows traditional cumulative gains (total accumulated benefit)
+  - "population": Shows total population impact (absolute gain in outcome units)
+  - Example: `margot_plot_qini(mc_result, "model_outcome", scale = "cumulative")`
+  - Confidence intervals automatically adjust to match the selected scale
+
+### Bug Fixes
+- **Fixed QINI dimension mismatch with qini_split = TRUE**: Resolved critical error where tau_hat dimensions didn't match test indices
+  - When `qini_split = TRUE`, tau_hat is now properly subset or regenerated for test indices only
+  - Added intelligent handling that regenerates predictions when model is available
+  - Falls back to subsetting when model is unavailable
+  - Prevents "reward, costs, and evaluation scores should have conformable dimension" errors
+
+- **Fixed rbind errors in QINI plots**: Resolved "numbers of columns of arguments do not match" errors
+  - Fixed confidence interval computation to ensure consistent column structure
+  - Fixed extended data generation to match qini_data columns when scale transformation is applied
+  - Added proper column matching before all rbind operations
+
+### Improvements
+- **Enhanced maq integration**: All maq function calls now properly pass seed and sample.weights parameters
+  - Updated `margot_generate_qini_data`, `compute_qini_curves_binary`, `margot_recompute_qini_ipw`, and `margot_recompute_qini_aipw`
+  - Ensures reproducibility and proper weighting in all QINI computations
+  - Fixed missing seed propagation in `margot_summary_cate_difference_gain`
+
+- **Better error handling for QINI regeneration**: Added detailed diagnostic messages
+  - Shows tau_hat dimensions, IPW scores shape, and weights information
+  - Helps identify dimension mismatches and data availability issues
+  - Improved handling of simple baseline objects vs maq objects
+
 # [2025-07-24] margot 1.0.140
 
 ### Breaking Changes (Improvements)
@@ -28,10 +61,31 @@
   - `margot_summary_cate_difference_gain()` now uses stored metadata for consistency
   - Added informative CLI messages throughout the process
   - Fixed baseline_method metadata to correctly reflect "maq_constant" for compute_qini_curves_binary
+
+- **Default spend levels updated**: Changed default spend_levels from c(0.2, 0.5) to c(0.1, 0.4) across all functions
+  - Affected functions: `margot_plot_qini()`, `margot_plot_qini_batch()`, `margot_interpret_qini()`, 
+    `margot_interpret_heterogeneity()`, `margot_policy()`, `margot_qini()`, `margot_qini_diagnostic()`, and `margot_batch_policy()`
+  - The 10% and 40% spend levels better reflect typical analysis needs
+  - 10% captures early targeting efficiency, 40% shows broader implementation potential
+  - Users can still specify custom spend levels as needed
+
+- **Enhanced heterogeneity interpretation**: `margot_interpret_heterogeneity()` now identifies models with mixed evidence
+  - New outputs: `cautiously_selected_model_ids` and `cautiously_selected_model_names` for models with conflicting evidence
+  - Combined outputs: `all_selected_model_ids` and `all_selected_model_names` include both selected and cautiously selected models
+  - Captures models that show positive evidence in some tests but negative in others
+  - Helps identify targeting opportunities that require careful validation before implementation
+  - Example use case: models with beneficial QINI curves despite negative RATE statistics
   - Note: Re-run `margot_causal_forest()` to get full metadata benefits for existing models
 - **Fixed breaking change**: QINI regeneration now checks data availability before attempting
   - When models were created with `save_data = FALSE`, changing baseline_method no longer causes errors
   - Falls back to existing QINI curves with clear warning when data is unavailable
+
+- **QINI baseline method consistency**: Enhanced tracking of baseline methods across functions
+  - `margot_policy()` and `margot_qini()` now store the baseline method used for each model
+  - `margot_interpret_qini()` gains `baseline_method` parameter to ensure consistency with plots
+  - `margot_qini()` now properly regenerates curves when baseline method changes
+  - Warns when interpretation uses different baseline method than visualization
+  - Helps avoid mismatches between QINI plots and summary tables
   - Users get informative messages instead of cryptic "Cannot find outcome data" errors
 
 # [2025-07-24] margot 1.0.130

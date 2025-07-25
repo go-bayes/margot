@@ -122,7 +122,8 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
                      predictions=predict(pt2, covariates[test_idx,top,drop=FALSE]))
       # Qini
       if (!qini_split) {
-        qres <- compute_qini_curves_binary(tau, as.matrix(data[[outcome]]), W, verbose)
+        qres <- compute_qini_curves_binary(tau, as.matrix(data[[outcome]]), W, 
+                                          weights = weights, seed = 42, verbose = verbose)
       } else {
         qtr <- sample(not_missing, floor(qini_train_prop*length(not_missing)))
         qte <- setdiff(not_missing, qtr)
@@ -132,7 +133,9 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
                               W=W[qtr], sample.weights=weights[qtr]),
                          grf_defaults))
         qtau<- predict(qmod, newdata=covariates[qte,,drop=FALSE])$predictions
-        qres <- compute_qini_curves_binary(qtau, as.matrix(data[[outcome]])[qte], W[qte], verbose)
+        qres <- compute_qini_curves_binary(qtau, as.matrix(data[[outcome]])[qte], W[qte], 
+                                          weights = if(!is.null(weights)) weights[qte] else NULL, 
+                                          seed = 42, verbose = verbose)
       }
       qdata   <- if(!is.null(qres)) qres$qini_data else NULL
       qobjs   <- if(!is.null(qres)) qres$qini_objects else NULL
@@ -197,7 +200,7 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
 
 #' Compute Qini Curves for Binary Treatments
 #' @keywords internal
-compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
+compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NULL, verbose = TRUE) {
   tryCatch({
     if (verbose) cli::cli_alert_info("computing Qini curves …")
     tau_hat    <- as.vector(tau_hat)
@@ -209,7 +212,9 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
       reward = as.matrix(tau_hat),
       cost = matrix(1, length(tau_hat), 1),
       DR.scores = IPW_scores,
-      R = 200
+      R = 200,
+      sample.weights = weights,
+      seed = seed
     )
     
     # try maq with target.with.covariates = FALSE first (maq_no_covariates approach)
@@ -219,7 +224,9 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
         cost = matrix(1, length(tau_hat), 1),
         DR.scores = IPW_scores,
         target.with.covariates = FALSE,
-        R = 200
+        R = 200,
+        sample.weights = weights,
+        seed = seed
       )
     }, error = function(e) {
       if (verbose) cli::cli_alert_warning("Failed to generate baseline with maq (no covariates), falling back to constant rewards: {e$message}")
@@ -228,7 +235,9 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, verbose = TRUE) {
         reward = matrix(rep(mean(tau_hat), length(tau_hat)), ncol = 1),
         cost = matrix(1, length(tau_hat), 1), 
         DR.scores = IPW_scores,
-        R = 200
+        R = 200,
+        sample.weights = weights,
+        seed = seed
       )
     })
     
@@ -538,7 +547,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       # --- 4) compute qini curves ---
       if (!qini_split) {
         if (verbose) cli::cli_alert_info("computing binary qini curves in-sample")
-        qini_result <- compute_qini_curves_binary(tau_hat, Y, W, verbose = verbose)
+        qini_result <- compute_qini_curves_binary(tau_hat, Y, W, weights = weights, seed = 42, verbose = verbose)
         if (!is.null(qini_result)) {
           results[[model_name]]$qini_data <- qini_result$qini_data
           results[[model_name]]$qini_objects <- qini_result$qini_objects
@@ -572,7 +581,9 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                 grf_defaults))
         qini_tau_hat <- predict(qini_model, newdata = covariates[qini_test_idxs, , drop = FALSE])$predictions
         if (verbose) cli::cli_alert_info("computing qini curves on qini-test subset")
-        qini_result <- compute_qini_curves_binary(qini_tau_hat, Y[qini_test_idxs], W[qini_test_idxs], verbose = verbose)
+        qini_result <- compute_qini_curves_binary(qini_tau_hat, Y[qini_test_idxs], W[qini_test_idxs], 
+                                                 weights = if(!is.null(weights)) weights[qini_test_idxs] else NULL,
+                                                 seed = 42, verbose = verbose)
         results[[model_name]]$qini_data <- qini_result$qini_data
         results[[model_name]]$qini_objects <- qini_result$qini_objects
         # store metadata about qini generation

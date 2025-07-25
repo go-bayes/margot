@@ -94,6 +94,7 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
         treatment = treatment_subset,
         weights = weights_subset,
         baseline_method = baseline_method_to_use,
+        seed = if(!is.null(mc_result$seed)) mc_result$seed else 12345,
         verbose = TRUE
       )
       qini_objects <- qini_result$qini_objects

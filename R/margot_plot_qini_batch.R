@@ -8,7 +8,7 @@
 #'        the "model_" prefix. Default NULL (all models).
 #' @param label_mapping Optional named list for custom label mappings. Keys should be original variable names
 #'        (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.
-#' @param spend_levels Numeric vector of spend levels to show with vertical lines. Default is c(0.2, 0.5).
+#' @param spend_levels Numeric vector of spend levels to show with vertical lines. Default is c(0.1, 0.4).
 #' @param show_spend_lines Logical indicating whether to show vertical lines at spend levels. Default is TRUE.
 #' @param spend_line_color Color for spend level lines. Default is "red".
 #' @param spend_line_alpha Alpha transparency for spend lines. Default is 0.5.
@@ -27,6 +27,9 @@
 #'   "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().
 #' @param cate_color Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).
 #' @param ate_color Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).
+#' @param scale Character string specifying the scale for gains: "average" (default), "cumulative", 
+#'   or "population". "average" shows average policy effect per unit (maq default), "cumulative" 
+#'   shows traditional cumulative gains, "population" shows total population impact.
 #'
 #' @return A list containing the generated ggplot objects for each processed model.
 #' 
@@ -58,7 +61,7 @@
 margot_plot_qini_batch <- function(mc_result,
                                    model_names = NULL,
                                    label_mapping = NULL,
-                                   spend_levels = c(0.2, 0.5),
+                                   spend_levels = c(0.1, 0.4),
                                    show_spend_lines = TRUE,
                                    spend_line_color = "red",
                                    spend_line_alpha = 0.5,
@@ -73,7 +76,8 @@ margot_plot_qini_batch <- function(mc_result,
                                    ylim = NULL,
                                    baseline_method = "maq_no_covariates",
                                    cate_color = "#d8a739",
-                                   ate_color = "#4d4d4d") {
+                                   ate_color = "#4d4d4d",
+                                   scale = "average") {
   
   cli::cli_h1("Margot Batch QINI Plots")
   
@@ -130,7 +134,8 @@ margot_plot_qini_batch <- function(mc_result,
         ylim = ylim,
         baseline_method = baseline_method,
         cate_color = cate_color,
-        ate_color = ate_color
+        ate_color = ate_color,
+        scale = scale
       )
       
       # store plot in list

@@ -7,7 +7,7 @@
 #'
 #' @param models Output from `margot_causal_forest()` containing model results
 #' @param spend_levels Numeric vector of spend levels for QINI analysis. 
-#'   Default is c(0.2, 0.5).
+#'   Default is c(0.1, 0.4).
 #' @param require_any_positive Logical. If TRUE (default), include models that 
 #'   show positive evidence in ANY method. If FALSE, require positive evidence 
 #'   in ALL methods.
@@ -35,6 +35,10 @@
 #' @return A list containing:
 #'   \item{selected_model_ids}{Character vector of model IDs with heterogeneity evidence}
 #'   \item{selected_model_names}{Character vector of human-readable model names}
+#'   \item{cautiously_selected_model_ids}{Character vector of model IDs with mixed evidence (positive in some tests but negative in others)}
+#'   \item{cautiously_selected_model_names}{Character vector of human-readable model names with mixed evidence}
+#'   \item{all_selected_model_ids}{Combined vector of selected_model_ids and cautiously_selected_model_ids}
+#'   \item{all_selected_model_names}{Combined vector of selected_model_names and cautiously_selected_model_names}
 #'   \item{excluded_model_ids}{Character vector of model IDs to exclude}
 #'   \item{excluded_model_names}{Character vector of human-readable excluded model names}
 #'   \item{evidence_summary}{Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring}
@@ -52,7 +56,7 @@
 #' # Simple usage - let the function handle everything
 #' het_evidence <- margot_interpret_heterogeneity(
 #'   models = causal_forest_results,
-#'   spend_levels = c(0.2, 0.5),
+#'   spend_levels = c(0.1, 0.4),
 #'   flipped_outcomes = c("anxiety", "depression")
 #' )
 #' 
@@ -79,7 +83,7 @@
 #' @importFrom tibble tibble
 margot_interpret_heterogeneity <- function(
   models = NULL,
-  spend_levels = c(0.2, 0.5),
+  spend_levels = c(0.1, 0.4),
   require_any_positive = TRUE,
   exclude_negative_any = TRUE,
   require_omnibus = FALSE,
@@ -231,6 +235,10 @@ margot_interpret_heterogeneity <- function(
   list(
     selected_model_ids = selection_results$selected_ids,
     selected_model_names = selection_results$selected_names,
+    cautiously_selected_model_ids = selection_results$cautiously_selected_ids,
+    cautiously_selected_model_names = selection_results$cautiously_selected_names,
+    all_selected_model_ids = c(selection_results$selected_ids, selection_results$cautiously_selected_ids),
+    all_selected_model_names = c(selection_results$selected_names, selection_results$cautiously_selected_names),
     excluded_model_ids = selection_results$excluded_ids,
     excluded_model_names = selection_results$excluded_names,
     evidence_summary = evidence_summary,
@@ -478,9 +486,16 @@ select_models <- function(evidence_summary, require_any_positive,
     dplyr::select(model_id, model_name, mean_prediction_test, differential_prediction_test, 
                   rate_autoc, rate_qini, qini_curve, positive_count, negative_count, evidence_type)
   
+  # extract cautiously selected models (mixed evidence)
+  cautiously_selected_rows <- evidence_summary$evidence_type == "mixed_evidence_caution"
+  cautiously_selected_ids <- evidence_summary$model_id[cautiously_selected_rows]
+  cautiously_selected_names <- evidence_summary$model_name[cautiously_selected_rows]
+  
   list(
     selected_ids = selected_ids,
     selected_names = selected_names,
+    cautiously_selected_ids = cautiously_selected_ids,
+    cautiously_selected_names = cautiously_selected_names,
     excluded_ids = excluded_ids,
     excluded_names = excluded_names,
     positive_counts = positive_counts,

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.140</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.150</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,10 +38,131 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.0.140" id="id_2025-07-25-margot-10140">[2025-07-25] margot 1.0.140<a class="anchor" aria-label="anchor" href="#id_2025-07-25-margot-10140"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.0.150" id="id_2025-07-25-margot-10150">[2025-07-25] margot 1.0.150<a class="anchor" aria-label="anchor" href="#id_2025-07-25-margot-10150"></a></h2>
 <div class="section level4">
-<h4 id="new-features-1-0-140">new features<a class="anchor" aria-label="anchor" href="#new-features-1-0-140"></a></h4>
-<ul><li>users may customise colour for margot_plot_qini() and margot_plot_qini_batch(), parameters are: ’cate_color = ““, ate_color =””</li>
+<h4 id="new-features-1-0-150">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-150"></a></h4>
+<ul><li>
+<strong>Scale transformations for QINI plots</strong>: Added <code>scale</code> parameter to <code><a href="../reference/margot_plot_qini.html">margot_plot_qini()</a></code> and <code><a href="../reference/margot_plot_qini_batch.html">margot_plot_qini_batch()</a></code>
+<ul><li>“average” (default): Shows average policy effects per unit (maq’s Q(B) = E[⟨πB(Xi), τ(Xi)⟩])</li>
+<li>“cumulative”: Shows traditional cumulative gains (total accumulated benefit)</li>
+<li>“population”: Shows total population impact (absolute gain in outcome units)</li>
+<li>Example: <code>margot_plot_qini(mc_result, "model_outcome", scale = "cumulative")</code>
+</li>
+<li>Confidence intervals automatically adjust to match the selected scale</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-150">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-150"></a></h4>
+<ul><li>
+<strong>Fixed QINI dimension mismatch with qini_split = TRUE</strong>: Resolved critical error where tau_hat dimensions didn’t match test indices
+<ul><li>When <code>qini_split = TRUE</code>, tau_hat is now properly subset or regenerated for test indices only</li>
+<li>Added intelligent handling that regenerates predictions when model is available</li>
+<li>Falls back to subsetting when model is unavailable</li>
+<li>Prevents “reward, costs, and evaluation scores should have conformable dimension” errors</li>
+</ul></li>
+<li>
+<strong>Fixed rbind errors in QINI plots</strong>: Resolved “numbers of columns of arguments do not match” errors
+<ul><li>Fixed confidence interval computation to ensure consistent column structure</li>
+<li>Fixed extended data generation to match qini_data columns when scale transformation is applied</li>
+<li>Added proper column matching before all rbind operations</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-150">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-150"></a></h4>
+<ul><li>
+<strong>Enhanced maq integration</strong>: All maq function calls now properly pass seed and sample.weights parameters
+<ul><li>Updated <code>margot_generate_qini_data</code>, <code>compute_qini_curves_binary</code>, <code>margot_recompute_qini_ipw</code>, and <code>margot_recompute_qini_aipw</code>
+</li>
+<li>Ensures reproducibility and proper weighting in all QINI computations</li>
+<li>Fixed missing seed propagation in <code>margot_summary_cate_difference_gain</code>
+</li>
+</ul></li>
+<li>
+<strong>Better error handling for QINI regeneration</strong>: Added detailed diagnostic messages
+<ul><li>Shows tau_hat dimensions, IPW scores shape, and weights information</li>
+<li>Helps identify dimension mismatches and data availability issues</li>
+<li>Improved handling of simple baseline objects vs maq objects</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.140" id="id_2025-07-24-margot-10140">[2025-07-24] margot 1.0.140<a class="anchor" aria-label="anchor" href="#id_2025-07-24-margot-10140"></a></h2>
+<div class="section level4">
+<h4 id="breaking-changes-improvements-1-0-140">Breaking Changes (Improvements)<a class="anchor" aria-label="anchor" href="#breaking-changes-improvements-1-0-140"></a></h4>
+<ul><li>
+<strong>Consistent QINI baseline method</strong>: <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> now uses “maq_no_covariates” as default
+<ul><li>Previously used constant rewards approach</li>
+<li>Now matches the default in visualization and analysis functions</li>
+<li>More theoretically sound as noted in literature</li>
+<li>Includes automatic fallback to ensure robustness</li>
+<li>
+<strong>Action required</strong>: Re-run <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> to get the new baseline method</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="new-features-1-0-140">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-140"></a></h4>
+<ul><li>
+<strong>Customizable QINI plot colours</strong>: Added <code>cate_color</code> and <code>ate_color</code> parameters to <code><a href="../reference/margot_plot_qini.html">margot_plot_qini()</a></code> and <code><a href="../reference/margot_plot_qini_batch.html">margot_plot_qini_batch()</a></code>
+<ul><li>Default colours: gold (#d8a739) for CATE (targeted treatment) and dark gray (<a href="https://github.com/go-bayes/margot/issues/4" class="external-link">#4</a>d4d4d) for ATE (no-priority assignment)</li>
+<li>Improves visual distinction between targeting strategies</li>
+<li>Example: <code>margot_plot_qini(mc_result, "model_outcome", cate_color = "blue", ate_color = "red")</code>
+</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-140">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-140"></a></h4>
+<ul><li>
+<strong>Fixed QINI regeneration for flipped models</strong>: Resolved critical issue where flipped models (with _r suffix) failed to regenerate QINI curves
+<ul><li>Models like <code>model_t2_neuroticism_z_r</code> now correctly regenerate QINI curves with different baseline methods</li>
+<li>Removed blocking condition that prevented regeneration when mc_result$data was NULL</li>
+<li>Added graceful fallback to existing QINI data when regeneration fails</li>
+<li>Enhanced debugging messages for forest object retrieval</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-140">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-140"></a></h4>
+<ul><li>
+<strong>QINI data consistency</strong>: Ensured average gain calculations use the same data subset as original QINI curves
+<ul><li>Store QINI generation metadata (test indices, baseline method, data split info) during initial generation</li>
+<li>
+<code><a href="../reference/margot_summary_cate_difference_gain.html">margot_summary_cate_difference_gain()</a></code> now uses stored metadata for consistency</li>
+<li>Added informative CLI messages throughout the process</li>
+<li>Fixed baseline_method metadata to correctly reflect “maq_constant” for compute_qini_curves_binary</li>
+</ul></li>
+<li>
+<strong>Default spend levels updated</strong>: Changed default spend_levels from c(0.2, 0.5) to c(0.1, 0.4) across all functions
+<ul><li>Affected functions: <code><a href="../reference/margot_plot_qini.html">margot_plot_qini()</a></code>, <code><a href="../reference/margot_plot_qini_batch.html">margot_plot_qini_batch()</a></code>, <code><a href="../reference/margot_interpret_qini.html">margot_interpret_qini()</a></code>, <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code>, <code><a href="../reference/margot_policy.html">margot_policy()</a></code>, <code><a href="../reference/margot_qini.html">margot_qini()</a></code>, <code><a href="../reference/margot_qini_diagnostic.html">margot_qini_diagnostic()</a></code>, and <code><a href="../reference/margot_batch_policy.html">margot_batch_policy()</a></code>
+</li>
+<li>The 10% and 40% spend levels better reflect typical analysis needs</li>
+<li>10% captures early targeting efficiency, 40% shows broader implementation potential</li>
+<li>Users can still specify custom spend levels as needed</li>
+</ul></li>
+<li>
+<strong>Enhanced heterogeneity interpretation</strong>: <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> now identifies models with mixed evidence
+<ul><li>New outputs: <code>cautiously_selected_model_ids</code> and <code>cautiously_selected_model_names</code> for models with conflicting evidence</li>
+<li>Combined outputs: <code>all_selected_model_ids</code> and <code>all_selected_model_names</code> include both selected and cautiously selected models</li>
+<li>Captures models that show positive evidence in some tests but negative in others</li>
+<li>Helps identify targeting opportunities that require careful validation before implementation</li>
+<li>Example use case: models with beneficial QINI curves despite negative RATE statistics</li>
+<li>Note: Re-run <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> to get full metadata benefits for existing models</li>
+</ul></li>
+<li>
+<strong>Fixed breaking change</strong>: QINI regeneration now checks data availability before attempting
+<ul><li>When models were created with <code>save_data = FALSE</code>, changing baseline_method no longer causes errors</li>
+<li>Falls back to existing QINI curves with clear warning when data is unavailable</li>
+</ul></li>
+<li>
+<strong>QINI baseline method consistency</strong>: Enhanced tracking of baseline methods across functions
+<ul><li>
+<code><a href="../reference/margot_policy.html">margot_policy()</a></code> and <code><a href="../reference/margot_qini.html">margot_qini()</a></code> now store the baseline method used for each model</li>
+<li>
+<code><a href="../reference/margot_interpret_qini.html">margot_interpret_qini()</a></code> gains <code>baseline_method</code> parameter to ensure consistency with plots</li>
+<li>
+<code><a href="../reference/margot_qini.html">margot_qini()</a></code> now properly regenerates curves when baseline method changes</li>
+<li>Warns when interpretation uses different baseline method than visualization</li>
+<li>Helps avoid mismatches between QINI plots and summary tables</li>
+<li>Users get informative messages instead of cryptic “Cannot find outcome data” errors</li>
+</ul></li>
 </ul></div>
 </div>
     <div class="section level2">
