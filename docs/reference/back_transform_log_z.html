@@ -76,16 +76,14 @@ then exponentiating to return to the original scale.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Given log-transformed data with log_mean = 1.5 and log_sd = 0.5</span></span></span>
 <span class="r-in"><span><span class="va">original_value</span> <span class="op">&lt;-</span> <span class="fu">back_transform_log_z</span><span class="op">(</span>z_scores <span class="op">=</span> <span class="fl">1.2</span>, log_mean <span class="op">=</span> <span class="fl">1.5</span>, log_sd <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in back_transform_log_z(z_scores = 1.2, log_mean = 1.5, log_sd = 0.5):</span> could not find function "back_transform_log_z"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">original_value</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_value' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 8.16617</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Multiple z-scores can be transformed at once</span></span></span>
 <span class="r-in"><span><span class="va">z_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">original_values</span> <span class="op">&lt;-</span> <span class="fu">back_transform_log_z</span><span class="op">(</span>z_scores <span class="op">=</span> <span class="va">z_scores</span>, log_mean <span class="op">=</span> <span class="fl">1.5</span>, log_sd <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in back_transform_log_z(z_scores = z_scores, log_mean = 1.5, log_sd = 0.5):</span> could not find function "back_transform_log_z"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">original_values</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_values' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  2.718282  4.481689  7.389056 12.182494</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Real-world example: back-transforming household income z-scores</span></span></span>
 <span class="r-in"><span><span class="co"># Get mean and sd from original log-transformed data</span></span></span>
@@ -100,7 +98,7 @@ then exponentiating to return to the original scale.</p>
 <span class="r-in"><span>  log_mean <span class="op">=</span> <span class="va">log_mean_inc</span>,</span></span>
 <span class="r-in"><span>  log_sd <span class="op">=</span> <span class="va">log_sd_inc</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in back_transform_log_z(df_grf$t0_log_household_inc_z, log_mean = log_mean_inc,     log_sd = log_sd_inc):</span> could not find function "back_transform_log_z"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'df_grf' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">original_data_scale</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_data_scale' not found</span>
 <span class="r-in"><span></span></span>
@@ -111,7 +109,7 @@ then exponentiating to return to the original scale.</p>
 <span class="r-in"><span>  log_mean <span class="op">=</span> <span class="va">log_mean_inc</span>,</span></span>
 <span class="r-in"><span>  log_sd <span class="op">=</span> <span class="va">log_sd_inc</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in back_transform_log_z(z_scores, log_mean = log_mean_inc, log_sd = log_sd_inc):</span> could not find function "back_transform_log_z"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'log_mean_inc' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a data frame to display the relationship between z-scores and original values</span></span></span>
 <span class="r-in"><span><span class="va">results_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>

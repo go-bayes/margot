@@ -55,6 +55,7 @@
 #' }
 #'
 #' @export
+#' @keywords internal
 #' @importFrom ggplot2 ggplot aes geom_line geom_ribbon geom_vline
 #'   scale_color_manual scale_fill_manual labs theme_minimal
 #'   facet_wrap facet_grid theme element_text
@@ -292,6 +293,7 @@ margot_plot_qini_dev <- function(
 #' @return A ggplot2 object with annotations
 #'
 #' @export
+#' @keywords internal
 #' @importFrom ggplot2 annotate geom_point
 margot_plot_qini_annotated_dev <- function(
     qini_results,
@@ -361,6 +363,7 @@ margot_plot_qini_annotated_dev <- function(
 #' @return A ggplot2 object comparing methods
 #'
 #' @export
+#' @keywords internal
 margot_plot_qini_compare_methods_dev <- function(
     cf_results,
     outcome,

@@ -76,16 +76,14 @@ interpretation.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Given a dataset with mean = 100 and sd = 15</span></span></span>
 <span class="r-in"><span><span class="va">original_value</span> <span class="op">&lt;-</span> <span class="fu">back_transform_zscore</span><span class="op">(</span>z <span class="op">=</span> <span class="fl">1.5</span>, mean <span class="op">=</span> <span class="fl">100</span>, sd <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in back_transform_zscore(z = 1.5, mean = 100, sd = 15):</span> could not find function "back_transform_zscore"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">original_value</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_value' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 122.5</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Multiple z-scores can be transformed at once</span></span></span>
 <span class="r-in"><span><span class="va">z_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">original_values</span> <span class="op">&lt;-</span> <span class="fu">back_transform_zscore</span><span class="op">(</span>z <span class="op">=</span> <span class="va">z_scores</span>, mean <span class="op">=</span> <span class="fl">50</span>, sd <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in back_transform_zscore(z = z_scores, mean = 50, sd = 10):</span> could not find function "back_transform_zscore"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">original_values</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_values' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 40 50 60 70</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

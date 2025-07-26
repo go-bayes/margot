@@ -65,11 +65,11 @@ based on the selected scale type (average, cumulative, or population).</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">margot_qini_scale_note</span><span class="op">(</span><span class="st">"average"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_qini_scale_note("average"):</span> could not find function "margot_qini_scale_note"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The y-axis shows average policy effects per unit (Q(B) = E[⟨πB(Xi), τ(Xi)⟩]), representing the expected gain from treating units according to the policy. This is the standard maq implementation where gains converge to the ATE at 100% spend."</span>
 <span class="r-in"><span><span class="fu">margot_qini_scale_note</span><span class="op">(</span><span class="st">"cumulative"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_qini_scale_note("cumulative"):</span> could not find function "margot_qini_scale_note"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The y-axis shows cumulative gains, where the gain at each point represents the total accumulated benefit from treating all units up to that proportion. This is the traditional uplift modeling approach where curves show total impact."</span>
 <span class="r-in"><span><span class="fu">margot_qini_scale_note</span><span class="op">(</span><span class="st">"population"</span>, n_units <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in margot_qini_scale_note("population", n_units = 1000):</span> could not find function "margot_qini_scale_note"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The y-axis shows total population impact for 1000 units. Values represent the absolute gain in the outcome from treating units according to the prioritization policy."</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -37,9 +37,9 @@ This function creates a histogram that highlights a specified range of values to
 }
 \examples{
 \dontrun{
-# Assuming df_nz is your dataframe and it includes a numeric variable 'forgiveness'
-# Filter to a specific subset, for example, wave 2019
-df_19 <- dplyr::filter(df_nz, wave == 2019)
+# Assuming df_margot_example is your dataframe and it includes a numeric variable 'forgiveness'
+# Filter to a specific subset, for example, wave 1
+df_19 <- dplyr::filter(df_margot_example, wave == 1)
 
 # Create and print the histogram
 graph_density_of_exposure <- coloured_histogram_shift(

@@ -94,3 +94,4 @@ plot2 <- margot_plot_qini_dev(
 }
 
 }
+\keyword{internal}

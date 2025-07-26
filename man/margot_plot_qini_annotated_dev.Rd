@@ -26,3 +26,4 @@ A ggplot2 object with annotations
 \description{
 Enhanced version that adds gain annotations at specified spend levels
 }
+\keyword{internal}

@@ -62,6 +62,7 @@
 #' }
 #'
 #' @export
+#' @keywords internal
 #' @importFrom maq maq get_ipw_scores
 #' @importFrom policytree double_robust_scores
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning
@@ -277,8 +278,7 @@ margot_qini_dev <- function(
 }
 
 #' Compute baseline QINI curve
-#'
-#' @keywords internal
+#' @noRd
 compute_baseline_qini <- function(
     tau_hat, 
     dr_scores, 
@@ -364,8 +364,7 @@ compute_baseline_qini <- function(
 }
 
 #' Extract QINI curve data
-#'
-#' @keywords internal
+#' @noRd
 extract_qini_curves <- function(qini_objects, outcome) {
   
   curve_data <- list()
@@ -411,8 +410,7 @@ extract_qini_curves <- function(qini_objects, outcome) {
 }
 
 #' Compute gain summaries at spend levels
-#'
-#' @keywords internal  
+#' @noRd  
 compute_gain_summaries <- function(cate_qini, baseline_qini, spend_levels, outcome) {
   
   summaries <- list()
@@ -456,8 +454,7 @@ compute_gain_summaries <- function(cate_qini, baseline_qini, spend_levels, outco
 }
 
 #' Compute QINI summary metrics
-#'
-#' @keywords internal
+#' @noRd
 compute_qini_metrics <- function(cate_qini, baseline_qini, outcome) {
   
   cate_gains <- cate_qini[["_path"]]$gain
@@ -504,6 +501,7 @@ compute_qini_metrics <- function(cate_qini, baseline_qini, outcome) {
 #' @param ... Additional arguments (ignored)
 #'
 #' @export
+#' @keywords internal
 print.margot_qini_dev <- function(x, ...) {
   cat("margot_qini_dev object\n")
   cat("======================\n\n")
@@ -545,6 +543,7 @@ print.margot_qini_dev <- function(x, ...) {
 #' @param ... Additional arguments (ignored)
 #'
 #' @export
+#' @keywords internal
 summary.margot_qini_dev <- function(object, ...) {
   # create summary table
   if (length(object$gain_summaries) > 0) {

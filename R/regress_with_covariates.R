@@ -14,12 +14,12 @@
 #'
 #' @examples
 #' \dontrun{
-#' # using `df_nz` is your data frame with "income" as the continuous outcome variable,
+#' # using `df_margot_example` is your data frame with "hours_exercise" as the continuous outcome variable,
 #' # "age" as an exposure variable, and other covariates
-#' outcome_var <- "income"
+#' outcome_var <- "hours_exercise"
 #' exposure_var <- "age"
-#' baseline_vars <- c("age", "education", "partner")
-#' model <- regress_with_covariates(df_nz, outcome_var, exposure_var, baseline_vars, family =  gaussian())
+#' baseline_vars <- c("age", "male", "partner")
+#' model <- regress_with_covariates(df_margot_example, outcome_var, exposure_var, baseline_vars, family =  gaussian())
 #' summary(model)
 #' }
 #'

@@ -89,3 +89,4 @@ qini_results_custom <- margot_qini_dev(
 }
 
 }
+\keyword{internal}

@@ -51,6 +51,7 @@
 #' )
 #'
 #' @export
+#' @keywords internal
 #' @importFrom stats rnorm rbinom plogis
 #' @importFrom MASS mvrnorm
 margot_simulate_test_data <- function(

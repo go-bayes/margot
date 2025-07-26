@@ -14,3 +14,4 @@
 \description{
 Print method for margot_qini_dev objects
 }
+\keyword{internal}

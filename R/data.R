@@ -44,30 +44,3 @@
 #' table(df_margot_example$wave)
 #'
 "df_margot_example"
-
-#' Legacy New Zealand Attitudes and Values Study (NZAVS) Simulated Data
-#'
-#' @description
-#' `r lifecycle::badge("deprecated")`
-#' 
-#' This dataset is deprecated and will be removed in a future version.
-#' Please use `fetch_margot_data()` instead.
-#'
-#' @format A data frame (see `?df_margot_example` for a similar structure)
-#'
-#' @details
-#' This large dataset (27MB) is being phased out to reduce package size.
-#' Use `fetch_margot_data(version = "v1")` to download the equivalent
-#' dataset from the Open Science Framework.
-#'
-#' @examples
-#' \dontrun{
-#' # old approach (deprecated)
-#' data(df_nz)
-#' 
-#' # new approach
-#' df <- fetch_margot_data(version = "v1")
-#' }
-#'
-#' @seealso \code{\link{fetch_margot_data}}
-"df_nz"

@@ -26,3 +26,4 @@ A ggplot2 object comparing methods
 \description{
 Convenience function for comparing QINI curves from different baseline methods
 }
+\keyword{internal}

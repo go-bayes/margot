@@ -18,9 +18,9 @@
 #'
 #' @examples
 #'  \dontrun{
-#' # Assuming `df_nz` is a dataframe with a numeric column 'forgiveness'
+#' # Assuming `df_margot_example` is a dataframe with a numeric column 'forgiveness'
 #' # and a factor or integer column 'wave' for subsetting:
-#' df_19 <- dplyr::filter(df_nz, wave == 2019)
+#' df_19 <- dplyr::filter(df_margot_example, wave == 1)
 #'
 #' graph_density_of_exposure <- coloured_histogram_sd(
 #'   df = df_19,

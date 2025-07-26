@@ -66,6 +66,7 @@
 #' }
 #'
 #' @export
+#' @keywords internal
 #' @importFrom grf causal_forest
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning
 margot_causal_forest_dev <- function(
@@ -397,6 +398,7 @@ margot_causal_forest_dev <- function(
 #' @param ... Additional arguments (ignored)
 #'
 #' @export
+#' @keywords internal
 print.margot_causal_forest_dev <- function(x, ...) {
   cat("margot_causal_forest_dev object\n")
   cat("==============================\n\n")

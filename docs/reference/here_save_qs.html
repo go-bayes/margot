@@ -83,7 +83,7 @@ The function uses enhanced compression settings by default to minimize file size
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">my_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, y <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">here_save_qs</span><span class="op">(</span><span class="va">my_df</span>, <span class="st">"my_saved_dataframe"</span>, <span class="st">"~/mydata"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in here_save_qs(my_df, "my_saved_dataframe", "~/mydata"):</span> could not find function "here_save_qs"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in qs::qsave(obj, file_path, preset = preset, nthreads = nthreads):</span> For file ~/mydata/my_saved_dataframe.qs: Failed to open for writing. Does the directory exist? Do you have file permissions? Is the file name long? (&gt;255 chars)</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
