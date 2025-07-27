@@ -13,6 +13,12 @@
 #' @param model_prefix Character; common prefix on model names (default "model_").
 #' @param verbose Logical; print progress with cli (default TRUE).
 #' @param seed Integer; base seed for reproducible RATE computations (default 12345).
+#' @param q Numeric vector of quantiles at which to evaluate. Default is
+#'   seq(0.1, 1, by = 0.1) which matches the GRF default.
+#' @param use_evaluation_subset Logical; if TRUE, use test indices from qini_metadata
+#'   when available for proper out-of-sample evaluation (default TRUE).
+#' @param ... Additional arguments passed to compute_rate_on_demand() and ultimately
+#'   to grf::rank_average_treatment_effect().
 #' @importFrom grf rank_average_treatment_effect
 #' @importFrom stats qnorm
 #' @importFrom tibble tibble
@@ -25,7 +31,10 @@ margot_rate_batch <- function(model_results,
                               round_digits = 3,
                               model_prefix = "model_",
                               verbose = TRUE,
-                              seed = 12345) {
+                              seed = 12345,
+                              q = seq(0.1, 1, by = 0.1),
+                              use_evaluation_subset = TRUE,
+                              ...) {
   stopifnot(is.list(model_results),
             all(c("results", "full_models") %in% names(model_results)))
 
@@ -52,15 +61,38 @@ margot_rate_batch <- function(model_results,
         return(NULL)
       }
 
-      if (policy == "withhold_best") tau_hat <- -tau_hat
+      # check for evaluation subset from qini_metadata
+      subset <- NULL
+      if (use_evaluation_subset && !is.null(model_results$results[[mn]]$qini_metadata)) {
+        qini_meta <- model_results$results[[mn]]$qini_metadata
+        if (!is.null(qini_meta$test_indices)) {
+          subset <- qini_meta$test_indices
+          say(cli::cli_alert_info,
+              sprintf("Using test subset of %d observations for valid RATE evaluation",
+                      length(subset)))
+        } else if (qini_meta$qini_split) {
+          # qini_split was TRUE but no test indices found - something is wrong
+          say(cli::cli_alert_warning,
+              sprintf("Expected test indices for %s but none found - using full sample", mn))
+        }
+      } else if (use_evaluation_subset) {
+        # user wants evaluation subset but no qini_metadata available
+        say(cli::cli_alert_warning,
+            sprintf("No evaluation subset available for %s - results may be optimistic", mn))
+      }
 
-      eps     <- 1e-12
-      tau_adj <- tau_hat + eps * seq_along(tau_hat)
-
-      ra <- grf::rank_average_treatment_effect(
-        forest,
-        tau_adj,
-        target = target
+      # use the helper function for consistent RATE computation
+      ra <- compute_rate_on_demand(
+        forest = forest,
+        tau_hat = tau_hat,
+        target = target,
+        q = q,
+        policy = policy,
+        subset = subset,
+        use_oob_predictions = FALSE,  # we already have tau_hat
+        verbose = FALSE,
+        seed = seed,
+        ...
       )
 
       est <- round(ra$estimate, round_digits)
@@ -111,9 +143,20 @@ margot_rate_batch <- function(model_results,
 #'   If FALSE, just document the adjustment method without recomputing. Default is TRUE when
 #'   adjust parameter is provided, FALSE otherwise.
 #' @param seed Integer; base seed for reproducible RATE computations (default 12345).
-#' @return A list with elements:
+#' @param q Numeric vector of quantiles at which to evaluate. Default is
+#'   seq(0.1, 1, by = 0.1) which matches the GRF default.
+#' @param use_evaluation_subset Logical; if TRUE, use test indices from qini_metadata
+#'   when available for proper out-of-sample evaluation (default TRUE).
+#' @param target Character vector; weighting schemes to compute: "AUTOC", "QINI", or
+#'   c("AUTOC", "QINI") for both (default). When a single target is specified,
+#'   only that table is returned.
+#' @param q Numeric vector of quantiles at which to evaluate. Default is
+#'   seq(0.1, 1, by = 0.1) which matches the GRF default.
+#' @param ... Additional arguments passed to grf::rank_average_treatment_effect().
+#' @return When target includes both "AUTOC" and "QINI", returns a list with elements:
 #' * rate_autoc: AUTOC RATE table
 #' * rate_qini: QINI RATE table
+#' When a single target is specified, returns just that table as a data frame.
 #' @export
 margot_rate <- function(models,
                         model_names = NULL,
@@ -128,7 +171,11 @@ margot_rate <- function(models,
                         adjust = NULL,
                         alpha = 0.05,
                         apply_adjustment = !is.null(adjust),
-                        seed = 12345) {
+                        seed = 12345,
+                        use_evaluation_subset = TRUE,
+                        target = c("AUTOC", "QINI"),
+                        q = seq(0.1, 1, by = 0.1),
+                        ...) {
   policy <- match.arg(policy)
 
   # determine which models to process
@@ -159,7 +206,10 @@ margot_rate <- function(models,
       policy        = policy,
       target        = target,
       round_digits  = round_digits,
-      seed          = seed
+      seed          = seed,
+      q             = q,
+      use_evaluation_subset = use_evaluation_subset,
+      ...
     ) %>%
       dplyr::mutate(
         outcome = vapply(
@@ -209,10 +259,22 @@ margot_rate <- function(models,
     tab %>% dplyr::arrange(dplyr::desc(`RATE Estimate`))
   }
 
-  list(
-    rate_autoc = make_tbl("AUTOC"),
-    rate_qini  = make_tbl("QINI")
-  )
+  # handle target parameter - can be single value or vector
+  if (length(target) == 1) {
+    # single target requested
+    target <- match.arg(target, c("AUTOC", "QINI"))
+    return(make_tbl(target))
+  } else {
+    # multiple targets - return list
+    results <- list()
+    if ("AUTOC" %in% target) {
+      results$rate_autoc <- make_tbl("AUTOC")
+    }
+    if ("QINI" %in% target) {
+      results$rate_qini <- make_tbl("QINI")
+    }
+    return(results)
+  }
 }
 
 #' Interpret RATE estimates
@@ -571,7 +633,7 @@ margot_interpret_rate_comparison <- function(autoc_df,
       qini_row <- qini_df[qini_df$model == m, ]
       concordant_details <- c(concordant_details,
         sprintf("%s (AUTOC: %.3f [95%% CI: %.3f, %.3f]; QINI: %.3f [95%% CI: %.3f, %.3f])",
-                label_map[m], 
+                label_map[m],
                 autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`,
                 qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
       )
@@ -619,7 +681,7 @@ margot_interpret_rate_comparison <- function(autoc_df,
                "Neither AUTOC nor QINI yields a positive RATE estimate for any outcome, suggesting that evidence for treatment effect heterogeneity is inconclusive across all examined outcomes."
     )
   }
-  
+
   # Add section for negative results
   neg_either <- union(neg_autoc, neg_qini)
   if (length(neg_either) > 0) {
@@ -627,13 +689,13 @@ margot_interpret_rate_comparison <- function(autoc_df,
     for (m in neg_either) {
       in_autoc <- m %in% neg_autoc
       in_qini <- m %in% neg_qini
-      
+
       if (in_autoc && in_qini) {
         autoc_row <- autoc_df[autoc_df$model == m, ]
         qini_row <- qini_df[qini_df$model == m, ]
         neg_details <- c(neg_details,
           sprintf("%s (AUTOC: %.3f [95%% CI: %.3f, %.3f]; QINI: %.3f [95%% CI: %.3f, %.3f])",
-                  label_map[m], 
+                  label_map[m],
                   autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`,
                   qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
         )
@@ -656,12 +718,12 @@ margot_interpret_rate_comparison <- function(autoc_df,
                        paste(neg_details, collapse="; "))
     )
   }
-  
+
   # Add section for unreliable outcomes
   all_models <- unique(c(autoc_df$model, qini_df$model))
   reliable_models <- union(either_models, neg_either)
   unreliable_models <- setdiff(all_models, reliable_models)
-  
+
   if (length(unreliable_models) > 0) {
     unreliable_labels <- label_map[unreliable_models]
     parts <- c(parts,

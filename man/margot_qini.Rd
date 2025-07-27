@@ -15,7 +15,8 @@ margot_qini(
   use_title_case = TRUE,
   remove_underscores = TRUE,
   verbose = TRUE,
-  seed = 12345
+  seed = 12345,
+  treatment_cost = 1
 )
 }
 \arguments{
@@ -44,6 +45,11 @@ Default is c(0.1, 0.4).}
 \item{verbose}{Logical; print progress messages (default TRUE).}
 
 \item{seed}{Integer; base seed for reproducible computations (default 12345).}
+
+\item{treatment_cost}{Scalar treatment cost per unit. Default 1. Lower values (e.g., 0.2)
+represent cheap treatments; higher values (e.g., 5) represent expensive treatments.
+Affects QINI curve shape - lower costs create steeper curves, higher costs create
+shallower curves.}
 }
 \value{
 A list where each element corresponds to a model and contains:
@@ -65,6 +71,20 @@ For binary treatments, it creates both CATE and baseline (e.g., ATE) curves.
 The difference gain summaries quantify how much better CATE-based targeting
 performs compared to the baseline at specified spend levels.
 
+The treatment_cost parameter allows for cost sensitivity analysis without
+rerunning the causal forest models. Lower costs (e.g., 0.2) create steeper
+QINI curves indicating more people can be treated cost-effectively, while
+higher costs (e.g., 5) create shallower curves indicating only the highest-effect
+individuals justify treatment.
+
+\strong{Cost Invariance Property}: When treatment costs are uniform across 
+individuals, the relative benefit of CATE-based targeting over uniform allocation 
+remains constant regardless of cost level. While absolute gains scale inversely 
+with cost (gain at cost c = gain at cost 1 / c), the difference between CATE 
+and ATE curves scales proportionally, preserving the relative advantage of 
+personalized treatment. This means the value of heterogeneous treatment effects 
+for targeting decisions is independent of the uniform cost level.
+
 The output is structured to be compatible with margot_interpret_qini() and
 other QINI visualization functions.
 }
@@ -79,6 +99,27 @@ qini_results <- margot_qini(
   model_names = c("model_anxiety", "model_depression"),
   spend_levels = c(0.1, 0.3, 0.5),
   baseline_method = "simple"
+)
+
+# Cost sensitivity analysis - vary treatment cost without rerunning forests
+# Low cost scenario (cheap treatment)
+qini_low_cost <- margot_qini(causal_forest_results, treatment_cost = 0.2)
+
+# Medium cost scenario (default)
+qini_med_cost <- margot_qini(causal_forest_results, treatment_cost = 1)
+
+# High cost scenario (expensive treatment)
+qini_high_cost <- margot_qini(causal_forest_results, treatment_cost = 5)
+
+# Compare results across cost scenarios
+margot_plot_qini(qini_low_cost$model_anxiety, title = "Anxiety - Low Cost")
+margot_plot_qini(qini_high_cost$model_anxiety, title = "Anxiety - High Cost")
+
+# Use helper function for systematic cost sensitivity analysis
+cost_sensitivity <- margot_qini_cost_sensitivity(
+  causal_forest_results,
+  costs = c(0.2, 0.5, 1, 2, 5),
+  model_names = "model_anxiety"
 )
 
 # Interpret the results

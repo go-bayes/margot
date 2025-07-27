@@ -7,21 +7,30 @@
 #' @param mean_tau The average treatment effect (mean of tau_hat)
 #' @param n_points Number of points for the gain curve (default 100)
 #' @param n_units Total number of units (for metadata)
+#' @param treatment_cost Scalar treatment cost per unit (default 1)
+#' @param x_axis Type of x-axis: "proportion" (default) or "budget"
 #' 
 #' @return A list mimicking maq output structure with:
 #'   - _path: list with gain, spend, and std.err
 #'   - mean_tau: the average treatment effect
+#'   - treatment_cost: the treatment cost used
 #'   - baseline_type: "simple"
 #'   - class: "qini_simple_baseline"
 #'   
 #' @keywords internal
-margot_qini_simple_baseline <- function(mean_tau, n_points = 100, n_units = NULL) {
-  # generate evenly spaced points from 0 to 1
-  spend <- seq(0, 1, length.out = n_points)
-  
-  # under random allocation, gain is proportional to spend
-  # gain(B) = B * mean(tau)
-  gain <- spend * mean_tau
+margot_qini_simple_baseline <- function(mean_tau, n_points = 100, n_units = NULL, treatment_cost = 1, x_axis = "proportion") {
+  if (x_axis == "budget") {
+    # generate evenly spaced budget points from 0 to treatment_cost
+    spend <- seq(0, treatment_cost, length.out = n_points)
+    # at budget B, we can treat B/cost proportion of people
+    # gain = (B/cost) * mean_tau
+    gain <- (spend / treatment_cost) * mean_tau
+  } else {
+    # generate evenly spaced proportion points from 0 to 1
+    spend <- seq(0, 1, length.out = n_points)
+    # under random allocation, treating proportion p yields gain p * mean_tau
+    gain <- spend * mean_tau
+  }
   
   # for a simple baseline, std.err could be approximated or set to 0
   # we'll use 0 for now as this is deterministic
@@ -36,8 +45,10 @@ margot_qini_simple_baseline <- function(mean_tau, n_points = 100, n_units = NULL
       complete.path = TRUE
     ),
     mean_tau = mean_tau,
+    treatment_cost = treatment_cost,
     n_units = n_units,
-    baseline_type = "simple"
+    baseline_type = "simple",
+    x_axis = x_axis
   )
   
   class(result) <- c("qini_simple_baseline", "list")
@@ -54,8 +65,17 @@ margot_qini_simple_baseline <- function(mean_tau, n_points = 100, n_units = NULL
 #' @export
 #' @keywords internal
 average_gain.qini_simple_baseline <- function(object, spend, ...) {
-  # for simple baseline, average gain is just spend * mean_tau
-  estimate <- spend * object$mean_tau
+  # use treatment_cost if available, otherwise default to 1
+  cost <- if (!is.null(object$treatment_cost)) object$treatment_cost else 1
+  x_axis <- if (!is.null(object$x_axis)) object$x_axis else "proportion"
+  
+  if (x_axis == "budget") {
+    # spend is budget B, gain = (B/cost) * mean_tau
+    estimate <- (spend / cost) * object$mean_tau
+  } else {
+    # spend is proportion p, gain = p * mean_tau  
+    estimate <- spend * object$mean_tau
+  }
   std_err <- 0  # deterministic, no uncertainty
   
   return(list(
@@ -104,7 +124,9 @@ integrated_difference_simple <- function(object, baseline, spend, ...) {
     }
     
     # compute baseline gains at the same spend points
-    baseline_gain <- comp_spend * baseline$mean_tau
+    # use treatment_cost if available
+    cost <- if (!is.null(baseline$treatment_cost)) baseline$treatment_cost else 1
+    baseline_gain <- comp_spend * baseline$mean_tau / cost
     
     # compute the integrated difference using trapezoidal rule
     n <- length(comp_spend)

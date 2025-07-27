@@ -157,8 +157,8 @@ margot_interpret_qini_binary <- function(
     }
   }
 
-  # the single-preamble text
-  qini_explanation <- create_qini_explanation_binary(spend_levels, include_intro, scale)
+  # the single-preamble text (will be updated after processing models if cost variation detected)
+  qini_explanation <- create_qini_explanation_binary(spend_levels, include_intro, scale, FALSE, NULL)
 
   ##-------------------  helpers in local scope  ----------------------##
   extract_estimates <- function(dg) {
@@ -219,6 +219,9 @@ margot_interpret_qini_binary <- function(
   # track ids as well as names
   harmful_ids <- character(0)
   no_effect_ids <- character(0)
+  
+  # track treatment costs for mentioning in explanations
+  model_costs <- list()
 
   for (nm in names(multi_batch)) {
     # check if we need to regenerate diff_gain_summaries due to baseline method mismatch
@@ -279,11 +282,23 @@ margot_interpret_qini_binary <- function(
     beneficial_count <- sum(grepl("beneficial", all_sentences))
     worsens_count <- sum(grepl("worsens", all_sentences))
 
+    # extract treatment cost if available
+    treatment_cost <- NULL
+    if (!is.null(multi_batch[[nm]]$qini_metadata) &&
+        !is.null(multi_batch[[nm]]$qini_metadata$treatment_cost)) {
+      treatment_cost <- multi_batch[[nm]]$qini_metadata$treatment_cost
+      model_costs[[nm]] <- treatment_cost
+    }
+    
     if (no_benefits_count == length(spend_levels)) {
       spend_text <- paste(paste0(spend_levels * 100, "%"), collapse = " or ")
+      cost_text <- ""
+      if (!is.null(treatment_cost) && treatment_cost != 1) {
+        cost_text <- paste0(" (treatment cost = ", treatment_cost, ")")
+      }
       explains[[label_fn(nm)]] <- paste0(
         "No benefits for priority investments as measured by the Qini curve at the ",
-        spend_text, " spend levels."
+        spend_text, " spend levels", cost_text, "."
       )
       no_effect_models <- c(no_effect_models, label_fn(nm))
       no_effect_ids <- c(no_effect_ids, nm)
@@ -291,6 +306,10 @@ margot_interpret_qini_binary <- function(
       txt <- paste(all_sentences, collapse = " ")
       txt <- sub("^We computed[^.]*\\.\\s*", "", txt)
       
+      # add cost information if not default
+      if (!is.null(treatment_cost) && treatment_cost != 1) {
+        txt <- paste0(txt, " (Treatment cost = ", treatment_cost, ")")
+      }
       
       explains[[label_fn(nm)]] <- txt
 
@@ -321,6 +340,16 @@ margot_interpret_qini_binary <- function(
     }
   }
 
+  # check if we have different treatment costs across models
+  unique_costs <- unique(unlist(model_costs))
+  has_cost_variation <- length(unique_costs) > 1 || 
+                       (length(unique_costs) == 1 && unique_costs[1] != 1)
+  
+  # update qini_explanation if there's cost variation
+  if (has_cost_variation) {
+    qini_explanation <- create_qini_explanation_binary(spend_levels, include_intro, scale, TRUE, unique_costs)
+  }
+  
   # create concise summary
   concise_summary <- create_concise_summary(beneficial_models, harmful_models, no_effect_models, spend_levels)
 
@@ -397,7 +426,7 @@ create_concise_summary <- function(beneficial_models, harmful_models, no_effect_
 
 
 #' @keywords internal
-create_qini_explanation_binary <- function(spend_levels = c(0.1, 0.4), include_intro = TRUE, scale = "average") {
+create_qini_explanation_binary <- function(spend_levels = c(0.1, 0.4), include_intro = TRUE, scale = "average", has_cost_variation = FALSE, unique_costs = NULL) {
   # format spend levels as percentages
   spend_text <- paste(paste0(spend_levels * 100, "%"), collapse = " and ")
   
@@ -440,6 +469,29 @@ create_qini_explanation_binary <- function(spend_levels = c(0.1, 0.4), include_i
       ""
     )
     base_text <- paste0(base_text, scale_note)
+  }
+  
+  # add cost variation note if applicable
+  if (has_cost_variation) {
+    base_text <- paste0(
+      base_text,
+      " Treatment costs vary across models, affecting the optimal allocation strategy. ",
+      "Higher costs result in more selective targeting, while lower costs enable broader treatment."
+    )
+  } else if (!is.null(unique_costs) && length(unique_costs) == 1) {
+    # all models have the same cost - mention it
+    cost_val <- unique_costs[1]
+    if (cost_val != 1) {
+      base_text <- paste0(
+        base_text,
+        " All models use a treatment cost of ", cost_val, "."
+      )
+    } else {
+      base_text <- paste0(
+        base_text,
+        " Treatment cost is set to the default value of 1."
+      )
+    }
   }
   
   base_text

@@ -12,7 +12,10 @@ margot_rate_batch(
   round_digits = 3,
   model_prefix = "model_",
   verbose = TRUE,
-  seed = 12345
+  seed = 12345,
+  q = seq(0.1, 1, by = 0.1),
+  use_evaluation_subset = TRUE,
+  ...
 )
 }
 \arguments{
@@ -32,6 +35,15 @@ results and full_models.}
 \item{verbose}{Logical; print progress with cli (default TRUE).}
 
 \item{seed}{Integer; base seed for reproducible RATE computations (default 12345).}
+
+\item{q}{Numeric vector of quantiles at which to evaluate. Default is
+seq(0.1, 1, by = 0.1) which matches the GRF default.}
+
+\item{use_evaluation_subset}{Logical; if TRUE, use test indices from qini_metadata
+when available for proper out-of-sample evaluation (default TRUE).}
+
+\item{...}{Additional arguments passed to compute_rate_on_demand() and ultimately
+to grf::rank_average_treatment_effect().}
 }
 \description{
 This replaces the legacy internal RATE code and is the only function that

@@ -16,12 +16,19 @@ margot_plot_rate(
   use_title_case = TRUE,
   remove_underscores = TRUE,
   label_mapping = NULL,
+  target = "AUTOC",
+  tau_hat = NULL,
+  q = seq(0.1, 1, by = 0.1),
+  policy = "treat_best",
+  subset = NULL,
+  use_oob_predictions = TRUE,
+  seed = NULL,
   ...
 )
 }
 \arguments{
-\item{x}{An object of class "rank_average_treatment_effect", typically the output
-of the rank_average_treatment_effect() function.}
+\item{x}{Either an object of class "rank_average_treatment_effect" or a causal_forest
+object from grf. If a causal_forest is provided, RATE will be computed on-demand.}
 
 \item{outcome_var}{A character string specifying the name of the outcome variable
 to plot. This is used for the plot title with proper label transformation.}
@@ -46,6 +53,24 @@ generated using the transformed outcome variable name.}
 \item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
 (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
 
+\item{target}{Character; either "AUTOC" or "QINI". Only used when x is a causal_forest. Default is "AUTOC".}
+
+\item{tau_hat}{Optional vector of treatment effect estimates. Only used when x is a causal_forest.
+If NULL, will be computed using out-of-bag predictions.}
+
+\item{q}{Numeric vector of quantiles at which to evaluate. Default is seq(0.1, 1, by = 0.1).
+Only used when x is a causal_forest.}
+
+\item{policy}{Character; either "treat_best" or "withhold_best". Only used when x is a causal_forest.
+Default is "treat_best".}
+
+\item{subset}{Optional indices for subsetting the evaluation data. Only used when x is a causal_forest.}
+
+\item{use_oob_predictions}{Logical; if TRUE and tau_hat is NULL, use out-of-bag predictions.
+Only used when x is a causal_forest. Default is TRUE.}
+
+\item{seed}{Optional random seed for reproducibility. Only used when x is a causal_forest.}
+
 \item{...}{Additional arguments passed to ggplot.}
 }
 \value{
@@ -54,7 +79,8 @@ A ggplot object that can be further customised or printed.
 \description{
 This function creates a ggplot visualisation of the Rank Average Treatment Effect.
 It displays the estimate with a confidence interval, using a simple black line
-and light gray shading by default.
+and light gray shading by default. Can either plot an existing RATE object or
+compute RATE on-demand from a causal forest.
 }
 \examples{
 \dontrun{

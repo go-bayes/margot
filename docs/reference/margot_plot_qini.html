@@ -15,7 +15,7 @@ like theme selection and spend level indicators."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.150</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.160</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,10 +69,14 @@ like theme selection and spend level indicators.</p>
 <span>  grid_step <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  return_data <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  ylim <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fixed_ylim <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  baseline_method <span class="op">=</span> <span class="st">"maq_no_covariates"</span>,</span>
 <span>  cate_color <span class="op">=</span> <span class="st">"#d8a739"</span>,</span>
 <span>  ate_color <span class="op">=</span> <span class="st">"#4d4d4d"</span>,</span>
-<span>  scale <span class="op">=</span> <span class="st">"average"</span></span>
+<span>  scale <span class="op">=</span> <span class="st">"average"</span>,</span>
+<span>  treatment_cost <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
+<span>  x_axis <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"proportion"</span>, <span class="st">"budget"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -115,7 +119,9 @@ to plot. This should match one of the model names in mc_result$results.</p></dd>
 
 
 <dt id="arg-show-ci">show_ci<a class="anchor" aria-label="anchor" href="#arg-show-ci"></a></dt>
-<dd><p>Logical indicating whether to show confidence intervals. Default is FALSE.</p></dd>
+<dd><p>Logical or character indicating which confidence intervals to show.
+Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only).
+Default is FALSE.</p></dd>
 
 
 <dt id="arg-ci-alpha">ci_alpha<a class="anchor" aria-label="anchor" href="#arg-ci-alpha"></a></dt>
@@ -154,6 +160,11 @@ lower, upper, curve.</p></dd>
 <dd><p>Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).</p></dd>
 
 
+<dt id="arg-fixed-ylim">fixed_ylim<a class="anchor" aria-label="anchor" href="#arg-fixed-ylim"></a></dt>
+<dd><p>Logical; if TRUE and ylim is NULL, uses the actual data range with padding
+for consistent y-axis scaling across plots. Default is FALSE.</p></dd>
+
+
 <dt id="arg-baseline-method">baseline_method<a class="anchor" aria-label="anchor" href="#arg-baseline-method"></a></dt>
 <dd><p>Method for generating baseline: "maq_no_covariates" (default),
 "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().</p></dd>
@@ -171,6 +182,24 @@ lower, upper, curve.</p></dd>
 <dd><p>Character string specifying the scale for gains: "average" (default), "cumulative",
 or "population". "average" shows average policy effect per unit (maq default), "cumulative"
 shows traditional cumulative gains, "population" shows total population impact.</p></dd>
+
+
+<dt id="arg-treatment-cost">treatment_cost<a class="anchor" aria-label="anchor" href="#arg-treatment-cost"></a></dt>
+<dd><p>Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
+which attempts to extract the cost from model metadata. If not found, assumes cost = 1.
+When cost differs from stored cost, QINI curves are automatically regenerated.
+When cost differs from 1, it will be shown in the plot subtitle.</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Integer; seed for reproducible QINI generation when treatment_cost differs
+from stored cost. Default is 12345.</p></dd>
+
+
+<dt id="arg-x-axis">x_axis<a class="anchor" aria-label="anchor" href="#arg-x-axis"></a></dt>
+<dd><p>Type of x-axis for QINI curves: "proportion" (default) or "budget".
+"proportion" shows proportion of population treated (0 to 1).
+"budget" shows budget per unit (0 to treatment_cost), matching maq's visualization.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -200,15 +229,31 @@ because the average effect is similar regardless of treatment ordering when ever
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Assuming mc.test is the result of margot_multi_arm_causal_forest()</span></span></span>
-<span class="r-in"><span><span class="fu">plot_qini_curves</span><span class="op">(</span><span class="va">mc.test</span>, <span class="st">"model_t2_belong_z"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Basic usage - uses stored treatment cost</span></span></span>
+<span class="r-in"><span><span class="fu">margot_plot_qini</span><span class="op">(</span><span class="va">cf_results</span>, <span class="st">"model_anxiety"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Auto-regenerates with different treatment cost</span></span></span>
+<span class="r-in"><span><span class="va">plot1</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_qini</span><span class="op">(</span><span class="va">cf_results</span>, <span class="st">"model_anxiety"</span>, treatment_cost <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plot2</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_qini</span><span class="op">(</span><span class="va">cf_results</span>, <span class="st">"model_anxiety"</span>, treatment_cost <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Compare costs with fixed y-axis scaling</span></span></span>
+<span class="r-in"><span><span class="va">plot3</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_qini</span><span class="op">(</span><span class="va">cf_results</span>, <span class="st">"model_anxiety"</span>, treatment_cost <span class="op">=</span> <span class="fl">5</span>, fixed_ylim <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Show CI only for CATE curve</span></span></span>
+<span class="r-in"><span><span class="va">plot4</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_qini</span><span class="op">(</span><span class="va">cf_results</span>, <span class="st">"model_anxiety"</span>, show_ci <span class="op">=</span> <span class="st">"cate"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Show CI for both curves</span></span></span>
+<span class="r-in"><span><span class="va">plot5</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_qini</span><span class="op">(</span><span class="va">cf_results</span>, <span class="st">"model_anxiety"</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Custom seed for reproducibility when regenerating</span></span></span>
+<span class="r-in"><span><span class="va">plot6</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_qini</span><span class="op">(</span><span class="va">cf_results</span>, <span class="st">"model_anxiety"</span>, treatment_cost <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using custom label mapping</span></span></span>
 <span class="r-in"><span><span class="va">label_mapping</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="st">"t2_env_not_env_efficacy_z"</span> <span class="op">=</span> <span class="st">"Deny Personal Environmental Efficacy"</span>,</span></span>
-<span class="r-in"><span>  <span class="st">"t2_env_not_climate_chg_real_z"</span> <span class="op">=</span> <span class="st">"Deny Climate Change Real"</span></span></span>
+<span class="r-in"><span>  <span class="st">"anxiety"</span> <span class="op">=</span> <span class="st">"Anxiety Symptoms"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"depression"</span> <span class="op">=</span> <span class="st">"Depression Symptoms"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">plot_qini_curves</span><span class="op">(</span><span class="va">mc.test</span>, <span class="st">"model_t2_env_not_env_efficacy_z"</span>, label_mapping <span class="op">=</span> <span class="va">label_mapping</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">margot_plot_qini</span><span class="op">(</span><span class="va">cf_results</span>, <span class="st">"model_anxiety"</span>, label_mapping <span class="op">=</span> <span class="va">label_mapping</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

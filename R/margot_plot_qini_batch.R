@@ -13,7 +13,9 @@
 #' @param spend_line_color Color for spend level lines. Default is "red".
 #' @param spend_line_alpha Alpha transparency for spend lines. Default is 0.5.
 #' @param theme Character string specifying the ggplot2 theme. Default is "classic".
-#' @param show_ci Logical indicating whether to show confidence intervals. Default is FALSE.
+#' @param show_ci Logical or character indicating which confidence intervals to show. 
+#'   Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only). 
+#'   Default is FALSE.
 #' @param ci_alpha Significance level for confidence intervals. Default is 0.05.
 #' @param ci_n_points Number of points at which to compute confidence intervals. Default is 20.
 #' @param ci_ribbon_alpha Alpha transparency for confidence interval ribbons. Default is 0.3.
@@ -30,6 +32,14 @@
 #' @param scale Character string specifying the scale for gains: "average" (default), "cumulative", 
 #'   or "population". "average" shows average policy effect per unit (maq default), "cumulative" 
 #'   shows traditional cumulative gains, "population" shows total population impact.
+#' @param treatment_cost Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
+#'   which attempts to extract the cost from model metadata. If not found, assumes cost = 1.
+#'   When cost differs from stored cost, QINI curves are automatically regenerated.
+#'   When cost differs from 1, it will be shown in the plot subtitle.
+#' @param seed Integer; seed for reproducible QINI generation when treatment_cost differs
+#'   from stored cost. Default is 12345.
+#' @param fixed_ylim Logical; if TRUE and ylim is NULL, calculates y-axis limits that would accommodate
+#'   a cost=1 scenario for consistent scaling across different cost comparisons. Default is FALSE.
 #'
 #' @return A list containing the generated ggplot objects for each processed model.
 #' 
@@ -42,8 +52,15 @@
 #' qini_plots <- margot_plot_qini_batch(
 #'   mc_result,
 #'   model_names = c("t2_belong_z", "t2_meaning_z"),
-#'   show_ci = TRUE,
+#'   show_ci = TRUE,  # shows CI for both curves
 #'   ci_n_points = 50
+#' )
+#' 
+#' # Show CI only for CATE curves
+#' qini_plots <- margot_plot_qini_batch(
+#'   mc_result,
+#'   model_names = c("anxiety", "depression"),
+#'   show_ci = "cate"
 #' )
 #' 
 #' # Custom label mapping
@@ -77,7 +94,10 @@ margot_plot_qini_batch <- function(mc_result,
                                    baseline_method = "maq_no_covariates",
                                    cate_color = "#d8a739",
                                    ate_color = "#4d4d4d",
-                                   scale = "average") {
+                                   scale = "average",
+                                   treatment_cost = NULL,
+                                   seed = 12345,
+                                   fixed_ylim = FALSE) {
   
   cli::cli_h1("Margot Batch QINI Plots")
   
@@ -135,7 +155,10 @@ margot_plot_qini_batch <- function(mc_result,
         baseline_method = baseline_method,
         cate_color = cate_color,
         ate_color = ate_color,
-        scale = scale
+        scale = scale,
+        treatment_cost = treatment_cost,
+        seed = seed,
+        fixed_ylim = fixed_ylim
       )
       
       # store plot in list

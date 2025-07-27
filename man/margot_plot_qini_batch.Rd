@@ -24,7 +24,10 @@ margot_plot_qini_batch(
   baseline_method = "maq_no_covariates",
   cate_color = "#d8a739",
   ate_color = "#4d4d4d",
-  scale = "average"
+  scale = "average",
+  treatment_cost = NULL,
+  seed = 12345,
+  fixed_ylim = FALSE
 )
 }
 \arguments{
@@ -46,7 +49,9 @@ the "model_" prefix. Default NULL (all models).}
 
 \item{theme}{Character string specifying the ggplot2 theme. Default is "classic".}
 
-\item{show_ci}{Logical indicating whether to show confidence intervals. Default is FALSE.}
+\item{show_ci}{Logical or character indicating which confidence intervals to show. 
+Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only). 
+Default is FALSE.}
 
 \item{ci_alpha}{Significance level for confidence intervals. Default is 0.05.}
 
@@ -74,6 +79,17 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
 \item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative", 
 or "population". "average" shows average policy effect per unit (maq default), "cumulative" 
 shows traditional cumulative gains, "population" shows total population impact.}
+
+\item{treatment_cost}{Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
+which attempts to extract the cost from model metadata. If not found, assumes cost = 1.
+When cost differs from stored cost, QINI curves are automatically regenerated.
+When cost differs from 1, it will be shown in the plot subtitle.}
+
+\item{seed}{Integer; seed for reproducible QINI generation when treatment_cost differs
+from stored cost. Default is 12345.}
+
+\item{fixed_ylim}{Logical; if TRUE and ylim is NULL, calculates y-axis limits that would accommodate
+a cost=1 scenario for consistent scaling across different cost comparisons. Default is FALSE.}
 }
 \value{
 A list containing the generated ggplot objects for each processed model.
@@ -91,8 +107,15 @@ qini_plots <- margot_plot_qini_batch(mc_result)
 qini_plots <- margot_plot_qini_batch(
   mc_result,
   model_names = c("t2_belong_z", "t2_meaning_z"),
-  show_ci = TRUE,
+  show_ci = TRUE,  # shows CI for both curves
   ci_n_points = 50
+)
+
+# Show CI only for CATE curves
+qini_plots <- margot_plot_qini_batch(
+  mc_result,
+  model_names = c("anxiety", "depression"),
+  show_ci = "cate"
 )
 
 # Custom label mapping

@@ -11,6 +11,10 @@
 #' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
 #'   "auto", "simple", "maq_only", or "none". See details.
 #' @param verbose Logical for verbose output
+#' @param treatment_cost Scalar treatment cost per unit. Default 1.
+#' @param x_axis Type of x-axis for QINI curves: "proportion" (default) or "budget".
+#'   "proportion" shows proportion of population treated (0 to 1).
+#'   "budget" shows budget per unit (0 to treatment_cost), matching maq's visualization.
 #'
 #' @details
 #' The baseline_method parameter controls how the no-prioritization baseline is generated:
@@ -28,8 +32,9 @@
 #' always succeeds and provides a robust fallback when maq fails.
 #'
 #' @return A list with components:
-#'   - qini_data: data.frame with columns proportion, gain, curve
+#'   - qini_data: data.frame with columns proportion (or budget), gain, curve
 #'   - qini_objects: list with cate and ate maq objects (ate may be simplified)
+#'   - x_axis: the x-axis type used ("proportion" or "budget")
 #'
 #' @keywords internal
 margot_generate_qini_data <- function(model_result, 
@@ -38,7 +43,9 @@ margot_generate_qini_data <- function(model_result,
                                      weights = NULL,
                                      baseline_method = c("maq_no_covariates", "auto", "simple", "maq_only", "none"),
                                      seed = NULL,
-                                     verbose = FALSE) {
+                                     verbose = FALSE,
+                                     treatment_cost = 1,
+                                     x_axis = c("proportion", "budget")) {
   
   # if baseline_method is not explicitly provided and we have metadata, use the stored method
   if (missing(baseline_method) && !is.null(model_result$qini_metadata$baseline_method)) {
@@ -50,8 +57,12 @@ margot_generate_qini_data <- function(model_result,
     baseline_method <- match.arg(baseline_method)
   }
   
+  # match x_axis argument
+  x_axis <- match.arg(x_axis)
+  
   if (verbose) {
     cli::cli_alert_info("Generating QINI curves with baseline method: {baseline_method}")
+    cli::cli_alert_info("Using x-axis type: {x_axis}")
   }
   
   # extract tau_hat from the model result
@@ -164,11 +175,12 @@ margot_generate_qini_data <- function(model_result,
       cli::cli_alert_info("  - IPW_scores dimensions: {paste(dim(IPW_scores), collapse = ' x ')}")
       cli::cli_alert_info("  - weights: {if(is.null(weights)) 'NULL' else paste0('length ', length(weights))}")
       cli::cli_alert_info("  - seed: {if(is.null(seed)) 'NULL' else seed}")
+      cli::cli_alert_info("  - treatment_cost: {treatment_cost}")
     }
     
     maq::maq(
       reward = as.matrix(tau_hat),
-      cost = matrix(1, length(tau_hat), 1),
+      cost = matrix(treatment_cost, length(tau_hat), 1),
       DR.scores = IPW_scores,
       R = 200,
       sample.weights = weights,
@@ -200,7 +212,9 @@ margot_generate_qini_data <- function(model_result,
     ate_qini <- margot_qini_simple_baseline(
       mean_tau = mean_tau,
       n_points = 100,
-      n_units = length(tau_hat)
+      n_units = length(tau_hat),
+      treatment_cost = treatment_cost,
+      x_axis = x_axis
     )
     if (verbose) cli::cli_alert_info("Using simple baseline from (0,0) to (1, {round(mean_tau, 3)})")
   } else if (baseline_method == "maq_no_covariates") {
@@ -208,7 +222,7 @@ margot_generate_qini_data <- function(model_result,
     ate_qini <- tryCatch({
       result <- maq::maq(
         reward = as.matrix(tau_hat),
-        cost = matrix(1, length(tau_hat), 1),
+        cost = matrix(treatment_cost, length(tau_hat), 1),
         DR.scores = IPW_scores,
         target.with.covariates = FALSE,
         R = 200,
@@ -233,7 +247,9 @@ margot_generate_qini_data <- function(model_result,
       simple_baseline <- margot_qini_simple_baseline(
         mean_tau = mean_tau,
         n_points = 100,
-        n_units = length(tau_hat)
+        n_units = length(tau_hat),
+        treatment_cost = treatment_cost,
+        x_axis = x_axis
       )
       simple_baseline$baseline_type <- "simple_fallback"
       simple_baseline
@@ -243,7 +259,7 @@ margot_generate_qini_data <- function(model_result,
     ate_qini <- tryCatch({
       result <- maq::maq(
         reward = matrix(rep(mean_tau, length(tau_hat)), ncol = 1),
-        cost = matrix(1, length(tau_hat), 1),
+        cost = matrix(treatment_cost, length(tau_hat), 1),
         DR.scores = IPW_scores,
         R = 200,
         sample.weights = weights,
@@ -261,7 +277,7 @@ margot_generate_qini_data <- function(model_result,
     ate_qini <- tryCatch({
       result <- maq::maq(
         reward = as.matrix(tau_hat),
-        cost = matrix(1, length(tau_hat), 1),
+        cost = matrix(treatment_cost, length(tau_hat), 1),
         DR.scores = IPW_scores,
         target.with.covariates = FALSE,
         R = 200,
@@ -277,7 +293,9 @@ margot_generate_qini_data <- function(model_result,
       margot_qini_simple_baseline(
         mean_tau = mean_tau,
         n_points = 100,
-        n_units = length(tau_hat)
+        n_units = length(tau_hat),
+        treatment_cost = treatment_cost,
+        x_axis = x_axis
       )
     })
   }
@@ -288,7 +306,7 @@ margot_generate_qini_data <- function(model_result,
   if (!is.null(ate_qini)) qini_objs$ate <- ate_qini
   
   if (length(qini_objs) == 0) {
-    return(list(qini_data = NULL, qini_objects = NULL, baseline_method = baseline_method))
+    return(list(qini_data = NULL, qini_objects = NULL, baseline_method = baseline_method, x_axis = x_axis))
   }
   
   # extract data for plotting
@@ -319,7 +337,14 @@ margot_generate_qini_data <- function(model_result,
         gain <- gain[idx]
       }
       
-      curve_data <- data.frame(proportion = proportion, gain = gain, curve = curve_name)
+      # transform x-axis if using budget
+      if (x_axis == "budget") {
+        x_values <- proportion * treatment_cost
+      } else {
+        x_values <- proportion
+      }
+      
+      curve_data <- data.frame(proportion = x_values, gain = gain, curve = curve_name)
     } else {
       # extract actual gain values
       gain <- qini_obj[["_path"]]$gain
@@ -346,15 +371,29 @@ margot_generate_qini_data <- function(model_result,
       
       gain <- gain[1:max_idx]
       proportion <- seq(0, 1, length.out = max_idx)
-      curve_data <- data.frame(proportion = proportion, gain = gain, curve = curve_name)
+      
+      # transform x-axis if using budget
+      if (x_axis == "budget") {
+        x_values <- proportion * treatment_cost
+      } else {
+        x_values <- proportion
+      }
+      # transform x-axis if using budget
+      if (x_axis == "budget") {
+        x_values <- proportion * treatment_cost
+      } else {
+        x_values <- proportion
+      }
+      
+      curve_data <- data.frame(proportion = x_values, gain = gain, curve = curve_name)
     }
     
     qini_data <- rbind(qini_data, curve_data)
   }
   
   if (is.null(qini_data) || nrow(qini_data) == 0) {
-    return(list(qini_data = NULL, qini_objects = NULL, baseline_method = baseline_method))
+    return(list(qini_data = NULL, qini_objects = NULL, baseline_method = baseline_method, treatment_cost = treatment_cost, x_axis = x_axis))
   }
   
-  return(list(qini_data = qini_data, qini_objects = qini_objs, baseline_method = baseline_method))
+  return(list(qini_data = qini_data, qini_objects = qini_objs, baseline_method = baseline_method, treatment_cost = treatment_cost, x_axis = x_axis))
 }

@@ -41,10 +41,12 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
                                            save_models     = TRUE,
                                            train_proportion= 0.7,
                                            qini_split      = TRUE,
-                                           qini_train_prop = 0.7,
+                                           train_prop      = 0.5,
+                                           qini_train_prop = NULL,  # deprecated
                                            compute_conditional_means = TRUE,
                                            n_cores         = future::availableCores() - 1,
-                                           verbose         = TRUE) {
+                                           verbose         = TRUE,
+                                           qini_treatment_cost = 1) {
   # dimension checks
   n_rows <- nrow(covariates)
   if (verbose) cli::cli_alert_info(paste0("rows in covariates: ", n_rows))
@@ -54,8 +56,14 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
     if (nrow(as.matrix(data[[o]])) != n_rows)
       stop("rows in outcome ", o, " do not match covariates")
   }
-  if (qini_split && (qini_train_prop <= 0 || qini_train_prop >= 1))
-    stop("qini_train_prop must be in (0,1)")
+  # handle deprecated qini_train_prop parameter
+  if (!is.null(qini_train_prop)) {
+    if (verbose) cli::cli_alert_warning("Parameter 'qini_train_prop' is deprecated. Please use 'train_prop' instead.")
+    train_prop <- qini_train_prop
+  }
+  
+  if (qini_split && (train_prop <= 0 || train_prop >= 1))
+    stop("train_prop must be in (0,1)")
   if (verbose) cli::cli_alert_info("starting margot_causal_forest()")
 
   # complete cases
@@ -90,7 +98,9 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
       # RATE
       if (compute_rate) {
         rate     <- grf::rank_average_treatment_effect(model, tau)
+        attr(rate, "target") <- "AUTOC"
         rate_qini<- grf::rank_average_treatment_effect(model, tau, target="QINI")
+        attr(rate_qini, "target") <- "QINI"
       }
       # conditional means
       cond_means <- NULL
@@ -123,9 +133,9 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
       # Qini
       if (!qini_split) {
         qres <- compute_qini_curves_binary(tau, as.matrix(data[[outcome]]), W, 
-                                          weights = weights, seed = 42, verbose = verbose)
+                                          weights = weights, seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
       } else {
-        qtr <- sample(not_missing, floor(qini_train_prop*length(not_missing)))
+        qtr <- sample(not_missing, floor(train_prop*length(not_missing)))
         qte <- setdiff(not_missing, qtr)
         qmod<- do.call(grf::causal_forest,
                        c(list(X=covariates[qtr,,drop=FALSE],
@@ -135,7 +145,7 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
         qtau<- predict(qmod, newdata=covariates[qte,,drop=FALSE])$predictions
         qres <- compute_qini_curves_binary(qtau, as.matrix(data[[outcome]])[qte], W[qte], 
                                           weights = if(!is.null(weights)) weights[qte] else NULL, 
-                                          seed = 42, verbose = verbose)
+                                          seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
       }
       qdata   <- if(!is.null(qres)) qres$qini_data else NULL
       qobjs   <- if(!is.null(qres)) qres$qini_objects else NULL
@@ -200,7 +210,7 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
 
 #' Compute Qini Curves for Binary Treatments
 #' @keywords internal
-compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NULL, verbose = TRUE) {
+compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NULL, verbose = TRUE, treatment_cost = 1) {
   tryCatch({
     if (verbose) cli::cli_alert_info("computing Qini curves …")
     tau_hat    <- as.vector(tau_hat)
@@ -210,7 +220,7 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NUL
     # use modern maq API with named parameters
     cate_qini  <- maq::maq(
       reward = as.matrix(tau_hat),
-      cost = matrix(1, length(tau_hat), 1),
+      cost = matrix(treatment_cost, length(tau_hat), 1),
       DR.scores = IPW_scores,
       R = 200,
       sample.weights = weights,
@@ -221,7 +231,7 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NUL
     ate_qini <- tryCatch({
       maq::maq(
         reward = as.matrix(tau_hat),
-        cost = matrix(1, length(tau_hat), 1),
+        cost = matrix(treatment_cost, length(tau_hat), 1),
         DR.scores = IPW_scores,
         target.with.covariates = FALSE,
         R = 200,
@@ -233,7 +243,7 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NUL
       # fallback to constant rewards
       maq::maq(
         reward = matrix(rep(mean(tau_hat), length(tau_hat)), ncol = 1),
-        cost = matrix(1, length(tau_hat), 1), 
+        cost = matrix(treatment_cost, length(tau_hat), 1), 
         DR.scores = IPW_scores,
         R = 200,
         sample.weights = weights,
@@ -381,10 +391,14 @@ margot_inspect_qini <- function(model_results,
 #'   training policy trees. Default is 0.7.
 #' @param qini_split Logical indicating whether to do a separate train/test split exclusively for the Qini
 #'   calculation. Default is TRUE (i.e., Qini is computed out-of-sample).
-#' @param qini_train_prop Proportion of data to use for the Qini training set (if \code{qini_split=TRUE}). Default is 0.7.
+#' @param train_prop Proportion of data to use for the training set when qini_split=TRUE. Default is 0.5.
+#' @param qini_train_prop Deprecated. Use train_prop instead. If provided, will override train_prop with a warning.
 #' @param compute_conditional_means Logical indicating whether to compute conditional means using 
 #'   \code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
+#' @param qini_treatment_cost Scalar treatment cost per unit for QINI calculations. Default 1.
+#'   Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
+#'   higher values (e.g., 5) represent expensive treatments creating shallower curves.
 #'
 #' @return A list containing:
 #'   * `results` - per-outcome diagnostics and objects
@@ -406,9 +420,11 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  save_models = TRUE,
                                  train_proportion = 0.7,
                                  qini_split = TRUE,
-                                 qini_train_prop = 0.7,  # renamed from qini_test_prop to qini_train_prop
+                                 train_prop = 0.5,
+                                 qini_train_prop = NULL,  # deprecated parameter
                                  compute_conditional_means = TRUE,
-                                 verbose = TRUE) {
+                                 verbose = TRUE,
+                                 qini_treatment_cost = 1) {
 
   # value:
   #   • plot_data – a list with elements
@@ -433,9 +449,15 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       stop("number of rows in outcome ", outcome, " does not match number of rows in covariates")
     }
   }
+  # handle deprecated qini_train_prop parameter
+  if (!is.null(qini_train_prop)) {
+    cli::cli_alert_warning("Parameter 'qini_train_prop' is deprecated. Please use 'train_prop' instead.")
+    train_prop <- qini_train_prop
+  }
+  
   if (qini_split) {
-    if (qini_train_prop <= 0 || qini_train_prop >= 1) {
-      stop("qini_train_prop must be between 0 and 1 (exclusive) when qini_split is TRUE")
+    if (train_prop <= 0 || train_prop >= 1) {
+      stop("train_prop must be between 0 and 1 (exclusive) when qini_split is TRUE")
     }
   }
 
@@ -475,7 +497,9 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
 
       if (compute_rate) {
         results[[model_name]]$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
+        attr(results[[model_name]]$rate_result, "target") <- "AUTOC"
         results[[model_name]]$rate_qini   <- grf::rank_average_treatment_effect(model, tau_hat, target = "QINI")
+        attr(results[[model_name]]$rate_qini, "target") <- "QINI"
       }
 
       # --- compute conditional means if requested ---
@@ -547,7 +571,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       # --- 4) compute qini curves ---
       if (!qini_split) {
         if (verbose) cli::cli_alert_info("computing binary qini curves in-sample")
-        qini_result <- compute_qini_curves_binary(tau_hat, Y, W, weights = weights, seed = 42, verbose = verbose)
+        qini_result <- compute_qini_curves_binary(tau_hat, Y, W, weights = weights, seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
         if (!is.null(qini_result)) {
           results[[model_name]]$qini_data <- qini_result$qini_data
           results[[model_name]]$qini_objects <- qini_result$qini_objects
@@ -565,7 +589,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       } else {
         if (verbose) cli::cli_alert_info("performing separate train/test split for qini evaluation")
         qini_n <- length(not_missing)
-        qini_train_size <- floor(qini_train_prop * qini_n)  # modified to use qini_train_prop directly
+        qini_train_size <- floor(train_prop * qini_n)  # use train_prop
         if (qini_train_size < 1 || qini_train_size >= qini_n) {
           stop("invalid qini_train_prop: results in empty train or test set for qini evaluation")
         }
@@ -583,7 +607,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         if (verbose) cli::cli_alert_info("computing qini curves on qini-test subset")
         qini_result <- compute_qini_curves_binary(qini_tau_hat, Y[qini_test_idxs], W[qini_test_idxs], 
                                                  weights = if(!is.null(weights)) weights[qini_test_idxs] else NULL,
-                                                 seed = 42, verbose = verbose)
+                                                 seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
         results[[model_name]]$qini_data <- qini_result$qini_data
         results[[model_name]]$qini_objects <- qini_result$qini_objects
         # store metadata about qini generation

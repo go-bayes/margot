@@ -11,7 +11,7 @@ fails to generate a baseline."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.150</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.160</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,13 @@ fails to generate a baseline.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_qini_simple_baseline</span><span class="op">(</span><span class="va">mean_tau</span>, n_points <span class="op">=</span> <span class="fl">100</span>, n_units <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_qini_simple_baseline</span><span class="op">(</span></span>
+<span>  <span class="va">mean_tau</span>,</span>
+<span>  n_points <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  n_units <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  treatment_cost <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  x_axis <span class="op">=</span> <span class="st">"proportion"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -63,12 +69,21 @@ fails to generate a baseline.</p>
 <dt id="arg-n-units">n_units<a class="anchor" aria-label="anchor" href="#arg-n-units"></a></dt>
 <dd><p>Total number of units (for metadata)</p></dd>
 
+
+<dt id="arg-treatment-cost">treatment_cost<a class="anchor" aria-label="anchor" href="#arg-treatment-cost"></a></dt>
+<dd><p>Scalar treatment cost per unit (default 1)</p></dd>
+
+
+<dt id="arg-x-axis">x_axis<a class="anchor" aria-label="anchor" href="#arg-x-axis"></a></dt>
+<dd><p>Type of x-axis: "proportion" (default) or "budget"</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list mimicking maq output structure with:
   - _path: list with gain, spend, and std.err
   - mean_tau: the average treatment effect
+  - treatment_cost: the treatment cost used
   - baseline_type: "simple"
   - class: "qini_simple_baseline"</p>
     </div>

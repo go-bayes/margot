@@ -22,10 +22,14 @@ margot_plot_qini(
   grid_step = NULL,
   return_data = FALSE,
   ylim = NULL,
+  fixed_ylim = FALSE,
   baseline_method = "maq_no_covariates",
   cate_color = "#d8a739",
   ate_color = "#4d4d4d",
-  scale = "average"
+  scale = "average",
+  treatment_cost = NULL,
+  seed = 12345,
+  x_axis = c("proportion", "budget")
 )
 }
 \arguments{
@@ -47,7 +51,9 @@ to plot. This should match one of the model names in mc_result$results.}
 
 \item{theme}{Character string specifying the ggplot2 theme. Default is "classic". Options include "classic", "minimal", "bw", "gray", "light", "dark", "void".}
 
-\item{show_ci}{Logical indicating whether to show confidence intervals. Default is FALSE.}
+\item{show_ci}{Logical or character indicating which confidence intervals to show. 
+Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only). 
+Default is FALSE.}
 
 \item{ci_alpha}{Significance level for confidence intervals. Default is 0.05.}
 
@@ -69,6 +75,9 @@ lower, upper, curve.}
 
 \item{ylim}{Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).}
 
+\item{fixed_ylim}{Logical; if TRUE and ylim is NULL, uses the actual data range with padding
+for consistent y-axis scaling across plots. Default is FALSE.}
+
 \item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
 "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
 
@@ -79,6 +88,18 @@ lower, upper, curve.}
 \item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative", 
 or "population". "average" shows average policy effect per unit (maq default), "cumulative" 
 shows traditional cumulative gains, "population" shows total population impact.}
+
+\item{treatment_cost}{Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
+which attempts to extract the cost from model metadata. If not found, assumes cost = 1.
+When cost differs from stored cost, QINI curves are automatically regenerated.
+When cost differs from 1, it will be shown in the plot subtitle.}
+
+\item{seed}{Integer; seed for reproducible QINI generation when treatment_cost differs
+from stored cost. Default is 12345.}
+
+\item{x_axis}{Type of x-axis for QINI curves: "proportion" (default) or "budget".
+"proportion" shows proportion of population treated (0 to 1).
+"budget" shows budget per unit (0 to treatment_cost), matching maq's visualization.}
 }
 \value{
 If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,
@@ -118,15 +139,31 @@ because the average effect is similar regardless of treatment ordering when ever
 }
 \examples{
 \dontrun{
-# Assuming mc.test is the result of margot_multi_arm_causal_forest()
-plot_qini_curves(mc.test, "model_t2_belong_z")
+# Basic usage - uses stored treatment cost
+margot_plot_qini(cf_results, "model_anxiety")
+
+# Auto-regenerates with different treatment cost
+plot1 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 1)
+plot2 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 5)
+
+# Compare costs with fixed y-axis scaling
+plot3 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 5, fixed_ylim = TRUE)
+
+# Show CI only for CATE curve
+plot4 <- margot_plot_qini(cf_results, "model_anxiety", show_ci = "cate")
+
+# Show CI for both curves
+plot5 <- margot_plot_qini(cf_results, "model_anxiety", show_ci = TRUE)
+
+# Custom seed for reproducibility when regenerating
+plot6 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 2, seed = 42)
 
 # Using custom label mapping
 label_mapping <- list(
-  "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
-  "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
+  "anxiety" = "Anxiety Symptoms",
+  "depression" = "Depression Symptoms"
 )
-plot_qini_curves(mc.test, "model_t2_env_not_env_efficacy_z", label_mapping = label_mapping)
+margot_plot_qini(cf_results, "model_anxiety", label_mapping = label_mapping)
 }
 
 }

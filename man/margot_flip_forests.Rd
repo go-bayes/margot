@@ -12,7 +12,8 @@ margot_flip_forests(
   parallel = FALSE,
   n_cores = future::availableCores() - 1,
   verbose = TRUE,
-  remove_original = TRUE
+  remove_original = TRUE,
+  qini_treatment_cost = 1
 )
 }
 \arguments{
@@ -33,9 +34,13 @@ honesty, honesty.fraction, alpha, min.node.size, and mtry.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 
-\item{remove_original}{Logical indicating whether to remove the original (non-flipped) models after 
-creating their flipped versions. Default is TRUE. When TRUE, only the flipped models with "_r" 
+\item{remove_original}{Logical indicating whether to remove the original (non-flipped) models after
+creating their flipped versions. Default is TRUE. When TRUE, only the flipped models with "_r"
 suffix remain; when FALSE, both original and flipped models are kept.}
+
+\item{qini_treatment_cost}{Scalar treatment cost per unit for QINI calculations. Default 1.
+Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
+higher values (e.g., 5) represent expensive treatments creating shallower curves.}
 }
 \value{
 A modified copy of model_results with flipped models (with "_r" suffix). If remove_original
@@ -64,14 +69,14 @@ the first fitted model to ensure consistency between original and flipped models
 \dontrun{
 # Flip models and remove originals (default)
 results_flipped <- margot_flip_forests(
-  results, 
+  results,
   flip_outcomes = c("anxiety", "depression")
 )
 # Results now contain anxiety_r and depression_r, originals removed
 
 # Keep both original and flipped models
 results_both <- margot_flip_forests(
-  results, 
+  results,
   flip_outcomes = c("anxiety", "depression"),
   remove_original = FALSE
 )
@@ -79,7 +84,7 @@ results_both <- margot_flip_forests(
 
 # Use custom GRF parameters for flipped models
 results_custom <- margot_flip_forests(
-  results, 
+  results,
   flip_outcomes = c("anxiety", "depression"),
   grf_defaults = list(num.trees = 4000, honesty = TRUE, honesty.fraction = 0.5)
 )

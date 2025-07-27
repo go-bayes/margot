@@ -18,7 +18,11 @@ margot_rate(
   adjust = NULL,
   alpha = 0.05,
   apply_adjustment = !is.null(adjust),
-  seed = 12345
+  seed = 12345,
+  use_evaluation_subset = TRUE,
+  target = c("AUTOC", "QINI"),
+  q = seq(0.1, 1, by = 0.1),
+  ...
 )
 }
 \arguments{
@@ -55,11 +59,24 @@ If FALSE, just document the adjustment method without recomputing. Default is TR
 adjust parameter is provided, FALSE otherwise.}
 
 \item{seed}{Integer; base seed for reproducible RATE computations (default 12345).}
+
+\item{use_evaluation_subset}{Logical; if TRUE, use test indices from qini_metadata
+when available for proper out-of-sample evaluation (default TRUE).}
+
+\item{target}{Character vector; weighting schemes to compute: "AUTOC", "QINI", or
+c("AUTOC", "QINI") for both (default). When a single target is specified,
+only that table is returned.}
+
+\item{q}{Numeric vector of quantiles at which to evaluate. Default is
+seq(0.1, 1, by = 0.1) which matches the GRF default.}
+
+\item{...}{Additional arguments passed to grf::rank_average_treatment_effect().}
 }
 \value{
-A list with elements:
+When target includes both "AUTOC" and "QINI", returns a list with elements:
 * rate_autoc: AUTOC RATE table
 * rate_qini: QINI RATE table
+When a single target is specified, returns just that table as a data frame.
 }
 \description{
 Convenience wrapper around margot_rate_batch(). Returns two data frames,

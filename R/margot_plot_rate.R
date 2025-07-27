@@ -2,10 +2,11 @@
 #'
 #' This function creates a ggplot visualisation of the Rank Average Treatment Effect.
 #' It displays the estimate with a confidence interval, using a simple black line
-#' and light gray shading by default.
+#' and light gray shading by default. Can either plot an existing RATE object or
+#' compute RATE on-demand from a causal forest.
 #'
-#' @param x An object of class "rank_average_treatment_effect", typically the output
-#'   of the rank_average_treatment_effect() function.
+#' @param x Either an object of class "rank_average_treatment_effect" or a causal_forest
+#'   object from grf. If a causal_forest is provided, RATE will be computed on-demand.
 #' @param outcome_var A character string specifying the name of the outcome variable
 #'   to plot. This is used for the plot title with proper label transformation.
 #' @param title Character string for the plot title. If NULL (default), a title is
@@ -19,6 +20,17 @@
 #' @param remove_underscores Logical value indicating whether to remove underscores from labels. Default is TRUE.
 #' @param label_mapping Optional named list for custom label mappings. Keys should be original variable names
 #'        (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.
+#' @param target Character; either "AUTOC" or "QINI". Only used when x is a causal_forest. Default is "AUTOC".
+#' @param tau_hat Optional vector of treatment effect estimates. Only used when x is a causal_forest.
+#'   If NULL, will be computed using out-of-bag predictions.
+#' @param q Numeric vector of quantiles at which to evaluate. Default is seq(0.1, 1, by = 0.1).
+#'   Only used when x is a causal_forest.
+#' @param policy Character; either "treat_best" or "withhold_best". Only used when x is a causal_forest.
+#'   Default is "treat_best".
+#' @param subset Optional indices for subsetting the evaluation data. Only used when x is a causal_forest.
+#' @param use_oob_predictions Logical; if TRUE and tau_hat is NULL, use out-of-bag predictions.
+#'   Only used when x is a causal_forest. Default is TRUE.
+#' @param seed Optional random seed for reproducibility. Only used when x is a causal_forest.
 #' @param ... Additional arguments passed to ggplot.
 #'
 #' @return A ggplot object that can be further customised or printed.
@@ -41,6 +53,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_ribbon geom_line geom_hline labs theme_minimal theme
 #' @importFrom dplyr mutate
+#' @importFrom cli cli_alert_info cli_alert_success
 #'
 #' @export
 margot_plot_rate <- function(x,
@@ -54,7 +67,38 @@ margot_plot_rate <- function(x,
                              use_title_case = TRUE,
                              remove_underscores = TRUE,
                              label_mapping = NULL,
+                             target = "AUTOC",
+                             tau_hat = NULL,
+                             q = seq(0.1, 1, by = 0.1),
+                             policy = "treat_best",
+                             subset = NULL,
+                             use_oob_predictions = TRUE,
+                             seed = NULL,
                              ...) {
+  # check if we need to compute RATE on-demand
+  if (inherits(x, "causal_forest")) {
+    cli::cli_alert_info("Computing {target} on-demand from causal forest")
+    rate_obj <- compute_rate_on_demand(
+      forest = x,
+      tau_hat = tau_hat,
+      target = target,
+      q = q,
+      policy = policy,
+      subset = subset,
+      use_oob_predictions = use_oob_predictions,
+      verbose = TRUE,  # show validation warnings
+      seed = seed
+    )
+    x <- rate_obj
+  } else if (!inherits(x, "rank_average_treatment_effect")) {
+    stop("x must be either a rank_average_treatment_effect object or a causal_forest object")
+  }
+  
+  # extract target from the RATE object if available
+  if (!is.null(attr(x, "target"))) {
+    target <- attr(x, "target")
+  }
+  
   # transform the outcome variable name for the title
   if (!is.null(outcome_var)) {
     transformed_outcome_var <- transform_var_name(outcome_var, label_mapping,
@@ -63,14 +107,14 @@ margot_plot_rate <- function(x,
 
     # if no title is provided, create one with the transformed outcome name
     if (is.null(title)) {
-      title <- paste("Targeting Operator Characteristic for", transformed_outcome_var)
+      title <- paste0("Targeting Operator Characteristic (", target, ") for ", transformed_outcome_var)
     }
   } else if (is.null(title)) {
     # fallback title if no outcome_var is provided
-    title <- "Targeting Operator Characteristic"
+    title <- paste0("Targeting Operator Characteristic (", target, ")")
   }
 
-  cli::cli_alert_info("Creating RATE plot for: {outcome_var}")
+  cli::cli_alert_info("Creating {target} plot for: {outcome_var}")
 
   TOC <- x$TOC
   # prepare the data

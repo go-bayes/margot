@@ -10,7 +10,8 @@ compute_qini_curves_binary(
   W,
   weights = NULL,
   seed = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  treatment_cost = 1
 )
 }
 \description{

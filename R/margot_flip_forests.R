@@ -74,9 +74,12 @@ margot_recalculate_policy_trees <- function(model_results,
 #' @param parallel Logical indicating whether to use parallel processing. Default is FALSE.
 #' @param n_cores Number of cores to use for parallel processing. Default is availableCores() - 1.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
-#' @param remove_original Logical indicating whether to remove the original (non-flipped) models after 
-#'        creating their flipped versions. Default is TRUE. When TRUE, only the flipped models with "_r" 
+#' @param remove_original Logical indicating whether to remove the original (non-flipped) models after
+#'        creating their flipped versions. Default is TRUE. When TRUE, only the flipped models with "_r"
 #'        suffix remain; when FALSE, both original and flipped models are kept.
+#' @param qini_treatment_cost Scalar treatment cost per unit for QINI calculations. Default 1.
+#'        Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
+#'        higher values (e.g., 5) represent expensive treatments creating shallower curves.
 #'
 #' @return A modified copy of model_results with flipped models (with "_r" suffix). If remove_original
 #'         is TRUE (default), original models are removed; otherwise both versions are kept.
@@ -88,33 +91,33 @@ margot_recalculate_policy_trees <- function(model_results,
 #' 3. Calling margot_causal_forest() with the flipped outcome
 #' 4. Storing the result with "_r" suffix
 #' 5. Optionally removing the original models (default behavior)
-#' 
+#'
 #' This ensures all components (forest model, CATE estimates, QINI curves, policy trees,
 #' E-values, etc.) are consistently computed based on the flipped outcome.
-#' 
+#'
 #' When grf_defaults is NULL, the function attempts to extract key GRF parameters from
 #' the first fitted model to ensure consistency between original and flipped models.
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' # Flip models and remove originals (default)
 #' results_flipped <- margot_flip_forests(
-#'   results, 
+#'   results,
 #'   flip_outcomes = c("anxiety", "depression")
 #' )
 #' # Results now contain anxiety_r and depression_r, originals removed
-#' 
+#'
 #' # Keep both original and flipped models
 #' results_both <- margot_flip_forests(
-#'   results, 
+#'   results,
 #'   flip_outcomes = c("anxiety", "depression"),
 #'   remove_original = FALSE
 #' )
 #' # Results contain both anxiety/depression and anxiety_r/depression_r
-#' 
+#'
 #' # Use custom GRF parameters for flipped models
 #' results_custom <- margot_flip_forests(
-#'   results, 
+#'   results,
 #'   flip_outcomes = c("anxiety", "depression"),
 #'   grf_defaults = list(num.trees = 4000, honesty = TRUE, honesty.fraction = 0.5)
 #' )
@@ -129,7 +132,8 @@ margot_flip_forests <- function(model_results,
                                 parallel       = FALSE,
                                 n_cores        = future::availableCores() - 1,
                                 verbose        = TRUE,
-                                remove_original = TRUE) {
+                                remove_original = TRUE,
+                                qini_treatment_cost = 1) {
   # validate inputs
   if (!is.list(model_results) || !("results" %in% names(model_results))) {
     stop("model_results must be a list containing a 'results' element (output from margot_causal_forest)")
@@ -138,52 +142,52 @@ margot_flip_forests <- function(model_results,
     warning("flip_outcomes is empty or not a character vector, no flipping will be performed")
     return(model_results)
   }
-  
+
   # check for required components
   has_data <- !is.null(model_results$data)
   has_covariates <- !is.null(model_results$covariates)
   has_W <- !is.null(model_results$W)
-  
+
   if (!has_data || !has_covariates || !has_W) {
     stop("model_results must contain 'data', 'covariates', and 'W' components for full recomputation")
   }
-  
+
   # ensure outcomes have model prefix
   flip_outcomes_prefixed <- ifelse(
     grepl(paste0("^", model_prefix), flip_outcomes),
     flip_outcomes,
     paste0(model_prefix, flip_outcomes)
   )
-  
+
   # filter to existing models
   existing_models <- intersect(flip_outcomes_prefixed, names(model_results$results))
-  
+
   if (length(existing_models) == 0) {
     warning("No matching models found for the specified outcomes")
     return(model_results)
   }
-  
+
   if (verbose) {
     cli::cli_h1("Flipping Treatment Effects via Full Recomputation")
     cli::cli_alert_info("Processing {length(existing_models)} model{?s}")
   }
-  
+
   # create a copy to avoid modifying the original
   results_copy <- model_results
-  
+
   # extract components we'll need for all models
   covariates <- model_results$covariates
   W <- model_results$W
   weights <- model_results$weights %||% NULL
-  
+
   # prepare outcome list for margot_causal_forest
   outcome_list <- list()
   outcome_names <- character()
-  
+
   for (model_name in existing_models) {
     # extract outcome name without prefix
     outcome_name <- gsub(paste0("^", model_prefix), "", model_name)
-    
+
     # find the outcome data
     outcome_data <- NULL
     if (outcome_name %in% names(model_results$data)) {
@@ -205,41 +209,41 @@ margot_flip_forests <- function(model_results,
         }
       }
     }
-    
+
     if (is.null(outcome_data)) {
       if (verbose) cli::cli_alert_warning("Cannot find outcome data for {model_name}, skipping")
       next
     }
-    
+
     # flip the outcome
     flipped_outcome_name <- paste0(outcome_name, "_r")
     outcome_list[[flipped_outcome_name]] <- -outcome_data
     outcome_names <- c(outcome_names, flipped_outcome_name)
-    
+
     if (verbose) cli::cli_alert_info("Prepared flipped outcome: {outcome_name} → {flipped_outcome_name}")
   }
-  
+
   if (length(outcome_list) == 0) {
     warning("No outcomes could be processed")
     return(model_results)
   }
-  
+
   # create data frame with flipped outcomes
   flipped_data <- as.data.frame(outcome_list)
-  
+
   # extract grf parameters if not provided
   if (is.null(grf_defaults)) {
     # try to extract from first fitted forest model
     first_model_name <- existing_models[1]
-    if (!is.null(model_results$full_models) && 
+    if (!is.null(model_results$full_models) &&
         first_model_name %in% names(model_results$full_models) &&
         !is.null(model_results$full_models[[first_model_name]])) {
-      
+
       forest_obj <- model_results$full_models[[first_model_name]]
-      
+
       # extract key parameters from the fitted forest
       extracted_params <- list()
-      
+
       # check for common grf parameters
       if (!is.null(forest_obj$num.trees)) extracted_params$num.trees <- forest_obj$num.trees
       if (!is.null(forest_obj$honesty)) extracted_params$honesty <- forest_obj$honesty
@@ -251,7 +255,7 @@ margot_flip_forests <- function(model_results,
       if (!is.null(forest_obj$stabilize.splits)) extracted_params$stabilize.splits <- forest_obj$stabilize.splits
       if (!is.null(forest_obj$ci.group.size)) extracted_params$ci.group.size <- forest_obj$ci.group.size
       if (!is.null(forest_obj$tune.parameters)) extracted_params$tune.parameters <- forest_obj$tune.parameters
-      
+
       if (length(extracted_params) > 0) {
         grf_defaults <- extracted_params
         if (verbose) {
@@ -283,7 +287,7 @@ margot_flip_forests <- function(model_results,
       cli::cli_alert_info("Using provided GRF parameters: {paste(names(grf_defaults), collapse = ', ')}")
     }
   }
-  
+
   # determine other parameters
   first_model <- model_results$results[[existing_models[1]]]
   save_data <- !is.null(model_results$data)
@@ -292,11 +296,11 @@ margot_flip_forests <- function(model_results,
   top_n_vars <- length(first_model$top_vars) %||% 15
   train_proportion <- 0.7  # default
   compute_conditional_means <- !is.null(first_model$conditional_means)
-  
+
   # check if we should use parallel processing
   if (parallel && length(outcome_names) > 1) {
     if (verbose) cli::cli_alert_info("Using parallel processing with {n_cores} cores")
-    
+
     # call parallel version
     flipped_results <- margot_causal_forest_parallel(
       data = flipped_data,
@@ -312,7 +316,8 @@ margot_flip_forests <- function(model_results,
       train_proportion = train_proportion,
       compute_conditional_means = compute_conditional_means,
       n_cores = n_cores,
-      verbose = verbose
+      verbose = verbose,
+      qini_treatment_cost = qini_treatment_cost
     )
   } else {
     # call sequential version
@@ -329,34 +334,35 @@ margot_flip_forests <- function(model_results,
       save_models = save_models,
       train_proportion = train_proportion,
       compute_conditional_means = compute_conditional_means,
-      verbose = verbose
+      verbose = verbose,
+      qini_treatment_cost = qini_treatment_cost
     )
   }
-  
+
   # merge flipped results into the original results
   if (!is.null(flipped_results$results)) {
     for (flipped_model_name in names(flipped_results$results)) {
       # margot_causal_forest already adds "model_" prefix, so use as-is
-      results_copy$results[[flipped_model_name]] <- 
+      results_copy$results[[flipped_model_name]] <-
         flipped_results$results[[flipped_model_name]]
     }
-    
+
     # also merge full_models if present
     if (!is.null(flipped_results$full_models)) {
       for (flipped_model_name in names(flipped_results$full_models)) {
         # margot_causal_forest already adds "model_" prefix, so use as-is
-        results_copy$full_models[[flipped_model_name]] <- 
+        results_copy$full_models[[flipped_model_name]] <-
           flipped_results$full_models[[flipped_model_name]]
       }
     }
-    
+
     # also merge flipped data if present
     if (!is.null(flipped_results$data) && !is.null(results_copy$data)) {
       for (outcome_name in names(flipped_results$data)) {
         results_copy$data[[outcome_name]] <- flipped_results$data[[outcome_name]]
       }
     }
-    
+
     # remove original models if requested
     if (remove_original) {
       # remove from results
@@ -366,14 +372,14 @@ margot_flip_forests <- function(model_results,
           cli::cli_alert_info("Removed original model: {gsub(model_prefix, '', model_name)}")
         }
       }
-      
+
       # remove from full_models if present
       if (!is.null(results_copy$full_models)) {
         for (model_name in existing_models) {
           results_copy$full_models[[model_name]] <- NULL
         }
       }
-      
+
       # remove from data if present
       if (!is.null(results_copy$data)) {
         for (model_name in existing_models) {
@@ -384,7 +390,7 @@ margot_flip_forests <- function(model_results,
         }
       }
     }
-    
+
     # rebuild combined table from all results (original + flipped or just flipped)
     if (!is.null(results_copy$results) && length(results_copy$results) > 0) {
       all_tables <- lapply(results_copy$results, function(res) {
@@ -393,21 +399,21 @@ margot_flip_forests <- function(model_results,
         }
         NULL
       })
-      
+
       # filter out NULLs
       all_tables <- all_tables[!sapply(all_tables, is.null)]
-      
+
       if (length(all_tables) > 0) {
         results_copy$combined_table <- do.call(rbind, all_tables)
         rownames(results_copy$combined_table) <- gsub("^model_", "", names(results_copy$results)[!sapply(all_tables, is.null)])
       }
     }
-    
+
     if (verbose) {
       cli::cli_alert_success("Flipping complete for {length(flipped_results$results)} model{?s}")
     }
   }
-  
+
   return(results_copy)
 }
 
@@ -447,10 +453,12 @@ margot_lighten_for_flip <- function(cf_out, models) {
     if (!is.null(mdl$rate_result)) {
       mdl$rate_result_original <- mdl$rate_result
       mdl$rate_result          <- grf::rank_average_treatment_effect(fm, th)
+      attr(mdl$rate_result, "target") <- "AUTOC"
     }
     if (!is.null(mdl$rate_qini)) {
       mdl$rate_qini_original <- mdl$rate_qini
       mdl$rate_qini          <- grf::rank_average_treatment_effect(fm, th, target = "QINI")
+      attr(mdl$rate_qini, "target") <- "QINI"
     }
   }
 
@@ -511,88 +519,4 @@ margot_lighten_for_flip <- function(cf_out, models) {
 
   mr$policy_trees_need_recalculation <- FALSE
   mr
-}
-
-#' Parallel flip of CATE estimates with reproducible RNG and memory guard
-#'
-#' @description
-#' This function modifies models IN PLACE by flipping their treatment effects,
-#' unlike margot_flip_forests which creates new models with "_r" suffix.
-#' The remove_original and grf_defaults parameters are ignored in this version.
-#'
-#' @inheritParams margot_flip_forests
-#' @param max_size_GB numeric. globals cap passed to `future.globals.maxSize` (default 2 GB).
-#' @param seed `TRUE` for automatic parallel-safe RNG, or an integer for deterministic streams.
-#' @param parallel_policy logical. if TRUE, policy-tree refits are parallelised.
-#' @param n_policy_cores integer. number of workers for policy-tree refits.
-#' @param remove_original logical indicating whether to remove the original (non-flipped) models after 
-#'        creating their flipped versions. Default is TRUE. Note: This parameter is ignored in the
-#'        parallel version which modifies models in place.
-#' @param grf_defaults A list of parameters to pass to the GRF causal forest models. Note: This
-#'        parameter is ignored in the parallel version which modifies existing models in place
-#'        rather than creating new ones.
-#' @importFrom future plan multisession availableCores
-#' @importFrom future.apply future_lapply
-#' @name margot_flip_forests_parallel
-#' @keywords internal
-margot_flip_forests_parallel <- function(model_results,
-                                         flip_outcomes,
-                                         model_prefix   = "model_",
-                                         grf_defaults   = NULL,
-                                         recalc_policy  = TRUE,
-                                         parallel_policy = FALSE,
-                                         n_policy_cores  = future::availableCores() - 1,
-                                         verbose        = TRUE,
-                                         n_cores        = future::availableCores() - 1,
-                                         max_size_GB    = 2,
-                                         seed           = TRUE,
-                                         remove_original = TRUE) {
-  stopifnot(is.list(model_results), "results" %in% names(model_results))
-  if (!is.character(flip_outcomes) || !length(flip_outcomes)) return(model_results)
-  
-  # note: grf_defaults parameter is ignored in parallel version
-  if (!is.null(grf_defaults) && verbose) {
-    cli::cli_alert_warning("grf_defaults parameter is ignored in margot_flip_forests_parallel (models are modified in place)")
-  }
-
-  targets <- paste0(ifelse(grepl(paste0("^", model_prefix), flip_outcomes), "", model_prefix), flip_outcomes)
-  targets <- intersect(targets, names(model_results$results))
-  if (!length(targets)) return(model_results)
-
-  if (verbose)
-    cli::cli_alert_info("flipping cate estimates for {length(targets)} outcomes: {paste(gsub(model_prefix, '', targets), collapse = ', ')}")
-
-  light <- margot_lighten_for_flip(model_results, targets)
-  options(future.globals.maxSize = max_size_GB * 1024^3)
-
-  future::plan(future::multisession, workers = n_cores)
-  if (verbose) cli::cli_alert_info("using {n_cores} workers and a {max_size_GB} gb globals cap")
-
-  flipped <- future.apply::future_lapply(
-    targets, .margot_flip_model,
-    results_list     = light$results,
-    full_models_list = light$full_models,
-    verbose          = verbose,
-    future.seed      = seed
-  )
-  names(flipped) <- targets
-
-  model_results$results[targets] <- flipped
-  model_results$flip_outcomes               <- gsub(model_prefix, "", targets)
-  model_results$flip_outcomes_postprocessed <- TRUE
-
-  if (recalc_policy && length(targets)) {
-    plain <- gsub(model_prefix, "", targets)
-    model_results <- margot_recalculate_policy_trees(
-      model_results = model_results,
-      outcomes_to_recalculate = plain,
-      model_prefix = model_prefix,
-      verbose = verbose,
-      parallel = parallel_policy,
-      n_cores = n_policy_cores,
-      seed = if (isTRUE(seed)) NULL else seed
-    )
-  }
-
-  model_results
 }

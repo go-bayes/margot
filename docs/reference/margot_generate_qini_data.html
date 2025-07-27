@@ -11,7 +11,7 @@ and creates a baseline following various methods."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.150</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.160</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,9 @@ and creates a baseline following various methods.</p>
 <span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  baseline_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"maq_no_covariates"</span>, <span class="st">"auto"</span>, <span class="st">"simple"</span>, <span class="st">"maq_only"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  treatment_cost <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  x_axis <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"proportion"</span>, <span class="st">"budget"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -84,12 +86,23 @@ and creates a baseline following various methods.</p>
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical for verbose output</p></dd>
 
+
+<dt id="arg-treatment-cost">treatment_cost<a class="anchor" aria-label="anchor" href="#arg-treatment-cost"></a></dt>
+<dd><p>Scalar treatment cost per unit. Default 1.</p></dd>
+
+
+<dt id="arg-x-axis">x_axis<a class="anchor" aria-label="anchor" href="#arg-x-axis"></a></dt>
+<dd><p>Type of x-axis for QINI curves: "proportion" (default) or "budget".
+"proportion" shows proportion of population treated (0 to 1).
+"budget" shows budget per unit (0 to treatment_cost), matching maq's visualization.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with components:
-  - qini_data: data.frame with columns proportion, gain, curve
-  - qini_objects: list with cate and ate maq objects (ate may be simplified)</p>
+  - qini_data: data.frame with columns proportion (or budget), gain, curve
+  - qini_objects: list with cate and ate maq objects (ate may be simplified)
+  - x_axis: the x-axis type used ("proportion" or "budget")</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

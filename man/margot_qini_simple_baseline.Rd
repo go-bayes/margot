@@ -4,7 +4,13 @@
 \alias{margot_qini_simple_baseline}
 \title{Create Simple QINI Baseline Object}
 \usage{
-margot_qini_simple_baseline(mean_tau, n_points = 100, n_units = NULL)
+margot_qini_simple_baseline(
+  mean_tau,
+  n_points = 100,
+  n_units = NULL,
+  treatment_cost = 1,
+  x_axis = "proportion"
+)
 }
 \arguments{
 \item{mean_tau}{The average treatment effect (mean of tau_hat)}
@@ -12,11 +18,16 @@ margot_qini_simple_baseline(mean_tau, n_points = 100, n_units = NULL)
 \item{n_points}{Number of points for the gain curve (default 100)}
 
 \item{n_units}{Total number of units (for metadata)}
+
+\item{treatment_cost}{Scalar treatment cost per unit (default 1)}
+
+\item{x_axis}{Type of x-axis: "proportion" (default) or "budget"}
 }
 \value{
 A list mimicking maq output structure with:
   - _path: list with gain, spend, and std.err
   - mean_tau: the average treatment effect
+  - treatment_cost: the treatment cost used
   - baseline_type: "simple"
   - class: "qini_simple_baseline"
 }

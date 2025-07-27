@@ -1,3 +1,60 @@
+# [2025-07-27] margot 1.0.160
+
+> **⚠️ IMPORTANT NOTICE**: This development version of the margot package is undergoing significant refactoring as we transition to the **margotverse** suite of packages. This package is currently for the author's lab use only. The package will be split into focused, single-responsibility packages including margot.core, margot.lmtp, margot.grf, margot.viz, and others. Please expect breaking changes in upcoming releases.
+
+### Breaking Changes
+- **Parameter deprecation**: `qini_train_prop` is now deprecated in favor of `train_prop` with default value 0.5
+  - Backward compatibility maintained with deprecation warning
+  - Affects: `margot_causal_forest()` and related functions
+
+### New Features
+- **Cost sensitivity analysis for QINI curves**:
+  - Added `treatment_cost` parameter throughout QINI functionality
+  - New `margot_qini_cost_sensitivity()` function for analyzing treatment allocation under different budget constraints
+  - Cost parameter affects optimal treatment allocation strategies
+  - Supports cost sensitivity visualization with budget-based x-axis
+
+- **Enhanced RATE computation**:
+  - Added `q` parameter for custom quantile grids in `margot_rate()`
+  - Pass-through parameters (`...`) to `grf::rank_average_treatment_effect()` for maximum flexibility
+  - Target parameter now correctly reflected in plot titles (AUTOC or QINI)
+
+- **Flexible confidence intervals**:
+  - `show_ci` parameter in QINI plots now accepts: FALSE, TRUE, "both", "cate", or "ate"
+  - Allows selective display of confidence intervals for different curves
+  - Added `seed` parameter (default = 12345) for reproducible confidence interval computation
+
+- **Budget-based visualization**:
+  - New `x_axis` parameter in QINI functions accepts "proportion" or "budget"
+  - Budget x-axis shows treatment allocation under budget constraints
+  - Automatically detects appropriate x-axis type based on data
+
+### Improvements
+- **Cost invariance property documentation**:
+  - Added extensive documentation explaining that relative benefit of CATE vs ATE targeting remains constant with uniform costs
+  - Clarified that gains are identical when plotted against proportion treated
+  - Budget visualization reveals cost differences more clearly
+
+- **Enhanced error handling**:
+  - Better detection of treatment_cost changes for QINI regeneration
+  - Improved error messages for missing data or model components
+  - Fixed treatment_cost initialization order to prevent NULL issues
+
+### Bug Fixes
+- Fixed "invalid 'type' (closure)" error in `margot_rate()` by properly handling `q` parameter
+- Fixed RATE plot titles to correctly display target (AUTOC or QINI)
+- Fixed QINI regeneration to detect treatment_cost changes
+- Fixed y-axis scaling to remove artificial cost-based adjustments
+- Fixed treatment_cost NULL initialization causing QINI generation failures
+- Fixed "Models not found" error in `margot_plot_qini_batch_cost_sensitivity()`
+- Fixed "$ operator is invalid for atomic vectors" error by creating `margot_plot_qini_direct()`
+- Fixed "invalid 'x' type in 'x && y'" error by using proper boolean variables
+
+### Internal Changes
+- Created `margot_generate_qini_data()` for on-demand QINI generation
+- Created `margot_plot_qini_direct()` for plotting pre-computed QINI data
+- Updated all maq() calls to properly pass treatment_cost parameter
+- Implemented budget-based generation in `margot_qini_simple_baseline()`
 
 # [2025-07-25] margot 1.0.150
 
@@ -626,7 +683,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 # [2025-05-06] margot 1.0.35
 ## improved
 - `here_save()` and  `here_save_qs()` now correctly reports size of saved file.
--  tidying of roxogen2 code ('mc_test' removed and replaced with 'result_object')
+-  tidying of roxygen2 code ('mc_test' removed and replaced with 'result_object')
 - `margot_plot_policy_tree()` nicer label placement.
 
 # [2025-05-04] margot 1.0.34

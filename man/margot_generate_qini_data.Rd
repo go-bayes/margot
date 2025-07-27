@@ -11,7 +11,9 @@ margot_generate_qini_data(
   weights = NULL,
   baseline_method = c("maq_no_covariates", "auto", "simple", "maq_only", "none"),
   seed = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  treatment_cost = 1,
+  x_axis = c("proportion", "budget")
 )
 }
 \arguments{
@@ -27,11 +29,18 @@ margot_generate_qini_data(
 "auto", "simple", "maq_only", or "none". See details.}
 
 \item{verbose}{Logical for verbose output}
+
+\item{treatment_cost}{Scalar treatment cost per unit. Default 1.}
+
+\item{x_axis}{Type of x-axis for QINI curves: "proportion" (default) or "budget".
+"proportion" shows proportion of population treated (0 to 1).
+"budget" shows budget per unit (0 to treatment_cost), matching maq's visualization.}
 }
 \value{
 A list with components:
-  - qini_data: data.frame with columns proportion, gain, curve
+  - qini_data: data.frame with columns proportion (or budget), gain, curve
   - qini_objects: list with cate and ate maq objects (ate may be simplified)
+  - x_axis: the x-axis type used ("proportion" or "budget")
 }
 \description{
 This function generates QINI curve data on-demand from a model result.

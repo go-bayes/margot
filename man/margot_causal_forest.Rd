@@ -17,9 +17,11 @@ margot_causal_forest(
   save_models = TRUE,
   train_proportion = 0.7,
   qini_split = TRUE,
-  qini_train_prop = 0.7,
+  train_prop = 0.5,
+  qini_train_prop = NULL,
   compute_conditional_means = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  qini_treatment_cost = 1
 )
 }
 \arguments{
@@ -49,12 +51,18 @@ training policy trees. Default is 0.7.}
 \item{qini_split}{Logical indicating whether to do a separate train/test split exclusively for the Qini
 calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
 
-\item{qini_train_prop}{Proportion of data to use for the Qini training set (if \code{qini_split=TRUE}). Default is 0.7.}
+\item{train_prop}{Proportion of data to use for the training set when qini_split=TRUE. Default is 0.5.}
+
+\item{qini_train_prop}{Deprecated. Use train_prop instead. If provided, will override train_prop with a warning.}
 
 \item{compute_conditional_means}{Logical indicating whether to compute conditional means using 
 \code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
+
+\item{qini_treatment_cost}{Scalar treatment cost per unit for QINI calculations. Default 1.
+Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
+higher values (e.g., 5) represent expensive treatments creating shallower curves.}
 }
 \value{
 A list containing:

@@ -20,6 +20,10 @@
 #' @param remove_underscores Logical; replace underscores with spaces (default TRUE).
 #' @param verbose Logical; print progress messages (default TRUE).
 #' @param seed Integer; base seed for reproducible computations (default 12345).
+#' @param treatment_cost Scalar treatment cost per unit. Default 1. Lower values (e.g., 0.2)
+#'   represent cheap treatments; higher values (e.g., 5) represent expensive treatments.
+#'   Affects QINI curve shape - lower costs create steeper curves, higher costs create
+#'   shallower curves.
 #'
 #' @return A list where each element corresponds to a model and contains:
 #' \itemize{
@@ -35,6 +39,20 @@
 #' The difference gain summaries quantify how much better CATE-based targeting
 #' performs compared to the baseline at specified spend levels.
 #'
+#' The treatment_cost parameter allows for cost sensitivity analysis without
+#' rerunning the causal forest models. Lower costs (e.g., 0.2) create steeper
+#' QINI curves indicating more people can be treated cost-effectively, while
+#' higher costs (e.g., 5) create shallower curves indicating only the highest-effect
+#' individuals justify treatment.
+#'
+#' \strong{Cost Invariance Property}: When treatment costs are uniform across 
+#' individuals, the relative benefit of CATE-based targeting over uniform allocation 
+#' remains constant regardless of cost level. While absolute gains scale inversely 
+#' with cost (gain at cost c = gain at cost 1 / c), the difference between CATE 
+#' and ATE curves scales proportionally, preserving the relative advantage of 
+#' personalized treatment. This means the value of heterogeneous treatment effects 
+#' for targeting decisions is independent of the uniform cost level.
+#'
 #' The output is structured to be compatible with margot_interpret_qini() and
 #' other QINI visualization functions.
 #'
@@ -49,6 +67,27 @@
 #'   model_names = c("model_anxiety", "model_depression"),
 #'   spend_levels = c(0.1, 0.3, 0.5),
 #'   baseline_method = "simple"
+#' )
+#' 
+#' # Cost sensitivity analysis - vary treatment cost without rerunning forests
+#' # Low cost scenario (cheap treatment)
+#' qini_low_cost <- margot_qini(causal_forest_results, treatment_cost = 0.2)
+#' 
+#' # Medium cost scenario (default)
+#' qini_med_cost <- margot_qini(causal_forest_results, treatment_cost = 1)
+#' 
+#' # High cost scenario (expensive treatment)
+#' qini_high_cost <- margot_qini(causal_forest_results, treatment_cost = 5)
+#' 
+#' # Compare results across cost scenarios
+#' margot_plot_qini(qini_low_cost$model_anxiety, title = "Anxiety - Low Cost")
+#' margot_plot_qini(qini_high_cost$model_anxiety, title = "Anxiety - High Cost")
+#' 
+#' # Use helper function for systematic cost sensitivity analysis
+#' cost_sensitivity <- margot_qini_cost_sensitivity(
+#'   causal_forest_results,
+#'   costs = c(0.2, 0.5, 1, 2, 5),
+#'   model_names = "model_anxiety"
 #' )
 #' 
 #' # Interpret the results
@@ -69,7 +108,8 @@ margot_qini <- function(models,
                        use_title_case = TRUE,
                        remove_underscores = TRUE,
                        verbose = TRUE,
-                       seed = 12345) {
+                       seed = 12345,
+                       treatment_cost = 1) {
   
   # validate inputs
   if (!is.list(models) || is.null(models$results)) {
@@ -121,12 +161,22 @@ margot_qini <- function(models,
       treatment <- NULL
       weights <- models$weights
       
-      # check if we need to regenerate due to baseline method change
+      # check if we need to regenerate due to baseline method or treatment cost change
       force_regenerate <- FALSE
       if (!is.null(model_result$qini_objects) && !is.null(model_result$qini_metadata$baseline_method)) {
         if (model_result$qini_metadata$baseline_method != baseline_method) {
           if (verbose) {
             cli::cli_alert_info("Baseline method changed from {model_result$qini_metadata$baseline_method} to {baseline_method}, will regenerate QINI curves")
+          }
+          force_regenerate <- TRUE
+        }
+      }
+      
+      # also check if treatment cost has changed
+      if (!is.null(model_result$qini_objects) && !is.null(model_result$qini_metadata$treatment_cost)) {
+        if (model_result$qini_metadata$treatment_cost != treatment_cost) {
+          if (verbose) {
+            cli::cli_alert_info("Treatment cost changed from {model_result$qini_metadata$treatment_cost} to {treatment_cost}, will regenerate QINI curves")
           }
           force_regenerate <- TRUE
         }
@@ -188,15 +238,23 @@ margot_qini <- function(models,
           weights = weights,
           baseline_method = baseline_method,
           seed = seed,
-          verbose = verbose  # pass through verbose flag
+          verbose = verbose,  # pass through verbose flag
+          treatment_cost = treatment_cost  # pass through treatment cost
         )
       })
       
       # update the models object with the new QINI objects
-      if (force_regenerate && !is.null(qini_result$qini_objects)) {
-        models$results[[model_name]]$qini_objects <- qini_result$qini_objects
-        models$results[[model_name]]$qini_data <- qini_result$qini_data
-        models$results[[model_name]]$qini_metadata$baseline_method <- baseline_method
+      if (!is.null(qini_result$qini_objects)) {
+        # always update if we generated new objects (either first time or regenerated)
+        if (is.null(model_result$qini_objects) || force_regenerate) {
+          models$results[[model_name]]$qini_objects <- qini_result$qini_objects
+          models$results[[model_name]]$qini_data <- qini_result$qini_data
+          if (is.null(models$results[[model_name]]$qini_metadata)) {
+            models$results[[model_name]]$qini_metadata <- list()
+          }
+          models$results[[model_name]]$qini_metadata$baseline_method <- baseline_method
+          models$results[[model_name]]$qini_metadata$treatment_cost <- treatment_cost
+        }
       }
       
       # compute difference gain summaries
@@ -261,7 +319,11 @@ margot_qini <- function(models,
         qini_data = qini_result$qini_data,
         diff_gain_summaries = diff_gain_summaries,
         model_name = display_name,
-        baseline_method = baseline_method
+        baseline_method = baseline_method,
+        qini_metadata = list(
+          baseline_method = baseline_method,
+          treatment_cost = treatment_cost
+        )
       )
       
       if (verbose) {

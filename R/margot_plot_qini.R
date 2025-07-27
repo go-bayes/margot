@@ -16,7 +16,9 @@
 #' @param spend_line_color Color for spend level lines. Default is "red".
 #' @param spend_line_alpha Alpha transparency for spend lines. Default is 0.5.
 #' @param theme Character string specifying the ggplot2 theme. Default is "classic". Options include "classic", "minimal", "bw", "gray", "light", "dark", "void".
-#' @param show_ci Logical indicating whether to show confidence intervals. Default is FALSE.
+#' @param show_ci Logical or character indicating which confidence intervals to show. 
+#'   Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only). 
+#'   Default is FALSE.
 #' @param ci_alpha Significance level for confidence intervals. Default is 0.05.
 #' @param ci_n_points Number of points at which to compute confidence intervals. Default is 20.
 #' @param ci_ribbon_alpha Alpha transparency for confidence interval ribbons. Default is 0.3.
@@ -29,6 +31,8 @@
 #'   the ggplot object. Default is FALSE. When TRUE, returns data with columns: proportion, gain,
 #'   lower, upper, curve.
 #' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
+#' @param fixed_ylim Logical; if TRUE and ylim is NULL, uses the actual data range with padding
+#'   for consistent y-axis scaling across plots. Default is FALSE.
 #' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
 #'   "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().
 #' @param cate_color Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).
@@ -36,6 +40,15 @@
 #' @param scale Character string specifying the scale for gains: "average" (default), "cumulative", 
 #'   or "population". "average" shows average policy effect per unit (maq default), "cumulative" 
 #'   shows traditional cumulative gains, "population" shows total population impact.
+#' @param treatment_cost Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
+#'   which attempts to extract the cost from model metadata. If not found, assumes cost = 1.
+#'   When cost differs from stored cost, QINI curves are automatically regenerated.
+#'   When cost differs from 1, it will be shown in the plot subtitle.
+#' @param seed Integer; seed for reproducible QINI generation when treatment_cost differs
+#'   from stored cost. Default is 12345.
+#' @param x_axis Type of x-axis for QINI curves: "proportion" (default) or "budget".
+#'   "proportion" shows proportion of population treated (0 to 1).
+#'   "budget" shows budget per unit (0 to treatment_cost), matching maq's visualization.
 #'
 #' @return If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,
 #'   returns a data.frame with the plot data.
@@ -72,15 +85,31 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Assuming mc.test is the result of margot_multi_arm_causal_forest()
-#' plot_qini_curves(mc.test, "model_t2_belong_z")
+#' # Basic usage - uses stored treatment cost
+#' margot_plot_qini(cf_results, "model_anxiety")
+#'
+#' # Auto-regenerates with different treatment cost
+#' plot1 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 1)
+#' plot2 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 5)
+#'
+#' # Compare costs with fixed y-axis scaling
+#' plot3 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 5, fixed_ylim = TRUE)
+#'
+#' # Show CI only for CATE curve
+#' plot4 <- margot_plot_qini(cf_results, "model_anxiety", show_ci = "cate")
+#'
+#' # Show CI for both curves
+#' plot5 <- margot_plot_qini(cf_results, "model_anxiety", show_ci = TRUE)
+#'
+#' # Custom seed for reproducibility when regenerating
+#' plot6 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 2, seed = 42)
 #'
 #' # Using custom label mapping
 #' label_mapping <- list(
-#'   "t2_env_not_env_efficacy_z" = "Deny Personal Environmental Efficacy",
-#'   "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
+#'   "anxiety" = "Anxiety Symptoms",
+#'   "depression" = "Depression Symptoms"
 #' )
-#' plot_qini_curves(mc.test, "model_t2_env_not_env_efficacy_z", label_mapping = label_mapping)
+#' margot_plot_qini(cf_results, "model_anxiety", label_mapping = label_mapping)
 #' }
 #'
 #' @export
@@ -100,11 +129,18 @@ margot_plot_qini <- function(mc_result, outcome_var,
                              grid_step = NULL,
                              return_data = FALSE,
                              ylim = NULL,
+                             fixed_ylim = FALSE,
                              baseline_method = "maq_no_covariates",
                              cate_color = "#d8a739",
                              ate_color = "#4d4d4d",
-                             scale = "average") {
+                             scale = "average",
+                             treatment_cost = NULL,
+                             seed = 12345,
+                             x_axis = c("proportion", "budget")) {
   cli::cli_h1("Margot Plot Qini Curves")
+  
+  # match x_axis argument
+  x_axis <- match.arg(x_axis)
 
   # Transform the outcome variable name
   # First try direct lookup in label_mapping if provided
@@ -159,6 +195,18 @@ margot_plot_qini <- function(mc_result, outcome_var,
     }
   }
 
+  # initialize treatment_cost early so it's available for regeneration
+  if (is.null(treatment_cost)) {
+    # try to get from qini metadata
+    if (!is.null(mc_result$results[[outcome_var]]$qini_metadata) &&
+        !is.null(mc_result$results[[outcome_var]]$qini_metadata$treatment_cost)) {
+      treatment_cost <- mc_result$results[[outcome_var]]$qini_metadata$treatment_cost
+    } else {
+      # assume default of 1
+      treatment_cost <- 1
+    }
+  }
+  
   # check if qini_data already exists, otherwise generate it
   qini_data <- mc_result$results[[outcome_var]]$qini_data
   qini_objects <- mc_result$results[[outcome_var]]$qini_objects
@@ -181,6 +229,17 @@ margot_plot_qini <- function(mc_result, outcome_var,
       # for specific baseline methods, always regenerate to ensure we get the right type
       regenerate_needed <- TRUE
       cli::cli_alert_info("Regenerating QINI data with {baseline_method} baseline")
+    }
+    
+    # also check if treatment cost has changed
+    stored_cost <- 1
+    if (!is.null(mc_result$results[[outcome_var]]$qini_metadata) &&
+        !is.null(mc_result$results[[outcome_var]]$qini_metadata$treatment_cost)) {
+      stored_cost <- mc_result$results[[outcome_var]]$qini_metadata$treatment_cost
+    }
+    if (treatment_cost != stored_cost) {
+      regenerate_needed <- TRUE
+      cli::cli_alert_info("Regenerating QINI curves with treatment_cost = {treatment_cost} (was {stored_cost})")
     }
   }
   
@@ -327,7 +386,9 @@ margot_plot_qini <- function(mc_result, outcome_var,
         weights = weights,
         baseline_method = baseline_method,
         seed = 42,
-        verbose = TRUE
+        verbose = TRUE,
+        treatment_cost = treatment_cost,
+        x_axis = x_axis
       )
     }, error = function(e) {
       cli::cli_alert_warning("Failed to regenerate QINI data: {e$message}")
@@ -525,10 +586,35 @@ margot_plot_qini <- function(mc_result, outcome_var,
     cli::cli_alert_info("Subsampled qini data using grid_step = {grid_step}")
   }
 
+  # parse show_ci parameter
+  compute_ci <- FALSE
+  ci_curves <- character(0)
+  
+  if (is.logical(show_ci)) {
+    if (show_ci) {
+      compute_ci <- TRUE
+      ci_curves <- c("cate", "ate")  # show both
+    }
+  } else if (is.character(show_ci)) {
+    show_ci <- tolower(show_ci)
+    if (show_ci %in% c("both", "true")) {
+      compute_ci <- TRUE
+      ci_curves <- c("cate", "ate")
+    } else if (show_ci == "cate") {
+      compute_ci <- TRUE
+      ci_curves <- "cate"
+    } else if (show_ci == "ate") {
+      compute_ci <- TRUE
+      ci_curves <- "ate"
+    } else if (show_ci != "false") {
+      cli::cli_alert_warning("Invalid show_ci value '{show_ci}'. Using FALSE.")
+    }
+  }
+  
   # compute confidence intervals if requested
   ci_data <- NULL
-  if (show_ci) {
-    cli::cli_alert_info("Computing confidence intervals...")
+  if (compute_ci) {
+    cli::cli_alert_info("Computing confidence intervals for {paste(ci_curves, collapse = ' and ')} curve(s)...")
     
     # qini_objects should already be available from the generation above
     # no need to re-extract
@@ -609,31 +695,35 @@ margot_plot_qini <- function(mc_result, outcome_var,
       if (is_binary) {
         # cli::cli_alert_info("Binary treatment detected, checking for CATE and ATE curves")
         
-        # check each curve individually
-        if ("cate" %in% names(qini_objects)) {
-          # cli::cli_alert_info("Computing CI for CATE curve")
-          result <- compute_curve_ci(qini_objects$cate, "CATE")
-          if (!is.null(result)) {
-            ci_list[["CATE"]] <- result
-            # cli::cli_alert_info("CATE CI computed: {nrow(result)} rows")
+        # check each curve individually based on ci_curves selection
+        if ("cate" %in% ci_curves) {
+          if ("cate" %in% names(qini_objects)) {
+            # cli::cli_alert_info("Computing CI for CATE curve")
+            result <- compute_curve_ci(qini_objects$cate, "CATE")
+            if (!is.null(result)) {
+              ci_list[["CATE"]] <- result
+              # cli::cli_alert_info("CATE CI computed: {nrow(result)} rows")
+            }
+          } else if ("treatment" %in% names(qini_objects)) {
+            # cli::cli_alert_info("Computing CI for treatment curve (as CATE)")
+            result <- compute_curve_ci(qini_objects$treatment, "CATE")
+            if (!is.null(result)) ci_list[["CATE"]] <- result
           }
-        } else if ("treatment" %in% names(qini_objects)) {
-          # cli::cli_alert_info("Computing CI for treatment curve (as CATE)")
-          result <- compute_curve_ci(qini_objects$treatment, "CATE")
-          if (!is.null(result)) ci_list[["CATE"]] <- result
         }
         
-        if ("ate" %in% names(qini_objects)) {
-          # cli::cli_alert_info("Computing CI for ATE curve")
-          result <- compute_curve_ci(qini_objects$ate, "ATE")
-          if (!is.null(result)) {
-            ci_list[["ATE"]] <- result
-            # cli::cli_alert_info("ATE CI computed: {nrow(result)} rows")
+        if ("ate" %in% ci_curves) {
+          if ("ate" %in% names(qini_objects)) {
+            # cli::cli_alert_info("Computing CI for ATE curve")
+            result <- compute_curve_ci(qini_objects$ate, "ATE")
+            if (!is.null(result)) {
+              ci_list[["ATE"]] <- result
+              # cli::cli_alert_info("ATE CI computed: {nrow(result)} rows")
+            }
+          } else if ("baseline" %in% names(qini_objects)) {
+            # cli::cli_alert_info("Computing CI for baseline curve (as ATE)")
+            result <- compute_curve_ci(qini_objects$baseline, "ATE")
+            if (!is.null(result)) ci_list[["ATE"]] <- result
           }
-        } else if ("baseline" %in% names(qini_objects)) {
-          # cli::cli_alert_info("Computing CI for baseline curve (as ATE)")
-          result <- compute_curve_ci(qini_objects$baseline, "ATE")
-          if (!is.null(result)) ci_list[["ATE"]] <- result
         }
       } else {
         # for multi-arm or other cases
@@ -914,7 +1004,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
   p <- ggplot(qini_data, aes(x = proportion, y = gain, colour = curve, linetype = curve))
   
   # add confidence intervals if available
-  if (show_ci && !is.null(ci_data)) {
+  if (compute_ci && !is.null(ci_data)) {
     if (is.null(ci_ribbon_color)) {
       # use the curve color for ribbons
       p <- p + geom_ribbon(
@@ -944,8 +1034,15 @@ margot_plot_qini <- function(mc_result, outcome_var,
 
   # add vertical lines at spend levels if requested
   if (show_spend_lines && length(spend_levels) > 0) {
+    # adjust spend levels for budget x-axis
+    adjusted_spend_levels <- if (x_axis == "budget") {
+      spend_levels * treatment_cost
+    } else {
+      spend_levels
+    }
+    
     p <- p + geom_vline(
-      xintercept = spend_levels,
+      xintercept = adjusted_spend_levels,
       linetype = "dashed",
       color = spend_line_color,
       alpha = spend_line_alpha,
@@ -979,11 +1076,38 @@ margot_plot_qini <- function(mc_result, outcome_var,
     "Average policy effect"  # default
   )
   
+  # treatment_cost was already initialized and cost-based regeneration handled earlier
+  
+  # handle fixed_ylim if requested
+  if (fixed_ylim && is.null(ylim)) {
+    # for fixed ylim, just use the actual data range with padding
+    if (!is.null(qini_data) && nrow(qini_data) > 0) {
+      current_range <- range(qini_data$gain, na.rm = TRUE)
+      # add some padding (5%)
+      padding <- diff(current_range) * 0.05
+      ylim <- c(current_range[1] - padding, current_range[2] + padding)
+    }
+  }
+  
+  # create subtitle if cost is not 1
+  subtitle_text <- NULL
+  if (treatment_cost != 1) {
+    subtitle_text <- paste0("Treatment cost = ", treatment_cost)
+  }
+  
+  # set x-axis label based on x_axis type
+  x_label <- if (x_axis == "budget") {
+    "Budget per unit (B)"
+  } else {
+    "Proportion of population targeted"
+  }
+  
   p <- p +
     labs(
-      x = "Proportion of population targeted",
+      x = x_label,
       y = y_label,
-      title = paste("Qini Curves for", transformed_outcome_var)
+      title = paste("Qini Curves for", transformed_outcome_var),
+      subtitle = subtitle_text
     ) +
     # apply selected theme
     switch(theme,
@@ -1024,7 +1148,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
     plot_data <- qini_data
     
     # add CI columns if available
-    if (show_ci && !is.null(ci_data)) {
+    if (compute_ci && !is.null(ci_data)) {
       # merge CI data with main data
       plot_data <- merge(
         plot_data, 

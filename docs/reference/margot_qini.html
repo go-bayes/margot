@@ -11,7 +11,7 @@ full policy analysis, paralleling the functionality of margot_rate()."></head><b
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.150</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.160</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,8 @@ full policy analysis, paralleling the functionality of margot_rate().</p>
 <span>  use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  remove_underscores <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">12345</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
+<span>  treatment_cost <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -111,6 +112,13 @@ Default is c(0.1, 0.4).</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Integer; base seed for reproducible computations (default 12345).</p></dd>
 
+
+<dt id="arg-treatment-cost">treatment_cost<a class="anchor" aria-label="anchor" href="#arg-treatment-cost"></a></dt>
+<dd><p>Scalar treatment cost per unit. Default 1. Lower values (e.g., 0.2)
+represent cheap treatments; higher values (e.g., 5) represent expensive treatments.
+Affects QINI curve shape - lower costs create steeper curves, higher costs create
+shallower curves.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -125,6 +133,18 @@ Default is c(0.1, 0.4).</p></dd>
 For binary treatments, it creates both CATE and baseline (e.g., ATE) curves.
 The difference gain summaries quantify how much better CATE-based targeting
 performs compared to the baseline at specified spend levels.</p>
+<p>The treatment_cost parameter allows for cost sensitivity analysis without
+rerunning the causal forest models. Lower costs (e.g., 0.2) create steeper
+QINI curves indicating more people can be treated cost-effectively, while
+higher costs (e.g., 5) create shallower curves indicating only the highest-effect
+individuals justify treatment.</p>
+<p><strong>Cost Invariance Property</strong>: When treatment costs are uniform across
+individuals, the relative benefit of CATE-based targeting over uniform allocation
+remains constant regardless of cost level. While absolute gains scale inversely
+with cost (gain at cost c = gain at cost 1 / c), the difference between CATE
+and ATE curves scales proportionally, preserving the relative advantage of
+personalized treatment. This means the value of heterogeneous treatment effects
+for targeting decisions is independent of the uniform cost level.</p>
 <p>The output is structured to be compatible with margot_interpret_qini() and
 other QINI visualization functions.</p>
     </div>
@@ -141,6 +161,27 @@ other QINI visualization functions.</p>
 <span class="r-in"><span>  model_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"model_anxiety"</span>, <span class="st">"model_depression"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  spend_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.3</span>, <span class="fl">0.5</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  baseline_method <span class="op">=</span> <span class="st">"simple"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Cost sensitivity analysis - vary treatment cost without rerunning forests</span></span></span>
+<span class="r-in"><span><span class="co"># Low cost scenario (cheap treatment)</span></span></span>
+<span class="r-in"><span><span class="va">qini_low_cost</span> <span class="op">&lt;-</span> <span class="fu">margot_qini</span><span class="op">(</span><span class="va">causal_forest_results</span>, treatment_cost <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Medium cost scenario (default)</span></span></span>
+<span class="r-in"><span><span class="va">qini_med_cost</span> <span class="op">&lt;-</span> <span class="fu">margot_qini</span><span class="op">(</span><span class="va">causal_forest_results</span>, treatment_cost <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># High cost scenario (expensive treatment)</span></span></span>
+<span class="r-in"><span><span class="va">qini_high_cost</span> <span class="op">&lt;-</span> <span class="fu">margot_qini</span><span class="op">(</span><span class="va">causal_forest_results</span>, treatment_cost <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Compare results across cost scenarios</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="margot_plot_qini.html">margot_plot_qini</a></span><span class="op">(</span><span class="va">qini_low_cost</span><span class="op">$</span><span class="va">model_anxiety</span>, title <span class="op">=</span> <span class="st">"Anxiety - Low Cost"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="margot_plot_qini.html">margot_plot_qini</a></span><span class="op">(</span><span class="va">qini_high_cost</span><span class="op">$</span><span class="va">model_anxiety</span>, title <span class="op">=</span> <span class="st">"Anxiety - High Cost"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Use helper function for systematic cost sensitivity analysis</span></span></span>
+<span class="r-in"><span><span class="va">cost_sensitivity</span> <span class="op">&lt;-</span> <span class="fu"><a href="margot_qini_cost_sensitivity.html">margot_qini_cost_sensitivity</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">causal_forest_results</span>,</span></span>
+<span class="r-in"><span>  costs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  model_names <span class="op">=</span> <span class="st">"model_anxiety"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Interpret the results</span></span></span>

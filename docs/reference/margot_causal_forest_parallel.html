@@ -17,7 +17,7 @@ warnings, etc.).  Live progress bars are emitted with **progressr** using a
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.150</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.160</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,10 +67,12 @@ warnings, etc.).  Live progress bars are emitted with **progressr** using a
 <span>  save_models <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  train_proportion <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  qini_split <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  qini_train_prop <span class="op">=</span> <span class="fl">0.7</span>,</span>
+<span>  train_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  qini_train_prop <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  compute_conditional_means <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">availableCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  qini_treatment_cost <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -128,8 +130,12 @@ training policy trees. Default is 0.7.</p></dd>
 calculation. Default is TRUE (i.e., Qini is computed out-of-sample).</p></dd>
 
 
+<dt id="arg-train-prop">train_prop<a class="anchor" aria-label="anchor" href="#arg-train-prop"></a></dt>
+<dd><p>Proportion of data to use for the training set when qini_split=TRUE. Default is 0.5.</p></dd>
+
+
 <dt id="arg-qini-train-prop">qini_train_prop<a class="anchor" aria-label="anchor" href="#arg-qini-train-prop"></a></dt>
-<dd><p>Proportion of data to use for the Qini training set (if <code>qini_split=TRUE</code>). Default is 0.7.</p></dd>
+<dd><p>Deprecated. Use train_prop instead. If provided, will override train_prop with a warning.</p></dd>
 
 
 <dt id="arg-compute-conditional-means">compute_conditional_means<a class="anchor" aria-label="anchor" href="#arg-compute-conditional-means"></a></dt>
@@ -143,6 +149,12 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).</p></dd>
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical indicating whether to display detailed messages during execution. Default is TRUE.</p></dd>
+
+
+<dt id="arg-qini-treatment-cost">qini_treatment_cost<a class="anchor" aria-label="anchor" href="#arg-qini-treatment-cost"></a></dt>
+<dd><p>Scalar treatment cost per unit for QINI calculations. Default 1.
+Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
+higher values (e.g., 5) represent expensive treatments creating shallower curves.</p></dd>
 
 </dl></div>
     <div class="section level2">

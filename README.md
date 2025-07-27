@@ -21,6 +21,14 @@
 
 # margot
 
+> **⚠️ IMPORTANT NOTICE**: This development version of the margot
+> package is undergoing significant refactoring as we transition to the
+> **margotverse** suite of packages. This package is currently for the
+> author’s lab use only. The package will be split into focused,
+> single-responsibility packages including margot.core, margot.lmtp,
+> margot.grf, margot.viz, and others. Please expect breaking changes in
+> upcoming releases.
+
 **MARG**inal **O**bservational **T**reatment-effects.[^1]
 
 Causal inference requires **balance** across the treatments to be

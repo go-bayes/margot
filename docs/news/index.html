@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.150</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.160</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,86 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.160" id="id_2025-07-27-margot-10160">[2025-07-27] margot 1.0.160<a class="anchor" aria-label="anchor" href="#id_2025-07-27-margot-10160"></a></h2>
+<blockquote>
+<p><strong>⚠️ IMPORTANT NOTICE</strong>: This development version of the margot package is undergoing significant refactoring as we transition to the <strong>margotverse</strong> suite of packages. This package is currently for the author’s lab use only. The package will be split into focused, single-responsibility packages including margot.core, margot.lmtp, margot.grf, margot.viz, and others. Please expect breaking changes in upcoming releases.</p>
+</blockquote>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-160">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-160"></a></h4>
+<ul><li>
+<strong>Parameter deprecation</strong>: <code>qini_train_prop</code> is now deprecated in favor of <code>train_prop</code> with default value 0.5
+<ul><li>Backward compatibility maintained with deprecation warning</li>
+<li>Affects: <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> and related functions</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="new-features-1-0-160">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-160"></a></h4>
+<ul><li>
+<strong>Cost sensitivity analysis for QINI curves</strong>:
+<ul><li>Added <code>treatment_cost</code> parameter throughout QINI functionality</li>
+<li>New <code><a href="../reference/margot_qini_cost_sensitivity.html">margot_qini_cost_sensitivity()</a></code> function for analyzing treatment allocation under different budget constraints</li>
+<li>Cost parameter affects optimal treatment allocation strategies</li>
+<li>Supports cost sensitivity visualization with budget-based x-axis</li>
+</ul></li>
+<li>
+<strong>Enhanced RATE computation</strong>:
+<ul><li>Added <code>q</code> parameter for custom quantile grids in <code><a href="../reference/margot_rate.html">margot_rate()</a></code>
+</li>
+<li>Pass-through parameters (<code>...</code>) to <code><a href="https://rdrr.io/pkg/grf/man/rank_average_treatment_effect.html" class="external-link">grf::rank_average_treatment_effect()</a></code> for maximum flexibility</li>
+<li>Target parameter now correctly reflected in plot titles (AUTOC or QINI)</li>
+</ul></li>
+<li>
+<strong>Flexible confidence intervals</strong>:
+<ul><li>
+<code>show_ci</code> parameter in QINI plots now accepts: FALSE, TRUE, “both”, “cate”, or “ate”</li>
+<li>Allows selective display of confidence intervals for different curves</li>
+<li>Added <code>seed</code> parameter (default = 12345) for reproducible confidence interval computation</li>
+</ul></li>
+<li>
+<strong>Budget-based visualization</strong>:
+<ul><li>New <code>x_axis</code> parameter in QINI functions accepts “proportion” or “budget”</li>
+<li>Budget x-axis shows treatment allocation under budget constraints</li>
+<li>Automatically detects appropriate x-axis type based on data</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-160">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-160"></a></h4>
+<ul><li>
+<strong>Cost invariance property documentation</strong>:
+<ul><li>Added extensive documentation explaining that relative benefit of CATE vs ATE targeting remains constant with uniform costs</li>
+<li>Clarified that gains are identical when plotted against proportion treated</li>
+<li>Budget visualization reveals cost differences more clearly</li>
+</ul></li>
+<li>
+<strong>Enhanced error handling</strong>:
+<ul><li>Better detection of treatment_cost changes for QINI regeneration</li>
+<li>Improved error messages for missing data or model components</li>
+<li>Fixed treatment_cost initialization order to prevent NULL issues</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-160">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-160"></a></h4>
+<ul><li>Fixed “invalid ‘type’ (closure)” error in <code><a href="../reference/margot_rate.html">margot_rate()</a></code> by properly handling <code>q</code> parameter</li>
+<li>Fixed RATE plot titles to correctly display target (AUTOC or QINI)</li>
+<li>Fixed QINI regeneration to detect treatment_cost changes</li>
+<li>Fixed y-axis scaling to remove artificial cost-based adjustments</li>
+<li>Fixed treatment_cost NULL initialization causing QINI generation failures</li>
+<li>Fixed “Models not found” error in <code><a href="../reference/margot_plot_qini_batch_cost_sensitivity.html">margot_plot_qini_batch_cost_sensitivity()</a></code>
+</li>
+<li>Fixed “$ operator is invalid for atomic vectors” error by creating <code><a href="../reference/margot_plot_qini_direct.html">margot_plot_qini_direct()</a></code>
+</li>
+<li>Fixed “invalid ‘x’ type in ‘x &amp;&amp; y’” error by using proper boolean variables</li>
+</ul></div>
+<div class="section level4">
+<h4 id="internal-changes-1-0-160">Internal Changes<a class="anchor" aria-label="anchor" href="#internal-changes-1-0-160"></a></h4>
+<ul><li>Created <code><a href="../reference/margot_generate_qini_data.html">margot_generate_qini_data()</a></code> for on-demand QINI generation</li>
+<li>Created <code><a href="../reference/margot_plot_qini_direct.html">margot_plot_qini_direct()</a></code> for plotting pre-computed QINI data</li>
+<li>Updated all maq() calls to properly pass treatment_cost parameter</li>
+<li>Implemented budget-based generation in <code><a href="../reference/margot_qini_simple_baseline.html">margot_qini_simple_baseline()</a></code>
+</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.150" id="id_2025-07-25-margot-10150">[2025-07-25] margot 1.0.150<a class="anchor" aria-label="anchor" href="#id_2025-07-25-margot-10150"></a></h2>
 <div class="section level4">
@@ -869,7 +949,7 @@
 <ul><li>
 <code>margot_causal_forest_paralle()</code> parallel implementation of <code>margot_causal_forest</code>.</li>
 <li>
-<code><a href="../reference/margot_flip_forests_parallel.html">margot_flip_forests_parallel()</a></code> parallel implementatino of <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code>
+<code>margot_flip_forests_parallel()</code> parallel implementatino of <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code>
 </li>
 </ul></div>
 <div class="section level3">
@@ -920,7 +1000,7 @@
 <h3 id="improved-1-0-35">improved<a class="anchor" aria-label="anchor" href="#improved-1-0-35"></a></h3>
 <ul><li>
 <code><a href="../reference/here_save.html">here_save()</a></code> and <code><a href="../reference/here_save_qs.html">here_save_qs()</a></code> now correctly reports size of saved file.</li>
-<li>tidying of roxogen2 code (‘mc_test’ removed and replaced with ‘result_object’)</li>
+<li>tidying of roxygen2 code (‘mc_test’ removed and replaced with ‘result_object’)</li>
 <li>
 <code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code> nicer label placement.</li>
 </ul></div>

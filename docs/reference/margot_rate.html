@@ -9,7 +9,7 @@ both sorted by descending RATE Estimate, with reliable results highlighted in bo
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.150</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.160</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,11 @@ both sorted by descending RATE Estimate, with reliable results highlighted in bo
 <span>  adjust <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  apply_adjustment <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">adjust</span><span class="op">)</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">12345</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
+<span>  use_evaluation_subset <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AUTOC"</span>, <span class="st">"QINI"</span><span class="op">)</span>,</span>
+<span>  q <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">1</span>, by <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -125,12 +129,33 @@ adjust parameter is provided, FALSE otherwise.</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Integer; base seed for reproducible RATE computations (default 12345).</p></dd>
 
+
+<dt id="arg-use-evaluation-subset">use_evaluation_subset<a class="anchor" aria-label="anchor" href="#arg-use-evaluation-subset"></a></dt>
+<dd><p>Logical; if TRUE, use test indices from qini_metadata
+when available for proper out-of-sample evaluation (default TRUE).</p></dd>
+
+
+<dt id="arg-target">target<a class="anchor" aria-label="anchor" href="#arg-target"></a></dt>
+<dd><p>Character vector; weighting schemes to compute: "AUTOC", "QINI", or
+c("AUTOC", "QINI") for both (default). When a single target is specified,
+only that table is returned.</p></dd>
+
+
+<dt id="arg-q">q<a class="anchor" aria-label="anchor" href="#arg-q"></a></dt>
+<dd><p>Numeric vector of quantiles at which to evaluate. Default is
+seq(0.1, 1, by = 0.1) which matches the GRF default.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Additional arguments passed to grf::rank_average_treatment_effect().</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with elements:
+    <p>When target includes both "AUTOC" and "QINI", returns a list with elements:
 * rate_autoc: AUTOC RATE table
-* rate_qini: QINI RATE table</p>
+* rate_qini: QINI RATE table
+When a single target is specified, returns just that table as a data frame.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
