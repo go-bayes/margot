@@ -31,6 +31,15 @@
 #' @param rate_results Optional pre-computed RATE results to skip computation.
 #' @param qini_results Optional pre-computed QINI results to skip computation.
 #' @param omnibus_results Optional pre-computed omnibus test results to skip computation.
+#' @param use_cross_validation Logical. If TRUE, use cross-validation for RATE tests
+#'   instead of standard approach (default FALSE).
+#' @param cv_num_folds Integer. Number of CV folds when use_cross_validation = TRUE (default 5).
+#' @param cv_results Optional pre-computed CV results to skip computation.
+#' @param seed Integer. Random seed for reproducibility in all computations (default 12345).
+#' @param parallel Logical. Use parallel processing for cross-validation when use_cross_validation = TRUE 
+#'   (default FALSE). Note: Parallel processing is experimental and may encounter memory issues.
+#' @param n_cores Integer. Number of cores for parallel processing when parallel = TRUE 
+#'   (default all cores - 1). Only applies when use_cross_validation = TRUE.
 #'
 #' @return A list containing:
 #'   \item{selected_model_ids}{Character vector of model IDs with heterogeneity evidence}
@@ -75,12 +84,24 @@
 #'   rate_results = my_rate_results,
 #'   require_omnibus = TRUE
 #' )
+#' 
+#' # Using cross-validation instead of standard RATE
+#' het_evidence_cv <- margot_interpret_heterogeneity(
+#'   models = causal_forest_results,
+#'   use_cross_validation = TRUE,
+#'   cv_num_folds = 5,
+#'   alpha = 0.2,  # Higher alpha recommended for Bonferroni with CV
+#'   adjust = "bonferroni",
+#'   parallel = TRUE,  # Enable parallel processing for faster CV
+#'   n_cores = 4
+#' )
 #' }
 #'
 #' @export
-#' @importFrom cli cli_h2 cli_alert_info cli_alert_success
+#' @importFrom cli cli_h2 cli_alert_info cli_alert_success cli_progress_step cli_progress_done
 #' @importFrom dplyr bind_rows mutate case_when
 #' @importFrom tibble tibble
+#' @importFrom future availableCores
 margot_interpret_heterogeneity <- function(
   models = NULL,
   spend_levels = c(0.1, 0.4),
@@ -95,7 +116,13 @@ margot_interpret_heterogeneity <- function(
   include_extended_report = FALSE,
   rate_results = NULL,
   qini_results = NULL,
-  omnibus_results = NULL
+  omnibus_results = NULL,
+  use_cross_validation = FALSE,
+  cv_num_folds = 5,
+  cv_results = NULL,
+  seed = 12345,
+  parallel = FALSE,
+  n_cores = future::availableCores() - 1
 ) {
   
   # validate inputs
@@ -106,38 +133,101 @@ margot_interpret_heterogeneity <- function(
   # header
   if (verbose) cli::cli_h2("Computing heterogeneity evidence")
   
+  # Count tasks to perform
+  n_tasks <- 0
+  if (is.null(rate_results) && !is.null(models)) n_tasks <- n_tasks + 1
+  if (is.null(qini_results) && !is.null(models)) n_tasks <- n_tasks + 1
+  if (is.null(omnibus_results) && !is.null(models)) n_tasks <- n_tasks + 1
+  n_tasks <- n_tasks + 1  # For combining evidence
+  
+  # Progress tracking
+  current_task <- 0
+  
   # initialize rate_results_list
   rate_results_list <- NULL
   
   # 1. compute rate results if not provided
   if (is.null(rate_results) && !is.null(models)) {
-    if (verbose) cli::cli_alert_info("Computing RATE estimates...")
+    current_task <- current_task + 1
+    if (verbose) {
+      task_msg <- if (use_cross_validation) {
+        "Computing cross-validation heterogeneity tests"
+      } else {
+        "Computing RATE estimates"
+      }
+      cli::cli_progress_step(
+        paste0("[{current_task}/{n_tasks}] ", task_msg),
+        msg_done = paste0("[{current_task}/{n_tasks}] ", task_msg, " ... done")
+      )
+    }
     
-    # compute rate - margot_rate() handles adjustment internally
-    rate_results_list <- margot_rate(
-      models, 
-      adjust = adjust, 
-      alpha = alpha,
-      apply_adjustment = TRUE
-    )
-    
-    # get interpretation
-    rate_results <- margot_interpret_rate(
-      rate_results_list,
-      flipped_outcomes = flipped_outcomes,
-      adjust_positives_only = TRUE
-    )
+    if (use_cross_validation) {
+      # Use cross-validation approach
+      if (is.null(cv_results)) {
+        # For CV, only "bonferroni" or "none" are valid
+        cv_adjust <- adjust
+        if (!adjust %in% c("bonferroni", "none")) {
+          if (verbose) {
+            cli::cli_alert_warning(
+              "Adjustment method '{adjust}' is not valid for cross-validation. Using 'none' instead."
+            )
+          }
+          cv_adjust <- "none"
+        }
+        
+        cv_results <- margot_rate_cv(
+          model_results = models,
+          num_folds = cv_num_folds,
+          target = c("AUTOC", "QINI"),  # Test both targets
+          alpha = alpha,
+          adjust = cv_adjust,
+          verbose = verbose,
+          seed = seed,
+          parallel = parallel,
+          n_cores = n_cores
+        )
+      }
+      
+      # Convert CV results to rate_results format for compatibility
+      rate_results <- convert_cv_to_rate_results(cv_results, flipped_outcomes)
+      rate_results_list <- cv_results  # Store for later reference
+      
+    } else {
+      # Standard RATE approach
+      # compute rate - margot_rate() handles adjustment internally
+      rate_results_list <- margot_rate(
+        models, 
+        adjust = adjust, 
+        alpha = alpha,
+        apply_adjustment = TRUE,
+        seed = seed
+      )
+      
+      # get interpretation
+      rate_results <- margot_interpret_rate(
+        rate_results_list,
+        flipped_outcomes = flipped_outcomes,
+        adjust_positives_only = TRUE
+      )
+    }
   }
   
   # 2. compute qini results if not provided
   if (is.null(qini_results) && !is.null(models)) {
-    if (verbose) cli::cli_alert_info("Computing QINI curves...")
+    current_task <- current_task + 1
+    if (verbose) {
+      cli::cli_progress_step(
+        "[{current_task}/{n_tasks}] Computing QINI curves",
+        msg_done = "[{current_task}/{n_tasks}] Computing QINI curves ... done"
+      )
+    }
     
     # run margot_policy to get diff_gain_summaries
     qini_batch <- margot_policy(
       models,
       spend_levels = spend_levels,
-      output_objects = c("diff_gain_summaries")
+      output_objects = c("diff_gain_summaries"),
+      seed = seed
     )
     
     # get interpretation
@@ -150,7 +240,13 @@ margot_interpret_heterogeneity <- function(
   
   # 3. compute omnibus test if not provided
   if (is.null(omnibus_results) && !is.null(models)) {
-    if (verbose) cli::cli_alert_info("Computing omnibus calibration tests...")
+    current_task <- current_task + 1
+    if (verbose) {
+      cli::cli_progress_step(
+        "[{current_task}/{n_tasks}] Computing omnibus calibration tests",
+        msg_done = "[{current_task}/{n_tasks}] Computing omnibus calibration tests ... done"
+      )
+    }
     # extract all outcome names from the models, including flipped ones
     all_outcome_names <- gsub("^model_", "", names(models$results))
     omnibus_results <- margot_omnibus_hetero_test(
@@ -161,7 +257,13 @@ margot_interpret_heterogeneity <- function(
   }
   
   # 4. combine evidence
-  if (verbose) cli::cli_alert_info("Combining heterogeneity evidence...")
+  current_task <- current_task + 1
+  if (verbose) {
+    cli::cli_progress_step(
+      "[{current_task}/{n_tasks}] Combining heterogeneity evidence",
+      msg_done = "[{current_task}/{n_tasks}] Combining heterogeneity evidence ... done"
+    )
+  }
   
   # extract all model ids
   all_model_ids <- unique(c(
@@ -211,7 +313,12 @@ margot_interpret_heterogeneity <- function(
   # generate extended report if requested
   extended_report <- NULL
   if (include_extended_report) {
-    if (verbose) cli::cli_alert_info("Generating extended report...")
+    if (verbose) {
+      cli::cli_progress_step(
+        "Generating extended report",
+        msg_done = "Generating extended report ... done"
+      )
+    }
     # use the evidence_summary which now includes model_id
     evidence_summary_with_id <- selection_results$evidence_summary
     extended_report <- generate_extended_report(
@@ -225,7 +332,10 @@ margot_interpret_heterogeneity <- function(
       spend_levels,
       label_mapping,
       alpha,
-      adjust
+      adjust,
+      use_cross_validation,
+      cv_num_folds,
+      cv_results
     )
   }
   
@@ -395,38 +505,44 @@ select_models <- function(evidence_summary, require_any_positive,
                           exclude_negative_any, require_omnibus) {
   
   # add positive_count, negative_count, and evidence_type to evidence_summary
+  # Note: qini_curve is excluded from counts as it's exploratory/sensitive to spend levels
   evidence_summary <- evidence_summary %>%
     dplyr::mutate(
+      # Count primary evidence only (RATE and differential prediction)
       positive_count = rowSums(
-        dplyr::select(., rate_autoc, rate_qini, qini_curve, differential_prediction_test) == "positive"
+        dplyr::select(., rate_autoc, rate_qini, differential_prediction_test) == "positive"
       ),
+      # Only RATE can be reliably negative (differential prediction is positive/inconclusive only)
       negative_count = rowSums(
-        dplyr::select(., rate_autoc, rate_qini, qini_curve, differential_prediction_test) == "negative"
+        dplyr::select(., rate_autoc, rate_qini) == "negative"
       ),
+      # Separate count for exploratory QINI curve evidence
+      qini_positive = (qini_curve == "positive"),
+      
       evidence_type = dplyr::case_when(
-        # Mixed evidence with caution - any positive but also has negatives
-        positive_count > 0 & negative_count > 0 ~ "mixed_evidence_caution",
-        
-        # Evidence for heterogeneity - RATE positive and differential prediction confirms
+        # Evidence for heterogeneity - RATE positive AND differential prediction confirms
         (rate_autoc == "positive" | rate_qini == "positive") & 
         differential_prediction_test == "positive" ~ "evidence_for_heterogeneity",
         
-        # Targeting opportunity - QINI works despite weak heterogeneity
-        qini_curve == "positive" & 
-        rate_autoc != "positive" & 
-        rate_qini != "positive" ~ "targeting_opportunity",
+        # Mixed evidence with caution - RATE has both positive and negative results
+        rate_autoc == "positive" & rate_qini == "negative" ~ "mixed_evidence_caution",
+        rate_autoc == "negative" & rate_qini == "positive" ~ "mixed_evidence_caution",
         
-        # Statistical only - differential prediction positive but no practical benefit
+        # Targeting opportunity - RATE positive (primary evidence)
+        (rate_autoc == "positive" | rate_qini == "positive") ~ "targeting_opportunity",
+        
+        # Statistical only - differential prediction positive but RATE not positive
         differential_prediction_test == "positive" & 
-        qini_curve != "positive" & 
         rate_autoc != "positive" & 
         rate_qini != "positive" ~ "statistical_only",
         
-        # Unconfirmed heterogeneity - RATE positive but not confirmed by differential prediction
-        (rate_autoc == "positive" | rate_qini == "positive") & 
-        differential_prediction_test != "positive" ~ "unconfirmed_heterogeneity",
+        # Exploratory evidence only - only QINI curve positive
+        qini_curve == "positive" & 
+        rate_autoc != "positive" & 
+        rate_qini != "positive" & 
+        differential_prediction_test != "positive" ~ "exploratory_only",
         
-        # No evidence - only negative or inconclusive results
+        # No evidence - no positive results in any test
         TRUE ~ "no_evidence"
       )
     )
@@ -569,7 +685,7 @@ generate_interpretation <- function(evidence_summary, selection_results,
   evidence_for_het <- evidence_summary[evidence_summary$evidence_type == "evidence_for_heterogeneity", ]
   targeting_opp <- evidence_summary[evidence_summary$evidence_type == "targeting_opportunity", ]
   statistical_only <- evidence_summary[evidence_summary$evidence_type == "statistical_only", ]
-  unconfirmed_het <- evidence_summary[evidence_summary$evidence_type == "unconfirmed_heterogeneity", ]
+  exploratory_only <- evidence_summary[evidence_summary$evidence_type == "exploratory_only", ]
   mixed_caution <- evidence_summary[evidence_summary$evidence_type == "mixed_evidence_caution", ]
   
   # evidence for heterogeneity
@@ -585,7 +701,7 @@ generate_interpretation <- function(evidence_summary, selection_results,
   # targeting opportunities
   targeting_text <- if (nrow(targeting_opp) > 0) {
     models_text <- paste(targeting_opp$model_name, collapse = ", ")
-    sprintf("\n\n**Targeting Opportunities**: %s show%s practical benefits from targeted allocation (positive QINI) despite limited evidence of overall heterogeneity. This suggests that even modest individual differences can be leveraged for improved outcomes.",
+    sprintf("\n\n**Targeting Opportunities**: %s show%s positive treatment effect heterogeneity based on RATE analysis. These outcomes demonstrate practical benefits from personalized treatment allocation.",
             models_text,
             ifelse(nrow(targeting_opp) == 1, "s", ""))
   } else {
@@ -602,12 +718,13 @@ generate_interpretation <- function(evidence_summary, selection_results,
     ""
   }
   
-  # unconfirmed heterogeneity
-  unconfirmed_text <- if (nrow(unconfirmed_het) > 0) {
-    models_text <- paste(unconfirmed_het$model_name, collapse = ", ")
-    sprintf("\n\n**Unconfirmed Heterogeneity**: %s show%s theoretical heterogeneity (RATE) not confirmed by omnibus calibration test. These findings should be interpreted cautiously.",
+  # exploratory evidence only
+  exploratory_text <- if (nrow(exploratory_only) > 0) {
+    models_text <- paste(exploratory_only$model_name, collapse = ", ")
+    sprintf("\n\n**Exploratory Evidence Only**: %s show%s positive QINI curves at specific spend levels (%s) but lack support from primary heterogeneity tests. These findings are sensitive to spend level selection and should be considered preliminary.",
             models_text,
-            ifelse(nrow(unconfirmed_het) == 1, "s", ""))
+            ifelse(nrow(exploratory_only) == 1, "s", ""),
+            paste(spend_levels * 100, "%", sep = "", collapse = ", "))
   } else {
     ""
   }
@@ -638,7 +755,7 @@ generate_interpretation <- function(evidence_summary, selection_results,
       targeting_opp$model_name
     )
     caution_targets <- mixed_caution$model_name
-    secondary_targets <- unconfirmed_het$model_name
+    exploratory_targets <- exploratory_only$model_name
     
     rec_parts <- character()
     if (length(primary_targets) > 0) {
@@ -651,10 +768,10 @@ generate_interpretation <- function(evidence_summary, selection_results,
                      sprintf("For %s, proceed with caution due to conflicting evidence across tests.", 
                              paste(caution_targets, collapse = ", ")))
     }
-    if (length(secondary_targets) > 0) {
+    if (length(exploratory_targets) > 0) {
       rec_parts <- c(rec_parts,
-                     sprintf("Consider %s for secondary analyses.", 
-                             paste(secondary_targets, collapse = ", ")))
+                     sprintf("Consider %s for exploratory analyses only, as evidence is limited to QINI curves.", 
+                             paste(exploratory_targets, collapse = ", ")))
     }
     if (length(selection_results$excluded_names) > 0) {
       rec_parts <- c(rec_parts,
@@ -668,16 +785,17 @@ generate_interpretation <- function(evidence_summary, selection_results,
   
   # full interpretation
   full_text <- paste0(header, evidence_text, targeting_text, caution_text,
-                      statistical_text, unconfirmed_text, recommendations)
+                      statistical_text, exploratory_text, excluded_text, recommendations)
   
   # summary
   summary_text <- sprintf(
-    "Found heterogeneity evidence for %d of %d models. Evidence for heterogeneity: %d models. Targeting opportunities: %d models. Proceed with caution: %d models. Selected for targeting: %d models.",
+    "Found heterogeneity evidence for %d of %d models. Evidence for heterogeneity: %d models. Targeting opportunities: %d models. Proceed with caution: %d models. Exploratory only: %d models. Selected for targeting: %d models.",
     selection_results$positive_counts$any_method,
     nrow(evidence_summary),
     nrow(evidence_for_het),
     nrow(targeting_opp),
     nrow(mixed_caution),
+    nrow(exploratory_only),
     length(selection_results$selected_ids)
   )
   
@@ -696,7 +814,10 @@ generate_extended_report <- function(evidence_summary, selection_results,
                                    qini_results, omnibus_results, 
                                    models, spend_levels,
                                    label_mapping, alpha = 0.05, 
-                                   adjust = "BH") {
+                                   adjust = "BH", 
+                                   use_cross_validation = FALSE,
+                                   cv_num_folds = NULL,
+                                   cv_results = NULL) {
   
   # extract grf parameters from first model
   grf_params <- extract_grf_params(models)
@@ -720,11 +841,18 @@ generate_extended_report <- function(evidence_summary, selection_results,
     adjust  # default to the provided name
   )
   
-  # header
+  # header with method details
+  method_description <- if (use_cross_validation) {
+    sprintf("We used %d-fold sequential cross-validation for heterogeneity testing, which provides robust statistical inference by avoiding overfitting. ", cv_num_folds)
+  } else {
+    "We used standard heterogeneity testing methods. "
+  }
+  
   header <- sprintf(
-    "We evaluated treatment effect heterogeneity (HTE) using complementary methods to identify outcomes suitable for targeted interventions covering %s of the population. We applied causal forests (grf package) with min.node.size = %s to obtain reliable estimates of conditional average treatment effects (CATE). Statistical significance was assessed at α = %s with %s correction for multiple testing.\n\nStatistical heterogeneity tests (RATE with AUTOC and QINI weighting, plus omnibus calibration) assess whether treatment effects vary across individuals. Practical targeting tests (QINI curves) assess whether targeting based on predicted effects improves outcomes at specific budget constraints. Each method provides different insights, and their agreement strengthens conclusions.\n\nOur methods include:\n\n",
+    "We evaluated treatment effect heterogeneity (HTE) using complementary methods to identify outcomes suitable for targeted interventions covering %s of the population. We applied causal forests (grf package) with min.node.size = %s to obtain reliable estimates of conditional average treatment effects (CATE). %sStatistical significance was assessed at α = %.3f with %s correction for multiple testing.\n\nStatistical heterogeneity tests (RATE with AUTOC and QINI weighting, plus omnibus calibration) assess whether treatment effects vary across individuals. Practical targeting tests (QINI curves) assess whether targeting based on predicted effects improves outcomes at specific budget constraints. Each method provides different insights, and their agreement strengthens conclusions.\n\nOur methods include:\n\n",
     spend_range,
     grf_params$min.node.size,
+    method_description,
     alpha,
     adjust_name
   )
@@ -735,11 +863,15 @@ generate_extended_report <- function(evidence_summary, selection_results,
     "Test calibration of the forest. Computes the best linear fit of the target estimand using the forest prediction (on held-out data) as well as the mean forest prediction as the sole two regressors.\n\n",
     
     "#### RATE AUTOC (Secondary Global Evidence)\n",
-    "Focuses on top responders with logarithmic weighting. A positive AUTOC signals strong HTE in groups with high $\\\\hat{\\\\tau}(x)$, although it is sensitive to ranking noise.\n\n",
+    "Focuses on top responders with logarithmic weighting. A positive AUTOC signals strong HTE in groups with high $\\\\hat{\\\\tau}(x)$, although it is sensitive to ranking noise.",
+    if (use_cross_validation) " Tests were conducted using sequential cross-validation for robust inference." else "",
+    "\n\n",
     
     "#### RATE QINI (Primary Global Evidence)\n", 
     "Measures overall targeting gains by ranking individuals by $\\\\hat{\\\\tau}(x)$, using linear weighting across treated proportions. ",
-    "A positive RATE QINI (e.g., 0.022 for Forgiveness) indicates HTE that enhances outcomes beyond random assignment, ideal for policies targeting a segment of the population.\n\n",
+    "A positive RATE QINI (e.g., 0.022 for Forgiveness) indicates HTE that enhances outcomes beyond random assignment, ideal for policies targeting a segment of the population.",
+    if (use_cross_validation) " Tests were conducted using sequential cross-validation for robust inference." else "",
+    "\n\n",
     
     "#### Qini Curves (Budget Focus)\n",
     "Illustrate cumulative gains at specific budgets (e.g., ", paste(spend_text, collapse = ", "), 

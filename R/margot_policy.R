@@ -19,6 +19,7 @@
 #' @param qini_args List of additional arguments to pass to margot_plot_qini(). Default: list().
 #' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
 #'   "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().
+#' @param seed Integer. Random seed for reproducibility in QINI computations (default 12345).
 #'
 #' @return A named list; each element corresponds to a model and contains only
 #' the requested outputs.
@@ -38,7 +39,8 @@ margot_policy <- function(
     model_names        = NULL,
     output_objects     = c("policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries"),
     qini_args          = list(),
-    baseline_method    = "maq_no_covariates"
+    baseline_method    = "maq_no_covariates",
+    seed               = 12345
 ) {
   cli::cli_alert_info("starting margot_policy function")
 
@@ -143,6 +145,7 @@ margot_policy <- function(
               treatment = result_outcomes$W,
               weights = result_outcomes$weights,
               baseline_method = baseline_method,
+              seed = seed,
               verbose = FALSE
             )
             qini_objs <- qini_result$qini_objects

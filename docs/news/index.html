@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.160</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.180</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,12 +33,158 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.0.160" id="id_2025-07-27-margot-10160">[2025-07-27] margot 1.0.160<a class="anchor" aria-label="anchor" href="#id_2025-07-27-margot-10160"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.0.180" id="id_2025-07-28-margot-10180">[2025-07-28] margot 1.0.180<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10180"></a></h2>
+<div class="section level4">
+<h4 id="new-features-1-0-180">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-180"></a></h4>
+<ul><li>
+<strong>Parallel processing support for <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>Added <code>parallel</code> parameter (default FALSE) for optional parallel processing</li>
+<li>Added <code>n_cores</code> parameter to control number of cores</li>
+<li>Passes through to <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> when <code>use_cross_validation = TRUE</code>
+</li>
+</ul></li>
+<li>
+<strong>Progress bars for <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code></strong>:
+<ul><li>Shows progress during model data extraction phase</li>
+<li>Displays detailed progress for each model being tested (non-parallel mode)</li>
+<li>Shows progress through CV folds within each model</li>
+<li>Clear indication when running in parallel mode (where detailed progress isn’t available)</li>
+<li>Includes time estimates (ETA) for completion</li>
+</ul></li>
+<li>
+<strong>Progress tracking for <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>Shows overall progress through major analysis steps (e.g., “[2/4] Computing QINI curves”)</li>
+<li>Step-by-step progress indicators with completion messages</li>
+<li>Clear indication of what analysis is currently running</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-180">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-180"></a></h4>
+<ul><li>
+<strong>Updated pkgdown documentation</strong>:
+<ul><li>Added <code>margot_rate_cv</code> to “Interpret and Report Results” section</li>
+<li>Added <code>margot_plot_cv_results</code> and <code>margot_plot_cv_summary</code> to “Visualise Causal Effect Estimates” section</li>
+<li>Marked <code>print.margot_cv_results</code> as internal (S3 method)</li>
+</ul></li>
+<li>
+<strong>Better cross-validation integration in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>Automatically converts invalid adjustment methods to “none” when using CV</li>
+<li>Shows warning when adjustment method is changed for CV compatibility</li>
+<li>Added example in documentation showing how to use cross-validation</li>
+</ul></li>
+<li>
+<strong>Enhanced <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> reporting</strong>:
+<ul><li>Extended report now includes method details (standard vs cross-validation)</li>
+<li>Reports number of CV folds when cross-validation is used</li>
+<li>Reports alpha level and multiple testing correction method</li>
+<li>CV now tests both AUTOC and QINI targets (was only testing AUTOC)</li>
+</ul></li>
+<li>
+<strong>Improved memory management for parallel processing</strong>:
+<ul><li>
+<code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> now has <code>future_globals_maxSize</code> parameter (default 16 GiB)</li>
+<li>Memory limit is now set before creating parallel plan to ensure proper enforcement</li>
+<li>Better error messages when memory limit is exceeded, suggesting solutions</li>
+<li>Automatically manages memory limits for parallel workers</li>
+<li>Restores original memory settings on function exit</li>
+</ul></li>
+<li>
+<strong>Simplified citation approach</strong>:
+<ul><li>Removed Rdpack dependency for simpler citation management</li>
+<li>Now uses direct “(Wager 2024)” citation format</li>
+<li>Maintained proper references in documentation</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-180">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-180"></a></h4>
+<ul><li>
+<strong>Fixed seed setting in <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code></strong>:
+<ul><li>Now properly sets seed at function start for full reproducibility</li>
+<li>If seed = NULL, automatically defaults to 12345</li>
+</ul></li>
+<li>
+<strong>Fixed parallel processing memory errors</strong>:
+<ul><li>Resolved “11.31 GiB exceeds 500 MiB limit” error</li>
+<li>Pre-extracts model data to reduce memory usage in parallel workers</li>
+</ul></li>
+<li>
+<strong>Fixed progress bar error in <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code></strong>:
+<ul><li>Progress bars now use explicit IDs to avoid “Cannot find current progress bar” errors</li>
+<li>Properly handles progress bar lifecycle with NULL checks</li>
+</ul></li>
+<li>
+<strong>Fixed parallel processing error “could not find function rate_sequential_cv”</strong>:
+<ul><li>Internal function <code>rate_sequential_cv</code> is now exported (marked as internal) to be available to parallel workers</li>
+<li>Function is explicitly passed to parallel workers via <code>future.globals</code> to ensure availability</li>
+<li>Required packages (margot, grf, cli) are loaded in each worker</li>
+<li>Added check for package installation - parallel processing requires margot to be installed</li>
+<li>When using <code><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">devtools::load_all()</a></code>, the function automatically falls back to sequential processing</li>
+<li>Clear warning message guides users to either install the package or use <code>parallel = FALSE</code>
+</li>
+<li>This resolves the “could not find function” error when using <code>parallel = TRUE</code>
+</li>
+<li>Parallel processing now shows elapsed time after completion for each target</li>
+<li>Function remains internal and should not be called directly by users</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.171" id="id_2025-07-28-margot-10171">[2025-07-28] margot 1.0.171<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10171"></a></h2>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-171">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-171"></a></h4>
+<ul><li>
+<strong>Multiple testing correction defaults changed</strong>:
+<ul><li>
+<code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> now defaults to <code>adjust = "none"</code> (was “BH”)</li>
+<li>
+<code><a href="../reference/margot_rate.html">margot_rate()</a></code> now defaults to <code>adjust = "none"</code> (was NULL)</li>
+<li>
+<code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> now only accepts “bonferroni” or “none” for <code>adjust</code> parameter</li>
+<li>Other methods are rejected with informative error message</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="new-features-1-0-171">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-171"></a></h4>
+<ul><li>
+<strong>Visualization for CV heterogeneity tests</strong>:
+<ul><li>New <code><a href="../reference/margot_plot_cv_results.html">margot_plot_cv_results()</a></code> function creates forest plots for CV test results</li>
+<li>New <code><a href="../reference/margot_plot_cv_summary.html">margot_plot_cv_summary()</a></code> function shows summary of significant vs non-significant models</li>
+<li>Both functions provide appropriate visualizations for hypothesis test results (not RATE curves)</li>
+</ul></li>
+<li>
+<strong>Enhanced CV heterogeneity testing</strong>:
+<ul><li>
+<code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> now defaults to testing both AUTOC and QINI targets</li>
+<li>Added <code>label_mapping</code> parameter for custom model labels in results and plots</li>
+<li>Improved interpretation for dual-target testing showing concordance and differences</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-171">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-171"></a></h4>
+<ul><li>
+<strong>Statistical validity for CV correction</strong>:
+<ul><li>Clear documentation that BH/BY/FDR methods are not appropriate for CV</li>
+<li>Added recommendation to use alpha = 0.2 with Bonferroni correction</li>
+<li>Improved error messages and warnings for adjustment methods</li>
+</ul></li>
+<li>
+<strong>Better handling of CV results in plotting functions</strong>:
+<ul><li>
+<code><a href="../reference/margot_plot_rate.html">margot_plot_rate()</a></code> now detects CV results and suggests using <code><a href="../reference/margot_plot_cv_results.html">margot_plot_cv_results()</a></code>
+</li>
+<li>
+<code><a href="../reference/margot_plot_rate_batch.html">margot_plot_rate_batch()</a></code> similarly provides informative error messages</li>
+<li>Clear distinction between hypothesis test visualizations and RATE curve plots</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.170" id="id_2025-07-28-margot-10170">[2025-07-28] margot 1.0.170<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10170"></a></h2>
 <blockquote>
 <p><strong>⚠️ IMPORTANT NOTICE</strong>: This development version of the margot package is undergoing significant refactoring as we transition to the <strong>margotverse</strong> suite of packages. This package is currently for the author’s lab use only. The package will be split into focused, single-responsibility packages including margot.core, margot.lmtp, margot.grf, margot.viz, and others. Please expect breaking changes in upcoming releases.</p>
 </blockquote>
 <div class="section level4">
-<h4 id="breaking-changes-1-0-160">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-160"></a></h4>
+<h4 id="breaking-changes-1-0-170">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-170"></a></h4>
 <ul><li>
 <strong>Parameter deprecation</strong>: <code>qini_train_prop</code> is now deprecated in favor of <code>train_prop</code> with default value 0.5
 <ul><li>Backward compatibility maintained with deprecation warning</li>
@@ -46,7 +192,7 @@
 </ul></li>
 </ul></div>
 <div class="section level4">
-<h4 id="new-features-1-0-160">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-160"></a></h4>
+<h4 id="new-features-1-0-170">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-170"></a></h4>
 <ul><li>
 <strong>Cost sensitivity analysis for QINI curves</strong>:
 <ul><li>Added <code>treatment_cost</code> parameter throughout QINI functionality</li>
@@ -74,9 +220,23 @@
 <li>Budget x-axis shows treatment allocation under budget constraints</li>
 <li>Automatically detects appropriate x-axis type based on data</li>
 </ul></li>
+<li>
+<strong>Cross-validation heterogeneity testing</strong>:
+<ul><li>New <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> function implementing GRF’s uncorrelated sequential CV approach</li>
+<li>Integrated CV option in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> with <code>use_cross_validation</code> parameter</li>
+<li>Provides robust heterogeneity testing that avoids overfitting</li>
+<li>Parallel processing support (currently experimental, disabled by default)</li>
+</ul></li>
+<li>
+<strong>Enhanced reproducibility</strong>:
+<ul><li>Added <code>seed</code> parameter to <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> and <code><a href="../reference/margot_policy.html">margot_policy()</a></code>
+</li>
+<li>Ensures consistent results across all sub-computations</li>
+<li>Default seed = 12345 for all functions</li>
+</ul></li>
 </ul></div>
 <div class="section level4">
-<h4 id="improvements-1-0-160">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-160"></a></h4>
+<h4 id="improvements-1-0-170">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-170"></a></h4>
 <ul><li>
 <strong>Cost invariance property documentation</strong>:
 <ul><li>Added extensive documentation explaining that relative benefit of CATE vs ATE targeting remains constant with uniform costs</li>
@@ -89,9 +249,18 @@
 <li>Improved error messages for missing data or model components</li>
 <li>Fixed treatment_cost initialization order to prevent NULL issues</li>
 </ul></li>
+<li>
+<strong>Multiple testing correction updates</strong>:
+<ul><li>Changed default <code>adjust</code> parameter to “none” in both <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> and <code><a href="../reference/margot_rate.html">margot_rate()</a></code>
+</li>
+<li>Restricted <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> to only accept “bonferroni” or “none” for statistical validity</li>
+<li>Other methods (BH/BY/FDR) are not appropriate for CV due to martingale aggregation</li>
+<li>Added recommendation to use alpha = 0.2 with Bonferroni due to its conservative nature</li>
+<li>Clear documentation explaining why only these methods are valid for CV</li>
+</ul></li>
 </ul></div>
 <div class="section level4">
-<h4 id="bug-fixes-1-0-160">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-160"></a></h4>
+<h4 id="bug-fixes-1-0-170">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-170"></a></h4>
 <ul><li>Fixed “invalid ‘type’ (closure)” error in <code><a href="../reference/margot_rate.html">margot_rate()</a></code> by properly handling <code>q</code> parameter</li>
 <li>Fixed RATE plot titles to correctly display target (AUTOC or QINI)</li>
 <li>Fixed QINI regeneration to detect treatment_cost changes</li>
@@ -102,14 +271,30 @@
 <li>Fixed “$ operator is invalid for atomic vectors” error by creating <code><a href="../reference/margot_plot_qini_direct.html">margot_plot_qini_direct()</a></code>
 </li>
 <li>Fixed “invalid ‘x’ type in ‘x &amp;&amp; y’” error by using proper boolean variables</li>
+<li>Fixed pkgdown build error by adding missing functions to _pkgdown.yml reference</li>
+<li>Fixed reproducibility issue in compute_rate_on_demand by adding default seed = 12345</li>
+<li>Fixed evidence type classification in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code>:
+<ul><li>QINI curves now properly treated as exploratory evidence (sensitive to spend levels)</li>
+<li>RATE positive results now correctly classified as “targeting_opportunity”</li>
+<li>Only RATE can produce negative evidence (differential prediction is positive/inconclusive only)</li>
+<li>Added new “exploratory_only” category for models with only QINI curve evidence</li>
+</ul></li>
 </ul></div>
 <div class="section level4">
-<h4 id="internal-changes-1-0-160">Internal Changes<a class="anchor" aria-label="anchor" href="#internal-changes-1-0-160"></a></h4>
+<h4 id="known-issues-1-0-170">Known Issues<a class="anchor" aria-label="anchor" href="#known-issues-1-0-170"></a></h4>
+<ul><li>Parallel processing in <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> may encounter memory issues with large model objects due to environment capture. Parallel processing is disabled by default. To enable at your own risk, use <code>parallel = TRUE</code> and increase memory limit with <code>options(future.globals.maxSize = 15 * 1024^3)</code>
+</li>
+</ul></div>
+<div class="section level4">
+<h4 id="internal-changes-1-0-170">Internal Changes<a class="anchor" aria-label="anchor" href="#internal-changes-1-0-170"></a></h4>
 <ul><li>Created <code><a href="../reference/margot_generate_qini_data.html">margot_generate_qini_data()</a></code> for on-demand QINI generation</li>
 <li>Created <code><a href="../reference/margot_plot_qini_direct.html">margot_plot_qini_direct()</a></code> for plotting pre-computed QINI data</li>
 <li>Updated all maq() calls to properly pass treatment_cost parameter</li>
 <li>Implemented budget-based generation in <code><a href="../reference/margot_qini_simple_baseline.html">margot_qini_simple_baseline()</a></code>
 </li>
+<li>Added <code><a href="../reference/compute_rate_on_demand.html">compute_rate_on_demand()</a></code> helper for consistent RATE computation</li>
+<li>Added <code><a href="../reference/convert_cv_to_rate_results.html">convert_cv_to_rate_results()</a></code> for CV result format conversion</li>
+<li>Implemented <code><a href="../reference/rate_sequential_cv.html">rate_sequential_cv()</a></code> for martingale-based CV aggregation</li>
 </ul></div>
 </div>
     <div class="section level2">

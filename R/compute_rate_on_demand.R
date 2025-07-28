@@ -15,7 +15,7 @@
 #' @param use_oob_predictions Logical; if TRUE and tau_hat is NULL, use out-of-bag
 #'   predictions for better validity (default TRUE)
 #' @param verbose Logical; print informative messages (default FALSE)
-#' @param seed Optional random seed for reproducibility
+#' @param seed Random seed for reproducibility (default 12345)
 #' @param ... Additional arguments passed to grf::rank_average_treatment_effect()
 #'
 #' @return A rank_average_treatment_effect object from grf
@@ -39,7 +39,7 @@ compute_rate_on_demand <- function(forest,
                                   subset = NULL,
                                   use_oob_predictions = TRUE,
                                   verbose = FALSE,
-                                  seed = NULL,
+                                  seed = 12345,
                                   ...) {
   
   # validate inputs

@@ -15,7 +15,10 @@ generate_extended_report(
   spend_levels,
   label_mapping,
   alpha = 0.05,
-  adjust = "BH"
+  adjust = "BH",
+  use_cross_validation = FALSE,
+  cv_num_folds = NULL,
+  cv_results = NULL
 )
 }
 \description{

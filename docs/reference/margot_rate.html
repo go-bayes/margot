@@ -9,7 +9,7 @@ both sorted by descending RATE Estimate, with reliable results highlighted in bo
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.160</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.180</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,9 +53,9 @@ both sorted by descending RATE Estimate, with reliable results highlighted in bo
 <span>  remove_z_suffix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  remove_underscores <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  adjust <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  adjust <span class="op">=</span> <span class="st">"none"</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  apply_adjustment <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">adjust</span><span class="op">)</span>,</span>
+<span>  apply_adjustment <span class="op">=</span> <span class="va">adjust</span> <span class="op">!=</span> <span class="st">"none"</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
 <span>  use_evaluation_subset <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AUTOC"</span>, <span class="st">"QINI"</span><span class="op">)</span>,</span>
@@ -111,13 +111,16 @@ Note: Only positive significant effects are bolded, negative effects are not bol
 
 
 <dt id="arg-adjust">adjust<a class="anchor" aria-label="anchor" href="#arg-adjust"></a></dt>
-<dd><p>Character; method for adjusting p-values, passed to stats::p.adjust().
-Options include "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none".
-Default is NULL (no adjustment).</p></dd>
+<dd><p>Character; method for adjusting p-values. Only "bonferroni" or "none"
+are recommended. While other methods are technically available through stats::p.adjust(),
+they may not be appropriate for all contexts (e.g., cross-validation). Default is "none".
+When using Bonferroni, consider alpha = 0.2 due to its conservative nature.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Numeric; significance threshold (default 0.05).</p></dd>
+<dd><p>Numeric; significance threshold (default 0.05). When using Bonferroni
+correction with noisy heterogeneous treatment effect models, alpha = 0.2 may be
+more appropriate to maintain reasonable statistical power.</p></dd>
 
 
 <dt id="arg-apply-adjustment">apply_adjustment<a class="anchor" aria-label="anchor" href="#arg-apply-adjustment"></a></dt>

@@ -15,9 +15,9 @@ margot_rate(
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
   remove_underscores = TRUE,
-  adjust = NULL,
+  adjust = "none",
   alpha = 0.05,
-  apply_adjustment = !is.null(adjust),
+  apply_adjustment = adjust != "none",
   seed = 12345,
   use_evaluation_subset = TRUE,
   target = c("AUTOC", "QINI"),
@@ -48,11 +48,14 @@ Note: Only positive significant effects are bolded, negative effects are not bol
 
 \item{remove_underscores}{Logical; replace underscores with spaces (default TRUE).}
 
-\item{adjust}{Character; method for adjusting p-values, passed to stats::p.adjust().
-Options include "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none".
-Default is NULL (no adjustment).}
+\item{adjust}{Character; method for adjusting p-values. Only "bonferroni" or "none" 
+are recommended. While other methods are technically available through stats::p.adjust(),
+they may not be appropriate for all contexts (e.g., cross-validation). Default is "none".
+When using Bonferroni, consider alpha = 0.2 due to its conservative nature.}
 
-\item{alpha}{Numeric; significance threshold (default 0.05).}
+\item{alpha}{Numeric; significance threshold (default 0.05). When using Bonferroni
+correction with noisy heterogeneous treatment effect models, alpha = 0.2 may be
+more appropriate to maintain reasonable statistical power.}
 
 \item{apply_adjustment}{Logical; if TRUE, compute p-values and apply adjustment method.
 If FALSE, just document the adjustment method without recomputing. Default is TRUE when

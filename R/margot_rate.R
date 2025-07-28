@@ -135,10 +135,13 @@ margot_rate_batch <- function(model_results,
 #' @param remove_z_suffix Logical; remove z-score suffix from variable names (default TRUE).
 #' @param use_title_case Logical; convert variable names to title case (default TRUE).
 #' @param remove_underscores Logical; replace underscores with spaces (default TRUE).
-#' @param adjust Character; method for adjusting p-values, passed to stats::p.adjust().
-#'   Options include "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none".
-#'   Default is NULL (no adjustment).
-#' @param alpha Numeric; significance threshold (default 0.05).
+#' @param adjust Character; method for adjusting p-values. Only "bonferroni" or "none" 
+#'   are recommended. While other methods are technically available through stats::p.adjust(),
+#'   they may not be appropriate for all contexts (e.g., cross-validation). Default is "none".
+#'   When using Bonferroni, consider alpha = 0.2 due to its conservative nature.
+#' @param alpha Numeric; significance threshold (default 0.05). When using Bonferroni
+#'   correction with noisy heterogeneous treatment effect models, alpha = 0.2 may be
+#'   more appropriate to maintain reasonable statistical power.
 #' @param apply_adjustment Logical; if TRUE, compute p-values and apply adjustment method.
 #'   If FALSE, just document the adjustment method without recomputing. Default is TRUE when
 #'   adjust parameter is provided, FALSE otherwise.
@@ -168,9 +171,9 @@ margot_rate <- function(models,
                         remove_z_suffix = TRUE,
                         use_title_case = TRUE,
                         remove_underscores = TRUE,
-                        adjust = NULL,
+                        adjust = "none",
                         alpha = 0.05,
-                        apply_adjustment = !is.null(adjust),
+                        apply_adjustment = adjust != "none",
                         seed = 12345,
                         use_evaluation_subset = TRUE,
                         target = c("AUTOC", "QINI"),
@@ -225,7 +228,7 @@ margot_rate <- function(models,
       )
 
     # If adjustment is requested and should be applied
-    if (!is.null(adjust) && apply_adjustment) {
+    if (adjust != "none" && apply_adjustment) {
       # Calculate p-values based on z-scores (two-tailed test)
       tab <- tab %>%
         dplyr::mutate(
@@ -249,7 +252,7 @@ margot_rate <- function(models,
     }
 
     # Add adjustment information as attributes for interpretation functions
-    if (!is.null(adjust)) {
+    if (adjust != "none") {
       attr(tab, "adjust") <- adjust
       attr(tab, "alpha") <- alpha
       attr(tab, "apply_adjustment") <- apply_adjustment
@@ -327,7 +330,7 @@ margot_interpret_rate <- function(rate_df,
   total_hypotheses <- attr(rate_df, "total_hypotheses")
 
   # determine pos/neg/inconclusive as before
-  if (!is.null(adjust) && apply_adjustment && "is_significant" %in% names(rate_df)) {
+  if (!is.null(adjust) && adjust != "none" && apply_adjustment && "is_significant" %in% names(rate_df)) {
     pos   <- which(rate_df$is_significant & rate_df$`RATE Estimate` > 0)
     neg   <- which(rate_df$is_significant & rate_df$`RATE Estimate` < 0)
     incon <- setdiff(seq_len(nrow(rate_df)), union(pos, neg))
@@ -392,7 +395,7 @@ margot_interpret_rate <- function(rate_df,
 
   # inconclusive
   if (length(incon) > 0) {
-    significance_text <- if (!is.null(adjust) && apply_adjustment) {
+    significance_text <- if (!is.null(adjust) && adjust != "none" && apply_adjustment) {
       if (adjust %in% c("BH", "BY", "fdr")) {
         sprintf("adjusted p-values not meeting the FDR threshold of q = %.2f", alpha)
       } else {
@@ -561,7 +564,7 @@ margot_interpret_rate_comparison <- function(autoc_df,
   total_hypotheses <- attr(autoc_df, "total_hypotheses")
 
   # Determine positive and negative models
-  if (!is.null(adjust) && apply_adjustment && "is_significant" %in% names(autoc_df)) {
+  if (!is.null(adjust) && adjust != "none" && apply_adjustment && "is_significant" %in% names(autoc_df)) {
     # positives by adjusted p-value
     pos_autoc <- autoc_df$model[autoc_df$is_significant & autoc_df$`RATE Estimate` > 0]
     pos_qini  <- qini_df$model[qini_df$is_significant & qini_df$`RATE Estimate` > 0]
@@ -604,12 +607,12 @@ margot_interpret_rate_comparison <- function(autoc_df,
   )
 
   # Pre-specification and adjustment details
-  if (is.null(adjust) || !apply_adjustment) {
+  if (is.null(adjust) || adjust == "none" || !apply_adjustment) {
     parts <- c(parts,
                sprintf("All %d outcomes were prespecified, and interpretations are based on 95%% confidence intervals without multiple testing correction.",
                        length(all_autoc))
     )
-  } else if (!is.null(adjust) && adjust != "none") {
+  } else if (adjust != "none") {
     is_fdr <- adjust %in% c("BH","BY","fdr")
     if (is_fdr) {
       parts <- c(parts,

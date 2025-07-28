@@ -42,6 +42,14 @@ margot_plot_rate_batch <- function(models_binary,
     stop("Package 'margot' is required but not installed. Please install it first.")
   }
 
+  # check if input is CV results
+  if (inherits(models_binary, "margot_cv_results")) {
+    stop("Cannot create RATE plots from cross-validation results.\n",
+         "CV results contain hypothesis tests, not RATE curves.\n",
+         "Please use margot_plot_cv_results() for a forest plot visualization.\n",
+         "To plot RATE curves, use the original causal forest results instead.")
+  }
+
   target <- match.arg(target)
   cli::cli_h1("Margot Batch RATE Plots ({target})")
 

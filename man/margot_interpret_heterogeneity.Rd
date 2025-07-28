@@ -18,7 +18,13 @@ margot_interpret_heterogeneity(
   include_extended_report = FALSE,
   rate_results = NULL,
   qini_results = NULL,
-  omnibus_results = NULL
+  omnibus_results = NULL,
+  use_cross_validation = FALSE,
+  cv_num_folds = 5,
+  cv_results = NULL,
+  seed = 12345,
+  parallel = FALSE,
+  n_cores = future::availableCores() - 1
 )
 }
 \arguments{
@@ -61,6 +67,21 @@ with full statistics and confidence intervals. Default is FALSE.}
 \item{qini_results}{Optional pre-computed QINI results to skip computation.}
 
 \item{omnibus_results}{Optional pre-computed omnibus test results to skip computation.}
+
+\item{use_cross_validation}{Logical. If TRUE, use cross-validation for RATE tests
+instead of standard approach (default FALSE).}
+
+\item{cv_num_folds}{Integer. Number of CV folds when use_cross_validation = TRUE (default 5).}
+
+\item{cv_results}{Optional pre-computed CV results to skip computation.}
+
+\item{seed}{Integer. Random seed for reproducibility in all computations (default 12345).}
+
+\item{parallel}{Logical. Use parallel processing for cross-validation when use_cross_validation = TRUE 
+(default FALSE). Note: Parallel processing is experimental and may encounter memory issues.}
+
+\item{n_cores}{Integer. Number of cores for parallel processing when parallel = TRUE 
+(default all cores - 1). Only applies when use_cross_validation = TRUE.}
 }
 \value{
 A list containing:
@@ -110,6 +131,17 @@ het_evidence <- margot_interpret_heterogeneity(
   models = causal_forest_results,
   rate_results = my_rate_results,
   require_omnibus = TRUE
+)
+
+# Using cross-validation instead of standard RATE
+het_evidence_cv <- margot_interpret_heterogeneity(
+  models = causal_forest_results,
+  use_cross_validation = TRUE,
+  cv_num_folds = 5,
+  alpha = 0.2,  # Higher alpha recommended for Bonferroni with CV
+  adjust = "bonferroni",
+  parallel = TRUE,  # Enable parallel processing for faster CV
+  n_cores = 4
 )
 }
 

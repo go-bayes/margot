@@ -16,7 +16,8 @@ margot_policy(
   output_objects = c("policy_tree", "decision_tree", "combined_plot", "qini_plot",
     "diff_gain_summaries"),
   qini_args = list(),
-  baseline_method = "maq_no_covariates"
+  baseline_method = "maq_no_covariates",
+  seed = 12345
 )
 }
 \arguments{
@@ -44,6 +45,8 @@ Default: all.}
 
 \item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
 "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
+
+\item{seed}{Integer. Random seed for reproducibility in QINI computations (default 12345).}
 }
 \value{
 A named list; each element corresponds to a model and contains only

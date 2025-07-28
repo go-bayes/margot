@@ -13,7 +13,7 @@ compute_rate_on_demand(
   subset = NULL,
   use_oob_predictions = TRUE,
   verbose = FALSE,
-  seed = NULL,
+  seed = 12345,
   ...
 )
 }
@@ -37,7 +37,7 @@ predictions for better validity (default TRUE)}
 
 \item{verbose}{Logical; print informative messages (default FALSE)}
 
-\item{seed}{Optional random seed for reproducibility}
+\item{seed}{Random seed for reproducibility (default 12345)}
 
 \item{...}{Additional arguments passed to grf::rank_average_treatment_effect()}
 }

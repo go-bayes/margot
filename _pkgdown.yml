@@ -118,6 +118,7 @@ reference:
     - margot_qini
     - margot_rate
     - margot_rate_batch
+    - margot_rate_cv
     - margot_recompute_qini_aipw
     - margot_recompute_qini_ipw
     - margot_rescue_qini
@@ -143,6 +144,8 @@ reference:
     - margot_plot_rate
     - margot_plot_rate_batch
     - margot_plot_tau
+    - margot_plot_cv_results
+    - margot_plot_cv_summary
 
   - title: "Utility functions"
     contents:

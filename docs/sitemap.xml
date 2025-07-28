@@ -55,6 +55,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_metrics.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_rate_on_demand.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/construct_formula.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/convert_cv_to_rate_results.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/create_cv_interpretation.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_evidence_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_fallback_qini_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/create_fallback_qini_objects.html</loc></url>
@@ -168,6 +170,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_boxplot_covariate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_categorical.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_create_options.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_cv_results.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_cv_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_decision_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_discontinuity.html</loc></url>
@@ -217,6 +221,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_qini_simple_baseline.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_rate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_rate_batch.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_rate_cv.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_rate_resistance.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_recalculate_policy_trees.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_recompute_ate.html</loc></url>
@@ -253,7 +258,9 @@
 <url><loc>https://go-bayes.github.io/margot/reference/prepare_panel_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/pretty_number.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/print.margot_causal_forest_dev.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/print.margot_cv_results.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/print.margot_qini_dev.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/rate_sequential_cv.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/read_multiple_images.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/recalculate_evalues.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/recalculate_policy_trees_single.html</loc></url>

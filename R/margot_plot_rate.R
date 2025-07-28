@@ -75,6 +75,13 @@ margot_plot_rate <- function(x,
                              use_oob_predictions = TRUE,
                              seed = NULL,
                              ...) {
+  # check if user passed CV results by mistake
+  if (inherits(x, "margot_cv_results")) {
+    stop("Cannot plot cross-validation results with margot_plot_rate().\n",
+         "CV results contain hypothesis tests, not RATE curves.\n",
+         "Please use margot_plot_cv_results() instead for a forest plot visualization.")
+  }
+  
   # check if we need to compute RATE on-demand
   if (inherits(x, "causal_forest")) {
     cli::cli_alert_info("Computing {target} on-demand from causal forest")
