@@ -42,8 +42,9 @@ show positive evidence in ANY method. If FALSE, require positive evidence
 in ALL methods.}
 
 \item{exclude_negative_any}{Logical. If TRUE (default), exclude models that 
-show negative evidence in ANY method. If FALSE, only exclude if negative 
-in ALL methods.}
+show negative evidence in ANY RATE test (AUTOC or QINI). Models with any 
+negative RATE evidence are classified as "excluded_negative_rate" and will 
+not appear in selected or exploratory lists.}
 
 \item{require_omnibus}{Logical. If TRUE, only include models that pass the 
 omnibus calibration test. Default is FALSE.}
@@ -93,13 +94,13 @@ instead of standard approach (default TRUE).}
 A list containing:
   \item{selected_model_ids}{Character vector of model IDs with heterogeneity evidence}
   \item{selected_model_names}{Character vector of human-readable model names}
-  \item{cautiously_selected_model_ids}{Character vector of model IDs with mixed evidence (positive in some tests but negative in others)}
-  \item{cautiously_selected_model_names}{Character vector of human-readable model names with mixed evidence}
-  \item{all_selected_model_ids}{Combined vector of selected_model_ids and cautiously_selected_model_ids}
-  \item{all_selected_model_names}{Combined vector of selected_model_names and cautiously_selected_model_names}
+  \item{exploratory_model_ids}{Character vector of model IDs with exploratory evidence (positive calibration or QINI curve, no negative RATE)}
+  \item{exploratory_model_names}{Character vector of human-readable model names with exploratory evidence}
+  \item{all_selected_model_ids}{Combined vector of selected_model_ids and exploratory_model_ids}
+  \item{all_selected_model_names}{Combined vector of selected_model_names and exploratory_model_names}
   \item{excluded_model_ids}{Character vector of model IDs to exclude}
   \item{excluded_model_names}{Character vector of human-readable excluded model names}
-  \item{evidence_summary}{Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring}
+  \item{evidence_summary}{Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Evidence types include: "excluded_negative_rate" (any negative RATE test), "evidence_for_heterogeneity" (positive RATE + omnibus), "targeting_opportunity" (positive RATE), "exploratory_evidence" (no negative RATE + positive calibration/QINI), "statistical_only" (only omnibus positive), "no_evidence". Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring}
   \item{interpretation}{Character string with main interpretation text organized by evidence categories}
   \item{summary}{Character string with brief summary}
   \item{recommendations}{Character string with actionable recommendations}

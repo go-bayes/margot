@@ -11,7 +11,7 @@ about which models show treatment effect heterogeneity."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.201</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.205</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -96,8 +96,9 @@ in ALL methods.</p></dd>
 
 <dt id="arg-exclude-negative-any">exclude_negative_any<a class="anchor" aria-label="anchor" href="#arg-exclude-negative-any"></a></dt>
 <dd><p>Logical. If TRUE (default), exclude models that
-show negative evidence in ANY method. If FALSE, only exclude if negative
-in ALL methods.</p></dd>
+show negative evidence in ANY RATE test (AUTOC or QINI). Models with any
+negative RATE evidence are classified as "excluded_negative_rate" and will
+not appear in selected or exploratory lists.</p></dd>
 
 
 <dt id="arg-require-omnibus">require_omnibus<a class="anchor" aria-label="anchor" href="#arg-require-omnibus"></a></dt>
@@ -185,17 +186,17 @@ instead of standard approach (default TRUE).</p></dd>
   <dt>selected_model_names</dt>
 <dd><p>Character vector of human-readable model names</p></dd>
 
-  <dt>cautiously_selected_model_ids</dt>
-<dd><p>Character vector of model IDs with mixed evidence (positive in some tests but negative in others)</p></dd>
+  <dt>exploratory_model_ids</dt>
+<dd><p>Character vector of model IDs with exploratory evidence (positive calibration or QINI curve, no negative RATE)</p></dd>
 
-  <dt>cautiously_selected_model_names</dt>
-<dd><p>Character vector of human-readable model names with mixed evidence</p></dd>
+  <dt>exploratory_model_names</dt>
+<dd><p>Character vector of human-readable model names with exploratory evidence</p></dd>
 
   <dt>all_selected_model_ids</dt>
-<dd><p>Combined vector of selected_model_ids and cautiously_selected_model_ids</p></dd>
+<dd><p>Combined vector of selected_model_ids and exploratory_model_ids</p></dd>
 
   <dt>all_selected_model_names</dt>
-<dd><p>Combined vector of selected_model_names and cautiously_selected_model_names</p></dd>
+<dd><p>Combined vector of selected_model_names and exploratory_model_names</p></dd>
 
   <dt>excluded_model_ids</dt>
 <dd><p>Character vector of model IDs to exclude</p></dd>
@@ -204,7 +205,7 @@ instead of standard approach (default TRUE).</p></dd>
 <dd><p>Character vector of human-readable excluded model names</p></dd>
 
   <dt>evidence_summary</dt>
-<dd><p>Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring</p></dd>
+<dd><p>Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Evidence types include: "excluded_negative_rate" (any negative RATE test), "evidence_for_heterogeneity" (positive RATE + omnibus), "targeting_opportunity" (positive RATE), "exploratory_evidence" (no negative RATE + positive calibration/QINI), "statistical_only" (only omnibus positive), "no_evidence". Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring</p></dd>
 
   <dt>interpretation</dt>
 <dd><p>Character string with main interpretation text organized by evidence categories</p></dd>

@@ -1,3 +1,53 @@
+# [2025-07-29] margot 1.0.205
+
+### Bug Fixes
+- **Fixed scope error in `create_evidence_summary()`**:
+  - Added `use_cross_validation` and `rate_results_list` parameters to function signature
+  - Resolves error: "object 'use_cross_validation' not found"
+  - These parameters are now properly passed from the main function to the evidence summary creation
+
+# [2025-07-29] margot 1.0.204
+
+### Improvements
+- **More precise negative RATE detection in `margot_interpret_heterogeneity()`**:
+  - Now correctly uses CV table Status column to identify statistically significant negative RATE results
+  - Only models with significant negative RATE (not just negative estimates) are flagged as "excluded_negative_rate"
+  - Inconclusive results are no longer misclassified as negative
+  - Enhanced recommendations to distinguish between:
+    - "AVOID targeting X" (statistically significant negative RATE - harmful)
+    - "Insufficient evidence for heterogeneity in Y" (no evidence found)
+    - "Statistical heterogeneity detected but no actionable targeting evidence for Z" (omnibus positive but RATE not positive)
+
+# [2025-07-29] margot 1.0.203
+
+### Bug Fixes
+- **Fixed extended report generation error in `margot_interpret_heterogeneity()`**:
+  - CV rate tables use `model_id` column, not `outcome` column
+  - Fixed column reference when looking up QINI and AUTOC results in extended reports
+  - Resolves error: "Unknown or uninitialised column: `outcome`"
+  
+### Improvements
+- **Enhanced recommendations in `margot_interpret_heterogeneity()`**:
+  - Now explains why models are excluded rather than just listing them
+  - Separates models with negative RATE evidence (avoid due to reduced effectiveness) from models with no evidence
+  - Provides clearer guidance: "Avoid targeting X due to negative RATE evidence" vs "No heterogeneity evidence found for Y"
+
+# [2025-07-28] margot 1.0.202
+
+### Breaking Changes
+- **Revised heterogeneity evidence classification in `margot_interpret_heterogeneity()`**:
+  - Removed "mixed_evidence_caution" category for models with conflicting RATE results
+  - Any model with negative RATE evidence (AUTOC or QINI) is now excluded entirely
+  - Added new "exploratory_evidence" category for models with no negative RATE tests AND positive calibration or QINI curve
+  - Changed return structure: replaced `cautiously_selected_model_ids/names` with `exploratory_model_ids/names`
+  - `all_selected_model_ids` now combines selected + exploratory (not cautiously selected)
+  - Added warning when models are excluded due to negative RATE evidence
+  - New evidence_type values: "excluded_negative_rate", "exploratory_evidence" (replaces "mixed_evidence_caution")
+  - This ensures more conservative selection by strictly excluding any model with verified negative heterogeneity
+
+### Improvements
+- **Changed default `parallel = FALSE` in `margot_interpret_heterogeneity()`**: Serial processing is currently faster than parallel for this function
+
 # [2025-07-28] margot 1.0.201
 
 ### Bug Fixes
@@ -6,6 +56,12 @@
   - CV rate tables now properly display transformed model names (e.g., "Personal Well-being Index" instead of "model_t2_pwi_z")
   - Fixed label transformation logic in `margot_rate_cv()` to use proper list indexing
   - Ensures consistency between evidence summary table and rate result tables
+  
+### Documentation
+- **Updated citations to distinguish methodologies**:
+  - Wager (2024) now correctly cited for sequential cross-validation methodology
+  - Nie & Wager (2020) cited for general RATE (Rank Average Treatment Effect) approach
+  - Fixed citation from incorrect "2021" to correct "2020" for Nie & Wager throughout codebase
 
 # [2025-07-28] margot 1.0.200
 

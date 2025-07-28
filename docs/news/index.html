@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.201</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.205</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,80 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.205" id="id_2025-07-29-margot-10205">[2025-07-29] margot 1.0.205<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10205"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-205">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-205"></a></h4>
+<ul><li>
+<strong>Fixed scope error in <code><a href="../reference/create_evidence_summary.html">create_evidence_summary()</a></code></strong>:
+<ul><li>Added <code>use_cross_validation</code> and <code>rate_results_list</code> parameters to function signature</li>
+<li>Resolves error: “object ‘use_cross_validation’ not found”</li>
+<li>These parameters are now properly passed from the main function to the evidence summary creation</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.204" id="id_2025-07-29-margot-10204">[2025-07-29] margot 1.0.204<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10204"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-204">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-204"></a></h4>
+<ul><li>
+<strong>More precise negative RATE detection in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>Now correctly uses CV table Status column to identify statistically significant negative RATE results</li>
+<li>Only models with significant negative RATE (not just negative estimates) are flagged as “excluded_negative_rate”</li>
+<li>Inconclusive results are no longer misclassified as negative</li>
+<li>Enhanced recommendations to distinguish between:
+<ul><li>“AVOID targeting X” (statistically significant negative RATE - harmful)</li>
+<li>“Insufficient evidence for heterogeneity in Y” (no evidence found)</li>
+<li>“Statistical heterogeneity detected but no actionable targeting evidence for Z” (omnibus positive but RATE not positive)</li>
+</ul></li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.203" id="id_2025-07-29-margot-10203">[2025-07-29] margot 1.0.203<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10203"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-203">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-203"></a></h4>
+<ul><li>
+<strong>Fixed extended report generation error in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>CV rate tables use <code>model_id</code> column, not <code>outcome</code> column</li>
+<li>Fixed column reference when looking up QINI and AUTOC results in extended reports</li>
+<li>Resolves error: “Unknown or uninitialised column: <code>outcome</code>”</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-203">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-203"></a></h4>
+<ul><li>
+<strong>Enhanced recommendations in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>Now explains why models are excluded rather than just listing them</li>
+<li>Separates models with negative RATE evidence (avoid due to reduced effectiveness) from models with no evidence</li>
+<li>Provides clearer guidance: “Avoid targeting X due to negative RATE evidence” vs “No heterogeneity evidence found for Y”</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.202" id="id_2025-07-28-margot-10202">[2025-07-28] margot 1.0.202<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10202"></a></h2>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-202">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-202"></a></h4>
+<ul><li>
+<strong>Revised heterogeneity evidence classification in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>Removed “mixed_evidence_caution” category for models with conflicting RATE results</li>
+<li>Any model with negative RATE evidence (AUTOC or QINI) is now excluded entirely</li>
+<li>Added new “exploratory_evidence” category for models with no negative RATE tests AND positive calibration or QINI curve</li>
+<li>Changed return structure: replaced <code>cautiously_selected_model_ids/names</code> with <code>exploratory_model_ids/names</code>
+</li>
+<li>
+<code>all_selected_model_ids</code> now combines selected + exploratory (not cautiously selected)</li>
+<li>Added warning when models are excluded due to negative RATE evidence</li>
+<li>New evidence_type values: “excluded_negative_rate”, “exploratory_evidence” (replaces “mixed_evidence_caution”)</li>
+<li>This ensures more conservative selection by strictly excluding any model with verified negative heterogeneity</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-202">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-202"></a></h4>
+<ul><li>
+<strong>Changed default <code>parallel = FALSE</code> in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>: Serial processing is currently faster than parallel for this function</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.201" id="id_2025-07-28-margot-10201">[2025-07-28] margot 1.0.201<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10201"></a></h2>
 <div class="section level4">
 <h4 id="bug-fixes-1-0-201">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-201"></a></h4>
@@ -44,6 +118,15 @@
 <li>CV rate tables now properly display transformed model names (e.g., “Personal Well-being Index” instead of “model_t2_pwi_z”)</li>
 <li>Fixed label transformation logic in <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> to use proper list indexing</li>
 <li>Ensures consistency between evidence summary table and rate result tables</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="documentation-1-0-201">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-201"></a></h4>
+<ul><li>
+<strong>Updated citations to distinguish methodologies</strong>:
+<ul><li>Wager (2024) now correctly cited for sequential cross-validation methodology</li>
+<li>Nie &amp; Wager (2020) cited for general RATE (Rank Average Treatment Effect) approach</li>
+<li>Fixed citation from incorrect “2021” to correct “2020” for Nie &amp; Wager throughout codebase</li>
 </ul></li>
 </ul></div>
 </div>
