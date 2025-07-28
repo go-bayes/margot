@@ -13,7 +13,7 @@ functionality of margot_rate() and margot_qini()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.183</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.199</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,8 @@ functionality of margot_rate() and margot_qini().</p>
 <span>  train_proportion <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">12345</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
+<span>  tree_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"policytree"</span>, <span class="st">"fastpolicytree"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -116,6 +117,13 @@ available data but only the selected covariates (same as depth-2).</p></dd>
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Integer; base seed for reproducible computations (default 12345).</p></dd>
+
+
+<dt id="arg-tree-method">tree_method<a class="anchor" aria-label="anchor" href="#arg-tree-method"></a></dt>
+<dd><p>Character string specifying the package to use: "policytree"
+(default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
+computation with identical results. Falls back to policytree if fastpolicytree
+is not installed.</p></dd>
 
 </dl></div>
     <div class="section level2">

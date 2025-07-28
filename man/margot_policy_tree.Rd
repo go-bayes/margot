@@ -14,7 +14,8 @@ margot_policy_tree(
   train_proportion = 0.5,
   label_mapping = NULL,
   verbose = TRUE,
-  seed = 12345
+  seed = 12345,
+  tree_method = c("policytree", "fastpolicytree")
 )
 }
 \arguments{
@@ -51,6 +52,11 @@ available data but only the selected covariates (same as depth-2).}
 \item{verbose}{Logical; print progress messages (default TRUE).}
 
 \item{seed}{Integer; base seed for reproducible computations (default 12345).}
+
+\item{tree_method}{Character string specifying the package to use: "policytree" 
+(default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
+computation with identical results. Falls back to policytree if fastpolicytree
+is not installed.}
 }
 \value{
 A list structured similarly to margot_causal_forest() output, containing:

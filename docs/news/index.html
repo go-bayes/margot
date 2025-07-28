@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.183</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.199</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,209 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.199" id="id_2025-07-28-margot-10199">[2025-07-28] margot 1.0.199<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10199"></a></h2>
+<div class="section level4">
+<h4 id="new-features-1-0-199">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-199"></a></h4>
+<ul><li>
+<strong>Extended fastpolicytree support to policy tree functions</strong>:
+<ul><li>Added <code>tree_method</code> parameter to <code><a href="../reference/margot_recalculate_policy_trees.html">margot_recalculate_policy_trees()</a></code>
+</li>
+<li>This function now uses the internal <code><a href="../reference/dot-compute_policy_tree.html">.compute_policy_tree()</a></code> wrapper for consistent method handling</li>
+<li>Users can benefit from 10x faster policy tree computation when recalculating trees with custom covariates</li>
+</ul></li>
+<li>
+<strong>Added automatic labelling to diagnostic functions</strong>:
+<ul><li>Enhanced <code><a href="../reference/transform_var_name.html">transform_var_name()</a></code> to handle <code>_r</code> suffix (converts to “(reduced) {var_name}”)</li>
+<li>Enhanced <code><a href="../reference/transform_var_name.html">transform_var_name()</a></code> to handle <code>_log</code> pattern (converts to “{var_name} (log)”)</li>
+<li>Added <code>label_mapping</code> parameter to <code><a href="../reference/margot_assess_variable_correlation.html">margot_assess_variable_correlation()</a></code>
+</li>
+<li>Added <code>label_mapping</code> parameter to <code><a href="../reference/margot_identify_variable_clusters.html">margot_identify_variable_clusters()</a></code>
+</li>
+<li>Added <code>label_mapping</code> parameter to <code><a href="../reference/margot_interpret_bootstrap.html">margot_interpret_bootstrap()</a></code>
+</li>
+<li>All functions now automatically transform variable names when no label mapping provided</li>
+<li>Model names in output are also transformed (e.g., “model_t2_kessler_latent_depression_z_r” becomes “(reduced) Kessler Latent Depression”)</li>
+<li>Correlation plots now show human-readable labels instead of raw variable names</li>
+<li>Cluster analysis output uses labeled variable names for better interpretability</li>
+<li>Bootstrap interpretation now uses labeled variable and model names throughout</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.198" id="id_2025-07-28-margot-10198">[2025-07-28] margot 1.0.198<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10198"></a></h2>
+<div class="section level4">
+<h4 id="documentation-1-0-198">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-198"></a></h4>
+<ul><li>
+<strong>Enhanced <code><a href="../reference/margot_policy_tree_bootstrap.html">margot_policy_tree_bootstrap()</a></code> documentation</strong>:
+<ul><li>Added complete workflow example showing all diagnostic steps</li>
+<li>Shows how to use correlation analysis with bootstrap results</li>
+<li>Clarifies that correlation analysis needs original causal forest results</li>
+<li>Added examples of all related diagnostic functions</li>
+<li>Added <a href="https://github.com/seealso" class="external-link">@seealso</a> section for related functions</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.197" id="id_2025-07-28-margot-10197">[2025-07-28] margot 1.0.197<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10197"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-197">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-197"></a></h4>
+<ul><li>
+<strong>Fixed hanging issue in <code><a href="../reference/margot_assess_variable_correlation.html">margot_assess_variable_correlation()</a></code></strong>:
+<ul><li>Now properly detects and rejects bootstrap results with helpful error message</li>
+<li>Improved covariate data detection with multiple fallback locations</li>
+<li>Can use test set covariates from plot_data as last resort</li>
+<li>Better error messages guide users to use original causal forest results</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.196" id="id_2025-07-28-margot-10196">[2025-07-28] margot 1.0.196<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10196"></a></h2>
+<div class="section level4">
+<h4 id="new-features-1-0-196">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-196"></a></h4>
+<ul><li>
+<strong>Added support for fastpolicytree package</strong>:
+<ul><li>New <code>tree_method</code> parameter in <code><a href="../reference/margot_policy_tree.html">margot_policy_tree()</a></code> and <code><a href="../reference/margot_policy_tree_bootstrap.html">margot_policy_tree_bootstrap()</a></code>
+</li>
+<li>Allows users to choose between “policytree” (default) and “fastpolicytree”</li>
+<li>fastpolicytree provides ~10x faster computation with identical results</li>
+<li>Particularly beneficial for bootstrap analysis with hundreds of iterations</li>
+<li>Falls back gracefully to policytree if fastpolicytree is not installed</li>
+<li>Added fastpolicytree to Suggests in DESCRIPTION</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="technical-changes-1-0-196">Technical Changes<a class="anchor" aria-label="anchor" href="#technical-changes-1-0-196"></a></h4>
+<ul><li>Added internal utility functions for policy tree computation:
+<ul><li>
+<code><a href="../reference/dot-compute_policy_tree.html">.compute_policy_tree()</a></code>: Wrapper that handles method selection</li>
+<li>
+<code><a href="../reference/dot-has_fastpolicytree.html">.has_fastpolicytree()</a></code>: Checks package availability</li>
+<li>
+<code><a href="../reference/dot-get_tree_method.html">.get_tree_method()</a></code>: Handles fallback logic</li>
+</ul></li>
+<li>Updated metadata and CLI output to show which tree method is being used</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.195" id="id_2025-07-28-margot-10195">[2025-07-28] margot 1.0.195<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10195"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-195">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-195"></a></h4>
+<ul><li>
+<strong>Corrected interpretation guidance in bootstrap analysis</strong>:
+<ul><li>No longer suggests “simpler approaches” when trees show instability</li>
+<li>Acknowledges that depth-2 trees typically outperform depth-1 trees despite higher instability</li>
+<li>Emphasises trade-off between stability and predictive performance</li>
+<li>Updated recommendations to focus on validation rather than simplification</li>
+<li>Added note in theoretical background about performance vs stability trade-offs</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.194" id="id_2025-07-28-margot-10194">[2025-07-28] margot 1.0.194<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10194"></a></h2>
+<div class="section level4">
+<h4 id="new-features-1-0-194">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-194"></a></h4>
+<ul><li>
+<strong>New diagnostic functions for policy tree stability analysis</strong>:
+<ul><li>
+<code><a href="../reference/margot_assess_variable_correlation.html">margot_assess_variable_correlation()</a></code>: Analyzes correlations among covariates to identify multicollinearity</li>
+<li>
+<code><a href="../reference/margot_identify_variable_clusters.html">margot_identify_variable_clusters()</a></code>: Groups correlated variables into clusters</li>
+<li>
+<code><a href="../reference/margot_stability_diagnostics.html">margot_stability_diagnostics()</a></code>: Comprehensive stability assessment combining bootstrap and correlation analyses</li>
+<li>These functions help explain why policy trees show instability when variables are correlated</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-194">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-194"></a></h4>
+<ul><li>
+<strong>Enhanced <code><a href="../reference/margot_interpret_bootstrap.html">margot_interpret_bootstrap()</a></code> with theoretical grounding</strong>:
+<ul><li>Now acknowledges tree instability as expected behavior, not a failure</li>
+<li>Frames variable selection variability in context of correlated predictors</li>
+<li>Includes theoretical context about decision tree sensitivity (can be disabled)</li>
+<li>More nuanced interpretation of stability patterns</li>
+<li>Emphasizes that correlated variables may capture similar information</li>
+<li>Added <code>include_theory</code> parameter to control theoretical context inclusion</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.193" id="id_2025-07-28-margot-10193">[2025-07-28] margot 1.0.193<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10193"></a></h2>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-193">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-193"></a></h4>
+<ul><li>
+<strong>Changed default bootstrap approach in <code><a href="../reference/margot_policy_tree_bootstrap.html">margot_policy_tree_bootstrap()</a></code></strong>:
+<ul><li>Default <code>vary_type</code> is now “split_only” instead of “both”</li>
+<li>By default, varies random seeds to create different train/test splits</li>
+<li>No longer performs bootstrap resampling by default</li>
+<li>This change reflects that decision trees are highly sensitive to data perturbations</li>
+<li>Bootstrap resampling can still be enabled with <code>vary_type = "sample_only"</code> or <code>vary_type = "both"</code>
+</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-193">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-193"></a></h4>
+<ul><li>
+<strong>Enhanced CLI output for bootstrap analysis</strong>:
+<ul><li>Now shows “seed variation (fixed train proportion)” for default behavior</li>
+<li>Shows “seed + train proportion variation” when varying train proportions</li>
+<li>More accurately describes what variation is being performed</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.192" id="id_2025-07-28-margot-10192">[2025-07-28] margot 1.0.192<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10192"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-192">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-192"></a></h4>
+<ul><li>
+<strong>Fixed misleading CLI output in <code><a href="../reference/margot_policy_tree_bootstrap.html">margot_policy_tree_bootstrap()</a></code></strong>:
+<ul><li>Now correctly shows “sample_only” when <code>vary_train_proportion = FALSE</code> (the default)</li>
+<li>Previously showed “both” even when only bootstrap resampling was happening</li>
+<li>CLI output now accurately reflects the actual variation being performed</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.191" id="id_2025-07-28-margot-10191">[2025-07-28] margot 1.0.191<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10191"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-191">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-191"></a></h4>
+<ul><li>
+<strong>Enhanced <code><a href="../reference/margot_interpret_bootstrap.html">margot_interpret_bootstrap()</a></code> for depth-2-only analyses</strong>:
+<ul><li>No longer treats depth-2-only analyses as warnings or edge cases</li>
+<li>Added dedicated <code><a href="../reference/interpret_depth2_only.html">interpret_depth2_only()</a></code> internal function for cleaner interpretation</li>
+<li>Provides comprehensive narrative focused on depth-2 split patterns and stability</li>
+<li>Properly handles the common use case where only depth=2 is specified</li>
+<li>Removed incorrect suggestion that single-split rules might be preferable to unstable depth-2 trees</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.190" id="id_2025-07-28-margot-10190">[2025-07-28] margot 1.0.190<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10190"></a></h2>
+<div class="section level4">
+<h4 id="new-features-1-0-190">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-190"></a></h4>
+<ul><li>
+<strong>New <code><a href="../reference/margot_policy_tree_bootstrap.html">margot_policy_tree_bootstrap()</a></code> function</strong>:
+<ul><li>Performs bootstrap analysis of policy trees to assess stability</li>
+<li>Memory-efficient streaming approach processes one tree at a time</li>
+<li>Uses metaseed architecture for full reproducibility</li>
+<li>Three variation types: “both” (resample + split), “sample_only”, “split_only”</li>
+<li>Flexible train proportion variation with sensible defaults (0.4, 0.5, 0.6, 0.7)</li>
+<li>Full parameter parity with <code><a href="../reference/margot_policy_tree.html">margot_policy_tree()</a></code>: supports <code>custom_covariates</code>, <code>exclude_covariates</code>, <code>covariate_mode</code>, <code>depth</code>, and <code>label_mapping</code>
+</li>
+<li>Covariate selection modes: “original”, “custom”, “add”, “all” - identical to <code><a href="../reference/margot_policy_tree.html">margot_policy_tree()</a></code>
+</li>
+<li>Pattern-based exclusion (e.g., exclude all “_log” variables)</li>
+<li>
+<strong>Changed default depth from “both” to 2</strong> (most commonly used in practice)</li>
+<li>Returns consensus trees fully compatible with existing plotting/interpretation functions</li>
+<li>Includes S3 methods: <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="../reference/get_variable_importance.html">get_variable_importance()</a></code>, <code><a href="../reference/get_consensus_info.html">get_consensus_info()</a></code>
+</li>
+<li>New <code><a href="../reference/margot_interpret_bootstrap.html">margot_interpret_bootstrap()</a></code> function provides publication-ready narrative interpretation</li>
+<li>Handles edge cases gracefully (e.g., when only depth-2 trees are computed)</li>
+<li>Lightweight output structure keeps memory usage reasonable (~74MB per model)</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.183" id="id_2025-07-28-margot-10183">[2025-07-28] margot 1.0.183<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10183"></a></h2>
 <div class="section level4">

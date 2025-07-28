@@ -13,7 +13,8 @@ recalculate_policy_trees_single(
   exclude_covariates,
   covariate_mode,
   verbose,
-  seed
+  seed,
+  tree_method
 )
 }
 \description{

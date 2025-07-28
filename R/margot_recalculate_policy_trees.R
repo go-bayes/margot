@@ -25,6 +25,11 @@
 #' @param parallel Logical indicating whether to use parallel processing. Default is FALSE.
 #' @param n_cores Number of cores for parallel processing. Default is availableCores() - 1.
 #' @param seed Random seed for reproducibility. Default is NULL.
+#' @param tree_method Character string specifying which method to use for policy tree computation:
+#'   \itemize{
+#'     \item{"policytree"}{Use the policytree package (default)}
+#'     \item{"fastpolicytree"}{Use the fastpolicytree package (about 10x faster)}
+#'   }
 #'
 #' @return A modified copy of model_results with recalculated policy trees.
 #'
@@ -82,7 +87,8 @@ margot_recalculate_policy_trees <- function(model_results,
                                           verbose = TRUE,
                                           parallel = FALSE,
                                           n_cores = future::availableCores() - 1,
-                                          seed = 12345) {
+                                          seed = 12345,
+                                          tree_method = c("policytree", "fastpolicytree")) {
   
   # validate inputs
   if (!is.list(model_results) || !"results" %in% names(model_results)) {
@@ -90,6 +96,7 @@ margot_recalculate_policy_trees <- function(model_results,
   }
   
   covariate_mode <- match.arg(covariate_mode)
+  tree_method <- match.arg(tree_method)
   
   # check for required data
   if (is.null(model_results$covariates)) {
@@ -174,7 +181,8 @@ margot_recalculate_policy_trees <- function(model_results,
       exclude_covariates = exclude_covariates,
       covariate_mode = covariate_mode,
       verbose = verbose && !parallel,
-      seed = seed
+      seed = seed,
+      tree_method = tree_method
     )
     
     return(updated_model)
@@ -199,7 +207,8 @@ recalculate_policy_trees_single <- function(model_result,
                                           exclude_covariates,
                                           covariate_mode,
                                           verbose,
-                                          seed) {
+                                          seed,
+                                          tree_method) {
   
   # set seed for reproducibility
   if (!is.null(seed)) {
@@ -257,10 +266,11 @@ recalculate_policy_trees_single <- function(model_result,
   }
   
   # fit depth-1 policy tree
-  model_result$policy_tree_depth_1 <- policytree::policy_tree(
+  model_result$policy_tree_depth_1 <- .compute_policy_tree(
     covariates[not_missing, selected_covars, drop = FALSE],
     dr_scores[not_missing, ],
-    depth = 1
+    depth = 1,
+    tree_method = tree_method
   )
   
   # handle depth-2 tree
@@ -294,10 +304,11 @@ recalculate_policy_trees_single <- function(model_result,
     test_idx <- setdiff(not_missing, train_idx)
     
     # fit depth-2 tree
-    model_result$policy_tree_depth_2 <- policytree::policy_tree(
+    model_result$policy_tree_depth_2 <- .compute_policy_tree(
       covariates[train_idx, depth2_covars, drop = FALSE],
       dr_scores[train_idx, ],
-      depth = 2
+      depth = 2,
+      tree_method = tree_method
     )
     
     # create plot data

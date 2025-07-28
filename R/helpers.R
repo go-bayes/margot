@@ -521,9 +521,19 @@ transform_var_name <- function(var_name, label_mapping = NULL,
     display_name <- sub("^model_", "", display_name)
   }
 
+  # check if this is a reduced (_r) variable
+  is_reduced <- grepl("_r$", display_name)
+  if (is_reduced) {
+    # remove _r suffix for processing
+    display_name <- sub("_r$", "", display_name)
+  }
+
   # explicit mapping
   if (!is.null(label_mapping) && display_name %in% names(label_mapping)) {
     mapped_label <- label_mapping[[display_name]]
+    if (is_reduced) {
+      mapped_label <- paste0("(reduced) ", mapped_label)
+    }
     cli::cli_alert_info("Applied label mapping: {var_name} -> {mapped_label}")
     return(mapped_label)
   }
@@ -533,9 +543,19 @@ transform_var_name <- function(var_name, label_mapping = NULL,
     t2_var <- sub("^t0_", "t2_", display_name)
     if (!is.null(label_mapping) && t2_var %in% names(label_mapping)) {
       mapped_label <- label_mapping[[t2_var]]
+      if (is_reduced) {
+        mapped_label <- paste0("(reduced) ", mapped_label)
+      }
       cli::cli_alert_info("Applied label mapping via t2_ equivalent: {var_name} -> {mapped_label}")
       return(mapped_label)
     }
+  }
+
+  # handle _log transformation
+  has_log <- grepl("_log_", display_name)
+  if (has_log) {
+    # extract the part after _log_ to identify what was logged
+    display_name <- gsub("_log_", "_", display_name)
   }
 
   # strip prefixes/suffixes/underscores
@@ -554,6 +574,16 @@ transform_var_name <- function(var_name, label_mapping = NULL,
     # capitalize NZSEI and NZDEP
     display_name <- gsub("Nzsei", "NZSEI", display_name, fixed = TRUE)
     display_name <- gsub("Nzdep", "NZDEP", display_name, fixed = TRUE)
+  }
+
+  # add (log) suffix if variable was log-transformed
+  if (has_log) {
+    display_name <- paste0(display_name, " (log)")
+  }
+
+  # add (reduced) prefix if variable was reversed
+  if (is_reduced) {
+    display_name <- paste0("(reduced) ", display_name)
   }
 
   if (!identical(display_name, var_name)) {

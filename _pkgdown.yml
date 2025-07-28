@@ -93,6 +93,10 @@ reference:
     - margot_causal_forest
     - margot_lmtp
     - margot_policy_tree
+    - margot_policy_tree_bootstrap
+    - margot_assess_variable_correlation
+    - margot_identify_variable_clusters
+    - margot_stability_diagnostics
     - margot_recalculate_policy_trees
     - margot_recompute_ate
     - margot_recompute_ate_batch
@@ -105,6 +109,7 @@ reference:
     - margot_correct_combined_table
     - margot_flip_forests
     - margot_inspect_qini
+    - margot_interpret_bootstrap
     - margot_interpret_policy_batch
     - margot_interpret_policy_tree
     - margot_interpret_qini
@@ -126,6 +131,11 @@ reference:
     - margot_subset_model
     - margot_subset_batch
     - margot_summary_cate_difference_gain
+    - get_consensus_info
+    - get_variable_importance
+    - summary.margot_bootstrap_policy_tree
+    - print.margot_bootstrap_policy_tree
+    - print.margot_correlation_assessment
 
   - title: "Visualise Causal Effect Estimates"
     contents:

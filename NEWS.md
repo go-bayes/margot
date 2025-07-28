@@ -1,3 +1,141 @@
+# [2025-07-28] margot 1.0.199
+
+### New Features
+- **Extended fastpolicytree support to policy tree functions**:
+  - Added `tree_method` parameter to `margot_recalculate_policy_trees()`
+  - This function now uses the internal `.compute_policy_tree()` wrapper for consistent method handling
+  - Users can benefit from 10x faster policy tree computation when recalculating trees with custom covariates
+
+- **Added automatic labelling to diagnostic functions**:
+  - Enhanced `transform_var_name()` to handle `_r` suffix (converts to "(reduced) {var_name}")
+  - Enhanced `transform_var_name()` to handle `_log` pattern (converts to "{var_name} (log)")
+  - Added `label_mapping` parameter to `margot_assess_variable_correlation()`
+  - Added `label_mapping` parameter to `margot_identify_variable_clusters()`
+  - Added `label_mapping` parameter to `margot_interpret_bootstrap()`
+  - All functions now automatically transform variable names when no label mapping provided
+  - Model names in output are also transformed (e.g., "model_t2_kessler_latent_depression_z_r" becomes "(reduced) Kessler Latent Depression")
+  - Correlation plots now show human-readable labels instead of raw variable names
+  - Cluster analysis output uses labeled variable names for better interpretability
+  - Bootstrap interpretation now uses labeled variable and model names throughout
+
+# [2025-07-28] margot 1.0.198
+
+### Documentation
+- **Enhanced `margot_policy_tree_bootstrap()` documentation**:
+  - Added complete workflow example showing all diagnostic steps
+  - Shows how to use correlation analysis with bootstrap results
+  - Clarifies that correlation analysis needs original causal forest results
+  - Added examples of all related diagnostic functions
+  - Added @seealso section for related functions
+
+# [2025-07-28] margot 1.0.197
+
+### Bug Fixes
+- **Fixed hanging issue in `margot_assess_variable_correlation()`**:
+  - Now properly detects and rejects bootstrap results with helpful error message
+  - Improved covariate data detection with multiple fallback locations
+  - Can use test set covariates from plot_data as last resort
+  - Better error messages guide users to use original causal forest results
+
+# [2025-07-28] margot 1.0.196
+
+### New Features
+- **Added support for fastpolicytree package**:
+  - New `tree_method` parameter in `margot_policy_tree()` and `margot_policy_tree_bootstrap()`
+  - Allows users to choose between "policytree" (default) and "fastpolicytree"
+  - fastpolicytree provides ~10x faster computation with identical results
+  - Particularly beneficial for bootstrap analysis with hundreds of iterations
+  - Falls back gracefully to policytree if fastpolicytree is not installed
+  - Added fastpolicytree to Suggests in DESCRIPTION
+  
+### Technical Changes
+- Added internal utility functions for policy tree computation:
+  - `.compute_policy_tree()`: Wrapper that handles method selection
+  - `.has_fastpolicytree()`: Checks package availability
+  - `.get_tree_method()`: Handles fallback logic
+- Updated metadata and CLI output to show which tree method is being used
+
+# [2025-07-28] margot 1.0.195
+
+### Improvements
+- **Corrected interpretation guidance in bootstrap analysis**:
+  - No longer suggests "simpler approaches" when trees show instability
+  - Acknowledges that depth-2 trees typically outperform depth-1 trees despite higher instability
+  - Emphasises trade-off between stability and predictive performance
+  - Updated recommendations to focus on validation rather than simplification
+  - Added note in theoretical background about performance vs stability trade-offs
+
+# [2025-07-28] margot 1.0.194
+
+### New Features
+- **New diagnostic functions for policy tree stability analysis**:
+  - `margot_assess_variable_correlation()`: Analyzes correlations among covariates to identify multicollinearity
+  - `margot_identify_variable_clusters()`: Groups correlated variables into clusters
+  - `margot_stability_diagnostics()`: Comprehensive stability assessment combining bootstrap and correlation analyses
+  - These functions help explain why policy trees show instability when variables are correlated
+
+### Improvements
+- **Enhanced `margot_interpret_bootstrap()` with theoretical grounding**:
+  - Now acknowledges tree instability as expected behavior, not a failure
+  - Frames variable selection variability in context of correlated predictors
+  - Includes theoretical context about decision tree sensitivity (can be disabled)
+  - More nuanced interpretation of stability patterns
+  - Emphasizes that correlated variables may capture similar information
+  - Added `include_theory` parameter to control theoretical context inclusion
+
+# [2025-07-28] margot 1.0.193
+
+### Breaking Changes
+- **Changed default bootstrap approach in `margot_policy_tree_bootstrap()`**:
+  - Default `vary_type` is now "split_only" instead of "both"
+  - By default, varies random seeds to create different train/test splits
+  - No longer performs bootstrap resampling by default
+  - This change reflects that decision trees are highly sensitive to data perturbations
+  - Bootstrap resampling can still be enabled with `vary_type = "sample_only"` or `vary_type = "both"`
+
+### Improvements  
+- **Enhanced CLI output for bootstrap analysis**:
+  - Now shows "seed variation (fixed train proportion)" for default behavior
+  - Shows "seed + train proportion variation" when varying train proportions
+  - More accurately describes what variation is being performed
+
+# [2025-07-28] margot 1.0.192
+
+### Bug Fixes
+- **Fixed misleading CLI output in `margot_policy_tree_bootstrap()`**:
+  - Now correctly shows "sample_only" when `vary_train_proportion = FALSE` (the default)
+  - Previously showed "both" even when only bootstrap resampling was happening
+  - CLI output now accurately reflects the actual variation being performed
+
+# [2025-07-28] margot 1.0.191
+
+### Improvements
+- **Enhanced `margot_interpret_bootstrap()` for depth-2-only analyses**:
+  - No longer treats depth-2-only analyses as warnings or edge cases
+  - Added dedicated `interpret_depth2_only()` internal function for cleaner interpretation
+  - Provides comprehensive narrative focused on depth-2 split patterns and stability
+  - Properly handles the common use case where only depth=2 is specified
+  - Removed incorrect suggestion that single-split rules might be preferable to unstable depth-2 trees
+
+# [2025-07-28] margot 1.0.190
+
+### New Features
+- **New `margot_policy_tree_bootstrap()` function**:
+  - Performs bootstrap analysis of policy trees to assess stability
+  - Memory-efficient streaming approach processes one tree at a time
+  - Uses metaseed architecture for full reproducibility
+  - Three variation types: "both" (resample + split), "sample_only", "split_only"
+  - Flexible train proportion variation with sensible defaults (0.4, 0.5, 0.6, 0.7)
+  - Full parameter parity with `margot_policy_tree()`: supports `custom_covariates`, `exclude_covariates`, `covariate_mode`, `depth`, and `label_mapping`
+  - Covariate selection modes: "original", "custom", "add", "all" - identical to `margot_policy_tree()`
+  - Pattern-based exclusion (e.g., exclude all "_log" variables)
+  - **Changed default depth from "both" to 2** (most commonly used in practice)
+  - Returns consensus trees fully compatible with existing plotting/interpretation functions
+  - Includes S3 methods: `summary()`, `print()`, `get_variable_importance()`, `get_consensus_info()`
+  - New `margot_interpret_bootstrap()` function provides publication-ready narrative interpretation
+  - Handles edge cases gracefully (e.g., when only depth-2 trees are computed)
+  - Lightweight output structure keeps memory usage reasonable (~74MB per model)
+
 # [2025-07-28] margot 1.0.183
 
 ### Improvements

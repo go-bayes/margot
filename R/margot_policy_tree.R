@@ -30,6 +30,10 @@
 #' @param label_mapping Named character vector for converting variable names to readable labels.
 #' @param verbose Logical; print progress messages (default TRUE).
 #' @param seed Integer; base seed for reproducible computations (default 12345).
+#' @param tree_method Character string specifying the package to use: "policytree" 
+#'   (default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
+#'   computation with identical results. Falls back to policytree if fastpolicytree
+#'   is not installed.
 #'
 #' @return A list structured similarly to margot_causal_forest() output, containing:
 #' \itemize{
@@ -118,12 +122,17 @@ margot_policy_tree <- function(model_results,
                               train_proportion = 0.5,
                               label_mapping = NULL,
                               verbose = TRUE,
-                              seed = 12345) {
+                              seed = 12345,
+                              tree_method = c("policytree", "fastpolicytree")) {
   
   # validate inputs
   if (!is.list(model_results) || !"results" %in% names(model_results)) {
     stop("model_results must be a list containing a 'results' element")
   }
+  
+  # validate tree method
+  tree_method <- match.arg(tree_method)
+  actual_tree_method <- .get_tree_method(tree_method, verbose)
   
   covariate_mode <- match.arg(covariate_mode)
   
@@ -331,10 +340,11 @@ compute_policy_trees_for_model <- function(model_result,
   
   # compute depth-1 tree if requested
   if (compute_depth1) {
-    output$policy_tree_depth_1 <- policytree::policy_tree(
+    output$policy_tree_depth_1 <- .compute_policy_tree(
       covariates[not_missing, selected_covars, drop = FALSE],
       dr_scores[not_missing, ],
-      depth = 1
+      depth = 1,
+      tree_method = actual_tree_method
     )
   }
   
@@ -371,10 +381,11 @@ compute_policy_trees_for_model <- function(model_result,
       test_idx <- setdiff(not_missing, train_idx)
       
       # fit depth-2 tree
-      output$policy_tree_depth_2 <- policytree::policy_tree(
+      output$policy_tree_depth_2 <- .compute_policy_tree(
         covariates[train_idx, depth2_covars, drop = FALSE],
         dr_scores[train_idx, ],
-        depth = 2
+        depth = 2,
+        tree_method = actual_tree_method
       )
       
       # create plot data
@@ -415,6 +426,7 @@ compute_policy_trees_for_model <- function(model_result,
   output$policy_tree_metadata <- list(
     covariate_mode = covariate_mode,
     train_proportion = train_proportion,
+    tree_method = actual_tree_method,
     actual_train_size = if (compute_depth2 && exists("train_idx")) length(train_idx) else NA,
     actual_test_size = if (compute_depth2 && exists("test_idx")) length(test_idx) else NA,
     depth1_covariates = if (compute_depth1) selected_covars else NULL,

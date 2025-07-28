@@ -14,7 +14,8 @@ margot_recalculate_policy_trees(
   verbose = TRUE,
   parallel = FALSE,
   n_cores = future::availableCores() - 1,
-  seed = 12345
+  seed = 12345,
+  tree_method = c("policytree", "fastpolicytree")
 )
 }
 \arguments{
@@ -47,6 +48,12 @@ variables starting with "t0_log_").}
 \item{n_cores}{Number of cores for parallel processing. Default is availableCores() - 1.}
 
 \item{seed}{Random seed for reproducibility. Default is NULL.}
+
+\item{tree_method}{Character string specifying which method to use for policy tree computation:
+\itemize{
+  \item{"policytree"}{Use the policytree package (default)}
+  \item{"fastpolicytree"}{Use the fastpolicytree package (about 10x faster)}
+}}
 }
 \value{
 A modified copy of model_results with recalculated policy trees.
