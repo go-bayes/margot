@@ -6,7 +6,7 @@ margot_recalculate_policy_trees <- function(model_results,
                                             verbose                = TRUE,
                                             parallel               = FALSE,
                                             n_cores_policy         = future::availableCores() - 1,
-                                            seed                   = NULL) {
+                                            seed                   = 12345) {
   if (!is.list(model_results) || !"results" %in% names(model_results))
     stop("model_results must be a list containing a 'results' element")
 
@@ -486,22 +486,22 @@ margot_lighten_for_flip <- function(cf_out, models) {
                                      not_missing,
                                      full,
                                      verbose = TRUE,
-                                     seed = NULL) {
+                                     seed = 12345) {
   if (!isTRUE(mr$policy_trees_need_recalculation))
     return(mr)
 
   if (!is.null(seed)) set.seed(seed + as.integer(as.factor(model_name)))
   if (verbose) cli::cli_alert_info("recalculating policy trees for {model_name}")
 
-  # depth‑1 using all predictors -------------------------------------------
+  # depth‑1 using top vars (not all predictors) ---------------------------
   mr$policy_tree_depth_1 <- policytree::policy_tree(
-    covariates[full, , drop = FALSE],
+    covariates[full, mr$top_vars, drop = FALSE],
     mr$dr_scores_flipped[full, ],
     depth = 1
   )
 
   # depth‑2 on top vars -----------------------------------------------------
-  train_size <- floor(0.7 * length(not_missing))
+  train_size <- floor(0.5 * length(not_missing))
   train_idx  <- sample(not_missing, train_size)
 
   mr$policy_tree_depth_2 <- policytree::policy_tree(

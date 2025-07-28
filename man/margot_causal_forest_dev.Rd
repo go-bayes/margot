@@ -17,7 +17,7 @@ margot_causal_forest_dev(
   save_data = TRUE,
   save_forests = TRUE,
   handle_missing = "complete",
-  seed = NULL,
+  seed = 12345,
   verbose = TRUE
 )
 }

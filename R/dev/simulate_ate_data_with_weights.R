@@ -31,7 +31,7 @@
 simulate_ate_data_with_weights <- function(n_sample = 10000, n_population = 100000,
                                            p_z_sample = 0.1, p_z_population = 0.5,
                                            beta_a = 1, beta_z = 2.5, beta_az = 0.5,
-                                           noise_sd = 0.5, seed = NULL) {
+                                           noise_sd = 0.5, seed = 12345) {
 
   if (!is.null(seed)) {
     set.seed(seed)

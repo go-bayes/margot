@@ -22,7 +22,7 @@ margot_plot_rate(
   policy = "treat_best",
   subset = NULL,
   use_oob_predictions = TRUE,
-  seed = NULL,
+  seed = 12345,
   ...
 )
 }

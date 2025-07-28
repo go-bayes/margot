@@ -17,7 +17,7 @@ warnings, etc.).  Live progress bars are emitted with **progressr** using a
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.180</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.183</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,14 +65,15 @@ warnings, etc.).  Live progress bars are emitted with **progressr** using a
 <span>  compute_rate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  top_n_vars <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  save_models <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  train_proportion <span class="op">=</span> <span class="fl">0.7</span>,</span>
+<span>  train_proportion <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  qini_split <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  train_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  qini_train_prop <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  compute_conditional_means <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">availableCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  qini_treatment_cost <span class="op">=</span> <span class="fl">1</span></span>
+<span>  qini_treatment_cost <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">12345</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -109,7 +110,9 @@ warnings, etc.).  Live progress bars are emitted with **progressr** using a
 
 
 <dt id="arg-compute-rate">compute_rate<a class="anchor" aria-label="anchor" href="#arg-compute-rate"></a></dt>
-<dd><p>Logical indicating whether to compute RATE for each model. Default is TRUE.</p></dd>
+<dd><p>Logical indicating whether to compute RATE for each model. Default is TRUE.
+Note: Direct computation of RATE, QINI, and policy trees within this function may be
+deprecated in future versions. Use margot_rate(), margot_qini(), and margot_policy_tree() instead.</p></dd>
 
 
 <dt id="arg-top-n-vars">top_n_vars<a class="anchor" aria-label="anchor" href="#arg-top-n-vars"></a></dt>
@@ -122,7 +125,7 @@ warnings, etc.).  Live progress bars are emitted with **progressr** using a
 
 <dt id="arg-train-proportion">train_proportion<a class="anchor" aria-label="anchor" href="#arg-train-proportion"></a></dt>
 <dd><p>Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
-training policy trees. Default is 0.7.</p></dd>
+training policy trees. Default is 0.5.</p></dd>
 
 
 <dt id="arg-qini-split">qini_split<a class="anchor" aria-label="anchor" href="#arg-qini-split"></a></dt>
@@ -155,6 +158,11 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).</p></dd>
 <dd><p>Scalar treatment cost per unit for QINI calculations. Default 1.
 Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
 higher values (e.g., 5) represent expensive treatments creating shallower curves.</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Integer. Random seed for reproducibility of train/test splits for policy trees
+and QINI evaluation. Default is 12345.</p></dd>
 
 </dl></div>
     <div class="section level2">

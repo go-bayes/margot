@@ -53,7 +53,7 @@ margot_plot_slope_covariate <- function(data,
                                         prefix = NULL,
                                         width = 12,
                                         height = 8,
-                                        seed = NULL,
+                                        seed = 12345,
                                         ...) {
 
   cli::cli_h1("Margot Plot ggeffects")

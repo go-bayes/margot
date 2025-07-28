@@ -21,7 +21,7 @@ margot_plot_individual_responses(
   save_path = NULL,
   width = 16,
   height = 8,
-  seed = NULL,
+  seed = 12345,
   wave_label_angle = 45,
   full_response_scale = TRUE,
   scale_range = NULL,

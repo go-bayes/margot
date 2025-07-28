@@ -92,6 +92,7 @@ reference:
     contents:
     - margot_causal_forest
     - margot_lmtp
+    - margot_policy_tree
     - margot_recalculate_policy_trees
     - margot_recompute_ate
     - margot_recompute_ate_batch

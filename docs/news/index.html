@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.180</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.183</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,61 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.183" id="id_2025-07-28-margot-10183">[2025-07-28] margot 1.0.183<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10183"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-183">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-183"></a></h4>
+<ul><li>
+<strong>Default seed values for reproducibility</strong>:
+<ul><li>Changed all functions with <code>seed = NULL</code> to use <code>seed = 12345</code> as default</li>
+<li>Affected functions: <code><a href="../reference/compute_qini_curves_binary.html">compute_qini_curves_binary()</a></code>, <code>.margot_fit_policy_trees()</code>, <code><a href="../reference/margot_plot_rate.html">margot_plot_rate()</a></code>, <code><a href="../reference/margot_plot_rate_batch.html">margot_plot_rate_batch()</a></code>, <code><a href="../reference/margot_generate_qini_data.html">margot_generate_qini_data()</a></code>, <code><a href="../reference/margot_plot_individual_responses.html">margot_plot_individual_responses()</a></code>, <code><a href="../reference/margot_plot_discontinuity.html">margot_plot_discontinuity()</a></code>, <code><a href="../reference/margot_plot_slope.html">margot_plot_slope()</a></code>, <code><a href="../reference/margot_plot_slope_covariate.html">margot_plot_slope_covariate()</a></code>, <code><a href="../reference/margot_recalculate_policy_trees.html">margot_recalculate_policy_trees()</a></code>, <code><a href="../reference/margot_causal_forest_dev.html">margot_causal_forest_dev()</a></code>, <code><a href="../reference/margot_qini_dev.html">margot_qini_dev()</a></code>, <code>simulate_ate_data_with_weights()</code>
+</li>
+<li>Ensures consistent reproducible results when no explicit seed is provided</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.182" id="id_2025-07-28-margot-10182">[2025-07-28] margot 1.0.182<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10182"></a></h2>
+<div class="section level4">
+<h4 id="new-features-1-0-182">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-182"></a></h4>
+<ul><li>
+<strong>New <code><a href="../reference/margot_policy_tree.html">margot_policy_tree()</a></code> function</strong>:
+<ul><li>Recompute policy trees with custom parameters without re-running causal forests</li>
+<li>Flexible covariate selection with exclusion patterns (e.g., exclude “_log” variables)</li>
+<li>Support for custom covariate sets and multiple selection modes</li>
+<li>User-configurable train/test split proportion (default 0.5)</li>
+<li>Output structure fully compatible with existing plotting and interpretation functions</li>
+<li>Works seamlessly with <code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code>, <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code>, and <code><a href="../reference/margot_plot_policy_combo.html">margot_plot_policy_combo()</a></code>
+</li>
+<li>Parallels the design of <code><a href="../reference/margot_qini.html">margot_qini()</a></code> and <code><a href="../reference/margot_rate.html">margot_rate()</a></code>
+</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-182">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-182"></a></h4>
+<ul><li>
+<strong>Updated defaults for policy tree estimation</strong>:
+<ul><li>Changed default <code>train_proportion</code> from 0.7 to 0.5 across all functions</li>
+<li>Added <code>seed</code> parameter to <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> with default 12345</li>
+<li>Ensures reproducible train/test splits for policy trees and QINI evaluation</li>
+<li>Seeds are model-specific to maintain independence across outcomes</li>
+<li>
+<strong>BREAKING CHANGE</strong>: Depth-1 policy trees now use only top_n_vars (same as depth-2), not all covariates</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.181" id="id_2025-07-28-margot-10181">[2025-07-28] margot 1.0.181<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10181"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-181">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-181"></a></h4>
+<ul><li>
+<strong>Enhanced <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> result interpretation</strong>:
+<ul><li>Now warns when models show negative heterogeneity (negative t-statistics)</li>
+<li>Only displays alpha level when an adjustment method is used</li>
+<li>Clearer messaging about statistical significance and practical implications</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.180" id="id_2025-07-28-margot-10180">[2025-07-28] margot 1.0.180<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10180"></a></h2>
 <div class="section level4">
@@ -1196,7 +1251,7 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.36" id="id_2025-05-07-margot-1036">[2025-05-07] margot 1.0.36<a class="anchor" aria-label="anchor" href="#id_2025-05-07-margot-1036"></a></h2>
 <ul><li>
-<code>margot_policy_tree()</code> level 2 fixed</li>
+<code><a href="../reference/margot_policy_tree.html">margot_policy_tree()</a></code> level 2 fixed</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.35" id="id_2025-05-06-margot-1035">[2025-05-06] margot 1.0.35<a class="anchor" aria-label="anchor" href="#id_2025-05-06-margot-1035"></a></h2>

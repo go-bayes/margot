@@ -15,14 +15,15 @@ margot_causal_forest_parallel(
   compute_rate = TRUE,
   top_n_vars = 15,
   save_models = TRUE,
-  train_proportion = 0.7,
+  train_proportion = 0.5,
   qini_split = TRUE,
   train_prop = 0.5,
   qini_train_prop = NULL,
   compute_conditional_means = TRUE,
   n_cores = future::availableCores() - 1,
   verbose = TRUE,
-  qini_treatment_cost = 1
+  qini_treatment_cost = 1,
+  seed = 12345
 )
 }
 \arguments{
@@ -40,14 +41,16 @@ margot_causal_forest_parallel(
 
 \item{save_data}{Logical indicating whether to save data, covariates, and weights. Default is FALSE.}
 
-\item{compute_rate}{Logical indicating whether to compute RATE for each model. Default is TRUE.}
+\item{compute_rate}{Logical indicating whether to compute RATE for each model. Default is TRUE.
+Note: Direct computation of RATE, QINI, and policy trees within this function may be 
+deprecated in future versions. Use margot_rate(), margot_qini(), and margot_policy_tree() instead.}
 
 \item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 15.}
 
 \item{save_models}{Logical indicating whether to save the full GRF model objects. Default is TRUE.}
 
 \item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
-training policy trees. Default is 0.7.}
+training policy trees. Default is 0.5.}
 
 \item{qini_split}{Logical indicating whether to do a separate train/test split exclusively for the Qini
 calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
@@ -56,7 +59,7 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
 
 \item{qini_train_prop}{Deprecated. Use train_prop instead. If provided, will override train_prop with a warning.}
 
-\item{compute_conditional_means}{Logical indicating whether to compute conditional means using 
+\item{compute_conditional_means}{Logical indicating whether to compute conditional means using
 \code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.}
 
 \item{n_cores}{integer. number of parallel workers (default = all cores − 1).}
@@ -66,6 +69,9 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
 \item{qini_treatment_cost}{Scalar treatment cost per unit for QINI calculations. Default 1.
 Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
 higher values (e.g., 5) represent expensive treatments creating shallower curves.}
+
+\item{seed}{Integer. Random seed for reproducibility of train/test splits for policy trees 
+and QINI evaluation. Default is 12345.}
 }
 \value{
 list with elements:

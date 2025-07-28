@@ -1,3 +1,31 @@
+# [2025-07-28] margot 1.0.183
+
+### Improvements
+- **Default seed values for reproducibility**:
+  - Changed all functions with `seed = NULL` to use `seed = 12345` as default
+  - Affected functions: `compute_qini_curves_binary()`, `.margot_fit_policy_trees()`, `margot_plot_rate()`, `margot_plot_rate_batch()`, `margot_generate_qini_data()`, `margot_plot_individual_responses()`, `margot_plot_discontinuity()`, `margot_plot_slope()`, `margot_plot_slope_covariate()`, `margot_recalculate_policy_trees()`, `margot_causal_forest_dev()`, `margot_qini_dev()`, `simulate_ate_data_with_weights()`
+  - Ensures consistent reproducible results when no explicit seed is provided
+
+# [2025-07-28] margot 1.0.182
+
+### New Features
+- **New `margot_policy_tree()` function**:
+  - Recompute policy trees with custom parameters without re-running causal forests
+  - Flexible covariate selection with exclusion patterns (e.g., exclude "_log" variables)
+  - Support for custom covariate sets and multiple selection modes
+  - User-configurable train/test split proportion (default 0.5)
+  - Output structure fully compatible with existing plotting and interpretation functions
+  - Works seamlessly with `margot_plot_policy_tree()`, `margot_interpret_policy_tree()`, and `margot_plot_policy_combo()`
+  - Parallels the design of `margot_qini()` and `margot_rate()`
+
+### Improvements
+- **Updated defaults for policy tree estimation**:
+  - Changed default `train_proportion` from 0.7 to 0.5 across all functions
+  - Added `seed` parameter to `margot_causal_forest()` with default 12345
+  - Ensures reproducible train/test splits for policy trees and QINI evaluation
+  - Seeds are model-specific to maintain independence across outcomes
+  - **BREAKING CHANGE**: Depth-1 policy trees now use only top_n_vars (same as depth-2), not all covariates
+
 # [2025-07-28] margot 1.0.181
 
 ### Improvements

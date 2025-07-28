@@ -15,7 +15,7 @@ margot_plot_slope(
   y_label = NULL,
   x_label = NULL,
   data_fraction = 1,
-  seed = NULL,
+  seed = 12345,
   plot_points = FALSE,
   point_alpha = 0.03,
   jitter_width = 1,

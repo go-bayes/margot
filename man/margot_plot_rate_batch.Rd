@@ -17,7 +17,7 @@ margot_plot_rate_batch(
   q = seq(0.1, 1, by = 0.1),
   policy = "treat_best",
   use_oob_predictions = TRUE,
-  seed = NULL
+  seed = 12345
 )
 }
 \arguments{

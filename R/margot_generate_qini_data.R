@@ -42,7 +42,7 @@ margot_generate_qini_data <- function(model_result,
                                      treatment,
                                      weights = NULL,
                                      baseline_method = c("maq_no_covariates", "auto", "simple", "maq_only", "none"),
-                                     seed = NULL,
+                                     seed = 12345,
                                      verbose = FALSE,
                                      treatment_cost = 1,
                                      x_axis = c("proportion", "budget")) {

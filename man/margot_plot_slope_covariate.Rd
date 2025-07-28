@@ -20,7 +20,7 @@ margot_plot_slope_covariate(
   prefix = NULL,
   width = 12,
   height = 8,
-  seed = NULL,
+  seed = 12345,
   ...
 )
 }

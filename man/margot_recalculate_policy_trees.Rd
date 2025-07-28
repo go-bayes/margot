@@ -14,7 +14,7 @@ margot_recalculate_policy_trees(
   verbose = TRUE,
   parallel = FALSE,
   n_cores = future::availableCores() - 1,
-  seed = NULL
+  seed = 12345
 )
 }
 \arguments{

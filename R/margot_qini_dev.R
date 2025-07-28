@@ -75,7 +75,7 @@ margot_qini_dev <- function(
     spend_levels = c(0.05, 0.1, 0.2, 0.4),
     n_bootstrap = 200,
     confidence_level = 0.95,
-    seed = NULL,
+    seed = 12345,
     verbose = TRUE
 ) {
   
@@ -285,7 +285,7 @@ compute_baseline_qini <- function(
     weights,
     method = "maq_no_covariates",
     n_bootstrap = 200,
-    seed = NULL,
+    seed = 12345,
     verbose = TRUE
 ) {
   

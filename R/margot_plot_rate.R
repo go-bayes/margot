@@ -73,7 +73,7 @@ margot_plot_rate <- function(x,
                              policy = "treat_best",
                              subset = NULL,
                              use_oob_predictions = TRUE,
-                             seed = NULL,
+                             seed = 12345,
                              ...) {
   # check if user passed CV results by mistake
   if (inherits(x, "margot_cv_results")) {

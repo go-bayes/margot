@@ -82,7 +82,7 @@ margot_recalculate_policy_trees <- function(model_results,
                                           verbose = TRUE,
                                           parallel = FALSE,
                                           n_cores = future::availableCores() - 1,
-                                          seed = NULL) {
+                                          seed = 12345) {
   
   # validate inputs
   if (!is.list(model_results) || !"results" %in% names(model_results)) {

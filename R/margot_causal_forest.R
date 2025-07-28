@@ -39,14 +39,15 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
                                            compute_rate    = TRUE,
                                            top_n_vars      = 15,
                                            save_models     = TRUE,
-                                           train_proportion= 0.7,
+                                           train_proportion= 0.5,
                                            qini_split      = TRUE,
                                            train_prop      = 0.5,
                                            qini_train_prop = NULL,  # deprecated
                                            compute_conditional_means = TRUE,
                                            n_cores         = future::availableCores() - 1,
                                            verbose         = TRUE,
-                                           qini_treatment_cost = 1) {
+                                           qini_treatment_cost = 1,
+                                           seed            = 12345) {
   # dimension checks
   n_rows <- nrow(covariates)
   if (verbose) cli::cli_alert_info(paste0("rows in covariates: ", n_rows))
@@ -61,7 +62,7 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
     if (verbose) cli::cli_alert_warning("Parameter 'qini_train_prop' is deprecated. Please use 'train_prop' instead.")
     train_prop <- qini_train_prop
   }
-  
+
   if (qini_split && (train_prop <= 0 || train_prop >= 1))
     stop("train_prop must be in (0,1)")
   if (verbose) cli::cli_alert_info("starting margot_causal_forest()")
@@ -114,16 +115,19 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
           })
         }
       }
-      # DR scores + policy tree 1
+      # DR scores
       dr   <- policytree::double_robust_scores(model)
-      pt1  <- policytree::policy_tree(covariates[not_missing,,drop=FALSE],
-                                      dr[not_missing,], depth=1)
       # var importance + BLP
       vi     <- grf::variable_importance(model)
       ord    <- order(vi, decreasing=TRUE)
       top    <- if(is.null(colnames(covariates))) ord[1:top_n_vars] else colnames(covariates)[ord[1:top_n_vars]]
       blp    <- grf::best_linear_projection(model, covariates[,top,drop=FALSE], target.sample="all")
-      # policy tree 2 + plot data
+      # policy trees using top vars
+      # depth-1 using top vars (not all covariates)
+      pt1    <- policytree::policy_tree(covariates[not_missing,top,drop=FALSE],
+                                      dr[not_missing,], depth=1)
+      # depth-2 + plot data
+      set.seed(seed + as.integer(factor(outcome)))
       train_idx <- sample(not_missing, floor(train_proportion*length(not_missing)))
       pt2    <- policytree::policy_tree(covariates[train_idx,top,drop=FALSE], dr[train_idx,], depth=2)
       test_idx<- setdiff(not_missing, train_idx)
@@ -132,9 +136,10 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
                      predictions=predict(pt2, covariates[test_idx,top,drop=FALSE]))
       # Qini
       if (!qini_split) {
-        qres <- compute_qini_curves_binary(tau, as.matrix(data[[outcome]]), W, 
+        qres <- compute_qini_curves_binary(tau, as.matrix(data[[outcome]]), W,
                                           weights = weights, seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
       } else {
+        set.seed(seed + as.integer(factor(outcome)) + 1000)  # different seed component for qini
         qtr <- sample(not_missing, floor(train_prop*length(not_missing)))
         qte <- setdiff(not_missing, qtr)
         qmod<- do.call(grf::causal_forest,
@@ -143,8 +148,8 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
                               W=W[qtr], sample.weights=weights[qtr]),
                          grf_defaults))
         qtau<- predict(qmod, newdata=covariates[qte,,drop=FALSE])$predictions
-        qres <- compute_qini_curves_binary(qtau, as.matrix(data[[outcome]])[qte], W[qte], 
-                                          weights = if(!is.null(weights)) weights[qte] else NULL, 
+        qres <- compute_qini_curves_binary(qtau, as.matrix(data[[outcome]])[qte], W[qte],
+                                          weights = if(!is.null(weights)) weights[qte] else NULL,
                                           seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
       }
       qdata   <- if(!is.null(qres)) qres$qini_data else NULL
@@ -210,13 +215,13 @@ margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, we
 
 #' Compute Qini Curves for Binary Treatments
 #' @keywords internal
-compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NULL, verbose = TRUE, treatment_cost = 1) {
+compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = 12345, verbose = TRUE, treatment_cost = 1) {
   tryCatch({
     if (verbose) cli::cli_alert_info("computing Qini curves …")
     tau_hat    <- as.vector(tau_hat)
     treatment  <- as.factor(W)
     IPW_scores <- maq::get_ipw_scores(Y, treatment)
-    
+
     # use modern maq API with named parameters
     cate_qini  <- maq::maq(
       reward = as.matrix(tau_hat),
@@ -226,7 +231,7 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NUL
       sample.weights = weights,
       seed = seed
     )
-    
+
     # try maq with target.with.covariates = FALSE first (maq_no_covariates approach)
     ate_qini <- tryCatch({
       maq::maq(
@@ -243,14 +248,14 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NUL
       # fallback to constant rewards
       maq::maq(
         reward = matrix(rep(mean(tau_hat), length(tau_hat)), ncol = 1),
-        cost = matrix(treatment_cost, length(tau_hat), 1), 
+        cost = matrix(treatment_cost, length(tau_hat), 1),
         DR.scores = IPW_scores,
         R = 200,
         sample.weights = weights,
         seed = seed
       )
     })
-    
+
     qini_objs  <- list(cate = cate_qini, ate = ate_qini)
     max_idx    <- max(sapply(qini_objs, function(q) length(q[["_path"]]$gain)))
     if (!max_idx) return(NULL)
@@ -270,12 +275,12 @@ compute_qini_curves_binary <- function(tau_hat, Y, W, weights = NULL, seed = NUL
 extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) {
   # use actual gain values for all curves
   gain <- qini_obj[["_path"]]$gain
-  
+
   if (is.null(gain) || length(gain) == 0) {
     if (verbose) cli::cli_alert_warning("no gain data found for curve {name}")
     return(NULL)
   }
-  
+
   # handle length differences
   if (length(gain) < max_index) {
     # pad with last value
@@ -285,11 +290,11 @@ extract_qini_data_binary <- function(qini_obj, name, max_index, verbose = TRUE) 
     indices <- round(seq(1, length(gain), length.out = max_index))
     gain <- gain[indices]
   }
-  
+
   # ensure we have exactly max_index points
   gain <- gain[1:max_index]
   proportion <- seq(0, 1, length.out = max_index)
-  
+
   data.frame(proportion = proportion, gain = gain, curve = name)
 }
 
@@ -385,20 +390,24 @@ margot_inspect_qini <- function(model_results,
 #' @param grf_defaults A list of default parameters for the GRF models.
 #' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
 #' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
+#'   Note: Direct computation of RATE, QINI, and policy trees within this function may be 
+#'   deprecated in future versions. Use margot_rate(), margot_qini(), and margot_policy_tree() instead.
 #' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 15.
 #' @param save_models Logical indicating whether to save the full GRF model objects. Default is TRUE.
 #' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
-#'   training policy trees. Default is 0.7.
+#'   training policy trees. Default is 0.5.
 #' @param qini_split Logical indicating whether to do a separate train/test split exclusively for the Qini
 #'   calculation. Default is TRUE (i.e., Qini is computed out-of-sample).
 #' @param train_prop Proportion of data to use for the training set when qini_split=TRUE. Default is 0.5.
 #' @param qini_train_prop Deprecated. Use train_prop instead. If provided, will override train_prop with a warning.
-#' @param compute_conditional_means Logical indicating whether to compute conditional means using 
+#' @param compute_conditional_means Logical indicating whether to compute conditional means using
 #'   \code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
 #' @param qini_treatment_cost Scalar treatment cost per unit for QINI calculations. Default 1.
 #'   Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
 #'   higher values (e.g., 5) represent expensive treatments creating shallower curves.
+#' @param seed Integer. Random seed for reproducibility of train/test splits for policy trees 
+#'   and QINI evaluation. Default is 12345.
 #'
 #' @return A list containing:
 #'   * `results` - per-outcome diagnostics and objects
@@ -418,13 +427,14 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  compute_rate = TRUE,
                                  top_n_vars = 15,
                                  save_models = TRUE,
-                                 train_proportion = 0.7,
+                                 train_proportion = 0.5,
                                  qini_split = TRUE,
                                  train_prop = 0.5,
                                  qini_train_prop = NULL,  # deprecated parameter
                                  compute_conditional_means = TRUE,
                                  verbose = TRUE,
-                                 qini_treatment_cost = 1) {
+                                 qini_treatment_cost = 1,
+                                 seed = 12345) {
 
   # value:
   #   • plot_data – a list with elements
@@ -454,7 +464,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
     cli::cli_alert_warning("Parameter 'qini_train_prop' is deprecated. Please use 'train_prop' instead.")
     train_prop <- qini_train_prop
   }
-  
+
   if (qini_split) {
     if (train_prop <= 0 || train_prop >= 1) {
       stop("train_prop must be between 0 and 1 (exclusive) when qini_split is TRUE")
@@ -519,11 +529,6 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
 
       # --- 2) compute doubly robust scores and policy trees ---
       results[[model_name]]$dr_scores <- policytree::double_robust_scores(model)
-      results[[model_name]]$policy_tree_depth_1 <- policytree::policy_tree(
-        covariates[full, , drop = FALSE],
-        results[[model_name]]$dr_scores[full, ],
-        depth = 1
-      )
 
       # --- 3) variable importance and best linear projection ---
       varimp <- grf::variable_importance(model)
@@ -542,9 +547,18 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         target.sample = "all"
       )
 
+      # --- 4) compute policy trees using top_vars ---
+      # depth-1 tree using top_vars (not all covariates)
+      results[[model_name]]$policy_tree_depth_1 <- policytree::policy_tree(
+        covariates[full, top_vars, drop = FALSE],
+        results[[model_name]]$dr_scores[full, ],
+        depth = 1
+      )
+
       n_non_missing <- length(not_missing)
       train_size <- floor(train_proportion * n_non_missing)
       if (train_size < 1) stop("train_proportion too low: resulting train_size is less than 1")
+      set.seed(seed + as.integer(factor(model_name)))
       train_indices <- sample(not_missing, train_size)
 
       policy_tree_model <- policytree::policy_tree(
@@ -593,6 +607,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         if (qini_train_size < 1 || qini_train_size >= qini_n) {
           stop("invalid qini_train_prop: results in empty train or test set for qini evaluation")
         }
+        set.seed(seed + as.integer(factor(model_name)) + 1000)  # different seed component for qini
         qini_train_idxs <- sample(not_missing, qini_train_size)
         qini_test_idxs  <- setdiff(not_missing, qini_train_idxs)
         if (length(qini_test_idxs) < 1) stop("qini test set is empty")
@@ -605,7 +620,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                 grf_defaults))
         qini_tau_hat <- predict(qini_model, newdata = covariates[qini_test_idxs, , drop = FALSE])$predictions
         if (verbose) cli::cli_alert_info("computing qini curves on qini-test subset")
-        qini_result <- compute_qini_curves_binary(qini_tau_hat, Y[qini_test_idxs], W[qini_test_idxs], 
+        qini_result <- compute_qini_curves_binary(qini_tau_hat, Y[qini_test_idxs], W[qini_test_idxs],
                                                  weights = if(!is.null(weights)) weights[qini_test_idxs] else NULL,
                                                  seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
         results[[model_name]]$qini_data <- qini_result$qini_data

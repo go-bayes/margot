@@ -9,7 +9,7 @@ compute_qini_curves_binary(
   Y,
   W,
   weights = NULL,
-  seed = NULL,
+  seed = 12345,
   verbose = TRUE,
   treatment_cost = 1
 )

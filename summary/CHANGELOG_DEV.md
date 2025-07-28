@@ -1,5 +1,39 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.182 (2025-07-28)
+
+### New Features
+
+- **New margot_policy_tree() function**:
+  - Provides direct computation of policy trees without re-running causal forests
+  - Supports flexible covariate selection:
+    - Exclude patterns (e.g., "_log" to remove log-transformed variables)
+    - Custom covariate sets
+    - Multiple modes: original, custom, add, all
+  - User-configurable train_proportion parameter (default 0.5)
+  - Depth selection: compute depth-1, depth-2, or both
+  - Full compatibility with downstream functions:
+    - margot_policy()
+    - margot_plot_policy_tree()
+    - margot_plot_policy_combo()
+    - margot_interpret_policy_tree()
+  - Structured output matching margot_causal_forest() format
+  - Comprehensive metadata tracking for reproducibility
+  - Output works directly with existing functions: margot_plot_policy_tree(), 
+    margot_interpret_policy_tree(), and margot_plot_policy_combo()
+  - No need for special wrapper functions - the design ensures full compatibility
+
+### Improvements
+
+- **Updated policy tree estimation defaults**:
+  - Changed default train_proportion from 0.7 to 0.5 in margot_causal_forest(), 
+    margot_flip_forests(), and margot_policy_tree()
+  - Added seed parameter to margot_causal_forest() (default 12345) for reproducible 
+    train/test splits
+  - **BREAKING CHANGE**: Both depth-1 and depth-2 policy trees now use only top_n_vars
+  - This ensures consistency between tree depths and reduces overfitting risk
+  - Seeds are model-specific to maintain independence across outcomes
+
 ## margot 1.0.181 (2025-07-28)
 
 ### Improvements

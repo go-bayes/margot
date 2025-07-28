@@ -36,7 +36,7 @@ margot_plot_rate_batch <- function(models_binary,
                                    q = seq(0.1, 1, by = 0.1),
                                    policy = "treat_best",
                                    use_oob_predictions = TRUE,
-                                   seed = NULL) {
+                                   seed = 12345) {
   # ensure margot package is installed
   if (!requireNamespace("margot", quietly = TRUE)) {
     stop("Package 'margot' is required but not installed. Please install it first.")

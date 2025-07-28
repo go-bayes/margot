@@ -49,6 +49,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/compute_difference_means.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_gain_summaries.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_leaf_means.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/compute_policy_trees_for_model.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_binary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_multi_arm.html</loc></url>
