@@ -20,7 +20,7 @@ rate_sequential_cv(
 }
 \description{
 Internal function implementing the uncorrelated sequential cross-validation
-approach from Nie & Wager (2021). This function is exported for technical
+approach from Wager (2024). This function is exported for technical
 reasons (parallel processing) but should not be called directly by users.
 }
 \keyword{internal}

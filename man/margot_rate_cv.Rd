@@ -78,7 +78,7 @@ sequential, non-overlapping training sets.
 }
 \details{
 The function implements the sequential cross-validation approach from 
-Wager (2024) and Nie & Wager (2021). This method:
+Wager (2024) and Nie & Wager (2020). This method:
 - Splits data into K folds
 - Trains on folds 1 to k-1, tests on fold k
 - Aggregates t-statistics using the martingale property

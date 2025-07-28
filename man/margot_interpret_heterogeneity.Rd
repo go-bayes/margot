@@ -12,15 +12,15 @@ margot_interpret_heterogeneity(
   exclude_negative_any = TRUE,
   require_omnibus = FALSE,
   alpha = 0.05,
-  adjust = "BH",
+  adjust = "none",
   flipped_outcomes = NULL,
   label_mapping = NULL,
   verbose = TRUE,
-  include_extended_report = FALSE,
+  include_extended_report = TRUE,
   rate_results = NULL,
   qini_results = NULL,
   omnibus_results = NULL,
-  use_cross_validation = FALSE,
+  use_cross_validation = TRUE,
   cv_num_folds = 5,
   cv_results = NULL,
   seed = 12345,
@@ -54,8 +54,8 @@ multiple testing correction.}
 
 \item{adjust}{Character. Multiple testing adjustment method for RATE estimates. 
 Options include "BH" (Benjamini-Hochberg), "BY" (Benjamini-Yekutieli), 
-"bonferroni", "holm", "fdr", or "none". Default is "BH".
-Note: When use_cross_validation = TRUE, only "bonferroni" or "none" are valid.
+"bonferroni", "holm", "fdr", or "none". Default is "none".
+Note: When use_cross_validation = TRUE (the default), only "bonferroni" or "none" are valid.
 Invalid methods will be automatically converted to "none" without warning.}
 
 \item{flipped_outcomes}{Character vector of outcome names that were flipped 
@@ -66,7 +66,7 @@ Invalid methods will be automatically converted to "none" without warning.}
 \item{verbose}{Logical. If TRUE, show progress messages. Default is TRUE.}
 
 \item{include_extended_report}{Logical. If TRUE, generate detailed academic-style report
-with full statistics and confidence intervals. Default is FALSE.}
+with full statistics and confidence intervals. Default is TRUE.}
 
 \item{rate_results}{Optional pre-computed RATE results to skip computation.}
 
@@ -75,7 +75,7 @@ with full statistics and confidence intervals. Default is FALSE.}
 \item{omnibus_results}{Optional pre-computed omnibus test results to skip computation.}
 
 \item{use_cross_validation}{Logical. If TRUE, use cross-validation for RATE tests
-instead of standard approach (default FALSE).}
+instead of standard approach (default TRUE).}
 
 \item{cv_num_folds}{Integer. Number of CV folds when use_cross_validation = TRUE (default 5).}
 

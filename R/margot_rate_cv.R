@@ -42,7 +42,7 @@
 #'
 #' @details
 #' The function implements the sequential cross-validation approach from 
-#' Wager (2024) and Nie & Wager (2021). This method:
+#' Wager (2024) and Nie & Wager (2020). This method:
 #' - Splits data into K folds
 #' - Trains on folds 1 to k-1, tests on fold k
 #' - Aggregates t-statistics using the martingale property
@@ -639,16 +639,84 @@ margot_rate_cv <- function(model_results,
     significant = adjusted_p_values < alpha
   )
   
+  # Compute RATE estimates on full data for each model/target combination
+  if (verbose) {
+    cli::cli_alert_info("Computing RATE estimates on full data...")
+  }
+  
+  rate_estimates <- list()
+  for (i in seq_len(nrow(cv_results))) {
+    model_name <- cv_results$model[i]
+    target_type <- cv_results$target[i]
+    
+    # Find the corresponding model data
+    model_idx <- which(sapply(model_data_list, function(x) x$model_name == model_name))[1]
+    if (!is.na(model_idx)) {
+      model_data <- model_data_list[[model_idx]]
+      
+      # Train final CATE forest on all data to get DR scores
+      final_forest <- do.call(grf::causal_forest, 
+                             c(list(X = model_data$X,
+                                   Y = model_data$Y,
+                                   W = model_data$W,
+                                   sample.weights = model_data$weights),
+                               model_data$grf_defaults))
+      
+      # Get DR scores from the forest
+      DR_scores <- grf::get_scores(final_forest)
+      
+      # Get predictions
+      cate_predictions <- predict(final_forest)$predictions
+      
+      # Compute RATE
+      rate_result <- grf::rank_average_treatment_effect.fit(
+        DR.scores = DR_scores,
+        priorities = cate_predictions,
+        target = target_type,
+        R = 200
+      )
+      
+      rate_estimates[[i]] <- list(
+        model = model_name,
+        target = target_type,
+        estimate = rate_result$estimate,
+        std_error = rate_result$std.err,
+        conf_low = rate_result$estimate - 1.96 * rate_result$std.err,
+        conf_high = rate_result$estimate + 1.96 * rate_result$std.err
+      )
+    }
+  }
+  
+  # Add RATE estimates to cv_results
+  rate_df <- dplyr::bind_rows(rate_estimates)
+  cv_results <- cv_results %>%
+    dplyr::left_join(rate_df, by = c("model", "target"))
+  
   # apply label mapping if provided
   if (!is.null(label_mapping)) {
     cv_results <- cv_results %>%
       dplyr::mutate(
-        model_label = dplyr::case_when(
-          model %in% names(label_mapping) ~ label_mapping[model],
-          paste0("model_", model) %in% names(label_mapping) ~ label_mapping[paste0("model_", model)],
-          gsub("^model_", "", model) %in% names(label_mapping) ~ label_mapping[gsub("^model_", "", model)],
-          TRUE ~ model
-        )
+        model_label = purrr::map_chr(model, function(m) {
+          # First get the label from mapping
+          label <- if (m %in% names(label_mapping)) {
+            label_mapping[[m]]
+          } else if (paste0("model_", m) %in% names(label_mapping)) {
+            label_mapping[[paste0("model_", m)]]
+          } else if (gsub("^model_", "", m) %in% names(label_mapping)) {
+            label_mapping[[gsub("^model_", "", m)]]
+          } else {
+            m
+          }
+          
+          # Then transform it
+          if (label != m) {
+            # We got a mapping, now transform it
+            transform_var_name(label)
+          } else {
+            # No mapping found, apply basic transformation
+            transform_var_name(m)
+          }
+        })
       )
   } else {
     cv_results$model_label <- cv_results$model
@@ -700,7 +768,7 @@ margot_rate_cv <- function(model_results,
 #' Sequential Cross-Validation for RATE
 #'
 #' Internal function implementing the uncorrelated sequential cross-validation
-#' approach from Nie & Wager (2021). This function is exported for technical
+#' approach from Wager (2024). This function is exported for technical
 #' reasons (parallel processing) but should not be called directly by users.
 #'
 #' @export
@@ -1032,7 +1100,7 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
     interpretation,
     "\n## Technical Note\n\n",
     "P-values are computed using the sequential cross-validation method ",
-    "(Wager 2024; Nie & Wager 2021), which provides valid inference by ",
+    "(Wager 2024; Nie & Wager 2020), which provides valid inference by ",
     "ensuring independence across folds through sequential training.\n"
   )
   
@@ -1120,40 +1188,49 @@ convert_cv_to_rate_results <- function(cv_results, flipped_outcomes = NULL) {
 #' @param cv_results Data frame with CV results
 #' @param alpha Significance level for highlighting
 #' @keywords internal
-#' @importFrom dplyr mutate select arrange filter desc case_when
+#' @importFrom dplyr mutate select arrange filter desc case_when left_join bind_rows
 create_cv_tables <- function(cv_results, alpha = 0.05) {
   
-  # Create a table similar to margot_rate() structure
+  # Check if model_label column exists
+  has_labels <- "model_label" %in% names(cv_results)
+  
+  # Create a table similar to margot_rate() structure with proper labeling
   cv_table <- cv_results %>%
     dplyr::mutate(
-      outcome = gsub("^model_", "", model),
-      `RATE Estimate` = estimate,
-      `Std Error` = std_error,
-      `t-statistic` = t_statistic,
-      `p-value` = p_value,
-      `95% CI Lower` = conf_low,
-      `95% CI Upper` = conf_high,
-      `Significant` = significant,
-      # Add significance indicator similar to margot_rate style
-      `Status` = dplyr::case_when(
-        significant & estimate > 0 ~ "Positive**",
-        significant & estimate < 0 ~ "Negative**", 
-        !significant ~ "Inconclusive"
+      model_id = model,
+      # Apply label transformation if available
+      model_name = if (has_labels) {
+        model_label
+      } else {
+        # Fall back to transform_var_name
+        purrr::map_chr(model, transform_var_name)
+      },
+      `RATE Estimate` = sprintf("%.3f", round(estimate, 3)),
+      `Std Error` = sprintf("%.3f", round(std_error, 3)),
+      `t-statistic` = sprintf("%.3f", round(t_statistic, 3)),
+      `p-value` = sprintf("%.4f", round(p_value, 4)),
+      `95% CI` = sprintf("[%.3f, %.3f]", round(conf_low, 3), round(conf_high, 3)),
+      # Status column matching evidence summary style
+      Status = dplyr::case_when(
+        significant & estimate > 0 ~ "positive",
+        significant & estimate < 0 ~ "negative", 
+        !significant ~ "inconclusive"
       )
     ) %>%
     dplyr::select(
-      outcome, target, `RATE Estimate`, `Std Error`, `t-statistic`, 
-      `p-value`, `95% CI Lower`, `95% CI Upper`, `Status`
+      model_id, model_name, target, `RATE Estimate`, `Std Error`, 
+      `t-statistic`, `p-value`, `95% CI`, Status
     ) %>%
-    dplyr::arrange(target, dplyr::desc(`RATE Estimate`))
+    dplyr::arrange(target, dplyr::desc(as.numeric(`RATE Estimate`)))
   
   # Split by target if both AUTOC and QINI are present
   targets <- unique(cv_table$target)
   
   if (length(targets) == 1) {
-    # Single target
+    # Single target - remove target column since it's redundant
     result <- list()
-    result[[paste0("rate_", tolower(targets[1]))]] <- cv_table
+    result[[paste0("rate_", tolower(targets[1]))]] <- cv_table %>%
+      dplyr::select(-target)
     result
   } else {
     # Multiple targets - split into separate tables

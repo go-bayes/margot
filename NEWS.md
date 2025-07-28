@@ -1,3 +1,12 @@
+# [2025-07-28] margot 1.0.201
+
+### Bug Fixes
+- **Fixed label mapping in CV rate tables**:
+  - `margot_interpret_heterogeneity()` now passes `label_mapping` parameter to `margot_rate_cv()`
+  - CV rate tables now properly display transformed model names (e.g., "Personal Well-being Index" instead of "model_t2_pwi_z")
+  - Fixed label transformation logic in `margot_rate_cv()` to use proper list indexing
+  - Ensures consistency between evidence summary table and rate result tables
+
 # [2025-07-28] margot 1.0.200
 
 ### New Features
@@ -8,6 +17,15 @@
   - Supports both single target (AUTOC or QINI) and combined target analysis
   - Provides comparison between AUTOC and QINI when both are computed
   - Updated examples show how to access tables and use interpretation functions
+
+- **Enhanced heterogeneity analysis with better defaults and CV integration**:
+  - Changed default `use_cross_validation = TRUE` in `margot_interpret_heterogeneity()` for more robust inference
+  - Changed default `include_extended_report = TRUE` for comprehensive output
+  - Changed default `adjust = "none"` to work better with CV (only "bonferroni" or "none" are valid for CV)
+  - Enhanced `margot_rate_cv()` to compute and include RATE estimates from full data after CV testing
+  - Updated `create_cv_tables()` to format results like standard RATE tables with estimates and CIs
+  - Improved CV results presentation in extended reports with proper RATE estimates
+  - CV results now include both p-values (from martingale aggregation) and RATE estimates (from full data)
 
 - **Changed default `tree_method` to "fastpolicytree" in `margot_policy_tree_bootstrap()`**:
   - Now defaults to the faster implementation for improved performance

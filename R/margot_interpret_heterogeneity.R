@@ -23,20 +23,20 @@
 #'   multiple testing correction.
 #' @param adjust Character. Multiple testing adjustment method for RATE estimates. 
 #'   Options include "BH" (Benjamini-Hochberg), "BY" (Benjamini-Yekutieli), 
-#'   "bonferroni", "holm", "fdr", or "none". Default is "BH".
-#'   Note: When use_cross_validation = TRUE, only "bonferroni" or "none" are valid.
+#'   "bonferroni", "holm", "fdr", or "none". Default is "none".
+#'   Note: When use_cross_validation = TRUE (the default), only "bonferroni" or "none" are valid.
 #'   Invalid methods will be automatically converted to "none" without warning.
 #' @param flipped_outcomes Character vector of outcome names that were flipped 
 #'   (reversed) in preprocessing. Used for interpretation text.
 #' @param label_mapping Named list for mapping model names to human-readable labels.
 #' @param verbose Logical. If TRUE, show progress messages. Default is TRUE.
 #' @param include_extended_report Logical. If TRUE, generate detailed academic-style report
-#'   with full statistics and confidence intervals. Default is FALSE.
+#'   with full statistics and confidence intervals. Default is TRUE.
 #' @param rate_results Optional pre-computed RATE results to skip computation.
 #' @param qini_results Optional pre-computed QINI results to skip computation.
 #' @param omnibus_results Optional pre-computed omnibus test results to skip computation.
 #' @param use_cross_validation Logical. If TRUE, use cross-validation for RATE tests
-#'   instead of standard approach (default FALSE).
+#'   instead of standard approach (default TRUE).
 #' @param cv_num_folds Integer. Number of CV folds when use_cross_validation = TRUE (default 5).
 #' @param cv_results Optional pre-computed CV results to skip computation.
 #' @param seed Integer. Random seed for reproducibility in all computations (default 12345).
@@ -136,15 +136,15 @@ margot_interpret_heterogeneity <- function(
   exclude_negative_any = TRUE,
   require_omnibus = FALSE,
   alpha = 0.05,
-  adjust = "BH",
+  adjust = "none",
   flipped_outcomes = NULL,
   label_mapping = NULL,
   verbose = TRUE,
-  include_extended_report = FALSE,
+  include_extended_report = TRUE,
   rate_results = NULL,
   qini_results = NULL,
   omnibus_results = NULL,
-  use_cross_validation = FALSE,
+  use_cross_validation = TRUE,
   cv_num_folds = 5,
   cv_results = NULL,
   seed = 12345,
@@ -292,7 +292,8 @@ margot_interpret_heterogeneity <- function(
           verbose = verbose,
           seed = seed,
           parallel = parallel,
-          n_cores = n_cores
+          n_cores = n_cores,
+          label_mapping = label_mapping
         )
       }
       
@@ -475,16 +476,18 @@ margot_interpret_heterogeneity <- function(
     recommendations = interpretation_text$recommendations,
     rate_results = list(
       autoc = if (use_cross_validation && !is.null(rate_results_list)) {
-        # For CV results, extract AUTOC results from cv_results
-        autoc_results <- rate_results_list$cv_results[rate_results_list$cv_results$target == "AUTOC", ]
-        if (nrow(autoc_results) > 0) autoc_results else NULL
+        # For CV results, use the formatted tables
+        if (!is.null(rate_results_list$tables) && !is.null(rate_results_list$tables$rate_autoc)) {
+          rate_results_list$tables$rate_autoc
+        } else NULL
       } else if (!is.null(rate_results_list) && !is.null(rate_results_list$rate_autoc)) {
         rate_results_list$rate_autoc
       } else NULL,
       qini = if (use_cross_validation && !is.null(rate_results_list)) {
-        # For CV results, extract QINI results from cv_results
-        qini_results <- rate_results_list$cv_results[rate_results_list$cv_results$target == "QINI", ]
-        if (nrow(qini_results) > 0) qini_results else NULL
+        # For CV results, use the formatted tables
+        if (!is.null(rate_results_list$tables) && !is.null(rate_results_list$tables$rate_qini)) {
+          rate_results_list$tables$rate_qini
+        } else NULL
       } else if (!is.null(rate_results_list) && !is.null(rate_results_list$rate_qini)) {
         rate_results_list$rate_qini
       } else NULL,
@@ -976,18 +979,25 @@ generate_extended_report <- function(evidence_summary, selection_results,
   
   # header with method details
   method_description <- if (use_cross_validation) {
-    sprintf("We used %d-fold sequential cross-validation for heterogeneity testing, which provides robust statistical inference by avoiding overfitting. ", cv_num_folds)
+    sprintf("We used %d-fold sequential cross-validation for heterogeneity testing, which provides robust statistical inference by avoiding overfitting. The p-values reflect aggregated evidence across folds using the martingale property (Wager 2024), while RATE estimates are computed on the full dataset. ", cv_num_folds)
   } else {
     "We used standard heterogeneity testing methods. "
   }
   
+  # Construct significance text based on adjustment method
+  significance_text <- if (adjust == "none") {
+    ""  # No mention of alpha when no adjustment is applied
+  } else {
+    sprintf("Statistical significance was assessed at α = %.3f with %s correction for multiple testing. ", 
+            alpha, adjust_name)
+  }
+  
   header <- sprintf(
-    "We evaluated treatment effect heterogeneity (HTE) using complementary methods to identify outcomes suitable for targeted interventions covering %s of the population. We applied causal forests (grf package) with min.node.size = %s to obtain reliable estimates of conditional average treatment effects (CATE). %sStatistical significance was assessed at α = %.3f with %s correction for multiple testing.\n\nStatistical heterogeneity tests (RATE with AUTOC and QINI weighting, plus omnibus calibration) assess whether treatment effects vary across individuals. Practical targeting tests (QINI curves) assess whether targeting based on predicted effects improves outcomes at specific budget constraints. Each method provides different insights, and their agreement strengthens conclusions.\n\nOur methods include:\n\n",
+    "We evaluated treatment effect heterogeneity (HTE) using complementary methods to identify outcomes suitable for targeted interventions covering %s of the population. We applied causal forests (grf package) with min.node.size = %s to obtain reliable estimates of conditional average treatment effects (CATE). %s%s\n\nStatistical heterogeneity tests (RATE with AUTOC and QINI weighting, plus omnibus calibration) assess whether treatment effects vary across individuals. Practical targeting tests (QINI curves) assess whether targeting based on predicted effects improves outcomes at specific budget constraints. Each method provides different insights, and their agreement strengthens conclusions.\n\nOur methods include:\n\n",
     spend_range,
     grf_params$min.node.size,
     method_description,
-    alpha,
-    adjust_name
+    significance_text
   )
   
   # methods description
@@ -1165,35 +1175,64 @@ format_outcome_details <- function(model_id, model_name, evidence_row,
   # extract RATE statistics if available
   rate_text <- character()
   
-  # RATE QINI
-  if (!is.null(rate_results_list) && !is.null(rate_results_list$rate_qini)) {
-    # try different column names
-    if ("outcome" %in% names(rate_results_list$rate_qini)) {
-      qini_row <- rate_results_list$rate_qini[rate_results_list$rate_qini$outcome == model_id, ]
-    } else if ("Model" %in% names(rate_results_list$rate_qini)) {
-      qini_row <- rate_results_list$rate_qini[rate_results_list$rate_qini$Model == model_id, ]
-    } else {
-      qini_row <- data.frame()
-    }
-    if (nrow(qini_row) > 0) {
-      qini_est <- format_rate_with_ci(qini_row, "QINI")
-      if (nchar(qini_est) > 0) rate_text <- c(rate_text, qini_est)
-    }
-  }
+  # Check if using CV results
+  is_cv <- !is.null(rate_results_list) && inherits(rate_results_list, "margot_cv_results")
   
-  # RATE AUTOC
-  if (!is.null(rate_results_list) && !is.null(rate_results_list$rate_autoc)) {
-    # try different column names
-    if ("outcome" %in% names(rate_results_list$rate_autoc)) {
-      autoc_row <- rate_results_list$rate_autoc[rate_results_list$rate_autoc$outcome == model_id, ]
-    } else if ("Model" %in% names(rate_results_list$rate_autoc)) {
-      autoc_row <- rate_results_list$rate_autoc[rate_results_list$rate_autoc$Model == model_id, ]
-    } else {
-      autoc_row <- data.frame()
+  if (is_cv) {
+    # Handle CV results - get from tables
+    if (!is.null(rate_results_list$tables)) {
+      # RATE QINI from CV
+      if (!is.null(rate_results_list$tables$rate_qini)) {
+        qini_table <- rate_results_list$tables$rate_qini
+        qini_row <- qini_table[qini_table$outcome == gsub("^model_", "", model_id), ]
+        if (nrow(qini_row) > 0) {
+          qini_est <- format_rate_with_ci(qini_row, "QINI")
+          if (nchar(qini_est) > 0) rate_text <- c(rate_text, qini_est)
+        }
+      }
+      
+      # RATE AUTOC from CV
+      if (!is.null(rate_results_list$tables$rate_autoc)) {
+        autoc_table <- rate_results_list$tables$rate_autoc
+        autoc_row <- autoc_table[autoc_table$outcome == gsub("^model_", "", model_id), ]
+        if (nrow(autoc_row) > 0) {
+          autoc_est <- format_rate_with_ci(autoc_row, "AUTOC")
+          if (nchar(autoc_est) > 0) rate_text <- c(rate_text, autoc_est)
+        }
+      }
     }
-    if (nrow(autoc_row) > 0) {
-      autoc_est <- format_rate_with_ci(autoc_row, "AUTOC")
-      if (nchar(autoc_est) > 0) rate_text <- c(rate_text, autoc_est)
+  } else {
+    # Standard RATE results
+    # RATE QINI
+    if (!is.null(rate_results_list) && !is.null(rate_results_list$rate_qini)) {
+      # try different column names
+      if ("outcome" %in% names(rate_results_list$rate_qini)) {
+        qini_row <- rate_results_list$rate_qini[rate_results_list$rate_qini$outcome == model_id, ]
+      } else if ("Model" %in% names(rate_results_list$rate_qini)) {
+        qini_row <- rate_results_list$rate_qini[rate_results_list$rate_qini$Model == model_id, ]
+      } else {
+        qini_row <- data.frame()
+      }
+      if (nrow(qini_row) > 0) {
+        qini_est <- format_rate_with_ci(qini_row, "QINI")
+        if (nchar(qini_est) > 0) rate_text <- c(rate_text, qini_est)
+      }
+    }
+    
+    # RATE AUTOC
+    if (!is.null(rate_results_list) && !is.null(rate_results_list$rate_autoc)) {
+      # try different column names
+      if ("outcome" %in% names(rate_results_list$rate_autoc)) {
+        autoc_row <- rate_results_list$rate_autoc[rate_results_list$rate_autoc$outcome == model_id, ]
+      } else if ("Model" %in% names(rate_results_list$rate_autoc)) {
+        autoc_row <- rate_results_list$rate_autoc[rate_results_list$rate_autoc$Model == model_id, ]
+      } else {
+        autoc_row <- data.frame()
+      }
+      if (nrow(autoc_row) > 0) {
+        autoc_est <- format_rate_with_ci(autoc_row, "AUTOC")
+        if (nchar(autoc_est) > 0) rate_text <- c(rate_text, autoc_est)
+      }
     }
   }
   

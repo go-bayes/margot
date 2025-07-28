@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.200</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.201</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,21 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.201" id="id_2025-07-28-margot-10201">[2025-07-28] margot 1.0.201<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10201"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-201">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-201"></a></h4>
+<ul><li>
+<strong>Fixed label mapping in CV rate tables</strong>:
+<ul><li>
+<code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> now passes <code>label_mapping</code> parameter to <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code>
+</li>
+<li>CV rate tables now properly display transformed model names (e.g., “Personal Well-being Index” instead of “model_t2_pwi_z”)</li>
+<li>Fixed label transformation logic in <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> to use proper list indexing</li>
+<li>Ensures consistency between evidence summary table and rate result tables</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.200" id="id_2025-07-28-margot-10200">[2025-07-28] margot 1.0.200<a class="anchor" aria-label="anchor" href="#id_2025-07-28-margot-10200"></a></h2>
 <div class="section level4">
 <h4 id="new-features-1-0-200">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-200"></a></h4>
@@ -45,6 +60,16 @@
 <li>Supports both single target (AUTOC or QINI) and combined target analysis</li>
 <li>Provides comparison between AUTOC and QINI when both are computed</li>
 <li>Updated examples show how to access tables and use interpretation functions</li>
+</ul></li>
+<li>
+<strong>Enhanced heterogeneity analysis with better defaults and CV integration</strong>:
+<ul><li>Changed default <code>use_cross_validation = TRUE</code> in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> for more robust inference</li>
+<li>Changed default <code>include_extended_report = TRUE</code> for comprehensive output</li>
+<li>Changed default <code>adjust = "none"</code> to work better with CV (only “bonferroni” or “none” are valid for CV)</li>
+<li>Enhanced <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> to compute and include RATE estimates from full data after CV testing</li>
+<li>Updated <code><a href="../reference/create_cv_tables.html">create_cv_tables()</a></code> to format results like standard RATE tables with estimates and CIs</li>
+<li>Improved CV results presentation in extended reports with proper RATE estimates</li>
+<li>CV results now include both p-values (from martingale aggregation) and RATE estimates (from full data)</li>
 </ul></li>
 <li>
 <strong>Changed default <code>tree_method</code> to “fastpolicytree” in <code><a href="../reference/margot_policy_tree_bootstrap.html">margot_policy_tree_bootstrap()</a></code></strong>:
@@ -180,7 +205,7 @@
 <ul><li>
 <strong>New diagnostic functions for policy tree stability analysis</strong>:
 <ul><li>
-<code><a href="../reference/margot_assess_variable_correlation.html">margot_assess_variable_correlation()</a></code>: Analyzes correlations among covariates to identify multicollinearity</li>
+<code><a href="../reference/margot_assess_variable_correlation.html">margot_assess_variable_correlation()</a></code>: Analyses correlations among covariates to identify multicollinearity</li>
 <li>
 <code><a href="../reference/margot_identify_variable_clusters.html">margot_identify_variable_clusters()</a></code>: Groups correlated variables into clusters</li>
 <li>
@@ -196,7 +221,7 @@
 <li>Frames variable selection variability in context of correlated predictors</li>
 <li>Includes theoretical context about decision tree sensitivity (can be disabled)</li>
 <li>More nuanced interpretation of stability patterns</li>
-<li>Emphasizes that correlated variables may capture similar information</li>
+<li>Emphasises that correlated variables may capture similar information</li>
 <li>Added <code>include_theory</code> parameter to control theoretical context inclusion</li>
 </ul></li>
 </ul></div>
