@@ -6,6 +6,7 @@
 \usage{
 margot_interpret_heterogeneity(
   models = NULL,
+  model_names = NULL,
   spend_levels = c(0.1, 0.4),
   require_any_positive = TRUE,
   exclude_negative_any = TRUE,
@@ -29,6 +30,9 @@ margot_interpret_heterogeneity(
 }
 \arguments{
 \item{models}{Output from `margot_causal_forest()` containing model results}
+
+\item{model_names}{Character vector of model names to analyze. If NULL (default), 
+analyzes all models. Model names can be specified with or without "model_" prefix.}
 
 \item{spend_levels}{Numeric vector of spend levels for QINI analysis. 
 Default is c(0.1, 0.4).}
@@ -99,7 +103,7 @@ A list containing:
   \item{interpretation}{Character string with main interpretation text organized by evidence categories}
   \item{summary}{Character string with brief summary}
   \item{recommendations}{Character string with actionable recommendations}
-  \item{rate_results}{List containing AUTOC and QINI RATE results}
+  \item{rate_results}{List containing AUTOC and QINI RATE results, interpretation, and raw_results from margot_rate() or margot_rate_cv()}
   \item{qini_results}{QINI curve interpretation results}
   \item{omnibus_results}{Omnibus calibration test results}
   \item{concordance}{List analyzing agreement between methods}
@@ -121,6 +125,13 @@ het_evidence <- margot_interpret_heterogeneity(
   flipped_outcomes = c("anxiety", "depression")
 )
 
+# Analyze specific models only
+het_evidence_subset <- margot_interpret_heterogeneity(
+  models = causal_forest_results,
+  model_names = c("t2_depression_z", "t2_anxiety_z"),
+  spend_levels = c(0.1, 0.4)
+)
+
 # View interpretation
 cat(het_evidence$interpretation)
 
@@ -128,6 +139,13 @@ cat(het_evidence$interpretation)
 policy_results <- margot_policy(
   causal_forest_results,
   model_names = het_evidence$selected_model_ids
+)
+
+# Use model_names parameter with selected models
+het_focused <- margot_interpret_heterogeneity(
+  models = causal_forest_results,
+  model_names = het_evidence$selected_model_ids,
+  include_extended_report = TRUE
 )
 
 # Advanced usage with pre-computed results

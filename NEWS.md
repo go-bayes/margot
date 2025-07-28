@@ -1,3 +1,35 @@
+# [2025-07-28] margot 1.0.200
+
+### New Features
+- **Enhanced `margot_rate_cv()` with table output and detailed summary**:
+  - Added `tables` field to return structure containing formatted tables similar to `margot_rate()` output
+  - New `margot_interpret_rate_cv()` function provides detailed interpretation similar to `margot_interpret_rate()`
+  - Tables include columns: outcome, RATE Estimate, Std Error, t-statistic, p-value, 95% CI, and Status
+  - Supports both single target (AUTOC or QINI) and combined target analysis
+  - Provides comparison between AUTOC and QINI when both are computed
+  - Updated examples show how to access tables and use interpretation functions
+
+- **Changed default `tree_method` to "fastpolicytree" in `margot_policy_tree_bootstrap()`**:
+  - Now defaults to the faster implementation for improved performance
+  - Provides ~10x speed improvement for bootstrap analysis
+  - Falls back gracefully to policytree if fastpolicytree is not installed
+  - Particularly beneficial for bootstrap analysis with hundreds of iterations
+
+- **Added `model_names` parameter to `margot_interpret_heterogeneity()`**:
+  - Allows users to analyse only specific models rather than all models
+  - Model names can be specified with or without "model_" prefix
+  - Filters all computations (RATE, QINI, omnibus tests) to requested models only
+  - Also filters pre-computed results when provided
+  - Provides helpful warnings when requested models are not found
+  - Consistent with other functions in the margot package
+
+### Bug Fixes
+- **Fixed `margot_interpret_heterogeneity()` RATE results export**:
+  - Now properly exports raw RATE results from `margot_rate()` or `margot_rate_cv()` in `rate_results$raw_results`
+  - This provides access to the full rate results including all statistics and confidence intervals
+  - Previously, CV results from `margot_rate_cv()` were only accessible through the `cv_results` field
+  - The raw results are now consistently available regardless of whether standard or CV method was used
+
 # [2025-07-28] margot 1.0.199
 
 ### New Features
@@ -69,7 +101,7 @@
 
 ### New Features
 - **New diagnostic functions for policy tree stability analysis**:
-  - `margot_assess_variable_correlation()`: Analyzes correlations among covariates to identify multicollinearity
+  - `margot_assess_variable_correlation()`: Analyses correlations among covariates to identify multicollinearity
   - `margot_identify_variable_clusters()`: Groups correlated variables into clusters
   - `margot_stability_diagnostics()`: Comprehensive stability assessment combining bootstrap and correlation analyses
   - These functions help explain why policy trees show instability when variables are correlated
@@ -80,7 +112,7 @@
   - Frames variable selection variability in context of correlated predictors
   - Includes theoretical context about decision tree sensitivity (can be disabled)
   - More nuanced interpretation of stability patterns
-  - Emphasizes that correlated variables may capture similar information
+  - Emphasises that correlated variables may capture similar information
   - Added `include_theory` parameter to control theoretical context inclusion
 
 # [2025-07-28] margot 1.0.193

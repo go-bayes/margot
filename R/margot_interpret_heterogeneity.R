@@ -6,6 +6,8 @@
 #' about which models show treatment effect heterogeneity.
 #'
 #' @param models Output from `margot_causal_forest()` containing model results
+#' @param model_names Character vector of model names to analyze. If NULL (default), 
+#'   analyzes all models. Model names can be specified with or without "model_" prefix.
 #' @param spend_levels Numeric vector of spend levels for QINI analysis. 
 #'   Default is c(0.1, 0.4).
 #' @param require_any_positive Logical. If TRUE (default), include models that 
@@ -56,7 +58,7 @@
 #'   \item{interpretation}{Character string with main interpretation text organized by evidence categories}
 #'   \item{summary}{Character string with brief summary}
 #'   \item{recommendations}{Character string with actionable recommendations}
-#'   \item{rate_results}{List containing AUTOC and QINI RATE results}
+#'   \item{rate_results}{List containing AUTOC and QINI RATE results, interpretation, and raw_results from margot_rate() or margot_rate_cv()}
 #'   \item{qini_results}{QINI curve interpretation results}
 #'   \item{omnibus_results}{Omnibus calibration test results}
 #'   \item{concordance}{List analyzing agreement between methods}
@@ -73,6 +75,13 @@
 #'   flipped_outcomes = c("anxiety", "depression")
 #' )
 #' 
+#' # Analyze specific models only
+#' het_evidence_subset <- margot_interpret_heterogeneity(
+#'   models = causal_forest_results,
+#'   model_names = c("t2_depression_z", "t2_anxiety_z"),
+#'   spend_levels = c(0.1, 0.4)
+#' )
+#' 
 #' # View interpretation
 #' cat(het_evidence$interpretation)
 #' 
@@ -80,6 +89,13 @@
 #' policy_results <- margot_policy(
 #'   causal_forest_results,
 #'   model_names = het_evidence$selected_model_ids
+#' )
+#' 
+#' # Use model_names parameter with selected models
+#' het_focused <- margot_interpret_heterogeneity(
+#'   models = causal_forest_results,
+#'   model_names = het_evidence$selected_model_ids,
+#'   include_extended_report = TRUE
 #' )
 #' 
 #' # Advanced usage with pre-computed results
@@ -114,6 +130,7 @@
 #' @importFrom future availableCores
 margot_interpret_heterogeneity <- function(
   models = NULL,
+  model_names = NULL,
   spend_levels = c(0.1, 0.4),
   require_any_positive = TRUE,
   exclude_negative_any = TRUE,
@@ -138,6 +155,85 @@ margot_interpret_heterogeneity <- function(
   # validate inputs
   if (is.null(models) && (is.null(rate_results) || is.null(qini_results))) {
     stop("Either 'models' or pre-computed results must be provided")
+  }
+  
+  # filter models if model_names is specified
+  if (!is.null(model_names) && !is.null(models)) {
+    # ensure model names have the "model_" prefix
+    model_names_prefixed <- ifelse(
+      grepl("^model_", model_names),
+      model_names,
+      paste0("model_", model_names)
+    )
+    
+    # filter the models
+    available_models <- names(models$results)
+    requested_models <- intersect(model_names_prefixed, available_models)
+    
+    if (length(requested_models) == 0) {
+      stop("None of the specified model names were found in the results. Available models: ", 
+           paste(available_models, collapse = ", "))
+    }
+    
+    if (length(requested_models) < length(model_names_prefixed)) {
+      missing_models <- setdiff(model_names_prefixed, available_models)
+      if (verbose) {
+        cli::cli_alert_warning("Some requested models were not found: {missing_models}")
+      }
+    }
+    
+    # create filtered models object
+    models_filtered <- models
+    models_filtered$results <- models$results[requested_models]
+    if (!is.null(models$full_models)) {
+      models_filtered$full_models <- models$full_models[intersect(requested_models, names(models$full_models))]
+    }
+    models <- models_filtered
+  }
+  
+  # filter pre-computed results if model_names is specified
+  if (!is.null(model_names) && !is.null(rate_results)) {
+    # ensure model names have the "model_" prefix
+    model_names_prefixed <- ifelse(
+      grepl("^model_", model_names),
+      model_names,
+      paste0("model_", model_names)
+    )
+    
+    # filter rate results if they contain model lists
+    if (!is.null(rate_results$autoc_model_names)) {
+      rate_results$autoc_model_names <- intersect(rate_results$autoc_model_names, model_names_prefixed)
+    }
+    if (!is.null(rate_results$qini_model_names)) {
+      rate_results$qini_model_names <- intersect(rate_results$qini_model_names, model_names_prefixed)
+    }
+    if (!is.null(rate_results$not_excluded_autoc_model_names)) {
+      rate_results$not_excluded_autoc_model_names <- intersect(rate_results$not_excluded_autoc_model_names, model_names_prefixed)
+    }
+    if (!is.null(rate_results$not_excluded_qini_model_names)) {
+      rate_results$not_excluded_qini_model_names <- intersect(rate_results$not_excluded_qini_model_names, model_names_prefixed)
+    }
+  }
+  
+  # filter qini results if model_names is specified
+  if (!is.null(model_names) && !is.null(qini_results)) {
+    # ensure model names have the "model_" prefix
+    model_names_prefixed <- ifelse(
+      grepl("^model_", model_names),
+      model_names,
+      paste0("model_", model_names)
+    )
+    
+    # filter qini results if they contain model lists
+    if (!is.null(qini_results$reliable_model_ids)) {
+      qini_results$reliable_model_ids <- intersect(qini_results$reliable_model_ids, model_names_prefixed)
+    }
+    if (!is.null(qini_results$harmful_model_ids)) {
+      qini_results$harmful_model_ids <- intersect(qini_results$harmful_model_ids, model_names_prefixed)
+    }
+    if (!is.null(qini_results$no_effect_model_ids)) {
+      qini_results$no_effect_model_ids <- intersect(qini_results$no_effect_model_ids, model_names_prefixed)
+    }
   }
   
   # header
@@ -277,9 +373,9 @@ margot_interpret_heterogeneity <- function(
     )
   }
   
-  # extract all model ids
+  # extract all model ids - filter if model_names was specified
   all_model_ids <- unique(c(
-    names(models$results),
+    if (!is.null(models)) names(models$results) else character(0),
     rate_results$autoc_model_names,
     rate_results$qini_model_names,
     rate_results$not_excluded_autoc_model_names,
@@ -288,6 +384,16 @@ margot_interpret_heterogeneity <- function(
     qini_results$harmful_model_ids,
     qini_results$no_effect_model_ids
   ))
+  
+  # if model_names was specified, only include those models
+  if (!is.null(model_names)) {
+    model_names_prefixed <- ifelse(
+      grepl("^model_", model_names),
+      model_names,
+      paste0("model_", model_names)
+    )
+    all_model_ids <- intersect(all_model_ids, model_names_prefixed)
+  }
   
   # create evidence summary
   evidence_summary <- create_evidence_summary(
@@ -368,9 +474,22 @@ margot_interpret_heterogeneity <- function(
     summary = interpretation_text$summary,
     recommendations = interpretation_text$recommendations,
     rate_results = list(
-      autoc = if (!is.null(rate_results_list)) rate_results_list$rate_autoc else NULL,
-      qini = if (!is.null(rate_results_list)) rate_results_list$rate_qini else NULL,
-      interpretation = rate_results
+      autoc = if (use_cross_validation && !is.null(rate_results_list)) {
+        # For CV results, extract AUTOC results from cv_results
+        autoc_results <- rate_results_list$cv_results[rate_results_list$cv_results$target == "AUTOC", ]
+        if (nrow(autoc_results) > 0) autoc_results else NULL
+      } else if (!is.null(rate_results_list) && !is.null(rate_results_list$rate_autoc)) {
+        rate_results_list$rate_autoc
+      } else NULL,
+      qini = if (use_cross_validation && !is.null(rate_results_list)) {
+        # For CV results, extract QINI results from cv_results
+        qini_results <- rate_results_list$cv_results[rate_results_list$cv_results$target == "QINI", ]
+        if (nrow(qini_results) > 0) qini_results else NULL
+      } else if (!is.null(rate_results_list) && !is.null(rate_results_list$rate_qini)) {
+        rate_results_list$rate_qini
+      } else NULL,
+      interpretation = rate_results,
+      raw_results = rate_results_list  # export the full raw results from margot_rate() or margot_rate_cv()
     ),
     cv_results = if (use_cross_validation && !is.null(rate_results_list)) rate_results_list else NULL,
     qini_results = qini_results,

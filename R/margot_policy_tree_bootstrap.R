@@ -43,8 +43,8 @@
 #' @param n_cores Integer. Number of cores for parallel processing.
 #' @param verbose Logical. Print progress messages (default TRUE).
 #' @param seed Integer. Additional seed parameter for compatibility (default 12345).
-#' @param tree_method Character string specifying the package to use: "policytree" 
-#'   (default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
+#' @param tree_method Character string specifying the package to use: "fastpolicytree" 
+#'   (default) or "policytree". The fastpolicytree package provides ~10x faster
 #'   computation, which is particularly beneficial for bootstrap analysis. Falls 
 #'   back to policytree if fastpolicytree is not installed.
 #'
@@ -235,7 +235,7 @@ margot_policy_tree_bootstrap <- function(
   n_cores = NULL,
   verbose = TRUE,
   seed = 12345,
-  tree_method = c("policytree", "fastpolicytree")
+  tree_method = c("fastpolicytree", "policytree")
 ) {
   
   # validate inputs

@@ -67,6 +67,7 @@ A list containing:
   \item{cv_results}{Data frame with CV test results for each model}
   \item{interpretation}{Character string interpreting the results}
   \item{significant_models}{Character vector of models with significant heterogeneity}
+  \item{tables}{List of formatted tables similar to margot_rate() output (rate_autoc, rate_qini)}
   \item{method_details}{List with details about the CV procedure}
 }
 \description{
@@ -141,6 +142,23 @@ cv_results_autoc <- margot_rate_cv(
 
 # View results
 cat(cv_results$interpretation)
+
+# Access formatted tables (similar to margot_rate output)
+cv_results$tables$rate_autoc  # AUTOC table
+cv_results$tables$rate_qini   # QINI table
+
+# Get detailed interpretation with tables (similar to margot_interpret_rate)
+detailed_results <- margot_interpret_rate_cv(cv_results)
+cat(detailed_results$interpretation)
+
+# View individual target interpretations
+cat(detailed_results$autoc_results)
+cat(detailed_results$qini_results)
+
+# Comparison between AUTOC and QINI
+if (!is.null(detailed_results$comparison)) {
+  cat(detailed_results$comparison)
+}
 
 # Create visualization
 plot <- margot_plot_cv_results(cv_results)

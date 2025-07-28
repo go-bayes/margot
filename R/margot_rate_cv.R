@@ -37,6 +37,7 @@
 #'   \item{cv_results}{Data frame with CV test results for each model}
 #'   \item{interpretation}{Character string interpreting the results}
 #'   \item{significant_models}{Character vector of models with significant heterogeneity}
+#'   \item{tables}{List of formatted tables similar to margot_rate() output (rate_autoc, rate_qini)}
 #'   \item{method_details}{List with details about the CV procedure}
 #'
 #' @details
@@ -105,6 +106,23 @@
 #'
 #' # View results
 #' cat(cv_results$interpretation)
+#' 
+#' # Access formatted tables (similar to margot_rate output)
+#' cv_results$tables$rate_autoc  # AUTOC table
+#' cv_results$tables$rate_qini   # QINI table
+#' 
+#' # Get detailed interpretation with tables (similar to margot_interpret_rate)
+#' detailed_results <- margot_interpret_rate_cv(cv_results)
+#' cat(detailed_results$interpretation)
+#' 
+#' # View individual target interpretations
+#' cat(detailed_results$autoc_results)
+#' cat(detailed_results$qini_results)
+#' 
+#' # Comparison between AUTOC and QINI
+#' if (!is.null(detailed_results$comparison)) {
+#'   cat(detailed_results$comparison)
+#' }
 #' 
 #' # Create visualization
 #' plot <- margot_plot_cv_results(cv_results)
@@ -653,12 +671,16 @@ margot_rate_cv <- function(model_results,
     target = target
   )
   
+  # Create formatted tables similar to margot_rate()
+  cv_tables <- create_cv_tables(cv_results, alpha)
+  
   # Return results
   structure(
     list(
       cv_results = cv_results,
       interpretation = interpretation,
       significant_models = significant_models,
+      tables = cv_tables,  # add formatted tables
       method_details = list(
         num_folds = num_folds,
         target = if (test_both) c("AUTOC", "QINI") else target,
@@ -1087,6 +1109,252 @@ convert_cv_to_rate_results <- function(cv_results, flipped_outcomes = NULL) {
     adjust = cv_results$method_details$adjust,
     interpretation = cv_results$interpretation
   )
+}
+
+
+#' Create Formatted Tables from CV Results
+#'
+#' Internal function to create formatted tables similar to margot_rate() output
+#' for cross-validation results.
+#'
+#' @param cv_results Data frame with CV results
+#' @param alpha Significance level for highlighting
+#' @keywords internal
+#' @importFrom dplyr mutate select arrange filter desc case_when
+create_cv_tables <- function(cv_results, alpha = 0.05) {
+  
+  # Create a table similar to margot_rate() structure
+  cv_table <- cv_results %>%
+    dplyr::mutate(
+      outcome = gsub("^model_", "", model),
+      `RATE Estimate` = estimate,
+      `Std Error` = std_error,
+      `t-statistic` = t_statistic,
+      `p-value` = p_value,
+      `95% CI Lower` = conf_low,
+      `95% CI Upper` = conf_high,
+      `Significant` = significant,
+      # Add significance indicator similar to margot_rate style
+      `Status` = dplyr::case_when(
+        significant & estimate > 0 ~ "Positive**",
+        significant & estimate < 0 ~ "Negative**", 
+        !significant ~ "Inconclusive"
+      )
+    ) %>%
+    dplyr::select(
+      outcome, target, `RATE Estimate`, `Std Error`, `t-statistic`, 
+      `p-value`, `95% CI Lower`, `95% CI Upper`, `Status`
+    ) %>%
+    dplyr::arrange(target, dplyr::desc(`RATE Estimate`))
+  
+  # Split by target if both AUTOC and QINI are present
+  targets <- unique(cv_table$target)
+  
+  if (length(targets) == 1) {
+    # Single target
+    result <- list()
+    result[[paste0("rate_", tolower(targets[1]))]] <- cv_table
+    result
+  } else {
+    # Multiple targets - split into separate tables
+    result <- list()
+    for (tgt in targets) {
+      result[[paste0("rate_", tolower(tgt))]] <- cv_table %>%
+        dplyr::filter(target == tgt) %>%
+        dplyr::select(-target)  # remove target column since it's in the name
+    }
+    result
+  }
+}
+
+
+#' Interpret CV RATE Results
+#'
+#' @description
+#' Produces a summary of which outcomes show positive, negative, or inconclusive
+#' heterogeneous treatment effects based on cross-validation RATE analysis,
+#' similar to margot_interpret_rate() but for CV results.
+#'
+#' @param cv_results A margot_cv_results object from margot_rate_cv()
+#' @param flipped_outcomes Character vector of outcomes that were inverted
+#'   during preprocessing. Optional.
+#' @param target Character. "AUTOC" or "QINI" (ignored when cv_results contains both).
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item summary_table: Formatted table with CV results
+#'   \item interpretation: Markdown-formatted character string summarizing the results
+#'   \item autoc_results: AUTOC interpretation (if available)
+#'   \item qini_results: QINI interpretation (if available)
+#'   \item comparison: Comparison between AUTOC and QINI (if both available)
+#' }
+#'
+#' @export
+margot_interpret_rate_cv <- function(cv_results, 
+                                    flipped_outcomes = NULL,
+                                    target = NULL) {
+  
+  if (!inherits(cv_results, "margot_cv_results")) {
+    stop("Input must be a margot_cv_results object from margot_rate_cv()")
+  }
+  
+  cv_data <- cv_results$cv_results
+  targets <- unique(cv_data$target)
+  
+  # Create individual interpretations for each target
+  interpretations <- list()
+  tables <- list()
+  
+  for (tgt in targets) {
+    tgt_data <- cv_data[cv_data$target == tgt, ]
+    tables[[paste0(tolower(tgt), "_table")]] <- cv_results$tables[[paste0("rate_", tolower(tgt))]]
+    interpretations[[paste0(tolower(tgt), "_results")]] <- interpret_single_cv_target(
+      tgt_data, tgt, flipped_outcomes
+    )
+  }
+  
+  # Create comparison if both targets are present
+  comparison <- NULL
+  if (length(targets) == 2) {
+    comparison <- compare_cv_targets(cv_data, flipped_outcomes)
+  }
+  
+  # Main interpretation
+  main_interpretation <- if (length(targets) == 1) {
+    interpretations[[1]]
+  } else {
+    comparison
+  }
+  
+  # Return comprehensive results
+  result <- list(
+    tables = tables,
+    interpretation = main_interpretation,
+    method_details = cv_results$method_details
+  )
+  
+  # Add individual target results
+  result <- c(result, interpretations)
+  
+  if (!is.null(comparison)) {
+    result$comparison <- comparison
+  }
+  
+  result
+}
+
+
+#' Interpret Single CV Target Results
+#' @keywords internal
+interpret_single_cv_target <- function(cv_data, target, flipped_outcomes = NULL) {
+  
+  pos <- which(cv_data$significant & cv_data$estimate > 0)
+  neg <- which(cv_data$significant & cv_data$estimate < 0)
+  inc <- which(!cv_data$significant)
+  
+  # Handle flipped outcomes for display
+  outcome_labels <- cv_data$outcome
+  if (!is.null(flipped_outcomes)) {
+    clean_outcomes <- gsub("^model_", "", cv_data$model)
+    flipped_idx <- which(clean_outcomes %in% flipped_outcomes)
+    if (length(flipped_idx) > 0) {
+      outcome_labels[flipped_idx] <- paste0(outcome_labels[flipped_idx], " (flipped)")
+    }
+  }
+  
+  pol_txt <- "CATE-based targeting"
+  
+  lines <- list(
+    paste0("### Cross-Validation RATE (", target, ")"),
+    paste0("Method: ", cv_data$fold[1], "-fold sequential cross-validation"),
+    if (target == "AUTOC") {
+      "AUTOC applies logarithmic weighting, emphasising top responders."
+    } else {
+      "QINI applies linear weighting, maximising aggregate gain."
+    }
+  )
+  
+  if (length(pos)) {
+    lines <- c(lines,
+               paste0("**Positive RATE** CATE targeting outperforms ATE for: ",
+                      paste(outcome_labels[pos], collapse = ", "), "."))
+  }
+  if (length(neg)) {
+    lines <- c(lines,
+               paste0("**Negative RATE** CATE targeting would *underperform* ATE for: ",
+                      paste(outcome_labels[neg], collapse = ", "), "."))
+  }
+  if (length(inc)) {
+    lines <- c(lines,
+               paste0("Evidence inconclusive for: ",
+                      paste(outcome_labels[inc], collapse = ", "),
+                      " (p > α)."))
+  }
+  
+  paste(lines, collapse = "\n\n")
+}
+
+
+#' Compare CV AUTOC and QINI Results
+#' @keywords internal
+compare_cv_targets <- function(cv_data, flipped_outcomes = NULL) {
+  
+  autoc_data <- cv_data[cv_data$target == "AUTOC", ]
+  qini_data <- cv_data[cv_data$target == "QINI", ]
+  
+  # Ensure same model order for comparison
+  autoc_data <- autoc_data[order(autoc_data$model), ]
+  qini_data <- qini_data[order(qini_data$model), ]
+  
+  pos_auto <- autoc_data$model[autoc_data$significant & autoc_data$estimate > 0]
+  pos_qini <- qini_data$model[qini_data$significant & qini_data$estimate > 0]
+  
+  both_pos <- intersect(pos_auto, pos_qini)
+  only_auto <- setdiff(pos_auto, pos_qini)
+  only_qini <- setdiff(pos_qini, pos_auto)
+  
+  # Handle flipped outcomes for display
+  format_outcomes <- function(models) {
+    labels <- gsub("^model_", "", models)
+    if (!is.null(flipped_outcomes)) {
+      flipped_idx <- which(labels %in% flipped_outcomes)
+      if (length(flipped_idx) > 0) {
+        labels[flipped_idx] <- paste0(labels[flipped_idx], " (flipped)")
+      }
+    }
+    labels
+  }
+  
+  txt <- c("### Cross-Validation RATE Comparison")
+  
+  if (length(both_pos)) {
+    txt <- c(txt,
+             paste0("**Agreement**: Both weighting schemes identify positive heterogeneity for ",
+                    paste(format_outcomes(both_pos), collapse = ", "), "."))
+  }
+  
+  if (length(c(only_auto, only_qini))) {
+    disc <- character()
+    if (length(only_auto)) {
+      disc <- c(disc,
+                paste0("AUTOC-only positive: ",
+                       paste(format_outcomes(only_auto), collapse = ", ")))
+    }
+    if (length(only_qini)) {
+      disc <- c(disc,
+                paste0("QINI-only positive: ",
+                       paste(format_outcomes(only_qini), collapse = ", ")))
+    }
+    txt <- c(txt,
+             "Weighting choice matters:",
+             paste(disc, collapse = "; "), ".")
+  }
+  
+  if (!length(c(both_pos, only_auto, only_qini))) {
+    txt <- c(txt, "No statistically reliable positives under either weighting.")
+  }
+  
+  paste(txt, collapse = "\n\n")
 }
 
 

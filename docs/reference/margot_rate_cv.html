@@ -13,7 +13,7 @@ sequential, non-overlapping training sets."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.199</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.200</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,6 +150,9 @@ Other methods like BH/BY/FDR are not statistically appropriate for CV aggregatio
   <dt>significant_models</dt>
 <dd><p>Character vector of models with significant heterogeneity</p></dd>
 
+  <dt>tables</dt>
+<dd><p>List of formatted tables similar to margot_rate() output (rate_autoc, rate_qini)</p></dd>
+
   <dt>method_details</dt>
 <dd><p>List with details about the CV procedure</p></dd>
 
@@ -225,6 +228,23 @@ Biometrika, 108(2), 299-319.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># View results</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">cv_results</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Access formatted tables (similar to margot_rate output)</span></span></span>
+<span class="r-in"><span><span class="va">cv_results</span><span class="op">$</span><span class="va">tables</span><span class="op">$</span><span class="va">rate_autoc</span>  <span class="co"># AUTOC table</span></span></span>
+<span class="r-in"><span><span class="va">cv_results</span><span class="op">$</span><span class="va">tables</span><span class="op">$</span><span class="va">rate_qini</span>   <span class="co"># QINI table</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Get detailed interpretation with tables (similar to margot_interpret_rate)</span></span></span>
+<span class="r-in"><span><span class="va">detailed_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="margot_interpret_rate_cv.html">margot_interpret_rate_cv</a></span><span class="op">(</span><span class="va">cv_results</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">detailed_results</span><span class="op">$</span><span class="va">interpretation</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># View individual target interpretations</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">detailed_results</span><span class="op">$</span><span class="va">autoc_results</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">detailed_results</span><span class="op">$</span><span class="va">qini_results</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Comparison between AUTOC and QINI</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">detailed_results</span><span class="op">$</span><span class="va">comparison</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">detailed_results</span><span class="op">$</span><span class="va">comparison</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create visualization</span></span></span>
 <span class="r-in"><span><span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu"><a href="margot_plot_cv_results.html">margot_plot_cv_results</a></span><span class="op">(</span><span class="va">cv_results</span><span class="op">)</span></span></span>

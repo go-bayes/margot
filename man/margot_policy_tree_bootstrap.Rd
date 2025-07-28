@@ -24,7 +24,7 @@ margot_policy_tree_bootstrap(
   n_cores = NULL,
   verbose = TRUE,
   seed = 12345,
-  tree_method = c("policytree", "fastpolicytree")
+  tree_method = c("fastpolicytree", "policytree")
 )
 }
 \arguments{
@@ -74,8 +74,8 @@ vary_train_proportion = TRUE (default c(0.4, 0.5, 0.6, 0.7)).}
 
 \item{seed}{Integer. Additional seed parameter for compatibility (default 12345).}
 
-\item{tree_method}{Character string specifying the package to use: "policytree" 
-(default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
+\item{tree_method}{Character string specifying the package to use: "fastpolicytree" 
+(default) or "policytree". The fastpolicytree package provides ~10x faster
 computation, which is particularly beneficial for bootstrap analysis. Falls 
 back to policytree if fastpolicytree is not installed.}
 }
