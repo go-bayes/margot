@@ -22,6 +22,8 @@
 #' @param adjust Character. Multiple testing adjustment method for RATE estimates. 
 #'   Options include "BH" (Benjamini-Hochberg), "BY" (Benjamini-Yekutieli), 
 #'   "bonferroni", "holm", "fdr", or "none". Default is "BH".
+#'   Note: When use_cross_validation = TRUE, only "bonferroni" or "none" are valid.
+#'   Invalid methods will be automatically converted to "none" without warning.
 #' @param flipped_outcomes Character vector of outcome names that were flipped 
 #'   (reversed) in preprocessing. Used for interpretation text.
 #' @param label_mapping Named list for mapping model names to human-readable labels.
@@ -59,6 +61,8 @@
 #'   \item{omnibus_results}{Omnibus calibration test results}
 #'   \item{concordance}{List analyzing agreement between methods}
 #'   \item{extended_report}{Character string with detailed academic report (if include_extended_report = TRUE)}
+#'   \item{cv_results}{Cross-validation results object (if use_cross_validation = TRUE) that can be passed to margot_plot_cv_results() and margot_plot_cv_summary()}
+#'   \item{method_used}{Character string indicating whether "cross_validation" or "standard" method was used}
 #'
 #' @examples
 #' \dontrun{
@@ -95,6 +99,12 @@
 #'   parallel = TRUE,  # Enable parallel processing for faster CV
 #'   n_cores = 4
 #' )
+#' 
+#' # Plot CV results without recomputing
+#' if (!is.null(het_evidence_cv$cv_results)) {
+#'   plot <- margot_plot_cv_results(het_evidence_cv$cv_results)
+#'   summary_plot <- margot_plot_cv_summary(het_evidence_cv$cv_results)
+#' }
 #' }
 #'
 #' @export
@@ -150,15 +160,16 @@ margot_interpret_heterogeneity <- function(
   if (is.null(rate_results) && !is.null(models)) {
     current_task <- current_task + 1
     if (verbose) {
-      task_msg <- if (use_cross_validation) {
-        "Computing cross-validation heterogeneity tests"
+      if (use_cross_validation) {
+        # Don't use progress_step for CV as margot_rate_cv has its own progress
+        cli::cli_alert_info("[{current_task}/{n_tasks}] Computing cross-validation heterogeneity tests")
       } else {
-        "Computing RATE estimates"
+        # Use progress_step for standard RATE
+        cli::cli_progress_step(
+          "[{current_task}/{n_tasks}] Computing RATE estimates",
+          msg_done = "[{current_task}/{n_tasks}] Computing RATE estimates ... done"
+        )
       }
-      cli::cli_progress_step(
-        paste0("[{current_task}/{n_tasks}] ", task_msg),
-        msg_done = paste0("[{current_task}/{n_tasks}] ", task_msg, " ... done")
-      )
     }
     
     if (use_cross_validation) {
@@ -167,7 +178,8 @@ margot_interpret_heterogeneity <- function(
         # For CV, only "bonferroni" or "none" are valid
         cv_adjust <- adjust
         if (!adjust %in% c("bonferroni", "none")) {
-          if (verbose) {
+          # Only warn if user explicitly set a non-default adjustment
+          if (adjust != "BH" && verbose) {
             cli::cli_alert_warning(
               "Adjustment method '{adjust}' is not valid for cross-validation. Using 'none' instead."
             )
@@ -360,11 +372,13 @@ margot_interpret_heterogeneity <- function(
       qini = if (!is.null(rate_results_list)) rate_results_list$rate_qini else NULL,
       interpretation = rate_results
     ),
+    cv_results = if (use_cross_validation && !is.null(rate_results_list)) rate_results_list else NULL,
     qini_results = qini_results,
     omnibus_results = omnibus_results,
     concordance = concordance,
     positive_counts = selection_results$positive_counts,
-    extended_report = extended_report
+    extended_report = extended_report,
+    method_used = if (use_cross_validation) "cross_validation" else "standard"
   )
 }
 

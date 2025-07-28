@@ -1,5 +1,15 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.181 (2025-07-28)
+
+### Improvements
+
+- **Enhanced margot_rate_cv() result interpretation**:
+  - Added warnings for models showing negative heterogeneity (negative t-statistics)
+  - Only displays alpha level when an adjustment method is used (bonferroni)
+  - Provides clearer messaging about statistical significance and practical implications
+  - Helps users identify models where heterogeneity may be in opposite direction
+
 ## margot 1.0.141 (2025-07-25)
 
 ### Bug Fixes

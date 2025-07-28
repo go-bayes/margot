@@ -1,3 +1,11 @@
+# [2025-07-28] margot 1.0.181
+
+### Improvements
+- **Enhanced `margot_rate_cv()` result interpretation**:
+  - Now warns when models show negative heterogeneity (negative t-statistics)
+  - Only displays alpha level when an adjustment method is used
+  - Clearer messaging about statistical significance and practical implications
+
 # [2025-07-28] margot 1.0.180
 
 ### New Features
@@ -23,15 +31,20 @@
   - Marked `print.margot_cv_results` as internal (S3 method)
 - **Better cross-validation integration in `margot_interpret_heterogeneity()`**:
   - Automatically converts invalid adjustment methods to "none" when using CV
-  - Shows warning when adjustment method is changed for CV compatibility
+  - No longer shows warning when default "BH" is automatically converted for CV
+  - Only warns if user explicitly sets an incompatible adjustment method
   - Added example in documentation showing how to use cross-validation
+  - Now returns `cv_results` object that can be passed directly to plotting functions
+  - Added `method_used` field to indicate whether CV or standard method was used
+  - Avoids need to recompute CV results for visualization
 - **Enhanced `margot_interpret_heterogeneity()` reporting**:
   - Extended report now includes method details (standard vs cross-validation)
   - Reports number of CV folds when cross-validation is used
   - Reports alpha level and multiple testing correction method
   - CV now tests both AUTOC and QINI targets (was only testing AUTOC)
 - **Improved memory management for parallel processing**:
-  - `margot_rate_cv()` now has `future_globals_maxSize` parameter (default 16 GiB)
+  - `margot_rate_cv()` now has `future_globals_maxSize` parameter (default 22 GiB)
+  - Increased default from 16 GiB to 22 GiB to handle larger model objects
   - Memory limit is now set before creating parallel plan to ensure proper enforcement
   - Better error messages when memory limit is exceeded, suggesting solutions
   - Automatically manages memory limits for parallel workers
@@ -42,6 +55,13 @@
   - Maintained proper references in documentation
 
 ### Bug Fixes
+- **Fixed progress tracking conflicts**:
+  - `margot_interpret_heterogeneity()` now uses simple alerts instead of progress_step when calling `margot_rate_cv()`
+  - This prevents conflicts between nested progress indicators
+- **Fixed parallel processing cleanup**:
+  - Parallel plan is now properly reset to sequential on function exit
+  - Package loading messages from workers are suppressed with `future.stdout = FALSE`
+  - Prevents hanging and repeated package loading messages
 - **Fixed seed setting in `margot_rate_cv()`**: 
   - Now properly sets seed at function start for full reproducibility
   - If seed = NULL, automatically defaults to 12345

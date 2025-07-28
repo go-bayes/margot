@@ -50,7 +50,9 @@ multiple testing correction.}
 
 \item{adjust}{Character. Multiple testing adjustment method for RATE estimates. 
 Options include "BH" (Benjamini-Hochberg), "BY" (Benjamini-Yekutieli), 
-"bonferroni", "holm", "fdr", or "none". Default is "BH".}
+"bonferroni", "holm", "fdr", or "none". Default is "BH".
+Note: When use_cross_validation = TRUE, only "bonferroni" or "none" are valid.
+Invalid methods will be automatically converted to "none" without warning.}
 
 \item{flipped_outcomes}{Character vector of outcome names that were flipped 
 (reversed) in preprocessing. Used for interpretation text.}
@@ -102,6 +104,8 @@ A list containing:
   \item{omnibus_results}{Omnibus calibration test results}
   \item{concordance}{List analyzing agreement between methods}
   \item{extended_report}{Character string with detailed academic report (if include_extended_report = TRUE)}
+  \item{cv_results}{Cross-validation results object (if use_cross_validation = TRUE) that can be passed to margot_plot_cv_results() and margot_plot_cv_summary()}
+  \item{method_used}{Character string indicating whether "cross_validation" or "standard" method was used}
 }
 \description{
 Combines evidence from multiple heterogeneity tests (RATE AUTOC, RATE QINI, 
@@ -143,6 +147,12 @@ het_evidence_cv <- margot_interpret_heterogeneity(
   parallel = TRUE,  # Enable parallel processing for faster CV
   n_cores = 4
 )
+
+# Plot CV results without recomputing
+if (!is.null(het_evidence_cv$cv_results)) {
+  plot <- margot_plot_cv_results(het_evidence_cv$cv_results)
+  summary_plot <- margot_plot_cv_summary(het_evidence_cv$cv_results)
+}
 }
 
 }

@@ -14,7 +14,7 @@ margot_rate_cv(
   verbose = TRUE,
   parallel = FALSE,
   n_cores = future::availableCores() - 1,
-  future_globals_maxSize = 16,
+  future_globals_maxSize = 22,
   alpha = 0.05,
   adjust = "none",
   label_mapping = NULL,
@@ -48,7 +48,7 @@ back to sequential processing with a warning.}
 (default all cores - 1)}
 
 \item{future_globals_maxSize}{Numeric. Maximum allowed size for exporting globals to 
-parallel workers in GiB. Default is 16. Set to Inf to disable the limit.}
+parallel workers in GiB. Default is 22. Set to Inf to disable the limit.}
 
 \item{alpha}{Numeric. Significance level for hypothesis tests (default 0.05).
 When using Bonferroni correction, consider alpha = 0.2 due to its conservative nature.}

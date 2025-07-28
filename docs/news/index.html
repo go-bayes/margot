@@ -69,8 +69,12 @@
 <li>
 <strong>Better cross-validation integration in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
 <ul><li>Automatically converts invalid adjustment methods to “none” when using CV</li>
-<li>Shows warning when adjustment method is changed for CV compatibility</li>
+<li>No longer shows warning when default “BH” is automatically converted for CV</li>
+<li>Only warns if user explicitly sets an incompatible adjustment method</li>
 <li>Added example in documentation showing how to use cross-validation</li>
+<li>Now returns <code>cv_results</code> object that can be passed directly to plotting functions</li>
+<li>Added <code>method_used</code> field to indicate whether CV or standard method was used</li>
+<li>Avoids need to recompute CV results for visualization</li>
 </ul></li>
 <li>
 <strong>Enhanced <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> reporting</strong>:
@@ -82,7 +86,8 @@
 <li>
 <strong>Improved memory management for parallel processing</strong>:
 <ul><li>
-<code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> now has <code>future_globals_maxSize</code> parameter (default 16 GiB)</li>
+<code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> now has <code>future_globals_maxSize</code> parameter (default 22 GiB)</li>
+<li>Increased default from 16 GiB to 22 GiB to handle larger model objects</li>
 <li>Memory limit is now set before creating parallel plan to ensure proper enforcement</li>
 <li>Better error messages when memory limit is exceeded, suggesting solutions</li>
 <li>Automatically manages memory limits for parallel workers</li>
@@ -98,6 +103,20 @@
 <div class="section level4">
 <h4 id="bug-fixes-1-0-180">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-180"></a></h4>
 <ul><li>
+<strong>Fixed progress tracking conflicts</strong>:
+<ul><li>
+<code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> now uses simple alerts instead of progress_step when calling <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code>
+</li>
+<li>This prevents conflicts between nested progress indicators</li>
+</ul></li>
+<li>
+<strong>Fixed parallel processing cleanup</strong>:
+<ul><li>Parallel plan is now properly reset to sequential on function exit</li>
+<li>Package loading messages from workers are suppressed with <code>future.stdout = FALSE</code>
+</li>
+<li>Prevents hanging and repeated package loading messages</li>
+</ul></li>
+<li>
 <strong>Fixed seed setting in <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code></strong>:
 <ul><li>Now properly sets seed at function start for full reproducibility</li>
 <li>If seed = NULL, automatically defaults to 12345</li>

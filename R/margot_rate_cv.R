@@ -23,7 +23,7 @@
 #' @param n_cores Integer. Number of cores for parallel processing when parallel = TRUE 
 #'   (default all cores - 1)
 #' @param future_globals_maxSize Numeric. Maximum allowed size for exporting globals to 
-#'   parallel workers in GiB. Default is 16. Set to Inf to disable the limit.
+#'   parallel workers in GiB. Default is 22. Set to Inf to disable the limit.
 #' @param alpha Numeric. Significance level for hypothesis tests (default 0.05).
 #'   When using Bonferroni correction, consider alpha = 0.2 due to its conservative nature.
 #' @param adjust Character. Multiple testing adjustment method. Only "bonferroni" or "none" 
@@ -133,7 +133,7 @@ margot_rate_cv <- function(model_results,
                           verbose = TRUE,
                           parallel = FALSE,
                           n_cores = future::availableCores() - 1,
-                          future_globals_maxSize = 16,
+                          future_globals_maxSize = 22,
                           alpha = 0.05,
                           adjust = "none",
                           label_mapping = NULL,
@@ -321,7 +321,11 @@ margot_rate_cv <- function(model_results,
       options(future.globals.maxSize = new_maxSize)
       
       # Ensure we restore the original setting on exit
-      on.exit(options(future.globals.maxSize = old_maxSize), add = TRUE)
+      on.exit({
+        options(future.globals.maxSize = old_maxSize)
+        # Reset to sequential plan
+        future::plan(future::sequential)
+      }, add = TRUE)
       
       # Set up parallel plan AFTER setting memory limit
       future::plan(future::multisession, workers = n_cores)
@@ -407,6 +411,7 @@ margot_rate_cv <- function(model_results,
               verbose = FALSE
             ),
             future.packages = c("margot", "grf", "cli"),
+            future.stdout = FALSE,  # Suppress stdout from workers
             future.seed = TRUE
           )
         } else {
@@ -823,11 +828,18 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
     )
   }
   
-  interpretation <- paste0(
-    interpretation,
-    sprintf("Significance level: α = %.3f\n", alpha),
-    sprintf("Multiple testing correction: %s\n\n", adjust_name)
-  )
+  if (adjust == "bonferroni") {
+    interpretation <- paste0(
+      interpretation,
+      sprintf("Significance level: α = %.3f\n", alpha),
+      sprintf("Multiple testing correction: %s\n\n", adjust_name)
+    )
+  } else {
+    interpretation <- paste0(
+      interpretation,
+      sprintf("Multiple testing correction: %s\n\n", adjust_name)
+    )
+  }
   
   if (n_significant > 0) {
     interpretation <- paste0(
@@ -857,13 +869,24 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
           } else {
             gsub("^model_", "", m)
           }
-          interpretation <- paste0(
-            interpretation,
-            sprintf("- **%s**: AUTOC p = %.4f (t = %.3f), QINI p = %.4f (t = %.3f)\n", 
-                    model_label, 
-                    autoc_row$p_value[1], autoc_row$t_statistic[1],
-                    qini_row$p_value[1], qini_row$t_statistic[1])
-          )
+          # check if either shows negative heterogeneity
+          if (autoc_row$t_statistic[1] < 0 || qini_row$t_statistic[1] < 0) {
+            interpretation <- paste0(
+              interpretation,
+              sprintf("- **%s**: AUTOC p = %.4f (t = %.3f), QINI p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n", 
+                      model_label, 
+                      autoc_row$p_value[1], autoc_row$t_statistic[1],
+                      qini_row$p_value[1], qini_row$t_statistic[1])
+            )
+          } else {
+            interpretation <- paste0(
+              interpretation,
+              sprintf("- **%s**: AUTOC p = %.4f (t = %.3f), QINI p = %.4f (t = %.3f)\n", 
+                      model_label, 
+                      autoc_row$p_value[1], autoc_row$t_statistic[1],
+                      qini_row$p_value[1], qini_row$t_statistic[1])
+            )
+          }
         }
         interpretation <- paste0(interpretation, "\n")
       }
@@ -882,11 +905,20 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
           } else {
             gsub("^model_", "", m)
           }
-          interpretation <- paste0(
-            interpretation,
-            sprintf("- **%s**: p = %.4f (t = %.3f)\n", 
-                    model_label, row$p_value[1], row$t_statistic[1])
-          )
+          # Check for negative t-statistic
+          if (row$t_statistic[1] < 0) {
+            interpretation <- paste0(
+              interpretation,
+              sprintf("- **%s**: p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n", 
+                      model_label, row$p_value[1], row$t_statistic[1])
+            )
+          } else {
+            interpretation <- paste0(
+              interpretation,
+              sprintf("- **%s**: p = %.4f (t = %.3f)\n", 
+                      model_label, row$p_value[1], row$t_statistic[1])
+            )
+          }
         }
         interpretation <- paste0(interpretation, "\n")
       }
@@ -905,11 +937,20 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
           } else {
             gsub("^model_", "", m)
           }
-          interpretation <- paste0(
-            interpretation,
-            sprintf("- **%s**: p = %.4f (t = %.3f)\n", 
-                    model_label, row$p_value[1], row$t_statistic[1])
-          )
+          # Check for negative t-statistic
+          if (row$t_statistic[1] < 0) {
+            interpretation <- paste0(
+              interpretation,
+              sprintf("- **%s**: p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n", 
+                      model_label, row$p_value[1], row$t_statistic[1])
+            )
+          } else {
+            interpretation <- paste0(
+              interpretation,
+              sprintf("- **%s**: p = %.4f (t = %.3f)\n", 
+                      model_label, row$p_value[1], row$t_statistic[1])
+            )
+          }
         }
         interpretation <- paste0(interpretation, "\n")
       }
@@ -929,11 +970,20 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
         } else {
           gsub("^model_", "", sig_models$model[i])
         }
-        interpretation <- paste0(
-          interpretation,
-          sprintf("- **%s**: p = %.4f (t = %.3f)\n", 
-                  model_label, sig_models$p_value[i], sig_models$t_statistic[i])
-        )
+        # Check for negative t-statistic
+        if (sig_models$t_statistic[i] < 0) {
+          interpretation <- paste0(
+            interpretation,
+            sprintf("- **%s**: p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n", 
+                    model_label, sig_models$p_value[i], sig_models$t_statistic[i])
+          )
+        } else {
+          interpretation <- paste0(
+            interpretation,
+            sprintf("- **%s**: p = %.4f (t = %.3f)\n", 
+                    model_label, sig_models$p_value[i], sig_models$t_statistic[i])
+          )
+        }
       }
     }
     
