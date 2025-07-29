@@ -93,6 +93,7 @@ reference:
     - margot_causal_forest
     - margot_lmtp
     - margot_policy_tree
+    - margot_policy_tree_stability
     - margot_policy_tree_bootstrap
     - margot_assess_variable_correlation
     - margot_identify_variable_clusters
@@ -109,6 +110,8 @@ reference:
     - margot_correct_combined_table
     - margot_flip_forests
     - margot_inspect_qini
+    - margot_interpret_stability
+    - margot_interpret_stability_batch
     - margot_interpret_bootstrap
     - margot_interpret_policy_batch
     - margot_interpret_policy_tree
@@ -134,6 +137,8 @@ reference:
     - margot_summary_cate_difference_gain
     - get_consensus_info
     - get_variable_importance
+    - summary.margot_stability_policy_tree
+    - print.margot_stability_policy_tree
     - summary.margot_bootstrap_policy_tree
     - print.margot_bootstrap_policy_tree
     - print.margot_correlation_assessment

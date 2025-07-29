@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.205</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.206</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,53 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.206" id="id_2025-07-29-margot-10206">[2025-07-29] margot 1.0.206<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10206"></a></h2>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-206">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-206"></a></h4>
+<ul><li>
+<strong>Renamed bootstrap functions to stability functions</strong>:
+<ul><li>
+<code><a href="../reference/margot_policy_tree_bootstrap.html">margot_policy_tree_bootstrap()</a></code> → <code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code>
+</li>
+<li>
+<code><a href="../reference/margot_interpret_bootstrap.html">margot_interpret_bootstrap()</a></code> → <code><a href="../reference/margot_interpret_stability.html">margot_interpret_stability()</a></code>
+</li>
+<li>Class <code>"margot_bootstrap_policy_tree"</code> → <code>"margot_stability_policy_tree"</code>
+</li>
+<li>Parameter <code>n_bootstrap</code> → <code>n_iterations</code>
+</li>
+<li>Parameter <code>vary_type = "sample_only"</code> → <code>vary_type = "bootstrap"</code>
+</li>
+<li>Old function names are deprecated but still work with warnings</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="new-features-1-0-206">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-206"></a></h4>
+<ul><li>
+<strong>Added <code><a href="../reference/margot_interpret_stability_batch.html">margot_interpret_stability_batch()</a></code> function</strong>:
+<ul><li>Processes multiple models from stability analysis in one call</li>
+<li>Returns named list of interpretations or combined text</li>
+<li>Supports saving combined output to file</li>
+<li>Includes theoretical context only for first model to avoid repetition</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-206">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-206"></a></h4>
+<ul><li>
+<strong>More accurate function naming</strong>:
+<ul><li>Default behavior performs train/test split variation, not bootstrap resampling</li>
+<li>New names better reflect the stability analysis purpose</li>
+<li>Documentation clarifies the difference between stability analysis and bootstrap</li>
+</ul></li>
+<li>
+<strong>Better backwards compatibility</strong>:
+<ul><li>
+<code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code> now accepts deprecated <code>n_bootstrap</code> parameter</li>
+<li>Shows warning but still works to ease transition</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.205" id="id_2025-07-29-margot-10205">[2025-07-29] margot 1.0.205<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10205"></a></h2>
 <div class="section level4">

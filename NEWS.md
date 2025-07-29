@@ -1,3 +1,30 @@
+# [2025-07-29] margot 1.0.206
+
+### Breaking Changes
+- **Renamed bootstrap functions to stability functions**:
+  - `margot_policy_tree_bootstrap()` → `margot_policy_tree_stability()`
+  - `margot_interpret_bootstrap()` → `margot_interpret_stability()`
+  - Class `"margot_bootstrap_policy_tree"` → `"margot_stability_policy_tree"`
+  - Parameter `n_bootstrap` → `n_iterations`
+  - Parameter `vary_type = "sample_only"` → `vary_type = "bootstrap"`
+  - Old function names are deprecated but still work with warnings
+  
+### New Features  
+- **Added `margot_interpret_stability_batch()` function**:
+  - Processes multiple models from stability analysis in one call
+  - Returns named list of interpretations or combined text
+  - Supports saving combined output to file
+  - Includes theoretical context only for first model to avoid repetition
+
+### Improvements
+- **More accurate function naming**:
+  - Default behavior performs train/test split variation, not bootstrap resampling
+  - New names better reflect the stability analysis purpose
+  - Documentation clarifies the difference between stability analysis and bootstrap
+- **Better backwards compatibility**:
+  - `margot_policy_tree_stability()` now accepts deprecated `n_bootstrap` parameter
+  - Shows warning but still works to ease transition
+  
 # [2025-07-29] margot 1.0.205
 
 ### Bug Fixes
