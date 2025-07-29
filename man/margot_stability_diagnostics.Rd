@@ -5,14 +5,14 @@
 \title{Diagnose Policy Tree Stability}
 \usage{
 margot_stability_diagnostics(
-  bootstrap_results,
+  stability_results,
   model_results,
   model_name,
   correlation_threshold = 0.5
 )
 }
 \arguments{
-\item{bootstrap_results}{Output from margot_policy_tree_bootstrap()}
+\item{stability_results}{Output from margot_policy_tree_stability()}
 
 \item{model_results}{Original causal forest results}
 
@@ -25,6 +25,6 @@ List containing diagnostic results and recommendations
 }
 \description{
 Comprehensive stability diagnostics for policy trees, combining
-correlation analysis with bootstrap results to provide actionable
+correlation analysis with stability results to provide actionable
 insights about tree instability.
 }

@@ -11,7 +11,7 @@ about which models show treatment effect heterogeneity."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.206</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.208</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,8 +79,8 @@ about which models show treatment effect heterogeneity.</p>
 
 
 <dt id="arg-model-names">model_names<a class="anchor" aria-label="anchor" href="#arg-model-names"></a></dt>
-<dd><p>Character vector of model names to analyze. If NULL (default),
-analyzes all models. Model names can be specified with or without "model_" prefix.</p></dd>
+<dd><p>Character vector of model names to analyse. If NULL (default),
+analyses all models. Model names can be specified with or without "model_" prefix.</p></dd>
 
 
 <dt id="arg-spend-levels">spend_levels<a class="anchor" aria-label="anchor" href="#arg-spend-levels"></a></dt>
@@ -134,8 +134,8 @@ Invalid methods will be automatically converted to "none" without warning.</p></
 
 
 <dt id="arg-include-extended-report">include_extended_report<a class="anchor" aria-label="anchor" href="#arg-include-extended-report"></a></dt>
-<dd><p>Logical. If TRUE, generate detailed academic-style report
-with full statistics and confidence intervals. Default is TRUE.</p></dd>
+<dd><p>Logical. If TRUE (default), generate detailed academic-style report
+with full statistics and confidence intervals.</p></dd>
 
 
 <dt id="arg-rate-results">rate_results<a class="anchor" aria-label="anchor" href="#arg-rate-results"></a></dt>
@@ -151,8 +151,8 @@ with full statistics and confidence intervals. Default is TRUE.</p></dd>
 
 
 <dt id="arg-use-cross-validation">use_cross_validation<a class="anchor" aria-label="anchor" href="#arg-use-cross-validation"></a></dt>
-<dd><p>Logical. If TRUE, use cross-validation for RATE tests
-instead of standard approach (default TRUE).</p></dd>
+<dd><p>Logical. If TRUE (default), use cross-validation for RATE tests
+instead of standard approach. This provides confidence intervals through robust inference.</p></dd>
 
 
 <dt id="arg-cv-num-folds">cv_num_folds<a class="anchor" aria-label="anchor" href="#arg-cv-num-folds"></a></dt>
@@ -226,7 +226,7 @@ instead of standard approach (default TRUE).</p></dd>
 <dd><p>Omnibus calibration test results</p></dd>
 
   <dt>concordance</dt>
-<dd><p>List analyzing agreement between methods</p></dd>
+<dd><p>List analysing agreement between methods</p></dd>
 
   <dt>extended_report</dt>
 <dd><p>Character string with detailed academic report (if include_extended_report = TRUE)</p></dd>

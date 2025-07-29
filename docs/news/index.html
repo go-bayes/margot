@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.206</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.208</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,103 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.208" id="id_2025-07-29-margot-10208">[2025-07-29] margot 1.0.208<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10208"></a></h2>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-208">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-208"></a></h4>
+<ul><li>
+<strong>Simplified heterogeneity testing logic in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>Now uses clear 3-category system: SELECTED (positive RATE), EXCLUDED (negative RATE), UNCLEAR (no significant RATE)</li>
+<li>Removed complex evidence_type categorization that caused contradictions</li>
+<li>QINI curve analysis now only performed for SELECTED models</li>
+<li>Calibration status reported for context but doesn’t affect selection</li>
+</ul></li>
+<li>
+<strong>Cross-validation now provides consistent estimates in <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code></strong>:
+<ul><li>Previously computed RATE estimates on full dataset after CV testing, causing inconsistency</li>
+<li>Now both p-values and RATE estimates come from the CV procedure</li>
+<li>RATE estimates are weighted averages across test folds</li>
+<li>Confidence intervals are no longer reported for CV estimates as they don’t align with the martingale-based hypothesis testing</li>
+<li>This ensures selection criteria align with reported effect sizes</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-208">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-208"></a></h4>
+<ul><li>
+<strong>Better defaults in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>
+<code>include_extended_report = TRUE</code> by default (was already TRUE)</li>
+<li>
+<code>use_cross_validation = TRUE</code> by default for robust confidence intervals</li>
+<li>
+<code>cv_num_folds = 5</code> by default</li>
+<li>RATE estimates now formatted with 3 decimal places and include 95% confidence intervals</li>
+</ul></li>
+<li>
+<strong>Clearer decision flow and reporting</strong>:
+<ul><li>Added decision flow chart to extended report showing exact logic</li>
+<li>Simplified recommendations format: “Use for targeting: X”, “Avoid targeting: Y”, “Evidence unclear: Z”</li>
+<li>More intuitive interpretation sections aligned with the 3-category system</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-208">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-208"></a></h4>
+<ul><li>
+<strong>Fixed <code><a href="../reference/margot_stability_diagnostics.html">margot_stability_diagnostics()</a></code> compatibility</strong>:
+<ul><li>Now works with new <code>stability_metrics</code> naming from <code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code>
+</li>
+<li>Handles both old <code>bootstrap_metrics</code> and new <code>stability_metrics</code> for backwards compatibility</li>
+<li>Updated all references from “bootstrap” to “stability” in documentation and messages</li>
+</ul></li>
+<li>
+<strong>Fixed incorrect “positive RATE” labeling in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>Function now correctly identifies and labels negative RATE values</li>
+<li>Properly handles mixed positive/negative values (e.g., “positive RATE AUTOC, but negative RATE QINI”)</li>
+<li>Also fixed Qini difference labeling to handle negative values correctly</li>
+</ul></li>
+<li>
+<strong>Fixed sprintf formatting error in <code><a href="../reference/format_rate_with_ci.html">format_rate_with_ci()</a></code></strong>:
+<ul><li>Now properly converts character estimates to numeric before formatting</li>
+<li>Handles cases where conversion fails gracefully</li>
+</ul></li>
+<li>
+<strong>Fixed missing confidence intervals in CV results</strong>:
+<ul><li>CV tables now preserve numeric confidence interval columns (<code>2.5%</code> and <code>97.5%</code>)</li>
+<li>Extended report now shows confidence intervals when using cross-validation (the default)</li>
+</ul></li>
+<li>
+<strong>Fixed misleading omnibus test language</strong>:
+<ul><li>Extended reports no longer say “confirmed by omnibus tests” when the omnibus p-values are not significant</li>
+<li>Now uses neutral language “Omnibus tests:” for non-significant results</li>
+</ul></li>
+<li>
+<strong>Clarified decision flow language</strong>:
+<ul><li>Removed confusing “Avoid Y”, “Use X”, “Evidence unclear for Z” placeholders</li>
+<li>Now clearly states actions in terms of targeting specific outcomes</li>
+<li>Updated recommendations to use “Outcomes suitable for targeted treatment” instead of “Use for targeting”</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="removed-1-0-208">Removed<a class="anchor" aria-label="anchor" href="#removed-1-0-208"></a></h4>
+<ul><li>
+<strong>Removed <code>margot_compute_consensus_conditional_means()</code> function</strong>:
+<ul><li>No longer needed as <code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code> now preserves all necessary data</li>
+<li>Conditional means computation is handled automatically by existing functions</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.207" id="id_2025-07-29-margot-10207">[2025-07-29] margot 1.0.207<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10207"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-207">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-207"></a></h4>
+<ul><li>
+<strong>Enhanced <code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code> data preservation</strong>:
+<ul><li>Now preserves outcome data, weights, and treatment assignments</li>
+<li>Ensures all necessary data is available for downstream analysis</li>
+<li>Maintains compatibility with plotting and interpretation functions</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.206" id="id_2025-07-29-margot-10206">[2025-07-29] margot 1.0.206<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10206"></a></h2>
 <div class="section level4">

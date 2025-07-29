@@ -31,8 +31,8 @@ margot_interpret_heterogeneity(
 \arguments{
 \item{models}{Output from `margot_causal_forest()` containing model results}
 
-\item{model_names}{Character vector of model names to analyze. If NULL (default), 
-analyzes all models. Model names can be specified with or without "model_" prefix.}
+\item{model_names}{Character vector of model names to analyse. If NULL (default), 
+analyses all models. Model names can be specified with or without "model_" prefix.}
 
 \item{spend_levels}{Numeric vector of spend levels for QINI analysis. 
 Default is c(0.1, 0.4).}
@@ -66,8 +66,8 @@ Invalid methods will be automatically converted to "none" without warning.}
 
 \item{verbose}{Logical. If TRUE, show progress messages. Default is TRUE.}
 
-\item{include_extended_report}{Logical. If TRUE, generate detailed academic-style report
-with full statistics and confidence intervals. Default is TRUE.}
+\item{include_extended_report}{Logical. If TRUE (default), generate detailed academic-style report
+with full statistics and confidence intervals.}
 
 \item{rate_results}{Optional pre-computed RATE results to skip computation.}
 
@@ -75,8 +75,8 @@ with full statistics and confidence intervals. Default is TRUE.}
 
 \item{omnibus_results}{Optional pre-computed omnibus test results to skip computation.}
 
-\item{use_cross_validation}{Logical. If TRUE, use cross-validation for RATE tests
-instead of standard approach (default TRUE).}
+\item{use_cross_validation}{Logical. If TRUE (default), use cross-validation for RATE tests
+instead of standard approach. This provides confidence intervals through robust inference.}
 
 \item{cv_num_folds}{Integer. Number of CV folds when use_cross_validation = TRUE (default 5).}
 
@@ -107,7 +107,7 @@ A list containing:
   \item{rate_results}{List containing AUTOC and QINI RATE results, interpretation, and raw_results from margot_rate() or margot_rate_cv()}
   \item{qini_results}{QINI curve interpretation results}
   \item{omnibus_results}{Omnibus calibration test results}
-  \item{concordance}{List analyzing agreement between methods}
+  \item{concordance}{List analysing agreement between methods}
   \item{extended_report}{Character string with detailed academic report (if include_extended_report = TRUE)}
   \item{cv_results}{Cross-validation results object (if use_cross_validation = TRUE) that can be passed to margot_plot_cv_results() and margot_plot_cv_summary()}
   \item{method_used}{Character string indicating whether "cross_validation" or "standard" method was used}

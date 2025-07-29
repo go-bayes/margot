@@ -6,8 +6,8 @@
 #' about which models show treatment effect heterogeneity.
 #'
 #' @param models Output from `margot_causal_forest()` containing model results
-#' @param model_names Character vector of model names to analyze. If NULL (default), 
-#'   analyzes all models. Model names can be specified with or without "model_" prefix.
+#' @param model_names Character vector of model names to analyse. If NULL (default), 
+#'   analyses all models. Model names can be specified with or without "model_" prefix.
 #' @param spend_levels Numeric vector of spend levels for QINI analysis. 
 #'   Default is c(0.1, 0.4).
 #' @param require_any_positive Logical. If TRUE (default), include models that 
@@ -31,13 +31,13 @@
 #'   (reversed) in preprocessing. Used for interpretation text.
 #' @param label_mapping Named list for mapping model names to human-readable labels.
 #' @param verbose Logical. If TRUE, show progress messages. Default is TRUE.
-#' @param include_extended_report Logical. If TRUE, generate detailed academic-style report
-#'   with full statistics and confidence intervals. Default is TRUE.
+#' @param include_extended_report Logical. If TRUE (default), generate detailed academic-style report
+#'   with full statistics and confidence intervals.
 #' @param rate_results Optional pre-computed RATE results to skip computation.
 #' @param qini_results Optional pre-computed QINI results to skip computation.
 #' @param omnibus_results Optional pre-computed omnibus test results to skip computation.
-#' @param use_cross_validation Logical. If TRUE, use cross-validation for RATE tests
-#'   instead of standard approach (default TRUE).
+#' @param use_cross_validation Logical. If TRUE (default), use cross-validation for RATE tests
+#'   instead of standard approach. This provides confidence intervals through robust inference.
 #' @param cv_num_folds Integer. Number of CV folds when use_cross_validation = TRUE (default 5).
 #' @param cv_results Optional pre-computed CV results to skip computation.
 #' @param seed Integer. Random seed for reproducibility in all computations (default 12345).
@@ -62,7 +62,7 @@
 #'   \item{rate_results}{List containing AUTOC and QINI RATE results, interpretation, and raw_results from margot_rate() or margot_rate_cv()}
 #'   \item{qini_results}{QINI curve interpretation results}
 #'   \item{omnibus_results}{Omnibus calibration test results}
-#'   \item{concordance}{List analyzing agreement between methods}
+#'   \item{concordance}{List analysing agreement between methods}
 #'   \item{extended_report}{Character string with detailed academic report (if include_extended_report = TRUE)}
 #'   \item{cv_results}{Cross-validation results object (if use_cross_validation = TRUE) that can be passed to margot_plot_cv_results() and margot_plot_cv_summary()}
 #'   \item{method_used}{Character string indicating whether "cross_validation" or "standard" method was used}
@@ -431,7 +431,7 @@ margot_interpret_heterogeneity <- function(
   )
   
   # create concordance analysis
-  concordance <- analyze_concordance(evidence_summary)
+  concordance <- analyse_concordance(evidence_summary)
   
   # generate extended report if requested
   extended_report <- NULL
@@ -468,12 +468,15 @@ margot_interpret_heterogeneity <- function(
   list(
     selected_model_ids = selection_results$selected_ids,
     selected_model_names = selection_results$selected_names,
-    exploratory_model_ids = selection_results$exploratory_ids,
-    exploratory_model_names = selection_results$exploratory_names,
-    all_selected_model_ids = c(selection_results$selected_ids, selection_results$exploratory_ids),
-    all_selected_model_names = c(selection_results$selected_names, selection_results$exploratory_names),
     excluded_model_ids = selection_results$excluded_ids,
     excluded_model_names = selection_results$excluded_names,
+    unclear_model_ids = selection_results$unclear_ids,
+    unclear_model_names = selection_results$unclear_names,
+    # for backwards compatibility
+    exploratory_model_ids = character(),
+    exploratory_model_names = character(),
+    all_selected_model_ids = selection_results$selected_ids,
+    all_selected_model_names = selection_results$selected_names,
     evidence_summary = evidence_summary,
     interpretation = interpretation_text$full,
     summary = interpretation_text$summary,
@@ -671,125 +674,79 @@ create_evidence_summary <- function(model_ids, rate_results, qini_results,
 select_models <- function(evidence_summary, require_any_positive, 
                           exclude_negative_any, require_omnibus, verbose = TRUE) {
   
-  # add positive_count, negative_count, and evidence_type to evidence_summary
-  # Note: qini_curve is excluded from counts as it's exploratory/sensitive to spend levels
+  # add the simplified 3-category system
   evidence_summary <- evidence_summary %>%
     dplyr::mutate(
-      # Count primary evidence only (RATE and differential prediction)
-      positive_count = rowSums(
-        dplyr::select(., rate_autoc, rate_qini, differential_prediction_test) == "positive"
+      # Determine if significantly negative RATE
+      has_negative_rate = (rate_autoc == "negative" | rate_qini == "negative"),
+      
+      # Determine if significantly positive RATE  
+      has_positive_rate = (rate_autoc == "positive" | rate_qini == "positive"),
+      
+      # Simple 3-category system
+      category = dplyr::case_when(
+        # EXCLUDED: Any significant negative RATE test
+        has_negative_rate ~ "excluded",
+        
+        # SELECTED: Any significant positive RATE test (and not excluded)
+        has_positive_rate ~ "selected",
+        
+        # UNCLEAR: No significant RATE evidence
+        TRUE ~ "unclear"
       ),
-      # Only RATE can be reliably negative (differential prediction is positive/inconclusive only)
+      
+      # For backwards compatibility, keep positive/negative counts
+      positive_count = rowSums(
+        dplyr::select(., rate_autoc, rate_qini) == "positive"
+      ),
       negative_count = rowSums(
         dplyr::select(., rate_autoc, rate_qini) == "negative"
-      ),
-      # Separate count for exploratory QINI curve evidence
-      qini_positive = (qini_curve == "positive"),
-      
-      evidence_type = dplyr::case_when(
-        # Excluded due to negative RATE evidence
-        rate_autoc == "negative" | rate_qini == "negative" ~ "excluded_negative_rate",
-        
-        # Evidence for heterogeneity - RATE positive AND differential prediction confirms
-        (rate_autoc == "positive" | rate_qini == "positive") & 
-        differential_prediction_test == "positive" ~ "evidence_for_heterogeneity",
-        
-        # Targeting opportunity - RATE positive (primary evidence)
-        (rate_autoc == "positive" | rate_qini == "positive") ~ "targeting_opportunity",
-        
-        # Exploratory evidence - no negative RATE AND (positive calibration OR positive QINI curve)
-        rate_autoc != "negative" & rate_qini != "negative" &
-        (mean_prediction_test == "calibrated" | qini_curve == "positive") ~ "exploratory_evidence",
-        
-        # Statistical only - differential prediction positive but RATE not positive
-        differential_prediction_test == "positive" & 
-        rate_autoc != "positive" & 
-        rate_qini != "positive" ~ "statistical_only",
-        
-        # No evidence - no positive results in any test
-        TRUE ~ "no_evidence"
       )
     )
   
-  # selection logic
-  if (require_any_positive) {
-    # include if ANY method shows positive
-    selected_rows <- evidence_summary$positive_count > 0
-  } else {
-    # include if ALL tested methods show positive
-    tested_cols <- c("rate_autoc", "rate_qini", "qini_curve", "differential_prediction_test")
-    selected_rows <- apply(evidence_summary[tested_cols], 1, function(row) {
-      tested <- row != "not_tested"
-      positive <- row == "positive"
-      all(positive[tested]) && any(tested)
-    })
-  }
+  # simplified selection logic based on categories
+  selected_rows <- evidence_summary$category == "selected"
+  excluded_rows <- evidence_summary$category == "excluded"
+  unclear_rows <- evidence_summary$category == "unclear"
   
-  # apply exclusion criteria
-  if (exclude_negative_any) {
-    # exclude if ANY method shows negative
-    selected_rows <- selected_rows & (evidence_summary$negative_count == 0)
-  } else {
-    # exclude if ALL tested methods show negative
-    tested_cols <- c("rate_autoc", "rate_qini", "qini_curve", "differential_prediction_test")
-    all_negative <- apply(evidence_summary[tested_cols], 1, function(row) {
-      tested <- row != "not_tested"
-      negative <- row == "negative"
-      all(negative[tested]) && any(tested)
-    })
-    selected_rows <- selected_rows & !all_negative
-  }
-  
-  # require omnibus if specified
-  if (require_omnibus) {
-    selected_rows <- selected_rows & (evidence_summary$differential_prediction_test == "positive")
-  }
-  
-  # extract results
+  # extract results by category
   selected_ids <- evidence_summary$model_id[selected_rows]
   selected_names <- evidence_summary$model_name[selected_rows]
-  excluded_ids <- evidence_summary$model_id[!selected_rows]
-  excluded_names <- evidence_summary$model_name[!selected_rows]
+  
+  excluded_ids <- evidence_summary$model_id[excluded_rows]
+  excluded_names <- evidence_summary$model_name[excluded_rows]
+  
+  unclear_ids <- evidence_summary$model_id[unclear_rows]
+  unclear_names <- evidence_summary$model_name[unclear_rows]
+  
+  # Issue warnings for excluded models
+  if (length(excluded_ids) > 0 && verbose) {
+    cli::cli_alert_warning(
+      "Excluded {length(excluded_ids)} model{?s} due to negative RATE evidence: {paste(excluded_names, collapse = ', ')}"
+    )
+  }
   
   # count positives by method
   positive_counts <- list(
     rate_autoc = sum(evidence_summary$rate_autoc == "positive"),
     rate_qini = sum(evidence_summary$rate_qini == "positive"),
-    qini_curve = sum(evidence_summary$qini_curve == "positive"),
-    differential_prediction = sum(evidence_summary$differential_prediction_test == "positive"),
-    any_method = sum(evidence_summary$positive_count > 0),
-    all_methods = sum(evidence_summary$positive_count == 4)
+    selected = sum(evidence_summary$category == "selected"),
+    excluded = sum(evidence_summary$category == "excluded"),
+    unclear = sum(evidence_summary$category == "unclear")
   )
   
   # reorder columns with model_id first for internal matching reliability
   evidence_summary_final <- evidence_summary %>%
-    dplyr::select(model_id, model_name, mean_prediction_test, differential_prediction_test, 
-                  rate_autoc, rate_qini, qini_curve, positive_count, negative_count, evidence_type)
-  
-  # extract exploratory models
-  exploratory_rows <- evidence_summary$evidence_type == "exploratory_evidence"
-  exploratory_ids <- evidence_summary$model_id[exploratory_rows]
-  exploratory_names <- evidence_summary$model_name[exploratory_rows]
-  
-  # extract excluded models due to negative RATE
-  excluded_negative_rows <- evidence_summary$evidence_type == "excluded_negative_rate"
-  excluded_negative_ids <- evidence_summary$model_id[excluded_negative_rows]
-  excluded_negative_names <- evidence_summary$model_name[excluded_negative_rows]
-  
-  # add warning for excluded models
-  if (length(excluded_negative_ids) > 0 && verbose) {
-    cli::cli_alert_warning(
-      "Excluded {length(excluded_negative_ids)} model{?s} due to negative RATE evidence: {paste(excluded_negative_names, collapse = ', ')}"
-    )
-  }
+    dplyr::select(model_id, model_name, category, mean_prediction_test, differential_prediction_test, 
+                  rate_autoc, rate_qini, qini_curve, positive_count, negative_count)
   
   list(
     selected_ids = selected_ids,
     selected_names = selected_names,
-    exploratory_ids = exploratory_ids,
-    exploratory_names = exploratory_names,
     excluded_ids = excluded_ids,
     excluded_names = excluded_names,
+    unclear_ids = unclear_ids,
+    unclear_names = unclear_names,
     positive_counts = positive_counts,
     evidence_summary = evidence_summary_final  # includes model_id for reliable matching
   )
@@ -798,7 +755,7 @@ select_models <- function(evidence_summary, require_any_positive,
 
 #' Analyze concordance between methods
 #' @keywords internal
-analyze_concordance <- function(evidence_summary) {
+analyse_concordance <- function(evidence_summary) {
   
   # models positive in all methods
   all_positive <- evidence_summary$model_name[evidence_summary$positive_count == 4]
@@ -855,133 +812,77 @@ generate_interpretation <- function(evidence_summary, selection_results,
                                     spend_levels) {
   
   # simple header for main interpretation
-  header <- "### Heterogeneity Evidence Summary"
+  header <- "### Heterogeneity Evidence Summary\n\n"
   
-  # organize outcomes by evidence type
-  evidence_for_het <- evidence_summary[evidence_summary$evidence_type == "evidence_for_heterogeneity", ]
-  targeting_opp <- evidence_summary[evidence_summary$evidence_type == "targeting_opportunity", ]
-  statistical_only <- evidence_summary[evidence_summary$evidence_type == "statistical_only", ]
-  exploratory_only <- evidence_summary[evidence_summary$evidence_type == "exploratory_only", ]
-  exploratory_evidence <- evidence_summary[evidence_summary$evidence_type == "exploratory_evidence", ]
-  excluded_negative <- evidence_summary[evidence_summary$evidence_type == "excluded_negative_rate", ]
+  # organise outcomes by category
+  selected <- evidence_summary[evidence_summary$category == "selected", ]
+  excluded <- evidence_summary[evidence_summary$category == "excluded", ]
+  unclear <- evidence_summary[evidence_summary$category == "unclear", ]
   
-  # evidence for heterogeneity
-  evidence_text <- if (nrow(evidence_for_het) > 0) {
-    models_text <- paste(evidence_for_het$model_name, collapse = ", ")
-    sprintf("\n\n**Evidence for Heterogeneity**: %s show%s both theoretical heterogeneity (RATE) and statistical validation (omnibus test). These outcomes have strong support for personalized treatment strategies.",
-            models_text, 
-            ifelse(nrow(evidence_for_het) == 1, "s", ""))
+  # SELECTED: Models with positive RATE evidence
+  selected_text <- if (nrow(selected) > 0) {
+    models_text <- paste(selected$model_name, collapse = ", ")
+    sprintf("**SELECTED for targeting**: %s\n\nThese models show statistically significant positive RATE evidence, indicating that personalized treatment allocation would improve outcomes compared to treating everyone equally.",
+            models_text)
   } else {
     ""
   }
   
-  # targeting opportunities
-  targeting_text <- if (nrow(targeting_opp) > 0) {
-    models_text <- paste(targeting_opp$model_name, collapse = ", ")
-    sprintf("\n\n**Targeting Opportunities**: %s show%s positive treatment effect heterogeneity based on RATE analysis. These outcomes demonstrate practical benefits from personalized treatment allocation.",
-            models_text,
-            ifelse(nrow(targeting_opp) == 1, "s", ""))
+  # EXCLUDED: Models with negative RATE evidence  
+  excluded_text <- if (nrow(excluded) > 0) {
+    models_text <- paste(excluded$model_name, collapse = ", ")
+    sprintf("\n\n**EXCLUDED from targeting**: %s\n\nThese models show statistically significant negative RATE evidence. Targeting based on predicted effects would reliably worsen outcomes compared to random assignment. Avoid personalized treatment for these outcomes.",
+            models_text)
   } else {
     ""
   }
   
-  # statistical heterogeneity only
-  statistical_text <- if (nrow(statistical_only) > 0) {
-    models_text <- paste(statistical_only$model_name, collapse = ", ")
-    sprintf("\n\n**Statistical Heterogeneity Only**: %s show%s statistical evidence of varying treatment effects (omnibus test) but no clear practical benefit from targeting. Individual differences exist but may not be actionable.",
-            models_text,
-            ifelse(nrow(statistical_only) == 1, "s", ""))
+  # UNCLEAR: Models with no significant RATE evidence
+  unclear_text <- if (nrow(unclear) > 0) {
+    models_text <- paste(unclear$model_name, collapse = ", ")
+    sprintf("\n\n**EVIDENCE UNCLEAR**: %s\n\nThese models show no statistically significant RATE evidence in either direction. There is insufficient evidence to support targeted treatment strategies.",
+            models_text)
   } else {
     ""
   }
   
-  # exploratory evidence only
-  exploratory_text <- if (nrow(exploratory_only) > 0) {
-    models_text <- paste(exploratory_only$model_name, collapse = ", ")
-    sprintf("\n\n**Exploratory Evidence Only**: %s show%s positive QINI curves at specific spend levels (%s) but lack support from primary heterogeneity tests. These findings are sensitive to spend level selection and should be considered preliminary.",
-            models_text,
-            ifelse(nrow(exploratory_only) == 1, "s", ""),
-            paste(spend_levels * 100, "%", sep = "", collapse = ", "))
-  } else {
-    ""
-  }
+  # simplified recommendations
+  rec_parts <- character()
   
-  # exploratory opportunities
-  exploratory_text <- if (nrow(exploratory_evidence) > 0) {
-    models_text <- paste(exploratory_evidence$model_name, collapse = ", ")
-    sprintf("\n\n**Exploratory Opportunities**: %s show%s positive calibration or QINI curve evidence without negative RATE results. These outcomes may benefit from further investigation for potential targeting strategies.",
-            models_text,
-            ifelse(nrow(exploratory_evidence) == 1, "s", ""))
-  } else {
-    ""
-  }
-  
-  # excluded outcomes
-  excluded_text <- if (length(selection_results$excluded_names) > 0) {
-    sprintf("\n\n**Excluded Outcomes**: %s should not be targeted, as they show negative or no evidence of heterogeneity.",
-            paste(selection_results$excluded_names, collapse = ", "))
-  } else {
-    ""
-  }
-  
-  # recommendations
   if (length(selection_results$selected_names) > 0) {
-    # prioritize by evidence type
-    primary_targets <- c(
-      evidence_for_het$model_name,
-      targeting_opp$model_name
-    )
-    exploratory_targets <- c(exploratory_evidence$model_name, exploratory_only$model_name)
-    
-    rec_parts <- character()
-    if (length(primary_targets) > 0) {
-      rec_parts <- c(rec_parts, 
-                     sprintf("Focus targeting efforts on %s.", 
-                             paste(primary_targets, collapse = ", ")))
-    }
-    if (length(exploratory_targets) > 0) {
-      rec_parts <- c(rec_parts,
-                     sprintf("Consider %s for exploratory analyses, as they show positive calibration or QINI evidence without negative RATE results.", 
-                             paste(exploratory_targets, collapse = ", ")))
-    }
-    # Separate excluded models by reason
-    excluded_negative_models <- evidence_summary$model_name[evidence_summary$evidence_type == "excluded_negative_rate"]
-    no_evidence_models <- evidence_summary$model_name[evidence_summary$evidence_type == "no_evidence"]
-    statistical_only_models <- evidence_summary$model_name[evidence_summary$evidence_type == "statistical_only"]
-    
-    if (length(excluded_negative_models) > 0) {
-      rec_parts <- c(rec_parts,
-                     sprintf("AVOID targeting %s due to statistically significant negative RATE evidence (personalization would reliably reduce treatment effectiveness).", 
-                             paste(excluded_negative_models, collapse = ", ")))
-    }
-    if (length(no_evidence_models) > 0) {
-      rec_parts <- c(rec_parts,
-                     sprintf("Insufficient evidence for heterogeneity in %s.", 
-                             paste(no_evidence_models, collapse = ", ")))
-    }
-    if (length(statistical_only_models) > 0) {
-      rec_parts <- c(rec_parts,
-                     sprintf("Statistical heterogeneity detected but no actionable targeting evidence for %s.", 
-                             paste(statistical_only_models, collapse = ", ")))
-    }
-    recommendations <- paste("\n\n**Recommendations**: ", paste(rec_parts, collapse = " "))
+    rec_parts <- c(rec_parts, 
+                   sprintf("Outcomes suitable for targeted treatment: %s", 
+                           paste(selection_results$selected_names, collapse = ", ")))
+  }
+  
+  if (length(selection_results$excluded_names) > 0) {
+    rec_parts <- c(rec_parts,
+                   sprintf("Outcomes to avoid for targeting: %s (targeting would worsen results)", 
+                           paste(selection_results$excluded_names, collapse = ", ")))
+  }
+  
+  if (length(selection_results$unclear_names) > 0) {
+    rec_parts <- c(rec_parts,
+                   sprintf("Outcomes with insufficient evidence for targeting: %s", 
+                           paste(selection_results$unclear_names, collapse = ", ")))
+  }
+  
+  if (length(rec_parts) == 0) {
+    recommendations <- "\n\n**Recommendations**: No outcomes show clear evidence of treatment effect heterogeneity."
   } else {
-    recommendations <- "\n\n**Recommendations**: No models show sufficient evidence of heterogeneity to warrant targeted treatment."
+    recommendations <- paste("\n\n**Recommendations**:\n• ", paste(rec_parts, collapse = "\n• "))
   }
   
   # full interpretation
-  full_text <- paste0(header, evidence_text, targeting_text, exploratory_text,
-                      statistical_text, excluded_text, recommendations)
+  full_text <- paste0(header, selected_text, excluded_text, unclear_text, recommendations)
   
   # summary
   summary_text <- sprintf(
-    "Found heterogeneity evidence for %d of %d models. Evidence for heterogeneity: %d models. Targeting opportunities: %d models. Exploratory evidence: %d models. Selected for targeting: %d models.",
-    selection_results$positive_counts$any_method,
+    "Analysed %d outcome models. Suitable for targeting: %d. Should avoid targeting: %d. Insufficient evidence: %d.",
     nrow(evidence_summary),
-    nrow(evidence_for_het),
-    nrow(targeting_opp),
-    nrow(exploratory_evidence) + nrow(exploratory_only),
-    length(selection_results$selected_ids)
+    selection_results$positive_counts$selected,
+    selection_results$positive_counts$excluded,
+    selection_results$positive_counts$unclear
   )
   
   list(
@@ -1028,7 +929,7 @@ generate_extended_report <- function(evidence_summary, selection_results,
   
   # header with method details
   method_description <- if (use_cross_validation) {
-    sprintf("We used %d-fold sequential cross-validation for heterogeneity testing, which provides robust statistical inference by avoiding overfitting. The p-values reflect aggregated evidence across folds using the martingale property (Wager 2024), while RATE estimates are computed on the full dataset. ", cv_num_folds)
+    sprintf("We used %d-fold sequential cross-validation for heterogeneity testing, which provides robust statistical inference by avoiding overfitting. P-values are derived using the martingale property (Wager 2024) for aggregation across folds. RATE estimates shown are weighted averages across test folds. Note: Confidence intervals are not provided for CV estimates as they do not align with the martingale-based hypothesis testing framework. ", cv_num_folds)
   } else {
     "We used standard heterogeneity testing methods. "
   }
@@ -1061,7 +962,7 @@ generate_extended_report <- function(evidence_summary, selection_results,
     
     "#### RATE QINI (Primary Global Evidence)\n", 
     "Measures overall targeting gains by ranking individuals by $\\\\hat{\\\\tau}(x)$, using linear weighting across treated proportions. ",
-    "A positive RATE QINI (e.g., 0.022 for Forgiveness) indicates HTE that enhances outcomes beyond random assignment, ideal for policies targeting a segment of the population.",
+    "A positive RATE QINI indicates HTE that enhances outcomes beyond random assignment, ideal for policies targeting a segment of the population.",
     if (use_cross_validation) " Tests were conducted using sequential cross-validation for robust inference." else "",
     "\n\n",
     
@@ -1070,14 +971,36 @@ generate_extended_report <- function(evidence_summary, selection_results,
     ") compared to a treat-all baseline, guiding resource allocation decisions.\n\n",
     
     "These methods offer complementary insights: QINI and AUTOC evaluate statistical HTE, while Qini curves quantify practical targeting benefits when budgets are limited to a portion of the population. ",
-    "Consistency across methods increases confidence in personalised strategies.\n\n"
+    "Consistency across methods increases confidence in personalised strategies.\n\n",
+    
+    "#### Heterogeneity Testing Decision Flow\n\n",
+    "For each outcome model:\n\n",
+    "#### 1. EXCLUSION CHECK\n",
+    "Is RATE QINI < 0 (sig) OR RATE AUTOC < 0 (sig)?\n\n",
+    "→ YES: EXCLUDED (Issue warning)\n",
+    "       Action: Avoid targeting based on this outcome - targeting would worsen results\n",
+    "       \n",
+    "→ NO:  Continue to Step 2\n\n",
+    "#### 2. SELECTION CHECK\n",
+    "Is RATE QINI > 0 (sig) OR RATE AUTOC > 0 (sig)?\n\n",
+    "→ YES: SELECTED FOR TARGETING\n",
+    "       Action: This outcome shows evidence of beneficial treatment effect heterogeneity\n",
+    "       \n",
+    "→ NO:  EVIDENCE UNCLEAR\n",
+    "       Action: Insufficient evidence to support targeted treatment for this outcome\n\n",
+    "#### 3. CALIBRATION CHECK (Selected models only)\n",
+    "Check mean_prediction_test status\n",
+    "→ Record calibration status (affects confidence in predictions)\n\n",
+    "#### 4. QINI CURVE ANALYSIS (Selected models only)\n",
+    "Analyse practical gains at budget levels (", paste(spend_text, collapse = ", "), ")\n",
+    "→ Report whether targeting improves outcomes at specific budget constraints\n\n"
   )
   
-  # evidence for heterogeneity
-  evidence_het_text <- format_evidence_section(
+  # selected models section
+  selected_text <- format_evidence_section_by_category(
     evidence_summary,
-    "evidence_for_heterogeneity",
-    "#### Evidence for Heterogeneity\n\n",
+    "selected",
+    "#### Selected for Targeting\n\n",
     rate_results_list,
     qini_results,
     omnibus_results,
@@ -1086,11 +1009,11 @@ generate_extended_report <- function(evidence_summary, selection_results,
     label_mapping
   )
   
-  # targeting opportunities
-  targeting_text <- format_evidence_section(
+  # excluded models section
+  excluded_text <- format_evidence_section_by_category(
     evidence_summary,
-    "targeting_opportunity",
-    "#### Targeting Opportunities\n\n",
+    "excluded",
+    "#### Excluded from Targeting\n\n",
     rate_results_list,
     qini_results,
     omnibus_results,
@@ -1099,52 +1022,22 @@ generate_extended_report <- function(evidence_summary, selection_results,
     label_mapping
   )
   
-  # exploratory evidence
-  exploratory_text <- format_evidence_section(
+  # unclear evidence section
+  unclear_text <- format_evidence_section_by_category(
     evidence_summary,
-    "exploratory_evidence",
-    "#### Exploratory Evidence\n\n",
+    "unclear",
+    "#### Evidence Unclear\n\n",
     rate_results_list,
     qini_results,
     omnibus_results,
     models,
     spend_levels,
-    label_mapping
+    label_mapping,
+    include_qini = FALSE  # Don't analyse QINI curves for unclear models
   )
-  
-  # avoid targeting - only include models with no positive evidence OR only negative evidence
-  avoid_models <- evidence_summary[evidence_summary$positive_count == 0, ]
-  
-  avoid_text <- if (nrow(avoid_models) > 0) {
-    # separate those with negative evidence vs just inconclusive
-    negative_models <- avoid_models[avoid_models$negative_count > 0, ]
-    inconclusive_models <- avoid_models[avoid_models$negative_count == 0, ]
-    
-    avoid_parts <- character()
-    
-    if (nrow(negative_models) > 0) {
-      avoid_parts <- c(avoid_parts,
-        paste0(paste(negative_models$model_name, collapse = ", "),
-               " show reliably negative results in one or more tests, suggesting targeting would worsen outcomes compared to random assignment"))
-    }
-    
-    if (nrow(inconclusive_models) > 0) {
-      avoid_parts <- c(avoid_parts,
-        paste0(paste(inconclusive_models$model_name, collapse = ", "),
-               " show no evidence of heterogeneity across all tests"))
-    }
-    
-    paste0(
-      "#### Avoid Targeting\n\n",
-      paste(avoid_parts, collapse = ". Additionally, "),
-      ".\n"
-    )
-  } else {
-    ""
-  }
   
   # combine all sections
-  paste0(header, methods_desc, evidence_het_text, targeting_text, exploratory_text, avoid_text)
+  paste0(header, methods_desc, selected_text, excluded_text, unclear_text)
 }
 
 
@@ -1174,14 +1067,15 @@ extract_grf_params <- function(models) {
 }
 
 
-#' Format evidence section with detailed statistics
+#' Format evidence section by category
 #' @keywords internal
-format_evidence_section <- function(evidence_summary, evidence_type, header_text,
-                                  rate_results_list, qini_results, omnibus_results,
-                                  models, spend_levels, label_mapping) {
+format_evidence_section_by_category <- function(evidence_summary, category, header_text,
+                                              rate_results_list, qini_results, omnibus_results,
+                                              models, spend_levels, label_mapping,
+                                              include_qini = TRUE) {
   
   # filter to relevant outcomes
-  outcomes <- evidence_summary[evidence_summary$evidence_type == evidence_type, ]
+  outcomes <- evidence_summary[evidence_summary$category == category, ]
   
   if (nrow(outcomes) == 0) return("")
   
@@ -1203,7 +1097,8 @@ format_evidence_section <- function(evidence_summary, evidence_type, header_text
       qini_results,
       omnibus_results,
       models,
-      spend_levels
+      spend_levels,
+      include_qini = include_qini
     )
     
     outcome_texts <- c(outcome_texts, outcome_text)
@@ -1217,7 +1112,7 @@ format_evidence_section <- function(evidence_summary, evidence_type, header_text
 #' @keywords internal
 format_outcome_details <- function(model_id, model_name, evidence_row,
                                  rate_results_list, qini_results, omnibus_results,
-                                 models, spend_levels) {
+                                 models, spend_levels, include_qini = TRUE) {
   
   details <- paste0("**", model_name, "**: ")
   
@@ -1287,39 +1182,105 @@ format_outcome_details <- function(model_id, model_name, evidence_row,
   
   # combine RATE text
   if (length(rate_text) > 0) {
-    details <- paste0(details, "positive RATE ", paste(rate_text, collapse = " and "))
+    # check if we need to determine the sign of RATE values
+    # rate_text contains formatted strings like "QINI (-0.003)" or "AUTOC (0.026)"
+    # extract the values to determine if they're positive or negative
+    rate_values <- character()
+    rate_labels <- character()
+    
+    for (rt in rate_text) {
+      # extract the value from formatted string like "QINI (-0.003)"
+      value_match <- regmatches(rt, regexpr("\\([-0-9.]+", rt))
+      if (length(value_match) > 0) {
+        value_str <- gsub("\\(", "", value_match)
+        value_num <- as.numeric(value_str)
+        if (!is.na(value_num)) {
+          if (value_num < 0) {
+            rate_labels <- c(rate_labels, "negative")
+          } else {
+            rate_labels <- c(rate_labels, "positive")
+          }
+          rate_values <- c(rate_values, rt)
+        }
+      }
+    }
+    
+    # group by positive/negative
+    if (length(rate_values) > 0) {
+      pos_rates <- rate_values[rate_labels == "positive"]
+      neg_rates <- rate_values[rate_labels == "negative"]
+      
+      rate_parts <- character()
+      if (length(pos_rates) > 0) {
+        rate_parts <- c(rate_parts, paste0("positive RATE ", paste(pos_rates, collapse = " and ")))
+      }
+      if (length(neg_rates) > 0) {
+        rate_parts <- c(rate_parts, paste0("negative RATE ", paste(neg_rates, collapse = " and ")))
+      }
+      
+      details <- paste0(details, paste(rate_parts, collapse = ", but "))
+    }
   }
   
   # add omnibus test results
   omnibus_text <- format_omnibus_results(model_id, model_name, omnibus_results)
   if (nchar(omnibus_text) > 0) {
     if (length(rate_text) > 0) {
-      details <- paste0(details, ", confirmed by omnibus tests (", omnibus_text, ")")
+      # Check if omnibus p-value suggests significance
+      # Extract p-value from omnibus_text which is like "Diff. Est. = 0.78, p = 0.158"
+      p_match <- regmatches(omnibus_text, regexpr("p = [0-9.]+", omnibus_text))
+      if (length(p_match) > 0) {
+        p_val <- as.numeric(sub("p = ", "", p_match))
+        if (!is.na(p_val) && p_val < 0.05) {
+          details <- paste0(details, ", confirmed by omnibus tests (", omnibus_text, ")")
+        } else {
+          details <- paste0(details, ". Omnibus tests: ", omnibus_text)
+        }
+      } else {
+        details <- paste0(details, ". Omnibus tests: ", omnibus_text)
+      }
     } else {
       details <- paste0(details, "omnibus tests show ", omnibus_text)
     }
   }
   
-  # add QINI curve differences
-  qini_diff_text <- format_qini_differences(model_id, qini_results, spend_levels)
-  if (nchar(qini_diff_text) > 0) {
-    if (length(rate_text) > 0 || nchar(omnibus_text) > 0) {
-      details <- paste0(details, ". Qini differences: ", qini_diff_text)
-    } else {
-      details <- paste0(details, "positive Qini differences ", qini_diff_text, " suggest practical benefits")
+  # add QINI curve differences only if requested
+  if (include_qini) {
+    qini_diff_text <- format_qini_differences(model_id, qini_results, spend_levels)
+    if (nchar(qini_diff_text) > 0) {
+      if (length(rate_text) > 0 || nchar(omnibus_text) > 0) {
+        details <- paste0(details, ". Qini differences: ", qini_diff_text)
+      } else {
+        # check if Qini differences are positive or negative
+        # qini_diff_text contains values like "10%: 0.001, 40%: -0.002"
+        has_negative <- grepl("-", qini_diff_text)
+        has_positive <- grepl("[^-]\\d+\\.\\d+", qini_diff_text)
+        
+        if (has_negative && !has_positive) {
+          details <- paste0(details, "negative Qini differences ", qini_diff_text, " suggest targeting would worsen outcomes")
+        } else if (has_positive && !has_negative) {
+          details <- paste0(details, "positive Qini differences ", qini_diff_text, " suggest practical benefits")
+        } else {
+          details <- paste0(details, "mixed Qini differences ", qini_diff_text, " suggest variable targeting effects")
+        }
+      }
     }
   }
   
-  # add interpretation based on evidence type
-  if (evidence_row$evidence_type == "evidence_for_heterogeneity") {
+  # add interpretation based on category
+  if (evidence_row$category == "selected") {
     details <- paste0(details, ". This supports effective targeting.")
-  } else if (evidence_row$evidence_type == "targeting_opportunity") {
-    # add ATE if available
-    ate_text <- format_ate_value(model_id, models)
-    if (nchar(ate_text) > 0) {
-      details <- paste0(details, " despite ", ate_text)
+    
+    # note calibration status
+    if (evidence_row$mean_prediction_test == "calibrated") {
+      details <- paste0(details, " Well-calibrated predictions enhance reliability.")
+    } else if (evidence_row$mean_prediction_test == "not_calibrated") {
+      details <- paste0(details, " Note: predictions not well-calibrated (interpret with caution).")
     }
-    details <- paste0(details, ". Even modest HTE can improve outcomes for a subset.")
+  } else if (evidence_row$category == "excluded") {
+    details <- paste0(details, ". Avoid targeting this outcome.")
+  } else if (evidence_row$category == "unclear") {
+    details <- paste0(details, ". Insufficient evidence for targeting.")
   }
   
   details
@@ -1360,9 +1321,26 @@ format_rate_with_ci <- function(rate_row, type) {
   }
   
   if (!is.null(ci_low) && !is.null(ci_high)) {
-    sprintf("%s (%s [95%% CI: %s, %s])", type, est, ci_low, ci_high)
+    # format with appropriate precision, converting to numeric if needed
+    est_num <- suppressWarnings(as.numeric(est))
+    ci_low_num <- suppressWarnings(as.numeric(ci_low))
+    ci_high_num <- suppressWarnings(as.numeric(ci_high))
+    
+    if (is.na(est_num)) {
+      # if conversion failed, return as is
+      sprintf("%s (%s)", type, est)
+    } else {
+      sprintf("%s (%0.3f [95%% CI: %0.3f, %0.3f])", type, est_num, ci_low_num, ci_high_num)
+    }
   } else {
-    sprintf("%s (%s)", type, est)
+    # convert to numeric if needed
+    est_num <- suppressWarnings(as.numeric(est))
+    if (is.na(est_num)) {
+      # if conversion failed, return as is
+      sprintf("%s (%s)", type, est)
+    } else {
+      sprintf("%s (%0.3f)", type, est_num)
+    }
   }
 }
 

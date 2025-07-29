@@ -46,11 +46,11 @@ margot_assess_variable_correlation <- function(
   
   method <- match.arg(method)
   
-  # handle both bootstrap results and causal forest results
-  if (inherits(model_results, "margot_bootstrap_policy_tree")) {
-    cli::cli_alert_warning("Bootstrap results detected. To assess correlations, please provide the original causal forest results.")
-    cli::cli_alert_info("The bootstrap results don't contain the full covariate data needed for correlation analysis.")
-    stop("Please use the original model_results from margot_causal_forest(), not bootstrap results")
+  # handle both stability results and causal forest results
+  if (inherits(model_results, c("margot_stability_policy_tree", "margot_bootstrap_policy_tree"))) {
+    cli::cli_alert_warning("Stability results detected. To assess correlations, please provide the original causal forest results.")
+    cli::cli_alert_info("The stability results don't contain the full covariate data needed for correlation analysis.")
+    stop("Please use the original model_results from margot_causal_forest(), not stability results")
   }
   
   # validate inputs
@@ -318,7 +318,7 @@ margot_identify_variable_clusters <- function(
     }
     
     cat("\nInterpretation: Variables within each cluster are highly correlated and may\n")
-    cat("substitute for one another in policy tree splits. When interpreting bootstrap\n")
+    cat("substitute for one another in policy tree splits. When interpreting stability\n")
     cat("results, consider these clusters as representing similar underlying constructs.\n")
     
     return(result)
@@ -332,10 +332,10 @@ margot_identify_variable_clusters <- function(
 #' 
 #' @description
 #' Comprehensive stability diagnostics for policy trees, combining
-#' correlation analysis with bootstrap results to provide actionable
+#' correlation analysis with stability results to provide actionable
 #' insights about tree instability.
 #' 
-#' @param bootstrap_results Output from margot_policy_tree_bootstrap()
+#' @param stability_results Output from margot_policy_tree_stability()
 #' @param model_results Original causal forest results
 #' @param model_name Model to analyze
 #' @param correlation_threshold Threshold for correlation analysis (default 0.5)
@@ -344,7 +344,7 @@ margot_identify_variable_clusters <- function(
 #' 
 #' @export
 margot_stability_diagnostics <- function(
-  bootstrap_results,
+  stability_results,
   model_results,
   model_name,
   correlation_threshold = 0.5
@@ -358,8 +358,15 @@ margot_stability_diagnostics <- function(
     plot = FALSE
   )
   
-  # get bootstrap metrics
-  boot_metrics <- bootstrap_results$results[[model_name]]$bootstrap_metrics
+  # get stability metrics (handle both old and new naming)
+  if (!is.null(stability_results$results[[model_name]]$stability_metrics)) {
+    boot_metrics <- stability_results$results[[model_name]]$stability_metrics
+  } else if (!is.null(stability_results$results[[model_name]]$bootstrap_metrics)) {
+    # backwards compatibility
+    boot_metrics <- stability_results$results[[model_name]]$bootstrap_metrics
+  } else {
+    stop("No stability metrics found for model ", model_name)
+  }
   var_freq <- boot_metrics$var_inclusion_freq
   
   # identify frequently selected variables
@@ -379,7 +386,7 @@ margot_stability_diagnostics <- function(
     }
     
     stability_interpretation <- paste0(
-      "The bootstrap analysis shows that several frequently selected variables ",
+      "The stability analysis shows that several frequently selected variables ",
       "belong to the same correlation clusters. This explains the apparent ",
       "instability: the trees are consistently identifying important subgroups, ",
       "but the specific variable chosen varies due to multicollinearity.\n\n",
@@ -401,7 +408,7 @@ margot_stability_diagnostics <- function(
     }
   } else {
     stability_interpretation <- paste0(
-      "The frequently selected variables in bootstrap analysis do not show ",
+      "The frequently selected variables in stability analysis do not show ",
       "strong correlations with each other. This suggests that instability ",
       "may be due to weak treatment effect heterogeneity rather than ",
       "multicollinearity among predictors."
@@ -423,14 +430,14 @@ margot_stability_diagnostics <- function(
     recommendations <- c(recommendations,
       "4. Consider the trade-off between stability and performance - unstable depth-2 trees often outperform stable alternatives",
       "5. Collect additional data to better characterize heterogeneity",
-      "6. Use the bootstrap results to quantify uncertainty in variable selection"
+      "6. Use the stability results to quantify uncertainty in variable selection"
     )
   }
   
   # compile results
   diagnostics <- list(
     correlation_analysis = cor_analysis,
-    bootstrap_metrics = boot_metrics,
+    stability_metrics = boot_metrics,
     correlated_frequent_vars = if (exists("correlated_freq_vars")) correlated_freq_vars else NULL,
     stability_interpretation = stability_interpretation,
     recommendations = recommendations

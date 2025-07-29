@@ -14,6 +14,7 @@
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/margotverse-plan.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/news/index.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/analyse_concordance.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/analyze_concordance.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/apply_covariate_exclusions.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/average_gain.qini_simple_baseline.html</loc></url>
@@ -96,6 +97,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/fetch_margot_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/format_ate_value.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/format_evidence_section.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/format_evidence_section_by_category.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/format_omnibus_results.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/format_outcome_details.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/format_qini_differences.html</loc></url>

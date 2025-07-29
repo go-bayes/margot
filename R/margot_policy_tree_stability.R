@@ -369,7 +369,14 @@ margot_policy_tree_stability <- function(
       tree_method = actual_tree_method,
       timestamp = Sys.time(),
       seeds_used = all_seeds
-    )
+    ),
+    # preserve key data from original results
+    outcome_vars = model_results$outcome_vars,
+    not_missing = not_missing,
+    data = model_results$data,
+    covariates = covariates,
+    weights = model_results$weights,
+    W = model_results$W
   )
   
   # process each model
@@ -565,6 +572,12 @@ stability_single_model <- function(
   
   # add stability metrics
   output$stability_metrics <- consensus_info$metrics
+  
+  # ensure key data is preserved
+  if (is.null(output$Y)) output$Y <- model_result$Y
+  if (is.null(output$W)) output$W <- model_result$W
+  if (is.null(output$dr_scores)) output$dr_scores <- dr_scores
+  if (is.null(output$dr_scores_flipped)) output$dr_scores_flipped <- model_result$dr_scores_flipped
   
   # optionally reconstruct consensus trees
   if (return_consensus_trees) {

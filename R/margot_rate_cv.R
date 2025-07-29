@@ -636,61 +636,12 @@ margot_rate_cv <- function(model_results,
     p_value_raw = raw_p_values,
     p_value = adjusted_p_values,
     t_statistic = sapply(cv_list, `[[`, "t_statistic"),
-    significant = adjusted_p_values < alpha
+    significant = adjusted_p_values < alpha,
+    # Add CV-based RATE estimates without CIs
+    # CIs are not meaningful in the CV context due to martingale aggregation
+    estimate = sapply(cv_list, `[[`, "cv_estimate"),
+    std_error = sapply(cv_list, `[[`, "cv_std_error")
   )
-  
-  # Compute RATE estimates on full data for each model/target combination
-  if (verbose) {
-    cli::cli_alert_info("Computing RATE estimates on full data...")
-  }
-  
-  rate_estimates <- list()
-  for (i in seq_len(nrow(cv_results))) {
-    model_name <- cv_results$model[i]
-    target_type <- cv_results$target[i]
-    
-    # Find the corresponding model data
-    model_idx <- which(sapply(model_data_list, function(x) x$model_name == model_name))[1]
-    if (!is.na(model_idx)) {
-      model_data <- model_data_list[[model_idx]]
-      
-      # Train final CATE forest on all data to get DR scores
-      final_forest <- do.call(grf::causal_forest, 
-                             c(list(X = model_data$X,
-                                   Y = model_data$Y,
-                                   W = model_data$W,
-                                   sample.weights = model_data$weights),
-                               model_data$grf_defaults))
-      
-      # Get DR scores from the forest
-      DR_scores <- grf::get_scores(final_forest)
-      
-      # Get predictions
-      cate_predictions <- predict(final_forest)$predictions
-      
-      # Compute RATE
-      rate_result <- grf::rank_average_treatment_effect.fit(
-        DR.scores = DR_scores,
-        priorities = cate_predictions,
-        target = target_type,
-        R = 200
-      )
-      
-      rate_estimates[[i]] <- list(
-        model = model_name,
-        target = target_type,
-        estimate = rate_result$estimate,
-        std_error = rate_result$std.err,
-        conf_low = rate_result$estimate - 1.96 * rate_result$std.err,
-        conf_high = rate_result$estimate + 1.96 * rate_result$std.err
-      )
-    }
-  }
-  
-  # Add RATE estimates to cv_results
-  rate_df <- dplyr::bind_rows(rate_estimates)
-  cv_results <- cv_results %>%
-    dplyr::left_join(rate_df, by = c("model", "target"))
   
   # apply label mapping if provided
   if (!is.null(label_mapping)) {
@@ -799,9 +750,11 @@ rate_sequential_cv <- function(X, Y, W, weights = NULL,
                               list(...)))
   DR_scores <- grf::get_scores(nuisance_forest)
   
-  # Initialize storage for t-statistics
+  # Initialize storage for t-statistics and estimates
   t_statistics <- numeric(num_folds - 1)
   fold_sizes <- numeric(num_folds - 1)
+  fold_estimates <- numeric(num_folds - 1)
+  fold_std_errors <- numeric(num_folds - 1)
   
   # Progress tracking for sequential CV
   if (verbose && num_folds > 3) {
@@ -845,6 +798,8 @@ rate_sequential_cv <- function(X, Y, W, weights = NULL,
     
     t_statistics[k-1] <- rate_fold$estimate / rate_fold$std.err
     fold_sizes[k-1] <- length(test_idx)
+    fold_estimates[k-1] <- rate_fold$estimate
+    fold_std_errors[k-1] <- rate_fold$std.err
   }
   
   # Close progress bar
@@ -856,11 +811,33 @@ rate_sequential_cv <- function(X, Y, W, weights = NULL,
   aggregated_t <- sum(t_statistics) / sqrt(num_folds - 1)
   p_value <- 2 * pnorm(-abs(aggregated_t))
   
+  # Aggregate RATE estimates across folds
+  # Use weighted average where weights are proportional to fold sizes
+  total_test_size <- sum(fold_sizes)
+  fold_weights <- fold_sizes / total_test_size
+  
+  # Weighted average of estimates
+  cv_estimate <- sum(fold_estimates * fold_weights)
+  
+  # Combined standard error (accounting for between-fold variance)
+  # First, get weighted average of within-fold variances
+  within_variance <- sum((fold_std_errors^2) * fold_weights)
+  
+  # Then add between-fold variance
+  between_variance <- sum(fold_weights * (fold_estimates - cv_estimate)^2)
+  
+  # Combined standard error
+  cv_std_error <- sqrt(within_variance + between_variance)
+  
   list(
     p_value = p_value,
     t_statistic = aggregated_t,
     fold_t_statistics = t_statistics,
     fold_sizes = fold_sizes,
+    fold_estimates = fold_estimates,
+    fold_std_errors = fold_std_errors,
+    cv_estimate = cv_estimate,
+    cv_std_error = cv_std_error,
     num_folds = num_folds,
     target = target
   )
@@ -1209,7 +1186,6 @@ create_cv_tables <- function(cv_results, alpha = 0.05) {
       `Std Error` = sprintf("%.3f", round(std_error, 3)),
       `t-statistic` = sprintf("%.3f", round(t_statistic, 3)),
       `p-value` = sprintf("%.4f", round(p_value, 4)),
-      `95% CI` = sprintf("[%.3f, %.3f]", round(conf_low, 3), round(conf_high, 3)),
       # Status column matching evidence summary style
       Status = dplyr::case_when(
         significant & estimate > 0 ~ "positive",
@@ -1219,7 +1195,7 @@ create_cv_tables <- function(cv_results, alpha = 0.05) {
     ) %>%
     dplyr::select(
       model_id, model_name, target, `RATE Estimate`, `Std Error`, 
-      `t-statistic`, `p-value`, `95% CI`, Status
+      `t-statistic`, `p-value`, Status
     ) %>%
     dplyr::arrange(target, dplyr::desc(as.numeric(`RATE Estimate`)))
   

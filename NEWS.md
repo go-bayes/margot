@@ -1,3 +1,65 @@
+# [2025-07-29] margot 1.0.208
+
+### Breaking Changes
+- **Simplified heterogeneity testing logic in `margot_interpret_heterogeneity()`**:
+  - Now uses clear 3-category system: SELECTED (positive RATE), EXCLUDED (negative RATE), UNCLEAR (no significant RATE)
+  - Removed complex evidence_type categorization that caused contradictions
+  - QINI curve analysis now only performed for SELECTED models
+  - Calibration status reported for context but doesn't affect selection
+- **Cross-validation now provides consistent estimates in `margot_rate_cv()`**:
+  - Previously computed RATE estimates on full dataset after CV testing, causing inconsistency
+  - Now both p-values and RATE estimates come from the CV procedure
+  - RATE estimates are weighted averages across test folds
+  - Confidence intervals are no longer reported for CV estimates as they don't align with the martingale-based hypothesis testing
+  - This ensures selection criteria align with reported effect sizes
+
+### Improvements
+- **Better defaults in `margot_interpret_heterogeneity()`**:
+  - `include_extended_report = TRUE` by default (was already TRUE)
+  - `use_cross_validation = TRUE` by default for robust confidence intervals
+  - `cv_num_folds = 5` by default
+  - RATE estimates now formatted with 3 decimal places and include 95% confidence intervals
+- **Clearer decision flow and reporting**:
+  - Added decision flow chart to extended report showing exact logic
+  - Simplified recommendations format: "Use for targeting: X", "Avoid targeting: Y", "Evidence unclear: Z"
+  - More intuitive interpretation sections aligned with the 3-category system
+
+### Bug Fixes
+- **Fixed `margot_stability_diagnostics()` compatibility**:
+  - Now works with new `stability_metrics` naming from `margot_policy_tree_stability()`
+  - Handles both old `bootstrap_metrics` and new `stability_metrics` for backwards compatibility
+  - Updated all references from "bootstrap" to "stability" in documentation and messages
+- **Fixed incorrect "positive RATE" labeling in `margot_interpret_heterogeneity()`**:
+  - Function now correctly identifies and labels negative RATE values
+  - Properly handles mixed positive/negative values (e.g., "positive RATE AUTOC, but negative RATE QINI")
+  - Also fixed Qini difference labeling to handle negative values correctly
+- **Fixed sprintf formatting error in `format_rate_with_ci()`**:
+  - Now properly converts character estimates to numeric before formatting
+  - Handles cases where conversion fails gracefully
+- **Fixed missing confidence intervals in CV results**:
+  - CV tables now preserve numeric confidence interval columns (`2.5%` and `97.5%`)
+  - Extended report now shows confidence intervals when using cross-validation (the default)
+- **Fixed misleading omnibus test language**: 
+  - Extended reports no longer say "confirmed by omnibus tests" when the omnibus p-values are not significant
+  - Now uses neutral language "Omnibus tests:" for non-significant results
+- **Clarified decision flow language**:
+  - Removed confusing "Avoid Y", "Use X", "Evidence unclear for Z" placeholders
+  - Now clearly states actions in terms of targeting specific outcomes
+  - Updated recommendations to use "Outcomes suitable for targeted treatment" instead of "Use for targeting"
+
+### Removed
+- **Removed `margot_compute_consensus_conditional_means()` function**:
+  - No longer needed as `margot_policy_tree_stability()` now preserves all necessary data
+  - Conditional means computation is handled automatically by existing functions
+
+# [2025-07-29] margot 1.0.207
+
+### Improvements
+- **Enhanced `margot_policy_tree_stability()` data preservation**:
+  - Now preserves outcome data, weights, and treatment assignments
+  - Ensures all necessary data is available for downstream analysis
+  - Maintains compatibility with plotting and interpretation functions
+  
 # [2025-07-29] margot 1.0.206
 
 ### Breaking Changes

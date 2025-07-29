@@ -12,7 +12,8 @@ format_outcome_details(
   qini_results,
   omnibus_results,
   models,
-  spend_levels
+  spend_levels,
+  include_qini = TRUE
 )
 }
 \description{
