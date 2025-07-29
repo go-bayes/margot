@@ -1,3 +1,20 @@
+# [2025-07-29] margot 1.0.209
+
+### Improvements
+- **Enhanced label mapping in `margot_interpret_heterogeneity()`**:
+  - Improved default transformation to remove wave prefixes (e.g., "t2_")
+  - Now correctly identifies reversed variables (ending in "_r" or "_z_r") and adds "(reduced)" prefix
+  - Added special handling for common abbreviations (hlth → health, bmi → BMI, pwi → PWI)
+  - Results in cleaner outcome names like "Belonging" instead of "T2 Belong"
+  - Reversed variables now show as "(reduced) Health Fatigue" instead of "T2 Hlth Fatigue z r"
+- **Updated to use New Zealand English spelling throughout**:
+  - Changed "analyze" → "analyse", "analyzed" → "analysed", "organize" → "organise"
+  - Consistent with project requirements
+- **Improved recommendations format**:
+  - Replaced bullet points with full sentences suitable for scientific reports
+  - Now provides clear counts and proper grammar (singular/plural handling)
+  - More professional presentation for academic contexts
+
 # [2025-07-29] margot 1.0.208
 
 ### Breaking Changes

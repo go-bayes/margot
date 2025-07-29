@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.208</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.209</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,31 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.209" id="id_2025-07-29-margot-10209">[2025-07-29] margot 1.0.209<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10209"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-209">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-209"></a></h4>
+<ul><li>
+<strong>Enhanced label mapping in <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code></strong>:
+<ul><li>Improved default transformation to remove wave prefixes (e.g., “t2_”)</li>
+<li>Now correctly identifies reversed variables (ending in “_r” or “_z_r”) and adds “(reduced)” prefix</li>
+<li>Added special handling for common abbreviations (hlth → health, bmi → BMI, pwi → PWI)</li>
+<li>Results in cleaner outcome names like “Belonging” instead of “T2 Belong”</li>
+<li>Reversed variables now show as “(reduced) Health Fatigue” instead of “T2 Hlth Fatigue z r”</li>
+</ul></li>
+<li>
+<strong>Updated to use New Zealand English spelling throughout</strong>:
+<ul><li>Changed “analyze” → “analyse”, “analyzed” → “analysed”, “organize” → “organise”</li>
+<li>Consistent with project requirements</li>
+</ul></li>
+<li>
+<strong>Improved recommendations format</strong>:
+<ul><li>Replaced bullet points with full sentences suitable for scientific reports</li>
+<li>Now provides clear counts and proper grammar (singular/plural handling)</li>
+<li>More professional presentation for academic contexts</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.208" id="id_2025-07-29-margot-10208">[2025-07-29] margot 1.0.208<a class="anchor" aria-label="anchor" href="#id_2025-07-29-margot-10208"></a></h2>
 <div class="section level4">

@@ -533,9 +533,31 @@ create_evidence_summary <- function(model_ids, rate_results, qini_results,
     }
     # default transformation
     clean_id <- sub("^model_", "", id)
-    clean_id <- sub("_z$", "", clean_id)  # remove _z suffix first
+    
+    # check if reversed (ends with _r or _z_r)
+    is_reversed <- grepl("_r$|_z_r$", clean_id)
+    
+    # remove suffixes
+    clean_id <- sub("_z_r$", "", clean_id)  # remove _z_r suffix
+    clean_id <- sub("_r$", "", clean_id)    # remove _r suffix
+    clean_id <- sub("_z$", "", clean_id)    # remove _z suffix
+    clean_id <- sub("^t[0-9]_", "", clean_id)  # remove wave prefix like t2_
     clean_id <- gsub("_", " ", clean_id)   # then replace underscores
-    tools::toTitleCase(clean_id)
+    
+    # special cases for common abbreviations
+    clean_id <- gsub("hlth", "health", clean_id, ignore.case = TRUE)
+    clean_id <- gsub("bmi", "BMI", clean_id, ignore.case = TRUE)
+    clean_id <- gsub("pwi", "PWI", clean_id, ignore.case = TRUE)
+    
+    # apply title case
+    clean_id <- tools::toTitleCase(clean_id)
+    
+    # add (reduced) prefix if reversed
+    if (is_reversed) {
+      clean_id <- paste0("(reduced) ", clean_id)
+    }
+    
+    clean_id
   }
   
   # build summary for each model
@@ -850,27 +872,39 @@ generate_interpretation <- function(evidence_summary, selection_results,
   rec_parts <- character()
   
   if (length(selection_results$selected_names) > 0) {
+    n_selected <- length(selection_results$selected_names)
     rec_parts <- c(rec_parts, 
-                   sprintf("Outcomes suitable for targeted treatment: %s", 
+                   sprintf("The following %d outcome%s show%s significant positive heterogeneous treatment effects and %s suitable for targeted intervention: %s.", 
+                           n_selected,
+                           ifelse(n_selected == 1, "", "s"),
+                           ifelse(n_selected == 1, "s", ""),
+                           ifelse(n_selected == 1, "is", "are"),
                            paste(selection_results$selected_names, collapse = ", ")))
   }
   
   if (length(selection_results$excluded_names) > 0) {
+    n_excluded <- length(selection_results$excluded_names)
     rec_parts <- c(rec_parts,
-                   sprintf("Outcomes to avoid for targeting: %s (targeting would worsen results)", 
+                   sprintf("Targeted treatment should be avoided for %d outcome%s that show%s significant negative heterogeneous effects: %s. Targeting based on these outcomes would worsen results compared to universal treatment.", 
+                           n_excluded,
+                           ifelse(n_excluded == 1, "", "s"),
+                           ifelse(n_excluded == 1, "s", ""),
                            paste(selection_results$excluded_names, collapse = ", ")))
   }
   
   if (length(selection_results$unclear_names) > 0) {
+    n_unclear <- length(selection_results$unclear_names)
     rec_parts <- c(rec_parts,
-                   sprintf("Outcomes with insufficient evidence for targeting: %s", 
+                   sprintf("There is insufficient evidence to support targeted treatment strategies for %d outcome%s: %s.", 
+                           n_unclear,
+                           ifelse(n_unclear == 1, "", "s"),
                            paste(selection_results$unclear_names, collapse = ", ")))
   }
   
   if (length(rec_parts) == 0) {
-    recommendations <- "\n\n**Recommendations**: No outcomes show clear evidence of treatment effect heterogeneity."
+    recommendations <- "\n\n**Recommendations**: No outcomes show clear evidence of treatment effect heterogeneity suitable for targeted intervention strategies."
   } else {
-    recommendations <- paste("\n\n**Recommendations**:\n• ", paste(rec_parts, collapse = "\n• "))
+    recommendations <- paste0("\n\n**Recommendations**: ", paste(rec_parts, collapse = " "))
   }
   
   # full interpretation
