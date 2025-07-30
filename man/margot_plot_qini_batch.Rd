@@ -8,7 +8,7 @@ margot_plot_qini_batch(
   mc_result,
   model_names = NULL,
   label_mapping = NULL,
-  spend_levels = c(0.1, 0.4),
+  spend_levels = 0.1,
   show_spend_lines = TRUE,
   spend_line_color = "red",
   spend_line_alpha = 0.5,
@@ -39,7 +39,7 @@ the "model_" prefix. Default NULL (all models).}
 \item{label_mapping}{Optional named list for custom label mappings. Keys should be original variable names
 (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.}
 
-\item{spend_levels}{Numeric vector of spend levels to show with vertical lines. Default is c(0.1, 0.4).}
+\item{spend_levels}{Numeric vector of spend levels to show with vertical lines. Default is 0.1.}
 
 \item{show_spend_lines}{Logical indicating whether to show vertical lines at spend levels. Default is TRUE.}
 

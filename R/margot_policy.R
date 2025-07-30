@@ -9,7 +9,7 @@
 #' @param policy_tree_args List of args for \code{margot_plot_policy_tree()}. Default: \code{list()}.
 #' @param decision_tree_args List of args for \code{margot_plot_decision_tree()}. Default: \code{list()}.
 #' @param max_depth Integer, 1 or 2; which decision tree depth to plot. Default: 2.
-#' @param spend_levels Numeric vector of spend levels for difference-gain summaries. Default: \code{c(0.1, 0.4)}.
+#' @param spend_levels Numeric vector of spend levels for difference-gain summaries. Default: \code{0.1}.
 #' @param label_mapping Named list mapping variable names to display labels. Default: NULL.
 #' @param original_df Optional data.frame of untransformed variables for axis annotations. Default: NULL.
 #' @param model_names Character vector of model names to process; NULL = all. Default: NULL.
@@ -33,7 +33,7 @@ margot_policy <- function(
     policy_tree_args   = list(),
     decision_tree_args = list(),
     max_depth          = 2L,
-    spend_levels       = c(0.1, 0.4),
+    spend_levels       = 0.1,
     label_mapping      = NULL,
     original_df        = NULL,
     model_names        = NULL,

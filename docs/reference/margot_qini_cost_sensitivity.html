@@ -13,7 +13,7 @@ the causal forest models."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.212</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.213</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@ the causal forest models.</p>
 <span>  <span class="va">models</span>,</span>
 <span>  costs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">5</span><span class="op">)</span>,</span>
 <span>  model_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  spend_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.4</span><span class="op">)</span>,</span>
+<span>  spend_levels <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  baseline_method <span class="op">=</span> <span class="st">"maq_no_covariates"</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">12345</span></span>
@@ -80,7 +80,7 @@ Default NULL (all models).</p></dd>
 
 <dt id="arg-spend-levels">spend_levels<a class="anchor" aria-label="anchor" href="#arg-spend-levels"></a></dt>
 <dd><p>Numeric vector of spend levels for difference gain summaries.
-Default is c(0.1, 0.4).</p></dd>
+Default is 0.1.</p></dd>
 
 
 <dt id="arg-baseline-method">baseline_method<a class="anchor" aria-label="anchor" href="#arg-baseline-method"></a></dt>

@@ -5,7 +5,7 @@
 #' 
 #' @param mc_result Results from margot_causal_forest or similar with qini_data and qini_objects
 #' @param model_names Character vector of models to check (NULL = all models)
-#' @param spend_levels Numeric vector of spend levels to check (default: c(0.1, 0.4))
+#' @param spend_levels Numeric vector of spend levels to check (default: 0.1)
 #' @param tolerance Numeric tolerance for flagging discrepancies (default: 0.01)
 #' @param verbose Logical for detailed output (default: TRUE)
 #' 
@@ -40,7 +40,7 @@
 #' @export
 margot_qini_diagnostic <- function(mc_result, 
                                   model_names = NULL,
-                                  spend_levels = c(0.1, 0.4),
+                                  spend_levels = 0.1,
                                   tolerance = 0.01,
                                   verbose = TRUE) {
   

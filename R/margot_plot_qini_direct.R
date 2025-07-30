@@ -38,7 +38,7 @@ margot_plot_qini_direct <- function(
   qini_objects = NULL,
   outcome_var = "Outcome",
   label_mapping = NULL,
-  spend_levels = c(0.1, 0.4),
+  spend_levels = 0.1,
   show_spend_lines = TRUE,
   spend_line_color = "red",
   spend_line_alpha = 0.5,

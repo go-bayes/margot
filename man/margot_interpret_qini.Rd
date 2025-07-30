@@ -10,7 +10,7 @@ margot_interpret_qini(
   alpha = 0.05,
   decimal_places = 2,
   model_names = NULL,
-  spend_levels = c(0.1, 0.4),
+  spend_levels = 0.1,
   include_intro = TRUE,
   baseline_method = NULL,
   scale = "average"
@@ -27,7 +27,7 @@ margot_interpret_qini(
 
 \item{model_names}{Character vector of models to process (optional)}
 
-\item{spend_levels}{Numeric vector of spend levels to analyze (default: c(0.1, 0.4)).
+\item{spend_levels}{Numeric vector of spend levels to analyze (default: 0.1).
 If requested levels don't exist in the data, the function will use available levels instead.}
 
 \item{include_intro}{Logical whether to include explanatory text about CATE and Qini curves (default: TRUE)}

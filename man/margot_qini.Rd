@@ -7,7 +7,7 @@
 margot_qini(
   models,
   model_names = NULL,
-  spend_levels = c(0.1, 0.4),
+  spend_levels = 0.1,
   baseline_method = "maq_no_covariates",
   label_mapping = NULL,
   remove_tx_prefix = TRUE,
@@ -27,7 +27,7 @@ and optionally full_models.}
 Default NULL (all models).}
 
 \item{spend_levels}{Numeric vector of spend levels for difference gain summaries.
-Default is c(0.1, 0.4).}
+Default is 0.1 (10% spend captures early heterogeneity patterns effectively).}
 
 \item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
 "auto", "simple", "maq_only", or "none". See margot_generate_qini_data() for details.}

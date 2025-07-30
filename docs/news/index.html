@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.212</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.213</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,25 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.213" id="id_2025-07-30-margot-10213">[2025-07-30] margot 1.0.213<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10213"></a></h2>
+<div class="section level4">
+<h4 id="major-changes-1-0-213">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-1-0-213"></a></h4>
+<ul><li>
+<strong>Simplified default spend levels to 0.1 (10%) throughout the package</strong>:
+<ul><li>Changed default <code>spend_levels</code> from <code>c(0.1, 0.4)</code> to <code>0.1</code> in all functions</li>
+<li>Affected functions: <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code>, <code><a href="../reference/margot_qini.html">margot_qini()</a></code>, <code><a href="../reference/margot_interpret_qini.html">margot_interpret_qini()</a></code>, <code><a href="../reference/margot_policy.html">margot_policy()</a></code>, <code><a href="../reference/margot_plot_qini.html">margot_plot_qini()</a></code>, <code><a href="../reference/margot_plot_qini_batch.html">margot_plot_qini_batch()</a></code>, <code><a href="../reference/margot_plot_qini_direct.html">margot_plot_qini_direct()</a></code>, <code><a href="../reference/margot_qini_diagnostic.html">margot_qini_diagnostic()</a></code>, <code><a href="../reference/margot_qini_cost_sensitivity.html">margot_qini_cost_sensitivity()</a></code>, <code><a href="../reference/margot_plot_qini_batch_cost_sensitivity.html">margot_plot_qini_batch_cost_sensitivity()</a></code>, and <code><a href="../reference/margot_batch_policy.html">margot_batch_policy()</a></code> (deprecated)</li>
+<li>Rationale: 10% spend captures early heterogeneity patterns effectively and simplifies interpretation</li>
+<li>Reduces confusion from multiple spend levels with potentially contradictory results</li>
+<li>Foundation for future transition to integrated differences over point estimates</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="work-in-progress-1-0-213">Work in Progress<a class="anchor" aria-label="anchor" href="#work-in-progress-1-0-213"></a></h4>
+<ul><li>Investigating discrepancies between QINI plots and difference gain summaries</li>
+<li>Planning transition to integrated differences as primary metric (keeping point estimates for compatibility)</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.212" id="id_2025-07-30-margot-10212">[2025-07-30] margot 1.0.212<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10212"></a></h2>
 <div class="section level4">

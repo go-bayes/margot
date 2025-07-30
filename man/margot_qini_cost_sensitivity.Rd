@@ -8,7 +8,7 @@ margot_qini_cost_sensitivity(
   models,
   costs = c(0.2, 0.5, 1, 2, 5),
   model_names = NULL,
-  spend_levels = c(0.1, 0.4),
+  spend_levels = 0.1,
   baseline_method = "maq_no_covariates",
   verbose = TRUE,
   seed = 12345
@@ -25,7 +25,7 @@ c(0.2, 0.5, 1, 2, 5) representing a range from cheap to expensive treatments.}
 Default NULL (all models).}
 
 \item{spend_levels}{Numeric vector of spend levels for difference gain summaries.
-Default is c(0.1, 0.4).}
+Default is 0.1.}
 
 \item{baseline_method}{Method for generating baseline. See margot_qini() for details.}
 

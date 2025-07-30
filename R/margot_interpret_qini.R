@@ -20,7 +20,7 @@
 #' @param alpha Significance level for confidence intervals (default: 0.05)
 #' @param decimal_places Decimal places for rounding (default: 2)
 #' @param model_names Character vector of models to process (optional)
-#' @param spend_levels Numeric vector of spend levels to analyze (default: c(0.1, 0.4)).
+#' @param spend_levels Numeric vector of spend levels to analyze (default: 0.1).
 #'   If requested levels don't exist in the data, the function will use available levels instead.
 #' @param include_intro Logical whether to include explanatory text about CATE and Qini curves (default: TRUE)
 #' @param baseline_method Method for generating baseline when regenerating summaries: 
@@ -36,7 +36,7 @@ margot_interpret_qini <- function(
     alpha           = 0.05,
     decimal_places  = 2,
     model_names     = NULL,
-    spend_levels    = c(0.1, 0.4),
+    spend_levels    = 0.1,
     include_intro   = TRUE,
     baseline_method = NULL,
     scale           = "average"
@@ -121,7 +121,7 @@ margot_interpret_qini_binary <- function(
     label_mapping   = NULL,
     alpha           = 0.05,
     decimal_places  = 2,
-    spend_levels    = c(0.1, 0.4),
+    spend_levels    = 0.1,
     include_intro   = TRUE,
     baseline_method = NULL,
     scale           = "average"
@@ -426,7 +426,7 @@ create_concise_summary <- function(beneficial_models, harmful_models, no_effect_
 
 
 #' @keywords internal
-create_qini_explanation_binary <- function(spend_levels = c(0.1, 0.4), include_intro = TRUE, scale = "average", has_cost_variation = FALSE, unique_costs = NULL) {
+create_qini_explanation_binary <- function(spend_levels = 0.1, include_intro = TRUE, scale = "average", has_cost_variation = FALSE, unique_costs = NULL) {
   # format spend levels as percentages
   spend_text <- paste(paste0(spend_levels * 100, "%"), collapse = " and ")
   

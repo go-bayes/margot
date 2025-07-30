@@ -11,7 +11,7 @@
 #'   to plot. This should match one of the model names in mc_result$results.
 #' @param label_mapping Optional named list for custom label mappings. Keys should be original variable names
 #'        (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.
-#' @param spend_levels Numeric vector of spend levels to show with vertical lines. Default is c(0.1, 0.4).
+#' @param spend_levels Numeric vector of spend levels to show with vertical lines. Default is 0.1.
 #' @param show_spend_lines Logical indicating whether to show vertical lines at spend levels. Default is TRUE.
 #' @param spend_line_color Color for spend level lines. Default is "red".
 #' @param spend_line_alpha Alpha transparency for spend lines. Default is 0.5.
@@ -115,7 +115,7 @@
 #' @export
 margot_plot_qini <- function(mc_result, outcome_var,
                              label_mapping = NULL,
-                             spend_levels = c(0.1, 0.4),
+                             spend_levels = 0.1,
                              show_spend_lines = TRUE,
                              spend_line_color = "red",
                              spend_line_alpha = 0.5,

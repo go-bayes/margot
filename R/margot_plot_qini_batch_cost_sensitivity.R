@@ -18,7 +18,7 @@
 #'   - "combined": Create a single combined plot with facets
 #'   Default is "grid".
 #' @param spend_levels Numeric vector of spend levels for annotations.
-#'   Default is c(0.1, 0.4).
+#'   Default is 0.1.
 #' @param baseline_method Method for generating baseline. See margot_qini() for details.
 #'   Default is "maq_no_covariates".
 #' @param label_mapping Named character vector for converting variable names to readable labels.
@@ -83,7 +83,7 @@ margot_plot_qini_batch_cost_sensitivity <- function(
     costs = c(0.2, 0.5, 1, 2, 5),
     model_names = NULL,
     plot_type = c("grid", "list", "combined"),
-    spend_levels = c(0.1, 0.4),
+    spend_levels = 0.1,
     baseline_method = "maq_no_covariates",
     label_mapping = NULL,
     ncol = NULL,

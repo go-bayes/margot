@@ -1,3 +1,20 @@
+# [2025-07-30] margot 1.0.213
+
+### Major Changes
+- **Simplified default spend levels to 0.1 (10%) throughout the package**:
+  - Changed default `spend_levels` from `c(0.1, 0.4)` to `0.1` in all functions
+  - Affected functions: `margot_interpret_heterogeneity()`, `margot_qini()`, `margot_interpret_qini()`, 
+    `margot_policy()`, `margot_plot_qini()`, `margot_plot_qini_batch()`, `margot_plot_qini_direct()`,
+    `margot_qini_diagnostic()`, `margot_qini_cost_sensitivity()`, `margot_plot_qini_batch_cost_sensitivity()`,
+    and `margot_batch_policy()` (deprecated)
+  - Rationale: 10% spend captures early heterogeneity patterns effectively and simplifies interpretation
+  - Reduces confusion from multiple spend levels with potentially contradictory results
+  - Foundation for future transition to integrated differences over point estimates
+
+### Work in Progress
+- Investigating discrepancies between QINI plots and difference gain summaries
+- Planning transition to integrated differences as primary metric (keeping point estimates for compatibility)
+
 # [2025-07-30] margot 1.0.212
 
 ### Bug Fixes

@@ -9,7 +9,7 @@ margot_policy(
   policy_tree_args = list(),
   decision_tree_args = list(),
   max_depth = 2L,
-  spend_levels = c(0.1, 0.4),
+  spend_levels = 0.1,
   label_mapping = NULL,
   original_df = NULL,
   model_names = NULL,
@@ -29,7 +29,7 @@ margot_policy(
 
 \item{max_depth}{Integer, 1 or 2; which decision tree depth to plot. Default: 2.}
 
-\item{spend_levels}{Numeric vector of spend levels for difference-gain summaries. Default: \code{c(0.1, 0.4)}.}
+\item{spend_levels}{Numeric vector of spend levels for difference-gain summaries. Default: \code{0.1}.}
 
 \item{label_mapping}{Named list mapping variable names to display labels. Default: NULL.}
 
