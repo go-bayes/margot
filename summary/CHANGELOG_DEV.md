@@ -1,5 +1,23 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.214 (2025-07-30)
+
+### Improvements
+
+- **Added missing knitr dependency**:
+  - Moved knitr from Suggests to Imports in DESCRIPTION
+  - Fixes namespace dependency error during R CMD check
+
+### Documentation Fixes
+
+- **Fixed all documentation warnings**:
+  - Rewrote roxygen2 documentation for `margot_interpret_heterogeneity()` and `margot_qini()`
+  - Removed problematic `\itemize{}` blocks from `@return` sections
+  - Simplified return value documentation to use plain text format
+  - Removed `\dontrun{}` blocks from examples
+  - Removed `\strong{}` markup from details
+  - Package now builds cleanly without any documentation warnings
+
 ## margot 1.0.213 (2025-07-30)
 
 ### Major Changes

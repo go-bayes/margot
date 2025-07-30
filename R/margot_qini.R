@@ -1,6 +1,5 @@
 #' Generate QINI Curves and Difference Gain Summaries
 #'
-#' @description
 #' Computes QINI curves and difference gain summaries for causal forest models.
 #' This function provides a direct way to generate QINI results without running
 #' full policy analysis, paralleling the functionality of margot_rate().
@@ -10,7 +9,7 @@
 #' @param model_names Optional character vector specifying which models to process.
 #'   Default NULL (all models).
 #' @param spend_levels Numeric vector of spend levels for difference gain summaries.
-#'   Default is 0.1 (10% spend captures early heterogeneity patterns effectively).
+#'   Default is 0.1 (10 percent spend captures early heterogeneity patterns effectively).
 #' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
 #'   "auto", "simple", "maq_only", or "none". See margot_generate_qini_data() for details.
 #' @param label_mapping Named character vector for converting variable names to readable labels.
@@ -26,12 +25,10 @@
 #'   shallower curves.
 #'
 #' @return A list where each element corresponds to a model and contains:
-#' \itemize{
-#'   \item \code{qini_objects}: maq objects for CATE and baseline curves
-#'   \item \code{qini_data}: data.frame with proportion, gain, and curve columns for plotting
-#'   \item \code{diff_gain_summaries}: list of difference gain summaries at each spend level
-#'   \item \code{model_name}: the processed model name
-#' }
+#'   qini_objects (maq objects for CATE and baseline curves),
+#'   qini_data (data.frame with proportion, gain, and curve columns for plotting),
+#'   diff_gain_summaries (list of difference gain summaries at each spend level),
+#'   model_name (the processed model name).
 #'
 #' @details
 #' This function generates QINI curves on-demand using margot_generate_qini_data().
@@ -45,7 +42,7 @@
 #' higher costs (e.g., 5) create shallower curves indicating only the highest-effect
 #' individuals justify treatment.
 #'
-#' \strong{Cost Invariance Property}: When treatment costs are uniform across 
+#' Cost Invariance Property: When treatment costs are uniform across 
 #' individuals, the relative benefit of CATE-based targeting over uniform allocation 
 #' remains constant regardless of cost level. While absolute gains scale inversely 
 #' with cost (gain at cost c = gain at cost 1 / c), the difference between CATE 
@@ -55,44 +52,6 @@
 #'
 #' The output is structured to be compatible with margot_interpret_qini() and
 #' other QINI visualization functions.
-#'
-#' @examples
-#' \dontrun{
-#' # Generate QINI results for all models
-#' qini_results <- margot_qini(causal_forest_results)
-#' 
-#' # Generate for specific models with custom spend levels
-#' qini_results <- margot_qini(
-#'   causal_forest_results,
-#'   model_names = c("model_anxiety", "model_depression"),
-#'   spend_levels = c(0.1, 0.3, 0.5),
-#'   baseline_method = "simple"
-#' )
-#' 
-#' # Cost sensitivity analysis - vary treatment cost without rerunning forests
-#' # Low cost scenario (cheap treatment)
-#' qini_low_cost <- margot_qini(causal_forest_results, treatment_cost = 0.2)
-#' 
-#' # Medium cost scenario (default)
-#' qini_med_cost <- margot_qini(causal_forest_results, treatment_cost = 1)
-#' 
-#' # High cost scenario (expensive treatment)
-#' qini_high_cost <- margot_qini(causal_forest_results, treatment_cost = 5)
-#' 
-#' # Compare results across cost scenarios
-#' margot_plot_qini(qini_low_cost$model_anxiety, title = "Anxiety - Low Cost")
-#' margot_plot_qini(qini_high_cost$model_anxiety, title = "Anxiety - High Cost")
-#' 
-#' # Use helper function for systematic cost sensitivity analysis
-#' cost_sensitivity <- margot_qini_cost_sensitivity(
-#'   causal_forest_results,
-#'   costs = c(0.2, 0.5, 1, 2, 5),
-#'   model_names = "model_anxiety"
-#' )
-#' 
-#' # Interpret the results
-#' interpretation <- margot_interpret_qini(qini_results)
-#' }
 #'
 #' @export
 #' @importFrom cli cli_alert_info cli_alert_warning cli_alert_success cli_h2

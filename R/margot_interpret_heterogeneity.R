@@ -1,15 +1,14 @@
 #' Interpret Heterogeneity Evidence from Multiple Sources
 #'
-#' @description
 #' Combines evidence from multiple heterogeneity tests (RATE AUTOC, RATE QINI, 
 #' QINI curves, and omnibus calibration tests) to provide unified recommendations 
 #' about which models show treatment effect heterogeneity.
 #'
-#' @param models Output from `margot_causal_forest()` containing model results
+#' @param models Output from margot_causal_forest() containing model results
 #' @param model_names Character vector of model names to analyse. If NULL (default), 
 #'   analyses all models. Model names can be specified with or without "model_" prefix.
 #' @param spend_levels Numeric vector of spend levels for QINI analysis. 
-#'   Default is 0.1 (10% spend captures early heterogeneity patterns effectively).
+#'   Default is 0.1 (10 percent spend captures early heterogeneity patterns effectively).
 #' @param require_any_positive Logical. If TRUE (default), include models that 
 #'   show positive evidence in ANY method. If FALSE, require positive evidence 
 #'   in ALL methods.
@@ -46,94 +45,26 @@
 #' @param n_cores Integer. Number of cores for parallel processing when parallel = TRUE 
 #'   (default all cores - 1). Only applies when use_cross_validation = TRUE.
 #'
-#' @return A list containing:
-#' \itemize{
-#' \item{selected_model_ids}{Character vector of model IDs with heterogeneity evidence}
-#' \item{selected_model_names}{Character vector of human-readable model names}
-#' \item{exploratory_model_ids}{Character vector of model IDs with exploratory evidence (positive calibration or QINI curve, no negative RATE)}
-#' \item{exploratory_model_names}{Character vector of human-readable model names with exploratory evidence}
-#' \item{all_selected_model_ids}{Combined vector of selected_model_ids and exploratory_model_ids}
-#' \item{all_selected_model_names}{Combined vector of selected_model_names and exploratory_model_names}
-#' \item{excluded_model_ids}{Character vector of model IDs to exclude}
-#' \item{excluded_model_names}{Character vector of human-readable excluded model names}
-#' \item{evidence_summary}{Data frame with detailed evidence by source. Contains columns: model_id, model_name, category (selected/excluded/unclear), mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count (backwards compatibility: same as rate_positive_count), negative_count (backwards compatibility: same as rate_negative_count), rate_positive_count (positive RATE tests only), rate_negative_count (negative RATE tests only), total_positive_count (across all 4 tests), total_negative_count (across all 4 tests), is_excluded (1 if any negative RATE test), strict_inclusion_count (positive RATE tests only if no negative RATE), selection_source (excluded/rate_only/qini_curve_only/both_rate_and_qini/none), has_negative_rate, has_positive_rate, has_positive_qini_curve. Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring}
-#' \item{interpretation}{Character string with main interpretation text organized by evidence categories}
-#' \item{summary}{Character string with brief summary}
-#' \item{recommendations}{Character string with actionable recommendations}
-#' \item{rate_results}{List containing AUTOC and QINI RATE results, interpretation, and raw_results from margot_rate() or margot_rate_cv()}
-#' \item{qini_results}{QINI curve interpretation results}
-#' \item{omnibus_results}{Omnibus calibration test results}
-#' \item{concordance}{List analysing agreement between methods}
-#' \item{extended_report}{Character string with detailed academic report (if include_extended_report = TRUE)}
-#' \item{cv_results}{Cross-validation results object (if use_cross_validation = TRUE) that can be passed to margot_plot_cv_results() and margot_plot_cv_summary()}
-#' \item{method_used}{Character string indicating whether "cross_validation" or "standard" method was used}
-#' }
-#'
-#' @examples
-#' \dontrun{
-#' # Simple usage - let the function handle everything
-#' het_evidence <- margot_interpret_heterogeneity(
-#'   models = causal_forest_results,
-#'   spend_levels = 0.1,
-#'   flipped_outcomes = c("anxiety", "depression")
-#' )
-#' 
-#' # Analyze specific models only
-#' het_evidence_subset <- margot_interpret_heterogeneity(
-#'   models = causal_forest_results,
-#'   model_names = c("t2_depression_z", "t2_anxiety_z"),
-#'   spend_levels = 0.1
-#' )
-#' 
-#' # View interpretation
-#' cat(het_evidence$interpretation)
-#' 
-#' # Use selected models for targeting
-#' policy_results <- margot_policy(
-#'   causal_forest_results,
-#'   model_names = het_evidence$selected_model_ids
-#' )
-#' 
-#' # Use model_names parameter with selected models
-#' het_focused <- margot_interpret_heterogeneity(
-#'   models = causal_forest_results,
-#'   model_names = het_evidence$selected_model_ids,
-#'   include_extended_report = TRUE
-#' )
-#' 
-#' # Advanced usage with pre-computed results
-#' het_evidence <- margot_interpret_heterogeneity(
-#'   models = causal_forest_results,
-#'   rate_results = my_rate_results,
-#'   require_omnibus = TRUE
-#' )
-#' 
-#' # Using cross-validation instead of standard RATE
-#' het_evidence_cv <- margot_interpret_heterogeneity(
-#'   models = causal_forest_results,
-#'   use_cross_validation = TRUE,
-#'   cv_num_folds = 5,
-#'   alpha = 0.2,  # Higher alpha recommended for Bonferroni with CV
-#'   adjust = "bonferroni",
-#'   parallel = TRUE,  # Enable parallel processing for faster CV
-#'   n_cores = 4
-#' )
-#' 
-#' # Plot CV results without recomputing
-#' if (!is.null(het_evidence_cv$cv_results)) {
-#'   plot <- margot_plot_cv_results(het_evidence_cv$cv_results)
-#'   summary_plot <- margot_plot_cv_summary(het_evidence_cv$cv_results)
-#' }
-#' 
-#' # Use standard RATE plotting functions with the raw results
-#' # This works for both standard and CV methods
-#' rate_results <- het_evidence$rate_results$raw_results
-#' 
-#' # Plot using standard functions
-#' plot_autoc <- margot_plot_rate(rate_results$rate_autoc, target = "AUTOC")
-#' plot_qini <- margot_plot_rate(rate_results$rate_qini, target = "QINI")
-#' plot_batch <- margot_plot_rate_batch(rate_results)
-#' }
+#' @return A list containing the following components:
+#'   selected_model_ids (character vector of model IDs with heterogeneity evidence),
+#'   selected_model_names (character vector of human-readable model names),
+#'   exploratory_model_ids (character vector of model IDs with exploratory evidence),
+#'   exploratory_model_names (character vector of human-readable model names with exploratory evidence),
+#'   all_selected_model_ids (combined vector of selected_model_ids and exploratory_model_ids),
+#'   all_selected_model_names (combined vector of selected_model_names and exploratory_model_names),
+#'   excluded_model_ids (character vector of model IDs to exclude),
+#'   excluded_model_names (character vector of human-readable excluded model names),
+#'   evidence_summary (data frame with detailed evidence by source),
+#'   interpretation (character string with main interpretation text),
+#'   summary (character string with brief summary),
+#'   recommendations (character string with actionable recommendations),
+#'   rate_results (list containing AUTOC and QINI RATE results),
+#'   qini_results (QINI curve interpretation results),
+#'   omnibus_results (omnibus calibration test results),
+#'   concordance (list analysing agreement between methods),
+#'   extended_report (character string with detailed academic report if requested),
+#'   cv_results (cross-validation results object if use_cross_validation = TRUE),
+#'   method_used (character string indicating whether "cross_validation" or "standard" method was used)
 #'
 #' @export
 #' @importFrom cli cli_h2 cli_alert_info cli_alert_success cli_progress_step cli_progress_done

@@ -1,0 +1,210 @@
+\nonstopmode{}
+\documentclass[a4paper]{book}
+\usepackage[times,inconsolata,hyper]{Rd}
+\usepackage{makeidx}
+\makeatletter\@ifl@t@r\fmtversion{2018/04/01}{}{\usepackage[utf8]{inputenc}}\makeatother
+% \usepackage{graphicx} % @USE GRAPHICX@
+\makeindex{}
+\begin{document}
+\chapter*{}
+\begin{center}
+{\textbf{\huge \R{} documentation}} \par\bigskip{{\Large of \file{man/margot\_interpret\_heterogeneity.Rd}}}
+\par\bigskip{\large \today}
+\end{center}
+\HeaderA{margot\_interpret\_heterogeneity}{Interpret Heterogeneity Evidence from Multiple Sources}{margot.Rul.interpret.Rul.heterogeneity}
+%
+\begin{Usage}
+\begin{verbatim}
+margot_interpret_heterogeneity(
+  models = NULL,
+  model_names = NULL,
+  spend_levels = 0.1,
+  require_any_positive = TRUE,
+  exclude_negative_any = TRUE,
+  require_omnibus = FALSE,
+  alpha = 0.05,
+  adjust = "none",
+  flipped_outcomes = NULL,
+  label_mapping = NULL,
+  verbose = TRUE,
+  include_extended_report = TRUE,
+  rate_results = NULL,
+  qini_results = NULL,
+  omnibus_results = NULL,
+  use_cross_validation = TRUE,
+  cv_num_folds = 5,
+  cv_results = NULL,
+  seed = 12345,
+  parallel = FALSE,
+  n_cores = future::availableCores() - 1
+)
+\end{verbatim}
+\end{Usage}
+%
+\begin{Arguments}
+\begin{ldescription}
+\item[\code{models}] Output from `margot\_causal\_forest()` containing model results
+
+\item[\code{model\_names}] Character vector of model names to analyse. If NULL (default), 
+analyses all models. Model names can be specified with or without "model\_" prefix.
+
+\item[\code{spend\_levels}] Numeric vector of spend levels for QINI analysis. 
+Default is 0.1 (10
+
+\bsl{}itemrequire\_any\_positiveLogical. If TRUE (default), include models that 
+show positive evidence in ANY method. If FALSE, require positive evidence 
+in ALL methods.
+
+\bsl{}itemexclude\_negative\_anyLogical. If TRUE (default), exclude models that 
+show negative evidence in ANY RATE test (AUTOC or QINI). Models with any 
+negative RATE evidence are classified as "excluded\_negative\_rate" and will 
+not appear in selected or exploratory lists.
+
+\bsl{}itemrequire\_omnibusLogical. If TRUE, only include models that pass the 
+omnibus calibration test. Default is FALSE.
+
+\bsl{}itemalphaNumeric. Significance level for RATE tests. Default is 0.05.
+Note: this controls which RATE estimates are considered statistically significant after
+multiple testing correction.
+
+\bsl{}itemadjustCharacter. Multiple testing adjustment method for RATE estimates. 
+Options include "BH" (Benjamini-Hochberg), "BY" (Benjamini-Yekutieli), 
+"bonferroni", "holm", "fdr", or "none". Default is "none".
+Note: When use\_cross\_validation = TRUE (the default), only "bonferroni" or "none" are valid.
+Invalid methods will be automatically converted to "none" without warning.
+
+\bsl{}itemflipped\_outcomesCharacter vector of outcome names that were flipped 
+(reversed) in preprocessing. Used for interpretation text.
+
+\bsl{}itemlabel\_mappingNamed list for mapping model names to human-readable labels.
+
+\bsl{}itemverboseLogical. If TRUE, show progress messages. Default is TRUE.
+
+\bsl{}iteminclude\_extended\_reportLogical. If TRUE (default), generate detailed academic-style report
+with full statistics and confidence intervals.
+
+\bsl{}itemrate\_resultsOptional pre-computed RATE results to skip computation.
+
+\bsl{}itemqini\_resultsOptional pre-computed QINI results to skip computation.
+
+\bsl{}itemomnibus\_resultsOptional pre-computed omnibus test results to skip computation.
+
+\bsl{}itemuse\_cross\_validationLogical. If TRUE (default), use cross-validation for RATE tests
+instead of standard approach. This provides confidence intervals through robust inference.
+
+\bsl{}itemcv\_num\_foldsInteger. Number of CV folds when use\_cross\_validation = TRUE (default 5).
+
+\bsl{}itemcv\_resultsOptional pre-computed CV results to skip computation.
+
+\bsl{}itemseedInteger. Random seed for reproducibility in all computations (default 12345).
+
+\bsl{}itemparallelLogical. Use parallel processing for cross-validation when use\_cross\_validation = TRUE 
+(default FALSE). Note: Parallel processing is experimental and may encounter memory issues.
+
+\bsl{}itemn\_coresInteger. Number of cores for parallel processing when parallel = TRUE 
+(default all cores - 1). Only applies when use\_cross\_validation = TRUE.
+
+\end{ldescription}
+
+A list containing:
+\begin{itemize}
+
+\item{} selected\_model\_idsCharacter vector of model IDs with heterogeneity evidence
+\item{} selected\_model\_namesCharacter vector of human-readable model names
+\item{} exploratory\_model\_idsCharacter vector of model IDs with exploratory evidence (positive calibration or QINI curve, no negative RATE)
+\item{} exploratory\_model\_namesCharacter vector of human-readable model names with exploratory evidence
+\item{} all\_selected\_model\_idsCombined vector of selected\_model\_ids and exploratory\_model\_ids
+\item{} all\_selected\_model\_namesCombined vector of selected\_model\_names and exploratory\_model\_names
+\item{} excluded\_model\_idsCharacter vector of model IDs to exclude
+\item{} excluded\_model\_namesCharacter vector of human-readable excluded model names
+\item{} evidence\_summaryData frame with detailed evidence by source. Contains columns: model\_id, model\_name, category (selected/excluded/unclear), mean\_prediction\_test (calibration status), differential\_prediction\_test (heterogeneity test), rate\_autoc, rate\_qini, qini\_curve, positive\_count (backwards compatibility: same as rate\_positive\_count), negative\_count (backwards compatibility: same as rate\_negative\_count), rate\_positive\_count (positive RATE tests only), rate\_negative\_count (negative RATE tests only), total\_positive\_count (across all 4 tests), total\_negative\_count (across all 4 tests), is\_excluded (1 if any negative RATE test), strict\_inclusion\_count (positive RATE tests only if no negative RATE), selection\_source (excluded/rate\_only/qini\_curve\_only/both\_rate\_and\_qini/none), has\_negative\_rate, has\_positive\_rate, has\_positive\_qini\_curve. Note: mean\_prediction\_test indicates calibration quality but is not included in heterogeneity scoring
+\item{} interpretationCharacter string with main interpretation text organized by evidence categories
+\item{} summaryCharacter string with brief summary
+\item{} recommendationsCharacter string with actionable recommendations
+\item{} rate\_resultsList containing AUTOC and QINI RATE results, interpretation, and raw\_results from margot\_rate() or margot\_rate\_cv()
+\item{} qini\_resultsQINI curve interpretation results
+\item{} omnibus\_resultsOmnibus calibration test results
+\item{} concordanceList analysing agreement between methods
+\item{} extended\_reportCharacter string with detailed academic report (if include\_extended\_report = TRUE)
+\item{} cv\_resultsCross-validation results object (if use\_cross\_validation = TRUE) that can be passed to margot\_plot\_cv\_results() and margot\_plot\_cv\_summary()
+\item{} method\_usedCharacter string indicating whether "cross\_validation" or "standard" method was used
+
+\end{itemize}
+
+
+
+Combines evidence from multiple heterogeneity tests (RATE AUTOC, RATE QINI, 
+QINI curves, and omnibus calibration tests) to provide unified recommendations 
+about which models show treatment effect heterogeneity.
+
+
+## Not run: 
+\# Simple usage - let the function handle everything
+het\_evidence <- margot\_interpret\_heterogeneity(
+  models = causal\_forest\_results,
+  spend\_levels = 0.1,
+  flipped\_outcomes = c("anxiety", "depression")
+)
+
+\# Analyze specific models only
+het\_evidence\_subset <- margot\_interpret\_heterogeneity(
+  models = causal\_forest\_results,
+  model\_names = c("t2\_depression\_z", "t2\_anxiety\_z"),
+  spend\_levels = 0.1
+)
+
+\# View interpretation
+cat(het\_evidence\$interpretation)
+
+\# Use selected models for targeting
+policy\_results <- margot\_policy(
+  causal\_forest\_results,
+  model\_names = het\_evidence\$selected\_model\_ids
+)
+
+\# Use model\_names parameter with selected models
+het\_focused <- margot\_interpret\_heterogeneity(
+  models = causal\_forest\_results,
+  model\_names = het\_evidence\$selected\_model\_ids,
+  include\_extended\_report = TRUE
+)
+
+\# Advanced usage with pre-computed results
+het\_evidence <- margot\_interpret\_heterogeneity(
+  models = causal\_forest\_results,
+  rate\_results = my\_rate\_results,
+  require\_omnibus = TRUE
+)
+
+\# Using cross-validation instead of standard RATE
+het\_evidence\_cv <- margot\_interpret\_heterogeneity(
+  models = causal\_forest\_results,
+  use\_cross\_validation = TRUE,
+  cv\_num\_folds = 5,
+  alpha = 0.2,  \# Higher alpha recommended for Bonferroni with CV
+  adjust = "bonferroni",
+  parallel = TRUE,  \# Enable parallel processing for faster CV
+  n\_cores = 4
+)
+
+\# Plot CV results without recomputing
+if (!is.null(het\_evidence\_cv\$cv\_results)) \{
+  plot <- margot\_plot\_cv\_results(het\_evidence\_cv\$cv\_results)
+  summary\_plot <- margot\_plot\_cv\_summary(het\_evidence\_cv\$cv\_results)
+\}
+
+\# Use standard RATE plotting functions with the raw results
+\# This works for both standard and CV methods
+rate\_results <- het\_evidence\$rate\_results\$raw\_results
+
+\# Plot using standard functions
+plot\_autoc <- margot\_plot\_rate(rate\_results\$rate\_autoc, target = "AUTOC")
+plot\_qini <- margot\_plot\_rate(rate\_results\$rate\_qini, target = "QINI")
+plot\_batch <- margot\_plot\_rate\_batch(rate\_results)
+
+## End(Not run)
+
+
+\end{Arguments}
+\printindex{}
+\end{document}

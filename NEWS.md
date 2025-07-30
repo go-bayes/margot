@@ -1,3 +1,11 @@
+# [2025-07-30] margot 1.0.214
+
+### Improvements
+- **Added missing knitr dependency**: Moved knitr from Suggests to Imports to fix namespace dependency error
+
+### Documentation Fixes
+- **Fixed all documentation build warnings**: Claude code very smartly rewrote roxygen2 documentation for problematic functions to eliminate all warnings. Package now builds cleanly. 
+
 # [2025-07-30] margot 1.0.213
 
 ### Major Changes
