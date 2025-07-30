@@ -1,7 +1,7 @@
 Package: margot
 Type: Package
 Title: MARGinal Observational Treatment-effects
-Version: 1.0.211
+Version: 1.0.212
 Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
 Author: Joseph A Bulbulia [aut, cre]
 Maintainer: Joseph A Bulbulia <joseph.bulbulia@gmail.com>

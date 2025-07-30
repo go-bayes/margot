@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.211</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.212</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,20 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.212" id="id_2025-07-30-margot-10212">[2025-07-30] margot 1.0.212<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10212"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-212">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-212"></a></h4>
+<ul><li>
+<strong>Fixed transformation lookup for flipped outcomes</strong>:
+<ul><li>Models created with <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> (with <code>_r</code> suffix) now correctly show original scale transformations</li>
+<li>The fix removes the <code>_r</code> suffix when searching for original variables in <code>original_df</code>
+</li>
+<li>Example: <code>model_t2_depression_z_r</code> now finds <code>t2_depression_z</code> data for transformation</li>
+<li>Preserves the “(reduced)” prefix in labels as intended</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.211" id="id_2025-07-30-margot-10211">[2025-07-30] margot 1.0.211<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10211"></a></h2>
 <div class="section level4">

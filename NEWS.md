@@ -1,3 +1,12 @@
+# [2025-07-30] margot 1.0.212
+
+### Bug Fixes
+- **Fixed transformation lookup for flipped outcomes**:
+  - Models created with `margot_flip_forests()` (with `_r` suffix) now correctly show original scale transformations
+  - The fix removes the `_r` suffix when searching for original variables in `original_df`
+  - Example: `model_t2_depression_z_r` now finds `t2_depression_z` data for transformation
+  - Preserves the "(reduced)" prefix in labels as intended
+
 # [2025-07-30] margot 1.0.211
 
 ### Major Changes

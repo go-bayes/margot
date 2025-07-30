@@ -358,19 +358,29 @@ get_outcome_transformation_info <- function(model_name, original_df) {
   # extract outcome name from model name (e.g., "model_t2_belong_z" -> "t2_belong_z")
   outcome_name <- sub("^model_", "", model_name)
   
-  # detect transformation type
-  has_z_suffix <- grepl("_z$", outcome_name)
-  has_log_prefix <- grepl("_log_", outcome_name)
+  # detect if this is a flipped outcome model
+  has_r_suffix <- grepl("_r$", outcome_name)
+  
+  # remove _r suffix for searching in original_df (which contains unflipped data)
+  outcome_name_for_search <- if (has_r_suffix) {
+    sub("_r$", "", outcome_name)
+  } else {
+    outcome_name
+  }
+  
+  # detect transformation type (use cleaned name for search)
+  has_z_suffix <- grepl("_z$", outcome_name_for_search)
+  has_log_prefix <- grepl("_log_", outcome_name_for_search)
   
   # build list of possible original variable names
   candidates <- character()
   
-  # start with the outcome name
-  candidates <- c(candidates, outcome_name)
+  # start with the outcome name (cleaned of _r suffix)
+  candidates <- c(candidates, outcome_name_for_search)
   
   # remove _z suffix if present
   if (has_z_suffix) {
-    var_no_z <- sub("_z$", "", outcome_name)
+    var_no_z <- sub("_z$", "", outcome_name_for_search)
     candidates <- c(candidates, var_no_z)
   }
   
@@ -413,7 +423,8 @@ get_outcome_transformation_info <- function(model_name, original_df) {
     outcome_name = outcome_name,
     original_var = orig_var,
     has_z = has_z_suffix,
-    has_log = has_log_prefix
+    has_log = has_log_prefix,
+    is_flipped = has_r_suffix
   )
   
   if (has_z_suffix) {

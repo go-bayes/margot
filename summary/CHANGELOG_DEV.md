@@ -1,5 +1,16 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.212 (2025-07-30)
+
+### Bug Fixes
+
+- **Fixed transformation lookup for flipped outcomes in policy tree interpretations**:
+  - Added detection for `_r` suffix indicating flipped models from `margot_flip_forests()`
+  - Modified `get_outcome_transformation_info()` to remove `_r` suffix when searching in `original_df`
+  - This fixes missing "original scale" output for flipped models like "(reduced) Depression"
+  - The fix correctly preserves labels and only affects outcome value transformations
+  - Split values (covariates) remain unchanged as they were never flipped
+
 ## margot 1.0.211 (2025-07-30)
 
 ### Major Changes

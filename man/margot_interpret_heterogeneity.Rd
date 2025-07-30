@@ -172,6 +172,15 @@ if (!is.null(het_evidence_cv$cv_results)) {
   plot <- margot_plot_cv_results(het_evidence_cv$cv_results)
   summary_plot <- margot_plot_cv_summary(het_evidence_cv$cv_results)
 }
+
+# Use standard RATE plotting functions with the raw results
+# This works for both standard and CV methods
+rate_results <- het_evidence$rate_results$raw_results
+
+# Plot using standard functions
+plot_autoc <- margot_plot_rate(rate_results$rate_autoc, target = "AUTOC")
+plot_qini <- margot_plot_rate(rate_results$rate_qini, target = "QINI")
+plot_batch <- margot_plot_rate_batch(rate_results)
 }
 
 }
