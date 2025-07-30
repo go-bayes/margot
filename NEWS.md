@@ -1,19 +1,40 @@
+# [2025-07-30] margot 1.0.210
+
+### Improvements
+- **Enhanced count columns in `margot_interpret_heterogeneity()`**:
+  - Renamed `positive_count`/`negative_count` to `rate_positive_count`/`rate_negative_count` for clarity
+  - Added `total_positive_count` and `total_negative_count` covering all 4 tests (differential_prediction_test, rate_autoc, rate_qini, qini_curve)
+  - Added `is_excluded` indicator (1 if any negative RATE test, 0 otherwise)
+  - Added `strict_inclusion_count` for positive RATE tests only when no negative RATE tests present
+  - Maintained backwards compatibility by keeping original column names
+- **Fixed concordance analysis**:
+  - Now correctly uses `total_positive_count` to check for models positive in all 4 methods
+  - Fixed discordance detection to consider all 4 tests rather than just RATE tests
+- **Improved terminology precision**:
+  - uses "statistically significant" throughout
+
 # [2025-07-29] margot 1.0.209
 
 ### Improvements
 - **Enhanced label mapping in `margot_interpret_heterogeneity()`**:
   - Improved default transformation to remove wave prefixes (e.g., "t2_")
   - Now correctly identifies reversed variables (ending in "_r" or "_z_r") and adds "(reduced)" prefix
-  - Added special handling for common abbreviations (hlth → health, bmi → BMI, pwi → PWI)
+  - Added special handling for common abbreviations (hlth --> health, bmi --> BMI, pwi --> PWI)
   - Results in cleaner outcome names like "Belonging" instead of "T2 Belong"
   - Reversed variables now show as "(reduced) Health Fatigue" instead of "T2 Hlth Fatigue z r"
 - **Updated to use New Zealand English spelling throughout**:
-  - Changed "analyze" → "analyse", "analyzed" → "analysed", "organize" → "organise"
+  - Changed "analyze" --> "analyse", "analyzed" --> "analysed", "organize" --> "organise"
   - Consistent with project requirements
 - **Improved recommendations format**:
   - Replaced bullet points with full sentences suitable for scientific reports
   - Now provides clear counts and proper grammar (singular/plural handling)
   - More professional presentation for academic contexts
+- **Enhanced selection logic in `margot_interpret_heterogeneity()`**:
+  - QINI curve analysis now applied to all non-excluded models (not just selected ones)
+  - Models can be selected based on either positive RATE tests OR positive QINI curves
+  - Recognises that QINI curves can identify heterogeneity at specific budgets even when global tests are inconclusive
+  - Extended report now indicates when models are selected based on QINI curve evidence
+  - Decision flow updated to reflect this broader selection approach
 
 # [2025-07-29] margot 1.0.208
 
@@ -81,11 +102,11 @@
 
 ### Breaking Changes
 - **Renamed bootstrap functions to stability functions**:
-  - `margot_policy_tree_bootstrap()` → `margot_policy_tree_stability()`
-  - `margot_interpret_bootstrap()` → `margot_interpret_stability()`
-  - Class `"margot_bootstrap_policy_tree"` → `"margot_stability_policy_tree"`
-  - Parameter `n_bootstrap` → `n_iterations`
-  - Parameter `vary_type = "sample_only"` → `vary_type = "bootstrap"`
+  - `margot_policy_tree_bootstrap()` --> `margot_policy_tree_stability()`
+  - `margot_interpret_bootstrap()` --> `margot_interpret_stability()`
+  - Class `"margot_bootstrap_policy_tree"` --> `"margot_stability_policy_tree"`
+  - Parameter `n_bootstrap` --> `n_iterations`
+  - Parameter `vary_type = "sample_only"` --> `vary_type = "bootstrap"`
   - Old function names are deprecated but still work with warnings
   
 ### New Features  
@@ -685,8 +706,8 @@
 ### improvements
 - **margot_interpret_qini()**: now accepts output from both margot_policy() and margot_qini()
 - **consistent API**: users can now use:
-  - margot_rate() → margot_interpret_rate() for RATE analysis
-  - margot_qini() → margot_interpret_qini() for QINI analysis
+  - margot_rate() --> margot_interpret_rate() for RATE analysis
+  - margot_qini() --> margot_interpret_qini() for QINI analysis
 
 ### default changes
 - **baseline_method**: changed default from "auto" to "maq_no_covariates" in all QINI functions

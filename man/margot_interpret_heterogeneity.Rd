@@ -50,7 +50,7 @@ not appear in selected or exploratory lists.}
 omnibus calibration test. Default is FALSE.}
 
 \item{alpha}{Numeric. Significance level for RATE tests. Default is 0.05.
-Note: this controls which RATE estimates are considered significant after
+Note: this controls which RATE estimates are considered statistically significant after
 multiple testing correction.}
 
 \item{adjust}{Character. Multiple testing adjustment method for RATE estimates. 
@@ -100,7 +100,7 @@ A list containing:
   \item{all_selected_model_names}{Combined vector of selected_model_names and exploratory_model_names}
   \item{excluded_model_ids}{Character vector of model IDs to exclude}
   \item{excluded_model_names}{Character vector of human-readable excluded model names}
-  \item{evidence_summary}{Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Evidence types include: "excluded_negative_rate" (any negative RATE test), "evidence_for_heterogeneity" (positive RATE + omnibus), "targeting_opportunity" (positive RATE), "exploratory_evidence" (no negative RATE + positive calibration/QINI), "statistical_only" (only omnibus positive), "no_evidence". Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring}
+  \item{evidence_summary}{Data frame with detailed evidence by source. Contains columns: model_id, model_name, category (selected/excluded/unclear), mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count (backwards compatibility: same as rate_positive_count), negative_count (backwards compatibility: same as rate_negative_count), rate_positive_count (positive RATE tests only), rate_negative_count (negative RATE tests only), total_positive_count (across all 4 tests), total_negative_count (across all 4 tests), is_excluded (1 if any negative RATE test), strict_inclusion_count (positive RATE tests only if no negative RATE), selection_source (excluded/rate_only/qini_curve_only/both_rate_and_qini/none), has_negative_rate, has_positive_rate, has_positive_qini_curve. Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring}
   \item{interpretation}{Character string with main interpretation text organized by evidence categories}
   \item{summary}{Character string with brief summary}
   \item{recommendations}{Character string with actionable recommendations}

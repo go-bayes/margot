@@ -11,7 +11,7 @@ about which models show treatment effect heterogeneity."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.209</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.210</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,7 +108,7 @@ omnibus calibration test. Default is FALSE.</p></dd>
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
 <dd><p>Numeric. Significance level for RATE tests. Default is 0.05.
-Note: this controls which RATE estimates are considered significant after
+Note: this controls which RATE estimates are considered statistically significant after
 multiple testing correction.</p></dd>
 
 
@@ -205,7 +205,7 @@ instead of standard approach. This provides confidence intervals through robust 
 <dd><p>Character vector of human-readable excluded model names</p></dd>
 
   <dt>evidence_summary</dt>
-<dd><p>Data frame with detailed evidence by source including evidence_type categorization. Contains columns: model_id, model_name, mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count, negative_count, and evidence_type. Evidence types include: "excluded_negative_rate" (any negative RATE test), "evidence_for_heterogeneity" (positive RATE + omnibus), "targeting_opportunity" (positive RATE), "exploratory_evidence" (no negative RATE + positive calibration/QINI), "statistical_only" (only omnibus positive), "no_evidence". Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring</p></dd>
+<dd><p>Data frame with detailed evidence by source. Contains columns: model_id, model_name, category (selected/excluded/unclear), mean_prediction_test (calibration status), differential_prediction_test (heterogeneity test), rate_autoc, rate_qini, qini_curve, positive_count (backwards compatibility: same as rate_positive_count), negative_count (backwards compatibility: same as rate_negative_count), rate_positive_count (positive RATE tests only), rate_negative_count (negative RATE tests only), total_positive_count (across all 4 tests), total_negative_count (across all 4 tests), is_excluded (1 if any negative RATE test), strict_inclusion_count (positive RATE tests only if no negative RATE), selection_source (excluded/rate_only/qini_curve_only/both_rate_and_qini/none), has_negative_rate, has_positive_rate, has_positive_qini_curve. Note: mean_prediction_test indicates calibration quality but is not included in heterogeneity scoring</p></dd>
 
   <dt>interpretation</dt>
 <dd><p>Character string with main interpretation text organized by evidence categories</p></dd>
