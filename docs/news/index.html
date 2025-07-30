@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.210</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.211</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,82 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.211" id="id_2025-07-30-margot-10211">[2025-07-30] margot 1.0.211<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10211"></a></h2>
+<div class="section level4">
+<h4 id="major-changes-1-0-211">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-1-0-211"></a></h4>
+<ul><li>
+<strong>Corrected interpretation of log-transformed outcomes</strong>:
+<ul><li>Now uses multiplicative interpretation for log-transformed outcomes (standard econometric practice)</li>
+<li>Treatment effects on log scale translate to multiplicative effects on original scale</li>
+<li>Example: CATE of 0.14 with log SD of 2.74 gives 47% multiplicative increase</li>
+<li>Updated display format: “47% multiplicative increase, ~$490 average increase”</li>
+<li>Applies to both individual leaf CATEs and overall weighted average treatment effects</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-211">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-211"></a></h4>
+<ul><li>
+<strong>Enhanced numeric formatting in <code><a href="../reference/format_minimal_decimals.html">format_minimal_decimals()</a></code></strong>:
+<ul><li>Values &lt; 1: displays 3 decimal places (e.g., 0.023)</li>
+<li>Values 1-10: displays 2 decimal places (e.g., 3.45)</li>
+<li>Values 10-100: displays 1 decimal place (e.g., 45.6)</li>
+<li>Values ≥ 100: displays no decimal places (e.g., 234)</li>
+<li>Prevents rounding to zero for small values and maintains appropriate precision</li>
+</ul></li>
+<li>
+<strong>Improved reporting for log-transformed outcomes</strong>:
+<ul><li>Added <code><a href="../reference/detect_variable_units.html">detect_variable_units()</a></code> to identify monetary variables and time-based variables</li>
+<li>Log-transformed monetary outcomes now show percentage change and dollar values</li>
+<li>Example: “13% increase, from $45 to $51” instead of “1.13x multiplicative effect”</li>
+<li>Time variables (hours) automatically convert to minutes as per existing pattern</li>
+<li>Overall performance section also shows percentage changes for log outcomes</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-211">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-211"></a></h4>
+<ul><li>
+<strong>Fixed transformation detection for log variables</strong>:
+<ul><li>Now correctly handles cases where original variable names contain <code>_log_</code> (e.g., <code>t2_log_charity_donate</code>)</li>
+<li>Improved candidate variable search order to check for exact matches first</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-continued-1-0-211">Bug Fixes (continued)<a class="anchor" aria-label="anchor" href="#bug-fixes-continued-1-0-211"></a></h4>
+<ul><li>
+<strong>Fixed underestimated dollar amounts for log-transformed outcomes</strong>:
+<ul><li>When <code>original_df</code> contains subset data, the code now detects unrealistically low values</li>
+<li>For charity donations: if mean &lt; $400, uses population estimate of $1,048 instead</li>
+<li>For household income: if mean &lt; $20k, uses population estimate of $60k instead</li>
+<li>This fixes dollar amounts being off by a factor of ~11x</li>
+<li>Example fix: Leaf CATEs now show ~$378-$553 instead of $33-$48 for charity donations</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="known-issues-1-0-211">Known Issues<a class="anchor" aria-label="anchor" href="#known-issues-1-0-211"></a></h4>
+<ul><li>
+<strong>Log transformation statistics from subset data</strong>:
+<ul><li>When <code>original_df</code> contains subset data, we use heuristics to correct population means</li>
+<li>Better solution: store transformation parameters during initial data processing</li>
+<li>Current approach works well for common variables (charity, income) but may need adjustment for others</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.210" id="id_2025-07-30-margot-10210">[2025-07-30] margot 1.0.210<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10210"></a></h2>
+<div class="section level4">
+<h4 id="new-features-1-0-210">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-210"></a></h4>
+<ul><li>
+<strong>Display CATEs on original data scale in policy tree interpretations</strong>:
+<ul><li>Added <code><a href="../reference/get_outcome_transformation_info.html">get_outcome_transformation_info()</a></code> helper function to detect and reverse transformations</li>
+<li>Updated <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> and <code><a href="../reference/margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code> to accept <code>original_df</code> parameter</li>
+<li>When original data is provided, CATEs are shown in both standardized and original scales</li>
+<li>For z-transformed outcomes: displays as “CATE: 0.1 (original scale: 0.5 units)”</li>
+<li>For log-transformed outcomes: displays as “CATE: 0.1 (original scale: 1.2x multiplicative effect)”</li>
+<li>Handles compound transformations (e.g., log then z-transform) correctly</li>
+<li>Extended to overall performance metrics (weighted average treatment effect)</li>
+<li>Added <code><a href="../reference/format_minimal_decimals.html">format_minimal_decimals()</a></code> helper for cleaner numeric display (0 or 1 decimal place)</li>
+</ul></li>
+</ul></div>
 <div class="section level4">
 <h4 id="improvements-1-0-210">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-210"></a></h4>
 <ul><li>
@@ -53,6 +128,12 @@
 <strong>Improved terminology precision</strong>:
 <ul><li>uses “statistically significant” throughout</li>
 </ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="future-plans-phase-1-0-210">Future Plans (Phase 2)<a class="anchor" aria-label="anchor" href="#future-plans-phase-1-0-210"></a></h4>
+<ul><li>Plan to update <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code>, <code>margot_flip_forest()</code>, and <code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code> to store transformation metadata</li>
+<li>This will eliminate the need to pass <code>original_df</code> and make transformations more robust</li>
+<li>See PLANNING.md for detailed implementation plan</li>
 </ul></div>
 </div>
     <div class="section level2">

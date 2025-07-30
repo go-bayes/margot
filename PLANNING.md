@@ -3,6 +3,105 @@
 ## Overview
 This document outlines the new development architecture for margot functions, moving from a monolithic approach to a modular, cleaner design with proper train/test separation.
 
+## Phase 2 Plan: Transformation Metadata in Causal Forest Models
+
+### Overview
+Currently, displaying CATEs on the original data scale requires passing `original_df` to interpretation functions. Phase 2 will embed transformation metadata directly in the model objects, making the process more robust and eliminating the need for external data.
+
+### Implementation Plan
+
+#### 1. Update margot_causal_forest() and margot_flip_forest()
+Add transformation detection and metadata storage:
+
+```r
+# When save_data = TRUE, also save transformation info
+if (save_data) {
+  output$transformation_info <- detect_transformations(
+    outcome_vars = outcome_vars,
+    data = data,
+    covariates = covariates
+  )
+}
+```
+
+#### 2. Transformation Detection Function
+Create `detect_transformations()` to analyse outcome variables:
+
+```r
+detect_transformations <- function(outcome_vars, data, covariates) {
+  transform_info <- list()
+  
+  for (outcome in outcome_vars) {
+    # Detect transformation type from name
+    has_z <- grepl("_z$", outcome)
+    has_log <- grepl("_log_", outcome)
+    
+    # Find original variable
+    original_var <- find_original_variable(outcome, data)
+    
+    # Store metadata based on transformation type
+    if (has_z && has_log) {
+      # Compound transformation: log then z
+      transform_info[[outcome]] <- list(
+        type = "log_z",
+        original_var = original_var,
+        original_mean = mean(data[[original_var]], na.rm = TRUE),
+        original_sd = sd(data[[original_var]], na.rm = TRUE),
+        log_data = log(data[[original_var]] + 1),
+        log_mean = mean(log_data, na.rm = TRUE),
+        log_sd = sd(log_data, na.rm = TRUE),
+        log_offset = 1
+      )
+    } else if (has_z) {
+      # Simple z-transformation
+      transform_info[[outcome]] <- list(
+        type = "z",
+        original_var = original_var,
+        original_mean = mean(data[[original_var]], na.rm = TRUE),
+        original_sd = sd(data[[original_var]], na.rm = TRUE)
+      )
+    }
+  }
+  
+  return(transform_info)
+}
+```
+
+#### 3. Update margot_policy_tree_stability()
+Preserve transformation metadata through stability analysis:
+
+```r
+# In the output structure
+output$transformation_info <- model_results$transformation_info
+```
+
+#### 4. Update Interpretation Functions
+Modify `margot_interpret_policy_tree()` to use embedded metadata:
+
+```r
+# Check for transformation info in model
+transform_info <- NULL
+if (!is.null(model$transformation_info)) {
+  outcome_name <- sub("^model_", "", model_name)
+  transform_info <- model$transformation_info[[outcome_name]]
+}
+
+# Use transform_info for inverse transformations
+# No need for original_df parameter
+```
+
+### Benefits
+1. **Self-contained models**: All necessary information travels with the model
+2. **Robustness**: No risk of mismatched data or missing original_df
+3. **Backwards compatibility**: Old models without transformation_info still work
+4. **Cleaner API**: Interpretation functions don't need original_df parameter
+5. **Accurate transformations**: Metadata captured at model creation time
+
+### Timeline
+- Phase 1 (completed): Basic functionality with original_df parameter
+- Phase 2 (planned): Embed transformation metadata in models
+- Migration: Update existing workflows to use new functionality
+
 ## Completed Components
 
 ### 1. margot_simulate_test_data() ✓

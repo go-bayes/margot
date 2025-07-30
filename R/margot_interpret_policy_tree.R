@@ -161,7 +161,8 @@ margot_interpret_policy_tree <- function(model,
         act_labels = act_labels,
         transform_var = transform_var,
         use_math_notation = use_math_notation,
-        output_format = output_format
+        output_format = output_format,
+        original_df = original_df
       )
       if (nzchar(cond_means_text)) {
         cli::cli_alert_success("Added conditional means interpretation")
@@ -187,7 +188,8 @@ margot_interpret_policy_tree <- function(model,
 compute_conditional_means_interpretation <- function(model, model_name, policy_tree_obj, 
                                                    max_depth, act_labels, transform_var,
                                                    use_math_notation = FALSE,
-                                                   output_format = "bullet") {
+                                                   output_format = "bullet",
+                                                   original_df = NULL) {
   
   # get conditional means and other needed data
   conditional_means <- model$results[[model_name]]$conditional_means
@@ -318,7 +320,9 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
           paste0("baseline ", transform_var(var1), " > ", round(split1, 3))
         ),
         use_math_notation = use_math_notation,
-        output_format = output_format
+        output_format = output_format,
+        original_df = original_df,
+        model_name = model_name
       )
       text <- paste0(text, result_text)
       
@@ -422,7 +426,9 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
         act_labels = act_labels,
         leaf_names = leaf_names,
         use_math_notation = use_math_notation,
-        output_format = output_format
+        output_format = output_format,
+        original_df = original_df,
+        model_name = model_name
       )
       text <- paste0(text, result_text)
       
@@ -468,15 +474,84 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
             )
             
             if (!is.na(weighted_avg_effect)) {
-              text <- paste0(text,
-                "Weighting the leaf-level CATEs by subgroup size yields an average treatment effect of ",
-                sprintf("%.3f", weighted_avg_effect), ". ",
-                "In other words, if the recommended treatment decisions were implemented for every unit ",
-                "in the test set, the mean outcome would be expected to ",
-                ifelse(weighted_avg_effect > 0, "rise", "fall"), " by roughly ",
-                sprintf("%.2f", abs(weighted_avg_effect)), " units relative to universal ", 
-                tolower(act_labels[1]), ".\n"
-              )
+              # Transform to original scale if possible
+              weighted_avg_display <- weighted_avg_effect
+              original_scale_overall <- ""
+              
+              # Get transformation info if available
+              transform_info <- NULL
+              if (!is.null(original_df) && !is.null(model_name)) {
+                transform_info <- get_outcome_transformation_info(model_name, original_df)
+              }
+              
+              if (!is.null(transform_info)) {
+                if (transform_info$has_z && !transform_info$has_log) {
+                  # simple z-transformation: multiply by SD
+                  weighted_avg_display <- weighted_avg_effect * transform_info$orig_sd
+                  original_scale_overall <- paste0(" (original scale: ", format_minimal_decimals(weighted_avg_display), " units)")
+                } else if (transform_info$has_z && transform_info$has_log) {
+                  # log+z transformation: use multiplicative interpretation
+                  units_info <- detect_variable_units(transform_info$original_var)
+                  
+                  # calculate effect on log scale
+                  delta_log_overall <- weighted_avg_effect * transform_info$log_sd
+                  ratio_overall <- exp(delta_log_overall)
+                  pct_change_overall <- (ratio_overall - 1) * 100
+                  change_word <- if (pct_change_overall >= 0) "increase" else "decrease"
+                  
+                  # calculate absolute change based on population mean
+                  # use display mean if available (for corrected population statistics)
+                  log_mean_overall <- if (!is.null(transform_info$use_display_mean) && transform_info$use_display_mean) {
+                    transform_info$log_mean_display
+                  } else {
+                    transform_info$log_mean
+                  }
+                  pop_mean_overall <- exp(log_mean_overall) - transform_info$log_offset
+                  if (!is.null(units_info$scale_factor)) {
+                    pop_mean_overall <- pop_mean_overall * units_info$scale_factor
+                  }
+                  abs_change_overall <- pop_mean_overall * (ratio_overall - 1)
+                  
+                  # format based on unit type
+                  if (units_info$type == "monetary") {
+                    original_scale_overall <- sprintf(" (%.0f%% average multiplicative %s, ~%s%s average %s)", 
+                                                    abs(pct_change_overall), change_word,
+                                                    units_info$symbol, format_minimal_decimals(abs(abs_change_overall)),
+                                                    change_word)
+                  } else {
+                    original_scale_overall <- sprintf(" (%.0f%% average %s)", 
+                                                    abs(pct_change_overall), change_word)
+                  }
+                }
+              }
+              
+              # Adjust wording based on transformation type
+              if (!is.null(transform_info) && transform_info$has_z && transform_info$has_log) {
+                # For log outcomes, emphasize percentage change
+                text <- paste0(text,
+                  "Weighting the leaf-level CATEs by subgroup size yields an average treatment effect of ",
+                  format_minimal_decimals(weighted_avg_effect), original_scale_overall, ". ",
+                  "In other words, if the recommended treatment decisions were implemented for every unit ",
+                  "in the test set, the mean outcome would be expected to ",
+                  ifelse(pct_change_overall > 0, "increase", "decrease"), " by approximately ",
+                  sprintf("%.0f%%", abs(pct_change_overall)),
+                  " relative to universal ", 
+                  tolower(act_labels[1]), ".\n"
+                )
+              } else {
+                # For non-log outcomes, use original wording
+                text <- paste0(text,
+                  "Weighting the leaf-level CATEs by subgroup size yields an average treatment effect of ",
+                  format_minimal_decimals(weighted_avg_effect), original_scale_overall, ". ",
+                  "In other words, if the recommended treatment decisions were implemented for every unit ",
+                  "in the test set, the mean outcome would be expected to ",
+                  ifelse(weighted_avg_effect > 0, "rise", "fall"), " by roughly ",
+                  format_minimal_decimals(abs(weighted_avg_effect)), " units",
+                  ifelse(nchar(original_scale_overall) > 0, " on the standardized scale", ""),
+                  " relative to universal ", 
+                  tolower(act_labels[1]), ".\n"
+                )
+              }
             }
           } else {
             text <- paste0(text, 
@@ -487,8 +562,58 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
             )
             
             if (!is.na(weighted_avg_effect)) {
+              # Transform to original scale if possible
+              original_scale_overall <- ""
+              
+              # Get transformation info if available
+              transform_info <- NULL
+              if (!is.null(original_df) && !is.null(model_name)) {
+                transform_info <- get_outcome_transformation_info(model_name, original_df)
+              }
+              
+              if (!is.null(transform_info)) {
+                if (transform_info$has_z && !transform_info$has_log) {
+                  # simple z-transformation: multiply by SD
+                  weighted_avg_display <- weighted_avg_effect * transform_info$orig_sd
+                  original_scale_overall <- paste0(" (original scale: ", format_minimal_decimals(weighted_avg_display), " units)")
+                } else if (transform_info$has_z && transform_info$has_log) {
+                  # log+z transformation: use multiplicative interpretation
+                  units_info <- detect_variable_units(transform_info$original_var)
+                  
+                  # calculate effect on log scale
+                  delta_log_overall <- weighted_avg_effect * transform_info$log_sd
+                  ratio_overall <- exp(delta_log_overall)
+                  pct_change_overall <- (ratio_overall - 1) * 100
+                  change_word <- if (pct_change_overall >= 0) "increase" else "decrease"
+                  
+                  # calculate absolute change based on population mean
+                  # use display mean if available (for corrected population statistics)
+                  log_mean_overall <- if (!is.null(transform_info$use_display_mean) && transform_info$use_display_mean) {
+                    transform_info$log_mean_display
+                  } else {
+                    transform_info$log_mean
+                  }
+                  pop_mean_overall <- exp(log_mean_overall) - transform_info$log_offset
+                  if (!is.null(units_info$scale_factor)) {
+                    pop_mean_overall <- pop_mean_overall * units_info$scale_factor
+                  }
+                  abs_change_overall <- pop_mean_overall * (ratio_overall - 1)
+                  
+                  # format based on unit type
+                  if (units_info$type == "monetary") {
+                    original_scale_overall <- sprintf(" (%.0f%% average multiplicative %s, ~%s%s average %s)", 
+                                                    abs(pct_change_overall), change_word,
+                                                    units_info$symbol, format_minimal_decimals(abs(abs_change_overall)),
+                                                    change_word)
+                  } else {
+                    original_scale_overall <- sprintf(" (%.0f%% average %s)", 
+                                                    abs(pct_change_overall), change_word)
+                  }
+                }
+              }
+              
               text <- paste0(text,
-                "Weighted average treatment effect: ", sprintf("%.3f", weighted_avg_effect), "\n"
+                "Weighted average treatment effect: ", format_minimal_decimals(weighted_avg_effect), original_scale_overall, "\n"
               )
             }
             
@@ -524,8 +649,15 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
 #' Compute average conditional means within leaves
 #' @keywords internal
 compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_labels, leaf_names, 
-                             use_math_notation = FALSE, output_format = "bullet") {
+                             use_math_notation = FALSE, output_format = "bullet",
+                             original_df = NULL, model_name = NULL, display_original_scale = TRUE) {
   text <- ""
+  
+  # get transformation info if available
+  transform_info <- NULL
+  if (display_original_scale && !is.null(original_df) && !is.null(model_name)) {
+    transform_info <- get_outcome_transformation_info(model_name, original_df)
+  }
   
   # handle both list and non-list inputs
   if (!is.list(leaf_idx)) {
@@ -567,6 +699,68 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
     if (length(avg_cm) == 2) {
       treatment_effect <- avg_cm[2] - avg_cm[1]
       
+      # transform to original scale if possible
+      treatment_effect_display <- NULL
+      original_scale_text <- ""
+      if (!is.null(transform_info)) {
+        if (transform_info$has_z && !transform_info$has_log) {
+          # simple z-transformation: multiply by SD
+          treatment_effect_display <- treatment_effect * transform_info$orig_sd
+          original_scale_text <- paste0(" (original scale: ", format_minimal_decimals(treatment_effect_display), " units)")
+        } else if (transform_info$has_z && transform_info$has_log) {
+          # log+z transformation: use multiplicative interpretation
+          # detect units
+          units_info <- detect_variable_units(transform_info$original_var)
+          
+          # calculate the effect on the log scale
+          delta_log <- treatment_effect * transform_info$log_sd
+          
+          # get multiplicative effect
+          ratio <- exp(delta_log)
+          
+          # calculate percentage change
+          pct_change <- (ratio - 1) * 100
+          
+          # calculate mean on original scale for absolute change
+          # use display mean if available (for corrected population statistics)
+          log_mean_to_use <- if (!is.null(transform_info$use_display_mean) && transform_info$use_display_mean) {
+            transform_info$log_mean_display
+          } else {
+            transform_info$log_mean
+          }
+          pop_mean_orig <- exp(log_mean_to_use) - transform_info$log_offset
+          
+          # apply scale factor if needed (e.g., hours to minutes)
+          if (!is.null(units_info$scale_factor)) {
+            pop_mean_orig <- pop_mean_orig * units_info$scale_factor
+          }
+          
+          # calculate absolute change
+          abs_change <- pop_mean_orig * (ratio - 1)
+          
+          # format based on unit type
+          change_word <- if (pct_change >= 0) "increase" else "decrease"
+          abs_pct_change <- abs(pct_change)
+          
+          if (units_info$type == "monetary") {
+            original_scale_text <- sprintf(" (%.0f%% multiplicative %s, ~%s%s average %s)",
+                                         abs_pct_change, change_word,
+                                         units_info$symbol, format_minimal_decimals(abs(abs_change)),
+                                         change_word)
+          } else if (units_info$type == "time") {
+            original_scale_text <- sprintf(" (%.0f%% multiplicative %s, ~%s %s average %s)",
+                                         abs_pct_change, change_word,
+                                         format_minimal_decimals(abs(abs_change)),
+                                         units_info$name,
+                                         change_word)
+          } else {
+            # generic format for other types
+            original_scale_text <- sprintf(" (%.1fx multiplicative effect)",
+                                         ratio)
+          }
+        }
+      }
+      
       if (output_format == "prose") {
         # prose format for flowing text
         pct_assigned <- round(100 * max(prop_control, prop_treat), 1)
@@ -585,11 +779,11 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
           assignment_text, ". "
         )
         
-        # add outcomes
+        # add outcomes with minimal decimals
         text <- paste0(text,
-          "The mean outcome under control was ", sprintf("%.3f", avg_cm[1]), ", ",
-          "the mean under treatment was ", sprintf("%.3f", avg_cm[2]), ", ",
-          "yielding a CATE of ", sprintf("%.3f", treatment_effect), ".\n\n"
+          "The mean outcome under control was ", format_minimal_decimals(avg_cm[1]), ", ",
+          "the mean under treatment was ", format_minimal_decimals(avg_cm[2]), ", ",
+          "yielding a CATE of ", format_minimal_decimals(treatment_effect), original_scale_text, ".\n\n"
         )
         
       } else if (use_math_notation) {
@@ -598,9 +792,9 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
           "n = ", length(idx), "; ",
           "assigned treatment: ", act_labels[predominant_action], " (",
           round(100 * max(prop_control, prop_treat), 1), "%)\n\n",
-          "E[Y(0)|X∈leaf] = ", sprintf("%.3f", avg_cm[1]), "\n",
-          "E[Y(1)|X∈leaf] = ", sprintf("%.3f", avg_cm[2]), "\n", 
-          "CATE = ", sprintf("%.3f", treatment_effect), "\n\n"
+          "E[Y(0)|X∈leaf] = ", format_minimal_decimals(avg_cm[1]), "\n",
+          "E[Y(1)|X∈leaf] = ", format_minimal_decimals(avg_cm[2]), "\n", 
+          "CATE = ", format_minimal_decimals(treatment_effect), original_scale_text, "\n\n"
         )
       } else {
         # clear, simple format
@@ -609,9 +803,9 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
           "Sample size: ", length(idx), " (", round(100 * length(idx) / length(predictions), 1), "% of test set)\n",
           "Recommended treatment: ", act_labels[predominant_action], " (",
           round(100 * max(prop_control, prop_treat), 1), "% of this group)\n\n",
-          "Control outcome: ", sprintf("%.3f", avg_cm[1]), "\n",
-          "Treatment outcome: ", sprintf("%.3f", avg_cm[2]), "\n", 
-          "Treatment effect (CATE): ", sprintf("%.3f", treatment_effect), "\n"
+          "Control outcome: ", format_minimal_decimals(avg_cm[1]), "\n",
+          "Treatment outcome: ", format_minimal_decimals(avg_cm[2]), "\n", 
+          "Treatment effect (CATE): ", format_minimal_decimals(treatment_effect), original_scale_text, "\n"
         )
         
         text <- paste0(text, "\n")

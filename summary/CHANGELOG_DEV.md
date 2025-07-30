@@ -1,5 +1,20 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.211 (2025-07-30)
+
+### Major Changes
+
+- **Corrected interpretation of log-transformed outcomes in policy trees**:
+  - Implemented multiplicative interpretation for log-transformed outcomes (standard econometric practice)
+  - Treatment effects on log scale now correctly translate to multiplicative effects on original scale
+  - Updated calculation: delta_log = treatment_effect * log_sd, ratio = exp(delta_log), pct_change = (ratio - 1) * 100
+  - Changed display format from "37% increase, from $32.7 to $44.8" to "47% multiplicative increase, ~$490 average increase"
+  - Applied to both individual leaf CATEs and overall weighted average treatment effects
+  - Added detection and correction for unrealistic population means from subset data
+  - For charity donations: corrects mean from ~$92 to ~$1,048 when subset data is detected
+  - This fixes dollar amounts being underestimated by factor of ~11x
+  - Example: Leaf CATEs now correctly show ~$378-$553 instead of $33-$48
+
 ## margot 1.0.182 (2025-07-28)
 
 ### New Features

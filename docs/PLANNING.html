@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.210</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.211</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,111 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a></h2>
 <p>This document outlines the new development architecture for margot functions, moving from a monolithic approach to a modular, cleaner design with proper train/test separation.</p>
+</div>
+<div class="section level2">
+<h2 id="phase-2-plan-transformation-metadata-in-causal-forest-models">Phase 2 Plan: Transformation Metadata in Causal Forest Models<a class="anchor" aria-label="anchor" href="#phase-2-plan-transformation-metadata-in-causal-forest-models"></a></h2>
+<div class="section level3">
+<h3 id="overview-1">Overview<a class="anchor" aria-label="anchor" href="#overview-1"></a></h3>
+<p>Currently, displaying CATEs on the original data scale requires passing <code>original_df</code> to interpretation functions. Phase 2 will embed transformation metadata directly in the model objects, making the process more robust and eliminating the need for external data.</p>
+</div>
+<div class="section level3">
+<h3 id="implementation-plan">Implementation Plan<a class="anchor" aria-label="anchor" href="#implementation-plan"></a></h3>
+<div class="section level4">
+<h4 id="id_1-update-margot_causal_forest-and-margot_flip_forest">1. Update margot_causal_forest() and margot_flip_forest()<a class="anchor" aria-label="anchor" href="#id_1-update-margot_causal_forest-and-margot_flip_forest"></a></h4>
+<p>Add transformation detection and metadata storage:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># When save_data = TRUE, also save transformation info</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">save_data</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">output</span><span class="op">$</span><span class="va">transformation_info</span> <span class="op">&lt;-</span> <span class="fu">detect_transformations</span><span class="op">(</span></span>
+<span>    outcome_vars <span class="op">=</span> <span class="va">outcome_vars</span>,</span>
+<span>    data <span class="op">=</span> <span class="va">data</span>,</span>
+<span>    covariates <span class="op">=</span> <span class="va">covariates</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="id_2-transformation-detection-function">2. Transformation Detection Function<a class="anchor" aria-label="anchor" href="#id_2-transformation-detection-function"></a></h4>
+<p>Create <code>detect_transformations()</code> to analyse outcome variables:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">detect_transformations</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">outcome_vars</span>, <span class="va">data</span>, <span class="va">covariates</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">transform_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">outcome</span> <span class="kw">in</span> <span class="va">outcome_vars</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="co"># Detect transformation type from name</span></span>
+<span>    <span class="va">has_z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"_z$"</span>, <span class="va">outcome</span><span class="op">)</span></span>
+<span>    <span class="va">has_log</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"_log_"</span>, <span class="va">outcome</span><span class="op">)</span></span>
+<span>    </span>
+<span>    <span class="co"># Find original variable</span></span>
+<span>    <span class="va">original_var</span> <span class="op">&lt;-</span> <span class="fu">find_original_variable</span><span class="op">(</span><span class="va">outcome</span>, <span class="va">data</span><span class="op">)</span></span>
+<span>    </span>
+<span>    <span class="co"># Store metadata based on transformation type</span></span>
+<span>    <span class="kw">if</span> <span class="op">(</span><span class="va">has_z</span> <span class="op">&amp;&amp;</span> <span class="va">has_log</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="co"># Compound transformation: log then z</span></span>
+<span>      <span class="va">transform_info</span><span class="op">[[</span><span class="va">outcome</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        type <span class="op">=</span> <span class="st">"log_z"</span>,</span>
+<span>        original_var <span class="op">=</span> <span class="va">original_var</span>,</span>
+<span>        original_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">data</span><span class="op">[[</span><span class="va">original_var</span><span class="op">]</span><span class="op">]</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        original_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">data</span><span class="op">[[</span><span class="va">original_var</span><span class="op">]</span><span class="op">]</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        log_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">data</span><span class="op">[[</span><span class="va">original_var</span><span class="op">]</span><span class="op">]</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>        log_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">log_data</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        log_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">log_data</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        log_offset <span class="op">=</span> <span class="fl">1</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="va">has_z</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="co"># Simple z-transformation</span></span>
+<span>      <span class="va">transform_info</span><span class="op">[[</span><span class="va">outcome</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        type <span class="op">=</span> <span class="st">"z"</span>,</span>
+<span>        original_var <span class="op">=</span> <span class="va">original_var</span>,</span>
+<span>        original_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">data</span><span class="op">[[</span><span class="va">original_var</span><span class="op">]</span><span class="op">]</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        original_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">data</span><span class="op">[[</span><span class="va">original_var</span><span class="op">]</span><span class="op">]</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">}</span></span>
+<span>  <span class="op">}</span></span>
+<span>  </span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">transform_info</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="id_3-update-margot_policy_tree_stability">3. Update margot_policy_tree_stability()<a class="anchor" aria-label="anchor" href="#id_3-update-margot_policy_tree_stability"></a></h4>
+<p>Preserve transformation metadata through stability analysis:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># In the output structure</span></span>
+<span><span class="va">output</span><span class="op">$</span><span class="va">transformation_info</span> <span class="op">&lt;-</span> <span class="va">model_results</span><span class="op">$</span><span class="va">transformation_info</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="id_4-update-interpretation-functions">4. Update Interpretation Functions<a class="anchor" aria-label="anchor" href="#id_4-update-interpretation-functions"></a></h4>
+<p>Modify <code><a href="reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> to use embedded metadata:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Check for transformation info in model</span></span>
+<span><span class="va">transform_info</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">transformation_info</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">outcome_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"^model_"</span>, <span class="st">""</span>, <span class="va">model_name</span><span class="op">)</span></span>
+<span>  <span class="va">transform_info</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="va">transformation_info</span><span class="op">[[</span><span class="va">outcome_name</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># Use transform_info for inverse transformations</span></span>
+<span><span class="co"># No need for original_df parameter</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level3">
+<h3 id="benefits">Benefits<a class="anchor" aria-label="anchor" href="#benefits"></a></h3>
+<ol style="list-style-type: decimal"><li>
+<strong>Self-contained models</strong>: All necessary information travels with the model</li>
+<li>
+<strong>Robustness</strong>: No risk of mismatched data or missing original_df</li>
+<li>
+<strong>Backwards compatibility</strong>: Old models without transformation_info still work</li>
+<li>
+<strong>Cleaner API</strong>: Interpretation functions don’t need original_df parameter</li>
+<li>
+<strong>Accurate transformations</strong>: Metadata captured at model creation time</li>
+</ol></div>
+<div class="section level3">
+<h3 id="timeline">Timeline<a class="anchor" aria-label="anchor" href="#timeline"></a></h3>
+<ul><li>Phase 1 (completed): Basic functionality with original_df parameter</li>
+<li>Phase 2 (planned): Embed transformation metadata in models</li>
+<li>Migration: Update existing workflows to use new functionality</li>
+</ul></div>
 </div>
 <div class="section level2">
 <h2 id="completed-components">Completed Components<a class="anchor" aria-label="anchor" href="#completed-components"></a></h2>
@@ -176,7 +281,7 @@
 </ol></div>
 <div class="section level2">
 <h2 id="example-workflow">Example Workflow<a class="anchor" aria-label="anchor" href="#example-workflow"></a></h2>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Generate test data</span></span>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/margot_simulate_test_data.html">margot_simulate_test_data</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>

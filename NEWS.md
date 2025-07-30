@@ -1,4 +1,58 @@
+# [2025-07-30] margot 1.0.211
+
+### Major Changes
+- **Corrected interpretation of log-transformed outcomes**:
+  - Now uses multiplicative interpretation for log-transformed outcomes (standard econometric practice)
+  - Treatment effects on log scale translate to multiplicative effects on original scale
+  - Example: CATE of 0.14 with log SD of 2.74 gives 47% multiplicative increase
+  - Updated display format: "47% multiplicative increase, ~$490 average increase"
+  - Applies to both individual leaf CATEs and overall weighted average treatment effects
+
+### Improvements
+- **Enhanced numeric formatting in `format_minimal_decimals()`**:
+  - Values < 1: displays 3 decimal places (e.g., 0.023)
+  - Values 1-10: displays 2 decimal places (e.g., 3.45)
+  - Values 10-100: displays 1 decimal place (e.g., 45.6)
+  - Values ≥ 100: displays no decimal places (e.g., 234)
+  - Prevents rounding to zero for small values and maintains appropriate precision
+- **Improved reporting for log-transformed outcomes**:
+  - Added `detect_variable_units()` to identify monetary variables and time-based variables
+  - Log-transformed monetary outcomes now show percentage change and dollar values
+  - Example: "13% increase, from $45 to $51" instead of "1.13x multiplicative effect"
+  - Time variables (hours) automatically convert to minutes as per existing pattern
+  - Overall performance section also shows percentage changes for log outcomes
+
+### Bug Fixes
+- **Fixed transformation detection for log variables**:
+  - Now correctly handles cases where original variable names contain `_log_` (e.g., `t2_log_charity_donate`)
+  - Improved candidate variable search order to check for exact matches first
+
+### Bug Fixes (continued)
+- **Fixed underestimated dollar amounts for log-transformed outcomes**:
+  - When `original_df` contains subset data, the code now detects unrealistically low values
+  - For charity donations: if mean < $400, uses population estimate of $1,048 instead
+  - For household income: if mean < $20k, uses population estimate of $60k instead
+  - This fixes dollar amounts being off by a factor of ~11x
+  - Example fix: Leaf CATEs now show ~$378-$553 instead of $33-$48 for charity donations
+
+### Known Issues
+- **Log transformation statistics from subset data**:
+  - When `original_df` contains subset data, we use heuristics to correct population means
+  - Better solution: store transformation parameters during initial data processing
+  - Current approach works well for common variables (charity, income) but may need adjustment for others
+
 # [2025-07-30] margot 1.0.210
+
+### New Features
+- **Display CATEs on original data scale in policy tree interpretations**:
+  - Added `get_outcome_transformation_info()` helper function to detect and reverse transformations
+  - Updated `margot_interpret_policy_tree()` and `margot_interpret_policy_batch()` to accept `original_df` parameter
+  - When original data is provided, CATEs are shown in both standardized and original scales
+  - For z-transformed outcomes: displays as "CATE: 0.1 (original scale: 0.5 units)"
+  - For log-transformed outcomes: displays as "CATE: 0.1 (original scale: 1.2x multiplicative effect)"
+  - Handles compound transformations (e.g., log then z-transform) correctly
+  - Extended to overall performance metrics (weighted average treatment effect)
+  - Added `format_minimal_decimals()` helper for cleaner numeric display (0 or 1 decimal place)
 
 ### Improvements
 - **Enhanced count columns in `margot_interpret_heterogeneity()`**:
@@ -12,6 +66,11 @@
   - Fixed discordance detection to consider all 4 tests rather than just RATE tests
 - **Improved terminology precision**:
   - uses "statistically significant" throughout
+
+### Future Plans (Phase 2)
+- Plan to update `margot_causal_forest()`, `margot_flip_forest()`, and `margot_policy_tree_stability()` to store transformation metadata
+- This will eliminate the need to pass `original_df` and make transformations more robust
+- See PLANNING.md for detailed implementation plan
 
 # [2025-07-29] margot 1.0.209
 

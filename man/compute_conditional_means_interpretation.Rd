@@ -12,7 +12,8 @@ compute_conditional_means_interpretation(
   act_labels,
   transform_var,
   use_math_notation = FALSE,
-  output_format = "bullet"
+  output_format = "bullet",
+  original_df = NULL
 )
 }
 \description{

@@ -11,7 +11,10 @@ compute_leaf_means(
   act_labels,
   leaf_names,
   use_math_notation = FALSE,
-  output_format = "bullet"
+  output_format = "bullet",
+  original_df = NULL,
+  model_name = NULL,
+  display_original_scale = TRUE
 )
 }
 \description{
