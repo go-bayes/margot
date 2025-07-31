@@ -80,6 +80,8 @@ margot_recalculate_policy_trees <- function(model_results,
 #' @param qini_treatment_cost Scalar treatment cost per unit for QINI calculations. Default 1.
 #'        Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
 #'        higher values (e.g., 5) represent expensive treatments creating shallower curves.
+#' @param seed Random seed for reproducible QINI curve generation. Default 12345 matches the
+#'        default seed used in compute_qini_improved for consistency.
 #'
 #' @return A modified copy of model_results with flipped models (with "_r" suffix). If remove_original
 #'         is TRUE (default), original models are removed; otherwise both versions are kept.
@@ -135,7 +137,8 @@ margot_flip_forests <- function(model_results,
                                 remove_original = TRUE,
                                 qini_treatment_cost = 1,
                                 train_proportion = NULL,
-                                use_train_test_split = NULL) {
+                                use_train_test_split = NULL,
+                                seed = 12345) {
   # validate inputs
   if (!is.list(model_results) || !("results" %in% names(model_results))) {
     stop("model_results must be a list containing a 'results' element (output from margot_causal_forest)")
@@ -340,7 +343,8 @@ margot_flip_forests <- function(model_results,
       n_cores = n_cores,
       verbose = verbose,
       qini_treatment_cost = qini_treatment_cost,
-      use_train_test_split = use_train_test_split
+      use_train_test_split = use_train_test_split,
+      seed = seed
     )
   } else {
     # call sequential version
@@ -359,7 +363,8 @@ margot_flip_forests <- function(model_results,
       compute_conditional_means = compute_conditional_means,
       verbose = verbose,
       qini_treatment_cost = qini_treatment_cost,
-      use_train_test_split = use_train_test_split
+      use_train_test_split = use_train_test_split,
+      seed = seed
     )
   }
 

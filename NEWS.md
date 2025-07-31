@@ -1,4 +1,12 @@
-# [2025-07-31] margot 2.0.219
+# [2025-07-31] margot 1.0.220
+
+### Improvements
+- **Enhanced `margot_flip_forests()` parameters**:
+  - Added `seed` parameter for reproducible QINI generation (default 12345)
+  - Now properly passes `train_proportion` and `use_train_test_split` to maintain consistency
+  - Seed default matches `compute_qini_improved()` for consistent results
+
+# [2025-07-31] margot 1.0.219
 
 ### Improvements
 - **Enhanced QINI robustness**: Improved error handling and diagnostic output
@@ -13,7 +21,7 @@
   - Common with homogeneous treatment effects (very low tau_hat variation)
   - Returns NULL with informative warning instead of crashing
 
-# [2025-07-31] margot 2.0.218
+# [2025-07-31] margot 1.0.218
 
 ### Major Improvements
 - **Reimplemented QINI curves following GRF best practices**:
