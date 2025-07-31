@@ -4,7 +4,7 @@
 - **Reimplemented QINI curves following GRF best practices**:
   - New `margot_qini_alternative()` function uses simplified GRF methodology
   - Single baseline method: `target.with.covariates = FALSE` (no-priority assignment)
-  - Removed complex baseline options in favor of standard approach
+  - Removed complex baseline options in favour of standard approach
   - Added `diff_gain_summaries` computation for backward compatibility
   - Created `margot_qini()` wrapper function for seamless integration
   - Default spend levels now 0.1 only (simplified from 0.1, 0.4)
@@ -19,6 +19,12 @@
     - Gracefully handles empty paths or computation failures
     - Provides informative warnings when models cannot be processed
     - Continues processing remaining models instead of failing completely
+  - **Unified QINI implementation**: All functions now use the improved GRF-standard approach
+    - `margot_causal_forest()` automatically uses evaluation forest DR scores
+    - `margot_flip_forests()` inherits improvements through `margot_causal_forest()`
+    - `margot_policy()` uses improved QINI when regenerating curves
+    - `margot_interpret_heterogeneity()` benefits through `margot_policy()`
+    - Consistent QINI computation across the entire margot ecosystem
 
 ### Bug Fixes
 - **Fixed QINI implementation to use existing data structure**:

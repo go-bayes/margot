@@ -60,6 +60,20 @@
 <li>Provides informative warnings when models cannot be processed</li>
 <li>Continues processing remaining models instead of failing completely</li>
 </ul></li>
+<li>
+<strong>Unified QINI implementation</strong>: All functions now use the improved GRF-standard approach
+<ul><li>
+<code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> automatically uses evaluation forest DR scores</li>
+<li>
+<code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> inherits improvements through <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code>
+</li>
+<li>
+<code><a href="../reference/margot_policy.html">margot_policy()</a></code> uses improved QINI when regenerating curves</li>
+<li>
+<code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> benefits through <code><a href="../reference/margot_policy.html">margot_policy()</a></code>
+</li>
+<li>Consistent QINI computation across the entire margot ecosystem</li>
+</ul></li>
 </ul></li>
 </ul></div>
 <div class="section level4">

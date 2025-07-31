@@ -139,16 +139,51 @@ margot_policy <- function(
           }
           
           if (!is.null(outcome_data) && !is.null(result_outcomes$W)) {
-            qini_result <- margot_generate_qini_data(
-              model_result = model_result,
-              outcome_data = outcome_data,
-              treatment = result_outcomes$W,
-              weights = result_outcomes$weights,
-              baseline_method = baseline_method,
-              seed = seed,
-              verbose = FALSE
-            )
-            qini_objs <- qini_result$qini_objects
+            # First check if we have data for improved QINI computation
+            if (!is.null(result_outcomes$covariates) && !is.null(model_result$tau_hat)) {
+              cli::cli_alert_info("Using improved QINI computation with evaluation forest")
+              
+              # determine test indices
+              test_indices <- model_result$qini_metadata$test_indices
+              if (is.null(test_indices)) {
+                test_indices <- which(!is.na(outcome_data) & !is.na(result_outcomes$W))
+              }
+              
+              # compute QINI with improved approach
+              qini_result <- compute_qini_improved(
+                Y = outcome_data[test_indices],
+                W = result_outcomes$W[test_indices],
+                X = result_outcomes$covariates[test_indices, ],
+                tau_hat = model_result$tau_hat[test_indices],
+                weights = if(!is.null(result_outcomes$weights)) result_outcomes$weights[test_indices] else NULL,
+                seed = seed,
+                n_bootstrap = 200,
+                verbose = FALSE
+              )
+              
+              if (!is.null(qini_result)) {
+                qini_objs <- qini_result$qini_objects
+                # update the results with new QINI data
+                result_outcomes$results[[model_name]]$qini_objects <- qini_objs
+                result_outcomes$results[[model_name]]$qini_data <- qini_result$qini_data
+                if (!is.null(qini_result$ate_evaluation_forest)) {
+                  result_outcomes$results[[model_name]]$ate_evaluation_forest <- qini_result$ate_evaluation_forest
+                }
+              }
+            } else {
+              # fallback to old method if necessary data is missing
+              cli::cli_alert_info("Using standard QINI computation")
+              qini_result <- margot_generate_qini_data(
+                model_result = model_result,
+                outcome_data = outcome_data,
+                treatment = result_outcomes$W,
+                weights = result_outcomes$weights,
+                baseline_method = baseline_method,
+                seed = seed,
+                verbose = FALSE
+              )
+              qini_objs <- qini_result$qini_objects
+            }
           }
         }
         

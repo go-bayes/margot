@@ -446,21 +446,34 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
 
       # --- 4) compute qini curves ---
       if (!qini_split) {
-        if (verbose) cli::cli_alert_info("computing binary qini curves in-sample")
-        qini_result <- compute_qini_curves_binary(tau_hat, Y, W, weights = weights, seed = seed, verbose = verbose, treatment_cost = qini_treatment_cost)
+        if (verbose) cli::cli_alert_info("computing QINI curves with improved DR scores")
+        qini_result <- compute_qini_improved(
+          Y = Y[not_missing], 
+          W = W[not_missing], 
+          X = covariates[not_missing, ], 
+          tau_hat = tau_hat,
+          weights = if(!is.null(weights)) weights[not_missing] else NULL, 
+          seed = seed, 
+          n_bootstrap = 200,
+          verbose = verbose
+        )
         if (!is.null(qini_result)) {
           results[[model_name]]$qini_data <- qini_result$qini_data
           results[[model_name]]$qini_objects <- qini_result$qini_objects
+          # store the evaluation forest ATE
+          if (!is.null(qini_result$ate_evaluation_forest)) {
+            results[[model_name]]$ate_evaluation_forest <- qini_result$ate_evaluation_forest
+          }
           # store metadata about qini generation
           results[[model_name]]$qini_metadata <- list(
             n_test = length(not_missing),
             n_train = 0,  # no separate train set
             test_indices = not_missing,
             qini_split = FALSE,
-            baseline_method = "maq_no_covariates"  # compute_qini_curves_binary now uses maq_no_covariates with fallback
+            baseline_method = "grf_standard"  # new GRF-standard approach
           )
         } else {
-          if (verbose) cli::cli_alert_warning(crayon::yellow(paste("unable to compute binary qini curves for", outcome)))
+          if (verbose) cli::cli_alert_warning(crayon::yellow(paste("unable to compute QINI curves for", outcome)))
         }
       } else {
         if (verbose) cli::cli_alert_info("performing separate train/test split for qini evaluation")
@@ -491,20 +504,35 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                      sample.weights = weights[qini_train_idxs]),
                                 grf_defaults))
         qini_tau_hat <- predict(qini_model, newdata = covariates[qini_test_idxs, , drop = FALSE])$predictions
-        if (verbose) cli::cli_alert_info("computing qini curves on qini-test subset")
-        qini_result <- compute_qini_curves_binary(qini_tau_hat, Y[qini_test_idxs], W[qini_test_idxs],
-                                                 weights = if(!is.null(weights)) weights[qini_test_idxs] else NULL,
-                                                 seed = seed, verbose = verbose, treatment_cost = qini_treatment_cost)
-        results[[model_name]]$qini_data <- qini_result$qini_data
-        results[[model_name]]$qini_objects <- qini_result$qini_objects
-        # store metadata about qini generation
-        results[[model_name]]$qini_metadata <- list(
-          n_test = length(qini_test_idxs),
-          n_train = length(qini_train_idxs),
-          test_indices = qini_test_idxs,
-          qini_split = TRUE,
-          baseline_method = "maq_no_covariates"  # compute_qini_curves_binary now uses maq_no_covariates with fallback
+        if (verbose) cli::cli_alert_info("computing QINI curves on test subset with improved DR scores")
+        qini_result <- compute_qini_improved(
+          Y = Y[qini_test_idxs], 
+          W = W[qini_test_idxs], 
+          X = covariates[qini_test_idxs, , drop = FALSE], 
+          tau_hat = qini_tau_hat,
+          weights = if(!is.null(weights)) weights[qini_test_idxs] else NULL,
+          seed = seed, 
+          n_bootstrap = 200,
+          verbose = verbose
         )
+        if (!is.null(qini_result)) {
+          results[[model_name]]$qini_data <- qini_result$qini_data
+          results[[model_name]]$qini_objects <- qini_result$qini_objects
+          # store the evaluation forest ATE
+          if (!is.null(qini_result$ate_evaluation_forest)) {
+            results[[model_name]]$ate_evaluation_forest <- qini_result$ate_evaluation_forest
+          }
+          # store metadata about qini generation
+          results[[model_name]]$qini_metadata <- list(
+            n_test = length(qini_test_idxs),
+            n_train = length(qini_train_idxs),
+            test_indices = qini_test_idxs,
+            qini_split = TRUE,
+            baseline_method = "grf_standard"  # new GRF-standard approach
+          )
+        } else {
+          if (verbose) cli::cli_alert_warning(crayon::yellow(paste("unable to compute QINI curves for", outcome)))
+        }
       }
 
       # --- 5) save the main model object if requested ---

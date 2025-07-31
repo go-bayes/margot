@@ -58,6 +58,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_binary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_curves_multi_arm.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/compute_qini_improved.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_qini_metrics.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_rate_on_demand.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/compute_stability_summary_metrics.html</loc></url>
