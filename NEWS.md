@@ -1,3 +1,18 @@
+# [2025-07-31] margot 2.0.219
+
+### Improvements
+- **Enhanced QINI robustness**: Improved error handling and diagnostic output
+  - Added tau_hat range and standard deviation reporting in verbose mode
+  - Better handling of edge cases where CATE estimates have minimal variation
+  - Clear diagnostic messages when QINI computation cannot proceed
+  - Graceful fallback for empty CATE paths instead of failures
+
+### Bug Fixes
+- **Fixed atomic vector access**: Resolved issue when accessing ate_evaluation_forest values
+- **Fixed empty CATE path errors**: Now properly handles cases where maq returns empty paths
+  - Common with homogeneous treatment effects (very low tau_hat variation)
+  - Returns NULL with informative warning instead of crashing
+
 # [2025-07-31] margot 2.0.218
 
 ### Major Improvements
