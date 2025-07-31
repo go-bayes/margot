@@ -33,8 +33,8 @@
 #' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
 #' @param fixed_ylim Logical; if TRUE and ylim is NULL, uses the actual data range with padding
 #'   for consistent y-axis scaling across plots. Default is FALSE.
-#' @param baseline_method Method for generating baseline: "maq_no_covariates" (default), 
-#'   "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().
+#' @param baseline_method Method for generating baseline: "auto" (default), 
+#'   "maq_no_covariates", "simple", "maq_only", or "none". See details in margot_generate_qini_data().
 #' @param cate_color Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).
 #' @param ate_color Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).
 #' @param scale Character string specifying the scale for gains: "average" (default), "cumulative", 
@@ -130,7 +130,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
                              return_data = FALSE,
                              ylim = NULL,
                              fixed_ylim = FALSE,
-                             baseline_method = "maq_no_covariates",
+                             baseline_method = "auto",
                              cate_color = "#d8a739",
                              ate_color = "#4d4d4d",
                              scale = "average",

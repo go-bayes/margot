@@ -180,6 +180,8 @@ reference:
     - margot_log_transform_vars
     - margot_plot_create_options
     - margot_plot_exposure
+    - margot_plot_qini_simple
+    - margot_qini_alternative
     - margot_qini_diagnostic
     - margot_process_binary_vars
     - margot_prop_missing

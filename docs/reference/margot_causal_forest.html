@@ -13,7 +13,7 @@ held-out data, thereby avoiding in-sample optimism in the Qini plots.'></head><b
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.214</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.218</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,8 @@ held-out data, thereby avoiding in-sample optimism in the Qini plots.</p>
 <span>  compute_conditional_means <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  qini_treatment_cost <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">12345</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
+<span>  use_train_test_split <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -152,6 +153,15 @@ higher values (e.g., 5) represent expensive treatments creating shallower curves
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Integer. Random seed for reproducibility of train/test splits for policy trees
 and QINI evaluation. Default is 12345.</p></dd>
+
+
+<dt id="arg-use-train-test-split">use_train_test_split<a class="anchor" aria-label="anchor" href="#arg-use-train-test-split"></a></dt>
+<dd><p>Logical. If TRUE, uses a consistent train/test split where:
+- The main causal forest is trained on all data (following GRF best practices for honesty)
+- All reported results (ATE, E-values, combined_table) are computed on the TEST SET
+- Policy trees and QINI also use the same train/test split
+- All-data results are stored in split_info for reference
+Default is FALSE for backward compatibility.</p></dd>
 
 </dl></div>
     <div class="section level2">

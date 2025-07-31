@@ -21,7 +21,7 @@ margot_plot_qini_batch(
   horizontal_line = TRUE,
   grid_step = NULL,
   ylim = NULL,
-  baseline_method = "maq_no_covariates",
+  baseline_method = "auto",
   cate_color = "#d8a739",
   ate_color = "#4d4d4d",
   scale = "average",
@@ -69,8 +69,8 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
 
 \item{ylim}{Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).}
 
-\item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
-"auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
+\item{baseline_method}{Method for generating baseline: "auto" (default), 
+"maq_no_covariates", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
 
 \item{cate_color}{Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).}
 

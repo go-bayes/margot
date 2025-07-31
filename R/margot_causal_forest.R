@@ -1,214 +1,3 @@
-#' Run Multiple Generalised Random Forest (GRF) Causal Forest Models in Parallel
-#'
-#' Parallelised, diagnostic‑rich variant of `margot_causal_forest()`.  Each
-#' outcome‑specific forest is estimated in its own R worker via **future**.  All
-#' the `cli` messages and checks from the sequential original are preserved, so
-#' you still get the same granular reporting (dimension checks, Qini status,
-#' warnings, etc.).  Live progress bars are emitted with **progressr** using a
-#' `cli` handler.
-#'
-#' @inheritParams margot_causal_forest
-#' @param n_cores integer. number of parallel workers (default = all cores − 1).
-#'
-#' @return list with elements:
-#'   * `results`         – per‑outcome diagnostics and objects
-#'   * `combined_table`  – rbind‑ed e‑value table across outcomes
-#'   * `outcome_vars`    – vector of (successful) outcome names
-#'   * `not_missing`     – indices of complete‑case rows
-#'   * (`data`, `covariates`, `weights`, `W`) when `save_data = TRUE`
-#'   * `full_models` when `save_models = TRUE`
-#'
-#' @details Messages produced inside workers are captured by **future** and
-#'   dispatched to the master session.  Progress bars update in real time.  To
-#'   silence progress, call `progressr::handlers("off")` before running.
-#'
-#' @importFrom future plan multisession availableCores
-#' @importFrom future.apply future_lapply
-#' @importFrom progressr with_progress progressor handlers
-#' @importFrom grf causal_forest average_treatment_effect test_calibration
-#'   rank_average_treatment_effect variable_importance best_linear_projection
-#' @importFrom policytree double_robust_scores policy_tree
-#' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_alert_danger cli_h3
-#'   cli_progress_bar cli_progress_update cli_progress_done
-#' @importFrom purrr map walk
-#' @name margot_causal_forest_parallel
-#' @keywords internal
-margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, weights,
-                                           grf_defaults    = list(),
-                                           save_data       = FALSE,
-                                           compute_rate    = TRUE,
-                                           top_n_vars      = 15,
-                                           save_models     = TRUE,
-                                           train_proportion= 0.5,
-                                           qini_split      = TRUE,
-                                           train_prop      = 0.5,
-                                           qini_train_prop = NULL,  # deprecated
-                                           compute_conditional_means = TRUE,
-                                           n_cores         = future::availableCores() - 1,
-                                           verbose         = TRUE,
-                                           qini_treatment_cost = 1,
-                                           seed            = 12345) {
-  # dimension checks
-  n_rows <- nrow(covariates)
-  if (verbose) cli::cli_alert_info(paste0("rows in covariates: ", n_rows))
-  if (length(W) != n_rows) stop("length of W does not match covariates rows")
-  if (!is.null(weights) && length(weights) != n_rows) stop("length of weights does not match")
-  for (o in outcome_vars) {
-    if (nrow(as.matrix(data[[o]])) != n_rows)
-      stop("rows in outcome ", o, " do not match covariates")
-  }
-  # handle deprecated qini_train_prop parameter
-  if (!is.null(qini_train_prop)) {
-    if (verbose) cli::cli_alert_warning("Parameter 'qini_train_prop' is deprecated. Please use 'train_prop' instead.")
-    train_prop <- qini_train_prop
-  }
-
-  if (qini_split && (train_prop <= 0 || train_prop >= 1))
-    stop("train_prop must be in (0,1)")
-  if (verbose) cli::cli_alert_info("starting margot_causal_forest()")
-
-  # complete cases
-  not_missing <- which(complete.cases(covariates))
-  if (length(not_missing)==0) stop("no complete cases in covariates")
-  if (verbose) cli::cli_alert_info(paste0("complete cases: ", length(not_missing)))
-
-  # parallel setup
-  future::plan(future::multisession, workers = n_cores)
-  if (verbose) cli::cli_alert_info(paste0("using ", n_cores, " workers"))
-
-  # parallel loop with CLI logging
-  results_list <- future.apply::future_lapply(outcome_vars, function(outcome) {
-    t0 <- Sys.time()
-    cli::cli_alert_info(paste0("↗ starting ", outcome))
-
-    res <- tryCatch({
-      # fit forest
-      model <- do.call(grf::causal_forest,
-                       c(list(X = covariates,
-                              Y = as.matrix(data[[outcome]]),
-                              W = W,
-                              sample.weights = weights),
-                         grf_defaults))
-      # core metrics
-      ate    <- round(grf::average_treatment_effect(model),3)
-      calib  <- round(grf::test_calibration(model),3)
-      table  <- margot::margot_model_evalue(model, scale="RD",
-                                            new_name=outcome, subset=NULL)
-      tau    <- predict(model)$predictions
-
-      # RATE
-      if (compute_rate) {
-        rate     <- grf::rank_average_treatment_effect(model, tau)
-        attr(rate, "target") <- "AUTOC"
-        rate_qini<- grf::rank_average_treatment_effect(model, tau, target="QINI")
-        attr(rate_qini, "target") <- "QINI"
-      }
-      # conditional means
-      cond_means <- NULL
-      if (compute_conditional_means) {
-        if (requireNamespace("policytree", quietly = TRUE)) {
-          tryCatch({
-            cond_means <- policytree::conditional_means(model)
-            if (verbose) cli::cli_alert_info("computed conditional means for {outcome}")
-          }, error = function(e) {
-            if (verbose) cli::cli_alert_warning("could not compute conditional means for {outcome}: {e$message}")
-          })
-        }
-      }
-      # DR scores
-      dr   <- policytree::double_robust_scores(model)
-      # var importance + BLP
-      vi     <- grf::variable_importance(model)
-      ord    <- order(vi, decreasing=TRUE)
-      top    <- if(is.null(colnames(covariates))) ord[1:top_n_vars] else colnames(covariates)[ord[1:top_n_vars]]
-      blp    <- grf::best_linear_projection(model, covariates[,top,drop=FALSE], target.sample="all")
-      # policy trees using top vars
-      # depth-1 using top vars (not all covariates)
-      pt1    <- policytree::policy_tree(covariates[not_missing,top,drop=FALSE],
-                                      dr[not_missing,], depth=1)
-      # depth-2 + plot data
-      set.seed(seed + as.integer(factor(outcome)))
-      train_idx <- sample(not_missing, floor(train_proportion*length(not_missing)))
-      pt2    <- policytree::policy_tree(covariates[train_idx,top,drop=FALSE], dr[train_idx,], depth=2)
-      test_idx<- setdiff(not_missing, train_idx)
-      plotd  <- list(X_test=covariates[test_idx,top,drop=FALSE],
-                     X_test_full=covariates[test_idx,,drop=FALSE],
-                     predictions=predict(pt2, covariates[test_idx,top,drop=FALSE]))
-      # Qini
-      if (!qini_split) {
-        qres <- compute_qini_curves_binary(tau, as.matrix(data[[outcome]]), W,
-                                          weights = weights, seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
-      } else {
-        set.seed(seed + as.integer(factor(outcome)) + 1000)  # different seed component for qini
-        qtr <- sample(not_missing, floor(train_prop*length(not_missing)))
-        qte <- setdiff(not_missing, qtr)
-        qmod<- do.call(grf::causal_forest,
-                       c(list(X=covariates[qtr,,drop=FALSE],
-                              Y=as.matrix(data[[outcome]])[qtr],
-                              W=W[qtr], sample.weights=weights[qtr]),
-                         grf_defaults))
-        qtau<- predict(qmod, newdata=covariates[qte,,drop=FALSE])$predictions
-        qres <- compute_qini_curves_binary(qtau, as.matrix(data[[outcome]])[qte], W[qte],
-                                          weights = if(!is.null(weights)) weights[qte] else NULL,
-                                          seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
-      }
-      qdata   <- if(!is.null(qres)) qres$qini_data else NULL
-      qobjs   <- if(!is.null(qres)) qres$qini_objects else NULL
-
-      out <- list(
-        ate=ate, test_calibration=calib, custom_table=table, tau_hat=tau,
-        conditional_means=cond_means,
-        rate_result=if(compute_rate) rate else NULL,
-        rate_qini=if(compute_rate) rate_qini else NULL,
-        dr_scores=dr, policy_tree_depth_1=pt1,
-        top_vars=top, blp_top=blp,
-        policy_tree_depth_2=pt2, plot_data=plotd,
-        qini_data=qdata, qini_objects=qobjs,
-        model=if(save_models) model else NULL
-      )
-      dt <- difftime(Sys.time(), t0, units="secs")
-      cli::cli_alert_success(sprintf("✓ worker finished %s (%.1f s)", outcome, as.numeric(dt)))
-      out
-    }, error=function(e) {
-      cli::cli_alert_danger(paste0("✗ error in ", outcome, ": ", e$message))
-      NULL
-    })
-    res
-  })
-  names(results_list) <- paste0("model_", outcome_vars)
-
-  # drop failures
-  ok <- !vapply(results_list, is.null, logical(1))
-  if (!all(ok)) {
-    cli::cli_alert_warning(paste(sum(!ok), "outcome(s) failed and were dropped"))
-    results_list <- results_list[ok]
-    outcome_vars <- outcome_vars[ok]
-  }
-
-  # combine
-  combined_table <- do.call(rbind, lapply(results_list, `[[`, "custom_table"))
-  rownames(combined_table) <- gsub("model_", "", names(results_list))
-  if (verbose) cli::cli_alert_success("all model runs completed")
-
-  output <- list(
-    results=results_list,
-    combined_table=combined_table,
-    outcome_vars=outcome_vars,
-    not_missing=not_missing
-  )
-  if (save_data) {
-    output$data<-data; output$covariates<-covariates; output$weights<-weights; output$W<-W
-    if (verbose) cli::cli_alert_info("raw data/covariates/weights/W saved")
-  }
-  if (save_models) {
-    output$full_models<-purrr::map(results_list, `[[`, "model")
-    if (verbose) cli::cli_alert_info("full model objects saved")
-  }
-  if (verbose) cli::cli_alert_success("margot_causal_forest() completed")
-  output
-}
-
-
 # -----------------------------------------------------------------------------
 # helper: compute_qini_curves_binary
 # -----------------------------------------------------------------------------
@@ -390,7 +179,7 @@ margot_inspect_qini <- function(model_results,
 #' @param grf_defaults A list of default parameters for the GRF models.
 #' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
 #' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
-#'   Note: Direct computation of RATE, QINI, and policy trees within this function may be 
+#'   Note: Direct computation of RATE, QINI, and policy trees within this function may be
 #'   deprecated in future versions. Use margot_rate(), margot_qini(), and margot_policy_tree() instead.
 #' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 15.
 #' @param save_models Logical indicating whether to save the full GRF model objects. Default is TRUE.
@@ -406,8 +195,14 @@ margot_inspect_qini <- function(model_results,
 #' @param qini_treatment_cost Scalar treatment cost per unit for QINI calculations. Default 1.
 #'   Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
 #'   higher values (e.g., 5) represent expensive treatments creating shallower curves.
-#' @param seed Integer. Random seed for reproducibility of train/test splits for policy trees 
+#' @param seed Integer. Random seed for reproducibility of train/test splits for policy trees
 #'   and QINI evaluation. Default is 12345.
+#' @param use_train_test_split Logical. If TRUE, uses a consistent train/test split where:
+#'   - The main causal forest is trained on all data (following GRF best practices for honesty)
+#'   - All reported results (ATE, E-values, combined_table) are computed on the TEST SET
+#'   - Policy trees and QINI also use the same train/test split
+#'   - All-data results are stored in split_info for reference
+#'   Default is FALSE for backward compatibility.
 #'
 #' @return A list containing:
 #'   * `results` - per-outcome diagnostics and objects
@@ -434,7 +229,8 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  compute_conditional_means = TRUE,
                                  verbose = TRUE,
                                  qini_treatment_cost = 1,
-                                 seed = 12345) {
+                                 seed = 12345,
+                                 use_train_test_split = FALSE) {
 
   # value:
   #   • plot_data – a list with elements
@@ -480,6 +276,29 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
   if (length(not_missing) == 0) stop("no complete cases in covariates")
   if (verbose) cli::cli_alert_info(paste("number of complete cases:", length(not_missing)))
 
+  # --- determine train/test split if requested ---
+  split_info <- NULL
+  if (use_train_test_split) {
+    if (verbose) cli::cli_alert_info("using train/test split for policy trees and QINI evaluation")
+    n_non_missing <- length(not_missing)
+    train_size <- floor(train_proportion * n_non_missing)
+    if (train_size < 1) stop("train_proportion too low: resulting train_size is less than 1")
+    
+    set.seed(seed)
+    global_train_indices <- sample(not_missing, train_size)
+    global_test_indices <- setdiff(not_missing, global_train_indices)
+    
+    split_info <- list(
+      use_train_test_split = TRUE,
+      train_indices = global_train_indices,
+      test_indices = global_test_indices,
+      train_proportion = train_proportion
+    )
+    
+    if (verbose) cli::cli_alert_info(paste("train set size:", length(global_train_indices), 
+                                           "| test set size:", length(global_test_indices)))
+  }
+
   results <- list()
   full_models <- list()
 
@@ -496,12 +315,48 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       model <- do.call(grf::causal_forest,
                        c(list(X = covariates, Y = Y, W = W, sample.weights = weights), grf_defaults))
 
-      results[[model_name]] <- list(
-        ate = round(grf::average_treatment_effect(model), 3),
-        test_calibration = round(grf::test_calibration(model), 3),
-        custom_table = margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL),
-        tau_hat = predict(model)$predictions
-      )
+      # compute results based on whether we're using train/test split
+      if (use_train_test_split) {
+        # when using train/test split, main results are computed on TEST SET
+        ate_test <- grf::average_treatment_effect(model, subset = global_test_indices)
+        custom_table_test <- margot::margot_model_evalue(
+          data.frame(estimate = ate_test[["estimate"]], std.err = ate_test[["std.err"]]),
+          scale = "RD",
+          new_name = outcome
+        )
+        
+        # main results use test set
+        results[[model_name]] <- list(
+          ate = round(ate_test, 3),
+          test_calibration = round(grf::test_calibration(model), 3),
+          custom_table = custom_table_test,
+          tau_hat = predict(model)$predictions
+        )
+        
+        # also compute and store all-data results for reference
+        ate_all <- grf::average_treatment_effect(model)
+        custom_table_all <- margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL)
+        
+        results[[model_name]]$split_info <- list(
+          use_train_test_split = TRUE,
+          train_indices = global_train_indices,
+          test_indices = global_test_indices,
+          train_proportion = train_proportion,
+          ate_all_data = round(ate_all, 3),
+          custom_table_all_data = custom_table_all
+        )
+      } else {
+        # standard behavior: compute on all data
+        ate_all <- grf::average_treatment_effect(model)
+        custom_table <- margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL)
+        
+        results[[model_name]] <- list(
+          ate = round(ate_all, 3),
+          test_calibration = round(grf::test_calibration(model), 3),
+          custom_table = custom_table,
+          tau_hat = predict(model)$predictions
+        )
+      }
 
       tau_hat <- results[[model_name]]$tau_hat
 
@@ -555,11 +410,22 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         depth = 1
       )
 
-      n_non_missing <- length(not_missing)
-      train_size <- floor(train_proportion * n_non_missing)
-      if (train_size < 1) stop("train_proportion too low: resulting train_size is less than 1")
-      set.seed(seed + as.integer(factor(model_name)))
-      train_indices <- sample(not_missing, train_size)
+      # determine train/test indices for policy trees
+      if (use_train_test_split) {
+        # use global train/test split
+        train_indices <- global_train_indices
+        test_indices <- global_test_indices
+      } else {
+        # create new split specific to this model
+        n_non_missing <- length(not_missing)
+        train_size <- floor(train_proportion * n_non_missing)
+        if (train_size < 1) stop("train_proportion too low: resulting train_size is less than 1")
+        set.seed(seed + as.integer(factor(model_name)))
+        train_indices <- sample(not_missing, train_size)
+        test_indices <- setdiff(not_missing, train_indices)
+      }
+
+      if (length(test_indices) < 1) stop("test set is empty after splitting for policy tree")
 
       policy_tree_model <- policytree::policy_tree(
         covariates[train_indices, top_vars, drop = FALSE],
@@ -568,12 +434,8 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       )
       results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
 
-      test_indices <- setdiff(not_missing, train_indices)
-      if (length(test_indices) < 1) stop("test set is empty after splitting for policy tree")
       X_test <- covariates[test_indices, top_vars, drop = FALSE]
-
       X_test_full <- covariates[test_indices, , drop = FALSE]
-
       predictions <- predict(policy_tree_model, X_test)
 
       results[[model_name]]$plot_data <- list(
@@ -585,7 +447,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       # --- 4) compute qini curves ---
       if (!qini_split) {
         if (verbose) cli::cli_alert_info("computing binary qini curves in-sample")
-        qini_result <- compute_qini_curves_binary(tau_hat, Y, W, weights = weights, seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
+        qini_result <- compute_qini_curves_binary(tau_hat, Y, W, weights = weights, seed = seed, verbose = verbose, treatment_cost = qini_treatment_cost)
         if (!is.null(qini_result)) {
           results[[model_name]]$qini_data <- qini_result$qini_data
           results[[model_name]]$qini_objects <- qini_result$qini_objects
@@ -602,14 +464,24 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         }
       } else {
         if (verbose) cli::cli_alert_info("performing separate train/test split for qini evaluation")
-        qini_n <- length(not_missing)
-        qini_train_size <- floor(train_prop * qini_n)  # use train_prop
-        if (qini_train_size < 1 || qini_train_size >= qini_n) {
-          stop("invalid qini_train_prop: results in empty train or test set for qini evaluation")
+        
+        # determine train/test indices for QINI
+        if (use_train_test_split) {
+          # use global train/test split
+          qini_train_idxs <- global_train_indices
+          qini_test_idxs <- global_test_indices
+        } else {
+          # create new split specific to QINI
+          qini_n <- length(not_missing)
+          qini_train_size <- floor(train_prop * qini_n)  # use train_prop
+          if (qini_train_size < 1 || qini_train_size >= qini_n) {
+            stop("invalid qini_train_prop: results in empty train or test set for qini evaluation")
+          }
+          set.seed(seed + as.integer(factor(model_name)) + 1000)  # different seed component for qini
+          qini_train_idxs <- sample(not_missing, qini_train_size)
+          qini_test_idxs  <- setdiff(not_missing, qini_train_idxs)
         }
-        set.seed(seed + as.integer(factor(model_name)) + 1000)  # different seed component for qini
-        qini_train_idxs <- sample(not_missing, qini_train_size)
-        qini_test_idxs  <- setdiff(not_missing, qini_train_idxs)
+        
         if (length(qini_test_idxs) < 1) stop("qini test set is empty")
         if (verbose) cli::cli_alert_info("fitting separate forest for qini on qini-train subset")
         qini_model <- do.call(grf::causal_forest,
@@ -622,7 +494,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         if (verbose) cli::cli_alert_info("computing qini curves on qini-test subset")
         qini_result <- compute_qini_curves_binary(qini_tau_hat, Y[qini_test_idxs], W[qini_test_idxs],
                                                  weights = if(!is.null(weights)) weights[qini_test_idxs] else NULL,
-                                                 seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
+                                                 seed = seed, verbose = verbose, treatment_cost = qini_treatment_cost)
         results[[model_name]]$qini_data <- qini_result$qini_data
         results[[model_name]]$qini_objects <- qini_result$qini_objects
         # store metadata about qini generation
@@ -677,3 +549,214 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
 
   return(output)
 }
+
+
+#' #' Run Multiple Generalised Random Forest (GRF) Causal Forest Models in Parallel
+#' #'
+#' #' Parallelised, diagnostic‑rich variant of `margot_causal_forest()`.  Each
+#' #' outcome‑specific forest is estimated in its own R worker via **future**.  All
+#' #' the `cli` messages and checks from the sequential original are preserved, so
+#' #' you still get the same granular reporting (dimension checks, Qini status,
+#' #' warnings, etc.).  Live progress bars are emitted with **progressr** using a
+#' #' `cli` handler.
+#' #'
+#' #' @inheritParams margot_causal_forest
+#' #' @param n_cores integer. number of parallel workers (default = all cores − 1).
+#' #'
+#' #' @return list with elements:
+#' #'   * `results`         – per‑outcome diagnostics and objects
+#' #'   * `combined_table`  – rbind‑ed e‑value table across outcomes
+#' #'   * `outcome_vars`    – vector of (successful) outcome names
+#' #'   * `not_missing`     – indices of complete‑case rows
+#' #'   * (`data`, `covariates`, `weights`, `W`) when `save_data = TRUE`
+#' #'   * `full_models` when `save_models = TRUE`
+#' #'
+#' #' @details Messages produced inside workers are captured by **future** and
+#' #'   dispatched to the master session.  Progress bars update in real time.  To
+#' #'   silence progress, call `progressr::handlers("off")` before running.
+#' #'
+#' #' @importFrom future plan multisession availableCores
+#' #' @importFrom future.apply future_lapply
+#' #' @importFrom progressr with_progress progressor handlers
+#' #' @importFrom grf causal_forest average_treatment_effect test_calibration
+#' #'   rank_average_treatment_effect variable_importance best_linear_projection
+#' #' @importFrom policytree double_robust_scores policy_tree
+#' #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_alert_danger cli_h3
+#' #'   cli_progress_bar cli_progress_update cli_progress_done
+#' #' @importFrom purrr map walk
+#' #' @name margot_causal_forest_parallel
+#' #' @keywords internal
+#' margot_causal_forest_parallel  <- function(data, outcome_vars, covariates, W, weights,
+#'                                            grf_defaults    = list(),
+#'                                            save_data       = FALSE,
+#'                                            compute_rate    = TRUE,
+#'                                            top_n_vars      = 15,
+#'                                            save_models     = TRUE,
+#'                                            train_proportion= 0.5,
+#'                                            qini_split      = TRUE,
+#'                                            train_prop      = 0.5,
+#'                                            qini_train_prop = NULL,  # deprecated
+#'                                            compute_conditional_means = TRUE,
+#'                                            n_cores         = future::availableCores() - 1,
+#'                                            verbose         = TRUE,
+#'                                            qini_treatment_cost = 1,
+#'                                            seed            = 12345) {
+#'   # dimension checks
+#'   n_rows <- nrow(covariates)
+#'   if (verbose) cli::cli_alert_info(paste0("rows in covariates: ", n_rows))
+#'   if (length(W) != n_rows) stop("length of W does not match covariates rows")
+#'   if (!is.null(weights) && length(weights) != n_rows) stop("length of weights does not match")
+#'   for (o in outcome_vars) {
+#'     if (nrow(as.matrix(data[[o]])) != n_rows)
+#'       stop("rows in outcome ", o, " do not match covariates")
+#'   }
+#'   # handle deprecated qini_train_prop parameter
+#'   if (!is.null(qini_train_prop)) {
+#'     if (verbose) cli::cli_alert_warning("Parameter 'qini_train_prop' is deprecated. Please use 'train_prop' instead.")
+#'     train_prop <- qini_train_prop
+#'   }
+#'
+#'   if (qini_split && (train_prop <= 0 || train_prop >= 1))
+#'     stop("train_prop must be in (0,1)")
+#'   if (verbose) cli::cli_alert_info("starting margot_causal_forest()")
+#'
+#'   # complete cases
+#'   not_missing <- which(complete.cases(covariates))
+#'   if (length(not_missing)==0) stop("no complete cases in covariates")
+#'   if (verbose) cli::cli_alert_info(paste0("complete cases: ", length(not_missing)))
+#'
+#'   # parallel setup
+#'   future::plan(future::multisession, workers = n_cores)
+#'   if (verbose) cli::cli_alert_info(paste0("using ", n_cores, " workers"))
+#'
+#'   # parallel loop with CLI logging
+#'   results_list <- future.apply::future_lapply(outcome_vars, function(outcome) {
+#'     t0 <- Sys.time()
+#'     cli::cli_alert_info(paste0("↗ starting ", outcome))
+#'
+#'     res <- tryCatch({
+#'       # fit forest
+#'       model <- do.call(grf::causal_forest,
+#'                        c(list(X = covariates,
+#'                               Y = as.matrix(data[[outcome]]),
+#'                               W = W,
+#'                               sample.weights = weights),
+#'                          grf_defaults))
+#'       # core metrics
+#'       ate    <- round(grf::average_treatment_effect(model),3)
+#'       calib  <- round(grf::test_calibration(model),3)
+#'       table  <- margot::margot_model_evalue(model, scale="RD",
+#'                                             new_name=outcome, subset=NULL)
+#'       tau    <- predict(model)$predictions
+#'
+#'       # RATE
+#'       if (compute_rate) {
+#'         rate     <- grf::rank_average_treatment_effect(model, tau)
+#'         attr(rate, "target") <- "AUTOC"
+#'         rate_qini<- grf::rank_average_treatment_effect(model, tau, target="QINI")
+#'         attr(rate_qini, "target") <- "QINI"
+#'       }
+#'       # conditional means
+#'       cond_means <- NULL
+#'       if (compute_conditional_means) {
+#'         if (requireNamespace("policytree", quietly = TRUE)) {
+#'           tryCatch({
+#'             cond_means <- policytree::conditional_means(model)
+#'             if (verbose) cli::cli_alert_info("computed conditional means for {outcome}")
+#'           }, error = function(e) {
+#'             if (verbose) cli::cli_alert_warning("could not compute conditional means for {outcome}: {e$message}")
+#'           })
+#'         }
+#'       }
+#'       # DR scores
+#'       dr   <- policytree::double_robust_scores(model)
+#'       # var importance + BLP
+#'       vi     <- grf::variable_importance(model)
+#'       ord    <- order(vi, decreasing=TRUE)
+#'       top    <- if(is.null(colnames(covariates))) ord[1:top_n_vars] else colnames(covariates)[ord[1:top_n_vars]]
+#'       blp    <- grf::best_linear_projection(model, covariates[,top,drop=FALSE], target.sample="all")
+#'       # policy trees using top vars
+#'       # depth-1 using top vars (not all covariates)
+#'       pt1    <- policytree::policy_tree(covariates[not_missing,top,drop=FALSE],
+#'                                       dr[not_missing,], depth=1)
+#'       # depth-2 + plot data
+#'       set.seed(seed + as.integer(factor(outcome)))
+#'       train_idx <- sample(not_missing, floor(train_proportion*length(not_missing)))
+#'       pt2    <- policytree::policy_tree(covariates[train_idx,top,drop=FALSE], dr[train_idx,], depth=2)
+#'       test_idx<- setdiff(not_missing, train_idx)
+#'       plotd  <- list(X_test=covariates[test_idx,top,drop=FALSE],
+#'                      X_test_full=covariates[test_idx,,drop=FALSE],
+#'                      predictions=predict(pt2, covariates[test_idx,top,drop=FALSE]))
+#'       # Qini
+#'       if (!qini_split) {
+#'         qres <- compute_qini_curves_binary(tau, as.matrix(data[[outcome]]), W,
+#'                                           weights = weights, seed = seed, verbose = verbose, treatment_cost = qini_treatment_cost)
+#'       } else {
+#'         set.seed(seed + as.integer(factor(outcome)) + 1000)  # different seed component for qini
+#'         qtr <- sample(not_missing, floor(train_prop*length(not_missing)))
+#'         qte <- setdiff(not_missing, qtr)
+#'         qmod<- do.call(grf::causal_forest,
+#'                        c(list(X=covariates[qtr,,drop=FALSE],
+#'                               Y=as.matrix(data[[outcome]])[qtr],
+#'                               W=W[qtr], sample.weights=weights[qtr]),
+#'                          grf_defaults))
+#'         qtau<- predict(qmod, newdata=covariates[qte,,drop=FALSE])$predictions
+#'         qres <- compute_qini_curves_binary(qtau, as.matrix(data[[outcome]])[qte], W[qte],
+#'                                           weights = if(!is.null(weights)) weights[qte] else NULL,
+#'                                           seed = 42, verbose = verbose, treatment_cost = qini_treatment_cost)
+#'       }
+#'       qdata   <- if(!is.null(qres)) qres$qini_data else NULL
+#'       qobjs   <- if(!is.null(qres)) qres$qini_objects else NULL
+#'
+#'       out <- list(
+#'         ate=ate, test_calibration=calib, custom_table=table, tau_hat=tau,
+#'         conditional_means=cond_means,
+#'         rate_result=if(compute_rate) rate else NULL,
+#'         rate_qini=if(compute_rate) rate_qini else NULL,
+#'         dr_scores=dr, policy_tree_depth_1=pt1,
+#'         top_vars=top, blp_top=blp,
+#'         policy_tree_depth_2=pt2, plot_data=plotd,
+#'         qini_data=qdata, qini_objects=qobjs,
+#'         model=if(save_models) model else NULL
+#'       )
+#'       dt <- difftime(Sys.time(), t0, units="secs")
+#'       cli::cli_alert_success(sprintf("✓ worker finished %s (%.1f s)", outcome, as.numeric(dt)))
+#'       out
+#'     }, error=function(e) {
+#'       cli::cli_alert_danger(paste0("✗ error in ", outcome, ": ", e$message))
+#'       NULL
+#'     })
+#'     res
+#'   })
+#'   names(results_list) <- paste0("model_", outcome_vars)
+#'
+#'   # drop failures
+#'   ok <- !vapply(results_list, is.null, logical(1))
+#'   if (!all(ok)) {
+#'     cli::cli_alert_warning(paste(sum(!ok), "outcome(s) failed and were dropped"))
+#'     results_list <- results_list[ok]
+#'     outcome_vars <- outcome_vars[ok]
+#'   }
+#'
+#'   # combine
+#'   combined_table <- do.call(rbind, lapply(results_list, `[[`, "custom_table"))
+#'   rownames(combined_table) <- gsub("model_", "", names(results_list))
+#'   if (verbose) cli::cli_alert_success("all model runs completed")
+#'
+#'   output <- list(
+#'     results=results_list,
+#'     combined_table=combined_table,
+#'     outcome_vars=outcome_vars,
+#'     not_missing=not_missing
+#'   )
+#'   if (save_data) {
+#'     output$data<-data; output$covariates<-covariates; output$weights<-weights; output$W<-W
+#'     if (verbose) cli::cli_alert_info("raw data/covariates/weights/W saved")
+#'   }
+#'   if (save_models) {
+#'     output$full_models<-purrr::map(results_list, `[[`, "model")
+#'     if (verbose) cli::cli_alert_info("full model objects saved")
+#'   }
+#'   if (verbose) cli::cli_alert_success("margot_causal_forest() completed")
+#'   output
+#' }

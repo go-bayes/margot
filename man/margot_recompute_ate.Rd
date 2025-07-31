@@ -11,7 +11,8 @@ margot_recompute_ate(
   scale = c("RD", "RR"),
   delta = 1,
   sd = 1,
-  subset = NULL
+  subset = NULL,
+  respect_train_test_split = TRUE
 )
 }
 \arguments{
@@ -40,6 +41,10 @@ Default is 1.}
 Default is 1.}
 
 \item{subset}{Optional logical vector for subsetting the data. Default is NULL.}
+
+\item{respect_train_test_split}{Logical. If TRUE and the original analysis used 
+use_train_test_split=TRUE, computes treatment effects on the test set only for
+consistency with policy evaluation. Default is TRUE.}
 }
 \value{
 A list with the same structure as the original causal forest output, but with:

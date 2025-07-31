@@ -24,6 +24,9 @@
 #' @param sd The standard deviation of the outcome for RD scale E-value calculations.
 #'   Default is 1.
 #' @param subset Optional logical vector for subsetting the data. Default is NULL.
+#' @param respect_train_test_split Logical. If TRUE and the original analysis used 
+#'   use_train_test_split=TRUE, computes treatment effects on the test set only for
+#'   consistency with policy evaluation. Default is TRUE.
 #'
 #' @return A list with the same structure as the original causal forest output, but with:
 #'   \itemize{
@@ -74,7 +77,8 @@ margot_recompute_ate <- function(
     scale = c("RD", "RR"),
     delta = 1,
     sd = 1,
-    subset = NULL
+    subset = NULL,
+    respect_train_test_split = TRUE
 ) {
   cli::cli_h1("Margot Recompute ATE")
   
@@ -131,13 +135,23 @@ margot_recompute_ate <- function(
       next
     }
     
+    # check for split_info and determine subset to use
+    effective_subset <- subset
+    if (respect_train_test_split && !is.null(results[[model_name]]$split_info)) {
+      split_info <- results[[model_name]]$split_info
+      if (split_info$use_train_test_split && !is.null(split_info$test_indices)) {
+        cli::cli_alert_info("Using test set indices from original train/test split")
+        effective_subset <- split_info$test_indices
+      }
+    }
+    
     # recompute ATE with new target_sample
-    if (!is.null(subset)) {
+    if (!is.null(effective_subset)) {
       ate_new <- grf::average_treatment_effect(
         model, 
         target.sample = target_sample,
         method = method,
-        subset = subset
+        subset = effective_subset
       )
     } else {
       ate_new <- grf::average_treatment_effect(
@@ -189,6 +203,21 @@ margot_recompute_ate <- function(
     # update the custom table in results
     new_output$results[[model_name]]$custom_table <- new_table
     new_tables[[outcome_name]] <- new_table
+    
+    # preserve split_info if it exists
+    if (!is.null(results[[model_name]]$split_info)) {
+      new_output$results[[model_name]]$split_info <- results[[model_name]]$split_info
+      # update the appropriate results based on whether test indices were used
+      if (respect_train_test_split && results[[model_name]]$split_info$use_train_test_split) {
+        # main results already use test set, so no need to update them
+        # but we should update the all_data results in split_info
+        if (is.null(effective_subset)) {
+          # if no subset was used, we computed on all data
+          new_output$results[[model_name]]$split_info$ate_all_data <- round(ate_new, 3)
+          new_output$results[[model_name]]$split_info$custom_table_all_data <- new_table
+        }
+      }
+    }
   }
   
   # rebuild combined table

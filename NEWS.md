@@ -1,3 +1,73 @@
+# [2025-07-31] margot 2.0.218
+
+### Major Improvements
+- **Reimplemented QINI curves following GRF best practices**:
+  - New `margot_qini_alternative()` function uses simplified GRF methodology
+  - Single baseline method: `target.with.covariates = FALSE` (no-priority assignment)
+  - Removed complex baseline options in favor of standard approach
+  - Added `diff_gain_summaries` computation for backward compatibility
+  - Created `margot_qini()` wrapper function for seamless integration
+  - Default spend levels now 0.1 only (simplified from 0.1, 0.4)
+  - Fixed "no gain data found for curve ate" warnings
+  - Full compatibility with `margot_interpret_qini()` and `margot_interpret_heterogeneity()`
+  - Works seamlessly with `margot_flip_forests()` architecture
+  - **Fixed DR scores consistency**: QINI curves now use doubly-robust scores from evaluation forest fitted on test data
+    - Ensures QINI endpoints match ATE estimates when using same test data
+    - Addresses discrepancy between QINI curve termination values and reported ATE
+    - Following GRF advice: "use the same doubly-robust scores throughout"
+  - **Improved robustness**: Added error handling for edge cases where baseline QINI computation fails
+    - Gracefully handles empty paths or computation failures
+    - Provides informative warnings when models cannot be processed
+    - Continues processing remaining models instead of failing completely
+
+### Bug Fixes
+- **Fixed QINI implementation to use existing data structure**:
+  - No longer requires `full_models` which was often empty
+  - Works with standard `results` structure from `margot_causal_forest()`
+  - Properly handles train/test splits when `use_train_test_split = TRUE`
+- **Updated default baseline_method to "auto" in plotting functions**:
+  - Changed `margot_plot_qini()` and `margot_plot_qini_batch()` default from "maq_no_covariates" to "auto"
+  - Ensures consistency with `margot_plot_qini_simple()` and new QINI implementation
+  - Both methods use the same GRF standard approach with `target.with.covariates = FALSE`
+
+# [2025-07-30] margot 1.0.217
+
+### New Features
+- **Added optional train/test split for consistent out-of-sample evaluation**:
+  - New `use_train_test_split` parameter in `margot_causal_forest()` (default FALSE for backward compatibility)
+  - When TRUE, ALL reported results (ATE, E-values, combined_table) are computed on the TEST SET
+  - Main causal forest still trained on all data (following GRF best practices for honest forests)
+  - Policy trees and QINI use the same consistent train/test split
+  - All-data results stored in `split_info` for reference when needed
+  - Updated `margot_recompute_ate()` with `respect_train_test_split` parameter
+  - Ensures consistent evaluation: when you choose train/test split, all results respect that decision
+
+### Bug Fixes
+- **Fixed QINI seed bug**: QINI curves now use the user-provided seed parameter instead of hardcoded seed 42
+  - Ensures reproducibility across all components
+  - Default seed remains 12345 if not specified
+
+# [2025-07-30] margot 1.0.216
+
+### Improvements
+- **Simplified interpretation output for log-transformed outcomes**:
+  - Removed multiplicative percentage language from all interpretation functions
+  - Confidence intervals now displayed in original scale units (dollars, minutes, etc.)
+  - Cleaner format: "$463 average increase (95% CI: $137 to $883)" instead of "44% multiplicative increase (~$463 average increase; 95% CI: 13% to 84%)"
+  - Updated both `margot_interpret_marginal()` and `margot_interpret_policy_tree()` functions
+  - Makes output more consistent and easier to interpret
+
+# [2025-07-30] margot 1.0.215
+
+### Improvements
+- **Updated `margot_interpret_marginal()` with correct back-transformation logic**:
+  - Now properly handles log+z transformed variables with multiplicative interpretation
+  - Displays percentage changes and absolute changes for log-transformed outcomes
+  - Includes unit detection for monetary and time variables with appropriate formatting
+  - Matches the sophisticated back-transformation logic from `margot_interpret_policy_tree()`
+  - Example: "47% multiplicative increase (~$490 average increase; 95% CI: 32% to 64%)"
+  - Ensures consistency across all margot interpretation functions
+
 # [2025-07-30] margot 1.0.214
 
 ### Improvements

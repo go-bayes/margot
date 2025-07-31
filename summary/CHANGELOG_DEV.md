@@ -1,5 +1,61 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.217 (2025-07-30)
+
+### New Features
+
+- **Added optional train/test split for consistent out-of-sample evaluation**:
+  - New `use_train_test_split` parameter in `margot_causal_forest()` (default FALSE)
+  - When TRUE, ALL results are computed on test set for consistency:
+    - Main forest still trained on all data (GRF best practice for honesty)
+    - ATE, E-values, and combined_table computed on TEST SET
+    - Policy trees and QINI use same train/test split
+    - All-data results available in `split_info` for reference
+  - Updated `margot_recompute_ate()` to respect train/test splits
+  - Zero breaking changes - default behavior unchanged
+
+## margot 1.0.216 (2025-07-30)
+
+### Improvements
+
+- **Simplified interpretation output for log-transformed outcomes**:
+  - Removed multiplicative percentage language from all interpretation functions per user request
+  - Confidence intervals now displayed in original scale units (dollars, minutes, etc.) instead of percentages
+  - New format: "$463 average increase (95% CI: $137 to $883)"
+  - Old format: "44% multiplicative increase (~$463 average increase; 95% CI: 13% to 84%)"
+  - Updated both `margot_interpret_marginal()` and `margot_interpret_policy_tree()` functions
+  - Removed percentage-based prose from weighted average treatment effect descriptions
+  - Makes output more consistent, cleaner, and easier to interpret
+
+### Technical Details
+
+- Modified formatting logic in `margot_interpret_marginal()` to calculate CI bounds in original units
+- Updated `compute_leaf_means()` to remove percentage multiplicative effects
+- Updated `compute_conditional_means_interpretation()` to simplify prose output
+- Generic outcomes without known units now show standardized effects only
+
+## margot 1.0.215 (2025-07-30)
+
+### Improvements
+
+- **Updated `margot_interpret_marginal()` with correct back-transformation logic**:
+  - Now properly handles log+z transformed variables with multiplicative interpretation
+  - Displays percentage changes and absolute changes for log-transformed outcomes
+  - Includes unit detection for monetary and time variables with appropriate formatting
+  - Matches the sophisticated back-transformation logic from `margot_interpret_policy_tree()`
+  - Example output: "47% multiplicative increase (~$490 average increase; 95% CI: 32% to 64%)"
+  - Ensures consistency across all margot interpretation functions
+  - Uses `format_minimal_decimals()` for cleaner numeric display
+  - Properly handles confidence intervals for multiplicative effects
+
+### Technical Details
+
+- The function now checks for `original_var_name` column to detect log transformations
+- Uses `get_outcome_transformation_info()` to retrieve transformation parameters
+- Calculates effects on log scale and converts to multiplicative changes
+- Detects variable units using `detect_variable_units()` for appropriate formatting
+- Falls back to simple format when transformation info is not available
+
 ## margot 1.0.214 (2025-07-30)
 
 ### Improvements

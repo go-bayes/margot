@@ -13,7 +13,7 @@ treatment effects in different subpopulations."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.214</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.218</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,8 @@ treatment effects in different subpopulations.</p>
 <span>  scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RD"</span>, <span class="st">"RR"</span><span class="op">)</span>,</span>
 <span>  delta <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  subset <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  subset <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  respect_train_test_split <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,6 +100,12 @@ Default is 1.</p></dd>
 
 <dt id="arg-subset">subset<a class="anchor" aria-label="anchor" href="#arg-subset"></a></dt>
 <dd><p>Optional logical vector for subsetting the data. Default is NULL.</p></dd>
+
+
+<dt id="arg-respect-train-test-split">respect_train_test_split<a class="anchor" aria-label="anchor" href="#arg-respect-train-test-split"></a></dt>
+<dd><p>Logical. If TRUE and the original analysis used
+use_train_test_split=TRUE, computes treatment effects on the test set only for
+consistency with policy evaluation. Default is TRUE.</p></dd>
 
 </dl></div>
     <div class="section level2">

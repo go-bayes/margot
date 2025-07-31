@@ -6,6 +6,7 @@
 <url><loc>https://go-bayes.github.io/margot/LICENSE-data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/LICENSE.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/PLANNING.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/QINI_IMPLEMENTATION_SUMMARY.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/REFACTOR_PLAN.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/margot-simulation.html</loc></url>
@@ -227,6 +228,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_qini_cost_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_qini_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_qini_direct.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_qini_simple.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_rate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_rate_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_response_timeline.html</loc></url>
@@ -248,6 +250,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_prop_missing.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_propensity_model_and_plots.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_qini.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_qini_alternative.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_qini_cost_sensitivity.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_qini_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_qini_diagnostic.html</loc></url>

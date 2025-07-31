@@ -514,44 +514,39 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
                   
                   # format based on unit type
                   if (units_info$type == "monetary") {
-                    original_scale_overall <- sprintf(" (%.0f%% average multiplicative %s, ~%s%s average %s)", 
-                                                    abs(pct_change_overall), change_word,
+                    original_scale_overall <- sprintf(" (%s%s average %s)", 
                                                     units_info$symbol, format_minimal_decimals(abs(abs_change_overall)),
                                                     change_word)
+                  } else if (units_info$type == "time") {
+                    original_scale_overall <- sprintf(" (%s %s average %s)", 
+                                                    format_minimal_decimals(abs(abs_change_overall)),
+                                                    units_info$name,
+                                                    change_word)
                   } else {
-                    original_scale_overall <- sprintf(" (%.0f%% average %s)", 
-                                                    abs(pct_change_overall), change_word)
+                    # for other types, don't show original scale
+                    original_scale_overall <- ""
                   }
                 }
               }
               
-              # Adjust wording based on transformation type
-              if (!is.null(transform_info) && transform_info$has_z && transform_info$has_log) {
-                # For log outcomes, emphasize percentage change
-                text <- paste0(text,
-                  "Weighting the leaf-level CATEs by subgroup size yields an average treatment effect of ",
-                  format_minimal_decimals(weighted_avg_effect), original_scale_overall, ". ",
-                  "In other words, if the recommended treatment decisions were implemented for every unit ",
-                  "in the test set, the mean outcome would be expected to ",
-                  ifelse(pct_change_overall > 0, "increase", "decrease"), " by approximately ",
-                  sprintf("%.0f%%", abs(pct_change_overall)),
-                  " relative to universal ", 
-                  tolower(act_labels[1]), ".\n"
-                )
-              } else {
-                # For non-log outcomes, use original wording
-                text <- paste0(text,
-                  "Weighting the leaf-level CATEs by subgroup size yields an average treatment effect of ",
-                  format_minimal_decimals(weighted_avg_effect), original_scale_overall, ". ",
-                  "In other words, if the recommended treatment decisions were implemented for every unit ",
-                  "in the test set, the mean outcome would be expected to ",
-                  ifelse(weighted_avg_effect > 0, "rise", "fall"), " by roughly ",
-                  format_minimal_decimals(abs(weighted_avg_effect)), " units",
-                  ifelse(nchar(original_scale_overall) > 0, " on the standardized scale", ""),
-                  " relative to universal ", 
-                  tolower(act_labels[1]), ".\n"
-                )
+              # Unified wording for all transformation types
+              text <- paste0(text,
+                "Weighting the leaf-level CATEs by subgroup size yields an average treatment effect of ",
+                format_minimal_decimals(weighted_avg_effect)
+              )
+              
+              # Add original scale if available
+              if (nchar(original_scale_overall) > 0) {
+                text <- paste0(text, original_scale_overall)
               }
+              
+              text <- paste0(text, 
+                ". In other words, if the recommended treatment decisions were implemented for every unit ",
+                "in the test set, the mean outcome would be expected to ",
+                ifelse(weighted_avg_effect > 0, "increase", "decrease"),
+                " relative to universal ", 
+                tolower(act_labels[1]), ".\n"
+              )
             }
           } else {
             text <- paste0(text, 
@@ -601,13 +596,17 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
                   
                   # format based on unit type
                   if (units_info$type == "monetary") {
-                    original_scale_overall <- sprintf(" (%.0f%% average multiplicative %s, ~%s%s average %s)", 
-                                                    abs(pct_change_overall), change_word,
+                    original_scale_overall <- sprintf(" (%s%s average %s)", 
                                                     units_info$symbol, format_minimal_decimals(abs(abs_change_overall)),
                                                     change_word)
+                  } else if (units_info$type == "time") {
+                    original_scale_overall <- sprintf(" (%s %s average %s)", 
+                                                    format_minimal_decimals(abs(abs_change_overall)),
+                                                    units_info$name,
+                                                    change_word)
                   } else {
-                    original_scale_overall <- sprintf(" (%.0f%% average %s)", 
-                                                    abs(pct_change_overall), change_word)
+                    # for other types, don't show original scale
+                    original_scale_overall <- ""
                   }
                 }
               }
@@ -743,20 +742,17 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
           abs_pct_change <- abs(pct_change)
           
           if (units_info$type == "monetary") {
-            original_scale_text <- sprintf(" (%.0f%% multiplicative %s, ~%s%s average %s)",
-                                         abs_pct_change, change_word,
+            original_scale_text <- sprintf(" (%s%s average %s)",
                                          units_info$symbol, format_minimal_decimals(abs(abs_change)),
                                          change_word)
           } else if (units_info$type == "time") {
-            original_scale_text <- sprintf(" (%.0f%% multiplicative %s, ~%s %s average %s)",
-                                         abs_pct_change, change_word,
+            original_scale_text <- sprintf(" (%s %s average %s)",
                                          format_minimal_decimals(abs(abs_change)),
                                          units_info$name,
                                          change_word)
           } else {
-            # generic format for other types
-            original_scale_text <- sprintf(" (%.1fx multiplicative effect)",
-                                         ratio)
+            # generic format for other types - just show standardized effect
+            original_scale_text <- ""
           }
         }
       }

@@ -9,7 +9,7 @@ plots for each model using the margot package."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.214</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.218</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,7 @@ plots for each model using the margot package.</p>
 <span>  horizontal_line <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  grid_step <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ylim <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  baseline_method <span class="op">=</span> <span class="st">"maq_no_covariates"</span>,</span>
+<span>  baseline_method <span class="op">=</span> <span class="st">"auto"</span>,</span>
 <span>  cate_color <span class="op">=</span> <span class="st">"#d8a739"</span>,</span>
 <span>  ate_color <span class="op">=</span> <span class="st">"#4d4d4d"</span>,</span>
 <span>  scale <span class="op">=</span> <span class="st">"average"</span>,</span>
@@ -144,8 +144,8 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.</p></dd
 
 
 <dt id="arg-baseline-method">baseline_method<a class="anchor" aria-label="anchor" href="#arg-baseline-method"></a></dt>
-<dd><p>Method for generating baseline: "maq_no_covariates" (default),
-"auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().</p></dd>
+<dd><p>Method for generating baseline: "auto" (default),
+"maq_no_covariates", "simple", "maq_only", or "none". See details in margot_generate_qini_data().</p></dd>
 
 
 <dt id="arg-cate-color">cate_color<a class="anchor" aria-label="anchor" href="#arg-cate-color"></a></dt>

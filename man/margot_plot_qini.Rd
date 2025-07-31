@@ -23,7 +23,7 @@ margot_plot_qini(
   return_data = FALSE,
   ylim = NULL,
   fixed_ylim = FALSE,
-  baseline_method = "maq_no_covariates",
+  baseline_method = "auto",
   cate_color = "#d8a739",
   ate_color = "#4d4d4d",
   scale = "average",
@@ -78,8 +78,8 @@ lower, upper, curve.}
 \item{fixed_ylim}{Logical; if TRUE and ylim is NULL, uses the actual data range with padding
 for consistent y-axis scaling across plots. Default is FALSE.}
 
-\item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
-"auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
+\item{baseline_method}{Method for generating baseline: "auto" (default), 
+"maq_no_covariates", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
 
 \item{cate_color}{Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).}
 

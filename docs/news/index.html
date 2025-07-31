@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.214</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.218</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,109 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.0.218" id="id_2025-07-31-margot-20218">[2025-07-31] margot 2.0.218<a class="anchor" aria-label="anchor" href="#id_2025-07-31-margot-20218"></a></h2>
+<div class="section level4">
+<h4 id="major-improvements-2-0-218">Major Improvements<a class="anchor" aria-label="anchor" href="#major-improvements-2-0-218"></a></h4>
+<ul><li>
+<strong>Reimplemented QINI curves following GRF best practices</strong>:
+<ul><li>New <code><a href="../reference/margot_qini_alternative.html">margot_qini_alternative()</a></code> function uses simplified GRF methodology</li>
+<li>Single baseline method: <code>target.with.covariates = FALSE</code> (no-priority assignment)</li>
+<li>Removed complex baseline options in favor of standard approach</li>
+<li>Added <code>diff_gain_summaries</code> computation for backward compatibility</li>
+<li>Created <code><a href="../reference/margot_qini.html">margot_qini()</a></code> wrapper function for seamless integration</li>
+<li>Default spend levels now 0.1 only (simplified from 0.1, 0.4)</li>
+<li>Fixed “no gain data found for curve ate” warnings</li>
+<li>Full compatibility with <code><a href="../reference/margot_interpret_qini.html">margot_interpret_qini()</a></code> and <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code>
+</li>
+<li>Works seamlessly with <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> architecture</li>
+<li>
+<strong>Fixed DR scores consistency</strong>: QINI curves now use doubly-robust scores from evaluation forest fitted on test data
+<ul><li>Ensures QINI endpoints match ATE estimates when using same test data</li>
+<li>Addresses discrepancy between QINI curve termination values and reported ATE</li>
+<li>Following GRF advice: “use the same doubly-robust scores throughout”</li>
+</ul></li>
+<li>
+<strong>Improved robustness</strong>: Added error handling for edge cases where baseline QINI computation fails
+<ul><li>Gracefully handles empty paths or computation failures</li>
+<li>Provides informative warnings when models cannot be processed</li>
+<li>Continues processing remaining models instead of failing completely</li>
+</ul></li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-2-0-218">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-0-218"></a></h4>
+<ul><li>
+<strong>Fixed QINI implementation to use existing data structure</strong>:
+<ul><li>No longer requires <code>full_models</code> which was often empty</li>
+<li>Works with standard <code>results</code> structure from <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code>
+</li>
+<li>Properly handles train/test splits when <code>use_train_test_split = TRUE</code>
+</li>
+</ul></li>
+<li>
+<strong>Updated default baseline_method to “auto” in plotting functions</strong>:
+<ul><li>Changed <code><a href="../reference/margot_plot_qini.html">margot_plot_qini()</a></code> and <code><a href="../reference/margot_plot_qini_batch.html">margot_plot_qini_batch()</a></code> default from “maq_no_covariates” to “auto”</li>
+<li>Ensures consistency with <code><a href="../reference/margot_plot_qini_simple.html">margot_plot_qini_simple()</a></code> and new QINI implementation</li>
+<li>Both methods use the same GRF standard approach with <code>target.with.covariates = FALSE</code>
+</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.217" id="id_2025-07-30-margot-10217">[2025-07-30] margot 1.0.217<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10217"></a></h2>
+<div class="section level4">
+<h4 id="new-features-1-0-217">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-217"></a></h4>
+<ul><li>
+<strong>Added optional train/test split for consistent out-of-sample evaluation</strong>:
+<ul><li>New <code>use_train_test_split</code> parameter in <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> (default FALSE for backward compatibility)</li>
+<li>When TRUE, ALL reported results (ATE, E-values, combined_table) are computed on the TEST SET</li>
+<li>Main causal forest still trained on all data (following GRF best practices for honest forests)</li>
+<li>Policy trees and QINI use the same consistent train/test split</li>
+<li>All-data results stored in <code>split_info</code> for reference when needed</li>
+<li>Updated <code><a href="../reference/margot_recompute_ate.html">margot_recompute_ate()</a></code> with <code>respect_train_test_split</code> parameter</li>
+<li>Ensures consistent evaluation: when you choose train/test split, all results respect that decision</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-217">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-217"></a></h4>
+<ul><li>
+<strong>Fixed QINI seed bug</strong>: QINI curves now use the user-provided seed parameter instead of hardcoded seed 42
+<ul><li>Ensures reproducibility across all components</li>
+<li>Default seed remains 12345 if not specified</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.216" id="id_2025-07-30-margot-10216">[2025-07-30] margot 1.0.216<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10216"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-216">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-216"></a></h4>
+<ul><li>
+<strong>Simplified interpretation output for log-transformed outcomes</strong>:
+<ul><li>Removed multiplicative percentage language from all interpretation functions</li>
+<li>Confidence intervals now displayed in original scale units (dollars, minutes, etc.)</li>
+<li>Cleaner format: “$463 average increase (95% CI: $137 to $883)” instead of “44% multiplicative increase (~$463 average increase; 95% CI: 13% to 84%)”</li>
+<li>Updated both <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> and <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> functions</li>
+<li>Makes output more consistent and easier to interpret</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.215" id="id_2025-07-30-margot-10215">[2025-07-30] margot 1.0.215<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10215"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-215">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-215"></a></h4>
+<ul><li>
+<strong>Updated <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> with correct back-transformation logic</strong>:
+<ul><li>Now properly handles log+z transformed variables with multiplicative interpretation</li>
+<li>Displays percentage changes and absolute changes for log-transformed outcomes</li>
+<li>Includes unit detection for monetary and time variables with appropriate formatting</li>
+<li>Matches the sophisticated back-transformation logic from <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code>
+</li>
+<li>Example: “47% multiplicative increase (~$490 average increase; 95% CI: 32% to 64%)”</li>
+<li>Ensures consistency across all margot interpretation functions</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.214" id="id_2025-07-30-margot-10214">[2025-07-30] margot 1.0.214<a class="anchor" aria-label="anchor" href="#id_2025-07-30-margot-10214"></a></h2>
 <div class="section level4">
 <h4 id="improvements-1-0-214">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-214"></a></h4>
@@ -42,7 +145,7 @@
 <div class="section level4">
 <h4 id="documentation-fixes-1-0-214">Documentation Fixes<a class="anchor" aria-label="anchor" href="#documentation-fixes-1-0-214"></a></h4>
 <ul><li>
-<strong>Fixed all documentation build warnings</strong>: Rewrote roxygen2 documentation for problematic functions to eliminate all warnings. Package now builds cleanly.</li>
+<strong>Fixed all documentation build warnings</strong>: Claude code very smartly rewrote roxygen2 documentation for problematic functions to eliminate all warnings. Package now builds cleanly.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -1879,7 +1982,7 @@
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.40" id="id_2025-05-13-margot-1040">[2025-05-13] margot 1.0.40<a class="anchor" aria-label="anchor" href="#id_2025-05-13-margot-1040"></a></h2>
-<ul><li>exported <code><a href="../reference/margot_causal_forest_parallel.html">margot_causal_forest_parallel()</a></code>
+<ul><li>exported <code>margot_causal_forest_parallel()</code>
 </li>
 </ul></div>
     <div class="section level2">

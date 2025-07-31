@@ -22,7 +22,8 @@ margot_causal_forest(
   compute_conditional_means = TRUE,
   verbose = TRUE,
   qini_treatment_cost = 1,
-  seed = 12345
+  seed = 12345,
+  use_train_test_split = FALSE
 )
 }
 \arguments{
@@ -41,7 +42,7 @@ margot_causal_forest(
 \item{save_data}{Logical indicating whether to save data, covariates, and weights. Default is FALSE.}
 
 \item{compute_rate}{Logical indicating whether to compute RATE for each model. Default is TRUE.
-Note: Direct computation of RATE, QINI, and policy trees within this function may be 
+Note: Direct computation of RATE, QINI, and policy trees within this function may be
 deprecated in future versions. Use margot_rate(), margot_qini(), and margot_policy_tree() instead.}
 
 \item{top_n_vars}{Integer specifying the number of top variables to use for additional computations. Default is 15.}
@@ -67,8 +68,15 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
 Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
 higher values (e.g., 5) represent expensive treatments creating shallower curves.}
 
-\item{seed}{Integer. Random seed for reproducibility of train/test splits for policy trees 
+\item{seed}{Integer. Random seed for reproducibility of train/test splits for policy trees
 and QINI evaluation. Default is 12345.}
+
+\item{use_train_test_split}{Logical. If TRUE, uses a consistent train/test split where:
+- The main causal forest is trained on all data (following GRF best practices for honesty)
+- All reported results (ATE, E-values, combined_table) are computed on the TEST SET
+- Policy trees and QINI also use the same train/test split
+- All-data results are stored in split_info for reference
+Default is FALSE for backward compatibility.}
 }
 \value{
 A list containing:

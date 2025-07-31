@@ -490,22 +490,116 @@ margot_interpret_marginal <- function(
   bullets <- df_f %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
+      # check if variable was log-transformed
+      was_log_transformed = if ("original_var_name" %in% names(.)) {
+        grepl("_log_", original_var_name)
+      } else {
+        FALSE
+      },
+      
+      # format standardized scale label
       lab = glue::glue(
-        "{round(.data[[effect_col]], 3)}(",
-        "{round(`2.5 %`, 3)},",
-        "{round(`97.5 %`, 3)})"
+        "{format_minimal_decimals(.data[[effect_col]])}(",
+        "{format_minimal_decimals(`2.5 %`)},",
+        "{format_minimal_decimals(`97.5 %`)})"
       ),
+      
+      # format original scale label with proper interpretation
       lab_orig = if (paste0(effect_col, "_original") %in% names(df)) {
-        glue::glue(
-          "{round(.data[[paste0(effect_col, '_original')]], 3)} {unit}(",
-          "{round(.data[[paste0('2.5 %_original')]], 3)},",
-          "{round(.data[[paste0('97.5 %_original')]], 3)})"
-        )
+        if (was_log_transformed && type == "RD") {
+          # for log-transformed outcomes on difference scale, use multiplicative interpretation
+          # calculate percentage change from standardized effect
+          if ("original_var_name" %in% names(.)) {
+            transform_info <- get_outcome_transformation_info(original_var_name, original_df)
+            if (!is.null(transform_info) && transform_info$has_z && transform_info$has_log) {
+              # effect on log scale
+              delta_log <- .data[[effect_col]] * transform_info$log_sd
+              ratio <- exp(delta_log)
+              pct_change <- (ratio - 1) * 100
+              
+              # confidence intervals
+              delta_log_lower <- .data[["2.5 %"]] * transform_info$log_sd
+              delta_log_upper <- .data[["97.5 %"]] * transform_info$log_sd
+              ratio_lower <- exp(delta_log_lower)
+              ratio_upper <- exp(delta_log_upper)
+              pct_lower <- (ratio_lower - 1) * 100
+              pct_upper <- (ratio_upper - 1) * 100
+              
+              # detect units
+              units_info <- detect_variable_units(transform_info$original_var)
+              
+              # calculate absolute change based on population mean
+              log_mean_to_use <- if (!is.null(transform_info$use_display_mean) && transform_info$use_display_mean) {
+                transform_info$log_mean_display
+              } else {
+                transform_info$log_mean
+              }
+              pop_mean_orig <- exp(log_mean_to_use) - transform_info$log_offset
+              
+              if (!is.null(units_info$scale_factor)) {
+                pop_mean_orig <- pop_mean_orig * units_info$scale_factor
+              }
+              
+              abs_change <- pop_mean_orig * (ratio - 1)
+              abs_change_lower <- pop_mean_orig * (ratio_lower - 1)
+              abs_change_upper <- pop_mean_orig * (ratio_upper - 1)
+              
+              # format based on unit type
+              change_word <- if (pct_change >= 0) "increase" else "decrease"
+              
+              if (units_info$type == "monetary") {
+                # format with confidence intervals in original units
+                glue::glue(
+                  "{units_info$symbol}{format_minimal_decimals(abs(abs_change))} average {change_word} ",
+                  "(95% CI: {units_info$symbol}{format_minimal_decimals(abs(abs_change_lower))} to ",
+                  "{units_info$symbol}{format_minimal_decimals(abs(abs_change_upper))})"
+                )
+              } else if (units_info$type == "time") {
+                # format with confidence intervals in original units
+                glue::glue(
+                  "{format_minimal_decimals(abs(abs_change))} {units_info$name} average {change_word} ",
+                  "(95% CI: {format_minimal_decimals(abs(abs_change_lower))} to ",
+                  "{format_minimal_decimals(abs(abs_change_upper))} {units_info$name})"
+                )
+              } else {
+                # generic format - use standardized effect since units are unknown
+                glue::glue(
+                  "{format_minimal_decimals(.data[[effect_col]])} standardized effect ",
+                  "(95% CI: {format_minimal_decimals(.data[['2.5 %']])} to ",
+                  "{format_minimal_decimals(.data[['97.5 %']])})"
+                )
+              }
+            } else {
+              # fallback if transformation info not available
+              glue::glue(
+                "{format_minimal_decimals(.data[[paste0(effect_col, '_original')]])} {unit}(",
+                "{format_minimal_decimals(.data[[paste0('2.5 %_original')]])},",
+                "{format_minimal_decimals(.data[[paste0('97.5 %_original')]])})"
+              )
+            }
+          } else {
+            # no original_var_name available, use simple format
+            glue::glue(
+              "{format_minimal_decimals(.data[[paste0(effect_col, '_original')]])} {unit}(",
+              "{format_minimal_decimals(.data[[paste0('2.5 %_original')]])},",
+              "{format_minimal_decimals(.data[[paste0('97.5 %_original')]])})"
+            )
+          }
+        } else {
+          # not log-transformed or RR scale, use simple format
+          unit_text <- if (!is.na(unit) && unit != "") paste0(" ", unit) else ""
+          glue::glue(
+            "{format_minimal_decimals(.data[[paste0(effect_col, '_original')]])}{unit_text}(",
+            "{format_minimal_decimals(.data[[paste0('2.5 %_original')]])},",
+            "{format_minimal_decimals(.data[[paste0('97.5 %_original')]])})"
+          )
+        }
       } else {
         NA_character_
       },
+      
       text = glue::glue(
-        "- {outcome}: {lab}{if (!is.na(lab_orig)) paste0('; on the original scale, ', lab_orig, '.') else ''} E‑value bound = {E_Val_bound}"
+        "- {outcome}: {lab}{if (!is.na(lab_orig)) paste0('; on the original scale, ', lab_orig, '.') else ''} E‑value bound = {format_minimal_decimals(E_Val_bound, 2)}"
       )
     ) %>%
     dplyr::pull(text)
