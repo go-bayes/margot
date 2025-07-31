@@ -324,12 +324,13 @@ margot_inspect_qini <- function(model_results,
 #'   deprecated in future versions. Use margot_rate(), margot_qini(), and margot_policy_tree() instead.
 #' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 15.
 #' @param save_models Logical indicating whether to save the full GRF model objects. Default is TRUE.
-#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
-#'   training policy trees. Default is 0.5.
+#' @param train_proportion Numeric value between 0 and 1 indicating the proportion of data to use for
+#'   training set. Used for policy trees, QINI evaluation (when qini_split=TRUE), and all train/test splits
+#'   when use_train_test_split=TRUE. Default is 0.5.
 #' @param qini_split Logical indicating whether to do a separate train/test split exclusively for the Qini
 #'   calculation. Default is TRUE (i.e., Qini is computed out-of-sample).
-#' @param train_prop Proportion of data to use for the training set when qini_split=TRUE. Default is 0.5.
-#' @param qini_train_prop Deprecated. Use train_prop instead. If provided, will override train_prop with a warning.
+#' @param train_prop Deprecated. Use train_proportion instead.
+#' @param qini_train_prop Deprecated. Use train_proportion instead.
 #' @param compute_conditional_means Logical indicating whether to compute conditional means using
 #'   \code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.
 #' @param verbose Logical indicating whether to display detailed messages during execution. Default is TRUE.
@@ -338,12 +339,12 @@ margot_inspect_qini <- function(model_results,
 #'   higher values (e.g., 5) represent expensive treatments creating shallower curves.
 #' @param seed Integer. Random seed for reproducibility of train/test splits for policy trees
 #'   and QINI evaluation. Default is 12345.
-#' @param use_train_test_split Logical. If TRUE, uses a consistent train/test split where:
+#' @param use_train_test_split Logical. If TRUE (default), uses a consistent train/test split where:
 #'   - The main causal forest is trained on all data (following GRF best practices for honesty)
 #'   - All reported results (ATE, E-values, combined_table) are computed on the TEST SET
 #'   - Policy trees and QINI also use the same train/test split
 #'   - All-data results are stored in split_info for reference
-#'   Default is FALSE for backward compatibility.
+#'   If FALSE, the main forest uses all data for estimation and policy trees/QINI get their own splits.
 #'
 #' @return A list containing:
 #'   * `results` - per-outcome diagnostics and objects
@@ -365,13 +366,13 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  save_models = TRUE,
                                  train_proportion = 0.5,
                                  qini_split = TRUE,
-                                 train_prop = 0.5,
-                                 qini_train_prop = NULL,  # deprecated parameter
+                                 train_prop = NULL,  # deprecated - use train_proportion
+                                 qini_train_prop = NULL,  # deprecated - use train_proportion
                                  compute_conditional_means = TRUE,
                                  verbose = TRUE,
                                  qini_treatment_cost = 1,
                                  seed = 12345,
-                                 use_train_test_split = FALSE) {
+                                 use_train_test_split = TRUE) {  # changed default to TRUE
 
   # value:
   #   • plot_data – a list with elements
@@ -396,16 +397,26 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       stop("number of rows in outcome ", outcome, " does not match number of rows in covariates")
     }
   }
-  # handle deprecated qini_train_prop parameter
+  # handle deprecated parameters
+  if (!is.null(train_prop)) {
+    cli::cli_alert_warning("Parameter 'train_prop' is deprecated. Please use 'train_proportion' instead.")
+    # only override if train_proportion hasn't been explicitly set
+    if (missing(train_proportion)) {
+      train_proportion <- train_prop
+    }
+  }
+  
   if (!is.null(qini_train_prop)) {
-    cli::cli_alert_warning("Parameter 'qini_train_prop' is deprecated. Please use 'train_prop' instead.")
-    train_prop <- qini_train_prop
+    cli::cli_alert_warning("Parameter 'qini_train_prop' is deprecated. Please use 'train_proportion' instead.")
+    # only override if train_proportion hasn't been explicitly set
+    if (missing(train_proportion)) {
+      train_proportion <- qini_train_prop
+    }
   }
 
-  if (qini_split) {
-    if (train_prop <= 0 || train_prop >= 1) {
-      stop("train_prop must be between 0 and 1 (exclusive) when qini_split is TRUE")
-    }
+  # validate train_proportion
+  if (train_proportion <= 0 || train_proportion >= 1) {
+    stop("train_proportion must be between 0 and 1 (exclusive)")
   }
 
   if (verbose) cli::cli_alert_info("starting margot_causal_forest function")
@@ -627,9 +638,9 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         } else {
           # create new split specific to QINI
           qini_n <- length(not_missing)
-          qini_train_size <- floor(train_prop * qini_n)  # use train_prop
+          qini_train_size <- floor(train_proportion * qini_n)  # use train_proportion
           if (qini_train_size < 1 || qini_train_size >= qini_n) {
-            stop("invalid qini_train_prop: results in empty train or test set for qini evaluation")
+            stop("invalid train_proportion: results in empty train or test set for qini evaluation")
           }
           set.seed(seed + as.integer(factor(model_name)) + 1000)  # different seed component for qini
           qini_train_idxs <- sample(not_missing, qini_train_size)

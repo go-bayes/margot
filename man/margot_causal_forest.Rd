@@ -17,13 +17,13 @@ margot_causal_forest(
   save_models = TRUE,
   train_proportion = 0.5,
   qini_split = TRUE,
-  train_prop = 0.5,
+  train_prop = NULL,
   qini_train_prop = NULL,
   compute_conditional_means = TRUE,
   verbose = TRUE,
   qini_treatment_cost = 1,
   seed = 12345,
-  use_train_test_split = FALSE
+  use_train_test_split = TRUE
 )
 }
 \arguments{
@@ -49,15 +49,16 @@ deprecated in future versions. Use margot_rate(), margot_qini(), and margot_poli
 
 \item{save_models}{Logical indicating whether to save the full GRF model objects. Default is TRUE.}
 
-\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
-training policy trees. Default is 0.5.}
+\item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of data to use for
+training set. Used for policy trees, QINI evaluation (when qini_split=TRUE), and all train/test splits
+when use_train_test_split=TRUE. Default is 0.5.}
 
 \item{qini_split}{Logical indicating whether to do a separate train/test split exclusively for the Qini
 calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
 
-\item{train_prop}{Proportion of data to use for the training set when qini_split=TRUE. Default is 0.5.}
+\item{train_prop}{Deprecated. Use train_proportion instead.}
 
-\item{qini_train_prop}{Deprecated. Use train_prop instead. If provided, will override train_prop with a warning.}
+\item{qini_train_prop}{Deprecated. Use train_proportion instead.}
 
 \item{compute_conditional_means}{Logical indicating whether to compute conditional means using
 \code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.}
@@ -71,12 +72,12 @@ higher values (e.g., 5) represent expensive treatments creating shallower curves
 \item{seed}{Integer. Random seed for reproducibility of train/test splits for policy trees
 and QINI evaluation. Default is 12345.}
 
-\item{use_train_test_split}{Logical. If TRUE, uses a consistent train/test split where:
+\item{use_train_test_split}{Logical. If TRUE (default), uses a consistent train/test split where:
 - The main causal forest is trained on all data (following GRF best practices for honesty)
 - All reported results (ATE, E-values, combined_table) are computed on the TEST SET
 - Policy trees and QINI also use the same train/test split
 - All-data results are stored in split_info for reference
-Default is FALSE for backward compatibility.}
+If FALSE, the main forest uses all data for estimation and policy trees/QINI get their own splits.}
 }
 \value{
 A list containing:

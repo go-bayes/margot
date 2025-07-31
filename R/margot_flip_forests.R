@@ -133,7 +133,9 @@ margot_flip_forests <- function(model_results,
                                 n_cores        = future::availableCores() - 1,
                                 verbose        = TRUE,
                                 remove_original = TRUE,
-                                qini_treatment_cost = 1) {
+                                qini_treatment_cost = 1,
+                                train_proportion = NULL,
+                                use_train_test_split = NULL) {
   # validate inputs
   if (!is.list(model_results) || !("results" %in% names(model_results))) {
     stop("model_results must be a list containing a 'results' element (output from margot_causal_forest)")
@@ -294,7 +296,27 @@ margot_flip_forests <- function(model_results,
   compute_rate <- !is.null(first_model$rate_result)
   save_models <- !is.null(model_results$full_models)
   top_n_vars <- length(first_model$top_vars) %||% 15
-  train_proportion <- 0.7  # default
+  
+  # extract train_proportion from original results if not provided
+  if (is.null(train_proportion)) {
+    # try to get from split_info
+    if (!is.null(first_model$split_info$train_proportion)) {
+      train_proportion <- first_model$split_info$train_proportion
+    } else {
+      train_proportion <- 0.5  # default matching margot_causal_forest
+    }
+  }
+  
+  # extract use_train_test_split if not provided
+  if (is.null(use_train_test_split)) {
+    # check if original used train/test split
+    if (!is.null(first_model$split_info$use_train_test_split)) {
+      use_train_test_split <- first_model$split_info$use_train_test_split
+    } else {
+      use_train_test_split <- TRUE  # default matching margot_causal_forest
+    }
+  }
+  
   compute_conditional_means <- !is.null(first_model$conditional_means)
 
   # check if we should use parallel processing
@@ -317,7 +339,8 @@ margot_flip_forests <- function(model_results,
       compute_conditional_means = compute_conditional_means,
       n_cores = n_cores,
       verbose = verbose,
-      qini_treatment_cost = qini_treatment_cost
+      qini_treatment_cost = qini_treatment_cost,
+      use_train_test_split = use_train_test_split
     )
   } else {
     # call sequential version
@@ -335,7 +358,8 @@ margot_flip_forests <- function(model_results,
       train_proportion = train_proportion,
       compute_conditional_means = compute_conditional_means,
       verbose = verbose,
-      qini_treatment_cost = qini_treatment_cost
+      qini_treatment_cost = qini_treatment_cost,
+      use_train_test_split = use_train_test_split
     )
   }
 

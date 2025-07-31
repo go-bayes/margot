@@ -54,7 +54,9 @@ and recomputing the entire causal forest from scratch. New models are appended w
 <span>  n_cores <span class="op">=</span> <span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">availableCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  remove_original <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  qini_treatment_cost <span class="op">=</span> <span class="fl">1</span></span>
+<span>  qini_treatment_cost <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  train_proportion <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  use_train_test_split <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 

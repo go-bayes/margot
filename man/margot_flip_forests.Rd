@@ -13,7 +13,9 @@ margot_flip_forests(
   n_cores = future::availableCores() - 1,
   verbose = TRUE,
   remove_original = TRUE,
-  qini_treatment_cost = 1
+  qini_treatment_cost = 1,
+  train_proportion = NULL,
+  use_train_test_split = NULL
 )
 }
 \arguments{

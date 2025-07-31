@@ -61,13 +61,13 @@ held-out data, thereby avoiding in-sample optimism in the Qini plots.</p>
 <span>  save_models <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  train_proportion <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  qini_split <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  train_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  train_prop <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  qini_train_prop <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  compute_conditional_means <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  qini_treatment_cost <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
-<span>  use_train_test_split <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  use_train_test_split <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -118,8 +118,9 @@ deprecated in future versions. Use margot_rate(), margot_qini(), and margot_poli
 
 
 <dt id="arg-train-proportion">train_proportion<a class="anchor" aria-label="anchor" href="#arg-train-proportion"></a></dt>
-<dd><p>Numeric value between 0 and 1 indicating the proportion of non-missing data to use for
-training policy trees. Default is 0.5.</p></dd>
+<dd><p>Numeric value between 0 and 1 indicating the proportion of data to use for
+training set. Used for policy trees, QINI evaluation (when qini_split=TRUE), and all train/test splits
+when use_train_test_split=TRUE. Default is 0.5.</p></dd>
 
 
 <dt id="arg-qini-split">qini_split<a class="anchor" aria-label="anchor" href="#arg-qini-split"></a></dt>
@@ -128,11 +129,11 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).</p></dd>
 
 
 <dt id="arg-train-prop">train_prop<a class="anchor" aria-label="anchor" href="#arg-train-prop"></a></dt>
-<dd><p>Proportion of data to use for the training set when qini_split=TRUE. Default is 0.5.</p></dd>
+<dd><p>Deprecated. Use train_proportion instead.</p></dd>
 
 
 <dt id="arg-qini-train-prop">qini_train_prop<a class="anchor" aria-label="anchor" href="#arg-qini-train-prop"></a></dt>
-<dd><p>Deprecated. Use train_prop instead. If provided, will override train_prop with a warning.</p></dd>
+<dd><p>Deprecated. Use train_proportion instead.</p></dd>
 
 
 <dt id="arg-compute-conditional-means">compute_conditional_means<a class="anchor" aria-label="anchor" href="#arg-compute-conditional-means"></a></dt>
@@ -156,12 +157,12 @@ and QINI evaluation. Default is 12345.</p></dd>
 
 
 <dt id="arg-use-train-test-split">use_train_test_split<a class="anchor" aria-label="anchor" href="#arg-use-train-test-split"></a></dt>
-<dd><p>Logical. If TRUE, uses a consistent train/test split where:
+<dd><p>Logical. If TRUE (default), uses a consistent train/test split where:
 - The main causal forest is trained on all data (following GRF best practices for honesty)
 - All reported results (ATE, E-values, combined_table) are computed on the TEST SET
 - Policy trees and QINI also use the same train/test split
 - All-data results are stored in split_info for reference
-Default is FALSE for backward compatibility.</p></dd>
+If FALSE, the main forest uses all data for estimation and policy trees/QINI get their own splits.</p></dd>
 
 </dl></div>
     <div class="section level2">
