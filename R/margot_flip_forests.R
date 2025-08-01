@@ -530,8 +530,20 @@ margot_lighten_for_flip <- function(cf_out, models) {
   )
 
   # depth‑2 on top vars -----------------------------------------------------
-  train_size <- floor(0.5 * length(not_missing))
-  train_idx  <- sample(not_missing, train_size)
+  # check if original model used train/test split
+  if (!is.null(mr$split_info) && !is.null(mr$split_info$train_indices)) {
+    # use the same train/test split as the original model
+    train_idx <- mr$split_info$train_indices
+    test_idx <- mr$split_info$test_indices
+    if (verbose) cli::cli_alert_info("using original train/test split for policy trees")
+  } else {
+    # create new split (matching original behavior when no split info)
+    train_proportion <- mr$split_info$train_proportion %||% 0.5
+    train_size <- floor(train_proportion * length(not_missing))
+    train_idx  <- sample(not_missing, train_size)
+    test_idx   <- setdiff(not_missing, train_idx)
+    if (verbose) cli::cli_alert_info("creating new train/test split for policy trees")
+  }
 
   mr$policy_tree_depth_2 <- policytree::policy_tree(
     covariates[train_idx, mr$top_vars, drop = FALSE],
@@ -539,7 +551,6 @@ margot_lighten_for_flip <- function(cf_out, models) {
     depth = 2
   )
 
-  test_idx   <- setdiff(not_missing, train_idx)
   mr$plot_data <- list(
     X_test       = covariates[test_idx, mr$top_vars, drop = FALSE],
     X_test_full  = covariates[test_idx, ,            drop = FALSE],

@@ -9,7 +9,7 @@ margot_policy(
   policy_tree_args = list(),
   decision_tree_args = list(),
   max_depth = 2L,
-  spend_levels = 0.1,
+  spend_levels = c(0.1, 0.4),
   label_mapping = NULL,
   original_df = NULL,
   model_names = NULL,

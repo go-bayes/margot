@@ -20,7 +20,7 @@ margot_qini <- function(margot_result,
                        seed = 12345,
                        n_bootstrap = 200,
                        verbose = TRUE,
-                       spend_levels = 0.1,
+                       spend_levels = c(0.1, 0.4),
                        label_mapping = NULL) {
   
   # apply new qini computation

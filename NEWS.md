@@ -1,3 +1,21 @@
+# [2025-07-31] margot 1.0.222
+
+### Improvements
+- **Updated default spend_levels to c(0.1, 0.4)**:
+  - Changed from single value 0.1 to c(0.1, 0.4) for better QINI analysis
+  - Affected functions: margot_plot_qini(), margot_plot_qini_batch(), margot_interpret_heterogeneity(), 
+    margot_policy(), margot_qini(), margot_qini_alternative(), margot_interpret_qini()
+  - Provides visibility at both 10% and 40% treatment allocation levels
+
+# [2025-07-31] margot 1.0.221
+
+### Improvements
+- **Ensured consistent train/test split usage across functions**:
+  - `margot_interpret_heterogeneity`: Already uses test indices from qini_metadata via margot_rate()
+  - `margot_qini_alternative`: Properly uses split_info$test_indices when available
+  - `margot_flip_forests`: Now uses same train/test splits as original models for policy trees
+  - `margot_policy_tree_stability`: Creates new splits by design for stability assessment
+
 # [2025-07-31] margot 1.0.220
 
 ### Improvements
@@ -5,6 +23,7 @@
   - Added `seed` parameter for reproducible QINI generation (default 12345)
   - Now properly passes `train_proportion` and `use_train_test_split` to maintain consistency
   - Seed default matches `compute_qini_improved()` for consistent results
+  - Fixed policy tree recalculation to use same train/test splits as original models
 
 # [2025-07-31] margot 1.0.219
 

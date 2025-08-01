@@ -11,7 +11,7 @@ margot_qini(
   seed = 12345,
   n_bootstrap = 200,
   verbose = TRUE,
-  spend_levels = 0.1,
+  spend_levels = c(0.1, 0.4),
   label_mapping = NULL
 )
 
@@ -21,7 +21,7 @@ margot_qini(
   seed = 12345,
   n_bootstrap = 200,
   verbose = TRUE,
-  spend_levels = 0.1,
+  spend_levels = c(0.1, 0.4),
   label_mapping = NULL
 )
 
@@ -31,7 +31,7 @@ margot_qini(
   seed = 12345,
   n_bootstrap = 200,
   verbose = TRUE,
-  spend_levels = 0.1,
+  spend_levels = c(0.1, 0.4),
   label_mapping = NULL
 )
 }

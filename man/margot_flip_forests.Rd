@@ -15,7 +15,8 @@ margot_flip_forests(
   remove_original = TRUE,
   qini_treatment_cost = 1,
   train_proportion = NULL,
-  use_train_test_split = NULL
+  use_train_test_split = NULL,
+  seed = 12345
 )
 }
 \arguments{
@@ -43,6 +44,9 @@ suffix remain; when FALSE, both original and flipped models are kept.}
 \item{qini_treatment_cost}{Scalar treatment cost per unit for QINI calculations. Default 1.
 Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
 higher values (e.g., 5) represent expensive treatments creating shallower curves.}
+
+\item{seed}{Random seed for reproducible QINI curve generation. Default 12345 matches the
+default seed used in compute_qini_improved for consistency.}
 }
 \value{
 A modified copy of model_results with flipped models (with "_r" suffix). If remove_original

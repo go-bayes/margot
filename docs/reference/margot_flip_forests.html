@@ -11,7 +11,7 @@ and recomputing the entire causal forest from scratch. New models are appended w
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.219</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.222</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,8 @@ and recomputing the entire causal forest from scratch. New models are appended w
 <span>  remove_original <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  qini_treatment_cost <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  train_proportion <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  use_train_test_split <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  use_train_test_split <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">12345</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -105,6 +106,11 @@ suffix remain; when FALSE, both original and flipped models are kept.</p></dd>
 <dd><p>Scalar treatment cost per unit for QINI calculations. Default 1.
 Lower values (e.g., 0.2) represent cheap treatments creating steeper QINI curves;
 higher values (e.g., 5) represent expensive treatments creating shallower curves.</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Random seed for reproducible QINI curve generation. Default 12345 matches the
+default seed used in compute_qini_improved for consistency.</p></dd>
 
 </dl></div>
     <div class="section level2">

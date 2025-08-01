@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.219</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.222</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,48 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.222" id="id_2025-07-31-margot-10222">[2025-07-31] margot 1.0.222<a class="anchor" aria-label="anchor" href="#id_2025-07-31-margot-10222"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-222">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-222"></a></h4>
+<ul><li>
+<strong>Updated default spend_levels to c(0.1, 0.4)</strong>:
+<ul><li>Changed from single value 0.1 to c(0.1, 0.4) for better QINI analysis</li>
+<li>Affected functions: margot_plot_qini(), margot_plot_qini_batch(), margot_interpret_heterogeneity(), margot_policy(), margot_qini(), margot_qini_alternative(), margot_interpret_qini()</li>
+<li>Provides visibility at both 10% and 40% treatment allocation levels</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.221" id="id_2025-07-31-margot-10221">[2025-07-31] margot 1.0.221<a class="anchor" aria-label="anchor" href="#id_2025-07-31-margot-10221"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-221">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-221"></a></h4>
+<ul><li>
+<strong>Ensured consistent train/test split usage across functions</strong>:
+<ul><li>
+<code>margot_interpret_heterogeneity</code>: Already uses test indices from qini_metadata via margot_rate()</li>
+<li>
+<code>margot_qini_alternative</code>: Properly uses split_info$test_indices when available</li>
+<li>
+<code>margot_flip_forests</code>: Now uses same train/test splits as original models for policy trees</li>
+<li>
+<code>margot_policy_tree_stability</code>: Creates new splits by design for stability assessment</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.220" id="id_2025-07-31-margot-10220">[2025-07-31] margot 1.0.220<a class="anchor" aria-label="anchor" href="#id_2025-07-31-margot-10220"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-220">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-220"></a></h4>
+<ul><li>
+<strong>Enhanced <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> parameters</strong>:
+<ul><li>Added <code>seed</code> parameter for reproducible QINI generation (default 12345)</li>
+<li>Now properly passes <code>train_proportion</code> and <code>use_train_test_split</code> to maintain consistency</li>
+<li>Seed default matches <code><a href="../reference/compute_qini_improved.html">compute_qini_improved()</a></code> for consistent results</li>
+<li>Fixed policy tree recalculation to use same train/test splits as original models</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.219" id="id_2025-07-31-margot-10219">[2025-07-31] margot 1.0.219<a class="anchor" aria-label="anchor" href="#id_2025-07-31-margot-10219"></a></h2>
 <div class="section level4">

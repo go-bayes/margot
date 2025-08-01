@@ -10,7 +10,7 @@ margot_interpret_qini(
   alpha = 0.05,
   decimal_places = 2,
   model_names = NULL,
-  spend_levels = 0.1,
+  spend_levels = c(0.1, 0.4),
   include_intro = TRUE,
   baseline_method = NULL,
   scale = "average"

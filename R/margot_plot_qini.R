@@ -115,7 +115,7 @@
 #' @export
 margot_plot_qini <- function(mc_result, outcome_var,
                              label_mapping = NULL,
-                             spend_levels = 0.1,
+                             spend_levels = c(0.1, 0.4),
                              show_spend_lines = TRUE,
                              spend_line_color = "red",
                              spend_line_alpha = 0.5,

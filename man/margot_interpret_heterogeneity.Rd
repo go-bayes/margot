@@ -7,7 +7,7 @@
 margot_interpret_heterogeneity(
   models = NULL,
   model_names = NULL,
-  spend_levels = 0.1,
+  spend_levels = c(0.1, 0.4),
   require_any_positive = TRUE,
   exclude_negative_any = TRUE,
   require_omnibus = FALSE,
