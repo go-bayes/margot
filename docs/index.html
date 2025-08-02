@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.227</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.228</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,7 @@
 </blockquote>
 <p><strong>MARG</strong>inal <strong>O</strong>bservational <strong>T</strong>reatment-effects.<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;The logo is a &lt;em&gt;Single World Intervention Template&lt;/em&gt; (SWIT). We use a SWIT to generate &lt;em&gt;Single World Intervention Graphs&lt;/em&gt; (SWIGs) – causal diagrams for which identification assumptions can be read separately for each treatment (regime) to be compared. The name &lt;code&gt;margot&lt;/code&gt; reflects the contents and aims of this package; it is also the name of my daughter, Margot.&lt;/p&gt;"><sup>1</sup></a></p>
 <p>Causal inference requires <strong>balance</strong> across the treatments to be compared. In observational studies, such balance is not guaranteed; quantifying causality therefore requires careful, multi-step workflows.</p>
-<p>The goal of <code>margot</code> is to enhance the accessibility of these workflows for causal inference. Its primary audience includes psychological scientists, although it may benefit other social scientists.</p>
+<p>The goal of <code>margot</code> is to enhance understanding of causality in observational research.</p>
 <p>The package offers functions for:</p>
 <ul>
 <li>evaluating causal assumptions</li>
@@ -67,7 +67,7 @@
 <li>reporting results</li>
 <li>performing sensitivity analyses</li>
 </ul>
-<p><code>margot</code> focuses on streamlining the estimation of (Marginal) Average Treatment Effects, but it also supports workflows for Conditional Average Treatment Effects and exploring Heterogeneous Treatment Effects, as well as Modified Treatment Policies.</p>
+<p><code>margot</code> focuses on streamlining the estimation of (Marginal) Average Treatment Effects (ATT, ATE), but it also supports workflows for Heterogeneous Treatment Effects (CATE) (estimated via <code>grf</code>), as well as Longtitudinal Modified Treatment Policies (estimated via <code>lmtp</code>). It has extensive graphical and reporting functions to ease burdens for understanding.</p>
 </div>
 
 

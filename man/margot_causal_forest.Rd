@@ -105,6 +105,7 @@ A list containing:
   * `not_missing` - indices of complete-case rows
   * (`data`, `covariates`, `weights`, `W`) when `save_data = TRUE`
   * `full_models` when `save_models = TRUE`
+  * `flip_info` when `flip_outcomes` is used - contains mapping and metadata for flipped outcomes
 }
 \description{
 This function runs multiple GRF causal forest models with enhanced features. In addition to estimating

@@ -201,6 +201,28 @@ margot_rate_cv <- function(model_results,
   # Determine which models to test
   if (is.null(model_names)) {
     model_names <- names(model_results$results)
+  } else {
+    # use helper to map model names (handles flipped outcomes)
+    available_models <- names(model_results$results)
+    name_mapping <- .map_model_names_with_flips(
+      requested_names = model_names,
+      available_names = available_models,
+      verbose = verbose
+    )
+    
+    if (length(name_mapping$mapped_names) == 0) {
+      stop(
+        "None of the specified model names were found in the results. Available models: ",
+        paste(available_models, collapse = ", ")
+      )
+    }
+    
+    if (length(name_mapping$missing_names) > 0 && verbose) {
+      cli::cli_alert_warning("Some requested models were not found: {name_mapping$missing_original}")
+    }
+    
+    # use the mapped names
+    model_names <- name_mapping$mapped_names
   }
 
   # Check if we have the necessary data
@@ -261,9 +283,15 @@ margot_rate_cv <- function(model_results,
 
     # Extract data for CV
     if (use_full_data && has_full_data) {
-      # Use full data
+      # Use full data - now that flipping happens before computation, this is straightforward
       outcome_var <- gsub("^model_", "", model_name)
-      Y <- as.matrix(model_results$data[[outcome_var]])
+      
+      if (outcome_var %in% names(model_results$data)) {
+        Y <- as.matrix(model_results$data[[outcome_var]])
+      } else {
+        stop(paste0("Cannot find outcome data for ", outcome_var, 
+                   ". Available columns: ", paste(names(model_results$data), collapse = ", ")))
+      }
       X <- model_results$covariates
       W <- model_results$W
       weights <- model_results$weights

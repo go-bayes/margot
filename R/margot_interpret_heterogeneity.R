@@ -100,31 +100,29 @@ margot_interpret_heterogeneity <- function(
 
   # filter models if model_names is specified
   if (!is.null(model_names) && !is.null(models)) {
-    # ensure model names have the "model_" prefix
-    model_names_prefixed <- ifelse(
-      grepl("^model_", model_names),
-      model_names,
-      paste0("model_", model_names)
-    )
-
-    # filter the models
+    # use helper to map model names (handles flipped outcomes)
     available_models <- names(models$results)
-    requested_models <- intersect(model_names_prefixed, available_models)
-
+    name_mapping <- .map_model_names_with_flips(
+      requested_names = model_names,
+      available_names = available_models,
+      verbose = verbose
+    )
+    
+    requested_models <- name_mapping$mapped_names
+    
     if (length(requested_models) == 0) {
       stop(
         "None of the specified model names were found in the results. Available models: ",
         paste(available_models, collapse = ", ")
       )
     }
-
-    if (length(requested_models) < length(model_names_prefixed)) {
-      missing_models <- setdiff(model_names_prefixed, available_models)
+    
+    if (length(name_mapping$missing_names) > 0) {
       if (verbose) {
-        cli::cli_alert_warning("Some requested models were not found: {missing_models}")
+        cli::cli_alert_warning("Some requested models were not found: {name_mapping$missing_original}")
       }
     }
-
+    
     # create filtered models object
     models_filtered <- models
     models_filtered$results <- models$results[requested_models]
@@ -132,6 +130,9 @@ margot_interpret_heterogeneity <- function(
       models_filtered$full_models <- models$full_models[intersect(requested_models, names(models$full_models))]
     }
     models <- models_filtered
+    
+    # update model_names to use the actual names (with _r suffix if flipped)
+    model_names <- requested_models
   }
 
   # filter pre-computed results if model_names is specified

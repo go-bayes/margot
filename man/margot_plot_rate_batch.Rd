@@ -13,7 +13,7 @@ margot_plot_rate_batch(
   use_title_case = TRUE,
   remove_underscores = TRUE,
   label_mapping = NULL,
-  compute_on_demand = FALSE,
+  compute_on_demand = TRUE,
   q = seq(0.1, 1, by = 0.1),
   policy = "treat_best",
   use_oob_predictions = TRUE,

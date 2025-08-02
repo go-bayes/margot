@@ -3,6 +3,8 @@
 #' This function processes a subset of models (or all models by default), creates RATE (Rank Average Treatment Effect)
 #' plots for each model using the margot package. Can plot either AUTOC or QINI RATE results.
 #'
+#' @importFrom cli cli_h1 cli_h2 cli_alert_info cli_alert_warning cli_alert_success cli_alert_danger
+#'
 #' @param models_binary A list of model results, where each element contains a 'rate_result' and/or 'rate_qini' component.
 #' @param model_names Optional character vector of model names to process. Default NULL (all models).
 #' @param target Character; either "AUTOC" (default) or "QINI". Determines which RATE result to plot.
@@ -32,7 +34,7 @@ margot_plot_rate_batch <- function(models_binary,
                                    use_title_case = TRUE,
                                    remove_underscores = TRUE,
                                    label_mapping = NULL,
-                                   compute_on_demand = FALSE,
+                                   compute_on_demand = TRUE,
                                    q = seq(0.1, 1, by = 0.1),
                                    policy = "treat_best",
                                    use_oob_predictions = TRUE,
@@ -58,11 +60,18 @@ margot_plot_rate_batch <- function(models_binary,
   # determine which models to process
   all_models <- names(models_binary$results)
   if (!is.null(model_names)) {
-    missing <- setdiff(model_names, all_models)
-    if (length(missing) > 0) {
-      cli::cli_alert_warning("Models not found: {paste(missing, collapse = ', ')}")
+    # use helper to map model names (handles flipped outcomes)
+    name_mapping <- .map_model_names_with_flips(
+      requested_names = model_names,
+      available_names = all_models,
+      verbose = TRUE
+    )
+    
+    selected_models <- name_mapping$mapped_names
+    
+    if (length(name_mapping$missing_names) > 0) {
+      cli::cli_alert_warning("Models not found: {paste(name_mapping$missing_original, collapse = ', ')}")
     }
-    selected_models <- intersect(model_names, all_models)
   } else {
     selected_models <- all_models
   }

@@ -8,6 +8,8 @@ margot_flip_forests(
   model_results,
   flip_outcomes,
   model_prefix = "model_",
+  flip_method = "zscore",
+  flip_scale_bounds = NULL,
   grf_defaults = NULL,
   parallel = FALSE,
   n_cores = future::availableCores() - 1,
@@ -25,6 +27,13 @@ margot_flip_forests(
 \item{flip_outcomes}{A character vector of outcome variable names for which models should be flipped.}
 
 \item{model_prefix}{A character string indicating the prefix used for model names in the results list. Default is "model_".}
+
+\item{flip_method}{Character string specifying default inversion method:
+- "zscore": Simple negation (default). Assumes data is already standardized.
+- "ordinal": Invert on ordinal scale using bounds.}
+
+\item{flip_scale_bounds}{Numeric vector of length 2 [min, max] or named list of bounds per outcome.
+Required when flip_method = "ordinal" unless bounds should be inferred from data.}
 
 \item{grf_defaults}{A list of parameters to pass to the GRF causal forest models. Default is NULL,
 which attempts to extract parameters from the original fitted models. Providing explicit values
@@ -53,9 +62,9 @@ A modified copy of model_results with flipped models (with "_r" suffix). If remo
         is TRUE (default), original models are removed; otherwise both versions are kept.
 }
 \description{
-Creates new models with reversed treatment effects by flipping the outcome variable
-and recomputing the entire causal forest from scratch. New models are appended with
-"_r" suffix to indicate reduced/reversed outcomes.
+This function is now a convenience wrapper around margot_causal_forest() with the
+flip_outcomes parameter. It allows flipping existing models by recomputing them
+with inverted outcomes.
 }
 \details{
 This function creates entirely new models by:

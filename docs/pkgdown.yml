@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   margot-simulation: margot-simulation.html
   margot-workflow: margot-workflow.html
-last_built: 2025-08-02T06:14Z
+last_built: 2025-08-02T12:51Z
 urls:
   reference: https://go-bayes.github.io/margot/reference
   article: https://go-bayes.github.io/margot/articles

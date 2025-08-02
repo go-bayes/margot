@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.227</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.228</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,45 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.228" id="id_2025-08-02-margot-10228">[2025-08-02] margot 1.0.228<a class="anchor" aria-label="anchor" href="#id_2025-08-02-margot-10228"></a></h2>
+<div class="section level4">
+<h4 id="major-improvements-1-0-228">Major Improvements<a class="anchor" aria-label="anchor" href="#major-improvements-1-0-228"></a></h4>
+<ul><li>
+<strong>Refactored outcome flipping to happen before computation</strong>:
+<ul><li>Moved flipping logic in <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> to preprocessing stage before the main loop</li>
+<li>Flipped outcomes are now consistently stored in the data with “_r” suffix</li>
+<li>Added <code>flip_info</code> metadata to output containing mapping and transformation details</li>
+<li>Simplified data extraction in downstream functions - no more special handling needed</li>
+<li>Ensures saved data is consistent with forest objects when <code>save_data = TRUE</code>
+</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-228">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-228"></a></h4>
+<ul><li>
+<strong>Fixed model name detection for flipped outcomes in heterogeneity functions</strong>:
+<ul><li>Added helper function <code>.map_model_names_with_flips()</code> to automatically detect and map flipped outcome names</li>
+<li>Updated <code><a href="../reference/margot_interpret_heterogeneity.html">margot_interpret_heterogeneity()</a></code> to handle model names with “_r” suffix (flipped outcomes)</li>
+<li>Updated <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> to handle model names with “_r” suffix and simplified Y data extraction</li>
+<li>Updated <code><a href="../reference/margot_plot_rate_batch.html">margot_plot_rate_batch()</a></code> to handle flipped outcome names and changed default <code>compute_on_demand = TRUE</code>
+</li>
+<li>Now correctly maps requested names like “t2_kessler_latent_anxiety_z” to “model_t2_kessler_latent_anxiety_z_r”</li>
+<li>Fixes issue where functions couldn’t find flipped models when using <code>model_names</code> parameter</li>
+<li>Provides informative messages when mapping flipped outcomes</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="enhancements-1-0-228">Enhancements<a class="anchor" aria-label="anchor" href="#enhancements-1-0-228"></a></h4>
+<ul><li>
+<strong>Updated <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> to support flip methods</strong>:
+<ul><li>Added <code>flip_method</code> and <code>flip_scale_bounds</code> parameters for consistency with <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code>
+</li>
+<li>Now uses <code><a href="../reference/margot_invert_measure.html">margot_invert_measure()</a></code> for flipping, supporting both zscore and ordinal methods</li>
+<li>Maintains backward compatibility with default zscore method</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.227" id="id_2025-08-02-margot-10227">[2025-08-02] margot 1.0.227<a class="anchor" aria-label="anchor" href="#id_2025-08-02-margot-10227"></a></h2>
 <div class="section level4">

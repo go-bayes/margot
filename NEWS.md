@@ -1,3 +1,29 @@
+# [2025-08-02] margot 1.0.228
+
+### Major Improvements
+- **Refactored outcome flipping to happen before computation**:
+  - Moved flipping logic in `margot_causal_forest()` to preprocessing stage before the main loop
+  - Flipped outcomes are now consistently stored in the data with "_r" suffix
+  - Added `flip_info` metadata to output containing mapping and transformation details
+  - Simplified data extraction in downstream functions - no more special handling needed
+  - Ensures saved data is consistent with forest objects when `save_data = TRUE`
+
+### Bug Fixes
+- **Fixed model name detection for flipped outcomes in heterogeneity functions**:
+  - Added helper function `.map_model_names_with_flips()` to automatically detect and map flipped outcome names
+  - Updated `margot_interpret_heterogeneity()` to handle model names with "_r" suffix (flipped outcomes)
+  - Updated `margot_rate_cv()` to handle model names with "_r" suffix and simplified Y data extraction
+  - Updated `margot_plot_rate_batch()` to handle flipped outcome names and changed default `compute_on_demand = TRUE`
+  - Now correctly maps requested names like "t2_kessler_latent_anxiety_z" to "model_t2_kessler_latent_anxiety_z_r"
+  - Fixes issue where functions couldn't find flipped models when using `model_names` parameter
+  - Provides informative messages when mapping flipped outcomes
+
+### Enhancements
+- **Updated `margot_flip_forests()` to support flip methods**:
+  - Added `flip_method` and `flip_scale_bounds` parameters for consistency with `margot_causal_forest()`
+  - Now uses `margot_invert_measure()` for flipping, supporting both zscore and ordinal methods
+  - Maintains backward compatibility with default zscore method
+
 # [2025-08-02] margot 1.0.227
 
 ### Bug Fixes

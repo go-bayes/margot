@@ -397,7 +397,6 @@ margot_inspect_qini <- function(model_results,
 #'   * `not_missing` - indices of complete-case rows
 #'   * (`data`, `covariates`, `weights`, `W`) when `save_data = TRUE`
 #'   * `full_models` when `save_models = TRUE`
-#'   * `flip_info` when `flip_outcomes` is used - contains mapping and metadata for flipped outcomes
 #'
 #' @importFrom grf causal_forest average_treatment_effect test_calibration rank_average_treatment_effect variable_importance best_linear_projection
 #' @importFrom policytree double_robust_scores policy_tree
@@ -497,61 +496,6 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
     }
   }
 
-  # --- apply flipping transformations before computation ---
-  flip_info <- NULL
-  if (!is.null(flip_spec) && length(flip_spec) > 0) {
-    if (verbose) cli::cli_alert_info("Applying outcome flipping transformations")
-    
-    # create a copy of data to avoid modifying the original
-    data_processed <- data
-    
-    # track flipping information
-    flip_info <- list()
-    
-    # apply flipping to each specified outcome
-    for (outcome in names(flip_spec)) {
-      spec <- flip_spec[[outcome]]
-      
-      # apply inversion
-      flipped_values <- margot_invert_measure(
-        x = data_processed[[outcome]],
-        method = spec$method,
-        scale_bounds = spec$scale_bounds
-      )
-      
-      # create new column name with _r suffix
-      flipped_name <- paste0(outcome, "_r")
-      data_processed[[flipped_name]] <- flipped_values
-      
-      # remove original column to avoid confusion
-      data_processed[[outcome]] <- NULL
-      
-      # store flip info
-      flip_info[[flipped_name]] <- list(
-        original_name = outcome,
-        method = spec$method,
-        scale_bounds = spec$scale_bounds
-      )
-      
-      if (verbose) {
-        original_mean <- mean(data[[outcome]], na.rm = TRUE)
-        flipped_mean <- mean(flipped_values, na.rm = TRUE)
-        cli::cli_alert_success("Flipped {outcome} -> {flipped_name} (mean: {round(original_mean, 3)} -> {round(flipped_mean, 3)})")
-      }
-    }
-    
-    # update outcome_vars to use flipped names
-    outcome_vars <- sapply(outcome_vars, function(v) {
-      if (v %in% names(flip_spec)) {
-        return(paste0(v, "_r"))
-      }
-      return(v)
-    })
-    
-    # use processed data
-    data <- data_processed
-  }
-
   # --- identify complete cases ---
   not_missing <- which(complete.cases(covariates))
   full <- seq_len(nrow(covariates))
@@ -609,7 +553,37 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
 
   for (outcome in outcome_vars) {
     model_name <- paste0("model_", outcome)
-    Y <- as.matrix(data[[outcome]])
+    Y_original <- as.matrix(data[[outcome]])
+
+    # check if this outcome should be flipped
+    if (!is.null(flip_spec) && outcome %in% names(flip_spec)) {
+      spec <- flip_spec[[outcome]]
+      if (verbose) cli::cli_alert_info("Flipping outcome '{outcome}' using {spec$method} method")
+
+      # apply inversion
+      Y <- margot_invert_measure(
+        x = Y_original,
+        method = spec$method,
+        scale_bounds = spec$scale_bounds
+      )
+
+      # report transformation details
+      if (verbose) {
+        original_mean <- mean(Y_original, na.rm = TRUE)
+        flipped_mean <- mean(Y, na.rm = TRUE)
+        cli::cli_alert_info("  Original mean: {round(original_mean, 3)}, Flipped mean: {round(flipped_mean, 3)}")
+
+        if (spec$method == "ordinal" && !is.null(spec$scale_bounds)) {
+          cli::cli_alert_info("  Scale bounds used: [{spec$scale_bounds[1]}, {spec$scale_bounds[2]}]")
+        }
+      }
+
+      # append _r suffix to indicate reversed/reduced outcome
+      outcome_suffix <- "_r"
+      model_name <- paste0(model_name, outcome_suffix)
+    } else {
+      Y <- Y_original
+    }
 
     tryCatch(
       {
@@ -941,12 +915,6 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
   if (save_models) {
     output$full_models <- full_models
     if (verbose) cli::cli_alert_info("full model objects saved in output")
-  }
-  
-  # add flip info if any outcomes were flipped
-  if (!is.null(flip_info)) {
-    output$flip_info <- flip_info
-    if (verbose) cli::cli_alert_info("flip information saved in output")
   }
 
   if (verbose) cli::cli_alert_success("margot_causal_forest function completed successfully \U0001F44D")

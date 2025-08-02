@@ -39,9 +39,7 @@ Causal inference requires **balance** across the treatments to be
 compared. In observational studies, such balance is not guaranteed;
 quantifying causality therefore requires careful, multi-step workflows.
 
-The goal of `margot` is to enhance the accessibility of these workflows
-for causal inference. Its primary audience includes psychological
-scientists, although it may benefit other social scientists.
+The goal of `margot` is to enhance understanding of causality in observational research.
 
 The package offers functions for:
 
@@ -51,9 +49,7 @@ The package offers functions for:
 - performing sensitivity analyses
 
 `margot` focuses on streamlining the estimation of (Marginal) Average
-Treatment Effects, but it also supports workflows for Conditional
-Average Treatment Effects and exploring Heterogeneous Treatment Effects,
-as well as Modified Treatment Policies.
+Treatment Effects (ATT, ATE), but it also supports workflows for Heterogeneous Treatment Effects (CATE) (estimated via `grf`), as well as Longitudinal Modified Treatment Policies (estimated via `lmtp`). It has extensive graphical and reporting functions to ease burdens for understanding. 
 
 [^1]: The logo is a *Single World Intervention Template* (SWIT). We use
     a SWIT to generate *Single World Intervention Graphs* (SWIGs) –
