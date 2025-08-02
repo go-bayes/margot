@@ -50,7 +50,7 @@
 #' cat(multi_results$interpretation)
 #' print(multi_results$transformed_table)
 #' }
-#'@importFrom cli cli_abort
+#' @importFrom cli cli_abort
 #' @export
 margot_plot_multi_arm <- function(model_table, contrast, original_df = NULL, options, label_mapping,
                                   save_output = FALSE, use_timestamp = FALSE,
@@ -107,4 +107,3 @@ margot_plot_multi_arm <- function(model_table, contrast, original_df = NULL, opt
 #   )
 # }
 #
-

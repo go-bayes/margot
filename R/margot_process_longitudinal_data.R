@@ -60,17 +60,23 @@ margot_process_longitudinal_data <- function(df_wide, ordinal_columns = NULL, co
     ) |>
     # handle factor columns separately
     dplyr::mutate(
-      dplyr::across(dplyr::where(is.factor) & dplyr::starts_with("t1_"),
-                    ~ if_else(t0_not_lost == 0, NA_character_, as.character(.)) |>
-                      factor(levels = levels(.), ordered = is.ordered(.))),
-      dplyr::across(dplyr::where(is.factor) & dplyr::starts_with("t2_"),
-                    ~ if_else(t0_not_lost == 0, NA_character_, as.character(.)) |>
-                      factor(levels = levels(.), ordered = is.ordered(.)))
+      dplyr::across(
+        dplyr::where(is.factor) & dplyr::starts_with("t1_"),
+        ~ if_else(t0_not_lost == 0, NA_character_, as.character(.)) |>
+          factor(levels = levels(.), ordered = is.ordered(.))
+      ),
+      dplyr::across(
+        dplyr::where(is.factor) & dplyr::starts_with("t2_"),
+        ~ if_else(t0_not_lost == 0, NA_character_, as.character(.)) |>
+          factor(levels = levels(.), ordered = is.ordered(.))
+      )
     ) |>
     dplyr::mutate(
-      dplyr::across(dplyr::where(is.factor) & dplyr::starts_with("t2_"),
-                    ~ if_else(t1_not_lost == 0, NA_character_, as.character(.)) |>
-                      factor(levels = levels(.), ordered = is.ordered(.)))
+      dplyr::across(
+        dplyr::where(is.factor) & dplyr::starts_with("t2_"),
+        ~ if_else(t1_not_lost == 0, NA_character_, as.character(.)) |>
+          factor(levels = levels(.), ordered = is.ordered(.))
+      )
     )
   cli::cli_alert_success("Handled non-factor and factor columns \U0001F44D")
 
@@ -108,11 +114,11 @@ margot_process_longitudinal_data <- function(df_wide, ordinal_columns = NULL, co
 
   cli::cli_h2("Step 5: Encoding ordinal columns")
   df_wide_encoded <- fastDummies::dummy_cols(df_wide_use,
-                                             select_columns = ordinal_columns,
-                                             remove_first_dummy = FALSE,
-                                             remove_most_frequent_dummy = FALSE,
-                                             remove_selected_columns = TRUE,
-                                             ignore_na = TRUE
+    select_columns = ordinal_columns,
+    remove_first_dummy = FALSE,
+    remove_most_frequent_dummy = FALSE,
+    remove_selected_columns = TRUE,
+    ignore_na = TRUE
   ) |>
     dplyr::rename_with(
       ~ paste0(., "_binary"),

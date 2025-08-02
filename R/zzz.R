@@ -8,4 +8,3 @@
   version <- utils::packageDescription(pkgname, fields = "Version")
   packageStartupMessage("margot ", version)
 }
-

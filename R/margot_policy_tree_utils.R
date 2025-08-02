@@ -1,23 +1,22 @@
 #' Internal wrapper for policy tree computation
-#' 
+#'
 #' @description
-#' Internal function that wraps either policytree::policy_tree() or 
+#' Internal function that wraps either policytree::policy_tree() or
 #' fastpolicytree::fastpolicytree() depending on user preference and
 #' package availability.
-#' 
+#'
 #' @param X Covariate matrix
 #' @param Gamma Matrix of doubly robust scores
 #' @param depth Integer depth of tree (1 or 2)
 #' @param tree_method Character string: "policytree" or "fastpolicytree"
-#' 
+#'
 #' @return Policy tree object
 #' @keywords internal
 #' @importFrom cli cli_alert_warning
 .compute_policy_tree <- function(X, Gamma, depth, tree_method = "policytree") {
-  
   # validate tree_method
   tree_method <- match.arg(tree_method, c("policytree", "fastpolicytree"))
-  
+
   # check if fastpolicytree is requested and available
   if (tree_method == "fastpolicytree") {
     if (!requireNamespace("fastpolicytree", quietly = TRUE)) {
@@ -28,7 +27,7 @@
       tree_method <- "policytree"
     }
   }
-  
+
   # compute tree using selected method
   if (tree_method == "fastpolicytree") {
     fastpolicytree::fastpolicytree(X, Gamma, depth = depth)
@@ -38,7 +37,7 @@
 }
 
 #' Check if fastpolicytree is available
-#' 
+#'
 #' @return Logical indicating if fastpolicytree package is installed
 #' @keywords internal
 .has_fastpolicytree <- function() {
@@ -46,13 +45,12 @@
 }
 
 #' Get policy tree method with fallback
-#' 
+#'
 #' @param requested_method The requested tree method
 #' @param verbose Whether to print messages about fallback
 #' @return The method to use (may differ from requested if package unavailable)
 #' @keywords internal
 .get_tree_method <- function(requested_method = "policytree", verbose = TRUE) {
-  
   if (requested_method == "fastpolicytree" && !.has_fastpolicytree()) {
     if (verbose) {
       cli::cli_alert_info(
@@ -62,6 +60,6 @@
     }
     return("policytree")
   }
-  
+
   return(requested_method)
 }

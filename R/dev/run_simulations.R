@@ -14,10 +14,12 @@
 #'
 #' @keywords internal
 run_simulations <- function(num_simulations, N, prob_L1, A_on_Y, L_on_A, L_on_Y, method = "ps") {
-  if (!is.numeric(num_simulations) || num_simulations < 1)
+  if (!is.numeric(num_simulations) || num_simulations < 1) {
     stop("num_simulations must be a positive integer.")
-  if (!is.numeric(N) || N < 1)
+  }
+  if (!is.numeric(N) || N < 1) {
     stop("N must be a positive integer.")
+  }
 
   # Initialise the matrix to store results
   simulations <- matrix(ncol = 4, nrow = num_simulations)

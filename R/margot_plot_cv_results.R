@@ -28,7 +28,7 @@
 #'   model_results = cf_results,
 #'   num_folds = 5,
 #'   target = "AUTOC",
-#'   alpha = 0.2,  # recommended for Bonferroni
+#'   alpha = 0.2, # recommended for Bonferroni
 #'   adjust = "bonferroni"
 #' )
 #'
@@ -46,7 +46,7 @@
 #'   "model_depression" = "Depression"
 #' )
 #' p <- margot_plot_cv_results(cv_results, label_mapping = label_mapping)
-#' 
+#'
 #' # Note: If you try to use margot_plot_rate() with CV results, you'll get an error:
 #' # margot_plot_rate(cv_results$cv_results)  # Error - use margot_plot_cv_results() instead
 #' }
@@ -60,30 +60,29 @@
 #'
 #' @export
 margot_plot_cv_results <- function(cv_results,
-                                  title = NULL,
-                                  subtitle = NULL,
-                                  x_lab = "t-statistic",
-                                  y_lab = "Model",
-                                  remove_model_prefix = TRUE,
-                                  label_mapping = NULL,
-                                  show_p_values = TRUE,
-                                  significance_color = "#4CAF50",
-                                  non_significance_color = "#9E9E9E",
-                                  null_line_color = "#FF5252",
-                                  point_size = 3,
-                                  text_size = 3) {
-  
+                                   title = NULL,
+                                   subtitle = NULL,
+                                   x_lab = "t-statistic",
+                                   y_lab = "Model",
+                                   remove_model_prefix = TRUE,
+                                   label_mapping = NULL,
+                                   show_p_values = TRUE,
+                                   significance_color = "#4CAF50",
+                                   non_significance_color = "#9E9E9E",
+                                   null_line_color = "#FF5252",
+                                   point_size = 3,
+                                   text_size = 3) {
   # validate input
   if (!inherits(cv_results, "margot_cv_results")) {
     stop("Input must be a margot_cv_results object from margot_rate_cv()")
   }
-  
+
   cli::cli_alert_info("Creating forest plot for CV heterogeneity test results")
-  
+
   # extract data
   plot_data <- cv_results$cv_results
   method_details <- cv_results$method_details
-  
+
   # transform model names
   plot_data <- plot_data %>%
     dplyr::mutate(
@@ -92,21 +91,21 @@ margot_plot_cv_results <- function(cv_results,
         TRUE ~ model
       )
     )
-  
+
   # apply custom label mapping if provided
   if (!is.null(label_mapping)) {
     for (old_name in names(label_mapping)) {
       # try matching with and without model_ prefix
-      matches <- plot_data$model == old_name | 
-                 plot_data$model == paste0("model_", old_name) |
-                 plot_data$model_display == old_name
-      
+      matches <- plot_data$model == old_name |
+        plot_data$model == paste0("model_", old_name) |
+        plot_data$model_display == old_name
+
       if (any(matches)) {
         plot_data$model_display[matches] <- label_mapping[[old_name]]
       }
     }
   }
-  
+
   # format p-values for display
   plot_data <- plot_data %>%
     dplyr::mutate(
@@ -118,8 +117,8 @@ margot_plot_cv_results <- function(cv_results,
       ),
       color = ifelse(significant, significance_color, non_significance_color)
     ) %>%
-    dplyr::arrange(t_statistic)  # arrange by t-statistic for better visualization
-  
+    dplyr::arrange(t_statistic) # arrange by t-statistic for better visualization
+
   # create title if not provided
   if (is.null(title)) {
     target_text <- if (length(method_details$target) > 1) {
@@ -133,22 +132,24 @@ margot_plot_cv_results <- function(cv_results,
       method_details$num_folds
     )
   }
-  
+
   # create subtitle if not provided
   if (is.null(subtitle)) {
     adjust_text <- if (method_details$adjust == "none") {
       "No multiple testing correction"
     } else {
-      sprintf("%s correction (α = %.2f)", 
-              tools::toTitleCase(method_details$adjust), 
-              method_details$alpha)
+      sprintf(
+        "%s correction (α = %.2f)",
+        tools::toTitleCase(method_details$adjust),
+        method_details$alpha
+      )
     }
     subtitle <- adjust_text
   }
-  
+
   # check if we have multiple targets
   has_multiple_targets <- length(unique(plot_data$target)) > 1
-  
+
   # create the plot
   if (has_multiple_targets) {
     # for multiple targets, create a combined label
@@ -156,17 +157,20 @@ margot_plot_cv_results <- function(cv_results,
       dplyr::mutate(
         model_target = paste0(model_display, " (", target, ")")
       )
-    
+
     p <- ggplot(plot_data, aes(x = t_statistic, y = reorder(model_target, t_statistic))) +
       # add vertical line at 0 (null hypothesis)
       geom_vline(xintercept = 0, linetype = "dashed", color = null_line_color, size = 0.8) +
       # add points
       geom_point(aes(color = color), size = point_size) +
       # add p-values if requested
-      {if (show_p_values) {
-        geom_text(aes(label = p_label, hjust = ifelse(t_statistic > 0, -0.1, 1.1)),
-                  size = text_size, color = "black")
-      }} +
+      {
+        if (show_p_values) {
+          geom_text(aes(label = p_label, hjust = ifelse(t_statistic > 0, -0.1, 1.1)),
+            size = text_size, color = "black"
+          )
+        }
+      } +
       # customize colors
       scale_color_identity() +
       # labels
@@ -193,10 +197,13 @@ margot_plot_cv_results <- function(cv_results,
       # add points
       geom_point(aes(color = color), size = point_size) +
       # add p-values if requested
-      {if (show_p_values) {
-        geom_text(aes(label = p_label, hjust = ifelse(t_statistic > 0, -0.1, 1.1)),
-                  size = text_size, color = "black")
-      }} +
+      {
+        if (show_p_values) {
+          geom_text(aes(label = p_label, hjust = ifelse(t_statistic > 0, -0.1, 1.1)),
+            size = text_size, color = "black"
+          )
+        }
+      } +
       # customize colors
       scale_color_identity() +
       # labels
@@ -216,29 +223,31 @@ margot_plot_cv_results <- function(cv_results,
         panel.grid.minor = element_blank()
       )
   }
-  
+
   # add significance region shading (optional)
   # critical value for two-tailed test
   if (method_details$adjust == "none") {
-    crit_val <- qnorm(1 - method_details$alpha/2)
+    crit_val <- qnorm(1 - method_details$alpha / 2)
   } else if (method_details$adjust == "bonferroni") {
     n_tests <- nrow(plot_data)
-    crit_val <- qnorm(1 - method_details$alpha/(2*n_tests))
+    crit_val <- qnorm(1 - method_details$alpha / (2 * n_tests))
   }
-  
+
   # add shaded regions for significance
   if (exists("crit_val")) {
     p <- p +
-      annotate("rect", 
-               xmin = crit_val, xmax = Inf, 
-               ymin = -Inf, ymax = Inf,
-               alpha = 0.1, fill = significance_color) +
-      annotate("rect", 
-               xmin = -Inf, xmax = -crit_val, 
-               ymin = -Inf, ymax = Inf,
-               alpha = 0.1, fill = significance_color)
+      annotate("rect",
+        xmin = crit_val, xmax = Inf,
+        ymin = -Inf, ymax = Inf,
+        alpha = 0.1, fill = significance_color
+      ) +
+      annotate("rect",
+        xmin = -Inf, xmax = -crit_val,
+        ymin = -Inf, ymax = Inf,
+        alpha = 0.1, fill = significance_color
+      )
   }
-  
+
   cli::cli_alert_success("CV results forest plot created successfully 👍")
   return(p)
 }
@@ -257,18 +266,17 @@ margot_plot_cv_results <- function(cv_results,
 #' @return A ggplot object
 #' @export
 margot_plot_cv_summary <- function(cv_results,
-                                  title = NULL,
-                                  positive_color = "#4CAF50",
-                                  negative_color = "#F44336", 
-                                  neutral_color = "#9E9E9E") {
-  
+                                   title = NULL,
+                                   positive_color = "#4CAF50",
+                                   negative_color = "#F44336",
+                                   neutral_color = "#9E9E9E") {
   if (!inherits(cv_results, "margot_cv_results")) {
     stop("Input must be a margot_cv_results object from margot_rate_cv()")
   }
-  
+
   # extract data
   data <- cv_results$cv_results
-  
+
   # categorize results
   summary_data <- data.frame(
     category = c("Positive\nHeterogeneity", "No\nHeterogeneity", "Negative\nHeterogeneity"),
@@ -279,22 +287,23 @@ margot_plot_cv_summary <- function(cv_results,
     ),
     color = c(positive_color, neutral_color, negative_color)
   )
-  
+
   # calculate percentages
   summary_data$percentage <- round(100 * summary_data$count / sum(summary_data$count), 1)
-  
+
   # create title if not provided
   if (is.null(title)) {
     n_sig <- sum(data$significant)
     n_total <- nrow(data)
     title <- sprintf("CV Heterogeneity Test Summary: %d/%d Significant", n_sig, n_total)
   }
-  
+
   # create the plot
   ggplot(summary_data, aes(x = category, y = count, fill = color)) +
     geom_bar(stat = "identity") +
     geom_text(aes(label = paste0(count, "\n(", percentage, "%)")),
-              vjust = -0.5, size = 4) +
+      vjust = -0.5, size = 4
+    ) +
     scale_fill_identity() +
     labs(
       title = title,
@@ -307,5 +316,5 @@ margot_plot_cv_summary <- function(cv_results,
       axis.text.x = element_text(size = 12),
       panel.grid.major.x = element_blank()
     ) +
-    ylim(0, max(summary_data$count) * 1.2)  # add space for labels
+    ylim(0, max(summary_data$count) * 1.2) # add space for labels
 }

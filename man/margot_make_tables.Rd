@@ -65,17 +65,17 @@ This function is optimized for \code{"markdown"}, \code{"latex"}, and \code{"fle
 }
 \examples{
 \dontrun{
-  # Flextable output for Word
-  flex_table <- margot_make_tables(
-    data = mydata,
-    vars = c("age", "gender", "income"),
-    by = "group",
-    labels = c("age" = "Age", "gender" = "Gender", "income" = "Income"),
-    factor_vars = "gender",
-    table1_opts = list(overall = FALSE, transpose = TRUE),
-    format = "flextable",
-    flex_opts = list(font_size = 8)
-  )
+# Flextable output for Word
+flex_table <- margot_make_tables(
+  data = mydata,
+  vars = c("age", "gender", "income"),
+  by = "group",
+  labels = c("age" = "Age", "gender" = "Gender", "income" = "Income"),
+  factor_vars = "gender",
+  table1_opts = list(overall = FALSE, transpose = TRUE),
+  format = "flextable",
+  flex_opts = list(font_size = 8)
+)
 }
 
 }

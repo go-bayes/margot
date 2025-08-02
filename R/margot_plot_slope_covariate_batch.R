@@ -76,7 +76,7 @@ margot_plot_slope_covariate_batch <- function(data,
                                               guides = "collect",
                                               patchwork_params = list(),
                                               plot_annotation_params = list(),
-                                              caption_size = 10,  # new parameter for caption size
+                                              caption_size = 10, # new parameter for caption size
                                               include_individual_titles = FALSE,
                                               width = 10,
                                               height = 8,
@@ -109,7 +109,7 @@ margot_plot_slope_covariate_batch <- function(data,
       x_label = x_label,
       color_label = color_label,
       include_title = include_individual_titles,
-      save_path = NULL,  # we don't save individual plots here
+      save_path = NULL, # we don't save individual plots here
       ...
     )
 
@@ -163,7 +163,7 @@ margot_plot_slope_covariate_batch <- function(data,
       width = width,
       height = height,
       units = "in",
-      device = 'png',
+      device = "png",
       dpi = dpi
     )
     # save the ggplot2 object

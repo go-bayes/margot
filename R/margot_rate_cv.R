@@ -2,17 +2,17 @@
 #'
 #' @description
 #' Performs uncorrelated sequential cross-validation to test for treatment effect
-#' heterogeneity using the approach recommended by the grf package (Wager 2024). 
-#' This method provides robust statistical testing that avoids overfitting by using 
+#' heterogeneity using the approach recommended by the grf package (Wager 2024).
+#' This method provides robust statistical testing that avoids overfitting by using
 #' sequential, non-overlapping training sets.
 #'
 #' @param model_results Output from `margot_causal_forest()` or `margot_flip_forests()`
 #' @param num_folds Integer. Number of cross-validation folds (default 5). Must be at least 3.
-#' @param target Character vector. RATE targets to test: "AUTOC", "QINI", or 
+#' @param target Character vector. RATE targets to test: "AUTOC", "QINI", or
 #'   c("AUTOC", "QINI") for both (default). When both are specified, results
 #'   are combined with adjusted p-values accounting for testing both metrics.
 #' @param model_names Character vector. Specific models to test (default NULL tests all)
-#' @param use_full_data Logical. If TRUE and data is available, refit forests on full data 
+#' @param use_full_data Logical. If TRUE and data is available, refit forests on full data
 #'   rather than using the training split (default TRUE)
 #' @param seed Integer or NULL. Random seed for reproducibility. If NULL, defaults to 12345
 #' @param verbose Logical. Print progress messages (default TRUE)
@@ -20,13 +20,13 @@
 #'   Note: Parallel processing requires the margot package to be installed (not just loaded
 #'   with devtools::load_all()). If the package is not installed, the function will fall
 #'   back to sequential processing with a warning.
-#' @param n_cores Integer. Number of cores for parallel processing when parallel = TRUE 
+#' @param n_cores Integer. Number of cores for parallel processing when parallel = TRUE
 #'   (default all cores - 1)
-#' @param future_globals_maxSize Numeric. Maximum allowed size for exporting globals to 
+#' @param future_globals_maxSize Numeric. Maximum allowed size for exporting globals to
 #'   parallel workers in GiB. Default is 22. Set to Inf to disable the limit.
 #' @param alpha Numeric. Significance level for hypothesis tests (default 0.05).
 #'   When using Bonferroni correction, consider alpha = 0.2 due to its conservative nature.
-#' @param adjust Character. Multiple testing adjustment method. Only "bonferroni" or "none" 
+#' @param adjust Character. Multiple testing adjustment method. Only "bonferroni" or "none"
 #'   are valid for cross-validation due to the martingale aggregation method. Default is "none".
 #'   Other methods like BH/BY/FDR are not statistically appropriate for CV aggregation.
 #' @param label_mapping Optional named list for custom label mappings. Keys should be model names
@@ -41,7 +41,7 @@
 #'   \item{method_details}{List with details about the CV procedure}
 #'
 #' @details
-#' The function implements the sequential cross-validation approach from 
+#' The function implements the sequential cross-validation approach from
 #' Wager (2024) and Nie & Wager (2020). This method:
 #' - Splits data into K folds
 #' - Trains on folds 1 to k-1, tests on fold k
@@ -52,12 +52,12 @@
 #' (all individuals have the same treatment effect).
 #'
 #' ## Multiple Testing Correction
-#' 
+#'
 #' Due to the martingale aggregation method used in CV, only Bonferroni correction
 #' or no correction are statistically valid. Methods like Benjamini-Hochberg (BH)
 #' or false discovery rate (FDR) control are not appropriate because they assume
 #' independent p-values, which is violated by the sequential CV structure.
-#' 
+#'
 #' Bonferroni correction is very conservative, especially with noisy heterogeneous
 #' treatment effect models. We recommend using alpha = 0.2 when applying Bonferroni
 #' correction to maintain reasonable statistical power.
@@ -77,14 +77,14 @@
 #'   outcome_vars = c("outcome1", "outcome2"),
 #'   covariates = covariates,
 #'   W = treatment,
-#'   save_data = TRUE  # Important for CV
+#'   save_data = TRUE # Important for CV
 #' )
 #'
 #' # Test for heterogeneity with cross-validation (both targets by default)
 #' cv_results <- margot_rate_cv(
 #'   model_results = cf_results,
 #'   num_folds = 5,
-#'   alpha = 0.2,  # recommended with Bonferroni
+#'   alpha = 0.2, # recommended with Bonferroni
 #'   adjust = "bonferroni"
 #' )
 #'
@@ -106,32 +106,32 @@
 #'
 #' # View results
 #' cat(cv_results$interpretation)
-#' 
+#'
 #' # Access formatted tables (similar to margot_rate output)
-#' cv_results$tables$rate_autoc  # AUTOC table
-#' cv_results$tables$rate_qini   # QINI table
-#' 
+#' cv_results$tables$rate_autoc # AUTOC table
+#' cv_results$tables$rate_qini # QINI table
+#'
 #' # Get detailed interpretation with tables (similar to margot_interpret_rate)
 #' detailed_results <- margot_interpret_rate_cv(cv_results)
 #' cat(detailed_results$interpretation)
-#' 
+#'
 #' # View individual target interpretations
 #' cat(detailed_results$autoc_results)
 #' cat(detailed_results$qini_results)
-#' 
+#'
 #' # Comparison between AUTOC and QINI
 #' if (!is.null(detailed_results$comparison)) {
 #'   cat(detailed_results$comparison)
 #' }
-#' 
+#'
 #' # Create visualization
 #' plot <- margot_plot_cv_results(cv_results)
 #' }
 #'
 #' @references
-#' Wager, S. (2024). Sequential validation for heterogeneous treatment effects. 
+#' Wager, S. (2024). Sequential validation for heterogeneous treatment effects.
 #' arXiv preprint arXiv:2401.06818.
-#' 
+#'
 #' Nie, X., & Wager, S. (2021). Quasi-oracle estimation of heterogeneous treatment effects.
 #' Biometrika, 108(2), 299-319.
 #'
@@ -143,36 +143,35 @@
 #' @importFrom stats pnorm p.adjust
 #' @importFrom tibble tibble
 margot_rate_cv <- function(model_results,
-                          num_folds = 5,
-                          target = c("AUTOC", "QINI"),
-                          model_names = NULL,
-                          use_full_data = TRUE,
-                          seed = 12345,
-                          verbose = TRUE,
-                          parallel = FALSE,
-                          n_cores = future::availableCores() - 1,
-                          future_globals_maxSize = 22,
-                          alpha = 0.05,
-                          adjust = "none",
-                          label_mapping = NULL,
-                          ...) {
-  
+                           num_folds = 5,
+                           target = c("AUTOC", "QINI"),
+                           model_names = NULL,
+                           use_full_data = TRUE,
+                           seed = 12345,
+                           verbose = TRUE,
+                           parallel = FALSE,
+                           n_cores = future::availableCores() - 1,
+                           future_globals_maxSize = 22,
+                           alpha = 0.05,
+                           adjust = "none",
+                           label_mapping = NULL,
+                           ...) {
   # Set seed for reproducibility
   if (is.null(seed)) {
     seed <- 12345
   }
   set.seed(seed)
-  
+
   # Input validation
-  if (!is.list(model_results) || 
-      !all(c("results", "outcome_vars") %in% names(model_results))) {
+  if (!is.list(model_results) ||
+    !all(c("results", "outcome_vars") %in% names(model_results))) {
     stop("model_results must be output from margot_causal_forest() or margot_flip_forests()")
   }
-  
+
   if (num_folds < 3) {
     stop("num_folds must be at least 3 for valid cross-validation")
   }
-  
+
   # handle target parameter - can be single value or vector
   if (length(target) > 1) {
     # default behavior - test both
@@ -182,13 +181,15 @@ margot_rate_cv <- function(model_results,
     target <- match.arg(target, c("AUTOC", "QINI"))
     test_both <- FALSE
   }
-  
+
   # validate adjust parameter for CV
   if (!adjust %in% c("none", "bonferroni")) {
-    stop("For cross-validation, only 'bonferroni' or 'none' are valid for the adjust parameter. ",
-         "Other methods like BH/BY/FDR are not appropriate due to the martingale aggregation method.")
+    stop(
+      "For cross-validation, only 'bonferroni' or 'none' are valid for the adjust parameter. ",
+      "Other methods like BH/BY/FDR are not appropriate due to the martingale aggregation method."
+    )
   }
-  
+
   # suggest higher alpha for bonferroni
   if (adjust == "bonferroni" && alpha == 0.05 && verbose) {
     cli::cli_alert_info(
@@ -196,17 +197,17 @@ margot_rate_cv <- function(model_results,
       "consider using alpha = 0.2 for more reasonable power."
     )
   }
-  
+
   # Determine which models to test
   if (is.null(model_names)) {
     model_names <- names(model_results$results)
   }
-  
+
   # Check if we have the necessary data
-  has_full_data <- !is.null(model_results$data) && 
-                   !is.null(model_results$covariates) && 
-                   !is.null(model_results$W)
-  
+  has_full_data <- !is.null(model_results$data) &&
+    !is.null(model_results$covariates) &&
+    !is.null(model_results$W)
+
   if (use_full_data && !has_full_data) {
     if (verbose) {
       cli::cli_alert_warning(
@@ -216,7 +217,7 @@ margot_rate_cv <- function(model_results,
     }
     use_full_data <- FALSE
   }
-  
+
   if (verbose) {
     cli::cli_h2("Cross-Validation Heterogeneity Testing")
     cli::cli_alert_info("Testing {length(model_names)} models with {num_folds}-fold CV")
@@ -226,29 +227,29 @@ margot_rate_cv <- function(model_results,
       cli::cli_alert_info("Target: {target}")
     }
   }
-  
+
   # Pre-extract data for each model to avoid sending large objects to workers
   if (verbose) cli::cli_alert_info("Pre-extracting data for {length(model_names)} models")
-  
+
   model_data_list <- list()
-  
+
   # Progress bar for data extraction
   pb_extract_id <- NULL
   if (verbose && length(model_names) > 1) {
     pb_extract_id <- cli::cli_progress_bar("Extracting model data", total = length(model_names))
   }
-  
+
   for (i in seq_along(model_names)) {
     model_name <- model_names[i]
-    
+
     # Update progress
     if (verbose && length(model_names) > 1 && !is.null(pb_extract_id)) {
       cli::cli_progress_update(id = pb_extract_id)
     }
-    
+
     # Get the model
-    if (!is.null(model_results$full_models) && 
-        model_name %in% names(model_results$full_models)) {
+    if (!is.null(model_results$full_models) &&
+      model_name %in% names(model_results$full_models)) {
       forest <- model_results$full_models[[model_name]]
     } else {
       if (verbose) {
@@ -257,7 +258,7 @@ margot_rate_cv <- function(model_results,
       model_data_list[[i]] <- NULL
       next
     }
-    
+
     # Extract data for CV
     if (use_full_data && has_full_data) {
       # Use full data
@@ -266,7 +267,7 @@ margot_rate_cv <- function(model_results,
       X <- model_results$covariates
       W <- model_results$W
       weights <- model_results$weights
-      
+
       # Handle missing data
       not_missing <- model_results$not_missing
       if (!is.null(not_missing)) {
@@ -275,12 +276,11 @@ margot_rate_cv <- function(model_results,
         W <- W[not_missing]
         if (!is.null(weights)) weights <- weights[not_missing]
       }
-      
+
       grf_defaults <- list()
       if (!is.null(forest$tunable.params)) {
         grf_defaults <- forest$tunable.params
       }
-      
     } else {
       # Extract from forest object
       Y <- forest$Y.orig
@@ -289,7 +289,7 @@ margot_rate_cv <- function(model_results,
       weights <- forest$sample.weights
       grf_defaults <- forest$tunable.params
     }
-    
+
     # Store extracted data
     model_data_list[[i]] <- list(
       model_name = model_name,
@@ -301,19 +301,19 @@ margot_rate_cv <- function(model_results,
       seed = seed + i
     )
   }
-  
+
   # Remove NULL entries
   model_data_list <- model_data_list[!sapply(model_data_list, is.null)]
-  
+
   # Close progress bar
   if (verbose && length(model_names) > 1 && !is.null(pb_extract_id)) {
     cli::cli_progress_done(id = pb_extract_id)
   }
-  
+
   if (length(model_data_list) == 0) {
     stop("No valid models found for cross-validation testing")
   }
-  
+
   # Set up parallel processing if requested
   if (parallel && length(model_data_list) > 1) {
     # Check if margot package is installed (needed for parallel processing)
@@ -329,7 +329,7 @@ margot_rate_cv <- function(model_results,
     } else {
       # Save current globals.maxSize
       old_maxSize <- getOption("future.globals.maxSize")
-      
+
       # Set new limit (convert GiB to bytes) BEFORE creating the plan
       new_maxSize <- if (is.infinite(future_globals_maxSize)) {
         Inf
@@ -337,35 +337,38 @@ margot_rate_cv <- function(model_results,
         future_globals_maxSize * 1024^3
       }
       options(future.globals.maxSize = new_maxSize)
-      
+
       # Ensure we restore the original setting on exit
-      on.exit({
-        options(future.globals.maxSize = old_maxSize)
-        # Reset to sequential plan
-        future::plan(future::sequential)
-      }, add = TRUE)
-      
+      on.exit(
+        {
+          options(future.globals.maxSize = old_maxSize)
+          # Reset to sequential plan
+          future::plan(future::sequential)
+        },
+        add = TRUE
+      )
+
       # Set up parallel plan AFTER setting memory limit
       future::plan(future::multisession, workers = n_cores)
-      
+
       if (verbose) {
         cli::cli_alert_info("Using {n_cores} cores for parallel processing")
         cli::cli_alert_info("Memory limit for globals: {if (is.infinite(future_globals_maxSize)) 'unlimited' else paste0(future_globals_maxSize, ' GiB')}")
       }
     }
   }
-  
+
   # Run CV for each model and target combination
   if (test_both) {
     # test both AUTOC and QINI
     cv_list <- list()
-    total_tests <- length(model_data_list) * 2  # Testing both AUTOC and QINI
+    total_tests <- length(model_data_list) * 2 # Testing both AUTOC and QINI
     current_test <- 0
-    
+
     for (tgt in c("AUTOC", "QINI")) {
       # Initialize timing
       start_time <- NULL
-      
+
       if (verbose) {
         cli::cli_alert_info("Running CV for {tgt}...")
         if (parallel) {
@@ -374,7 +377,7 @@ margot_rate_cv <- function(model_results,
           start_time <- Sys.time()
         }
       }
-      
+
       # Progress bar for non-parallel processing
       if (verbose && !parallel && length(model_data_list) > 1) {
         pb_id <- cli::cli_progress_bar(
@@ -383,53 +386,181 @@ margot_rate_cv <- function(model_results,
           clear = FALSE
         )
       }
-      
+
       # Counter for progress updates
       model_counter <- 0
-      
+
       # wrap in tryCatch for better error handling
-      cv_list_target <- tryCatch({
+      cv_list_target <- tryCatch(
+        {
+          if (parallel) {
+            # For parallel, explicitly export the function and data
+            future.apply::future_lapply(
+              seq_along(model_data_list),
+              function(idx) {
+                model_data <- model_data_list[[idx]]
+                if (verbose && !parallel) {
+                  # Update progress bar
+                  if (length(model_data_list) > 1) {
+                    cli::cli_progress_update(id = pb_id)
+                  }
+                }
+
+                # Run sequential CV
+                cv_result <- rate_sequential_cv(
+                  X = model_data$X,
+                  Y = model_data$Y,
+                  W = model_data$W,
+                  weights = model_data$weights,
+                  num_folds = num_folds,
+                  target = tgt,
+                  grf_defaults = model_data$grf_defaults,
+                  seed = model_data$seed,
+                  verbose = FALSE, # No verbose output in parallel workers
+                  model_name = model_data$model_name,
+                  ...
+                )
+
+                cv_result$model_name <- model_data$model_name
+                cv_result$target <- tgt
+                cv_result
+              },
+              future.globals = list(
+                rate_sequential_cv = rate_sequential_cv,
+                model_data_list = model_data_list,
+                num_folds = num_folds,
+                tgt = tgt,
+                verbose = FALSE
+              ),
+              future.packages = c("margot", "grf", "cli"),
+              future.stdout = FALSE, # Suppress stdout from workers
+              future.seed = TRUE
+            )
+          } else {
+            # For sequential, use regular lapply
+            lapply(seq_along(model_data_list), function(idx) {
+              model_data <- model_data_list[[idx]]
+              if (verbose) {
+                # Update progress bar
+                if (length(model_data_list) > 1) {
+                  cli::cli_progress_update(id = pb_id)
+                }
+              }
+
+              # Run sequential CV
+              cv_result <- rate_sequential_cv(
+                X = model_data$X,
+                Y = model_data$Y,
+                W = model_data$W,
+                weights = model_data$weights,
+                num_folds = num_folds,
+                target = tgt,
+                grf_defaults = model_data$grf_defaults,
+                seed = model_data$seed,
+                verbose = FALSE,
+                model_name = model_data$model_name,
+                ...
+              )
+
+              cv_result$model_name <- model_data$model_name
+              cv_result$target <- tgt
+              cv_result
+            })
+          }
+        },
+        error = function(e) {
+          if (grepl("globals.*exceeds", e$message)) {
+            stop(paste0(
+              "Memory limit exceeded for parallel processing. ",
+              "Try increasing future_globals_maxSize (current: ", future_globals_maxSize, " GiB) ",
+              "or set parallel = FALSE. Original error: ", e$message
+            ))
+          } else {
+            stop(e)
+          }
+        }
+      )
+
+      # Close progress bar or show timing for parallel
+      if (verbose) {
+        if (!parallel && length(model_data_list) > 1) {
+          cli::cli_progress_done(id = pb_id)
+        } else if (parallel && !is.null(start_time)) {
+          # Show elapsed time for parallel processing
+          elapsed <- difftime(Sys.time(), start_time, units = "secs")
+          cli::cli_alert_success("Completed {tgt} testing in {round(elapsed, 1)} seconds")
+        }
+      }
+
+      cv_list <- c(cv_list, cv_list_target)
+    }
+  } else {
+    # test single target
+    # Initialize timing
+    start_time <- NULL
+
+    if (verbose) {
+      cli::cli_alert_info("Running CV for {target}...")
+      if (parallel) {
+        cli::cli_alert_info("Processing {length(model_data_list)} models in parallel (progress updates not available during parallel execution)")
+        # Add timing information
+        start_time <- Sys.time()
+      }
+    }
+
+    # Progress bar for non-parallel processing
+    if (verbose && !parallel && length(model_data_list) > 1) {
+      pb_id <- cli::cli_progress_bar(
+        format = "Testing {target}: {cli::pb_current}/{cli::pb_total} models [{cli::pb_percent}] {cli::pb_bar} ETA: {cli::pb_eta}",
+        total = length(model_data_list),
+        clear = FALSE
+      )
+    }
+
+    # wrap in tryCatch for better error handling
+    cv_list <- tryCatch(
+      {
         if (parallel) {
           # For parallel, explicitly export the function and data
           future.apply::future_lapply(
-            seq_along(model_data_list), 
+            seq_along(model_data_list),
             function(idx) {
-          model_data <- model_data_list[[idx]]
-          if (verbose && !parallel) {
-            # Update progress bar
-            if (length(model_data_list) > 1) {
-              cli::cli_progress_update(id = pb_id)
-            }
-          }
-          
-          # Run sequential CV
-          cv_result <- rate_sequential_cv(
-            X = model_data$X,
-            Y = model_data$Y,
-            W = model_data$W,
-            weights = model_data$weights,
-            num_folds = num_folds,
-            target = tgt,
-            grf_defaults = model_data$grf_defaults,
-            seed = model_data$seed,
-            verbose = FALSE,  # No verbose output in parallel workers
-            model_name = model_data$model_name,
-            ...
-          )
-          
-          cv_result$model_name <- model_data$model_name
-          cv_result$target <- tgt
-          cv_result
-        },
+              model_data <- model_data_list[[idx]]
+
+              if (verbose && !parallel) {
+                # Update progress bar
+                if (length(model_data_list) > 1) {
+                  cli::cli_progress_update(id = pb_id)
+                }
+              }
+
+              # Run sequential CV
+              cv_result <- rate_sequential_cv(
+                X = model_data$X,
+                Y = model_data$Y,
+                W = model_data$W,
+                weights = model_data$weights,
+                num_folds = num_folds,
+                target = target,
+                grf_defaults = model_data$grf_defaults,
+                seed = model_data$seed,
+                verbose = FALSE, # No verbose output in parallel workers
+                model_name = model_data$model_name,
+                ...
+              )
+
+              cv_result$model_name <- model_data$model_name
+              cv_result$target <- target
+              cv_result
+            },
             future.globals = list(
               rate_sequential_cv = rate_sequential_cv,
               model_data_list = model_data_list,
               num_folds = num_folds,
-              tgt = tgt,
+              target = target,
               verbose = FALSE
             ),
-            future.packages = c("margot", "grf", "cli"),
-            future.stdout = FALSE,  # Suppress stdout from workers
+            future.packages = c("grf", "cli"),
             future.seed = TRUE
           )
         } else {
@@ -442,7 +573,7 @@ margot_rate_cv <- function(model_results,
                 cli::cli_progress_update(id = pb_id)
               }
             }
-            
+
             # Run sequential CV
             cv_result <- rate_sequential_cv(
               X = model_data$X,
@@ -450,20 +581,25 @@ margot_rate_cv <- function(model_results,
               W = model_data$W,
               weights = model_data$weights,
               num_folds = num_folds,
-              target = tgt,
+              target = target,
               grf_defaults = model_data$grf_defaults,
               seed = model_data$seed,
               verbose = FALSE,
               model_name = model_data$model_name,
               ...
             )
-            
+
             cv_result$model_name <- model_data$model_name
-            cv_result$target <- tgt
+            cv_result$target <- target
             cv_result
           })
         }
-      }, error = function(e) {
+      },
+      error = function(e) {
+        # Close progress bar on error
+        if (verbose && !parallel && length(model_data_list) > 1) {
+          cli::cli_progress_done(id = pb_id)
+        }
         if (grepl("globals.*exceeds", e$message)) {
           stop(paste0(
             "Memory limit exceeded for parallel processing. ",
@@ -473,136 +609,9 @@ margot_rate_cv <- function(model_results,
         } else {
           stop(e)
         }
-      })
-      
-      # Close progress bar or show timing for parallel
-      if (verbose) {
-        if (!parallel && length(model_data_list) > 1) {
-          cli::cli_progress_done(id = pb_id)
-        } else if (parallel && !is.null(start_time)) {
-          # Show elapsed time for parallel processing
-          elapsed <- difftime(Sys.time(), start_time, units = "secs")
-          cli::cli_alert_success("Completed {tgt} testing in {round(elapsed, 1)} seconds")
-        }
       }
-      
-      cv_list <- c(cv_list, cv_list_target)
-    }
-  } else {
-    # test single target
-    # Initialize timing
-    start_time <- NULL
-    
-    if (verbose) {
-      cli::cli_alert_info("Running CV for {target}...")
-      if (parallel) {
-        cli::cli_alert_info("Processing {length(model_data_list)} models in parallel (progress updates not available during parallel execution)")
-        # Add timing information
-        start_time <- Sys.time()
-      }
-    }
-    
-    # Progress bar for non-parallel processing
-    if (verbose && !parallel && length(model_data_list) > 1) {
-      pb_id <- cli::cli_progress_bar(
-        format = "Testing {target}: {cli::pb_current}/{cli::pb_total} models [{cli::pb_percent}] {cli::pb_bar} ETA: {cli::pb_eta}",
-        total = length(model_data_list),
-        clear = FALSE
-      )
-    }
-    
-    # wrap in tryCatch for better error handling
-    cv_list <- tryCatch({
-      if (parallel) {
-        # For parallel, explicitly export the function and data
-        future.apply::future_lapply(
-          seq_along(model_data_list), 
-          function(idx) {
-        model_data <- model_data_list[[idx]]
-        
-        if (verbose && !parallel) {
-          # Update progress bar
-          if (length(model_data_list) > 1) {
-            cli::cli_progress_update(id = pb_id)
-          }
-        }
-        
-        # Run sequential CV
-        cv_result <- rate_sequential_cv(
-          X = model_data$X,
-          Y = model_data$Y,
-          W = model_data$W,
-          weights = model_data$weights,
-          num_folds = num_folds,
-          target = target,
-          grf_defaults = model_data$grf_defaults,
-          seed = model_data$seed,
-          verbose = FALSE,  # No verbose output in parallel workers
-          model_name = model_data$model_name,
-          ...
-        )
-        
-        cv_result$model_name <- model_data$model_name
-        cv_result$target <- target
-        cv_result
-      },
-          future.globals = list(
-            rate_sequential_cv = rate_sequential_cv,
-            model_data_list = model_data_list,
-            num_folds = num_folds,
-            target = target,
-            verbose = FALSE
-          ),
-          future.packages = c("grf", "cli"),
-          future.seed = TRUE
-        )
-      } else {
-        # For sequential, use regular lapply
-        lapply(seq_along(model_data_list), function(idx) {
-          model_data <- model_data_list[[idx]]
-          if (verbose) {
-            # Update progress bar
-            if (length(model_data_list) > 1) {
-              cli::cli_progress_update(id = pb_id)
-            }
-          }
-          
-          # Run sequential CV
-          cv_result <- rate_sequential_cv(
-            X = model_data$X,
-            Y = model_data$Y,
-            W = model_data$W,
-            weights = model_data$weights,
-            num_folds = num_folds,
-            target = target,
-            grf_defaults = model_data$grf_defaults,
-            seed = model_data$seed,
-            verbose = FALSE,
-            model_name = model_data$model_name,
-            ...
-          )
-          
-          cv_result$model_name <- model_data$model_name
-          cv_result$target <- target
-          cv_result
-        })
-      }
-    }, error = function(e) {
-      # Close progress bar on error
-      if (verbose && !parallel && length(model_data_list) > 1) {
-        cli::cli_progress_done(id = pb_id)
-      }
-      if (grepl("globals.*exceeds", e$message)) {
-        stop(paste0(
-          "Memory limit exceeded for parallel processing. ",
-          "Try increasing future_globals_maxSize (current: ", future_globals_maxSize, " GiB) ",
-          "or set parallel = FALSE. Original error: ", e$message
-        ))
-      } else {
-        stop(e)
-      }
-    })
-    
+    )
+
     # Close progress bar or show timing for parallel
     if (verbose) {
       if (!parallel && length(model_data_list) > 1) {
@@ -614,22 +623,22 @@ margot_rate_cv <- function(model_results,
       }
     }
   }
-  
+
   # Results should already be filtered, but double-check
   cv_list <- cv_list[!sapply(cv_list, is.null)]
-  
+
   # Compile results
   raw_p_values <- sapply(cv_list, `[[`, "p_value")
-  
+
   # Apply multiple testing adjustment (only bonferroni or none for CV)
   adjusted_p_values <- if (adjust == "none") {
     raw_p_values
   } else if (adjust == "bonferroni") {
-    pmin(raw_p_values * length(raw_p_values), 1)  # bonferroni correction
+    pmin(raw_p_values * length(raw_p_values), 1) # bonferroni correction
   } else {
     stop("Invalid adjust parameter")
   }
-  
+
   cv_results <- tibble::tibble(
     model = sapply(cv_list, `[[`, "model_name"),
     target = sapply(cv_list, `[[`, "target"),
@@ -642,7 +651,7 @@ margot_rate_cv <- function(model_results,
     estimate = sapply(cv_list, `[[`, "cv_estimate"),
     std_error = sapply(cv_list, `[[`, "cv_std_error")
   )
-  
+
   # apply label mapping if provided
   if (!is.null(label_mapping)) {
     cv_results <- cv_results %>%
@@ -658,7 +667,7 @@ margot_rate_cv <- function(model_results,
           } else {
             m
           }
-          
+
           # Then transform it
           if (label != m) {
             # We got a mapping, now transform it
@@ -672,7 +681,7 @@ margot_rate_cv <- function(model_results,
   } else {
     cv_results$model_label <- cv_results$model
   }
-  
+
   # Identify significant models (using adjusted p-values)
   if (test_both) {
     # for combined results, a model is significant if either AUTOC or QINI is significant
@@ -680,7 +689,7 @@ margot_rate_cv <- function(model_results,
   } else {
     significant_models <- cv_results$model[cv_results$significant]
   }
-  
+
   # Create interpretation
   interpretation <- create_cv_interpretation(
     cv_results = cv_results,
@@ -689,17 +698,17 @@ margot_rate_cv <- function(model_results,
     num_folds = num_folds,
     target = target
   )
-  
+
   # Create formatted tables similar to margot_rate()
   cv_tables <- create_cv_tables(cv_results, alpha)
-  
+
   # Return results
   structure(
     list(
       cv_results = cv_results,
       interpretation = interpretation,
       significant_models = significant_models,
-      tables = cv_tables,  # add formatted tables
+      tables = cv_tables, # add formatted tables
       method_details = list(
         num_folds = num_folds,
         target = if (test_both) c("AUTOC", "QINI") else target,
@@ -727,35 +736,41 @@ margot_rate_cv <- function(model_results,
 #' @importFrom grf causal_forest get_scores rank_average_treatment_effect.fit
 #' @importFrom stats predict
 #' @importFrom cli cli_progress_bar cli_progress_update cli_progress_done
-rate_sequential_cv <- function(X, Y, W, weights = NULL, 
-                              num_folds = 5, 
-                              target = "AUTOC",
-                              grf_defaults = list(),
-                              seed = 12345,
-                              verbose = FALSE,
-                              model_name = NULL,
-                              ...) {
+rate_sequential_cv <- function(X, Y, W, weights = NULL,
+                               num_folds = 5,
+                               target = "AUTOC",
+                               grf_defaults = list(),
+                               seed = 12345,
+                               verbose = FALSE,
+                               model_name = NULL,
+                               ...) {
   set.seed(seed)
   n <- nrow(X)
-  
+
   # Create fold assignments
   fold_id <- sample(rep(1:num_folds, length.out = n))
   samples_by_fold <- split(seq_len(n), fold_id)
-  
+
   # Fit nuisance forest on full data for doubly robust scores
-  nuisance_forest <- do.call(grf::causal_forest,
-                            c(list(X = X, Y = Y, W = W, 
-                                  sample.weights = weights),
-                              grf_defaults,
-                              list(...)))
+  nuisance_forest <- do.call(
+    grf::causal_forest,
+    c(
+      list(
+        X = X, Y = Y, W = W,
+        sample.weights = weights
+      ),
+      grf_defaults,
+      list(...)
+    )
+  )
   DR_scores <- grf::get_scores(nuisance_forest)
-  
+
   # Initialize storage for t-statistics and estimates
   t_statistics <- numeric(num_folds - 1)
   fold_sizes <- numeric(num_folds - 1)
   fold_estimates <- numeric(num_folds - 1)
   fold_std_errors <- numeric(num_folds - 1)
-  
+
   # Progress tracking for sequential CV
   if (verbose && num_folds > 3) {
     model_str <- if (!is.null(model_name)) paste0(" for ", model_name) else ""
@@ -765,70 +780,78 @@ rate_sequential_cv <- function(X, Y, W, weights = NULL,
       clear = TRUE
     )
   }
-  
+
   # Sequential cross-validation
   for (k in 2:num_folds) {
     # Update progress
     if (verbose && num_folds > 3) {
       cli::cli_progress_update(id = pb_cv_id)
     }
-    train_idx <- unlist(samples_by_fold[1:(k-1)])
+    train_idx <- unlist(samples_by_fold[1:(k - 1)])
     test_idx <- samples_by_fold[[k]]
-    
+
     # Train CATE forest on cumulative training data
-    cate_forest <- do.call(grf::causal_forest,
-                          c(list(X = X[train_idx, , drop = FALSE], 
-                                Y = Y[train_idx, drop = FALSE], 
-                                W = W[train_idx],
-                                sample.weights = if (!is.null(weights)) weights[train_idx] else NULL),
-                            grf_defaults,
-                            list(...)))
-    
+    cate_forest <- do.call(
+      grf::causal_forest,
+      c(
+        list(
+          X = X[train_idx, , drop = FALSE],
+          Y = Y[train_idx, drop = FALSE],
+          W = W[train_idx],
+          sample.weights = if (!is.null(weights)) weights[train_idx] else NULL
+        ),
+        grf_defaults,
+        list(...)
+      )
+    )
+
     # Predict on test fold
-    cate_hat_test <- predict(cate_forest, 
-                            X[test_idx, , drop = FALSE])$predictions
-    
+    cate_hat_test <- predict(
+      cate_forest,
+      X[test_idx, , drop = FALSE]
+    )$predictions
+
     # Compute RATE on test fold using DR scores
     rate_fold <- grf::rank_average_treatment_effect.fit(
       DR.scores = DR_scores[test_idx],
       priorities = cate_hat_test,
       target = target,
-      R = 200  # Number of bootstrap replicates
+      R = 200 # Number of bootstrap replicates
     )
-    
-    t_statistics[k-1] <- rate_fold$estimate / rate_fold$std.err
-    fold_sizes[k-1] <- length(test_idx)
-    fold_estimates[k-1] <- rate_fold$estimate
-    fold_std_errors[k-1] <- rate_fold$std.err
+
+    t_statistics[k - 1] <- rate_fold$estimate / rate_fold$std.err
+    fold_sizes[k - 1] <- length(test_idx)
+    fold_estimates[k - 1] <- rate_fold$estimate
+    fold_std_errors[k - 1] <- rate_fold$std.err
   }
-  
+
   # Close progress bar
   if (verbose && num_folds > 3) {
     cli::cli_progress_done(id = pb_cv_id)
   }
-  
+
   # Aggregate t-statistics using martingale property
   aggregated_t <- sum(t_statistics) / sqrt(num_folds - 1)
   p_value <- 2 * pnorm(-abs(aggregated_t))
-  
+
   # Aggregate RATE estimates across folds
   # Use weighted average where weights are proportional to fold sizes
   total_test_size <- sum(fold_sizes)
   fold_weights <- fold_sizes / total_test_size
-  
+
   # Weighted average of estimates
   cv_estimate <- sum(fold_estimates * fold_weights)
-  
+
   # Combined standard error (accounting for between-fold variance)
   # First, get weighted average of within-fold variances
   within_variance <- sum((fold_std_errors^2) * fold_weights)
-  
+
   # Then add between-fold variance
   between_variance <- sum(fold_weights * (fold_estimates - cv_estimate)^2)
-  
+
   # Combined standard error
   cv_std_error <- sqrt(within_variance + between_variance)
-  
+
   list(
     p_value = p_value,
     t_statistic = aggregated_t,
@@ -850,12 +873,12 @@ rate_sequential_cv <- function(X, Y, W, weights = NULL,
 create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, target) {
   # check if we have both targets
   test_both <- length(unique(cv_results$target)) > 1
-  
+
   if (test_both) {
     # count unique models (each model tested with both targets)
     n_models <- length(unique(cv_results$model))
     n_tests <- nrow(cv_results)
-    
+
     # get significant models by target
     sig_autoc <- unique(cv_results$model[cv_results$significant & cv_results$target == "AUTOC"])
     sig_qini <- unique(cv_results$model[cv_results$significant & cv_results$target == "QINI"])
@@ -868,20 +891,22 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
     n_significant <- sum(cv_results$significant)
     target_str <- target
   }
-  
+
   # Format adjustment method name
   adjust_name <- switch(adjust,
     "bonferroni" = "Bonferroni",
     "none" = "no adjustment",
-    adjust  # default to the provided name
+    adjust # default to the provided name
   )
-  
+
   interpretation <- paste0(
     "# Cross-Validation Heterogeneity Test Results\n\n",
-    sprintf("Tested %d models using %d-fold sequential cross-validation.\n", 
-            n_models, num_folds)
+    sprintf(
+      "Tested %d models using %d-fold sequential cross-validation.\n",
+      n_models, num_folds
+    )
   )
-  
+
   if (test_both) {
     interpretation <- paste0(
       interpretation,
@@ -894,7 +919,7 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
       sprintf("Target metric: %s\n", target)
     )
   }
-  
+
   if (adjust == "bonferroni") {
     interpretation <- paste0(
       interpretation,
@@ -907,20 +932,22 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
       sprintf("Multiple testing correction: %s\n\n", adjust_name)
     )
   }
-  
+
   if (n_significant > 0) {
     interpretation <- paste0(
       interpretation,
       sprintf("## Significant Heterogeneity Found\n\n")
     )
-    
+
     if (test_both) {
       interpretation <- paste0(
         interpretation,
-        sprintf("%d out of %d models show statistically significant treatment effect heterogeneity:\n\n", 
-                n_significant, n_models)
+        sprintf(
+          "%d out of %d models show statistically significant treatment effect heterogeneity:\n\n",
+          n_significant, n_models
+        )
       )
-      
+
       # show breakdown by target
       if (length(sig_both) > 0) {
         interpretation <- paste0(
@@ -940,24 +967,28 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
           if (autoc_row$t_statistic[1] < 0 || qini_row$t_statistic[1] < 0) {
             interpretation <- paste0(
               interpretation,
-              sprintf("- **%s**: AUTOC p = %.4f (t = %.3f), QINI p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n", 
-                      model_label, 
-                      autoc_row$p_value[1], autoc_row$t_statistic[1],
-                      qini_row$p_value[1], qini_row$t_statistic[1])
+              sprintf(
+                "- **%s**: AUTOC p = %.4f (t = %.3f), QINI p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n",
+                model_label,
+                autoc_row$p_value[1], autoc_row$t_statistic[1],
+                qini_row$p_value[1], qini_row$t_statistic[1]
+              )
             )
           } else {
             interpretation <- paste0(
               interpretation,
-              sprintf("- **%s**: AUTOC p = %.4f (t = %.3f), QINI p = %.4f (t = %.3f)\n", 
-                      model_label, 
-                      autoc_row$p_value[1], autoc_row$t_statistic[1],
-                      qini_row$p_value[1], qini_row$t_statistic[1])
+              sprintf(
+                "- **%s**: AUTOC p = %.4f (t = %.3f), QINI p = %.4f (t = %.3f)\n",
+                model_label,
+                autoc_row$p_value[1], autoc_row$t_statistic[1],
+                qini_row$p_value[1], qini_row$t_statistic[1]
+              )
             )
           }
         }
         interpretation <- paste0(interpretation, "\n")
       }
-      
+
       # AUTOC only
       autoc_only <- setdiff(sig_autoc, sig_qini)
       if (length(autoc_only) > 0) {
@@ -976,20 +1007,24 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
           if (row$t_statistic[1] < 0) {
             interpretation <- paste0(
               interpretation,
-              sprintf("- **%s**: p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n", 
-                      model_label, row$p_value[1], row$t_statistic[1])
+              sprintf(
+                "- **%s**: p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n",
+                model_label, row$p_value[1], row$t_statistic[1]
+              )
             )
           } else {
             interpretation <- paste0(
               interpretation,
-              sprintf("- **%s**: p = %.4f (t = %.3f)\n", 
-                      model_label, row$p_value[1], row$t_statistic[1])
+              sprintf(
+                "- **%s**: p = %.4f (t = %.3f)\n",
+                model_label, row$p_value[1], row$t_statistic[1]
+              )
             )
           }
         }
         interpretation <- paste0(interpretation, "\n")
       }
-      
+
       # QINI only
       qini_only <- setdiff(sig_qini, sig_autoc)
       if (length(qini_only) > 0) {
@@ -1008,14 +1043,18 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
           if (row$t_statistic[1] < 0) {
             interpretation <- paste0(
               interpretation,
-              sprintf("- **%s**: p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n", 
-                      model_label, row$p_value[1], row$t_statistic[1])
+              sprintf(
+                "- **%s**: p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n",
+                model_label, row$p_value[1], row$t_statistic[1]
+              )
             )
           } else {
             interpretation <- paste0(
               interpretation,
-              sprintf("- **%s**: p = %.4f (t = %.3f)\n", 
-                      model_label, row$p_value[1], row$t_statistic[1])
+              sprintf(
+                "- **%s**: p = %.4f (t = %.3f)\n",
+                model_label, row$p_value[1], row$t_statistic[1]
+              )
             )
           }
         }
@@ -1025,10 +1064,12 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
       # single target case
       interpretation <- paste0(
         interpretation,
-        sprintf("%d out of %d models show statistically significant treatment effect heterogeneity:\n\n", 
-                n_significant, n_models)
+        sprintf(
+          "%d out of %d models show statistically significant treatment effect heterogeneity:\n\n",
+          n_significant, n_models
+        )
       )
-      
+
       # List significant models
       sig_models <- cv_results[cv_results$significant, ]
       for (i in 1:nrow(sig_models)) {
@@ -1041,26 +1082,29 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
         if (sig_models$t_statistic[i] < 0) {
           interpretation <- paste0(
             interpretation,
-            sprintf("- **%s**: p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n", 
-                    model_label, sig_models$p_value[i], sig_models$t_statistic[i])
+            sprintf(
+              "- **%s**: p = %.4f (t = %.3f) ⚠️ **CAUTION: Shows negative heterogeneity**\n",
+              model_label, sig_models$p_value[i], sig_models$t_statistic[i]
+            )
           )
         } else {
           interpretation <- paste0(
             interpretation,
-            sprintf("- **%s**: p = %.4f (t = %.3f)\n", 
-                    model_label, sig_models$p_value[i], sig_models$t_statistic[i])
+            sprintf(
+              "- **%s**: p = %.4f (t = %.3f)\n",
+              model_label, sig_models$p_value[i], sig_models$t_statistic[i]
+            )
           )
         }
       }
     }
-    
+
     interpretation <- paste0(
       interpretation,
       "\n## Recommendation\n\n",
       "These models show robust evidence of treatment effect heterogeneity and are ",
       "good candidates for personalized treatment strategies.\n"
     )
-    
   } else {
     interpretation <- paste0(
       interpretation,
@@ -1071,7 +1115,7 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
       "A uniform treatment policy may be appropriate.\n"
     )
   }
-  
+
   # Add technical note
   interpretation <- paste0(
     interpretation,
@@ -1080,7 +1124,7 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
     "(Wager 2024; Nie & Wager 2020), which provides valid inference by ",
     "ensuring independence across folds through sequential training.\n"
   )
-  
+
   interpretation
 }
 
@@ -1092,60 +1136,62 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
 #'
 #' @keywords internal
 convert_cv_to_rate_results <- function(cv_results, flipped_outcomes = NULL) {
-  
   # extract model names that passed CV test
   significant_models <- cv_results$significant_models
-  
+
   # format model names - ensure they have "model_" prefix
   significant_models <- ifelse(
     grepl("^model_", significant_models),
     significant_models,
     paste0("model_", significant_models)
   )
-  
+
   # all tested models
   all_models <- ifelse(
     grepl("^model_", cv_results$cv_results$model),
     cv_results$cv_results$model,
     paste0("model_", cv_results$cv_results$model)
   )
-  
+
   # models that failed the test (negative evidence)
   excluded_models <- setdiff(all_models, significant_models)
-  
+
   # models with inconclusive results (p-value > alpha but not negative)
   # for CV, we treat non-significant as inconclusive rather than negative
   inconclusive_models <- all_models[!cv_results$cv_results$significant]
-  
+
   # create rate_results structure matching margot_interpret_rate output
   list(
     # CV uses the same target for both, so duplicate for consistency
     autoc_model_names = significant_models,
     qini_model_names = significant_models,
-    
+
     # excluded models - those with clearly negative evidence
-    excluded_autoc = character(0),  # CV doesn't produce negative results per se
+    excluded_autoc = character(0), # CV doesn't produce negative results per se
     excluded_qini = character(0),
-    excluded_either = character(0),  # No models excluded for negative evidence in CV
-    
-    # inconclusive models 
+    excluded_either = character(0), # No models excluded for negative evidence in CV
+
+    # inconclusive models
     not_excluded_autoc_model_names = inconclusive_models,
     not_excluded_qini_model_names = inconclusive_models,
-    
+
     # flipped outcomes handling
     autoc_flipped = if (!is.null(flipped_outcomes)) {
       intersect(significant_models, paste0("model_", flipped_outcomes))
-    } else character(0),
-    
+    } else {
+      character(0)
+    },
     qini_flipped = if (!is.null(flipped_outcomes)) {
       intersect(significant_models, paste0("model_", flipped_outcomes))
-    } else character(0),
-    
+    } else {
+      character(0)
+    },
+
     # summary counts
     n_positive_autoc = length(significant_models),
     n_positive_qini = length(significant_models),
     n_tested = length(all_models),
-    
+
     # method info
     method = "cross_validation",
     num_folds = cv_results$method_details$num_folds,
@@ -1167,10 +1213,9 @@ convert_cv_to_rate_results <- function(cv_results, flipped_outcomes = NULL) {
 #' @keywords internal
 #' @importFrom dplyr mutate select arrange filter desc case_when left_join bind_rows
 create_cv_tables <- function(cv_results, alpha = 0.05) {
-  
   # Check if model_label column exists
   has_labels <- "model_label" %in% names(cv_results)
-  
+
   # Create a table similar to margot_rate() structure with proper labeling
   cv_table <- cv_results %>%
     dplyr::mutate(
@@ -1189,19 +1234,19 @@ create_cv_tables <- function(cv_results, alpha = 0.05) {
       # Status column matching evidence summary style
       Status = dplyr::case_when(
         significant & estimate > 0 ~ "positive",
-        significant & estimate < 0 ~ "negative", 
+        significant & estimate < 0 ~ "negative",
         !significant ~ "inconclusive"
       )
     ) %>%
     dplyr::select(
-      model_id, model_name, target, `RATE Estimate`, `Std Error`, 
+      model_id, model_name, target, `RATE Estimate`, `Std Error`,
       `t-statistic`, `p-value`, Status
     ) %>%
     dplyr::arrange(target, dplyr::desc(as.numeric(`RATE Estimate`)))
-  
+
   # Split by target if both AUTOC and QINI are present
   targets <- unique(cv_table$target)
-  
+
   if (length(targets) == 1) {
     # Single target - remove target column since it's redundant
     result <- list()
@@ -1214,7 +1259,7 @@ create_cv_tables <- function(cv_results, alpha = 0.05) {
     for (tgt in targets) {
       result[[paste0("rate_", tolower(tgt))]] <- cv_table %>%
         dplyr::filter(target == tgt) %>%
-        dplyr::select(-target)  # remove target column since it's in the name
+        dplyr::select(-target) # remove target column since it's in the name
     }
     result
   }
@@ -1243,21 +1288,20 @@ create_cv_tables <- function(cv_results, alpha = 0.05) {
 #' }
 #'
 #' @export
-margot_interpret_rate_cv <- function(cv_results, 
-                                    flipped_outcomes = NULL,
-                                    target = NULL) {
-  
+margot_interpret_rate_cv <- function(cv_results,
+                                     flipped_outcomes = NULL,
+                                     target = NULL) {
   if (!inherits(cv_results, "margot_cv_results")) {
     stop("Input must be a margot_cv_results object from margot_rate_cv()")
   }
-  
+
   cv_data <- cv_results$cv_results
   targets <- unique(cv_data$target)
-  
+
   # Create individual interpretations for each target
   interpretations <- list()
   tables <- list()
-  
+
   for (tgt in targets) {
     tgt_data <- cv_data[cv_data$target == tgt, ]
     tables[[paste0(tolower(tgt), "_table")]] <- cv_results$tables[[paste0("rate_", tolower(tgt))]]
@@ -1265,34 +1309,34 @@ margot_interpret_rate_cv <- function(cv_results,
       tgt_data, tgt, flipped_outcomes
     )
   }
-  
+
   # Create comparison if both targets are present
   comparison <- NULL
   if (length(targets) == 2) {
     comparison <- compare_cv_targets(cv_data, flipped_outcomes)
   }
-  
+
   # Main interpretation
   main_interpretation <- if (length(targets) == 1) {
     interpretations[[1]]
   } else {
     comparison
   }
-  
+
   # Return comprehensive results
   result <- list(
     tables = tables,
     interpretation = main_interpretation,
     method_details = cv_results$method_details
   )
-  
+
   # Add individual target results
   result <- c(result, interpretations)
-  
+
   if (!is.null(comparison)) {
     result$comparison <- comparison
   }
-  
+
   result
 }
 
@@ -1300,11 +1344,10 @@ margot_interpret_rate_cv <- function(cv_results,
 #' Interpret Single CV Target Results
 #' @keywords internal
 interpret_single_cv_target <- function(cv_data, target, flipped_outcomes = NULL) {
-  
   pos <- which(cv_data$significant & cv_data$estimate > 0)
   neg <- which(cv_data$significant & cv_data$estimate < 0)
   inc <- which(!cv_data$significant)
-  
+
   # Handle flipped outcomes for display
   outcome_labels <- cv_data$outcome
   if (!is.null(flipped_outcomes)) {
@@ -1314,9 +1357,9 @@ interpret_single_cv_target <- function(cv_data, target, flipped_outcomes = NULL)
       outcome_labels[flipped_idx] <- paste0(outcome_labels[flipped_idx], " (flipped)")
     }
   }
-  
+
   pol_txt <- "CATE-based targeting"
-  
+
   lines <- list(
     paste0("### Cross-Validation RATE (", target, ")"),
     paste0("Method: ", cv_data$fold[1], "-fold sequential cross-validation"),
@@ -1326,24 +1369,36 @@ interpret_single_cv_target <- function(cv_data, target, flipped_outcomes = NULL)
       "QINI applies linear weighting, maximising aggregate gain."
     }
   )
-  
+
   if (length(pos)) {
-    lines <- c(lines,
-               paste0("**Positive RATE** CATE targeting outperforms ATE for: ",
-                      paste(outcome_labels[pos], collapse = ", "), "."))
+    lines <- c(
+      lines,
+      paste0(
+        "**Positive RATE** CATE targeting outperforms ATE for: ",
+        paste(outcome_labels[pos], collapse = ", "), "."
+      )
+    )
   }
   if (length(neg)) {
-    lines <- c(lines,
-               paste0("**Negative RATE** CATE targeting would *underperform* ATE for: ",
-                      paste(outcome_labels[neg], collapse = ", "), "."))
+    lines <- c(
+      lines,
+      paste0(
+        "**Negative RATE** CATE targeting would *underperform* ATE for: ",
+        paste(outcome_labels[neg], collapse = ", "), "."
+      )
+    )
   }
   if (length(inc)) {
-    lines <- c(lines,
-               paste0("Evidence inconclusive for: ",
-                      paste(outcome_labels[inc], collapse = ", "),
-                      " (p > α)."))
+    lines <- c(
+      lines,
+      paste0(
+        "Evidence inconclusive for: ",
+        paste(outcome_labels[inc], collapse = ", "),
+        " (p > α)."
+      )
+    )
   }
-  
+
   paste(lines, collapse = "\n\n")
 }
 
@@ -1351,21 +1406,20 @@ interpret_single_cv_target <- function(cv_data, target, flipped_outcomes = NULL)
 #' Compare CV AUTOC and QINI Results
 #' @keywords internal
 compare_cv_targets <- function(cv_data, flipped_outcomes = NULL) {
-  
   autoc_data <- cv_data[cv_data$target == "AUTOC", ]
   qini_data <- cv_data[cv_data$target == "QINI", ]
-  
+
   # Ensure same model order for comparison
   autoc_data <- autoc_data[order(autoc_data$model), ]
   qini_data <- qini_data[order(qini_data$model), ]
-  
+
   pos_auto <- autoc_data$model[autoc_data$significant & autoc_data$estimate > 0]
   pos_qini <- qini_data$model[qini_data$significant & qini_data$estimate > 0]
-  
+
   both_pos <- intersect(pos_auto, pos_qini)
   only_auto <- setdiff(pos_auto, pos_qini)
   only_qini <- setdiff(pos_qini, pos_auto)
-  
+
   # Handle flipped outcomes for display
   format_outcomes <- function(models) {
     labels <- gsub("^model_", "", models)
@@ -1377,36 +1431,50 @@ compare_cv_targets <- function(cv_data, flipped_outcomes = NULL) {
     }
     labels
   }
-  
+
   txt <- c("### Cross-Validation RATE Comparison")
-  
+
   if (length(both_pos)) {
-    txt <- c(txt,
-             paste0("**Agreement**: Both weighting schemes identify positive heterogeneity for ",
-                    paste(format_outcomes(both_pos), collapse = ", "), "."))
+    txt <- c(
+      txt,
+      paste0(
+        "**Agreement**: Both weighting schemes identify positive heterogeneity for ",
+        paste(format_outcomes(both_pos), collapse = ", "), "."
+      )
+    )
   }
-  
+
   if (length(c(only_auto, only_qini))) {
     disc <- character()
     if (length(only_auto)) {
-      disc <- c(disc,
-                paste0("AUTOC-only positive: ",
-                       paste(format_outcomes(only_auto), collapse = ", ")))
+      disc <- c(
+        disc,
+        paste0(
+          "AUTOC-only positive: ",
+          paste(format_outcomes(only_auto), collapse = ", ")
+        )
+      )
     }
     if (length(only_qini)) {
-      disc <- c(disc,
-                paste0("QINI-only positive: ",
-                       paste(format_outcomes(only_qini), collapse = ", ")))
+      disc <- c(
+        disc,
+        paste0(
+          "QINI-only positive: ",
+          paste(format_outcomes(only_qini), collapse = ", ")
+        )
+      )
     }
-    txt <- c(txt,
-             "Weighting choice matters:",
-             paste(disc, collapse = "; "), ".")
+    txt <- c(
+      txt,
+      "Weighting choice matters:",
+      paste(disc, collapse = "; "), "."
+    )
   }
-  
+
   if (!length(c(both_pos, only_auto, only_qini))) {
     txt <- c(txt, "No statistically reliable positives under either weighting.")
   }
-  
+
   paste(txt, collapse = "\n\n")
 }
 

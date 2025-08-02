@@ -28,16 +28,15 @@ data <- data.frame(
   outcome2 = Y2
 )
 
-# run margot_causal_forest with qini_split = TRUE for proper validation
-cat("Running margot_causal_forest with qini_split = TRUE...\n")
+# run margot_causal_forest with honest evaluation
+cat("Running margot_causal_forest...\n")
 results <- margot_causal_forest(
   data = data,
   outcome_vars = c("outcome1", "outcome2"),
   covariates = X,
   W = W,
   weights = NULL,
-  qini_split = TRUE,
-  train_prop = 0.7,
+  train_proportion = 0.7,
   save_models = TRUE,
   save_data = TRUE,
   verbose = TRUE
@@ -47,7 +46,7 @@ cat("\n\nTest 1: margot_rate with custom q grid\n")
 cat("=====================================\n")
 rate_results <- margot_rate(
   models = results,
-  q = seq(0.2, 1, by = 0.2),  # custom q grid
+  q = seq(0.2, 1, by = 0.2), # custom q grid
   use_evaluation_subset = TRUE
 )
 

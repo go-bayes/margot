@@ -41,9 +41,11 @@ wave_breaks <- list(
   "wave 1" = c(as.Date("2010-01-01"), as.Date("2010-12-31")),
   "wave 2" = c(as.Date("2011-01-01"), as.Date("2011-12-31"))
 )
-prepared_data <- prepare_panel_data(dat, wave_col = "Wave", tscore_col = "TimeScore",
-                                    id_col = "ParticipantID", base_date = "2010-01-01",
-                                    wave_breaks = wave_breaks)
+prepared_data <- prepare_panel_data(dat,
+  wave_col = "Wave", tscore_col = "TimeScore",
+  id_col = "ParticipantID", base_date = "2010-01-01",
+  wave_breaks = wave_breaks
+)
 }
 
 }

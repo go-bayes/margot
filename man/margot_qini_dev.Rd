@@ -24,7 +24,7 @@ margot_qini_dev(
 \item{baseline_method}{Method for baseline curve: "maq_no_covariates" (default),
 "simple", "maq_only", "auto", or "none"}
 
-\item{use_evaluation_forest}{Logical. Use evaluation forest for DR scores 
+\item{use_evaluation_forest}{Logical. Use evaluation forest for DR scores
 if available (default: TRUE)}
 
 \item{spend_levels}{Numeric vector of budget levels for gain summaries
@@ -47,8 +47,8 @@ List of class "margot_qini_dev" containing:
   \item{metadata}{Analysis parameters and data info}
 }
 \description{
-Computes QINI curves and related metrics using the test set from 
-margot_causal_forest_dev(). Integrates functionality from margot_qini() 
+Computes QINI curves and related metrics using the test set from
+margot_causal_forest_dev(). Integrates functionality from margot_qini()
 and margot_interpret_qini() into a single coherent function.
 }
 \details{

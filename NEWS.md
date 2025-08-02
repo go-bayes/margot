@@ -1,3 +1,97 @@
+# [2025-08-02] margot 1.0.227
+
+### Bug Fixes
+- Fixed `compute_conditional_means` to respect `compute_marginal_only` setting in `margot_causal_forest()`
+- When `compute_marginal_only = TRUE`, conditional means computation is now skipped with defensive empty structure
+- This ensures consistent behavior where marginal-only mode skips all heterogeneity-related computations
+
+# [2025-08-02] margot 1.0.226
+
+### Bug Fixes
+- Fixed label mapping in `margot_plot()` to correctly handle reversed variables with `_r` suffix
+- `transform_label()` now prioritizes exact matches in label_mapping before trying pattern matching
+- Added automatic removal of `_r` suffix (for reversed variables) alongside `_z` suffix removal
+- This prevents stray "_r" suffixes appearing on plot labels when using label_mapping
+
+# [2025-08-02] margot 1.0.225
+
+### Bug Fixes
+- Fixed `margot_plot()` to properly handle reversed variables (with `_r` suffix) when `original_df` is provided
+- `back_transform_estimates()` now removes `_r` suffix before searching in original_df and skips silently if not found
+
+### Breaking Changes
+- **Renamed `compute_heterogeneity` to `compute_marginal_only` with inverted logic**:
+  - `compute_marginal_only = TRUE` now means skip heterogeneity (was `compute_heterogeneity = FALSE`)
+  - `compute_marginal_only = FALSE` (default) means compute full analysis
+  - Clearer parameter name that explicitly states what is computed
+  
+- **Removed `qini_split` parameter**:
+  - QINI evaluation now always uses honest evaluation (test set only)
+  - Simplifies the interface and follows GRF best practices
+  - Ensures QINI curves accurately reflect out-of-sample performance
+
+### Major Improvements
+- **Enhanced parameter validation**:
+  - `compute_marginal_only = TRUE` requires `train_proportion = NULL` (enforced)
+  - `compute_marginal_only = FALSE` requires valid `train_proportion` (enforced)
+  - Clear error messages prevent conflicting parameter combinations
+  
+### Implementation Details
+- Default behavior unchanged: `compute_marginal_only = FALSE, train_proportion = 0.5`
+- Backward compatibility maintained through parameter detection in `margot_flip_forests()`
+- Cleaner mental model: either marginal-only OR full-with-splits
+- `margot_flip_forests()` now requires heterogeneity components and provides clear error when used with marginal-only results
+
+### Benefits
+- Prevents user confusion about parameter interactions
+- Makes intentions explicit in function calls
+- Simplifies understanding of what analyses will be performed
+- Always uses honest QINI evaluation for accurate heterogeneity assessment
+
+# [2025-08-01] margot 1.0.224
+
+### Major Features
+- **Added `compute_heterogeneity` parameter to `margot_causal_forest()`**:
+  - Set to FALSE to skip QINI, RATE, and policy tree computations
+  - Significantly faster when only average treatment effects are needed
+  - Creates defensive empty data structures to maintain pipeline compatibility
+  - Default TRUE maintains backward compatibility
+
+### Improvements
+- **Enhanced parameter inheritance in `margot_flip_forests()`**:
+  - Now inherits all computation parameters from original results
+  - Uses new `computation_params` structure when available
+  - Falls back to old detection method for backward compatibility
+  
+- **Added computation tracking**:
+  - New `computation_status` field tracks what was computed
+  - New `computation_params` field stores all parameters for reproducibility
+  - Enables future `margot_hetero()` function to compute missing heterogeneity metrics
+
+### Implementation Details
+- Empty data structures have `computed = FALSE` flag for downstream detection
+- All existing pipelines continue to work unchanged
+- Prepares architecture for separating effect estimation from heterogeneity evaluation
+
+# [2025-08-01] margot 1.0.223
+
+### Major Features
+- **Added outcome flipping capability to `margot_causal_forest()`**:
+  - New parameters: `flip_outcomes`, `flip_method`, and `flip_scale_bounds`
+  - Supports two inversion methods:
+    - `"zscore"`: Negates standardized z-scores while preserving relative distances
+    - `"ordinal"`: Inverts values on ordinal scale using specified bounds (e.g., Likert scales)
+  - Flipped outcomes automatically appended with "_r" suffix in results
+  - Informative CLI messages report transformation details
+  - Created `margot_invert_measure()` utility function for flexible score inversion
+  - Comprehensive test suite for inversion functionality
+
+### Implementation Details
+- **Z-score method**: Simple negation (`-x`) for already standardized data. Warns if data appears unstandardized
+- **Ordinal method**: Uses formula `(max + min) - x` to preserve distances while reversing order
+- **Flexible specification**: Can flip all outcomes uniformly or specify per-outcome settings
+- **NA handling**: Properly preserves missing values during transformation
+
 # [2025-07-31] margot 1.0.222
 
 ### Improvements

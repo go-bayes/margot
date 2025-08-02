@@ -19,7 +19,6 @@
 #' # assume some_data is a dataset with no wave column
 #' margot_prop_missing(some_data)
 margot_prop_missing <- function(data, wave_col = "wave") {
-
   if (!wave_col %in% names(data)) {
     warning("No wave column found. Using entire dataset.")
     data_subset <- data

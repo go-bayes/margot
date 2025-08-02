@@ -1,4 +1,3 @@
-
 #' Attach policy-value tests to a batch of models
 #'
 #' Runs `margot_compute_policy_value()` at specified depths for each outcome,
@@ -18,9 +17,9 @@
 #' @importFrom furrr future_map furrr_options
 margot_add_policy_values_batch <- function(cf_out,
                                            outcomes = NULL,
-                                           depths   = c(1L, 2L),
-                                           R        = 499L,
-                                           seed     = 42L,
+                                           depths = c(1L, 2L),
+                                           R = 499L,
+                                           seed = 42L,
                                            parallel = FALSE) {
   stopifnot(is.list(cf_out), "results" %in% names(cf_out))
   if (is.null(outcomes)) {
@@ -82,12 +81,11 @@ margot_add_policy_values_batch <- function(cf_out,
 margot_policy_summary <- function(cf_out,
                                   depths = 2L,
                                   adjust = "bonferroni",
-                                  alpha  = 0.05) {
-
+                                  alpha = 0.05) {
   cf_out |>
     margot_collect_policy_values(depths = depths) |>
     margot_adjust_policy_p(method = adjust, alpha = alpha) |>
-    dplyr::filter(estimate > 0)        # <- new line: keep positive gain only
+    dplyr::filter(estimate > 0) # <- new line: keep positive gain only
 }
 
 
@@ -95,13 +93,13 @@ margot_policy_summary <- function(cf_out,
 # @keywords internal
 margot_add_policy_batch <- function(cf_out, keep,
                                     depth = 2L, R = 999L, seed = 2025L) {
-
   idx <- paste0("model_", keep)
   cf_out$results[idx] <- purrr::map(cf_out$results[idx],
-                                    margot_add_policy_p,
-                                    depth = depth,
-                                    R     = R,
-                                    seed  = seed)
+    margot_add_policy_p,
+    depth = depth,
+    R     = R,
+    seed  = seed
+  )
   invisible(cf_out)
 }
 
@@ -128,14 +126,18 @@ margot_add_policy_batch <- function(cf_out, keep,
 #' @importFrom stats p.adjust
 margot_adjust_policy_p <- function(tbl,
                                    method = "bonferroni",
-                                   alpha  = 0.05) {
+                                   alpha = 0.05) {
   stopifnot(is.data.frame(tbl), "p_value" %in% names(tbl))
-  method <- match.arg(tolower(method),
-                      c("bonferroni", "holm", "hochberg", "hommel",
-                        "BH", "fdr", "BY", "none"))
+  method <- match.arg(
+    tolower(method),
+    c(
+      "bonferroni", "holm", "hochberg", "hommel",
+      "BH", "fdr", "BY", "none"
+    )
+  )
   out <- dplyr::mutate(tbl,
-                       p_adj = stats::p.adjust(p_value, method = method),
-                       significant = p_adj < alpha
+    p_adj = stats::p.adjust(p_value, method = method),
+    significant = p_adj < alpha
   )
   out
 }
@@ -149,12 +151,13 @@ margot_adjust_policy_p <- function(tbl,
 #' @keywords internal
 margot_add_policy_p <- function(model,
                                 depth = 2L,
-                                R     = 999L,
-                                seed  = 2025L) {
+                                R = 999L,
+                                seed = 2025L) {
   margot_add_policy_values(model,
-                           depths = depth,
-                           R      = R,
-                           seed   = seed)
+    depths = depth,
+    R      = R,
+    seed   = seed
+  )
 }
 
 
@@ -182,22 +185,23 @@ margot_add_policy_p <- function(model,
 #' @keywords internal
 margot_compute_policy_value <- function(model,
                                         depth = 2L,
-                                        R     = 499L,
-                                        seed  = NULL) {
+                                        R = 499L,
+                                        seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
 
   tag <- paste0("policy_tree_depth_", depth)
   pol <- model[[tag]]
-  if (is.null(pol))
+  if (is.null(pol)) {
     stop("no ", tag, " slot present – run `margot_policy()` first")
+  }
 
-  dr   <- model$dr_scores
+  dr <- model$dr_scores
   full <- model$plot_data$X_test_full
-  X    <- full[, pol$columns, drop = FALSE]
+  X <- full[, pol$columns, drop = FALSE]
   keep <- complete.cases(X)
-  X    <- X[keep, , drop = FALSE]
-  dr   <- dr[keep, , drop = FALSE]
-  n    <- nrow(X)
+  X <- X[keep, , drop = FALSE]
+  dr <- dr[keep, , drop = FALSE]
+  n <- nrow(X)
   stopifnot(n > 0L)
 
   pick <- function(a, mat) {
@@ -206,19 +210,19 @@ margot_compute_policy_value <- function(model,
   }
 
   # —— changed lines —— #
-  a_hat   <- predict(pol, X)
+  a_hat <- predict(pol, X)
   ate_hat <- mean(dr[, 2] - dr[, 1])
-  pv_hat  <- mean(pick(a_hat, dr)) - ate_hat
+  pv_hat <- mean(pick(a_hat, dr)) - ate_hat
 
   reps <- replicate(R, {
-    idx  <- sample.int(n, n, TRUE)
+    idx <- sample.int(n, n, TRUE)
     a_bs <- predict(pol, X[idx, , drop = FALSE])
     mean(pick(a_bs, dr[idx, , drop = FALSE])) - ate_hat
   })
   # —— end changes —— #
 
   se <- sd(reps)
-  p  <- 2 * pnorm(-abs(pv_hat / se))
+  p <- 2 * pnorm(-abs(pv_hat / se))
 
   structure(
     list(
@@ -242,8 +246,8 @@ margot_compute_policy_value <- function(model,
 #' @keywords internal
 margot_add_policy_values <- function(model,
                                      depths = c(1L, 2L),
-                                     R      = 499L,
-                                     seed   = 42L) {
+                                     R = 499L,
+                                     seed = 42L) {
   for (d in depths) {
     model[[paste0("policy_value_depth_", d)]] <-
       margot_compute_policy_value(model, depth = d, R = R, seed = seed)
@@ -271,13 +275,17 @@ margot_collect_policy_values <- function(cf_out, depths = c(1L, 2L)) {
     m <- cf_out$results[[paste0("model_", out)]]
     purrr::map_dfr(depths, function(d) {
       tag <- paste0("policy_value_depth_", d)
-      pv  <- m[[tag]]
-      if (is.null(pv)) return(NULL)
-      tibble::tibble(outcome = out,
-                     depth   = d,
-                     estimate = pv$estimate,
-                     std_err  = pv$std.err,
-                     p_value  = pv$p.value)
+      pv <- m[[tag]]
+      if (is.null(pv)) {
+        return(NULL)
+      }
+      tibble::tibble(
+        outcome = out,
+        depth = d,
+        estimate = pv$estimate,
+        std_err = pv$std.err,
+        p_value = pv$p.value
+      )
     })
   })
 }
@@ -303,45 +311,50 @@ margot_collect_policy_values <- function(cf_out, depths = c(1L, 2L)) {
 #' @keywords internal
 margot_add_policy_values_batch <- function(cf_out,
                                            outcomes = NULL,
-                                           depths   = c(1L, 2L),
-                                           R        = 499L,
-                                           seed     = 42L,
+                                           depths = c(1L, 2L),
+                                           R = 499L,
+                                           seed = 42L,
                                            parallel = FALSE) {
-
   stopifnot(is.list(cf_out), "results" %in% names(cf_out))
 
-  if (is.null(outcomes))
+  if (is.null(outcomes)) {
     outcomes <- cf_out$outcome_vars
+  }
   model_keys <- paste0("model_", outcomes)
 
   # choose sequential or parallel mapper ---------------------------------
   if (parallel &&
-      requireNamespace("future", quietly = TRUE) &&
-      requireNamespace("furrr",  quietly = TRUE)) {
-
+    requireNamespace("future", quietly = TRUE) &&
+    requireNamespace("furrr", quietly = TRUE)) {
     ncores <- parallel::detectCores(logical = FALSE)
     future::plan(future::multisession, workers = max(1, ncores - 1))
 
-    mapper      <- furrr::future_map
-    mapper_opts <- furrr::furrr_options(seed = seed,
-                                        packages = "margot")
+    mapper <- furrr::future_map
+    mapper_opts <- furrr::furrr_options(
+      seed = seed,
+      packages = "margot"
+    )
     map_args <- list(.options = mapper_opts)
-
   } else {
-    mapper   <- purrr::map
+    mapper <- purrr::map
     map_args <- list()
   }
 
   # add tests that are still missing -------------------------------------
   add_missing <- function(model) {
-    missing <- depths[vapply(depths, function(d)
-      is.null(model[[paste0("policy_value_depth_", d)]]),
-      logical(1))]
-    if (length(missing))
+    missing <- depths[vapply(
+      depths, function(d) {
+        is.null(model[[paste0("policy_value_depth_", d)]])
+      },
+      logical(1)
+    )]
+    if (length(missing)) {
       model <- margot_add_policy_values(model,
-                                        depths = missing,
-                                        R      = R,
-                                        seed   = seed)
+        depths = missing,
+        R      = R,
+        seed   = seed
+      )
+    }
     model
   }
 
@@ -377,24 +390,26 @@ margot_add_policy_values_batch <- function(cf_out,
 #' @return tibble. one row per outcome with adjusted *p*-values and pass flag.
 #' @keywords internal
 margot_report_policy <- function(cf_out,
-                                 keep   = NULL,
-                                 depth  = 2L,
+                                 keep = NULL,
+                                 depth = 2L,
                                  adjust = "bonferroni",
-                                 alpha  = 0.05,
-                                 R      = 999L,
-                                 seed   = 2025L) {
+                                 alpha = 0.05,
+                                 R = 999L,
+                                 seed = 2025L) {
   if (!is.null(keep)) {
     cf_out <- margot_add_policy_batch(cf_out,
-                                      keep  = keep,
-                                      depth = depth,
-                                      R     = R,
-                                      seed  = seed)
+      keep  = keep,
+      depth = depth,
+      R     = R,
+      seed  = seed
+    )
   }
 
   margot_policy_summary(cf_out,
-                        depths = depth,
-                        adjust = adjust,
-                        alpha  = alpha)
+    depths = depth,
+    adjust = adjust,
+    alpha  = alpha
+  )
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -422,46 +437,52 @@ margot_report_policy <- function(cf_out,
 margot_summarise_all <- function(cf_out,
                                  target = c("AUTOC", "QINI", "both"),
                                  adjust = c("bonferroni", "holm", "BH", "none"),
-                                 alpha  = 0.05) {
+                                 alpha = 0.05) {
   `%||%` <- function(a, b) if (is.null(a)) b else a
   target <- match.arg(target)
   adjust <- match.arg(adjust)
-  z      <- stats::qnorm(1 - alpha / 2)
+  z <- stats::qnorm(1 - alpha / 2)
 
   res <- purrr::map_dfr(cf_out$outcome_vars, function(outcome) {
     m <- cf_out$results[[paste0("model_", outcome)]]
 
     ate_est <- unname(m$ate["estimate"])
-    ate_se  <- unname(m$ate["std.err"])
+    ate_se <- unname(m$ate["std.err"])
 
     rr_a <- m$rate_result
     rr_q <- m$rate_qini
 
-    a_est <- rr_a$estimate; a_se <- rr_a$std.err
-    a_lo  <- a_est - z * a_se; a_hi <- a_est + z * a_se
+    a_est <- rr_a$estimate
+    a_se <- rr_a$std.err
+    a_lo <- a_est - z * a_se
+    a_hi <- a_est + z * a_se
 
-    q_est <- rr_q$estimate; q_se <- rr_q$std.err
-    q_lo  <- q_est - z * q_se; q_hi <- q_est + z * q_se
+    q_est <- rr_q$estimate
+    q_se <- rr_q$std.err
+    q_lo <- q_est - z * q_se
+    q_hi <- q_est + z * q_se
 
-    pv_tag  <- m$policy_value_depth_2 %||% m$policy_value
+    pv_tag <- m$policy_value_depth_2 %||% m$policy_value
     policy_p <- if (!is.null(pv_tag)) pv_tag$p.value else NA_real_
 
     tibble::tibble(outcome,
-                   ate_est, ate_se,
-                   rate_autoc     = a_est,
-                   rate_autoc_se  = a_se,
-                   rate_autoc_lo  = a_lo,
-                   rate_autoc_hi  = a_hi,
-                   rate_qini      = q_est,
-                   rate_qini_se   = q_se,
-                   rate_qini_lo   = q_lo,
-                   rate_qini_hi   = q_hi,
-                   policy_p)
+      ate_est, ate_se,
+      rate_autoc = a_est,
+      rate_autoc_se = a_se,
+      rate_autoc_lo = a_lo,
+      rate_autoc_hi = a_hi,
+      rate_qini = q_est,
+      rate_qini_se = q_se,
+      rate_qini_lo = q_lo,
+      rate_qini_hi = q_hi,
+      policy_p
+    )
   })
 
   res <- dplyr::mutate(res,
-                       p_adj = stats::p.adjust(policy_p, method = adjust),
-                       significant  = p_adj < alpha)
+    p_adj = stats::p.adjust(policy_p, method = adjust),
+    significant = p_adj < alpha
+  )
 
   if (target == "AUTOC") {
     res <- dplyr::select(res, -dplyr::starts_with("rate_qini"))
@@ -489,12 +510,12 @@ margot_summarise_all <- function(cf_out,
 #' @importFrom tibble tibble
 #' @importFrom dplyr mutate
 margot_screen_models <- function(model_results,
-                                 rule   = c("ate_or_rate", "ate", "rate"),
+                                 rule = c("ate_or_rate", "ate", "rate"),
                                  target = c("AUTOC", "QINI", "either", "both"),
-                                 alpha  = 0.05,
+                                 alpha = 0.05,
                                  adjust = c("none", "bonferroni", "holm", "BH", "fdr", "BY"),
                                  use_boot = FALSE) {
-  rule   <- match.arg(rule)
+  rule <- match.arg(rule)
   target <- toupper(match.arg(target))
   adjust <- match.arg(adjust)
 
@@ -510,49 +531,51 @@ margot_screen_models <- function(model_results,
 
   # map over each named result element
   res <- purrr::imap_dfr(model_results$results, function(m, nm) {
-    ate_est   <- purrr::pluck(m, "ate",          "estimate",       .default = NA_real_)
-    ate_se    <- purrr::pluck(m, "ate",          "std.err",        .default = NA_real_)
-    ate_boot  <- purrr::pluck(m, "ate",          "boot_estimates", .default = NULL)
+    ate_est <- purrr::pluck(m, "ate", "estimate", .default = NA_real_)
+    ate_se <- purrr::pluck(m, "ate", "std.err", .default = NA_real_)
+    ate_boot <- purrr::pluck(m, "ate", "boot_estimates", .default = NULL)
 
-    autoc_est <- purrr::pluck(m, "rate_result",  "estimate",       .default = NA_real_)
-    autoc_se  <- purrr::pluck(m, "rate_result",  "std.err",        .default = NA_real_)
-    autoc_boot<- purrr::pluck(m, "rate_result",  "boot_est",       .default = NULL)
+    autoc_est <- purrr::pluck(m, "rate_result", "estimate", .default = NA_real_)
+    autoc_se <- purrr::pluck(m, "rate_result", "std.err", .default = NA_real_)
+    autoc_boot <- purrr::pluck(m, "rate_result", "boot_est", .default = NULL)
 
-    qini_est  <- purrr::pluck(m, "rate_qini",    "estimate",       .default = NA_real_)
-    qini_se   <- purrr::pluck(m, "rate_qini",    "std.err",        .default = NA_real_)
-    qini_boot <- purrr::pluck(m, "rate_qini",    "boot_est",       .default = NULL)
+    qini_est <- purrr::pluck(m, "rate_qini", "estimate", .default = NA_real_)
+    qini_se <- purrr::pluck(m, "rate_qini", "std.err", .default = NA_real_)
+    qini_boot <- purrr::pluck(m, "rate_qini", "boot_est", .default = NULL)
 
     tibble::tibble(
       outcome   = sub("^model_", "", nm),
-      p_ate     = get_p(ate_est,   ate_se,    ate_boot),
-      p_autoc   = get_p(autoc_est, autoc_se,  autoc_boot),
-      p_qini    = get_p(qini_est,  qini_se,   qini_boot)
+      p_ate     = get_p(ate_est, ate_se, ate_boot),
+      p_autoc   = get_p(autoc_est, autoc_se, autoc_boot),
+      p_qini    = get_p(qini_est, qini_se, qini_boot)
     )
   })
 
   # multiplicity adjustment
   res <- dplyr::mutate(
     res,
-    p_ate_adj   = stats::p.adjust(p_ate,   method = adjust),
+    p_ate_adj   = stats::p.adjust(p_ate, method = adjust),
     p_autoc_adj = stats::p.adjust(p_autoc, method = adjust),
-    p_qini_adj  = stats::p.adjust(p_qini,  method = adjust)
+    p_qini_adj  = stats::p.adjust(p_qini, method = adjust)
   )
 
   # decision logic
-  sig_ate <- res$p_ate_adj   < alpha
-  sig_a   <- res$p_autoc_adj < alpha
-  sig_q   <- res$p_qini_adj  < alpha
+  sig_ate <- res$p_ate_adj < alpha
+  sig_a <- res$p_autoc_adj < alpha
+  sig_q <- res$p_qini_adj < alpha
 
   rate_sig <- switch(target,
-                     AUTOC  = sig_a,
-                     QINI   = sig_q,
-                     EITHER = sig_a | sig_q,
-                     BOTH   = sig_a & sig_q)
+    AUTOC  = sig_a,
+    QINI   = sig_q,
+    EITHER = sig_a | sig_q,
+    BOTH   = sig_a & sig_q
+  )
 
   res$keep <- switch(rule,
-                     ate_or_rate = sig_ate | rate_sig,
-                     ate         = sig_ate,
-                     rate        = rate_sig)
+    ate_or_rate = sig_ate | rate_sig,
+    ate         = sig_ate,
+    rate        = rate_sig
+  )
 
   res
 }

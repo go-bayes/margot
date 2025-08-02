@@ -21,11 +21,11 @@
 #' @noRd
 .default_sim_params <- function() {
   list(
-    cens_exp_coef   = 0.4,  # prev A → logit(attrition)
-    cens_latent_rho = 0.5,  # shared frailty SD
+    cens_exp_coef   = 0.4, # prev A → logit(attrition)
+    cens_latent_rho = 0.5, # shared frailty SD
     exp_intercept   = -0.2, # baseline logit(A)
-    exp_L1_coef     = 0.2,  # L1 → A
-    out_B1_coef     = 0.1   # B1 → Y
+    exp_L1_coef     = 0.2, # L1 → A
+    out_B1_coef     = 0.1 # B1 → Y
   )
 }
 
@@ -51,10 +51,12 @@
 #' @noRd
 calc_lp <- function(base_lp, idx, prev_A, cens_spec, params) {
   lp <- base_lp
-  if (cens_spec$exposure_dependence)
+  if (cens_spec$exposure_dependence) {
     lp <- lp + params$cens_exp_coef * prev_A[idx]
-  if (cens_spec$latent_dependence)
+  }
+  if (cens_spec$latent_dependence) {
     lp <- lp + cens_spec$latent_rho * rnorm(length(idx))
+  }
   lp
 }
 
@@ -136,8 +138,10 @@ calc_lp <- function(base_lp, idx, prev_A, cens_spec, params) {
 #'       het  = list(modifier = "B2", coef = 0.6)
 #'     )
 #'   ),
-#'   censoring = list(rate = 0.25, exposure_dependence = TRUE,
-#'                    indicator = TRUE),
+#'   censoring = list(
+#'     rate = 0.25, exposure_dependence = TRUE,
+#'     indicator = TRUE
+#'   ),
 #'   seed = 42
 #' )
 #'
@@ -150,39 +154,43 @@ calc_lp <- function(base_lp, idx, prev_A, cens_spec, params) {
 margot_simulate <- function(
     n,
     waves,
-    exposures          = NULL,
-    outcomes           = NULL,
-    p_covars           = 20,
-    censoring          = list(rate = 0.25),
-    item_missing_rate  = 0,
-    exposure_outcome   = 0.5,
-    y_feedback         = 0.4,
-    positivity         = "good",
-    outcome_type       = NULL,
-    wide               = TRUE,
-    seed               = NULL,
-    params             = list(),
+    exposures = NULL,
+    outcomes = NULL,
+    p_covars = 20,
+    censoring = list(rate = 0.25),
+    item_missing_rate = 0,
+    exposure_outcome = 0.5,
+    y_feedback = 0.4,
+    positivity = "good",
+    outcome_type = NULL,
+    wide = TRUE,
+    seed = NULL,
+    params = list(),
     ...) {
-
   # -- handle deprecated dots --------------------------------------------
   dots <- list(...)
   if ("covar_feedback" %in% names(dots)) {
     warning("`covar_feedback` is deprecated; use params$exp_L1_coef instead.")
     params$exp_L1_coef <- dots$covar_feedback
   }
-  if ("jitter_censoring" %in% names(dots))
+  if ("jitter_censoring" %in% names(dots)) {
     warning("`jitter_censoring` no longer has any effect and is ignored.")
+  }
 
   if (!is.null(seed)) set.seed(seed)
 
   # -- merge parameter lists ---------------------------------------------
-  params    <- modifyList(.default_sim_params(), params)
-  censoring <- modifyList(list(rate = 0.25,
-                               exposure_dependence = FALSE,
-                               latent_dependence   = FALSE,
-                               latent_rho          = params$cens_latent_rho,
-                               indicator           = FALSE),  # optional C cols
-                          censoring)
+  params <- modifyList(.default_sim_params(), params)
+  censoring <- modifyList(
+    list(
+      rate = 0.25,
+      exposure_dependence = FALSE,
+      latent_dependence = FALSE,
+      latent_rho = params$cens_latent_rho,
+      indicator = FALSE
+    ), # optional C cols
+    censoring
+  )
 
   # -- default exposure / outcome specs ----------------------------------
   if (is.null(exposures)) exposures <- list(A1 = list(type = "binary"))
@@ -191,76 +199,91 @@ margot_simulate <- function(
       outcomes <- list(Y = list(type = "normal"))
     } else if (outcome_type[1] == "binary") {
       outcomes <- list(Y = list(type = "binary", p = 0.5))
-    } else stop("Unknown outcome_type")
+    } else {
+      stop("Unknown outcome_type")
+    }
   }
   k_out <- length(outcomes)
 
   # -- helpers ------------------------------------------------------------
   rbern <- function(x, p = NULL) {
     prob <- if (is.null(p)) x else if (length(p) == 1) rep(p, x) else p
-    prob[is.na(prob) | prob < 0] <- 0; prob[prob > 1] <- 1
+    prob[is.na(prob) | prob < 0] <- 0
+    prob[prob > 1] <- 1
     stats::rbinom(length(prob), 1, prob)
   }
   sprinkle <- function(v) {
-    if (item_missing_rate == 0) return(v)
+    if (item_missing_rate == 0) {
+      return(v)
+    }
     v[runif(length(v)) < item_missing_rate] <- NA
     v
   }
 
   # -- baseline positivity prob ------------------------------------------
   pos_prob <- switch(as.character(positivity[1]),
-                     good = 0.5,
-                     poor = 0.9,
-                     as.numeric(positivity[1]))
+    good = 0.5,
+    poor = 0.9,
+    as.numeric(positivity[1])
+  )
   if (is.na(pos_prob) || pos_prob <= 0 || pos_prob >= 1) pos_prob <- 0.5
 
   # -- draw baseline covariates + initial A ------------------------------
-  Sigma_B <- matrix(0.3, p_covars, p_covars); diag(Sigma_B) <- 1
+  Sigma_B <- matrix(0.3, p_covars, p_covars)
+  diag(Sigma_B) <- 1
   df <- tibble::tibble(id = seq_len(n)) |>
     dplyr::bind_cols(
       tibble::as_tibble(MASS::mvrnorm(n, rep(0, p_covars), Sigma_B),
-                        .name_repair = ~ paste0("B", seq_along(.x)))
+        .name_repair = ~ paste0("B", seq_along(.x))
+      )
     )
   for (ex in names(exposures)) {
-    df[[paste0("t0_", ex)]] <- if (exposures[[ex]]$type == "binary")
-      rbern(n, pos_prob) else rnorm(n)
+    df[[paste0("t0_", ex)]] <- if (exposures[[ex]]$type == "binary") {
+      rbern(n, pos_prob)
+    } else {
+      rnorm(n)
+    }
   }
 
   # -- trackers -----------------------------------------------------------
-  alive     <- rep(TRUE, n)
-  last_Y    <- matrix(0, n, k_out)  # for optional lag-Y feedback
+  alive <- rep(TRUE, n)
+  last_Y <- matrix(0, n, k_out) # for optional lag-Y feedback
   long_list <- if (!wide) vector("list", waves) else NULL
 
   # -- main follow-up loop -----------------------------------------------
   for (t in seq_len(waves)) {
-    tag      <- paste0("t", t)
+    tag <- paste0("t", t)
     prev_tag <- if (t == 1) "t0" else paste0("t", t - 1)
 
     # --- attrition -------------------------------------------------------
-    lp0       <- rep(-Inf, n)
+    lp0 <- rep(-Inf, n)
     idx_alive <- which(alive)
     if (length(idx_alive)) {
       lp0[idx_alive] <- qlogis(1 - censoring$rate)
-      prev_A         <- df[[paste0(prev_tag, "_", names(exposures)[1])]]
+      prev_A <- df[[paste0(prev_tag, "_", names(exposures)[1])]]
       lp0[idx_alive] <- calc_lp(lp0[idx_alive], idx_alive, prev_A, censoring, params)
     }
     C_wave <- rbern(plogis(lp0))
-    alive  <- alive & as.logical(C_wave)
+    alive <- alive & as.logical(C_wave)
 
     nc_df <- if (censoring$indicator) {
       tibble::tibble(!!paste0(tag, "_not_censored") := as.integer(alive))
-    } else NULL
+    } else {
+      NULL
+    }
 
     # --- time-varying covariates L --------------------------------------
     L_df <- tibble::tibble(.rows = n)
-    idx  <- which(alive)
+    idx <- which(alive)
     for (j in 1:3) {
-      v <- rep(NA_real_, n); if (length(idx)) v[idx] <- rnorm(length(idx))
+      v <- rep(NA_real_, n)
+      if (length(idx)) v[idx] <- rnorm(length(idx))
       L_df[[paste0(tag, "_L", j)]] <- sprinkle(v)
     }
 
     # --- exposures A -----------------------------------------------------
-    A_df  <- tibble::tibble(.rows = n); A_cols <- list()
+    A_df <- tibble::tibble(.rows = n)
+    A_cols <- list()
     for (ex in names(exposures)) {
       spec <- exposures[[ex]]
       if (isTRUE(spec$lag_Y) && is.null(spec$lag_coef)) spec$lag_coef <- y_feedback
@@ -287,14 +310,15 @@ margot_simulate <- function(
         lpY[idx_alive2] <- qlogis(1 - censoring$rate)
         lpY[idx_alive2] <- calc_lp(lpY[idx_alive2], idx_alive2, A_cols[[1]], censoring, params)
       }
-      keep_Y  <- rbern(plogis(lpY))
+      keep_Y <- rbern(plogis(lpY))
       alive_Y <- alive & as.logical(keep_Y)
 
       idx_Y <- which(alive_Y)
-      Err <- if (length(idx_Y))
+      Err <- if (length(idx_Y)) {
         MASS::mvrnorm(length(idx_Y), rep(0, k_out), diag(k_out))
-      else
+      } else {
         matrix(NA_real_, 0, k_out)
+      }
       Err <- matrix(Err, nrow = length(idx_Y), ncol = k_out)
 
       for (k in seq_along(outcomes)) {
@@ -305,22 +329,22 @@ margot_simulate <- function(
             params$out_B1_coef * df$B1[idx_Y]
 
           if (!is.null(exposures[[1]]$het)) {
-            gamma  <- exposures[[1]]$het$coef
+            gamma <- exposures[[1]]$het$coef
             modcol <- exposures[[1]]$het$modifier
             mu <- mu + gamma * A_cols[[1]][idx_Y] * df[[modcol]][idx_Y]
           }
 
           if (spec$type == "normal") {
             y[idx_Y] <- mu + Err[, k]
-          } else {                    # binary outcome
+          } else { # binary outcome
             lp <- -1 + mu
             y[idx_Y] <- rbern(pnorm(lp + Err[, k]))
           }
         }
         Y_df[[paste0("t", t + 1, "_", names(outcomes)[k])]] <- sprinkle(y)
         last_Y[, k] <- y
-      }  # end outcome loop
-    }    # end if final wave
+      } # end outcome loop
+    } # end if final wave
 
     # --- bind wave-level blocks ----------------------------------------
     blocks <- list(L_df, A_df, Y_df)
@@ -328,7 +352,7 @@ margot_simulate <- function(
     df <- dplyr::bind_cols(df, !!!blocks)
 
     if (!wide) long_list[[t]] <- dplyr::bind_cols(id = df$id, wave = t, !!!blocks)
-  }         # end follow-up loop
+  } # end follow-up loop
 
   # -- baseline MCAR -----------------------------------------------------
   if (item_missing_rate > 0) {
@@ -340,7 +364,9 @@ margot_simulate <- function(
   attr(df, "margot_meta") <- list(args = match.call(), timestamp = Sys.time())
 
   # -- return wide or long ----------------------------------------------
-  if (wide) return(df)
+  if (wide) {
+    return(df)
+  }
 
   base_block <- df |>
     dplyr::select(id, dplyr::starts_with("t0_"), dplyr::starts_with("B")) |>

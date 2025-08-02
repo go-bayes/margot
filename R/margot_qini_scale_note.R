@@ -14,7 +14,7 @@
 #' margot_qini_scale_note("population", n_units = 1000)
 margot_qini_scale_note <- function(scale = "average", n_units = NULL) {
   scale <- match.arg(scale, c("average", "cumulative", "population"))
-  
+
   if (scale == "average") {
     return(paste0(
       "The y-axis shows average policy effects per unit (Q(B) = E[⟨πB(Xi), τ(Xi)⟩]), ",
@@ -58,7 +58,7 @@ margot_qini_scale_note <- function(scale = "average", n_units = NULL) {
 #' margot_qini_scale_subtitle("population", n_units = 1000)
 margot_qini_scale_subtitle <- function(scale = "average", n_units = NULL) {
   scale <- match.arg(scale, c("average", "cumulative", "population"))
-  
+
   if (scale == "average") {
     return("Showing average policy effects (maq default)")
   } else if (scale == "cumulative") {

@@ -61,7 +61,7 @@ Creates QINI curve plots from margot_qini_dev() results. Can handle single
 or multiple outcomes/models in one plot without needing a separate batch function.
 }
 \details{
-This function replaces both margot_plot_qini() and margot_plot_qini_batch() 
+This function replaces both margot_plot_qini() and margot_plot_qini_batch()
 by intelligently handling both single and multiple model inputs.
 
 Scale options:
@@ -83,7 +83,7 @@ qini_results <- margot_qini_dev(cf_results)
 plot1 <- margot_plot_qini_dev(qini_results)
 
 # Multiple models comparison
-cf_results2 <- margot_causal_forest_dev(test_data$data, c("Y3", "Y4"), "A") 
+cf_results2 <- margot_causal_forest_dev(test_data$data, c("Y3", "Y4"), "A")
 qini_results2 <- margot_qini_dev(cf_results2)
 
 plot2 <- margot_plot_qini_dev(

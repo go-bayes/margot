@@ -40,23 +40,23 @@
 #' \dontrun{
 #' # assess overlap for all models
 #' overlap_results <- margot_assess_overlap(model_results)
-#' 
+#'
 #' # assess specific models only
 #' overlap_results <- margot_assess_overlap(
 #'   model_results,
 #'   model_names = c("model_outcome1", "model_outcome2")
 #' )
-#' 
+#'
 #' # save plots
 #' overlap_results <- margot_assess_overlap(
 #'   model_results,
 #'   save_plots = TRUE,
 #'   output_dir = "output/overlap_diagnostics"
 #' )
-#' 
+#'
 #' # use text summary in a report
 #' cat(overlap_results$text_summary)
-#' 
+#'
 #' # use different theme
 #' overlap_results <- margot_assess_overlap(
 #'   model_results,
@@ -70,20 +70,19 @@
 #' @importFrom dplyr bind_rows mutate group_by summarise
 #' @importFrom stats quantile
 margot_assess_overlap <- function(model_results,
-                                model_names = NULL,
-                                exposure_name = NULL,
-                                label_mapping = NULL,
-                                plot = TRUE,
-                                save_plots = FALSE,
-                                output_dir = NULL,
-                                theme = "classic",
-                                verbose = TRUE) {
-  
+                                  model_names = NULL,
+                                  exposure_name = NULL,
+                                  label_mapping = NULL,
+                                  plot = TRUE,
+                                  save_plots = FALSE,
+                                  output_dir = NULL,
+                                  theme = "classic",
+                                  verbose = TRUE) {
   # validate inputs
   if (!is.list(model_results) || !"full_models" %in% names(model_results)) {
     stop("model_results must contain full_models (ensure save_models = TRUE in margot_causal_forest)")
   }
-  
+
   # determine which models to assess
   if (is.null(model_names)) {
     model_names <- names(model_results$full_models)
@@ -97,11 +96,11 @@ margot_assess_overlap <- function(model_results,
     )
     model_names <- intersect(model_names, names(model_results$full_models))
   }
-  
+
   if (length(model_names) == 0) {
     stop("no valid models found to assess")
   }
-  
+
   # set up exposure name and label
   if (is.null(exposure_name)) {
     exposure_name <- "Treatment"
@@ -109,7 +108,7 @@ margot_assess_overlap <- function(model_results,
       cli::cli_alert_info("no exposure_name specified, using default: 'Treatment'")
     }
   }
-  
+
   # get exposure label using transform_label helper
   exposure_label <- transform_label(
     label = exposure_name,
@@ -121,44 +120,44 @@ margot_assess_overlap <- function(model_results,
       use_title_case = TRUE
     )
   )
-  
+
   if (verbose) {
     cli::cli_alert_info("assessing overlap for exposure: {exposure_label}")
   }
-  
+
   # create output directory if needed
   if (save_plots && !is.null(output_dir)) {
     if (!dir.exists(output_dir)) {
       dir.create(output_dir, recursive = TRUE)
     }
   }
-  
+
   # initialize results
   overlap_summary <- list()
   propensity_plots <- list()
   balance_tables <- list()
   trimming_summary <- list()
-  
+
   # extract treatment and propensity scores from first model (same for all)
   first_model <- model_results$full_models[[model_names[1]]]
   W <- first_model$W.orig
   W_hat <- first_model$W.hat
-  
+
   # calculate overlap statistics once (for the exposure)
   overlap_stats <- calculate_overlap_statistics(W, W_hat, exposure_label)
-  
+
   # create propensity score plot if requested
   if (plot) {
     p <- create_propensity_plot(W, W_hat, exposure_label, theme)
     propensity_plots[["exposure"]] <- p
-    
+
     if (save_plots && !is.null(output_dir)) {
       filename <- file.path(output_dir, paste0("propensity_", exposure_name, ".png"))
       ggplot2::ggsave(filename, p, width = 8, height = 6, dpi = 300)
       if (verbose) cli::cli_alert_success("saved plot to {filename}")
     }
   }
-  
+
   # calculate covariate balance if available
   if (!is.null(model_results$covariates)) {
     # use first model's top vars or all covariates
@@ -166,7 +165,7 @@ margot_assess_overlap <- function(model_results,
     if (length(model_names) > 0 && !is.null(model_results$results[[model_names[1]]]$top_vars)) {
       top_vars <- model_results$results[[model_names[1]]]$top_vars
     }
-    
+
     balance <- calculate_covariate_balance(
       covariates = model_results$covariates,
       W = W,
@@ -175,18 +174,18 @@ margot_assess_overlap <- function(model_results,
     )
     balance_tables[["exposure"]] <- balance
   }
-  
+
   # calculate trimming summary
   trim_summary <- calculate_trimming_summary(W_hat)
   trimming_summary[["exposure"]] <- trim_summary
-  
+
   # process each model for test calibration and other model-specific metrics
   for (model_name in model_names) {
     if (verbose) cli::cli_alert_info("processing test calibration for {model_name}")
-    
+
     # get outcome name
     outcome_name <- gsub("^model_", "", model_name)
-    
+
     # apply transform_label to outcome if no label_mapping provided
     outcome_label <- transform_label(
       label = outcome_name,
@@ -198,13 +197,13 @@ margot_assess_overlap <- function(model_results,
         use_title_case = TRUE
       )
     )
-    
+
     # create model-specific stats with overlap info
     model_stats <- overlap_stats
     model_stats$model <- model_name
     model_stats$outcome <- outcome_name
     model_stats$outcome_label <- outcome_label
-    
+
     # get test calibration
     test_cal <- model_results$results[[model_name]]$test_calibration
     if (!is.null(test_cal)) {
@@ -218,14 +217,14 @@ margot_assess_overlap <- function(model_results,
         model_stats$test_calibration_pvalue <- test_cal
       }
     }
-    
+
     # store the model-specific statistics
     overlap_summary[[model_name]] <- model_stats
   }
-  
+
   # combine summaries
   combined_summary <- dplyr::bind_rows(overlap_summary, .id = "model")
-  
+
   # create text summary for easy document inclusion
   if (overlap_stats$poor_overlap_pct > 10) {
     text_summary <- sprintf(
@@ -241,10 +240,10 @@ margot_assess_overlap <- function(model_results,
       overlap_stats$good_overlap_pct
     )
   }
-  
+
   if (verbose) {
     cli::cli_alert_success("overlap assessment complete")
-    
+
     # print summary of overlap
     if (overlap_stats$poor_overlap_pct > 10) {
       cli::cli_alert_warning(
@@ -256,7 +255,7 @@ margot_assess_overlap <- function(model_results,
       )
     }
   }
-  
+
   return(list(
     overlap_summary = combined_summary,
     propensity_plots = propensity_plots,
@@ -273,11 +272,11 @@ calculate_overlap_statistics <- function(W, W_hat, exposure_name) {
   good_overlap <- W_hat > 0.1 & W_hat < 0.9
   moderate_overlap <- (W_hat > 0.05 & W_hat <= 0.1) | (W_hat >= 0.9 & W_hat < 0.95)
   poor_overlap <- W_hat <= 0.05 | W_hat >= 0.95
-  
+
   # calculate statistics by treatment group
   treated_props <- W_hat[W == 1]
   control_props <- W_hat[W == 0]
-  
+
   stats <- data.frame(
     exposure = exposure_name,
     n_total = length(W),
@@ -295,7 +294,7 @@ calculate_overlap_statistics <- function(W, W_hat, exposure_name) {
     common_support_lower = round(max(min(treated_props), min(control_props)), 3),
     common_support_upper = round(min(max(treated_props), max(control_props)), 3)
   )
-  
+
   return(stats)
 }
 
@@ -307,17 +306,17 @@ create_propensity_plot <- function(W, W_hat, exposure_name, theme = "classic") {
     propensity_score = W_hat,
     treatment = factor(W, levels = c(0, 1), labels = c("Control", "Treated"))
   )
-  
+
   # create plot
   p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = propensity_score, fill = treatment)) +
     ggplot2::geom_histogram(
-      alpha = 0.85, 
-      position = "identity", 
+      alpha = 0.85,
+      position = "identity",
       bins = 30,
       color = "white",
       linewidth = 0.5
     ) +
-    ggplot2::facet_wrap(~ treatment, ncol = 1, scales = "free_y") +
+    ggplot2::facet_wrap(~treatment, ncol = 1, scales = "free_y") +
     ggplot2::scale_fill_manual(values = c("Control" = "#4f88c6", "Treated" = "#d8a739")) +
     ggplot2::geom_vline(xintercept = c(0.1, 0.9), linetype = "dashed", alpha = 0.7, color = "black", linewidth = 0.7) +
     ggplot2::labs(
@@ -336,10 +335,10 @@ create_propensity_plot <- function(W, W_hat, exposure_name, theme = "classic") {
       "light" = ggplot2::theme_light(),
       "dark" = ggplot2::theme_dark(),
       "void" = ggplot2::theme_void(),
-      ggplot2::theme_classic()  # default fallback
+      ggplot2::theme_classic() # default fallback
     ) +
     ggplot2::theme(legend.position = "none")
-  
+
   return(p)
 }
 
@@ -350,30 +349,31 @@ calculate_covariate_balance <- function(covariates, W, W_hat, top_vars = NULL) {
   if (!is.null(top_vars)) {
     covariates <- covariates[, top_vars, drop = FALSE]
   }
-  
+
   # stratify by propensity score quintiles
-  ps_quintiles <- cut(W_hat, 
-                     breaks = quantile(W_hat, probs = seq(0, 1, 0.2)),
-                     include.lowest = TRUE,
-                     labels = FALSE)
-  
+  ps_quintiles <- cut(W_hat,
+    breaks = quantile(W_hat, probs = seq(0, 1, 0.2)),
+    include.lowest = TRUE,
+    labels = FALSE
+  )
+
   # calculate standardized differences within strata
   balance_list <- list()
-  
+
   for (var in colnames(covariates)) {
     var_data <- covariates[[var]]
-    
+
     # skip if not numeric
     if (!is.numeric(var_data)) next
-    
+
     # overall balance
     treated_mean <- mean(var_data[W == 1], na.rm = TRUE)
     control_mean <- mean(var_data[W == 0], na.rm = TRUE)
-    pooled_sd <- sqrt((var(var_data[W == 1], na.rm = TRUE) + 
-                      var(var_data[W == 0], na.rm = TRUE)) / 2)
-    
+    pooled_sd <- sqrt((var(var_data[W == 1], na.rm = TRUE) +
+      var(var_data[W == 0], na.rm = TRUE)) / 2)
+
     std_diff_overall <- (treated_mean - control_mean) / pooled_sd
-    
+
     # balance within quintiles
     std_diff_quintiles <- numeric(5)
     for (q in 1:5) {
@@ -381,14 +381,14 @@ calculate_covariate_balance <- function(covariates, W, W_hat, top_vars = NULL) {
       if (sum(W[in_quintile] == 1) > 1 && sum(W[in_quintile] == 0) > 1) {
         treated_mean_q <- mean(var_data[in_quintile & W == 1], na.rm = TRUE)
         control_mean_q <- mean(var_data[in_quintile & W == 0], na.rm = TRUE)
-        pooled_sd_q <- sqrt((var(var_data[in_quintile & W == 1], na.rm = TRUE) + 
-                           var(var_data[in_quintile & W == 0], na.rm = TRUE)) / 2)
+        pooled_sd_q <- sqrt((var(var_data[in_quintile & W == 1], na.rm = TRUE) +
+          var(var_data[in_quintile & W == 0], na.rm = TRUE)) / 2)
         std_diff_quintiles[q] <- (treated_mean_q - control_mean_q) / pooled_sd_q
       } else {
         std_diff_quintiles[q] <- NA
       }
     }
-    
+
     balance_list[[var]] <- list(
       variable = var,
       std_diff_overall = round(std_diff_overall, 3),
@@ -400,10 +400,10 @@ calculate_covariate_balance <- function(covariates, W, W_hat, top_vars = NULL) {
       max_abs_std_diff = round(max(abs(std_diff_quintiles), na.rm = TRUE), 3)
     )
   }
-  
+
   # convert to data frame
   balance_df <- dplyr::bind_rows(balance_list)
-  
+
   return(balance_df)
 }
 
@@ -418,6 +418,6 @@ calculate_trimming_summary <- function(W_hat, bounds = c(0.05, 0.95)) {
     pct_trimmed = round(100 * mean(W_hat < bounds[1] | W_hat > bounds[2]), 1),
     bounds = bounds
   )
-  
+
   return(summary)
 }

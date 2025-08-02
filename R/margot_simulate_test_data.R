@@ -37,10 +37,10 @@
 #' @examples
 #' # Generate default test dataset
 #' test_data <- margot_simulate_test_data()
-#' 
+#'
 #' # Generate with more observations and covariates
 #' test_data_large <- margot_simulate_test_data(n = 10000, p_covars = 30)
-#' 
+#'
 #' # Generate with custom treatment effects
 #' test_data_custom <- margot_simulate_test_data(
 #'   treatment_effects = list(
@@ -60,19 +60,17 @@ margot_simulate_test_data <- function(
     p_covars = 20,
     treatment_effects = list(
       Y1 = "positive",
-      Y2 = "negative", 
+      Y2 = "negative",
       Y3 = "null",
       Y4 = "heterogeneous"
     ),
     missing_prop = 0.1,
     binary_outcomes = c(FALSE, FALSE, FALSE, TRUE),
     censoring_rate = 0.1,
-    seed = 2025
-) {
-  
+    seed = 2025) {
   # set seed for reproducibility
   set.seed(seed)
-  
+
   # parameter validation
   if (n < 100) stop("n must be at least 100 for meaningful testing")
   if (k < 3) stop("k must be at least 3 for causal inference")
@@ -80,49 +78,51 @@ margot_simulate_test_data <- function(
   if (missing_prop < 0 || missing_prop > 0.5) {
     stop("missing_prop must be between 0 and 0.5")
   }
-  
+
   # generate baseline covariates with correlation structure
   Sigma <- matrix(0.3, p_covars, p_covars)
   diag(Sigma) <- 1
   B <- MASS::mvrnorm(n, mu = rep(0, p_covars), Sigma = Sigma)
   colnames(B) <- paste0("B", 1:p_covars)
-  
+
   # create data frame
   df <- data.frame(id = 1:n, B)
-  
+
   # define true propensity score function
   # depends on B1 and B2 to create confounding
   prop_score <- plogis(-0.5 + 0.5 * df$B1 + 0.3 * df$B2)
-  
+
   # generate treatment assignment
   df$A <- rbinom(n, 1, prop_score)
-  
+
   # define true treatment effect functions
   true_tau <- list()
-  
+
   # generate outcomes based on treatment_effects specification
   outcome_names <- names(treatment_effects)
   n_outcomes <- length(outcome_names)
-  
+
   # extend binary_outcomes if needed
   if (length(binary_outcomes) < n_outcomes) {
-    binary_outcomes <- c(binary_outcomes, 
-                        rep(FALSE, n_outcomes - length(binary_outcomes)))
+    binary_outcomes <- c(
+      binary_outcomes,
+      rep(FALSE, n_outcomes - length(binary_outcomes))
+    )
   }
-  
+
   for (i in seq_along(outcome_names)) {
     outcome <- outcome_names[i]
     effect_type <- treatment_effects[[outcome]]
-    
+
     # baseline outcome model (depends on B1, B3, B5)
     mu0 <- 0.2 * df$B1 + 0.15 * df$B3 - 0.1 * df$B5
-    
+
     # treatment effect based on type
     if (effect_type == "positive") {
       tau <- rep(0.3, n)
       true_tau[[outcome]] <- function(x) 0.3
     } else if (effect_type == "negative") {
-      tau <- rep(-0.2, n) 
+      tau <- rep(-0.2, n)
       true_tau[[outcome]] <- function(x) -0.2
     } else if (effect_type == "null") {
       tau <- rep(0, n)
@@ -131,41 +131,41 @@ margot_simulate_test_data <- function(
       # strong heterogeneous effect based on B1 and B2
       tau <- 0.5 * df$B1 - 0.4 * df$B2 + 0.2 * df$B1 * df$B2
       true_tau[[outcome]] <- function(x) {
-        0.5 * x[,"B1"] - 0.4 * x[,"B2"] + 0.2 * x[,"B1"] * x[,"B2"]
+        0.5 * x[, "B1"] - 0.4 * x[, "B2"] + 0.2 * x[, "B1"] * x[, "B2"]
       }
     } else {
       stop("Unknown effect_type: ", effect_type)
     }
-    
+
     # generate outcome
     Y <- mu0 + tau * df$A + rnorm(n, 0, 0.5)
-    
+
     # convert to binary if specified
     if (binary_outcomes[i]) {
       Y <- as.integer(plogis(Y) > runif(n))
     }
-    
+
     df[[outcome]] <- Y
   }
-  
+
   # add censoring indicator based on treatment and covariates
   # higher probability of censoring for treated units with high B1
   censor_prob <- plogis(-2.5 + 0.3 * df$A + 0.2 * df$B1)
   censor_prob <- pmax(pmin(censor_prob, censoring_rate * 2), censoring_rate / 2)
   df$censored <- rbinom(n, 1, censor_prob)
-  
+
   # introduce missing data (MCAR)
   if (missing_prop > 0) {
     # don't make id, treatment, outcomes, or censoring indicator missing
     # only introduce missing data in covariates (B variables)
     covariate_vars <- grep("^B[0-9]+$", names(df), value = TRUE)
-    
+
     for (var in covariate_vars) {
       missing_idx <- sample(n, floor(n * missing_prop))
       df[missing_idx, var] <- NA
     }
   }
-  
+
   # create metadata
   metadata <- list(
     n = n,
@@ -183,7 +183,7 @@ margot_simulate_test_data <- function(
     treatment_name = "A",
     censoring_name = "censored"
   )
-  
+
   # return list
   list(
     data = df,
@@ -206,7 +206,7 @@ margot_simulate_test_data <- function(
 #' @examples
 #' # Generate test data with Y1 flipped
 #' test_data_flip <- margot_simulate_test_data_flip()
-#' 
+#'
 #' # Generate test data with Y1 and Y4 flipped
 #' test_data_flip_multi <- margot_simulate_test_data_flip(
 #'   flip_outcomes = c("Y1", "Y4")
@@ -215,21 +215,20 @@ margot_simulate_test_data <- function(
 #' @export
 margot_simulate_test_data_flip <- function(
     flip_outcomes = "Y1",
-    ...
-) {
+    ...) {
   # generate base data
   test_data <- margot_simulate_test_data(...)
-  
+
   # flip specified outcomes
   for (outcome in flip_outcomes) {
     if (outcome %in% names(test_data$data)) {
       # create flipped version
       col_name_r <- paste0(outcome, "_r")
-      
+
       # get outcome range
       y_vals <- test_data$data[[outcome]]
       y_vals_clean <- y_vals[!is.na(y_vals)]
-      
+
       if (length(unique(y_vals_clean)) == 2) {
         # binary outcome - simple flip
         test_data$data[[col_name_r]] <- 1 - test_data$data[[outcome]]
@@ -240,7 +239,7 @@ margot_simulate_test_data_flip <- function(
         y_mid <- (y_min + y_max) / 2
         test_data$data[[col_name_r]] <- 2 * y_mid - test_data$data[[outcome]]
       }
-      
+
       # update metadata
       test_data$metadata$flipped_outcomes <- c(
         test_data$metadata$flipped_outcomes,
@@ -248,6 +247,6 @@ margot_simulate_test_data_flip <- function(
       )
     }
   }
-  
+
   test_data
 }

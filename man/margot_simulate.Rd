@@ -116,8 +116,10 @@ dat2 <- margot_simulate(
       het  = list(modifier = "B2", coef = 0.6)
     )
   ),
-  censoring = list(rate = 0.25, exposure_dependence = TRUE,
-                   indicator = TRUE),
+  censoring = list(
+    rate = 0.25, exposure_dependence = TRUE,
+    indicator = TRUE
+  ),
   seed = 42
 )
 

@@ -38,17 +38,17 @@ margot_wide_impute_baseline <- function(.data,
   # delegate to the new wide-machine implementation
   margot_wide_machine(
     .data,
-    id                         = "id",
-    wave                       = "wave",
-    baseline_vars              = baseline_vars,
-    exposure_var               = exposure_var,
-    outcome_vars               = outcome_vars,
-    confounder_vars            = NULL,
-    imputation_method          = "mice",
+    id = "id",
+    wave = "wave",
+    baseline_vars = baseline_vars,
+    exposure_var = exposure_var,
+    outcome_vars = outcome_vars,
+    confounder_vars = NULL,
+    imputation_method = "mice",
     include_exposure_var_baseline = TRUE,
-    include_outcome_vars_baseline  = TRUE,
-    extend_baseline            = FALSE,
-    include_na_indicators      = FALSE
+    include_outcome_vars_baseline = TRUE,
+    extend_baseline = FALSE,
+    include_na_indicators = FALSE
   )
 }
 

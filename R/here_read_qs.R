@@ -49,4 +49,3 @@ here_read_qs <- function(name, dir_path = NULL, nthreads = 1, quiet = FALSE) {
 
   return(obj)
 }
-

@@ -11,7 +11,7 @@
 #' @param custom_covariates Character vector of covariate names to use for policy trees.
 #'   If NULL, uses the original top variables from the model.
 #' @param exclude_covariates Character vector of covariate names or patterns to exclude.
-#'   Supports exact matches and regex patterns (e.g., "^t0_log_" excludes all 
+#'   Supports exact matches and regex patterns (e.g., "^t0_log_" excludes all
 #'   variables starting with "t0_log_").
 #' @param covariate_mode Character string specifying how to handle covariates:
 #'   \itemize{
@@ -79,52 +79,53 @@
 #' @importFrom future plan multisession availableCores
 #' @importFrom future.apply future_lapply
 margot_recalculate_policy_trees <- function(model_results,
-                                          outcomes_to_recalculate = NULL,
-                                          custom_covariates = NULL,
-                                          exclude_covariates = NULL,
-                                          covariate_mode = c("original", "custom", "add", "all"),
-                                          model_prefix = "model_",
-                                          verbose = TRUE,
-                                          parallel = FALSE,
-                                          n_cores = future::availableCores() - 1,
-                                          seed = 12345,
-                                          tree_method = c("policytree", "fastpolicytree")) {
-  
+                                            outcomes_to_recalculate = NULL,
+                                            custom_covariates = NULL,
+                                            exclude_covariates = NULL,
+                                            covariate_mode = c("original", "custom", "add", "all"),
+                                            model_prefix = "model_",
+                                            verbose = TRUE,
+                                            parallel = FALSE,
+                                            n_cores = future::availableCores() - 1,
+                                            seed = 12345,
+                                            tree_method = c("policytree", "fastpolicytree")) {
   # validate inputs
   if (!is.list(model_results) || !"results" %in% names(model_results)) {
     stop("model_results must be a list containing a 'results' element")
   }
-  
+
   covariate_mode <- match.arg(covariate_mode)
   tree_method <- match.arg(tree_method)
-  
+
   # check for required data
   if (is.null(model_results$covariates)) {
     stop("covariates not found in model_results. ensure save_data = TRUE in margot_causal_forest")
   }
-  
+
   # validate custom covariates exist
   if (!is.null(custom_covariates)) {
     available_covars <- colnames(model_results$covariates)
     missing_covars <- setdiff(custom_covariates, available_covars)
     if (length(missing_covars) > 0) {
-      stop(paste("the following covariates are not available:",
-                 paste(missing_covars, collapse = ", ")))
+      stop(paste(
+        "the following covariates are not available:",
+        paste(missing_covars, collapse = ", ")
+      ))
     }
   }
-  
+
   # copy to avoid side effects
   results_copy <- model_results
-  
+
   # determine which outcomes to process
   if (is.null(outcomes_to_recalculate)) {
     # find models that need recalculation
     outcomes_to_recalculate <- names(results_copy$results)[
       vapply(results_copy$results, function(x) {
-        isTRUE(x$policy_trees_need_recalculation) || 
-        !is.null(custom_covariates) || 
-        !is.null(exclude_covariates) ||
-        covariate_mode == "all"
+        isTRUE(x$policy_trees_need_recalculation) ||
+          !is.null(custom_covariates) ||
+          !is.null(exclude_covariates) ||
+          covariate_mode == "all"
       }, logical(1))
     ]
   } else {
@@ -134,28 +135,28 @@ margot_recalculate_policy_trees <- function(model_results,
       outcomes_to_recalculate
     )
   }
-  
+
   # filter to existing models
   outcomes_to_recalculate <- intersect(outcomes_to_recalculate, names(results_copy$results))
-  
+
   if (length(outcomes_to_recalculate) == 0) {
     if (verbose) cli::cli_alert_info("no outcomes need policy tree recalculation")
     return(results_copy)
   }
-  
+
   if (verbose) {
     cli::cli_alert_info(
       "recalculating policy trees for {length(outcomes_to_recalculate)} outcomes: {paste(gsub(model_prefix, '', outcomes_to_recalculate), collapse = ', ')}"
     )
   }
-  
+
   # get data indices
   covariates <- results_copy$covariates
   not_missing <- results_copy$not_missing
   if (is.null(not_missing)) {
     not_missing <- which(complete.cases(covariates))
   }
-  
+
   # choose sequential or parallel processing
   if (parallel && length(outcomes_to_recalculate) > 1) {
     future::plan(future::multisession, workers = n_cores)
@@ -164,13 +165,13 @@ margot_recalculate_policy_trees <- function(model_results,
   } else {
     apply_fun <- lapply
   }
-  
+
   # process each model
   updated_results <- apply_fun(outcomes_to_recalculate, function(model_name) {
     if (verbose && !parallel) cli::cli_alert_info("processing {model_name}")
-    
+
     model_result <- results_copy$results[[model_name]]
-    
+
     # recalculate policy trees
     updated_model <- recalculate_policy_trees_single(
       model_result = model_result,
@@ -184,40 +185,39 @@ margot_recalculate_policy_trees <- function(model_results,
       seed = seed,
       tree_method = tree_method
     )
-    
+
     return(updated_model)
   })
-  
+
   # update results
   names(updated_results) <- outcomes_to_recalculate
   results_copy$results[outcomes_to_recalculate] <- updated_results
-  
+
   if (verbose) cli::cli_alert_success("finished recalculating policy trees")
-  
+
   return(results_copy)
 }
 
 #' Recalculate policy trees for a single model
 #' @keywords internal
 recalculate_policy_trees_single <- function(model_result,
-                                          model_name,
-                                          covariates,
-                                          not_missing,
-                                          custom_covariates,
-                                          exclude_covariates,
-                                          covariate_mode,
-                                          verbose,
-                                          seed,
-                                          tree_method) {
-  
+                                            model_name,
+                                            covariates,
+                                            not_missing,
+                                            custom_covariates,
+                                            exclude_covariates,
+                                            covariate_mode,
+                                            verbose,
+                                            seed,
+                                            tree_method) {
   # set seed for reproducibility
   if (!is.null(seed)) {
     set.seed(seed + as.integer(as.factor(model_name)))
   }
-  
+
   # determine covariates to use
   all_covars <- colnames(covariates)
-  
+
   if (covariate_mode == "all") {
     selected_covars <- all_covars
     if (length(selected_covars) > 20 && verbose) {
@@ -243,19 +243,19 @@ recalculate_policy_trees_single <- function(model_result,
       stop(paste("no top_vars found for", model_name, "and no custom_covariates specified"))
     }
   }
-  
+
   # ensure selected covariates exist
   selected_covars <- intersect(selected_covars, all_covars)
-  
+
   # apply exclusions
   if (!is.null(exclude_covariates)) {
     selected_covars <- apply_covariate_exclusions(selected_covars, exclude_covariates, verbose)
   }
-  
+
   if (length(selected_covars) == 0) {
     stop(paste("no covariates remaining for", model_name, "after applying exclusions"))
   }
-  
+
   # get dr_scores (use flipped if available)
   dr_scores <- model_result$dr_scores_flipped
   if (is.null(dr_scores)) {
@@ -264,7 +264,7 @@ recalculate_policy_trees_single <- function(model_result,
   if (is.null(dr_scores)) {
     stop(paste("no dr_scores found for", model_name))
   }
-  
+
   # fit depth-1 policy tree
   model_result$policy_tree_depth_1 <- .compute_policy_tree(
     covariates[not_missing, selected_covars, drop = FALSE],
@@ -272,20 +272,20 @@ recalculate_policy_trees_single <- function(model_result,
     depth = 1,
     tree_method = tree_method
   )
-  
+
   # handle depth-2 tree
   depth2_covars <- selected_covars
   auto_expanded <- FALSE
-  
+
   # auto-expand if needed for depth-2
   if (length(selected_covars) < 2 && covariate_mode == "custom" && !is.null(model_result$top_vars)) {
     depth2_covars <- unique(c(selected_covars, model_result$top_vars))
-    
+
     # apply exclusions to expanded set
     if (!is.null(exclude_covariates)) {
       depth2_covars <- apply_covariate_exclusions(depth2_covars, exclude_covariates, verbose = FALSE)
     }
-    
+
     if (length(depth2_covars) > length(selected_covars)) {
       auto_expanded <- TRUE
       if (verbose) {
@@ -295,14 +295,14 @@ recalculate_policy_trees_single <- function(model_result,
       }
     }
   }
-  
+
   # create depth-2 tree if possible
   if (length(depth2_covars) >= 2) {
     # train/test split
     train_size <- floor(0.7 * length(not_missing))
     train_idx <- sample(not_missing, train_size)
     test_idx <- setdiff(not_missing, train_idx)
-    
+
     # fit depth-2 tree
     model_result$policy_tree_depth_2 <- .compute_policy_tree(
       covariates[train_idx, depth2_covars, drop = FALSE],
@@ -310,7 +310,7 @@ recalculate_policy_trees_single <- function(model_result,
       depth = 2,
       tree_method = tree_method
     )
-    
+
     # create plot data
     model_result$plot_data <- list(
       X_test = covariates[test_idx, depth2_covars, drop = FALSE],
@@ -328,7 +328,7 @@ recalculate_policy_trees_single <- function(model_result,
       )
     }
     model_result$policy_tree_depth_2 <- NULL
-    
+
     # create plot data using depth-1
     test_idx <- sample(not_missing, floor(0.3 * length(not_missing)))
     model_result$plot_data <- list(
@@ -340,7 +340,7 @@ recalculate_policy_trees_single <- function(model_result,
       )
     )
   }
-  
+
   # store metadata
   model_result$policy_tree_covariates <- selected_covars
   model_result$policy_tree_covariate_mode <- covariate_mode
@@ -352,7 +352,7 @@ recalculate_policy_trees_single <- function(model_result,
   }
   model_result$policy_tree_depth_2_auto_expanded <- auto_expanded
   model_result$policy_trees_need_recalculation <- FALSE
-  
+
   return(model_result)
 }
 
@@ -362,30 +362,33 @@ apply_covariate_exclusions <- function(covariates, exclude_patterns, verbose = T
   if (is.null(exclude_patterns) || length(exclude_patterns) == 0) {
     return(covariates)
   }
-  
+
   excluded <- character(0)
-  
+
   for (pattern in exclude_patterns) {
     # try as regex first
-    tryCatch({
-      matches <- grep(pattern, covariates, value = TRUE)
-      if (length(matches) > 0) {
-        excluded <- c(excluded, matches)
+    tryCatch(
+      {
+        matches <- grep(pattern, covariates, value = TRUE)
+        if (length(matches) > 0) {
+          excluded <- c(excluded, matches)
+        }
+      },
+      error = function(e) {
+        # if regex fails, treat as exact match
+        if (pattern %in% covariates) {
+          excluded <- c(excluded, pattern)
+        }
       }
-    }, error = function(e) {
-      # if regex fails, treat as exact match
-      if (pattern %in% covariates) {
-        excluded <- c(excluded, pattern)
-      }
-    })
+    )
   }
-  
+
   excluded <- unique(excluded)
   remaining <- setdiff(covariates, excluded)
-  
+
   if (verbose && length(excluded) > 0) {
     cli::cli_alert_info("excluded {length(excluded)} covariate(s): {paste(excluded, collapse = ', ')}")
   }
-  
+
   return(remaining)
 }

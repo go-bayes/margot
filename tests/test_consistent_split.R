@@ -7,7 +7,7 @@ n <- 500
 X <- matrix(rnorm(n * 20), n, 20)
 colnames(X) <- paste0("X", 1:20)
 W <- rbinom(n, 1, 0.5)
-Y1 <- X[,1] + 0.5 * W + rnorm(n)
+Y1 <- X[, 1] + 0.5 * W + rnorm(n)
 
 df <- data.frame(Y1 = Y1, W = W)
 
@@ -36,7 +36,7 @@ if (!is.null(results$results$model_Y1$split_info)) {
   cat("   Train size:", length(split_info$train_indices), "\n")
   cat("   Test size:", length(split_info$test_indices), "\n")
   cat("   All-data ATE:", split_info$ate_all_data[1], "\n")
-  
+
   cat("\n4. All-data E-value table (stored in split_info):\n")
   print(split_info$custom_table_all_data)
 }

@@ -45,7 +45,7 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
 
   # set default ties.method based on cutpoint_inclusive if not specified
   if (is.null(ties.method)) {
-    ties.method <- if(cutpoint_inclusive == "lower") "first" else "last"
+    ties.method <- if (cutpoint_inclusive == "lower") "first" else "last"
     cli::cli_alert_info(paste("ties.method set to", ties.method, "based on cutpoint_inclusive."))
   }
 
@@ -93,8 +93,10 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
 
     n_unique <- length(unique(var_clean))
     if (n_unique < n_divisions) {
-      cli::cli_alert_warning(paste("The variable has fewer unique non-NA values than requested divisions.",
-                                   "Adjusting number of divisions."))
+      cli::cli_alert_warning(paste(
+        "The variable has fewer unique non-NA values than requested divisions.",
+        "Adjusting number of divisions."
+      ))
       n_divisions <- n_unique
     }
 
@@ -110,7 +112,7 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
     if (length(quantile_breaks) < n_divisions + 1) {
       epsilon <- diff(range(var_clean)) * .Machine$double.eps
       quantile_breaks <- unique(c(quantile_breaks, max_val + epsilon))
-      quantile_breaks <- quantile_breaks[1:(n_divisions + 1)]  # ensure exactly n_divisions + 1 breaks
+      quantile_breaks <- quantile_breaks[1:(n_divisions + 1)] # ensure exactly n_divisions + 1 breaks
     }
   }
 
@@ -126,7 +128,7 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
       } else {
         sprintf("[%.1f,%.1f)", quantile_breaks[x], quantile_breaks[x + 1])
       }
-    } else {  # cutpoint_inclusive == "upper"
+    } else { # cutpoint_inclusive == "upper"
       if (x == 1) {
         sprintf("[%.1f,%.1f]", quantile_breaks[x], quantile_breaks[x + 1])
       } else {
@@ -141,11 +143,15 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
 
   # use cut for categorisation, adjusting for cutpoint inclusivity
   if (cutpoint_inclusive == "lower") {
-    df[[new_col_name]] <- cut(var, breaks = quantile_breaks,
-                              labels = labels, include.lowest = TRUE, right = FALSE)
-  } else {  # cutpoint_inclusive == "upper"
-    df[[new_col_name]] <- cut(var, breaks = quantile_breaks,
-                              labels = labels, include.lowest = TRUE, right = TRUE)
+    df[[new_col_name]] <- cut(var,
+      breaks = quantile_breaks,
+      labels = labels, include.lowest = TRUE, right = FALSE
+    )
+  } else { # cutpoint_inclusive == "upper"
+    df[[new_col_name]] <- cut(var,
+      breaks = quantile_breaks,
+      labels = labels, include.lowest = TRUE, right = TRUE
+    )
   }
 
   # print summary of the new variable

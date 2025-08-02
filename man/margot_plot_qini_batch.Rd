@@ -49,8 +49,8 @@ the "model_" prefix. Default NULL (all models).}
 
 \item{theme}{Character string specifying the ggplot2 theme. Default is "classic".}
 
-\item{show_ci}{Logical or character indicating which confidence intervals to show. 
-Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only). 
+\item{show_ci}{Logical or character indicating which confidence intervals to show.
+Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only).
 Default is FALSE.}
 
 \item{ci_alpha}{Significance level for confidence intervals. Default is 0.05.}
@@ -69,15 +69,15 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
 
 \item{ylim}{Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).}
 
-\item{baseline_method}{Method for generating baseline: "auto" (default), 
+\item{baseline_method}{Method for generating baseline: "auto" (default),
 "maq_no_covariates", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
 
 \item{cate_color}{Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).}
 
 \item{ate_color}{Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).}
 
-\item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative", 
-or "population". "average" shows average policy effect per unit (maq default), "cumulative" 
+\item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative",
+or "population". "average" shows average policy effect per unit (maq default), "cumulative"
 shows traditional cumulative gains, "population" shows total population impact.}
 
 \item{treatment_cost}{Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
@@ -107,7 +107,7 @@ qini_plots <- margot_plot_qini_batch(mc_result)
 qini_plots <- margot_plot_qini_batch(
   mc_result,
   model_names = c("t2_belong_z", "t2_meaning_z"),
-  show_ci = TRUE,  # shows CI for both curves
+  show_ci = TRUE, # shows CI for both curves
   ci_n_points = 50
 )
 

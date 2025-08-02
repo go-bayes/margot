@@ -29,9 +29,9 @@ are combined into a 'mids' object, which is then cleaned and returned.
 }
 \examples{
 \dontrun{
-  # Assuming list_df is a list of data frames with missing values
-  imputed_data <- impute_and_combine(list_df, m = 5)
-  print(imputed_data)
+# Assuming list_df is a list of data frames with missing values
+imputed_data <- impute_and_combine(list_df, m = 5)
+print(imputed_data)
 }
 
 }

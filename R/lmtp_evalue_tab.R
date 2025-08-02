@@ -44,13 +44,15 @@ lmtp_evalue_tab <- function(x, delta = 1, sd = 1, scale = c("RD", "RR")) {
       3
     ))
   } else {
-    evalout <- as.data.frame(round(EValue::evalues.RR(
-      tab0[1, 1],
-      lo = tab0[1, 3],
-      hi = tab0[1, 4],
-      true = 1
-    ),
-    3))
+    evalout <- as.data.frame(round(
+      EValue::evalues.RR(
+        tab0[1, 1],
+        lo = tab0[1, 3],
+        hi = tab0[1, 4],
+        true = 1
+      ),
+      3
+    ))
   }
 
   # Assuming evalout[2, ] fetches the row for E-Values, and you reshape it correctly.

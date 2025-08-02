@@ -20,9 +20,11 @@
 #'   "wave 1" = c(as.Date("2010-01-01"), as.Date("2010-12-31")),
 #'   "wave 2" = c(as.Date("2011-01-01"), as.Date("2011-12-31"))
 #' )
-#' prepared_data <- prepare_panel_data(dat, wave_col = "Wave", tscore_col = "TimeScore",
-#'                                     id_col = "ParticipantID", base_date = "2010-01-01",
-#'                                     wave_breaks = wave_breaks)
+#' prepared_data <- prepare_panel_data(dat,
+#'   wave_col = "Wave", tscore_col = "TimeScore",
+#'   id_col = "ParticipantID", base_date = "2010-01-01",
+#'   wave_breaks = wave_breaks
+#' )
 #' }
 #'
 #' @importFrom dplyr mutate count case_when arrange
@@ -36,9 +38,11 @@ prepare_panel_data <- function(dat, wave_col = "wave", tscore_col = "tscore", id
 
   df_timeline <- dat %>%
     dplyr::mutate(year = as.numeric(as.character(!!sym(wave_col)))) %>%
-    dplyr::mutate(timeline = lubridate::make_date(year = lubridate::year(base_date),
-                                                  month = lubridate::month(base_date),
-                                                  day = lubridate::day(base_date)) + !!sym(tscore_col)) %>%
+    dplyr::mutate(timeline = lubridate::make_date(
+      year = lubridate::year(base_date),
+      month = lubridate::month(base_date),
+      day = lubridate::day(base_date)
+    ) + !!sym(tscore_col)) %>%
     dplyr::count(day = lubridate::floor_date(timeline, "day"), name = "n_responses")
 
   if (!is.null(wave_breaks)) {
@@ -48,8 +52,10 @@ prepare_panel_data <- function(dat, wave_col = "wave", tscore_col = "tscore", id
     })
 
     df_timeline <- df_timeline %>%
-      dplyr::mutate(wave = factor(dplyr::case_when(!!!wave_conditions,
-                                                   TRUE ~ NA_character_)))
+      dplyr::mutate(wave = factor(dplyr::case_when(
+        !!!wave_conditions,
+        TRUE ~ NA_character_
+      )))
   }
 
   df_timeline <- df_timeline %>% dplyr::arrange(day, wave)

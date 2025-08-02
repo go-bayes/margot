@@ -22,8 +22,7 @@ margot_censor <- function(
     condition_var = "rel_complete",
     condition_value = 0,
     year_measured_var = "year_measured",
-    censor_final_wave = FALSE
-) {
+    censor_final_wave = FALSE) {
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("Package 'data.table' is required but not installed.")
   }

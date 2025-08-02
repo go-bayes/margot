@@ -73,11 +73,14 @@ margot_summary_tables <- function(data,
   # Function to update progress
   update_progress <- function() {
     if (show_progress && !is.null(pb)) {
-      tryCatch({
-        cli::cli_progress_update(id = pb)
-      }, error = function(e) {
-        cli::cli_alert_warning(paste("Error updating progress bar:", e$message))
-      })
+      tryCatch(
+        {
+          cli::cli_progress_update(id = pb)
+        },
+        error = function(e) {
+          cli::cli_alert_warning(paste("Error updating progress bar:", e$message))
+        }
+      )
     }
   }
 
@@ -280,11 +283,14 @@ margot_summary_tables <- function(data,
 
   # Close progress bar
   if (show_progress && !is.null(pb)) {
-    tryCatch({
-      cli::cli_progress_done(id = pb)
-    }, error = function(e) {
-      cli::cli_alert_warning(paste("Error closing progress bar:", e$message))
-    })
+    tryCatch(
+      {
+        cli::cli_progress_done(id = pb)
+      },
+      error = function(e) {
+        cli::cli_alert_warning(paste("Error closing progress bar:", e$message))
+      }
+    )
   }
 
   # Final success message
@@ -312,7 +318,6 @@ margot_plot_exposure_boxplot <- function(data,
                                          show_points = FALSE,
                                          point_alpha = 0.05,
                                          point_size = 0.5) {
-
   # Ensure wave column is present
   if (!"wave" %in% names(data)) {
     cli::cli_abort("The 'wave' column is missing from the data.")
@@ -348,8 +353,10 @@ margot_plot_exposure_boxplot <- function(data,
   n_waves <- length(all_waves)
 
   # Create a color palette that recycles if needed
-  okabe_ito_palette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442",
-                         "#0072B2", "#D55E00", "#CC79A7", "#999999")
+  okabe_ito_palette <- c(
+    "#E69F00", "#56B4E9", "#009E73", "#F0E442",
+    "#0072B2", "#D55E00", "#CC79A7", "#999999"
+  )
   color_palette <- rep(okabe_ito_palette, length.out = n_waves)
 
   # Create the ggplot

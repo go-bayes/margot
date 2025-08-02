@@ -11,7 +11,7 @@ cat("====================================================\n\n")
 cat("Test 1: Using target_sample = 'overlap'\n")
 test_overlap <- margot_recompute_ate(
   models_binary,
-  target_sample = "overlap"  # new parameter name
+  target_sample = "overlap" # new parameter name
 )
 cat("Success! Function accepts target_sample parameter.\n\n")
 

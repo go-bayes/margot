@@ -36,17 +36,17 @@
 #'
 #' @examples
 #' \dontrun{
-#'   # Flextable output for Word
-#'   flex_table <- margot_make_tables(
-#'     data = mydata,
-#'     vars = c("age", "gender", "income"),
-#'     by = "group",
-#'     labels = c("age" = "Age", "gender" = "Gender", "income" = "Income"),
-#'     factor_vars = "gender",
-#'     table1_opts = list(overall = FALSE, transpose = TRUE),
-#'     format = "flextable",
-#'     flex_opts = list(font_size = 8)
-#'   )
+#' # Flextable output for Word
+#' flex_table <- margot_make_tables(
+#'   data = mydata,
+#'   vars = c("age", "gender", "income"),
+#'   by = "group",
+#'   labels = c("age" = "Age", "gender" = "Gender", "income" = "Income"),
+#'   factor_vars = "gender",
+#'   table1_opts = list(overall = FALSE, transpose = TRUE),
+#'   format = "flextable",
+#'   flex_opts = list(font_size = 8)
+#' )
 #' }
 #'
 #' @importFrom table1 table1 setLabel t1kable
@@ -68,15 +68,19 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
   # check for missing variables
   missing_vars <- vars[!vars %in% names(data)]
   if (length(missing_vars) > 0) {
-    stop(paste("the following variables are missing in the data:",
-               paste(missing_vars, collapse = ", ")))
+    stop(paste(
+      "the following variables are missing in the data:",
+      paste(missing_vars, collapse = ", ")
+    ))
   }
 
   # data checks for 'by' variables and missingness
   missing_by_vars <- by[!by %in% names(data)]
   if (length(missing_by_vars) > 0) {
-    stop(paste("the following 'by' variables are missing in the data:",
-               paste(missing_by_vars, collapse = ", ")))
+    stop(paste(
+      "the following 'by' variables are missing in the data:",
+      paste(missing_by_vars, collapse = ", ")
+    ))
   }
 
   # check for missing values in stratification variables
@@ -98,8 +102,10 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
   if (!is.null(factor_vars)) {
     missing_factor_vars <- factor_vars[!factor_vars %in% vars]
     if (length(missing_factor_vars) > 0) {
-      stop(paste("the following 'factor_vars' are not in 'vars':",
-                 paste(missing_factor_vars, collapse = ", ")))
+      stop(paste(
+        "the following 'factor_vars' are not in 'vars':",
+        paste(missing_factor_vars, collapse = ", ")
+      ))
     }
 
     # Convert to factors using base R
@@ -137,11 +143,14 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
   table1_args <- c(list(x = form, data = data), table1_opts)
 
   # generate the table1 object with error handling
-  table_obj <- tryCatch({
-    do.call(table1::table1, table1_args)
-  }, error = function(e) {
-    stop("error in generating table1: ", e$message)
-  })
+  table_obj <- tryCatch(
+    {
+      do.call(table1::table1, table1_args)
+    },
+    error = function(e) {
+      stop("error in generating table1: ", e$message)
+    }
+  )
 
   # process output based on the chosen format
   if (format == "latex") {
@@ -154,17 +163,22 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
     booktabs <- if (!is.null(kable_opts$booktabs)) kable_opts$booktabs else TRUE
     longtable <- if (!is.null(kable_opts$longtable)) kable_opts$longtable else TRUE
     font_size <- if (!is.null(kable_opts$font_size)) kable_opts$font_size else 10
-    latex_options <- if (!is.null(kable_opts$latex_options))
-      kable_opts$latex_options else
-        c("hold_position", "repeat_header", "striped", "longtable")
+    latex_options <- if (!is.null(kable_opts$latex_options)) {
+      kable_opts$latex_options
+    } else {
+      c("hold_position", "repeat_header", "striped", "longtable")
+    }
 
     # create latex table
-    latex_table <- table1::t1kable(table_obj, format = "latex",
-                                   booktabs = booktabs,
-                                   longtable = longtable)
+    latex_table <- table1::t1kable(table_obj,
+      format = "latex",
+      booktabs = booktabs,
+      longtable = longtable
+    )
     result <- kableExtra::kable_styling(latex_table,
-                                        font_size = font_size,
-                                        latex_options = latex_options)
+      font_size = font_size,
+      latex_options = latex_options
+    )
 
     # Add Quarto cross-reference label if provided
     if (!is.null(quarto_label)) {
@@ -182,7 +196,6 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
         result <- paste0("\\label{", quarto_label, "}\n", result)
       }
     }
-
   } else if (format == "flextable") {
     # ensure flextable is available
     if (!requireNamespace("flextable", quietly = TRUE)) {
@@ -212,14 +225,14 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
     # - the text doesn't match statistics patterns (Mean, Median, Missing)
     # - the text isn't the N count row (starts with "(N=")
     # - the cell isn't empty
-    is_variable <- !grepl("^\\s+", table_df[,1]) &
-      !grepl("^(Mean|Median|Missing|\\(N=)", table_df[,1]) &
-      table_df[,1] != ""
+    is_variable <- !grepl("^\\s+", table_df[, 1]) &
+      !grepl("^(Mean|Median|Missing|\\(N=)", table_df[, 1]) &
+      table_df[, 1] != ""
 
     # additional check for custom labels
     provided_labels <- if (!is.null(labels)) labels else character(0)
     if (length(provided_labels) > 0) {
-      row_texts <- trimws(table_df[,1])
+      row_texts <- trimws(table_df[, 1])
       for (i in seq_along(row_texts)) {
         if (row_texts[i] %in% provided_labels) {
           is_variable[i] <- TRUE
@@ -235,11 +248,12 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
 
     # apply theme
     theme_func <- switch(theme_name,
-                         "theme_vanilla" = flextable::theme_vanilla,
-                         "theme_box" = flextable::theme_box,
-                         "theme_booktabs" = flextable::theme_booktabs,
-                         "theme_alafoli" = flextable::theme_alafoli,
-                         flextable::theme_vanilla)  # default
+      "theme_vanilla" = flextable::theme_vanilla,
+      "theme_box" = flextable::theme_box,
+      "theme_booktabs" = flextable::theme_booktabs,
+      "theme_alafoli" = flextable::theme_alafoli,
+      flextable::theme_vanilla
+    ) # default
 
     result <- theme_func(result)
 
@@ -250,15 +264,15 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
 
     # set table width
     result <- flextable::set_table_properties(result,
-                                              layout = "autofit",
-                                              width = width)
+      layout = "autofit",
+      width = width
+    )
 
     # align first column left, others center
     result <- flextable::align(result, j = 1, align = "left", part = "all")
     if (ncol(table_df) > 1) {
       result <- flextable::align(result, j = 2:ncol(table_df), align = "center", part = "all")
     }
-
   } else { # markdown
     # convert to data frame
     table_df <- as.data.frame(table_obj)
@@ -274,14 +288,14 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
     # - the text isn't the N count row (starts with "(N=")
     # - the cell isn't empty
     # - IMPORTANT: check if the trimmed text matches any of our provided labels
-    is_variable <- !grepl("^\\s+", table_df[,1]) &
-      !grepl("^(Mean|Median|Missing|\\(N=)", table_df[,1]) &
-      table_df[,1] != ""
+    is_variable <- !grepl("^\\s+", table_df[, 1]) &
+      !grepl("^(Mean|Median|Missing|\\(N=)", table_df[, 1]) &
+      table_df[, 1] != ""
 
     # additional check: see if the row text matches any of our custom labels
     # this handles cases where labels contain special characters like hyphens
     if (length(provided_labels) > 0) {
-      row_texts <- trimws(table_df[,1])
+      row_texts <- trimws(table_df[, 1])
       for (i in seq_along(row_texts)) {
         if (row_texts[i] %in% provided_labels) {
           is_variable[i] <- TRUE

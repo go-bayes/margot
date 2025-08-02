@@ -16,7 +16,7 @@ margot_reversed_labels(
 
 \item{reversed}{character vector of variable names that have been flipped}
 
-\item{use_r_suffix}{logical; if TRUE (default), creates new entries with "_r" suffix 
+\item{use_r_suffix}{logical; if TRUE (default), creates new entries with "_r" suffix
 for flipped outcomes. If FALSE, uses the old behavior of modifying in-place.}
 
 \item{remove_original}{logical; if TRUE and use_r_suffix is TRUE, removes the original

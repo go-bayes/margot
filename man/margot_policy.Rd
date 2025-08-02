@@ -43,7 +43,7 @@ Default: all.}
 
 \item{qini_args}{List of additional arguments to pass to margot_plot_qini(). Default: list().}
 
-\item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
+\item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default),
 "auto", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
 
 \item{seed}{Integer. Random seed for reproducibility in QINI computations (default 12345).}

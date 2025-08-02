@@ -53,7 +53,7 @@ margot_qini(
 \item{models}{List returned by margot_causal_forest(), containing results
 and optionally full_models.}
 
-\item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default), 
+\item{baseline_method}{Method for generating baseline: "maq_no_covariates" (default),
 "auto", "simple", "maq_only", or "none". See margot_generate_qini_data() for details.}
 
 \item{remove_tx_prefix}{Logical; remove treatment prefix from variable names (default TRUE).}
@@ -108,12 +108,12 @@ QINI curves indicating more people can be treated cost-effectively, while
 higher costs (e.g., 5) create shallower curves indicating only the highest-effect
 individuals justify treatment.
 
-Cost Invariance Property: When treatment costs are uniform across 
-individuals, the relative benefit of CATE-based targeting over uniform allocation 
-remains constant regardless of cost level. While absolute gains scale inversely 
-with cost (gain at cost c = gain at cost 1 / c), the difference between CATE 
-and ATE curves scales proportionally, preserving the relative advantage of 
-personalized treatment. This means the value of heterogeneous treatment effects 
+Cost Invariance Property: When treatment costs are uniform across
+individuals, the relative benefit of CATE-based targeting over uniform allocation
+remains constant regardless of cost level. While absolute gains scale inversely
+with cost (gain at cost c = gain at cost 1 / c), the difference between CATE
+and ATE curves scales proportionally, preserving the relative advantage of
+personalized treatment. This means the value of heterogeneous treatment effects
 for targeting decisions is independent of the uniform cost level.
 
 The output is structured to be compatible with margot_interpret_qini() and

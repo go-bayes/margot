@@ -20,10 +20,11 @@
 #' \dontrun{
 #' # Assuming mc_result is the result of margot_multi_arm_causal_forest()
 #' result <- margot_summary_cate_difference_gain(mc_result,
-#'                                  outcome_var = "model_Y",
-#'                                  reference_curve = "baseline",
-#'                                  comparison_curve = "arm2",
-#'                                  spend = 0.3)
+#'   outcome_var = "model_Y",
+#'   reference_curve = "baseline",
+#'   comparison_curve = "arm2",
+#'   spend = 0.3
+#' )
 #' # Use in text
 #' glue::glue("The difference in gains is {result$diff_gain}. {result$summary}")
 #' }
@@ -41,18 +42,18 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
   # Get the qini_objects
   qini_objects <- mc_result$results[[outcome_var]]$qini_objects
   model_result <- mc_result$results[[outcome_var]]
-  
+
   # Check if we have existing QINI objects
   if (!is.null(qini_objects)) {
     cli::cli_alert_info("Using existing QINI objects for {outcome_var}")
   } else {
     # Generate qini objects if missing
     cli::cli_alert_warning("QINI objects missing for {outcome_var}, regenerating...")
-    
+
     # Check for stored metadata to ensure consistency
     qini_metadata <- model_result$qini_metadata
-    baseline_method_to_use <- "auto"  # default
-    
+    baseline_method_to_use <- "auto" # default
+
     if (!is.null(qini_metadata)) {
       if (!is.null(qini_metadata$baseline_method)) {
         baseline_method_to_use <- qini_metadata$baseline_method
@@ -62,17 +63,17 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
         cli::cli_alert_info("Original QINI used {length(qini_metadata$test_indices)} observations")
       }
     }
-    
+
     # try to generate on-demand
     outcome_name_clean <- gsub("^model_", "", outcome_var)
     outcome_data <- NULL
-    
+
     if (!is.null(mc_result$data) && outcome_name_clean %in% names(mc_result$data)) {
       outcome_data <- mc_result$data[[outcome_name_clean]]
     } else if (!is.null(mc_result$data) && outcome_var %in% names(mc_result$data)) {
       outcome_data <- mc_result$data[[outcome_var]]
     }
-    
+
     if (!is.null(outcome_data) && !is.null(mc_result$W)) {
       # Use test indices if available
       if (!is.null(qini_metadata$test_indices)) {
@@ -80,26 +81,26 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
         outcome_data_subset <- outcome_data[test_idx]
         treatment_subset <- mc_result$W[test_idx]
         weights_subset <- if (!is.null(mc_result$weights)) mc_result$weights[test_idx] else NULL
-        
+
         cli::cli_alert_info("Regenerating QINI with {length(test_idx)} observations from original subset")
       } else {
         outcome_data_subset <- outcome_data
         treatment_subset <- mc_result$W
         weights_subset <- mc_result$weights
       }
-      
+
       qini_result <- margot_generate_qini_data(
         model_result = model_result,
         outcome_data = outcome_data_subset,
         treatment = treatment_subset,
         weights = weights_subset,
         baseline_method = baseline_method_to_use,
-        seed = if(!is.null(mc_result$seed)) mc_result$seed else 12345,
+        seed = if (!is.null(mc_result$seed)) mc_result$seed else 12345,
         verbose = TRUE
       )
       qini_objects <- qini_result$qini_objects
     }
-    
+
     if (is.null(qini_objects)) {
       stop("Qini objects not found and could not be generated for: ", outcome_var)
     }
@@ -132,7 +133,7 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
   } else {
     avg_gain_ref <- maq::average_gain(maq_object_ref, spend = spend)
   }
-  
+
   if (inherits(maq_object_comp, "qini_simple_baseline")) {
     avg_gain_comp <- average_gain.qini_simple_baseline(maq_object_comp, spend = spend)
   } else {
@@ -157,15 +158,15 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
 
   # Compute the integrated difference between the two curves
   # Handle different combinations of maq objects and simple baselines
-  if (inherits(maq_object_ref, "qini_simple_baseline") || 
-      inherits(maq_object_comp, "qini_simple_baseline")) {
+  if (inherits(maq_object_ref, "qini_simple_baseline") ||
+    inherits(maq_object_comp, "qini_simple_baseline")) {
     # if either is a simple baseline, we need special handling
-    if (inherits(maq_object_ref, "qini_simple_baseline") && 
-        !inherits(maq_object_comp, "qini_simple_baseline")) {
+    if (inherits(maq_object_ref, "qini_simple_baseline") &&
+      !inherits(maq_object_comp, "qini_simple_baseline")) {
       # reference is simple, comparison is maq
       integrated_diff <- integrated_difference_simple(maq_object_comp, maq_object_ref, spend = spend)
-    } else if (!inherits(maq_object_ref, "qini_simple_baseline") && 
-               inherits(maq_object_comp, "qini_simple_baseline")) {
+    } else if (!inherits(maq_object_ref, "qini_simple_baseline") &&
+      inherits(maq_object_comp, "qini_simple_baseline")) {
       # reference is maq, comparison is simple - reverse and negate
       temp_diff <- integrated_difference_simple(maq_object_ref, maq_object_comp, spend = spend)
       integrated_diff <- list(
@@ -194,8 +195,10 @@ margot_summary_cate_difference_gain <- function(mc_result, outcome_var, referenc
   diff_gain <- glue::glue("{diff_estimate} (SE: {diff_std_err})")
   int_diff <- glue::glue("{format(integrated_diff$estimate, nsmall = 3)} (SE: {format(integrated_diff$std.err, nsmall = 3)})")
 
-  summary <- glue::glue("Using {reference_curve} as the reference condition, {comparison_curve} shows a difference in gains of {diff_gain} ",
-                        "at a {spend*100}% spend level. The integrated difference between {comparison_curve} and {reference_curve} is {int_diff}.")
+  summary <- glue::glue(
+    "Using {reference_curve} as the reference condition, {comparison_curve} shows a difference in gains of {diff_gain} ",
+    "at a {spend*100}% spend level. The integrated difference between {comparison_curve} and {reference_curve} is {int_diff}."
+  )
 
   # Return a list of formatted strings
   return(list(

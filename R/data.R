@@ -29,17 +29,17 @@
 #' better reflect real longitudinal studies, use `fetch_margot_data()`
 #' with version = "v1" or "v2".
 #'
-#' @seealso 
+#' @seealso
 #' \code{\link{fetch_margot_data}} for accessing larger datasets
 #' \code{\link{list_margot_data}} to see all available datasets
 #'
 #' @examples
 #' # load the example data
 #' data(df_margot_example)
-#' 
+#'
 #' # check structure
 #' str(df_margot_example)
-#' 
+#'
 #' # basic summary by wave
 #' table(df_margot_example$wave)
 #'

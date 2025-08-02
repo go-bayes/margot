@@ -99,13 +99,15 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
         3
       ))
     } else {
-      evalout <- as.data.frame(round(EValue::evalues.RR(
-        est = tab_tmle$`E[Y(1)]/E[Y(0)]`,
-        lo = tab_tmle$`2.5 %`,
-        hi = tab_tmle$`97.5 %`,
-        true = 1
-      ),
-      3))
+      evalout <- as.data.frame(round(
+        EValue::evalues.RR(
+          est = tab_tmle$`E[Y(1)]/E[Y(0)]`,
+          lo = tab_tmle$`2.5 %`,
+          hi = tab_tmle$`97.5 %`,
+          true = 1
+        ),
+        3
+      ))
     }
 
     evalout2 <- evalout[2, , drop = FALSE] # Keep it as a dataframe

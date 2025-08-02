@@ -14,19 +14,23 @@ check_suggests <- function(pkg, fun = NULL, purpose = NULL) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     fun_msg <- if (!is.null(fun)) paste0(" for ", fun, "()") else ""
     purpose_msg <- if (!is.null(purpose)) paste0(" (", purpose, ")") else ""
-    
+
     # determine which bundle would provide this package
     bundle_msg <- ""
-    if (pkg %in% c("grf", "lmtp", "policytree", "maq", "SuperLearner", 
-                   "clarify", "EValue", "WeightIt", "MatchIt", "MatchThem")) {
+    if (pkg %in% c(
+      "grf", "lmtp", "policytree", "maq", "SuperLearner",
+      "clarify", "EValue", "WeightIt", "MatchIt", "MatchThem"
+    )) {
       bundle_msg <- c("i" = "For all estimation packages: {.code install.packages('margot.models')}")
     } else if (pkg %in% c("ggplot2", "patchwork", "ggokabeito", "ggeffects", "DiagrammeR")) {
       bundle_msg <- c("i" = "For all visualisation packages: {.code install.packages('margot.viz')}")
-    } else if (pkg %in% c("gt", "gtsummary", "flextable", "kableExtra", "knitr", 
-                          "report", "parameters", "table1")) {
+    } else if (pkg %in% c(
+      "gt", "gtsummary", "flextable", "kableExtra", "knitr",
+      "report", "parameters", "table1"
+    )) {
       bundle_msg <- c("i" = "For all reporting packages: {.code install.packages('margot.report')}")
     }
-    
+
     cli::cli_abort(c(
       "Package {.pkg {pkg}} is required{fun_msg}{purpose_msg}.",
       "i" = "Install it with: {.code install.packages('{pkg}')}",
@@ -54,11 +58,11 @@ check_suggests_multiple <- function(pkgs, fun = NULL, purpose = NULL) {
       missing_pkgs <- c(missing_pkgs, pkg)
     }
   }
-  
+
   if (length(missing_pkgs) > 0) {
     fun_msg <- if (!is.null(fun)) paste0(" for ", fun, "()") else ""
     purpose_msg <- if (!is.null(purpose)) paste0(" (", purpose, ")") else ""
-    
+
     cli::cli_abort(c(
       "The following packages are required{fun_msg}{purpose_msg}:",
       paste0("  ", missing_pkgs),

@@ -35,21 +35,25 @@ margot_rate_batch <- function(model_results,
                               q = seq(0.1, 1, by = 0.1),
                               use_evaluation_subset = TRUE,
                               ...) {
-  stopifnot(is.list(model_results),
-            all(c("results", "full_models") %in% names(model_results)))
+  stopifnot(
+    is.list(model_results),
+    all(c("results", "full_models") %in% names(model_results))
+  )
 
   policy <- match.arg(policy)
   target <- match.arg(target)
-  z      <- stats::qnorm(1 - (1 - level) / 2)
+  z <- stats::qnorm(1 - (1 - level) / 2)
 
   say <- function(fun, msg) if (verbose) fun(msg)
 
   res_list <- lapply(names(model_results$results), function(mn) {
     withr::with_seed(seed + as.integer(factor(mn)), {
-      say(cli::cli_alert_info,
-          sprintf("↻ computing %s (%s, %s)", mn, target, policy))
+      say(
+        cli::cli_alert_info,
+        sprintf("↻ computing %s (%s, %s)", mn, target, policy)
+      )
 
-      forest  <- model_results$full_models[[mn]]
+      forest <- model_results$full_models[[mn]]
       tau_hat <- model_results$results[[mn]]$tau_hat
 
       if (is.null(forest) || !inherits(forest, "causal_forest")) {
@@ -67,18 +71,20 @@ margot_rate_batch <- function(model_results,
         qini_meta <- model_results$results[[mn]]$qini_metadata
         if (!is.null(qini_meta$test_indices)) {
           subset <- qini_meta$test_indices
-          say(cli::cli_alert_info,
-              sprintf("Using test subset of %d observations for valid RATE evaluation",
-                      length(subset)))
-        } else if (qini_meta$qini_split) {
-          # qini_split was TRUE but no test indices found - something is wrong
-          say(cli::cli_alert_warning,
-              sprintf("Expected test indices for %s but none found - using full sample", mn))
+          say(
+            cli::cli_alert_info,
+            sprintf(
+              "Using test subset of %d observations for valid RATE evaluation",
+              length(subset)
+            )
+          )
         }
       } else if (use_evaluation_subset) {
         # user wants evaluation subset but no qini_metadata available
-        say(cli::cli_alert_warning,
-            sprintf("No evaluation subset available for %s - results may be optimistic", mn))
+        say(
+          cli::cli_alert_warning,
+          sprintf("No evaluation subset available for %s - results may be optimistic", mn)
+        )
       }
 
       # use the helper function for consistent RATE computation
@@ -89,18 +95,20 @@ margot_rate_batch <- function(model_results,
         q = q,
         policy = policy,
         subset = subset,
-        use_oob_predictions = FALSE,  # we already have tau_hat
+        use_oob_predictions = FALSE, # we already have tau_hat
         verbose = FALSE,
         seed = seed,
         ...
       )
 
       est <- round(ra$estimate, round_digits)
-      se  <- round(ra$std.err,   round_digits)
-      ci  <- round(est + c(-1, 1) * z * se, round_digits)
+      se <- round(ra$std.err, round_digits)
+      ci <- round(est + c(-1, 1) * z * se, round_digits)
 
-      say(cli::cli_alert_info,
-          sprintf("✔ %s RATE = %.3f (SE %.3f)", mn, est, se))
+      say(
+        cli::cli_alert_info,
+        sprintf("✔ %s RATE = %.3f (SE %.3f)", mn, est, se)
+      )
 
       tibble::tibble(
         model           = mn,
@@ -135,7 +143,7 @@ margot_rate_batch <- function(model_results,
 #' @param remove_z_suffix Logical; remove z-score suffix from variable names (default TRUE).
 #' @param use_title_case Logical; convert variable names to title case (default TRUE).
 #' @param remove_underscores Logical; replace underscores with spaces (default TRUE).
-#' @param adjust Character; method for adjusting p-values. Only "bonferroni" or "none" 
+#' @param adjust Character; method for adjusting p-values. Only "bonferroni" or "none"
 #'   are recommended. While other methods are technically available through stats::p.adjust(),
 #'   they may not be appropriate for all contexts (e.g., cross-validation). Default is "none".
 #'   When using Bonferroni, consider alpha = 0.2 due to its conservative nature.
@@ -206,11 +214,11 @@ margot_rate <- function(models,
   make_tbl <- function(target) {
     tab <- margot_rate_batch(
       model_results = models,
-      policy        = policy,
-      target        = target,
-      round_digits  = round_digits,
-      seed          = seed,
-      q             = q,
+      policy = policy,
+      target = target,
+      round_digits = round_digits,
+      seed = seed,
+      q = q,
       use_evaluation_subset = use_evaluation_subset,
       ...
     ) %>%
@@ -246,7 +254,7 @@ margot_rate <- function(models,
     } else {
       # Standard CI-based significance, but only bold positive significant results
       if (highlight_significant) {
-        pos_sig <- tab$`2.5%` > 0  # Only positive significant results
+        pos_sig <- tab$`2.5%` > 0 # Only positive significant results
         tab$outcome[pos_sig] <- paste0("**", tab$outcome[pos_sig], "**")
       }
     }
@@ -302,7 +310,7 @@ margot_interpret_rate <- function(rate_df,
                                   adjust_positives_only = FALSE) {
   # comparison case: two-element list
   if (is.list(rate_df) && !is.data.frame(rate_df) &&
-      all(c("rate_autoc", "rate_qini") %in% names(rate_df))) {
+    all(c("rate_autoc", "rate_qini") %in% names(rate_df))) {
     return(
       margot_interpret_rate_comparison(
         rate_df$rate_autoc,
@@ -331,22 +339,25 @@ margot_interpret_rate <- function(rate_df,
 
   # determine pos/neg/inconclusive as before
   if (!is.null(adjust) && adjust != "none" && apply_adjustment && "is_significant" %in% names(rate_df)) {
-    pos   <- which(rate_df$is_significant & rate_df$`RATE Estimate` > 0)
-    neg   <- which(rate_df$is_significant & rate_df$`RATE Estimate` < 0)
+    pos <- which(rate_df$is_significant & rate_df$`RATE Estimate` > 0)
+    neg <- which(rate_df$is_significant & rate_df$`RATE Estimate` < 0)
     incon <- setdiff(seq_len(nrow(rate_df)), union(pos, neg))
   } else {
-    low   <- rate_df$`2.5%`
-    high  <- rate_df$`97.5%`
-    pos   <- which(low > 0)
-    neg   <- which(high < 0)
+    low <- rate_df$`2.5%`
+    high <- rate_df$`97.5%`
+    pos <- which(low > 0)
+    neg <- which(high < 0)
     incon <- setdiff(seq_len(nrow(rate_df)), union(pos, neg))
   }
 
   # header and base description
   header <- sprintf(
     "### Evidence for heterogeneous treatment effects (policy = %s) using %s",
-    if (rate_df$policy[1] == "treat_best")
-      "treat best responders" else "withhold from best responders",
+    if (rate_df$policy[1] == "treat_best") {
+      "treat best responders"
+    } else {
+      "withhold from best responders"
+    },
     target
   )
   desc <- if (target == "AUTOC") {
@@ -373,9 +384,10 @@ margot_interpret_rate <- function(rate_df,
       "%s: %.3f (95%% CI %.3f, %.3f)",
       labs, rate_df$`RATE Estimate`[pos], rate_df$`2.5%`[pos], rate_df$`97.5%`[pos]
     )
-    parts <- c(parts,
-               sprintf("Positive RATE estimates for: %s.", paste(labs, collapse = ", ")),
-               sprintf("Estimates (%s) show robust heterogeneity.", paste(ests, collapse = "; "))
+    parts <- c(
+      parts,
+      sprintf("Positive RATE estimates for: %s.", paste(labs, collapse = ", ")),
+      sprintf("Estimates (%s) show robust heterogeneity.", paste(ests, collapse = "; "))
     )
   }
 
@@ -386,10 +398,13 @@ margot_interpret_rate <- function(rate_df,
       "%s: %.3f (95%% CI %.3f, %.3f)",
       labs, rate_df$`RATE Estimate`[neg], rate_df$`2.5%`[neg], rate_df$`97.5%`[neg]
     )
-    parts <- c(parts,
-               sprintf("Negative RATE estimates for: %s.", paste(labs, collapse = ", ")),
-               sprintf("Estimates (%s) caution against CATE prioritisation.",
-                       paste(ests, collapse = "; "))
+    parts <- c(
+      parts,
+      sprintf("Negative RATE estimates for: %s.", paste(labs, collapse = ", ")),
+      sprintf(
+        "Estimates (%s) caution against CATE prioritisation.",
+        paste(ests, collapse = "; ")
+      )
     )
   }
 
@@ -404,19 +419,20 @@ margot_interpret_rate <- function(rate_df,
     } else {
       "95% CI crossing zero"
     }
-    parts <- c(parts,
-               sprintf(
-                 "For outcomes with %s (%s), evidence is inconclusive.",
-                 significance_text,
-                 paste(rate_df$outcome[incon], collapse = ", ")
-               )
+    parts <- c(
+      parts,
+      sprintf(
+        "For outcomes with %s (%s), evidence is inconclusive.",
+        significance_text,
+        paste(rate_df$outcome[incon], collapse = ", ")
+      )
     )
   }
 
   paste(parts, collapse = "\n\n")
 }
 
-#old
+# old
 # margot_interpret_rate <- function(rate_df,
 #                                   flipped_outcomes = NULL,
 #                                   target = "AUTOC",
@@ -559,7 +575,7 @@ margot_interpret_rate_comparison <- function(autoc_df,
 
   # Get adjustment attributes
   adjust <- attr(autoc_df, "adjust")
-  alpha  <- attr(autoc_df, "alpha")
+  alpha <- attr(autoc_df, "alpha")
   apply_adjustment <- attr(autoc_df, "apply_adjustment")
   total_hypotheses <- attr(autoc_df, "total_hypotheses")
 
@@ -567,22 +583,22 @@ margot_interpret_rate_comparison <- function(autoc_df,
   if (!is.null(adjust) && adjust != "none" && apply_adjustment && "is_significant" %in% names(autoc_df)) {
     # positives by adjusted p-value
     pos_autoc <- autoc_df$model[autoc_df$is_significant & autoc_df$`RATE Estimate` > 0]
-    pos_qini  <- qini_df$model[qini_df$is_significant & qini_df$`RATE Estimate` > 0]
+    pos_qini <- qini_df$model[qini_df$is_significant & qini_df$`RATE Estimate` > 0]
     if (adjust_positives_only) {
       # negatives by unadjusted CI crossing only
       neg_autoc <- autoc_df$model[autoc_df$`97.5%` < 0]
-      neg_qini  <- qini_df$model[qini_df$`97.5%` < 0]
+      neg_qini <- qini_df$model[qini_df$`97.5%` < 0]
     } else {
       # negatives also by adjusted p-value
       neg_autoc <- autoc_df$model[autoc_df$is_significant & autoc_df$`RATE Estimate` < 0]
-      neg_qini  <- qini_df$model[qini_df$is_significant & qini_df$`RATE Estimate` < 0]
+      neg_qini <- qini_df$model[qini_df$is_significant & qini_df$`RATE Estimate` < 0]
     }
   } else {
     # conventional CI approach
     pos_autoc <- autoc_df$model[autoc_df$`2.5%` > 0]
-    pos_qini  <- qini_df$model[qini_df$`2.5%` > 0]
+    pos_qini <- qini_df$model[qini_df$`2.5%` > 0]
     neg_autoc <- autoc_df$model[autoc_df$`97.5%` < 0]
-    neg_qini  <- qini_df$model[qini_df$`97.5%` < 0]
+    neg_qini <- qini_df$model[qini_df$`97.5%` < 0]
   }
 
   autoc_models <- unique(pos_autoc)
@@ -592,10 +608,10 @@ margot_interpret_rate_comparison <- function(autoc_df,
 
   # Prepare exclusion lists
   all_autoc <- unique(autoc_df$model)
-  all_qini  <- unique(qini_df$model)
-  not_excl_autoc  <- setdiff(all_autoc, neg_autoc)
-  not_excl_qini   <- setdiff(all_qini,  neg_qini)
-  not_excl_both   <- intersect(not_excl_autoc, not_excl_qini)
+  all_qini <- unique(qini_df$model)
+  not_excl_autoc <- setdiff(all_autoc, neg_autoc)
+  not_excl_qini <- setdiff(all_qini, neg_qini)
+  not_excl_both <- intersect(not_excl_autoc, not_excl_qini)
   not_excl_either <- union(not_excl_autoc, not_excl_qini)
 
   label_map <- setNames(autoc_df$outcome, autoc_df$model)
@@ -608,80 +624,109 @@ margot_interpret_rate_comparison <- function(autoc_df,
 
   # Pre-specification and adjustment details
   if (is.null(adjust) || adjust == "none" || !apply_adjustment) {
-    parts <- c(parts,
-               sprintf("All %d outcomes were prespecified, and interpretations are based on 95%% confidence intervals without multiple testing correction.",
-                       length(all_autoc))
+    parts <- c(
+      parts,
+      sprintf(
+        "All %d outcomes were prespecified, and interpretations are based on 95%% confidence intervals without multiple testing correction.",
+        length(all_autoc)
+      )
     )
   } else if (adjust != "none") {
-    is_fdr <- adjust %in% c("BH","BY","fdr")
+    is_fdr <- adjust %in% c("BH", "BY", "fdr")
     if (is_fdr) {
-      parts <- c(parts,
-                 sprintf("We treated the RATE analysis as exploratory and controlled the false discovery rate at q=%.2f over %d outcomes.",
-                         alpha, total_hypotheses)
+      parts <- c(
+        parts,
+        sprintf(
+          "We treated the RATE analysis as exploratory and controlled the false discovery rate at q=%.2f over %d outcomes.",
+          alpha, total_hypotheses
+        )
       )
     } else {
-      parts <- c(parts,
-                 sprintf("Results were adjusted for multiple testing using the %s method over %d hypotheses, yielding an adjusted threshold of %.3f.",
-                         adjust, total_hypotheses, alpha/total_hypotheses)
+      parts <- c(
+        parts,
+        sprintf(
+          "Results were adjusted for multiple testing using the %s method over %d hypotheses, yielding an adjusted threshold of %.3f.",
+          adjust, total_hypotheses, alpha / total_hypotheses
+        )
       )
     }
   }
 
   # Concordance statements with estimates
-  if (length(both_models)>0) {
+  if (length(both_models) > 0) {
     # Get the estimates for concordant models
     concordant_details <- character()
     for (m in both_models) {
       autoc_row <- autoc_df[autoc_df$model == m, ]
       qini_row <- qini_df[qini_df$model == m, ]
-      concordant_details <- c(concordant_details,
-        sprintf("%s (AUTOC: %.3f [95%% CI: %.3f, %.3f]; QINI: %.3f [95%% CI: %.3f, %.3f])",
-                label_map[m],
-                autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`,
-                qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
+      concordant_details <- c(
+        concordant_details,
+        sprintf(
+          "%s (AUTOC: %.3f [95%% CI: %.3f, %.3f]; QINI: %.3f [95%% CI: %.3f, %.3f])",
+          label_map[m],
+          autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`,
+          qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`
+        )
       )
     }
-    parts <- c(parts,
-               sprintf("Both methods yield positive RATE estimates for %s, indicating robust evidence of treatment effect heterogeneity through this concordance.",
-                       paste(concordant_details, collapse="; "))
+    parts <- c(
+      parts,
+      sprintf(
+        "Both methods yield positive RATE estimates for %s, indicating robust evidence of treatment effect heterogeneity through this concordance.",
+        paste(concordant_details, collapse = "; ")
+      )
     )
   }
   pos_only_a <- setdiff(autoc_models, qini_models)
   pos_only_q <- setdiff(qini_models, autoc_models)
-  if (length(pos_only_a)|length(pos_only_q)) {
+  if (length(pos_only_a) | length(pos_only_q)) {
     disagreement_parts <- character()
     if (length(pos_only_a)) {
       autoc_only_details <- character()
       for (m in pos_only_a) {
         autoc_row <- autoc_df[autoc_df$model == m, ]
-        autoc_only_details <- c(autoc_only_details,
-          sprintf("%s (%.3f [95%% CI: %.3f, %.3f])",
-                  label_map[m], autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`)
+        autoc_only_details <- c(
+          autoc_only_details,
+          sprintf(
+            "%s (%.3f [95%% CI: %.3f, %.3f])",
+            label_map[m], autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`
+          )
         )
       }
-      disagreement_parts <- c(disagreement_parts,
-                sprintf("AUTOC alone yields positive RATE for %s", paste(autoc_only_details, collapse=", ")))
+      disagreement_parts <- c(
+        disagreement_parts,
+        sprintf("AUTOC alone yields positive RATE for %s", paste(autoc_only_details, collapse = ", "))
+      )
     }
     if (length(pos_only_q)) {
       qini_only_details <- character()
       for (m in pos_only_q) {
         qini_row <- qini_df[qini_df$model == m, ]
-        qini_only_details <- c(qini_only_details,
-          sprintf("%s (%.3f [95%% CI: %.3f, %.3f])",
-                  label_map[m], qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
+        qini_only_details <- c(
+          qini_only_details,
+          sprintf(
+            "%s (%.3f [95%% CI: %.3f, %.3f])",
+            label_map[m], qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`
+          )
         )
       }
-      disagreement_parts <- c(disagreement_parts,
-                sprintf("QINI alone yields positive RATE for %s", paste(qini_only_details, collapse=", ")))
+      disagreement_parts <- c(
+        disagreement_parts,
+        sprintf("QINI alone yields positive RATE for %s", paste(qini_only_details, collapse = ", "))
+      )
     }
-    parts <- c(parts,
-               sprintf("When the methods disagree, %s. In such cases, researchers should choose QINI to maximise overall benefit or AUTOC to focus resources on top responders.",
-                       paste(disagreement_parts, collapse=", while "))
+    parts <- c(
+      parts,
+      sprintf(
+        "When the methods disagree, %s. In such cases, researchers should choose QINI to maximise overall benefit or AUTOC to focus resources on top responders.",
+        paste(disagreement_parts, collapse = ", while ")
+      )
     )
   }
-  if (length(either_models)==0) {
-    parts <- c(parts,
-               "Neither AUTOC nor QINI yields a positive RATE estimate for any outcome, suggesting that evidence for treatment effect heterogeneity is inconclusive across all examined outcomes."
+  if (length(either_models) == 0) {
+    parts <- c(
+      parts,
+      "Neither AUTOC nor QINI yields a positive RATE estimate for any outcome, suggesting that evidence for treatment effect heterogeneity is inconclusive across all examined outcomes."
     )
   }
 
@@ -696,29 +741,41 @@ margot_interpret_rate_comparison <- function(autoc_df,
       if (in_autoc && in_qini) {
         autoc_row <- autoc_df[autoc_df$model == m, ]
         qini_row <- qini_df[qini_df$model == m, ]
-        neg_details <- c(neg_details,
-          sprintf("%s (AUTOC: %.3f [95%% CI: %.3f, %.3f]; QINI: %.3f [95%% CI: %.3f, %.3f])",
-                  label_map[m],
-                  autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`,
-                  qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
+        neg_details <- c(
+          neg_details,
+          sprintf(
+            "%s (AUTOC: %.3f [95%% CI: %.3f, %.3f]; QINI: %.3f [95%% CI: %.3f, %.3f])",
+            label_map[m],
+            autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`,
+            qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`
+          )
         )
       } else if (in_autoc) {
         autoc_row <- autoc_df[autoc_df$model == m, ]
-        neg_details <- c(neg_details,
-          sprintf("%s (AUTOC: %.3f [95%% CI: %.3f, %.3f])",
-                  label_map[m], autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`)
+        neg_details <- c(
+          neg_details,
+          sprintf(
+            "%s (AUTOC: %.3f [95%% CI: %.3f, %.3f])",
+            label_map[m], autoc_row$`RATE Estimate`, autoc_row$`2.5%`, autoc_row$`97.5%`
+          )
         )
       } else {
         qini_row <- qini_df[qini_df$model == m, ]
-        neg_details <- c(neg_details,
-          sprintf("%s (QINI: %.3f [95%% CI: %.3f, %.3f])",
-                  label_map[m], qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`)
+        neg_details <- c(
+          neg_details,
+          sprintf(
+            "%s (QINI: %.3f [95%% CI: %.3f, %.3f])",
+            label_map[m], qini_row$`RATE Estimate`, qini_row$`2.5%`, qini_row$`97.5%`
+          )
         )
       }
     }
-    parts <- c(parts,
-               sprintf("**Caution**: We found reliably negative RATE estimates for %s, which strongly caution against CATE-based prioritisation for these outcomes. Targeting individuals based on predicted treatment effects would worsen outcomes compared to random assignment in these cases.",
-                       paste(neg_details, collapse="; "))
+    parts <- c(
+      parts,
+      sprintf(
+        "**Caution**: We found reliably negative RATE estimates for %s, which strongly caution against CATE-based prioritisation for these outcomes. Targeting individuals based on predicted treatment effects would worsen outcomes compared to random assignment in these cases.",
+        paste(neg_details, collapse = "; ")
+      )
     )
   }
 
@@ -729,28 +786,31 @@ margot_interpret_rate_comparison <- function(autoc_df,
 
   if (length(unreliable_models) > 0) {
     unreliable_labels <- label_map[unreliable_models]
-    parts <- c(parts,
-               sprintf("Finally, for the remaining outcomes of %s, neither AUTOC nor QINI provided reliable evidence of treatment effect heterogeneity, with confidence intervals crossing zero for both methods.",
-                       paste(unreliable_labels, collapse=", "))
+    parts <- c(
+      parts,
+      sprintf(
+        "Finally, for the remaining outcomes of %s, neither AUTOC nor QINI provided reliable evidence of treatment effect heterogeneity, with confidence intervals crossing zero for both methods.",
+        paste(unreliable_labels, collapse = ", ")
+      )
     )
   }
 
-  comparison_text <- paste(parts, collapse="\n\n")
+  comparison_text <- paste(parts, collapse = "\n\n")
 
   list(
     comparison = comparison_text,
     autoc_results = margot_interpret_rate(autoc_df, flipped_outcomes, "AUTOC"),
-    qini_results  = margot_interpret_rate(qini_df, flipped_outcomes, "QINI"),
-    autoc_model_names  = autoc_models,
-    qini_model_names   = qini_models,
-    both_model_names   = both_models,
+    qini_results = margot_interpret_rate(qini_df, flipped_outcomes, "QINI"),
+    autoc_model_names = autoc_models,
+    qini_model_names = qini_models,
+    both_model_names = both_models,
     either_model_names = either_models,
     not_excluded_autoc_model_names = not_excl_autoc,
-    not_excluded_qini_model_names  = not_excl_qini,
-    not_excluded_both              = not_excl_both,
-    not_excluded_either            = not_excl_either,
-    excluded_both                  = intersect(neg_autoc, neg_qini),
-    excluded_either                = union(neg_autoc, neg_qini)
+    not_excluded_qini_model_names = not_excl_qini,
+    not_excluded_both = not_excl_both,
+    not_excluded_either = not_excl_either,
+    excluded_both = intersect(neg_autoc, neg_qini),
+    excluded_either = union(neg_autoc, neg_qini)
   )
 }
 

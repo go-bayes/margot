@@ -16,7 +16,7 @@ margot_recompute_ate(
 )
 }
 \arguments{
-\item{causal_forest_output}{Output from `margot_causal_forest()` or 
+\item{causal_forest_output}{Output from `margot_causal_forest()` or
 `margot_causal_forest_parallel()`. Must have been run with `save_models = TRUE`.}
 
 \item{target_sample}{Character string specifying the target sample for ATE estimation.
@@ -31,7 +31,7 @@ Options are:
 \item{method}{Character string specifying the estimation method. Currently only
 "AIPW" (Augmented Inverse Probability Weighting) is supported by grf.}
 
-\item{scale}{Character string specifying the scale of the estimate. Either "RD" 
+\item{scale}{Character string specifying the scale of the estimate. Either "RD"
 (risk difference) or "RR" (risk ratio). Default is "RD".}
 
 \item{delta}{The hypothesized increase in outcome for RD scale E-value calculations.
@@ -42,7 +42,7 @@ Default is 1.}
 
 \item{subset}{Optional logical vector for subsetting the data. Default is NULL.}
 
-\item{respect_train_test_split}{Logical. If TRUE and the original analysis used 
+\item{respect_train_test_split}{Logical. If TRUE and the original analysis used
 use_train_test_split=TRUE, computes treatment effects on the test set only for
 consistency with policy evaluation. Default is TRUE.}
 }
@@ -69,7 +69,7 @@ ATEs using the specified target sample.
 The different target samples represent different estimands:
 - "all": Average Treatment Effect (ATE) for the entire population
 - "treated": Average Treatment Effect on the Treated (ATT)
-- "control": Average Treatment Effect on the Control (ATC)  
+- "control": Average Treatment Effect on the Control (ATC)
 - "overlap": ATE for units with good overlap in propensity scores
 }
 \examples{
@@ -87,9 +87,9 @@ ate_overlap <- margot_recompute_ate(cf_results, target_sample = "overlap")
 ate_treated <- margot_recompute_ate(cf_results, target_sample = "treated")
 
 # Compare estimates
-cf_results$combined_table      # Original (all units)
-ate_overlap$combined_table      # Overlap units only
-ate_treated$combined_table      # Treated units only
+cf_results$combined_table # Original (all units)
+ate_overlap$combined_table # Overlap units only
+ate_treated$combined_table # Treated units only
 }
 
 }

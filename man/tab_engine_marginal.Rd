@@ -40,11 +40,13 @@ types of estimates and handles continuous and categorical treatment variables.
 }
 \examples{
 # Assuming you have results from a simulation or model in `results_df`
-tabulated_results <- tab_engine_marginal(x = results_df,
-                                         new_name = "Treatment Effect",
-                                         delta = 1,
-                                         sd = 0.2,
-                                         type = "RD")  # Corrected 'scale' to 'type'
+tabulated_results <- tab_engine_marginal(
+  x = results_df,
+  new_name = "Treatment Effect",
+  delta = 1,
+  sd = 0.2,
+  type = "RD"
+) # Corrected 'scale' to 'type'
 
 }
 \keyword{internal}

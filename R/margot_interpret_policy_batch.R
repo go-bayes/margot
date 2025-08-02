@@ -20,10 +20,10 @@
 #' @return A single character string containing the combined markdown output.
 #' @export
 margot_interpret_policy_batch <- function(models,
-                                          model_names       = NULL,
-                                          max_depth         = 2L,
-                                          save_path         = NULL,
-                                          prefix            = NULL,
+                                          model_names = NULL,
+                                          max_depth = 2L,
+                                          save_path = NULL,
+                                          prefix = NULL,
                                           include_timestamp = FALSE,
                                           ...) {
   cli::cli_alert_info("Starting batch processing of policy tree interpretations (depth {max_depth})")
@@ -42,24 +42,29 @@ margot_interpret_policy_batch <- function(models,
   interpretations_list <- vector("list", length(model_names))
   names(interpretations_list) <- model_names
 
-  pb <- cli::cli_progress_bar(total = length(model_names),
-                              format = "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}")
+  pb <- cli::cli_progress_bar(
+    total = length(model_names),
+    format = "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}"
+  )
 
   for (model_name in model_names) {
     cli::cli_alert_info("Processing model: {model_name}")
-    tryCatch({
-      ## pass max_depth plus any other args on to the interpreter
-      interpretation <- margot_interpret_policy_tree(
-        model       = models,
-        model_name  = model_name,
-        max_depth   = max_depth,
-        ...
-      )
-      interpretations_list[[model_name]] <- interpretation
-      cli::cli_alert_success("Successfully processed model: {model_name}")
-    }, error = function(e) {
-      cli::cli_alert_danger("Error processing model {model_name}: {e$message}")
-    })
+    tryCatch(
+      {
+        ## pass max_depth plus any other args on to the interpreter
+        interpretation <- margot_interpret_policy_tree(
+          model       = models,
+          model_name  = model_name,
+          max_depth   = max_depth,
+          ...
+        )
+        interpretations_list[[model_name]] <- interpretation
+        cli::cli_alert_success("Successfully processed model: {model_name}")
+      },
+      error = function(e) {
+        cli::cli_alert_danger("Error processing model {model_name}: {e$message}")
+      }
+    )
     cli::cli_progress_update()
   }
   cli::cli_progress_done()
@@ -67,7 +72,7 @@ margot_interpret_policy_batch <- function(models,
 
   # Filter out NULL interpretations
   valid_interpretations <- Filter(Negate(is.null), interpretations_list)
-  
+
   if (length(valid_interpretations) == 0) {
     cli::cli_alert_warning("No valid interpretations were generated")
     return("")
@@ -79,7 +84,7 @@ margot_interpret_policy_batch <- function(models,
     cli::cli_alert_warning("First interpretation is not valid text")
     return("")
   }
-  
+
   if (grepl("\\*\\*Findings for", first_txt)) {
     split_at <- strsplit(first_txt, "\\*\\*Findings for", perl = TRUE)[[1]]
     common_intro <- split_at[1]
@@ -105,7 +110,7 @@ margot_interpret_policy_batch <- function(models,
   # Assemble final markdown
   # Remove "Policy tree analysis results:" from common_intro if present
   common_intro <- gsub("Policy tree analysis results:\n\n", "", common_intro, fixed = TRUE)
-  
+
   final_output <- paste0(
     "### Policy Tree Interpretations (depth ", max_depth, ")\n\n",
     paste(unlist(model_specifics), collapse = "\n\n")

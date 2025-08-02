@@ -46,7 +46,7 @@ A rank_average_treatment_effect object from grf
 }
 \description{
 This internal helper function computes RATE metrics (AUTOC or QINI) on-demand
-from a causal forest and treatment effect estimates. It ensures proper 
+from a causal forest and treatment effect estimates. It ensures proper
 out-of-sample validation when possible.
 }
 \details{

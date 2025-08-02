@@ -34,8 +34,9 @@ margot_amelia_to_mice <- function(amelia_obj) {
 
   # Create where matrix - use complete.cases on original data
   mice_format$where <- matrix(FALSE,
-                              nrow = nrow(mice_format$data),
-                              ncol = ncol(mice_format$data))
+    nrow = nrow(mice_format$data),
+    ncol = ncol(mice_format$data)
+  )
   colnames(mice_format$where) <- names(mice_format$data)
 
   # Get all variables except special columns
@@ -53,8 +54,9 @@ margot_amelia_to_mice <- function(amelia_obj) {
   # Fill imp array
   for (var in imputed_vars) {
     mice_format$imp[[var]] <- matrix(NA,
-                                     nrow = nrow(mice_format$data),
-                                     ncol = n_imp)
+      nrow = nrow(mice_format$data),
+      ncol = n_imp
+    )
     for (m in 1:n_imp) {
       mice_format$imp[[var]][, m] <- imp_list[[m]][[var]]
     }

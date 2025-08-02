@@ -29,12 +29,14 @@
 #' @examples
 #' \dontrun{
 #' # Assume `df` is a data frame with treatment, covariates, and sample weights
-#' matched_data <- match_mi_general(data = df,
-#'                                  X = "treatment_var",
-#'                                  baseline_vars = c("covariate1", "covariate2"),
-#'                                  estimand = "ATE",
-#'                                  method = "nearest",
-#'                                  stabilize = TRUE)
+#' matched_data <- match_mi_general(
+#'   data = df,
+#'   X = "treatment_var",
+#'   baseline_vars = c("covariate1", "covariate2"),
+#'   estimand = "ATE",
+#'   method = "nearest",
+#'   stabilize = TRUE
+#' )
 #' }
 #'
 #' @importFrom WeightIt weightit
@@ -53,7 +55,6 @@ match_mi_general <-
            subgroup = NULL,
            focal = NULL,
            sample_weights = NULL) {
-
     data_class <- class(data)
 
     if (!data_class %in% c("mids", "data.frame")) {

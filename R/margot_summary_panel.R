@@ -52,7 +52,6 @@ margot_summary_panel <- function(data,
                                  id_col = "id",
                                  wave_col = "wave",
                                  year_measured_col = "year_measured") {
-
   cli::cli_alert_info("Starting margot_summary_panel function")
 
   required_cols <- c(id_col, wave_col, year_measured_col)
@@ -94,8 +93,9 @@ margot_summary_panel <- function(data,
 
   wave_summary_grouped <- id_wave_counts %>%
     mutate(wave_count = if_else(wave_count >= group_waves_at,
-                                paste(group_waves_at, "or more"),
-                                as.character(wave_count))) %>%
+      paste(group_waves_at, "or more"),
+      as.character(wave_count)
+    )) %>%
     group_by(wave_count) %>%
     summarize(number_of_participants = n()) %>%
     ungroup()
@@ -108,7 +108,9 @@ margot_summary_panel <- function(data,
 
   cli::cli_alert("Analysis complete \U0001F44D")
 
-  return(list(unique_ids_by_wave = table1,
-              participant_wave_summary = table2,
-              participant_wave_summary_grouped = table3))
+  return(list(
+    unique_ids_by_wave = table1,
+    participant_wave_summary = table2,
+    participant_wave_summary_grouped = table3
+  ))
 }

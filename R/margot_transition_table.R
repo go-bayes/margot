@@ -24,7 +24,7 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
                                     table_name = "transition_table") {
   # filter by observed indicator if requested
   if (!is.null(observed_var)) {
-    if (! observed_var %in% names(data)) {
+    if (!observed_var %in% names(data)) {
       stop(sprintf("observed_var '%s' not found in data", observed_var))
     }
     data <- data[data[[observed_var]] == observed_val, , drop = FALSE]
@@ -44,7 +44,8 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
   )
 
   for (i in seq_len(length(waves) - 1)) {
-    w1 <- waves[i]; w2 <- waves[i + 1]
+    w1 <- waves[i]
+    w2 <- waves[i + 1]
 
     dat_pair <- data[data[[wave_var]] %in% c(w1, w2), , drop = FALSE]
     tmp <- data.frame(
@@ -55,11 +56,11 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
 
     wide <- reshape(tmp, idvar = "id", timevar = "wave", direction = "wide")
     from_col <- paste0("state.", w1)
-    to_col   <- paste0("state.", w2)
+    to_col <- paste0("state.", w2)
 
     ok <- !is.na(wide[[from_col]]) & !is.na(wide[[to_col]])
     from_states <- wide[[from_col]][ok]
-    to_states   <- wide[[to_col]][ok]
+    to_states <- wide[[to_col]][ok]
 
     transition_matrix <- table(from = from_states, to = to_states)
 
@@ -70,26 +71,30 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
     }
 
     all_states <- sort(unique(c(rownames(transition_matrix), colnames(transition_matrix))))
-    labels     <- if (is.null(state_names)) paste0("State ", all_states) else state_names
+    labels <- if (is.null(state_names)) paste0("State ", all_states) else state_names
 
     trans_df <- as.data.frame.matrix(transition_matrix)
     trans_df$from <- rownames(trans_df)
-    long_df <- tidyr::pivot_longer(trans_df, cols = -from,
-                                   names_to = "to", values_to = "Freq")
+    long_df <- tidyr::pivot_longer(trans_df,
+      cols = -from,
+      names_to = "to", values_to = "Freq"
+    )
 
     res <- transition_table(long_df,
-                            state_names = labels,
-                            wave_info   = paste0("Wave ", w1, " → Wave ", w2),
-                            table_name  = table_name)
+      state_names = labels,
+      wave_info   = paste0("Wave ", w1, " → Wave ", w2),
+      table_name  = table_name
+    )
 
     results$tables[[i]] <- res$table
-    results$waves[[i]]  <- c(w1, w2)
+    results$waves[[i]] <- c(w1, w2)
   }
 
   results$quarto_code <- function() {
     cat(sprintf("```{r, results='asis'}\ncat(%s$explanation)\n```\n\n", table_name))
     for (i in seq_along(results$tables)) {
-      w1 <- results$waves[[i]][1]; w2 <- results$waves[[i]][2]
+      w1 <- results$waves[[i]][1]
+      w2 <- results$waves[[i]][2]
       cat(sprintf(
         "```{r}\n#| label: %s-wave%s-%s\n#| tbl-cap: \"Transition Matrix: Wave %s → %s\"\n%s$tables[[%d]]\n```\n\n",
         table_name, w1, w2, w1, w2, table_name, i
@@ -143,11 +148,11 @@ transition_table <- function(trans_df, state_names = NULL,
   # bold diagonal
   for (r in seq_len(nrow(trans_wide))) {
     state <- trans_wide[r, "From / To"]
-    idx   <- which(colnames(trans_wide) == state)
+    idx <- which(colnames(trans_wide) == state)
     if (length(idx)) {
       val <- trans_wide[r, idx]
       # fix escape: double backslashes for regex
-      pattern     <- paste0("\\|\\s*", val, "\\s*\\|")
+      pattern <- paste0("\\|\\s*", val, "\\s*\\|")
       replacement <- paste0("| **", val, "** |")
       formatted <- gsub(pattern, replacement, formatted)
     }
@@ -165,4 +170,3 @@ transition_table <- function(trans_df, state_names = NULL,
   }
   list(table = formatted, table_name = table_name)
 }
-

@@ -83,9 +83,11 @@ result <- margot_lmtp(
   outcome_vars = c("outcome1", "outcome2"),
   trt = "treatment",
   shift_functions = list(gain = gain_function, loss = loss_function),
-  lmtp_defaults = list(baseline = c("confounder1", "confounder2"),
-                       time_vary = c("time_var1", "time_var2"),
-                       outcome_type = "continuous"),
+  lmtp_defaults = list(
+    baseline = c("confounder1", "confounder2"),
+    time_vary = c("time_var1", "time_var2"),
+    outcome_type = "continuous"
+  ),
   save_output = TRUE,
   save_path = here::here("output", "lmtp_results"),
   prefix = "my_study"

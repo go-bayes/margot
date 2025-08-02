@@ -16,14 +16,17 @@ margot_causal_forest(
   top_n_vars = 15,
   save_models = TRUE,
   train_proportion = 0.5,
-  qini_split = TRUE,
   train_prop = NULL,
   qini_train_prop = NULL,
   compute_conditional_means = TRUE,
+  compute_marginal_only = FALSE,
   verbose = TRUE,
   qini_treatment_cost = 1,
   seed = 12345,
-  use_train_test_split = TRUE
+  use_train_test_split = TRUE,
+  flip_outcomes = NULL,
+  flip_method = "zscore",
+  flip_scale_bounds = NULL
 )
 }
 \arguments{
@@ -50,11 +53,8 @@ deprecated in future versions. Use margot_rate(), margot_qini(), and margot_poli
 \item{save_models}{Logical indicating whether to save the full GRF model objects. Default is TRUE.}
 
 \item{train_proportion}{Numeric value between 0 and 1 indicating the proportion of data to use for
-training set. Used for policy trees, QINI evaluation (when qini_split=TRUE), and all train/test splits
-when use_train_test_split=TRUE. Default is 0.5.}
-
-\item{qini_split}{Logical indicating whether to do a separate train/test split exclusively for the Qini
-calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
+training set, or NULL. Used for policy trees and QINI evaluation when compute_marginal_only=FALSE.
+Must be NULL when compute_marginal_only=TRUE. Default is 0.5.}
 
 \item{train_prop}{Deprecated. Use train_proportion instead.}
 
@@ -62,6 +62,11 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).}
 
 \item{compute_conditional_means}{Logical indicating whether to compute conditional means using
 \code{policytree::conditional_means()}. These represent expected outcomes under each treatment arm. Default is TRUE.}
+
+\item{compute_marginal_only}{Logical indicating whether to compute only marginal (average)
+treatment effects, skipping heterogeneity metrics (QINI curves, RATE, policy trees).
+When TRUE, train_proportion must be NULL. When FALSE (default), heterogeneity
+metrics are computed using train/test splits.}
 
 \item{verbose}{Logical indicating whether to display detailed messages during execution. Default is TRUE.}
 
@@ -78,6 +83,19 @@ and QINI evaluation. Default is 12345.}
 - Policy trees and QINI also use the same train/test split
 - All-data results are stored in split_info for reference
 If FALSE, the main forest uses all data for estimation and policy trees/QINI get their own splits.}
+
+\item{flip_outcomes}{Character vector or list specifying outcomes to flip (reverse score).
+- Character vector: applies default flip_method and flip_scale_bounds to all listed outcomes
+- List: allows per-outcome specification, e.g., list(anxiety = list(method = "ordinal", scale_bounds = c(1, 7)))
+Flipped outcomes are appended with "_r" suffix in results.}
+
+\item{flip_method}{Character string specifying default inversion method when flip_outcomes is provided:
+- "zscore": Simple negation (default). Assumes data is already standardized (e.g., outcomes ending in "_z").
+- "ordinal": Invert on ordinal scale using bounds. Use for Likert scales or bounded measures.}
+
+\item{flip_scale_bounds}{Numeric vector of length 2 [min, max] or named list of bounds per outcome.
+Required when flip_method = "ordinal" unless bounds should be inferred from data.
+Example: c(1, 7) for a 7-point Likert scale, or list(anxiety = c(1, 7), depression = c(0, 21)).}
 }
 \value{
 A list containing:

@@ -9,7 +9,7 @@ calculates contrasts, creates evaluation tables, and optionally saves the comple
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.222</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.227</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -162,9 +162,11 @@ calculates contrasts, creates evaluation tables, and optionally saves the comple
 <span class="r-in"><span>  outcome_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"outcome1"</span>, <span class="st">"outcome2"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  trt <span class="op">=</span> <span class="st">"treatment"</span>,</span></span>
 <span class="r-in"><span>  shift_functions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>gain <span class="op">=</span> <span class="va">gain_function</span>, loss <span class="op">=</span> <span class="va">loss_function</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  lmtp_defaults <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>baseline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"confounder1"</span>, <span class="st">"confounder2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                       time_vary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"time_var1"</span>, <span class="st">"time_var2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                       outcome_type <span class="op">=</span> <span class="st">"continuous"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  lmtp_defaults <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    baseline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"confounder1"</span>, <span class="st">"confounder2"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    time_vary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"time_var1"</span>, <span class="st">"time_var2"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    outcome_type <span class="op">=</span> <span class="st">"continuous"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  save_output <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>  save_path <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"output"</span>, <span class="st">"lmtp_results"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  prefix <span class="op">=</span> <span class="st">"my_study"</span></span></span>

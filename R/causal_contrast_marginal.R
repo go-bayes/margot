@@ -25,13 +25,15 @@
 #'
 #' @examples
 #' # Assume that df is your dataset with variables 'outcome', 'treatment', 'age', and 'gender'
-#' result <- causal_contrast_marginal(df = df, Y = "outcome", X = "treatment",
-#'                                    baseline_vars = c("age", "gender"),
-#'                                    treat_0 = "control", treat_1 = "exposed",
-#'                                    estimand = "ATE", type = "RD", nsims = 100,
-#'                                    cores = 2, family = "gaussian", weights = "weight_var",
-#'                                    continuous_X = FALSE, splines = FALSE,
-#'                                    vcov = "HC3", verbose = TRUE)
+#' result <- causal_contrast_marginal(
+#'   df = df, Y = "outcome", X = "treatment",
+#'   baseline_vars = c("age", "gender"),
+#'   treat_0 = "control", treat_1 = "exposed",
+#'   estimand = "ATE", type = "RD", nsims = 100,
+#'   cores = 2, family = "gaussian", weights = "weight_var",
+#'   continuous_X = FALSE, splines = FALSE,
+#'   vcov = "HC3", verbose = TRUE
+#' )
 #'
 #' @importFrom parallel detectCores
 #' @importFrom purrr map
@@ -158,5 +160,3 @@ causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0, tre
 #
 #   summary(sim_estimand)
 # }
-
-

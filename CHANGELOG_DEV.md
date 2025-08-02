@@ -1,5 +1,39 @@
 # Development Changelog
 
+## 2025-08-02: Fixed compute_conditional_means to respect compute_marginal_only
+
+### Fixed
+- Updated `margot_causal_forest()` so that `compute_conditional_means` respects the `compute_marginal_only` setting
+- When `compute_marginal_only = TRUE`, conditional means are now skipped for performance
+- Creates defensive empty structure with `computed = FALSE` and reason for pipeline compatibility
+
+### Technical Details
+- Conditional means from `policytree::conditional_means()` are heterogeneity-related metrics
+- These show expected outcomes under each treatment arm for different covariate patterns
+- Skipping them when `compute_marginal_only = TRUE` is consistent with skipping RATE and QINI
+- Maintains same defensive structure pattern as other skipped computations
+
+## 2025-08-02: Fixed label mapping for reversed variables in margot_plot()
+
+### Fixed
+- Updated `transform_label()` in helpers.R to prioritize exact matches in label_mapping
+- When an exact match is found, it returns immediately without further processing
+- Added automatic removal of `_r` suffix alongside `_z` suffix for reversed variables
+- This prevents cases where partial pattern matching would leave "_r" as a stray suffix on plot labels
+
+### Technical Details
+- The issue occurred when label_mapping contained both base and reversed variable names
+- Pattern matching could match the base pattern, leaving "_r" unprocessed
+- Now exact matches take precedence and are returned without modification
+
+## 2025-08-02: Fixed handling of reversed variables in margot_plot()
+
+### Fixed
+- Updated `back_transform_estimates()` in helpers.R to properly handle reversed variables with `_r` suffix
+- The function now removes the `_r` suffix before looking for variables in original_df
+- Silently skips variables not found in original_df instead of throwing warnings
+- This fix aligns with how `margot_interpret_policy()` and `margot_interpret_policy_batch()` handle reversed variables
+
 ## 2025-01-25: New Development Architecture Implementation
 
 ### Overview

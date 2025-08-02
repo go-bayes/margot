@@ -65,7 +65,7 @@ margot_process_binary_vars <- function(data, exceptions = character(0), suffix =
 
   # Determine columns to convert: binary factors excluding exceptions and ignored variables.
   cols_to_convert <- names(data)[sapply(data, is_binary_factor) &
-                                   !(names(data) %in% c(exceptions, ignored_vars))]
+    !(names(data) %in% c(exceptions, ignored_vars))]
   if (length(cols_to_convert) > 0) {
     data <- data %>%
       dplyr::mutate(dplyr::across(dplyr::all_of(cols_to_convert), ~ as.numeric(. == levels(.)[2])))
@@ -73,7 +73,7 @@ margot_process_binary_vars <- function(data, exceptions = character(0), suffix =
 
   # Identify binary numeric variables (excluding exceptions and ignored)
   binary_vars <- names(data)[sapply(data, is_binary) &
-                               !(names(data) %in% c(exceptions, ignored_vars))]
+    !(names(data) %in% c(exceptions, ignored_vars))]
 
   # Report on identified binary variables
   cli::cli_h2("Binary Variables Identified")

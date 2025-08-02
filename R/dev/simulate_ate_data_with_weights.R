@@ -32,7 +32,6 @@ simulate_ate_data_with_weights <- function(n_sample = 10000, n_population = 1000
                                            p_z_sample = 0.1, p_z_population = 0.5,
                                            beta_a = 1, beta_z = 2.5, beta_az = 0.5,
                                            noise_sd = 0.5, seed = 12345) {
-
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -58,12 +57,12 @@ simulate_ate_data_with_weights <- function(n_sample = 10000, n_population = 1000
   population_data <- data.frame(y_population, a_population, z_population)
 
   # simulate weighting based on z distribution difference
-  weight_z_1 = p_z_population / p_z_sample # adjust weight for Z=1
-  weight_z_0 = (1 - p_z_population) / (1 - p_z_sample) # adjust weight for Z=0
+  weight_z_1 <- p_z_population / p_z_sample # adjust weight for Z=1
+  weight_z_0 <- (1 - p_z_population) / (1 - p_z_sample) # adjust weight for Z=0
   weights <- ifelse(z_sample == 1, weight_z_1, weight_z_0)
 
   # add weights to sample_data
-  sample_data$weights = weights
+  sample_data$weights <- weights
 
   # return list of data frames and weights
   list(sample_data = sample_data, population_data = population_data)

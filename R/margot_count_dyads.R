@@ -30,8 +30,7 @@ margot_count_dyads <- function(dat,
                                year_measured_val = 1,
                                rel_id_var = "rel_num_l",
                                complete_var = "rel_complete",
-                               prev_wave_counts = c(1,2,3,4)) {
-
+                               prev_wave_counts = c(1, 2, 3, 4)) {
   cli::cli_alert_info("Starting dyad count calculation")
   results <- tibble::tibble()
 
@@ -42,12 +41,12 @@ margot_count_dyads <- function(dat,
   dyad_ids <- character(0)
 
   # validate prev_wave_counts
-  if(!is.numeric(prev_wave_counts) || any(prev_wave_counts < 1)) {
+  if (!is.numeric(prev_wave_counts) || any(prev_wave_counts < 1)) {
     stop("prev_wave_counts must be a numeric vector with values >= 1")
   }
-  prev_wave_counts <- sort(unique(prev_wave_counts))  # remove duplicates and sort
+  prev_wave_counts <- sort(unique(prev_wave_counts)) # remove duplicates and sort
 
-  for(wave in all_waves) {
+  for (wave in all_waves) {
     cli::cli_alert_info(paste("Processing wave:", wave))
 
     # current wave processing
@@ -60,7 +59,7 @@ margot_count_dyads <- function(dat,
       dplyr::summarise(
         n_in_couple = n(),
         is_complete = sum(!!rlang::sym(complete_var), na.rm = TRUE) == 2,
-        .groups = 'drop'
+        .groups = "drop"
       ) %>%
       dplyr::ungroup()
 
@@ -72,7 +71,7 @@ margot_count_dyads <- function(dat,
 
     # update wave history matrix
     new_dyads <- setdiff(current_complete_dyads, dyad_ids)
-    if(length(new_dyads) > 0) {
+    if (length(new_dyads) > 0) {
       new_rows <- matrix(0, nrow = length(new_dyads), ncol = length(all_waves))
       colnames(new_rows) <- colnames(wave_history)
       wave_history <- rbind(wave_history, new_rows)
@@ -86,18 +85,18 @@ margot_count_dyads <- function(dat,
 
     # compute previous wave appearances
     dyads_in_prev_waves <- list()
-    if(wave > start_wave) {
-      previous_waves <- wave_history[dyad_rows, 1:(wave_idx-1), drop = FALSE]
+    if (wave > start_wave) {
+      previous_waves <- wave_history[dyad_rows, 1:(wave_idx - 1), drop = FALSE]
       wave_counts <- rowSums(previous_waves)
 
       # compute counts for each specified number of previous waves
-      for(count in prev_wave_counts) {
+      for (count in prev_wave_counts) {
         dyads_in_prev_waves[[paste0("prev_", count)]] <-
           sum(wave_counts >= count)
       }
     } else {
       # init with zeros for first wave
-      for(count in prev_wave_counts) {
+      for (count in prev_wave_counts) {
         dyads_in_prev_waves[[paste0("prev_", count)]] <- 0
       }
     }
@@ -111,7 +110,7 @@ margot_count_dyads <- function(dat,
     )
 
     # add prev wave counts with new naming convention
-    for(count in prev_wave_counts) {
+    for (count in prev_wave_counts) {
       temp_tibble[[paste0("n_wave_", count, "plus")]] <-
         dyads_in_prev_waves[[paste0("prev_", count)]]
     }

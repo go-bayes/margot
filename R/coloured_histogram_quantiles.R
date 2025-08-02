@@ -78,7 +78,7 @@ coloured_histogram_quantiles <- function(df, col_name, n_divisions = NULL, break
 
   # set default ties.method based on cutpoint_inclusive if not specified
   if (is.null(ties.method)) {
-    ties.method <- if(cutpoint_inclusive == "lower") "first" else "last"
+    ties.method <- if (cutpoint_inclusive == "lower") "first" else "last"
   }
   if (!ties.method %in% c("first", "last", "random", "ordered")) {
     stop("invalid ties.method. must be one of 'first', 'last', 'random', or 'ordered'.")
@@ -96,7 +96,7 @@ coloured_histogram_quantiles <- function(df, col_name, n_divisions = NULL, break
   break_labels <- vapply(seq_len(n_divisions), function(i) {
     left <- if (cutpoint_inclusive == "lower" || i > 1) "[" else "("
     right <- if (cutpoint_inclusive == "upper" || i < n_divisions) "]" else ")"
-    sprintf("%s%.1f,%.1f%s", left, breaks[i], breaks[i+1], right)
+    sprintf("%s%.1f,%.1f%s", left, breaks[i], breaks[i + 1], right)
   }, character(1))
 
   # create data frame for v-lines
@@ -109,26 +109,35 @@ coloured_histogram_quantiles <- function(df, col_name, n_divisions = NULL, break
   # create the plot
   p <- ggplot(df, aes(x = !!rlang::sym(col_name))) +
     geom_histogram(aes(y = after_stat(count)),
-                   binwidth = binwidth,
-                   bins = n_bins,
-                   fill = hist_fill,
-                   colour = hist_colour) +
-    geom_vline(data = line_data,
-               aes(xintercept = value),
-               colour = line_data$colour,
-               linewidth = line_width,
-               linetype = line_type) +
-    labs(title = ifelse(is.null(title),
-                        paste(tools::toTitleCase(col_name), "Histogram with Quantile Highlights"),
-                        title),
-         subtitle = ifelse(is.null(subtitle),
-                           "Vertical lines indicate the quantile divisions.",
-                           subtitle),
-         x = ifelse(is.null(x_lab), tools::toTitleCase(col_name), x_lab),
-         y = y_lab) +
+      binwidth = binwidth,
+      bins = n_bins,
+      fill = hist_fill,
+      colour = hist_colour
+    ) +
+    geom_vline(
+      data = line_data,
+      aes(xintercept = value),
+      colour = line_data$colour,
+      linewidth = line_width,
+      linetype = line_type
+    ) +
+    labs(
+      title = ifelse(is.null(title),
+        paste(tools::toTitleCase(col_name), "Histogram with Quantile Highlights"),
+        title
+      ),
+      subtitle = ifelse(is.null(subtitle),
+        "Vertical lines indicate the quantile divisions.",
+        subtitle
+      ),
+      x = ifelse(is.null(x_lab), tools::toTitleCase(col_name), x_lab),
+      y = y_lab
+    ) +
     theme_choice +
-    theme(text = element_text(size = text_size),
-          axis.text.x = element_text(angle = axis_text_angle, hjust = 1))
+    theme(
+      text = element_text(size = text_size),
+      axis.text.x = element_text(angle = axis_text_angle, hjust = 1)
+    )
 
   # add cutpoint labels to x-axis
   p <- p + scale_x_continuous(

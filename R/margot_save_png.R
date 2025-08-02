@@ -24,7 +24,8 @@
 #' @examples
 #' \dontrun{
 #' # For a ggplot object
-#' plot_result <- ggplot(mtcars, aes(x = mpg, y = wt)) + geom_point()
+#' plot_result <- ggplot(mtcars, aes(x = mpg, y = wt)) +
+#'   geom_point()
 #' margot_save_png(plot_result, prefix = "study1", base_filename = "scatter")
 #'
 #' # For a base R plot
@@ -32,7 +33,8 @@
 #' margot_save_png(plot_result, prefix = "study1", base_filename = "scatter")
 #'
 #' # For a list containing a plot
-#' plot_list <- list(plot = ggplot(mtcars, aes(x = mpg, y = wt)) + geom_point())
+#' plot_list <- list(plot = ggplot(mtcars, aes(x = mpg, y = wt)) +
+#'   geom_point())
 #' margot_save_png(plot_list, prefix = "study1", base_filename = "scatter")
 #' }
 #'
@@ -46,7 +48,6 @@ margot_save_png <- function(plot_output,
                             width = 12,
                             height = 12,
                             dpi = 500) {
-
   # Extract plot object if it's in a list
   if (is.list(plot_output) && "plot" %in% names(plot_output)) {
     plot_obj <- plot_output$plot
@@ -70,42 +71,44 @@ margot_save_png <- function(plot_output,
   file_path <- file.path(save_path, filename)
 
   # Save the plot based on its type
-  tryCatch({
-    if (inherits(plot_obj, "ggplot")) {
-      # Save ggplot object using ggsave
-      ggplot2::ggsave(
-        filename = file_path,
-        plot = plot_obj,
-        width = width,
-        height = height,
-        dpi = dpi
-      )
-    } else {
-      # For other plot types, use png device
-      png(
-        filename = file_path,
-        width = width,
-        height = height,
-        units = "in",
-        res = dpi
-      )
-
-      # If it's a recordedplot object, replot it
-      if (inherits(plot_obj, "recordedplot")) {
-        replayPlot(plot_obj)
+  tryCatch(
+    {
+      if (inherits(plot_obj, "ggplot")) {
+        # Save ggplot object using ggsave
+        ggplot2::ggsave(
+          filename = file_path,
+          plot = plot_obj,
+          width = width,
+          height = height,
+          dpi = dpi
+        )
       } else {
-        # For other objects that might have a plot method
-        plot(plot_obj)
+        # For other plot types, use png device
+        png(
+          filename = file_path,
+          width = width,
+          height = height,
+          units = "in",
+          res = dpi
+        )
+
+        # If it's a recordedplot object, replot it
+        if (inherits(plot_obj, "recordedplot")) {
+          replayPlot(plot_obj)
+        } else {
+          # For other objects that might have a plot method
+          plot(plot_obj)
+        }
+
+        dev.off()
       }
 
-      dev.off()
+      cli::cli_alert_success("Plot saved successfully: {file_path}")
+    },
+    error = function(e) {
+      cli::cli_alert_danger("Error saving plot: {e$message}")
     }
-
-    cli::cli_alert_success("Plot saved successfully: {file_path}")
-
-  }, error = function(e) {
-    cli::cli_alert_danger("Error saving plot: {e$message}")
-  })
+  )
 
   # Return the file path invisibly
   invisible(file_path)

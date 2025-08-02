@@ -48,7 +48,7 @@ Note: Only positive significant effects are bolded, negative effects are not bol
 
 \item{remove_underscores}{Logical; replace underscores with spaces (default TRUE).}
 
-\item{adjust}{Character; method for adjusting p-values. Only "bonferroni" or "none" 
+\item{adjust}{Character; method for adjusting p-values. Only "bonferroni" or "none"
 are recommended. While other methods are technically available through stats::p.adjust(),
 they may not be appropriate for all contexts (e.g., cross-validation). Default is "none".
 When using Bonferroni, consider alpha = 0.2 due to its conservative nature.}

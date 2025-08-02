@@ -38,11 +38,10 @@ margot_planned_subgroups_batch <- function(
     subtitles,
     adjust = c("none", "bonferroni", "holm"),
     alpha = 0.05,
-    ...
-) {
+    ...) {
   # match and validate correction args
   adjust <- match.arg(adjust)
-  alpha  <- as.numeric(alpha)[1]
+  alpha <- as.numeric(alpha)[1]
 
   # initialise container
   results_list <- list()
@@ -50,7 +49,7 @@ margot_planned_subgroups_batch <- function(
   # iterate over domains
   for (i in seq_along(domain_models)) {
     domain_name <- domain_names[i]
-    subtitle    <- subtitles[i]
+    subtitle <- subtitles[i]
 
     cli::cli_h1(glue::glue("domain: {domain_name}"))
     results_list[[domain_name]] <- list()

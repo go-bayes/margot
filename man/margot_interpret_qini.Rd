@@ -32,11 +32,11 @@ If requested levels don't exist in the data, the function will use available lev
 
 \item{include_intro}{Logical whether to include explanatory text about CATE and Qini curves (default: TRUE)}
 
-\item{baseline_method}{Method for generating baseline when regenerating summaries: 
-"maq_no_covariates" (default if NULL), "auto", "simple", "maq_only", or "none". 
+\item{baseline_method}{Method for generating baseline when regenerating summaries:
+"maq_no_covariates" (default if NULL), "auto", "simple", "maq_only", or "none".
 If NULL, uses the baseline method from the original QINI generation.}
 
-\item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative", 
+\item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative",
 or "population". This affects how gains are interpreted in the summary.}
 }
 \value{

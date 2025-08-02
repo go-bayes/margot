@@ -14,9 +14,9 @@
 #'        (with or without "model_" prefix), and values should be the desired display labels. Default is NULL.
 #' @param compute_on_demand Logical; if TRUE and RATE results are not pre-computed, will compute them
 #'        on-demand from the causal forest (requires full_models to be saved). Default is FALSE.
-#' @param q Numeric vector of quantiles at which to evaluate when computing on-demand. 
+#' @param q Numeric vector of quantiles at which to evaluate when computing on-demand.
 #'        Default is seq(0.1, 1, by = 0.1).
-#' @param policy Character; either "treat_best" or "withhold_best" when computing on-demand. 
+#' @param policy Character; either "treat_best" or "withhold_best" when computing on-demand.
 #'        Default is "treat_best".
 #' @param use_oob_predictions Logical; if TRUE, use out-of-bag predictions when computing on-demand.
 #'        Default is TRUE.
@@ -44,10 +44,12 @@ margot_plot_rate_batch <- function(models_binary,
 
   # check if input is CV results
   if (inherits(models_binary, "margot_cv_results")) {
-    stop("Cannot create RATE plots from cross-validation results.\n",
-         "CV results contain hypothesis tests, not RATE curves.\n",
-         "Please use margot_plot_cv_results() for a forest plot visualization.\n",
-         "To plot RATE curves, use the original causal forest results instead.")
+    stop(
+      "Cannot create RATE plots from cross-validation results.\n",
+      "CV results contain hypothesis tests, not RATE curves.\n",
+      "Please use margot_plot_cv_results() for a forest plot visualization.\n",
+      "To plot RATE curves, use the original causal forest results instead."
+    )
   }
 
   target <- match.arg(target)
@@ -74,67 +76,69 @@ margot_plot_rate_batch <- function(models_binary,
   for (model_name in selected_models) {
     cli::cli_h2("Processing model: {model_name}")
 
-    tryCatch({
-      # extract rate result for this model based on target
-      if (target == "AUTOC") {
-        rate_result <- models_binary$results[[model_name]]$rate_result
-      } else {
-        rate_result <- models_binary$results[[model_name]]$rate_qini
-      }
-
-      if (is.null(rate_result) && compute_on_demand) {
-        # try to compute on-demand if forest is available
-        if (!is.null(models_binary$full_models) && !is.null(models_binary$full_models[[model_name]])) {
-          cli::cli_alert_info("Computing {target} on-demand for {model_name}")
-          forest <- models_binary$full_models[[model_name]]
-          tau_hat <- models_binary$results[[model_name]]$tau_hat
-          
-          # check for evaluation subset from qini_metadata
-          subset <- NULL
-          if (!is.null(models_binary$results[[model_name]]$qini_metadata)) {
-            qini_meta <- models_binary$results[[model_name]]$qini_metadata
-            if (!is.null(qini_meta$test_indices)) {
-              subset <- qini_meta$test_indices
-            }
-          }
-          
-          rate_result <- compute_rate_on_demand(
-            forest = forest,
-            tau_hat = tau_hat,
-            target = target,
-            q = q,
-            policy = policy,
-            subset = subset,
-            use_oob_predictions = use_oob_predictions,
-            verbose = TRUE,  # changed to TRUE to show validation warnings
-            seed = seed
-          )
+    tryCatch(
+      {
+        # extract rate result for this model based on target
+        if (target == "AUTOC") {
+          rate_result <- models_binary$results[[model_name]]$rate_result
         } else {
-          cli::cli_alert_warning("No {target} result found and cannot compute on-demand for model: {model_name}")
+          rate_result <- models_binary$results[[model_name]]$rate_qini
+        }
+
+        if (is.null(rate_result) && compute_on_demand) {
+          # try to compute on-demand if forest is available
+          if (!is.null(models_binary$full_models) && !is.null(models_binary$full_models[[model_name]])) {
+            cli::cli_alert_info("Computing {target} on-demand for {model_name}")
+            forest <- models_binary$full_models[[model_name]]
+            tau_hat <- models_binary$results[[model_name]]$tau_hat
+
+            # check for evaluation subset from qini_metadata
+            subset <- NULL
+            if (!is.null(models_binary$results[[model_name]]$qini_metadata)) {
+              qini_meta <- models_binary$results[[model_name]]$qini_metadata
+              if (!is.null(qini_meta$test_indices)) {
+                subset <- qini_meta$test_indices
+              }
+            }
+
+            rate_result <- compute_rate_on_demand(
+              forest = forest,
+              tau_hat = tau_hat,
+              target = target,
+              q = q,
+              policy = policy,
+              subset = subset,
+              use_oob_predictions = use_oob_predictions,
+              verbose = TRUE, # changed to TRUE to show validation warnings
+              seed = seed
+            )
+          } else {
+            cli::cli_alert_warning("No {target} result found and cannot compute on-demand for model: {model_name}")
+            next
+          }
+        } else if (is.null(rate_result)) {
+          cli::cli_alert_warning("No {target} result found for model: {model_name}")
           next
         }
-      } else if (is.null(rate_result)) {
-        cli::cli_alert_warning("No {target} result found for model: {model_name}")
-        next
+
+        # create RATE plot with transformed labels
+        plot <- margot_plot_rate(
+          x = rate_result,
+          outcome_var = model_name,
+          remove_tx_prefix = remove_tx_prefix,
+          remove_z_suffix = remove_z_suffix,
+          use_title_case = use_title_case,
+          remove_underscores = remove_underscores,
+          label_mapping = label_mapping
+        )
+
+        # store plot in list
+        rate_plots[[model_name]] <- plot
+      },
+      error = function(e) {
+        cli::cli_alert_danger("Error processing model {model_name}: {e$message}")
       }
-
-      # create RATE plot with transformed labels
-      plot <- margot_plot_rate(
-        x = rate_result,
-        outcome_var = model_name,
-        remove_tx_prefix = remove_tx_prefix,
-        remove_z_suffix = remove_z_suffix,
-        use_title_case = use_title_case,
-        remove_underscores = remove_underscores,
-        label_mapping = label_mapping
-      )
-
-      # store plot in list
-      rate_plots[[model_name]] <- plot
-    },
-    error = function(e) {
-      cli::cli_alert_danger("Error processing model {model_name}: {e$message}")
-    })
+    )
   }
 
   cli::cli_alert_success("Completed processing {length(rate_plots)} models")
@@ -142,4 +146,3 @@ margot_plot_rate_batch <- function(models_binary,
   # return list of plots
   return(rate_plots)
 }
-

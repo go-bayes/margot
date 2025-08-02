@@ -312,8 +312,8 @@ margot_plot_slope <- function(data,
       # add faceting if specified
       if (use_facets && length(y_vars) > 1) {
         p <- p + ggplot2::facet_wrap(~variable,
-                                     scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow,
-                                     labeller = ggplot2::as_labeller(formatted_labels)
+          scales = facet_scales, ncol = facet_ncol, nrow = facet_nrow,
+          labeller = ggplot2::as_labeller(formatted_labels)
         )
       }
 
@@ -347,26 +347,26 @@ margot_plot_slope <- function(data,
 
           # add white rectangle with grey border behind the event label
           p <- p + ggplot2::annotate("rect",
-                                     xmin = x_position - 0.5,
-                                     xmax = x_position + 0.5,
-                                     ymin = y_position - label_height,
-                                     ymax = y_position,
-                                     fill = "white",
-                                     color = "grey50",
-                                     alpha = 0.9,
-                                     size = 0.25
+            xmin = x_position - 0.5,
+            xmax = x_position + 0.5,
+            ymin = y_position - label_height,
+            ymax = y_position,
+            fill = "white",
+            color = "grey50",
+            alpha = 0.9,
+            size = 0.25
           )
 
           # add text label for the event
           p <- p + ggplot2::annotate("text",
-                                     x = x_position,
-                                     y = y_position,
-                                     label = transform_label(event_name),
-                                     color = event_label_color,
-                                     size = event_label_size,
-                                     angle = 90,
-                                     vjust = 1, # align text to the top of the label box
-                                     hjust = 1  # align text to the right of the label box
+            x = x_position,
+            y = y_position,
+            label = transform_label(event_name),
+            color = event_label_color,
+            size = event_label_size,
+            angle = 90,
+            vjust = 1, # align text to the top of the label box
+            hjust = 1 # align text to the right of the label box
           )
         }
         cli::cli_alert_success("Event lines and labels added")

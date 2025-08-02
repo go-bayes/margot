@@ -44,9 +44,11 @@
 #'   outcome_vars = c("outcome1", "outcome2"),
 #'   trt = "treatment",
 #'   shift_functions = list(gain = gain_function, loss = loss_function),
-#'   lmtp_defaults = list(baseline = c("confounder1", "confounder2"),
-#'                        time_vary = c("time_var1", "time_var2"),
-#'                        outcome_type = "continuous"),
+#'   lmtp_defaults = list(
+#'     baseline = c("confounder1", "confounder2"),
+#'     time_vary = c("time_var1", "time_var2"),
+#'     outcome_type = "continuous"
+#'   ),
 #'   save_output = TRUE,
 #'   save_path = here::here("output", "lmtp_results"),
 #'   prefix = "my_study"
@@ -77,8 +79,7 @@ margot_lmtp <- function(
     save_path = here::here("push_mods"),
     base_filename = "lmtp_output",
     use_timestamp = FALSE,
-    prefix = NULL
-) {
+    prefix = NULL) {
   # Load required packages
   library(cli)
   library(progressr)
@@ -137,28 +138,31 @@ margot_lmtp <- function(
       shift <- shift_functions[[shift_name]]
       cli::cli_h3("Running model for shift: {.val {shift_name}}")
 
-      tryCatch({
-        # set up LMTP arguments
-        lmtp_args <- c(
-          list(data = data, trt = trt, outcome = outcome, shift = shift),
-          lmtp_defaults
-        )
+      tryCatch(
+        {
+          # set up LMTP arguments
+          lmtp_args <- c(
+            list(data = data, trt = trt, outcome = outcome, shift = shift),
+            lmtp_defaults
+          )
 
-        # run LMTP model with progress reporting
-        with_progress({
-          model <- do.call(lmtp_model_type, lmtp_args)
-        })
+          # run LMTP model with progress reporting
+          with_progress({
+            model <- do.call(lmtp_model_type, lmtp_args)
+          })
 
-        # Store model
-        model_name <- paste0(outcome, "_", shift_name)
-        outcome_models[[model_name]] <- model
+          # Store model
+          model_name <- paste0(outcome, "_", shift_name)
+          outcome_models[[model_name]] <- model
 
-        cli::cli_alert_success("Completed model for {.val {outcome}} with shift {.val {shift_name}}")
-        p(sprintf("Completed %s - %s", outcome, shift_name))
-      }, error = function(e) {
-        cli::cli_alert_danger("Error in model for {.val {outcome}} with shift {.val {shift_name}}: {e$message}")
-        p(sprintf("Error in %s - %s", outcome, shift_name))
-      })
+          cli::cli_alert_success("Completed model for {.val {outcome}} with shift {.val {shift_name}}")
+          p(sprintf("Completed %s - %s", outcome, shift_name))
+        },
+        error = function(e) {
+          cli::cli_alert_danger("Error in model for {.val {outcome}} with shift {.val {shift_name}}: {e$message}")
+          p(sprintf("Error in %s - %s", outcome, shift_name))
+        }
+      )
     }
 
     all_models[[outcome]] <- outcome_models
@@ -174,13 +178,16 @@ margot_lmtp <- function(
       for (model_name in model_names) {
         if (!grepl("null", model_name)) {
           contrast_name <- paste0(model_name, "_vs_null")
-          tryCatch({
-            contrast <- lmtp::lmtp_contrast(outcome_models[[model_name]], ref = null_model, type = contrast_scale)
-            contrasts[[contrast_name]] <- contrast
-            cli::cli_alert_success("Completed contrast: {.val {contrast_name}}")
-          }, error = function(e) {
-            cli::cli_alert_danger("Error in contrast {.val {contrast_name}} for {.val {outcome}}: {e$message}")
-          })
+          tryCatch(
+            {
+              contrast <- lmtp::lmtp_contrast(outcome_models[[model_name]], ref = null_model, type = contrast_scale)
+              contrasts[[contrast_name]] <- contrast
+              cli::cli_alert_success("Completed contrast: {.val {contrast_name}}")
+            },
+            error = function(e) {
+              cli::cli_alert_danger("Error in contrast {.val {contrast_name}} for {.val {outcome}}: {e$message}")
+            }
+          )
         }
       }
     } else {
@@ -188,13 +195,16 @@ margot_lmtp <- function(
       for (i in 1:(length(model_names) - 1)) {
         for (j in (i + 1):length(model_names)) {
           contrast_name <- paste0(model_names[i], "_vs_", model_names[j])
-          tryCatch({
-            contrast <- lmtp::lmtp_contrast(outcome_models[[model_names[i]]], ref = outcome_models[[model_names[j]]], type = contrast_scale)
-            contrasts[[contrast_name]] <- contrast
-            cli::cli_alert_success("Completed contrast: {.val {contrast_name}}")
-          }, error = function(e) {
-            cli::cli_alert_danger("Error in contrast {.val {contrast_name}} for {.val {outcome}}: {e$message}")
-          })
+          tryCatch(
+            {
+              contrast <- lmtp::lmtp_contrast(outcome_models[[model_names[i]]], ref = outcome_models[[model_names[j]]], type = contrast_scale)
+              contrasts[[contrast_name]] <- contrast
+              cli::cli_alert_success("Completed contrast: {.val {contrast_name}}")
+            },
+            error = function(e) {
+              cli::cli_alert_danger("Error in contrast {.val {contrast_name}} for {.val {outcome}}: {e$message}")
+            }
+          )
         }
       }
     }
@@ -205,14 +215,17 @@ margot_lmtp <- function(
     cli::cli_h3("Creating tables")
     tables <- list()
     for (contrast_name in names(contrasts)) {
-      tryCatch({
-        scale <- if(contrast_scale == "additive") "RD" else "RR"
-        table <- margot::margot_lmtp_evalue(contrasts[[contrast_name]], scale = scale, new_name = outcome)
-        tables[[contrast_name]] <- table
-        cli::cli_alert_success("Created table for contrast: {.val {contrast_name}}")
-      }, error = function(e) {
-        cli::cli_alert_danger("Error in creating table for contrast {.val {contrast_name}}, outcome {.val {outcome}}: {e$message}")
-      })
+      tryCatch(
+        {
+          scale <- if (contrast_scale == "additive") "RD" else "RR"
+          table <- margot::margot_lmtp_evalue(contrasts[[contrast_name]], scale = scale, new_name = outcome)
+          tables[[contrast_name]] <- table
+          cli::cli_alert_success("Created table for contrast: {.val {contrast_name}}")
+        },
+        error = function(e) {
+          cli::cli_alert_danger("Error in creating table for contrast {.val {contrast_name}}, outcome {.val {outcome}}: {e$message}")
+        }
+      )
     }
 
     all_tables[[outcome]] <- tables
@@ -277,31 +290,37 @@ margot_lmtp <- function(
   # Save complete output if save_output is TRUE
   if (save_output) {
     cli::cli_alert_info("Saving complete output...")
-    tryCatch({
-      if (use_timestamp) {
-        output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-                                  base_filename, "_",
-                                  format(Sys.time(), "%Y%m%d_%H%M%S"))
-      } else {
-        output_filename <- paste0(ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-                                  base_filename)
-      }
+    tryCatch(
+      {
+        if (use_timestamp) {
+          output_filename <- paste0(
+            ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+            base_filename, "_",
+            format(Sys.time(), "%Y%m%d_%H%M%S")
+          )
+        } else {
+          output_filename <- paste0(
+            ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+            base_filename
+          )
+        }
 
-      margot::here_save_qs(
-        obj = complete_output,
-        name = output_filename,
-        dir_path = save_path,
-        preset = "high",
-        nthreads = 1
-      )
-      cli::cli_alert_success("Complete output saved successfully")
-    }, error = function(e) {
-      cli::cli_alert_danger(paste("Failed to save complete output:", e$message))
-    })
+        margot::here_save_qs(
+          obj = complete_output,
+          name = output_filename,
+          dir_path = save_path,
+          preset = "high",
+          nthreads = 1
+        )
+        cli::cli_alert_success("Complete output saved successfully")
+      },
+      error = function(e) {
+        cli::cli_alert_danger(paste("Failed to save complete output:", e$message))
+      }
+    )
   }
 
   cli::cli_alert_success("Analysis complete \U0001F44D")
 
   return(complete_output)
 }
-

@@ -51,8 +51,8 @@ to plot. This should match one of the model names in mc_result$results.}
 
 \item{theme}{Character string specifying the ggplot2 theme. Default is "classic". Options include "classic", "minimal", "bw", "gray", "light", "dark", "void".}
 
-\item{show_ci}{Logical or character indicating which confidence intervals to show. 
-Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only). 
+\item{show_ci}{Logical or character indicating which confidence intervals to show.
+Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only).
 Default is FALSE.}
 
 \item{ci_alpha}{Significance level for confidence intervals. Default is 0.05.}
@@ -78,15 +78,15 @@ lower, upper, curve.}
 \item{fixed_ylim}{Logical; if TRUE and ylim is NULL, uses the actual data range with padding
 for consistent y-axis scaling across plots. Default is FALSE.}
 
-\item{baseline_method}{Method for generating baseline: "auto" (default), 
+\item{baseline_method}{Method for generating baseline: "auto" (default),
 "maq_no_covariates", "simple", "maq_only", or "none". See details in margot_generate_qini_data().}
 
 \item{cate_color}{Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).}
 
 \item{ate_color}{Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).}
 
-\item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative", 
-or "population". "average" shows average policy effect per unit (maq default), "cumulative" 
+\item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative",
+or "population". "average" shows average policy effect per unit (maq default), "cumulative"
 shows traditional cumulative gains, "population" shows total population impact.}
 
 \item{treatment_cost}{Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
@@ -130,11 +130,11 @@ Key differences from maq::plot():
   \item Binary treatment colors: Customizable via cate_color and ate_color parameters
 }
 
-\strong{Important Note on Scale:} The y-axis shows \strong{average policy effects per unit}, 
-not cumulative gains. This follows the maq package implementation where gains represent 
-Q(B) = E[⟨πB(Xi), τ(Xi)⟩], the expected (average) gain from treating units according 
-to the policy πB. This differs from traditional uplift modeling QINI curves which show 
-cumulative gains. At 100\% spend, both CATE and ATE curves converge to similar values 
+\strong{Important Note on Scale:} The y-axis shows \strong{average policy effects per unit},
+not cumulative gains. This follows the maq package implementation where gains represent
+Q(B) = E[⟨πB(Xi), τ(Xi)⟩], the expected (average) gain from treating units according
+to the policy πB. This differs from traditional uplift modeling QINI curves which show
+cumulative gains. At 100\% spend, both CATE and ATE curves converge to similar values
 because the average effect is similar regardless of treatment ordering when everyone is treated.
 }
 \examples{

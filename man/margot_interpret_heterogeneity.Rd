@@ -31,35 +31,35 @@ margot_interpret_heterogeneity(
 \arguments{
 \item{models}{Output from margot_causal_forest() containing model results}
 
-\item{model_names}{Character vector of model names to analyse. If NULL (default), 
+\item{model_names}{Character vector of model names to analyse. If NULL (default),
 analyses all models. Model names can be specified with or without "model_" prefix.}
 
-\item{spend_levels}{Numeric vector of spend levels for QINI analysis. 
+\item{spend_levels}{Numeric vector of spend levels for QINI analysis.
 Default is 0.1 (10 percent spend captures early heterogeneity patterns effectively).}
 
-\item{require_any_positive}{Logical. If TRUE (default), include models that 
-show positive evidence in ANY method. If FALSE, require positive evidence 
+\item{require_any_positive}{Logical. If TRUE (default), include models that
+show positive evidence in ANY method. If FALSE, require positive evidence
 in ALL methods.}
 
-\item{exclude_negative_any}{Logical. If TRUE (default), exclude models that 
-show negative evidence in ANY RATE test (AUTOC or QINI). Models with any 
-negative RATE evidence are classified as "excluded_negative_rate" and will 
+\item{exclude_negative_any}{Logical. If TRUE (default), exclude models that
+show negative evidence in ANY RATE test (AUTOC or QINI). Models with any
+negative RATE evidence are classified as "excluded_negative_rate" and will
 not appear in selected or exploratory lists.}
 
-\item{require_omnibus}{Logical. If TRUE, only include models that pass the 
+\item{require_omnibus}{Logical. If TRUE, only include models that pass the
 omnibus calibration test. Default is FALSE.}
 
 \item{alpha}{Numeric. Significance level for RATE tests. Default is 0.05.
 Note: this controls which RATE estimates are considered statistically significant after
 multiple testing correction.}
 
-\item{adjust}{Character. Multiple testing adjustment method for RATE estimates. 
-Options include "BH" (Benjamini-Hochberg), "BY" (Benjamini-Yekutieli), 
+\item{adjust}{Character. Multiple testing adjustment method for RATE estimates.
+Options include "BH" (Benjamini-Hochberg), "BY" (Benjamini-Yekutieli),
 "bonferroni", "holm", "fdr", or "none". Default is "none".
 Note: When use_cross_validation = TRUE (the default), only "bonferroni" or "none" are valid.
 Invalid methods will be automatically converted to "none" without warning.}
 
-\item{flipped_outcomes}{Character vector of outcome names that were flipped 
+\item{flipped_outcomes}{Character vector of outcome names that were flipped
 (reversed) in preprocessing. Used for interpretation text.}
 
 \item{label_mapping}{Named list for mapping model names to human-readable labels.}
@@ -84,10 +84,10 @@ instead of standard approach. This provides confidence intervals through robust 
 
 \item{seed}{Integer. Random seed for reproducibility in all computations (default 12345).}
 
-\item{parallel}{Logical. Use parallel processing for cross-validation when use_cross_validation = TRUE 
+\item{parallel}{Logical. Use parallel processing for cross-validation when use_cross_validation = TRUE
 (default FALSE). Note: Parallel processing is experimental and may encounter memory issues.}
 
-\item{n_cores}{Integer. Number of cores for parallel processing when parallel = TRUE 
+\item{n_cores}{Integer. Number of cores for parallel processing when parallel = TRUE
 (default all cores - 1). Only applies when use_cross_validation = TRUE.}
 }
 \value{
@@ -113,7 +113,7 @@ A list containing the following components:
   method_used (character string indicating whether "cross_validation" or "standard" method was used)
 }
 \description{
-Combines evidence from multiple heterogeneity tests (RATE AUTOC, RATE QINI, 
-QINI curves, and omnibus calibration tests) to provide unified recommendations 
+Combines evidence from multiple heterogeneity tests (RATE AUTOC, RATE QINI,
+QINI curves, and omnibus calibration tests) to provide unified recommendations
 about which models show treatment effect heterogeneity.
 }

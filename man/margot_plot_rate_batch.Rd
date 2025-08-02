@@ -41,10 +41,10 @@ margot_plot_rate_batch(
 \item{compute_on_demand}{Logical; if TRUE and RATE results are not pre-computed, will compute them
 on-demand from the causal forest (requires full_models to be saved). Default is FALSE.}
 
-\item{q}{Numeric vector of quantiles at which to evaluate when computing on-demand. 
+\item{q}{Numeric vector of quantiles at which to evaluate when computing on-demand.
 Default is seq(0.1, 1, by = 0.1).}
 
-\item{policy}{Character; either "treat_best" or "withhold_best" when computing on-demand. 
+\item{policy}{Character; either "treat_best" or "withhold_best" when computing on-demand.
 Default is "treat_best".}
 
 \item{use_oob_predictions}{Logical; if TRUE, use out-of-bag predictions when computing on-demand.

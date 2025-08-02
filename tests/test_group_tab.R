@@ -14,10 +14,13 @@ test_ate <- data.frame(
 rownames(test_ate) <- c("Outcome1", "Outcome2", "Outcome3")
 
 cat("Testing group_tab with ATE column...\n")
-tryCatch({
-  result <- margot:::group_tab(test_ate, type = "RD")
-  cat("✓ group_tab worked\n")
-  print(result)
-}, error = function(e) {
-  cat("✗ Error:", e$message, "\n")
-})
+tryCatch(
+  {
+    result <- margot:::group_tab(test_ate, type = "RD")
+    cat("✓ group_tab worked\n")
+    print(result)
+  },
+  error = function(e) {
+    cat("✗ Error:", e$message, "\n")
+  }
+)

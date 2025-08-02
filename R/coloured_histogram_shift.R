@@ -45,8 +45,8 @@ coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight
 
 
   # validate data
-  if(!col_name %in% names(df)) stop("col_name does not exist in the dataframe.")
-  if(all(is.na(df[[col_name]]))) stop("The specified column contains only NA values.")
+  if (!col_name %in% names(df)) stop("col_name does not exist in the dataframe.")
+  if (all(is.na(df[[col_name]]))) stop("The specified column contains only NA values.")
 
   # Ensure col_name is a symbol for aes()
   col_name_sym <- rlang::sym(col_name)
@@ -55,7 +55,7 @@ coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight
   avg_val <- mean(df[[col_name]], na.rm = TRUE)
 
   # determine the fill colour based on the shift direction
-  highlight_color <- if(shift == "up") "gold2" else "dodgerblue"
+  highlight_color <- if (shift == "up") "gold2" else "dodgerblue"
 
   # create a new column for fill colour based on range_highlight
   if (!is.null(range_highlight) && length(range_highlight) == 2) {
@@ -65,14 +65,14 @@ coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight
   }
 
   # define subtitle based on the shift direction
-  subtitle_text <- if(shift == "up") {
+  subtitle_text <- if (shift == "up") {
     "Highlights region shifted up to boundary with grey"
   } else {
     "Highlights region shifted down to boundary with grey"
   }
 
   # Optionally add average line description to the subtitle if the line is to be shown
-  if(show_avg_line) {
+  if (show_avg_line) {
     subtitle_text <- paste(subtitle_text, "\nRed dashed line shows the average value")
   }
 
@@ -81,20 +81,20 @@ coloured_histogram_shift <- function(df, col_name, binwidth = 1, range_highlight
 
   # create the histogram with the new fill_colour column for colouring
   p <- ggplot(df, aes(x = !!col_name_sym, fill = fill_color)) +
-    geom_histogram(binwidth = binwidth,  alpha = 0.7) +
+    geom_histogram(binwidth = binwidth, alpha = 0.7) +
     scale_fill_identity() +
-    labs(title = paste("Histogram of", col_name_title_case, "Shift Intervention"),
-         subtitle = subtitle_text,
-         x = col_name_title_case,
-         y = "Count") +
-  theme_classic()
+    labs(
+      title = paste("Histogram of", col_name_title_case, "Shift Intervention"),
+      subtitle = subtitle_text,
+      x = col_name_title_case,
+      y = "Count"
+    ) +
+    theme_classic()
 
   # Conditionally add the average value line
-  if(show_avg_line) {
+  if (show_avg_line) {
     p <- p + geom_vline(xintercept = avg_val, color = "darkred", linetype = "dashed", linewidth = .75)
   }
 
   return(p)
 }
-
-

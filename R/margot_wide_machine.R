@@ -67,16 +67,22 @@ margot_wide_machine <- function(.data,
   df_list <- lapply(0:(n_waves - 1), function(t) {
     vars <- id
     if (t == 0) {
-      vars <- c(vars, baseline_vars,
-                if (include_exposure_var_baseline) exposure_var,
-                if (include_outcome_vars_baseline) outcome_vars)
+      vars <- c(
+        vars, baseline_vars,
+        if (include_exposure_var_baseline) exposure_var,
+        if (include_outcome_vars_baseline) outcome_vars
+      )
     } else if (t < (n_waves - 1)) {
-      vars <- c(vars, exposure_var,
-                if (!is.null(confounder_vars)) confounder_vars,
-                if (extend_baseline) baseline_vars)
+      vars <- c(
+        vars, exposure_var,
+        if (!is.null(confounder_vars)) confounder_vars,
+        if (extend_baseline) baseline_vars
+      )
     } else {
-      vars <- c(vars, outcome_vars,
-                if (extend_baseline) baseline_vars)
+      vars <- c(
+        vars, outcome_vars,
+        if (extend_baseline) baseline_vars
+      )
     }
     vars <- unique(vars[vars %in% names(df)])
     df %>%
@@ -99,9 +105,11 @@ margot_wide_machine <- function(.data,
   # add NA indicators
   if (include_na_indicators) {
     cli::cli_alert_info("creating NA indicators at baseline...")
-    base_vars <- unique(c(baseline_vars,
-                          if (include_exposure_var_baseline) exposure_var,
-                          if (include_outcome_vars_baseline) outcome_vars))
+    base_vars <- unique(c(
+      baseline_vars,
+      if (include_exposure_var_baseline) exposure_var,
+      if (include_outcome_vars_baseline) outcome_vars
+    ))
     base_cols <- paste0("t0_", base_vars)
     for (col in intersect(base_cols, names(data_wide))) {
       if (any(is.na(data_wide[[col]]))) {
@@ -113,13 +121,17 @@ margot_wide_machine <- function(.data,
   }
 
   # impute baseline if requested
-  if (imputation_method != 'none') {
+  if (imputation_method != "none") {
     cli::cli_alert_info(sprintf("performing %s imputation at baseline...", imputation_method))
-    imp_cols <- intersect(paste0("t0_", unique(c(baseline_vars,
-                                                 if (include_exposure_var_baseline) exposure_var,
-                                                 if (include_outcome_vars_baseline) outcome_vars))),
-                          names(data_wide))
-    if (imputation_method == 'mice') {
+    imp_cols <- intersect(
+      paste0("t0_", unique(c(
+        baseline_vars,
+        if (include_exposure_var_baseline) exposure_var,
+        if (include_outcome_vars_baseline) outcome_vars
+      ))),
+      names(data_wide)
+    )
+    if (imputation_method == "mice") {
       # ensure mice prints its progress
       cli::cli_alert_info("running mice imputation; progress will appear below:")
       old_opt <- options(mice.trace = TRUE)
@@ -128,13 +140,13 @@ margot_wide_machine <- function(.data,
         data_wide[imp_cols],
         m = 1,
         maxit = 5,
-        method = 'pmm',
+        method = "pmm",
         printFlag = TRUE
       )
       data_wide[imp_cols] <- mice::complete(imp)
       cli::cli_alert_success("mice imputation completed")
     }
-    if (imputation_method == 'median' || !exists('imp')) {
+    if (imputation_method == "median" || !exists("imp")) {
       for (col in imp_cols) {
         if (is.numeric(data_wide[[col]])) {
           data_wide[[col]][is.na(data_wide[[col]])] <- median(data_wide[[col]], na.rm = TRUE)
@@ -153,10 +165,14 @@ margot_wide_machine <- function(.data,
   for (t in 0:(n_waves - 1)) {
     prefix <- paste0("t", t, "_")
     if (t == 0) {
-      cols <- intersect(paste0(prefix, unique(c(baseline_vars,
-                                                if (include_exposure_var_baseline) exposure_var,
-                                                if (include_outcome_vars_baseline) outcome_vars))),
-                        names(data_wide))
+      cols <- intersect(
+        paste0(prefix, unique(c(
+          baseline_vars,
+          if (include_exposure_var_baseline) exposure_var,
+          if (include_outcome_vars_baseline) outcome_vars
+        ))),
+        names(data_wide)
+      )
       if (include_na_indicators) {
         na_cols <- paste0(cols, "_na")
         interleaved <- unlist(lapply(cols, function(x) c(x, na_cols[na_cols %in% names(data_wide)])))
@@ -165,9 +181,11 @@ margot_wide_machine <- function(.data,
         final_order <- c(final_order, cols)
       }
     } else if (t < (n_waves - 1)) {
-      vars_t <- c(exposure_var,
-                  if (!is.null(confounder_vars)) confounder_vars,
-                  if (extend_baseline) baseline_vars)
+      vars_t <- c(
+        exposure_var,
+        if (!is.null(confounder_vars)) confounder_vars,
+        if (extend_baseline) baseline_vars
+      )
       cols <- intersect(paste0(prefix, vars_t), names(data_wide))
       final_order <- c(final_order, cols)
     } else {
@@ -178,8 +196,10 @@ margot_wide_machine <- function(.data,
   final_order <- unique(final_order[final_order %in% names(data_wide)])
   data_wide <- data_wide[, final_order]
 
-  cli::cli_alert_success(sprintf("completed in %.2f seconds",
-                                 difftime(Sys.time(), start_time, units = 'secs')))
+  cli::cli_alert_success(sprintf(
+    "completed in %.2f seconds",
+    difftime(Sys.time(), start_time, units = "secs")
+  ))
   return(as.data.frame(data_wide))
 }
 

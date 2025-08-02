@@ -25,17 +25,16 @@
 #' @export
 margot_bind_tables <- function(
     tables_list,
-    sort_E_val_bound      = c("none", "asc", "desc"),
+    sort_E_val_bound = c("none", "asc", "desc"),
     e_val_bound_threshold = 1.1,
-    highlight_color       = "yellow",
-    bold                  = TRUE,
-    output_format         = "markdown",
-    rename_cols           = TRUE,
-    col_renames           = list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound"),
-    rename_ate            = FALSE,
-    threshold_col         = "E_Val_bound",
-    kbl_args              = list(booktabs = TRUE, caption = "Combined Results", align = NULL)
-) {
+    highlight_color = "yellow",
+    bold = TRUE,
+    output_format = "markdown",
+    rename_cols = TRUE,
+    col_renames = list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound"),
+    rename_ate = FALSE,
+    threshold_col = "E_Val_bound",
+    kbl_args = list(booktabs = TRUE, caption = "Combined Results", align = NULL)) {
   # coerce sort argument
   sort_E_val_bound <- match.arg(sort_E_val_bound)
 
@@ -46,7 +45,7 @@ margot_bind_tables <- function(
     if (!"Outcome" %in% names(df)) {
       df <- tibble::rownames_to_column(df, var = "Outcome")
     }
-    combined   <- df
+    combined <- df
     domain_mode <- FALSE
   } else {
     # process list of tables with domain id
@@ -56,7 +55,7 @@ margot_bind_tables <- function(
       }
       df
     })
-    combined    <- dplyr::bind_rows(tables_list, .id = "Domain") %>%
+    combined <- dplyr::bind_rows(tables_list, .id = "Domain") %>%
       dplyr::select(Domain, Outcome, everything())
     domain_mode <- TRUE
   }
@@ -80,7 +79,7 @@ margot_bind_tables <- function(
   if (rename_cols && length(col_renames) > 0) {
     for (new_nm in names(col_renames)) {
       old_nm <- col_renames[[new_nm]]
-      idx    <- which(names(combined) == old_nm)
+      idx <- which(names(combined) == old_nm)
       if (length(idx) == 1) names(combined)[idx] <- new_nm
     }
   }
@@ -157,7 +156,7 @@ margot_bind_tables <- function(
   # pack rows by domain if in domain mode
   if (domain_mode) {
     domain_vec <- combined$Domain
-    domains    <- unique(domain_vec)
+    domains <- unique(domain_vec)
     idx <- data.frame(
       start = vapply(domains, function(x) min(which(domain_vec == x)), integer(1)),
       end   = vapply(domains, function(x) max(which(domain_vec == x)), integer(1))

@@ -98,7 +98,6 @@ margot_plot_individual_responses <- function(data,
                                              prefix = NULL,
                                              jitter_amount = 0.05,
                                              legend_position = "top") {
-
   cli::cli_h1("Margot Plot Individual Responses")
 
   # null coalescing operator replacement
@@ -190,23 +189,32 @@ margot_plot_individual_responses <- function(data,
   # create the plot
   cli::cli_alert_info("Creating plot...")
 
-  p <- tryCatch({
-    ggplot2::ggplot(df, ggplot2::aes(x = !!rlang::sym(wave_col), y = value, color = variable,
-                                     group = interaction(!!rlang::sym(id_col), variable))) +
-      ggplot2::geom_point(position = ggplot2::position_jitter(height = jitter_amount, width = 0)) +
-      ggplot2::geom_line(position = ggplot2::position_jitter(height = jitter_amount, width = 0)) +
-      ggplot2::facet_wrap(as.formula(paste("~", id_col))) +
-      theme +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = wave_label_angle, hjust = 1),
-                     legend.position = legend_position) +
-      ggplot2::labs(title = title,
-                    y = y_label %||% "Value",
-                    x = x_label %||% "Wave",
-                    color = "Variable")
-  }, error = function(e) {
-    cli::cli_alert_danger("Error creating plot: {conditionMessage(e)}")
-    return(NULL)
-  })
+  p <- tryCatch(
+    {
+      ggplot2::ggplot(df, ggplot2::aes(
+        x = !!rlang::sym(wave_col), y = value, color = variable,
+        group = interaction(!!rlang::sym(id_col), variable)
+      )) +
+        ggplot2::geom_point(position = ggplot2::position_jitter(height = jitter_amount, width = 0)) +
+        ggplot2::geom_line(position = ggplot2::position_jitter(height = jitter_amount, width = 0)) +
+        ggplot2::facet_wrap(as.formula(paste("~", id_col))) +
+        theme +
+        ggplot2::theme(
+          axis.text.x = ggplot2::element_text(angle = wave_label_angle, hjust = 1),
+          legend.position = legend_position
+        ) +
+        ggplot2::labs(
+          title = title,
+          y = y_label %||% "Value",
+          x = x_label %||% "Wave",
+          color = "Variable"
+        )
+    },
+    error = function(e) {
+      cli::cli_alert_danger("Error creating plot: {conditionMessage(e)}")
+      return(NULL)
+    }
+  )
 
   if (is.null(p)) {
     return(NULL)
@@ -220,45 +228,49 @@ margot_plot_individual_responses <- function(data,
 
   # apply color palette
   if (is.null(color_palette)) {
-    color_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
-                       "#D55E00", "#CC79A7", "#000000", "#999999")
+    color_palette <- c(
+      "#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
+      "#D55E00", "#CC79A7", "#000000", "#999999"
+    )
   }
   p <- p + ggplot2::scale_color_manual(values = color_palette)
 
   # save plot if a save path is provided
   if (!is.null(save_path)) {
     cli::cli_alert_info("Saving plot...")
-    tryCatch({
-      filename <- "individual_responses_plot"
+    tryCatch(
+      {
+        filename <- "individual_responses_plot"
 
-      if (!is.null(prefix) && nzchar(prefix)) {
-        filename <- paste0(prefix, "_", filename)
+        if (!is.null(prefix) && nzchar(prefix)) {
+          filename <- paste0(prefix, "_", filename)
+        }
+
+        filename <- paste0(filename, "_", paste(y_vars, collapse = "_"))
+
+        if (include_timestamp) {
+          filename <- paste0(filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"))
+        }
+
+        full_path_png <- file.path(save_path, paste0(filename, ".png"))
+        ggplot2::ggsave(
+          plot = p,
+          filename = full_path_png,
+          width = width,
+          height = height,
+          units = "in",
+          dpi = 300
+        )
+        cli::cli_alert_success("Plot saved as PNG: {.file {full_path_png}}")
+
+        margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+        full_path_qs <- file.path(save_path, paste0(filename, ".qs"))
+        cli::cli_alert_success("Plot object saved using qs: {.file {full_path_qs}}")
+      },
+      error = function(e) {
+        cli::cli_alert_danger("An error occurred while saving the plot: {conditionMessage(e)}")
       }
-
-      filename <- paste0(filename, "_", paste(y_vars, collapse = "_"))
-
-      if (include_timestamp) {
-        filename <- paste0(filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"))
-      }
-
-      full_path_png <- file.path(save_path, paste0(filename, ".png"))
-      ggplot2::ggsave(
-        plot = p,
-        filename = full_path_png,
-        width = width,
-        height = height,
-        units = "in",
-        dpi = 300
-      )
-      cli::cli_alert_success("Plot saved as PNG: {.file {full_path_png}}")
-
-      margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
-      full_path_qs <- file.path(save_path, paste0(filename, ".qs"))
-      cli::cli_alert_success("Plot object saved using qs: {.file {full_path_qs}}")
-
-    }, error = function(e) {
-      cli::cli_alert_danger("An error occurred while saving the plot: {conditionMessage(e)}")
-    })
+    )
   } else {
     cli::cli_alert_info("No save path provided. Plot not saved.")
   }

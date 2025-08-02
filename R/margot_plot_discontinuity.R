@@ -169,9 +169,9 @@ margot_plot_discontinuity <- function(data,
 
       df <- df %>%
         dplyr::mutate(event_condition = cut(timeline,
-                                            breaks = c(as.Date(-Inf), event_dates, as.Date(Inf)),
-                                            labels = seq_len(n_discontinuities),
-                                            include.lowest = TRUE
+          breaks = c(as.Date(-Inf), event_dates, as.Date(Inf)),
+          labels = seq_len(n_discontinuities),
+          include.lowest = TRUE
         ))
 
       # recycle colors for the number of discontinuities
@@ -256,26 +256,26 @@ margot_plot_discontinuity <- function(data,
 
         # add white rectangle with grey border behind the event label
         p <- p + ggplot2::annotate("rect",
-                                   xmin = x_position - 0.5,
-                                   xmax = x_position + 0.5,
-                                   ymin = y_position - label_height,
-                                   ymax = y_position,
-                                   fill = "white",
-                                   color = "grey50",
-                                   alpha = 0.9,
-                                   linewidth = 0.25
+          xmin = x_position - 0.5,
+          xmax = x_position + 0.5,
+          ymin = y_position - label_height,
+          ymax = y_position,
+          fill = "white",
+          color = "grey50",
+          alpha = 0.9,
+          linewidth = 0.25
         )
 
         # add text label for the event
         p <- p + ggplot2::annotate("text",
-                                   x = x_position,
-                                   y = y_position,
-                                   label = transform_label(event_name),
-                                   color = event_label_color,
-                                   size = event_label_size,
-                                   angle = 90,
-                                   vjust = 1, # align text to the top of the label box
-                                   hjust = 1  # align text to the right of the label box
+          x = x_position,
+          y = y_position,
+          label = transform_label(event_name),
+          color = event_label_color,
+          size = event_label_size,
+          angle = 90,
+          vjust = 1, # align text to the top of the label box
+          hjust = 1 # align text to the right of the label box
         )
       }
       cli::cli_alert_success("Event lines and labels added")

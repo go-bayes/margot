@@ -14,9 +14,9 @@
 #'
 #' @examples
 #' \dontrun{
-#'   # Assuming list_df is a list of data frames with missing values
-#'   imputed_data <- impute_and_combine(list_df, m = 5)
-#'   print(imputed_data)
+#' # Assuming list_df is a list of data frames with missing values
+#' imputed_data <- impute_and_combine(list_df, m = 5)
+#' print(imputed_data)
 #' }
 #'
 #' @importFrom mice mice complete
@@ -27,7 +27,6 @@ impute_and_combine <-
   function(list_df,
            m = 10,
            exclude_vars = c("t0_sample_frame", "id", "t0_sample_origin_names_combined")) {
-
     # Load necessary libraries in a manner suitable for package development
     # Assumed to be loaded via namespace and described in the DESCRIPTION file
     library(mice)
@@ -42,11 +41,11 @@ impute_and_combine <-
       predictorMatrix[, intersect(colnames(predictorMatrix), exclude_vars)] <- 0
 
       # Perform multiple imputation
-      mice_df <- mice(df, m = m, method = 'pmm', predictorMatrix = predictorMatrix)
+      mice_df <- mice(df, m = m, method = "pmm", predictorMatrix = predictorMatrix)
 
       # Complete the data to 'long' format
-      completed_df <- complete(mice_df, action = 'long')
-      rownames(completed_df) <- NULL  # Reset rownames
+      completed_df <- complete(mice_df, action = "long")
+      rownames(completed_df) <- NULL # Reset rownames
       completed_df
     })
 
@@ -66,7 +65,7 @@ impute_and_combine <-
     mids_df <- datalist2mids(data_list, progress = FALSE)
 
     # Spit and Shine: Clean up the mids object as needed
-    complete_data <- complete(mids_df, action = 'long', include = TRUE)
+    complete_data <- complete(mids_df, action = "long", include = TRUE)
     complete_data <- select(complete_data, -c(.id.1, .imp.1))
     rownames(complete_data) <- NULL
 

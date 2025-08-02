@@ -22,8 +22,7 @@ margot_censor_lead <- function(
     condition_var,
     condition_value = 0,
     year_measured_var = "year_measured",
-    cluster_condition = "ANY"
-) {
+    cluster_condition = "ANY") {
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("Package 'data.table' is required but not installed.")
   }
@@ -61,7 +60,8 @@ margot_censor_lead <- function(
 
   # create lead variable within each id group
   dt[, lead_var_temp := data.table::shift(get(condition_var), n = 1L, type = "lead"),
-     by = get(id_var)]
+    by = get(id_var)
+  ]
 
   # identify dataset characteristics
   total_clusters <- data.table::uniqueN(dt[[cluster_id]])
@@ -72,11 +72,13 @@ margot_censor_lead <- function(
   cli::cli_alert_info("Dataset has {total_clusters} clusters, {total_ids} unique IDs, waves {wave_range[1]} to {wave_range[2]}")
 
   # find minimum trigger wave for each cluster (vectorized approach)
-  trigger_data <- dt[get(wave_var) != final_wave &
-                       !is.na(lead_var_temp) &
-                       lead_var_temp == condition_value,
-                     .(min_trigger_wave = min(get(wave_var))),
-                     by = get(cluster_id)]
+  trigger_data <- dt[
+    get(wave_var) != final_wave &
+      !is.na(lead_var_temp) &
+      lead_var_temp == condition_value,
+    .(min_trigger_wave = min(get(wave_var))),
+    by = get(cluster_id)
+  ]
 
   if (nrow(trigger_data) == 0) {
     cli::cli_alert_info("No lead conditions met for censoring.")
@@ -93,11 +95,13 @@ margot_censor_lead <- function(
     data.table::setnames(cluster_sizes, c("cluster", "total_members"))
 
     # count members with trigger condition per cluster
-    trigger_members <- dt[get(wave_var) != final_wave &
-                            !is.na(lead_var_temp) &
-                            lead_var_temp == condition_value,
-                          data.table::uniqueN(get(id_var)),
-                          by = get(cluster_id)]
+    trigger_members <- dt[
+      get(wave_var) != final_wave &
+        !is.na(lead_var_temp) &
+        lead_var_temp == condition_value,
+      data.table::uniqueN(get(id_var)),
+      by = get(cluster_id)
+    ]
     data.table::setnames(trigger_members, c("cluster", "trigger_members"))
 
     # merge and filter to clusters where all members have trigger
@@ -117,8 +121,9 @@ margot_censor_lead <- function(
   # vectorized censoring approach
   # merge trigger info back to main dataset
   dt_with_triggers <- merge(dt, trigger_data,
-                            by.x = cluster_id, by.y = "cluster",
-                            all.x = TRUE, sort = FALSE)
+    by.x = cluster_id, by.y = "cluster",
+    all.x = TRUE, sort = FALSE
+  )
 
   # create censoring indicator vectorially
   censor_idx <- !is.na(dt_with_triggers$min_trigger_wave) &
@@ -132,8 +137,10 @@ margot_censor_lead <- function(
     dt[censor_idx, (year_measured_var) := 0]
 
     # set other variables to NA (excluding key identifiers)
-    vars_to_na <- setdiff(names(dt),
-                          c(cluster_id, id_var, wave_var, year_measured_var, "lead_var_temp"))
+    vars_to_na <- setdiff(
+      names(dt),
+      c(cluster_id, id_var, wave_var, year_measured_var, "lead_var_temp")
+    )
     dt[censor_idx, (vars_to_na) := NA]
   }
 

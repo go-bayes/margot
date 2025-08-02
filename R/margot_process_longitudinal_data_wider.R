@@ -29,20 +29,19 @@
 #' @export
 margot_process_longitudinal_data_wider <- function(
     df_wide,
-    relationship_id             = "NULL",
-    ordinal_columns             = NULL,
-    continuous_columns_keep     = NULL,
-    exposure_vars               = NULL,
-    scale_exposure              = FALSE,
-    scale_continuous            = TRUE,
-    censor_if_missing_exposure  = TRUE,
-    not_lost_in_following_wave  = "not_lost_following_wave",
-    lost_in_following_wave      = NULL,
-    remove_selected_columns     = TRUE,
-    time_point_prefixes         = NULL,
-    time_point_regex            = NULL,
-    save_observed_y             = FALSE
-) {
+    relationship_id = "NULL",
+    ordinal_columns = NULL,
+    continuous_columns_keep = NULL,
+    exposure_vars = NULL,
+    scale_exposure = FALSE,
+    scale_continuous = TRUE,
+    censor_if_missing_exposure = TRUE,
+    not_lost_in_following_wave = "not_lost_following_wave",
+    lost_in_following_wave = NULL,
+    remove_selected_columns = TRUE,
+    time_point_prefixes = NULL,
+    time_point_regex = NULL,
+    save_observed_y = FALSE) {
   cli::cli_h1("longitudinal dyadic data processing")
 
   # discover time points
@@ -60,16 +59,16 @@ margot_process_longitudinal_data_wider <- function(
   df <- df_wide
 
   # identify final wave outcomes
-  final_wave         <- time_points[num_time_points]
+  final_wave <- time_points[num_time_points]
   final_outcome_cols <- grep(paste0("^", final_wave, "_"), names(df), value = TRUE)
-  outcome_vars       <- sub(paste0("^", final_wave, "_"), "", final_outcome_cols)
+  outcome_vars <- sub(paste0("^", final_wave, "_"), "", final_outcome_cols)
 
   # step 1: create not-lost indicators and apply censoring
   cli::cli_h2("step 1: creating 'not_lost' indicators & applying censoring")
   for (i in seq_len(num_time_points - 1)) {
-    t0      <- time_points[i]
-    t1      <- time_points[i + 1]
-    nl_col  <- paste0(t0, "_", not_lost_in_following_wave)
+    t0 <- time_points[i]
+    t1 <- time_points[i + 1]
+    nl_col <- paste0(t0, "_", not_lost_in_following_wave)
     expo_cols <- if (!is.null(exposure_vars)) paste0(t1, "_", exposure_vars) else character(0)
     expo_exist <- all(expo_cols %in% names(df))
 
@@ -80,11 +79,11 @@ margot_process_longitudinal_data_wider <- function(
     } else {
       # fallback: outcome-based
       out_cols_next <- grep(paste0("^", t1, "_"), names(df), value = TRUE)
-      observed      <- rowSums(!is.na(df[, out_cols_next, drop = FALSE]))
-      total         <- length(out_cols_next)
-      df[[nl_col]]  <- NA_integer_
+      observed <- rowSums(!is.na(df[, out_cols_next, drop = FALSE]))
+      total <- length(out_cols_next)
+      df[[nl_col]] <- NA_integer_
       df[[nl_col]][observed == total] <- 1L
-      df[[nl_col]][observed <  total] <- 0L
+      df[[nl_col]][observed < total] <- 0L
     }
 
     # dyadic enforcement: if any partner lost, censor all
@@ -107,7 +106,7 @@ margot_process_longitudinal_data_wider <- function(
         fcols <- grep(paste0("^", fw, "_"), names(df), value = TRUE)
         if (save_observed_y && fw == final_wave) {
           outcome_fw <- paste0(fw, "_", outcome_vars)
-          fcols      <- setdiff(fcols, outcome_fw)
+          fcols <- setdiff(fcols, outcome_fw)
         }
         df[to_censor, fcols] <- NA
       }
@@ -143,13 +142,15 @@ margot_process_longitudinal_data_wider <- function(
   if (scale_continuous) {
     cli::cli_h2("step 4: scaling continuous variables")
     num_cols <- names(df)[vapply(df, is.numeric, logical(1))]
-    excl_pattern <- paste0("_", not_lost_in_following_wave, "$|_",
-                           lost_in_following_wave, "$|_binary$|_na$|_weights$")
-    to_scale     <- setdiff(setdiff(num_cols, continuous_columns_keep), ordinal_columns)
-    to_scale     <- to_scale[!grepl(excl_pattern, to_scale)]
+    excl_pattern <- paste0(
+      "_", not_lost_in_following_wave, "$|_",
+      lost_in_following_wave, "$|_binary$|_na$|_weights$"
+    )
+    to_scale <- setdiff(setdiff(num_cols, continuous_columns_keep), ordinal_columns)
+    to_scale <- to_scale[!grepl(excl_pattern, to_scale)]
     if (!scale_exposure && !is.null(exposure_vars)) {
       expo_names <- paste0(rep(time_points, each = length(exposure_vars)), "_", exposure_vars)
-      to_scale   <- setdiff(to_scale, expo_names)
+      to_scale <- setdiff(to_scale, expo_names)
     }
     for (col in to_scale) {
       df[[paste0(col, "_z")]] <- as.vector(scale(df[[col]]))
@@ -190,12 +191,15 @@ margot_process_longitudinal_data_wider <- function(
     order_cols <- c(order_cols, relationship_id)
   }
   for (t in time_points) {
-    tcols  <- grep(paste0("^", t, "_"), names(df), value = TRUE)
-    zcols  <- grep("_z$", tcols, value = TRUE)
-    expo   <- if (!is.null(exposure_vars)) paste0(t, "_", exposure_vars) else NULL
-    nl     <- paste0(t, "_", not_lost_in_following_wave)
-    lc     <- if (!is.null(lost_in_following_wave) && t != final_wave)
-      paste0(t, "_", lost_in_following_wave) else NULL
+    tcols <- grep(paste0("^", t, "_"), names(df), value = TRUE)
+    zcols <- grep("_z$", tcols, value = TRUE)
+    expo <- if (!is.null(exposure_vars)) paste0(t, "_", exposure_vars) else NULL
+    nl <- paste0(t, "_", not_lost_in_following_wave)
+    lc <- if (!is.null(lost_in_following_wave) && t != final_wave) {
+      paste0(t, "_", lost_in_following_wave)
+    } else {
+      NULL
+    }
     others <- setdiff(tcols, c(zcols, expo, nl, lc))
     order_cols <- c(order_cols, others, zcols, expo, nl, lc)
   }

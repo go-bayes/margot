@@ -25,12 +25,12 @@
 #' @param depth Numeric or character specifying which depth(s) to compute:
 #'   1 for single split, 2 for two splits, or "both" for both depths (default).
 #' @param train_proportion Numeric value between 0 and 1 for the proportion of data
-#'   used for training depth-2 trees. Default is 0.5. Note: depth-1 trees use all 
+#'   used for training depth-2 trees. Default is 0.5. Note: depth-1 trees use all
 #'   available data but only the selected covariates (same as depth-2).
 #' @param label_mapping Named character vector for converting variable names to readable labels.
 #' @param verbose Logical; print progress messages (default TRUE).
 #' @param seed Integer; base seed for reproducible computations (default 12345).
-#' @param tree_method Character string specifying the package to use: "policytree" 
+#' @param tree_method Character string specifying the package to use: "policytree"
 #'   (default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
 #'   computation with identical results. Falls back to policytree if fastpolicytree
 #'   is not installed.
@@ -69,13 +69,13 @@
 #' \dontrun{
 #' # Recompute policy trees with default settings
 #' policy_trees <- margot_policy_tree(causal_forest_results)
-#' 
+#'
 #' # Exclude log-transformed variables
 #' policy_trees_no_log <- margot_policy_tree(
 #'   causal_forest_results,
 #'   exclude_covariates = "_log"
 #' )
-#' 
+#'
 #' # Use custom covariates with 80/20 train/test split
 #' policy_trees_custom <- margot_policy_tree(
 #'   causal_forest_results,
@@ -83,28 +83,28 @@
 #'   covariate_mode = "custom",
 #'   train_proportion = 0.8
 #' )
-#' 
+#'
 #' # Compute only depth-1 trees using all covariates
 #' policy_trees_d1 <- margot_policy_tree(
 #'   causal_forest_results,
 #'   covariate_mode = "all",
 #'   depth = 1
 #' )
-#' 
+#'
 #' # Process specific models with larger training set
 #' policy_trees_selected <- margot_policy_tree(
 #'   causal_forest_results,
 #'   model_names = c("anxiety", "depression"),
 #'   train_proportion = 0.8
 #' )
-#' 
+#'
 #' # Visualize results
 #' plot <- margot_plot_policy_tree(policy_trees, "model_anxiety")
-#' 
+#'
 #' # Create combined plots
 #' plots <- margot_plot_policy_combo(policy_trees, "model_anxiety")
 #' print(plots$combined_plot)
-#' 
+#'
 #' # Interpret results
 #' margot_interpret_policy_tree(policy_trees, "model_anxiety")
 #' }
@@ -114,28 +114,27 @@
 #' @importFrom policytree policy_tree
 #' @importFrom stats setNames complete.cases
 margot_policy_tree <- function(model_results,
-                              model_names = NULL,
-                              custom_covariates = NULL,
-                              exclude_covariates = NULL,
-                              covariate_mode = c("original", "custom", "add", "all"),
-                              depth = "both",
-                              train_proportion = 0.5,
-                              label_mapping = NULL,
-                              verbose = TRUE,
-                              seed = 12345,
-                              tree_method = c("policytree", "fastpolicytree")) {
-  
+                               model_names = NULL,
+                               custom_covariates = NULL,
+                               exclude_covariates = NULL,
+                               covariate_mode = c("original", "custom", "add", "all"),
+                               depth = "both",
+                               train_proportion = 0.5,
+                               label_mapping = NULL,
+                               verbose = TRUE,
+                               seed = 12345,
+                               tree_method = c("policytree", "fastpolicytree")) {
   # validate inputs
   if (!is.list(model_results) || !"results" %in% names(model_results)) {
     stop("model_results must be a list containing a 'results' element")
   }
-  
+
   # validate tree method
   tree_method <- match.arg(tree_method)
   actual_tree_method <- .get_tree_method(tree_method, verbose)
-  
+
   covariate_mode <- match.arg(covariate_mode)
-  
+
   # validate depth parameter
   if (is.character(depth)) {
     if (!depth %in% c("both", "1", "2")) {
@@ -157,27 +156,29 @@ margot_policy_tree <- function(model_results,
   } else {
     stop("depth must be 1, 2, or 'both'")
   }
-  
+
   # validate train_proportion
   if (train_proportion <= 0 || train_proportion >= 1) {
     stop("train_proportion must be between 0 and 1 (exclusive)")
   }
-  
+
   # check for required data
   if (is.null(model_results$covariates)) {
     stop("covariates not found in model_results. Ensure save_data = TRUE in margot_causal_forest()")
   }
-  
+
   # validate custom covariates exist
   if (!is.null(custom_covariates)) {
     available_covars <- colnames(model_results$covariates)
     missing_covars <- setdiff(custom_covariates, available_covars)
     if (length(missing_covars) > 0) {
-      stop(paste("The following covariates are not available:",
-                 paste(missing_covars, collapse = ", ")))
+      stop(paste(
+        "The following covariates are not available:",
+        paste(missing_covars, collapse = ", ")
+      ))
     }
   }
-  
+
   # determine which models to process
   if (is.null(model_names)) {
     model_names <- names(model_results$results)
@@ -191,11 +192,13 @@ margot_policy_tree <- function(model_results,
     # validate they exist
     missing_models <- setdiff(model_names, names(model_results$results))
     if (length(missing_models) > 0) {
-      stop(paste("The following models are not available:",
-                 paste(missing_models, collapse = ", ")))
+      stop(paste(
+        "The following models are not available:",
+        paste(missing_models, collapse = ", ")
+      ))
     }
   }
-  
+
   if (verbose) {
     cli::cli_h2("Computing policy trees for {length(model_names)} model{?s}")
     if (!is.null(exclude_covariates)) {
@@ -205,14 +208,14 @@ margot_policy_tree <- function(model_results,
       cli::cli_alert_info("Using custom covariates: {paste(custom_covariates, collapse = ', ')}")
     }
   }
-  
+
   # get data indices
   covariates <- model_results$covariates
   not_missing <- model_results$not_missing
   if (is.null(not_missing)) {
     not_missing <- which(complete.cases(covariates))
   }
-  
+
   # create output structure
   output <- list(
     results = list(),
@@ -220,13 +223,13 @@ margot_policy_tree <- function(model_results,
     not_missing = not_missing,
     train_proportion = train_proportion
   )
-  
+
   # process each model
   for (model_name in model_names) {
     if (verbose) cli::cli_alert_info("Processing {model_name}")
-    
+
     model_result <- model_results$results[[model_name]]
-    
+
     # compute policy trees using the helper function
     updated_model <- compute_policy_trees_for_model(
       model_result = model_result,
@@ -242,12 +245,12 @@ margot_policy_tree <- function(model_results,
       verbose = verbose,
       seed = seed
     )
-    
+
     output$results[[model_name]] <- updated_model
   }
-  
+
   if (verbose) cli::cli_alert_success("Policy tree computation completed")
-  
+
   class(output) <- c("margot_policy_tree", class(output))
   return(output)
 }
@@ -255,26 +258,25 @@ margot_policy_tree <- function(model_results,
 #' Compute policy trees for a single model
 #' @keywords internal
 compute_policy_trees_for_model <- function(model_result,
-                                         model_name,
-                                         covariates,
-                                         not_missing,
-                                         custom_covariates,
-                                         exclude_covariates,
-                                         covariate_mode,
-                                         compute_depth1,
-                                         compute_depth2,
-                                         train_proportion,
-                                         verbose,
-                                         seed) {
-  
+                                           model_name,
+                                           covariates,
+                                           not_missing,
+                                           custom_covariates,
+                                           exclude_covariates,
+                                           covariate_mode,
+                                           compute_depth1,
+                                           compute_depth2,
+                                           train_proportion,
+                                           verbose,
+                                           seed) {
   # set seed for reproducibility
   if (!is.null(seed)) {
     set.seed(seed + as.integer(as.factor(model_name)))
   }
-  
+
   # determine covariates to use
   all_covars <- colnames(covariates)
-  
+
   if (covariate_mode == "all") {
     selected_covars <- all_covars
     if (length(selected_covars) > 20 && verbose) {
@@ -300,19 +302,19 @@ compute_policy_trees_for_model <- function(model_result,
       stop(paste("No top_vars found for", model_name, "and no custom_covariates specified"))
     }
   }
-  
+
   # ensure selected covariates exist
   selected_covars <- intersect(selected_covars, all_covars)
-  
+
   # apply exclusions
   if (!is.null(exclude_covariates)) {
     selected_covars <- apply_covariate_exclusions(selected_covars, exclude_covariates, verbose)
   }
-  
+
   if (length(selected_covars) == 0) {
     stop(paste("No covariates remaining for", model_name, "after applying exclusions"))
   }
-  
+
   # get dr_scores (use flipped if available)
   dr_scores <- model_result$dr_scores_flipped
   if (is.null(dr_scores)) {
@@ -321,23 +323,25 @@ compute_policy_trees_for_model <- function(model_result,
   if (is.null(dr_scores)) {
     stop(paste("No dr_scores found for", model_name))
   }
-  
+
   # create output structure copying relevant fields
   output <- list(
     dr_scores = dr_scores,
     top_vars = selected_covars
   )
-  
+
   # copy over existing fields that might be needed
-  fields_to_copy <- c("ate", "test_calibration", "custom_table", "tau_hat", 
-                     "rate_result", "rate_qini", "conditional_means",
-                     "qini_data", "qini_objects", "qini_metadata")
+  fields_to_copy <- c(
+    "ate", "test_calibration", "custom_table", "tau_hat",
+    "rate_result", "rate_qini", "conditional_means",
+    "qini_data", "qini_objects", "qini_metadata"
+  )
   for (field in fields_to_copy) {
     if (!is.null(model_result[[field]])) {
       output[[field]] <- model_result[[field]]
     }
   }
-  
+
   # compute depth-1 tree if requested
   if (compute_depth1) {
     output$policy_tree_depth_1 <- .compute_policy_tree(
@@ -347,22 +351,22 @@ compute_policy_trees_for_model <- function(model_result,
       tree_method = actual_tree_method
     )
   }
-  
+
   # compute depth-2 tree if requested
   if (compute_depth2) {
     # handle depth-2 tree
     depth2_covars <- selected_covars
     auto_expanded <- FALSE
-    
+
     # auto-expand if needed for depth-2
     if (length(selected_covars) < 2 && covariate_mode == "custom" && !is.null(model_result$top_vars)) {
       depth2_covars <- unique(c(selected_covars, model_result$top_vars))
-      
+
       # apply exclusions to expanded set
       if (!is.null(exclude_covariates)) {
         depth2_covars <- apply_covariate_exclusions(depth2_covars, exclude_covariates, verbose = FALSE)
       }
-      
+
       if (length(depth2_covars) > length(selected_covars)) {
         auto_expanded <- TRUE
         if (verbose) {
@@ -372,14 +376,14 @@ compute_policy_trees_for_model <- function(model_result,
         }
       }
     }
-    
+
     # create depth-2 tree if possible
     if (length(depth2_covars) >= 2) {
       # train/test split
       train_size <- floor(train_proportion * length(not_missing))
       train_idx <- sample(not_missing, train_size)
       test_idx <- setdiff(not_missing, train_idx)
-      
+
       # fit depth-2 tree
       output$policy_tree_depth_2 <- .compute_policy_tree(
         covariates[train_idx, depth2_covars, drop = FALSE],
@@ -387,7 +391,7 @@ compute_policy_trees_for_model <- function(model_result,
         depth = 2,
         tree_method = actual_tree_method
       )
-      
+
       # create plot data
       output$plot_data <- list(
         X_test = covariates[test_idx, depth2_covars, drop = FALSE],
@@ -405,7 +409,7 @@ compute_policy_trees_for_model <- function(model_result,
         )
       }
       output$policy_tree_depth_2 <- NULL
-      
+
       # create plot data using depth-1 if available
       if (!is.null(output$policy_tree_depth_1)) {
         test_idx <- sample(not_missing, floor((1 - train_proportion) * length(not_missing)))
@@ -420,7 +424,7 @@ compute_policy_trees_for_model <- function(model_result,
       }
     }
   }
-  
+
   # store metadata
   output$policy_tree_covariates <- selected_covars
   output$policy_tree_metadata <- list(
@@ -438,7 +442,7 @@ compute_policy_trees_for_model <- function(model_result,
     depth2_auto_expanded = if (compute_depth2) auto_expanded else NA,
     seed_used = seed + as.integer(as.factor(model_name))
   )
-  
+
   return(output)
 }
 
@@ -448,9 +452,9 @@ apply_covariate_exclusions <- function(covariates, exclude_patterns, verbose = T
   if (is.null(exclude_patterns) || length(exclude_patterns) == 0) {
     return(covariates)
   }
-  
+
   excluded <- character(0)
-  
+
   for (pattern in exclude_patterns) {
     # check for substring match first (e.g., "_log" matches "var_log" and "log_var")
     substring_matches <- covariates[grepl(pattern, covariates, fixed = TRUE)]
@@ -458,26 +462,29 @@ apply_covariate_exclusions <- function(covariates, exclude_patterns, verbose = T
       excluded <- c(excluded, substring_matches)
     } else {
       # try as regex if no fixed matches
-      tryCatch({
-        regex_matches <- grep(pattern, covariates, value = TRUE)
-        if (length(regex_matches) > 0) {
-          excluded <- c(excluded, regex_matches)
+      tryCatch(
+        {
+          regex_matches <- grep(pattern, covariates, value = TRUE)
+          if (length(regex_matches) > 0) {
+            excluded <- c(excluded, regex_matches)
+          }
+        },
+        error = function(e) {
+          # if regex fails, treat as exact match
+          if (pattern %in% covariates) {
+            excluded <- c(excluded, pattern)
+          }
         }
-      }, error = function(e) {
-        # if regex fails, treat as exact match
-        if (pattern %in% covariates) {
-          excluded <- c(excluded, pattern)
-        }
-      })
+      )
     }
   }
-  
+
   excluded <- unique(excluded)
   remaining <- setdiff(covariates, excluded)
-  
+
   if (verbose && length(excluded) > 0) {
     cli::cli_alert_info("Excluded {length(excluded)} covariate(s): {paste(excluded, collapse = ', ')}")
   }
-  
+
   return(remaining)
 }

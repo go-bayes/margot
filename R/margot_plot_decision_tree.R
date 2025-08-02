@@ -27,90 +27,109 @@
 #' @export
 margot_plot_decision_tree <- function(
     result_object,
-    model_name         = NULL,
-    max_depth          = 2L,
-    original_df        = NULL,
-    x_padding          = 0.12,
-    y_padding          = 0.25,
-    border_size        = .5,
-    text_size          = 4,
-    edge_label_offset  = 0.025,
-    span_ratio         = 0.4,
-    non_leaf_fill      = "lightyellow",
-    title              = NULL,
-    plot_margin        = grid::unit(c(1, 1, 1, 1), "cm"),
-    remove_tx_prefix   = TRUE,
-    remove_z_suffix    = TRUE,
-    use_title_case     = TRUE,
+    model_name = NULL,
+    max_depth = 2L,
+    original_df = NULL,
+    x_padding = 0.12,
+    y_padding = 0.25,
+    border_size = .5,
+    text_size = 4,
+    edge_label_offset = 0.025,
+    span_ratio = 0.4,
+    non_leaf_fill = "lightyellow",
+    title = NULL,
+    plot_margin = grid::unit(c(1, 1, 1, 1), "cm"),
+    remove_tx_prefix = TRUE,
+    remove_z_suffix = TRUE,
+    use_title_case = TRUE,
     remove_underscores = TRUE,
-    remove_action_label= TRUE,
-    label_mapping      = NULL) {
-
+    remove_action_label = TRUE,
+    label_mapping = NULL) {
   cli::cli_h1("Margot Plot Decision Tree")
 
   # safe wrappers for labelling
-  tl <- function(x) tryCatch(
-    transform_label(
-      x, label_mapping,
-      list(
-        remove_tx_prefix   = remove_tx_prefix,
-        remove_z_suffix    = remove_z_suffix,
-        remove_underscores = remove_underscores,
-        use_title_case     = use_title_case
-      )
-    ), error = function(e) x
-  )
-  tv <- function(x) tryCatch(
-    transform_var_name(
-      x, label_mapping,
-      remove_tx_prefix, remove_z_suffix,
-      use_title_case, remove_underscores
-    ), error = function(e) x
-  )
+  tl <- function(x) {
+    tryCatch(
+      transform_label(
+        x, label_mapping,
+        list(
+          remove_tx_prefix   = remove_tx_prefix,
+          remove_z_suffix    = remove_z_suffix,
+          remove_underscores = remove_underscores,
+          use_title_case     = use_title_case
+        )
+      ),
+      error = function(e) x
+    )
+  }
+  tv <- function(x) {
+    tryCatch(
+      transform_var_name(
+        x, label_mapping,
+        remove_tx_prefix, remove_z_suffix,
+        use_title_case, remove_underscores
+      ),
+      error = function(e) x
+    )
+  }
 
   # 1 fetch tree
-  if (! max_depth %in% c(1L, 2L))
+  if (!max_depth %in% c(1L, 2L)) {
     cli::cli_abort("`max_depth` must be 1 or 2.")
+  }
   tag <- paste0("policy_tree_depth_", max_depth)
-  if (! (is.list(result_object) && "results" %in% names(result_object)))
+  if (!(is.list(result_object) && "results" %in% names(result_object))) {
     cli::cli_abort("`result_object` must be the full list returned by `margot_causal_forest()`.")
-  if (! model_name %in% names(result_object$results))
+  }
+  if (!model_name %in% names(result_object$results)) {
     cli::cli_abort("model `{model_name}` not found.")
+  }
   policy_tree_obj <- result_object$results[[model_name]][[tag]]
-  if (is.null(policy_tree_obj))
+  if (is.null(policy_tree_obj)) {
     cli::cli_abort("`{tag}` object missing for model `{model_name}`.")
+  }
   cli::cli_alert_success("✔ Using decision tree at depth {max_depth} for model: {model_name}")
 
   # extract nodes
-  nodes        <- policy_tree_obj$nodes
-  columns      <- policy_tree_obj$columns
+  nodes <- policy_tree_obj$nodes
+  columns <- policy_tree_obj$columns
   action_names <- policy_tree_obj$action.names
 
   node_data <- tibble::tibble(
-    id          = seq_along(nodes),
-    is_leaf     = vapply(nodes, `[[`, logical(1), "is_leaf"),
-    split_var   = vapply(nodes,
-                         function(n) if (is.null(n$split_variable)) NA_character_ else columns[n$split_variable],
-                         character(1)),
-    split_val   = vapply(nodes,
-                         function(n) if (is.null(n$split_value)) NA_real_ else n$split_value,
-                         numeric(1)),
-    action_id   = vapply(nodes,
-                         function(n) if (is.null(n$action)) NA_integer_ else as.integer(n$action),
-                         integer(1)),
-    left_child  = vapply(nodes,
-                         function(n) if (is.null(n$left_child)) NA_integer_ else as.integer(n$left_child),
-                         integer(1)),
-    right_child = vapply(nodes,
-                         function(n) if (is.null(n$right_child)) NA_integer_ else as.integer(n$right_child),
-                         integer(1)),
+    id = seq_along(nodes),
+    is_leaf = vapply(nodes, `[[`, logical(1), "is_leaf"),
+    split_var = vapply(
+      nodes,
+      function(n) if (is.null(n$split_variable)) NA_character_ else columns[n$split_variable],
+      character(1)
+    ),
+    split_val = vapply(
+      nodes,
+      function(n) if (is.null(n$split_value)) NA_real_ else n$split_value,
+      numeric(1)
+    ),
+    action_id = vapply(
+      nodes,
+      function(n) if (is.null(n$action)) NA_integer_ else as.integer(n$action),
+      integer(1)
+    ),
+    left_child = vapply(
+      nodes,
+      function(n) if (is.null(n$left_child)) NA_integer_ else as.integer(n$left_child),
+      integer(1)
+    ),
+    right_child = vapply(
+      nodes,
+      function(n) if (is.null(n$right_child)) NA_integer_ else as.integer(n$right_child),
+      integer(1)
+    ),
     x = NA_real_, y = NA_real_, label = NA_character_
   ) |>
     # keep literal action names for robustness
     dplyr::mutate(
       action_lbl = dplyr::case_when(
         !is_leaf ~ NA_character_,
-        TRUE     ~ tolower(action_names[action_id])
+        TRUE ~ tolower(action_names[action_id])
       )
     )
 
@@ -118,16 +137,18 @@ margot_plot_decision_tree <- function(
   for (i in seq_len(nrow(node_data))) {
     if (node_data$is_leaf[i]) {
       lbl <- tl(action_names[node_data$action_id[i]])
-      if (! remove_action_label) lbl <- paste("Action:", lbl)
+      if (!remove_action_label) lbl <- paste("Action:", lbl)
       node_data$label[i] <- lbl
     } else {
-      var    <- node_data$split_var[i]
-      val_s  <- round(node_data$split_val[i], 3)
-      orig   <- get_original_value_plot(var, node_data$split_val[i], original_df)
+      var <- node_data$split_var[i]
+      val_s <- round(node_data$split_val[i], 3)
+      orig <- get_original_value_plot(var, node_data$split_val[i], original_df)
       var_lb <- tv(var)
       node_data$label[i] <- if (!is.null(orig)) {
-        sprintf("%s\n<= %s\n(%s)*", var_lb, val_s,
-                format(orig, big.mark = ",", scientific = FALSE))
+        sprintf(
+          "%s\n<= %s\n(%s)*", var_lb, val_s,
+          format(orig, big.mark = ",", scientific = FALSE)
+        )
       } else {
         sprintf("%s\n<= %s", var_lb, val_s)
       }
@@ -135,75 +156,92 @@ margot_plot_decision_tree <- function(
   }
 
   # 4 layout, edges, colours unchanged
-  max_d      <- policy_tree_obj$depth
+  max_d <- policy_tree_obj$depth
   assign_pos <- function(id, depth, xpos) {
     node_data$y[id] <<- max_d - depth + 1
     node_data$x[id] <<- xpos
-    if (!is.na(node_data$left_child[id]))
-      assign_pos(node_data$left_child[id], depth + 1, xpos - 1/(2^depth))
-    if (!is.na(node_data$right_child[id]))
-      assign_pos(node_data$right_child[id], depth + 1, xpos + 1/(2^depth))
+    if (!is.na(node_data$left_child[id])) {
+      assign_pos(node_data$left_child[id], depth + 1, xpos - 1 / (2^depth))
+    }
+    if (!is.na(node_data$right_child[id])) {
+      assign_pos(node_data$right_child[id], depth + 1, xpos + 1 / (2^depth))
+    }
   }
-  assign_pos(1, 1, 0.5); cli::cli_alert_success("✔ Node positions calculated")
+  assign_pos(1, 1, 0.5)
+  cli::cli_alert_success("✔ Node positions calculated")
 
   edge_data <- purrr::map_dfr(seq_len(nrow(node_data)), function(i) {
     rows <- list()
-    if (!is.na(node_data$left_child[i])) rows[[1]] <- tibble::tibble(
-      x=node_data$x[i], y=node_data$y[i],
-      xend=node_data$x[node_data$left_child[i]],
-      yend=node_data$y[node_data$left_child[i]],
-      edge_lab="True", hjust=1, vjust=.5)
-    if (!is.na(node_data$right_child[i])) rows[[length(rows)+1]] <- tibble::tibble(
-      x=node_data$x[i], y=node_data$y[i],
-      xend=node_data$x[node_data$right_child[i]],
-      yend=node_data$y[node_data$right_child[i]],
-      edge_lab="False", hjust=0, vjust=.5)
+    if (!is.na(node_data$left_child[i])) {
+      rows[[1]] <- tibble::tibble(
+        x = node_data$x[i], y = node_data$y[i],
+        xend = node_data$x[node_data$left_child[i]],
+        yend = node_data$y[node_data$left_child[i]],
+        edge_lab = "True", hjust = 1, vjust = .5
+      )
+    }
+    if (!is.na(node_data$right_child[i])) {
+      rows[[length(rows) + 1]] <- tibble::tibble(
+        x = node_data$x[i], y = node_data$y[i],
+        xend = node_data$x[node_data$right_child[i]],
+        yend = node_data$y[node_data$right_child[i]],
+        edge_lab = "False", hjust = 0, vjust = .5
+      )
+    }
     dplyr::bind_rows(rows)
   })
   cli::cli_alert_success("✔ Edge data created")
 
   edge_data <- edge_data |>
-    dplyr::mutate(label_x = (x+xend)/2 + edge_label_offset*sign(xend-x),
-                  label_y = (y+yend)/2)
+    dplyr::mutate(
+      label_x = (x + xend) / 2 + edge_label_offset * sign(xend - x),
+      label_y = (y + yend) / 2
+    )
 
   node_data <- node_data |>
     dplyr::mutate(
       fill_col = dplyr::case_when(
-        is_leaf & action_lbl == "control"  ~ "#4f88c6",
-        is_leaf & action_lbl == "treated"  ~ "#d8a739",
-        TRUE                                ~ non_leaf_fill
+        is_leaf & action_lbl == "control" ~ "#4f88c6",
+        is_leaf & action_lbl == "treated" ~ "#d8a739",
+        TRUE ~ non_leaf_fill
       )
     )
 
   aspect <- ifelse(diff(range(node_data$y)) == 0,
-                   1,
-                   (diff(range(node_data$x))/diff(range(node_data$y))) * span_ratio)
+    1,
+    (diff(range(node_data$x)) / diff(range(node_data$y))) * span_ratio
+  )
 
   p <- ggplot2::ggplot() +
     ggplot2::geom_segment(
-      data=edge_data,
-      ggplot2::aes(x=x,y=y,xend=xend,yend=yend)) +
+      data = edge_data,
+      ggplot2::aes(x = x, y = y, xend = xend, yend = yend)
+    ) +
     ggplot2::geom_label(
-      data=node_data,
-      ggplot2::aes(x=x,y=y,label=label,fill=fill_col),
-      colour="black", size=text_size,
-      label.padding=grid::unit(border_size,"lines")) +
+      data = node_data,
+      ggplot2::aes(x = x, y = y, label = label, fill = fill_col),
+      colour = "black", size = text_size,
+      label.padding = grid::unit(border_size, "lines")
+    ) +
     ggplot2::geom_text(
-      data=edge_data,
-      ggplot2::aes(x=label_x,y=label_y,label=edge_lab,hjust=hjust,vjust=vjust),
-      size=text_size) +
-    ggplot2::scale_fill_identity(guide="none") +
-    ggplot2::coord_fixed(ratio=aspect) +
-    ggplot2::scale_x_continuous(expand=ggplot2::expansion(mult=c(x_padding,x_padding))) +
-    ggplot2::scale_y_continuous(expand=ggplot2::expansion(mult=c(y_padding,y_padding))) +
+      data = edge_data,
+      ggplot2::aes(x = label_x, y = label_y, label = edge_lab, hjust = hjust, vjust = vjust),
+      size = text_size
+    ) +
+    ggplot2::scale_fill_identity(guide = "none") +
+    ggplot2::coord_fixed(ratio = aspect) +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(x_padding, x_padding))) +
+    ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(y_padding, y_padding))) +
     ggplot2::theme_void() +
     ggplot2::theme(
       plot.margin  = plot_margin,
-      plot.title   = ggplot2::element_text(hjust=.5,face="bold",margin=ggplot2::margin(b=20)),
-      plot.caption = ggplot2::element_text(hjust=1,size=text_size+2)) +
+      plot.title   = ggplot2::element_text(hjust = .5, face = "bold", margin = ggplot2::margin(b = 20)),
+      plot.caption = ggplot2::element_text(hjust = 1, size = text_size + 2)
+    ) +
     ggplot2::labs(
       title   = if (is.null(title)) paste0(tv(model_name), " Outcome") else paste0(tv(title), " Outcome"),
-      caption = if (!is.null(original_df)) "* original scale value" else NULL)
+      caption = if (!is.null(original_df)) "* original scale value" else NULL
+    )
 
   cli::cli_alert_success("🎉 Plot created successfully")
   p
@@ -821,4 +859,3 @@ margot_plot_decision_tree <- function(
 #'
 #'   return(p)
 #' }
-

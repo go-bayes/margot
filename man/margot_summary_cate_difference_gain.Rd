@@ -41,10 +41,11 @@ It returns a list of formatted strings for easy use in Quarto markdown text.
 \dontrun{
 # Assuming mc_result is the result of margot_multi_arm_causal_forest()
 result <- margot_summary_cate_difference_gain(mc_result,
-                                 outcome_var = "model_Y",
-                                 reference_curve = "baseline",
-                                 comparison_curve = "arm2",
-                                 spend = 0.3)
+  outcome_var = "model_Y",
+  reference_curve = "baseline",
+  comparison_curve = "arm2",
+  spend = 0.3
+)
 # Use in text
 glue::glue("The difference in gains is {result$diff_gain}. {result$summary}")
 }

@@ -14,33 +14,42 @@ test_ate <- data.frame(
 rownames(test_ate) <- c("Outcome1", "Outcome2", "Outcome3")
 
 cat("Testing margot_plot with ATE column...\n")
-tryCatch({
-  result <- margot_plot(test_ate, type = "RD")
-  cat("✓ margot_plot worked with ATE column\n")
-  print(result$transformed_table)
-}, error = function(e) {
-  cat("✗ Error:", e$message, "\n")
-})
+tryCatch(
+  {
+    result <- margot_plot(test_ate, type = "RD")
+    cat("✓ margot_plot worked with ATE column\n")
+    print(result$transformed_table)
+  },
+  error = function(e) {
+    cat("✗ Error:", e$message, "\n")
+  }
+)
 
 # test with ATT column
 test_att <- test_ate
 names(test_att)[1] <- "ATT"
 
 cat("\nTesting margot_plot with ATT column...\n")
-tryCatch({
-  result <- margot_plot(test_att, type = "RD")
-  cat("✓ margot_plot worked with ATT column\n")
-  print(result$transformed_table)
-}, error = function(e) {
-  cat("✗ Error:", e$message, "\n")
-})
+tryCatch(
+  {
+    result <- margot_plot(test_att, type = "RD")
+    cat("✓ margot_plot worked with ATT column\n")
+    print(result$transformed_table)
+  },
+  error = function(e) {
+    cat("✗ Error:", e$message, "\n")
+  }
+)
 
 # test rename_evalue
 cat("\nTesting rename_evalue parameter...\n")
-tryCatch({
-  result <- margot_plot(test_ate, type = "RD", rename_evalue = TRUE)
-  cat("✓ rename_evalue worked\n")
-  print(names(result$transformed_table))
-}, error = function(e) {
-  cat("✗ Error:", e$message, "\n")
-})
+tryCatch(
+  {
+    result <- margot_plot(test_ate, type = "RD", rename_evalue = TRUE)
+    cat("✓ rename_evalue worked\n")
+    print(names(result$transformed_table))
+  },
+  error = function(e) {
+    cat("✗ Error:", e$message, "\n")
+  }
+)

@@ -44,7 +44,7 @@ containing "_log").}
 1 for single split, 2 for two splits, or "both" for both depths (default).}
 
 \item{train_proportion}{Numeric value between 0 and 1 for the proportion of data
-used for training depth-2 trees. Default is 0.5. Note: depth-1 trees use all 
+used for training depth-2 trees. Default is 0.5. Note: depth-1 trees use all
 available data but only the selected covariates (same as depth-2).}
 
 \item{label_mapping}{Named character vector for converting variable names to readable labels.}
@@ -53,7 +53,7 @@ available data but only the selected covariates (same as depth-2).}
 
 \item{seed}{Integer; base seed for reproducible computations (default 12345).}
 
-\item{tree_method}{Character string specifying the package to use: "policytree" 
+\item{tree_method}{Character string specifying the package to use: "policytree"
 (default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
 computation with identical results. Falls back to policytree if fastpolicytree
 is not installed.}

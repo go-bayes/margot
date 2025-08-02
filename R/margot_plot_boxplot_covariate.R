@@ -156,7 +156,7 @@ margot_plot_boxplot_covariate <- function(data,
       # remove NAs and count participants who responded
       df <- df %>%
         dplyr::filter(!is.na(!!rlang::sym(outcome)) & is.finite(!!rlang::sym(outcome)) &
-                        !is.na(!!rlang::sym(covariate)) & is.finite(!!rlang::sym(covariate)))
+          !is.na(!!rlang::sym(covariate)) & is.finite(!!rlang::sym(covariate)))
 
       # count total unique participants
       total_unique <- dplyr::n_distinct(df[[id_col]])

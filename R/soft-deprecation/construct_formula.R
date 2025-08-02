@@ -38,7 +38,7 @@ construct_formula <- function(Y, X = 1, baseline_vars, continuous_X = FALSE, spl
 
   # Remove subclass from baseline_vars if necessary
   if (!is.null(subclass) && subclass %in% baseline_vars) {
-    baseline_vars <- setdiff(baseline_vars, subclass)  # Exclude subclass from baseline_vars
+    baseline_vars <- setdiff(baseline_vars, subclass) # Exclude subclass from baseline_vars
     message("The subclass variable '", subclass, "' has been removed from baseline_vars to avoid redundancy.")
   }
 

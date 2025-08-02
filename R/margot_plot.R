@@ -41,37 +41,36 @@ margot_plot <- function(
       "alphabetical", "magnitude_desc", "magnitude_asc",
       "evaluebound_desc", "evaluebound_asc", "custom", "default"
     ),
-    custom_order        = NULL,
-    title_binary        = NULL,
+    custom_order = NULL,
+    title_binary = NULL,
     include_coefficients = TRUE,
-    standardize_label   = c("NZ", "US", "none"),
+    standardize_label = c("NZ", "US", "none"),
     e_val_bound_threshold = 1.2,
     adjust = c("none", "bonferroni"),
-    alpha  = 0.05,
+    alpha = 0.05,
     ...,
-    options       = list(),
+    options = list(),
     label_mapping = NULL,
-    save_output   = FALSE,
+    save_output = FALSE,
     use_timestamp = FALSE,
     base_filename = "margot_plot_output",
-    prefix        = NULL,
-    save_path     = here::here("push_mods"),
-    original_df   = NULL,
-    bold_rows   = FALSE,
+    prefix = NULL,
+    save_path = here::here("push_mods"),
+    original_df = NULL,
+    bold_rows = FALSE,
     rename_cols = FALSE,
     col_renames = list(
       "E-Value"       = "E_Value",
       "E-Value bound" = "E_Val_bound"
     ),
-    rename_ate  = FALSE,
-    rename_evalue = FALSE
-) {
+    rename_ate = FALSE,
+    rename_evalue = FALSE) {
   # match and validate args -------------------------------------------------
-  type              <- match.arg(type)
-  order             <- match.arg(order)
+  type <- match.arg(type)
+  order <- match.arg(order)
   standardize_label <- match.arg(standardize_label)
-  adjust            <- match.arg(adjust)
-  alpha             <- as.numeric(alpha)[1]
+  adjust <- match.arg(adjust)
+  alpha <- as.numeric(alpha)[1]
 
   # fall back for deprecated order value
   if (order == "default") {
@@ -112,42 +111,44 @@ margot_plot <- function(
 
   # merge user options with defaults ---------------------------------------
   default_opts <- list(
-    title             = NULL,
-    subtitle          = NULL,
-    estimate_scale    = 1,
-    base_size         = 18,
-    text_size         = 2.75,
-    point_size        = 3,
-    title_size        = 20,
-    subtitle_size     = 18,
-    legend_text_size  = 10,
+    title = NULL,
+    subtitle = NULL,
+    estimate_scale = 1,
+    base_size = 18,
+    text_size = 2.75,
+    point_size = 3,
+    title_size = 20,
+    subtitle_size = 18,
+    legend_text_size = 10,
     legend_title_size = 10,
-    x_offset          = NULL,
-    x_lim_lo          = NULL,
-    x_lim_hi          = NULL,
-    linewidth         = 0.4,
-    plot_theme        = NULL,
-    colors            = c(
-      "positive"      = "#E69F00",
+    x_offset = NULL,
+    x_lim_lo = NULL,
+    x_lim_hi = NULL,
+    linewidth = 0.4,
+    plot_theme = NULL,
+    colors = c(
+      "positive" = "#E69F00",
       "not reliable" = "black",
-      "negative"      = "#56B4E9"
+      "negative" = "#56B4E9"
     ),
-    facet_var         = NULL,
-    confidence_level  = 0.95,
-    annotations       = NULL,
-    show_evalues      = TRUE,
-    evalue_digits     = 2,
-    remove_tx_prefix  = TRUE,
-    remove_z_suffix   = TRUE,
-    use_title_case    = TRUE,
+    facet_var = NULL,
+    confidence_level = 0.95,
+    annotations = NULL,
+    show_evalues = TRUE,
+    evalue_digits = 2,
+    remove_tx_prefix = TRUE,
+    remove_z_suffix = TRUE,
+    use_title_case = TRUE,
     remove_underscores = TRUE
   )
 
   opts <- modifyList(modifyList(default_opts, options), list(...))
 
   # coerce logical flags -----------------------------------------------------
-  for (nm in c("remove_tx_prefix", "remove_z_suffix",
-               "use_title_case", "remove_underscores")) {
+  for (nm in c(
+    "remove_tx_prefix", "remove_z_suffix",
+    "use_title_case", "remove_underscores"
+  )) {
     opts[[nm]] <- as.logical(opts[[nm]])[1]
   }
 
@@ -155,9 +156,12 @@ margot_plot <- function(
   effect_info <- detect_effect_column(.data)
   if (is.null(effect_info)) {
     # fallback to old behavior for compatibility
-    eff_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data))
-      "E[Y(1)]-E[Y(0)]" else "E[Y(1)]/E[Y(0)]"
-    effect_type <- "ATE"  # default assumption
+    eff_col <- if ("E[Y(1)]-E[Y(0)]" %in% names(.data)) {
+      "E[Y(1)]-E[Y(0)]"
+    } else {
+      "E[Y(1)]/E[Y(0)]"
+    }
+    effect_type <- "ATE" # default assumption
   } else {
     eff_col <- effect_info$column
     effect_type <- effect_info$type
@@ -183,7 +187,7 @@ margot_plot <- function(
   )
 
   # sorting and thresholds --------------------------------------------------
-  thresh   <- e_val_bound_threshold
+  thresh <- e_val_bound_threshold
   null_val <- ifelse(type == "RR", 1, 0)
 
   sorted_df <- group_tab(
@@ -195,18 +199,24 @@ margot_plot <- function(
   sorted_df$outcome <- factor(sorted_df$outcome, levels = sorted_df$outcome)
 
   # categorise estimates ----------------------------------------------------
-  cat_vec <- with(sorted_df,
-                  ifelse(
-                    E_Val_bound > thresh & `2.5 %` > null_val & `97.5 %` > null_val, "positive",
-                    ifelse(
-                      E_Val_bound > thresh & `2.5 %` < null_val & `97.5 %` < null_val, "negative",
-                      "not reliable"
-                    )
-                  ))
+  cat_vec <- with(
+    sorted_df,
+    ifelse(
+      E_Val_bound > thresh & `2.5 %` > null_val & `97.5 %` > null_val, "positive",
+      ifelse(
+        E_Val_bound > thresh & `2.5 %` < null_val & `97.5 %` < null_val, "negative",
+        "not reliable"
+      )
+    )
+  )
   sorted_df$Estimate <- factor(cat_vec, levels = c("positive", "not reliable", "negative"))
 
   # axis label --------------------------------------------------------------
-  lw   <- switch(standardize_label, NZ = "Standardised", US = "Standardized", none = "Effect")
+  lw <- switch(standardize_label,
+    NZ = "Standardised",
+    US = "Standardized",
+    none = "Effect"
+  )
   xlab <- if (type == "RR") {
     "Effect (Risk Ratio)"
   } else if (lw != "Effect") {
@@ -219,10 +229,10 @@ margot_plot <- function(
   out_plot <- ggplot2::ggplot(
     sorted_df,
     ggplot2::aes(
-      y     = outcome,
-      x     = !!rlang::sym(eff_col),
-      xmin  = `2.5 %`,
-      xmax  = `97.5 %`,
+      y = outcome,
+      x = !!rlang::sym(eff_col),
+      xmin = `2.5 %`,
+      xmax = `97.5 %`,
       colour = Estimate
     )
   ) +
@@ -265,8 +275,8 @@ margot_plot <- function(
         x     = !!rlang::sym(eff_col) + opts$x_offset * opts$estimate_scale,
         label = sprintf("%.2f", !!rlang::sym(eff_col))
       ),
-      size   = opts$text_size,
-      hjust  = ifelse(type == "RR", 0, 1),
+      size = opts$text_size,
+      hjust = ifelse(type == "RR", 0, 1),
       fontface = "bold"
     )
   }
@@ -345,11 +355,11 @@ margot_plot <- function(
   if (bold_rows) {
     # determine the correct column name for E-value bound
     bound_nm <- if ("E-Value Bound" %in% names(transformed_table)) {
-      "E-Value Bound"  # from rename_evalue
+      "E-Value Bound" # from rename_evalue
     } else if ("E-Value bound" %in% names(transformed_table)) {
-      "E-Value bound"  # from rename_cols
+      "E-Value bound" # from rename_cols
     } else {
-      "E_Val_bound"    # original
+      "E_Val_bound" # original
     }
     above <- transformed_table[[bound_nm]] > e_val_bound_threshold
     if (any(above)) {
@@ -414,27 +424,24 @@ margot_interpret_marginal <- function(
     adjust = c("none", "bonferroni"),
     alpha = 0.05,
     include_adjust_note = TRUE,
-    effect_type = "ATE"
-) {
-  type   <- match.arg(type)
-  order  <- match.arg(order)
+    effect_type = "ATE") {
+  type <- match.arg(type)
+  order <- match.arg(order)
   adjust <- match.arg(adjust)
-  alpha  <- as.numeric(alpha)[1]
+  alpha <- as.numeric(alpha)[1]
 
   # build adjustment sentences only when requested ------------------------
   if (include_adjust_note) {
-    ci_sentence <- switch(
-      adjust,
-      none       = "No adjustment was made for family‑wise error rates to confidence intervals.",
+    ci_sentence <- switch(adjust,
+      none = "No adjustment was made for family‑wise error rates to confidence intervals.",
       bonferroni = paste0(
         "Confidence intervals were adjusted for multiple comparisons using Bonferroni correction",
         " ($\\alpha$ = ", alpha, ")."
       ),
     )
 
-    ev_sentence <- switch(
-      adjust,
-      none       = "No adjustment was made for family‑wise error rates to E‑values.",
+    ev_sentence <- switch(adjust,
+      none = "No adjustment was made for family‑wise error rates to E‑values.",
       bonferroni = paste0(
         "E‑values were also adjusted using Bonferroni correction",
         " ($\\alpha$ = ", alpha, ")."
@@ -479,7 +486,7 @@ margot_interpret_marginal <- function(
     "ATT" = "average treatment effects on the treated",
     "ATC" = "average treatment effects on the control",
     "ATO" = "average treatment effects in the overlap population",
-    "treatment effects"  # fallback
+    "treatment effects" # fallback
   )
 
   intro <- glue::glue(
@@ -496,14 +503,14 @@ margot_interpret_marginal <- function(
       } else {
         FALSE
       },
-      
+
       # format standardized scale label
       lab = glue::glue(
         "{format_minimal_decimals(.data[[effect_col]])}(",
         "{format_minimal_decimals(`2.5 %`)},",
         "{format_minimal_decimals(`97.5 %`)})"
       ),
-      
+
       # format original scale label with proper interpretation
       lab_orig = if (paste0(effect_col, "_original") %in% names(df)) {
         if (was_log_transformed && type == "RD") {
@@ -516,7 +523,7 @@ margot_interpret_marginal <- function(
               delta_log <- .data[[effect_col]] * transform_info$log_sd
               ratio <- exp(delta_log)
               pct_change <- (ratio - 1) * 100
-              
+
               # confidence intervals
               delta_log_lower <- .data[["2.5 %"]] * transform_info$log_sd
               delta_log_upper <- .data[["97.5 %"]] * transform_info$log_sd
@@ -524,10 +531,10 @@ margot_interpret_marginal <- function(
               ratio_upper <- exp(delta_log_upper)
               pct_lower <- (ratio_lower - 1) * 100
               pct_upper <- (ratio_upper - 1) * 100
-              
+
               # detect units
               units_info <- detect_variable_units(transform_info$original_var)
-              
+
               # calculate absolute change based on population mean
               log_mean_to_use <- if (!is.null(transform_info$use_display_mean) && transform_info$use_display_mean) {
                 transform_info$log_mean_display
@@ -535,18 +542,18 @@ margot_interpret_marginal <- function(
                 transform_info$log_mean
               }
               pop_mean_orig <- exp(log_mean_to_use) - transform_info$log_offset
-              
+
               if (!is.null(units_info$scale_factor)) {
                 pop_mean_orig <- pop_mean_orig * units_info$scale_factor
               }
-              
+
               abs_change <- pop_mean_orig * (ratio - 1)
               abs_change_lower <- pop_mean_orig * (ratio_lower - 1)
               abs_change_upper <- pop_mean_orig * (ratio_upper - 1)
-              
+
               # format based on unit type
               change_word <- if (pct_change >= 0) "increase" else "decrease"
-              
+
               if (units_info$type == "monetary") {
                 # format with confidence intervals in original units
                 glue::glue(
@@ -597,7 +604,6 @@ margot_interpret_marginal <- function(
       } else {
         NA_character_
       },
-      
       text = glue::glue(
         "- {outcome}: {lab}{if (!is.na(lab_orig)) paste0('; on the original scale, ', lab_orig, '.') else ''} E‑value bound = {format_minimal_decimals(E_Val_bound, 2)}"
       )
@@ -614,28 +620,28 @@ margot_interpret_marginal <- function(
 }
 
 
-#’ Transform Table Row Names with CLI Feedback
-#’
-#’ This function transforms the row names of a data frame based on specified criteria
-#’ and provides CLI feedback on the changes made.
-#’
-#’ @param df A data frame whose row names are to be transformed.
-#’ @param remove_tx_prefix logical. if TRUE, removes 't' followed by numbers and underscore from the start of row names.
-#’ @param remove_z_suffix logical. if TRUE, removes '_z' from the end of row names.
-#’ @param use_title_case logical. if TRUE, converts row names to title case.
-#’ @param remove_underscores logical. if TRUE, replaces underscores with spaces in row names.
-#’
-#’ @return A data frame with transformed row names.
-#’
-#’ @import cli
-#’
-#’ @keywords internal
+# ’ Transform Table Row Names with CLI Feedback
+# ’
+# ’ This function transforms the row names of a data frame based on specified criteria
+# ’ and provides CLI feedback on the changes made.
+# ’
+# ’ @param df A data frame whose row names are to be transformed.
+# ’ @param remove_tx_prefix logical. if TRUE, removes 't' followed by numbers and underscore from the start of row names.
+# ’ @param remove_z_suffix logical. if TRUE, removes '_z' from the end of row names.
+# ’ @param use_title_case logical. if TRUE, converts row names to title case.
+# ’ @param remove_underscores logical. if TRUE, replaces underscores with spaces in row names.
+# ’
+# ’ @return A data frame with transformed row names.
+# ’
+# ’ @import cli
+# ’
+# ’ @keywords internal
 transform_table_rownames <- function(df, label_mapping = NULL, options = list()) {
   # coerce each flag to a single TRUE/FALSE
-  remove_tx_prefix   <- isTRUE(options$remove_tx_prefix)
-  remove_z_suffix    <- isTRUE(options$remove_z_suffix)
+  remove_tx_prefix <- isTRUE(options$remove_tx_prefix)
+  remove_z_suffix <- isTRUE(options$remove_z_suffix)
   remove_underscores <- isTRUE(options$remove_underscores)
-  use_title_case     <- isTRUE(options$use_title_case)
+  use_title_case <- isTRUE(options$use_title_case)
 
   n_before <- nrow(df)
   cli::cli_h1("Transforming table row names")
@@ -715,20 +721,20 @@ transform_table_rownames <- function(df, label_mapping = NULL, options = list())
 #'
 #' @examples
 #' # descending magnitude (default for 'default')
-#' result_df <- group_tab(df = analysis_df, order = 'default')
+#' result_df <- group_tab(df = analysis_df, order = "default")
 #'
 #' # ascending magnitude
-#' result_df <- group_tab(df = analysis_df, order = 'magnitude_asc')
+#' result_df <- group_tab(df = analysis_df, order = "magnitude_asc")
 #'
 #' # strongest E-value bound first
-#' result_df <- group_tab(df = analysis_df, order = 'evaluebound_desc')
+#' result_df <- group_tab(df = analysis_df, order = "evaluebound_desc")
 #'
 #' # alphabetical
-#' result_df <- group_tab(df = analysis_df, order = 'alphabetical')
+#' result_df <- group_tab(df = analysis_df, order = "alphabetical")
 #'
 #' # custom ordering
-#' custom_order <- c('Outcome3','Outcome1','Outcome2')
-#' result_df <- group_tab(df = analysis_df, order = 'custom', custom_order = custom_order)
+#' custom_order <- c("Outcome3", "Outcome1", "Outcome2")
+#' result_df <- group_tab(df = analysis_df, order = "custom", custom_order = custom_order)
 #'
 #' @importFrom dplyr arrange desc mutate slice
 #' @importFrom tibble rownames_to_column
@@ -738,7 +744,7 @@ transform_table_rownames <- function(df, label_mapping = NULL, options = list())
 # DEPRECATED - Remove this duplicate function
 group_tab_deprecated <- function(
     df,
-    type = c("RD","RR"),
+    type = c("RD", "RR"),
     order = c(
       "alphabetical",
       "magnitude_desc",
@@ -748,13 +754,12 @@ group_tab_deprecated <- function(
       "custom",
       "default"
     ),
-    custom_order = NULL
-) {
+    custom_order = NULL) {
   # load dplyr verbs
   require(dplyr)
 
   # match arguments
-  type  <- match.arg(type)
+  type <- match.arg(type)
   order <- match.arg(order)
 
   # alias old magnitude and default to magnitude_desc
@@ -765,10 +770,10 @@ group_tab_deprecated <- function(
 
   # handle list input
   if (is.list(df) && "results_df" %in% names(df)) {
-    results_df   <- df$results_df
+    results_df <- df$results_df
     label_mapping <- df$label_mapping
   } else {
-    results_df   <- df
+    results_df <- df
     label_mapping <- NULL
   }
 
@@ -786,19 +791,19 @@ group_tab_deprecated <- function(
 
   # columns for sorting
   effect_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
-  ev_bound   <- "E_Val_bound"
+  ev_bound <- "E_Val_bound"
 
   # apply ordering
   results_df <- switch(order,
-                       alphabetical      = results_df %>% arrange(outcome),
-                       magnitude_desc    = results_df %>% arrange(desc(abs(!!sym(effect_col)))),
-                       magnitude_asc     = results_df %>% arrange(abs(!!sym(effect_col))),
-                       evaluebound_desc  = results_df %>% arrange(desc(!!sym(ev_bound))),
-                       evaluebound_asc   = results_df %>% arrange(!!sym(ev_bound)),
-                       custom            = {
-                         if (is.null(custom_order)) stop("custom_order must be provided for 'custom' order")
-                         results_df %>% slice(match(custom_order, outcome))
-                       }
+    alphabetical = results_df %>% arrange(outcome),
+    magnitude_desc = results_df %>% arrange(desc(abs(!!sym(effect_col)))),
+    magnitude_asc = results_df %>% arrange(abs(!!sym(effect_col))),
+    evaluebound_desc = results_df %>% arrange(desc(!!sym(ev_bound))),
+    evaluebound_asc = results_df %>% arrange(!!sym(ev_bound)),
+    custom = {
+      if (is.null(custom_order)) stop("custom_order must be provided for 'custom' order")
+      results_df %>% slice(match(custom_order, outcome))
+    }
   )
 
   # annotate estimates
@@ -806,28 +811,32 @@ group_tab_deprecated <- function(
     Estimate = factor(
       if (type == "RR") {
         ifelse(`E[Y(1)]/E[Y(0)]` > 1 & `2.5 %` > 1,
-               "positive",
-               ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1,
-                      "negative",
-                      "not reliable"))
+          "positive",
+          ifelse(`E[Y(1)]/E[Y(0)]` < 1 & `97.5 %` < 1,
+            "negative",
+            "not reliable"
+          )
+        )
       } else {
         ifelse(`E[Y(1)]-E[Y(0)]` > 0 & `2.5 %` > 0,
-               "positive",
-               ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0,
-                      "negative",
-                      "not reliable"))
+          "positive",
+          ifelse(`E[Y(1)]-E[Y(0)]` < 0 & `97.5 %` < 0,
+            "negative",
+            "not reliable"
+          )
+        )
       }
     ),
     estimate_lab = if (type == "RR") {
       paste0(
         round(`E[Y(1)]/E[Y(0)]`, 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
+        round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
         " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
       )
     } else {
       paste0(
         round(`E[Y(1)]-E[Y(0)]`, 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
+        round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
         " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
       )
     }
@@ -849,21 +858,22 @@ group_tab_deprecated <- function(
 
 #' @keywords internal
 process_evalue <- function(tab, scale, delta, sd) {
-
   ev <- if (scale == "RD") {
     EValue::evalues.OLS(tab$`E[Y(1)]-E[Y(0)]`,
-                        se    = tab$standard_error,
-                        sd    = sd,
-                        delta = delta,
-                        true  = 0)
+      se    = tab$standard_error,
+      sd    = sd,
+      delta = delta,
+      true  = 0
+    )
   } else {
     EValue::evalues.RR(tab$`E[Y(1)]/E[Y(0)]`,
-                       lo   = tab$`2.5 %`,
-                       hi   = tab$`97.5 %`,
-                       true = 1)
+      lo   = tab$`2.5 %`,
+      hi   = tab$`97.5 %`,
+      true = 1
+    )
   }
 
-  ev_df <- as.data.frame(ev)[2, c("point","lower","upper"), drop = FALSE]
+  ev_df <- as.data.frame(ev)[2, c("point", "lower", "upper"), drop = FALSE]
 
   tibble::tibble(
     E_Value     = ev_df$point,
@@ -930,16 +940,15 @@ process_evalue <- function(tab, scale, delta, sd) {
 #' @importFrom EValue evalues.OLS evalues.RR
 margot_correct_combined_table <- function(combined_table,
                                           adjust = c("bonferroni", "none"),
-                                          alpha  = 0.05,
-                                          scale  = c("RD", "RR"),
-                                          delta  = 1,
-                                          sd     = 1) {
-
+                                          alpha = 0.05,
+                                          scale = c("RD", "RR"),
+                                          delta = 1,
+                                          sd = 1) {
   adjust <- match.arg(adjust)
-  scale  <- match.arg(scale)
+  scale <- match.arg(scale)
 
   ## ---- 0 • sanity checks ----------------------------------------------------
-  if      ("E[Y(1)]-E[Y(0)]" %in% names(combined_table)) {
+  if ("E[Y(1)]-E[Y(0)]" %in% names(combined_table)) {
     est_col <- "E[Y(1)]-E[Y(0)]"
   } else if ("E[Y(1)]/E[Y(0)]" %in% names(combined_table)) {
     est_col <- "E[Y(1)]/E[Y(0)]"
@@ -947,17 +956,17 @@ margot_correct_combined_table <- function(combined_table,
     stop("Couldn't find a point-estimate column in `combined_table`.")
   }
 
-  if (!all(c("2.5 %", "97.5 %") %in% names(combined_table)))
+  if (!all(c("2.5 %", "97.5 %") %in% names(combined_table))) {
     stop("`combined_table` must contain '2.5 %' and '97.5 %' columns.")
+  }
 
-  m      <- nrow(combined_table)          # number of tests
-  z_orig <- stats::qnorm(0.975)           # 1.96
+  m <- nrow(combined_table) # number of tests
+  z_orig <- stats::qnorm(0.975) # 1.96
 
   tbl <- combined_table
 
   ## ---- 1  adjust the CI ----------------------------------------------------
   if (adjust == "bonferroni") {
-
     z_star <- stats::qnorm(1 - alpha / (2 * m))
 
     # original half-width so we don't need the raw SE
@@ -973,14 +982,16 @@ margot_correct_combined_table <- function(combined_table,
 
   ## ---- 2  recompute E-values ----------------------------------------------
   new_EV <- purrr::pmap_dfr(
-    list(est = tbl[[est_col]],
-         lo  = tbl$`2.5 %`,
-         hi  = tbl$`97.5 %`,
-         se0 = (tbl$`97.5 %` - tbl[[est_col]]) / stats::qnorm(0.975)),
+    list(
+      est = tbl[[est_col]],
+      lo = tbl$`2.5 %`,
+      hi = tbl$`97.5 %`,
+      se0 = (tbl$`97.5 %` - tbl[[est_col]]) / stats::qnorm(0.975)
+    ),
     \(est, lo, hi, se0) {
       tmp <- tibble::tibble(
         `E[Y(1)]-E[Y(0)]` = est,
-        `E[Y(1)]/E[Y(0)]` = NA_real_,   # ignored for RD
+        `E[Y(1)]/E[Y(0)]` = NA_real_, # ignored for RD
         `2.5 %`           = lo,
         `97.5 %`          = hi,
         standard_error    = se0
@@ -1012,4 +1023,3 @@ margot_correct_combined_table <- function(combined_table,
 # •	here_save_qs() (from  I/O utilities)
 # 7. to add - calls margot_correct_combined_table() - not in this file
 # 8. margot_correct_combined_table
-

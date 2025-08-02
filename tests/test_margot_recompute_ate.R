@@ -17,9 +17,9 @@ colnames(X) <- paste0("X", 1:p)
 W <- rbinom(n, 1, 0.5)
 
 # outcomes with heterogeneous treatment effect
-tau <- pmax(X[,1], 0)
-Y1 <- X[,1] + X[,2] + tau + rnorm(n)
-Y2 <- X[,3] - X[,4] + 0.5 * tau + rnorm(n)
+tau <- pmax(X[, 1], 0)
+Y1 <- X[, 1] + X[, 2] + tau + rnorm(n)
+Y2 <- X[, 3] - X[, 4] + 0.5 * tau + rnorm(n)
 
 # create data frame
 data <- data.frame(
@@ -66,12 +66,12 @@ if (length(cf_results$results) > 0) {
   cat("\nChecking first result structure:\n")
   result_names <- names(cf_results$results[[1]])
   print(result_names)
-  
+
   # check if model field exists
   if ("model" %in% result_names) {
     cat("\nModel field exists in results\n")
   }
-  
+
   # Check for other model-related fields
   model_fields <- grep("model|tree|blp", result_names, value = TRUE)
   if (length(model_fields) > 0) {
@@ -85,7 +85,7 @@ cat("===============================================\n")
 
 # overlap sample
 ate_overlap <- margot_recompute_ate(
-  cf_results, 
+  cf_results,
   target.sample = "overlap"
 )
 cat("\nOverlap sample ATE:\n")
@@ -93,7 +93,7 @@ print(ate_overlap$combined_table)
 
 # treated sample
 ate_treated <- margot_recompute_ate(
-  cf_results, 
+  cf_results,
   target.sample = "treated"
 )
 cat("\nTreated sample ATE (ATT):\n")
@@ -101,7 +101,7 @@ print(ate_treated$combined_table)
 
 # control sample
 ate_control <- margot_recompute_ate(
-  cf_results, 
+  cf_results,
   target.sample = "control"
 )
 cat("\nControl sample ATE (ATC):\n")

@@ -10,7 +10,7 @@ test_no_effects <- data.frame(
   `2.5 %` = c(-0.1, -0.2, -0.1),
   `97.5 %` = c(0.3, 0.1, 0.15),
   E_Value = c(1.2, 1.1, 1.05),
-  E_Val_bound = c(0.9, 0.8, 0.7),  # all below threshold
+  E_Val_bound = c(0.9, 0.8, 0.7), # all below threshold
   check.names = FALSE
 )
 rownames(test_no_effects) <- c("Outcome1", "Outcome2", "Outcome3")
@@ -40,8 +40,8 @@ cat(result2$interpretation, "\n\n")
 cat("\nTest 3: No effects with adjustment note\n")
 cat("========================================\n")
 result3 <- margot:::margot_interpret_marginal(
-  test_no_effects, 
-  type = "RD", 
+  test_no_effects,
+  type = "RD",
   adjust = "bonferroni",
   alpha = 0.05
 )

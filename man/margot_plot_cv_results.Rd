@@ -63,7 +63,7 @@ cv_results <- margot_rate_cv(
   model_results = cf_results,
   num_folds = 5,
   target = "AUTOC",
-  alpha = 0.2,  # recommended for Bonferroni
+  alpha = 0.2, # recommended for Bonferroni
   adjust = "bonferroni"
 )
 

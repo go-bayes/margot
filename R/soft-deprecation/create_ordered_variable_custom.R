@@ -32,7 +32,6 @@ create_ordered_variable_custom <- function(df, var_name, breaks,
                                            cutpoint_inclusive = "upper",
                                            inf_label = "Inf",
                                            neg_inf_label = "-Inf") {
-
   # warning
   lifecycle::deprecate_warn("1.0.0", "create_ordered_variable_custom()", "create_ordered_variable()")
 

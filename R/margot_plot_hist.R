@@ -60,7 +60,6 @@ margot_plot_hist <- function(df, col_name, n_divisions = NULL, custom_breaks = N
                              x_scale_transform = NULL, y_scale_transform = NULL,
                              additional_layers = NULL,
                              binwidth = NULL) {
-
   # Deprecation warning
   lifecycle::deprecate_warn(
     when = "0.2.1.39",
@@ -83,10 +82,12 @@ margot_plot_hist <- function(df, col_name, n_divisions = NULL, custom_breaks = N
   }
 
   # use create_ordered_variable to get the breaks and labels
-  result_df <- create_ordered_variable(df, col_name, n_divisions = n_divisions,
-                                       custom_breaks = custom_breaks,
-                                       cutpoint_inclusive = cutpoint_inclusive,
-                                       ties.method = ties.method)
+  result_df <- create_ordered_variable(df, col_name,
+    n_divisions = n_divisions,
+    custom_breaks = custom_breaks,
+    cutpoint_inclusive = cutpoint_inclusive,
+    ties.method = ties.method
+  )
 
   # Extract the new column name (it's the original name with "_cat" appended)
   new_col_name <- paste0(col_name, "_cat")
@@ -110,20 +111,27 @@ margot_plot_hist <- function(df, col_name, n_divisions = NULL, custom_breaks = N
   # Create the plot
   p <- ggplot(result_df, aes(x = !!rlang::sym(col_name), fill = !!rlang::sym(new_col_name))) +
     geom_histogram(aes(y = after_stat(count)),
-                   binwidth = binwidth,
-                   colour = hist_colour) +
+      binwidth = binwidth,
+      colour = hist_colour
+    ) +
     scale_fill_manual(values = colour_palette, name = "Intervals") +
-    labs(title = ifelse(is.null(title),
-                        paste(tools::toTitleCase(col_name), "Histogram with Interval Highlights"),
-                        title),
-         subtitle = ifelse(is.null(subtitle),
-                           paste("Colored regions indicate intervals."),
-                           subtitle),
-         x = ifelse(is.null(x_lab), tools::toTitleCase(col_name), x_lab),
-         y = y_lab) +
+    labs(
+      title = ifelse(is.null(title),
+        paste(tools::toTitleCase(col_name), "Histogram with Interval Highlights"),
+        title
+      ),
+      subtitle = ifelse(is.null(subtitle),
+        paste("Colored regions indicate intervals."),
+        subtitle
+      ),
+      x = ifelse(is.null(x_lab), tools::toTitleCase(col_name), x_lab),
+      y = y_lab
+    ) +
     theme_choice +
-    theme(text = element_text(size = text_size),
-          axis.text.x = element_text(angle = axis_text_angle, hjust = 1))
+    theme(
+      text = element_text(size = text_size),
+      axis.text.x = element_text(angle = axis_text_angle, hjust = 1)
+    )
 
   #  density curve if requested
   if (add_density) {

@@ -69,11 +69,11 @@ margot_bind_models <- function(..., quiet = FALSE) {
 
   if (!quiet) cli::cli_alert_info("combining causal forest models...")
   combined <- list(
-    results        = unlist(purrr::map(models, "results"),       recursive = FALSE),
+    results        = unlist(purrr::map(models, "results"), recursive = FALSE),
     combined_table = dplyr::bind_rows(purrr::map(models, "combined_table")),
     outcome_vars   = unlist(purrr::map(models, "outcome_vars")),
     not_missing    = models[[1]]$not_missing,
-    full_models    = unlist(purrr::map(models, "full_models"),     recursive = FALSE)
+    full_models    = unlist(purrr::map(models, "full_models"), recursive = FALSE)
   )
 
   # preserve covariates/data if present and identical

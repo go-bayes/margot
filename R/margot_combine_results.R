@@ -49,7 +49,7 @@
 #'   longtable = TRUE,
 #'   digits = 2
 #' )
-#'}
+#' }
 #' @importFrom dplyr mutate across where select bind_rows
 #' @importFrom kableExtra kbl group_rows
 #' @keywords internal
@@ -61,8 +61,7 @@ margot_combine_results <- function(
     options = NULL,
     format = "latex",
     digits = 2,
-    ...
-) {
+    ...) {
   # 1. Ensure 'results' is a named list
   if (is.null(names(results)) || any(names(results) == "")) {
     stop("`results` must be a named list with non-empty names.")
@@ -100,7 +99,7 @@ margot_combine_results <- function(
   # 4. Get rows per domain for group_rows
   domain_info <- combined_df %>%
     group_by(.domain_label) %>%
-    summarise(rows = n(), .groups = 'drop')
+    summarise(rows = n(), .groups = "drop")
 
   # 5. Create kable without .domain_label
   kbl_df <- combined_df %>%

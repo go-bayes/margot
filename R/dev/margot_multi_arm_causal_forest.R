@@ -64,10 +64,12 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
   if (verbose) cli::cli_alert_info(crayon::bold("starting margot_multi_arm_causal_forest function"))
 
   if (save_models) {
-    if (verbose) cli::cli_alert_warning(crayon::yellow(
-      "note: setting save_models = TRUE typically results in very large objects (often several GB). ",
-      "ensure you have sufficient memory available."
-    ))
+    if (verbose) {
+      cli::cli_alert_warning(crayon::yellow(
+        "note: setting save_models = TRUE typically results in very large objects (often several GB). ",
+        "ensure you have sufficient memory available."
+      ))
+    }
   }
 
   if (!is.factor(W_multi)) {
@@ -92,158 +94,167 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
       model_name <- paste0("model_", outcome)
       Y <- as.matrix(data[[outcome]])
 
-      tryCatch({
-        model <- do.call(grf::multi_arm_causal_forest,
-                         c(list(X = covariates, Y = Y, W = W_multi, sample.weights = weights),
-                           grf_defaults))
-
-        ate <- grf::average_treatment_effect(model)
-        custom_table <- margot::margot_model_evalue(model, new_name = outcome, subset = NULL)
-        tau_hat <- predict(model, X = covariates, estimate.variance = TRUE)
-
-        results[[model_name]] <- list(
-          ate = ate,
-          custom_table = custom_table,
-          tau_hat = tau_hat$predictions
-        )
-
-        varimp <- grf::variable_importance(model)
-        ranked_vars <- order(varimp, decreasing = TRUE)
-        top_vars <- colnames(covariates)[ranked_vars[1:min(top_n_vars, length(ranked_vars))]]
-        results[[model_name]]$top_vars <- top_vars
-        results[[model_name]]$variable_importance <- data.frame(
-          variable = colnames(covariates),
-          importance = varimp
-        ) %>% dplyr::arrange(dplyr::desc(importance))
-
-        dr_scores <- policytree::double_robust_scores(model)
-        results[[model_name]]$dr_scores <- dr_scores
-
-        n_non_missing <- length(not_missing)
-        train_size <- floor(train_proportion * n_non_missing)
-        train_indices <- sample(not_missing, train_size)
-
-        X_train <- covariates[train_indices, top_vars, drop = FALSE]
-        dr_scores_train <- dr_scores[train_indices, , drop = FALSE]
-
-        policy_tree_model <- tryCatch({
-          policytree::policy_tree(X_train, dr_scores_train, depth = 2)
-        }, error = function(e) {
-          if (verbose) cli::cli_alert_warning(crayon::yellow(paste("error in policy tree for", outcome, ":", e$message)))
-          NULL
-        })
-
-        results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
-
-        if (!is.null(policy_tree_model)) {
-          test_indices <- setdiff(not_missing, train_indices)
-          X_test <- covariates[test_indices, top_vars, drop = FALSE]
-          predictions <- predict(policy_tree_model, X_test)
-
-          results[[model_name]]$plot_data <- list(
-            X_test = X_test,
-            predictions = predictions
-          )
-        } else {
-          results[[model_name]]$plot_data <- NULL
-        }
-
-        if (compute_qini) {
-          # compute qini curves
-          if (verbose) cli::cli_alert_info(paste("computing qini curves for", outcome))
-
-          qini_results <- compute_qini_curves_multi_arm(
-            model = model,
-            tau_hat = tau_hat$predictions,
-            Y = Y,
-            W_multi = W_multi,
-            W.hat = W.hat,
-            cost = cost,
-            verbose = verbose
+      tryCatch(
+        {
+          model <- do.call(
+            grf::multi_arm_causal_forest,
+            c(
+              list(X = covariates, Y = Y, W = W_multi, sample.weights = weights),
+              grf_defaults
+            )
           )
 
-          # validate qini results
-          if (is.null(qini_results)) {
-            if (verbose) cli::cli_alert_warning(paste("qini results are NULL for", outcome, "- creating fallback objects"))
+          ate <- grf::average_treatment_effect(model)
+          custom_table <- margot::margot_model_evalue(model, new_name = outcome, subset = NULL)
+          tau_hat <- predict(model, X = covariates, estimate.variance = TRUE)
 
-            # create fallback qini objects
-            qini_data <- create_fallback_qini_data(tau_hat$predictions, W_multi)
-            qini_objects <- create_fallback_qini_objects(tau_hat$predictions, W_multi)
+          results[[model_name]] <- list(
+            ate = ate,
+            custom_table = custom_table,
+            tau_hat = tau_hat$predictions
+          )
 
-            results[[model_name]]$qini_data <- qini_data
-            results[[model_name]]$qini_objects <- qini_objects
-            results[[model_name]]$qini_imputed <- TRUE
+          varimp <- grf::variable_importance(model)
+          ranked_vars <- order(varimp, decreasing = TRUE)
+          top_vars <- colnames(covariates)[ranked_vars[1:min(top_n_vars, length(ranked_vars))]]
+          results[[model_name]]$top_vars <- top_vars
+          results[[model_name]]$variable_importance <- data.frame(
+            variable = colnames(covariates),
+            importance = varimp
+          ) %>% dplyr::arrange(dplyr::desc(importance))
 
-            if (verbose) cli::cli_alert_success(paste("created fallback qini objects for", outcome))
+          dr_scores <- policytree::double_robust_scores(model)
+          results[[model_name]]$dr_scores <- dr_scores
+
+          n_non_missing <- length(not_missing)
+          train_size <- floor(train_proportion * n_non_missing)
+          train_indices <- sample(not_missing, train_size)
+
+          X_train <- covariates[train_indices, top_vars, drop = FALSE]
+          dr_scores_train <- dr_scores[train_indices, , drop = FALSE]
+
+          policy_tree_model <- tryCatch(
+            {
+              policytree::policy_tree(X_train, dr_scores_train, depth = 2)
+            },
+            error = function(e) {
+              if (verbose) cli::cli_alert_warning(crayon::yellow(paste("error in policy tree for", outcome, ":", e$message)))
+              NULL
+            }
+          )
+
+          results[[model_name]]$policy_tree_depth_2 <- policy_tree_model
+
+          if (!is.null(policy_tree_model)) {
+            test_indices <- setdiff(not_missing, train_indices)
+            X_test <- covariates[test_indices, top_vars, drop = FALSE]
+            predictions <- predict(policy_tree_model, X_test)
+
+            results[[model_name]]$plot_data <- list(
+              X_test = X_test,
+              predictions = predictions
+            )
           } else {
-            # use the calculated qini results
-            qini_data <- qini_results$qini_data
-            qini_objects <- qini_results$qini_objects
+            results[[model_name]]$plot_data <- NULL
+          }
 
-            # validate objects structure
-            qini_data_valid <- !is.null(qini_data) &&
-              is.data.frame(qini_data) &&
-              nrow(qini_data) > 0
+          if (compute_qini) {
+            # compute qini curves
+            if (verbose) cli::cli_alert_info(paste("computing qini curves for", outcome))
 
-            qini_objects_valid <- !is.null(qini_objects) &&
-              is.list(qini_objects) &&
-              length(qini_objects) > 0
+            qini_results <- compute_qini_curves_multi_arm(
+              model = model,
+              tau_hat = tau_hat$predictions,
+              Y = Y,
+              W_multi = W_multi,
+              W.hat = W.hat,
+              cost = cost,
+              verbose = verbose
+            )
 
-            if (!qini_data_valid || !qini_objects_valid) {
-              if (verbose) {
-                cli::cli_alert_warning(crayon::yellow(paste("invalid qini structure for", outcome, "- creating fallback objects")))
-                if (!qini_data_valid) cli::cli_alert_info("qini_data validation failed")
-                if (!qini_objects_valid) cli::cli_alert_info("qini_objects validation failed")
-              }
+            # validate qini results
+            if (is.null(qini_results)) {
+              if (verbose) cli::cli_alert_warning(paste("qini results are NULL for", outcome, "- creating fallback objects"))
 
-              # create replacements for invalid objects
-              if (!qini_data_valid) {
-                qini_data <- create_fallback_qini_data(tau_hat$predictions, W_multi)
-              }
-              if (!qini_objects_valid) {
-                qini_objects <- create_fallback_qini_objects(tau_hat$predictions, W_multi)
-              }
+              # create fallback qini objects
+              qini_data <- create_fallback_qini_data(tau_hat$predictions, W_multi)
+              qini_objects <- create_fallback_qini_objects(tau_hat$predictions, W_multi)
 
+              results[[model_name]]$qini_data <- qini_data
+              results[[model_name]]$qini_objects <- qini_objects
               results[[model_name]]$qini_imputed <- TRUE
+
+              if (verbose) cli::cli_alert_success(paste("created fallback qini objects for", outcome))
             } else {
-              if (attr(qini_data, "imputed", exact = TRUE)) {
-                if (verbose) cli::cli_alert_warning(paste("qini data for", outcome, "was partially imputed. exercise caution when interpreting results."))
+              # use the calculated qini results
+              qini_data <- qini_results$qini_data
+              qini_objects <- qini_results$qini_objects
+
+              # validate objects structure
+              qini_data_valid <- !is.null(qini_data) &&
+                is.data.frame(qini_data) &&
+                nrow(qini_data) > 0
+
+              qini_objects_valid <- !is.null(qini_objects) &&
+                is.list(qini_objects) &&
+                length(qini_objects) > 0
+
+              if (!qini_data_valid || !qini_objects_valid) {
+                if (verbose) {
+                  cli::cli_alert_warning(crayon::yellow(paste("invalid qini structure for", outcome, "- creating fallback objects")))
+                  if (!qini_data_valid) cli::cli_alert_info("qini_data validation failed")
+                  if (!qini_objects_valid) cli::cli_alert_info("qini_objects validation failed")
+                }
+
+                # create replacements for invalid objects
+                if (!qini_data_valid) {
+                  qini_data <- create_fallback_qini_data(tau_hat$predictions, W_multi)
+                }
+                if (!qini_objects_valid) {
+                  qini_objects <- create_fallback_qini_objects(tau_hat$predictions, W_multi)
+                }
+
                 results[[model_name]]$qini_imputed <- TRUE
               } else {
-                results[[model_name]]$qini_imputed <- FALSE
-                if (verbose) cli::cli_alert_success(paste("successfully created qini objects for", outcome))
+                if (attr(qini_data, "imputed", exact = TRUE)) {
+                  if (verbose) cli::cli_alert_warning(paste("qini data for", outcome, "was partially imputed. exercise caution when interpreting results."))
+                  results[[model_name]]$qini_imputed <- TRUE
+                } else {
+                  results[[model_name]]$qini_imputed <- FALSE
+                  if (verbose) cli::cli_alert_success(paste("successfully created qini objects for", outcome))
+                }
               }
+
+              # store qini_data and qini_objects in the results
+              results[[model_name]]$qini_data <- qini_data
+              results[[model_name]]$qini_objects <- qini_objects
             }
-
-            # store qini_data and qini_objects in the results
-            results[[model_name]]$qini_data <- qini_data
-            results[[model_name]]$qini_objects <- qini_objects
+          } else {
+            # create minimal placeholder objects even when computation is turned off
+            results[[model_name]]$qini_data <- create_fallback_qini_data(tau_hat$predictions, W_multi)
+            results[[model_name]]$qini_objects <- create_fallback_qini_objects(tau_hat$predictions, W_multi)
+            results[[model_name]]$qini_imputed <- TRUE
           }
-        } else {
-          # create minimal placeholder objects even when computation is turned off
-          results[[model_name]]$qini_data <- create_fallback_qini_data(tau_hat$predictions, W_multi)
-          results[[model_name]]$qini_objects <- create_fallback_qini_objects(tau_hat$predictions, W_multi)
-          results[[model_name]]$qini_imputed <- TRUE
-        }
 
-        if (save_models) {
-          full_models[[model_name]] <- model
+          if (save_models) {
+            full_models[[model_name]] <- model
+          }
+        },
+        error = function(e) {
+          if (verbose) cli::cli_alert_danger(crayon::red(paste("error in model for", outcome, ":", e$message)))
+          results[[model_name]] <- list(
+            error = e$message,
+            # create minimal placeholder objects even when model fails
+            qini_data = data.frame(
+              proportion = seq(0, 1, length.out = 100),
+              gain = rep(0, 100),
+              curve = "error"
+            ),
+            qini_objects = list(error = list("_path" = list(gain = rep(0, 100)))),
+            qini_imputed = TRUE
+          )
         }
-
-      }, error = function(e) {
-        if (verbose) cli::cli_alert_danger(crayon::red(paste("error in model for", outcome, ":", e$message)))
-        results[[model_name]] <- list(
-          error = e$message,
-          # create minimal placeholder objects even when model fails
-          qini_data = data.frame(
-            proportion = seq(0, 1, length.out = 100),
-            gain = rep(0, 100),
-            curve = "error"
-          ),
-          qini_objects = list(error = list("_path" = list(gain = rep(0, 100)))),
-          qini_imputed = TRUE
-        )
-      })
+      )
 
       cli::cli_progress_update()
     }
@@ -251,13 +262,16 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
     cli::cli_progress_done()
 
     # group results by comparison
-    tryCatch({
-      combined_tables <- group_results_by_comparison(results)
-    }, error = function(e) {
-      if (verbose) cli::cli_alert_warning(paste("error in grouping results:", e$message))
-      # create an empty list as fallback
-      combined_tables <- list()
-    })
+    tryCatch(
+      {
+        combined_tables <- group_results_by_comparison(results)
+      },
+      error = function(e) {
+        if (verbose) cli::cli_alert_warning(paste("error in grouping results:", e$message))
+        # create an empty list as fallback
+        combined_tables <- list()
+      }
+    )
 
     list(results = results, full_models = full_models, combined_tables = combined_tables)
   }
@@ -290,13 +304,13 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
   missing_qini <- character(0)
   for (model_name in names(model_results$results)) {
     if (is.null(model_results$results[[model_name]]$qini_objects) ||
-        is.null(model_results$results[[model_name]]$qini_data)) {
+      is.null(model_results$results[[model_name]]$qini_data)) {
       missing_qini <- c(missing_qini, model_name)
     }
   }
 
   if (length(missing_qini) > 0) {
-    if (verbose) cli::cli_alert_warning(crayon::yellow(paste("missing qini objects for models:", paste(missing_qini, collapse=", "))))
+    if (verbose) cli::cli_alert_warning(crayon::yellow(paste("missing qini objects for models:", paste(missing_qini, collapse = ", "))))
   } else {
     if (verbose) cli::cli_alert_success(crayon::green("all models have qini_objects and qini_data"))
   }
@@ -330,163 +344,177 @@ margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_mul
 #'
 #' @keywords internal
 compute_qini_curves_multi_arm <- function(model, tau_hat, Y, W_multi, W.hat = NULL, cost = NULL, verbose = TRUE) {
-  tryCatch({
-    if (verbose) {
-      cli::cli_alert_info("using doubly robust scores for multi-arm qini estimation")
-      cli::cli_alert_info(paste("tau_hat class:", class(tau_hat)))
-      cli::cli_alert_info(paste("tau_hat dimensions:", paste(dim(tau_hat), collapse = "x")))
-      cli::cli_alert_info(paste("Y class:", class(Y)))
-      cli::cli_alert_info(paste("Y dimensions:", paste(dim(Y), collapse = "x")))
-      cli::cli_alert_info(paste("W_multi class:", class(W_multi)))
-      cli::cli_alert_info(paste("W_multi length:", length(W_multi)))
-    }
-
-    # ensure Y is in the correct format
-    if (is.matrix(Y) || is.array(Y)) {
-      if (ncol(Y) == 1) {
-        Y <- as.vector(Y)
+  tryCatch(
+    {
+      if (verbose) {
+        cli::cli_alert_info("using doubly robust scores for multi-arm qini estimation")
+        cli::cli_alert_info(paste("tau_hat class:", class(tau_hat)))
+        cli::cli_alert_info(paste("tau_hat dimensions:", paste(dim(tau_hat), collapse = "x")))
+        cli::cli_alert_info(paste("Y class:", class(Y)))
+        cli::cli_alert_info(paste("Y dimensions:", paste(dim(Y), collapse = "x")))
+        cli::cli_alert_info(paste("W_multi class:", class(W_multi)))
+        cli::cli_alert_info(paste("W_multi length:", length(W_multi)))
       }
-    }
 
-    # get doubly robust scores from the model
-    dr_scores <- tryCatch({
-      policytree::double_robust_scores(model)
-    }, error = function(e) {
-      if (verbose) cli::cli_alert_warning(paste("error getting DR scores:", e$message))
-      # fallback to a simpler approach if DR scores fail
+      # ensure Y is in the correct format
+      if (is.matrix(Y) || is.array(Y)) {
+        if (ncol(Y) == 1) {
+          Y <- as.vector(Y)
+        }
+      }
+
+      # get doubly robust scores from the model
+      dr_scores <- tryCatch(
+        {
+          policytree::double_robust_scores(model)
+        },
+        error = function(e) {
+          if (verbose) cli::cli_alert_warning(paste("error getting DR scores:", e$message))
+          # fallback to a simpler approach if DR scores fail
+          return(NULL)
+        }
+      )
+
+      if (is.null(dr_scores)) {
+        if (verbose) cli::cli_alert_warning("DR scores failed, using alternative approach")
+
+        # create simplified qini data and objects
+        qini_data <- create_fallback_qini_data(tau_hat, W_multi)
+        qini_objects <- create_fallback_qini_objects(tau_hat, W_multi)
+
+        # mark as imputed
+        attr(qini_data, "imputed") <- TRUE
+
+        return(list(
+          qini_data = qini_data,
+          qini_objects = qini_objects
+        ))
+      }
+
+      if (verbose) {
+        cli::cli_alert_info(paste("DR scores dimensions:", paste(dim(dr_scores), collapse = "x")))
+      }
+
+      # extract treatment arms
+      arms <- levels(W_multi)
+      n_arms <- length(arms)
+
+      if (is.null(cost)) {
+        cost <- rep(1, n_arms)
+      } else if (length(cost) != n_arms) {
+        if (verbose) cli::cli_alert_warning(paste("cost vector length", length(cost), "doesn't match number of arms", n_arms, "- using uniform costs"))
+        cost <- rep(1, n_arms)
+      }
+
+      # compute qini objects for each arm comparison
+      qini_objects <- list()
+      imputed <- FALSE
+
+      # process each column of tau_hat (each treatment comparison)
+      for (i in 1:ncol(tau_hat)) {
+        col_name <- colnames(tau_hat)[i]
+        if (verbose) cli::cli_alert_info(paste("processing comparison:", col_name))
+
+        tau_hat_i <- tau_hat[, i]
+
+        # try to compute the maq object
+        qini_i <- tryCatch(
+          {
+            maq::maq(tau_hat_i, cost, dr_scores, R = 200)
+          },
+          error = function(e) {
+            if (verbose) cli::cli_alert_warning(paste("error in maq for", col_name, ":", e$message))
+            # create a simple fallback object
+            imputed <- TRUE
+            list("_path" = list(gain = cumsum(sort(tau_hat_i, decreasing = TRUE)) / length(tau_hat_i)))
+          }
+        )
+
+        qini_objects[[col_name]] <- qini_i
+      }
+
+      # compute ATE qini curves
+      for (i in 1:ncol(tau_hat)) {
+        col_name <- colnames(tau_hat)[i]
+        ate_name <- paste0("ate_", col_name)
+
+        tau_hat_i <- tau_hat[, i]
+        mean_tau <- mean(tau_hat_i)
+
+        # try to compute the ATE maq object
+        qini_ate <- tryCatch(
+          {
+            maq::maq(rep(mean_tau, length(tau_hat_i)), cost, dr_scores, R = 200)
+          },
+          error = function(e) {
+            if (verbose) cli::cli_alert_warning(paste("error in ATE maq for", col_name, ":", e$message))
+            # create a simple fallback object
+            imputed <- TRUE
+            list("_path" = list(gain = seq(0, mean_tau, length.out = 100)))
+          }
+        )
+
+        qini_objects[[ate_name]] <- qini_ate
+      }
+
+      # determine max index across all qini objects
+      max_index <- max(sapply(qini_objects, function(qini_obj) {
+        if (!is.null(qini_obj) && !is.null(qini_obj[["_path"]]) && !is.null(qini_obj[["_path"]]$gain)) {
+          length(qini_obj[["_path"]]$gain)
+        } else {
+          return(0)
+        }
+      }))
+
+      if (max_index == 0) {
+        if (verbose) cli::cli_alert_warning("all qini objects have empty gain, creating fallback objects")
+
+        # create fallback objects
+        qini_data <- create_fallback_qini_data(tau_hat, W_multi)
+
+        # mark as imputed
+        attr(qini_data, "imputed") <- TRUE
+
+        return(list(
+          qini_data = qini_data,
+          qini_objects = qini_objects
+        ))
+      }
+
+      # extract data from each qini object
+      qini_data <- purrr::map2_dfr(
+        qini_objects, names(qini_objects),
+        ~ extract_qini_data_multi(.x, .y, max_index, verbose)
+      )
+
+      if (nrow(qini_data) == 0) {
+        if (verbose) cli::cli_alert_warning("extracted qini data is empty, creating fallback data")
+
+        # create fallback data
+        qini_data <- create_fallback_qini_data(tau_hat, W_multi)
+        imputed <- TRUE
+      }
+
+      # mark if any imputation happened
+      attr(qini_data, "imputed") <- imputed
+
+      if (verbose) {
+        cli::cli_alert_success("successfully created qini_objects and qini_data")
+        cli::cli_alert_info(paste("qini_data dimensions:", nrow(qini_data), "x", ncol(qini_data)))
+        cli::cli_alert_info(paste("number of qini_objects:", length(qini_objects)))
+        if (imputed) cli::cli_alert_warning("note: some qini data was imputed")
+      }
+
+      return(list(
+        qini_data = qini_data,
+        qini_objects = qini_objects
+      ))
+    },
+    error = function(e) {
+      if (verbose) cli::cli_alert_warning(paste("error in compute_qini_curves_multi_arm:", e$message))
       return(NULL)
-    })
-
-    if (is.null(dr_scores)) {
-      if (verbose) cli::cli_alert_warning("DR scores failed, using alternative approach")
-
-      # create simplified qini data and objects
-      qini_data <- create_fallback_qini_data(tau_hat, W_multi)
-      qini_objects <- create_fallback_qini_objects(tau_hat, W_multi)
-
-      # mark as imputed
-      attr(qini_data, "imputed") <- TRUE
-
-      return(list(
-        qini_data = qini_data,
-        qini_objects = qini_objects
-      ))
     }
-
-    if (verbose) {
-      cli::cli_alert_info(paste("DR scores dimensions:", paste(dim(dr_scores), collapse = "x")))
-    }
-
-    # extract treatment arms
-    arms <- levels(W_multi)
-    n_arms <- length(arms)
-
-    if (is.null(cost)) {
-      cost <- rep(1, n_arms)
-    } else if (length(cost) != n_arms) {
-      if (verbose) cli::cli_alert_warning(paste("cost vector length", length(cost), "doesn't match number of arms", n_arms, "- using uniform costs"))
-      cost <- rep(1, n_arms)
-    }
-
-    # compute qini objects for each arm comparison
-    qini_objects <- list()
-    imputed <- FALSE
-
-    # process each column of tau_hat (each treatment comparison)
-    for (i in 1:ncol(tau_hat)) {
-      col_name <- colnames(tau_hat)[i]
-      if (verbose) cli::cli_alert_info(paste("processing comparison:", col_name))
-
-      tau_hat_i <- tau_hat[, i]
-
-      # try to compute the maq object
-      qini_i <- tryCatch({
-        maq::maq(tau_hat_i, cost, dr_scores, R = 200)
-      }, error = function(e) {
-        if (verbose) cli::cli_alert_warning(paste("error in maq for", col_name, ":", e$message))
-        # create a simple fallback object
-        imputed <- TRUE
-        list("_path" = list(gain = cumsum(sort(tau_hat_i, decreasing = TRUE))/length(tau_hat_i)))
-      })
-
-      qini_objects[[col_name]] <- qini_i
-    }
-
-    # compute ATE qini curves
-    for (i in 1:ncol(tau_hat)) {
-      col_name <- colnames(tau_hat)[i]
-      ate_name <- paste0("ate_", col_name)
-
-      tau_hat_i <- tau_hat[, i]
-      mean_tau <- mean(tau_hat_i)
-
-      # try to compute the ATE maq object
-      qini_ate <- tryCatch({
-        maq::maq(rep(mean_tau, length(tau_hat_i)), cost, dr_scores, R = 200)
-      }, error = function(e) {
-        if (verbose) cli::cli_alert_warning(paste("error in ATE maq for", col_name, ":", e$message))
-        # create a simple fallback object
-        imputed <- TRUE
-        list("_path" = list(gain = seq(0, mean_tau, length.out = 100)))
-      })
-
-      qini_objects[[ate_name]] <- qini_ate
-    }
-
-    # determine max index across all qini objects
-    max_index <- max(sapply(qini_objects, function(qini_obj) {
-      if (!is.null(qini_obj) && !is.null(qini_obj[["_path"]]) && !is.null(qini_obj[["_path"]]$gain)) {
-        length(qini_obj[["_path"]]$gain)
-      } else {
-        return(0)
-      }
-    }))
-
-    if (max_index == 0) {
-      if (verbose) cli::cli_alert_warning("all qini objects have empty gain, creating fallback objects")
-
-      # create fallback objects
-      qini_data <- create_fallback_qini_data(tau_hat, W_multi)
-
-      # mark as imputed
-      attr(qini_data, "imputed") <- TRUE
-
-      return(list(
-        qini_data = qini_data,
-        qini_objects = qini_objects
-      ))
-    }
-
-    # extract data from each qini object
-    qini_data <- purrr::map2_dfr(qini_objects, names(qini_objects),
-                                 ~ extract_qini_data_multi(.x, .y, max_index, verbose))
-
-    if (nrow(qini_data) == 0) {
-      if (verbose) cli::cli_alert_warning("extracted qini data is empty, creating fallback data")
-
-      # create fallback data
-      qini_data <- create_fallback_qini_data(tau_hat, W_multi)
-      imputed <- TRUE
-    }
-
-    # mark if any imputation happened
-    attr(qini_data, "imputed") <- imputed
-
-    if (verbose) {
-      cli::cli_alert_success("successfully created qini_objects and qini_data")
-      cli::cli_alert_info(paste("qini_data dimensions:", nrow(qini_data), "x", ncol(qini_data)))
-      cli::cli_alert_info(paste("number of qini_objects:", length(qini_objects)))
-      if (imputed) cli::cli_alert_warning("note: some qini data was imputed")
-    }
-
-    return(list(
-      qini_data = qini_data,
-      qini_objects = qini_objects
-    ))
-  }, error = function(e) {
-    if (verbose) cli::cli_alert_warning(paste("error in compute_qini_curves_multi_arm:", e$message))
-    return(NULL)
-  })
+  )
 }
 
 #' Extract Qini Data for Multi-Arm Treatments
@@ -563,7 +591,7 @@ create_fallback_qini_data <- function(tau_hat, W_multi) {
       # for CATE curves, create a curved line
       curve_data <- data.frame(
         proportion = seq(0, 1, length.out = n_points),
-        gain = (seq(0, 1, length.out = n_points))^0.5,  # square root curve
+        gain = (seq(0, 1, length.out = n_points))^0.5, # square root curve
         curve = curve
       )
     }
@@ -605,7 +633,7 @@ create_fallback_qini_objects <- function(tau_hat, W_multi) {
       result[[curve]] <- list("_path" = list(gain = seq(0, 1, length.out = n_points)))
     } else {
       # for CATE curves, create a curved line
-      result[[curve]] <- list("_path" = list(gain = (seq(0, 1, length.out = n_points))^0.5))  # square root curve
+      result[[curve]] <- list("_path" = list(gain = (seq(0, 1, length.out = n_points))^0.5)) # square root curve
     }
   }
 
@@ -622,59 +650,64 @@ create_fallback_qini_objects <- function(tau_hat, W_multi) {
 #'
 #' @keywords internal
 group_results_by_comparison <- function(results) {
-  tryCatch({
-    # extract custom tables
-    tables <- lapply(results, function(x) {
-      if (!is.null(x$custom_table)) {
-        return(x$custom_table)
-      } else {
-        return(NULL)
+  tryCatch(
+    {
+      # extract custom tables
+      tables <- lapply(results, function(x) {
+        if (!is.null(x$custom_table)) {
+          return(x$custom_table)
+        } else {
+          return(NULL)
+        }
+      })
+
+      # filter out NULL entries
+      tables <- tables[!sapply(tables, is.null)]
+
+      if (length(tables) == 0) {
+        return(list())
       }
-    })
 
-    # filter out NULL entries
-    tables <- tables[!sapply(tables, is.null)]
+      # identify unique comparison levels
+      all_levels <- unique(unlist(lapply(tables, function(x) {
+        if (is.null(x$comparison)) {
+          return(NULL)
+        }
+        unique(x$comparison)
+      })))
 
-    if (length(tables) == 0) {
-      return(list())
-    }
+      # group tables by comparison level
+      grouped_tables <- lapply(all_levels, function(level) {
+        filtered_tables <- lapply(tables, function(table) {
+          if (level %in% table$comparison) {
+            subset(table, comparison == level)
+          } else {
+            NULL
+          }
+        })
 
-    # identify unique comparison levels
-    all_levels <- unique(unlist(lapply(tables, function(x) {
-      if (is.null(x$comparison)) return(NULL)
-      unique(x$comparison)
-    })))
+        filtered_tables <- filtered_tables[!sapply(filtered_tables, is.null)]
 
-    # group tables by comparison level
-    grouped_tables <- lapply(all_levels, function(level) {
-      filtered_tables <- lapply(tables, function(table) {
-        if (level %in% table$comparison) {
-          subset(table, comparison == level)
+        if (length(filtered_tables) > 0) {
+          do.call(rbind, filtered_tables)
         } else {
           NULL
         }
       })
 
-      filtered_tables <- filtered_tables[!sapply(filtered_tables, is.null)]
+      # name the list elements
+      names(grouped_tables) <- all_levels
 
-      if (length(filtered_tables) > 0) {
-        do.call(rbind, filtered_tables)
-      } else {
-        NULL
-      }
-    })
+      # filter out NULL entries
+      grouped_tables <- grouped_tables[!sapply(grouped_tables, is.null)]
 
-    # name the list elements
-    names(grouped_tables) <- all_levels
-
-    # filter out NULL entries
-    grouped_tables <- grouped_tables[!sapply(grouped_tables, is.null)]
-
-    return(grouped_tables)
-  }, error = function(e) {
-    warning(paste("Error in group_results_by_comparison:", e$message))
-    return(list())
-  })
+      return(grouped_tables)
+    },
+    error = function(e) {
+      warning(paste("Error in group_results_by_comparison:", e$message))
+      return(list())
+    }
+  )
 }
 # old
 # margot_multi_arm_causal_forest <- function(data, outcome_vars, covariates, W_multi, weights,

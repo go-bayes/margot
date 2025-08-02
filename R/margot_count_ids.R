@@ -32,16 +32,15 @@
 margot_count_ids <- function(dat,
                              start_wave = 2009,
                              end_wave = 2022,
-                             prev_wave_counts = c(1,2,3,4),
+                             prev_wave_counts = c(1, 2, 3, 4),
                              opt_in_var = "sample_frame_opt_in",
                              opt_in_true = 1,
                              opt_in_false = 0) {
-
   cli::cli_alert_info("Starting participant count calculation")
   results <- tibble::tibble()
 
   # validate opt_in variable exists if needed
-  if(opt_in_var %in% names(dat)) {
+  if (opt_in_var %in% names(dat)) {
     track_opt_ins <- TRUE
   } else {
     track_opt_ins <- FALSE
@@ -62,12 +61,12 @@ margot_count_ids <- function(dat,
   opted_in_ids <- character(0)
 
   # validate prev_wave_counts
-  if(!is.numeric(prev_wave_counts) || any(prev_wave_counts < 1)) {
+  if (!is.numeric(prev_wave_counts) || any(prev_wave_counts < 1)) {
     stop("prev_wave_counts must be a numeric vector with values >= 1")
   }
   prev_wave_counts <- sort(unique(prev_wave_counts))
 
-  for(wave in all_waves) {
+  for (wave in all_waves) {
     cli::cli_alert_info(paste("Processing wave:", wave))
 
     # get current wave data
@@ -86,10 +85,12 @@ margot_count_ids <- function(dat,
       unique()
 
     # track opt-ins for current wave if variable exists
-    if(track_opt_ins) {
+    if (track_opt_ins) {
       new_opt_ins <- wave_data %>%
-        dplyr::filter(year_measured == 1,
-                      !!rlang::sym(opt_in_var) == opt_in_true) %>%
+        dplyr::filter(
+          year_measured == 1,
+          !!rlang::sym(opt_in_var) == opt_in_true
+        ) %>%
         dplyr::anti_join(tibble::tibble(id = opted_in_ids), by = "id") %>%
         dplyr::pull(id) %>%
         unique()
@@ -111,7 +112,7 @@ margot_count_ids <- function(dat,
       length()
 
     # identify returnees (present in earlier waves but not previous wave)
-    if(wave > start_wave) {
+    if (wave > start_wave) {
       # get previous wave participants
       prev_wave_actives <- dat %>%
         dplyr::filter(wave == (!!wave - 1), year_measured == 1) %>%
@@ -127,7 +128,7 @@ margot_count_ids <- function(dat,
       # find returnees: active now, not in previous wave, but in earlier waves
       new_returnees <- intersect(
         setdiff(active_ids, prev_wave_actives), # not in previous wave
-        earlier_participants  # but were in earlier waves
+        earlier_participants # but were in earlier waves
       )
 
       returned_ids <- union(returned_ids, new_returnees)
@@ -137,7 +138,7 @@ margot_count_ids <- function(dat,
 
     # update wave history matrix
     new_ids <- setdiff(active_ids, rownames(wave_history))
-    if(length(new_ids) > 0) {
+    if (length(new_ids) > 0) {
       new_rows <- matrix(0, nrow = length(new_ids), ncol = length(all_waves))
       colnames(new_rows) <- colnames(wave_history)
       rownames(new_rows) <- new_ids
@@ -151,17 +152,17 @@ margot_count_ids <- function(dat,
 
     # compute previous wave appearances
     participants_in_prev_waves <- list()
-    if(wave > start_wave) {
+    if (wave > start_wave) {
       active_rows <- match(active_ids, rownames(wave_history))
-      previous_waves <- wave_history[active_rows, 1:(wave_idx-1), drop = FALSE]
+      previous_waves <- wave_history[active_rows, 1:(wave_idx - 1), drop = FALSE]
       wave_counts <- rowSums(previous_waves)
 
-      for(count in prev_wave_counts) {
+      for (count in prev_wave_counts) {
         participants_in_prev_waves[[paste0("prev_", count)]] <-
           sum(wave_counts >= count)
       }
     } else {
-      for(count in prev_wave_counts) {
+      for (count in prev_wave_counts) {
         participants_in_prev_waves[[paste0("prev_", count)]] <- 0
       }
     }
@@ -180,7 +181,7 @@ margot_count_ids <- function(dat,
     )
 
     # add previous wave counts with new naming convention
-    for(count in prev_wave_counts) {
+    for (count in prev_wave_counts) {
       temp_tibble[[paste0("n_wave_", count, "plus")]] <-
         participants_in_prev_waves[[paste0("prev_", count)]]
     }

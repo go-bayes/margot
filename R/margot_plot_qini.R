@@ -16,8 +16,8 @@
 #' @param spend_line_color Color for spend level lines. Default is "red".
 #' @param spend_line_alpha Alpha transparency for spend lines. Default is 0.5.
 #' @param theme Character string specifying the ggplot2 theme. Default is "classic". Options include "classic", "minimal", "bw", "gray", "light", "dark", "void".
-#' @param show_ci Logical or character indicating which confidence intervals to show. 
-#'   Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only). 
+#' @param show_ci Logical or character indicating which confidence intervals to show.
+#'   Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE only), "ate" (ATE only).
 #'   Default is FALSE.
 #' @param ci_alpha Significance level for confidence intervals. Default is 0.05.
 #' @param ci_n_points Number of points at which to compute confidence intervals. Default is 20.
@@ -33,12 +33,12 @@
 #' @param ylim Numeric vector of length 2 specifying the y-axis limits c(min, max). Default is NULL (automatic scaling).
 #' @param fixed_ylim Logical; if TRUE and ylim is NULL, uses the actual data range with padding
 #'   for consistent y-axis scaling across plots. Default is FALSE.
-#' @param baseline_method Method for generating baseline: "auto" (default), 
+#' @param baseline_method Method for generating baseline: "auto" (default),
 #'   "maq_no_covariates", "simple", "maq_only", or "none". See details in margot_generate_qini_data().
 #' @param cate_color Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).
 #' @param ate_color Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).
-#' @param scale Character string specifying the scale for gains: "average" (default), "cumulative", 
-#'   or "population". "average" shows average policy effect per unit (maq default), "cumulative" 
+#' @param scale Character string specifying the scale for gains: "average" (default), "cumulative",
+#'   or "population". "average" shows average policy effect per unit (maq default), "cumulative"
 #'   shows traditional cumulative gains, "population" shows total population impact.
 #' @param treatment_cost Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
 #'   which attempts to extract the cost from model metadata. If not found, assumes cost = 1.
@@ -53,7 +53,7 @@
 #' @return If return_data is FALSE (default), returns a ggplot object. If return_data is TRUE,
 #'   returns a data.frame with the plot data.
 #'
-#' @details 
+#' @details
 #' This function provides maq::plot() compatible features including:
 #' \itemize{
 #'   \item Horizontal line extension for complete paths
@@ -61,7 +61,7 @@
 #'   \item Data frame return option matching maq::plot() output format
 #'   \item Standard error extraction from maq objects
 #' }
-#' 
+#'
 #' Key differences from maq::plot():
 #' \itemize{
 #'   \item Uses ggplot2 instead of base R graphics
@@ -70,12 +70,12 @@
 #'   \item Confidence intervals computed via maq::average_gain() for accuracy
 #'   \item Binary treatment colors: Customizable via cate_color and ate_color parameters
 #' }
-#' 
-#' \strong{Important Note on Scale:} The y-axis shows \strong{average policy effects per unit}, 
-#' not cumulative gains. This follows the maq package implementation where gains represent 
-#' Q(B) = E[⟨πB(Xi), τ(Xi)⟩], the expected (average) gain from treating units according 
-#' to the policy πB. This differs from traditional uplift modeling QINI curves which show 
-#' cumulative gains. At 100\% spend, both CATE and ATE curves converge to similar values 
+#'
+#' \strong{Important Note on Scale:} The y-axis shows \strong{average policy effects per unit},
+#' not cumulative gains. This follows the maq package implementation where gains represent
+#' Q(B) = E[⟨πB(Xi), τ(Xi)⟩], the expected (average) gain from treating units according
+#' to the policy πB. This differs from traditional uplift modeling QINI curves which show
+#' cumulative gains. At 100\% spend, both CATE and ATE curves converge to similar values
 #' because the average effect is similar regardless of treatment ordering when everyone is treated.
 #'
 #' @import ggplot2
@@ -138,14 +138,14 @@ margot_plot_qini <- function(mc_result, outcome_var,
                              seed = 12345,
                              x_axis = c("proportion", "budget")) {
   cli::cli_h1("Margot Plot Qini Curves")
-  
+
   # match x_axis argument
   x_axis <- match.arg(x_axis)
 
   # Transform the outcome variable name
   # First try direct lookup in label_mapping if provided
   transformed_outcome_var <- outcome_var
-  
+
   if (!is.null(label_mapping)) {
     # Try exact match first (with model_ prefix)
     if (outcome_var %in% names(label_mapping)) {
@@ -199,24 +199,24 @@ margot_plot_qini <- function(mc_result, outcome_var,
   if (is.null(treatment_cost)) {
     # try to get from qini metadata
     if (!is.null(mc_result$results[[outcome_var]]$qini_metadata) &&
-        !is.null(mc_result$results[[outcome_var]]$qini_metadata$treatment_cost)) {
+      !is.null(mc_result$results[[outcome_var]]$qini_metadata$treatment_cost)) {
       treatment_cost <- mc_result$results[[outcome_var]]$qini_metadata$treatment_cost
     } else {
       # assume default of 1
       treatment_cost <- 1
     }
   }
-  
+
   # check if qini_data already exists, otherwise generate it
   qini_data <- mc_result$results[[outcome_var]]$qini_data
   qini_objects <- mc_result$results[[outcome_var]]$qini_objects
-  
+
   # check if we need to regenerate due to different baseline method
   regenerate_needed <- FALSE
   if (!is.null(qini_data)) {
     # check if current data matches requested baseline method
     has_ate <- "ate" %in% unique(qini_data$curve) || "ATE" %in% unique(qini_data$curve)
-    
+
     if (baseline_method == "none" && has_ate) {
       # want no baseline but have one
       regenerate_needed <- TRUE
@@ -230,11 +230,11 @@ margot_plot_qini <- function(mc_result, outcome_var,
       regenerate_needed <- TRUE
       cli::cli_alert_info("Regenerating QINI data with {baseline_method} baseline")
     }
-    
+
     # also check if treatment cost has changed
     stored_cost <- 1
     if (!is.null(mc_result$results[[outcome_var]]$qini_metadata) &&
-        !is.null(mc_result$results[[outcome_var]]$qini_metadata$treatment_cost)) {
+      !is.null(mc_result$results[[outcome_var]]$qini_metadata$treatment_cost)) {
       stored_cost <- mc_result$results[[outcome_var]]$qini_metadata$treatment_cost
     }
     if (treatment_cost != stored_cost) {
@@ -242,16 +242,16 @@ margot_plot_qini <- function(mc_result, outcome_var,
       cli::cli_alert_info("Regenerating QINI curves with treatment_cost = {treatment_cost} (was {stored_cost})")
     }
   }
-  
+
   # Try to regenerate if needed and possible
   if (is.null(qini_data) || regenerate_needed) {
     # First check if we can actually regenerate before trying
     can_regenerate <- FALSE
-    
+
     # Quick check if data is available
     model_result <- mc_result$results[[outcome_var]]
     outcome_name_clean <- gsub("^model_", "", outcome_var)
-    
+
     # Check various data sources
     if (!is.null(mc_result$data) && (outcome_name_clean %in% names(mc_result$data) || outcome_var %in% names(mc_result$data))) {
       can_regenerate <- TRUE
@@ -265,7 +265,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
         can_regenerate <- TRUE
       }
     }
-    
+
     if (!can_regenerate && regenerate_needed) {
       # Can't regenerate - use existing data if available
       if (!is.null(qini_data)) {
@@ -276,19 +276,19 @@ margot_plot_qini <- function(mc_result, outcome_var,
       }
     }
   }
-  
+
   # Now proceed with regeneration if still needed
   if (is.null(qini_data) || regenerate_needed) {
     cli::cli_alert_info("Generating QINI curves on-demand for {outcome_var}")
-    
+
     # extract necessary components
     model_result <- mc_result$results[[outcome_var]]
-    
+
     # find outcome data - try various locations
     outcome_name_clean <- gsub("^model_", "", outcome_var)
     is_flipped <- grepl("_r$", outcome_name_clean)
     outcome_data <- NULL
-    
+
     # For flipped models, prioritize data from forest object which has the correct data
     if (is_flipped) {
       if (!is.null(model_result$model) && !is.null(model_result$model$Y.orig)) {
@@ -318,7 +318,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
         }
       }
     }
-    
+
     # If not found yet, try standard locations
     if (is.null(outcome_data)) {
       if (is.null(mc_result$data)) {
@@ -341,7 +341,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
         outcome_data <- mc_result$data[[outcome_var]]
       }
     }
-    
+
     if (is.null(outcome_data)) {
       # provide more helpful error message
       if (!is.null(mc_result$data)) {
@@ -359,11 +359,11 @@ margot_plot_qini <- function(mc_result, outcome_var,
         ))
       }
     }
-    
+
     # get treatment and weights
     W <- mc_result$W
     weights <- mc_result$weights
-    
+
     if (is.null(W)) {
       # try to get from forest object
       if (!is.null(model_result$model) && !is.null(model_result$model$W.orig)) {
@@ -376,35 +376,38 @@ margot_plot_qini <- function(mc_result, outcome_var,
         cli::cli_abort("Treatment assignment vector (W) not found in mc_result or forest objects")
       }
     }
-    
+
     # generate qini data
-    qini_result <- tryCatch({
-      margot_generate_qini_data(
-        model_result = model_result,
-        outcome_data = outcome_data,
-        treatment = W,
-        weights = weights,
-        baseline_method = baseline_method,
-        seed = 42,
-        verbose = TRUE,
-        treatment_cost = treatment_cost,
-        x_axis = x_axis
-      )
-    }, error = function(e) {
-      cli::cli_alert_warning("Failed to regenerate QINI data: {e$message}")
-      
-      # try to use existing QINI data if available
-      if (!is.null(mc_result$results[[outcome_var]]$qini_data)) {
-        cli::cli_alert_info("Falling back to existing QINI data (baseline method may differ)")
-        list(
-          qini_data = mc_result$results[[outcome_var]]$qini_data,
-          qini_objects = mc_result$results[[outcome_var]]$qini_objects
+    qini_result <- tryCatch(
+      {
+        margot_generate_qini_data(
+          model_result = model_result,
+          outcome_data = outcome_data,
+          treatment = W,
+          weights = weights,
+          baseline_method = baseline_method,
+          seed = 42,
+          verbose = TRUE,
+          treatment_cost = treatment_cost,
+          x_axis = x_axis
         )
-      } else {
-        NULL
+      },
+      error = function(e) {
+        cli::cli_alert_warning("Failed to regenerate QINI data: {e$message}")
+
+        # try to use existing QINI data if available
+        if (!is.null(mc_result$results[[outcome_var]]$qini_data)) {
+          cli::cli_alert_info("Falling back to existing QINI data (baseline method may differ)")
+          list(
+            qini_data = mc_result$results[[outcome_var]]$qini_data,
+            qini_objects = mc_result$results[[outcome_var]]$qini_objects
+          )
+        } else {
+          NULL
+        }
       }
-    })
-    
+    )
+
     if (!is.null(qini_result)) {
       qini_data <- qini_result$qini_data
       qini_objects <- qini_result$qini_objects
@@ -412,7 +415,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
       cli::cli_abort("Failed to generate QINI data for {outcome_var} and no existing data available")
     }
   }
-  
+
   # Handle case where we want a different baseline but can't regenerate
   if (regenerate_needed && is.null(mc_result$data) && !is.null(qini_data)) {
     if (baseline_method == "simple") {
@@ -420,13 +423,13 @@ margot_plot_qini <- function(mc_result, outcome_var,
       # If we have CATE data, we can add a simple baseline
       has_cate <- "cate" %in% unique(qini_data$curve) || "CATE" %in% unique(qini_data$curve)
       has_ate <- "ate" %in% unique(qini_data$curve) || "ATE" %in% unique(qini_data$curve)
-      
+
       if (has_cate) {
         cli::cli_alert_info("Cannot regenerate data, but adding simple baseline to existing QINI data")
-        
+
         # Get model result
         model_result <- mc_result$results[[outcome_var]]
-        
+
         # Try to get mean tau from existing objects or model
         mean_tau <- NULL
         if (!is.null(model_result$tau_hat)) {
@@ -445,7 +448,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
             mean_tau <- ate_row[1, "Estimate"]
           }
         }
-        
+
         if (!is.null(mean_tau)) {
           # Add simple baseline to existing data
           n_points <- length(unique(qini_data$proportion))
@@ -465,7 +468,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
       }
     }
   }
-  
+
   cli::cli_alert_success("Qini data ready for outcome variable: {outcome_var}")
   cli::cli_alert_info("Structure of qini_data:")
   print(str(qini_data))
@@ -502,47 +505,48 @@ margot_plot_qini <- function(mc_result, outcome_var,
     }
   } else {
     # For multi-arm, use standard label transformation
-    transformed_curves <- sapply(unique_curves, function(x) transform_label(
-      label = x,
-      label_mapping = label_mapping,
-      options = list(
-        remove_tx_prefix = TRUE,
-        remove_z_suffix = TRUE,
-        remove_underscores = TRUE,
-        use_title_case = TRUE
+    transformed_curves <- sapply(unique_curves, function(x) {
+      transform_label(
+        label = x,
+        label_mapping = label_mapping,
+        options = list(
+          remove_tx_prefix = TRUE,
+          remove_z_suffix = TRUE,
+          remove_underscores = TRUE,
+          use_title_case = TRUE
+        )
       )
-    ))
+    })
   }
 
   curve_mapping <- setNames(transformed_curves, unique_curves)
   qini_data$curve <- curve_mapping[qini_data$curve]
-  
+
   # ensure curve is a factor with both levels to maintain consistent colors
   if (is_binary) {
     qini_data$curve <- factor(qini_data$curve, levels = c("CATE", "ATE"))
   } else {
     qini_data$curve <- factor(qini_data$curve)
   }
-  
+
   cli::cli_alert_success("Treatment curve labels transformed")
-  
+
   # apply scale transformation
   if (!is.null(scale)) {
     cli::cli_alert_info("Applying scale transformation: {scale}")
-    
+
     # store original gains for reference
     qini_data$original_gain <- qini_data$gain
-    
+
     if (scale == "cumulative") {
       # transform from average to cumulative: multiply by proportion
       qini_data$gain <- qini_data$gain * qini_data$proportion
       cli::cli_alert_success("Transformed gains to cumulative scale")
-      
     } else if (scale == "population") {
       # transform to population scale
       # need to get the total number of units
       n_units <- NULL
-      
+
       # try to get n_units from qini metadata
       if (!is.null(mc_result$results[[outcome_var]]$qini_metadata$n_test)) {
         n_units <- mc_result$results[[outcome_var]]$qini_metadata$n_test
@@ -551,7 +555,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
       } else if (!is.null(mc_result$data)) {
         n_units <- nrow(mc_result$data)
       }
-      
+
       if (!is.null(n_units)) {
         # population gain = average gain * proportion * n_units
         qini_data$gain <- qini_data$gain * qini_data$proportion * n_units
@@ -564,12 +568,12 @@ margot_plot_qini <- function(mc_result, outcome_var,
     }
     # else scale == "average", no transformation needed
   }
-  
+
   # apply grid step subsampling if needed
   if (is.null(grid_step)) {
     grid_step <- max(floor(nrow(qini_data) / 1000), 1)
   }
-  
+
   if (grid_step > 1) {
     # subsample the data
     indices <- seq(1, nrow(qini_data), by = grid_step)
@@ -589,11 +593,11 @@ margot_plot_qini <- function(mc_result, outcome_var,
   # parse show_ci parameter
   compute_ci <- FALSE
   ci_curves <- character(0)
-  
+
   if (is.logical(show_ci)) {
     if (show_ci) {
       compute_ci <- TRUE
-      ci_curves <- c("cate", "ate")  # show both
+      ci_curves <- c("cate", "ate") # show both
     }
   } else if (is.character(show_ci)) {
     show_ci <- tolower(show_ci)
@@ -610,61 +614,64 @@ margot_plot_qini <- function(mc_result, outcome_var,
       cli::cli_alert_warning("Invalid show_ci value '{show_ci}'. Using FALSE.")
     }
   }
-  
+
   # compute confidence intervals if requested
   ci_data <- NULL
   if (compute_ci) {
     cli::cli_alert_info("Computing confidence intervals for {paste(ci_curves, collapse = ' and ')} curve(s)...")
-    
+
     # qini_objects should already be available from the generation above
     # no need to re-extract
-    
+
     if (!is.null(qini_objects)) {
       # create spend sequence for CI computation
       # include small buffer at extremes to avoid numerical issues
       spend_seq <- seq(0.01, 0.99, length.out = ci_n_points)
-      
+
       # function to compute CIs for a single qini object
       compute_curve_ci <- function(qini_obj, curve_name) {
         ci_list <- lapply(spend_seq, function(s) {
-          tryCatch({
-            # handle both maq objects and simple baselines
-            if (inherits(qini_obj, "qini_simple_baseline")) {
-              avg_gain_result <- average_gain.qini_simple_baseline(qini_obj, spend = s)
-            } else {
-              avg_gain_result <- maq::average_gain(qini_obj, spend = s)
-            }
-            
-            # handle different return formats from maq
-            if (is.list(avg_gain_result)) {
-              estimate <- avg_gain_result$estimate
-              std_err <- avg_gain_result$std.err
-            } else if (is.numeric(avg_gain_result) && length(avg_gain_result) >= 2) {
-              estimate <- avg_gain_result[1]
-              std_err <- avg_gain_result[2]
-            } else {
+          tryCatch(
+            {
+              # handle both maq objects and simple baselines
+              if (inherits(qini_obj, "qini_simple_baseline")) {
+                avg_gain_result <- average_gain.qini_simple_baseline(qini_obj, spend = s)
+              } else {
+                avg_gain_result <- maq::average_gain(qini_obj, spend = s)
+              }
+
+              # handle different return formats from maq
+              if (is.list(avg_gain_result)) {
+                estimate <- avg_gain_result$estimate
+                std_err <- avg_gain_result$std.err
+              } else if (is.numeric(avg_gain_result) && length(avg_gain_result) >= 2) {
+                estimate <- avg_gain_result[1]
+                std_err <- avg_gain_result[2]
+              } else {
+                return(NULL)
+              }
+
+              z_val <- qnorm(1 - ci_alpha / 2)
+              lower <- estimate - z_val * std_err
+              upper <- estimate + z_val * std_err
+
+              # we'll use the std_err but need to center on actual gain values
+              data.frame(
+                proportion = s,
+                estimate = estimate,
+                std_err = std_err,
+                lower = lower,
+                upper = upper,
+                curve = curve_name
+              )
+            },
+            error = function(e) {
+              cli::cli_alert_warning("CI computation failed at spend = {s}: {e$message}")
               return(NULL)
             }
-            
-            z_val <- qnorm(1 - ci_alpha/2)
-            lower <- estimate - z_val * std_err
-            upper <- estimate + z_val * std_err
-            
-            # we'll use the std_err but need to center on actual gain values
-            data.frame(
-              proportion = s,
-              estimate = estimate,
-              std_err = std_err,
-              lower = lower,
-              upper = upper,
-              curve = curve_name
-            )
-          }, error = function(e) {
-            cli::cli_alert_warning("CI computation failed at spend = {s}: {e$message}")
-            return(NULL)
-          })
+          )
         })
-        
+
         # combine results and remove NULLs
         ci_results <- ci_list[!sapply(ci_list, is.null)]
         if (length(ci_results) > 0) {
@@ -677,7 +684,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
             }
           })
           ci_results <- ci_results[!sapply(ci_results, is.null)]
-          
+
           if (length(ci_results) > 0) {
             do.call(rbind, ci_results)
           } else {
@@ -687,14 +694,14 @@ margot_plot_qini <- function(mc_result, outcome_var,
           NULL
         }
       }
-      
+
       # compute CIs for each curve
       ci_list <- list()
-      
+
       # for binary treatments - check both old and new naming conventions
       if (is_binary) {
         # cli::cli_alert_info("Binary treatment detected, checking for CATE and ATE curves")
-        
+
         # check each curve individually based on ci_curves selection
         if ("cate" %in% ci_curves) {
           if ("cate" %in% names(qini_objects)) {
@@ -710,7 +717,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
             if (!is.null(result)) ci_list[["CATE"]] <- result
           }
         }
-        
+
         if ("ate" %in% ci_curves) {
           if ("ate" %in% names(qini_objects)) {
             # cli::cli_alert_info("Computing CI for ATE curve")
@@ -734,63 +741,66 @@ margot_plot_qini <- function(mc_result, outcome_var,
           }
         }
       }
-      
+
       # combine CI data with better error handling
       non_null_ci <- ci_list[!sapply(ci_list, is.null)]
       if (length(non_null_ci) > 0) {
-        tryCatch({
-          ci_data <- do.call(rbind, non_null_ci)
-        }, error = function(e) {
-          cli::cli_alert_warning("Error combining CI data: {e$message}")
-          # debug: check structure of each CI result
-          for (nm in names(non_null_ci)) {
-            cli::cli_alert_info("CI structure for {nm}: {paste(names(non_null_ci[[nm]]), collapse = ', ')}")
+        tryCatch(
+          {
+            ci_data <- do.call(rbind, non_null_ci)
+          },
+          error = function(e) {
+            cli::cli_alert_warning("Error combining CI data: {e$message}")
+            # debug: check structure of each CI result
+            for (nm in names(non_null_ci)) {
+              cli::cli_alert_info("CI structure for {nm}: {paste(names(non_null_ci[[nm]]), collapse = ', ')}")
+            }
+            ci_data <- NULL
           }
-          ci_data <- NULL
-        })
+        )
       } else {
         ci_data <- NULL
       }
-      
+
       # re-center CIs on actual gain values from qini_data
       if (!is.null(ci_data) && nrow(ci_data) > 0) {
         for (crv in unique(ci_data$curve)) {
           # get the actual gains from qini_data
           qini_crv_data <- qini_data[qini_data$curve == crv, ]
           ci_crv_idx <- ci_data$curve == crv
-          
+
           if (nrow(qini_crv_data) > 0) {
             # for each CI point, find the actual gain at that proportion
             for (i in which(ci_crv_idx)) {
               # find closest proportion in qini_data
               idx <- which.min(abs(qini_crv_data$proportion - ci_data$proportion[i]))
               actual_gain <- qini_crv_data$gain[idx]
-              
+
               # recenter the CI on the actual gain
               if (length(actual_gain) > 0 && !is.na(actual_gain)) {
-                z_val <- qnorm(1 - ci_alpha/2)
+                z_val <- qnorm(1 - ci_alpha / 2)
                 ci_data$lower[i] <- actual_gain - z_val * ci_data$std_err[i]
                 ci_data$upper[i] <- actual_gain + z_val * ci_data$std_err[i]
-                ci_data$estimate[i] <- actual_gain  # use actual gain as estimate
+                ci_data$estimate[i] <- actual_gain # use actual gain as estimate
               }
             }
           }
         }
-        
+
         # remove std_err column as it's no longer needed
         if ("std_err" %in% names(ci_data)) {
           ci_data$std_err <- NULL
         }
       }
-      
+
       # add endpoints at 0 and 1 if missing
       if (!is.null(ci_data) && nrow(ci_data) > 0) {
         # for each curve, ensure we have 0 and 1
         curves <- unique(ci_data$curve)
-        
+
         # get column names from existing ci_data to ensure consistency
         ci_cols <- names(ci_data)
-        
+
         for (crv in curves) {
           crv_data <- ci_data[ci_data$curve == crv, ]
           # add 0 if missing
@@ -812,7 +822,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
             last_row <- crv_data[which.max(crv_data$proportion), ]
             new_row <- data.frame(
               proportion = 1,
-              estimate = last_row$estimate * (1 / last_row$proportion),  # extrapolate
+              estimate = last_row$estimate * (1 / last_row$proportion), # extrapolate
               lower = last_row$lower * (1 / last_row$proportion),
               upper = last_row$upper * (1 / last_row$proportion),
               curve = crv,
@@ -826,17 +836,16 @@ margot_plot_qini <- function(mc_result, outcome_var,
         # sort by curve and proportion
         ci_data <- ci_data[order(ci_data$curve, ci_data$proportion), ]
       }
-      
+
       # apply scale transformation to CI data if needed
       if (!is.null(ci_data) && !is.null(scale) && scale != "average") {
         cli::cli_alert_info("Applying scale transformation to confidence intervals")
-        
+
         if (scale == "cumulative") {
           # transform CI bounds to cumulative scale
           ci_data$estimate <- ci_data$estimate * ci_data$proportion
           ci_data$lower <- ci_data$lower * ci_data$proportion
           ci_data$upper <- ci_data$upper * ci_data$proportion
-          
         } else if (scale == "population") {
           # use same n_units as before
           n_units <- NULL
@@ -847,7 +856,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
           } else if (!is.null(mc_result$data)) {
             n_units <- nrow(mc_result$data)
           }
-          
+
           if (!is.null(n_units)) {
             ci_data$estimate <- ci_data$estimate * ci_data$proportion * n_units
             ci_data$lower <- ci_data$lower * ci_data$proportion * n_units
@@ -860,7 +869,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
           }
         }
       }
-      
+
       # also try to get std.err directly from maq objects for consistency
       std_err_data <- NULL
       for (qini_name in names(qini_objects)) {
@@ -868,41 +877,47 @@ margot_plot_qini <- function(mc_result, outcome_var,
         if (!is.null(qini_obj[["_path"]]$std.err)) {
           # map qini object name to curve name
           curve_name <- NULL
-          if (qini_name %in% c("cate", "treatment")) curve_name <- "CATE"
-          else if (qini_name %in% c("ate", "baseline")) curve_name <- "ATE"
-          else if (qini_name %in% names(curve_mapping)) curve_name <- curve_mapping[qini_name]
-          
+          if (qini_name %in% c("cate", "treatment")) {
+            curve_name <- "CATE"
+          } else if (qini_name %in% c("ate", "baseline")) {
+            curve_name <- "ATE"
+          } else if (qini_name %in% names(curve_mapping)) curve_name <- curve_mapping[qini_name]
+
           if (!is.null(curve_name)) {
             # extract std.err at the same proportions as the main data
             main_props <- unique(qini_data$proportion[qini_data$curve == curve_name])
             std_err_values <- qini_obj[["_path"]]$std.err
-            
+
             # check if we have enough values to interpolate
             if (length(std_err_values) < 2 || length(main_props) < 1) {
-              next  # skip this curve
+              next # skip this curve
             }
-            
+
             path_props <- seq(0, 1, length.out = length(std_err_values))
-            
+
             # interpolate std.err to match main proportions
-            std_err_interp <- tryCatch({
-              approx(path_props, std_err_values, 
-                     xout = main_props, rule = 2)$y
-            }, error = function(e) {
-              cli::cli_alert_warning("Could not interpolate std.err for {curve_name}")
-              NULL
-            })
-            
+            std_err_interp <- tryCatch(
+              {
+                approx(path_props, std_err_values,
+                  xout = main_props, rule = 2
+                )$y
+              },
+              error = function(e) {
+                cli::cli_alert_warning("Could not interpolate std.err for {curve_name}")
+                NULL
+              }
+            )
+
             if (is.null(std_err_interp)) {
               next
             }
-            
+
             temp_df <- data.frame(
               proportion = main_props,
               std_err = std_err_interp,
               curve = curve_name
             )
-            
+
             if (is.null(std_err_data)) {
               std_err_data <- temp_df
             } else {
@@ -911,12 +926,12 @@ margot_plot_qini <- function(mc_result, outcome_var,
           }
         }
       }
-      
+
       # if we have direct std.err data, we can add it to our results
       if (!is.null(std_err_data)) {
         cli::cli_alert_info("Also extracted std.err directly from maq objects")
       }
-      
+
       if (!is.null(ci_data) && nrow(ci_data) > 0) {
         cli::cli_alert_success("Confidence intervals computed")
       } else {
@@ -928,31 +943,33 @@ margot_plot_qini <- function(mc_result, outcome_var,
       show_ci <- FALSE
     }
   }
-  
+
   # check for complete paths and extend with horizontal lines if needed
   if (horizontal_line && !is.null(qini_objects)) {
     # qini_objects already available from generation above
     extended_data <- NULL
-    
+
     for (crv in unique(qini_data$curve)) {
       crv_data <- qini_data[qini_data$curve == crv, ]
-      
+
       # map curve names back to qini object names
       qini_obj_name <- NULL
       if (crv == "CATE") {
-        if ("cate" %in% names(qini_objects)) qini_obj_name <- "cate"
-        else if ("treatment" %in% names(qini_objects)) qini_obj_name <- "treatment"
+        if ("cate" %in% names(qini_objects)) {
+          qini_obj_name <- "cate"
+        } else if ("treatment" %in% names(qini_objects)) qini_obj_name <- "treatment"
       } else if (crv == "ATE") {
-        if ("ate" %in% names(qini_objects)) qini_obj_name <- "ate"
-        else if ("baseline" %in% names(qini_objects)) qini_obj_name <- "baseline"
+        if ("ate" %in% names(qini_objects)) {
+          qini_obj_name <- "ate"
+        } else if ("baseline" %in% names(qini_objects)) qini_obj_name <- "baseline"
       } else {
         # for multi-arm, use direct mapping
         qini_obj_name <- names(curve_mapping)[curve_mapping == crv][1]
       }
-      
+
       if (!is.null(qini_obj_name) && qini_obj_name %in% names(qini_objects)) {
         qini_obj <- qini_objects[[qini_obj_name]]
-        
+
         # check if path is complete
         if (!is.null(qini_obj[["_path"]]$complete.path) && qini_obj[["_path"]]$complete.path) {
           # check if we need to extend to proportion = 1
@@ -960,25 +977,25 @@ margot_plot_qini <- function(mc_result, outcome_var,
           if (max_prop < 1) {
             # get the last gain value
             last_gain <- crv_data$gain[which.max(crv_data$proportion)]
-            
+
             # create extension points
-            n_extend <- 20  # number of points for smooth line
-            extend_props <- seq(max_prop, 1, length.out = n_extend)[-1]  # exclude the overlap point
-            
+            n_extend <- 20 # number of points for smooth line
+            extend_props <- seq(max_prop, 1, length.out = n_extend)[-1] # exclude the overlap point
+
             extend_data <- data.frame(
               proportion = extend_props,
               gain = rep(last_gain, length(extend_props)),
               curve = crv,
               stringsAsFactors = FALSE
             )
-            
+
             # if qini_data has original_gain column (from scale transformation), add it to extend_data
             if ("original_gain" %in% names(qini_data)) {
               # get the original gain for this curve at max proportion
               original_last_gain <- crv_data$original_gain[which.max(crv_data$proportion)]
               extend_data$original_gain <- rep(original_last_gain, nrow(extend_data))
             }
-            
+
             if (is.null(extended_data)) {
               extended_data <- extend_data
             } else {
@@ -988,7 +1005,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
         }
       }
     }
-    
+
     # add extended data if any
     if (!is.null(extended_data)) {
       # ensure columns match exactly before rbind
@@ -998,11 +1015,11 @@ margot_plot_qini <- function(mc_result, outcome_var,
       cli::cli_alert_info("Extended complete paths with horizontal lines")
     }
   }
-  
+
   # create plot
   cli::cli_alert("Creating Qini curves plot...")
   p <- ggplot(qini_data, aes(x = proportion, y = gain, colour = curve, linetype = curve))
-  
+
   # add confidence intervals if available
   if (compute_ci && !is.null(ci_data)) {
     if (is.null(ci_ribbon_color)) {
@@ -1028,7 +1045,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
       )
     }
   }
-  
+
   # add the main curves
   p <- p + geom_line(linewidth = 0.5)
 
@@ -1040,7 +1057,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
     } else {
       spend_levels
     }
-    
+
     p <- p + geom_vline(
       xintercept = adjusted_spend_levels,
       linetype = "dashed",
@@ -1073,11 +1090,11 @@ margot_plot_qini <- function(mc_result, outcome_var,
     "average" = "Average policy effect",
     "cumulative" = "Cumulative gain",
     "population" = "Total population impact",
-    "Average policy effect"  # default
+    "Average policy effect" # default
   )
-  
+
   # treatment_cost was already initialized and cost-based regeneration handled earlier
-  
+
   # handle fixed_ylim if requested
   if (fixed_ylim && is.null(ylim)) {
     # for fixed ylim, just use the actual data range with padding
@@ -1088,20 +1105,20 @@ margot_plot_qini <- function(mc_result, outcome_var,
       ylim <- c(current_range[1] - padding, current_range[2] + padding)
     }
   }
-  
+
   # create subtitle if cost is not 1
   subtitle_text <- NULL
   if (treatment_cost != 1) {
     subtitle_text <- paste0("Treatment cost = ", treatment_cost)
   }
-  
+
   # set x-axis label based on x_axis type
   x_label <- if (x_axis == "budget") {
     "Budget per unit (B)"
   } else {
     "Proportion of population targeted"
   }
-  
+
   p <- p +
     labs(
       x = x_label,
@@ -1118,45 +1135,50 @@ margot_plot_qini <- function(mc_result, outcome_var,
       "light" = theme_light(),
       "dark" = theme_dark(),
       "void" = theme_void(),
-      theme_classic()  # default fallback
+      theme_classic() # default fallback
     ) +
     theme(
       legend.position = "top",
       plot.title = element_text(hjust = 0.5)
     ) +
     # use hardcoded colors for binary treatments
-    {if (is_binary) {
-      list(
-        scale_color_manual(values = c("CATE" = cate_color, "ATE" = ate_color)),
-        scale_fill_manual(values = c("CATE" = cate_color, "ATE" = ate_color))
-      )
-    } else {
-      list(
-        ggokabeito::scale_color_okabe_ito(),
-        ggokabeito::scale_fill_okabe_ito()
-      )
-    }} +
-    guides(colour = guide_legend(title = if(is_binary) "Curve Type" else "Treatment Arm"),
-           linetype = guide_legend(title = if(is_binary) "Curve Type" else "Treatment Arm")) +
-    {if (!is.null(ylim)) coord_cartesian(ylim = ylim)}
+    {
+      if (is_binary) {
+        list(
+          scale_color_manual(values = c("CATE" = cate_color, "ATE" = ate_color)),
+          scale_fill_manual(values = c("CATE" = cate_color, "ATE" = ate_color))
+        )
+      } else {
+        list(
+          ggokabeito::scale_color_okabe_ito(),
+          ggokabeito::scale_fill_okabe_ito()
+        )
+      }
+    } +
+    guides(
+      colour = guide_legend(title = if (is_binary) "Curve Type" else "Treatment Arm"),
+      linetype = guide_legend(title = if (is_binary) "Curve Type" else "Treatment Arm")
+    ) + {
+      if (!is.null(ylim)) coord_cartesian(ylim = ylim)
+    }
 
   cli::cli_alert_success("Qini curves plot created successfully 👍")
-  
+
   # return data if requested
   if (return_data) {
     # prepare return data frame
     plot_data <- qini_data
-    
+
     # add CI columns if available
     if (compute_ci && !is.null(ci_data)) {
       # merge CI data with main data
       plot_data <- merge(
-        plot_data, 
+        plot_data,
         ci_data[, c("proportion", "curve", "lower", "upper")],
         by = c("proportion", "curve"),
         all.x = TRUE
       )
-      
+
       # fill in missing CI values with NA
       plot_data$lower[is.na(plot_data$lower)] <- NA
       plot_data$upper[is.na(plot_data$upper)] <- NA
@@ -1164,13 +1186,15 @@ margot_plot_qini <- function(mc_result, outcome_var,
       plot_data$lower <- NA
       plot_data$upper <- NA
     }
-    
+
     # order columns consistently with maq::plot() output
-    plot_data <- plot_data[order(plot_data$curve, plot_data$proportion), 
-                          c("proportion", "gain", "lower", "upper", "curve")]
-    
+    plot_data <- plot_data[
+      order(plot_data$curve, plot_data$proportion),
+      c("proportion", "gain", "lower", "upper", "curve")
+    ]
+
     return(plot_data)
   }
-  
+
   return(p)
 }

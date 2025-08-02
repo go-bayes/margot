@@ -56,7 +56,7 @@
 #'   plot_type = "grid"
 #' )
 #' print(grid_plots)
-#' 
+#'
 #' # Get individual plots as a list
 #' plot_list <- margot_plot_qini_batch_cost_sensitivity(
 #'   cf_results,
@@ -65,7 +65,7 @@
 #'   plot_type = "list"
 #' )
 #' # Access specific plot: plot_list$model_anxiety$cost_0.5
-#' 
+#'
 #' # Create combined faceted plot
 #' combined_plot <- margot_plot_qini_batch_cost_sensitivity(
 #'   cf_results,
@@ -91,15 +91,13 @@ margot_plot_qini_batch_cost_sensitivity <- function(
     widths = NULL,
     verbose = TRUE,
     x_axis = "budget",
-    ...
-) {
-  
+    ...) {
   plot_type <- match.arg(plot_type)
-  
+
   if (verbose) {
     cli::cli_h1("Batch QINI Cost Sensitivity Plots")
   }
-  
+
   # run cost sensitivity analysis
   cost_sens <- margot_qini_cost_sensitivity(
     models = models,
@@ -109,93 +107,94 @@ margot_plot_qini_batch_cost_sensitivity <- function(
     baseline_method = baseline_method,
     verbose = verbose
   )
-  
+
   # extract processed model names
   models_to_plot <- cost_sens$models_processed
-  
+
   if (length(models_to_plot) == 0) {
     stop("No models available for plotting")
   }
-  
+
   if (verbose) {
     cli::cli_alert_info("Creating plots for {length(models_to_plot)} models at {length(costs)} cost levels")
   }
-  
+
   # create plots based on type
   if (plot_type == "list") {
     # return nested list of individual plots
     plot_list <- list()
-    
+
     for (model_name in models_to_plot) {
       plot_list[[model_name]] <- list()
-      
+
       for (i in seq_along(costs)) {
         cost <- costs[i]
         cost_label <- paste0("cost_", cost)
-        
+
         if (verbose) {
           cli::cli_alert_info("Creating plot for {model_name} at cost {cost}")
         }
-        
+
         # get qini results for this cost
         qini_at_cost <- cost_sens$results[[cost_label]]
-        
+
         # check if model exists and has qini_data
-        if (!is.null(qini_at_cost[[model_name]]) && 
-            !is.null(qini_at_cost[[model_name]]$qini_data)) {
-          
+        if (!is.null(qini_at_cost[[model_name]]) &&
+          !is.null(qini_at_cost[[model_name]]$qini_data)) {
           # create plot directly from QINI data
-          plot <- tryCatch({
-            p <- margot_plot_qini_direct(
-              qini_data = qini_at_cost[[model_name]]$qini_data,
-              qini_objects = qini_at_cost[[model_name]]$qini_objects,
-              outcome_var = model_name,
-              label_mapping = label_mapping,
-              spend_levels = spend_levels,
-              treatment_cost = cost,
-              x_axis = x_axis,
-              ...
-            )
-            list(p)
-          }, error = function(e) {
-            if (verbose) {
-              cli::cli_alert_warning("Failed to create plot for {model_name} at cost {cost}: {e$message}")
+          plot <- tryCatch(
+            {
+              p <- margot_plot_qini_direct(
+                qini_data = qini_at_cost[[model_name]]$qini_data,
+                qini_objects = qini_at_cost[[model_name]]$qini_objects,
+                outcome_var = model_name,
+                label_mapping = label_mapping,
+                spend_levels = spend_levels,
+                treatment_cost = cost,
+                x_axis = x_axis,
+                ...
+              )
+              list(p)
+            },
+            error = function(e) {
+              if (verbose) {
+                cli::cli_alert_warning("Failed to create plot for {model_name} at cost {cost}: {e$message}")
+              }
+              list()
             }
-            list()
-          })
+          )
         } else {
           if (verbose) {
             cli::cli_alert_warning("No QINI data found for {model_name} at cost {cost}")
           }
           plot <- list()
         }
-        
+
         if (length(plot) > 0) {
           # add cost to title
-          plot[[1]] <- plot[[1]] + 
+          plot[[1]] <- plot[[1]] +
             labs(subtitle = paste0("Treatment cost = ", cost))
-          
+
           plot_list[[model_name]][[cost_label]] <- plot[[1]]
         }
       }
     }
-    
+
     if (verbose) {
       cli::cli_alert_success("Created {length(models_to_plot) * length(costs)} individual plots")
     }
-    
+
     return(plot_list)
-    
   } else if (plot_type == "grid") {
     # create grid layout with patchwork
     if (!requireNamespace("patchwork", quietly = TRUE)) {
       stop("Package 'patchwork' is required for grid plots. Please install it.")
     }
-    
+
     # collect all plots in order
     all_plots <- list()
     plot_labels <- character()
-    
+
     for (model_name in models_to_plot) {
       model_display <- transform_var_name(
         gsub("^model_", "", model_name),
@@ -205,47 +204,49 @@ margot_plot_qini_batch_cost_sensitivity <- function(
         use_title_case = TRUE,
         remove_underscores = TRUE
       )
-      
+
       for (i in seq_along(costs)) {
         cost <- costs[i]
         cost_label <- paste0("cost_", cost)
-        
+
         # get qini results for this cost
         qini_at_cost <- cost_sens$results[[cost_label]]
-        
+
         # check if model exists and has qini_data
-        if (!is.null(qini_at_cost[[model_name]]) && 
-            !is.null(qini_at_cost[[model_name]]$qini_data)) {
-          
+        if (!is.null(qini_at_cost[[model_name]]) &&
+          !is.null(qini_at_cost[[model_name]]$qini_data)) {
           # create plot directly from QINI data
-          plot <- tryCatch({
-            p <- margot_plot_qini_direct(
-              qini_data = qini_at_cost[[model_name]]$qini_data,
-              qini_objects = qini_at_cost[[model_name]]$qini_objects,
-              outcome_var = model_name,
-              label_mapping = label_mapping,
-              spend_levels = spend_levels,
-              treatment_cost = cost,
-              x_axis = x_axis,
-              ...
-            )
-            list(p)
-          }, error = function(e) {
-            if (verbose) {
-              cli::cli_alert_warning("Failed to create plot for {model_name} at cost {cost}: {e$message}")
+          plot <- tryCatch(
+            {
+              p <- margot_plot_qini_direct(
+                qini_data = qini_at_cost[[model_name]]$qini_data,
+                qini_objects = qini_at_cost[[model_name]]$qini_objects,
+                outcome_var = model_name,
+                label_mapping = label_mapping,
+                spend_levels = spend_levels,
+                treatment_cost = cost,
+                x_axis = x_axis,
+                ...
+              )
+              list(p)
+            },
+            error = function(e) {
+              if (verbose) {
+                cli::cli_alert_warning("Failed to create plot for {model_name} at cost {cost}: {e$message}")
+              }
+              list()
             }
-            list()
-          })
+          )
         } else {
           if (verbose) {
             cli::cli_alert_warning("No QINI data found for {model_name} at cost {cost}")
           }
           plot <- list()
         }
-        
+
         if (length(plot) > 0) {
           # customize title to show model and cost
-          plot[[1]] <- plot[[1]] + 
+          plot[[1]] <- plot[[1]] +
             labs(
               title = model_display,
               subtitle = paste0("Cost = ", cost)
@@ -253,21 +254,21 @@ margot_plot_qini_batch_cost_sensitivity <- function(
             theme(
               plot.title = element_text(size = 10, face = "bold"),
               plot.subtitle = element_text(size = 9),
-              legend.position = "none"  # remove legend from individual plots
+              legend.position = "none" # remove legend from individual plots
             )
-          
+
           all_plots[[length(all_plots) + 1]] <- plot[[1]]
           plot_labels <- c(plot_labels, paste0(model_name, "_", cost))
         }
       }
     }
-    
+
     # determine grid layout
     if (is.null(ncol)) {
       ncol <- length(costs)
     }
     nrow <- ceiling(length(all_plots) / ncol)
-    
+
     # create combined plot with patchwork
     combined <- patchwork::wrap_plots(
       all_plots,
@@ -275,26 +276,25 @@ margot_plot_qini_batch_cost_sensitivity <- function(
       heights = heights,
       widths = widths
     )
-    
+
     # add overall title and caption
-    combined <- combined + 
+    combined <- combined +
       patchwork::plot_annotation(
         title = "QINI Curves Across Treatment Costs",
         subtitle = paste("Models:", paste(models_to_plot, collapse = ", ")),
         caption = paste("Treatment costs evaluated:", paste(costs, collapse = ", "))
       )
-    
+
     if (verbose) {
       cli::cli_alert_success("Created grid plot with {length(all_plots)} panels")
     }
-    
+
     return(combined)
-    
-  } else {  # combined
+  } else { # combined
     # create single faceted plot
     # first collect all qini data
     all_qini_data <- list()
-    
+
     for (model_name in models_to_plot) {
       model_display <- transform_var_name(
         gsub("^model_", "", model_name),
@@ -304,13 +304,13 @@ margot_plot_qini_batch_cost_sensitivity <- function(
         use_title_case = TRUE,
         remove_underscores = TRUE
       )
-      
+
       for (i in seq_along(costs)) {
         cost <- costs[i]
         cost_label <- names(cost_sens$results)[i]
-        
+
         qini_data <- cost_sens$results[[cost_label]][[model_name]]$qini_data
-        
+
         if (!is.null(qini_data)) {
           # add model and cost information
           qini_data$model <- model_display
@@ -320,14 +320,14 @@ margot_plot_qini_batch_cost_sensitivity <- function(
         }
       }
     }
-    
+
     if (length(all_qini_data) == 0) {
       stop("No QINI data available for plotting")
     }
-    
+
     # combine all data
     combined_data <- do.call(rbind, all_qini_data)
-    
+
     # create faceted plot
     p <- ggplot(combined_data, aes(x = proportion, y = gain, color = curve)) +
       geom_line(size = 1) +
@@ -344,11 +344,11 @@ margot_plot_qini_batch_cost_sensitivity <- function(
         strip.text = element_text(face = "bold"),
         legend.position = "bottom"
       )
-    
+
     # add spend level lines if requested
     if (length(spend_levels) > 0) {
       for (spend in spend_levels) {
-        p <- p + 
+        p <- p +
           geom_vline(
             xintercept = spend,
             linetype = "dashed",
@@ -357,11 +357,11 @@ margot_plot_qini_batch_cost_sensitivity <- function(
           )
       }
     }
-    
+
     if (verbose) {
       cli::cli_alert_success("Created combined faceted plot")
     }
-    
+
     return(p)
   }
 }

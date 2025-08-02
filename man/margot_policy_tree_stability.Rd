@@ -49,7 +49,7 @@ containing "_log").}
 
 \item{n_iterations}{Integer. Number of stability iterations (default 300).}
 
-\item{vary_type}{Character. Type of variation: "split_only" (vary train/test split via seeds), 
+\item{vary_type}{Character. Type of variation: "split_only" (vary train/test split via seeds),
 "bootstrap" (bootstrap resample), "both" (resample + split). Default is "split_only".}
 
 \item{consensus_threshold}{Numeric. Minimum inclusion frequency for consensus (default 0.5).}
@@ -58,7 +58,7 @@ containing "_log").}
 
 \item{vary_train_proportion}{Logical. Whether to vary train proportion (default FALSE).}
 
-\item{train_proportions}{Numeric vector. Proportions to cycle through when 
+\item{train_proportions}{Numeric vector. Proportions to cycle through when
 vary_train_proportion = TRUE (default c(0.4, 0.5, 0.6, 0.7)).}
 
 \item{label_mapping}{Named character vector for converting variable names to readable labels.}
@@ -75,9 +75,9 @@ vary_train_proportion = TRUE (default c(0.4, 0.5, 0.6, 0.7)).}
 
 \item{seed}{Integer. Additional seed parameter for compatibility (default 12345).}
 
-\item{tree_method}{Character string specifying the package to use: "fastpolicytree" 
+\item{tree_method}{Character string specifying the package to use: "fastpolicytree"
 (default) or "policytree". The fastpolicytree package provides ~10x faster
-computation, which is particularly beneficial for stability analysis. Falls 
+computation, which is particularly beneficial for stability analysis. Falls
 back to policytree if fastpolicytree is not installed.}
 
 \item{n_bootstrap}{Deprecated. Use n_iterations instead.}
@@ -93,8 +93,8 @@ Object of class "margot_stability_policy_tree" containing:
 \description{
 Performs stability analysis of policy trees to assess robustness and generate
 consensus trees. By default, varies random seeds to create different train/test
-splits to assess stability. Optionally supports bootstrap resampling for 
-traditional bootstrap analysis. Uses memory-efficient streaming approach to 
+splits to assess stability. Optionally supports bootstrap resampling for
+traditional bootstrap analysis. Uses memory-efficient streaming approach to
 handle large datasets.
 }
 \details{
@@ -108,7 +108,7 @@ The function uses a memory-efficient approach:
 
 By default, the function varies random seeds to create different train/test splits
 for each iteration. This assesses the stability of the policy tree structure
-without the computational overhead and statistical assumptions of bootstrap 
+without the computational overhead and statistical assumptions of bootstrap
 resampling. True bootstrap resampling can be enabled with vary_type = "bootstrap".
 }
 \section{Theoretical Background}{
@@ -132,7 +132,7 @@ outperform both uniform treatment assignment and more stable depth-1 trees, even
 when the depth-2 trees show high variability. The goal is to understand and quantify
 instability, not necessarily to eliminate it.
 
-Use the companion functions `margot_assess_variable_correlation()` and 
+Use the companion functions `margot_assess_variable_correlation()` and
 `margot_stability_diagnostics()` to better understand the sources of instability.
 
 Three types of variation are supported:
@@ -221,14 +221,14 @@ summary(stability_results)
 
 # Interpret results with theoretical context
 interpretation <- margot_interpret_stability(
-  stability_results, 
+  stability_results,
   "model_anxiety",
   format = "text"
 )
 
 # Assess variable correlations (using original causal forest results)
 cor_analysis <- margot_assess_variable_correlation(
-  causal_forest_results,  # NOT stability_results
+  causal_forest_results, # NOT stability_results
   "model_anxiety"
 )
 
@@ -245,12 +245,12 @@ diagnostics <- margot_stability_diagnostics(
 
 }
 \references{
-Athey, S., & Wager, S. (2021). Policy learning with observational data. 
+Athey, S., & Wager, S. (2021). Policy learning with observational data.
 Econometrica, 89(1), 133-161.
 
 Breiman, L. (1996). Bagging predictors. Machine Learning, 24(2), 123-140.
 
-Zhou, Z., Athey, S., & Wager, S. (2023). Offline multi-action policy learning: 
+Zhou, Z., Athey, S., & Wager, S. (2023). Offline multi-action policy learning:
 Generalization and optimization. Operations Research, 71(1), 148-183.
 }
 \seealso{

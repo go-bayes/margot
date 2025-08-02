@@ -64,9 +64,7 @@ margot_propensity_model_and_plots <- function(
     focal = NULL,
     love_plot_options = list(),
     bal_tab_options = list(),
-    verbose = TRUE
-) {
-
+    verbose = TRUE) {
   # Check for required packages without attaching them
   required_packages <- c("WeightIt", "MatchIt", "cobalt", "cli")
   for (pkg in required_packages) {
@@ -102,39 +100,45 @@ margot_propensity_model_and_plots <- function(
   )
 
   # Input validation
-  tryCatch({
-    cli::cli_h1("Input Validation")
-    cli::cli_progress_step("Checking input parameters")
-    if (!is.data.frame(df_propensity)) stop("df_propensity must be a data frame")
-    if (!is.character(exposure_variable) || length(exposure_variable) != 1) stop("exposure_variable must be a single character string")
-    if (!is.character(baseline_vars) || length(baseline_vars) < 1) stop("baseline_vars must be a character vector of length >= 1")
-    if (!is.character(weights_var_name) || length(weights_var_name) != 1) stop("weights_var_name must be a single character string")
-    if (!all(c(exposure_variable, baseline_vars, weights_var_name) %in% names(df_propensity))) stop("All specified variables must be present in df_propensity")
-    cli::cli_progress_done()
-  }, error = function(e) {
-    log_msg(paste("Input validation error:", e$message), "ERROR")
-    stop(e)
-  })
+  tryCatch(
+    {
+      cli::cli_h1("Input Validation")
+      cli::cli_progress_step("Checking input parameters")
+      if (!is.data.frame(df_propensity)) stop("df_propensity must be a data frame")
+      if (!is.character(exposure_variable) || length(exposure_variable) != 1) stop("exposure_variable must be a single character string")
+      if (!is.character(baseline_vars) || length(baseline_vars) < 1) stop("baseline_vars must be a character vector of length >= 1")
+      if (!is.character(weights_var_name) || length(weights_var_name) != 1) stop("weights_var_name must be a single character string")
+      if (!all(c(exposure_variable, baseline_vars, weights_var_name) %in% names(df_propensity))) stop("All specified variables must be present in df_propensity")
+      cli::cli_progress_done()
+    },
+    error = function(e) {
+      log_msg(paste("Input validation error:", e$message), "ERROR")
+      stop(e)
+    }
+  )
 
   log_msg("Starting propensity score modeling and analysis...")
 
   # Create the propensity score model using explicit namespace call
   cli::cli_h1("Propensity Score Modeling")
   cli::cli_progress_step("Creating propensity score model")
-  result$match_propensity <- tryCatch({
-    margot::match_mi_general(
-      data = df_propensity,
-      X = exposure_variable,
-      baseline_vars = baseline_vars,
-      estimand = estimand,
-      method = method,
-      sample_weights = weights_var_name,
-      focal = focal
-    )
-  }, error = function(e) {
-    log_msg(paste("Error in creating propensity score model:", e$message), "ERROR")
-    return(result)
-  })
+  result$match_propensity <- tryCatch(
+    {
+      margot::match_mi_general(
+        data = df_propensity,
+        X = exposure_variable,
+        baseline_vars = baseline_vars,
+        estimand = estimand,
+        method = method,
+        sample_weights = weights_var_name,
+        focal = focal
+      )
+    },
+    error = function(e) {
+      log_msg(paste("Error in creating propensity score model:", e$message), "ERROR")
+      return(result)
+    }
+  )
   cli::cli_progress_done()
   log_msg("Propensity score model created successfully.", "SUCCESS")
 
@@ -152,13 +156,18 @@ margot_propensity_model_and_plots <- function(
   # Create love plot with explicit call
   cli::cli_h1("Generating Plots")
   cli::cli_progress_step("Creating love plot")
-  result$love_plot <- tryCatch({
-    do.call(cobalt::love.plot,
-            c(list(result$match_propensity), love_plot_options))
-  }, error = function(e) {
-    log_msg(paste("Error in generating love plot:", e$message), "ERROR")
-    NULL
-  })
+  result$love_plot <- tryCatch(
+    {
+      do.call(
+        cobalt::love.plot,
+        c(list(result$match_propensity), love_plot_options)
+      )
+    },
+    error = function(e) {
+      log_msg(paste("Error in generating love plot:", e$message), "ERROR")
+      NULL
+    }
+  )
   cli::cli_progress_done()
   if (!is.null(result$love_plot)) {
     log_msg("Love plot generated.", "SUCCESS")
@@ -166,12 +175,15 @@ margot_propensity_model_and_plots <- function(
 
   # Create summary
   cli::cli_progress_step("Creating summary of propensity score model")
-  result$summary <- tryCatch({
-    summary(result$match_propensity)
-  }, error = function(e) {
-    log_msg(paste("Error in creating summary:", e$message), "ERROR")
-    NULL
-  })
+  result$summary <- tryCatch(
+    {
+      summary(result$match_propensity)
+    },
+    error = function(e) {
+      log_msg(paste("Error in creating summary:", e$message), "ERROR")
+      NULL
+    }
+  )
   cli::cli_progress_done()
   if (!is.null(result$summary)) {
     log_msg("Summary created.", "SUCCESS")
@@ -179,12 +191,15 @@ margot_propensity_model_and_plots <- function(
 
   # Create summary plot
   cli::cli_progress_step("Generating summary plot")
-  result$summary_plot <- tryCatch({
-    plot(result$summary)
-  }, error = function(e) {
-    log_msg(paste("Error in generating summary plot:", e$message), "ERROR")
-    NULL
-  })
+  result$summary_plot <- tryCatch(
+    {
+      plot(result$summary)
+    },
+    error = function(e) {
+      log_msg(paste("Error in generating summary plot:", e$message), "ERROR")
+      NULL
+    }
+  )
   cli::cli_progress_done()
   if (!is.null(result$summary_plot)) {
     log_msg("Summary plot generated.", "SUCCESS")
@@ -200,13 +215,18 @@ margot_propensity_model_and_plots <- function(
   # Create balance table with explicit call
   cli::cli_h1("Balance Analysis")
   cli::cli_progress_step("Creating balance table")
-  result$balance_table <- tryCatch({
-    do.call(cobalt::bal.tab,
-            c(list(result$match_propensity), bal_tab_options))
-  }, error = function(e) {
-    log_msg(paste("Error in creating balance table:", e$message), "ERROR")
-    NULL
-  })
+  result$balance_table <- tryCatch(
+    {
+      do.call(
+        cobalt::bal.tab,
+        c(list(result$match_propensity), bal_tab_options)
+      )
+    },
+    error = function(e) {
+      log_msg(paste("Error in creating balance table:", e$message), "ERROR")
+      NULL
+    }
+  )
   cli::cli_progress_done()
   if (!is.null(result$balance_table)) {
     log_msg("Balance table created.", "SUCCESS")
@@ -215,35 +235,38 @@ margot_propensity_model_and_plots <- function(
   # Additional diagnostics
   cli::cli_h1("Additional Diagnostics")
   cli::cli_progress_step("Calculating additional diagnostics")
-  result$diagnostics <- tryCatch({
-    diag_list <- list()
-    if (!is.null(result$match_propensity)) {
-      if ("weights" %in% names(result$match_propensity)) {
-        diag_list$weight_summary <- summary(result$match_propensity$weights)
-        diag_list$effective_sample_size <- sum(result$match_propensity$weights)^2 / sum(result$match_propensity$weights^2)
-      } else {
-        log_msg("Weights not found in match_propensity object", "WARNING")
+  result$diagnostics <- tryCatch(
+    {
+      diag_list <- list()
+      if (!is.null(result$match_propensity)) {
+        if ("weights" %in% names(result$match_propensity)) {
+          diag_list$weight_summary <- summary(result$match_propensity$weights)
+          diag_list$effective_sample_size <- sum(result$match_propensity$weights)^2 / sum(result$match_propensity$weights^2)
+        } else {
+          log_msg("Weights not found in match_propensity object", "WARNING")
+        }
+        if ("propensity" %in% names(result$match_propensity)) {
+          diag_list$prop_score_summary <- summary(result$match_propensity$propensity)
+        } else if ("ps" %in% names(result$match_propensity)) {
+          diag_list$prop_score_summary <- summary(result$match_propensity$ps)
+        } else {
+          log_msg("Propensity scores not found in match_propensity object", "WARNING")
+        }
       }
-      if ("propensity" %in% names(result$match_propensity)) {
-        diag_list$prop_score_summary <- summary(result$match_propensity$propensity)
-      } else if ("ps" %in% names(result$match_propensity)) {
-        diag_list$prop_score_summary <- summary(result$match_propensity$ps)
-      } else {
-        log_msg("Propensity scores not found in match_propensity object", "WARNING")
-      }
+      diag_list$model_info <- list(
+        estimand = estimand,
+        method = method,
+        focal = focal,
+        exposure_variable = exposure_variable,
+        n_baseline_vars = length(baseline_vars)
+      )
+      diag_list
+    },
+    error = function(e) {
+      log_msg(paste("Error in calculating diagnostics:", e$message), "ERROR")
+      NULL
     }
-    diag_list$model_info <- list(
-      estimand = estimand,
-      method = method,
-      focal = focal,
-      exposure_variable = exposure_variable,
-      n_baseline_vars = length(baseline_vars)
-    )
-    diag_list
-  }, error = function(e) {
-    log_msg(paste("Error in calculating diagnostics:", e$message), "ERROR")
-    NULL
-  })
+  )
   cli::cli_progress_done()
   log_msg("Additional diagnostics calculated.", "SUCCESS")
 

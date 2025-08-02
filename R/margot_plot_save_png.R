@@ -38,20 +38,19 @@
 #' @importFrom cli cli_alert_success cli_alert_danger
 #' @export
 margot_save_png <- function(plot_output,
-                                 prefix = NULL,
-                                 base_filename = "margot_plot",
-                                 save_path = here::here("push_mods"),
-                                 width = 16,
-                                 height = 8,
-                                 dpi = 500) {
-
+                            prefix = NULL,
+                            base_filename = "margot_plot",
+                            save_path = here::here("push_mods"),
+                            width = 16,
+                            height = 8,
+                            dpi = 500) {
   # check if the plot_output contains a plot
   if (!("plot" %in% names(plot_output) && inherits(plot_output$plot, "ggplot"))) {
     cli::cli_alert_danger("The provided plot_output does not contain a valid ggplot object.")
     return(invisible(NULL))
   }
 
-  #create the directory if it doesn't exist
+  # create the directory if it doesn't exist
   if (!dir.exists(save_path)) {
     dir.create(save_path, recursive = TRUE)
   }
@@ -67,18 +66,21 @@ margot_save_png <- function(plot_output,
   file_path <- file.path(save_path, filename)
 
   # Save the plot
-  tryCatch({
-    ggplot2::ggsave(
-      filename = file_path,
-      plot = plot_output$plot,
-      width = width,
-      height = height,
-      dpi = dpi
-    )
-    cli::cli_alert_success("Plot saved successfully: {file_path}")
-  }, error = function(e) {
-    cli::cli_alert_danger("Error saving plot: {e$message}")
-  })
+  tryCatch(
+    {
+      ggplot2::ggsave(
+        filename = file_path,
+        plot = plot_output$plot,
+        width = width,
+        height = height,
+        dpi = dpi
+      )
+      cli::cli_alert_success("Plot saved successfully: {file_path}")
+    },
+    error = function(e) {
+      cli::cli_alert_danger("Error saving plot: {e$message}")
+    }
+  )
 
   # return the file path invisibly
   invisible(file_path)

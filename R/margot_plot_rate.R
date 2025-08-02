@@ -47,7 +47,8 @@
 #'   "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
 #' )
 #' p <- margot_plot_rate(rate_eval, "model_t2_env_not_env_efficacy_z",
-#'                       label_mapping = label_mapping)
+#'   label_mapping = label_mapping
+#' )
 #' print(p)
 #' }
 #'
@@ -77,11 +78,13 @@ margot_plot_rate <- function(x,
                              ...) {
   # check if user passed CV results by mistake
   if (inherits(x, "margot_cv_results")) {
-    stop("Cannot plot cross-validation results with margot_plot_rate().\n",
-         "CV results contain hypothesis tests, not RATE curves.\n",
-         "Please use margot_plot_cv_results() instead for a forest plot visualization.")
+    stop(
+      "Cannot plot cross-validation results with margot_plot_rate().\n",
+      "CV results contain hypothesis tests, not RATE curves.\n",
+      "Please use margot_plot_cv_results() instead for a forest plot visualization."
+    )
   }
-  
+
   # check if we need to compute RATE on-demand
   if (inherits(x, "causal_forest")) {
     cli::cli_alert_info("Computing {target} on-demand from causal forest")
@@ -93,24 +96,26 @@ margot_plot_rate <- function(x,
       policy = policy,
       subset = subset,
       use_oob_predictions = use_oob_predictions,
-      verbose = TRUE,  # show validation warnings
+      verbose = TRUE, # show validation warnings
       seed = seed
     )
     x <- rate_obj
   } else if (!inherits(x, "rank_average_treatment_effect")) {
     stop("x must be either a rank_average_treatment_effect object or a causal_forest object")
   }
-  
+
   # extract target from the RATE object if available
   if (!is.null(attr(x, "target"))) {
     target <- attr(x, "target")
   }
-  
+
   # transform the outcome variable name for the title
   if (!is.null(outcome_var)) {
-    transformed_outcome_var <- transform_var_name(outcome_var, label_mapping,
-                                                  remove_tx_prefix, remove_z_suffix,
-                                                  use_title_case, remove_underscores)
+    transformed_outcome_var <- transform_var_name(
+      outcome_var, label_mapping,
+      remove_tx_prefix, remove_z_suffix,
+      use_title_case, remove_underscores
+    )
 
     # if no title is provided, create one with the transformed outcome name
     if (is.null(title)) {
@@ -135,8 +140,10 @@ margot_plot_rate <- function(x,
   if ("priority" %in% colnames(plot_data) && length(unique(plot_data$priority)) > 1) {
     unique_priorities <- unique(plot_data$priority)
     transformed_priorities <- sapply(unique_priorities, function(p) {
-      transform_var_name(p, label_mapping, remove_tx_prefix, remove_z_suffix,
-                         use_title_case, remove_underscores)
+      transform_var_name(
+        p, label_mapping, remove_tx_prefix, remove_z_suffix,
+        use_title_case, remove_underscores
+      )
     })
 
     priority_mapping <- setNames(transformed_priorities, unique_priorities)
@@ -159,7 +166,7 @@ margot_plot_rate <- function(x,
     theme(
       plot.title = element_text(hjust = 0.5),
       plot.subtitle = element_text(hjust = 0.5),
-      legend.position = "top"  # place legend at the top
+      legend.position = "top" # place legend at the top
     )
 
   # if there's only one priority, use default colors

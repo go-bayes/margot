@@ -7,8 +7,8 @@ n <- 500
 X <- matrix(rnorm(n * 20), n, 20)
 colnames(X) <- paste0("X", 1:20)
 W <- rbinom(n, 1, 0.5)
-Y1 <- X[,1] + 0.5 * W + rnorm(n)
-Y2 <- X[,2] - 0.3 * W + rnorm(n)
+Y1 <- X[, 1] + 0.5 * W + rnorm(n)
+Y2 <- X[, 2] - 0.3 * W + rnorm(n)
 
 df <- data.frame(Y1 = Y1, Y2 = Y2, W = W)
 

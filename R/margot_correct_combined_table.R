@@ -1,20 +1,21 @@
 #' @keywords internal
 process_evalue <- function(tab, scale, delta, sd) {
-
   ev <- if (scale == "RD") {
     EValue::evalues.OLS(tab$`E[Y(1)]-E[Y(0)]`,
-                        se    = tab$standard_error,
-                        sd    = sd,
-                        delta = delta,
-                        true  = 0)
+      se    = tab$standard_error,
+      sd    = sd,
+      delta = delta,
+      true  = 0
+    )
   } else {
     EValue::evalues.RR(tab$`E[Y(1)]/E[Y(0)]`,
-                       lo   = tab$`2.5 %`,
-                       hi   = tab$`97.5 %`,
-                       true = 1)
+      lo   = tab$`2.5 %`,
+      hi   = tab$`97.5 %`,
+      true = 1
+    )
   }
 
-  ev_df <- as.data.frame(ev)[2, c("point","lower","upper"), drop = FALSE]
+  ev_df <- as.data.frame(ev)[2, c("point", "lower", "upper"), drop = FALSE]
 
   tibble::tibble(
     E_Value     = ev_df$point,
@@ -86,16 +87,15 @@ process_evalue <- function(tab, scale, delta, sd) {
 #' @importFrom EValue evalues.OLS evalues.RR
 margot_correct_combined_table <- function(combined_table,
                                           adjust = c("bonferroni", "holm", "BH"),
-                                          alpha  = 0.05,
-                                          scale  = c("RD", "RR"),
-                                          delta  = 1,
-                                          sd     = 1) {
-
+                                          alpha = 0.05,
+                                          scale = c("RD", "RR"),
+                                          delta = 1,
+                                          sd = 1) {
   adjust <- match.arg(adjust)
-  scale  <- match.arg(scale)
+  scale <- match.arg(scale)
 
   ## ---- 0 • sanity checks ----------------------------------------------------
-  if      ("E[Y(1)]-E[Y(0)]" %in% names(combined_table)) {
+  if ("E[Y(1)]-E[Y(0)]" %in% names(combined_table)) {
     est_col <- "E[Y(1)]-E[Y(0)]"
   } else if ("E[Y(1)]/E[Y(0)]" %in% names(combined_table)) {
     est_col <- "E[Y(1)]/E[Y(0)]"
@@ -103,17 +103,17 @@ margot_correct_combined_table <- function(combined_table,
     stop("Couldn't find a point-estimate column in `combined_table`.")
   }
 
-  if (!all(c("2.5 %", "97.5 %") %in% names(combined_table)))
+  if (!all(c("2.5 %", "97.5 %") %in% names(combined_table))) {
     stop("`combined_table` must contain '2.5 %' and '97.5 %' columns.")
+  }
 
-  m      <- nrow(combined_table)          # number of tests
-  z_orig <- stats::qnorm(0.975)           # 1.96
+  m <- nrow(combined_table) # number of tests
+  z_orig <- stats::qnorm(0.975) # 1.96
 
   tbl <- combined_table
 
   ## ---- 1  adjust the CI ----------------------------------------------------
   if (adjust == "bonferroni") {
-
     z_star <- stats::qnorm(1 - alpha / (2 * m))
 
     # original half-width so we don't need the raw SE
@@ -124,13 +124,12 @@ margot_correct_combined_table <- function(combined_table,
         `2.5 %`  = !!rlang::sym(est_col) - (half_w * z_star / z_orig),
         `97.5 %` = !!rlang::sym(est_col) + (half_w * z_star / z_orig)
       )
-
-  } else if (adjust == "holm") {   # -------- Holm ------------------------------
+  } else if (adjust == "holm") { # -------- Holm ------------------------------
 
     ## back-calculate SE from the *original* CI
     se <- (tbl$`97.5 %` - tbl[[est_col]]) / z_orig
-    z  <- tbl[[est_col]] / se
-    p  <- 2 * (1 - stats::pnorm(abs(z)))           # two-sided
+    z <- tbl[[est_col]] / se
+    p <- 2 * (1 - stats::pnorm(abs(z))) # two-sided
     p_adj <- stats::p.adjust(p, method = "holm")
 
     z_star <- stats::qnorm(1 - p_adj / 2)
@@ -140,14 +139,13 @@ margot_correct_combined_table <- function(combined_table,
         `2.5 %`  = !!rlang::sym(est_col) - z_star * se,
         `97.5 %` = !!rlang::sym(est_col) + z_star * se
       )
-
-  } else {                         # -------- BH (Benjamini-Hochberg) -----------
+  } else { # -------- BH (Benjamini-Hochberg) -----------
 
     ## back-calculate SE from the *original* CI
     se <- (tbl$`97.5 %` - tbl[[est_col]]) / z_orig
-    z  <- tbl[[est_col]] / se
-    p  <- 2 * (1 - stats::pnorm(abs(z)))           # two-sided
-    p_adj <- stats::p.adjust(p, method = "BH")     # benjamini-hochberg FDR
+    z <- tbl[[est_col]] / se
+    p <- 2 * (1 - stats::pnorm(abs(z))) # two-sided
+    p_adj <- stats::p.adjust(p, method = "BH") # benjamini-hochberg FDR
 
     z_star <- stats::qnorm(1 - p_adj / 2)
 
@@ -160,14 +158,16 @@ margot_correct_combined_table <- function(combined_table,
 
   ## ---- 2  recompute E-values ----------------------------------------------
   new_EV <- purrr::pmap_dfr(
-    list(est = tbl[[est_col]],
-         lo  = tbl$`2.5 %`,
-         hi  = tbl$`97.5 %`,
-         se0 = (tbl$`97.5 %` - tbl[[est_col]]) / stats::qnorm(0.975)),
+    list(
+      est = tbl[[est_col]],
+      lo = tbl$`2.5 %`,
+      hi = tbl$`97.5 %`,
+      se0 = (tbl$`97.5 %` - tbl[[est_col]]) / stats::qnorm(0.975)
+    ),
     \(est, lo, hi, se0) {
       tmp <- tibble::tibble(
         `E[Y(1)]-E[Y(0)]` = est,
-        `E[Y(1)]/E[Y(0)]` = NA_real_,   # ignored for RD
+        `E[Y(1)]/E[Y(0)]` = NA_real_, # ignored for RD
         `2.5 %`           = lo,
         `97.5 %`          = hi,
         standard_error    = se0

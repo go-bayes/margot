@@ -100,7 +100,6 @@ margot_subset_model <- function(model_results,
                                 subset_operator = "==",
                                 subset_description = NULL,
                                 debug = FALSE) {
-
   # start logging
   cli::cli_alert_info("starting margot_subset_model function")
 
@@ -138,12 +137,13 @@ margot_subset_model <- function(model_results,
     # define the operator function
     # define the operator function
     subset_op <- switch(subset_operator,
-                        "==" = `==`,
-                        ">"  = `>`,
-                        ">=" = `>=`,
-                        "<"  = `<`,
-                        "<=" = `<=`,
-                        "!=" = `!=`)
+      "==" = `==`,
+      ">"  = `>`,
+      ">=" = `>=`,
+      "<"  = `<`,
+      "<=" = `<=`,
+      "!=" = `!=`
+    )
 
     # create the subset condition and convert NA to FALSE
     subset_condition <- subset_op(X[, subset_var], subset_value)
@@ -201,13 +201,16 @@ margot_subset_model <- function(model_results,
         cli::cli_alert_info("model class: {class(model)}")
         cli::cli_alert_info("model names: {paste(names(model), collapse=', ')}")
       }
-      tryCatch({
-        custom_table <- margot::margot_model_evalue(model, scale = scale, new_name = outcome, subset = subset_condition)
-        tables[[outcome]] <- custom_table
-        cli::cli_alert_success("successfully created table for {outcome}")
-      }, error = function(e) {
-        cli::cli_alert_warning("error in margot_model_evalue for {outcome}: {e$message}")
-      })
+      tryCatch(
+        {
+          custom_table <- margot::margot_model_evalue(model, scale = scale, new_name = outcome, subset = subset_condition)
+          tables[[outcome]] <- custom_table
+          cli::cli_alert_success("successfully created table for {outcome}")
+        },
+        error = function(e) {
+          cli::cli_alert_warning("error in margot_model_evalue for {outcome}: {e$message}")
+        }
+      )
     } else if (!is.null(model_results$results) && model_name %in% names(model_results$results)) {
       # categorical exposure case
       result <- model_results$results[[model_name]]

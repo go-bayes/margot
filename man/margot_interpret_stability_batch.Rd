@@ -21,7 +21,7 @@ margot_interpret_stability_batch(
 \arguments{
 \item{object}{Object of class "margot_stability_policy_tree"}
 
-\item{model_names}{Optional character vector of model names to interpret. 
+\item{model_names}{Optional character vector of model names to interpret.
 If NULL (default), interprets all models in the results.}
 
 \item{depth}{Tree depth to interpret (1, 2, or "both")}

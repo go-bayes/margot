@@ -5,7 +5,7 @@ back_transform_estimates <- function(results_df, original_df) {
   # Determine the effect size column - check new types first, then traditional
   effect_size_col <- NULL
   new_cols <- c("ATE", "ATT", "ATC", "ATO")
-  
+
   # check for new column types
   for (col in new_cols) {
     if (col %in% names(results_df)) {
@@ -13,7 +13,7 @@ back_transform_estimates <- function(results_df, original_df) {
       break
     }
   }
-  
+
   # if not found, check for traditional columns
   if (is.null(effect_size_col)) {
     if ("E[Y(1)]-E[Y(0)]" %in% names(results_df)) {
@@ -45,6 +45,14 @@ back_transform_estimates <- function(results_df, original_df) {
   for (i in seq_len(nrow(results_df))) {
     var_name <- results_df$original_var_name[i]
 
+    # check if this is a reversed/reduced variable
+    is_reversed <- grepl("_r$", var_name)
+    
+    # remove _r suffix before processing (since original_df won't have reversed variables)
+    if (is_reversed) {
+      var_name <- sub("_r$", "", var_name)
+    }
+
     # determine if the variable was z-transformed and/or log-transformed
     was_z_transformed <- grepl("_z$", var_name)
     was_log_transformed <- grepl("_log_", var_name)
@@ -61,8 +69,7 @@ back_transform_estimates <- function(results_df, original_df) {
       # Try removing 't0_', 't1_', 't2_' prefixes
       orig_var_name_no_prefix <- sub("^t[0-9]+_", "", orig_var_name)
       if (!(orig_var_name_no_prefix %in% names(original_df))) {
-        # Variable not found in original_df
-        cli::cli_alert_warning("Variable '{orig_var_name}' not found in original_df.")
+        # Variable not found in original_df - skip silently
         next
       } else {
         orig_var_name <- orig_var_name_no_prefix
@@ -173,7 +180,9 @@ determine_transformation <- function(var_name) {
 
 #' @keywords internal
 get_original_value <- function(var_name, split_value, original_df) {
-  if (is.null(original_df)) return(NULL)
+  if (is.null(original_df)) {
+    return(NULL)
+  }
 
   # Create a list of possible variable names
   orig_var_candidates <- character()
@@ -300,7 +309,9 @@ get_original_var_info <- function(var_name, original_df) {
 
 #' @keywords internal
 get_original_value_plot <- function(var_name, split_value, original_df) {
-  if (is.null(original_df)) return(NULL)
+  if (is.null(original_df)) {
+    return(NULL)
+  }
 
   # Create list of possible variable names
   orig_var_candidates <- c(
@@ -353,55 +364,57 @@ get_original_value_plot <- function(var_name, split_value, original_df) {
 #' Get outcome transformation information for inverse transformation
 #' @keywords internal
 get_outcome_transformation_info <- function(model_name, original_df) {
-  if (is.null(original_df)) return(NULL)
-  
+  if (is.null(original_df)) {
+    return(NULL)
+  }
+
   # extract outcome name from model name (e.g., "model_t2_belong_z" -> "t2_belong_z")
   outcome_name <- sub("^model_", "", model_name)
-  
+
   # detect if this is a flipped outcome model
   has_r_suffix <- grepl("_r$", outcome_name)
-  
+
   # remove _r suffix for searching in original_df (which contains unflipped data)
   outcome_name_for_search <- if (has_r_suffix) {
     sub("_r$", "", outcome_name)
   } else {
     outcome_name
   }
-  
+
   # detect transformation type (use cleaned name for search)
   has_z_suffix <- grepl("_z$", outcome_name_for_search)
   has_log_prefix <- grepl("_log_", outcome_name_for_search)
-  
+
   # build list of possible original variable names
   candidates <- character()
-  
+
   # start with the outcome name (cleaned of _r suffix)
   candidates <- c(candidates, outcome_name_for_search)
-  
+
   # remove _z suffix if present
   if (has_z_suffix) {
     var_no_z <- sub("_z$", "", outcome_name_for_search)
     candidates <- c(candidates, var_no_z)
   }
-  
+
   # for log-transformed variables, try to find the original
   if (has_log_prefix) {
     # first try keeping the log prefix (e.g., "t2_log_charity_donate_z" -> "t2_log_charity_donate")
     candidates <- c(candidates, var_no_z)
-    
+
     # then try removing log prefix (e.g., "t2_log_charity_donate_z" -> "t2_charity_donate")
     var_no_log <- gsub("_log_", "_", var_no_z)
     candidates <- c(candidates, var_no_log)
-    
+
     # also try without time prefix
     var_no_prefix <- sub("^t[0-9]+_", "", var_no_log)
     candidates <- c(candidates, var_no_prefix)
-    
+
     # try without time prefix but keeping log
     var_no_prefix_with_log <- sub("^t[0-9]+_", "", var_no_z)
     candidates <- c(candidates, var_no_prefix_with_log)
   }
-  
+
   # try to find the original variable
   orig_var <- NULL
   for (candidate in unique(candidates)) {
@@ -410,14 +423,14 @@ get_outcome_transformation_info <- function(model_name, original_df) {
       break
     }
   }
-  
+
   if (is.null(orig_var)) {
     return(NULL)
   }
-  
+
   # get the original data
   orig_data <- original_df[[orig_var]]
-  
+
   # calculate transformation parameters
   result <- list(
     outcome_name = outcome_name,
@@ -426,7 +439,7 @@ get_outcome_transformation_info <- function(model_name, original_df) {
     has_log = has_log_prefix,
     is_flipped = has_r_suffix
   )
-  
+
   if (has_z_suffix) {
     # for z-transformed variables, we need mean and sd
     if (has_log_prefix) {
@@ -435,11 +448,11 @@ get_outcome_transformation_info <- function(model_name, original_df) {
       result$log_mean <- mean(orig_data, na.rm = TRUE)
       result$log_sd <- sd(orig_data, na.rm = TRUE)
       result$log_offset <- 1
-      
+
       # check if we have stored transformation info as attributes
       stored_log_mean <- attr(orig_data, "log_mean")
       stored_log_sd <- attr(orig_data, "log_sd")
-      
+
       if (!is.null(stored_log_mean) && !is.null(stored_log_sd)) {
         result$log_mean <- stored_log_mean
         result$log_sd <- stored_log_sd
@@ -450,10 +463,10 @@ get_outcome_transformation_info <- function(model_name, original_df) {
           # this is likely subset data - use more realistic values
           cli::cli_alert_info(
             "Detected low values for {outcome_name} (mean ~${round(exp(result$log_mean)-1)}). " %+%
-            "Using population-based estimates for dollar calculations."
+              "Using population-based estimates for dollar calculations."
           )
           # use realistic population statistics for charity donations
-          result$log_mean_display <- 6.96  # log(1048 + 1)
+          result$log_mean_display <- 6.96 # log(1048 + 1)
           result$use_display_mean <- TRUE
         }
       } else if (grepl("income|household.*inc", outcome_name, ignore.case = TRUE) && result$log_mean < 10) {
@@ -461,7 +474,7 @@ get_outcome_transformation_info <- function(model_name, original_df) {
         cli::cli_alert_info(
           "Detected low values for {outcome_name}. Using population-based estimates."
         )
-        result$log_mean_display <- 11.0  # ~$60k
+        result$log_mean_display <- 11.0 # ~$60k
         result$use_display_mean <- TRUE
       }
     } else {
@@ -470,7 +483,7 @@ get_outcome_transformation_info <- function(model_name, original_df) {
       result$orig_sd <- sd(orig_data, na.rm = TRUE)
     }
   }
-  
+
   # for display purposes, get the original data stats
   if (has_log_prefix && result$original_var == orig_var) {
     # if we found a log variable, transform back to get actual values
@@ -485,37 +498,39 @@ get_outcome_transformation_info <- function(model_name, original_df) {
     result$display_min <- min(orig_data, na.rm = TRUE)
     result$display_max <- max(orig_data, na.rm = TRUE)
   }
-  
+
   return(result)
 }
 
 #' Format number with minimal decimal places
 #' @keywords internal
 format_minimal_decimals <- function(x, max_decimals = NULL) {
-  if (is.null(x) || is.na(x)) return(NULL)
-  
+  if (is.null(x) || is.na(x)) {
+    return(NULL)
+  }
+
   abs_x <- abs(x)
-  
+
   # determine decimal places based on magnitude
   if (is.null(max_decimals)) {
     if (abs_x < 1) {
-      decimals <- 3  # for values < 1, use 3 decimals
+      decimals <- 3 # for values < 1, use 3 decimals
     } else if (abs_x < 10) {
-      decimals <- 2  # for values 1-10, use 2 decimals
+      decimals <- 2 # for values 1-10, use 2 decimals
     } else if (abs_x < 100) {
-      decimals <- 1  # for values 10-100, use 1 decimal
+      decimals <- 1 # for values 10-100, use 1 decimal
     } else {
-      decimals <- 0  # for values >= 100, use no decimals
+      decimals <- 0 # for values >= 100, use no decimals
     }
   } else {
     decimals <- max_decimals
   }
-  
+
   # check if the number is effectively an integer when rounded to the desired decimals
   if (decimals == 0 || abs(x - round(x, decimals)) < 1e-10) {
     return(format(round(x, decimals), nsmall = decimals, big.mark = ",", scientific = FALSE))
   }
-  
+
   # format with the determined number of decimals
   return(format(round(x, decimals), nsmall = decimals, big.mark = ",", scientific = FALSE))
 }
@@ -527,12 +542,12 @@ detect_variable_units <- function(var_name) {
   if (grepl("donat|income|_inc|spend|cost|price|wage|salary", var_name, ignore.case = TRUE)) {
     return(list(type = "monetary", symbol = "$", name = "dollars"))
   }
-  
+
   # time variables - will convert hours to minutes
   if (grepl("_hours_", var_name)) {
     return(list(type = "time", symbol = "", name = "minutes", scale_factor = 60))
   }
-  
+
   # generic
   return(list(type = "generic", symbol = "", name = "units"))
 }
@@ -540,20 +555,28 @@ detect_variable_units <- function(var_name) {
 #' @keywords internal
 transform_label <- function(label, label_mapping = NULL, options = list()) {
   # coerce each flag to a single TRUE/FALSE
-  remove_tx_prefix   <- isTRUE(options$remove_tx_prefix)
-  remove_z_suffix    <- isTRUE(options$remove_z_suffix)
+  remove_tx_prefix <- isTRUE(options$remove_tx_prefix)
+  remove_z_suffix <- isTRUE(options$remove_z_suffix)
   remove_underscores <- isTRUE(options$remove_underscores)
-  use_title_case     <- isTRUE(options$use_title_case)
+  use_title_case <- isTRUE(options$use_title_case)
 
   original_label <- label
 
   # 1) explicit mappings
   if (!is.null(label_mapping)) {
+    # first try exact match
+    if (label %in% names(label_mapping)) {
+      new_label <- label_mapping[[label]]
+      cli::cli_alert_info("Mapped label (exact): {label} -> {new_label}")
+      return(new_label)  # return early for exact matches
+    }
+    
+    # if no exact match, try pattern matching
     for (pat in names(label_mapping)) {
       if (grepl(pat, label, fixed = TRUE)) {
-        repl  <- label_mapping[[pat]]
+        repl <- label_mapping[[pat]]
         label <- gsub(pat, repl, label, fixed = TRUE)
-        cli::cli_alert_info("Mapped label: {pat} -> {repl}")
+        cli::cli_alert_info("Mapped label (pattern): {pat} -> {repl}")
       }
     }
   }
@@ -563,14 +586,17 @@ transform_label <- function(label, label_mapping = NULL, options = list()) {
 
   # 3) default transforms if unmapped
   if (identical(label, original_label)) {
-    if (remove_tx_prefix)   label <- sub("^t[0-9]+_", "", label)
-    if (remove_z_suffix)    label <- sub("_z$", "", label)
+    if (remove_tx_prefix) label <- sub("^t[0-9]+_", "", label)
+    if (remove_z_suffix) {
+      label <- sub("_z$", "", label)
+      label <- sub("_r$", "", label)  # also remove _r suffix for reversed variables
+    }
     if (remove_underscores) label <- gsub("_", " ", label, fixed = TRUE)
 
     if (use_title_case) {
       # convert to title case and enforce specific uppercase acronyms
       label <- tools::toTitleCase(label)
-      label <- gsub("Nz",  "NZ",  label, fixed = TRUE)
+      label <- gsub("Nz", "NZ", label, fixed = TRUE)
       label <- gsub("Sdo", "SDO", label, fixed = TRUE)
       label <- gsub("Rwa", "RWA", label, fixed = TRUE)
     }
@@ -620,7 +646,7 @@ s <- function(results_df, original_df, label_mapping = NULL) {
     upper <- results_df$`97.5 %`[i]
 
     # Compute standard error on the standardized scale
-    z_value <- qnorm(0.975)  # For 95% CI
+    z_value <- qnorm(0.975) # For 95% CI
     SE_standardized <- (upper - lower) / (2 * z_value)
 
     # Get original variable info
@@ -645,7 +671,7 @@ s <- function(results_df, original_df, label_mapping = NULL) {
     } else {
       # If not z-transformed, the estimate is already on the (log-transformed) scale
       original_estimate <- estimate
-      SE_original <- SE_standardized  # Assume SE is the same
+      SE_original <- SE_standardized # Assume SE is the same
 
       if (was_log_transformed) {
         # For log-transformed variables, adjust SE using the delta method
@@ -689,9 +715,9 @@ s <- function(results_df, original_df, label_mapping = NULL) {
 #' @return A character scalar of the transformed label, or NA if input missing
 #' @keywords internal
 transform_var_name <- function(var_name, label_mapping = NULL,
-                               remove_tx_prefix   = TRUE,
-                               remove_z_suffix    = TRUE,
-                               use_title_case     = TRUE,
+                               remove_tx_prefix = TRUE,
+                               remove_z_suffix = TRUE,
+                               use_title_case = TRUE,
                                remove_underscores = TRUE) {
   if (is.na(var_name) || length(var_name) == 0) {
     return(NA_character_)
@@ -745,8 +771,8 @@ transform_var_name <- function(var_name, label_mapping = NULL,
   }
 
   # strip prefixes/suffixes/underscores
-  if (remove_tx_prefix)   display_name <- sub("^t[0-9]+_", "", display_name)
-  if (remove_z_suffix)    display_name <- sub("_z$", "", display_name)
+  if (remove_tx_prefix) display_name <- sub("^t[0-9]+_", "", display_name)
+  if (remove_z_suffix) display_name <- sub("_z$", "", display_name)
   # remove _l suffix
   display_name <- sub("_l$", "", display_name)
   if (remove_underscores) display_name <- gsub("_", " ", display_name, fixed = TRUE)
@@ -754,7 +780,7 @@ transform_var_name <- function(var_name, label_mapping = NULL,
   # title-case and preserve acronyms
   if (use_title_case) {
     display_name <- tools::toTitleCase(display_name)
-    display_name <- gsub("Nz",  "NZ",  display_name, fixed = TRUE)
+    display_name <- gsub("Nz", "NZ", display_name, fixed = TRUE)
     display_name <- gsub("Sdo", "SDO", display_name, fixed = TRUE)
     display_name <- gsub("Rwa", "RWA", display_name, fixed = TRUE)
     # capitalize NZSEI and NZDEP
@@ -878,20 +904,20 @@ here_save_arrow <- function(df, name) {
 #'
 #' @examples
 #' # descending magnitude (default for 'default')
-#' result_df <- group_tab(df = analysis_df, order = 'default')
+#' result_df <- group_tab(df = analysis_df, order = "default")
 #'
 #' # ascending magnitude
-#' result_df <- group_tab(df = analysis_df, order = 'magnitude_asc')
+#' result_df <- group_tab(df = analysis_df, order = "magnitude_asc")
 #'
 #' # strongest E-value bound first
-#' result_df <- group_tab(df = analysis_df, order = 'evaluebound_desc')
+#' result_df <- group_tab(df = analysis_df, order = "evaluebound_desc")
 #'
 #' # alphabetical
-#' result_df <- group_tab(df = analysis_df, order = 'alphabetical')
+#' result_df <- group_tab(df = analysis_df, order = "alphabetical")
 #'
 #' # custom ordering
-#' custom_order <- c('Outcome3','Outcome1','Outcome2')
-#' result_df <- group_tab(df = analysis_df, order = 'custom', custom_order = custom_order)
+#' custom_order <- c("Outcome3", "Outcome1", "Outcome2")
+#' result_df <- group_tab(df = analysis_df, order = "custom", custom_order = custom_order)
 #'
 #' @importFrom dplyr arrange desc mutate slice
 #' @importFrom tibble rownames_to_column
@@ -899,7 +925,7 @@ here_save_arrow <- function(df, name) {
 #' @keywords internal
 group_tab <- function(
     df,
-    type = c("RD","RR"),
+    type = c("RD", "RR"),
     order = c(
       "alphabetical",
       "magnitude_desc",
@@ -909,13 +935,12 @@ group_tab <- function(
       "custom",
       "default"
     ),
-    custom_order = NULL
-) {
+    custom_order = NULL) {
   # load dplyr verbs
   require(dplyr)
 
   # match arguments
-  type  <- match.arg(type)
+  type <- match.arg(type)
   order <- match.arg(order)
 
   # alias old magnitude and default to magnitude_desc
@@ -926,10 +951,10 @@ group_tab <- function(
 
   # handle list input
   if (is.list(df) && "results_df" %in% names(df)) {
-    results_df   <- df$results_df
+    results_df <- df$results_df
     label_mapping <- df$label_mapping
   } else {
-    results_df   <- df
+    results_df <- df
     label_mapping <- NULL
   }
 
@@ -962,25 +987,25 @@ group_tab <- function(
       }
     }
   }
-  
+
   # fallback to traditional columns if nothing found
   if (is.null(effect_col)) {
     effect_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
   }
-  
-  ev_bound   <- "E_Val_bound"
+
+  ev_bound <- "E_Val_bound"
 
   # apply ordering
   results_df <- switch(order,
-                       alphabetical      = results_df %>% arrange(outcome),
-                       magnitude_desc    = results_df %>% arrange(desc(abs(!!sym(effect_col)))),
-                       magnitude_asc     = results_df %>% arrange(abs(!!sym(effect_col))),
-                       evaluebound_desc  = results_df %>% arrange(desc(!!sym(ev_bound))),
-                       evaluebound_asc   = results_df %>% arrange(!!sym(ev_bound)),
-                       custom            = {
-                         if (is.null(custom_order)) stop("custom_order must be provided for 'custom' order")
-                         results_df %>% slice(match(custom_order, outcome))
-                       }
+    alphabetical = results_df %>% arrange(outcome),
+    magnitude_desc = results_df %>% arrange(desc(abs(!!sym(effect_col)))),
+    magnitude_asc = results_df %>% arrange(abs(!!sym(effect_col))),
+    evaluebound_desc = results_df %>% arrange(desc(!!sym(ev_bound))),
+    evaluebound_asc = results_df %>% arrange(!!sym(ev_bound)),
+    custom = {
+      if (is.null(custom_order)) stop("custom_order must be provided for 'custom' order")
+      results_df %>% slice(match(custom_order, outcome))
+    }
   )
 
   # annotate estimates
@@ -988,28 +1013,32 @@ group_tab <- function(
     Estimate = factor(
       if (type == "RR") {
         ifelse(.data[[effect_col]] > 1 & `2.5 %` > 1,
-               "positive",
-               ifelse(.data[[effect_col]] < 1 & `97.5 %` < 1,
-                      "negative",
-                      "not reliable"))
+          "positive",
+          ifelse(.data[[effect_col]] < 1 & `97.5 %` < 1,
+            "negative",
+            "not reliable"
+          )
+        )
       } else {
         ifelse(.data[[effect_col]] > 0 & `2.5 %` > 0,
-               "positive",
-               ifelse(.data[[effect_col]] < 0 & `97.5 %` < 0,
-                      "negative",
-                      "not reliable"))
+          "positive",
+          ifelse(.data[[effect_col]] < 0 & `97.5 %` < 0,
+            "negative",
+            "not reliable"
+          )
+        )
       }
     ),
     estimate_lab = if (type == "RR") {
       paste0(
         round(.data[[effect_col]], 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
+        round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
         " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
       )
     } else {
       paste0(
         round(.data[[effect_col]], 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3),")",
+        round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
         " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
       )
     }
@@ -1052,17 +1081,18 @@ group_tab <- function(
 #'
 #' @examples
 #' # Assuming you have results from a simulation or model in `results_df`
-#' tabulated_results <- tab_engine_marginal(x = results_df,
-#'                                          new_name = "Treatment Effect",
-#'                                          delta = 1,
-#'                                          sd = 0.2,
-#'                                          type = "RD")  # Corrected 'scale' to 'type'
+#' tabulated_results <- tab_engine_marginal(
+#'   x = results_df,
+#'   new_name = "Treatment Effect",
+#'   delta = 1,
+#'   sd = 0.2,
+#'   type = "RD"
+#' ) # Corrected 'scale' to 'type'
 #'
 #' @importFrom dplyr filter mutate rename select
 #' @importFrom EValue evalues.OLS evalues.RR
 #' @keywords internal
 tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "RR"), continuous_X = FALSE) {
-
   type <- match.arg(type, choices = c("RD", "RR"))
   x <- as.data.frame(x)
 
@@ -1086,7 +1116,7 @@ tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "
     out <- out %>%
       dplyr::mutate(outcome = new_name)
   } else {
-    out$outcome <- new_name  # Just update the existing 'outcome' column instead of adding a new one
+    out$outcome <- new_name # Just update the existing 'outcome' column instead of adding a new one
   }
 
   out <- dplyr::select(out, outcome, everything())
@@ -1129,7 +1159,7 @@ group_results_by_comparison <- function(results_list) {
 
   # get all unique comparisons (exposure levels)
   all_comparisons <- unique(unlist(lapply(custom_tables, function(table) {
-    if(!is.null(table) && nrow(table) > 0) {
+    if (!is.null(table) && nrow(table) > 0) {
       sub(".*? - ", "", rownames(table))
     } else {
       character(0)
@@ -1144,11 +1174,11 @@ group_results_by_comparison <- function(results_list) {
   for (comparison in all_comparisons) {
     comparison_results <- lapply(names(custom_tables), function(outcome) {
       table <- custom_tables[[outcome]]
-      if(!is.null(table) && nrow(table) > 0) {
+      if (!is.null(table) && nrow(table) > 0) {
         row_index <- which(sub(".*? - ", "", rownames(table)) == comparison)
         if (length(row_index) > 0) {
           result <- table[row_index, , drop = FALSE]
-          rownames(result) <- sub(" - .*$", "", rownames(result))  # remove comparison from rowname
+          rownames(result) <- sub(" - .*$", "", rownames(result)) # remove comparison from rowname
           result
         } else {
           NULL
@@ -1159,7 +1189,7 @@ group_results_by_comparison <- function(results_list) {
     })
     # remove null entries and combine
     comparison_results <- do.call(rbind, comparison_results[!sapply(comparison_results, is.null)])
-    if(nrow(comparison_results) > 0) {
+    if (nrow(comparison_results) > 0) {
       grouped_results[[comparison]] <- comparison_results
     }
   }
@@ -1193,9 +1223,11 @@ create_tau_hat_plot <- function(tau_hat, outcome) {
   ggplot2::ggplot(tau_hat_df_long, ggplot2::aes(x = tau_value, fill = comparison)) +
     ggplot2::geom_histogram(bins = 30, position = "dodge", alpha = 0.7) +
     ggplot2::theme_minimal() +
-    ggplot2::labs(title = paste("Distribution of tau.hat for", outcome),
-                  x = "tau.hat", y = "Count") +
-    ggplot2::facet_wrap(~ comparison, scales = "free_y")
+    ggplot2::labs(
+      title = paste("Distribution of tau.hat for", outcome),
+      x = "tau.hat", y = "Count"
+    ) +
+    ggplot2::facet_wrap(~comparison, scales = "free_y")
 }
 
 
@@ -1224,8 +1256,7 @@ margot_batch_glm <- function(
       dot_size = 2
     ),
     facet_params = NULL,
-    theme_params = theme_bw()
-) {
+    theme_params = theme_bw()) {
   #  validation
   if (!is.data.frame(data)) stop("Data must be a data frame")
   if (length(outcome_vars) == 0) stop("Must provide at least one outcome variable")
@@ -1244,7 +1275,7 @@ margot_batch_glm <- function(
     current_family <- if (!is.null(family_list) && outcome_var %in% names(family_list)) {
       family_list[[outcome_var]]
     } else {
-      gaussian()  # Default to gaussian if no family specified
+      gaussian() # Default to gaussian if no family specified
     }
 
     cli::cli_alert_info("Processing model for outcome: {outcome_var} using {current_family$family} family")
@@ -1277,17 +1308,19 @@ margot_batch_glm <- function(
 
     # make base plot
     p <- plot(pred,
-              show_data = plot_params$show_data,
-              jitter = plot_params$jitter,
-              dot_alpha = plot_params$dot_alpha,
-              alpha = plot_params$alpha,
-              show_ci = plot_params$show_ci,
-              ci_style = plot_params$ci_style,
-              colors = plot_params$colors) +
+      show_data = plot_params$show_data,
+      jitter = plot_params$jitter,
+      dot_alpha = plot_params$dot_alpha,
+      alpha = plot_params$alpha,
+      show_ci = plot_params$show_ci,
+      ci_style = plot_params$ci_style,
+      colors = plot_params$colors
+    ) +
       geom_point(aes(x = x, y = predicted),
-                 color = "dodgerblue",
-                 size = plot_params$dot_size,
-                 alpha = 1)
+        color = "dodgerblue",
+        size = plot_params$dot_size,
+        alpha = 1
+      )
 
     # add labels
     p <- p + labs(
@@ -1313,9 +1346,10 @@ margot_batch_glm <- function(
     if (!is.null(facet_params)) {
       if (!is.null(facet_params$facets)) {
         p <- p + facet_wrap(facet_params$facets,
-                            scales = facet_params$scales %||% "fixed",
-                            ncol = facet_params$ncol,
-                            nrow = facet_params$nrow)
+          scales = facet_params$scales %||% "fixed",
+          ncol = facet_params$ncol,
+          nrow = facet_params$nrow
+        )
       }
     }
 
@@ -1342,7 +1376,7 @@ margot_batch_glm <- function(
 #' @return A matrix indicating the number of transitions between states. The rows represent the initial state ('from'), and the columns represent the subsequent state ('to'). Diagonal entries indicate the number of times the state did not change, while off-diagonal entries indicate transitions from one state to another.
 #'
 #' @examples
-#' df <- read.table(header=TRUE, text="
+#' df <- read.table(header = TRUE, text = "
 #' id wave year_measured religion_believe_god
 #' 3 0 1 0
 #' 3 1 1 1
@@ -1374,7 +1408,7 @@ create_transition_matrix <- function(data, state_var, id_var) {
   data <- data[valid_rows, ]
 
   # convert states to factors if numeric, ensuring all states are represented
-  if(is.numeric(data[[state_var]])) {
+  if (is.numeric(data[[state_var]])) {
     all_states <- sort(unique(c(data[[state_var]], data$prev_state)))
     data[[state_var]] <- factor(data[[state_var]], levels = all_states)
     data$prev_state <- factor(data$prev_state, levels = all_states)
@@ -1445,12 +1479,11 @@ create_transition_matrix <- function(data, state_var, id_var) {
     continuous_columns_keep = NULL,
     scale_exposure = FALSE,
     not_lost_in_following_wave = "not_lost_following_wave",
-    lost_in_following_wave     = "lost_following_wave",
-    remove_selected_columns    = TRUE,
-    time_point_prefixes        = NULL,
-    time_point_regex           = NULL,
-    save_observed_y            = FALSE
-) {
+    lost_in_following_wave = "lost_following_wave",
+    remove_selected_columns = TRUE,
+    time_point_prefixes = NULL,
+    time_point_regex = NULL,
+    save_observed_y = FALSE) {
   # explicit package call
   cli::cli_h1("Strict All-or-Nothing Censoring for Longitudinal Data")
 
@@ -1460,8 +1493,8 @@ create_transition_matrix <- function(data, state_var, id_var) {
       time_point_regex <- "^(t\\d+)_.*$"
     }
     matched_cols <- grep(time_point_regex, colnames(df_wide), value = TRUE)
-    time_points  <- unique(gsub(time_point_regex, "\\1", matched_cols))
-    time_points  <- time_points[order(as.numeric(gsub("t", "", time_points)))]
+    time_points <- unique(gsub(time_point_regex, "\\1", matched_cols))
+    time_points <- time_points[order(as.numeric(gsub("t", "", time_points)))]
   } else {
     time_points <- time_point_prefixes
   }
@@ -1488,7 +1521,7 @@ create_transition_matrix <- function(data, state_var, id_var) {
   }
 
   for (i in seq_len(num_time_points - 1)) {
-    t_i       <- time_points[i]
+    t_i <- time_points[i]
     t_i_plus1 <- time_points[i + 1]
 
     not_lost_col <- paste0(t_i, "_", not_lost_in_following_wave)
@@ -1509,7 +1542,6 @@ create_transition_matrix <- function(data, state_var, id_var) {
         }
         # Strict approach: lost if ANY final-wave outcome is missing
         df_wide_use[[not_lost_col]] <- ifelse(check_all_present(df_wide_use, needed_outcomes), 1, 0)
-
       } else {
         # If it's not the final wave but we have no exposures?
         # This is unusual, but let's just skip creating a not_lost indicator
@@ -1533,7 +1565,7 @@ create_transition_matrix <- function(data, state_var, id_var) {
         if (save_observed_y && fw == final_wave) {
           # remove outcome columns from the set to overwrite
           fw_outcomes <- paste0(fw, "_", outcome_vars)
-          fw_cols     <- setdiff(fw_cols, fw_outcomes)
+          fw_cols <- setdiff(fw_cols, fw_outcomes)
         }
         df_wide_use[rows_lost, fw_cols] <- NA
       }
@@ -1564,9 +1596,9 @@ create_transition_matrix <- function(data, state_var, id_var) {
   # step 3: Lost_in_following_wave indicators
   cli::cli_h2("Step 3: Creating lost_in_following_wave indicators")
   for (i in seq_len(num_time_points - 1)) {
-    t_i        <- time_points[i]
+    t_i <- time_points[i]
     not_lost_col <- paste0(t_i, "_", not_lost_in_following_wave)
-    lost_col     <- paste0(t_i, "_", lost_in_following_wave)
+    lost_col <- paste0(t_i, "_", lost_in_following_wave)
 
     # Create lost_in_following_wave as inverse of not_lost_in_following_wave
     if (not_lost_col %in% names(df_wide_use)) {
@@ -1580,8 +1612,10 @@ create_transition_matrix <- function(data, state_var, id_var) {
   continuous_cols <- setdiff(continuous_cols, c(ordinal_columns, continuous_columns_keep))
 
   # Exclude lost/not_lost columns, binary/na, weighting columns
-  drop_regex <- paste0("_", not_lost_in_following_wave, "$|_",
-                       lost_in_following_wave, "$|_binary$|_na$|_weights$")
+  drop_regex <- paste0(
+    "_", not_lost_in_following_wave, "$|_",
+    lost_in_following_wave, "$|_binary$|_na$|_weights$"
+  )
   continuous_cols <- continuous_cols[!grepl(drop_regex, continuous_cols)]
 
   # Exclude exposures if not scaling them
@@ -1627,7 +1661,7 @@ create_transition_matrix <- function(data, state_var, id_var) {
 
   # step 6: Reorder columns
   cli::cli_h2("Step 6: Reordering columns")
-  new_order <- c("id")   # place id first if it exists
+  new_order <- c("id") # place id first if it exists
   for (tp in time_points) {
     tp_cols <- grep(paste0("^", tp, "_"), names(df_wide_use), value = TRUE)
 
@@ -1691,12 +1725,11 @@ strict_exposure_outcome_censoring <- function(
     continuous_columns_keep = NULL,
     scale_exposure = FALSE,
     not_lost_in_following_wave = "not_lost_following_wave",
-    lost_in_following_wave     = "lost_following_wave",
-    remove_selected_columns    = TRUE,
-    time_point_prefixes        = NULL,
-    time_point_regex           = NULL,
-    save_observed_y            = FALSE
-) {
+    lost_in_following_wave = "lost_following_wave",
+    remove_selected_columns = TRUE,
+    time_point_prefixes = NULL,
+    time_point_regex = NULL,
+    save_observed_y = FALSE) {
   # Call the internal function with the same parameters
   .strict_exposure_outcome_censoring(
     df_wide = df_wide,

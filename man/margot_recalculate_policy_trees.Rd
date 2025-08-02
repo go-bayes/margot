@@ -28,7 +28,7 @@ If NULL (default), recalculates all models marked as needing recalculation.}
 If NULL, uses the original top variables from the model.}
 
 \item{exclude_covariates}{Character vector of covariate names or patterns to exclude.
-Supports exact matches and regex patterns (e.g., "^t0_log_" excludes all 
+Supports exact matches and regex patterns (e.g., "^t0_log_" excludes all
 variables starting with "t0_log_").}
 
 \item{covariate_mode}{Character string specifying how to handle covariates:

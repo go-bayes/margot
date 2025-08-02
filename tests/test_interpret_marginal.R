@@ -14,11 +14,14 @@ test_ate <- data.frame(
 rownames(test_ate) <- c("Outcome1", "Outcome2", "Outcome3")
 
 cat("Testing margot_interpret_marginal with ATE column...\n")
-tryCatch({
-  result <- margot:::margot_interpret_marginal(test_ate, type = "RD", effect_type = "ATE")
-  cat("✓ margot_interpret_marginal worked\n")
-  cat(result$interpretation, "\n")
-}, error = function(e) {
-  cat("✗ Error:", e$message, "\n")
-  print(e)
-})
+tryCatch(
+  {
+    result <- margot:::margot_interpret_marginal(test_ate, type = "RD", effect_type = "ATE")
+    cat("✓ margot_interpret_marginal worked\n")
+    cat(result$interpretation, "\n")
+  },
+  error = function(e) {
+    cat("✗ Error:", e$message, "\n")
+    print(e)
+  }
+)

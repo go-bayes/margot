@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.222</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.227</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,48 @@
 
 <div id="development-changelog" class="section level1">
 
+<div class="section level2">
+<h2 id="id_2025-08-02-fixed-compute_conditional_means-to-respect-compute_marginal_only">2025-08-02: Fixed compute_conditional_means to respect compute_marginal_only<a class="anchor" aria-label="anchor" href="#id_2025-08-02-fixed-compute_conditional_means-to-respect-compute_marginal_only"></a></h2>
+<div class="section level3">
+<h3 id="fixed">Fixed<a class="anchor" aria-label="anchor" href="#fixed"></a></h3>
+<ul><li>Updated <code><a href="reference/margot_causal_forest.html">margot_causal_forest()</a></code> so that <code>compute_conditional_means</code> respects the <code>compute_marginal_only</code> setting</li>
+<li>When <code>compute_marginal_only = TRUE</code>, conditional means are now skipped for performance</li>
+<li>Creates defensive empty structure with <code>computed = FALSE</code> and reason for pipeline compatibility</li>
+</ul></div>
+<div class="section level3">
+<h3 id="technical-details">Technical Details<a class="anchor" aria-label="anchor" href="#technical-details"></a></h3>
+<ul><li>Conditional means from <code><a href="https://rdrr.io/pkg/policytree/man/conditional_means.html" class="external-link">policytree::conditional_means()</a></code> are heterogeneity-related metrics</li>
+<li>These show expected outcomes under each treatment arm for different covariate patterns</li>
+<li>Skipping them when <code>compute_marginal_only = TRUE</code> is consistent with skipping RATE and QINI</li>
+<li>Maintains same defensive structure pattern as other skipped computations</li>
+</ul></div>
+</div>
+<div class="section level2">
+<h2 id="id_2025-08-02-fixed-label-mapping-for-reversed-variables-in-margot_plot">2025-08-02: Fixed label mapping for reversed variables in margot_plot()<a class="anchor" aria-label="anchor" href="#id_2025-08-02-fixed-label-mapping-for-reversed-variables-in-margot_plot"></a></h2>
+<div class="section level3">
+<h3 id="fixed-1">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1"></a></h3>
+<ul><li>Updated <code>transform_label()</code> in helpers.R to prioritize exact matches in label_mapping</li>
+<li>When an exact match is found, it returns immediately without further processing</li>
+<li>Added automatic removal of <code>_r</code> suffix alongside <code>_z</code> suffix for reversed variables</li>
+<li>This prevents cases where partial pattern matching would leave “_r” as a stray suffix on plot labels</li>
+</ul></div>
+<div class="section level3">
+<h3 id="technical-details-1">Technical Details<a class="anchor" aria-label="anchor" href="#technical-details-1"></a></h3>
+<ul><li>The issue occurred when label_mapping contained both base and reversed variable names</li>
+<li>Pattern matching could match the base pattern, leaving “_r” unprocessed</li>
+<li>Now exact matches take precedence and are returned without modification</li>
+</ul></div>
+</div>
+<div class="section level2">
+<h2 id="id_2025-08-02-fixed-handling-of-reversed-variables-in-margot_plot">2025-08-02: Fixed handling of reversed variables in margot_plot()<a class="anchor" aria-label="anchor" href="#id_2025-08-02-fixed-handling-of-reversed-variables-in-margot_plot"></a></h2>
+<div class="section level3">
+<h3 id="fixed-2">Fixed<a class="anchor" aria-label="anchor" href="#fixed-2"></a></h3>
+<ul><li>Updated <code>back_transform_estimates()</code> in helpers.R to properly handle reversed variables with <code>_r</code> suffix</li>
+<li>The function now removes the <code>_r</code> suffix before looking for variables in original_df</li>
+<li>Silently skips variables not found in original_df instead of throwing warnings</li>
+<li>This fix aligns with how <code>margot_interpret_policy()</code> and <code><a href="reference/margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code> handle reversed variables</li>
+</ul></div>
+</div>
 <div class="section level2">
 <h2 id="id_2025-01-25-new-development-architecture-implementation">2025-01-25: New Development Architecture Implementation<a class="anchor" aria-label="anchor" href="#id_2025-01-25-new-development-architecture-implementation"></a></h2>
 <div class="section level3">

@@ -13,7 +13,7 @@ held-out data, thereby avoiding in-sample optimism in the Qini plots.'></head><b
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.222</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.227</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,14 +60,17 @@ held-out data, thereby avoiding in-sample optimism in the Qini plots.</p>
 <span>  top_n_vars <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  save_models <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  train_proportion <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  qini_split <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  train_prop <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  qini_train_prop <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  compute_conditional_means <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  compute_marginal_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  qini_treatment_cost <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
-<span>  use_train_test_split <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  use_train_test_split <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  flip_outcomes <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  flip_method <span class="op">=</span> <span class="st">"zscore"</span>,</span>
+<span>  flip_scale_bounds <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -119,13 +122,8 @@ deprecated in future versions. Use margot_rate(), margot_qini(), and margot_poli
 
 <dt id="arg-train-proportion">train_proportion<a class="anchor" aria-label="anchor" href="#arg-train-proportion"></a></dt>
 <dd><p>Numeric value between 0 and 1 indicating the proportion of data to use for
-training set. Used for policy trees, QINI evaluation (when qini_split=TRUE), and all train/test splits
-when use_train_test_split=TRUE. Default is 0.5.</p></dd>
-
-
-<dt id="arg-qini-split">qini_split<a class="anchor" aria-label="anchor" href="#arg-qini-split"></a></dt>
-<dd><p>Logical indicating whether to do a separate train/test split exclusively for the Qini
-calculation. Default is TRUE (i.e., Qini is computed out-of-sample).</p></dd>
+training set, or NULL. Used for policy trees and QINI evaluation when compute_marginal_only=FALSE.
+Must be NULL when compute_marginal_only=TRUE. Default is 0.5.</p></dd>
 
 
 <dt id="arg-train-prop">train_prop<a class="anchor" aria-label="anchor" href="#arg-train-prop"></a></dt>
@@ -139,6 +137,13 @@ calculation. Default is TRUE (i.e., Qini is computed out-of-sample).</p></dd>
 <dt id="arg-compute-conditional-means">compute_conditional_means<a class="anchor" aria-label="anchor" href="#arg-compute-conditional-means"></a></dt>
 <dd><p>Logical indicating whether to compute conditional means using
 <code><a href="https://rdrr.io/pkg/policytree/man/conditional_means.html" class="external-link">policytree::conditional_means()</a></code>. These represent expected outcomes under each treatment arm. Default is TRUE.</p></dd>
+
+
+<dt id="arg-compute-marginal-only">compute_marginal_only<a class="anchor" aria-label="anchor" href="#arg-compute-marginal-only"></a></dt>
+<dd><p>Logical indicating whether to compute only marginal (average)
+treatment effects, skipping heterogeneity metrics (QINI curves, RATE, policy trees).
+When TRUE, train_proportion must be NULL. When FALSE (default), heterogeneity
+metrics are computed using train/test splits.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -163,6 +168,25 @@ and QINI evaluation. Default is 12345.</p></dd>
 - Policy trees and QINI also use the same train/test split
 - All-data results are stored in split_info for reference
 If FALSE, the main forest uses all data for estimation and policy trees/QINI get their own splits.</p></dd>
+
+
+<dt id="arg-flip-outcomes">flip_outcomes<a class="anchor" aria-label="anchor" href="#arg-flip-outcomes"></a></dt>
+<dd><p>Character vector or list specifying outcomes to flip (reverse score).
+- Character vector: applies default flip_method and flip_scale_bounds to all listed outcomes
+- List: allows per-outcome specification, e.g., list(anxiety = list(method = "ordinal", scale_bounds = c(1, 7)))
+Flipped outcomes are appended with "_r" suffix in results.</p></dd>
+
+
+<dt id="arg-flip-method">flip_method<a class="anchor" aria-label="anchor" href="#arg-flip-method"></a></dt>
+<dd><p>Character string specifying default inversion method when flip_outcomes is provided:
+- "zscore": Simple negation (default). Assumes data is already standardized (e.g., outcomes ending in "_z").
+- "ordinal": Invert on ordinal scale using bounds. Use for Likert scales or bounded measures.</p></dd>
+
+
+<dt id="arg-flip-scale-bounds">flip_scale_bounds<a class="anchor" aria-label="anchor" href="#arg-flip-scale-bounds"></a></dt>
+<dd><p>Numeric vector of length 2 [min, max] or named list of bounds per outcome.
+Required when flip_method = "ordinal" unless bounds should be inferred from data.
+Example: c(1, 7) for a 7-point Likert scale, or list(anxiety = c(1, 7), depression = c(0, 21)).</p></dd>
 
 </dl></div>
     <div class="section level2">

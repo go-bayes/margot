@@ -64,7 +64,7 @@ margot_plot_qini_cost_sensitivity(cost_sens, "model_anxiety")
 
 # Faceted plot
 margot_plot_qini_cost_sensitivity(
-  cost_sens, 
+  cost_sens,
   "model_anxiety",
   plot_type = "facet"
 )

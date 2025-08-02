@@ -27,24 +27,25 @@
 margot_impute_carry_forward <- function(
     df_wide,
     columns_to_impute,
-    max_carry_forward          = 1,
-    time_point_prefixes        = NULL,
-    time_point_regex           = NULL,
-    require_one_observed       = TRUE,
+    max_carry_forward = 1,
+    time_point_prefixes = NULL,
+    time_point_regex = NULL,
+    require_one_observed = TRUE,
     columns_no_future_required = NULL,
-    create_na_indicator        = TRUE,
-    indicator_suffix           = "_na",
-    indicator_as_suffix        = TRUE,
-    verbose                    = TRUE,
-    impute_final_wave          = FALSE
-) {
+    create_na_indicator = TRUE,
+    indicator_suffix = "_na",
+    indicator_as_suffix = TRUE,
+    verbose = TRUE,
+    impute_final_wave = FALSE) {
   # validate columns_no_future_required
   if (!is.null(columns_no_future_required)) {
     bad <- setdiff(columns_no_future_required, columns_to_impute)
-    if (length(bad) > 0) stop(
-      "columns_no_future_required not in columns_to_impute: ",
-      paste(bad, collapse = ", ")
-    )
+    if (length(bad) > 0) {
+      stop(
+        "columns_no_future_required not in columns_to_impute: ",
+        paste(bad, collapse = ", ")
+      )
+    }
   } else {
     columns_no_future_required <-
       if (!require_one_observed) columns_to_impute else character(0)
@@ -60,7 +61,7 @@ margot_impute_carry_forward <- function(
   # detect time prefixes
   if (is.null(time_point_prefixes)) {
     if (is.null(time_point_regex)) time_point_regex <- "^(t\\d+)_.*$"
-    cols        <- grep(time_point_regex, names(df_wide), value = TRUE)
+    cols <- grep(time_point_regex, names(df_wide), value = TRUE)
     time_points <- unique(sub(time_point_regex, "\\1", cols))
   } else {
     time_points <- time_point_prefixes
@@ -68,9 +69,9 @@ margot_impute_carry_forward <- function(
   if (length(time_points) == 0) stop("No time-points found; check regex or time_point_prefixes")
 
   # order numerically
-  nums        <- as.numeric(sub("^t", "", time_points))
+  nums <- as.numeric(sub("^t", "", time_points))
   time_points <- time_points[order(nums)]
-  n_tp        <- length(time_points)
+  n_tp <- length(time_points)
 
   if (verbose) {
     cli::cli_alert_success(
@@ -79,43 +80,43 @@ margot_impute_carry_forward <- function(
   }
 
   # warn if no matching columns for any base
-  pattern    <- paste0("^(", paste(time_points, collapse = "|"), ")_")
+  pattern <- paste0("^(", paste(time_points, collapse = "|"), ")_")
   match_cols <- grep(pattern, names(df_wide), value = TRUE)
-  bases      <- unique(sub("^[^_]+_(.*)$", "\\1", match_cols))
-  missing    <- setdiff(columns_to_impute, bases)
+  bases <- unique(sub("^[^_]+_(.*)$", "\\1", match_cols))
+  missing <- setdiff(columns_to_impute, bases)
   if (length(missing) > 0) warning("No columns found for: ", paste(missing, collapse = ", "))
 
   # prepare output and indicator storage
-  out        <- df_wide
+  out <- df_wide
   indicators <- list()
 
   # main imputation loop
   for (base in columns_to_impute) {
     if (verbose) cli::cli_h2("Variable: {base}")
     stats[[base]] <- list()
-    req_fut       <- require_one_observed && !(base %in% columns_no_future_required)
-    max_t         <- if (impute_final_wave) n_tp else (n_tp - 1)
-    max_t         <- max(0, max_t)
+    req_fut <- require_one_observed && !(base %in% columns_no_future_required)
+    max_t <- if (impute_final_wave) n_tp else (n_tp - 1)
+    max_t <- max(0, max_t)
 
     for (i in seq_len(max_t)) {
-      tp  <- time_points[i]
+      tp <- time_points[i]
       col <- paste0(tp, "_", base)
       stats[[base]][[tp]] <- list(total = 0L, imp = 0L, rem = 0L, src = list())
       if (!col %in% names(out)) next
 
       # determine rows eligible: require present or future observation
       if (req_fut && i < n_tp) {
-        future_cols <- paste0(time_points[(i+1):n_tp], "_", base)
+        future_cols <- paste0(time_points[(i + 1):n_tp], "_", base)
         future_cols <- intersect(future_cols, names(out))
         # include current wave in eligibility check
-        cols_check  <- c(col, future_cols)
+        cols_check <- c(col, future_cols)
         if (length(cols_check) == 0) next
         ok <- rowSums(!is.na(out[, cols_check, drop = FALSE])) > 0
       } else {
         ok <- rep(TRUE, nrow(out))
       }
 
-      miss          <- is.na(out[[col]]) & ok
+      miss <- is.na(out[[col]]) & ok
       total_missing <- sum(miss)
       stats[[base]][[tp]]$total <- total_missing
 
@@ -130,7 +131,7 @@ margot_impute_carry_forward <- function(
 
         # carry-forward: impute from the immediate previous wave(s)
         for (lag in seq_len(max_carry_forward)) {
-          prev_i   <- i - lag
+          prev_i <- i - lag
           if (prev_i < 1) break
           prev_col <- paste0(time_points[prev_i], "_", base)
           if (prev_col %in% names(out)) {

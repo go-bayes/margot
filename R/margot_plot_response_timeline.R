@@ -65,9 +65,11 @@
 #'   use_timestamp = TRUE,
 #'   save_path = here::here("output", "plots"),
 #'   title = "New Zealand Attitudes and Values Study (panel)",
-#'   x_label = paste("NZAVS years",  min(prepared_data$df_timeline$day, na.rm = TRUE),
-#'                   "-", max(prepared_data$df_timeline$day, na.rm = TRUE),
-#'                   "cohort: daily counts by condition"),
+#'   x_label = paste(
+#'     "NZAVS years", min(prepared_data$df_timeline$day, na.rm = TRUE),
+#'     "-", max(prepared_data$df_timeline$day, na.rm = TRUE),
+#'     "cohort: daily counts by condition"
+#'   ),
 #'   y_label = "Count of Responses"
 #' )
 #'
@@ -121,20 +123,26 @@ margot_plot_response_timeline <- function(df_timeline,
 
   # prepare subtitle
   if (!is.null(n_total_participants)) {
-    subtitle <- sprintf("N = %s participants, %s responses; years %.0f - %.0f",
-                        format(n_total_participants, big.mark = ","),
-                        format(total_responses, big.mark = ","),
-                        year_range[1], year_range[2])
+    subtitle <- sprintf(
+      "N = %s participants, %s responses; years %.0f - %.0f",
+      format(n_total_participants, big.mark = ","),
+      format(total_responses, big.mark = ","),
+      year_range[1], year_range[2]
+    )
   } else {
-    subtitle <- sprintf("N = %s responses; years %.0f - %.0f",
-                        format(total_responses, big.mark = ","),
-                        year_range[1], year_range[2])
+    subtitle <- sprintf(
+      "N = %s responses; years %.0f - %.0f",
+      format(total_responses, big.mark = ","),
+      year_range[1], year_range[2]
+    )
   }
 
   # set default color palette if not provided
   if (is.null(color_palette)) {
-    color_palette <- c("#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
-                       "#D55E00", "#CC79A7", "#000000", "#999999")
+    color_palette <- c(
+      "#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2",
+      "#D55E00", "#CC79A7", "#000000", "#999999"
+    )
   }
 
   # get the number of unique waves
@@ -168,37 +176,40 @@ margot_plot_response_timeline <- function(df_timeline,
   # Save ggplot if save is TRUE
   if (save) {
     cli::cli_alert_info("Saving plot...")
-    tryCatch({
-      margot::here_save_qs(
-        obj = gg,
-        name = base_filename,
-        dir_path = save_path,
-        preset = "high",
-        nthreads = 1
-      )
-      cli::cli_alert_success("Plot saved as .qs file successfully")
-
-      if (save_png) {
-        # Generate filename for PNG
-        if (use_timestamp) {
-          png_filename <- paste0(base_filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".png")
-        } else {
-          png_filename <- paste0(base_filename, ".png")
-        }
-
-        ggplot2::ggsave(
-          plot = gg,
-          filename = file.path(save_path, png_filename),
-          width = width,
-          height = height,
-          units = "in",
-          dpi = 400
+    tryCatch(
+      {
+        margot::here_save_qs(
+          obj = gg,
+          name = base_filename,
+          dir_path = save_path,
+          preset = "high",
+          nthreads = 1
         )
-        cli::cli_alert_success("Plot saved as PNG successfully")
+        cli::cli_alert_success("Plot saved as .qs file successfully")
+
+        if (save_png) {
+          # Generate filename for PNG
+          if (use_timestamp) {
+            png_filename <- paste0(base_filename, "_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".png")
+          } else {
+            png_filename <- paste0(base_filename, ".png")
+          }
+
+          ggplot2::ggsave(
+            plot = gg,
+            filename = file.path(save_path, png_filename),
+            width = width,
+            height = height,
+            units = "in",
+            dpi = 400
+          )
+          cli::cli_alert_success("Plot saved as PNG successfully")
+        }
+      },
+      error = function(e) {
+        cli::cli_alert_danger(paste("Failed to save plot:", e$message))
       }
-    }, error = function(e) {
-      cli::cli_alert_danger(paste("Failed to save plot:", e$message))
-    })
+    )
   }
 
   cli::cli_alert_success(paste("Response timeline plot creation complete!", "\U0001F44D"))

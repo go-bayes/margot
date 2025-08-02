@@ -79,9 +79,9 @@ margot_plot_qini_cost_sensitivity(cost_sens, model_name = "model_anxiety")
 # Detailed analysis for specific models
 cost_sens_detailed <- margot_qini_cost_sensitivity(
   causal_forest_results,
-  costs = seq(0.2, 3, by = 0.2),  # Fine-grained cost grid
+  costs = seq(0.2, 3, by = 0.2), # Fine-grained cost grid
   model_names = c("model_anxiety", "model_depression"),
-  spend_levels = c(0.05, 0.1, 0.2, 0.4)  # More spend levels
+  spend_levels = c(0.05, 0.1, 0.2, 0.4) # More spend levels
 )
 }
 

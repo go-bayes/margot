@@ -19,7 +19,7 @@
 #' outcome_var <- "hours_exercise"
 #' exposure_var <- "age"
 #' baseline_vars <- c("age", "male", "partner")
-#' model <- regress_with_covariates(df_margot_example, outcome_var, exposure_var, baseline_vars, family =  gaussian())
+#' model <- regress_with_covariates(df_margot_example, outcome_var, exposure_var, baseline_vars, family = gaussian())
 #' summary(model)
 #' }
 #'

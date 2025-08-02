@@ -109,29 +109,27 @@
 #' @export
 margot_plot_tau <- function(
     models_list,
-    label_mapping      = NULL,
-    binwidth           = 0.01,
-    base_size          = 14,
-    ncol               = NULL,
-    title              = NULL,
-    subtitle           = NULL,
-    x_label            = expression(tau[i]),
-    show_zero_line     = TRUE,
-    fill_colour        = "white",
-    border_colour      = NA,
-    colour_by_sign     = TRUE,
-    colour_below       = "#4f88c6",
-    colour_above       = "#d8a739",
-    zero_line_colour   = "red",
-    zero_line_alpha    = 0.5,
-    remove_tx_prefix   = TRUE,
-    remove_z_suffix    = TRUE,
-    use_title_case     = TRUE,
+    label_mapping = NULL,
+    binwidth = 0.01,
+    base_size = 14,
+    ncol = NULL,
+    title = NULL,
+    subtitle = NULL,
+    x_label = expression(tau[i]),
+    show_zero_line = TRUE,
+    fill_colour = "white",
+    border_colour = NA,
+    colour_by_sign = TRUE,
+    colour_below = "#4f88c6",
+    colour_above = "#d8a739",
+    zero_line_colour = "red",
+    zero_line_alpha = 0.5,
+    remove_tx_prefix = TRUE,
+    remove_z_suffix = TRUE,
+    use_title_case = TRUE,
     remove_underscores = TRUE,
-    free_scales        = FALSE,
-    theme              = "void"
-) {
-
+    free_scales = FALSE,
+    theme = "void") {
   # validate inputs --------------------------------------------------------
   if (!is.list(models_list)) {
     stop("models_list must be a list of models")
@@ -146,7 +144,7 @@ margot_plot_tau <- function(
   # smart handling for models_binary structure -----------------------------
   # if user passes models_binary, extract $results automatically
   if ("results" %in% names(models_list) &&
-      any(c("combined_table", "outcome_vars", "data", "covariates", "full_models") %in% names(models_list))) {
+    any(c("combined_table", "outcome_vars", "data", "covariates", "full_models") %in% names(models_list))) {
     cli::cli_alert_info("detected models_binary structure, using $results")
     if (!is.list(models_list$results)) {
       stop("models_binary$results is not a valid list")
@@ -266,9 +264,9 @@ margot_plot_tau <- function(
       ggplot2::geom_histogram(
         ggplot2::aes(fill = sign_group),
         binwidth = binwidth,
-        colour   = border_colour,
+        colour = border_colour,
         boundary = 0,
-        closed   = "left"
+        closed = "left"
       ) +
       ggplot2::scale_fill_manual(
         values = c("below zero" = colour_below, "above zero" = colour_above),
@@ -298,7 +296,7 @@ margot_plot_tau <- function(
   # add faceting
   if (n_models > 1) {
     p <- p + ggplot2::facet_wrap(
-      ~ model_display,
+      ~model_display,
       ncol   = ncol,
       scales = if (free_scales) "free" else "fixed"
     )
@@ -323,16 +321,15 @@ margot_plot_tau <- function(
   )
 
   # apply selected theme with base_size
-  p <- p + switch(
-    theme,
+  p <- p + switch(theme,
     "classic" = ggplot2::theme_classic(base_size = base_size),
     "minimal" = ggplot2::theme_minimal(base_size = base_size),
-    "bw"      = ggplot2::theme_bw(base_size = base_size),
-    "light"   = ggplot2::theme_light(base_size = base_size),
-    "dark"    = ggplot2::theme_dark(base_size = base_size),
-    "void"    = ggplot2::theme_void(base_size = base_size),
-    "grey"    = ggplot2::theme_grey(base_size = base_size),
-    "linedraw"= ggplot2::theme_linedraw(base_size = base_size)
+    "bw" = ggplot2::theme_bw(base_size = base_size),
+    "light" = ggplot2::theme_light(base_size = base_size),
+    "dark" = ggplot2::theme_dark(base_size = base_size),
+    "void" = ggplot2::theme_void(base_size = base_size),
+    "grey" = ggplot2::theme_grey(base_size = base_size),
+    "linedraw" = ggplot2::theme_linedraw(base_size = base_size)
   )
 
   # add custom theme modifications

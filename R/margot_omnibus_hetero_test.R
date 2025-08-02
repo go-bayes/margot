@@ -61,11 +61,15 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
 
   # create display labels for outcomes
   display_labels <- sapply(outcome_vars, function(outcome) {
-    transform_label(outcome, label_mapping,
-                    list(remove_tx_prefix = TRUE,
-                         remove_z_suffix = TRUE,
-                         remove_underscores = TRUE,
-                         use_title_case = TRUE))
+    transform_label(
+      outcome, label_mapping,
+      list(
+        remove_tx_prefix = TRUE,
+        remove_z_suffix = TRUE,
+        remove_underscores = TRUE,
+        use_title_case = TRUE
+      )
+    )
   })
 
   # create a mapping between original outcomes and display labels
@@ -96,13 +100,13 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
       mean_prediction_estimate = round(calib["mean.forest.prediction", "Estimate"], 2),
       mean_prediction_se = round(calib["mean.forest.prediction", "Std. Error"], 2),
       mean_prediction_t = round(calib["mean.forest.prediction", "Estimate"] /
-                                  calib["mean.forest.prediction", "Std. Error"], 2),
+        calib["mean.forest.prediction", "Std. Error"], 2),
       mean_prediction_p = calib["mean.forest.prediction", "Pr(>t)"],
       mean_prediction_significant = mean_prediction_p < alpha,
       differential_prediction_estimate = round(calib["differential.forest.prediction", "Estimate"], 2),
       differential_prediction_se = round(calib["differential.forest.prediction", "Std. Error"], 2),
       differential_prediction_t = round(calib["differential.forest.prediction", "Estimate"] /
-                                          calib["differential.forest.prediction", "Std. Error"], 2),
+        calib["differential.forest.prediction", "Std. Error"], 2),
       differential_prediction_p = calib["differential.forest.prediction", "Pr(>t)"],
       differential_prediction_significant = differential_prediction_p < alpha
     )
@@ -119,9 +123,11 @@ margot_omnibus_hetero_test <- function(model_results, outcome_vars = NULL, alpha
       mean_prediction_p_formatted = format_pval(mean_prediction_p),
       differential_prediction_p_formatted = format_pval(differential_prediction_p),
       calibration_status = ifelse(mean_prediction_significant,
-                                  "Calibrated", "Not calibrated"),
+        "Calibrated", "Not calibrated"
+      ),
       heterogeneity_status = ifelse(differential_prediction_significant,
-                                    "Heterogeneity present", "No heterogeneity")
+        "Heterogeneity present", "No heterogeneity"
+      )
     )
 
   # create a clean summary table for display

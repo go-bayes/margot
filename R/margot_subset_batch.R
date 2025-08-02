@@ -55,39 +55,39 @@ margot_subset_batch <- function(model_results,
     # subset the data
     if (!is.null(subset_info$subset_condition)) {
       subset_result <- margot_subset_model(
-        model_results     = model_results,
-        subset_condition  = subset_info$subset_condition,
+        model_results = model_results,
+        subset_condition = subset_info$subset_condition,
         subset_description = subset_description,
-        debug             = debug
+        debug = debug
       )
     } else {
       subset_operator <- if (!is.null(subset_info$operator)) subset_info$operator else "=="
       subset_result <- margot_subset_model(
-        model_results     = model_results,
-        X                 = X,
-        subset_var        = subset_info$var,
-        subset_value      = subset_info$value,
-        subset_operator   = subset_operator,
+        model_results = model_results,
+        X = X,
+        subset_var = subset_info$var,
+        subset_value = subset_info$value,
+        subset_operator = subset_operator,
         subset_description = subset_description,
-        debug             = debug
+        debug = debug
       )
     }
 
     # create plot options
     options <- margot_plot_create_options(
-      subtitle       = subset_description,
-      base_defaults  = base_defaults,
-      title          = title,
+      subtitle = subset_description,
+      base_defaults = base_defaults,
+      title = title,
       filename_prefix = paste0("subset_", subset_label)
     )
 
     # generate plot
     plot_result <- margot_plot(
       subset_result$results,
-      options            = options,
-      label_mapping      = label_mapping,
+      options = options,
+      label_mapping = label_mapping,
       include_coefficients = FALSE,
-      original_df        = original_df,
+      original_df = original_df,
       ...
     )
 
@@ -105,10 +105,10 @@ margot_subset_batch <- function(model_results,
 
   # summary table
   summary_df <- data.frame(
-    Subset      = names(results),
+    Subset = names(results),
     Sample_Size = vapply(results, `[[`, numeric(1), "n"),
-    Total_Size  = vapply(results, `[[`, numeric(1), "total"),
-    Percentage  = vapply(results, function(x) round(x$pct, 2), numeric(1)),
+    Total_Size = vapply(results, `[[`, numeric(1), "total"),
+    Percentage = vapply(results, function(x) round(x$pct, 2), numeric(1)),
     stringsAsFactors = FALSE
   )
   rownames(summary_df) <- NULL

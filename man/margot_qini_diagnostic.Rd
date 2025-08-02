@@ -29,7 +29,7 @@ A tibble comparing gain values from different sources with columns:
   - spend: Spend level
   - source: Source of the gain value ("plot_data", "maq_direct", "diff_summary")
   - cate_gain: CATE gain value
-  - ate_gain: ATE/baseline gain value  
+  - ate_gain: ATE/baseline gain value
   - difference: CATE - ATE difference
   - se: Standard error (where available)
   - discrepancy: Logical flag if values differ by more than tolerance

@@ -100,9 +100,11 @@ nzavs_timeline <- margot_plot_response_timeline(
   use_timestamp = TRUE,
   save_path = here::here("output", "plots"),
   title = "New Zealand Attitudes and Values Study (panel)",
-  x_label = paste("NZAVS years",  min(prepared_data$df_timeline$day, na.rm = TRUE),
-                  "-", max(prepared_data$df_timeline$day, na.rm = TRUE),
-                  "cohort: daily counts by condition"),
+  x_label = paste(
+    "NZAVS years", min(prepared_data$df_timeline$day, na.rm = TRUE),
+    "-", max(prepared_data$df_timeline$day, na.rm = TRUE),
+    "cohort: daily counts by condition"
+  ),
   y_label = "Count of Responses"
 )
 

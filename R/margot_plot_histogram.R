@@ -96,7 +96,7 @@ margot_plot_histogram <- function(data,
                                   file_prefix = "",
                                   mean_line_color = "black",
                                   sd_line_color = "black",
-                                  vertical_facets = FALSE) {  # new parameter
+                                  vertical_facets = FALSE) { # new parameter
 
   cli::cli_h1("Margot Plot Histogram")
 

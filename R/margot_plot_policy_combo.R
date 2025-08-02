@@ -28,22 +28,22 @@
 #' @export
 margot_plot_policy_combo <- function(result_object,
                                      model_name,
-                                     max_depth             = 2L,
-                                     label_mapping         = NULL,
-                                     original_df           = NULL,
-                                     layout                = list(heights = c(1, 2)),
-                                     annotation            = list(tag_levels = "A"),
-                                     generate_policy_tree  = TRUE,
-                                     generate_decision_tree= TRUE,
-                                     policy_tree_args      = list(),
-                                     decision_tree_args    = list()) {
+                                     max_depth = 2L,
+                                     label_mapping = NULL,
+                                     original_df = NULL,
+                                     layout = list(heights = c(1, 2)),
+                                     annotation = list(tag_levels = "A"),
+                                     generate_policy_tree = TRUE,
+                                     generate_decision_tree = TRUE,
+                                     policy_tree_args = list(),
+                                     decision_tree_args = list()) {
   cli::cli_h1("Margot Plot Policy Combo")
 
   # validate inputs (omitted here for brevity)...
 
-  policy_tree_plot  <- NULL
-  decision_tree_plot<- NULL
-  combined_plot     <- NULL
+  policy_tree_plot <- NULL
+  decision_tree_plot <- NULL
+  combined_plot <- NULL
 
   # 1) generate the decision tree at the requested depth
   if (generate_decision_tree) {
@@ -71,10 +71,10 @@ margot_plot_policy_combo <- function(result_object,
       margot_plot_policy_tree,
       c(
         list(
-          result_object       = result_object,
-          model_name    = model_name,
-          max_depth     = max_depth,
-          original_df   = original_df,
+          result_object = result_object,
+          model_name = model_name,
+          max_depth = max_depth,
+          original_df = original_df,
           label_mapping = label_mapping
         ),
         policy_tree_args

@@ -19,7 +19,7 @@
 Policy tree object
 }
 \description{
-Internal function that wraps either policytree::policy_tree() or 
+Internal function that wraps either policytree::policy_tree() or
 fastpolicytree::fastpolicytree() depending on user preference and
 package availability.
 }

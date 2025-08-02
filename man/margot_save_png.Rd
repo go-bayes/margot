@@ -79,7 +79,8 @@ margot_save_png(
 
 \dontrun{
 # For a ggplot object
-plot_result <- ggplot(mtcars, aes(x = mpg, y = wt)) + geom_point()
+plot_result <- ggplot(mtcars, aes(x = mpg, y = wt)) +
+  geom_point()
 margot_save_png(plot_result, prefix = "study1", base_filename = "scatter")
 
 # For a base R plot
@@ -87,7 +88,8 @@ plot_result <- plot(mtcars$mpg, mtcars$wt)
 margot_save_png(plot_result, prefix = "study1", base_filename = "scatter")
 
 # For a list containing a plot
-plot_list <- list(plot = ggplot(mtcars, aes(x = mpg, y = wt)) + geom_point())
+plot_list <- list(plot = ggplot(mtcars, aes(x = mpg, y = wt)) +
+  geom_point())
 margot_save_png(plot_list, prefix = "study1", base_filename = "scatter")
 }
 

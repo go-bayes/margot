@@ -11,7 +11,7 @@ types of estimates and handles continuous and categorical treatment variables.">
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.222</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.227</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,11 +95,13 @@ If TRUE, adjusts row names based on the type parameter.</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Assuming you have results from a simulation or model in `results_df`</span></span></span>
-<span class="r-in"><span><span class="va">tabulated_results</span> <span class="op">&lt;-</span> <span class="fu">tab_engine_marginal</span><span class="op">(</span>x <span class="op">=</span> <span class="va">results_df</span>,</span></span>
-<span class="r-in"><span>                                         new_name <span class="op">=</span> <span class="st">"Treatment Effect"</span>,</span></span>
-<span class="r-in"><span>                                         delta <span class="op">=</span> <span class="fl">1</span>,</span></span>
-<span class="r-in"><span>                                         sd <span class="op">=</span> <span class="fl">0.2</span>,</span></span>
-<span class="r-in"><span>                                         type <span class="op">=</span> <span class="st">"RD"</span><span class="op">)</span>  <span class="co"># Corrected 'scale' to 'type'</span></span></span>
+<span class="r-in"><span><span class="va">tabulated_results</span> <span class="op">&lt;-</span> <span class="fu">tab_engine_marginal</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  x <span class="op">=</span> <span class="va">results_df</span>,</span></span>
+<span class="r-in"><span>  new_name <span class="op">=</span> <span class="st">"Treatment Effect"</span>,</span></span>
+<span class="r-in"><span>  delta <span class="op">=</span> <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>  sd <span class="op">=</span> <span class="fl">0.2</span>,</span></span>
+<span class="r-in"><span>  type <span class="op">=</span> <span class="st">"RD"</span></span></span>
+<span class="r-in"><span><span class="op">)</span> <span class="co"># Corrected 'scale' to 'type'</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in tab_engine_marginal(x = results_df, new_name = "Treatment Effect",     delta = 1, sd = 0.2, type = "RD"):</span> could not find function "tab_engine_marginal"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

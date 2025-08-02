@@ -17,11 +17,12 @@
 margot_rescue_qini <- function(model_results,
                                propensity_bounds = c(0.05, 0.95),
                                verbose = TRUE) {
-
-  stopifnot(is.list(model_results),
-            !is.null(model_results$results),
-            !is.null(model_results$full_models),
-            !is.null(model_results$data))
+  stopifnot(
+    is.list(model_results),
+    !is.null(model_results$results),
+    !is.null(model_results$full_models),
+    !is.null(model_results$data)
+  )
 
   for (mn in names(model_results$results)) {
     mr <- model_results$results[[mn]]
@@ -33,15 +34,15 @@ margot_rescue_qini <- function(model_results,
 
     forest <- model_results$full_models[[mn]]
     outcome <- sub("^model_", "", mn)
-    Y   <- model_results$data[[outcome]]
-    W   <- forest$W
-    eh  <- forest$W.hat
+    Y <- model_results$data[[outcome]]
+    W <- forest$W
+    eh <- forest$W.hat
     tau <- mr$tau_hat
 
     # apply overlap trimming
     keep <- which(eh > propensity_bounds[1] &
-                    eh < propensity_bounds[2] &
-                    !is.na(Y))
+      eh < propensity_bounds[2] &
+      !is.na(Y))
 
     if (length(keep) < 10) {
       if (verbose) message("  too few obs after trimming; skipping")
@@ -50,7 +51,8 @@ margot_rescue_qini <- function(model_results,
 
     # recompute in‐sample qini on trimmed set
     rescue <- compute_qini_curves_binary(
-      tau[keep], Y[keep], W[keep], verbose = FALSE
+      tau[keep], Y[keep], W[keep],
+      verbose = FALSE
     )
 
     if (is.null(rescue)) {
@@ -59,7 +61,7 @@ margot_rescue_qini <- function(model_results,
     }
 
     # save rescued results
-    mr$qini_data    <- rescue$qini_data
+    mr$qini_data <- rescue$qini_data
     mr$qini_objects <- rescue$qini_objects
     model_results$results[[mn]] <- mr
   }

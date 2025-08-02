@@ -20,16 +20,16 @@ margot_lmtp_tab <- function(lmtp_output,
   # extract theta, se, conf.low, conf.high from either old or new lmtp output
   if (!is.null(lmtp_output$vals)) {
     vals <- lmtp_output$vals
-    theta    <- vals$theta
-    se       <- vals$std.error
+    theta <- vals$theta
+    se <- vals$std.error
     conf_low <- vals$conf.low
-    conf_high<- vals$conf.high
+    conf_high <- vals$conf.high
   } else if (!is.null(lmtp_output$estimates)) {
     est <- lmtp_output$estimates
-    theta    <- est$estimate
-    se       <- est$std.error
+    theta <- est$estimate
+    se <- est$std.error
     conf_low <- est$conf.low
-    conf_high<- est$conf.high
+    conf_high <- est$conf.high
   } else {
     stop("Unrecognised LMTP output: no 'vals' or 'estimates' component")
   }

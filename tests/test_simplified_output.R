@@ -23,8 +23,8 @@ test_data$unit <- c("", "")
 
 # create mock original_df with log-transformed data
 original_df <- data.frame(
-  t2_log_charity_donate = rnorm(1000, mean = 3.5, sd = 2.74),  # log($33) with SD 2.74
-  t2_hours_volunteering_log = rnorm(1000, mean = 6.87, sd = 2.81)  # log(960 minutes) with SD 2.81
+  t2_log_charity_donate = rnorm(1000, mean = 3.5, sd = 2.74), # log($33) with SD 2.74
+  t2_hours_volunteering_log = rnorm(1000, mean = 6.87, sd = 2.81) # log(960 minutes) with SD 2.81
 )
 
 # test the simplified interpretation

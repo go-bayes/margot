@@ -37,7 +37,8 @@ margot_batch_policy <- function(result_outcomes,
                                 label_mapping = NULL) {
   # Deprecation warning
   warning("The margot_batch_policy() function is deprecated as of margot 0.2.1.65. Please use margot_policy() instead.",
-          call. = FALSE)
+    call. = FALSE
+  )
 
   cli::cli_alert_info("Starting margot_batch_policy function (Deprecated)")
 
@@ -56,90 +57,93 @@ margot_batch_policy <- function(result_outcomes,
 
   for (model_name in model_names) {
     cli::cli_alert_info(paste("Processing model:", model_name))
-    tryCatch({
-      # Update margot_plot_policy_combo call to include label_mapping
-      model_output <- margot_plot_policy_combo(
-        result_object = result_outcomes,
-        model_name = model_name,
-        policy_tree_args = policy_tree_args,
-        decision_tree_args = decision_tree_args,
-        label_mapping = label_mapping
-      )
+    tryCatch(
+      {
+        # Update margot_plot_policy_combo call to include label_mapping
+        model_output <- margot_plot_policy_combo(
+          result_object = result_outcomes,
+          model_name = model_name,
+          policy_tree_args = policy_tree_args,
+          decision_tree_args = decision_tree_args,
+          label_mapping = label_mapping
+        )
 
-      # Add Qini plot
-      # Note: margot_batch_policy is deprecated and doesn't support qini_args
-      # For CI support, use margot_policy() instead
-      model_output$qini_plot <- margot_plot_qini(
-        mc_result = result_outcomes,
-        outcome_var = model_name,
-        label_mapping = label_mapping,
-        spend_levels = spend_levels
-      )
+        # Add Qini plot
+        # Note: margot_batch_policy is deprecated and doesn't support qini_args
+        # For CI support, use margot_policy() instead
+        model_output$qini_plot <- margot_plot_qini(
+          mc_result = result_outcomes,
+          outcome_var = model_name,
+          label_mapping = label_mapping,
+          spend_levels = spend_levels
+        )
 
-      # Add difference gain summary for each spend level
-      qini_objects <- result_outcomes$results[[model_name]]$qini_objects
-      is_binary <- "cate" %in% names(qini_objects) && "ate" %in% names(qini_objects)
+        # Add difference gain summary for each spend level
+        qini_objects <- result_outcomes$results[[model_name]]$qini_objects
+        is_binary <- "cate" %in% names(qini_objects) && "ate" %in% names(qini_objects)
 
-      if (is_binary) {
-        model_output$diff_gain_summaries <- list()
-        for (s in spend_levels) {
-          diff_gain_summary <- margot_summary_cate_difference_gain(
-            result_outcomes,
-            outcome_var = model_name,
-            reference_curve = "ate",
-            comparison_curve = "cate",
-            spend = s
-          )
-          model_output$diff_gain_summaries[[paste0("spend_", s)]] <- diff_gain_summary
-        }
-      } else if ("baseline" %in% names(qini_objects)) {
-        # Multi-arm treatment
-        model_output$diff_gain_summaries <- list()
+        if (is_binary) {
+          model_output$diff_gain_summaries <- list()
+          for (s in spend_levels) {
+            diff_gain_summary <- margot_summary_cate_difference_gain(
+              result_outcomes,
+              outcome_var = model_name,
+              reference_curve = "ate",
+              comparison_curve = "cate",
+              spend = s
+            )
+            model_output$diff_gain_summaries[[paste0("spend_", s)]] <- diff_gain_summary
+          }
+        } else if ("baseline" %in% names(qini_objects)) {
+          # Multi-arm treatment
+          model_output$diff_gain_summaries <- list()
 
-        for (s in spend_levels) {
-          spend_summaries <- list()
+          for (s in spend_levels) {
+            spend_summaries <- list()
 
-          # Compare 'all_arms' with 'baseline'
-          spend_summaries[["all_arms"]] <- margot_summary_cate_difference_gain(
-            result_outcomes,
-            outcome_var = model_name,
-            reference_curve = "baseline",
-            comparison_curve = "all_arms",
-            spend = s
-          )
-
-          # Compare each individual arm with 'baseline'
-          arm_names <- setdiff(names(qini_objects), c("all_arms", "baseline"))
-          for (arm in arm_names) {
-            spend_summaries[[arm]] <- margot_summary_cate_difference_gain(
+            # Compare 'all_arms' with 'baseline'
+            spend_summaries[["all_arms"]] <- margot_summary_cate_difference_gain(
               result_outcomes,
               outcome_var = model_name,
               reference_curve = "baseline",
-              comparison_curve = arm,
+              comparison_curve = "all_arms",
               spend = s
             )
+
+            # Compare each individual arm with 'baseline'
+            arm_names <- setdiff(names(qini_objects), c("all_arms", "baseline"))
+            for (arm in arm_names) {
+              spend_summaries[[arm]] <- margot_summary_cate_difference_gain(
+                result_outcomes,
+                outcome_var = model_name,
+                reference_curve = "baseline",
+                comparison_curve = arm,
+                spend = s
+              )
+            }
+
+            model_output$diff_gain_summaries[[paste0("spend_", s)]] <- spend_summaries
           }
-
-          model_output$diff_gain_summaries[[paste0("spend_", s)]] <- spend_summaries
         }
-      }
 
-      if (save_plots) {
-        plot_names <- c("policy_tree_plot", "qini_plot", "decision_tree_visualisation", "policy_combo_plot")
-        for (plot_name in plot_names) {
-          if (!is.null(model_output[[plot_name]])) {
-            file_name <- file.path(output_dir, paste0(model_name, "_", plot_name, ".png"))
-            ggsave(file_name, model_output[[plot_name]], dpi = dpi, width = width, height = height)
-            cli::cli_alert_success(paste("Saved", file_name))
+        if (save_plots) {
+          plot_names <- c("policy_tree_plot", "qini_plot", "decision_tree_visualisation", "policy_combo_plot")
+          for (plot_name in plot_names) {
+            if (!is.null(model_output[[plot_name]])) {
+              file_name <- file.path(output_dir, paste0(model_name, "_", plot_name, ".png"))
+              ggsave(file_name, model_output[[plot_name]], dpi = dpi, width = width, height = height)
+              cli::cli_alert_success(paste("Saved", file_name))
+            }
           }
         }
-      }
 
-      output_list[[model_name]] <- model_output
-      cli::cli_alert_success(paste("Successfully processed model:", model_name))
-    }, error = function(e) {
-      cli::cli_alert_danger(paste("Error processing model", model_name, ":", e$message))
-    })
+        output_list[[model_name]] <- model_output
+        cli::cli_alert_success(paste("Successfully processed model:", model_name))
+      },
+      error = function(e) {
+        cli::cli_alert_danger(paste("Error processing model", model_name, ":", e$message))
+      }
+    )
     cli::cli_progress_update()
   }
 

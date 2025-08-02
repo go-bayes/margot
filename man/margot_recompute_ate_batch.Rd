@@ -13,7 +13,7 @@ margot_recompute_ate_batch(
 \arguments{
 \item{causal_forest_output}{Output from `margot_causal_forest()` with saved models}
 
-\item{target_samples}{Character vector of target samples to compute. 
+\item{target_samples}{Character vector of target samples to compute.
 Default is all four: c("all", "treated", "control", "overlap")}
 
 \item{...}{Additional arguments passed to `margot_recompute_ate()`}

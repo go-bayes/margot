@@ -23,7 +23,7 @@ To satisify the positivity assumption of causal inference, we must ensure that t
 This function explicitly excludes NA values from the transition matrix calculation. It treats numeric state variables by converting them to factors, ensuring a consistent analysis approach for both numeric and factor types.
 }
 \examples{
-df <- read.table(header=TRUE, text="
+df <- read.table(header = TRUE, text = "
 id wave year_measured religion_believe_god
 3 0 1 0
 3 1 1 1

@@ -27,7 +27,8 @@
 #' @keywords internal
 compute_difference <- function(group1, group2, type = "RD") {
   lifecycle::deprecate_soft("1.0.0", "compute_difference()",
-                            details = "Please use the new `margot_compare_groups()` function and associated workflow instead.")
+    details = "Please use the new `margot_compare_groups()` function and associated workflow instead."
+  )
 
   # The rest of the function remains the same
   # extract means and standard errors from each group

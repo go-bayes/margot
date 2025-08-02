@@ -55,10 +55,12 @@ print(p6$transformed_table)
 
 cat("\n\nTest 7: All renaming options together\n")
 cat("======================================\n")
-p7 <- margot_plot(test_data_traditional, type = "RD", 
-                  rename_ate = TRUE, 
-                  rename_evalue = TRUE,
-                  rename_cols = TRUE)
+p7 <- margot_plot(test_data_traditional,
+  type = "RD",
+  rename_ate = TRUE,
+  rename_evalue = TRUE,
+  rename_cols = TRUE
+)
 print(p7$transformed_table)
 
 cat("\n\nAll tests completed!\n")

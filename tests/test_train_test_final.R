@@ -4,11 +4,11 @@ library(margot)
 # simulate test data with more covariates
 set.seed(2025)
 n <- 500
-X <- matrix(rnorm(n * 20), n, 20)  # 20 covariates
+X <- matrix(rnorm(n * 20), n, 20) # 20 covariates
 colnames(X) <- paste0("X", 1:20)
 W <- rbinom(n, 1, 0.5)
-Y1 <- X[,1] + 0.5 * W + rnorm(n)
-Y2 <- X[,2] - 0.3 * W + rnorm(n)
+Y1 <- X[, 1] + 0.5 * W + rnorm(n)
+Y2 <- X[, 2] - 0.3 * W + rnorm(n)
 
 df <- data.frame(
   Y1 = Y1,
@@ -54,11 +54,11 @@ if ("split_info" %in% names(results_split$results$model_Y1)) {
   cat("- Train size:", length(split_info$train_indices), "\n")
   cat("- Test size:", length(split_info$test_indices), "\n")
   cat("- Train proportion:", split_info$train_proportion, "\n")
-  
+
   cat("\nComparison of ATEs:\n")
   cat("- ATE (all data):", results_split$results$model_Y1$ate[1], "\n")
   cat("- ATE (test set):", split_info$ate_test_set[1], "\n")
-  
+
   cat("\nTest set E-value table:\n")
   print(split_info$custom_table_test_set)
 }

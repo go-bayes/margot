@@ -11,7 +11,7 @@ p <- 5
 X <- matrix(rnorm(n * p), n, p)
 colnames(X) <- paste0("X", 1:p)
 W <- rbinom(n, 1, 0.5)
-Y <- X[,1] + 0.5 * W + rnorm(n)
+Y <- X[, 1] + 0.5 * W + rnorm(n)
 
 data <- data.frame(outcome1 = Y)
 
@@ -23,10 +23,9 @@ cf_results <- margot_causal_forest(
   W = W,
   weights = NULL,
   save_models = TRUE,
-  save_data = TRUE,  # also save data for completeness
-  verbose = TRUE,  # see what's happening
-  qini_split = FALSE,  # disable to avoid errors
-  compute_rate = FALSE,  # disable to simplify
+  save_data = TRUE, # also save data for completeness
+  verbose = TRUE, # see what's happening
+  compute_rate = FALSE, # disable to simplify
   compute_conditional_means = FALSE
 )
 
@@ -36,7 +35,7 @@ print(cf_results$combined_table)
 # test new parameter name
 ate_overlap <- margot_recompute_ate(
   cf_results,
-  target_sample = "overlap"  # new parameter name
+  target_sample = "overlap" # new parameter name
 )
 
 cat("\n\nOverlap table (should show ATO column):\n")

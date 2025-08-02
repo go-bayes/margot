@@ -65,10 +65,12 @@ dat <- data.frame(
   male = sample(c(0, 1), 100, replace = TRUE, prob = c(0.7, 0.3)),
   wave = rep(1:2, each = 50)
 )
-weights <- margot_compute_gender_weights_by_wave(dat, male_col = "male",
-                                                 wave_col = "wave",
-                                                 target_wave = 1,
-                                                 target_male_prop = 0.52)
+weights <- margot_compute_gender_weights_by_wave(dat,
+  male_col = "male",
+  wave_col = "wave",
+  target_wave = 1,
+  target_male_prop = 0.52
+)
 head(weights)
 
 dat <- data.frame(
@@ -76,10 +78,12 @@ dat <- data.frame(
   male = sample(c(0, 1), 100, replace = TRUE, prob = c(0.7, 0.3)),
   wave = rep(1:2, each = 50)
 )
-weights <- margot_compute_gender_weights_by_wave(dat, male_col = "male",
-                                                 wave_col = "wave",
-                                                 target_wave = 1,
-                                                 target_male_prop = 0.52)
+weights <- margot_compute_gender_weights_by_wave(dat,
+  male_col = "male",
+  wave_col = "wave",
+  target_wave = 1,
+  target_male_prop = 0.52
+)
 head(weights)
 
 }

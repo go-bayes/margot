@@ -9,7 +9,7 @@ or multiple outcomes/models in one plot without needing a separate batch functio
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.222</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.227</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -153,7 +153,7 @@ by intelligently handling both single and multiple model inputs.</p>
 <span class="r-in"><span><span class="va">plot1</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_qini_dev</span><span class="op">(</span><span class="va">qini_results</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Multiple models comparison</span></span></span>
-<span class="r-in"><span><span class="va">cf_results2</span> <span class="op">&lt;-</span> <span class="fu"><a href="margot_causal_forest_dev.html">margot_causal_forest_dev</a></span><span class="op">(</span><span class="va">test_data</span><span class="op">$</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Y3"</span>, <span class="st">"Y4"</span><span class="op">)</span>, <span class="st">"A"</span><span class="op">)</span> </span></span>
+<span class="r-in"><span><span class="va">cf_results2</span> <span class="op">&lt;-</span> <span class="fu"><a href="margot_causal_forest_dev.html">margot_causal_forest_dev</a></span><span class="op">(</span><span class="va">test_data</span><span class="op">$</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Y3"</span>, <span class="st">"Y4"</span><span class="op">)</span>, <span class="st">"A"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">qini_results2</span> <span class="op">&lt;-</span> <span class="fu"><a href="margot_qini_dev.html">margot_qini_dev</a></span><span class="op">(</span><span class="va">cf_results2</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">plot2</span> <span class="op">&lt;-</span> <span class="fu">margot_plot_qini_dev</span><span class="op">(</span></span></span>

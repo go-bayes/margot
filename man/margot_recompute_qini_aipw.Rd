@@ -17,13 +17,13 @@ margot_recompute_qini_aipw(
 \item{margot_result}{A list returned by \code{margot_causal_forest()} with
 \code{save_models = TRUE} and \code{save_data = TRUE}.}
 
-\item{model_name}{Character string specifying which model to recompute. 
+\item{model_name}{Character string specifying which model to recompute.
 If NULL (default), all models will be recomputed.}
 
 \item{method}{Character string specifying the method to estimate mu.hat.
 Options are "regression_forest" (default) or "grf_scores".}
 
-\item{n.trees}{Number of trees to use for regression forests when 
+\item{n.trees}{Number of trees to use for regression forests when
 method = "regression_forest". Default is 2000.}
 
 \item{treatment_var}{Character string specifying the treatment variable name.
@@ -37,7 +37,7 @@ A modified version of the input margot_result with updated QINI
   existing plotting and interpretation functions.
 }
 \description{
-Recomputes QINI curves for binary treatment causal forest models using 
+Recomputes QINI curves for binary treatment causal forest models using
 Augmented Inverse Probability Weighted (AIPW) scores instead of IPW scores.
 This provides more robust estimates, especially for observational data where
 treatment assignment may be confounded.
@@ -49,9 +49,9 @@ This is particularly valuable in observational studies.
 
 The function supports two methods for estimating conditional means (mu.hat):
 \itemize{
-  \item \strong{regression_forest}: Trains separate regression forests on 
+  \item \strong{regression_forest}: Trains separate regression forests on
     control and treated units to estimate E[Y|W=0,X] and E[Y|W=1,X].
-  \item \strong{grf_scores}: Uses the doubly robust scores from grf's 
+  \item \strong{grf_scores}: Uses the doubly robust scores from grf's
     internal computations (if available).
 }
 }
@@ -62,7 +62,7 @@ results_aipw <- margot_recompute_qini_aipw(margot_results)
 
 # Recompute for a specific model
 results_aipw <- margot_recompute_qini_aipw(
-  margot_results, 
+  margot_results,
   model_name = "model_anxiety"
 )
 
@@ -71,7 +71,7 @@ margot_plot_qini(results_aipw, "model_anxiety")
 
 # Specify treatment variable if auto-detection fails
 results_aipw <- margot_recompute_qini_aipw(
-  margot_results, 
+  margot_results,
   treatment_var = "t1_treatment"
 )
 }

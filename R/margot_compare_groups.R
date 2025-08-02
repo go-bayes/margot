@@ -31,7 +31,7 @@ margot_compare_groups <- function(group,
 
   # determine which columns to use
   est_col <- if (type == "RD") "E[Y(1)]-E[Y(0)]" else "E[Y(1)]/E[Y(0)]"
-  needed  <- c(est_col, "2.5 %", "97.5 %")
+  needed <- c(est_col, "2.5 %", "97.5 %")
   if (any(!needed %in% names(group)) || any(!needed %in% names(subgroup))) {
     stop("data frames must contain columns: ", paste(needed, collapse = ", "))
   }
@@ -58,13 +58,13 @@ margot_compare_groups <- function(group,
     if (type == "RD") {
       stat <- est_B - est_A
       se_d <- sqrt(se_A^2 + se_B^2)
-      lo   <- stat - 1.96 * se_d
-      hi   <- stat + 1.96 * se_d
+      lo <- stat - 1.96 * se_d
+      hi <- stat + 1.96 * se_d
     } else {
       stat <- est_B / est_A
       se_ln <- sqrt((se_B / est_B)^2 + (se_A / est_A)^2)
-      lo    <- exp(log(stat) - 1.96 * se_ln)
-      hi    <- exp(log(stat) + 1.96 * se_ln)
+      lo <- exp(log(stat) - 1.96 * se_ln)
+      hi <- exp(log(stat) + 1.96 * se_ln)
     }
     tibble::tibble(
       delta    = stat,
@@ -125,4 +125,3 @@ margot_compare_groups <- function(group,
 
   list(results = results_tbl, interpretation = interp)
 }
-

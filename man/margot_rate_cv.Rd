@@ -26,13 +26,13 @@ margot_rate_cv(
 
 \item{num_folds}{Integer. Number of cross-validation folds (default 5). Must be at least 3.}
 
-\item{target}{Character vector. RATE targets to test: "AUTOC", "QINI", or 
+\item{target}{Character vector. RATE targets to test: "AUTOC", "QINI", or
 c("AUTOC", "QINI") for both (default). When both are specified, results
 are combined with adjusted p-values accounting for testing both metrics.}
 
 \item{model_names}{Character vector. Specific models to test (default NULL tests all)}
 
-\item{use_full_data}{Logical. If TRUE and data is available, refit forests on full data 
+\item{use_full_data}{Logical. If TRUE and data is available, refit forests on full data
 rather than using the training split (default TRUE)}
 
 \item{seed}{Integer or NULL. Random seed for reproducibility. If NULL, defaults to 12345}
@@ -44,16 +44,16 @@ Note: Parallel processing requires the margot package to be installed (not just 
 with devtools::load_all()). If the package is not installed, the function will fall
 back to sequential processing with a warning.}
 
-\item{n_cores}{Integer. Number of cores for parallel processing when parallel = TRUE 
+\item{n_cores}{Integer. Number of cores for parallel processing when parallel = TRUE
 (default all cores - 1)}
 
-\item{future_globals_maxSize}{Numeric. Maximum allowed size for exporting globals to 
+\item{future_globals_maxSize}{Numeric. Maximum allowed size for exporting globals to
 parallel workers in GiB. Default is 22. Set to Inf to disable the limit.}
 
 \item{alpha}{Numeric. Significance level for hypothesis tests (default 0.05).
 When using Bonferroni correction, consider alpha = 0.2 due to its conservative nature.}
 
-\item{adjust}{Character. Multiple testing adjustment method. Only "bonferroni" or "none" 
+\item{adjust}{Character. Multiple testing adjustment method. Only "bonferroni" or "none"
 are valid for cross-validation due to the martingale aggregation method. Default is "none".
 Other methods like BH/BY/FDR are not statistically appropriate for CV aggregation.}
 
@@ -72,12 +72,12 @@ A list containing:
 }
 \description{
 Performs uncorrelated sequential cross-validation to test for treatment effect
-heterogeneity using the approach recommended by the grf package (Wager 2024). 
-This method provides robust statistical testing that avoids overfitting by using 
+heterogeneity using the approach recommended by the grf package (Wager 2024).
+This method provides robust statistical testing that avoids overfitting by using
 sequential, non-overlapping training sets.
 }
 \details{
-The function implements the sequential cross-validation approach from 
+The function implements the sequential cross-validation approach from
 Wager (2024) and Nie & Wager (2020). This method:
 - Splits data into K folds
 - Trains on folds 1 to k-1, tests on fold k
@@ -113,14 +113,14 @@ cf_results <- margot_causal_forest(
   outcome_vars = c("outcome1", "outcome2"),
   covariates = covariates,
   W = treatment,
-  save_data = TRUE  # Important for CV
+  save_data = TRUE # Important for CV
 )
 
 # Test for heterogeneity with cross-validation (both targets by default)
 cv_results <- margot_rate_cv(
   model_results = cf_results,
   num_folds = 5,
-  alpha = 0.2,  # recommended with Bonferroni
+  alpha = 0.2, # recommended with Bonferroni
   adjust = "bonferroni"
 )
 
@@ -144,8 +144,8 @@ cv_results_autoc <- margot_rate_cv(
 cat(cv_results$interpretation)
 
 # Access formatted tables (similar to margot_rate output)
-cv_results$tables$rate_autoc  # AUTOC table
-cv_results$tables$rate_qini   # QINI table
+cv_results$tables$rate_autoc # AUTOC table
+cv_results$tables$rate_qini # QINI table
 
 # Get detailed interpretation with tables (similar to margot_interpret_rate)
 detailed_results <- margot_interpret_rate_cv(cv_results)
@@ -166,7 +166,7 @@ plot <- margot_plot_cv_results(cv_results)
 
 }
 \references{
-Wager, S. (2024). Sequential validation for heterogeneous treatment effects. 
+Wager, S. (2024). Sequential validation for heterogeneous treatment effects.
 arXiv preprint arXiv:2401.06818.
 
 Nie, X., & Wager, S. (2021). Quasi-oracle estimation of heterogeneous treatment effects.

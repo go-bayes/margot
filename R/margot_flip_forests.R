@@ -2,37 +2,41 @@
 #' @keywords internal
 margot_recalculate_policy_trees <- function(model_results,
                                             outcomes_to_recalculate = NULL,
-                                            model_prefix           = "model_",
-                                            verbose                = TRUE,
-                                            parallel               = FALSE,
-                                            n_cores_policy         = future::availableCores() - 1,
-                                            seed                   = 12345) {
-  if (!is.list(model_results) || !"results" %in% names(model_results))
+                                            model_prefix = "model_",
+                                            verbose = TRUE,
+                                            parallel = FALSE,
+                                            n_cores_policy = future::availableCores() - 1,
+                                            seed = 12345) {
+  if (!is.list(model_results) || !"results" %in% names(model_results)) {
     stop("model_results must be a list containing a 'results' element")
+  }
 
   results_copy <- model_results
 
   # which outcomes ----------------------------------------------------------
   if (is.null(outcomes_to_recalculate)) {
     outcomes_to_recalculate <- names(results_copy$results)[
-      vapply(results_copy$results, function(x)
-        isTRUE(x$policy_trees_need_recalculation), logical(1))
+      vapply(results_copy$results, function(x) {
+        isTRUE(x$policy_trees_need_recalculation)
+      }, logical(1))
     ]
   } else {
     outcomes_to_recalculate <- paste0(
       ifelse(grepl(paste0("^", model_prefix), outcomes_to_recalculate), "", model_prefix),
-      outcomes_to_recalculate)
+      outcomes_to_recalculate
+    )
   }
   if (!length(outcomes_to_recalculate)) {
     if (verbose) cli::cli_alert_info("no outcomes need policy tree recalculation")
     return(results_copy)
   }
-  if (verbose)
+  if (verbose) {
     cli::cli_alert_info("recalculating policy trees for {length(outcomes_to_recalculate)} outcomes: {paste(gsub(model_prefix, '', outcomes_to_recalculate), collapse = ', ')}")
+  }
 
-  covariates  <- results_copy$covariates
+  covariates <- results_copy$covariates
   not_missing <- results_copy$not_missing %||% which(complete.cases(covariates))
-  full        <- intersect(seq_len(nrow(covariates)), not_missing)
+  full <- intersect(seq_len(nrow(covariates)), not_missing)
 
   # choose apply ------------------------------------------------------------
   apply_fun <- if (parallel && length(outcomes_to_recalculate) > 1) {
@@ -129,11 +133,11 @@ margot_recalculate_policy_trees <- function(model_results,
 #' @export
 margot_flip_forests <- function(model_results,
                                 flip_outcomes,
-                                model_prefix   = "model_",
-                                grf_defaults   = NULL,
-                                parallel       = FALSE,
-                                n_cores        = future::availableCores() - 1,
-                                verbose        = TRUE,
+                                model_prefix = "model_",
+                                grf_defaults = NULL,
+                                parallel = FALSE,
+                                n_cores = future::availableCores() - 1,
+                                verbose = TRUE,
                                 remove_original = TRUE,
                                 qini_treatment_cost = 1,
                                 train_proportion = NULL,
@@ -146,6 +150,16 @@ margot_flip_forests <- function(model_results,
   if (!is.character(flip_outcomes) || length(flip_outcomes) == 0) {
     warning("flip_outcomes is empty or not a character vector, no flipping will be performed")
     return(model_results)
+  }
+
+  # check if original results were computed with marginal only
+  if (!is.null(model_results$computation_status) &&
+    !model_results$computation_status$heterogeneity_computed) {
+    stop(
+      "Cannot flip forests when original results were computed with compute_marginal_only = TRUE.\n",
+      "Rerun margot_causal_forest() with compute_marginal_only = FALSE and appropriate train_proportion ",
+      "to enable forest flipping."
+    )
   }
 
   # check for required components
@@ -241,9 +255,8 @@ margot_flip_forests <- function(model_results,
     # try to extract from first fitted forest model
     first_model_name <- existing_models[1]
     if (!is.null(model_results$full_models) &&
-        first_model_name %in% names(model_results$full_models) &&
-        !is.null(model_results$full_models[[first_model_name]])) {
-
+      first_model_name %in% names(model_results$full_models) &&
+      !is.null(model_results$full_models[[first_model_name]])) {
       forest_obj <- model_results$full_models[[first_model_name]]
 
       # extract key parameters from the fitted forest
@@ -296,30 +309,59 @@ margot_flip_forests <- function(model_results,
   # determine other parameters
   first_model <- model_results$results[[existing_models[1]]]
   save_data <- !is.null(model_results$data)
-  compute_rate <- !is.null(first_model$rate_result)
   save_models <- !is.null(model_results$full_models)
-  top_n_vars <- length(first_model$top_vars) %||% 15
-  
+
+  # additional check for required heterogeneity components
+  if (is.null(first_model$dr_scores) || is.null(first_model$top_vars)) {
+    stop(
+      "Cannot flip forests: required heterogeneity components (dr_scores, top_vars) not found.\n",
+      "This typically occurs when compute_marginal_only = TRUE was used.\n",
+      "Rerun margot_causal_forest() with compute_marginal_only = FALSE."
+    )
+  }
+
+  # check if computation_params exists (new structure)
+  if (!is.null(model_results$computation_params)) {
+    # inherit from saved computation parameters
+    compute_marginal_only <- model_results$computation_params$compute_marginal_only %||% FALSE
+    compute_rate <- model_results$computation_params$compute_rate %||% TRUE
+    # qini_split parameter removed - always use honest evaluation
+    qini_treatment_cost <- model_results$computation_params$qini_treatment_cost %||% qini_treatment_cost
+    top_n_vars <- model_results$computation_params$top_n_vars %||% 15
+    if (verbose) cli::cli_alert_info("Inheriting computation parameters from original results")
+  } else {
+    # fallback to old detection method for backward compatibility
+    # if compute_heterogeneity exists, invert it; otherwise check if heterogeneity was computed
+    if (!is.null(model_results$computation_params$compute_heterogeneity)) {
+      compute_marginal_only <- !model_results$computation_params$compute_heterogeneity
+    } else {
+      compute_marginal_only <- FALSE # assume full analysis for backward compatibility
+    }
+    compute_rate <- !is.null(first_model$rate_result)
+    # qini_split parameter removed - always use honest evaluation
+    top_n_vars <- length(first_model$top_vars) %||% 15
+  }
+
   # extract train_proportion from original results if not provided
   if (is.null(train_proportion)) {
     # try to get from split_info
     if (!is.null(first_model$split_info$train_proportion)) {
       train_proportion <- first_model$split_info$train_proportion
     } else {
-      train_proportion <- 0.5  # default matching margot_causal_forest
+      train_proportion <- 0.5 # default matching margot_causal_forest
     }
   }
-  
+
   # extract use_train_test_split if not provided
   if (is.null(use_train_test_split)) {
     # check if original used train/test split
     if (!is.null(first_model$split_info$use_train_test_split)) {
       use_train_test_split <- first_model$split_info$use_train_test_split
     } else {
-      use_train_test_split <- TRUE  # default matching margot_causal_forest
+      use_train_test_split <- TRUE # default matching margot_causal_forest
     }
   }
-  
+
   compute_conditional_means <- !is.null(first_model$conditional_means)
 
   # check if we should use parallel processing
@@ -340,6 +382,7 @@ margot_flip_forests <- function(model_results,
       save_models = save_models,
       train_proportion = train_proportion,
       compute_conditional_means = compute_conditional_means,
+      compute_marginal_only = compute_marginal_only,
       n_cores = n_cores,
       verbose = verbose,
       qini_treatment_cost = qini_treatment_cost,
@@ -361,6 +404,7 @@ margot_flip_forests <- function(model_results,
       save_models = save_models,
       train_proportion = train_proportion,
       compute_conditional_means = compute_conditional_means,
+      compute_marginal_only = compute_marginal_only,
       verbose = verbose,
       qini_treatment_cost = qini_treatment_cost,
       use_train_test_split = use_train_test_split,
@@ -471,7 +515,7 @@ margot_lighten_for_flip <- function(cf_out, models) {
   # 1. flip tau_hat ---------------------------------------------------------
   if (!is.null(mdl$tau_hat)) {
     mdl$tau_hat_original <- mdl$tau_hat
-    mdl$tau_hat          <- -mdl$tau_hat
+    mdl$tau_hat <- -mdl$tau_hat
   }
 
   # 2. recalc RATE / QINI ---------------------------------------------------
@@ -481,26 +525,26 @@ margot_lighten_for_flip <- function(cf_out, models) {
 
     if (!is.null(mdl$rate_result)) {
       mdl$rate_result_original <- mdl$rate_result
-      mdl$rate_result          <- grf::rank_average_treatment_effect(fm, th)
+      mdl$rate_result <- grf::rank_average_treatment_effect(fm, th)
       attr(mdl$rate_result, "target") <- "AUTOC"
     }
     if (!is.null(mdl$rate_qini)) {
       mdl$rate_qini_original <- mdl$rate_qini
-      mdl$rate_qini          <- grf::rank_average_treatment_effect(fm, th, target = "QINI")
+      mdl$rate_qini <- grf::rank_average_treatment_effect(fm, th, target = "QINI")
       attr(mdl$rate_qini, "target") <- "QINI"
     }
   }
 
   # 3. mark qini curve for later regen -------------------------------------
   if (!is.null(mdl$qini_data)) {
-    mdl$qini_data_original       <- mdl$qini_data
+    mdl$qini_data_original <- mdl$qini_data
     mdl$qini_needs_recalculation <- TRUE
   }
 
   # 4. flip dr scores + flag policy trees ----------------------------------
   if (is.matrix(mdl$dr_scores)) {
-    mdl$dr_scores_original            <- mdl$dr_scores
-    mdl$dr_scores_flipped             <- -mdl$dr_scores
+    mdl$dr_scores_original <- mdl$dr_scores
+    mdl$dr_scores_flipped <- -mdl$dr_scores
     mdl$policy_trees_need_recalculation <- TRUE
   }
 
@@ -516,8 +560,9 @@ margot_lighten_for_flip <- function(cf_out, models) {
                                      full,
                                      verbose = TRUE,
                                      seed = 12345) {
-  if (!isTRUE(mr$policy_trees_need_recalculation))
+  if (!isTRUE(mr$policy_trees_need_recalculation)) {
     return(mr)
+  }
 
   if (!is.null(seed)) set.seed(seed + as.integer(as.factor(model_name)))
   if (verbose) cli::cli_alert_info("recalculating policy trees for {model_name}")
@@ -540,8 +585,8 @@ margot_lighten_for_flip <- function(cf_out, models) {
     # create new split (matching original behavior when no split info)
     train_proportion <- mr$split_info$train_proportion %||% 0.5
     train_size <- floor(train_proportion * length(not_missing))
-    train_idx  <- sample(not_missing, train_size)
-    test_idx   <- setdiff(not_missing, train_idx)
+    train_idx <- sample(not_missing, train_size)
+    test_idx <- setdiff(not_missing, train_idx)
     if (verbose) cli::cli_alert_info("creating new train/test split for policy trees")
   }
 
@@ -553,7 +598,7 @@ margot_lighten_for_flip <- function(cf_out, models) {
 
   mr$plot_data <- list(
     X_test       = covariates[test_idx, mr$top_vars, drop = FALSE],
-    X_test_full  = covariates[test_idx, ,            drop = FALSE],
+    X_test_full  = covariates[test_idx, , drop = FALSE],
     predictions  = predict(mr$policy_tree_depth_2, covariates[test_idx, mr$top_vars, drop = FALSE])
   )
 

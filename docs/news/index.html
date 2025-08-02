@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.222</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.227</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,147 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.227" id="id_2025-08-02-margot-10227">[2025-08-02] margot 1.0.227<a class="anchor" aria-label="anchor" href="#id_2025-08-02-margot-10227"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-227">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-227"></a></h4>
+<ul><li>Fixed <code>compute_conditional_means</code> to respect <code>compute_marginal_only</code> setting in <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code>
+</li>
+<li>When <code>compute_marginal_only = TRUE</code>, conditional means computation is now skipped with defensive empty structure</li>
+<li>This ensures consistent behavior where marginal-only mode skips all heterogeneity-related computations</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.226" id="id_2025-08-02-margot-10226">[2025-08-02] margot 1.0.226<a class="anchor" aria-label="anchor" href="#id_2025-08-02-margot-10226"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-226">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-226"></a></h4>
+<ul><li>Fixed label mapping in <code><a href="../reference/margot_plot.html">margot_plot()</a></code> to correctly handle reversed variables with <code>_r</code> suffix</li>
+<li>
+<code>transform_label()</code> now prioritizes exact matches in label_mapping before trying pattern matching</li>
+<li>Added automatic removal of <code>_r</code> suffix (for reversed variables) alongside <code>_z</code> suffix removal</li>
+<li>This prevents stray “_r” suffixes appearing on plot labels when using label_mapping</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.225" id="id_2025-08-02-margot-10225">[2025-08-02] margot 1.0.225<a class="anchor" aria-label="anchor" href="#id_2025-08-02-margot-10225"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-225">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-225"></a></h4>
+<ul><li>Fixed <code><a href="../reference/margot_plot.html">margot_plot()</a></code> to properly handle reversed variables (with <code>_r</code> suffix) when <code>original_df</code> is provided</li>
+<li>
+<code>back_transform_estimates()</code> now removes <code>_r</code> suffix before searching in original_df and skips silently if not found</li>
+</ul></div>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-225">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-225"></a></h4>
+<ul><li>
+<strong>Renamed <code>compute_heterogeneity</code> to <code>compute_marginal_only</code> with inverted logic</strong>:
+<ul><li>
+<code>compute_marginal_only = TRUE</code> now means skip heterogeneity (was <code>compute_heterogeneity = FALSE</code>)</li>
+<li>
+<code>compute_marginal_only = FALSE</code> (default) means compute full analysis</li>
+<li>Clearer parameter name that explicitly states what is computed</li>
+</ul></li>
+<li>
+<strong>Removed <code>qini_split</code> parameter</strong>:
+<ul><li>QINI evaluation now always uses honest evaluation (test set only)</li>
+<li>Simplifies the interface and follows GRF best practices</li>
+<li>Ensures QINI curves accurately reflect out-of-sample performance</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="major-improvements-1-0-225">Major Improvements<a class="anchor" aria-label="anchor" href="#major-improvements-1-0-225"></a></h4>
+<ul><li>
+<strong>Enhanced parameter validation</strong>:
+<ul><li>
+<code>compute_marginal_only = TRUE</code> requires <code>train_proportion = NULL</code> (enforced)</li>
+<li>
+<code>compute_marginal_only = FALSE</code> requires valid <code>train_proportion</code> (enforced)</li>
+<li>Clear error messages prevent conflicting parameter combinations</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="implementation-details-1-0-225">Implementation Details<a class="anchor" aria-label="anchor" href="#implementation-details-1-0-225"></a></h4>
+<ul><li>Default behavior unchanged: <code>compute_marginal_only = FALSE, train_proportion = 0.5</code>
+</li>
+<li>Backward compatibility maintained through parameter detection in <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code>
+</li>
+<li>Cleaner mental model: either marginal-only OR full-with-splits</li>
+<li>
+<code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code> now requires heterogeneity components and provides clear error when used with marginal-only results</li>
+</ul></div>
+<div class="section level4">
+<h4 id="benefits-1-0-225">Benefits<a class="anchor" aria-label="anchor" href="#benefits-1-0-225"></a></h4>
+<ul><li>Prevents user confusion about parameter interactions</li>
+<li>Makes intentions explicit in function calls</li>
+<li>Simplifies understanding of what analyses will be performed</li>
+<li>Always uses honest QINI evaluation for accurate heterogeneity assessment</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.224" id="id_2025-08-01-margot-10224">[2025-08-01] margot 1.0.224<a class="anchor" aria-label="anchor" href="#id_2025-08-01-margot-10224"></a></h2>
+<div class="section level4">
+<h4 id="major-features-1-0-224">Major Features<a class="anchor" aria-label="anchor" href="#major-features-1-0-224"></a></h4>
+<ul><li>
+<strong>Added <code>compute_heterogeneity</code> parameter to <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code></strong>:
+<ul><li>Set to FALSE to skip QINI, RATE, and policy tree computations</li>
+<li>Significantly faster when only average treatment effects are needed</li>
+<li>Creates defensive empty data structures to maintain pipeline compatibility</li>
+<li>Default TRUE maintains backward compatibility</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-224">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-224"></a></h4>
+<ul><li>
+<strong>Enhanced parameter inheritance in <code><a href="../reference/margot_flip_forests.html">margot_flip_forests()</a></code></strong>:
+<ul><li>Now inherits all computation parameters from original results</li>
+<li>Uses new <code>computation_params</code> structure when available</li>
+<li>Falls back to old detection method for backward compatibility</li>
+</ul></li>
+<li>
+<strong>Added computation tracking</strong>:
+<ul><li>New <code>computation_status</code> field tracks what was computed</li>
+<li>New <code>computation_params</code> field stores all parameters for reproducibility</li>
+<li>Enables future <code>margot_hetero()</code> function to compute missing heterogeneity metrics</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="implementation-details-1-0-224">Implementation Details<a class="anchor" aria-label="anchor" href="#implementation-details-1-0-224"></a></h4>
+<ul><li>Empty data structures have <code>computed = FALSE</code> flag for downstream detection</li>
+<li>All existing pipelines continue to work unchanged</li>
+<li>Prepares architecture for separating effect estimation from heterogeneity evaluation</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.223" id="id_2025-08-01-margot-10223">[2025-08-01] margot 1.0.223<a class="anchor" aria-label="anchor" href="#id_2025-08-01-margot-10223"></a></h2>
+<div class="section level4">
+<h4 id="major-features-1-0-223">Major Features<a class="anchor" aria-label="anchor" href="#major-features-1-0-223"></a></h4>
+<ul><li>
+<strong>Added outcome flipping capability to <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code></strong>:
+<ul><li>New parameters: <code>flip_outcomes</code>, <code>flip_method</code>, and <code>flip_scale_bounds</code>
+</li>
+<li>Supports two inversion methods:
+<ul><li>
+<code>"zscore"</code>: Negates standardized z-scores while preserving relative distances</li>
+<li>
+<code>"ordinal"</code>: Inverts values on ordinal scale using specified bounds (e.g., Likert scales)</li>
+</ul></li>
+<li>Flipped outcomes automatically appended with “_r” suffix in results</li>
+<li>Informative CLI messages report transformation details</li>
+<li>Created <code><a href="../reference/margot_invert_measure.html">margot_invert_measure()</a></code> utility function for flexible score inversion</li>
+<li>Comprehensive test suite for inversion functionality</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="implementation-details-1-0-223">Implementation Details<a class="anchor" aria-label="anchor" href="#implementation-details-1-0-223"></a></h4>
+<ul><li>
+<strong>Z-score method</strong>: Simple negation (<code>-x</code>) for already standardized data. Warns if data appears unstandardized</li>
+<li>
+<strong>Ordinal method</strong>: Uses formula <code>(max + min) - x</code> to preserve distances while reversing order</li>
+<li>
+<strong>Flexible specification</strong>: Can flip all outcomes uniformly or specify per-outcome settings</li>
+<li>
+<strong>NA handling</strong>: Properly preserves missing values during transformation</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.222" id="id_2025-07-31-margot-10222">[2025-07-31] margot 1.0.222<a class="anchor" aria-label="anchor" href="#id_2025-07-31-margot-10222"></a></h2>
 <div class="section level4">

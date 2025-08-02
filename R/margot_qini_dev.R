@@ -1,14 +1,14 @@
 #' Development Version of QINI Analysis with Integrated Interpretation
 #'
-#' Computes QINI curves and related metrics using the test set from 
-#' margot_causal_forest_dev(). Integrates functionality from margot_qini() 
+#' Computes QINI curves and related metrics using the test set from
+#' margot_causal_forest_dev(). Integrates functionality from margot_qini()
 #' and margot_interpret_qini() into a single coherent function.
 #'
 #' @param cf_results Results from margot_causal_forest_dev()
 #' @param outcome_vars Character vector of outcomes to analyze. NULL = all.
 #' @param baseline_method Method for baseline curve: "maq_no_covariates" (default),
 #'   "simple", "maq_only", "auto", or "none"
-#' @param use_evaluation_forest Logical. Use evaluation forest for DR scores 
+#' @param use_evaluation_forest Logical. Use evaluation forest for DR scores
 #'   if available (default: TRUE)
 #' @param spend_levels Numeric vector of budget levels for gain summaries
 #'   (default: c(0.05, 0.1, 0.2, 0.4))
@@ -76,19 +76,17 @@ margot_qini_dev <- function(
     n_bootstrap = 200,
     confidence_level = 0.95,
     seed = 12345,
-    verbose = TRUE
-) {
-  
+    verbose = TRUE) {
   # validate input
   if (!inherits(cf_results, "margot_causal_forest_dev")) {
     stop("cf_results must be output from margot_causal_forest_dev()")
   }
-  
+
   # set seed if provided
   if (!is.null(seed)) set.seed(seed)
-  
+
   if (verbose) cli::cli_alert_info("Starting margot_qini_dev()")
-  
+
   # determine outcomes to analyze
   if (is.null(outcome_vars)) {
     outcome_vars <- cf_results$data_info$outcome_vars
@@ -96,45 +94,47 @@ margot_qini_dev <- function(
     # validate requested outcomes exist
     missing_outcomes <- setdiff(outcome_vars, cf_results$data_info$outcome_vars)
     if (length(missing_outcomes) > 0) {
-      stop("Requested outcomes not found in cf_results: ",
-           paste(missing_outcomes, collapse = ", "))
+      stop(
+        "Requested outcomes not found in cf_results: ",
+        paste(missing_outcomes, collapse = ", ")
+      )
     }
   }
-  
+
   # extract test set data
   X_test <- cf_results$X_test
   W_test <- cf_results$W_test
   weights_test <- cf_results$weights_test
   test_idx <- cf_results$data_info$test_idx
-  
+
   n_test <- nrow(X_test)
-  
+
   if (verbose) {
     cli::cli_alert_info("Analyzing {length(outcome_vars)} outcomes on test set (n={n_test})")
   }
-  
+
   # initialize storage
   all_qini_data <- list()
   all_qini_objects <- list()
   all_gain_summaries <- list()
   all_qini_metrics <- list()
-  
+
   # process each outcome
   for (outcome in outcome_vars) {
     if (verbose) {
       cli::cli_alert_info("Processing QINI for outcome: {outcome}")
     }
-    
+
     # skip if forest failed
     if (!is.null(cf_results$results[[outcome]]$error)) {
       cli::cli_alert_warning("Skipping {outcome} due to forest error")
       next
     }
-    
+
     # extract components
     Y_test <- cf_results$results[[outcome]]$Y_test
     tau_hat_test <- cf_results$results[[outcome]]$tau_hat_test
-    
+
     # check for missing outcomes
     complete_test <- !is.na(Y_test)
     if (sum(complete_test) < n_test) {
@@ -142,107 +142,110 @@ margot_qini_dev <- function(
         "{sum(!complete_test)} missing values in test outcomes for {outcome}"
       )
     }
-    
+
     # compute DR scores
-    if (use_evaluation_forest && !is.null(cf_results$eval_forests) && 
-        outcome %in% names(cf_results$eval_forests)) {
+    if (use_evaluation_forest && !is.null(cf_results$eval_forests) &&
+      outcome %in% names(cf_results$eval_forests)) {
       # use evaluation forest for DR scores
       if (verbose) {
         cli::cli_alert_info("Using evaluation forest for DR scores")
       }
-      
+
       # for now, skip evaluation forest and use IPW scores
       # TODO: fix evaluation forest DR score computation for test set
       if (verbose) {
         cli::cli_alert_info("Computing IPW scores directly (eval forest not yet implemented)")
       }
-      
+
       treatment_factor <- as.factor(W_test)
       dr_scores <- maq::get_ipw_scores(Y_test, treatment_factor)
-      
     } else {
       # compute IPW scores directly
       if (verbose) {
         cli::cli_alert_info("Computing IPW scores directly")
       }
-      
+
       treatment_factor <- as.factor(W_test)
       dr_scores <- maq::get_ipw_scores(Y_test, treatment_factor)
     }
-    
+
     # fit QINI curves
-    tryCatch({
-      # primary QINI curve using tau_hat
-      qini_args <- list(
-        reward = as.matrix(tau_hat_test[complete_test]),
-        cost = matrix(1, sum(complete_test), 1),
-        DR.scores = dr_scores[complete_test, , drop = FALSE],
-        R = n_bootstrap,
-        sample.weights = if (!is.null(weights_test)) {
-          weights_test[complete_test]
-        } else NULL,
-        seed = if (!is.null(seed)) as.integer(seed) else NULL
-      )
-      
-      cate_qini <- do.call(maq::maq, qini_args)
-      
-      # baseline curve based on method
-      baseline_qini <- compute_baseline_qini(
-        tau_hat = tau_hat_test[complete_test],
-        dr_scores = dr_scores[complete_test, , drop = FALSE],
-        weights = if (!is.null(weights_test)) weights_test[complete_test] else NULL,
-        method = baseline_method,
-        n_bootstrap = n_bootstrap,
-        seed = if (!is.null(seed)) as.integer(seed) else NULL,
-        verbose = verbose
-      )
-      
-      # extract curve data
-      qini_data <- extract_qini_curves(
-        list(cate = cate_qini, baseline = baseline_qini),
-        outcome = outcome
-      )
-      
-      # compute gain summaries
-      gain_summaries <- compute_gain_summaries(
-        cate_qini = cate_qini,
-        baseline_qini = baseline_qini,
-        spend_levels = spend_levels,
-        outcome = outcome
-      )
-      
-      # compute summary metrics
-      qini_metrics <- compute_qini_metrics(
-        cate_qini = cate_qini,
-        baseline_qini = baseline_qini,
-        outcome = outcome
-      )
-      
-      # store results
-      all_qini_data[[outcome]] <- qini_data
-      all_qini_objects[[outcome]] <- list(
-        cate = cate_qini,
-        baseline = baseline_qini
-      )
-      all_gain_summaries[[outcome]] <- gain_summaries
-      all_qini_metrics[[outcome]] <- qini_metrics
-      
-      if (verbose) {
-        cli::cli_alert_success("Completed QINI analysis for {outcome}")
+    tryCatch(
+      {
+        # primary QINI curve using tau_hat
+        qini_args <- list(
+          reward = as.matrix(tau_hat_test[complete_test]),
+          cost = matrix(1, sum(complete_test), 1),
+          DR.scores = dr_scores[complete_test, , drop = FALSE],
+          R = n_bootstrap,
+          sample.weights = if (!is.null(weights_test)) {
+            weights_test[complete_test]
+          } else {
+            NULL
+          },
+          seed = if (!is.null(seed)) as.integer(seed) else NULL
+        )
+
+        cate_qini <- do.call(maq::maq, qini_args)
+
+        # baseline curve based on method
+        baseline_qini <- compute_baseline_qini(
+          tau_hat = tau_hat_test[complete_test],
+          dr_scores = dr_scores[complete_test, , drop = FALSE],
+          weights = if (!is.null(weights_test)) weights_test[complete_test] else NULL,
+          method = baseline_method,
+          n_bootstrap = n_bootstrap,
+          seed = if (!is.null(seed)) as.integer(seed) else NULL,
+          verbose = verbose
+        )
+
+        # extract curve data
+        qini_data <- extract_qini_curves(
+          list(cate = cate_qini, baseline = baseline_qini),
+          outcome = outcome
+        )
+
+        # compute gain summaries
+        gain_summaries <- compute_gain_summaries(
+          cate_qini = cate_qini,
+          baseline_qini = baseline_qini,
+          spend_levels = spend_levels,
+          outcome = outcome
+        )
+
+        # compute summary metrics
+        qini_metrics <- compute_qini_metrics(
+          cate_qini = cate_qini,
+          baseline_qini = baseline_qini,
+          outcome = outcome
+        )
+
+        # store results
+        all_qini_data[[outcome]] <- qini_data
+        all_qini_objects[[outcome]] <- list(
+          cate = cate_qini,
+          baseline = baseline_qini
+        )
+        all_gain_summaries[[outcome]] <- gain_summaries
+        all_qini_metrics[[outcome]] <- qini_metrics
+
+        if (verbose) {
+          cli::cli_alert_success("Completed QINI analysis for {outcome}")
+        }
+      },
+      error = function(e) {
+        cli::cli_alert_warning("QINI failed for {outcome}: {e$message}")
       }
-      
-    }, error = function(e) {
-      cli::cli_alert_warning("QINI failed for {outcome}: {e$message}")
-    })
+    )
   }
-  
+
   # combine all QINI data
   if (length(all_qini_data) > 0) {
     combined_qini_data <- do.call(rbind, all_qini_data)
   } else {
     combined_qini_data <- NULL
   }
-  
+
   # metadata
   metadata <- list(
     timestamp = Sys.time(),
@@ -256,7 +259,7 @@ margot_qini_dev <- function(
     confidence_level = confidence_level,
     seed = seed
   )
-  
+
   # create output
   output <- list(
     qini_curves = combined_qini_data,
@@ -265,30 +268,28 @@ margot_qini_dev <- function(
     qini_metrics = all_qini_metrics,
     metadata = metadata
   )
-  
+
   class(output) <- c("margot_qini_dev", "list")
-  
+
   if (verbose) {
     cli::cli_alert_success(
       "margot_qini_dev() completed: {metadata$n_successful}/{metadata$n_outcomes} outcomes analyzed"
     )
   }
-  
+
   return(output)
 }
 
 #' Compute baseline QINI curve
 #' @noRd
 compute_baseline_qini <- function(
-    tau_hat, 
-    dr_scores, 
+    tau_hat,
+    dr_scores,
     weights,
     method = "maq_no_covariates",
     n_bootstrap = 200,
     seed = 12345,
-    verbose = TRUE
-) {
-  
+    verbose = TRUE) {
   baseline_args <- list(
     cost = matrix(1, length(tau_hat), 1),
     DR.scores = dr_scores,
@@ -296,93 +297,93 @@ compute_baseline_qini <- function(
     sample.weights = weights,
     seed = seed
   )
-  
+
   if (method == "maq_no_covariates") {
     # use maq with no covariate targeting
-    baseline_qini <- tryCatch({
-      do.call(maq::maq, c(
-        baseline_args,
-        list(
-          reward = as.matrix(tau_hat),
-          target.with.covariates = FALSE
-        )
-      ))
-    }, error = function(e) {
-      if (verbose) {
-        cli::cli_alert_warning("maq_no_covariates failed, using simple baseline")
+    baseline_qini <- tryCatch(
+      {
+        do.call(maq::maq, c(
+          baseline_args,
+          list(
+            reward = as.matrix(tau_hat),
+            target.with.covariates = FALSE
+          )
+        ))
+      },
+      error = function(e) {
+        if (verbose) {
+          cli::cli_alert_warning("maq_no_covariates failed, using simple baseline")
+        }
+        # fallback to constant rewards
+        do.call(maq::maq, c(
+          baseline_args,
+          list(reward = matrix(mean(tau_hat), length(tau_hat), 1))
+        ))
       }
-      # fallback to constant rewards
-      do.call(maq::maq, c(
-        baseline_args,
-        list(reward = matrix(mean(tau_hat), length(tau_hat), 1))
-      ))
-    })
-    
+    )
   } else if (method == "simple") {
     # constant treatment effect
     baseline_qini <- do.call(maq::maq, c(
       baseline_args,
       list(reward = matrix(mean(tau_hat), length(tau_hat), 1))
     ))
-    
   } else if (method == "maq_only") {
     # standard maq baseline
     baseline_qini <- do.call(maq::maq, c(
       baseline_args,
       list(reward = as.matrix(tau_hat))
     ))
-    
   } else if (method == "auto") {
     # try methods in order
     for (try_method in c("maq_no_covariates", "simple", "maq_only")) {
-      baseline_qini <- tryCatch({
-        compute_baseline_qini(
-          tau_hat, dr_scores, weights, 
-          method = try_method, 
-          n_bootstrap = n_bootstrap,
-          seed = if (!is.null(seed)) as.integer(seed) else NULL, 
-          verbose = FALSE
-        )
-      }, error = function(e) NULL)
-      
+      baseline_qini <- tryCatch(
+        {
+          compute_baseline_qini(
+            tau_hat, dr_scores, weights,
+            method = try_method,
+            n_bootstrap = n_bootstrap,
+            seed = if (!is.null(seed)) as.integer(seed) else NULL,
+            verbose = FALSE
+          )
+        },
+        error = function(e) NULL
+      )
+
       if (!is.null(baseline_qini)) break
     }
-    
+
     if (is.null(baseline_qini)) {
       stop("All baseline methods failed")
     }
-    
   } else if (method == "none") {
     # no baseline
     return(NULL)
-    
   } else {
     stop("Unknown baseline_method: ", method)
   }
-  
+
   return(baseline_qini)
 }
 
 #' Extract QINI curve data
 #' @noRd
 extract_qini_curves <- function(qini_objects, outcome) {
-  
   curve_data <- list()
-  
+
   for (curve_name in names(qini_objects)) {
     if (is.null(qini_objects[[curve_name]])) next
-    
+
     qini_obj <- qini_objects[[curve_name]]
-    
+
     # extract gain path
     gain <- qini_obj[["_path"]]$gain
     n_points <- length(gain)
-    
+
     if (n_points == 0) next
-    
+
     # create proportion vector
     proportion <- seq(0, 1, length.out = n_points)
-    
+
     # extract confidence intervals if available
     if (!is.null(qini_obj[["_path"]]$gain.se)) {
       gain_se <- qini_obj[["_path"]]$gain.se
@@ -391,7 +392,7 @@ extract_qini_curves <- function(qini_objects, outcome) {
     } else {
       ci_lower <- ci_upper <- NA
     }
-    
+
     curve_data[[curve_name]] <- data.frame(
       outcome = outcome,
       curve = curve_name,
@@ -401,7 +402,7 @@ extract_qini_curves <- function(qini_objects, outcome) {
       ci_upper = ci_upper
     )
   }
-  
+
   if (length(curve_data) > 0) {
     do.call(rbind, curve_data)
   } else {
@@ -410,20 +411,19 @@ extract_qini_curves <- function(qini_objects, outcome) {
 }
 
 #' Compute gain summaries at spend levels
-#' @noRd  
+#' @noRd
 compute_gain_summaries <- function(cate_qini, baseline_qini, spend_levels, outcome) {
-  
   summaries <- list()
-  
+
   for (spend in spend_levels) {
     # find index corresponding to spend level
     n_points <- length(cate_qini[["_path"]]$gain)
     spend_idx <- round(spend * n_points)
     spend_idx <- max(1, min(spend_idx, n_points))
-    
+
     # extract gains
     cate_gain <- cate_qini[["_path"]]$gain[spend_idx]
-    
+
     if (!is.null(baseline_qini)) {
       baseline_gain <- baseline_qini[["_path"]]$gain[spend_idx]
       diff_gain <- cate_gain - baseline_gain
@@ -431,7 +431,7 @@ compute_gain_summaries <- function(cate_qini, baseline_qini, spend_levels, outco
       baseline_gain <- 0
       diff_gain <- cate_gain
     }
-    
+
     # confidence intervals if available
     if (!is.null(cate_qini[["_path"]]$gain.se)) {
       cate_se <- cate_qini[["_path"]]$gain.se[spend_idx]
@@ -439,7 +439,7 @@ compute_gain_summaries <- function(cate_qini, baseline_qini, spend_levels, outco
     } else {
       cate_ci <- c(NA, NA)
     }
-    
+
     summaries[[paste0("spend_", spend)]] <- list(
       spend = spend,
       cate_gain = cate_gain,
@@ -449,30 +449,29 @@ compute_gain_summaries <- function(cate_qini, baseline_qini, spend_levels, outco
       outcome = outcome
     )
   }
-  
+
   summaries
 }
 
 #' Compute QINI summary metrics
 #' @noRd
 compute_qini_metrics <- function(cate_qini, baseline_qini, outcome) {
-  
   cate_gains <- cate_qini[["_path"]]$gain
   n_points <- length(cate_gains)
-  
+
   # peak gain
   peak_gain <- max(cate_gains)
   peak_idx <- which.max(cate_gains)
   peak_proportion <- peak_idx / n_points
-  
+
   # area under curve (normalized)
   auc <- sum(cate_gains) / n_points
-  
+
   # gain at common spend levels
   gain_10 <- cate_gains[round(0.1 * n_points)]
   gain_20 <- cate_gains[round(0.2 * n_points)]
   gain_50 <- cate_gains[round(0.5 * n_points)]
-  
+
   # improvement over baseline
   if (!is.null(baseline_qini)) {
     baseline_gains <- baseline_qini[["_path"]]$gain
@@ -481,7 +480,7 @@ compute_qini_metrics <- function(cate_qini, baseline_qini, outcome) {
   } else {
     max_improvement <- avg_improvement <- NA
   }
-  
+
   list(
     outcome = outcome,
     peak_gain = peak_gain,
@@ -505,35 +504,41 @@ compute_qini_metrics <- function(cate_qini, baseline_qini, outcome) {
 print.margot_qini_dev <- function(x, ...) {
   cat("margot_qini_dev object\n")
   cat("======================\n\n")
-  
+
   # summary
-  cat(sprintf("Outcomes analyzed: %d/%d\n", 
-              x$metadata$n_successful,
-              x$metadata$n_outcomes))
+  cat(sprintf(
+    "Outcomes analyzed: %d/%d\n",
+    x$metadata$n_successful,
+    x$metadata$n_outcomes
+  ))
   cat(sprintf("Test set size: %d\n", x$metadata$n_test))
   cat(sprintf("Baseline method: %s\n", x$metadata$baseline_method))
   cat(sprintf("Bootstrap iterations: %d\n", x$metadata$n_bootstrap))
   cat("\n")
-  
+
   # metrics summary
   if (length(x$qini_metrics) > 0) {
     cat("QINI Metrics Summary:\n")
     cat("--------------------\n")
-    
+
     for (outcome in names(x$qini_metrics)) {
       metrics <- x$qini_metrics[[outcome]]
       cat(sprintf("\n%s:\n", outcome))
-      cat(sprintf("  Peak gain: %.3f (at %.1f%% treated)\n",
-                  metrics$peak_gain, 100 * metrics$peak_proportion))
+      cat(sprintf(
+        "  Peak gain: %.3f (at %.1f%% treated)\n",
+        metrics$peak_gain, 100 * metrics$peak_proportion
+      ))
       cat(sprintf("  AUC: %.3f\n", metrics$auc))
-      
+
       if (!is.na(metrics$max_improvement)) {
-        cat(sprintf("  Max improvement over baseline: %.3f\n",
-                    metrics$max_improvement))
+        cat(sprintf(
+          "  Max improvement over baseline: %.3f\n",
+          metrics$max_improvement
+        ))
       }
     }
   }
-  
+
   invisible(x)
 }
 
@@ -548,11 +553,11 @@ summary.margot_qini_dev <- function(object, ...) {
   # create summary table
   if (length(object$gain_summaries) > 0) {
     summary_list <- list()
-    
+
     for (outcome in names(object$gain_summaries)) {
       for (spend_level in names(object$gain_summaries[[outcome]])) {
         gains <- object$gain_summaries[[outcome]][[spend_level]]
-        
+
         summary_list[[length(summary_list) + 1]] <- data.frame(
           outcome = outcome,
           spend = gains$spend,
@@ -564,10 +569,10 @@ summary.margot_qini_dev <- function(object, ...) {
         )
       }
     }
-    
+
     summary_df <- do.call(rbind, summary_list)
     rownames(summary_df) <- NULL
-    
+
     return(summary_df)
   } else {
     return(NULL)

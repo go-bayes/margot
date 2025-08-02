@@ -15,7 +15,7 @@ It also handles original scale estimates when available."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.222</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.227</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,24 +109,24 @@ name; 'custom' respects a user-provided vector; 'default' is an alias for 'magni
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># descending magnitude (default for 'default')</span></span></span>
-<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">'default'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">"default"</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in group_tab(df = analysis_df, order = "default"):</span> could not find function "group_tab"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ascending magnitude</span></span></span>
-<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">'magnitude_asc'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">"magnitude_asc"</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in group_tab(df = analysis_df, order = "magnitude_asc"):</span> could not find function "group_tab"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># strongest E-value bound first</span></span></span>
-<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">'evaluebound_desc'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">"evaluebound_desc"</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in group_tab(df = analysis_df, order = "evaluebound_desc"):</span> could not find function "group_tab"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># alphabetical</span></span></span>
-<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">'alphabetical'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">"alphabetical"</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in group_tab(df = analysis_df, order = "alphabetical"):</span> could not find function "group_tab"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># custom ordering</span></span></span>
-<span class="r-in"><span><span class="va">custom_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'Outcome3'</span>,<span class="st">'Outcome1'</span>,<span class="st">'Outcome2'</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">'custom'</span>, custom_order <span class="op">=</span> <span class="va">custom_order</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">custom_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Outcome3"</span>, <span class="st">"Outcome1"</span>, <span class="st">"Outcome2"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">result_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="group_tab.html">group_tab</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">analysis_df</span>, order <span class="op">=</span> <span class="st">"custom"</span>, custom_order <span class="op">=</span> <span class="va">custom_order</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in group_tab(df = analysis_df, order = "custom", custom_order = custom_order):</span> could not find function "group_tab"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

@@ -29,8 +29,7 @@ results_low_cost <- margot_causal_forest(
   covariates = X,
   W = W,
   weights = NULL,
-  qini_split = TRUE,
-  train_prop = 0.5,
+  train_proportion = 0.5,
   qini_treatment_cost = 0.2,
   verbose = TRUE
 )
@@ -42,8 +41,7 @@ results_med_cost <- margot_causal_forest(
   covariates = X,
   W = W,
   weights = NULL,
-  qini_split = TRUE,
-  train_prop = 0.5,
+  train_proportion = 0.5,
   qini_treatment_cost = 1,
   verbose = TRUE
 )
@@ -55,50 +53,50 @@ results_high_cost <- margot_causal_forest(
   covariates = X,
   W = W,
   weights = NULL,
-  qini_split = TRUE,
-  train_prop = 0.5,
+  train_proportion = 0.5,
   qini_treatment_cost = 5,
   verbose = TRUE
 )
 
-cat("\n\nTest 2: Using margot_qini with different treatment costs\n")
-
-# test margot_qini with different costs
-qini_low <- margot_qini(results_med_cost, treatment_cost = 0.2)
-qini_med <- margot_qini(results_med_cost, treatment_cost = 1)
-qini_high <- margot_qini(results_med_cost, treatment_cost = 5)
-
-cat("\n\nTest 3: Comparing QINI curve shapes\n")
+cat("\n\nTest 2: Comparing QINI curve shapes from different treatment costs\n")
 
 # extract qini data for plotting
-get_qini_data <- function(qini_result, cost_label) {
-  df <- qini_result$model_outcome$qini_data
-  df$cost <- cost_label
-  df
+get_qini_data <- function(result, cost_label) {
+  if (!is.null(result$results$model_outcome$qini_data)) {
+    df <- result$results$model_outcome$qini_data
+    df$cost <- cost_label
+    df
+  } else {
+    NULL
+  }
 }
 
-# combine data
+# combine data from the results with different costs
 plot_data <- rbind(
-  get_qini_data(qini_low, "Low cost (0.2)"),
-  get_qini_data(qini_med, "Medium cost (1)"),
-  get_qini_data(qini_high, "High cost (5)")
+  get_qini_data(results_low_cost, "Low cost (0.2)"),
+  get_qini_data(results_med_cost, "Medium cost (1)"),
+  get_qini_data(results_high_cost, "High cost (5)")
 )
 
 # create plot showing how cost affects curve shape
-p <- ggplot(plot_data[plot_data$curve == "cate",], 
-            aes(x = proportion, y = gain, color = cost)) +
-  geom_line(size = 1.2) +
-  labs(
-    title = "QINI Curves with Different Treatment Costs",
-    subtitle = "Lower costs create steeper curves (more treated), higher costs create shallower curves",
-    x = "Proportion of Population",
-    y = "Gain",
-    color = "Treatment Cost"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "top")
-
-print(p)
+if (!is.null(plot_data)) {
+  p <- ggplot(plot_data[plot_data$curve == "cate",], 
+              aes(x = proportion, y = gain, color = cost)) +
+    geom_line(size = 1.2) +
+    labs(
+      title = "QINI Curves with Different Treatment Costs",
+      subtitle = "Lower costs create steeper curves (more treated), higher costs create shallower curves",
+      x = "Proportion of Population",
+      y = "Gain",
+      color = "Treatment Cost"
+    ) +
+    theme_minimal() +
+    theme(legend.position = "top")
+  
+  print(p)
+} else {
+  cat("No QINI data available for plotting\n")
+}
 
 cat("\n\nKey insights:\n")
 cat("1. With low cost (0.2): Treatment is cheap, so more people can be treated cost-effectively\n")

@@ -34,8 +34,10 @@ read_multiple_images <- function(path_multi_plots, pattern = "policy_tree_plot\\
   names(image_list) <- sub("\\.png$", "", basename(matching_files))
 
   # Add CLI message with emojis
-  message(sprintf("\U1F44D\U1F60A Successfully loaded %d images matching the pattern '%s'",
-                  length(image_list), pattern))
+  message(sprintf(
+    "\U1F44D\U1F60A Successfully loaded %d images matching the pattern '%s'",
+    length(image_list), pattern
+  ))
 
   return(image_list)
 }

@@ -15,7 +15,7 @@ margot_recompute_qini_ipw(
 \arguments{
 \item{margot_result}{A list returned by \code{margot_causal_forest()}.}
 
-\item{model_name}{Character string specifying which model to recompute. 
+\item{model_name}{Character string specifying which model to recompute.
 If NULL (default), all models will be recomputed.}
 
 \item{treatment_var}{Character string specifying the treatment variable name.
@@ -32,7 +32,7 @@ A modified version of the input margot_result with updated QINI
   existing plotting and interpretation functions.
 }
 \description{
-Recomputes QINI curves for binary treatment causal forest models using 
+Recomputes QINI curves for binary treatment causal forest models using
 Inverse Probability Weighted (IPW) scores. This is a simpler alternative
 to \code{margot_recompute_qini_aipw()} that uses IPW scores only.
 }
@@ -55,13 +55,13 @@ results_ipw <- margot_recompute_qini_ipw(margot_results)
 
 # Recompute for a specific model
 results_ipw <- margot_recompute_qini_ipw(
-  margot_results, 
+  margot_results,
   model_name = "model_anxiety"
 )
 
 # Specify treatment variable if auto-detection fails
 results_ipw <- margot_recompute_qini_ipw(
-  margot_results, 
+  margot_results,
   treatment_var = "t1_treatment"
 )
 

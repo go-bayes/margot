@@ -94,7 +94,8 @@ label_mapping <- list(
   "t2_env_not_climate_chg_real_z" = "Deny Climate Change Real"
 )
 p <- margot_plot_rate(rate_eval, "model_t2_env_not_env_efficacy_z",
-                      label_mapping = label_mapping)
+  label_mapping = label_mapping
+)
 print(p)
 }
 
