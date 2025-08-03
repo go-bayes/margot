@@ -102,29 +102,54 @@ back_transform_estimates <- function(results_df, original_df) {
 
     if (was_log_transformed) {
       # For log-transformed variables, back-transform to original scale
-      # E[y|treatment = 0] = mean_y
-      # E[y|treatment = 1] = mean_y + estimate_log
-      E_y_treated <- mean_y + estimate_log
-      E_y_control <- mean_y
+      if (was_z_transformed) {
+        # For log+z transformed variables, use back_transform_log_z
+        # the treatment effect in z-score units
+        z_effect <- estimate
+        z_lower <- results_df$`2.5 %`[i]
+        z_upper <- results_df$`97.5 %`[i]
+        
+        # back-transform the control group mean (z=0)
+        control_orig <- back_transform_log_z(0, log_mean = mean_y, log_sd = orig_sd)
+        
+        # back-transform the treated group mean
+        treated_orig <- back_transform_log_z(z_effect, log_mean = mean_y, log_sd = orig_sd)
+        
+        # calculate the difference
+        delta_x <- treated_orig - control_orig
+        
+        # for confidence intervals
+        treated_lower <- back_transform_log_z(z_lower, log_mean = mean_y, log_sd = orig_sd)
+        treated_upper <- back_transform_log_z(z_upper, log_mean = mean_y, log_sd = orig_sd)
+        
+        delta_x_lower <- treated_lower - control_orig
+        delta_x_upper <- treated_upper - control_orig
+      } else {
+        # For only log-transformed variables (not z-scored)
+        # E[y|treatment = 0] = mean_y
+        # E[y|treatment = 1] = mean_y + estimate_log
+        E_y_treated <- mean_y + estimate_log
+        E_y_control <- mean_y
 
-      # Expected values on the original scale
-      E_x_treated <- exp(E_y_treated) - 1
-      E_x_control <- exp(E_y_control) - 1
+        # Expected values on the original scale
+        E_x_treated <- exp(E_y_treated) - 1
+        E_x_control <- exp(E_y_control) - 1
 
-      delta_x <- E_x_treated - E_x_control
+        delta_x <- E_x_treated - E_x_control
 
-      # For confidence intervals
-      estimate_log_lower <- estimate_log - z_value * SE_log
-      estimate_log_upper <- estimate_log + z_value * SE_log
+        # For confidence intervals
+        estimate_log_lower <- estimate_log - z_value * SE_log
+        estimate_log_upper <- estimate_log + z_value * SE_log
 
-      E_y_treated_lower <- mean_y + estimate_log_lower
-      E_y_treated_upper <- mean_y + estimate_log_upper
+        E_y_treated_lower <- mean_y + estimate_log_lower
+        E_y_treated_upper <- mean_y + estimate_log_upper
 
-      E_x_treated_lower <- exp(E_y_treated_lower) - 1
-      E_x_treated_upper <- exp(E_y_treated_upper) - 1
+        E_x_treated_lower <- exp(E_y_treated_lower) - 1
+        E_x_treated_upper <- exp(E_y_treated_upper) - 1
 
-      delta_x_lower <- E_x_treated_lower - E_x_control
-      delta_x_upper <- E_x_treated_upper - E_x_control
+        delta_x_lower <- E_x_treated_lower - E_x_control
+        delta_x_upper <- E_x_treated_upper - E_x_control
+      }
 
       # If variable contains '_hours_', transform to minutes
       if (contains_hours) {

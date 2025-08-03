@@ -1,5 +1,16 @@
 # CHANGELOG_DEV.md
 
+## margot 1.0.219 (2025-08-03)
+
+### Bug Fixes
+
+- **Fixed incorrect back-transformation for log+z transformed variables in margot_plot()**:
+  - Updated `back_transform_estimates()` to properly use `back_transform_log_z()` for variables that have been both log-transformed and z-scored
+  - This fixes the issue where hours variables were incorrectly transformed to minutes (e.g., showing 7,711 minutes instead of ~104 minutes)
+  - The function now correctly distinguishes between:
+    - Variables that are only log-transformed: uses `exp(y) - 1`
+    - Variables that are log+z transformed: uses `back_transform_log_z()`
+
 ## margot 1.0.218 (2025-08-02)
 
 ### Major Improvements
