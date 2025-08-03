@@ -77,7 +77,7 @@ uses max(floor(nrow(qini_data) / 1000), 1). Set to 1 to plot all points.}
 \item{ate_color}{Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).}
 
 \item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative",
-or "population". "average" shows average policy effect per unit (maq default), "cumulative"
+or "population". "average" shows expected policy effect per unit (maq default), "cumulative"
 shows traditional cumulative gains, "population" shows total population impact.}
 
 \item{treatment_cost}{Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,

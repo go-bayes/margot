@@ -467,7 +467,7 @@ create_qini_explanation_binary <- function(spend_levels = 0.1, include_intro = T
 
   # get scale-specific terminology
   gain_term <- switch(scale,
-    "average" = "average policy effects",
+    "average" = "expected policy effects",
     "cumulative" = "cumulative gains",
     "population" = "total population impact",
     "gains" # default

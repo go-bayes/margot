@@ -17,7 +17,7 @@ margot_qini_scale_note <- function(scale = "average", n_units = NULL) {
 
   if (scale == "average") {
     return(paste0(
-      "The y-axis shows average policy effects per unit (Q(B) = E[⟨πB(Xi), τ(Xi)⟩]), ",
+      "The y-axis shows expected policy effects per unit (Q(B) = E[⟨πB(Xi), τ(Xi)⟩]), ",
       "representing the expected gain from treating units according to the policy. ",
       "This is the standard maq implementation where gains converge to the ATE at 100% spend."
     ))
@@ -60,7 +60,7 @@ margot_qini_scale_subtitle <- function(scale = "average", n_units = NULL) {
   scale <- match.arg(scale, c("average", "cumulative", "population"))
 
   if (scale == "average") {
-    return("Showing average policy effects (maq default)")
+    return("Showing expected policy effects (maq default)")
   } else if (scale == "cumulative") {
     return("Showing cumulative gains")
   } else if (scale == "population") {

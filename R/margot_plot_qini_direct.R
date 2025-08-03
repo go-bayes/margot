@@ -202,8 +202,8 @@ margot_plot_qini_direct <- function(
   p <- p +
     labs(
       x = x_label,
-      y = "Average treatment effect",
-      title = paste("Qini Curves for", transformed_outcome_var),
+      y = "Expected policy effect",
+      title = paste("Uplift Curve for", transformed_outcome_var),
       subtitle = subtitle_text
     ) +
     scale_color_manual(values = c("CATE" = cate_color, "ATE" = ate_color)) +

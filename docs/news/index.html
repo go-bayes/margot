@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.228</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.229</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,33 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.229" id="id_2025-08-03-margot-10229">[2025-08-03] margot 1.0.229<a class="anchor" aria-label="anchor" href="#id_2025-08-03-margot-10229"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-1-0-229">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-229"></a></h4>
+<ul><li>
+<strong>Fixed incorrect back-transformation for log+z transformed variables in margot_plot()</strong>:
+<ul><li>Updated <code>back_transform_estimates()</code> to properly use <code><a href="../reference/back_transform_log_z.html">back_transform_log_z()</a></code> for variables that have been both log-transformed and z-scored</li>
+<li>This fixes the issue where hours variables were incorrectly transformed to minutes (e.g., showing 7,711 minutes instead of ~104 minutes)</li>
+<li>The function now correctly distinguishes between:
+<ul><li>Variables that are only log-transformed: uses <code>exp(y) - 1</code>
+</li>
+<li>Variables that are log+z transformed: uses <code><a href="../reference/back_transform_log_z.html">back_transform_log_z()</a></code>
+</li>
+</ul></li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="uiux-improvements-1-0-229">UI/UX Improvements<a class="anchor" aria-label="anchor" href="#uiux-improvements-1-0-229"></a></h4>
+<ul><li>
+<strong>Improved plot labeling for clarity</strong>:
+<ul><li>Removed “outcome” label from y-axis in <code><a href="../reference/margot_plot.html">margot_plot()</a></code> for cleaner appearance</li>
+<li>Changed “Qini Curves” to “Uplift Curve” in plot titles across all qini plot functions</li>
+<li>Changed “average policy effect” to “expected policy effect” in y-axis labels to better reflect the statistical nature of the estimates</li>
+<li>Updated documentation and scale notes to use consistent “expected policy effect” terminology</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.228" id="id_2025-08-02-margot-10228">[2025-08-02] margot 1.0.228<a class="anchor" aria-label="anchor" href="#id_2025-08-02-margot-10228"></a></h2>
 <div class="section level4">

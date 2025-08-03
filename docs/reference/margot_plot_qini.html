@@ -15,7 +15,7 @@ like theme selection and spend level indicators."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.228</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.229</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -180,7 +180,7 @@ for consistent y-axis scaling across plots. Default is FALSE.</p></dd>
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
 <dd><p>Character string specifying the scale for gains: "average" (default), "cumulative",
-or "population". "average" shows average policy effect per unit (maq default), "cumulative"
+or "population". "average" shows expected policy effect per unit (maq default), "cumulative"
 shows traditional cumulative gains, "population" shows total population impact.</p></dd>
 
 
@@ -218,7 +218,7 @@ from stored cost. Default is 12345.</p></dd>
 <li><p>Additional features like theme selection and spend indicators</p></li>
 <li><p>Confidence intervals computed via maq::average_gain() for accuracy</p></li>
 <li><p>Binary treatment colors: Customizable via cate_color and ate_color parameters</p></li>
-</ul><p><strong>Important Note on Scale:</strong> The y-axis shows <strong>average policy effects per unit</strong>,
+</ul><p><strong>Important Note on Scale:</strong> The y-axis shows <strong>expected policy effects per unit</strong>,
 not cumulative gains. This follows the maq package implementation where gains represent
 Q(B) = E[⟨πB(Xi), τ(Xi)⟩], the expected (average) gain from treating units according
 to the policy πB. This differs from traditional uplift modeling QINI curves which show

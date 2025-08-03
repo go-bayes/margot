@@ -30,7 +30,7 @@
 #' @param cate_color Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).
 #' @param ate_color Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).
 #' @param scale Character string specifying the scale for gains: "average" (default), "cumulative",
-#'   or "population". "average" shows average policy effect per unit (maq default), "cumulative"
+#'   or "population". "average" shows expected policy effect per unit (maq default), "cumulative"
 #'   shows traditional cumulative gains, "population" shows total population impact.
 #' @param treatment_cost Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
 #'   which attempts to extract the cost from model metadata. If not found, assumes cost = 1.

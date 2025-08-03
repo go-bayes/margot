@@ -11,6 +11,14 @@
     - Variables that are only log-transformed: uses `exp(y) - 1`
     - Variables that are log+z transformed: uses `back_transform_log_z()`
 
+### UI/UX Improvements
+
+- **Improved plot labeling for clarity**:
+  - Removed "outcome" label from y-axis in `margot_plot()` for cleaner appearance
+  - Changed "Qini Curves" to "Uplift Curve" in plot titles across all qini plot functions
+  - Changed "average policy effect" to "expected policy effect" in y-axis labels to better reflect the statistical nature of the estimates
+  - Updated documentation and scale notes to use consistent "expected policy effect" terminology
+
 ## margot 1.0.218 (2025-08-02)
 
 ### Major Improvements

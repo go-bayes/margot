@@ -38,7 +38,7 @@
 #' @param cate_color Color for the CATE (targeted treatment) curve. Default is "#d8a739" (gold).
 #' @param ate_color Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).
 #' @param scale Character string specifying the scale for gains: "average" (default), "cumulative",
-#'   or "population". "average" shows average policy effect per unit (maq default), "cumulative"
+#'   or "population". "average" shows expected policy effect per unit (maq default), "cumulative"
 #'   shows traditional cumulative gains, "population" shows total population impact.
 #' @param treatment_cost Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
 #'   which attempts to extract the cost from model metadata. If not found, assumes cost = 1.
@@ -71,7 +71,7 @@
 #'   \item Binary treatment colors: Customizable via cate_color and ate_color parameters
 #' }
 #'
-#' \strong{Important Note on Scale:} The y-axis shows \strong{average policy effects per unit},
+#' \strong{Important Note on Scale:} The y-axis shows \strong{expected policy effects per unit},
 #' not cumulative gains. This follows the maq package implementation where gains represent
 #' Q(B) = E[⟨πB(Xi), τ(Xi)⟩], the expected (average) gain from treating units according
 #' to the policy πB. This differs from traditional uplift modeling QINI curves which show
@@ -1087,10 +1087,10 @@ margot_plot_qini <- function(mc_result, outcome_var,
 
   # set y-axis label based on scale
   y_label <- switch(scale,
-    "average" = "Average policy effect",
+    "average" = "Expected policy effect",
     "cumulative" = "Cumulative gain",
     "population" = "Total population impact",
-    "Average policy effect" # default
+    "Expected policy effect" # default
   )
 
   # treatment_cost was already initialized and cost-based regeneration handled earlier
@@ -1123,7 +1123,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
     labs(
       x = x_label,
       y = y_label,
-      title = paste("Qini Curves for", transformed_outcome_var),
+      title = paste("Uplift Curve for", transformed_outcome_var),
       subtitle = subtitle_text
     ) +
     # apply selected theme

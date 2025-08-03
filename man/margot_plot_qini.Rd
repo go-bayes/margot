@@ -86,7 +86,7 @@ for consistent y-axis scaling across plots. Default is FALSE.}
 \item{ate_color}{Color for the ATE (no-priority/uniform assignment) curve. Default is "#4d4d4d" (dark gray).}
 
 \item{scale}{Character string specifying the scale for gains: "average" (default), "cumulative",
-or "population". "average" shows average policy effect per unit (maq default), "cumulative"
+or "population". "average" shows expected policy effect per unit (maq default), "cumulative"
 shows traditional cumulative gains, "population" shows total population impact.}
 
 \item{treatment_cost}{Numeric scalar; the treatment cost used in QINI calculations. Default is NULL,
@@ -130,7 +130,7 @@ Key differences from maq::plot():
   \item Binary treatment colors: Customizable via cate_color and ate_color parameters
 }
 
-\strong{Important Note on Scale:} The y-axis shows \strong{average policy effects per unit},
+\strong{Important Note on Scale:} The y-axis shows \strong{expected policy effects per unit},
 not cumulative gains. This follows the maq package implementation where gains represent
 Q(B) = E[⟨πB(Xi), τ(Xi)⟩], the expected (average) gain from treating units according
 to the policy πB. This differs from traditional uplift modeling QINI curves which show

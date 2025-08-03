@@ -249,6 +249,7 @@ margot_plot <- function(
     ggplot2::scale_color_manual(values = opts$colors) +
     ggplot2::labs(
       x        = xlab,
+      y        = "",
       title    = opts$title,
       subtitle = opts$subtitle
     ) +
