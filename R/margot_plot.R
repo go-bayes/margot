@@ -270,14 +270,32 @@ margot_plot <- function(
   }
 
   # add numeric labels if requested ----------------------------------------
+  # coefficients aligned along inside edge of plot area
   if (include_coefficients) {
+    # get plot limits to determine positioning
+    if (is.null(opts$x_lim_lo) || is.null(opts$x_lim_hi)) {
+      # calculate default limits based on data range
+      data_range <- range(c(sorted_df[[eff_col]], sorted_df$`2.5 %`, sorted_df$`97.5 %`), na.rm = TRUE)
+      x_range <- diff(data_range)
+      x_lim_lo <- data_range[1] - 0.1 * x_range
+      x_lim_hi <- data_range[2] + 0.1 * x_range
+    } else {
+      x_lim_lo <- opts$x_lim_lo
+      x_lim_hi <- opts$x_lim_hi
+    }
+    
+    # position coefficients at fixed offset from the left edge of plot area
+    plot_width <- x_lim_hi - x_lim_lo
+    fixed_offset_pct <- 0.05  # 5% from left edge of plot area
+    coeff_x_position <- x_lim_lo + (fixed_offset_pct * plot_width)
+    
     out_plot <- out_plot + ggplot2::geom_text(
       ggplot2::aes(
-        x     = !!rlang::sym(eff_col) + opts$x_offset * opts$estimate_scale,
+        x     = coeff_x_position,
         label = sprintf("%.2f", !!rlang::sym(eff_col))
       ),
       size = opts$text_size,
-      hjust = ifelse(type == "RR", 0, 1),
+      hjust = 0,  # left-align text
       fontface = "bold"
     )
   }

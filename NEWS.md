@@ -1,3 +1,12 @@
+# [2025-08-08] margot 1.0.230
+
+### UI/UX Improvements
+- **Improved coefficient alignment in `margot_plot()`**:
+  - Coefficients are now positioned at a fixed location along the inside edge of the plot area
+  - Creates consistent vertical alignment of coefficient values regardless of where data points fall
+  - Uses 5% offset from left edge of plot area with left-aligned text for optimal readability
+  - Eliminates the scattered coefficient positioning that varied based on individual data point locations
+
 # [2025-08-03] margot 1.0.229
 
 ### Bug Fixes
