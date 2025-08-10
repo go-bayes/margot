@@ -9,6 +9,11 @@ detect_effect_column <- function(data) {
     }
   }
 
+  # check for naive regression column
+  if ("E[Y|A]" %in% names(data)) {
+    return(list(column = "E[Y|A]", type = "naive"))
+  }
+
   # check for traditional columns
   if ("E[Y(1)]-E[Y(0)]" %in% names(data)) {
     return(list(column = "E[Y(1)]-E[Y(0)]", type = "ATE"))
@@ -342,6 +347,9 @@ margot_plot <- function(
         if (eff_col %in% c("ATE", "ATT", "ATC", "ATO")) {
           # already has the right name
           new_name <- eff_col
+        } else if (eff_col == "E[Y|A]") {
+          # for naive regressions, use special labeling
+          new_name <- "E[Y|A] (misspecified)"
         } else {
           # use detected effect_type or default to ATE
           new_name <- effect_type
@@ -505,13 +513,22 @@ margot_interpret_marginal <- function(
     "ATT" = "average treatment effects on the treated",
     "ATC" = "average treatment effects on the control",
     "ATO" = "average treatment effects in the overlap population",
+    "naive" = "naive regression associations (ignoring confounding)",
     "treatment effects" # fallback
   )
 
-  intro <- glue::glue(
-    "The following outcomes present reliable causal evidence for {effect_desc} ",
-    "(E‑value lower bound > {e_val_bound_threshold}):\n\n\n"
-  )
+  intro <- if (effect_type == "naive") {
+    glue::glue(
+      "The following outcomes show associations in {effect_desc} ",
+      "(E‑value lower bound > {e_val_bound_threshold}):\n\n",
+      "**Warning:** These are naive associations that ignore confounding and should NOT be interpreted causally.\n\n\n"
+    )
+  } else {
+    glue::glue(
+      "The following outcomes present reliable causal evidence for {effect_desc} ",
+      "(E‑value lower bound > {e_val_bound_threshold}):\n\n\n"
+    )
+  }
 
   bullets <- df_f %>%
     dplyr::rowwise() %>%

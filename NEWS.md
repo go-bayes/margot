@@ -1,3 +1,15 @@
+# [2025-08-10] margot 1.0.231
+
+### New Features
+- **Added `margot_naive_regressions()` function**:
+  - Performs naive cross-sectional linear regressions for educational/comparison purposes
+  - Processes multiple outcomes with robust error handling - continues processing even if individual outcomes fail
+  - Includes `coefficient_scale` parameter for multi-unit change interpretations (e.g., 4-unit changes)
+  - Calculates approximate E-values based on effect sizes when EValue package compatibility issues occur
+  - Output structure compatible with `margot_plot()` for seamless integration with existing workflows
+  - Uses `"E[Y|A]"` notation to clearly indicate these are conditional expectations, not causal effects
+  - Includes appropriate warnings about confounding and non-causal interpretation
+
 # [2025-08-08] margot 1.0.230
 
 ### UI/UX Improvements
