@@ -9,6 +9,8 @@
 #' @param data A data frame containing all necessary variables.
 #' @param exposure_var A character string specifying the exposure variable name.
 #' @param outcome_vars A character vector of outcome variable names to be modeled.
+#' @param baseline_vars Optional character vector of baseline variables to include as 
+#'   covariates in the regression models. Default is NULL (no additional covariates).
 #' @param scale Character string specifying the scale for E-value calculation. 
 #'   Options are "RD" (risk difference, default) or "RR" (risk ratio).
 #' @param delta The hypothesised increase in outcome for RD scale E-value calculations. 
@@ -34,7 +36,7 @@
 #'   \item{individual_results}{A list of individual regression summaries for each outcome.}
 #'
 #' @details
-#' This function fits simple linear regressions of the form: outcome ~ exposure.
+#' This function fits simple linear regressions of the form: outcome ~ exposure + baseline_vars.
 #' It calculates confidence intervals and E-values for each regression coefficient.
 #' The output uses "E[Y|A]" notation to indicate these are conditional expectations
 #' from naive regressions, not causal effects. The E-values calculated are 
@@ -50,6 +52,14 @@
 #'   data = my_data,
 #'   exposure_var = "treatment",
 #'   outcome_vars = c("outcome1_z", "outcome2_z", "outcome3_z")
+#' )
+#' 
+#' # perform naive regressions with baseline covariates
+#' naive_results_adjusted <- margot_naive_regressions(
+#'   data = my_data,
+#'   exposure_var = "treatment",
+#'   outcome_vars = c("outcome1_z", "outcome2_z", "outcome3_z"),
+#'   baseline_vars = c("age", "gender", "baseline_outcome")
 #' )
 #' 
 #' # perform naive regressions scaled for 4-unit change
@@ -71,6 +81,7 @@ margot_naive_regressions <- function(
     data,
     exposure_var,
     outcome_vars,
+    baseline_vars = NULL,
     scale = c("RD", "RR"),
     delta = 1,
     sd = 1,
@@ -93,7 +104,8 @@ margot_naive_regressions <- function(
   }
   
   # check variables exist in data
-  missing_vars <- c(exposure_var, outcome_vars)[!c(exposure_var, outcome_vars) %in% names(data)]
+  all_vars <- c(exposure_var, outcome_vars, baseline_vars)
+  missing_vars <- all_vars[!all_vars %in% names(data)]
   if (length(missing_vars) > 0) {
     stop(paste("Variables not found in data:", paste(missing_vars, collapse = ", ")))
   }
@@ -105,6 +117,9 @@ margot_naive_regressions <- function(
   cli::cli_h1("Running naive cross-sectional regressions")
   cli::cli_alert_info("Exposure variable: {.var {exposure_var}}")
   cli::cli_alert_info("Number of outcomes: {.val {length(outcome_vars)}}")
+  if (!is.null(baseline_vars)) {
+    cli::cli_alert_info("Baseline covariates: {.var {paste(baseline_vars, collapse = ', ')}}")
+  }
   cli::cli_alert_warning("These are naive regressions that ignore confounding")
   
   # fit regression for each outcome with error handling
@@ -116,8 +131,13 @@ margot_naive_regressions <- function(
     # wrap each outcome processing in tryCatch
     tryCatch({
       cli::cli_alert_info("Step 1: Fitting regression for {.var {outcome_var}}")
-      # fit simple linear regression
-      formula_str <- paste(outcome_var, "~", exposure_var)
+      # create formula with baseline variables if provided
+      if (is.null(baseline_vars)) {
+        formula_str <- paste(outcome_var, "~", exposure_var)
+      } else {
+        covariates_str <- paste(c(exposure_var, baseline_vars), collapse = " + ")
+        formula_str <- paste(outcome_var, "~", covariates_str)
+      }
       model <- lm(as.formula(formula_str), data = data)
       models[[model_name]] <- model
       
