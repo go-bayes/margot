@@ -1,3 +1,13 @@
+
+# [2025-08-10] margot 1.0.232
+
+### New
+- Added **`margot_resort_contrast_lmtp`**
+  - Flipping the effect estimates - Changes the sign of E[Y(1)]-E[Y(0)]
+  - Swapping confidence intervals - Properly reverses and swaps the 2.5% and 97.5% bounds
+  - Recalculating E-values - updates these based on the flipped estimates 
+- **`margot_view_lmtp_structure()`**: view contrasts
+
 # [2025-08-10] margot 1.0.231
 
 ### New Features

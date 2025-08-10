@@ -8,6 +8,7 @@ margot_naive_regressions(
   data,
   exposure_var,
   outcome_vars,
+  baseline_vars = NULL,
   scale = c("RD", "RR"),
   delta = 1,
   sd = 1,
@@ -25,6 +26,9 @@ margot_naive_regressions(
 \item{exposure_var}{A character string specifying the exposure variable name.}
 
 \item{outcome_vars}{A character vector of outcome variable names to be modeled.}
+
+\item{baseline_vars}{Optional character vector of baseline variables to include as 
+covariates in the regression models. Default is NULL (no additional covariates).}
 
 \item{scale}{Character string specifying the scale for E-value calculation. 
 Options are "RD" (risk difference, default) or "RR" (risk ratio).}
@@ -67,7 +71,7 @@ inference methods are not used. The results should be interpreted as misspecifie
 models that do not account for confounding.
 }
 \details{
-This function fits simple linear regressions of the form: outcome ~ exposure.
+This function fits simple linear regressions of the form: outcome ~ exposure + baseline_vars.
 It calculates confidence intervals and E-values for each regression coefficient.
 The output uses "E[Y|A]" notation to indicate these are conditional expectations
 from naive regressions, not causal effects. The E-values calculated are 
@@ -83,6 +87,14 @@ naive_results <- margot_naive_regressions(
   data = my_data,
   exposure_var = "treatment",
   outcome_vars = c("outcome1_z", "outcome2_z", "outcome3_z")
+)
+
+# perform naive regressions with baseline covariates
+naive_results_adjusted <- margot_naive_regressions(
+  data = my_data,
+  exposure_var = "treatment",
+  outcome_vars = c("outcome1_z", "outcome2_z", "outcome3_z"),
+  baseline_vars = c("age", "gender", "baseline_outcome")
 )
 
 # perform naive regressions scaled for 4-unit change

@@ -15,7 +15,7 @@ models that do not account for confounding."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.231</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.232</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,6 +55,7 @@ models that do not account for confounding.</p>
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">exposure_var</span>,</span>
 <span>  <span class="va">outcome_vars</span>,</span>
+<span>  baseline_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RD"</span>, <span class="st">"RR"</span><span class="op">)</span>,</span>
 <span>  delta <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  sd <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -81,6 +82,11 @@ models that do not account for confounding.</p>
 
 <dt id="arg-outcome-vars">outcome_vars<a class="anchor" aria-label="anchor" href="#arg-outcome-vars"></a></dt>
 <dd><p>A character vector of outcome variable names to be modeled.</p></dd>
+
+
+<dt id="arg-baseline-vars">baseline_vars<a class="anchor" aria-label="anchor" href="#arg-baseline-vars"></a></dt>
+<dd><p>Optional character vector of baseline variables to include as
+covariates in the regression models. Default is NULL (no additional covariates).</p></dd>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
@@ -143,7 +149,7 @@ Default is FALSE.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function fits simple linear regressions of the form: outcome ~ exposure.
+    <p>This function fits simple linear regressions of the form: outcome ~ exposure + baseline_vars.
 It calculates confidence intervals and E-values for each regression coefficient.
 The output uses "E[Y|A]" notation to indicate these are conditional expectations
 from naive regressions, not causal effects. The E-values calculated are
@@ -160,6 +166,14 @@ between naive associations and properly estimated causal effects.</p>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">my_data</span>,</span></span>
 <span class="r-in"><span>  exposure_var <span class="op">=</span> <span class="st">"treatment"</span>,</span></span>
 <span class="r-in"><span>  outcome_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"outcome1_z"</span>, <span class="st">"outcome2_z"</span>, <span class="st">"outcome3_z"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># perform naive regressions with baseline covariates</span></span></span>
+<span class="r-in"><span><span class="va">naive_results_adjusted</span> <span class="op">&lt;-</span> <span class="fu">margot_naive_regressions</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">my_data</span>,</span></span>
+<span class="r-in"><span>  exposure_var <span class="op">=</span> <span class="st">"treatment"</span>,</span></span>
+<span class="r-in"><span>  outcome_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"outcome1_z"</span>, <span class="st">"outcome2_z"</span>, <span class="st">"outcome3_z"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  baseline_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"gender"</span>, <span class="st">"baseline_outcome"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># perform naive regressions scaled for 4-unit change</span></span></span>

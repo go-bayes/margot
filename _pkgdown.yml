@@ -133,6 +133,7 @@ reference:
     - margot_recompute_qini_aipw
     - margot_recompute_qini_ipw
     - margot_rescue_qini
+    - margot_resort_contrast_lmtp
     - margot_subset_model
     - margot_subset_batch
     - margot_summary_cate_difference_gain
@@ -164,6 +165,8 @@ reference:
     - margot_plot_tau
     - margot_plot_cv_results
     - margot_plot_cv_summary
+    - margot_view_lmtp_structure
+
 
   - title: "Utility functions"
     contents:
