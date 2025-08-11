@@ -209,6 +209,8 @@ reference:
     - clear_margot_cache
     - margot_simulate
     - margot_simulate_test_data_flip
+    - simulate_ate_data_with_weights
+
 
 
 

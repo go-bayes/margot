@@ -1,4 +1,7 @@
 
+# [2025-08-11] margot 1.0.233
+- **Returned** `simulate_ate_data_with_weights()` to exports for teaching. 
+
 # [2025-08-10] margot 1.0.232
 
 ### New
