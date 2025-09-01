@@ -198,6 +198,7 @@ reference:
     - prepare_panel_data
     - pretty_number
     - remove_numeric_attributes
+    - read_multiple_images
     - regress_with_covariates
     - select_and_rename_cols
 

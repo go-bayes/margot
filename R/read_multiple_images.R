@@ -8,7 +8,7 @@
 #' @return A named list of magick image objects.
 #'
 #'
-#' @keywords internal
+#' @export
 #'
 #' @examples
 #' \dontrun{

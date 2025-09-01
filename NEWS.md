@@ -1,4 +1,9 @@
 
+
+# [2025-09-01] margot 1.0.234
+- **Returned** `read_multiple_images()` utility for quarto presentations/documents
+
+
 # [2025-08-11] margot 1.0.233
 - **Returned** `simulate_ate_data_with_weights()` to exports for teaching. 
 
