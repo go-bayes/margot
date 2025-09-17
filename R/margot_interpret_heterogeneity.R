@@ -107,22 +107,22 @@ margot_interpret_heterogeneity <- function(
       available_names = available_models,
       verbose = verbose
     )
-    
+
     requested_models <- name_mapping$mapped_names
-    
+
     if (length(requested_models) == 0) {
       stop(
         "None of the specified model names were found in the results. Available models: ",
         paste(available_models, collapse = ", ")
       )
     }
-    
+
     if (length(name_mapping$missing_names) > 0) {
       if (verbose) {
         cli::cli_alert_warning("Some requested models were not found: {name_mapping$missing_original}")
       }
     }
-    
+
     # create filtered models object
     models_filtered <- models
     models_filtered$results <- models$results[requested_models]
@@ -130,7 +130,7 @@ margot_interpret_heterogeneity <- function(
       models_filtered$full_models <- models$full_models[intersect(requested_models, names(models$full_models))]
     }
     models <- models_filtered
-    
+
     # update model_names to use the actual names (with _r suffix if flipped)
     model_names <- requested_models
   }
@@ -412,6 +412,10 @@ margot_interpret_heterogeneity <- function(
     selected_model_names = selection_results$selected_names,
     excluded_model_ids = selection_results$excluded_ids,
     excluded_model_names = selection_results$excluded_names,
+    permitted_model_ids = selection_results$permitted_ids,
+    permitted_model_names = selection_results$permitted_names,
+    not_excluded_model_ids = selection_results$not_excluded_ids,
+    not_excluded_model_names = selection_results$not_excluded_names,
     unclear_model_ids = selection_results$unclear_ids,
     unclear_model_names = selection_results$unclear_names,
     # for backwards compatibility
@@ -631,7 +635,9 @@ create_evidence_summary <- function(model_ids, rate_results, qini_results,
       differential_prediction_test = diff_pred_status,
       rate_autoc = rate_autoc_status,
       rate_qini = rate_qini_status,
-      qini_curve = qini_curve_status
+      qini_curve = qini_curve_status,
+      rate_autoc_not_excluded = rate_autoc_status != "negative",
+      rate_qini_not_excluded = rate_qini_status != "negative"
     )
   })
 
@@ -643,6 +649,15 @@ create_evidence_summary <- function(model_ids, rate_results, qini_results,
 #' @keywords internal
 select_models <- function(evidence_summary, require_any_positive,
                           exclude_negative_any, require_omnibus, verbose = TRUE) {
+  # ensure not-excluded indicators are present (backwards compatibility)
+  if (!"rate_autoc_not_excluded" %in% names(evidence_summary)) {
+    evidence_summary <- evidence_summary %>%
+      dplyr::mutate(
+        rate_autoc_not_excluded = rate_autoc != "negative",
+        rate_qini_not_excluded = rate_qini != "negative"
+      )
+  }
+
   # add the enhanced selection system that includes QINI curves
   evidence_summary <- evidence_summary %>%
     dplyr::mutate(
@@ -653,7 +668,8 @@ select_models <- function(evidence_summary, require_any_positive,
       has_positive_rate = (rate_autoc == "positive" | rate_qini == "positive"),
 
       # Check if QINI curves show positive evidence (only for non-excluded)
-      has_positive_qini_curve = (!has_negative_rate & qini_curve == "positive"),
+      is_not_excluded_rate = rate_autoc_not_excluded & rate_qini_not_excluded,
+      has_positive_qini_curve = (is_not_excluded_rate & qini_curve == "positive"),
 
       # Enhanced selection system
       category = dplyr::case_when(
@@ -663,8 +679,8 @@ select_models <- function(evidence_summary, require_any_positive,
         # SELECTED: Any statistically significant positive RATE test OR positive QINI curves
         has_positive_rate | has_positive_qini_curve ~ "selected",
 
-        # UNCLEAR: Neither positive RATE nor positive QINI curves
-        TRUE ~ "unclear"
+        # PERMITTED: Not excluded, but lacks positive evidence
+        TRUE ~ "permitted"
       ),
 
       # Track selection source for reporting
@@ -694,6 +710,7 @@ select_models <- function(evidence_summary, require_any_positive,
 
       # Exclusion/inclusion indicators
       is_excluded = as.numeric(has_negative_rate),
+      is_not_excluded = as.numeric(!has_negative_rate),
 
       # Strict inclusion: count positive RATE tests only if neither is negative
       strict_inclusion_count = dplyr::case_when(
@@ -709,7 +726,8 @@ select_models <- function(evidence_summary, require_any_positive,
   # simplified selection logic based on categories
   selected_rows <- evidence_summary$category == "selected"
   excluded_rows <- evidence_summary$category == "excluded"
-  unclear_rows <- evidence_summary$category == "unclear"
+  permitted_rows <- evidence_summary$category == "permitted"
+  not_excluded_rows <- evidence_summary$category != "excluded"
 
   # extract results by category
   selected_ids <- evidence_summary$model_id[selected_rows]
@@ -718,8 +736,11 @@ select_models <- function(evidence_summary, require_any_positive,
   excluded_ids <- evidence_summary$model_id[excluded_rows]
   excluded_names <- evidence_summary$model_name[excluded_rows]
 
-  unclear_ids <- evidence_summary$model_id[unclear_rows]
-  unclear_names <- evidence_summary$model_name[unclear_rows]
+  permitted_ids <- evidence_summary$model_id[permitted_rows]
+  permitted_names <- evidence_summary$model_name[permitted_rows]
+
+  not_excluded_ids <- evidence_summary$model_id[not_excluded_rows]
+  not_excluded_names <- evidence_summary$model_name[not_excluded_rows]
 
   # Issue warnings for excluded models
   if (length(excluded_ids) > 0 && verbose) {
@@ -734,7 +755,9 @@ select_models <- function(evidence_summary, require_any_positive,
     rate_qini = sum(evidence_summary$rate_qini == "positive"),
     selected = sum(evidence_summary$category == "selected"),
     excluded = sum(evidence_summary$category == "excluded"),
-    unclear = sum(evidence_summary$category == "unclear")
+    permitted = sum(permitted_rows),
+    not_excluded = sum(not_excluded_rows),
+    unclear = sum(permitted_rows) # backwards compatibility
   )
 
   # reorder columns with model_id first for internal matching reliability
@@ -745,8 +768,9 @@ select_models <- function(evidence_summary, require_any_positive,
       positive_count, negative_count, # backwards compatibility
       rate_positive_count, rate_negative_count, # renamed RATE-only counts
       total_positive_count, total_negative_count, # all 4 tests
-      is_excluded, strict_inclusion_count, # new indicators
-      selection_source, has_negative_rate, has_positive_rate, has_positive_qini_curve
+      is_excluded, is_not_excluded, strict_inclusion_count, # new indicators
+      selection_source, has_negative_rate, has_positive_rate, has_positive_qini_curve,
+      is_not_excluded_rate, rate_autoc_not_excluded, rate_qini_not_excluded
     )
 
   list(
@@ -754,8 +778,13 @@ select_models <- function(evidence_summary, require_any_positive,
     selected_names = selected_names,
     excluded_ids = excluded_ids,
     excluded_names = excluded_names,
-    unclear_ids = unclear_ids,
-    unclear_names = unclear_names,
+    permitted_ids = permitted_ids,
+    permitted_names = permitted_names,
+    not_excluded_ids = not_excluded_ids,
+    not_excluded_names = not_excluded_names,
+    # backwards compatibility
+    unclear_ids = permitted_ids,
+    unclear_names = permitted_names,
     positive_counts = positive_counts,
     evidence_summary = evidence_summary_final # includes model_id for reliable matching
   )
@@ -826,7 +855,7 @@ generate_interpretation <- function(evidence_summary, selection_results,
   # organise outcomes by category
   selected <- evidence_summary[evidence_summary$category == "selected", ]
   excluded <- evidence_summary[evidence_summary$category == "excluded", ]
-  unclear <- evidence_summary[evidence_summary$category == "unclear", ]
+  permitted <- evidence_summary[evidence_summary$category == "permitted", ]
 
   # SELECTED: Models with positive RATE evidence
   selected_text <- if (nrow(selected) > 0) {
@@ -851,10 +880,10 @@ generate_interpretation <- function(evidence_summary, selection_results,
   }
 
   # UNCLEAR: Models with no significant RATE evidence
-  unclear_text <- if (nrow(unclear) > 0) {
-    models_text <- paste(unclear$model_name, collapse = ", ")
+  permitted_text <- if (nrow(permitted) > 0) {
+    models_text <- paste(permitted$model_name, collapse = ", ")
     sprintf(
-      "\n\n**EVIDENCE UNCLEAR**: %s\n\nThese models show no statistically significant RATE evidence in either direction. There is insufficient evidence to support targeted treatment strategies.",
+      "\n\n**PERMITTED (NOT EXCLUDED)**: %s\n\nThese models are not flagged for negative effects, but current tests do not show statistically significant positive evidence.",
       models_text
     )
   } else {
@@ -893,15 +922,21 @@ generate_interpretation <- function(evidence_summary, selection_results,
     )
   }
 
-  if (length(selection_results$unclear_names) > 0) {
-    n_unclear <- length(selection_results$unclear_names)
+  permitted_names <- if (!is.null(selection_results$permitted_names)) {
+    selection_results$permitted_names
+  } else {
+    selection_results$unclear_names
+  }
+
+  if (length(permitted_names) > 0) {
+    n_permitted <- length(permitted_names)
     rec_parts <- c(
       rec_parts,
       sprintf(
         "There is insufficient evidence to support targeted treatment strategies for %d outcome%s: %s.",
-        n_unclear,
-        ifelse(n_unclear == 1, "", "s"),
-        paste(selection_results$unclear_names, collapse = ", ")
+        n_permitted,
+        ifelse(n_permitted == 1, "", "s"),
+        paste(permitted_names, collapse = ", ")
       )
     )
   }
@@ -913,15 +948,21 @@ generate_interpretation <- function(evidence_summary, selection_results,
   }
 
   # full interpretation
-  full_text <- paste0(header, selected_text, excluded_text, unclear_text, recommendations)
+  full_text <- paste0(header, selected_text, excluded_text, permitted_text, recommendations)
 
   # summary
+  insufficient_count <- if (!is.null(selection_results$positive_counts$permitted)) {
+    selection_results$positive_counts$permitted
+  } else {
+    selection_results$positive_counts$unclear
+  }
+
   summary_text <- sprintf(
     "Analysed %d outcome models. Suitable for targeting: %d. Should avoid targeting: %d. Insufficient evidence: %d.",
     nrow(evidence_summary),
     selection_results$positive_counts$selected,
     selection_results$positive_counts$excluded,
-    selection_results$positive_counts$unclear
+    insufficient_count
   )
 
   list(
@@ -1031,7 +1072,7 @@ generate_extended_report <- function(evidence_summary, selection_results,
     "Model is SELECTED FOR TARGETING if:\n",
     "- Positive RATE tests (Step 2) OR\n",
     "- Positive QINI curves (Step 3)\n\n",
-    "Otherwise: EVIDENCE UNCLEAR\n\n",
+    "Otherwise: PERMITTED (not excluded, but no positive evidence)\n\n",
     "#### 5. CALIBRATION CHECK (Selected models only)\n",
     "Check mean_prediction_test status\n",
     "→ Record calibration status (affects confidence in predictions)\n\n"
@@ -1063,11 +1104,11 @@ generate_extended_report <- function(evidence_summary, selection_results,
     label_mapping
   )
 
-  # unclear evidence section
-  unclear_text <- format_evidence_section_by_category(
+  # permitted evidence section
+  permitted_text <- format_evidence_section_by_category(
     evidence_summary,
-    "unclear",
-    "#### Evidence Unclear\n\n",
+    "permitted",
+    "#### Permitted (Not Excluded)\n\n",
     rate_results_list,
     qini_results,
     omnibus_results,
@@ -1078,7 +1119,7 @@ generate_extended_report <- function(evidence_summary, selection_results,
   )
 
   # combine all sections
-  paste0(header, methods_desc, selected_text, excluded_text, unclear_text)
+  paste0(header, methods_desc, selected_text, excluded_text, permitted_text)
 }
 
 
@@ -1325,13 +1366,13 @@ format_outcome_details <- function(model_id, model_name, evidence_row,
     }
   } else if (evidence_row$category == "excluded") {
     details <- paste0(details, ". Avoid targeting this outcome.")
-  } else if (evidence_row$category == "unclear") {
+  } else if (evidence_row$category == "permitted") {
     # Check if QINI curves were tested
     qini_tested <- evidence_row$qini_curve != "not_tested"
     if (qini_tested) {
-      details <- paste0(details, ". Insufficient evidence for targeting (neither RATE tests nor QINI curves show statistically significant benefits).")
+      details <- paste0(details, ". Not excluded, but insufficient evidence for targeted deployment (neither RATE tests nor QINI curves show statistically significant benefits).")
     } else {
-      details <- paste0(details, ". Insufficient evidence for targeting.")
+      details <- paste0(details, ". Not excluded, but insufficient evidence for targeting.")
     }
   }
 

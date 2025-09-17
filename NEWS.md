@@ -1,4 +1,7 @@
 
+# [2025-09-17] margot 1.0.235
+- **Improved** `margot_interpret_heterogeneity()` now return 'permitted_model_ds' for use with policytree analysis.
+
 
 # [2025-09-01] margot 1.0.234
 - **Returned** `read_multiple_images()` utility for quarto presentations/documents
