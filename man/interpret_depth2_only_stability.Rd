@@ -15,7 +15,9 @@ interpret_depth2_only_stability(
   decimal_places,
   format,
   include_theory = TRUE,
-  label_mapping = NULL
+  label_mapping = NULL,
+  include_ci = FALSE,
+  ci_level = 0.95
 )
 }
 \description{

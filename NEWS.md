@@ -1,4 +1,33 @@
 
+# [2025-09-18] margot 1.0.236
+
+### New
+- Added `margot_report_consensus_policy_value()` to report consensus policy value vs treat-all and control-all with 95% CIs (bootstrap). Supports `label_mapping` and optional treated-only metrics.
+- Added `margot_table_consensus_policy_value()` to create a rounded, manuscript-ready table from the reporter output (includes treated-only metrics when present).
+- Added `margot_table_treated_only()` to produce a condensed, treated-only summary table: average uplift among treated (with CI when available) and coverage treated (%).
+- Added `margot_policy_summary_report()` to generate a grouped summary text and a markdown table for all models at a chosen depth. Supports `report_df` to avoid recomputation, grouping by sign (Wins/Neutral/Caution), ordering, filtering, verbose progress, and optional original-scale annotations via `original_df`.
+- Added `margot_policy_methods_statement()` to generate a standard policy-learning methods paragraph (DR scores, policy trees, honest evaluation, policy value CIs, treated-only uplift, optional stability).
+
+### Interpreter enhancements
+- `margot_interpret_policy_tree()` and `margot_interpret_policy_batch()` now accept `report_policy_value = "treated_only"` to focus on treated subgroups. The narrative includes “Avg uplift among treated,” with a bootstrap CI.
+- Batch interpreter (`margot_interpret_policy_batch`) can return both a brief treated-only summary and the full report via `return_as_list = TRUE` (list elements: `report_brief`, `report_full`, `by_model`, and `policy_value_explanation`).
+- Optional one-line treated-only summary per model (`brief = TRUE`).
+- Rich leaf reporting is preserved even when conditional means are missing by falling back to DR scores on the test set.
+
+### Stability + summary
+- `summary.margot_stability_policy_tree()` can control bootstrap settings for consensus policy value via `policy_value_R`, `policy_value_seed`, and `show_policy_value`.
+
+### Improvements
+- Reporter and tables accept `label_mapping` for display labels; reporter also includes an `outcome_label` column.
+- Baseline computation for policy value corrected to use explicit control/treatment means; removed inappropriate use of ATE.
+- Policy tree learning/evaluation consistently uses `dr_scores` (flipping is for reporting only).
+- Small UI polish (better evaluation messages) and rounding in tables (3 d.p.).
+- `margot_policy_summary_report()` returns grouped brief tables as data frames (`group_table`) and a single combined data frame with a `group` column (`group_table_df`) to facilitate downstream export.
+- Renamed internal columns to be syntactic (e.g., `coverage_treated_pct`) to avoid build errors.
+
+### Notes
+- All changes are backward compatible. Defaults preserved; new features are opt-in.
+
 # [2025-09-17] margot 1.0.235
 - **Improved** `margot_interpret_heterogeneity()` now return 'permitted_model_ds' for use with policytree analysis.
 
@@ -2930,3 +2959,17 @@ These deprecated functions will continue to work but will issue warnings. They w
 # margot 0.1.0
 
 * Initial release: includes data exploration, model preparation, utility functions.
+# [2025-09-18] margot 1.0.236
+
+### New
+- Added `margot_report_consensus_policy_value()` to report how much better a consensus policy performs than (a) treat-all (ATE baseline) and (b) treat-none (universal control), with 95% CIs from bootstrap SEs.
+- Added `margot_table_consensus_policy_value()` to produce a compact, manuscript-ready table for consensus policy values per outcome and depth, for both contrasts.
+
+### Improvements
+- `margot_policy_tree_stability()` now persists consensus splits in the stability metrics to support threshold-aware interpretation and reporting.
+- Depth-2 consensus now includes `threshold_sd` for both first-level nodes.
+- `margot_interpret_stability()` and `margot_interpret_stability_batch()` can optionally include simple CIs for selection frequencies and thresholds in technical output (`include_ci = TRUE`).
+- `summary.margot_stability_policy_tree()` displays a quick consensus policy value summary vs treat-all and control-all (light bootstrap, R=199).
+
+### Notes
+- All changes are backward compatible. New parameters default to previous behavior.

@@ -25,7 +25,11 @@ margot_policy_tree_stability(
   verbose = TRUE,
   seed = 12345,
   tree_method = c("fastpolicytree", "policytree"),
-  n_bootstrap = NULL
+  n_bootstrap = NULL,
+  compute_policy_values = FALSE,
+  policy_value_R = 499L,
+  policy_value_seed = 42L,
+  policy_value_baseline = c("treat_all", "control_all")
 )
 }
 \arguments{

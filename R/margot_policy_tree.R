@@ -316,9 +316,9 @@ compute_policy_trees_for_model <- function(model_result,
   }
 
   # get dr_scores (use flipped if available)
-  dr_scores <- model_result$dr_scores_flipped
+  dr_scores <- model_result$dr_scores
   if (is.null(dr_scores)) {
-    dr_scores <- model_result$dr_scores
+    dr_scores <- model_result$dr_scores_flipped
   }
   if (is.null(dr_scores)) {
     stop(paste("No dr_scores found for", model_name))

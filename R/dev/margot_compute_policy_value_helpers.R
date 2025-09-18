@@ -9,6 +9,8 @@
 #' @param R        integer ≥ 199; bootstrap replicates. default 499L
 #' @param seed     integer; RNG seed for reproducibility. default 42L
 #' @param parallel logical; whether to use parallel processing. default FALSE
+#' @param baseline character; contrast baseline for value tests: "treat_all" (default)
+#'   compares policy value to universal treatment; "control_all" compares to universal control.
 #'
 #' @return invisibly returns modified `cf_out` with added policy-value tests
 #' @keywords internal
@@ -20,7 +22,9 @@ margot_add_policy_values_batch <- function(cf_out,
                                            depths = c(1L, 2L),
                                            R = 499L,
                                            seed = 42L,
-                                           parallel = FALSE) {
+                                           parallel = FALSE,
+                                           baseline = c("treat_all", "control_all")) {
+  baseline <- match.arg(baseline)
   stopifnot(is.list(cf_out), "results" %in% names(cf_out))
   if (is.null(outcomes)) {
     outcomes <- cf_out$outcome_vars
@@ -50,7 +54,8 @@ margot_add_policy_values_batch <- function(cf_out,
         model,
         depths = missing_depths,
         R      = R,
-        seed   = seed
+        seed   = seed,
+        baseline = baseline
       )
     }
     model
@@ -92,13 +97,16 @@ margot_policy_summary <- function(cf_out,
 
 # @keywords internal
 margot_add_policy_batch <- function(cf_out, keep,
-                                    depth = 2L, R = 999L, seed = 2025L) {
+                                    depth = 2L, R = 999L, seed = 2025L,
+                                    baseline = c("treat_all", "control_all")) {
+  baseline <- match.arg(baseline)
   idx <- paste0("model_", keep)
   cf_out$results[idx] <- purrr::map(cf_out$results[idx],
     margot_add_policy_p,
     depth = depth,
     R     = R,
-    seed  = seed
+    seed  = seed,
+    baseline = baseline
   )
   invisible(cf_out)
 }
@@ -152,11 +160,14 @@ margot_adjust_policy_p <- function(tbl,
 margot_add_policy_p <- function(model,
                                 depth = 2L,
                                 R = 999L,
-                                seed = 2025L) {
+                                seed = 2025L,
+                                baseline = c("treat_all", "control_all")) {
+  baseline <- match.arg(baseline)
   margot_add_policy_values(model,
     depths = depth,
     R      = R,
-    seed   = seed
+    seed   = seed,
+    baseline = baseline
   )
 }
 
@@ -171,6 +182,9 @@ margot_add_policy_p <- function(model,
 #' @param depth Integer; depth of the stored `policy_tree` (1 or 2). Default: 2.
 #' @param R Integer ≥ 199; number of bootstrap replicates. Default: 499.
 #' @param seed Integer or `NULL`; RNG seed for reproducibility.
+#' @param baseline Character: contrast baseline for value. "treat_all" (default) computes
+#'   policy value minus ATE (improvement over treat-all), while "control_all" uses treat-none
+#'   baseline (policy value alone).
 #'
 #' @return Object of class `policy_value_test` with components:
 #' \describe{
@@ -186,7 +200,9 @@ margot_add_policy_p <- function(model,
 margot_compute_policy_value <- function(model,
                                         depth = 2L,
                                         R = 499L,
-                                        seed = NULL) {
+                                        seed = NULL,
+                                        baseline = c("treat_all", "control_all")) {
+  baseline <- match.arg(baseline)
   if (!is.null(seed)) set.seed(seed)
 
   tag <- paste0("policy_tree_depth_", depth)
@@ -195,6 +211,7 @@ margot_compute_policy_value <- function(model,
     stop("no ", tag, " slot present – run `margot_policy()` first")
   }
 
+  # Use DR scores as returned by policytree; do not invert for reporting
   dr <- model$dr_scores
   full <- model$plot_data$X_test_full
   X <- full[, pol$columns, drop = FALSE]
@@ -211,13 +228,17 @@ margot_compute_policy_value <- function(model,
 
   # —— changed lines —— #
   a_hat <- predict(pol, X)
-  ate_hat <- mean(dr[, 2] - dr[, 1])
-  pv_hat <- mean(pick(a_hat, dr)) - ate_hat
+  # Baselines: treat-all = mean of treatment column; control-all = mean of control column
+  # For binary W in {0,1}, columns are ordered (control=1, treat=2)
+  treat_mean <- mean(dr[, 2])
+  control_mean <- mean(dr[, 1])
+  base_val <- if (baseline == "treat_all") treat_mean else control_mean
+  pv_hat <- mean(pick(a_hat, dr)) - base_val
 
   reps <- replicate(R, {
     idx <- sample.int(n, n, TRUE)
     a_bs <- predict(pol, X[idx, , drop = FALSE])
-    mean(pick(a_bs, dr[idx, , drop = FALSE])) - ate_hat
+    mean(pick(a_bs, dr[idx, , drop = FALSE])) - base_val
   })
   # —— end changes —— #
 
@@ -240,6 +261,7 @@ margot_compute_policy_value <- function(model,
 #' @param model  list. One element of `margot$results`.
 #' @param depths integer vector. Depths to evaluate (default `c(1, 2)`).
 #' @param R,seed Passed to [margot_compute_policy_value()].
+#' @param baseline character; contrast baseline: "treat_all" (default) or "control_all".
 #'
 #' @return The modified `model` (invisibly).
 #'
@@ -247,10 +269,12 @@ margot_compute_policy_value <- function(model,
 margot_add_policy_values <- function(model,
                                      depths = c(1L, 2L),
                                      R = 499L,
-                                     seed = 42L) {
+                                     seed = 42L,
+                                     baseline = c("treat_all", "control_all")) {
+  baseline <- match.arg(baseline)
   for (d in depths) {
     model[[paste0("policy_value_depth_", d)]] <-
-      margot_compute_policy_value(model, depth = d, R = R, seed = seed)
+      margot_compute_policy_value(model, depth = d, R = R, seed = seed, baseline = baseline)
   }
   invisible(model)
 }

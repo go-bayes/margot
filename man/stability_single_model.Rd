@@ -22,7 +22,11 @@ stability_single_model(
   label_mapping,
   verbose,
   seed,
-  tree_method
+  tree_method,
+  compute_policy_values = FALSE,
+  policy_value_R = 499L,
+  policy_value_seed = 42L,
+  policy_value_baseline = c("treat_all", "control_all")
 )
 }
 \description{

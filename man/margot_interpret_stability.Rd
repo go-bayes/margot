@@ -12,7 +12,9 @@ margot_interpret_stability(
   format = c("text", "technical"),
   decimal_places = 1,
   include_theory = TRUE,
-  label_mapping = NULL
+  label_mapping = NULL,
+  include_ci = FALSE,
+  ci_level = 0.95
 )
 }
 \arguments{
@@ -32,6 +34,13 @@ margot_interpret_stability(
 
 \item{label_mapping}{Optional named list mapping variable names to labels. If NULL,
 uses automatic transformation via transform_var_name()}
+
+\item{include_ci}{Logical: If TRUE and format = "technical", include simple confidence
+intervals for selection frequencies (Wilson interval) and, when available, for
+threshold means (normal approx). These quantify iteration-level variability; for
+sample uncertainty prefer vary_type = "bootstrap".}
+
+\item{ci_level}{Numeric: Confidence level for intervals (default 0.95)}
 }
 \value{
 Character string containing the interpretation

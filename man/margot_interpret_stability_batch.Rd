@@ -15,7 +15,9 @@ margot_interpret_stability_batch(
   label_mapping = NULL,
   verbose = TRUE,
   combine = FALSE,
-  save_to_file = NULL
+  save_to_file = NULL,
+  include_ci = FALSE,
+  ci_level = 0.95
 )
 }
 \arguments{
@@ -42,6 +44,10 @@ Note: theory is only included for the first model to avoid repetition.}
 \item{combine}{Logical: If TRUE, combines all interpretations into a single text (default FALSE)}
 
 \item{save_to_file}{Optional file path to save combined interpretations as text file}
+
+\item{include_ci}{Logical: If TRUE and format = "technical", include simple CIs in output}
+
+\item{ci_level}{Numeric: Confidence level for intervals (default 0.95)}
 }
 \value{
 Named list where each element contains the interpretation for a model.

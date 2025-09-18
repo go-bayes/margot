@@ -17,7 +17,11 @@ margot_interpret_policy_tree(
   use_title_case = TRUE,
   include_conditional_means = TRUE,
   use_math_notation = FALSE,
-  output_format = c("prose", "bullet")
+  output_format = c("prose", "bullet"),
+  report_policy_value = c("none", "treat_all", "control_all", "both", "treated_only"),
+  policy_value_R = 499L,
+  policy_value_seed = 42L,
+  policy_value_ci_level = 0.95
 )
 }
 \arguments{
@@ -46,6 +50,17 @@ margot_interpret_policy_tree(
 \item{use_math_notation}{Logical indicating whether to use mathematical notation (E[Y(a)|X]) or plain language. Default is FALSE for clarity.}
 
 \item{output_format}{Character string specifying output format: "prose" (default) for flowing narrative text, or "bullet" for structured bullet points.}
+
+\item{report_policy_value}{Character: one of "none" (default), "treat_all",
+"control_all", or "both". If not "none", appends policy value summary with
+95% confidence intervals based on bootstrap standard errors. Uses test data
+stored in `plot_data` and DR scores from the model.}
+
+\item{policy_value_R}{Integer ≥ 199; number of bootstrap replicates (default 499).}
+
+\item{policy_value_seed}{Integer or NULL; RNG seed (default 42).}
+
+\item{policy_value_ci_level}{Numeric confidence level (default 0.95).}
 }
 \value{
 Invisibly returns a string containing the interpretation; also prints it to the console.

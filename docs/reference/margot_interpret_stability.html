@@ -13,7 +13,7 @@ on robust patterns that emerge across iterations."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.235</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.236</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,9 @@ on robust patterns that emerge across iterations.</p>
 <span>  format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"text"</span>, <span class="st">"technical"</span><span class="op">)</span>,</span>
 <span>  decimal_places <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  include_theory <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  include_ci <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ci_level <span class="op">=</span> <span class="fl">0.95</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -95,6 +97,17 @@ on robust patterns that emerge across iterations.</p>
 <dt id="arg-label-mapping">label_mapping<a class="anchor" aria-label="anchor" href="#arg-label-mapping"></a></dt>
 <dd><p>Optional named list mapping variable names to labels. If NULL,
 uses automatic transformation via transform_var_name()</p></dd>
+
+
+<dt id="arg-include-ci">include_ci<a class="anchor" aria-label="anchor" href="#arg-include-ci"></a></dt>
+<dd><p>Logical: If TRUE and format = "technical", include simple confidence
+intervals for selection frequencies (Wilson interval) and, when available, for
+threshold means (normal approx). These quantify iteration-level variability; for
+sample uncertainty prefer vary_type = "bootstrap".</p></dd>
+
+
+<dt id="arg-ci-level">ci_level<a class="anchor" aria-label="anchor" href="#arg-ci-level"></a></dt>
+<dd><p>Numeric: Confidence level for intervals (default 0.95)</p></dd>
 
 </dl></div>
     <div class="section level2">

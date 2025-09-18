@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.235</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.236</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,44 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.236" id="id_2025-09-18-margot-10236">[2025-09-18] margot 1.0.236<a class="anchor" aria-label="anchor" href="#id_2025-09-18-margot-10236"></a></h2>
+<div class="section level4">
+<h4 id="new-1-0-236">New<a class="anchor" aria-label="anchor" href="#new-1-0-236"></a></h4>
+<ul><li>Added <code><a href="../reference/margot_report_consensus_policy_value.html">margot_report_consensus_policy_value()</a></code> to report consensus policy value vs treat-all and control-all with 95% CIs (bootstrap). Supports <code>label_mapping</code> and optional treated-only metrics.</li>
+<li>Added <code><a href="../reference/margot_table_consensus_policy_value.html">margot_table_consensus_policy_value()</a></code> to create a rounded, manuscript-ready table from the reporter output (includes treated-only metrics when present).</li>
+<li>Added <code><a href="../reference/margot_table_treated_only.html">margot_table_treated_only()</a></code> to produce a condensed, treated-only summary table: average uplift among treated (with CI when available) and coverage treated (%).</li>
+<li>Added <code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code> to generate a grouped summary text and a markdown table for all models at a chosen depth. Supports <code>report_df</code> to avoid recomputation, grouping by sign (Wins/Neutral/Caution), ordering, filtering, verbose progress, and optional original-scale annotations via <code>original_df</code>.</li>
+<li>Added <code><a href="../reference/margot_policy_methods_statement.html">margot_policy_methods_statement()</a></code> to generate a standard policy-learning methods paragraph (DR scores, policy trees, honest evaluation, policy value CIs, treated-only uplift, optional stability).</li>
+</ul></div>
+<div class="section level4">
+<h4 id="interpreter-enhancements-1-0-236">Interpreter enhancements<a class="anchor" aria-label="anchor" href="#interpreter-enhancements-1-0-236"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> and <code><a href="../reference/margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code> now accept <code>report_policy_value = "treated_only"</code> to focus on treated subgroups. The narrative includes “Avg uplift among treated,” with a bootstrap CI.</li>
+<li>Batch interpreter (<code>margot_interpret_policy_batch</code>) can return both a brief treated-only summary and the full report via <code>return_as_list = TRUE</code> (list elements: <code>report_brief</code>, <code>report_full</code>, <code>by_model</code>, and <code>policy_value_explanation</code>).</li>
+<li>Optional one-line treated-only summary per model (<code>brief = TRUE</code>).</li>
+<li>Rich leaf reporting is preserved even when conditional means are missing by falling back to DR scores on the test set.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="stability--summary-1-0-236">Stability + summary<a class="anchor" aria-label="anchor" href="#stability--summary-1-0-236"></a></h4>
+<ul><li>
+<code><a href="../reference/summary.margot_stability_policy_tree.html">summary.margot_stability_policy_tree()</a></code> can control bootstrap settings for consensus policy value via <code>policy_value_R</code>, <code>policy_value_seed</code>, and <code>show_policy_value</code>.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-236">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-236"></a></h4>
+<ul><li>Reporter and tables accept <code>label_mapping</code> for display labels; reporter also includes an <code>outcome_label</code> column.</li>
+<li>Baseline computation for policy value corrected to use explicit control/treatment means; removed inappropriate use of ATE.</li>
+<li>Policy tree learning/evaluation consistently uses <code>dr_scores</code> (flipping is for reporting only).</li>
+<li>Small UI polish (better evaluation messages) and rounding in tables (3 d.p.).</li>
+<li>
+<code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code> returns grouped brief tables as data frames (<code>group_table</code>) and a single combined data frame with a <code>group</code> column (<code>group_table_df</code>) to facilitate downstream export.</li>
+<li>Renamed internal columns to be syntactic (e.g., <code>coverage_treated_pct</code>) to avoid build errors.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="notes-1-0-236">Notes<a class="anchor" aria-label="anchor" href="#notes-1-0-236"></a></h4>
+<ul><li>All changes are backward compatible. Defaults preserved; new features are opt-in.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.235" id="id_2025-09-17-margot-10235">[2025-09-17] margot 1.0.235<a class="anchor" aria-label="anchor" href="#id_2025-09-17-margot-10235"></a></h2>
 <ul><li>
@@ -4240,8 +4278,27 @@
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="margot-010">margot 0.1.0<a class="anchor" aria-label="anchor" href="#margot-010"></a></h2>
-<ul><li>Initial release: includes data exploration, model preparation, utility functions.</li>
+<ul><li>Initial release: includes data exploration, model preparation, utility functions. # [2025-09-18] margot 1.0.236</li>
+</ul><div class="section level4">
+<h4 id="new-0-1-0">New<a class="anchor" aria-label="anchor" href="#new-0-1-0"></a></h4>
+<ul><li>Added <code><a href="../reference/margot_report_consensus_policy_value.html">margot_report_consensus_policy_value()</a></code> to report how much better a consensus policy performs than (a) treat-all (ATE baseline) and (b) treat-none (universal control), with 95% CIs from bootstrap SEs.</li>
+<li>Added <code><a href="../reference/margot_table_consensus_policy_value.html">margot_table_consensus_policy_value()</a></code> to produce a compact, manuscript-ready table for consensus policy values per outcome and depth, for both contrasts.</li>
 </ul></div>
+<div class="section level4">
+<h4 id="improvements-0-1-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-1-0"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code> now persists consensus splits in the stability metrics to support threshold-aware interpretation and reporting.</li>
+<li>Depth-2 consensus now includes <code>threshold_sd</code> for both first-level nodes.</li>
+<li>
+<code><a href="../reference/margot_interpret_stability.html">margot_interpret_stability()</a></code> and <code><a href="../reference/margot_interpret_stability_batch.html">margot_interpret_stability_batch()</a></code> can optionally include simple CIs for selection frequencies and thresholds in technical output (<code>include_ci = TRUE</code>).</li>
+<li>
+<code><a href="../reference/summary.margot_stability_policy_tree.html">summary.margot_stability_policy_tree()</a></code> displays a quick consensus policy value summary vs treat-all and control-all (light bootstrap, R=199).</li>
+</ul></div>
+<div class="section level4">
+<h4 id="notes-0-1-0">Notes<a class="anchor" aria-label="anchor" href="#notes-0-1-0"></a></h4>
+<ul><li>All changes are backward compatible. New parameters default to previous behavior.</li>
+</ul></div>
+</div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -11,6 +11,13 @@ margot_interpret_policy_batch(
   save_path = NULL,
   prefix = NULL,
   include_timestamp = FALSE,
+  report_policy_value = c("none", "treat_all", "control_all", "both", "treated_only"),
+  policy_value_R = 499L,
+  policy_value_seed = 42L,
+  policy_value_ci_level = 0.95,
+  brief = FALSE,
+  brief_save_to = NULL,
+  return_as_list = FALSE,
   ...
 )
 }
@@ -27,11 +34,24 @@ margot_interpret_policy_batch(
 
 \item{include_timestamp}{Logical; whether to include a timestamp in the filename (if desired).}
 
+\item{report_policy_value}{Character: one of "none" (default), "treat_all",
+"control_all", or "both". If not "none", each model interpretation will include
+a one-line policy value summary with 95% CIs based on bootstrap SEs.}
+
+\item{policy_value_R}{Integer >= 199; bootstrap replicates (default 499).}
+
+\item{policy_value_seed}{Integer or NULL; RNG seed (default 42).}
+
+\item{policy_value_ci_level}{Numeric confidence level (default 0.95).}
+
+\item{brief}{Logical; if TRUE, prepend a compact treated-only summary for each
+model (coverage treated and average uplift among treated) and optionally save it.}
+
+\item{brief_save_to}{Optional path to save the brief treated-only summary as text.}
+
 \item{...}{Additional arguments to pass to margot_interpret_policy_tree(), including
-include_conditional_means (default TRUE) to add conditional means interpretation,
-use_math_notation (default FALSE) for clear, simple output format,
-output_format ("bullet" or "prose") for different text styles,
-and original_df to display CATEs on the original data scale.}
+include_conditional_means (default TRUE), use_math_notation (default FALSE),
+output_format ("bullet" or "prose"), original_df, label_mapping, and policy value options.}
 }
 \value{
 A single character string containing the combined markdown output.

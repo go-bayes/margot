@@ -113,6 +113,11 @@ reference:
     - margot_inspect_qini
     - margot_interpret_stability
     - margot_interpret_stability_batch
+    - margot_report_consensus_policy_value
+    - margot_table_consensus_policy_value
+    - margot_table_treated_only
+    - margot_policy_summary_report
+    - margot_policy_methods_statement
     - margot_interpret_bootstrap
     - margot_interpret_policy_batch
     - margot_interpret_policy_tree
@@ -211,7 +216,3 @@ reference:
     - margot_simulate
     - margot_simulate_test_data_flip
     - simulate_ate_data_with_weights
-
-
-
-

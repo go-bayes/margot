@@ -16,6 +16,13 @@
 #' @param include_conditional_means Logical indicating whether to include conditional means information if available. Default is TRUE.
 #' @param use_math_notation Logical indicating whether to use mathematical notation (E[Y(a)|X]) or plain language. Default is FALSE for clarity.
 #' @param output_format Character string specifying output format: "prose" (default) for flowing narrative text, or "bullet" for structured bullet points.
+#' @param report_policy_value Character: one of "none" (default), "treat_all",
+#'   "control_all", or "both". If not "none", appends policy value summary with
+#'   95% confidence intervals based on bootstrap standard errors. Uses test data
+#'   stored in `plot_data` and DR scores from the model.
+#' @param policy_value_R Integer ≥ 199; number of bootstrap replicates (default 499).
+#' @param policy_value_seed Integer or NULL; RNG seed (default 42).
+#' @param policy_value_ci_level Numeric confidence level (default 0.95).
 #'
 #' @return Invisibly returns a string containing the interpretation; also prints it to the console.
 #'
@@ -34,10 +41,15 @@ margot_interpret_policy_tree <- function(model,
                                          use_title_case = TRUE,
                                          include_conditional_means = TRUE,
                                          use_math_notation = FALSE,
-                                         output_format = c("prose", "bullet")) {
+                                         output_format = c("prose", "bullet"),
+                                         report_policy_value = c("none", "treat_all", "control_all", "both", "treated_only"),
+                                         policy_value_R = 499L,
+                                         policy_value_seed = 42L,
+                                         policy_value_ci_level = 0.95) {
   cli::cli_alert_info("Starting policy tree interpretation for {model_name} (depth {max_depth})")
 
   output_format <- match.arg(output_format)
+  report_policy_value <- match.arg(report_policy_value)
 
   # helper to relabel variables
   transform_var <- function(var) {
@@ -189,6 +201,81 @@ margot_interpret_policy_tree <- function(model,
   }
 
   full <- paste0(intro, text, cond_means_text, "\n")
+
+  # Optional: append policy value summary with 95% CIs
+  if (report_policy_value != "none" && report_policy_value != "treated_only") {
+    try({
+      # local compute function (robust to partial sourcing)
+      compute_pv <- function(submodel, depth = 2L, R = 499L, seed = NULL, baseline = c("treat_all", "control_all")) {
+        baseline <- match.arg(baseline)
+        if (!is.null(seed)) set.seed(seed)
+
+        tag <- paste0("policy_tree_depth_", depth)
+        pol <- submodel[[tag]]
+        if (is.null(pol)) stop("no ", tag, " present for model")
+
+        # Use DR scores as produced by policytree
+        dr <- submodel$dr_scores
+        if (is.null(dr)) stop("DR scores missing for policy evaluation")
+
+        pd <- submodel$plot_data
+        if (is.null(pd)) stop("plot_data missing; cannot evaluate policy value")
+        fullX <- if (!is.null(pd$X_test_full)) pd$X_test_full else pd$X_test
+        if (is.null(fullX)) stop("plot_data lacks X_test_full/X_test; cannot evaluate policy value")
+
+        X <- fullX[, pol$columns, drop = FALSE]
+        keep <- stats::complete.cases(X)
+        X <- X[keep, , drop = FALSE]
+        dr <- dr[keep, , drop = FALSE]
+        n <- nrow(X)
+        if (n <= 1L) stop("insufficient evaluation data for policy value")
+
+        pick <- function(a, mat) {
+          if (min(a) == 0L) a <- a + 1L
+          mat[cbind(seq_along(a), a)]
+        }
+
+        a_hat <- predict(pol, X)
+        # treat-all baseline uses treatment mean; control-all baseline uses control mean
+        treat_mean <- mean(dr[, 2])
+        control_mean <- mean(dr[, 1])
+        base_val <- if (baseline == "treat_all") treat_mean else control_mean
+        pv_hat <- mean(pick(a_hat, dr)) - base_val
+
+        reps <- replicate(R, {
+          idx <- sample.int(n, n, TRUE)
+          a_bs <- predict(pol, X[idx, , drop = FALSE])
+          mean(pick(a_bs, dr[idx, , drop = FALSE])) - base_val
+        })
+
+        se <- stats::sd(reps)
+        z <- stats::qnorm(1 - (1 - policy_value_ci_level) / 2)
+        ci_lo <- pv_hat - z * se
+        ci_hi <- pv_hat + z * se
+        list(estimate = pv_hat, se = se, lo = ci_lo, hi = ci_hi, n = n)
+      }
+
+      sm <- model$results[[model_name]]
+      add_line <- function(lbl, est) {
+        paste0(lbl, ": ", round(est$estimate, 3), " [ ", round(est$lo, 3), ", ", round(est$hi, 3), " ] (n=", est$n, ")")
+      }
+
+      lines <- character()
+      if (report_policy_value %in% c("treat_all", "both")) {
+        val <- compute_pv(sm, depth = max_depth, R = policy_value_R, seed = policy_value_seed, baseline = "treat_all")
+        lines <- c(lines, add_line("Policy value vs treat-all", val))
+      }
+      if (report_policy_value %in% c("control_all", "both")) {
+        val <- compute_pv(sm, depth = max_depth, R = policy_value_R, seed = policy_value_seed, baseline = "control_all")
+        lines <- c(lines, add_line("Policy value vs control-all", val))
+      }
+
+      if (length(lines)) {
+        pv_block <- paste0("\n", if (output_format == "prose") "In out-of-sample evaluation, " else "", paste(lines, collapse = "; "), ".\n")
+        full <- paste0(full, pv_block)
+      }
+    }, silent = TRUE)
+  }
   cat(full)
   cli::cli_alert_success("Policy tree interpretation completed!")
   invisible(full)
@@ -203,8 +290,32 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
                                                      original_df = NULL) {
   # get conditional means and other needed data
   conditional_means <- model$results[[model_name]]$conditional_means
+  # fallback: if conditional means missing, approximate using DR scores on test set
   if (is.null(conditional_means) || nrow(conditional_means) == 0) {
-    return("\n\n(Conditional means not available for this model)\n\n")
+    pd <- model$results[[model_name]]$plot_data
+    dr <- model$results[[model_name]]$dr_scores
+    if (!is.null(pd) && !is.null(dr)) {
+      test_X <- pd$X_test_full
+      if (is.null(test_X)) test_X <- pd$X_test
+      if (!is.null(test_X)) {
+        n_test <- nrow(test_X)
+        test_row_indices <- rownames(test_X)
+        if (!is.null(test_row_indices)) {
+          idx <- suppressWarnings(as.numeric(test_row_indices))
+          if (all(!is.na(idx)) && max(idx) <= nrow(dr)) {
+            conditional_means <- dr[idx, , drop = FALSE]
+          }
+        }
+        if (is.null(conditional_means) || nrow(conditional_means) == 0) {
+          if (n_test <= nrow(dr)) {
+            conditional_means <- dr[seq_len(n_test), , drop = FALSE]
+          }
+        }
+      }
+    }
+    if (is.null(conditional_means) || nrow(conditional_means) == 0) {
+      return("\n\n(Conditional means not available for this model)\n\n")
+    }
   }
 
   # get predictions from plot_data to identify which units fall in which leaf
@@ -472,24 +583,66 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
             pct_treatment <- round(100 * n_treatment / n_total, 1)
 
 
-            # Calculate summary statistics
-            effects <- numeric()
-            sizes <- numeric()
+            # Calculate summary statistics per leaf
+            effects <- numeric()          # treat - control per leaf
+            sizes <- numeric()            # leaf sizes
+            leaf_action <- integer()      # 1 = control, 2 = treatment
+            leaf_treat_avg <- numeric()   # mean under treatment in leaf
+            leaf_ctrl_avg  <- numeric()   # mean under control in leaf
             for (j in seq_along(leaf_indices)) {
               if (length(leaf_indices[[j]]) > 0) {
                 leaf_cm <- test_conditional_means[leaf_indices[[j]], , drop = FALSE]
                 if (nrow(leaf_cm) > 0 && ncol(leaf_cm) == 2) {
                   avg_cm <- colMeans(leaf_cm, na.rm = TRUE)
-                  effects <- c(effects, avg_cm[2] - avg_cm[1])
+                  eff <- avg_cm[2] - avg_cm[1]
+                  effects <- c(effects, eff)
                   sizes <- c(sizes, length(leaf_indices[[j]]))
+                  # infer action from predictions in this leaf (all should be identical)
+                  act <- unique(test_predictions[leaf_indices[[j]]])
+                  leaf_action <- c(leaf_action, if (length(act)) act[1] else NA_integer_)
+                  leaf_ctrl_avg <- c(leaf_ctrl_avg, avg_cm[1])
+                  leaf_treat_avg <- c(leaf_treat_avg, avg_cm[2])
                 }
               }
             }
 
-            weighted_avg_effect <- if (length(effects) > 0 && sum(sizes) > 0) {
-              sum(effects * sizes) / sum(sizes)
-            } else {
-              NA
+            # Policy gains relative to baselines using conditional means
+            weighted_avg_effect <- if (length(effects) > 0 && sum(sizes) > 0) sum(effects * sizes) / sum(sizes) else NA
+            policy_gain_vs_control <- if (length(effects) > 0 && sum(sizes) > 0) {
+              # sum over leaves recommended to treat of (treat - control) * size / N
+              treat_mask <- leaf_action == 2
+              sum(effects[treat_mask] * sizes[treat_mask]) / sum(sizes)
+            } else NA
+            policy_gain_vs_treat <- if (length(effects) > 0 && sum(sizes) > 0) {
+              # sum over leaves recommended to control of (control - treat) * size / N
+              ctrl_mask <- leaf_action == 1
+              sum((-effects[ctrl_mask]) * sizes[ctrl_mask]) / sum(sizes)
+            } else NA
+            avg_uplift_among_treated <- if (length(effects) > 0 && sum(sizes[leaf_action == 2], na.rm = TRUE) > 0) {
+              sum(effects[leaf_action == 2] * sizes[leaf_action == 2], na.rm = TRUE) / sum(sizes[leaf_action == 2], na.rm = TRUE)
+            } else NA
+
+            # Bootstrap CI for avg uplift among treated using test predictions + conditional means
+            avg_uplift_lo <- avg_uplift_hi <- NA_real_
+            if (!is.na(avg_uplift_among_treated) && nrow(test_conditional_means) > 1) {
+              n_eval <- nrow(test_conditional_means)
+              # align lengths; assume test_predictions correspond to rows in test_conditional_means
+              tm_vec <- (test_predictions[seq_len(n_eval)] == 2)
+              reps_t <- replicate(policy_value_R, {
+                idx <- sample.int(n_eval, n_eval, TRUE)
+                tm_bs <- tm_vec[idx]
+                if (any(tm_bs)) {
+                  cm_bs <- test_conditional_means[idx, , drop = FALSE]
+                  mean(cm_bs[tm_bs, 2] - cm_bs[tm_bs, 1])
+                } else NA_real_
+              })
+              reps_t <- reps_t[!is.na(reps_t)]
+              if (length(reps_t) > 1) {
+                se_t <- stats::sd(reps_t)
+                zval <- stats::qnorm(1 - (1 - policy_value_ci_level) / 2)
+                avg_uplift_lo <- avg_uplift_among_treated - zval * se_t
+                avg_uplift_hi <- avg_uplift_among_treated + zval * se_t
+              }
             }
 
             if (output_format == "prose") {
@@ -503,9 +656,8 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
                 formatC(n_treatment, format = "d", big.mark = ","), " participants (", pct_treatment, "%). "
               )
 
-              if (!is.na(weighted_avg_effect)) {
-                # Transform to original scale if possible
-                weighted_avg_display <- weighted_avg_effect
+              if (!is.na(policy_gain_vs_control) || !is.na(policy_gain_vs_treat) || !is.na(avg_uplift_among_treated)) {
+                # Optionally transform to original scale for policy_gain_vs_control
                 original_scale_overall <- ""
 
                 # Get transformation info if available
@@ -515,16 +667,16 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
                 }
 
                 if (!is.null(transform_info)) {
-                  if (transform_info$has_z && !transform_info$has_log) {
-                    # simple z-transformation: multiply by SD
-                    weighted_avg_display <- weighted_avg_effect * transform_info$orig_sd
-                    original_scale_overall <- paste0(" (original scale: ", format_minimal_decimals(weighted_avg_display), " units)")
-                  } else if (transform_info$has_z && transform_info$has_log) {
+                  if (transform_info$has_z && !transform_info$has_log && !is.na(policy_gain_vs_control)) {
+                    # simple z-transformation: multiply by SD for control baseline gain
+                    policy_gain_display <- policy_gain_vs_control * transform_info$orig_sd
+                    original_scale_overall <- paste0(" (original scale: ", format_minimal_decimals(policy_gain_display), " units)")
+                  } else if (transform_info$has_z && transform_info$has_log && !is.na(policy_gain_vs_control)) {
                     # log+z transformation: use multiplicative interpretation
                     units_info <- detect_variable_units(transform_info$original_var)
 
                     # calculate effect on log scale
-                    delta_log_overall <- weighted_avg_effect * transform_info$log_sd
+                    delta_log_overall <- policy_gain_vs_control * transform_info$log_sd
                     ratio_overall <- exp(delta_log_overall)
                     pct_change_overall <- (ratio_overall - 1) * 100
                     change_word <- if (pct_change_overall >= 0) "increase" else "decrease"
@@ -563,26 +715,29 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
                   }
                 }
 
-                # Unified wording for all transformation types
-                text <- paste0(
-                  text,
-                  "Weighting the leaf-level CATEs by subgroup size yields an average treatment effect of ",
-                  format_minimal_decimals(weighted_avg_effect)
-                )
-
-                # Add original scale if available
-                if (nchar(original_scale_overall) > 0) {
-                  text <- paste0(text, original_scale_overall)
+                # Report policy values relative to both baselines (rounded to 3 d.p.)
+                pv_lines <- character()
+                if (report_policy_value %in% c("both", "control_all") && !is.na(policy_gain_vs_control)) {
+                  pv_lines <- c(pv_lines, paste0(
+                    "Policy value vs control-all: ", round(policy_gain_vs_control, 3),
+                    if (nchar(original_scale_overall) > 0) paste0(" ", original_scale_overall) else ""
+                  ))
                 }
-
-                text <- paste0(
-                  text,
-                  ". In other words, if the recommended treatment decisions were implemented for every unit ",
-                  "in the test set, the mean outcome would be expected to ",
-                  ifelse(weighted_avg_effect > 0, "increase", "decrease"),
-                  " relative to universal ",
-                  tolower(act_labels[1]), ".\n"
-                )
+                if (report_policy_value %in% c("both", "treat_all") && !is.na(policy_gain_vs_treat)) {
+                  pv_lines <- c(pv_lines, paste0(
+                    "Policy value vs treat-all: ", round(policy_gain_vs_treat, 3)
+                  ))
+                }
+                if (report_policy_value %in% c("treated_only", "both") && !is.na(avg_uplift_among_treated)) {
+                  uplift_line <- paste0("Avg uplift among treated: ", round(avg_uplift_among_treated, 3))
+                  if (!is.na(avg_uplift_lo) && !is.na(avg_uplift_hi)) {
+                    uplift_line <- paste0(uplift_line, " [ ", round(avg_uplift_lo, 3), ", ", round(avg_uplift_hi, 3), " ]")
+                  }
+                  pv_lines <- c(pv_lines, uplift_line)
+                }
+                if (length(pv_lines)) {
+                  text <- paste0(text, paste(pv_lines, collapse = "; "), ".\n")
+                }
               }
             } else {
               text <- paste0(

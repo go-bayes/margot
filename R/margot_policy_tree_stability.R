@@ -238,8 +238,13 @@ margot_policy_tree_stability <- function(
     verbose = TRUE,
     seed = 12345,
     tree_method = c("fastpolicytree", "policytree"),
-    n_bootstrap = NULL # deprecated parameter for backwards compatibility
+    n_bootstrap = NULL, # deprecated parameter for backwards compatibility
+    compute_policy_values = FALSE,
+    policy_value_R = 499L,
+    policy_value_seed = 42L,
+    policy_value_baseline = c("treat_all", "control_all")
     ) {
+  policy_value_baseline <- match.arg(policy_value_baseline)
   # handle deprecated n_bootstrap parameter
   if (!is.null(n_bootstrap)) {
     if (!missing(n_iterations) && n_iterations != 300) {
@@ -407,7 +412,11 @@ margot_policy_tree_stability <- function(
       label_mapping = label_mapping,
       verbose = verbose,
       seed = seed,
-      tree_method = actual_tree_method
+      tree_method = actual_tree_method,
+      compute_policy_values = compute_policy_values,
+      policy_value_R = policy_value_R,
+      policy_value_seed = policy_value_seed,
+      policy_value_baseline = policy_value_baseline
     )
 
     output$results[[model_name]] <- stability_result
@@ -415,6 +424,12 @@ margot_policy_tree_stability <- function(
 
   # compute summary metrics across all models
   output$summary_metrics <- compute_stability_summary_metrics(output$results, verbose)
+
+  # attach outcome vars for downstream helpers
+  output$outcome_vars <- gsub("^model_", "", names(output$results))
+
+  # optional compact policy-value summary if present
+  output$policy_value_summary <- compute_policy_value_summary(output$results)
 
   if (verbose) cli::cli_alert_success("Stability analysis completed")
 
@@ -454,11 +469,16 @@ stability_single_model <- function(
     label_mapping,
     verbose,
     seed,
-    tree_method) {
-  # get DR scores (use flipped if available)
-  dr_scores <- model_result$dr_scores_flipped
+    tree_method,
+    compute_policy_values = FALSE,
+    policy_value_R = 499L,
+    policy_value_seed = 42L,
+    policy_value_baseline = c("treat_all", "control_all")) {
+  policy_value_baseline <- match.arg(policy_value_baseline)
+  # get DR scores (prefer original; flipped is for reporting)
+  dr_scores <- model_result$dr_scores
   if (is.null(dr_scores)) {
-    dr_scores <- model_result$dr_scores
+    dr_scores <- model_result$dr_scores_flipped
   }
   if (is.null(dr_scores)) {
     stop(paste("No dr_scores found for", model_name))
@@ -571,8 +591,9 @@ stability_single_model <- function(
   # build output structure compatible with margot_causal_forest
   output <- model_result # start with original
 
-  # add stability metrics
+  # add stability metrics (persist consensus splits for interpreters)
   output$stability_metrics <- consensus_info$metrics
+  output$stability_metrics$consensus_splits <- consensus_info$consensus_splits
 
   # ensure key data is preserved
   if (is.null(output$Y)) output$Y <- model_result$Y
@@ -613,6 +634,34 @@ stability_single_model <- function(
           output$policy_tree_depth_2,
           covariates[test_idx, selected_vars, drop = FALSE]
         )
+      )
+    }
+  }
+
+  # ensure plot_data exists for evaluation even if only depth-1 was requested
+  if (is.null(output$plot_data)) {
+    set.seed(all_seeds$split_seeds[1])
+    train_size <- floor(median(actual_train_props) * length(not_missing))
+    train_idx <- sample(not_missing, train_size)
+    test_idx <- setdiff(not_missing, train_idx)
+    output$plot_data <- list(
+      X_test = covariates[test_idx, selected_vars, drop = FALSE],
+      X_test_full = covariates[test_idx, , drop = FALSE]
+    )
+  }
+
+  # optionally compute policy-value tests for available depths
+  if (isTRUE(compute_policy_values)) {
+    if (!is.null(output$policy_tree_depth_1)) {
+      output$policy_value_depth_1 <- margot_compute_policy_value(
+        output, depth = 1L, R = policy_value_R, seed = policy_value_seed,
+        baseline = policy_value_baseline
+      )
+    }
+    if (!is.null(output$policy_tree_depth_2)) {
+      output$policy_value_depth_2 <- margot_compute_policy_value(
+        output, depth = 2L, R = policy_value_R, seed = policy_value_seed,
+        baseline = policy_value_baseline
       )
     }
   }
@@ -738,6 +787,10 @@ compute_stability_summary_metrics <- function(results, verbose) {
 #' @export
 #' @method summary margot_stability_policy_tree
 summary.margot_stability_policy_tree <- function(object, ...) {
+  dots <- list(...)
+  pv_R <- if (!is.null(dots$policy_value_R)) as.integer(dots$policy_value_R) else 199L
+  pv_seed <- if (!is.null(dots$policy_value_seed)) as.integer(dots$policy_value_seed) else 42L
+  show_pv <- if (!is.null(dots$show_policy_value)) isTRUE(dots$show_policy_value) else TRUE
   cli::cli_h1("Policy Tree Stability Summary")
 
   # metadata
@@ -787,6 +840,36 @@ summary.margot_stability_policy_tree <- function(object, ...) {
       cli::cli_alert_success("All models achieved consensus above threshold")
     } else {
       cli::cli_alert_warning("Some models did not achieve strong consensus")
+    }
+  }
+
+  # consensus policy value (depth 2) quick summary if evaluable
+  if (show_pv) {
+    cli::cli_h2("Consensus Policy Value (Depth 2)")
+    pv_tbl <- tryCatch({
+      margot_report_consensus_policy_value(object, depths = 2L, R = pv_R, seed = pv_seed, verbose = FALSE)
+    }, error = function(e) NULL)
+
+    if (!is.null(pv_tbl) && nrow(pv_tbl) > 0) {
+      by_model <- split(pv_tbl, pv_tbl$model)
+      for (nm in names(by_model)) {
+        sub <- by_model[[nm]]
+        treat_all <- sub[sub$contrast == "policy - treat_all", , drop = FALSE]
+        control_all <- sub[sub$contrast == "policy - control_all", , drop = FALSE]
+        out_label <- gsub("^model_", "", nm)
+        if (nrow(treat_all)) {
+          cli::cli_alert_info(
+            "{out_label}: vs treat-all = {round(treat_all$estimate, 3)} [ {round(treat_all$ci_lo, 3)}, {round(treat_all$ci_hi, 3)} ]"
+          )
+        }
+        if (nrow(control_all)) {
+          cli::cli_alert_info(
+            "{out_label}: vs control-all = {round(control_all$estimate, 3)} [ {round(control_all$ci_lo, 3)}, {round(control_all$ci_hi, 3)} ]"
+          )
+        }
+      }
+    } else {
+      cli::cli_alert_info("No evaluable consensus trees; run margot_report_consensus_policy_value() or rerun with compute_policy_values = TRUE.")
     }
   }
 
@@ -847,6 +930,11 @@ print.margot_stability_policy_tree <- function(x, ...) {
 #' @param include_theory Logical: Include theoretical context about tree instability (default TRUE)
 #' @param label_mapping Optional named list mapping variable names to labels. If NULL,
 #'   uses automatic transformation via transform_var_name()
+#' @param include_ci Logical: If TRUE and format = "technical", include simple confidence
+#'   intervals for selection frequencies (Wilson interval) and, when available, for
+#'   threshold means (normal approx). These quantify iteration-level variability; for
+#'   sample uncertainty prefer vary_type = "bootstrap".
+#' @param ci_level Numeric: Confidence level for intervals (default 0.95)
 #'
 #' @return Character string containing the interpretation
 #' @export
@@ -858,7 +946,9 @@ margot_interpret_stability <- function(
     format = c("text", "technical"),
     decimal_places = 1,
     include_theory = TRUE,
-    label_mapping = NULL) {
+    label_mapping = NULL,
+    include_ci = FALSE,
+    ci_level = 0.95) {
   format <- match.arg(format)
 
   # validate inputs
@@ -916,7 +1006,9 @@ margot_interpret_stability <- function(
       decimal_places = decimal_places,
       format = format,
       include_theory = include_theory,
-      label_mapping = label_mapping
+      label_mapping = label_mapping,
+      include_ci = include_ci,
+      ci_level = ci_level
     ))
   }
 
@@ -1093,6 +1185,51 @@ margot_interpret_stability <- function(
 
   # technical details if requested
   if (format == "technical") {
+    # optional CI helper for proportions (Wilson interval)
+    .prop_ci <- function(p, n, level = 0.95) {
+      if (is.na(p) || is.na(n) || n <= 0) return(c(NA_real_, NA_real_))
+      z <- stats::qnorm(1 - (1 - level) / 2)
+      denom <- 1 + z^2 / n
+      center <- (p + z^2 / (2 * n)) / denom
+      rad <- (z * sqrt((p * (1 - p) / n) + (z^2 / (4 * n^2)))) / denom
+      lo <- max(0, center - rad)
+      hi <- min(1, center + rad)
+      c(lo, hi)
+    }
+
+    # CI text for depth-1 consensus selection and threshold mean (if available)
+    ci_text <- ""
+    if (isTRUE(include_ci)) {
+      # CI for selection frequency
+      ci_p <- .prop_ci(consensus_freq_d1, n_iterations, ci_level)
+      if (all(!is.na(ci_p))) {
+        ci_text <- paste0(
+          " Consensus freq CI: ",
+          sprintf("%.*f%%", decimal_places, ci_p[1] * 100),
+          "–",
+          sprintf("%.*f%%", decimal_places, ci_p[2] * 100),
+          "."
+        )
+      }
+
+      # CI for threshold mean if SD present and at least 2 selections
+      if (!is.na(consensus_thresh_d1) && !is.na(thresh_sd_d1) && thresh_sd_d1 > 0) {
+        n_sel <- max(1L, round(consensus_freq_d1 * n_iterations))
+        if (n_sel >= 2L) {
+          z <- stats::qnorm(1 - (1 - ci_level) / 2)
+          se_th <- thresh_sd_d1 / sqrt(n_sel)
+          th_lo <- consensus_thresh_d1 - z * se_th
+          th_hi <- consensus_thresh_d1 + z * se_th
+          ci_text <- paste0(
+            ci_text,
+            " Threshold CI: [",
+            sprintf("%.*f", decimal_places + 1, th_lo), ", ",
+            sprintf("%.*f", decimal_places + 1, th_hi), "]"
+          )
+        }
+      }
+    }
+
     tech_details <- paste0(
       "\n\nTechnical details: Stability analysis used ",
       switch(vary_type,
@@ -1108,7 +1245,8 @@ margot_interpret_stability <- function(
         ),
         collapse = ", "
       ),
-      "."
+      ".",
+      if (nzchar(ci_text)) paste0(" ", ci_text) else ""
     )
     interpretation <- c(interpretation, tech_details)
   }
@@ -1128,7 +1266,9 @@ margot_interpret_stability <- function(
 interpret_depth2_only_stability <- function(object, model_name, outcome_name, outcome_label, metrics,
                                             n_iterations, stability_threshold,
                                             decimal_places, format, include_theory = TRUE,
-                                            label_mapping = NULL) {
+                                            label_mapping = NULL,
+                                            include_ci = FALSE,
+                                            ci_level = 0.95) {
   interpretation <- character()
 
   # add theoretical context if requested
@@ -1275,6 +1415,24 @@ interpret_depth2_only_stability <- function(object, model_name, outcome_name, ou
 
   # technical details if requested
   if (format == "technical") {
+    # optional CI for the top variable's average frequency across nodes
+    ci_text <- ""
+    if (isTRUE(include_ci) && nrow(top_vars) > 0) {
+      p1 <- top_vars$depth_2_node1_freq[1]
+      p2 <- top_vars$depth_2_node2_freq[1]
+      z <- stats::qnorm(1 - (1 - ci_level) / 2)
+      se_avg <- sqrt((p1 * (1 - p1) / n_iterations + p2 * (1 - p2) / n_iterations) / 4)
+      lo <- max(0, top_var_avg_freq - z * se_avg)
+      hi <- min(1, top_var_avg_freq + z * se_avg)
+      ci_text <- paste0(
+        " Top variable avg freq CI: ",
+        sprintf("%.*f%%", decimal_places, lo * 100),
+        "–",
+        sprintf("%.*f%%", decimal_places, hi * 100),
+        "."
+      )
+    }
+
     tech_details <- paste0(
       "\n\nTechnical details: Stability analysis used ", n_iterations, " iterations with ",
       object$metadata$vary_type, " variation. ",
@@ -1289,7 +1447,8 @@ interpret_depth2_only_stability <- function(object, model_name, outcome_name, ou
         ),
         collapse = ", "
       ),
-      "."
+      ".",
+      ci_text
     )
     interpretation <- c(interpretation, tech_details)
   }
@@ -1340,6 +1499,273 @@ margot_policy_tree_bootstrap <- function(...) {
   do.call(margot_policy_tree_stability, args)
 }
 
+#' Report Policy Value for Consensus Trees
+#'
+#' Computes and reports how much better the consensus policy trees perform
+#' than (a) treat-all (ATE baseline) and (b) treat-none (universal control),
+#' with 95% confidence intervals from bootstrap standard errors.
+#'
+#' @param object Object of class "margot_stability_policy_tree" produced by
+#'   [margot_policy_tree_stability()]. Must contain consensus policy trees in
+#'   `policy_tree_depth_1` and/or `policy_tree_depth_2`, plus `plot_data` and
+#'   `dr_scores`/`dr_scores_flipped`.
+#' @param model_names Optional character vector of model names to include
+#'   (with or without `model_` prefix). Default: all.
+#' @param depths Integer vector of depths to evaluate (default `c(1, 2)`).
+#' @param R Integer ≥ 199; number of bootstrap replicates (default 499).
+#' @param seed Integer or NULL; RNG seed for reproducibility (default 42).
+#' @param ci_level Confidence level for intervals (default 0.95).
+#' @param verbose Logical; print progress (default TRUE).
+#'
+#' @return A data.frame with one row per model × depth × contrast containing
+#'   estimate, standard error, and confidence interval.
+#'
+#' @export
+margot_report_consensus_policy_value <- function(object,
+                                                model_names = NULL,
+                                                depths = c(1L, 2L),
+                                                R = 499L,
+                                                seed = 42L,
+                                                ci_level = 0.95,
+                                                include_treated_only = FALSE,
+                                                label_mapping = NULL,
+                                                verbose = TRUE) {
+  if (!inherits(object, "margot_stability_policy_tree")) {
+    stop("object must be of class 'margot_stability_policy_tree'")
+  }
+
+  if (is.null(model_names)) {
+    model_names <- names(object$results)
+  } else {
+    model_names <- ifelse(grepl("^model_", model_names), model_names, paste0("model_", model_names))
+  }
+
+  missing <- setdiff(model_names, names(object$results))
+  if (length(missing)) stop("Models not found in results: ", paste(missing, collapse = ", "))
+
+  z <- stats::qnorm(1 - (1 - ci_level) / 2)
+  out_rows <- list()
+
+  # resolve internal helper robustly (works if user sourced a single file)
+  compute_pv <- NULL
+  if (exists("margot_compute_policy_value", mode = "function")) {
+    compute_pv <- margot_compute_policy_value
+  } else {
+    compute_pv <- tryCatch(getFromNamespace("margot_compute_policy_value", "margot"), error = function(e) NULL)
+  }
+  # local fallback implementation if helper not found
+  if (is.null(compute_pv)) {
+    compute_pv <- function(model, depth = 2L, R = 499L, seed = NULL, baseline = c("treat_all", "control_all")) {
+      baseline <- match.arg(baseline)
+      if (!is.null(seed)) set.seed(seed)
+
+      tag <- paste0("policy_tree_depth_", depth)
+      pol <- model[[tag]]
+      if (is.null(pol)) stop("no ", tag, " present for model")
+
+      dr <- model$dr_scores
+      full <- if (!is.null(model$plot_data$X_test_full)) model$plot_data$X_test_full else model$plot_data$X_test
+      if (is.null(full)) stop("plot_data with X_test_full/X_test missing; cannot evaluate policy value")
+      X <- full[, pol$columns, drop = FALSE]
+      keep <- stats::complete.cases(X)
+      X <- X[keep, , drop = FALSE]
+      dr <- dr[keep, , drop = FALSE]
+      n <- nrow(X)
+      if (n <= 1L) stop("insufficient evaluation data for policy value")
+
+      pick <- function(a, mat) {
+        if (min(a) == 0L) a <- a + 1L
+        mat[cbind(seq_along(a), a)]
+      }
+
+      a_hat <- predict(pol, X)
+      # Baselines: treat-all = mean(dr[,2]); control-all = mean(dr[,1])
+      treat_mean <- mean(dr[, 2])
+      control_mean <- mean(dr[, 1])
+      base_val <- if (baseline == "treat_all") treat_mean else control_mean
+      pv_hat <- mean(pick(a_hat, dr)) - base_val
+
+      reps <- replicate(R, {
+        idx <- sample.int(n, n, TRUE)
+        a_bs <- predict(pol, X[idx, , drop = FALSE])
+        mean(pick(a_bs, dr[idx, , drop = FALSE])) - base_val
+      })
+
+      se <- stats::sd(reps)
+      p <- 2 * stats::pnorm(-abs(pv_hat / se))
+      structure(list(estimate = pv_hat, std.err = se, p.value = p, n_eval = n), class = "policy_value_test")
+    }
+  }
+
+  for (mn in model_names) {
+    if (verbose) {
+      out_name <- gsub("^model_", "", mn)
+      out_disp <- .apply_label_stability(out_name, label_mapping)
+      cli::cli_alert_info("Evaluating consensus trees for {.var {out_disp}}")
+    }
+    m <- object$results[[mn]]
+    for (d in depths) {
+      tag <- paste0("policy_tree_depth_", d)
+      if (is.null(m[[tag]])) next
+
+      # evaluate both baselines
+      for (base in c("treat_all", "control_all")) {
+        pv <- compute_pv(m, depth = d, R = R, seed = seed, baseline = base)
+        est <- pv$estimate
+        se  <- pv$std.err
+        lo <- est - z * se
+        hi <- est + z * se
+        # optionally compute treated-only metrics
+        avg_uplift_treated <- NA_real_
+        coverage_treated <- NA_real_
+        if (isTRUE(include_treated_only)) {
+          pol <- m[[tag]]
+          dr <- m$dr_scores
+          pd <- m$plot_data
+          full <- if (!is.null(pd$X_test_full)) pd$X_test_full else pd$X_test
+          if (!is.null(full) && !is.null(pol) && !is.null(dr)) {
+            X <- full[, pol$columns, drop = FALSE]
+            keep <- stats::complete.cases(X)
+            Xk <- X[keep, , drop = FALSE]
+            drk <- dr[keep, , drop = FALSE]
+            if (nrow(Xk) > 0) {
+              a_hat <- predict(pol, Xk)
+              treat_mask <- a_hat == 2L
+              if (any(treat_mask)) {
+                avg_uplift_treated <- mean(drk[treat_mask, 2] - drk[treat_mask, 1])
+                coverage_treated <- mean(treat_mask)
+                # bootstrap CI for avg uplift among treated
+                reps_u <- replicate(R, {
+                  idx <- sample.int(nrow(Xk), nrow(Xk), TRUE)
+                  a_bs <- predict(pol, Xk[idx, , drop = FALSE])
+                  tm <- a_bs == 2L
+                  if (any(tm)) mean(drk[idx, , drop = FALSE][tm, 2] - drk[idx, , drop = FALSE][tm, 1]) else NA_real_
+                })
+                reps_u <- reps_u[!is.na(reps_u)]
+                if (length(reps_u) > 1) {
+                  se_u <- stats::sd(reps_u)
+                  lo_u <- avg_uplift_treated - z * se_u
+                  hi_u <- avg_uplift_treated + z * se_u
+                } else {
+                  se_u <- NA_real_
+                  lo_u <- NA_real_
+                  hi_u <- NA_real_
+                }
+              }
+            }
+          }
+        }
+        out_rows[[length(out_rows) + 1L]] <- data.frame(
+          model = mn,
+          outcome = gsub("^model_", "", mn),
+          outcome_label = .apply_label_stability(gsub("^model_", "", mn), label_mapping),
+          depth = d,
+          contrast = if (base == "treat_all") "policy - treat_all" else "policy - control_all",
+          estimate = est,
+          std_err = se,
+          ci_lo = lo,
+          ci_hi = hi,
+          avg_uplift_treated = avg_uplift_treated,
+          avg_uplift_treated_se = if (exists("se_u")) se_u else NA_real_,
+          avg_uplift_treated_ci_lo = if (exists("lo_u")) lo_u else NA_real_,
+          avg_uplift_treated_ci_hi = if (exists("hi_u")) hi_u else NA_real_,
+          coverage_treated = coverage_treated,
+          n_eval = pv$n_eval,
+          stringsAsFactors = FALSE
+        )
+      }
+    }
+  }
+
+  if (!length(out_rows)) {
+    if (verbose) cli::cli_alert_warning("No consensus trees available to evaluate")
+    return(invisible(NULL))
+  }
+
+  res <- do.call(rbind, out_rows)
+  rownames(res) <- NULL
+  res
+}
+
+#' Manuscript-ready table for consensus policy value
+#'
+#' Produces a compact table (data.frame) summarizing the consensus policy value
+#' for each model and selected depth, relative to both treat-all and control-all
+#' baselines, with 95% confidence intervals.
+#'
+#' @param object Stability result from [margot_policy_tree_stability()].
+#' @param model_names Optional outcomes to include (with or without `model_`).
+#' @param depth Integer; default 2.
+#' @param R,seed,ci_level Passed to [margot_report_consensus_policy_value()].
+#' @export
+margot_table_consensus_policy_value <- function(object,
+                                               model_names = NULL,
+                                               depth = 2L,
+                                               R = 499L,
+                                               seed = 42L,
+                                               ci_level = 0.95,
+                                               report_df = NULL,
+                                               label_mapping = NULL) {
+  # If caller provided a precomputed report, prefer it for consistency and efficiency
+  tbl <- report_df
+  if (is.null(tbl)) {
+    tbl <- margot_report_consensus_policy_value(
+      object,
+      model_names = model_names,
+      depths = depth,
+      R = R,
+      seed = seed,
+      ci_level = ci_level,
+      verbose = FALSE
+    )
+  } else {
+    # Optionally filter the provided report to the selected models/depth
+    if (!is.null(model_names)) {
+      keep_models <- ifelse(grepl("^model_", model_names), model_names, paste0("model_", model_names))
+      tbl <- tbl[tbl$model %in% keep_models, , drop = FALSE]
+    }
+    if (!is.null(depth)) {
+      tbl <- tbl[tbl$depth %in% depth, , drop = FALSE]
+    }
+  }
+
+  if (is.null(tbl) || !nrow(tbl)) return(tbl)
+
+  # apply label mapping for display if provided or if outcome_label present
+  if (!is.null(label_mapping)) {
+    tbl$outcome <- vapply(tbl$outcome, function(x) .apply_label_stability(x, label_mapping), character(1))
+  } else if ("outcome_label" %in% names(tbl)) {
+    tbl$outcome <- tbl$outcome_label
+  }
+
+  # order columns and add a concise CI string
+  tbl$ci <- paste0("[", round(tbl$ci_lo, 3), ", ", round(tbl$ci_hi, 3), "]")
+  tbl$estimate <- round(tbl$estimate, 3)
+  tbl$std_err <- round(tbl$std_err, 3)
+  # include treated-only metrics if present
+  has_treated <- all(c("avg_uplift_treated", "coverage_treated") %in% names(tbl))
+  if (has_treated) {
+    tbl$avg_uplift_treated <- round(tbl$avg_uplift_treated, 3)
+    tbl$coverage_treated <- round(100 * tbl$coverage_treated, 1)
+    if (all(c("avg_uplift_treated_ci_lo", "avg_uplift_treated_ci_hi") %in% names(tbl))) {
+      tbl$avg_uplift_treated_ci <- paste0(
+        "[", round(tbl$avg_uplift_treated_ci_lo, 3), ", ", round(tbl$avg_uplift_treated_ci_hi, 3), "]"
+      )
+      tbl <- tbl[, c("outcome", "depth", "contrast", "estimate", "std_err", "ci", "n_eval",
+                     "avg_uplift_treated", "avg_uplift_treated_ci", "coverage_treated")]
+      names(tbl)[names(tbl) == "coverage_treated"] <- "coverage_treated_pct"
+    } else {
+      tbl <- tbl[, c("outcome", "depth", "contrast", "estimate", "std_err", "ci", "n_eval",
+                     "avg_uplift_treated", "coverage_treated")]
+      names(tbl)[names(tbl) == "coverage_treated"] <- "coverage_treated_pct"
+    }
+  } else {
+    tbl <- tbl[, c("outcome", "depth", "contrast", "estimate", "std_err", "ci", "n_eval")]
+  }
+  rownames(tbl) <- NULL
+  tbl
+}
+
 #' Batch Interpret Policy Tree Stability Results
 #'
 #' @description
@@ -1360,6 +1786,8 @@ margot_policy_tree_bootstrap <- function(...) {
 #' @param verbose Logical: Print progress messages (default TRUE)
 #' @param combine Logical: If TRUE, combines all interpretations into a single text (default FALSE)
 #' @param save_to_file Optional file path to save combined interpretations as text file
+#' @param include_ci Logical: If TRUE and format = "technical", include simple CIs in output
+#' @param ci_level Numeric: Confidence level for intervals (default 0.95)
 #'
 #' @return Named list where each element contains the interpretation for a model.
 #'   If combine = TRUE, returns a single character string with all interpretations.
@@ -1401,7 +1829,9 @@ margot_interpret_stability_batch <- function(
     label_mapping = NULL,
     verbose = TRUE,
     combine = FALSE,
-    save_to_file = NULL) {
+    save_to_file = NULL,
+    include_ci = FALSE,
+    ci_level = 0.95) {
   format <- match.arg(format)
 
   # validate inputs
@@ -1453,7 +1883,9 @@ margot_interpret_stability_batch <- function(
           format = format,
           decimal_places = decimal_places,
           include_theory = include_theory && i == 1, # only include theory for first model
-          label_mapping = label_mapping
+          label_mapping = label_mapping,
+          include_ci = include_ci,
+          ci_level = ci_level
         )
       },
       type = "output"
@@ -1468,7 +1900,9 @@ margot_interpret_stability_batch <- function(
       format = format,
       decimal_places = decimal_places,
       include_theory = include_theory && i == 1,
-      label_mapping = label_mapping
+      label_mapping = label_mapping,
+      include_ci = include_ci,
+      ci_level = ci_level
     )
 
     interpretations[[model_name]] <- actual_text
@@ -1593,26 +2027,34 @@ compute_consensus_info <- function(accumulator, n_iterations, consensus_threshol
   d2_node2_idx <- which.max(d2_node2_freqs)
 
   d2_consensus <- list(
-    node1 = list(
-      variable = accumulator$var_names[d2_node1_idx],
-      frequency = d2_node1_freqs[d2_node1_idx],
-      threshold_mean = if (accumulator$depth_2$node1_var_counts[d2_node1_idx] > 0) {
-        accumulator$depth_2$node1_threshold_sums[d2_node1_idx] /
-          accumulator$depth_2$node1_var_counts[d2_node1_idx]
-      } else {
-        NA
-      }
-    ),
-    node2 = list(
-      variable = accumulator$var_names[d2_node2_idx],
-      frequency = d2_node2_freqs[d2_node2_idx],
-      threshold_mean = if (accumulator$depth_2$node2_var_counts[d2_node2_idx] > 0) {
-        accumulator$depth_2$node2_threshold_sums[d2_node2_idx] /
-          accumulator$depth_2$node2_var_counts[d2_node2_idx]
-      } else {
-        NA
-      }
-    )
+    node1 = {
+      n1c <- accumulator$depth_2$node1_var_counts[d2_node1_idx]
+      mean1 <- if (n1c > 0) accumulator$depth_2$node1_threshold_sums[d2_node1_idx] / n1c else NA
+      sd1 <- if (n1c > 1) {
+        m2 <- accumulator$depth_2$node1_threshold_sumsq[d2_node1_idx] / n1c
+        sqrt(max(0, m2 - mean1^2))
+      } else NA
+      list(
+        variable = accumulator$var_names[d2_node1_idx],
+        frequency = d2_node1_freqs[d2_node1_idx],
+        threshold_mean = mean1,
+        threshold_sd = sd1
+      )
+    },
+    node2 = {
+      n2c <- accumulator$depth_2$node2_var_counts[d2_node2_idx]
+      mean2 <- if (n2c > 0) accumulator$depth_2$node2_threshold_sums[d2_node2_idx] / n2c else NA
+      sd2 <- if (n2c > 1) {
+        m2 <- accumulator$depth_2$node2_threshold_sumsq[d2_node2_idx] / n2c
+        sqrt(max(0, m2 - mean2^2))
+      } else NA
+      list(
+        variable = accumulator$var_names[d2_node2_idx],
+        frequency = d2_node2_freqs[d2_node2_idx],
+        threshold_mean = mean2,
+        threshold_sd = sd2
+      )
+    }
   )
 
   # metrics
@@ -1636,6 +2078,37 @@ compute_consensus_info <- function(accumulator, n_iterations, consensus_threshol
     ),
     metrics = metrics
   )
+}
+
+#' Compute compact policy-value summary if available
+#' @keywords internal
+compute_policy_value_summary <- function(results) {
+  z <- stats::qnorm(1 - 0.05 / 2)
+  rows <- lapply(names(results), function(nm) {
+    m <- results[[nm]]
+    out <- list()
+    for (d in c(1L, 2L)) {
+      tag <- paste0("policy_value_depth_", d)
+      pv <- m[[tag]]
+      if (!is.null(pv) && is.list(pv)) {
+        est <- pv$estimate
+        se  <- pv$std.err
+        lo <- est - z * se
+        hi <- est + z * se
+        out[[length(out) + 1L]] <- data.frame(
+          model = nm,
+          depth = d,
+          estimate = est,
+          std_err = se,
+          ci_lo = lo,
+          ci_hi = hi,
+          stringsAsFactors = FALSE
+        )
+      }
+    }
+    if (length(out)) do.call(rbind, out) else NULL
+  })
+  do.call(rbind, rows)
 }
 
 #' Reconstruct a consensus tree from consensus splits
