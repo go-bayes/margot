@@ -13,7 +13,7 @@
 #' @param include_policy_value Logical; mention policy value contrasts and CIs
 #'   (default TRUE).
 #' @param include_treated_only Logical; mention treated-only uplift and coverage
-#'   (default TRUE).
+#'   (default FALSE).
 #' @param citations Logical; include inline citations (author-year) (default TRUE).
 #' @param style Character; one of "short" (1 paragraph) or "long" (multi-line)
 #'   (default "short").
@@ -23,7 +23,7 @@ margot_policy_methods_statement <- function(object,
                                             depth = 2L,
                                             include_stability = TRUE,
                                             include_policy_value = TRUE,
-                                            include_treated_only = TRUE,
+                                            include_treated_only = FALSE,
                                             citations = TRUE,
                                             style = c("short", "long")) {
   style <- match.arg(style)

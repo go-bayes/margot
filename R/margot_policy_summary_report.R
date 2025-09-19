@@ -20,8 +20,16 @@
 #'
 #' @return A list with:
 #'   - `text`: Combined summary text (character scalar)
+#'   - `report`: Narrative policy summary formatted for scientific reporting
+#'   - `interpretation`: Concise sentence-level summary listing wins, caution, and uncertain models
 #'   - `table_md`: Markdown table (character scalar) when `render_markdown = TRUE`
 #'   - `table_df`: Data frame of policy value summary rows (title-case columns)
+#'   - `wins_model_ids`: Character vector of model identifiers where policy vs control-all is strictly positive (CI > 0)
+#'   - `wins_model_names`: Character vector of human-readable labels matching `wins_model_ids`
+#'   - `neutral_model_ids`: Character vector of model identifiers with inconclusive policy vs control-all evidence (CI crosses 0)
+#'   - `neutral_model_names`: Character vector of human-readable labels matching `neutral_model_ids`
+#'   - `caution_model_ids`: Character vector of model identifiers where policy vs control-all is negative (CI < 0)
+#'   - `caution_model_names`: Character vector of human-readable labels matching `caution_model_ids`
 #'   - `group_table`: Named list of grouped brief tables (data frames)
 #'   - `group_table_df`: Combined grouped table with a `Group` column
 #'
@@ -181,12 +189,12 @@ margot_policy_summary_report <- function(object,
     if (is.null(info)) return("")
     if (isTRUE(info$has_z) && !isTRUE(info$has_log)) {
       val <- eff * info$orig_sd
-      return(paste0(" (unscaled: ", round(val, digits), ")"))
+      return(paste0(" (original scale: ", round(val, digits), ")"))
     }
     if (isTRUE(info$has_z) && isTRUE(info$has_log)) {
       dlog <- eff * info$log_sd
       pct <- (exp(dlog) - 1) * 100
-      return(paste0(" (unscaled: ", round(pct, 1), "%)"))
+      return(paste0(" (original scale: ", round(pct, 1), "%)"))
     }
     ""
   }
@@ -194,17 +202,168 @@ margot_policy_summary_report <- function(object,
   lines <- character()
   fmt_ci <- function(lo, hi) paste0("[", round(lo, digits), ", ", round(hi, digits), "]")
 
-  # Optionally group by sign of pv_control_all
+  # classify models by sign of pv_control_all (always available for downstream uses)
+  wins <- mm[mm$ci_lo_ctrl > 0, , drop = FALSE]
+  neutral <- mm[mm$ci_lo_ctrl <= 0 & mm$ci_hi_ctrl >= 0, , drop = FALSE]
+  harm <- mm[mm$ci_hi_ctrl < 0, , drop = FALSE]
+
+  # Optionally group by sign for text/table rendering
   if (isTRUE(group_by_sign)) {
-    wins <- mm[mm$ci_lo_ctrl > 0, , drop = FALSE]
-    neutral <- mm[mm$ci_lo_ctrl <= 0 & mm$ci_hi_ctrl >= 0, , drop = FALSE]
-    harm <- mm[mm$ci_hi_ctrl < 0, , drop = FALSE]
-    groups <- list("Wins (pv vs control-all > 0, CI>0)" = wins,
-                   "Neutral (pv vs control-all ~ 0)" = neutral,
-                   "Caution (pv vs control-all < 0, CI<0)" = harm)
+    groups <- list(
+      "Wins (pv vs control-all > 0, CI>0)" = wins,
+      "Neutral (pv vs control-all ~ 0)" = neutral,
+      "Caution (pv vs control-all < 0, CI<0)" = harm
+    )
   } else {
     groups <- list("Summary" = mm)
   }
+
+  # helper to extract readable names for model lists
+  resolve_outcome_labels <- function(df) {
+    if (!nrow(df)) return(character())
+    vapply(seq_len(nrow(df)), function(idx) {
+      outcome <- df$outcome[idx]
+      fallback <- df$outcome_label[idx]
+      if (!is.null(label_mapping)) {
+        .apply_label_stability(outcome, label_mapping)
+      } else {
+        fallback %||% outcome
+      }
+    }, character(1))
+  }
+
+  format_report_entry <- function(df_row) {
+    if (!nrow(df_row)) return("")
+    label <- resolve_outcome_labels(df_row)[1]
+    pieces <- character()
+    est_ctrl <- df_row[["estimate_ctrl"]]
+    if (!is.na(est_ctrl)) {
+      pieces <- c(pieces, paste0(
+        "policy vs control-all ",
+        round(est_ctrl, digits), " ",
+        fmt_ci(df_row[["ci_lo_ctrl"]], df_row[["ci_hi_ctrl"]]),
+        convert_original(est_ctrl, df_row[["model"]])
+      ))
+    }
+    est_treat <- df_row[["estimate_treat"]]
+    if (!is.na(est_treat)) {
+      pieces <- c(pieces, paste0(
+        "policy vs treat-all ",
+        round(est_treat, digits), " ",
+        fmt_ci(df_row[["ci_lo_treat"]], df_row[["ci_hi_treat"]]),
+        convert_original(est_treat, df_row[["model"]])
+      ))
+    }
+    uplift_val <- df_row[["uplift"]]
+    if (!is.na(uplift_val)) {
+      uplift_piece <- paste0(
+        "avg uplift (treated) ",
+        round(uplift_val, digits)
+      )
+      lo <- df_row[["uplift_lo"]]
+      hi <- df_row[["uplift_hi"]]
+      if (!is.na(lo) && !is.na(hi)) {
+        uplift_piece <- paste0(uplift_piece, " ", fmt_ci(lo, hi))
+      }
+      uplift_piece <- paste0(uplift_piece, convert_original(uplift_val, df_row[["model"]]))
+      pieces <- c(pieces, uplift_piece)
+    }
+    cov_val <- df_row[["coverage"]]
+    if (!is.na(cov_val)) {
+      pieces <- c(pieces, paste0("coverage ", round(100 * cov_val, 1), "%"))
+    }
+    paste0(label, " (", paste(pieces, collapse = "; "), ")")
+  }
+
+  wins_model_ids <- wins$model
+  wins_model_names <- resolve_outcome_labels(wins)
+  neutral_model_ids <- neutral$model
+  neutral_model_names <- resolve_outcome_labels(neutral)
+  caution_model_ids <- harm$model
+  caution_model_names <- resolve_outcome_labels(harm)
+
+  format_name_list <- function(x) {
+    x <- unique(x[!is.na(x) & nzchar(x)])
+    if (!length(x)) return("none")
+    if (length(x) == 1) return(x)
+    if (length(x) == 2) return(paste(x, collapse = " and "))
+    paste0(paste(x[-length(x)], collapse = ", "), ", and ", x[length(x)])
+  }
+
+  wins_sentence <- if (length(wins_model_names)) {
+    paste0(
+      "Policy value gains vs control-all (wins): ",
+      format_name_list(wins_model_names),
+      "."
+    )
+  } else {
+    "No models delivered a policy value gain vs control-all (wins)."
+  }
+
+  neutral_sentence <- if (length(neutral_model_names)) {
+    paste0(
+      "Policy value confidence intervals crossed zero for: ",
+      format_name_list(neutral_model_names),
+      "."
+    )
+  } else {
+    "No models had policy value confidence intervals that crossed zero."
+  }
+
+  caution_sentence <- if (length(caution_model_names)) {
+    paste0(
+      "Policy deployment would underperform control-all for: ",
+      format_name_list(caution_model_names),
+      "."
+    )
+  } else {
+    "No models showed policy value estimates entirely below zero (caution)."
+  }
+
+  interpretation_text <- paste(wins_sentence, neutral_sentence, caution_sentence)
+
+  build_group_block <- function(header, df, empty_msg) {
+    heading <- paste0("### ", header)
+    if (!nrow(df)) {
+      return(paste(c(heading, "", empty_msg, ""), collapse = "\n"))
+    }
+    entries <- vapply(
+      seq_len(nrow(df)),
+      function(idx) paste0("- ", format_report_entry(df[idx, , drop = FALSE])),
+      character(1)
+    )
+    paste(c(heading, "", entries, ""), collapse = "\n")
+  }
+
+  report_sections <- list()
+  if (isTRUE(include_explanation)) {
+    report_sections <- c(report_sections, list(policy_expl, ""))
+  }
+
+  report_sections <- c(report_sections, list(
+    paste0(
+      "Consensus policy evaluation at depth ", depth,
+      " compared targeted deployment against control-all and treat-all baselines."
+    ),
+    "",
+    build_group_block(
+      "Wins (policy value vs control-all 95% CI entirely > 0)",
+      wins,
+      "No wins: no models delivered a statistically significant policy value gain vs control-all (95% CI > 0)."
+    ),
+    build_group_block(
+      "Neutral (policy value vs control-all CI spans zero)",
+      neutral,
+      "No neutral models: every evaluable policy was classified as win or caution."
+    ),
+    build_group_block(
+      "Caution (policy value vs control-all 95% CI entirely < 0)",
+      harm,
+      "No caution models: no policy value estimates fell entirely below zero."
+    )
+  ))
+
+  report_text <- paste(unlist(report_sections), collapse = "\n")
 
   # build grouped text
   for (gname in names(groups)) {
@@ -317,6 +476,19 @@ margot_policy_summary_report <- function(object,
     group_table_df <- data.frame()
   }
 
-  list(text = text, table_md = table_md, table_df = tbl_df,
-       group_table = group_tables, group_table_df = group_table_df)
+  list(
+    text = text,
+    report = report_text,
+    interpretation = interpretation_text,
+    table_md = table_md,
+    table_df = tbl_df,
+    wins_model_ids = wins_model_ids,
+    wins_model_names = wins_model_names,
+    neutral_model_ids = neutral_model_ids,
+    neutral_model_names = neutral_model_names,
+    caution_model_ids = caution_model_ids,
+    caution_model_names = caution_model_names,
+    group_table = group_tables,
+    group_table_df = group_table_df
+  )
 }

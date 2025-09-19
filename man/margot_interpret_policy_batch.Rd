@@ -36,7 +36,7 @@ margot_interpret_policy_batch(
 
 \item{report_policy_value}{Character: one of "none" (default), "treat_all",
 "control_all", or "both". If not "none", each model interpretation will include
-a one-line policy value summary with 95% CIs based on bootstrap SEs.}
+a one-line policy value summary with 95\% CIs based on bootstrap SEs.}
 
 \item{policy_value_R}{Integer >= 199; bootstrap replicates (default 499).}
 

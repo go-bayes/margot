@@ -1,3 +1,20 @@
+# [2025-09-19] margot 1.0.239
+### Improvements
+- `margot_policy_summary_report()` better support for quarto markdown. 
+ 
+
+
+# [2025-09-19] margot 1.0.238
+### Improvements
+- `margot_policy_summary_report()` better summary of policy-tree results
+ 
+ 
+# [2025-09-19] margot 1.0.237
+
+### Improvements
+- `margot_policy_summary_report()` outputs model id's for wins/neutral/caution, to make reporting of policy trees easier
+- `margot_policy_summary_report()` now returns a narrative `report` field summarising wins, neutral, and caution models for manuscript-ready text
+- `margot_policy_summary_report()` also includes a compact `interpretation` paragraph that lists wins, caution models, and uncertain outcomes
 
 # [2025-09-18] margot 1.0.236
 

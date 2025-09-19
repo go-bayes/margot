@@ -9,7 +9,7 @@ margot_policy_methods_statement(
   depth = 2L,
   include_stability = TRUE,
   include_policy_value = TRUE,
-  include_treated_only = TRUE,
+  include_treated_only = FALSE,
   citations = TRUE,
   style = c("short", "long")
 )
@@ -27,7 +27,7 @@ available (default TRUE).}
 (default TRUE).}
 
 \item{include_treated_only}{Logical; mention treated-only uplift and coverage
-(default TRUE).}
+(default FALSE).}
 
 \item{citations}{Logical; include inline citations (author-year) (default TRUE).}
 

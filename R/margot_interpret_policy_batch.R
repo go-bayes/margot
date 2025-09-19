@@ -16,7 +16,7 @@
 #'   output_format ("bullet" or "prose"), original_df, label_mapping, and policy value options.
 #' @param report_policy_value Character: one of "none" (default), "treat_all",
 #'   "control_all", or "both". If not "none", each model interpretation will include
-#'   a one-line policy value summary with 95% CIs based on bootstrap SEs.
+#'   a one-line policy value summary with 95\% CIs based on bootstrap SEs.
 #' @param policy_value_R Integer >= 199; bootstrap replicates (default 499).
 #' @param policy_value_seed Integer or NULL; RNG seed (default 42).
 #' @param policy_value_ci_level Numeric confidence level (default 0.95).

@@ -52,8 +52,16 @@ margot_policy_summary_report(
 \value{
 A list with:
   - `text`: Combined summary text (character scalar)
+  - `report`: Narrative policy summary formatted for scientific reporting
+  - `interpretation`: Concise sentence-level summary listing wins, caution, and uncertain models
   - `table_md`: Markdown table (character scalar) when `render_markdown = TRUE`
   - `table_df`: Data frame of policy value summary rows (title-case columns)
+  - `wins_model_ids`: Character vector of model identifiers where policy vs control-all is strictly positive (CI > 0)
+  - `wins_model_names`: Character vector of human-readable labels matching `wins_model_ids`
+  - `neutral_model_ids`: Character vector of model identifiers with inconclusive policy vs control-all evidence (CI crosses 0)
+  - `neutral_model_names`: Character vector of human-readable labels matching `neutral_model_ids`
+  - `caution_model_ids`: Character vector of model identifiers where policy vs control-all is negative (CI < 0)
+  - `caution_model_names`: Character vector of human-readable labels matching `caution_model_ids`
   - `group_table`: Named list of grouped brief tables (data frames)
   - `group_table_df`: Combined grouped table with a `Group` column
 }

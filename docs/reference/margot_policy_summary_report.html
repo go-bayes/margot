@@ -15,7 +15,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.236</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.239</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -124,8 +124,16 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with:
   - `text`: Combined summary text (character scalar)
+  - `report`: Narrative policy summary formatted for scientific reporting
+  - `interpretation`: Concise sentence-level summary listing wins, caution, and uncertain models
   - `table_md`: Markdown table (character scalar) when `render_markdown = TRUE`
   - `table_df`: Data frame of policy value summary rows (title-case columns)
+  - `wins_model_ids`: Character vector of model identifiers where policy vs control-all is strictly positive (CI &gt; 0)
+  - `wins_model_names`: Character vector of human-readable labels matching `wins_model_ids`
+  - `neutral_model_ids`: Character vector of model identifiers with inconclusive policy vs control-all evidence (CI crosses 0)
+  - `neutral_model_names`: Character vector of human-readable labels matching `neutral_model_ids`
+  - `caution_model_ids`: Character vector of model identifiers where policy vs control-all is negative (CI &lt; 0)
+  - `caution_model_names`: Character vector of human-readable labels matching `caution_model_ids`
   - `group_table`: Named list of grouped brief tables (data frames)
   - `group_table_df`: Combined grouped table with a `Group` column</p>
     </div>
