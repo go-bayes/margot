@@ -1,9 +1,19 @@
-# [2025-09-19] margot 1.0.239
+# [2025-09-19] margot 1.0.240
+
 ### Improvements
-- `margot_policy_summary_report()` better support for quarto markdown. 
+- `margot_policy_tree_stability()` adds `compute_policy_values` (with `policy_value_R`, `policy_value_seed`, `policy_value_baseline`) to pre-compute bootstrap policy gains and now recognises the legacy `parrallel` flag.
+- `margot_policy_tree_stability()` allows tuning `future.globals.maxSize` via `future_globals_max_size` (20 GiB default) so large stability jobs can run in parallel without hitting the future globals guard.
+- Cached policy gains include baseline/contrast metadata for downstream reporters; internal fallback `.compute_policy_value_internal()` keeps stand-alone scripts working.
+- `margot_policy_summary_report()` adds a "Practical Takeaways" block, per-model depth overrides (`depths_by_model`), depth-specific model lists/maps, recommended id/name outputs by depth, and compact-table controls (`split_drop_zero`, `split_top_only`) while fixing the missing-object error.
+- `margot_policy_summary_compare_depths()` is now exported and documented alongside the updated policy reporting workflow, returning a mixed-depth report (`best_summary`) plus depth maps/lists for downstream plotting.
+- `margot_interpret_policy_batch()` accepts `depths_by_model`, surfaces per-model depths, and returns the depth map when `return_as_list = TRUE`.
+- `margot_policy_summary_report()` better support for quarto markdown.
  
 
-
+# [2025-09-19] margot 1.0.239
+### Improvements
+- `margot_policy_summary_report()` better support for quarto markdown.wn.
+ 
 # [2025-09-19] margot 1.0.238
 ### Improvements
 - `margot_policy_summary_report()` better summary of policy-tree results

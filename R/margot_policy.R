@@ -8,7 +8,9 @@
 #' @param result_outcomes List returned by \code{margot_multi_arm_causal_forest()}.
 #' @param policy_tree_args List of args for \code{margot_plot_policy_tree()}. Default: \code{list()}.
 #' @param decision_tree_args List of args for \code{margot_plot_decision_tree()}. Default: \code{list()}.
-#' @param max_depth Integer, 1 or 2; which decision tree depth to plot. Default: 2.
+#' @param max_depth Integer, 1 or 2; default depth used when `depths_by_model` is NULL (default 2).
+#' @param depths_by_model Optional named vector/list mapping models (with or without `model_` prefix)
+#'   to depth 1 or 2; overrides `max_depth` on a per-model basis.
 #' @param spend_levels Numeric vector of spend levels for difference-gain summaries. Default: \code{0.1}.
 #' @param label_mapping Named list mapping variable names to display labels. Default: NULL.
 #' @param original_df Optional data.frame of untransformed variables for axis annotations. Default: NULL.
@@ -22,7 +24,8 @@
 #' @param seed Integer. Random seed for reproducibility in QINI computations (default 12345).
 #'
 #' @return A named list; each element corresponds to a model and contains only
-#' the requested outputs.
+#' the requested outputs. The returned object includes an attribute `depth_map`
+#' giving the depth used for each model.
 #'
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning cli_alert_danger cli_progress_bar cli_progress_update cli_progress_done
 #' @importFrom ggplot2 ggsave
@@ -33,6 +36,7 @@ margot_policy <- function(
     policy_tree_args = list(),
     decision_tree_args = list(),
     max_depth = 2L,
+    depths_by_model = NULL,
     spend_levels = c(0.1, 0.4),
     label_mapping = NULL,
     original_df = NULL,
@@ -55,8 +59,30 @@ margot_policy <- function(
     model_names <- names(result_outcomes$results)
   }
 
+  if (!is.null(depths_by_model)) {
+    if (is.null(names(depths_by_model))) {
+      stop("depths_by_model must be a named vector or list")
+    }
+    provided <- ifelse(grepl("^model_", names(depths_by_model)), names(depths_by_model), paste0("model_", names(depths_by_model)))
+    missing <- setdiff(provided, model_names)
+    if (length(missing)) {
+      stop("depths_by_model references unknown models: ", paste(missing, collapse = ", "))
+    }
+    model_depths <- setNames(rep(as.integer(max_depth), length(model_names)), model_names)
+    model_depths[provided] <- as.integer(depths_by_model)
+  } else {
+    model_depths <- setNames(rep(as.integer(max_depth), length(model_names)), model_names)
+  }
+  if (!all(model_depths %in% c(1L, 2L))) {
+    stop("depth values must be 1 or 2")
+  }
+  unique_depths <- sort(unique(model_depths))
 
-  cli::cli_alert_info("processing {length(model_names)} models")
+  if (length(unique_depths) == 1) {
+    cli::cli_alert_info("processing {length(model_names)} models (depth {unique_depths})")
+  } else {
+    cli::cli_alert_info("processing {length(model_names)} models (mixed depths)")
+  }
   pb <- cli::cli_progress_bar(
     total  = length(model_names),
     format = "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}"
@@ -74,10 +100,11 @@ margot_policy <- function(
         # policy + decision outputs
         combo_needs <- intersect(output_objects, c("policy_tree", "decision_tree", "combined_plot"))
         if (length(combo_needs) > 0) {
+          depth_cur <- model_depths[[model_name]]
           combo_args <- list(
             result_object      = result_outcomes,
             model_name         = model_name,
-            max_depth          = max_depth,
+            max_depth          = depth_cur,
             label_mapping      = label_mapping,
             original_df        = original_df,
             policy_tree_args   = policy_tree_args,
@@ -246,5 +273,6 @@ margot_policy <- function(
 
   cli::cli_progress_done()
   cli::cli_alert_success("margot_policy completed 👍")
+  attr(output_list, "depth_map") <- model_depths
   output_list
 }

@@ -23,10 +23,10 @@ stability_single_model(
   verbose,
   seed,
   tree_method,
-  compute_policy_values = FALSE,
-  policy_value_R = 499L,
-  policy_value_seed = 42L,
-  policy_value_baseline = c("treat_all", "control_all")
+  compute_policy_values,
+  policy_value_R,
+  policy_value_seed,
+  policy_value_baseline
 )
 }
 \description{

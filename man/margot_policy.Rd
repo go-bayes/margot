@@ -9,6 +9,7 @@ margot_policy(
   policy_tree_args = list(),
   decision_tree_args = list(),
   max_depth = 2L,
+  depths_by_model = NULL,
   spend_levels = c(0.1, 0.4),
   label_mapping = NULL,
   original_df = NULL,
@@ -27,7 +28,10 @@ margot_policy(
 
 \item{decision_tree_args}{List of args for \code{margot_plot_decision_tree()}. Default: \code{list()}.}
 
-\item{max_depth}{Integer, 1 or 2; which decision tree depth to plot. Default: 2.}
+\item{max_depth}{Integer, 1 or 2; default depth used when `depths_by_model` is NULL (default 2).}
+
+\item{depths_by_model}{Optional named vector/list mapping models (with or without `model_` prefix)
+to depth 1 or 2; overrides `max_depth` on a per-model basis.}
 
 \item{spend_levels}{Numeric vector of spend levels for difference-gain summaries. Default: \code{0.1}.}
 
@@ -50,7 +54,8 @@ Default: all.}
 }
 \value{
 A named list; each element corresponds to a model and contains only
-the requested outputs.
+the requested outputs. The returned object includes an attribute `depth_map`
+giving the depth used for each model.
 }
 \description{
 Process a list of multi-arm causal forest results: generate policy-tree and

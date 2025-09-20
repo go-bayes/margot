@@ -8,6 +8,7 @@ margot_interpret_policy_batch(
   models,
   model_names = NULL,
   max_depth = 2L,
+  depths_by_model = NULL,
   save_path = NULL,
   prefix = NULL,
   include_timestamp = FALSE,
@@ -26,7 +27,10 @@ margot_interpret_policy_batch(
 
 \item{model_names}{A character vector of model names to interpret. If NULL, all models are processed.}
 
-\item{max_depth}{Integer, 1 or 2; which saved policy tree to interpret (default 2).}
+\item{max_depth}{Integer, 1 or 2; default depth used when `depths_by_model` is NULL (default 2).}
+
+\item{depths_by_model}{Optional named vector/list mapping models (with or without `model_` prefix) to
+depth 1 or 2; overrides `max_depth` on a per-model basis.}
 
 \item{save_path}{The path where the combined interpretation will be saved. If NULL, nothing is saved.}
 
@@ -54,11 +58,14 @@ include_conditional_means (default TRUE), use_math_notation (default FALSE),
 output_format ("bullet" or "prose"), original_df, label_mapping, and policy value options.}
 }
 \value{
-A single character string containing the combined markdown output.
+A single character string containing the combined markdown output. When
+  `return_as_list = TRUE`, returns a list with the full report, brief summary,
+  per-model sections, policy value explanation, and `model_depths`/`depth_map`.
 }
 \description{
 This function now accepts a vector of model names to process and produces
 a single combined output. The common description is printed once at the top,
 followed by each model's specific findings. You can now control whether to
-interpret the depth-1 or depth-2 tree via the `max_depth` argument.
+interpret depth-1 or depth-2 trees via the `max_depth` argument, or supply
+per-model depth choices via `depths_by_model`.
 }

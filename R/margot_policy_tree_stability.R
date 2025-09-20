@@ -40,6 +40,7 @@
 #' @param label_mapping Named character vector for converting variable names to readable labels.
 #' @param return_consensus_trees Logical. Return fitted consensus trees (default TRUE).
 #' @param metaseed Integer. Master seed for reproducibility (default 12345).
+#' @param parrallel Deprecated misspelling of `parallel`; retained for backwards compatibility.
 #' @param parallel Logical. Use parallel processing (default FALSE).
 #' @param n_cores Integer. Number of cores for parallel processing.
 #' @param verbose Logical. Print progress messages (default TRUE).
@@ -49,6 +50,17 @@
 #'   computation, which is particularly beneficial for stability analysis. Falls
 #'   back to policytree if fastpolicytree is not installed.
 #' @param n_bootstrap Deprecated. Use n_iterations instead.
+#' @param compute_policy_values Logical. If TRUE, compute bootstrap policy-value tests for
+#'   each consensus tree and store results in `policy_value_depth_*` slots (default FALSE).
+#' @param policy_value_R Integer ≥ 1. Number of bootstrap replicates for policy values when
+#'   `compute_policy_values = TRUE` (default 499).
+#' @param policy_value_seed Optional integer seed for policy-value bootstraps. Use NULL to
+#'   inherit the ambient RNG state.
+#' @param policy_value_baseline Contrast baseline for stored policy values when
+#'   `compute_policy_values = TRUE`. One of "control_all" (default) or "treat_all".
+#' @param future_globals_max_size Maximum size (in bytes) of globals that can be exported to
+#'   parallel workers when `parallel = TRUE`. Defaults to 20 GiB. Increase this if large model
+#'   objects trigger the `future.globals.maxSize` guard.
 #'
 #' @return Object of class "margot_stability_policy_tree" containing:
 #' \itemize{
@@ -65,6 +77,11 @@
 #'   \item Accumulates statistics without storing all trees
 #'   \item Reconstructs single consensus trees for compatibility
 #' }
+#'
+#' When `compute_policy_values = TRUE`, each consensus tree is also evaluated
+#' against the specified baseline and bootstrap policy-value estimates are stored
+#' in `policy_value_depth_1` / `policy_value_depth_2`. This allows downstream
+#' reporters to reuse consistent estimates without rerunning the bootstrap.
 #'
 #' By default, the function varies random seeds to create different train/test splits
 #' for each iteration. This assesses the stability of the policy tree structure
@@ -233,6 +250,7 @@ margot_policy_tree_stability <- function(
     label_mapping = NULL,
     return_consensus_trees = TRUE,
     metaseed = 12345,
+    parrallel = NULL,
     parallel = FALSE,
     n_cores = NULL,
     verbose = TRUE,
@@ -242,9 +260,9 @@ margot_policy_tree_stability <- function(
     compute_policy_values = FALSE,
     policy_value_R = 499L,
     policy_value_seed = 42L,
-    policy_value_baseline = c("treat_all", "control_all")
+    policy_value_baseline = c("control_all", "treat_all"),
+    future_globals_max_size = 20 * 1024^3
     ) {
-  policy_value_baseline <- match.arg(policy_value_baseline)
   # handle deprecated n_bootstrap parameter
   if (!is.null(n_bootstrap)) {
     if (!missing(n_iterations) && n_iterations != 300) {
@@ -254,6 +272,39 @@ margot_policy_tree_stability <- function(
       "Parameter 'n_bootstrap' is deprecated. Please use 'n_iterations' instead."
     )
     n_iterations <- n_bootstrap
+  }
+
+  # backwards-compatible alias for misspelled argument
+  if (!is.null(parrallel)) {
+    cli::cli_alert_warning(
+      "Argument 'parrallel' is deprecated; use 'parallel' instead."
+    )
+    parallel <- isTRUE(parrallel)
+  }
+
+  policy_value_baseline <- match.arg(policy_value_baseline)
+  policy_value_R <- as.integer(policy_value_R)
+  if (is.na(policy_value_R) || policy_value_R < 1L) {
+    stop("policy_value_R must be a positive integer")
+  }
+  if (!is.null(policy_value_seed)) {
+    policy_value_seed <- as.integer(policy_value_seed)
+  }
+
+  if (!is.null(future_globals_max_size)) {
+    future_globals_max_size <- as.numeric(future_globals_max_size)
+    if (is.na(future_globals_max_size) || future_globals_max_size <= 0) {
+      stop("future_globals_max_size must be a positive number of bytes or NULL")
+    }
+  }
+
+  if (isTRUE(compute_policy_values) && !isTRUE(return_consensus_trees)) {
+    if (verbose) {
+      cli::cli_alert_warning(
+        "compute_policy_values = TRUE requires return_consensus_trees = TRUE; enabling consensus tree reconstruction."
+      )
+    }
+    return_consensus_trees <- TRUE
   }
 
   # validate inputs
@@ -375,6 +426,11 @@ margot_policy_tree_stability <- function(
       train_proportions = if (vary_train_proportion) train_proportions else train_proportion,
       consensus_threshold = consensus_threshold,
       tree_method = actual_tree_method,
+      compute_policy_values = compute_policy_values,
+      policy_value_R = policy_value_R,
+      policy_value_seed = policy_value_seed,
+      policy_value_baseline = policy_value_baseline,
+      future_globals_max_size = future_globals_max_size,
       timestamp = Sys.time(),
       seeds_used = all_seeds
     ),
@@ -387,14 +443,16 @@ margot_policy_tree_stability <- function(
     W = model_results$W
   )
 
-  # process each model
-  for (model_name in model_names) {
+  # process each model (possibly in parallel across models)
+  run_one_model <- function(model_name) {
+    # Avoid oversubscription inside workers
+    if (requireNamespace("RhpcBLASctl", quietly = TRUE)) {
+      try(RhpcBLASctl::blas_set_num_threads(1), silent = TRUE)
+    }
+    Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1", MKL_NUM_THREADS = "1")
     if (verbose) cli::cli_h2("Processing {model_name}")
-
     model_result <- model_results$results[[model_name]]
-
-    # run stability analysis for this model
-    stability_result <- stability_single_model(
+    res <- stability_single_model(
       model_result = model_result,
       model_name = model_name,
       covariates = covariates,
@@ -418,8 +476,36 @@ margot_policy_tree_stability <- function(
       policy_value_seed = policy_value_seed,
       policy_value_baseline = policy_value_baseline
     )
+    list(name = model_name, result = res)
+  }
 
-    output$results[[model_name]] <- stability_result
+  use_parallel <- isTRUE(parallel) && length(model_names) >= 3 && (n_iterations >= 200)
+  results_list <- list()
+  if (use_parallel && requireNamespace("future", quietly = TRUE) && requireNamespace("future.apply", quietly = TRUE)) {
+    # configure workers
+    nc <- if (!is.null(n_cores)) as.integer(n_cores) else max(1L, parallel::detectCores(logical = TRUE) - 1L)
+    if (verbose) cli::cli_alert_info("Running across models in parallel ({nc} workers)")
+    old_plan <- NULL
+    old_future_size <- getOption("future.globals.maxSize")
+    try({ old_plan <- future::plan() }, silent = TRUE)
+    future::plan(future::multisession, workers = nc)
+    if (!is.null(future_globals_max_size)) {
+      options(future.globals.maxSize = future_globals_max_size)
+    }
+    on.exit({
+      if (!is.null(old_plan)) future::plan(old_plan) else future::plan(future::sequential)
+      options(future.globals.maxSize = old_future_size)
+    }, add = TRUE)
+    results_list <- future.apply::future_lapply(model_names, run_one_model, future.seed = seed)
+  } else {
+    if (isTRUE(parallel) && !use_parallel && verbose) {
+      cli::cli_alert_info("Parallel disabled (small job); running sequentially")
+    }
+    results_list <- lapply(model_names, run_one_model)
+  }
+  # assemble
+  for (el in results_list) {
+    output$results[[el$name]] <- el$result
   }
 
   # compute summary metrics across all models
@@ -470,11 +556,10 @@ stability_single_model <- function(
     verbose,
     seed,
     tree_method,
-    compute_policy_values = FALSE,
-    policy_value_R = 499L,
-    policy_value_seed = 42L,
-    policy_value_baseline = c("treat_all", "control_all")) {
-  policy_value_baseline <- match.arg(policy_value_baseline)
+    compute_policy_values,
+    policy_value_R,
+    policy_value_seed,
+    policy_value_baseline) {
   # get DR scores (prefer original; flipped is for reporting)
   dr_scores <- model_result$dr_scores
   if (is.null(dr_scores)) {
@@ -650,19 +735,57 @@ stability_single_model <- function(
     )
   }
 
-  # optionally compute policy-value tests for available depths
   if (isTRUE(compute_policy_values)) {
-    if (!is.null(output$policy_tree_depth_1)) {
-      output$policy_value_depth_1 <- margot_compute_policy_value(
-        output, depth = 1L, R = policy_value_R, seed = policy_value_seed,
-        baseline = policy_value_baseline
-      )
-    }
-    if (!is.null(output$policy_tree_depth_2)) {
-      output$policy_value_depth_2 <- margot_compute_policy_value(
-        output, depth = 2L, R = policy_value_R, seed = policy_value_seed,
-        baseline = policy_value_baseline
-      )
+    available_depths <- intersect(depths, c(1L, 2L))
+    available_depths <- available_depths[vapply(available_depths, function(d) {
+      !is.null(output[[paste0("policy_tree_depth_", d)]])
+    }, logical(1))]
+
+    if (length(available_depths)) {
+      compute_pv <- NULL
+      if (exists("margot_compute_policy_value", mode = "function")) {
+        compute_pv <- margot_compute_policy_value
+      } else {
+        compute_pv <- tryCatch(
+          getFromNamespace("margot_compute_policy_value", "margot"),
+          error = function(e) NULL
+        )
+      }
+      if (is.null(compute_pv)) {
+        compute_pv <- .compute_policy_value_internal
+      }
+
+      for (idx in seq_along(available_depths)) {
+        d <- available_depths[idx]
+        seed_use <- if (is.null(policy_value_seed)) NULL else policy_value_seed + (idx - 1L)
+        pv_res <- tryCatch(
+          compute_pv(
+            output,
+            depth = d,
+            R = policy_value_R,
+            seed = seed_use,
+            baseline = policy_value_baseline
+          ),
+          error = function(e) NULL
+        )
+
+        if (!is.null(pv_res) && is.list(pv_res)) {
+          if (is.null(pv_res$p.value) || is.na(pv_res$p.value)) {
+            if (!is.null(pv_res$std.err) && is.finite(pv_res$std.err) && pv_res$std.err > 0) {
+              pv_res$p.value <- 2 * stats::pnorm(-abs(pv_res$estimate / pv_res$std.err))
+            } else {
+              pv_res$p.value <- NA_real_
+            }
+          }
+          pv_res$baseline <- policy_value_baseline
+          pv_res$contrast <- if (policy_value_baseline == "control_all") {
+            "policy - control_all"
+          } else {
+            "policy - treat_all"
+          }
+          output[[paste0("policy_value_depth_", d)]] <- pv_res
+        }
+      }
     }
   }
 
@@ -882,6 +1005,106 @@ summary.margot_stability_policy_tree <- function(object, ...) {
   )
 
   invisible(summary_obj)
+}
+
+#' Compute policy value using DR scores for consensus trees (internal helper)
+#' @keywords internal
+.compute_policy_value_internal <- function(model,
+                                           depth = 2L,
+                                           R = 499L,
+                                           seed = NULL,
+                                           baseline = c("control_all", "treat_all")) {
+  baseline <- match.arg(baseline)
+  if (!is.null(seed)) set.seed(seed)
+
+  tag <- paste0("policy_tree_depth_", depth)
+  pol <- model[[tag]]
+  if (is.null(pol)) return(NULL)
+
+  dr <- model$dr_scores
+  if (is.null(dr)) dr <- model$dr_scores_flipped
+  if (is.null(dr)) return(NULL)
+
+  pd <- model$plot_data
+  full <- NULL
+  if (!is.null(pd)) {
+    if (!is.null(pd$X_test_full)) {
+      full <- pd$X_test_full
+    } else if (!is.null(pd$X_test)) {
+      full <- pd$X_test
+    }
+  }
+  if (is.null(full)) {
+    return(NULL)
+  }
+
+  full <- as.data.frame(full)
+  if (!all(pol$columns %in% colnames(full))) {
+    missing_cols <- setdiff(pol$columns, colnames(full))
+    stop(
+      "Evaluation data missing columns required by the consensus tree: ",
+      paste(missing_cols, collapse = ", ")
+    )
+  }
+
+  X_full <- as.data.frame(full[, pol$columns, drop = FALSE])
+  test_idx <- suppressWarnings(as.integer(rownames(full)))
+  drm <- as.matrix(dr)
+  if (!is.null(test_idx) && all(!is.na(test_idx)) &&
+      length(test_idx) == nrow(full) && max(test_idx) <= nrow(drm)) {
+    drm_test <- drm[test_idx, , drop = FALSE]
+  } else {
+    take <- seq_len(min(nrow(full), nrow(drm)))
+    drm_test <- drm[take, , drop = FALSE]
+  }
+
+  keep <- stats::complete.cases(X_full)
+  if (!any(keep)) return(NULL)
+  Xk <- X_full[keep, , drop = FALSE]
+  drk <- drm_test[keep, , drop = FALSE]
+  n <- nrow(Xk)
+  if (n <= 1L) return(NULL)
+
+  a_hat_full <- tryCatch(stats::predict(pol, X_full), error = function(e) NULL)
+  if (is.null(a_hat_full)) return(NULL)
+  if (is.matrix(a_hat_full)) a_hat_full <- a_hat_full[, 1]
+  a_hat <- as.integer(a_hat_full[keep])
+
+  pick <- function(a, mat) {
+    if (length(a) && min(a, na.rm = TRUE) == 0L) a <- a + 1L
+    mat[cbind(seq_along(a), a)]
+  }
+
+  treat_mean <- mean(drk[, 2])
+  control_mean <- mean(drk[, 1])
+  base_val <- if (baseline == "control_all") control_mean else treat_mean
+  pv_hat <- mean(pick(a_hat, drk)) - base_val
+
+  if (!is.null(seed)) set.seed(seed)
+  reps <- replicate(R, {
+    idx <- sample.int(n, n, TRUE)
+    a_bs <- tryCatch(stats::predict(pol, Xk[idx, , drop = FALSE]), error = function(e) NULL)
+    if (is.null(a_bs)) return(NA_real_)
+    if (is.matrix(a_bs)) a_bs <- a_bs[, 1]
+    mean(pick(a_bs, drk[idx, , drop = FALSE])) - base_val
+  })
+  reps <- reps[is.finite(reps)]
+  se <- if (length(reps)) stats::sd(reps) else NA_real_
+  p_val <- if (!is.na(se) && is.finite(se) && se > 0) {
+    2 * stats::pnorm(-abs(pv_hat / se))
+  } else {
+    NA_real_
+  }
+
+  structure(
+    list(
+      estimate = pv_hat,
+      std.err = se,
+      p.value = p_val,
+      n_eval = n
+    ),
+    class = "policy_value_test"
+  )
 }
 
 #' Print method for stability policy tree results
@@ -1555,46 +1778,7 @@ margot_report_consensus_policy_value <- function(object,
   }
   # local fallback implementation if helper not found
   if (is.null(compute_pv)) {
-    compute_pv <- function(model, depth = 2L, R = 499L, seed = NULL, baseline = c("treat_all", "control_all")) {
-      baseline <- match.arg(baseline)
-      if (!is.null(seed)) set.seed(seed)
-
-      tag <- paste0("policy_tree_depth_", depth)
-      pol <- model[[tag]]
-      if (is.null(pol)) stop("no ", tag, " present for model")
-
-      dr <- model$dr_scores
-      full <- if (!is.null(model$plot_data$X_test_full)) model$plot_data$X_test_full else model$plot_data$X_test
-      if (is.null(full)) stop("plot_data with X_test_full/X_test missing; cannot evaluate policy value")
-      X <- full[, pol$columns, drop = FALSE]
-      keep <- stats::complete.cases(X)
-      X <- X[keep, , drop = FALSE]
-      dr <- dr[keep, , drop = FALSE]
-      n <- nrow(X)
-      if (n <= 1L) stop("insufficient evaluation data for policy value")
-
-      pick <- function(a, mat) {
-        if (min(a) == 0L) a <- a + 1L
-        mat[cbind(seq_along(a), a)]
-      }
-
-      a_hat <- predict(pol, X)
-      # Baselines: treat-all = mean(dr[,2]); control-all = mean(dr[,1])
-      treat_mean <- mean(dr[, 2])
-      control_mean <- mean(dr[, 1])
-      base_val <- if (baseline == "treat_all") treat_mean else control_mean
-      pv_hat <- mean(pick(a_hat, dr)) - base_val
-
-      reps <- replicate(R, {
-        idx <- sample.int(n, n, TRUE)
-        a_bs <- predict(pol, X[idx, , drop = FALSE])
-        mean(pick(a_bs, dr[idx, , drop = FALSE])) - base_val
-      })
-
-      se <- stats::sd(reps)
-      p <- 2 * stats::pnorm(-abs(pv_hat / se))
-      structure(list(estimate = pv_hat, std.err = se, p.value = p, n_eval = n), class = "policy_value_test")
-    }
+    compute_pv <- .compute_policy_value_internal
   }
 
   for (mn in model_names) {
@@ -2098,6 +2282,8 @@ compute_policy_value_summary <- function(results) {
         out[[length(out) + 1L]] <- data.frame(
           model = nm,
           depth = d,
+          baseline = pv$baseline %||% NA_character_,
+          contrast = pv$contrast %||% NA_character_,
           estimate = est,
           std_err = se,
           ci_lo = lo,

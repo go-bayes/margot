@@ -20,6 +20,7 @@ margot_policy_tree_stability(
   label_mapping = NULL,
   return_consensus_trees = TRUE,
   metaseed = 12345,
+  parrallel = NULL,
   parallel = FALSE,
   n_cores = NULL,
   verbose = TRUE,
@@ -29,7 +30,8 @@ margot_policy_tree_stability(
   compute_policy_values = FALSE,
   policy_value_R = 499L,
   policy_value_seed = 42L,
-  policy_value_baseline = c("treat_all", "control_all")
+  policy_value_baseline = c("control_all", "treat_all"),
+  future_globals_max_size = 20 * 1024^3
 )
 }
 \arguments{
@@ -71,6 +73,8 @@ vary_train_proportion = TRUE (default c(0.4, 0.5, 0.6, 0.7)).}
 
 \item{metaseed}{Integer. Master seed for reproducibility (default 12345).}
 
+\item{parrallel}{Deprecated misspelling of `parallel`; retained for backwards compatibility.}
+
 \item{parallel}{Logical. Use parallel processing (default FALSE).}
 
 \item{n_cores}{Integer. Number of cores for parallel processing.}
@@ -85,6 +89,22 @@ computation, which is particularly beneficial for stability analysis. Falls
 back to policytree if fastpolicytree is not installed.}
 
 \item{n_bootstrap}{Deprecated. Use n_iterations instead.}
+
+\item{compute_policy_values}{Logical. If TRUE, compute bootstrap policy-value tests for
+each consensus tree and store results in `policy_value_depth_*` slots (default FALSE).}
+
+\item{policy_value_R}{Integer ≥ 1. Number of bootstrap replicates for policy values when
+`compute_policy_values = TRUE` (default 499).}
+
+\item{policy_value_seed}{Optional integer seed for policy-value bootstraps. Use NULL to
+inherit the ambient RNG state.}
+
+\item{policy_value_baseline}{Contrast baseline for stored policy values when
+`compute_policy_values = TRUE`. One of "control_all" (default) or "treat_all".}
+
+\item{future_globals_max_size}{Maximum size (in bytes) of globals that can be exported to
+parallel workers when `parallel = TRUE`. Defaults to 20 GiB. Increase this if large model
+objects trigger the `future.globals.maxSize` guard.}
 }
 \value{
 Object of class "margot_stability_policy_tree" containing:
@@ -109,6 +129,11 @@ The function uses a memory-efficient approach:
   \item Accumulates statistics without storing all trees
   \item Reconstructs single consensus trees for compatibility
 }
+
+When `compute_policy_values = TRUE`, each consensus tree is also evaluated
+against the specified baseline and bootstrap policy-value estimates are stored
+in `policy_value_depth_1` / `policy_value_depth_2`. This allows downstream
+reporters to reuse consistent estimates without rerunning the bootstrap.
 
 By default, the function varies random seeds to create different train/test splits
 for each iteration. This assesses the stability of the policy tree structure

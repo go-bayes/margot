@@ -15,7 +15,7 @@ handle large datasets."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.239</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.240</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,7 @@ handle large datasets.</p>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  return_consensus_trees <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  metaseed <span class="op">=</span> <span class="fl">12345</span>,</span>
+<span>  parrallel <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -76,7 +77,8 @@ handle large datasets.</p>
 <span>  compute_policy_values <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  policy_value_R <span class="op">=</span> <span class="fl">499L</span>,</span>
 <span>  policy_value_seed <span class="op">=</span> <span class="fl">42L</span>,</span>
-<span>  policy_value_baseline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"treat_all"</span>, <span class="st">"control_all"</span><span class="op">)</span></span>
+<span>  policy_value_baseline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"control_all"</span>, <span class="st">"treat_all"</span><span class="op">)</span>,</span>
+<span>  future_globals_max_size <span class="op">=</span> <span class="fl">20</span> <span class="op">*</span> <span class="fl">1024</span><span class="op">^</span><span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -152,6 +154,10 @@ vary_train_proportion = TRUE (default c(0.4, 0.5, 0.6, 0.7)).</p></dd>
 <dd><p>Integer. Master seed for reproducibility (default 12345).</p></dd>
 
 
+<dt id="arg-parrallel">parrallel<a class="anchor" aria-label="anchor" href="#arg-parrallel"></a></dt>
+<dd><p>Deprecated misspelling of `parallel`; retained for backwards compatibility.</p></dd>
+
+
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
 <dd><p>Logical. Use parallel processing (default FALSE).</p></dd>
 
@@ -178,6 +184,32 @@ back to policytree if fastpolicytree is not installed.</p></dd>
 <dt id="arg-n-bootstrap">n_bootstrap<a class="anchor" aria-label="anchor" href="#arg-n-bootstrap"></a></dt>
 <dd><p>Deprecated. Use n_iterations instead.</p></dd>
 
+
+<dt id="arg-compute-policy-values">compute_policy_values<a class="anchor" aria-label="anchor" href="#arg-compute-policy-values"></a></dt>
+<dd><p>Logical. If TRUE, compute bootstrap policy-value tests for
+each consensus tree and store results in `policy_value_depth_*` slots (default FALSE).</p></dd>
+
+
+<dt id="arg-policy-value-r">policy_value_R<a class="anchor" aria-label="anchor" href="#arg-policy-value-r"></a></dt>
+<dd><p>Integer ≥ 1. Number of bootstrap replicates for policy values when
+`compute_policy_values = TRUE` (default 499).</p></dd>
+
+
+<dt id="arg-policy-value-seed">policy_value_seed<a class="anchor" aria-label="anchor" href="#arg-policy-value-seed"></a></dt>
+<dd><p>Optional integer seed for policy-value bootstraps. Use NULL to
+inherit the ambient RNG state.</p></dd>
+
+
+<dt id="arg-policy-value-baseline">policy_value_baseline<a class="anchor" aria-label="anchor" href="#arg-policy-value-baseline"></a></dt>
+<dd><p>Contrast baseline for stored policy values when
+`compute_policy_values = TRUE`. One of "control_all" (default) or "treat_all".</p></dd>
+
+
+<dt id="arg-future-globals-max-size">future_globals_max_size<a class="anchor" aria-label="anchor" href="#arg-future-globals-max-size"></a></dt>
+<dd><p>Maximum size (in bytes) of globals that can be exported to
+parallel workers when `parallel = TRUE`. Defaults to 20 GiB. Increase this if large model
+objects trigger the `future.globals.maxSize` guard.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -191,7 +223,11 @@ back to policytree if fastpolicytree is not installed.</p></dd>
 <li><p>Extracts only essential split information</p></li>
 <li><p>Accumulates statistics without storing all trees</p></li>
 <li><p>Reconstructs single consensus trees for compatibility</p></li>
-</ul><p>By default, the function varies random seeds to create different train/test splits
+</ul><p>When `compute_policy_values = TRUE`, each consensus tree is also evaluated
+against the specified baseline and bootstrap policy-value estimates are stored
+in `policy_value_depth_1` / `policy_value_depth_2`. This allows downstream
+reporters to reuse consistent estimates without rerunning the bootstrap.</p>
+<p>By default, the function varies random seeds to create different train/test splits
 for each iteration. This assesses the stability of the policy tree structure
 without the computational overhead and statistical assumptions of bootstrap
 resampling. True bootstrap resampling can be enabled with vary_type = "bootstrap".</p>

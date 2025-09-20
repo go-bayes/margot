@@ -3,11 +3,14 @@
 #' This function now accepts a vector of model names to process and produces
 #' a single combined output. The common description is printed once at the top,
 #' followed by each model's specific findings. You can now control whether to
-#' interpret the depth-1 or depth-2 tree via the `max_depth` argument.
+#' interpret depth-1 or depth-2 trees via the `max_depth` argument, or supply
+#' per-model depth choices via `depths_by_model`.
 #'
 #' @param models A list containing the results from multi-arm causal forest models.
 #' @param model_names A character vector of model names to interpret. If NULL, all models are processed.
-#' @param max_depth Integer, 1 or 2; which saved policy tree to interpret (default 2).
+#' @param max_depth Integer, 1 or 2; default depth used when `depths_by_model` is NULL (default 2).
+#' @param depths_by_model Optional named vector/list mapping models (with or without `model_` prefix) to
+#'   depth 1 or 2; overrides `max_depth` on a per-model basis.
 #' @param save_path The path where the combined interpretation will be saved. If NULL, nothing is saved.
 #' @param prefix An optional prefix for the filename.
 #' @param include_timestamp Logical; whether to include a timestamp in the filename (if desired).
@@ -24,11 +27,14 @@
 #'   model (coverage treated and average uplift among treated) and optionally save it.
 #' @param brief_save_to Optional path to save the brief treated-only summary as text.
 #'
-#' @return A single character string containing the combined markdown output.
+#' @return A single character string containing the combined markdown output. When
+#'   `return_as_list = TRUE`, returns a list with the full report, brief summary,
+#'   per-model sections, policy value explanation, and `model_depths`/`depth_map`.
 #' @export
 margot_interpret_policy_batch <- function(models,
                                           model_names = NULL,
                                           max_depth = 2L,
+                                          depths_by_model = NULL,
                                           save_path = NULL,
                                           prefix = NULL,
                                           include_timestamp = FALSE,
@@ -41,7 +47,6 @@ margot_interpret_policy_batch <- function(models,
                                           return_as_list = FALSE,
                                           ...) {
   report_policy_value <- match.arg(report_policy_value)
-  cli::cli_alert_info("Starting batch processing of policy tree interpretations (depth {max_depth})")
 
   # If model_names is not supplied, process all models
   if (is.null(model_names) || length(model_names) == 0) {
@@ -54,6 +59,35 @@ margot_interpret_policy_batch <- function(models,
     cli::cli_alert_success("Created output directory: {save_path}")
   }
 
+  # resolve per-model depths
+  if (!is.null(depths_by_model)) {
+    if (is.null(names(depths_by_model))) {
+      stop("depths_by_model must be a named vector or list")
+    }
+    provided <- ifelse(grepl('^model_', names(depths_by_model)), names(depths_by_model), paste0('model_', names(depths_by_model)))
+    missing <- setdiff(provided, model_names)
+    if (length(missing)) {
+      stop("depths_by_model references unknown models: ", paste(missing, collapse = ", "))
+    }
+    model_depths <- setNames(rep(as.integer(max_depth), length(model_names)), model_names)
+    model_depths[provided] <- as.integer(depths_by_model)
+  } else {
+    model_depths <- setNames(rep(as.integer(max_depth), length(model_names)), model_names)
+  }
+  if (!all(model_depths %in% c(1L, 2L))) {
+    stop("depth values must be 1 or 2")
+  }
+  unique_depths <- sort(unique(model_depths))
+
+  dots <- list(...)
+  label_mapping <- if (!is.null(dots$label_mapping)) dots$label_mapping else NULL
+
+  if (length(unique_depths) == 1) {
+    cli::cli_alert_info("Starting batch processing of policy tree interpretations (depth {unique_depths})")
+  } else {
+    cli::cli_alert_info("Starting batch processing of policy tree interpretations (mixed depths)")
+  }
+
   interpretations_list <- vector("list", length(model_names))
   names(interpretations_list) <- model_names
 
@@ -63,14 +97,15 @@ margot_interpret_policy_batch <- function(models,
   )
 
   for (model_name in model_names) {
-    cli::cli_alert_info("Processing model: {model_name}")
+    depth_cur <- model_depths[[model_name]]
+    cli::cli_alert_info("Processing model: {model_name} (depth {depth_cur})")
     tryCatch(
       {
         ## pass max_depth plus any other args on to the interpreter
         interpretation <- margot_interpret_policy_tree(
           model       = models,
           model_name  = model_name,
-          max_depth   = max_depth,
+          max_depth   = depth_cur,
           report_policy_value = report_policy_value,
           policy_value_R = policy_value_R,
           policy_value_seed = policy_value_seed,
@@ -78,7 +113,7 @@ margot_interpret_policy_batch <- function(models,
           ...
         )
         interpretations_list[[model_name]] <- interpretation
-        cli::cli_alert_success("Successfully processed model: {model_name}")
+        cli::cli_alert_success("Successfully processed model: {model_name} (depth {depth_cur})")
       },
       error = function(e) {
         cli::cli_alert_danger("Error processing model {model_name}: {e$message}")
@@ -87,7 +122,11 @@ margot_interpret_policy_batch <- function(models,
     cli::cli_progress_update()
   }
   cli::cli_progress_done()
-  cli::cli_alert_success("Batch processing completed (depth {max_depth})")
+  if (length(unique_depths) == 1) {
+    cli::cli_alert_success("Batch processing completed (depth {unique_depths})")
+  } else {
+    cli::cli_alert_success("Batch processing completed (mixed depths)")
+  }
 
   # Filter out NULL interpretations
   valid_interpretations <- Filter(Negate(is.null), interpretations_list)
@@ -100,11 +139,10 @@ margot_interpret_policy_batch <- function(models,
   # Build optional treated-only brief summary
   brief_lines <- character()
   if (isTRUE(brief)) {
-    dots <- list(...)
-    label_mapping <- if (!is.null(dots$label_mapping)) dots$label_mapping else NULL
     for (mn in model_names) {
       m <- models$results[[mn]]
-      tag <- paste0("policy_tree_depth_", max_depth)
+      depth_cur <- model_depths[[mn]]
+      tag <- paste0("policy_tree_depth_", depth_cur)
       pol <- m[[tag]]
       if (is.null(pol)) next
       pd <- m$plot_data
@@ -162,7 +200,15 @@ margot_interpret_policy_batch <- function(models,
   # Remove "Policy tree analysis results:" from common_intro if present
   common_intro <- gsub("Policy tree analysis results:\n\n", "", common_intro, fixed = TRUE)
 
-  header <- paste0("### Policy Tree Interpretations (depth ", max_depth, ")\n\n")
+  if (length(unique_depths) == 1) {
+    header <- paste0("### Policy Tree Interpretations (depth ", unique_depths, ")\n\n")
+  } else {
+    depth_summary <- paste(sprintf("%s → %s",
+      if (!is.null(label_mapping)) vapply(model_names, function(mn) .apply_label_stability(gsub('^model_', '', mn), label_mapping), character(1)) else gsub('^model_', '', model_names),
+      model_depths[model_names]
+    ), collapse = ", ")
+    header <- paste0("### Policy Tree Interpretations (mixed depths)\n\nDepth assignments: ", depth_summary, "\n\n")
+  }
   if (isTRUE(brief) && length(brief_lines)) {
     brief_block <- paste0("#### Treated-only Summary\n\n", paste(brief_lines, collapse = "\n"), "\n\n")
   } else {
@@ -181,7 +227,9 @@ margot_interpret_policy_batch <- function(models,
       report_full = final_output,
       report_brief = if (length(brief_lines)) brief_lines else character(0),
       by_model = valid_interpretations,
-      policy_value_explanation = policy_value_explanation
+      policy_value_explanation = policy_value_explanation,
+      model_depths = model_depths,
+      depth_map = model_depths
     ))
   } else {
     return(final_output)

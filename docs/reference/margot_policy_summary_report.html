@@ -3,11 +3,13 @@
 (typically from `margot_policy_tree_stability()`). The report focuses on:
 - Policy value vs control-all and vs treat-all (95
 - Average uplift among treated (95
-- Optional stability highlights (consensus strength and top split variable)"><meta property="og:description" content="Generates a concise textual summary and a markdown table for policy tree results
+- Optional stability highlights (consensus strength and top split variable)
+- Optional split breakdown: per-branch selective uplifts and contributions"><meta property="og:description" content="Generates a concise textual summary and a markdown table for policy tree results
 (typically from `margot_policy_tree_stability()`). The report focuses on:
 - Policy value vs control-all and vs treat-all (95
 - Average uplift among treated (95
-- Optional stability highlights (consensus strength and top split variable)"></head><body>
+- Optional stability highlights (consensus strength and top split variable)
+- Optional split breakdown: per-branch selective uplifts and contributions"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +17,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.239</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.240</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +48,8 @@
 (typically from `margot_policy_tree_stability()`). The report focuses on:
 - Policy value vs control-all and vs treat-all (95<!-- % CIs) -->
 - Average uplift among treated (95<!-- % CI) and coverage treated (%) -->
-- Optional stability highlights (consensus strength and top split variable)</p>
+- Optional stability highlights (consensus strength and top split variable)
+- Optional split breakdown: per-branch selective uplifts and contributions</p>
     </div>
 
     <div class="section level2">
@@ -55,6 +58,7 @@
 <span>  <span class="va">object</span>,</span>
 <span>  model_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  depth <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>  depths_by_model <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  R <span class="op">=</span> <span class="fl">499L</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -71,7 +75,22 @@
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  group_by_sign <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  compact <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  render_markdown <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  render_markdown <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  include_split_breakdown <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"branch"</span>, <span class="st">"leaf"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  split_compact <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  contrib_scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rel_abs"</span>, <span class="st">"rel_signed"</span>, <span class="st">"abs"</span><span class="op">)</span>,</span>
+<span>  show_pvt <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  show_ci_compact <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  min_action_pct <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  split_drop_zero <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  split_top_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  se_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bootstrap"</span>, <span class="st">"plugin"</span><span class="op">)</span>,</span>
+<span>  source_models <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  audit_with_policytree <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  auto_recommend <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  dominance_threshold <span class="op">=</span> <span class="fl">0.6</span>,</span>
+<span>  strict_branch <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  restricted_scope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"leaf"</span>, <span class="st">"branch"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -90,6 +109,12 @@
 
 <dt id="arg-depth">depth<a class="anchor" aria-label="anchor" href="#arg-depth"></a></dt>
 <dd><p>Integer; policy tree depth to summarize (default 2).</p></dd>
+
+
+<dt id="arg-depths-by-model">depths_by_model<a class="anchor" aria-label="anchor" href="#arg-depths-by-model"></a></dt>
+<dd><p>Optional named vector/list mapping models (with or without `model_`
+prefix) to depth 1 or 2; overrides `depth` on a per-model basis so mixed-depth reports can
+be generated.</p></dd>
 
 
 <dt id="arg-r">R<a class="anchor" aria-label="anchor" href="#arg-r"></a></dt>
@@ -119,6 +144,85 @@
 <dt id="arg-table-type">table_type<a class="anchor" aria-label="anchor" href="#arg-table-type"></a></dt>
 <dd><p>Character; one of "full" (default) or "treated_only" for condensed table.</p></dd>
 
+
+<dt id="arg-include-split-breakdown">include_split_breakdown<a class="anchor" aria-label="anchor" href="#arg-include-split-breakdown"></a></dt>
+<dd><p>Character; one of "branch" (default), "leaf", or "none".
+Adds a compact per-split summary per model with action-conditional treated-only uplift(s)
+and contributions to policy value vs control-all and vs treat-all. Coherent by construction:
+we only report uplift among treated in treated subgroups and uplift among controlled in
+controlled subgroups.</p></dd>
+
+
+<dt id="arg-split-compact">split_compact<a class="anchor" aria-label="anchor" href="#arg-split-compact"></a></dt>
+<dd><p>Logical; if TRUE (default), builds compact split tables from
+`split_breakdown` with reduced columns.</p></dd>
+
+
+<dt id="arg-contrib-scale">contrib_scale<a class="anchor" aria-label="anchor" href="#arg-contrib-scale"></a></dt>
+<dd><p>Character; one of "rel_abs" (default, signed share of |PV|),
+"rel_signed" (share of signed PV), or "abs" (raw contribution values).</p></dd>
+
+
+<dt id="arg-show-pvt">show_pvt<a class="anchor" aria-label="anchor" href="#arg-show-pvt"></a></dt>
+<dd><p>Logical; include PV vs treat-all contribution column in compact tables (default FALSE).</p></dd>
+
+
+<dt id="arg-show-ci-compact">show_ci_compact<a class="anchor" aria-label="anchor" href="#arg-show-ci-compact"></a></dt>
+<dd><p>Logical; include CIs in compact tables (default TRUE).</p></dd>
+
+
+<dt id="arg-min-action-pct">min_action_pct<a class="anchor" aria-label="anchor" href="#arg-min-action-pct"></a></dt>
+<dd><p>Numeric (default 5); below this percent treated or controlled in a split,
+suppress the corresponding action-specific uplift (report as "—").</p></dd>
+
+
+<dt id="arg-split-drop-zero">split_drop_zero<a class="anchor" aria-label="anchor" href="#arg-split-drop-zero"></a></dt>
+<dd><p>Logical (default TRUE); drop split rows whose PV contributions are numerically
+zero for both baselines in the compact tables.</p></dd>
+
+
+<dt id="arg-split-top-only">split_top_only<a class="anchor" aria-label="anchor" href="#arg-split-top-only"></a></dt>
+<dd><p>Logical (default FALSE); when TRUE, retain only the top-contributing split per
+model in the compact tables (helpful for depth-1 trees where complementary branches are redundant).</p></dd>
+
+
+<dt id="arg-se-method">se_method<a class="anchor" aria-label="anchor" href="#arg-se-method"></a></dt>
+<dd><p>Character; one of "bootstrap" (default) or "plugin" for influence-function
+plug-in SEs based on per-unit DR contributions.</p></dd>
+
+
+<dt id="arg-source-models">source_models<a class="anchor" aria-label="anchor" href="#arg-source-models"></a></dt>
+<dd><p>Optional original model container (e.g., from `margot_causal_forest()`)
+if you wish to run external audits; not required for estimation.</p></dd>
+
+
+<dt id="arg-audit-with-policytree">audit_with_policytree<a class="anchor" aria-label="anchor" href="#arg-audit-with-policytree"></a></dt>
+<dd><p>Logical; if TRUE and `source_models` are available, performs a
+side-by-side audit using the original GRF predictions on the same test rows: (i) tau_hat-based
+policy values PVc = mean(1a=Treat×tau_hat), PVT = mean(1a=Control×(-tau_hat)); and
+(ii) conditional-means-based values using `conditional_means` if present. This helps validate
+that DR-based values agree with GRF-based alternatives on the same evaluation slice.</p></dd>
+
+
+<dt id="arg-auto-recommend">auto_recommend<a class="anchor" aria-label="anchor" href="#arg-auto-recommend"></a></dt>
+<dd><p>Logical; if TRUE, compute and report restricted-policy recommendations
+derived from dominant favorable split(s). Default FALSE.</p></dd>
+
+
+<dt id="arg-dominance-threshold">dominance_threshold<a class="anchor" aria-label="anchor" href="#arg-dominance-threshold"></a></dt>
+<dd><p>Numeric in (0,1); minimum share of |PV(control-all)| contribution to
+consider a split dominant (default 0.6).</p></dd>
+
+
+<dt id="arg-strict-branch">strict_branch<a class="anchor" aria-label="anchor" href="#arg-strict-branch"></a></dt>
+<dd><p>Logical; if TRUE, require positive branch-level treated-only uplift with
+CI lower bound &gt; 0 to consider a branch favorable (default FALSE).</p></dd>
+
+
+<dt id="arg-restricted-scope">restricted_scope<a class="anchor" aria-label="anchor" href="#arg-restricted-scope"></a></dt>
+<dd><p>Character; one of "leaf" (default) or "branch"; defines the granularity
+used to construct the restricted policy (treat inside selected branch/leaf; control elsewhere).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -128,6 +232,18 @@
   - `interpretation`: Concise sentence-level summary listing wins, caution, and uncertain models
   - `table_md`: Markdown table (character scalar) when `render_markdown = TRUE`
   - `table_df`: Data frame of policy value summary rows (title-case columns)
+  - `split_breakdown`: Named list mapping model id -&gt; data frame of split-level metrics
+  - `split_table_compact`: Named list mapping model id -&gt; compact split table (data frame)
+  - `split_table_compact_df`: Combined compact split table with `Outcome` column
+  - `split_table_compact_md`: Markdown rendering of combined compact table
+  - `method_overview`: Character string describing the estimation approach and identities
+  - `method_by_model`: Named list of per-model method blurbs (including n_eval, coverage, SE method)
+  - `policy_value_audit`: Optional named list of audit results when `audit_with_policytree = TRUE`
+  - `recommendations_by_model`: Optional per-model recommendation objects when `auto_recommend = TRUE`
+  - `recommendations_text`: Optional combined markdown text for recommendations
+  - `recommended_model_ids`: Character vector of model identifiers flagged for deployment
+  - `recommended_model_names`: Character vector of human-readable labels for the recommended models
+  - `practical_takeaways_text`: Optional high-level bullet summary of deployment guidance
   - `wins_model_ids`: Character vector of model identifiers where policy vs control-all is strictly positive (CI &gt; 0)
   - `wins_model_names`: Character vector of human-readable labels matching `wins_model_ids`
   - `neutral_model_ids`: Character vector of model identifiers with inconclusive policy vs control-all evidence (CI crosses 0)
@@ -135,7 +251,48 @@
   - `caution_model_ids`: Character vector of model identifiers where policy vs control-all is negative (CI &lt; 0)
   - `caution_model_names`: Character vector of human-readable labels matching `caution_model_ids`
   - `group_table`: Named list of grouped brief tables (data frames)
-  - `group_table_df`: Combined grouped table with a `Group` column</p>
+  - `group_table_df`: Combined grouped table with a `Group` column
+  - `model_depths`: Named integer vector giving the depth used for each model in the report
+  - `depth_map`: Convenience alias for `model_depths` (for passing to `depths_by_model`)
+  - `depth1_model_ids`: Character vector of model identifiers summarised at depth 1
+  - `depth1_model_names`: Character vector of human-readable labels for depth-1 models
+  - `depth2_model_ids`: Character vector of model identifiers summarised at depth 2
+  - `depth2_model_names`: Character vector of human-readable labels for depth-2 models
+  - `recommended_depth1_model_ids`: Recommended-for-deployment models evaluated at depth 1
+  - `recommended_depth1_model_names`: Human-readable labels for recommended depth-1 models
+  - `recommended_depth2_model_ids`: Recommended-for-deployment models evaluated at depth 2
+  - `recommended_depth2_model_names`: Human-readable labels for recommended depth-2 models</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Method (estimation and identities):
+- For each model and depth, we evaluate the consensus policy on the held-out test set
+  used to build `plot_data` (policytree test indices).
+- Let μ0(x), μ1(x) be conditional means E[Y(0)|X=x], E[Y(1)|X=x] estimated by
+  policytree/GRF. We use `double_robust_scores()` stored in `dr_scores` to obtain
+  per-unit estimates for μ0 and μ1 on the test rows, and we predict policy actions a(x)
+  from the consensus policy tree. We ensure all quantities are aligned to the same test
+  rows by mapping via rownames and a single complete-case mask over the policy columns.
+- Policy value contrasts are computed as sample averages (plugin DR estimators):
+    PV vs control-all  = mean( 1a(x)=Treat × (μ1(x) − μ0(x)) )
+    PV vs treat-all    = mean( 1a(x)=Control × (μ0(x) − μ1(x)) )
+- Treated-only metrics link to these via the identity:
+    Coverage = mean(1a(x)=Treat), Uplift_Treated = mean(μ1 − μ0 | a(x)=Treat)
+    PV vs control-all = Coverage × Uplift_Treated
+- Split contributions report the subgroup decomposition of these means over the first split
+  (or leaves), and sum exactly to the overall policy values.</p>
+<p>Standard errors:
+- `se_method = "bootstrap"` (default): bootstrap resampling of the test rows and
+  re-prediction of the policy actions to obtain SEs and CIs.
+- `se_method = "plugin"`: influence-function plug-in SEs via the sample variance of the
+  per-unit contributions (e.g., TreatMask × (μ1−μ0) for PV vs control-all); i.e.,
+  se = sd(contribution)/sqrt(n). This mimics the asymptotic SE used by policytree
+  for value estimators based on DR pseudo-outcomes when raw (Y, W) are not required.</p>
+<p>Automated recommendations (optional):
+- When `auto_recommend = TRUE`, the reporter identifies a dominant favorable split (by PV(control-all)
+  contribution share) and evaluates a restricted policy that treats only inside that split (keeps
+  the learned actions there; forces control elsewhere). It then compares full vs restricted policies
+  and emits a recommendation per model: deploy_full, deploy_restricted, caution, or do_not_deploy.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

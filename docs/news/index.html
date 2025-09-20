@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.239</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.240</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,11 +33,30 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.240" id="id_2025-09-19-margot-10240">[2025-09-19] margot 1.0.240<a class="anchor" aria-label="anchor" href="#id_2025-09-19-margot-10240"></a></h2>
+<div class="section level4">
+<h4 id="improvements-1-0-240">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-240"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code> adds <code>compute_policy_values</code> (with <code>policy_value_R</code>, <code>policy_value_seed</code>, <code>policy_value_baseline</code>) to pre-compute bootstrap policy gains and now recognises the legacy <code>parrallel</code> flag.</li>
+<li>
+<code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code> allows tuning <code>future.globals.maxSize</code> via <code>future_globals_max_size</code> (20 GiB default) so large stability jobs can run in parallel without hitting the future globals guard.</li>
+<li>Cached policy gains include baseline/contrast metadata for downstream reporters; internal fallback <code><a href="../reference/dot-compute_policy_value_internal.html">.compute_policy_value_internal()</a></code> keeps stand-alone scripts working.</li>
+<li>
+<code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code> adds a “Practical Takeaways” block, per-model depth overrides (<code>depths_by_model</code>), depth-specific model lists/maps, recommended id/name outputs by depth, and compact-table controls (<code>split_drop_zero</code>, <code>split_top_only</code>) while fixing the missing-object error.</li>
+<li>
+<code><a href="../reference/margot_policy_summary_compare_depths.html">margot_policy_summary_compare_depths()</a></code> is now exported and documented alongside the updated policy reporting workflow, returning a mixed-depth report (<code>best_summary</code>) plus depth maps/lists for downstream plotting.</li>
+<li>
+<code><a href="../reference/margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code> accepts <code>depths_by_model</code>, surfaces per-model depths, and returns the depth map when <code>return_as_list = TRUE</code>.</li>
+<li>
+<code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code> better support for quarto markdown.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.239" id="id_2025-09-19-margot-10239">[2025-09-19] margot 1.0.239<a class="anchor" aria-label="anchor" href="#id_2025-09-19-margot-10239"></a></h2>
 <div class="section level4">
 <h4 id="improvements-1-0-239">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-239"></a></h4>
 <ul><li>
-<code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code> better support for quarto markdown.</li>
+<code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code> better support for quarto markdown.wn.</li>
 </ul></div>
 </div>
     <div class="section level2">

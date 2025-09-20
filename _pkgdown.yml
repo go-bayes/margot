@@ -117,6 +117,7 @@ reference:
     - margot_table_consensus_policy_value
     - margot_table_treated_only
     - margot_policy_summary_report
+    - margot_policy_summary_compare_depths
     - margot_policy_methods_statement
     - margot_interpret_bootstrap
     - margot_interpret_policy_batch
