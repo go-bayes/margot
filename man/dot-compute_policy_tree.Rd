@@ -4,7 +4,13 @@
 \alias{.compute_policy_tree}
 \title{Internal wrapper for policy tree computation}
 \usage{
-.compute_policy_tree(X, Gamma, depth, tree_method = "policytree")
+.compute_policy_tree(
+  X,
+  Gamma,
+  depth,
+  tree_method = "policytree",
+  min_node_size = getOption("margot.policy_tree.min_node_size", 1L)
+)
 }
 \arguments{
 \item{X}{Covariate matrix}

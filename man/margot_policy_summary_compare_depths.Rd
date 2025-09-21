@@ -72,20 +72,12 @@ tables (default FALSE).}
 }
 \value{
 A list with:
-  - depth1: result of [margot_policy_summary_report()] at depth 1
-  - depth2: result of [margot_policy_summary_report()] at depth 2
-  - compare_df: data.frame with PVc and CIs for depth 1 and 2 and selected depth
-  - compare_md: markdown table rendering of `compare_df`
-  - selected_depth_by_model: named character vector ("1" or "2")
-  - recommended_model_ids: character vector of model identifiers recommended for deployment
-  - recommended_model_names: corresponding human-readable outcome labels
-  - best_summary: mixed-depth `margot_policy_summary_report()` result (if available)
-  - model_depths: named integer vector with the depth chosen for each model
-  - depth_map: convenience alias for `model_depths`
-  - depth1_model_ids / depth1_model_names: models evaluated at depth 1 (ids with `model_` prefix)
-  - depth2_model_ids / depth2_model_names: models evaluated at depth 2
-  - recommended_depth1_model_ids / names: recommended models with depth 1 policies
-  - recommended_depth2_model_ids / names: recommended models with depth 2 policies
+  - `depth_map`: named integer vector indicating the preferred depth (1 or 2) per model.
+  - `depth_summary_df`: tidy per-model summary (preferred depth, policy values, gain vs alternative, decision).
+  - `depth_table_df` / `depth_table_md`: formatted comparison of depth-1 vs depth-2 policy values.
+  - `depth_takeaways_text`: concise prose describing which outcomes favour depth-1 vs depth-2.
+  - `summary_text`: markdown narrative combining depth takeaways with key recommendations.
+  - `recommendations_df`: deployment recommendations with policy value details by depth.
 }
 \description{
 Runs [margot_policy_summary_report()] twice (depth 1 and depth 2) with consistent

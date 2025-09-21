@@ -28,10 +28,11 @@ margot_policy(
 
 \item{decision_tree_args}{List of args for \code{margot_plot_decision_tree()}. Default: \code{list()}.}
 
-\item{max_depth}{Integer, 1 or 2; default depth used when `depths_by_model` is NULL (default 2).}
+\item{max_depth}{Integer, 1 or 2; fallback depth used when no per-model mapping is supplied via
+`model_names` or `depths_by_model` (default 2).}
 
 \item{depths_by_model}{Optional named vector/list mapping models (with or without `model_` prefix)
-to depth 1 or 2; overrides `max_depth` on a per-model basis.}
+to depth 1 or 2; merged with any depth hints supplied by `model_names`.}
 
 \item{spend_levels}{Numeric vector of spend levels for difference-gain summaries. Default: \code{0.1}.}
 
@@ -39,7 +40,8 @@ to depth 1 or 2; overrides `max_depth` on a per-model basis.}
 
 \item{original_df}{Optional data.frame of untransformed variables for axis annotations. Default: NULL.}
 
-\item{model_names}{Character vector of model names to process; NULL = all. Default: NULL.}
+\item{model_names}{Character vector of model names to process. If named, values should be 1 or 2
+(depth assignments) and take precedence over `max_depth` and `depths_by_model`; NULL = all.}
 
 \item{output_objects}{Character vector specifying which outputs to include.
 Options: "policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries".

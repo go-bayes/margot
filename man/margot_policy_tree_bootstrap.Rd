@@ -111,10 +111,6 @@ The bootstrap analysis helps distinguish between:
   \item Robust patterns that emerge consistently across different data samples
 }
 
-Important: While stability is desirable, research shows that depth-2 trees typically
-outperform both uniform treatment assignment and more stable depth-1 trees, even
-when the depth-2 trees show high variability. The goal is to understand and quantify
-instability, not necessarily to eliminate it.
 
 Use the companion functions `margot_assess_variable_correlation()` and
 `margot_stability_diagnostics()` to better understand the sources of instability.

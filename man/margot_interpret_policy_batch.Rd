@@ -25,12 +25,14 @@ margot_interpret_policy_batch(
 \arguments{
 \item{models}{A list containing the results from multi-arm causal forest models.}
 
-\item{model_names}{A character vector of model names to interpret. If NULL, all models are processed.}
+\item{model_names}{A character vector of model names to interpret. If named, the values should be 1 or 2
+(depth assignments) and take precedence over `max_depth` and `depths_by_model`. If NULL, all models are processed.}
 
-\item{max_depth}{Integer, 1 or 2; default depth used when `depths_by_model` is NULL (default 2).}
+\item{max_depth}{Integer, 1 or 2; fallback depth used when no per-model depth mapping is provided
+via `model_names` or `depths_by_model` (default 2).}
 
 \item{depths_by_model}{Optional named vector/list mapping models (with or without `model_` prefix) to
-depth 1 or 2; overrides `max_depth` on a per-model basis.}
+depth 1 or 2; combined with any depth hints supplied through `model_names`.}
 
 \item{save_path}{The path where the combined interpretation will be saved. If NULL, nothing is saved.}
 

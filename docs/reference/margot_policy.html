@@ -11,7 +11,7 @@ Users can toggle which outputs to include via the `output_objects` parameter."><
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.240</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.241</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,12 +80,13 @@ Users can toggle which outputs to include via the `output_objects` parameter.</p
 
 
 <dt id="arg-max-depth">max_depth<a class="anchor" aria-label="anchor" href="#arg-max-depth"></a></dt>
-<dd><p>Integer, 1 or 2; default depth used when `depths_by_model` is NULL (default 2).</p></dd>
+<dd><p>Integer, 1 or 2; fallback depth used when no per-model mapping is supplied via
+`model_names` or `depths_by_model` (default 2).</p></dd>
 
 
 <dt id="arg-depths-by-model">depths_by_model<a class="anchor" aria-label="anchor" href="#arg-depths-by-model"></a></dt>
 <dd><p>Optional named vector/list mapping models (with or without `model_` prefix)
-to depth 1 or 2; overrides `max_depth` on a per-model basis.</p></dd>
+to depth 1 or 2; merged with any depth hints supplied by `model_names`.</p></dd>
 
 
 <dt id="arg-spend-levels">spend_levels<a class="anchor" aria-label="anchor" href="#arg-spend-levels"></a></dt>
@@ -101,7 +102,8 @@ to depth 1 or 2; overrides `max_depth` on a per-model basis.</p></dd>
 
 
 <dt id="arg-model-names">model_names<a class="anchor" aria-label="anchor" href="#arg-model-names"></a></dt>
-<dd><p>Character vector of model names to process; NULL = all. Default: NULL.</p></dd>
+<dd><p>Character vector of model names to process. If named, values should be 1 or 2
+(depth assignments) and take precedence over `max_depth` and `depths_by_model`; NULL = all.</p></dd>
 
 
 <dt id="arg-output-objects">output_objects<a class="anchor" aria-label="anchor" href="#arg-output-objects"></a></dt>

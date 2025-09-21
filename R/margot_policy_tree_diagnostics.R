@@ -429,7 +429,7 @@ margot_stability_diagnostics <- function(
   if (boot_metrics$consensus_strength$depth_1 < 0.5) {
     recommendations <- c(
       recommendations,
-      "4. Consider the trade-off between stability and performance - unstable depth-2 trees often outperform stable alternatives",
+      "4. Consider the trade-off between stability and performance -- stable depth-1 trees often outperform unstable depth-2 trees",
       "5. Collect additional data to better characterize heterogeneity",
       "6. Use the stability results to quantify uncertainty in variable selection"
     )

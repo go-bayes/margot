@@ -15,7 +15,7 @@ This function is deprecated. Please use margot_policy_tree_stability instead."><
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.240</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.241</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -186,11 +186,7 @@ methods to extract robust insights despite the instability.</p>
 <p>The bootstrap analysis helps distinguish between:</p><ul><li><p>Fundamental instability due to weak or absent treatment effect heterogeneity</p></li>
 <li><p>Apparent instability due to correlated predictors that capture similar information</p></li>
 <li><p>Robust patterns that emerge consistently across different data samples</p></li>
-</ul><p>Important: While stability is desirable, research shows that depth-2 trees typically
-outperform both uniform treatment assignment and more stable depth-1 trees, even
-when the depth-2 trees show high variability. The goal is to understand and quantify
-instability, not necessarily to eliminate it.</p>
-<p>Use the companion functions `margot_assess_variable_correlation()` and
+</ul><p>Use the companion functions `margot_assess_variable_correlation()` and
 `margot_stability_diagnostics()` to better understand the sources of instability.</p>
 <p>Three types of variation are supported:</p><ul><li><p>"both": Varies both bootstrap sampling and train/test splits</p></li>
 <li><p>"sample_only": Only bootstrap resampling, fixed train/test split</p></li>

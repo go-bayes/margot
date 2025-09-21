@@ -84,10 +84,6 @@
 #'   \item Robust patterns that emerge consistently across different data samples
 #' }
 #'
-#' Important: While stability is desirable, research shows that depth-2 trees typically
-#' outperform both uniform treatment assignment and more stable depth-1 trees, even
-#' when the depth-2 trees show high variability. The goal is to understand and quantify
-#' instability, not necessarily to eliminate it.
 #'
 #' Use the companion functions `margot_assess_variable_correlation()` and
 #' `margot_stability_diagnostics()` to better understand the sources of instability.
@@ -1272,9 +1268,7 @@ margot_interpret_bootstrap <- function(
       "treatment effect heterogeneity is limited for ", outcome_label,
       ", or that multiple correlated predictors capture similar information. ",
       "In such cases, uniform treatment assignment or additional research ",
-      "to identify stronger effect modifiers may be warranted. Note that ",
-      "depth-1 trees, while more stable, typically have worse performance ",
-      "than depth-2 trees, so stability must be balanced against predictive accuracy."
+      "to identify stronger effect modifiers may be warranted."
     ))
   }
 
@@ -1452,11 +1446,7 @@ interpret_depth2_only <- function(object, model_name, outcome_name, outcome_labe
   } else if (consensus_d2 < 0.5) {
     interpretation <- c(interpretation, paste0(
       " The high variability in tree structure is common for depth-2 trees and ",
-      "suggests caution in implementing complex treatment rules for ", outcome_label,
-      ". While uniform treatment assignment avoids unstable personalization, ",
-      "note that even unstable depth-2 trees typically outperform both uniform ",
-      "treatment and stable depth-1 trees. Consider validating the most frequent ",
-      "patterns in independent samples before implementation."
+      "suggests caution in implementing complex treatment rules for ", outcome_label, "."
     ))
   }
 
