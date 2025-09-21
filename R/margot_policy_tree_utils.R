@@ -13,9 +13,23 @@
 #' @return Policy tree object
 #' @keywords internal
 #' @importFrom cli cli_alert_warning
-.compute_policy_tree <- function(X, Gamma, depth, tree_method = "policytree") {
+.compute_policy_tree <- function(
+    X,
+    Gamma,
+    depth,
+    tree_method = "policytree",
+    min_node_size = getOption("margot.policy_tree.min_node_size", 1L)
+) {
   # validate tree_method
   tree_method <- match.arg(tree_method, c("policytree", "fastpolicytree"))
+
+  if (!is.numeric(min_node_size) || length(min_node_size) != 1L || is.na(min_node_size)) {
+    stop("min_node_size must be a single numeric value")
+  }
+  min_node_size <- as.integer(min_node_size)
+  if (min_node_size < 1L) {
+    stop("min_node_size must be >= 1")
+  }
 
   # check if fastpolicytree is requested and available
   if (tree_method == "fastpolicytree") {
@@ -30,9 +44,19 @@
 
   # compute tree using selected method
   if (tree_method == "fastpolicytree") {
-    fastpolicytree::fastpolicytree(X, Gamma, depth = depth)
+    fastpolicytree::fastpolicytree(
+      X,
+      Gamma,
+      depth = depth,
+      min.node.size = min_node_size
+    )
   } else {
-    policytree::policy_tree(X, Gamma, depth = depth)
+    policytree::policy_tree(
+      X,
+      Gamma,
+      depth = depth,
+      min.node.size = min_node_size
+    )
   }
 }
 

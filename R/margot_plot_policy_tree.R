@@ -1,3 +1,24 @@
+# helper ---------------------------------------------------------------
+.policy_tree_build_predict_df <- function(plot_data, columns) {
+  candidates <- list(plot_data$X_test, plot_data$X_test_full)
+  for (cand in candidates) {
+    if (!is.null(cand)) {
+      cand_df <- as.data.frame(cand)
+      if (all(columns %in% colnames(cand_df))) {
+        return(cand_df[, columns, drop = FALSE])
+      }
+    }
+  }
+  missing <- setdiff(
+    columns,
+    unique(unlist(lapply(candidates, function(cand) {
+      if (is.null(cand)) character() else colnames(as.data.frame(cand))
+    })))
+  )
+  cli::cli_abort(
+    "Unable to locate required column(s) for prediction: {paste(missing, collapse = \", \")}")
+}
+
 #' Plot a policy tree (depth-adaptive)
 #'
 #' Visualise the first one or two splits of a `policytree` stored inside a
@@ -92,6 +113,25 @@ margot_plot_policy_tree <- function(
     )
   }
 
+  # helper: build prediction frame containing required columns
+  build_predict_df <- function(pd, columns) {
+    candidates <- list(pd$X_test, pd$X_test_full)
+    for (cand in candidates) {
+      if (!is.null(cand)) {
+        cand_df <- as.data.frame(cand)
+        if (all(columns %in% colnames(cand_df))) {
+          return(cand_df[, columns, drop = FALSE])
+        }
+      }
+    }
+    missing <- setdiff(columns, unlist(lapply(candidates, function(cand) {
+      if (is.null(cand)) character() else colnames(as.data.frame(cand))
+    })))
+    cli::cli_abort(
+      "Unable to locate required column(s) for prediction: {paste(missing, collapse = \", \")}"
+    )
+  }
+
   # build colour scale
   build_colour_scale <- function(action_labels) {
     if (!is.null(color_scale)) {
@@ -112,8 +152,7 @@ margot_plot_policy_tree <- function(
     cp <- nd$split_value
 
     pd <- result_object$results[[model_name]]$plot_data
-    Xt <- pd$X_test
-    Xt_full <- pd$X_test_full %||% Xt
+    predict_df <- .policy_tree_build_predict_df(pd, tree$columns)
 
     # determine var_name
     if (is.numeric(sp)) {
@@ -122,22 +161,11 @@ margot_plot_policy_tree <- function(
       var_name <- sp
     }
 
-    idx <- match(var_name, if (is.matrix(Xt)) colnames(Xt) else names(Xt))
-    if (is.na(idx)) {
-      cli::cli_alert_info(
-        "split variable '{var_name}' not in X_test; falling back to X_test_full"
-      )
-      idx <- match(
-        var_name,
-        if (is.matrix(Xt_full)) colnames(Xt_full) else names(Xt_full)
-      )
-      if (is.na(idx)) {
-        cli::cli_abort("split variable '{var_name}' absent from both X_test and X_test_full")
-      }
-      Xt <- Xt_full
+    if (!var_name %in% colnames(predict_df)) {
+      cli::cli_abort("split variable '{var_name}' not found in prediction frame")
     }
 
-    x_vec <- if (is.matrix(Xt)) Xt[, idx] else Xt[[var_name]]
+    x_vec <- predict_df[[var_name]]
     if (length(x_vec) == 0) {
       cli::cli_abort("vector for split variable '{var_name}' is empty (check input data)")
     }
@@ -145,7 +173,8 @@ margot_plot_policy_tree <- function(
     # get labels
     var_label <- tv(var_name)
     act_labels <- vapply(tree$action.names, tl, FUN.VALUE = "")
-    preds <- factor(pd$predictions, seq_along(act_labels), act_labels)
+    pred_raw <- predict(tree, predict_df)
+    preds <- factor(pred_raw, seq_along(act_labels), act_labels)
 
     # compute original-scale split value
     orig_cp <- get_original_value_plot(var_name, cp, original_df)
@@ -286,8 +315,6 @@ margot_plot_policy_tree_depth2 <- function(
   }
 
   pd <- result_object$results[[model_name]]$plot_data
-  Xt <- pd$X_test
-
   # ---- action labels & colour scale ------------------------------------
   act_labels <- if (is.null(custom_action_names)) {
     vapply(tree_obj$action.names, tl, FUN.VALUE = "")
@@ -305,7 +332,9 @@ margot_plot_policy_tree_depth2 <- function(
     )
   }
 
-  preds <- factor(pd$predictions, seq_along(act_labels), act_labels)
+  predict_df <- .policy_tree_build_predict_df(pd, tree_obj$columns)
+  pred_raw <- predict(tree_obj, predict_df)
+  preds <- factor(pred_raw, seq_along(act_labels), act_labels)
   nodes <- tree_obj$nodes
 
   # ---- split variables & cut-points ------------------------------------
@@ -316,13 +345,33 @@ margot_plot_policy_tree_depth2 <- function(
   sv3 <- nodes[[3]]$split_variable
   cp3 <- nodes[[3]]$split_value
 
-  varnames <- names(Xt)
+  resolve_var <- function(sv) {
+    if (is.numeric(sv)) {
+      tree_obj$columns[as.integer(sv)]
+    } else {
+      sv
+    }
+  }
+
+  var1 <- resolve_var(sv1)
+  var2 <- resolve_var(sv2)
+  var3 <- resolve_var(sv3)
+
+  if (!all(c(var1, var2, var3) %in% colnames(predict_df))) {
+    missing <- setdiff(c(var1, var2, var3), colnames(predict_df))
+    cli::cli_abort("Missing columns for plotting depth-2 tree: {paste(missing, collapse = \", \")}")
+  }
+
   plot_df <- tibble::tibble(
-    x1   = Xt[[varnames[sv1]]],
-    x2   = Xt[[varnames[sv2]]],
-    x3   = Xt[[varnames[sv3]]],
+    x1   = predict_df[[var1]],
+    x2   = predict_df[[var2]],
+    x3   = predict_df[[var3]],
     pred = preds
   )
+
+  var_label1 <- tv(var1)
+  var_label2 <- tv(var2)
+  var_label3 <- tv(var3)
 
   # ---- panel constructor -----------------------------------------------
   build_panel <- function(x, y, xlab, ylab, xsp, ysp,
@@ -478,19 +527,19 @@ margot_plot_policy_tree_depth2 <- function(
   if (plot_selection %in% c("both", "p1")) {
     p1 <- build_panel(
       "x1", "x2",
-      tv(varnames[sv1]), tv(varnames[sv2]),
+      var_label1, var_label2,
       cp1, cp2,
       shade_side = if (shading) "right" else "none",
-      xvar = varnames[sv1], yvar = varnames[sv2]
+      xvar = var1, yvar = var2
     )
   }
   if (plot_selection %in% c("both", "p2")) {
     p2 <- build_panel(
       "x1", "x3",
-      tv(varnames[sv1]), tv(varnames[sv3]),
+      var_label1, var_label3,
       cp1, cp3,
       shade_side = if (shading) "left" else "none",
-      xvar = varnames[sv1], yvar = varnames[sv3]
+      xvar = var1, yvar = var3
     )
   }
 

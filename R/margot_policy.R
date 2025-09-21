@@ -8,13 +8,15 @@
 #' @param result_outcomes List returned by \code{margot_multi_arm_causal_forest()}.
 #' @param policy_tree_args List of args for \code{margot_plot_policy_tree()}. Default: \code{list()}.
 #' @param decision_tree_args List of args for \code{margot_plot_decision_tree()}. Default: \code{list()}.
-#' @param max_depth Integer, 1 or 2; default depth used when `depths_by_model` is NULL (default 2).
+#' @param max_depth Integer, 1 or 2; fallback depth used when no per-model mapping is supplied via
+#'   `model_names` or `depths_by_model` (default 2).
 #' @param depths_by_model Optional named vector/list mapping models (with or without `model_` prefix)
-#'   to depth 1 or 2; overrides `max_depth` on a per-model basis.
+#'   to depth 1 or 2; merged with any depth hints supplied by `model_names`.
 #' @param spend_levels Numeric vector of spend levels for difference-gain summaries. Default: \code{0.1}.
 #' @param label_mapping Named list mapping variable names to display labels. Default: NULL.
 #' @param original_df Optional data.frame of untransformed variables for axis annotations. Default: NULL.
-#' @param model_names Character vector of model names to process; NULL = all. Default: NULL.
+#' @param model_names Character vector of model names to process. If named, values should be 1 or 2
+#'   (depth assignments) and take precedence over `max_depth` and `depths_by_model`; NULL = all.
 #' @param output_objects Character vector specifying which outputs to include.
 #'   Options: "policy_tree", "decision_tree", "combined_plot", "qini_plot", "diff_gain_summaries".
 #'   Default: all.
@@ -54,22 +56,69 @@ margot_policy <- function(
     stop("invalid output_objects: ", paste(invalid, collapse = ", "))
   }
 
+  available_models <- names(result_outcomes$results)
+  available_clean <- gsub("^model_", "", available_models)
+  name_lookup <- setNames(available_models, available_models)
+  name_lookup <- c(name_lookup, setNames(available_models, available_clean))
+  name_lookup <- name_lookup[!duplicated(names(name_lookup))]
+
+  resolve_model_ids <- function(x) {
+    if (is.null(x) || length(x) == 0) return(character())
+    x <- as.character(x)
+    if (anyNA(x)) {
+      stop("model names cannot contain NA values")
+    }
+    unknown <- setdiff(unique(x), names(name_lookup))
+    if (length(unknown)) {
+      stop("Unknown model name(s): ", paste(unknown, collapse = ", "))
+    }
+    unname(name_lookup[x])
+  }
+
+  if (!is.null(model_names) && length(model_names) > 0 && !is.null(names(model_names))) {
+    candidate_names <- names(model_names)
+    depth_vals <- as.character(model_names)
+    if (!anyNA(candidate_names) && !anyNA(depth_vals) &&
+        all(candidate_names %in% names(name_lookup)) &&
+        all(depth_vals %in% c("1", "2"))) {
+      inferred_depths <- as.integer(depth_vals)
+      resolved_names <- resolve_model_ids(candidate_names)
+      depth_hint <- setNames(inferred_depths, resolved_names)
+      if (is.null(depths_by_model)) {
+        depths_by_model <- depth_hint
+      } else {
+        depths_by_model[names(depth_hint)] <- depth_hint
+      }
+      model_names <- resolved_names
+    }
+  }
+
   # determine models to process
   if (is.null(model_names) || length(model_names) == 0) {
-    model_names <- names(result_outcomes$results)
+    model_names <- available_models
+  } else {
+    model_names <- resolve_model_ids(model_names)
   }
 
   if (!is.null(depths_by_model)) {
     if (is.null(names(depths_by_model))) {
       stop("depths_by_model must be a named vector or list")
     }
-    provided <- ifelse(grepl("^model_", names(depths_by_model)), names(depths_by_model), paste0("model_", names(depths_by_model)))
-    missing <- setdiff(provided, model_names)
-    if (length(missing)) {
-      stop("depths_by_model references unknown models: ", paste(missing, collapse = ", "))
+    resolved_names <- resolve_model_ids(names(depths_by_model))
+    depth_vec <- setNames(as.integer(depths_by_model), resolved_names)
+    if (!all(depth_vec %in% c(1L, 2L))) {
+      stop("depths_by_model values must be 1 or 2")
     }
+    relevant <- intersect(names(depth_vec), model_names)
+    extras <- setdiff(names(depth_vec), relevant)
+    if (length(extras)) {
+      cli::cli_alert_info("Ignoring depth assignments for models not in `model_names`: {paste(extras, collapse = \", \")}")
+    }
+    depth_vec <- depth_vec[relevant]
     model_depths <- setNames(rep(as.integer(max_depth), length(model_names)), model_names)
-    model_depths[provided] <- as.integer(depths_by_model)
+    if (length(depth_vec)) {
+      model_depths[names(depth_vec)] <- depth_vec
+    }
   } else {
     model_depths <- setNames(rep(as.integer(max_depth), length(model_names)), model_names)
   }

@@ -7,10 +7,12 @@
 #' per-model depth choices via `depths_by_model`.
 #'
 #' @param models A list containing the results from multi-arm causal forest models.
-#' @param model_names A character vector of model names to interpret. If NULL, all models are processed.
-#' @param max_depth Integer, 1 or 2; default depth used when `depths_by_model` is NULL (default 2).
+#' @param model_names A character vector of model names to interpret. If named, the values should be 1 or 2
+#'   (depth assignments) and take precedence over `max_depth` and `depths_by_model`. If NULL, all models are processed.
+#' @param max_depth Integer, 1 or 2; fallback depth used when no per-model depth mapping is provided
+#'   via `model_names` or `depths_by_model` (default 2).
 #' @param depths_by_model Optional named vector/list mapping models (with or without `model_` prefix) to
-#'   depth 1 or 2; overrides `max_depth` on a per-model basis.
+#'   depth 1 or 2; combined with any depth hints supplied through `model_names`.
 #' @param save_path The path where the combined interpretation will be saved. If NULL, nothing is saved.
 #' @param prefix An optional prefix for the filename.
 #' @param include_timestamp Logical; whether to include a timestamp in the filename (if desired).
@@ -48,9 +50,47 @@ margot_interpret_policy_batch <- function(models,
                                           ...) {
   report_policy_value <- match.arg(report_policy_value)
 
-  # If model_names is not supplied, process all models
+  available_models <- names(models$results)
+  available_clean <- gsub("^model_", "", available_models)
+  name_lookup <- setNames(available_models, available_models)
+  name_lookup <- c(name_lookup, setNames(available_models, available_clean))
+  name_lookup <- name_lookup[!duplicated(names(name_lookup))]
+
+  resolve_model_ids <- function(x) {
+    if (is.null(x) || length(x) == 0) return(character())
+    x <- as.character(x)
+    if (anyNA(x)) {
+      stop("model names cannot contain NA values")
+    }
+    unknown <- setdiff(unique(x), names(name_lookup))
+    if (length(unknown)) {
+      stop("Unknown model name(s): ", paste(unknown, collapse = ", "))
+    }
+    unname(name_lookup[x])
+  }
+
+  if (!is.null(model_names) && length(model_names) > 0 && !is.null(names(model_names))) {
+    candidate_names <- names(model_names)
+    depth_vals <- as.character(model_names)
+    if (!anyNA(candidate_names) && !anyNA(depth_vals) &&
+        all(candidate_names %in% names(name_lookup)) &&
+        all(depth_vals %in% c("1", "2"))) {
+      inferred_depths <- as.integer(depth_vals)
+      resolved_names <- resolve_model_ids(candidate_names)
+      depth_hint <- setNames(inferred_depths, resolved_names)
+      if (is.null(depths_by_model)) {
+        depths_by_model <- depth_hint
+      } else {
+        depths_by_model[names(depth_hint)] <- depth_hint
+      }
+      model_names <- resolved_names
+    }
+  }
+
   if (is.null(model_names) || length(model_names) == 0) {
-    model_names <- names(models$results)
+    model_names <- available_models
+  } else {
+    model_names <- resolve_model_ids(model_names)
   }
 
   # Create save directory if needed
@@ -64,13 +104,21 @@ margot_interpret_policy_batch <- function(models,
     if (is.null(names(depths_by_model))) {
       stop("depths_by_model must be a named vector or list")
     }
-    provided <- ifelse(grepl('^model_', names(depths_by_model)), names(depths_by_model), paste0('model_', names(depths_by_model)))
-    missing <- setdiff(provided, model_names)
-    if (length(missing)) {
-      stop("depths_by_model references unknown models: ", paste(missing, collapse = ", "))
+    resolved_names <- resolve_model_ids(names(depths_by_model))
+    depth_vec <- setNames(as.integer(depths_by_model), resolved_names)
+    if (!all(depth_vec %in% c(1L, 2L))) {
+      stop("depths_by_model values must be 1 or 2")
     }
+    relevant <- intersect(names(depth_vec), model_names)
+    extras <- setdiff(names(depth_vec), relevant)
+    if (length(extras)) {
+      cli::cli_alert_info("Ignoring depth assignments for models not in `model_names`: {paste(extras, collapse = \", \")}")
+    }
+    depth_vec <- depth_vec[relevant]
     model_depths <- setNames(rep(as.integer(max_depth), length(model_names)), model_names)
-    model_depths[provided] <- as.integer(depths_by_model)
+    if (length(depth_vec)) {
+      model_depths[names(depth_vec)] <- depth_vec
+    }
   } else {
     model_depths <- setNames(rep(as.integer(max_depth), length(model_names)), model_names)
   }

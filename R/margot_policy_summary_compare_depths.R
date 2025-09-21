@@ -31,20 +31,12 @@
 #' @param verbose Logical; print progress (default TRUE).
 #'
 #' @return A list with:
-#'   - depth1: result of [margot_policy_summary_report()] at depth 1
-#'   - depth2: result of [margot_policy_summary_report()] at depth 2
-#'   - compare_df: data.frame with PVc and CIs for depth 1 and 2 and selected depth
-#'   - compare_md: markdown table rendering of `compare_df`
-#'   - selected_depth_by_model: named character vector ("1" or "2")
-#'   - recommended_model_ids: character vector of model identifiers recommended for deployment
-#'   - recommended_model_names: corresponding human-readable outcome labels
-#'   - best_summary: mixed-depth `margot_policy_summary_report()` result (if available)
-#'   - model_depths: named integer vector with the depth chosen for each model
-#'   - depth_map: convenience alias for `model_depths`
-#'   - depth1_model_ids / depth1_model_names: models evaluated at depth 1 (ids with `model_` prefix)
-#'   - depth2_model_ids / depth2_model_names: models evaluated at depth 2
-#'   - recommended_depth1_model_ids / names: recommended models with depth 1 policies
-#'   - recommended_depth2_model_ids / names: recommended models with depth 2 policies
+#'   - `depth_map`: named integer vector indicating the preferred depth (1 or 2) per model.
+#'   - `depth_summary_df`: tidy per-model summary (preferred depth, policy values, gain vs alternative, decision).
+#'   - `depth_table_df` / `depth_table_md`: formatted comparison of depth-1 vs depth-2 policy values.
+#'   - `depth_takeaways_text`: concise prose describing which outcomes favour depth-1 vs depth-2.
+#'   - `summary_text`: markdown narrative combining depth takeaways with key recommendations.
+#'   - `recommendations_df`: deployment recommendations with policy value details by depth.
 #'
 #' @export
 margot_policy_summary_compare_depths <- function(object,
@@ -69,6 +61,40 @@ margot_policy_summary_compare_depths <- function(object,
   se_method <- match.arg(se_method)
 
   if (isTRUE(verbose)) cli::cli_alert_info("Comparing depth-1 and depth-2 policy summaries")
+
+  available_models <- names(object$results)
+  available_clean <- gsub("^model_", "", available_models)
+  name_lookup <- setNames(available_models, available_models)
+  name_lookup <- c(name_lookup, setNames(available_models, available_clean))
+  name_lookup <- name_lookup[!duplicated(names(name_lookup))]
+
+  resolve_model_ids <- function(x) {
+    if (is.null(x) || !length(x)) return(character())
+    vals <- as.character(x)
+    if (anyNA(vals)) stop("model names cannot contain NA values")
+    unknown <- setdiff(unique(vals), names(name_lookup))
+    if (length(unknown)) {
+      stop("Unknown model name(s): ", paste(unknown, collapse = ", "))
+    }
+    unname(name_lookup[vals])
+  }
+
+  inferred_depths_external <- NULL
+  if (!is.null(model_names) && length(model_names) && !is.null(names(model_names))) {
+    candidate <- names(model_names)
+    depth_vals <- as.character(model_names)
+    if (!anyNA(candidate) && !anyNA(depth_vals) &&
+        all(candidate %in% names(name_lookup)) &&
+        all(depth_vals %in% c("1", "2"))) {
+      inferred_depths_external <- setNames(as.integer(depth_vals), resolve_model_ids(candidate))
+      model_names <- resolve_model_ids(candidate)
+    } else {
+      model_names <- resolve_model_ids(model_names)
+    }
+  } else {
+    model_names <- resolve_model_ids(model_names)
+  }
+  if (!length(model_names)) model_names <- available_models
 
   d1 <- tryCatch(
     margot_policy_summary_report(
@@ -190,6 +216,28 @@ margot_policy_summary_compare_depths <- function(object,
   compare_df <- compare_df[ord, , drop = FALSE]
   rownames(compare_df) <- NULL
 
+  compare_df$Depth1_PV_value <- if (length(pv1$models)) {
+    vapply(compare_df$Model, function(mn) if (mn %in% pv1$models) pv1$pv[mn, "pv"] else NA_real_, numeric(1))
+  } else rep(NA_real_, nrow(compare_df))
+  compare_df$Depth2_PV_value <- if (length(pv2$models)) {
+    vapply(compare_df$Model, function(mn) if (mn %in% pv2$models) pv2$pv[mn, "pv"] else NA_real_, numeric(1))
+  } else rep(NA_real_, nrow(compare_df))
+
+  depth_summary_df <- within(compare_df, {
+    depth_selected <- suppressWarnings(as.integer(Selected_Depth))
+    depth_selected <- ifelse(is.na(depth_selected), NA_integer_, depth_selected)
+    depth_label <- ifelse(depth_selected == 1L, "depth 1", ifelse(depth_selected == 2L, "depth 2", NA_character_))
+    pv_depth1 <- Depth1_PV_value
+    pv_depth2 <- Depth2_PV_value
+    pv_selected <- ifelse(depth_selected == 1L, pv_depth1, pv_depth2)
+    pv_alternative <- ifelse(depth_selected == 1L, pv_depth2, pv_depth1)
+    pv_gain <- pv_selected - pv_alternative
+  })
+  depth_summary_df <- depth_summary_df[, c("Model", "Outcome", "depth_selected", "depth_label", "pv_depth1", "pv_depth2", "pv_selected", "pv_alternative", "pv_gain")]
+  names(depth_summary_df)[1:2] <- c("model", "outcome_label")
+  depth_summary_df$outcome <- gsub("^model_", "", depth_summary_df$model)
+  depth_summary_df <- depth_summary_df[, c("model", "outcome", "outcome_label", "depth_selected", "depth_label", "pv_depth1", "pv_depth2", "pv_selected", "pv_alternative", "pv_gain")]
+
   compare_md <- if (nrow(compare_df)) {
     tryCatch(knitr::kable(compare_df[, c("Outcome", "Depth1_PV", "Depth1_CI", "Depth2_PV", "Depth2_CI", "Selected_Depth")], format = "markdown"),
              error = function(e) paste(capture.output(print(compare_df)), collapse = "\n"))
@@ -250,10 +298,11 @@ margot_policy_summary_compare_depths <- function(object,
   }
   best_text <- if (length(best_lines)) paste(c("### Best-of-Depths Summary", "", best_lines, ""), collapse = "\n") else ""
 
-  recommended_ids <- character()
-  recommended_names <- character()
   best_summary <- NULL
   depth_mapping <- sel[!is.na(sel)]
+  if (!is.null(inferred_depths_external) && length(inferred_depths_external)) {
+    depth_mapping[names(inferred_depths_external)] <- as.character(inferred_depths_external)
+  }
   if (length(depth_mapping)) {
     depth_mapping_int <- as.integer(depth_mapping)
     names(depth_mapping_int) <- names(depth_mapping)
@@ -290,8 +339,6 @@ margot_policy_summary_compare_depths <- function(object,
       best_by_model <- best_summary$recommendations_by_model
       best_split_df <- best_summary$split_table_compact_df
       best_split_md <- best_summary$split_table_compact_md
-      recommended_ids <- best_summary$recommended_model_ids
-      recommended_names <- best_summary$recommended_model_names
     }
   }
 
@@ -338,7 +385,7 @@ margot_policy_summary_compare_depths <- function(object,
     }
   }
 
-  depth_map <- if (!is.null(best_summary)) {
+  depth_map_vec <- if (!is.null(best_summary)) {
     if (!is.null(best_summary$depth_map)) best_summary$depth_map else best_summary$model_depths
   } else {
     dm <- sel
@@ -347,52 +394,86 @@ margot_policy_summary_compare_depths <- function(object,
     names(dm) <- names(sel)
     dm
   }
-  depth_map <- depth_map[!is.na(depth_map)]
-
-  if (!length(recommended_ids) && length(best_by_model)) {
-    recommended_ids <- names(Filter(function(x) {
-      is.list(x) && !is.null(x$decision) && x$decision %in% c("deploy_full", "deploy_restricted")
-    }, best_by_model))
+  depth_map_vec <- depth_map_vec[!is.na(depth_map_vec)]
+  if (!is.null(inferred_depths_external) && length(inferred_depths_external)) {
+    depth_map_vec[names(inferred_depths_external)] <- inferred_depths_external
   }
 
-  recommended_names <- if (length(recommended_ids)) {
-    vapply(recommended_ids, function(mn) {
-      out <- gsub("^model_", "", mn)
-      .apply_label_stability(out, label_mapping)
-    }, character(1))
-  } else character()
+  if (nrow(depth_summary_df)) {
+    depth_summary_df$depth_selected <- ifelse(is.na(depth_summary_df$depth_selected) & depth_summary_df$model %in% names(depth_map_vec),
+                                              depth_map_vec[depth_summary_df$model], depth_summary_df$depth_selected)
+    depth_summary_df$depth_label <- ifelse(depth_summary_df$depth_selected == 1L, "depth 1",
+                                           ifelse(depth_summary_df$depth_selected == 2L, "depth 2", depth_summary_df$depth_label))
+    depth_summary_df$pv_selected <- ifelse(depth_summary_df$depth_selected == 1L, depth_summary_df$pv_depth1,
+                                           ifelse(depth_summary_df$depth_selected == 2L, depth_summary_df$pv_depth2, depth_summary_df$pv_selected))
+    depth_summary_df$pv_alternative <- ifelse(depth_summary_df$depth_selected == 1L, depth_summary_df$pv_depth2,
+                                              ifelse(depth_summary_df$depth_selected == 2L, depth_summary_df$pv_depth1, depth_summary_df$pv_alternative))
+    depth_summary_df$pv_gain <- depth_summary_df$pv_selected - depth_summary_df$pv_alternative
+  }
 
-  depth1_model_ids <- names(depth_map[depth_map == 1L])
-  depth2_model_ids <- names(depth_map[depth_map == 2L])
-  depth1_model_names <- if (length(depth1_model_ids)) vapply(depth1_model_ids, function(mn) .apply_label_stability(gsub("^model_", "", mn), label_mapping), character(1)) else character()
-  depth2_model_names <- if (length(depth2_model_ids)) vapply(depth2_model_ids, function(mn) .apply_label_stability(gsub("^model_", "", mn), label_mapping), character(1)) else character()
-  recommended_depth1_model_ids <- if (length(recommended_ids)) recommended_ids[depth_map[recommended_ids] == 1L] else character()
-  recommended_depth2_model_ids <- if (length(recommended_ids)) recommended_ids[depth_map[recommended_ids] == 2L] else character()
-  recommended_depth1_model_names <- if (length(recommended_depth1_model_ids)) vapply(recommended_depth1_model_ids, function(mn) .apply_label_stability(gsub("^model_", "", mn), label_mapping), character(1)) else character()
-  recommended_depth2_model_names <- if (length(recommended_depth2_model_ids)) vapply(recommended_depth2_model_ids, function(mn) .apply_label_stability(gsub("^model_", "", mn), label_mapping), character(1)) else character()
+  depth_map_vec <- depth_map_vec[order(match(names(depth_map_vec), depth_summary_df$model))]
+  depth_map_vec <- depth_map_vec[!is.na(depth_map_vec)]
+  depth_map_vec <- depth_map_vec[!duplicated(names(depth_map_vec))]
+
+  depth_summary_df$decision <- NA_character_
+  if (length(best_by_model)) {
+    decisions_lookup <- vapply(best_by_model, function(x) x$decision %||% NA_character_, character(1))
+    depth_summary_df$decision <- decisions_lookup[depth_summary_df$model]
+  }
+  depth_summary_df$decision[is.na(depth_summary_df$decision)] <- "not_evaluated"
+
+  depth_table_df <- depth_summary_df
+  depth_table_df$pv_depth1 <- round(depth_table_df$pv_depth1, 3)
+  depth_table_df$pv_depth2 <- round(depth_table_df$pv_depth2, 3)
+  depth_table_df$pv_selected <- round(depth_table_df$pv_selected, 3)
+  depth_table_df$pv_alternative <- round(depth_table_df$pv_alternative, 3)
+  depth_table_df$pv_gain <- round(depth_table_df$pv_gain, 3)
+  depth_table_df$Preferred_Depth <- ifelse(is.na(depth_table_df$depth_selected), "unknown", paste0("depth ", depth_table_df$depth_selected))
+  depth_table_df$Delta_vs_alt <- depth_table_df$pv_gain
+  depth_table_df$Decision <- depth_table_df$decision
+  depth_table_df <- depth_table_df[, c("outcome_label", "pv_depth1", "pv_depth2", "Preferred_Depth", "Delta_vs_alt", "Decision")]
+  names(depth_table_df)[1] <- "Outcome"
+  depth_table_md <- if (nrow(depth_table_df)) {
+    tryCatch(knitr::kable(depth_table_df, format = "markdown"), error = function(e) paste(capture.output(print(depth_table_df)), collapse = "\n"))
+  } else ""
+
+  summarise_depth_list <- function(df, depth_label) {
+    if (!nrow(df)) return(sprintf("No outcomes preferred depth %s.", depth_label))
+    items <- vapply(seq_len(nrow(df)), function(i) {
+      lbl <- df$outcome_label[i]
+      gain <- df$pv_gain[i]
+      if (is.na(gain)) lbl else paste0(lbl, " (Δ = ", round(gain, 3), ")")
+    }, character(1))
+    paste(items, collapse = "; ")
+  }
+
+  depth1_pref <- depth_summary_df[depth_summary_df$depth_selected == 1L & !is.na(depth_summary_df$depth_selected), , drop = FALSE]
+  depth2_pref <- depth_summary_df[depth_summary_df$depth_selected == 2L & !is.na(depth_summary_df$depth_selected), , drop = FALSE]
+  depth_takeaways_lines <- c(
+    sprintf("Depth-1 preferred (%d): %s", nrow(depth1_pref), summarise_depth_list(depth1_pref, "1")),
+    sprintf("Depth-2 preferred (%d): %s", nrow(depth2_pref), summarise_depth_list(depth2_pref, "2"))
+  )
+  depth_takeaways_lines <- depth_takeaways_lines[nchar(depth_takeaways_lines) > 0]
+  depth_takeaways_text <- paste(depth_takeaways_lines, collapse = "\n")
+
+  if (nzchar(depth_takeaways_text)) {
+    depth_block <- paste(c("### Depth Selection", "", depth_takeaways_text, ""), collapse = "\n")
+    if (nzchar(best_text)) {
+      best_text <- paste0(depth_block, best_text)
+    } else {
+      best_text <- depth_block
+    }
+  }
+
+  recommendations_df <- depth_summary_df[, c("model", "outcome", "outcome_label", "depth_selected", "depth_label", "pv_depth1", "pv_depth2", "pv_selected", "pv_alternative", "pv_gain", "decision")]
 
   list(
-    depth1 = d1,
-    depth2 = d2,
-    compare_df = compare_df,
-    compare_md = compare_md,
-    selected_depth_by_model = sel,
-    best_by_model = best_by_model,
-    best_text = best_text,
-    best_split_table_compact_df = best_split_df,
-    best_split_table_compact_md = best_split_md,
-    recommended_model_ids = recommended_ids,
-    recommended_model_names = recommended_names,
-    recommended_depth1_model_ids = recommended_depth1_model_ids,
-    recommended_depth1_model_names = recommended_depth1_model_names,
-    recommended_depth2_model_ids = recommended_depth2_model_ids,
-    recommended_depth2_model_names = recommended_depth2_model_names,
-    best_summary = best_summary,
-    model_depths = if (!is.null(best_summary)) best_summary$model_depths else depth_map,
-    depth_map = depth_map,
-    depth1_model_ids = depth1_model_ids,
-    depth1_model_names = depth1_model_names,
-    depth2_model_ids = depth2_model_ids,
-    depth2_model_names = depth2_model_names
+    depth_map = depth_map_vec,
+    depth_summary_df = depth_summary_df,
+    depth_table_df = depth_table_df,
+    depth_table_md = depth_table_md,
+    depth_takeaways_text = depth_takeaways_text,
+    summary_text = best_text,
+    recommendations_df = recommendations_df
   )
 }

@@ -1,4 +1,4 @@
-# [2025-09-19] margot 1.0.240
+# [2025-09-19] margot 1.0.240 - 1.0.241
 
 ### Improvements
 - `margot_policy_tree_stability()` adds `compute_policy_values` (with `policy_value_R`, `policy_value_seed`, `policy_value_baseline`) to pre-compute bootstrap policy gains and now recognises the legacy `parrallel` flag.

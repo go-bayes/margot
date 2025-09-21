@@ -859,6 +859,11 @@ margot_policy_summary_report <- function(object,
   practical_takeaways_text <- ""
   recommended_model_ids <- character()
   recommended_model_names <- character()
+  auto_decision_counts <- NULL
+  decision_line <- NULL
+  dominance_block <- NULL
+  uncertainty_line <- NULL
+  risk_line <- NULL
   if (isTRUE(auto_recommend) && length(split_breakdown)) {
     if (isTRUE(verbose)) cli::cli_alert_info("Computing restricted-policy recommendations ({length(unique(mm$model))} model{?s})")
 
@@ -1362,6 +1367,26 @@ margot_policy_summary_report <- function(object,
 
   interpretation_text <- paste(wins_sentence, neutral_sentence, caution_sentence)
 
+  depth_pref_sentence <- if (length(unique_depths) == 1) {
+    if (unique_depths == 1L) {
+      "All evaluated models used depth-1 policies."
+    } else {
+      "All evaluated models used depth-2 policies."
+    }
+  } else {
+    depth1_list <- format_name_list(depth1_model_names)
+    depth2_list <- format_name_list(depth2_model_names)
+    paste0(
+      "Depth preference: 1-level policies performed best for ",
+      depth1_list,
+      "; 2-level policies performed best for ",
+      depth2_list,
+      "."
+    )
+  }
+
+  interpretation_text <- paste(interpretation_text, depth_pref_sentence)
+
   build_group_block <- function(header, df, empty_msg) {
     heading <- paste0("### ", header)
     if (!nrow(df)) {
@@ -1534,20 +1559,6 @@ margot_policy_summary_report <- function(object,
     }
   }
 
-  if (length(unique_depths) == 1) {
-    header <- paste0("### Policy Summary (depth ", unique_depths, ")\n\n")
-  } else {
-    header <- "### Policy Summary (mixed depths)\n\n"
-  }
-  expl <- if (isTRUE(include_explanation)) paste0("\n\n", policy_expl, "\n\n") else "\n"
-  text <- paste0(header, paste(lines, collapse = "\n"), expl)
-  if (isTRUE(auto_recommend) && nzchar(recommendations_text)) {
-    text <- paste0(text, "\n### Recommendations\n\n", recommendations_text, "\n")
-  }
-  if (nzchar(practical_takeaways_text)) {
-    text <- paste0(text, "\n### Practical Takeaways\n\n", practical_takeaways_text, "\n")
-  }
-
   # Method text (overview and per-model)
   method_overview <- paste0(
     "We evaluate the consensus policy on the held-out test set used for the policy tree evaluation. ",
@@ -1587,14 +1598,19 @@ margot_policy_summary_report <- function(object,
 
   # Practical takeaways block (summarize recommendations and dominance)
   if (isTRUE(auto_recommend) && length(recommendations_by_model)) {
-    # Count decisions
     decs <- vapply(recommendations_by_model, function(x) x$decision, character(1))
     n_full <- sum(decs == "deploy_full", na.rm = TRUE)
     n_restr <- sum(decs == "deploy_restricted", na.rm = TRUE)
     n_caut <- sum(decs == "caution", na.rm = TRUE)
     n_no <- sum(decs == "do_not_deploy", na.rm = TRUE)
-    # Dominance list
-    dom_ok <- vapply(recommendations_by_model, function(x) !is.null(x$dominance_pct) && !is.na(x$dominance_pct) && x$dominance_pct >= dominance_threshold*100, logical(1))
+    auto_decision_counts <- c(full = n_full, restricted = n_restr, caution = n_caut, do_not_deploy = n_no)
+    decision_line <- sprintf("• Decisions — Full: %d, Restricted: %d, Caution: %d, Do not deploy: %d.", n_full, n_restr, n_caut, n_no)
+
+    dom_ok <- vapply(
+      recommendations_by_model,
+      function(x) !is.null(x$dominance_pct) && !is.na(x$dominance_pct) && x$dominance_pct >= dominance_threshold * 100,
+      logical(1)
+    )
     dom_lines <- character()
     if (any(dom_ok)) {
       for (nm in names(recommendations_by_model)[dom_ok]) {
@@ -1602,41 +1618,13 @@ margot_policy_summary_report <- function(object,
         dom_lines <- c(dom_lines, sprintf("%s: %s (%.1f%% of PVc)", gsub("^model_", "", nm), r$selected_label, r$dominance_pct))
       }
     }
-    practical_takeaways_text <- paste0(
-      sprintf("• Decisions — Full: %d, Restricted: %d, Caution: %d, Do not deploy: %d.", n_full, n_restr, n_caut, n_no), "\n",
-      if (length(dom_lines)) paste0("• Dominant positive split(s):\n  - ", paste(dom_lines, collapse = "\n  - ")) else "• No strong single dominant positive split across models.", "\n",
-      "• Uncertainty: Most branch/leaf uplift CIs cross zero; treat as directional. Depth‑1 policies may stabilize at a cost of nuance.", "\n",
-      "• Harm flags: If dominant contribution is negative or full PV ≤ 0, avoid deployment or restrict to favorable branches and re‑evaluate."
-    )
-    if (length(recommended_model_ids)) {
-      deployment_details <- paste(sprintf("%s (depth %s)",
-        vapply(recommended_model_ids, function(x) .apply_label_stability(gsub("^model_", "", x), label_mapping), character(1)),
-        model_depths[recommended_model_ids]
-      ), collapse = ", ")
-      practical_takeaways_text <- paste0(practical_takeaways_text, "\n• Recommended for deployment: ", deployment_details, ".")
+    dominance_block <- if (length(dom_lines)) {
+      paste0("• Dominant positive split(s):\n  - ", paste(dom_lines, collapse = "\n  - "))
     } else {
-      practical_takeaways_text <- paste0(practical_takeaways_text, "\n• Recommended for deployment: none.")
+      "• No strong single dominant positive split across models."
     }
-    depth_summary <- paste0(
-      "• Depth selection — depth 1: ", length(depth1_model_ids), " model(s); depth 2: ", length(depth2_model_ids), " model(s)."
-    )
-    practical_takeaways_text <- paste0(practical_takeaways_text, "\n", depth_summary)
-    if (length(recommended_depth1_model_names)) {
-      practical_takeaways_text <- paste0(
-        practical_takeaways_text,
-        "\n• Recommended depth-1 models: ",
-        paste(recommended_depth1_model_names, collapse = ", "),
-        "."
-      )
-    }
-    if (length(recommended_depth2_model_names)) {
-      practical_takeaways_text <- paste0(
-        practical_takeaways_text,
-        "\n• Recommended depth-2 models: ",
-        paste(recommended_depth2_model_names, collapse = ", "),
-        "."
-      )
-    }
+    uncertainty_line <- "• Uncertainty: Most branch/leaf uplift CIs cross zero; treat as directional. Depth-1 policies may stabilize at a cost of nuance."
+    risk_line <- "• Harm flags: If dominant contribution is negative or full PV ≤ 0, avoid deployment or restrict to favorable branches and re-evaluate."
   }
 
   if (length(recommendations_by_model)) {
@@ -1655,6 +1643,63 @@ margot_policy_summary_report <- function(object,
   recommended_depth2_model_ids <- if (length(recommended_model_ids)) recommended_model_ids[model_depths[recommended_model_ids] == 2L] else character()
   recommended_depth1_model_names <- if (length(recommended_depth1_model_ids)) vapply(recommended_depth1_model_ids, function(mn) .apply_label_stability(gsub("^model_", "", mn), label_mapping), character(1)) else character()
   recommended_depth2_model_names <- if (length(recommended_depth2_model_ids)) vapply(recommended_depth2_model_ids, function(mn) .apply_label_stability(gsub("^model_", "", mn), label_mapping), character(1)) else character()
+
+  depth_summary_line <- paste0(
+    "• Depth allocation — depth 1: ", length(depth1_model_ids), " model(s); depth 2: ", length(depth2_model_ids), " model(s)."
+  )
+  depth_pref_line <- paste0(
+    "• Depth preference — 1-level: ", format_name_list(depth1_model_names),
+    "; 2-level: ", format_name_list(depth2_model_names), "."
+  )
+
+  practical_lines <- character()
+  if (!is.null(auto_decision_counts)) {
+    if (!is.null(decision_line)) practical_lines <- c(practical_lines, decision_line)
+    if (!is.null(dominance_block)) practical_lines <- c(practical_lines, dominance_block)
+    if (!is.null(uncertainty_line)) practical_lines <- c(practical_lines, uncertainty_line)
+    if (!is.null(risk_line)) practical_lines <- c(practical_lines, risk_line)
+    if (length(recommended_model_ids)) {
+      deployment_details <- paste(
+        sprintf(
+          "%s (depth %s)",
+          recommended_model_names,
+          model_depths[recommended_model_ids]
+        ),
+        collapse = ", "
+      )
+      practical_lines <- c(practical_lines, paste0("• Recommended for deployment: ", deployment_details, "."))
+    } else {
+      practical_lines <- c(practical_lines, "• Recommended for deployment: none.")
+    }
+    if (length(recommended_depth1_model_names)) {
+      practical_lines <- c(
+        practical_lines,
+        paste0("• Recommended depth-1 models: ", paste(recommended_depth1_model_names, collapse = ", "), ".")
+      )
+    }
+    if (length(recommended_depth2_model_names)) {
+      practical_lines <- c(
+        practical_lines,
+        paste0("• Recommended depth-2 models: ", paste(recommended_depth2_model_names, collapse = ", "), ".")
+      )
+    }
+  }
+  practical_lines <- c(practical_lines, depth_summary_line, depth_pref_line)
+  practical_takeaways_text <- paste(practical_lines[nzchar(practical_lines)], collapse = "\n")
+
+  if (length(unique_depths) == 1) {
+    header <- paste0("### Policy Summary (depth ", unique_depths, ")\n\n")
+  } else {
+    header <- "### Policy Summary (mixed depths)\n\n"
+  }
+  expl <- if (isTRUE(include_explanation)) paste0("\n\n", policy_expl, "\n\n") else "\n"
+  text <- paste0(header, paste(lines, collapse = "\n"), expl)
+  if (isTRUE(auto_recommend) && nzchar(recommendations_text)) {
+    text <- paste0(text, "\n### Recommendations\n\n", recommendations_text, "\n")
+  }
+  if (nzchar(practical_takeaways_text)) {
+    text <- paste0(text, "\n### Practical Takeaways\n\n", practical_takeaways_text, "\n")
+  }
 
   # build grouped brief tables matching text sections (as data frames, not markdown)
   make_brief_df <- function(df) {
