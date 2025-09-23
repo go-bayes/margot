@@ -214,8 +214,8 @@ margot_interpret_policy_tree <- function(model,
         pol <- submodel[[tag]]
         if (is.null(pol)) stop("no ", tag, " present for model")
 
-        # Use DR scores as produced by policytree
         dr <- submodel$dr_scores
+        if (is.null(dr)) dr <- submodel$dr_scores_flipped
         if (is.null(dr)) stop("DR scores missing for policy evaluation")
 
         pd <- submodel$plot_data
@@ -223,29 +223,48 @@ margot_interpret_policy_tree <- function(model,
         fullX <- if (!is.null(pd$X_test_full)) pd$X_test_full else pd$X_test
         if (is.null(fullX)) stop("plot_data lacks X_test_full/X_test; cannot evaluate policy value")
 
-        X <- fullX[, pol$columns, drop = FALSE]
+        full_df <- as.data.frame(fullX)
+        test_idx <- pd$test_indices
+        if (is.null(test_idx)) {
+          test_idx <- suppressWarnings(as.integer(rownames(full_df)))
+        }
+        drm <- as.matrix(dr)
+        if (!is.null(test_idx) && length(test_idx) == nrow(full_df) && all(!is.na(test_idx)) && max(test_idx) <= nrow(drm)) {
+          dr_test <- drm[test_idx, , drop = FALSE]
+        } else {
+          take <- seq_len(min(nrow(full_df), nrow(drm)))
+          dr_test <- drm[take, , drop = FALSE]
+          full_df <- full_df[take, , drop = FALSE]
+        }
+
+        X <- full_df[, pol$columns, drop = FALSE]
         keep <- stats::complete.cases(X)
+        if (!any(keep)) stop("insufficient evaluation data for policy value")
         X <- X[keep, , drop = FALSE]
-        dr <- dr[keep, , drop = FALSE]
+        dr_eval <- dr_test[keep, , drop = FALSE]
         n <- nrow(X)
         if (n <= 1L) stop("insufficient evaluation data for policy value")
 
         pick <- function(a, mat) {
-          if (min(a) == 0L) a <- a + 1L
+          a <- .normalize_policy_actions(a)
           mat[cbind(seq_along(a), a)]
         }
 
         a_hat <- predict(pol, X)
-        # treat-all baseline uses treatment mean; control-all baseline uses control mean
-        treat_mean <- mean(dr[, 2])
-        control_mean <- mean(dr[, 1])
+        if (is.matrix(a_hat)) a_hat <- a_hat[, 1]
+        a_hat <- .normalize_policy_actions(a_hat)
+
+        treat_mean <- mean(dr_eval[, 2])
+        control_mean <- mean(dr_eval[, 1])
         base_val <- if (baseline == "treat_all") treat_mean else control_mean
-        pv_hat <- mean(pick(a_hat, dr)) - base_val
+        pv_hat <- mean(pick(a_hat, dr_eval)) - base_val
 
         reps <- replicate(R, {
           idx <- sample.int(n, n, TRUE)
           a_bs <- predict(pol, X[idx, , drop = FALSE])
-          mean(pick(a_bs, dr[idx, , drop = FALSE])) - base_val
+          if (is.matrix(a_bs)) a_bs <- a_bs[, 1]
+          a_bs <- .normalize_policy_actions(a_bs)
+          mean(pick(a_bs, dr_eval[idx, , drop = FALSE])) - base_val
         })
 
         se <- stats::sd(reps)
@@ -294,19 +313,25 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
   if (is.null(conditional_means) || nrow(conditional_means) == 0) {
     pd <- model$results[[model_name]]$plot_data
     dr <- model$results[[model_name]]$dr_scores
+    if (is.null(dr)) dr <- model$results[[model_name]]$dr_scores_flipped
     if (!is.null(pd) && !is.null(dr)) {
+      test_idx <- pd$test_indices
       test_X <- pd$X_test_full
       if (is.null(test_X)) test_X <- pd$X_test
       if (!is.null(test_X)) {
-        n_test <- nrow(test_X)
-        test_row_indices <- rownames(test_X)
-        if (!is.null(test_row_indices)) {
-          idx <- suppressWarnings(as.numeric(test_row_indices))
-          if (all(!is.na(idx)) && max(idx) <= nrow(dr)) {
-            conditional_means <- dr[idx, , drop = FALSE]
+        if (!is.null(test_idx) && length(test_idx) <= nrow(dr)) {
+          conditional_means <- dr[test_idx, , drop = FALSE]
+        } else {
+          test_row_indices <- rownames(test_X)
+          if (!is.null(test_row_indices)) {
+            idx <- suppressWarnings(as.numeric(test_row_indices))
+            if (length(idx) == nrow(test_X) && all(!is.na(idx)) && max(idx) <= nrow(dr)) {
+              conditional_means <- dr[idx, , drop = FALSE]
+            }
           }
         }
         if (is.null(conditional_means) || nrow(conditional_means) == 0) {
+          n_test <- nrow(test_X)
           if (n_test <= nrow(dr)) {
             conditional_means <- dr[seq_len(n_test), , drop = FALSE]
           }
@@ -324,15 +349,21 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
     return("\n\n(Policy tree test data not available for conditional means analysis)\n\n")
   }
 
-  # for binary treatment, conditional_means has 2 columns (control, treatment)
-  # the policy tree predictions tell us which action is recommended for each unit
-
-  # get the test indices used for evaluation
   test_predictions <- plot_data$predictions
-  test_X <- plot_data$X_test_full
+  if (is.matrix(test_predictions)) test_predictions <- test_predictions[, 1]
+  test_predictions <- .normalize_policy_actions(test_predictions)
 
+  test_X <- plot_data$X_test_full
   if (is.null(test_X)) {
     test_X <- plot_data$X_test # fallback to restricted covariates
+  }
+  if (is.null(test_X)) {
+    return("\n\n(Policy tree test data not available for conditional means analysis)\n\n")
+  }
+  test_df <- as.data.frame(test_X)
+  test_idx <- plot_data$test_indices
+  if (!is.null(test_idx) && length(test_idx) != nrow(test_df)) {
+    test_idx <- NULL
   }
 
   # get covariates for conditional means computation
@@ -348,42 +379,30 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
     not_missing <- which(complete.cases(covariates))
   }
 
-  # the test indices correspond to a subset of the data
-  # we need to get the matching conditional means rows
-  # test_X should have rownames that are the original row indices
-  test_row_indices <- rownames(test_X)
+  n_test <- nrow(test_df)
+  if (n_test == 0) {
+    return("\n\n(Policy tree test data not available for conditional means analysis)\n\n")
+  }
 
-  # DEBUG: print sizes
-  # cli::cli_alert_info("DEBUG: nrow(test_X) = {nrow(test_X)}, nrow(conditional_means) = {nrow(conditional_means)}")
-  # if (!is.null(test_row_indices)) {
-  #   cli::cli_alert_info("DEBUG: test_row_indices[1:5] = {paste(head(test_row_indices, 5), collapse=', ')}")
-  # }
-
-  if (!is.null(test_row_indices)) {
-    # convert to numeric indices
-    test_row_indices <- as.numeric(test_row_indices)
-
-    # check if these are valid indices for conditional_means
-    max_idx <- max(test_row_indices)
-    if (max_idx > nrow(conditional_means)) {
-      # indices don't match - fall back to using just the test set size
-      n_test <- nrow(test_X)
-      if (n_test > nrow(conditional_means)) {
+  test_conditional_means <- NULL
+  if (nrow(conditional_means) == n_test) {
+    test_conditional_means <- conditional_means
+  } else {
+    if (!is.null(test_idx) && max(test_idx) <= nrow(conditional_means)) {
+      test_conditional_means <- conditional_means[test_idx, , drop = FALSE]
+    } else {
+      test_row_indices <- suppressWarnings(as.integer(rownames(test_df)))
+      if (!is.null(test_row_indices) && length(test_row_indices) == n_test && max(test_row_indices) <= nrow(conditional_means)) {
+        test_conditional_means <- conditional_means[test_row_indices, , drop = FALSE]
+      }
+    }
+    if (is.null(test_conditional_means)) {
+      if (n_test <= nrow(conditional_means)) {
+        test_conditional_means <- conditional_means[seq_len(n_test), , drop = FALSE]
+      } else {
         return("\n\n(Conditional means analysis not available due to data size mismatch)\n\n")
       }
-      # use sequential matching - this assumes test set is a contiguous subset
-      test_conditional_means <- conditional_means[seq_len(n_test), , drop = FALSE]
-    } else {
-      # use the actual indices
-      test_conditional_means <- conditional_means[test_row_indices, , drop = FALSE]
     }
-  } else {
-    # no rownames - use sequential matching
-    n_test <- nrow(test_X)
-    if (n_test > nrow(conditional_means)) {
-      return("\n\n(Conditional means analysis not available due to data size mismatch)\n\n")
-    }
-    test_conditional_means <- conditional_means[seq_len(n_test), , drop = FALSE]
   }
 
   if (output_format == "prose") {
@@ -430,9 +449,9 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
     split1 <- nodes[[1]]$split_value
 
     # identify units in each leaf using the test data
-    if (!is.null(test_X) && var1 %in% colnames(test_X)) {
-      left_leaf_idx <- which(test_X[, var1] <= split1)
-      right_leaf_idx <- which(test_X[, var1] > split1)
+    if (var1 %in% colnames(test_df)) {
+      left_leaf_idx <- which(test_df[, var1] <= split1)
+      right_leaf_idx <- which(test_df[, var1] > split1)
 
       # compute average conditional means for each leaf
       result_text <- compute_leaf_means(
@@ -508,19 +527,19 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
     split3 <- nodes[[3]]$split_value
 
     # identify units in each leaf using the test data
-    if (!is.null(test_X) && all(c(var1, var2, var3) %in% colnames(test_X))) {
+    if (all(c(var1, var2, var3) %in% colnames(test_df))) {
       # define the four leaves based on the tree structure
       # leaf 1: var1 <= split1 & var2 <= split2
       # leaf 2: var1 <= split1 & var2 > split2
       # leaf 3: var1 > split1 & var3 <= split3
       # leaf 4: var1 > split1 & var3 > split3
 
-      left_idx <- which(test_X[, var1] <= split1)
-      right_idx <- which(test_X[, var1] > split1)
+      left_idx <- which(test_df[, var1] <= split1)
+      right_idx <- which(test_df[, var1] > split1)
 
       # ensure we have valid indices before subsetting
       if (length(left_idx) > 0) {
-        left_var2_vals <- test_X[left_idx, var2]
+        left_var2_vals <- test_df[left_idx, var2]
         leaf1_idx <- left_idx[left_var2_vals <= split2]
         leaf2_idx <- left_idx[left_var2_vals > split2]
       } else {
@@ -529,7 +548,7 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
       }
 
       if (length(right_idx) > 0) {
-        right_var3_vals <- test_X[right_idx, var3]
+        right_var3_vals <- test_df[right_idx, var3]
         leaf3_idx <- right_idx[right_var3_vals <= split3]
         leaf4_idx <- right_idx[right_var3_vals > split3]
       } else {

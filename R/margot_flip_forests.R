@@ -624,7 +624,8 @@ margot_lighten_for_flip <- function(cf_out, models) {
   mr$plot_data <- list(
     X_test       = covariates[test_idx, mr$top_vars, drop = FALSE],
     X_test_full  = covariates[test_idx, , drop = FALSE],
-    predictions  = predict(mr$policy_tree_depth_2, covariates[test_idx, mr$top_vars, drop = FALSE])
+    predictions  = predict(mr$policy_tree_depth_2, covariates[test_idx, mr$top_vars, drop = FALSE]),
+    test_indices = test_idx
   )
 
   mr$policy_trees_need_recalculation <- FALSE

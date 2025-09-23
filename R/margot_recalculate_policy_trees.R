@@ -318,7 +318,8 @@ recalculate_policy_trees_single <- function(model_result,
       predictions = predict(
         model_result$policy_tree_depth_2,
         covariates[test_idx, depth2_covars, drop = FALSE]
-      )
+      ),
+      test_indices = test_idx
     )
   } else {
     # not enough covariates for depth-2
@@ -337,7 +338,8 @@ recalculate_policy_trees_single <- function(model_result,
       predictions = predict(
         model_result$policy_tree_depth_1,
         covariates[test_idx, selected_covars, drop = FALSE]
-      )
+      ),
+      test_indices = test_idx
     )
   }
 

@@ -342,11 +342,27 @@ compute_policy_trees_for_model <- function(model_result,
     }
   }
 
+  if (length(not_missing) > 1L) {
+    train_size <- floor(train_proportion * length(not_missing))
+    train_size <- max(1L, min(length(not_missing) - 1L, train_size))
+    if (train_size >= length(not_missing)) train_size <- length(not_missing) - 1L
+    if (train_size < 1L) train_size <- 1L
+    train_idx <- sample(not_missing, train_size)
+    test_idx <- setdiff(not_missing, train_idx)
+    if (!length(test_idx)) {
+      test_idx <- setdiff(not_missing, train_idx[1])
+      if (!length(test_idx)) test_idx <- train_idx
+    }
+  } else {
+    train_idx <- not_missing
+    test_idx <- not_missing
+  }
+
   # compute depth-1 tree if requested
   if (compute_depth1) {
     output$policy_tree_depth_1 <- .compute_policy_tree(
-      covariates[not_missing, selected_covars, drop = FALSE],
-      dr_scores[not_missing, ],
+      covariates[train_idx, selected_covars, drop = FALSE],
+      dr_scores[train_idx, ],
       depth = 1,
       tree_method = actual_tree_method
     )
@@ -379,12 +395,7 @@ compute_policy_trees_for_model <- function(model_result,
 
     # create depth-2 tree if possible
     if (length(depth2_covars) >= 2) {
-      # train/test split
-      train_size <- floor(train_proportion * length(not_missing))
-      train_idx <- sample(not_missing, train_size)
-      test_idx <- setdiff(not_missing, train_idx)
-
-      # fit depth-2 tree
+      # fit depth-2 tree using established training indices
       output$policy_tree_depth_2 <- .compute_policy_tree(
         covariates[train_idx, depth2_covars, drop = FALSE],
         dr_scores[train_idx, ],
@@ -392,14 +403,20 @@ compute_policy_trees_for_model <- function(model_result,
         tree_method = actual_tree_method
       )
 
+      preds <- tryCatch(
+        predict(
+          output$policy_tree_depth_2,
+          covariates[test_idx, depth2_covars, drop = FALSE]
+        ),
+        error = function(e) NULL
+      )
+
       # create plot data
       output$plot_data <- list(
         X_test = covariates[test_idx, depth2_covars, drop = FALSE],
         X_test_full = covariates[test_idx, , drop = FALSE],
-        predictions = predict(
-          output$policy_tree_depth_2,
-          covariates[test_idx, depth2_covars, drop = FALSE]
-        )
+        predictions = preds,
+        test_indices = test_idx
       )
     } else {
       # not enough covariates for depth-2
@@ -412,14 +429,17 @@ compute_policy_trees_for_model <- function(model_result,
 
       # create plot data using depth-1 if available
       if (!is.null(output$policy_tree_depth_1)) {
-        test_idx <- sample(not_missing, floor((1 - train_proportion) * length(not_missing)))
         output$plot_data <- list(
           X_test = covariates[test_idx, selected_covars, drop = FALSE],
           X_test_full = covariates[test_idx, , drop = FALSE],
-          predictions = predict(
-            output$policy_tree_depth_1,
-            covariates[test_idx, selected_covars, drop = FALSE]
-          )
+          predictions = tryCatch(
+            predict(
+              output$policy_tree_depth_1,
+              covariates[test_idx, selected_covars, drop = FALSE]
+            ),
+            error = function(e) NULL
+          ),
+          test_indices = test_idx
         )
       }
     }

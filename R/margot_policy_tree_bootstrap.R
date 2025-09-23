@@ -578,7 +578,8 @@ bootstrap_single_model <- function(
         predictions = predict(
           output$policy_tree_depth_2,
           covariates[test_idx, selected_vars, drop = FALSE]
-        )
+        ),
+        test_indices = test_idx
       )
     }
   }

@@ -89,6 +89,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/dot-compute_policy_value_internal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-get_tree_method.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-has_fastpolicytree.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/dot-normalize_policy_actions.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-strict_exposure_outcome_censoring.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/double_robust_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/extract_from_diff_gain.html</loc></url>

@@ -142,14 +142,17 @@ margot_policy_summary_compare_depths <- function(object,
 
   # pull PVc (full policy) and CI for each depth from coherence_audit (preferred),
   # else from recommendations_by_model; else empty
-  get_pv <- function(rep_obj) {
+  get_pv <- function(rep_obj, depth_sel) {
     if (is.null(rep_obj)) return(list(models = character(), pv = NULL, label = character()))
-    if (!is.null(rep_obj$coherence_audit) && nrow(rep_obj$coherence_audit) > 0) {
-      ca <- rep_obj$coherence_audit
-      models <- ca$model
-      pv_mat <- cbind(pv = ca$pv_ctrl_rep, lo = ca$pv_ctrl_rep * NA_real_, hi = ca$pv_ctrl_rep * NA_real_)
-      rownames(pv_mat) <- models
-      return(list(models = models, pv = pv_mat, label = models))
+    if (!is.null(rep_obj$coherent_policy_values) && nrow(rep_obj$coherent_policy_values) > 0) {
+      cpv <- rep_obj$coherent_policy_values
+      sub <- cpv[cpv$contrast == "policy - control_all" & cpv$depth == depth_sel, , drop = FALSE]
+      if (nrow(sub) > 0) {
+        models <- sub$model
+        pv_mat <- cbind(pv = sub$estimate, lo = sub$ci_lo, hi = sub$ci_hi)
+        rownames(pv_mat) <- models
+        return(list(models = models, pv = pv_mat, label = models))
+      }
     }
     if (!is.null(rep_obj$recommendations_by_model) && length(rep_obj$recommendations_by_model)) {
       models <- names(rep_obj$recommendations_by_model)
@@ -170,8 +173,8 @@ margot_policy_summary_compare_depths <- function(object,
     list(models = sub$model, pv = pv_mat)
   }
 
-  pv1 <- if (!is.null(d1)) get_pv(d1) else get_pv_from_rep(object, 1L)
-  pv2 <- if (!is.null(d2)) get_pv(d2) else get_pv_from_rep(object, 2L)
+  pv1 <- if (!is.null(d1)) get_pv(d1, 1L) else get_pv_from_rep(object, 1L)
+  pv2 <- if (!is.null(d2)) get_pv(d2, 2L) else get_pv_from_rep(object, 2L)
   all_models <- sort(unique(c(pv1$models, pv2$models)))
 
   # Build comparison table

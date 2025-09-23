@@ -633,7 +633,7 @@ stability_single_model <- function(
     # fit trees and extract info
     for (depth in depths) {
       if (depth == 1) {
-        # depth-1 uses all available data
+        # depth-1 uses the sampled training subset
         tree <- .compute_policy_tree(
           covariates[indices$train_idx, selected_vars, drop = FALSE],
           dr_scores[indices$train_idx, ],
@@ -681,53 +681,81 @@ stability_single_model <- function(
   if (is.null(output$dr_scores)) output$dr_scores <- dr_scores
   if (is.null(output$dr_scores_flipped)) output$dr_scores_flipped <- model_result$dr_scores_flipped
 
+  # establish a consistent train/test split for consensus reconstruction and evaluation
+  if (length(not_missing) > 1L) {
+    set.seed(all_seeds$split_seeds[1])
+    train_prop_use <- median(actual_train_props)
+    train_size <- floor(train_prop_use * length(not_missing))
+    if (!is.finite(train_size)) train_size <- floor(0.5 * length(not_missing))
+    train_size <- max(1L, min(length(not_missing) - 1L, train_size))
+    if (train_size >= length(not_missing)) train_size <- length(not_missing) - 1L
+    if (train_size < 1L) train_size <- 1L
+    train_idx_consensus <- sample(not_missing, train_size)
+    test_idx_consensus <- setdiff(not_missing, train_idx_consensus)
+    if (!length(test_idx_consensus)) {
+      # fallback: use a different sample for test set
+      test_idx_consensus <- setdiff(not_missing, train_idx_consensus[1])
+      if (!length(test_idx_consensus)) test_idx_consensus <- train_idx_consensus
+    }
+  } else {
+    train_idx_consensus <- not_missing
+    test_idx_consensus <- not_missing
+  }
+
   # optionally reconstruct consensus trees
   if (return_consensus_trees) {
     if (1 %in% depths) {
       output$policy_tree_depth_1 <- reconstruct_consensus_tree(
         consensus_info$consensus_splits$depth_1,
-        dr_scores[not_missing, ],
-        covariates[not_missing, selected_vars, drop = FALSE],
+        dr_scores[train_idx_consensus, ],
+        covariates[train_idx_consensus, selected_vars, drop = FALSE],
         depth = 1
       )
     }
 
     if (2 %in% depths) {
-      # for depth-2, need train/test split for plot_data
-      set.seed(all_seeds$split_seeds[1]) # use first split seed for consistency
-      train_size <- floor(median(actual_train_props) * length(not_missing))
-      train_idx <- sample(not_missing, train_size)
-      test_idx <- setdiff(not_missing, train_idx)
-
       output$policy_tree_depth_2 <- reconstruct_consensus_tree(
         consensus_info$consensus_splits$depth_2,
-        dr_scores[train_idx, ],
-        covariates[train_idx, selected_vars, drop = FALSE],
+        dr_scores[train_idx_consensus, ],
+        covariates[train_idx_consensus, selected_vars, drop = FALSE],
         depth = 2
-      )
-
-      # create plot_data
-      output$plot_data <- list(
-        X_test = covariates[test_idx, selected_vars, drop = FALSE],
-        X_test_full = covariates[test_idx, , drop = FALSE],
-        predictions = predict(
-          output$policy_tree_depth_2,
-          covariates[test_idx, selected_vars, drop = FALSE]
-        )
       )
     }
   }
 
   # ensure plot_data exists for evaluation even if only depth-1 was requested
   if (is.null(output$plot_data)) {
-    set.seed(all_seeds$split_seeds[1])
-    train_size <- floor(median(actual_train_props) * length(not_missing))
-    train_idx <- sample(not_missing, train_size)
-    test_idx <- setdiff(not_missing, train_idx)
+    preds <- NULL
+    prediction_tree <- NULL
+    if (!is.null(output$policy_tree_depth_2) && !is.null(output$policy_tree_depth_2$columns)) {
+      prediction_tree <- output$policy_tree_depth_2
+    } else if (!is.null(output$policy_tree_depth_1) && !is.null(output$policy_tree_depth_1$columns)) {
+      prediction_tree <- output$policy_tree_depth_1
+    }
+    if (!is.null(prediction_tree)) {
+      cols_use <- prediction_tree$columns
+      if (is.null(cols_use)) {
+        cols_use <- selected_vars
+      } else {
+        cols_use <- intersect(cols_use, colnames(covariates))
+        if (!length(cols_use)) cols_use <- selected_vars
+      }
+      preds <- tryCatch(
+        predict(prediction_tree, covariates[test_idx_consensus, cols_use, drop = FALSE]),
+        error = function(e) NULL
+      )
+    }
     output$plot_data <- list(
-      X_test = covariates[test_idx, selected_vars, drop = FALSE],
-      X_test_full = covariates[test_idx, , drop = FALSE]
+      X_test = covariates[test_idx_consensus, selected_vars, drop = FALSE],
+      X_test_full = covariates[test_idx_consensus, , drop = FALSE],
+      predictions = preds,
+      test_indices = test_idx_consensus
     )
+  } else {
+    # augment existing plot_data with consistent indices if missing
+    if (is.null(output$plot_data$test_indices)) {
+      output$plot_data$test_indices <- test_idx_consensus
+    }
   }
 
   if (isTRUE(compute_policy_values)) {

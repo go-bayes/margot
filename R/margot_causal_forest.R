@@ -732,14 +732,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         )
 
         # --- 4) compute policy trees using top_vars ---
-        if (!compute_marginal_only) {
-          # depth-1 tree using top_vars (not all covariates)
-          results[[model_name]]$policy_tree_depth_1 <- policytree::policy_tree(
-            covariates[full, top_vars, drop = FALSE],
-            results[[model_name]]$dr_scores[full, ],
-            depth = 1
-          )
-        } else {
+        if (compute_marginal_only) {
           # create placeholder for pipeline compatibility
           results[[model_name]]$policy_tree_depth_1 <- list(
             computed = FALSE,
@@ -767,6 +760,14 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         }
 
         if (!compute_marginal_only) {
+          results[[model_name]]$policy_tree_depth_1 <- policytree::policy_tree(
+            covariates[train_indices, top_vars, drop = FALSE],
+            results[[model_name]]$dr_scores[train_indices, ],
+            depth = 1
+          )
+        }
+
+        if (!compute_marginal_only) {
           policy_tree_model <- policytree::policy_tree(
             covariates[train_indices, top_vars, drop = FALSE],
             results[[model_name]]$dr_scores[train_indices, ],
@@ -781,7 +782,8 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
           results[[model_name]]$plot_data <- list(
             X_test       = X_test,
             X_test_full  = X_test_full, # <- NEW
-            predictions  = predictions
+            predictions  = predictions,
+            test_indices = test_indices
           )
         } else {
           # create placeholder for pipeline compatibility

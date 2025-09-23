@@ -60,6 +60,17 @@
   }
 }
 
+#' Normalise policy tree actions to 1-based indexing
+#' @keywords internal
+.normalize_policy_actions <- function(actions) {
+  if (is.null(actions)) return(actions)
+  actions <- as.integer(actions)
+  if (!length(actions)) return(actions)
+  if (all(is.na(actions))) return(actions)
+  if (min(actions, na.rm = TRUE) == 0L) actions <- actions + 1L
+  actions
+}
+
 #' Check if fastpolicytree is available
 #'
 #' @return Logical indicating if fastpolicytree package is installed

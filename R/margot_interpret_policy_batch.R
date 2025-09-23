@@ -195,15 +195,32 @@ margot_interpret_policy_batch <- function(models,
       if (is.null(pol)) next
       pd <- m$plot_data
       dr <- m$dr_scores
+      if (is.null(dr)) dr <- m$dr_scores_flipped
       if (is.null(pd) || is.null(dr)) next
       full <- if (!is.null(pd$X_test_full)) pd$X_test_full else pd$X_test
       if (is.null(full)) next
-      X <- full[, pol$columns, drop = FALSE]
+      full_df <- as.data.frame(full)
+      test_idx <- pd$test_indices
+      if (is.null(test_idx)) {
+        test_idx <- suppressWarnings(as.integer(rownames(full_df)))
+      }
+      drm <- as.matrix(dr)
+      if (!is.null(test_idx) && length(test_idx) == nrow(full_df) && all(!is.na(test_idx)) && max(test_idx) <= nrow(drm)) {
+        dr_test <- drm[test_idx, , drop = FALSE]
+      } else {
+        take <- seq_len(min(nrow(full_df), nrow(drm)))
+        dr_test <- drm[take, , drop = FALSE]
+        full_df <- full_df[take, , drop = FALSE]
+      }
+      X <- full_df[, pol$columns, drop = FALSE]
       keep <- stats::complete.cases(X)
+      if (!any(keep)) next
       Xk <- X[keep, , drop = FALSE]
-      drk <- dr[keep, , drop = FALSE]
+      drk <- dr_test[keep, , drop = FALSE]
       if (!nrow(Xk)) next
       preds <- predict(pol, Xk)
+      if (is.matrix(preds)) preds <- preds[, 1]
+      preds <- .normalize_policy_actions(preds)
       treat_mask <- preds == 2L
       avg_uplift <- if (any(treat_mask)) mean(drk[treat_mask, 2] - drk[treat_mask, 1]) else NA_real_
       coverage <- mean(treat_mask)

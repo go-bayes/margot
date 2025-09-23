@@ -201,6 +201,14 @@ margot_policy_summary_report <- function(object,
 
   # coherent policy value reporter (ensures PVs, treated-only, and split metrics align)
   .compute_coherent_policy_report <- function(object, model_names, model_depths, R, seed, alpha, label_mapping, verbose, se_method) {
+    normalize_actions <- function(actions) {
+      if (is.null(actions)) return(actions)
+      actions <- as.integer(actions)
+      if (!length(actions)) return(actions)
+      if (all(is.na(actions))) return(actions)
+      if (min(actions, na.rm = TRUE) == 0L) actions <- actions + 1L
+      actions
+    }
     if (!is.null(seed)) set.seed(seed)
     z <- stats::qnorm(1 - alpha / 2)
     out <- list()
@@ -224,13 +232,20 @@ margot_policy_summary_report <- function(object,
       # build evaluation matrices consistently and align predictions via keep mask
       X_full <- as.data.frame(full[, pol$columns, drop = FALSE])
       # Map DR scores to the exact test rows using rownames if available
-      test_idx <- suppressWarnings(as.integer(rownames(full)))
+      test_idx <- pd$test_indices
+      if (is.null(test_idx)) {
+        test_idx <- suppressWarnings(as.integer(rownames(full)))
+      }
       drm <- as.matrix(dr)
-      if (!is.null(test_idx) && all(!is.na(test_idx)) && length(test_idx) == nrow(full) && max(test_idx) <= nrow(drm)) {
+      if (!is.null(test_idx) && length(test_idx) == nrow(full) && all(!is.na(test_idx)) && max(test_idx) <= nrow(drm)) {
         drm_test <- drm[test_idx, , drop = FALSE]
       } else {
         # fallback: assume first nrow(full) rows correspond to test set
-        drm_test <- drm[seq_len(nrow(full)), , drop = FALSE]
+        take <- seq_len(min(nrow(full), nrow(drm)))
+        drm_test <- drm[take, , drop = FALSE]
+        if (length(take) < nrow(X_full)) {
+          X_full <- X_full[take, , drop = FALSE]
+        }
       }
       keep <- stats::complete.cases(X_full)
       if (!any(keep)) next
@@ -243,7 +258,7 @@ margot_policy_summary_report <- function(object,
       a_hat_full <- tryCatch(predict(pol, X_full), error = function(e) NULL)
       if (is.null(a_hat_full)) next
       if (is.matrix(a_hat_full)) a_hat_full <- a_hat_full[, 1]
-      a_hat <- as.integer(a_hat_full[keep])
+      a_hat <- normalize_actions(a_hat_full[keep])
       eff <- as.numeric(drk[, 2] - drk[, 1])
       if (length(a_hat) != length(eff)) next
       # PV vs control-all and vs treat-all using same slice + predictions
@@ -266,7 +281,7 @@ margot_policy_summary_report <- function(object,
           ah <- tryCatch(predict(pol, Xk[idx, , drop = FALSE]), error = function(e) NULL)
           if (is.null(ah)) return(NA_real_)
           if (is.matrix(ah)) ah <- ah[, 1]
-          ah <- as.integer(ah)
+          ah <- normalize_actions(ah)
           ef <- as.numeric(drk[idx, 2] - drk[idx, 1])
           mean((ah == 2L) * ef)
         })
@@ -276,7 +291,7 @@ margot_policy_summary_report <- function(object,
           ah <- tryCatch(predict(pol, Xk[idx, , drop = FALSE]), error = function(e) NULL)
           if (is.null(ah)) return(NA_real_)
           if (is.matrix(ah)) ah <- ah[, 1]
-          ah <- as.integer(ah)
+          ah <- normalize_actions(ah)
           ef <- as.numeric(drk[idx, 2] - drk[idx, 1])
           mean((ah == 1L) * (-ef))
         })
@@ -306,6 +321,8 @@ margot_policy_summary_report <- function(object,
         reps_uplift <- replicate(R, {
           idx <- sample.int(n, n, TRUE)
           ah <- predict(pol, Xk[idx, , drop = FALSE])
+          if (is.matrix(ah)) ah <- ah[, 1]
+          ah <- normalize_actions(ah)
           ef <- drk[idx, 2] - drk[idx, 1]
           tm <- ah == 2L
           if (any(tm)) mean(ef[tm]) else NA_real_
@@ -1789,6 +1806,7 @@ margot_policy_summary_report <- function(object,
     depth1_model_ids = depth1_model_ids,
     depth1_model_names = depth1_model_names,
     depth2_model_ids = depth2_model_ids,
-    depth2_model_names = depth2_model_names
+    depth2_model_names = depth2_model_names,
+    coherent_policy_values = rep
   )
 }
