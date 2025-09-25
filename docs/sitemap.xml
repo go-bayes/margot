@@ -253,6 +253,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_bootstrap.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_value_explainer.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_workflow.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_binary_vars.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_longitudinal_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_longitudinal_data_wider.html</loc></url>

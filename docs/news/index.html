@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.241</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.242</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,18 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.242" id="id_2025-09-19-margot-10242">[2025-09-19] margot 1.0.242<a class="anchor" aria-label="anchor" href="#id_2025-09-19-margot-10242"></a></h2>
+<div class="section level4">
+<h4 id="new-1-0-242">New:<a class="anchor" aria-label="anchor" href="#new-1-0-242"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code>, shared explainer</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-242">Improvements:<a class="anchor" aria-label="anchor" href="#improvements-1-0-242"></a></h4>
+<ul><li>min_gain_for_depth_switch, audience + return_unit_masks, brief includes Depth, bugfix for depth-1 in summary table, interpretation reuse flags</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.240" id="id_2025-09-19-margot-10240---10241">[2025-09-19] margot 1.0.240 - 1.0.241<a class="anchor" aria-label="anchor" href="#id_2025-09-19-margot-10240---10241"></a></h2>
 <div class="section level4">
@@ -4343,7 +4355,29 @@
 </ul></div>
 <div class="section level4">
 <h4 id="notes-0-1-0">Notes<a class="anchor" aria-label="anchor" href="#notes-0-1-0"></a></h4>
-<ul><li>All changes are backward compatible. New parameters default to previous behavior.</li>
+<ul><li>All changes are backward compatible. New parameters default to previous behavior. # [2025-09-19] margot 1.0.240 - 1.0.241</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.242" id="id_2025-09-25-margot-10242">[2025-09-25] margot 1.0.242<a class="anchor" aria-label="anchor" href="#id_2025-09-25-margot-10242"></a></h2>
+<div class="section level4">
+<h4 id="new-1-0-242-1">New<a class="anchor" aria-label="anchor" href="#new-1-0-242-1"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code>: one-call policy workflow that orchestrates depth selection (<code><a href="../reference/margot_policy_summary_compare_depths.html">margot_policy_summary_compare_depths()</a></code>), mixed-depth summary reporting (<code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code>), and optional interpretations (<code><a href="../reference/margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code>). Adds <code>brief_include_group</code> to control whether the policy brief includes the Group column.</li>
+<li>Shared text helper <code><a href="../reference/margot_policy_value_explainer.html">margot_policy_value_explainer()</a></code> for consistent definitions of policy value vs control-all/treat-all, coverage, uplift, and the identity PV(control-all) = Coverage × Uplift_Treated.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-1-0-242-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-242-1"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_summary_compare_depths.html">margot_policy_summary_compare_depths()</a></code> adds <code>min_gain_for_depth_switch</code> (default 0.005) to prefer depth-1 unless depth-2 yields a material out-of-sample gain.</li>
+<li>
+<code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code> now supports <code>audience = c("policy","research")</code> to drive policy-facing wording and includes <code>return_unit_masks</code> to return per-model evaluation masks (including <code>not_excluded_ids</code>) for downstream plotting and drill-downs. The compact policy brief now includes <code>Depth</code>, and an issue dropping depth-1 rows from the summary table when precomputed reports were supplied was fixed.</li>
+<li>
+<code><a href="../reference/margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code> gains <code>policy_value_source = c("compute","use_coherent")</code> and <code>coherent_values</code> so interpretations can reuse PV rows from the summary report instead of recomputing CIs.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="documentation-1-0-242">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-242"></a></h4>
+<ul><li>Added <code>README.qmd</code> with quick-start usage of the new policy workflow and a summary of 1.0.242 changes.</li>
 </ul></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
