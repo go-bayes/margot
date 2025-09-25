@@ -47,8 +47,11 @@ margot_interpret_policy_batch <- function(models,
                                           brief = FALSE,
                                           brief_save_to = NULL,
                                           return_as_list = FALSE,
+                                          policy_value_source = c("compute", "use_coherent"),
+                                          coherent_values = NULL,
                                           ...) {
   report_policy_value <- match.arg(report_policy_value)
+  policy_value_source <- match.arg(policy_value_source)
 
   available_models <- names(models$results)
   available_clean <- gsub("^model_", "", available_models)
@@ -150,16 +153,38 @@ margot_interpret_policy_batch <- function(models,
     tryCatch(
       {
         ## pass max_depth plus any other args on to the interpreter
+        # If we are asked to reuse coherent values, suppress internal PV computation
+        rp <- if (identical(policy_value_source, "use_coherent")) "none" else report_policy_value
         interpretation <- margot_interpret_policy_tree(
           model       = models,
           model_name  = model_name,
           max_depth   = depth_cur,
-          report_policy_value = report_policy_value,
+          report_policy_value = rp,
           policy_value_R = policy_value_R,
           policy_value_seed = policy_value_seed,
           policy_value_ci_level = policy_value_ci_level,
           ...
         )
+        # Optionally append PV lines from coherent_values
+        if (identical(policy_value_source, "use_coherent") && !is.null(coherent_values)) {
+          cv <- tryCatch({
+            sub_ctrl <- coherent_values[coherent_values$model == model_name &
+                                         coherent_values$depth == depth_cur &
+                                         coherent_values$contrast == "policy - control_all", , drop = FALSE]
+            sub_trt  <- coherent_values[coherent_values$model == model_name &
+                                         coherent_values$depth == depth_cur &
+                                         coherent_values$contrast == "policy - treat_all", , drop = FALSE]
+            list(ctrl = sub_ctrl, trt = sub_trt)
+          }, error = function(e) NULL)
+          if (!is.null(cv) && nrow(cv$ctrl) > 0) {
+            pv_ctrl <- sprintf("Policy value vs control-all: %.3f [% .3f, % .3f]",
+                               cv$ctrl$estimate[1], cv$ctrl$ci_lo[1], cv$ctrl$ci_hi[1])
+            pv_trt <- if (nrow(cv$trt) > 0) sprintf("Policy value vs treat-all: %.3f [% .3f, % .3f]",
+                                                   cv$trt$estimate[1], cv$trt$ci_lo[1], cv$trt$ci_hi[1]) else NULL
+            extra <- paste(c("\nIn out-of-sample evaluation,", pv_trt, pv_ctrl), collapse = " ")
+            interpretation <- paste0(interpretation, "\n", extra, "\n")
+          }
+        }
         interpretations_list[[model_name]] <- interpretation
         cli::cli_alert_success("Successfully processed model: {model_name} (depth {depth_cur})")
       },

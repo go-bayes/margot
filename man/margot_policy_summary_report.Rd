@@ -40,7 +40,9 @@ margot_policy_summary_report(
   auto_recommend = FALSE,
   dominance_threshold = 0.6,
   strict_branch = FALSE,
-  restricted_scope = c("leaf", "branch")
+  restricted_scope = c("leaf", "branch"),
+  audience = c("policy", "research"),
+  return_unit_masks = FALSE
 )
 }
 \arguments{

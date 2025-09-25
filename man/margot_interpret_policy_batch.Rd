@@ -19,6 +19,8 @@ margot_interpret_policy_batch(
   brief = FALSE,
   brief_save_to = NULL,
   return_as_list = FALSE,
+  policy_value_source = c("compute", "use_coherent"),
+  coherent_values = NULL,
   ...
 )
 }

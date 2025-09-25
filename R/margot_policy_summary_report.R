@@ -160,7 +160,9 @@ margot_policy_summary_report <- function(object,
                                          auto_recommend = FALSE,
                                          dominance_threshold = 0.6,
                                          strict_branch = FALSE,
-                                         restricted_scope = c("leaf", "branch")) {
+                                         restricted_scope = c("leaf", "branch"),
+                                         audience = c("policy", "research"),
+                                         return_unit_masks = FALSE) {
   stopifnot(inherits(object, "margot_stability_policy_tree"))
   table_type <- match.arg(table_type)
   order_by <- match.arg(order_by)
@@ -415,7 +417,8 @@ margot_policy_summary_report <- function(object,
   if (table_type == "treated_only") {
     tbl_df <- margot_table_treated_only(rep, label_mapping = label_mapping, digits = digits)
   } else {
-    tbl_df <- margot_table_consensus_policy_value(object, report_df = rep, label_mapping = label_mapping)
+    # We already filtered to selected depths per model; prevent accidental depth re-filtering
+    tbl_df <- margot_table_consensus_policy_value(object, report_df = rep, depth = NULL, label_mapping = label_mapping)
   }
   # updated column names for readability
   col_map <- c(
@@ -449,12 +452,9 @@ margot_policy_summary_report <- function(object,
     table_md <- ""
   }
 
-  # small helper for policy value explanation
-  policy_expl <- paste0(
-    "Policy value vs control-all: mean benefit when treating only those recommended; ",
-    "policy value vs treat-all: mean benefit when withholding treatment only where the policy recommends control. ",
-    "Avg uplift among treated: average (DR_treat − DR_control) across units the policy recommends to treat."
-  )
+  # small helper for policy value explanation (single source of truth)
+  audience <- match.arg(audience)
+  policy_expl <- margot_policy_value_explainer(audience)
 
   # build per-model text
   lines <- character()
@@ -1733,6 +1733,7 @@ margot_policy_summary_report <- function(object,
     cov <- paste0(round(100 * df$coverage, 1), "%")
     df_out <- data.frame(
       Outcome = lab,
+      Depth = df$depth,
       `Effect Size (95% CI)` = pv_ctrl,
       `Effect in Treated (95% CI)` = uplift,
       `Coverage (%)` = cov,
@@ -1769,6 +1770,104 @@ margot_policy_summary_report <- function(object,
     group_table_df <- data.frame()
   }
 
+  # Optional: return unit-level masks and IDs for exploratory drill-downs
+  unit_masks <- NULL
+  if (isTRUE(return_unit_masks)) {
+    unit_masks <- list()
+    for (mn in model_names) {
+      res <- object$results[[mn]]
+      d <- model_depths[[mn]]
+      tag <- paste0("policy_tree_depth_", d)
+      pol <- res[[tag]]
+      pd <- res$plot_data
+      dr <- res$dr_scores
+      if (is.null(dr)) dr <- res$dr_scores_flipped
+      if (is.null(pol) || is.null(pd) || is.null(dr)) next
+      full <- if (!is.null(pd$X_test_full)) pd$X_test_full else pd$X_test
+      if (is.null(full)) next
+      if (!all(pol$columns %in% colnames(full))) next
+      X_full <- as.data.frame(full[, pol$columns, drop = FALSE])
+      test_idx <- pd$test_indices
+      if (is.null(test_idx)) {
+        test_idx <- suppressWarnings(as.integer(rownames(full)))
+      }
+      keep <- stats::complete.cases(X_full)
+      if (!any(keep)) next
+      # Predict actions on full test slice then subset to keep
+      a_full <- tryCatch(predict(pol, X_full), error = function(e) NULL)
+      if (is.null(a_full)) next
+      if (is.matrix(a_full)) a_full <- a_full[, 1]
+      a_hat <- .normalize_policy_actions(a_full[keep])
+      N <- length(a_hat)
+      if (!N) next
+      # evaluation IDs aligned to keep
+      eval_ids <- NULL
+      if (!is.null(test_idx) && length(test_idx) == nrow(X_full) && all(!is.na(test_idx))) {
+        eval_ids <- test_idx[keep]
+      } else {
+        rn <- suppressWarnings(as.integer(rownames(X_full)))
+        if (!any(is.na(rn)) && length(rn) == nrow(X_full)) {
+          eval_ids <- rn[keep]
+        } else {
+          eval_ids <- seq_len(nrow(X_full))[keep]
+        }
+      }
+      # group membership (branch for depth 1; leaf for depth 2 if available)
+      gid <- integer(N)
+      nodes <- pol$nodes
+      var1 <- pol$columns[nodes[[1]]$split_variable]
+      thr1 <- nodes[[1]]$split_value
+      left <- X_full[keep, var1, drop = FALSE][, 1] <= thr1
+      if (d >= 2L && length(nodes) >= 3) {
+        var2 <- pol$columns[nodes[[2]]$split_variable]; thr2 <- nodes[[2]]$split_value
+        var3 <- pol$columns[nodes[[3]]$split_variable]; thr3 <- nodes[[3]]$split_value
+        gid[left] <- ifelse(X_full[keep, var2, drop = FALSE][left, 1] <= thr2, 1L, 2L)
+        gid[!left] <- ifelse(X_full[keep, var3, drop = FALSE][!left, 1] <= thr3, 3L, 4L)
+      } else {
+        gid[left] <- 1L; gid[!left] <- 2L
+      }
+      # dominant favorable group index from split_breakdown
+      keep_groups <- integer(0)
+      sb <- split_breakdown[[mn]]
+      if (!is.null(sb) && nrow(sb)) {
+        contrib <- sb$contrib_pv_control_all
+        best <- suppressWarnings(which.max(contrib))
+        if (length(best) == 1 && !is.na(contrib[best]) && contrib[best] > 0) {
+          keep_groups <- best
+        }
+      }
+      # Gating by decision when auto_recommend is on
+      allow_export <- TRUE
+      if (isTRUE(auto_recommend) && !is.null(recommendations_by_model) && !is.null(recommendations_by_model[[mn]])) {
+        allow_export <- recommendations_by_model[[mn]]$decision != "do_not_deploy"
+      }
+      if (!allow_export) next
+      # restricted actions (if a single dominant favorable group exists)
+      actions_restricted <- NULL
+      treat_mask_restricted <- NULL
+      if (length(keep_groups)) {
+        a_var <- a_hat
+        a_var[!(gid %in% keep_groups)] <- 1L
+        actions_restricted <- a_var
+        treat_mask_restricted <- a_var == 2L
+      }
+      treat_mask_full <- a_hat == 2L
+      # assemble entry (include a generic not_excluded_ids aligned to restricted if available; else full treat ids)
+      entry <- list(
+        eval_ids = eval_ids,
+        actions_full = a_hat,
+        treat_mask_full = treat_mask_full,
+        favorable_mask = if (length(keep_groups)) (gid %in% keep_groups) else rep(FALSE, N),
+        actions_restricted = actions_restricted,
+        treat_mask_restricted = treat_mask_restricted,
+        coverage_full = mean(treat_mask_full),
+        coverage_restricted = if (!is.null(treat_mask_restricted)) mean(treat_mask_restricted) else NA_real_,
+        not_excluded_ids = if (!is.null(treat_mask_restricted)) eval_ids[treat_mask_restricted] else eval_ids[treat_mask_full]
+      )
+      unit_masks[[mn]] <- entry
+    }
+  }
+
   list(
     text = text,
     report = report_text,
@@ -1792,7 +1891,7 @@ margot_policy_summary_report <- function(object,
     recommended_depth1_model_names = recommended_depth1_model_names,
     recommended_depth2_model_ids = recommended_depth2_model_ids,
     recommended_depth2_model_names = recommended_depth2_model_names,
-    practical_takeaways_text = practical_takeaways_text,
+  practical_takeaways_text = practical_takeaways_text,
     wins_model_ids = wins_model_ids,
     wins_model_names = wins_model_names,
     neutral_model_ids = neutral_model_ids,
@@ -1807,6 +1906,7 @@ margot_policy_summary_report <- function(object,
     depth1_model_names = depth1_model_names,
     depth2_model_ids = depth2_model_ids,
     depth2_model_names = depth2_model_names,
-    coherent_policy_values = rep
+    coherent_policy_values = rep,
+    unit_masks = unit_masks
   )
 }

@@ -1,3 +1,11 @@
+# [2025-09-19] margot 1.0.242
+
+### New: 
+- `margot_policy_workflow()`, shared explainer
+
+### Improvements: 
+- min_gain_for_depth_switch, audience + return_unit_masks, brief includes Depth, bugfix for depth-1 in summary table, interpretation reuse flags
+
 # [2025-09-19] margot 1.0.240 - 1.0.241
 
 ### Improvements
@@ -3000,3 +3008,18 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ### Notes
 - All changes are backward compatible. New parameters default to previous behavior.
+# [2025-09-19] margot 1.0.240 - 1.0.241
+ 
+# [2025-09-25] margot 1.0.242
+
+### New
+- `margot_policy_workflow()`: one-call policy workflow that orchestrates depth selection (`margot_policy_summary_compare_depths()`), mixed-depth summary reporting (`margot_policy_summary_report()`), and optional interpretations (`margot_interpret_policy_batch()`). Adds `brief_include_group` to control whether the policy brief includes the Group column.
+- Shared text helper `margot_policy_value_explainer()` for consistent definitions of policy value vs control-all/treat-all, coverage, uplift, and the identity PV(control-all) = Coverage × Uplift_Treated.
+
+### Improvements
+- `margot_policy_summary_compare_depths()` adds `min_gain_for_depth_switch` (default 0.005) to prefer depth-1 unless depth-2 yields a material out-of-sample gain.
+- `margot_policy_summary_report()` now supports `audience = c("policy","research")` to drive policy-facing wording and includes `return_unit_masks` to return per-model evaluation masks (including `not_excluded_ids`) for downstream plotting and drill-downs. The compact policy brief now includes `Depth`, and an issue dropping depth-1 rows from the summary table when precomputed reports were supplied was fixed.
+- `margot_interpret_policy_batch()` gains `policy_value_source = c("compute","use_coherent")` and `coherent_values` so interpretations can reuse PV rows from the summary report instead of recomputing CIs.
+
+### Documentation
+- Added `README.qmd` with quick-start usage of the new policy workflow and a summary of 1.0.242 changes.

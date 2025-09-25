@@ -23,7 +23,8 @@ margot_policy_summary_compare_depths(
   min_action_pct = 5,
   split_drop_zero = TRUE,
   split_top_only = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  min_gain_for_depth_switch = 0.005
 )
 }
 \arguments{

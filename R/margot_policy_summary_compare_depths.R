@@ -57,7 +57,8 @@ margot_policy_summary_compare_depths <- function(object,
                                                  min_action_pct = 5,
                                                  split_drop_zero = TRUE,
                                                  split_top_only = FALSE,
-                                                 verbose = TRUE) {
+                                                 verbose = TRUE,
+                                                 min_gain_for_depth_switch = 0.005) {
   se_method <- match.arg(se_method)
 
   if (isTRUE(verbose)) cli::cli_alert_info("Comparing depth-1 and depth-2 policy summaries")
@@ -191,16 +192,28 @@ margot_policy_summary_compare_depths <- function(object,
     v2 <- if (mn %in% pv2$models) pv2$pv[mn, "pv"] else NA_real_
     l2 <- if (mn %in% pv2$models) pv2$pv[mn, "lo"] else NA_real_
     h2 <- if (mn %in% pv2$models) pv2$pv[mn, "hi"] else NA_real_
-    # choose best by PV; if tie, by higher lower-CI
+    # choose best by PV with parsimony threshold: only switch depth if
+    # the gain exceeds `min_gain_for_depth_switch`; otherwise prefer depth 1.
+    # If one depth missing, pick the available one. If both present and gain
+    # exceeds threshold, pick the higher PV; if equal within threshold, depth 1.
     pick <- NA_character_
     if (!is.na(v1) || !is.na(v2)) {
-      s1 <- ifelse(is.na(v1), -Inf, v1)
-      s2 <- ifelse(is.na(v2), -Inf, v2)
-      if (s1 > s2) pick <- "1" else if (s2 > s1) pick <- "2" else {
-        # tie-break by CI lower bound
-        lb1 <- ifelse(is.na(l1), -Inf, l1)
-        lb2 <- ifelse(is.na(l2), -Inf, l2)
-        pick <- if (lb1 >= lb2) "1" else "2"
+      both_have <- (!is.na(v1) && !is.na(v2))
+      if (both_have) {
+        delta <- v2 - v1
+        if (!is.na(delta) && delta > min_gain_for_depth_switch) {
+          pick <- "2"
+        } else if (!is.na(delta) && (-delta) > min_gain_for_depth_switch) {
+          pick <- "1"
+        } else {
+          pick <- "1" # prefer simpler tree when gains are marginal
+        }
+      } else if (!is.na(v1) && is.na(v2)) {
+        pick <- "1"
+      } else if (is.na(v1) && !is.na(v2)) {
+        pick <- "2"
+      } else {
+        pick <- NA_character_
       }
     }
     sel[mn] <- pick
