@@ -15,11 +15,15 @@ margot_lmtp(
   contrast_scale = c("additive", "rr", "or"),
   lmtp_defaults = list(),
   n_cores = parallel::detectCores() - 1,
+  models_in_parallel = NULL,
+  cv_workers = NULL,
   save_output = FALSE,
   save_path = here::here("push_mods"),
   base_filename = "lmtp_output",
   use_timestamp = FALSE,
-  prefix = NULL
+  prefix = NULL,
+  manage_future_plan = FALSE,
+  progress = c("cli", "progressr", "none")
 )
 }
 \arguments{
@@ -41,7 +45,11 @@ margot_lmtp(
 
 \item{lmtp_defaults}{A list of default parameters for the LMTP models.}
 
-\item{n_cores}{Number of cores to use for parallel processing. Default is detectCores() - 1.}
+\item{n_cores}{Total number of CPU cores to budget for the batch run. Default is detectCores() - 1 (includes efficiency cores on Apple Silicon, so set manually if you want to cap at performance cores).}
+
+\item{models_in_parallel}{Optional cap on how many LMTP models to run at once. Defaults to floor(n_cores / cv_workers).}
+
+\item{cv_workers}{Number of workers consumed internally by each LMTP fit (usually the cross-validation folds). Defaults to future::nbrOfWorkers().}
 
 \item{save_output}{Logical, whether to save the complete output. Default is FALSE.}
 

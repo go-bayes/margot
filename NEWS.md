@@ -1,3 +1,12 @@
+# [2025-09-26] margot 1.0.244
+
+### Improvements
+- `margot_lmtp()` batches outcome/shift fits with nested future parallelism, prioritises fold workers, and adds `models_in_parallel`/`cv_workers` controls plus clearer scheduling messages. (note, nested future parrallelism not yet working; lmtp
+'listens' to sequential parrallel setting, slowing its cross validation (to be continued...))
+
+### Bug Fixes
+- Stabilised nested future plans on macOS by provisioning dedicated multisession layers for outer/inner work so batches no longer trigger `UnexpectedFutureResultError`.
+
 # [2025-09-19] margot 1.0.243
 
 - `margot_lmtp_positivity()` - reports positivity in lmtp models

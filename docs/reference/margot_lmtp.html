@@ -9,7 +9,7 @@ calculates contrasts, creates evaluation tables, and optionally saves the comple
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.243</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.244</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,11 +53,15 @@ calculates contrasts, creates evaluation tables, and optionally saves the comple
 <span>  contrast_scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"additive"</span>, <span class="st">"rr"</span>, <span class="st">"or"</span><span class="op">)</span>,</span>
 <span>  lmtp_defaults <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
+<span>  models_in_parallel <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cv_workers <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  save_output <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  save_path <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"push_mods"</span><span class="op">)</span>,</span>
 <span>  base_filename <span class="op">=</span> <span class="st">"lmtp_output"</span>,</span>
 <span>  use_timestamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  prefix <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  prefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  manage_future_plan <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  progress <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cli"</span>, <span class="st">"progressr"</span>, <span class="st">"none"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -102,7 +106,15 @@ calculates contrasts, creates evaluation tables, and optionally saves the comple
 
 
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
-<dd><p>Number of cores to use for parallel processing. Default is detectCores() - 1.</p></dd>
+<dd><p>Total number of CPU cores to budget for the batch run. Default is detectCores() - 1 (includes efficiency cores on Apple Silicon, so set manually if you want to cap at performance cores).</p></dd>
+
+
+<dt id="arg-models-in-parallel">models_in_parallel<a class="anchor" aria-label="anchor" href="#arg-models-in-parallel"></a></dt>
+<dd><p>Optional cap on how many LMTP models to run at once. Defaults to floor(n_cores / cv_workers).</p></dd>
+
+
+<dt id="arg-cv-workers">cv_workers<a class="anchor" aria-label="anchor" href="#arg-cv-workers"></a></dt>
+<dd><p>Number of workers consumed internally by each LMTP fit (usually the cross-validation folds). Defaults to future::nbrOfWorkers().</p></dd>
 
 
 <dt id="arg-save-output">save_output<a class="anchor" aria-label="anchor" href="#arg-save-output"></a></dt>
