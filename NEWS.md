@@ -1,3 +1,7 @@
+# [2025-09-19] margot 1.0.243
+
+- `margot_lmtp_positivity()` - reports positivity in lmtp models
+
 # [2025-09-19] margot 1.0.242
 
 ### New: 
