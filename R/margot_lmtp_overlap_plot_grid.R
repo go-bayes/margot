@@ -37,7 +37,8 @@ margot_lmtp_overlap_plot_grid <- function(x,
                                           drop_titles = TRUE,
                                           title = NULL,
                                           label_mapping = NULL,
-                                          annotate_zeros = c("column","facet","none")) {
+                                          annotate_zeros = c("column","facet","none"),
+                                          ymax = NULL) {
 
   annotate_zeros <- match.arg(annotate_zeros)
 
@@ -135,6 +136,27 @@ margot_lmtp_overlap_plot_grid <- function(x,
   waves_order <- sort(unique(info$wave_num))
   if (is.null(ncol)) ncol <- length(shifts_order_full)
 
+  # Compute a common Y-axis maximum across the selected plots so column heights
+  # are comparable. Allow an explicit `ymax` override when provided.
+  safe_max_count <- function(p) {
+    if (is.null(p)) return(NA_real_)
+    gb <- tryCatch(ggplot2::ggplot_build(p), error = function(e) NULL)
+    if (is.null(gb) || !length(gb$data)) return(NA_real_)
+    d <- gb$data[[1]]
+    ycols <- intersect(c("y", "count", "..count.."), names(d))
+    if (!length(ycols)) return(NA_real_)
+    max(unlist(d[ycols]), na.rm = TRUE)
+  }
+  selected_keys <- paste(info$outcome, info$shift, as.character(info$wave_num), sep = "::")
+  max_y <- 0
+  for (k in selected_keys) {
+    max_y <- max(max_y, safe_max_count(ratio_plots[[k]]), na.rm = TRUE)
+  }
+  if (!is.null(ymax) && is.finite(ymax) && ymax > 0) {
+    max_y <- ymax
+  }
+  if (!is.finite(max_y) || max_y <= 0) max_y <- NA_real_
+
   # Helper to extract zeros% from original plot title
   parse_zeros <- function(p) {
     ttl <- tryCatch(p$labels$title, error = function(e) NULL)
@@ -176,6 +198,10 @@ margot_lmtp_overlap_plot_grid <- function(x,
       } else {
         p <- p + ggplot2::labs(title = NULL)
       }
+    }
+    # Harmonize Y-axis limits across panels, when available
+    if (is.finite(max_y)) {
+      p <- p + ggplot2::scale_y_continuous(limits = c(0, max_y))
     }
     if (annotate_zeros == "facet") {
       z <- parse_zeros(p)

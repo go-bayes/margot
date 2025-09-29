@@ -227,6 +227,9 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_histogram.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_histogram_intervals.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_individual_responses.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_lmtp_overlap_grid.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_lmtp_positivity.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_lmtp_positivity_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_multi_arm.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_combo.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_tree.html</loc></url>
@@ -286,6 +289,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_recompute_qini_aipw.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_recompute_qini_ipw.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_report_consensus_policy_value.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_report_policy.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_rescue_qini.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_resort_contrast_lmtp.html</loc></url>

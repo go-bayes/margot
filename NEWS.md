@@ -1,3 +1,15 @@
+# [2025-09-28] margot 1.0.246
+
+### New
+
+- `margot_report_lmtp_positivity()`: one‑stop reporter for LMTP positivity diagnostics that returns overall tables, combined by‑wave tables (ESS/N and ESS), optional density‑ratio grids with harmonised or custom y‑limits, and filtered flags. Backwards‑compatible alias `margot_lmtp_positivity_report()` is provided.
+- `margot_plot_lmtp_overlap_grid()`: wrapper for wave‑by‑shift density‑ratio grids with optional y‑axis control.
+- `margot_plot_lmtp_positivity()`: quick ggplots for overall ESS/N (bar) and ESS/N by wave (line) from the positivity reporter.
+- `margot_plot_lmtp_positivity_batch()`: run the positivity reporter/plots across multiple analyses in one call.
+
+### Improvements
+- `margot_lmtp_overlap_plot_grid()` now harmonises y‑axis heights across panels and accepts a `ymax` override to force comparable histogram scales across waves or shifts.
+
 # [2025-09-27] margot 1.0.245
 
 ### New

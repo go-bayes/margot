@@ -66,6 +66,7 @@ reference:
     contents:
     - margot_grf_overlap
     - margot_lmtp_overlap
+    - margot_report_lmtp_positivity
     - margot_lmtp_ratio_grid
     - margot_lmtp_ratio_multigrid
     - margot_lmtp_overlap_plot_grid
@@ -144,6 +145,7 @@ reference:
     - margot_rate_cv
     - margot_recompute_qini_aipw
     - margot_recompute_qini_ipw
+    - margot_report_lmtp_positivity
     - margot_rescue_qini
     - margot_resort_contrast_lmtp
     - margot_policy_workflow
@@ -164,6 +166,9 @@ reference:
     contents:
     - margot_plot
     - margot_plot_decision_tree
+    - margot_plot_lmtp_overlap_grid
+    - margot_plot_lmtp_positivity
+    - margot_plot_lmtp_positivity_batch
     - margot_plot_multi_arm
     - margot_plot_policy_combo
     - margot_plot_policy_tree
@@ -172,9 +177,6 @@ reference:
     - margot_plot_qini_batch_cost_sensitivity
     - margot_plot_qini_cost_sensitivity
     - margot_plot_qini_cost_summary
-    - margot_qini_cost_sensitivity
-    - margot_qini_scale_note
-    - margot_qini_scale_subtitle
     - margot_plot_rate
     - margot_plot_rate_batch
     - margot_plot_tau
@@ -201,7 +203,10 @@ reference:
     - margot_plot_exposure
     - margot_plot_qini_simple
     - margot_qini_alternative
+    - margot_qini_cost_sensitivity
     - margot_qini_diagnostic
+    - margot_qini_scale_note
+    - margot_qini_scale_subtitle
     - margot_process_binary_vars
     - margot_prop_missing
     - margot_rescue_qini

@@ -13,7 +13,8 @@ margot_lmtp_overlap_plot_grid(
   drop_titles = TRUE,
   title = NULL,
   label_mapping = NULL,
-  annotate_zeros = c("column", "facet", "none")
+  annotate_zeros = c("column", "facet", "none"),
+  ymax = NULL
 )
 }
 \arguments{
