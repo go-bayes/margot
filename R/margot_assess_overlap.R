@@ -78,6 +78,10 @@ margot_assess_overlap <- function(model_results,
                                   output_dir = NULL,
                                   theme = "classic",
                                   verbose = TRUE) {
+  # soft deprecation notice
+  if (isTRUE(requireNamespace("cli", quietly = TRUE))) {
+    cli::cli_alert_warning("`margot_assess_overlap()` is soft-deprecated; use `margot_grf_overlap()` instead.")
+  }
   # validate inputs
   if (!is.list(model_results) || !"full_models" %in% names(model_results)) {
     stop("model_results must contain full_models (ensure save_models = TRUE in margot_causal_forest)")

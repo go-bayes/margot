@@ -174,6 +174,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_generate_qini_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_get_labels.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_causal_forest.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_grf_overlap.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_subset_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_identify_variable_clusters.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_impute_carry_forward.html</loc></url>
@@ -194,7 +195,11 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_invert_measure.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_evalue.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_overlap.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_overlap_plot_grid.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_positivity.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_ratio_grid.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_ratio_multigrid.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_tab.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_log_transform_vars.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_make_tables.html</loc></url>
@@ -256,6 +261,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_value_explainer.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_workflow.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_positivity_panel.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_positivity_tails_panel.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_binary_vars.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_longitudinal_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_longitudinal_data_wider.html</loc></url>

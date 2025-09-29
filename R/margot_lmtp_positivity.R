@@ -56,22 +56,48 @@ margot_lmtp_positivity <- function(
     if (!n) {
       out <- data.frame(wave = wave_idx, n = 0, prop_zero = NA_real_,
                         min = NA_real_, max = NA_real_, mean = NA_real_, sd = NA_real_,
-                        cv = NA_real_, ess = NA_real_, ess_frac = NA_real_)
-      # add quantiles & tails with NA
-      qs <- setNames(rep(NA_real_, length(probs)), paste0("q", gsub("\\.", "", sprintf("%g", probs))))
+                        cv = NA_real_, ess = NA_real_, ess_frac = NA_real_,
+                        n_pos = NA_real_, prop_nonzero = NA_real_,
+                        ess_pos = NA_real_, ess_pos_frac = NA_real_)
+      # add quantiles & tails with NA (all and positive-only)
+      qn <- paste0("q", gsub("\\.", "", sprintf("%g", probs)))
+      qs <- setNames(rep(NA_real_, length(probs)), qn)
+      qs_pos <- setNames(rep(NA_real_, length(probs)), paste0(qn, "_pos"))
       tails <- setNames(rep(NA_real_, length(thresholds)), paste0("p_gt_", thresholds))
-      return(cbind(out, as.data.frame(as.list(qs)), as.data.frame(as.list(tails))))
+      tails_pos <- setNames(rep(NA_real_, length(thresholds)), paste0("p_gt_", thresholds, "_pos"))
+      return(cbind(out,
+                   as.data.frame(as.list(qs)),
+                   as.data.frame(as.list(tails)),
+                   as.data.frame(as.list(qs_pos)),
+                   as.data.frame(as.list(tails_pos))))
     }
 
     # basic moments
     mn <- mean(w); sdv <- stats::sd(w)
     cv <- if (isTRUE(all.equal(mn, 0))) NA_real_ else sdv / mn
-    qv <- setNames(.q(w, probs), paste0("q", gsub("\\.", "", sprintf("%g", probs))))
+    qn <- paste0("q", gsub("\\.", "", sprintf("%g", probs)))
+    qv <- setNames(.q(w, probs), qn)
     tails <- sapply(thresholds, function(t) mean(w > t))
     names(tails) <- paste0("p_gt_", thresholds)
 
     ess <- .ess(w)
     ess_frac <- ess / n
+
+    # positive-only (uncensored) diagnostics
+    w_pos <- w[w > 0]
+    n_pos <- length(w_pos)
+    prop_nonzero <- if (n > 0) n_pos / n else NA_real_
+    ess_pos <- if (n_pos > 0) .ess(w_pos) else NA_real_
+    ess_pos_frac <- if (n_pos > 0) ess_pos / n_pos else NA_real_
+
+    # positive-only quantiles and tails
+    if (n_pos > 0) {
+      qv_pos <- setNames(.q(w_pos, probs), paste0(qn, "_pos"))
+      tails_pos <- setNames(sapply(thresholds, function(t) mean(w_pos > t)), paste0("p_gt_", thresholds, "_pos"))
+    } else {
+      qv_pos <- setNames(rep(NA_real_, length(probs)), paste0(qn, "_pos"))
+      tails_pos <- setNames(rep(NA_real_, length(thresholds)), paste0("p_gt_", thresholds, "_pos"))
+    }
 
     data.frame(
       wave = wave_idx,
@@ -83,9 +109,15 @@ margot_lmtp_positivity <- function(
       sd = sdv,
       cv = cv,
       t(qv),
-      t(as.data.frame(as.list(tails))),
+      as.data.frame(as.list(tails)),
+      t(qv_pos),
+      as.data.frame(as.list(tails_pos)),
       ess = ess,
       ess_frac = ess_frac,
+      n_pos = n_pos,
+      prop_nonzero = prop_nonzero,
+      ess_pos = ess_pos,
+      ess_pos_frac = ess_pos_frac,
       row.names = NULL,
       check.names = FALSE
     )
@@ -113,10 +145,16 @@ margot_lmtp_positivity <- function(
       if (length(idx)) flags[["zeros"]] <- data.frame(idx = idx, reason = sprintf("prop_zero > %.3f", zero_warn))
     }
 
-    # ESS
+    # ESS (all weights)
     if ("ess_frac" %in% names(df)) {
       idx <- which(!is.na(df$ess_frac) & df$ess_frac < ess_warn)
       if (length(idx)) flags[["ess"]] <- data.frame(idx = idx, reason = sprintf("ESS/N < %.2f", ess_warn))
+    }
+
+    # ESS among positive weights only
+    if ("ess_pos_frac" %in% names(df)) {
+      idx <- which(!is.na(df$ess_pos_frac) & df$ess_pos_frac < ess_warn)
+      if (length(idx)) flags[["ess_pos"]] <- data.frame(idx = idx, reason = sprintf("ESS+/(N+) < %.2f", ess_warn))
     }
 
     # tails
@@ -127,6 +165,18 @@ margot_lmtp_positivity <- function(
         idx <- which(!is.na(df[[col]]) & df[[col]] > thr)
         if (length(idx)) {
           flags[[paste0("tail_", t)]] <- data.frame(idx = idx, reason = sprintf("P(ratio > %g) > %.3f", t, thr))
+        }
+      }
+    }
+
+    # tails among positive-only weights
+    for (t in thresholds) {
+      col <- paste0("p_gt_", t, "_pos")
+      thr <- tail_warn[as.character(t)]
+      if (col %in% names(df)) {
+        idx <- which(!is.na(df[[col]]) & df[[col]] > thr)
+        if (length(idx)) {
+          flags[[paste0("tail_pos_", t)]] <- data.frame(idx = idx, reason = sprintf("P+(ratio > %g) > %.3f", t, thr))
         }
       }
     }
@@ -184,13 +234,22 @@ margot_lmtp_positivity <- function(
 
       # reorder columns nicely
       left  <- c("outcome", "shift", "wave", "n")
-      mids1 <- c("prop_zero", "min", paste0("q", gsub("\\.", "", sprintf("%g", probs))), "median", "max")
+      qcols <- paste0("q", gsub("\\.", "", sprintf("%g", probs)))
+      qcols_pos <- paste0(qcols, "_pos")
+      mids1 <- c("prop_zero", "min", qcols, qcols_pos, "median", "max")
       # ensure "median" is present and not duplicated
       if (!"median" %in% mids1) mids1 <- c(mids1, "median")
       mids2 <- c("mean", "sd", "cv")
       tails <- paste0("p_gt_", thresholds)
-      right <- c("ess", "ess_frac")
-      keep  <- unique(c(left, mids1[mids1 %in% names(wave_df)], mids2, tails[tails %in% names(wave_df)], right))
+      tails_pos <- paste0("p_gt_", thresholds, "_pos")
+      # include positive-only diagnostics in the kept columns
+      right <- c("ess", "ess_frac", "n_pos", "prop_nonzero", "ess_pos", "ess_pos_frac")
+      keep  <- unique(c(left,
+                        mids1[mids1 %in% names(wave_df)],
+                        mids2,
+                        tails[tails %in% names(wave_df)],
+                        tails_pos[tails_pos %in% names(wave_df)],
+                        right))
       wave_df <- wave_df[, intersect(keep, names(wave_df)), drop = FALSE]
 
       by_wave_rows[[length(by_wave_rows) + 1]] <- wave_df

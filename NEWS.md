@@ -1,3 +1,18 @@
+# [2025-09-27] margot 1.0.245
+
+### New
+- `margot_positivity_panel()`: compact positivity summary (all vs positive-only) for LMTP models.
+- `margot_positivity_tails_panel()`: detailed quantiles and tail probabilities (all vs positive-only).
+- `margot_lmtp_overlap()`: LMTP overlap/positivity helper built on `margot_lmtp_positivity()`, with optional density-ratio plots and scale toggle.
+- `margot_lmtp_ratio_grid()`: panel grid of per-wave density-ratio histograms for a selected outcome/shift.
+- `margot_lmtp_ratio_multigrid()`: multi-shift facet grid (waves x shifts) of density ratios for a selected outcome; supports label mapping and log10/linear scales.
+- `margot_lmtp_overlap_plot_grid()`: arrange `margot_lmtp_overlap()` ratio_plots into a wave-by-shift grid for a single outcome; supports ordering and title control.
+- `margot_grf_overlap()`: new name for GRF overlap diagnostics (wraps existing functionality).
+
+### Changes
+- `margot_assess_overlap()` is soft-deprecated; please use `margot_grf_overlap()` instead.
+- `margot_lmtp_overlap()` plots now accept `scale = "log10"` (default) or `scale = "linear"` and no longer take `save_plots`/`output_dir` (return ggplot objects to save externally).
+
 # [2025-09-26] margot 1.0.244
 
 ### Improvements

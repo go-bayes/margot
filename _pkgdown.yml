@@ -64,6 +64,11 @@ reference:
 
   - title: "Check assumptions"
     contents:
+    - margot_grf_overlap
+    - margot_lmtp_overlap
+    - margot_lmtp_ratio_grid
+    - margot_lmtp_ratio_multigrid
+    - margot_lmtp_overlap_plot_grid
     - margot_assess_overlap
     - margot_make_tables
     - margot_plot_categorical
@@ -142,6 +147,8 @@ reference:
     - margot_rescue_qini
     - margot_resort_contrast_lmtp
     - margot_policy_workflow
+    - margot_positivity_panel
+    - margot_positivity_tails_panel
     - margot_subset_model
     - margot_subset_batch
     - margot_summary_cate_difference_gain
@@ -174,7 +181,6 @@ reference:
     - margot_plot_cv_results
     - margot_plot_cv_summary
     - margot_view_lmtp_structure
-
 
   - title: "Utility functions"
     contents:
