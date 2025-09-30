@@ -51,7 +51,7 @@ margot_report_lmtp_positivity <- function(x,
   }
 
   # Compute positivity/overlap summaries
-  pos <- margot_lmtp_positivity(x, digits = max(3L, digits))
+  pos <- margot_lmtp_positivity(x, digits = max(3L, digits), verbose = FALSE)
   pos <- lapply(pos, clean_shift_names)
 
   # Filter outcome + shifts
@@ -84,7 +84,8 @@ margot_report_lmtp_positivity <- function(x,
             remove_tx_prefix = TRUE,
             remove_z_suffix = TRUE,
             remove_underscores = TRUE,
-            use_title_case = TRUE
+            use_title_case = TRUE,
+            quiet = TRUE
           )
         ),
         error = function(e) sh_clean
@@ -93,6 +94,24 @@ margot_report_lmtp_positivity <- function(x,
     }
     gsub("_", " ", tools::toTitleCase(sh_clean))
   }
+
+  # Outcome label for titles
+  outcome_label <- tryCatch({
+    if (exists("transform_label", mode = "function")) {
+      out <- transform_label(
+        label = outcome,
+        label_mapping = label_mapping,
+        options = list(
+          remove_tx_prefix = TRUE,
+          remove_z_suffix = TRUE,
+          remove_underscores = TRUE,
+          use_title_case = TRUE,
+          quiet = TRUE
+        )
+      )
+      if (is.null(out) || is.na(out)) outcome else out
+    } else outcome
+  }, error = function(e) outcome)
 
   # Overall table (Estimand rows)
   ov <- pos_overall
@@ -119,17 +138,51 @@ margot_report_lmtp_positivity <- function(x,
       names_from = "Estimand",
       values_from = "ess"
     )
+    # Compact ESS by wave with cleaned shift columns (e.g., Shift Up, Shift Down, Null)
+    present <- unique(bw$shift_clean)
+    pref_order <- c("shift_up", "shift_down", "null", "religious", "secular")
+    order_clean <- c(intersect(pref_order, present), setdiff(sort(present), pref_order))
+    title_map <- c(
+      shift_up = "Shift Up",
+      shift_down = "Shift Down",
+      null = "Null",
+      religious = "Religious",
+      secular = "Secular"
+    )
+    ess_compact <- pos_by_wave[pos_by_wave$shift_clean %in% order_clean, c("wave", "shift_clean", "ess")]
+    ess_compact$Wave <- suppressWarnings(as.integer(ess_compact$wave))
+    ess_compact <- ess_compact[, c("Wave", "shift_clean", "ess")]
+    by_wave_ess_compact <- tidyr::pivot_wider(
+      ess_compact,
+      names_from = "shift_clean",
+      values_from = "ess"
+    )
+    # Rename columns to pretty titles when available
+    nm <- names(by_wave_ess_compact)
+    nm <- ifelse(nm %in% names(title_map), title_map[nm], nm)
+    names(by_wave_ess_compact) <- nm
+    # By-wave counts and participants/person-time
+    by_wave_counts <- unique(pos_by_wave[, c("wave", "n")])
+    names(by_wave_counts) <- c("Wave", "N")
+    by_wave_counts$Wave <- suppressWarnings(as.integer(by_wave_counts$Wave))
+    by_wave_counts <- by_wave_counts[order(by_wave_counts$Wave), , drop = FALSE]
+    n_participants <- suppressWarnings(min(by_wave_counts$N, na.rm = TRUE))
+    n_person_time <- suppressWarnings(if (nrow(overall)) overall$N[1] else sum(by_wave_counts$N, na.rm = TRUE))
     if (isTRUE(digits >= 0)) {
       by_wave_ess_frac[, -1] <- lapply(by_wave_ess_frac[, -1, drop = FALSE], round, digits = digits)
       by_wave_ess[, -1]      <- lapply(by_wave_ess[, -1, drop = FALSE], function(v) round(v))
+      by_wave_ess_compact[, -1] <- lapply(by_wave_ess_compact[, -1, drop = FALSE], function(v) round(v))
     }
   } else {
-    by_wave_ess_frac <- by_wave_ess <- tibble::tibble()
+    by_wave_ess_frac <- by_wave_ess <- by_wave_ess_compact <- tibble::tibble()
+    by_wave_counts <- tibble::tibble()
+    n_participants <- NA_integer_
+    n_person_time <- if (nrow(overall)) overall$N[1] else NA_integer_
   }
 
   # Flags: drop ESS+/(N+) flags per default manuscript reporting
   if (nrow(pos_flags)) {
-    pos_flags <- pos_flags[!grepl("^ESS\\+/$N\\+ <\\s*0.50$", pos_flags$flag_reason), , drop = FALSE]
+    pos_flags <- pos_flags[!grepl("ESS\\+/\\(N\\+\\)", pos_flags$flag_reason), , drop = FALSE]
   }
 
   # Optional overlap plot grid
@@ -137,7 +190,7 @@ margot_report_lmtp_positivity <- function(x,
   if (isTRUE(include_plots)) {
     ol <- margot_lmtp_overlap(x, outcomes = outcome, shifts = unique(ov$shift), plot = TRUE, theme = "empty", scale = "linear", digits = 3, verbose = FALSE)
     overlap_grid <- tryCatch(
-      margot_lmtp_overlap_plot_grid(ol, outcome = outcome, shifts = unique(ov$shift), title = paste0(outcome, " — density ratio grid"), label_mapping = label_mapping, annotate_zeros = "column", ymax = ymax),
+      margot_lmtp_overlap_plot_grid(ol, outcome = outcome, shifts = unique(ov$shift), title = paste0(outcome_label, " — density ratio grid"), label_mapping = label_mapping, annotate_zeros = "column", ymax = ymax),
       error = function(e) NULL
     )
   }
@@ -146,9 +199,14 @@ margot_report_lmtp_positivity <- function(x,
     overall = overall,
     by_wave_ess_frac = by_wave_ess_frac,
     by_wave_ess = by_wave_ess,
+    by_wave_ess_compact = by_wave_ess_compact,
+    by_wave_counts = by_wave_counts,
+    n_participants = n_participants,
+    n_person_time = n_person_time,
     flags = pos_flags,
     overlap_grid = overlap_grid,
-    text_summary = sprintf("Across selected LMTP models: median zeros = %.1f%%, median ESS/N = %.3f.", 100*median(ov$prop_zero, na.rm = TRUE), median(ov$`ESS/N`, na.rm = TRUE))
+    text_summary = sprintf("Across selected LMTP models: median zeros = %.1f%%, median ESS/N = %.3f.", 100*median(ov$prop_zero, na.rm = TRUE), median(ov$`ESS/N`, na.rm = TRUE)),
+    outcome_label = outcome_label
   )
 }
 

@@ -13,6 +13,10 @@ margot_lmtp_overlap(
   scale = "log10",
   digits = 3,
   verbose = TRUE,
+  color_by_wave = TRUE,
+  bins = 40,
+  binwidth = NULL,
+  xlim = NULL,
   ...
 )
 }

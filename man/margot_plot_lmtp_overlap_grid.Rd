@@ -12,7 +12,19 @@ margot_plot_lmtp_overlap_grid(
   scale = "linear",
   theme = "empty",
   ymax = NULL,
-  digits = 3
+  digits = 3,
+  annotate_wave = TRUE,
+  annotate_zeros = FALSE,
+  waves = NULL,
+  remove_waves = NULL,
+  xlim = NULL,
+  layout = c("waves_by_shifts", "shifts_by_waves"),
+  annotate_shift = TRUE,
+  ymax_by_wave = NULL,
+  headroom = 0.06,
+  color_by_wave = TRUE,
+  bins = 40,
+  binwidth = NULL
 )
 }
 \arguments{

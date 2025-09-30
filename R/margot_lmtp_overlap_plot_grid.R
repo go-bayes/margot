@@ -33,14 +33,24 @@ margot_lmtp_overlap_plot_grid <- function(x,
                                           outcome = NULL,
                                           shifts = NULL,
                                           waves = NULL,
+                                          remove_waves = NULL,
                                           ncol = NULL,
                                           drop_titles = TRUE,
                                           title = NULL,
                                           label_mapping = NULL,
-                                          annotate_zeros = c("column","facet","none"),
-                                          ymax = NULL) {
+                                          annotate_zeros = FALSE,
+                                          ymax = NULL,
+                                          annotate_wave = TRUE,
+                                          annotate_shift = TRUE,
+                                          xlim = NULL,
+                                          layout = c("waves_by_shifts","shifts_by_waves"),
+                                          ymax_by_wave = NULL,
+                                          headroom = 0.06) {
 
-  annotate_zeros <- match.arg(annotate_zeros)
+  stopifnot(is.logical(annotate_zeros), length(annotate_zeros) == 1L)
+  stopifnot(is.logical(annotate_wave),  length(annotate_wave)  == 1L)
+  stopifnot(is.logical(annotate_shift), length(annotate_shift) == 1L)
+  layout         <- match.arg(layout)
 
   # Extract ratio_plots list
   ratio_plots <- NULL
@@ -88,6 +98,7 @@ margot_lmtp_overlap_plot_grid <- function(x,
   # Filter by waves
   info$wave_num <- suppressWarnings(as.integer(info$wave))
   if (!is.null(waves)) info <- info[info$wave_num %in% waves, , drop = FALSE]
+  if (!is.null(remove_waves)) info <- info[!(info$wave_num %in% remove_waves), , drop = FALSE]
   if (!nrow(info)) stop("No plots after applying wave filter.")
 
   # Select shifts: allow full or cleaned name matching
@@ -134,10 +145,9 @@ margot_lmtp_overlap_plot_grid <- function(x,
   col_labels <- vapply(shifts_order_clean, map_label, character(1))
 
   waves_order <- sort(unique(info$wave_num))
-  if (is.null(ncol)) ncol <- length(shifts_order_full)
+  if (is.null(ncol)) ncol <- if (identical(layout, "waves_by_shifts")) length(shifts_order_full) else length(waves_order)
 
-  # Compute a common Y-axis maximum across the selected plots so column heights
-  # are comparable. Allow an explicit `ymax` override when provided.
+  # Compute Y-axis maxima: global and per-wave; allow explicit per-wave override via `ymax_by_wave`.
   safe_max_count <- function(p) {
     if (is.null(p)) return(NA_real_)
     gb <- tryCatch(ggplot2::ggplot_build(p), error = function(e) NULL)
@@ -149,8 +159,13 @@ margot_lmtp_overlap_plot_grid <- function(x,
   }
   selected_keys <- paste(info$outcome, info$shift, as.character(info$wave_num), sep = "::")
   max_y <- 0
+  max_y_by_wave <- setNames(rep(0, length(unique(info$wave_num))), sort(unique(info$wave_num)))
   for (k in selected_keys) {
     max_y <- max(max_y, safe_max_count(ratio_plots[[k]]), na.rm = TRUE)
+    # parse wave number from key (3rd part)
+    parts <- strsplit(k, "::", fixed = TRUE)[[1]]
+    wv <- suppressWarnings(as.integer(parts[3]))
+    if (!is.na(wv)) max_y_by_wave[as.character(wv)] <- max(max_y_by_wave[as.character(wv)], safe_max_count(ratio_plots[[k]]), na.rm = TRUE)
   }
   if (!is.null(ymax) && is.finite(ymax) && ymax > 0) {
     max_y <- ymax
@@ -166,15 +181,24 @@ margot_lmtp_overlap_plot_grid <- function(x,
     if (length(r) >= 2) r[2] else NA_character_
   }
 
-  # For column annotation, pre-compute zeros for the top row wave per column
-  col_zeros <- rep(NA_character_, length(shifts_order_full))
-  names(col_zeros) <- shifts_order_full
-  top_wave <- waves_order[1]
-  if (annotate_zeros == "column") {
-    for (i in seq_along(shifts_order_full)) {
-      k_top <- paste(outcome, shifts_order_full[[i]], as.character(top_wave), sep = "::")
-      if (!is.null(ratio_plots[[k_top]])) {
-        col_zeros[[i]] <- parse_zeros(ratio_plots[[k_top]])
+  # Column labels depend on layout
+  if (identical(layout, "waves_by_shifts")) {
+    # columns are shifts
+    col_lab_vals <- col_labels
+    col_keys <- shifts_order_full
+    top_key_context <- list(type = "wave", value = waves_order[1])
+  } else {
+    # columns are waves
+    col_lab_vals <- paste0("Wave ", waves_order)
+    col_keys <- as.character(waves_order)
+    top_key_context <- list(type = "shift", value = shifts_order_full[1])
+  }
+
+  # Optionally fix x-axis limits across all selected plots
+  if (!is.null(xlim) && length(xlim) == 2 && is.finite(xlim[1]) && is.finite(xlim[2])) {
+    for (k in selected_keys) {
+      if (!is.null(ratio_plots[[k]])) {
+        ratio_plots[[k]] <- ratio_plots[[k]] + ggplot2::scale_x_continuous(limits = xlim)
       }
     }
   }
@@ -183,31 +207,60 @@ margot_lmtp_overlap_plot_grid <- function(x,
   get_plot <- function(outc, sh_full, w_num, is_top, col_idx) {
     k <- paste(outc, sh_full, as.character(w_num), sep = "::")
     p <- ratio_plots[[k]]
+    zeros_str <- parse_zeros(ratio_plots[[k]])
     if (is.null(p)) {
       # fill empty
       return(ggplot2::ggplot() + ggplot2::theme_void())
     }
     if (isTRUE(drop_titles)) {
-      # Only show the shift label as title on the top row
       if (isTRUE(is_top)) {
-        ttl <- col_labels[[col_idx]]
-        if (annotate_zeros == "column" && !is.na(col_zeros[[col_idx]])) {
-          ttl <- paste0(ttl, " — zeros: ", col_zeros[[col_idx]], "%")
-        }
-        p <- p + ggplot2::labs(title = ttl)
+        p <- p + ggplot2::labs(title = col_lab_vals[[col_idx]])
       } else {
         p <- p + ggplot2::labs(title = NULL)
       }
     }
     # Harmonize Y-axis limits across panels, when available
-    if (is.finite(max_y)) {
-      p <- p + ggplot2::scale_y_continuous(limits = c(0, max_y))
+    # Apply Y-axis limit (override > per-wave auto > global)
+    y_top <- NA_real_
+    # explicit override
+    if (!is.null(ymax_by_wave)) {
+      if (!is.null(names(ymax_by_wave)) && as.character(w_num) %in% names(ymax_by_wave)) {
+        y_top <- ymax_by_wave[[as.character(w_num)]]
+      } else if (length(ymax_by_wave) == length(waves_order)) {
+        idx <- match(w_num, waves_order)
+        if (!is.na(idx)) y_top <- ymax_by_wave[[idx]]
+      }
     }
-    if (annotate_zeros == "facet") {
-      z <- parse_zeros(p)
-      if (!is.na(z)) {
+    # if no explicit, use per-wave auto
+    if (!is.finite(y_top) || is.na(y_top)) {
+      if (is.finite(max_y_by_wave[as.character(w_num)])) y_top <- max_y_by_wave[as.character(w_num)]
+    }
+    # fall back to global
+    if (!is.finite(y_top) || is.na(y_top)) {
+      if (is.finite(max_y)) y_top <- max_y
+    }
+    if (is.finite(y_top)) {
+      y_top_adj <- y_top * (1 + max(0, headroom))
+      p <- p + ggplot2::scale_y_continuous(limits = c(0, y_top_adj))
+    }
+
+    if (isTRUE(annotate_wave)) {
+      p <- p + ggplot2::annotate("text", x = -Inf, y = Inf,
+                                 label = paste0("Wave ", w_num),
+                                 hjust = -0.1, vjust = 1.1, size = 3)
+    }
+    if (isTRUE(annotate_shift)) {
+      # pretty shift label for facet annotation (bottom-left, nudged inside)
+      sh_clean <- if (startsWith(sh_full, paste0(outc, "_"))) substring(sh_full, nchar(outc) + 2L) else sh_full
+      sh_pretty <- map_label(sh_clean)
+      p <- p + ggplot2::annotate("text", x = -Inf, y = -Inf,
+                                 label = sh_pretty,
+                                 hjust = -0.1, vjust = -0.6, size = 3)
+    }
+    if (isTRUE(annotate_zeros)) {
+      if (!is.na(zeros_str)) {
         p <- p + ggplot2::annotate("text", x = Inf, y = Inf,
-                                   label = paste0("zeros: ", z, "%"),
+                                   label = paste0("zeros: ", zeros_str, "%"),
                                    hjust = 1.1, vjust = 1.1, size = 3)
       }
     }
@@ -215,11 +268,23 @@ margot_lmtp_overlap_plot_grid <- function(x,
   }
 
   plots <- list()
-  for (w_idx in seq_along(waves_order)) {
-    w <- waves_order[[w_idx]]
+  if (identical(layout, "waves_by_shifts")) {
+    for (w_idx in seq_along(waves_order)) {
+      w <- waves_order[[w_idx]]
+      for (sc_idx in seq_along(shifts_order_full)) {
+        is_top <- (w_idx == 1L)
+        col_idx <- sc_idx
+        plots[[length(plots) + 1]] <- get_plot(outcome, shifts_order_full[[sc_idx]], w, is_top, col_idx)
+      }
+    }
+  } else {
     for (sc_idx in seq_along(shifts_order_full)) {
-      is_top <- (w_idx == 1L)
-      plots[[length(plots) + 1]] <- get_plot(outcome, shifts_order_full[[sc_idx]], w, is_top, sc_idx)
+      sh <- shifts_order_full[[sc_idx]]
+      for (w_idx in seq_along(waves_order)) {
+        is_top <- (sc_idx == 1L)
+        col_idx <- w_idx
+        plots[[length(plots) + 1]] <- get_plot(outcome, sh, waves_order[[w_idx]], is_top, col_idx)
+      }
     }
   }
 

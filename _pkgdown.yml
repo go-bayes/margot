@@ -1,4 +1,3 @@
-
 url: https://go-bayes.github.io/margot
 
 home:
@@ -68,7 +67,6 @@ reference:
     - margot_lmtp_overlap
     - margot_report_lmtp_positivity
     - margot_lmtp_ratio_grid
-    - margot_lmtp_ratio_multigrid
     - margot_lmtp_overlap_plot_grid
     - margot_assess_overlap
     - margot_make_tables
@@ -117,6 +115,7 @@ reference:
     - margot_correct_combined_table
     - margot_flip_forests
     - margot_inspect_qini
+    - margot_interpret_lmtp_positivity
     - margot_interpret_stability
     - margot_interpret_stability_batch
     - margot_report_consensus_policy_value
@@ -126,6 +125,7 @@ reference:
     - margot_policy_summary_compare_depths
     - margot_policy_methods_statement
     - margot_interpret_bootstrap
+    - margot_interpret_lmtp_positivity_overview
     - margot_interpret_policy_batch
     - margot_interpret_policy_tree
     - margot_interpret_qini
@@ -149,8 +149,6 @@ reference:
     - margot_rescue_qini
     - margot_resort_contrast_lmtp
     - margot_policy_workflow
-    - margot_positivity_panel
-    - margot_positivity_tails_panel
     - margot_subset_model
     - margot_subset_batch
     - margot_summary_cate_difference_gain
@@ -167,8 +165,6 @@ reference:
     - margot_plot
     - margot_plot_decision_tree
     - margot_plot_lmtp_overlap_grid
-    - margot_plot_lmtp_positivity
-    - margot_plot_lmtp_positivity_batch
     - margot_plot_multi_arm
     - margot_plot_policy_combo
     - margot_plot_policy_tree

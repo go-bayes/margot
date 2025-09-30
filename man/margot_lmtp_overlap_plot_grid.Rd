@@ -9,12 +9,19 @@ margot_lmtp_overlap_plot_grid(
   outcome = NULL,
   shifts = NULL,
   waves = NULL,
+  remove_waves = NULL,
   ncol = NULL,
   drop_titles = TRUE,
   title = NULL,
   label_mapping = NULL,
-  annotate_zeros = c("column", "facet", "none"),
-  ymax = NULL
+  annotate_zeros = FALSE,
+  ymax = NULL,
+  annotate_wave = TRUE,
+  annotate_shift = TRUE,
+  xlim = NULL,
+  layout = c("waves_by_shifts", "shifts_by_waves"),
+  ymax_by_wave = NULL,
+  headroom = 0.06
 )
 }
 \arguments{

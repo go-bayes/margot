@@ -1,3 +1,28 @@
+# [2025-09-30] margot 1.0.248
+### Changed
+- Introduced `margot_interpret_lmtp_positivity()` for colSums-based ESS summaries by wave and overall, replacing the earlier zero-focused reporting.
+- `margot_interpret_lmtp_overlap()` now forwards to the new helper with a soft-deprecation warning to ease migration.
+- pkgdown reference navigation now lists `margot_interpret_lmtp_positivity()` in place of the deprecated alias.
+- Removed redundant positivity helper wrappers (`margot_positivity_panel()`, `margot_positivity_tails_panel()`, `margot_lmtp_ratio_multigrid()`, `margot_plot_lmtp_positivity()`, `margot_plot_lmtp_positivity_batch()`).
+
+# [2025-09-29] margot 1.0.247
+### New
+- `margot_overlap_bullets()` reports positivity results
+- `margot_interpret_lmtp_positivity_overview`() - compares results
+
+### Improved
+- `margot_report_lmtp_positivity()` now uses label_mapping to pretty‑print the outcome in plot
+  titles and returns outcome_label in the report list.
+- Grid improvements
+      - Rows can be annotated with wave labels: `annotate_wave = "facet"`.
+      - Optional wave‑based `coloring: color_by_wave = TRUE` (distinct fill per wave).
+      - Both available via margot_plot_lmtp_overlap_grid().
+  - Compact by‑wave table
+      - Reporter now returns `by_wave_ess_compact` as a slim Wave × Shift table (e.g., Wave | Shift Up |
+  Shift Down | Null).
+      - Also returns `n_participants` (baseline participants) and `n_person_time` (pooled rows).
+
+
 # [2025-09-28] margot 1.0.246
 
 ### New

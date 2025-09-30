@@ -182,6 +182,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_inspect_qini.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_bootstrap.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_heterogeneity.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity_overview.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_policy_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_policy_tree.html</loc></url>

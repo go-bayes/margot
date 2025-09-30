@@ -34,6 +34,10 @@ margot_lmtp_overlap <- function(x,
                                 scale = "log10",
                                 digits = 3,
                                 verbose = TRUE,
+                                color_by_wave = TRUE,
+                                bins = 40,
+                                binwidth = NULL,
+                                xlim = NULL,
                                 ...) {
 
   # compute positivity/overlap summaries
@@ -105,13 +109,29 @@ margot_lmtp_overlap <- function(x,
         # separate zeros for text annotation
         prop_zero <- mean(w_vec == 0)
         w_pos <- w_vec[w_vec > 0]
+        # Handle all-zero case (e.g., censored/no support)
+        if (length(w_pos) == 0L) {
+          p <- ggplot2::ggplot() + ggplot2::theme_void() +
+            ggplot2::annotate("text", x = 0, y = 0,
+                               label = "all ratios = 0",
+                               hjust = 0, vjust = 0, size = 3)
+          ratio_plots[[paste(outcome_name, shift_name, wave_idx, sep = "::")]] <<- p
+          return(invisible())
+        }
+        # choose fill based on wave if requested
+        fill_col <- if (isTRUE(color_by_wave)) {
+          pal <- c("#4f88c6", "#E69F00", "#56B4E9", "#009E73", "#CC79A7")
+          pal[(as.integer(wave_idx - 1L) %% length(pal)) + 1L]
+        } else {
+          "#4f88c6"
+        }
         if (identical(tolower(scale), "log10")) {
           plot_df <- data.frame(x = log10(w_pos + 1e-12))
-          xlab <- "log10(density ratio)"
+          xlab <- NULL
           scale_txt <- "log10"
         } else {
           plot_df <- data.frame(x = w_pos)
-          xlab <- "density ratio"
+          xlab <- NULL
           scale_txt <- "linear"
         }
         title_txt <- paste0("Density ratios — ", outcome_name, " | ", shift_name,
@@ -119,9 +139,12 @@ margot_lmtp_overlap <- function(x,
                              " | zeros: ", sprintf("%.1f%%", 100*prop_zero),
                              " | scale: ", scale_txt)
         p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = x)) +
-          ggplot2::geom_histogram(bins = 40, color = "white", fill = "#4f88c6", linewidth = 0.3) +
+          { if (!is.null(binwidth)) ggplot2::geom_histogram(binwidth = binwidth, color = "white", fill = fill_col, linewidth = 0.3) else ggplot2::geom_histogram(bins = bins, color = "white", fill = fill_col, linewidth = 0.3) } +
           ggplot2::labs(title = title_txt, x = xlab, y = "Count") +
           ggtheme
+        if (!is.null(xlim) && length(xlim) == 2 && is.finite(xlim[1]) && is.finite(xlim[2])) {
+          p <- p + ggplot2::scale_x_continuous(limits = xlim)
+        }
         ratio_plots[[paste(outcome_name, shift_name, wave_idx, sep = "::")]] <<- p
       }
 

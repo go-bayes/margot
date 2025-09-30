@@ -584,6 +584,7 @@ transform_label <- function(label, label_mapping = NULL, options = list()) {
   remove_z_suffix <- isTRUE(options$remove_z_suffix)
   remove_underscores <- isTRUE(options$remove_underscores)
   use_title_case <- isTRUE(options$use_title_case)
+  quiet <- isTRUE(options$quiet)
 
   original_label <- label
 
@@ -592,7 +593,7 @@ transform_label <- function(label, label_mapping = NULL, options = list()) {
     # first try exact match
     if (label %in% names(label_mapping)) {
       new_label <- label_mapping[[label]]
-      cli::cli_alert_info("Mapped label (exact): {label} -> {new_label}")
+      if (!quiet) cli::cli_alert_info("Mapped label (exact): {label} -> {new_label}")
       return(new_label)  # return early for exact matches
     }
     
@@ -601,7 +602,7 @@ transform_label <- function(label, label_mapping = NULL, options = list()) {
       if (grepl(pat, label, fixed = TRUE)) {
         repl <- label_mapping[[pat]]
         label <- gsub(pat, repl, label, fixed = TRUE)
-        cli::cli_alert_info("Mapped label (pattern): {pat} -> {repl}")
+        if (!quiet) cli::cli_alert_info("Mapped label (pattern): {pat} -> {repl}")
       }
     }
   }
@@ -629,7 +630,7 @@ transform_label <- function(label, label_mapping = NULL, options = list()) {
 
   # log if changed
   if (!identical(label, original_label)) {
-    cli::cli_alert_info("Transformed label: {original_label} -> {label}")
+    if (!quiet) cli::cli_alert_info("Transformed label: {original_label} -> {label}")
   }
 
   label
