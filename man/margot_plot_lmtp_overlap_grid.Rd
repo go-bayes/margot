@@ -22,7 +22,10 @@ margot_plot_lmtp_overlap_grid(
   annotate_shift = TRUE,
   ymax_by_wave = NULL,
   headroom = 0.06,
-  color_by_wave = TRUE,
+  color_by = c("wave", "shift", "constant"),
+  color_by_wave = NULL,
+  fill_palette = NULL,
+  text_size = 3,
   bins = 40,
   binwidth = NULL
 )
@@ -48,6 +51,16 @@ cleaned names).}
 panels (passed to `margot_lmtp_overlap_plot_grid()`).}
 
 \item{digits}{Integer rounding for summaries (not used in plot aesthetics).}
+
+\item{color_by}{Character; how histogram fills are coloured (`"wave"`,
+`"shift"`, or `"constant"`).}
+
+\item{color_by_wave}{Legacy logical alias for `color_by` (`TRUE` = `"wave"`,
+`FALSE` = `"constant"`).}
+
+\item{fill_palette}{Optional vector of colours (named or unnamed) used when colouring histograms.}
+
+\item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).}
 }
 \value{
 A patchwork grid object.

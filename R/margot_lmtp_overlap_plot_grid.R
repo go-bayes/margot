@@ -25,6 +25,7 @@
 #' @param annotate_zeros Character; one of "column" (default), "facet", "none".
 #'   "column" appends the zeros for the top-row wave to the column title;
 #'   "facet" prints zeros in the top-right of each panel; "none" disables.
+#' @param text_size Numeric size for facet annotations (wave/shift/zeros labels).
 #'
 #' @return A patchwork object combining the selected plots.
 #' @export
@@ -45,7 +46,8 @@ margot_lmtp_overlap_plot_grid <- function(x,
                                           xlim = NULL,
                                           layout = c("waves_by_shifts","shifts_by_waves"),
                                           ymax_by_wave = NULL,
-                                          headroom = 0.06) {
+                                          headroom = 0.06,
+                                          text_size = text_size) {
 
   stopifnot(is.logical(annotate_zeros), length(annotate_zeros) == 1L)
   stopifnot(is.logical(annotate_wave),  length(annotate_wave)  == 1L)
@@ -170,6 +172,10 @@ margot_lmtp_overlap_plot_grid <- function(x,
   if (!is.null(ymax) && is.finite(ymax) && ymax > 0) {
     max_y <- ymax
   }
+  if (is.logical(ymax_by_wave) && length(ymax_by_wave) == 1L) {
+    ymax_by_wave <- if (isTRUE(ymax_by_wave)) max_y_by_wave else NULL
+  }
+
   if (!is.finite(max_y) || max_y <= 0) max_y <- NA_real_
 
   # Helper to extract zeros% from original plot title
@@ -179,6 +185,10 @@ margot_lmtp_overlap_plot_grid <- function(x,
     m <- regexec("zeros:\\s*([0-9.]+)%", ttl)
     r <- regmatches(ttl, m)[[1]]
     if (length(r) >= 2) r[2] else NA_character_
+  }
+
+  if (length(unique(info$wave_num)) == 1L && identical(layout, "shifts_by_waves")) {
+    layout <- "waves_by_shifts"
   }
 
   # Column labels depend on layout
@@ -247,7 +257,7 @@ margot_lmtp_overlap_plot_grid <- function(x,
     if (isTRUE(annotate_wave)) {
       p <- p + ggplot2::annotate("text", x = -Inf, y = Inf,
                                  label = paste0("Wave ", w_num),
-                                 hjust = -0.1, vjust = 1.1, size = 3)
+                                 hjust = -0.1, vjust = 1.1, size = text_size)
     }
     if (isTRUE(annotate_shift)) {
       # pretty shift label for facet annotation (bottom-left, nudged inside)
@@ -255,13 +265,13 @@ margot_lmtp_overlap_plot_grid <- function(x,
       sh_pretty <- map_label(sh_clean)
       p <- p + ggplot2::annotate("text", x = -Inf, y = -Inf,
                                  label = sh_pretty,
-                                 hjust = -0.1, vjust = -0.6, size = 3)
+                                 hjust = -0.1, vjust = -0.6, size = text_size)
     }
     if (isTRUE(annotate_zeros)) {
       if (!is.na(zeros_str)) {
         p <- p + ggplot2::annotate("text", x = Inf, y = Inf,
                                    label = paste0("zeros: ", zeros_str, "%"),
-                                   hjust = 1.1, vjust = 1.1, size = 3)
+                                   hjust = 1.1, vjust = 1.1, size = text_size)
       }
     }
     p

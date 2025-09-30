@@ -1,3 +1,9 @@
+# [2025-09-30] margot 1.0.249
+### Added
+- `margot_plot_lmtp_learners()` heatmap summarising Super Learner weights by wave/component.
+- `margot_interpret_lmtp_learners()` prose helper that highlights dominant learners (e.g., LOCF-driven collapses).
+- `margot_plot_lmtp_overlap_grid()` now accepts `color_by`, `fill_palette`, and `text_size` to control histogram aesthetics.
+
 # [2025-09-30] margot 1.0.248
 ### Changed
 - Introduced `margot_interpret_lmtp_positivity()` for colSums-based ESS summaries by wave and overall, replacing the earlier zero-focused reporting.

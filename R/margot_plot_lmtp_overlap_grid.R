@@ -17,6 +17,12 @@
 #' @param ymax Optional numeric y-axis maximum for histogram counts across
 #'   panels (passed to `margot_lmtp_overlap_plot_grid()`).
 #' @param digits Integer rounding for summaries (not used in plot aesthetics).
+#' @param color_by Character; how histogram fills are coloured (`"wave"`,
+#'   `"shift"`, or `"constant"`).
+#' @param color_by_wave Legacy logical alias for `color_by` (`TRUE` = `"wave"`,
+#'   `FALSE` = `"constant"`).
+#' @param fill_palette Optional vector of colours (named or unnamed) used when colouring histograms.
+#' @param text_size Numeric size for facet annotations (wave/shift/zeros labels).
 #' @return A patchwork grid object.
 #' @export
 margot_plot_lmtp_overlap_grid <- function(x,
@@ -36,13 +42,20 @@ margot_plot_lmtp_overlap_grid <- function(x,
                                           annotate_shift = TRUE,
                                           ymax_by_wave = NULL,
                                           headroom = 0.06,
-                                          color_by_wave = TRUE,
+                                          color_by = c("wave", "shift", "constant"),
+                                          color_by_wave = NULL,
+                                          fill_palette = NULL,
+                                          text_size = 3,
                                           bins = 40,
                                           binwidth = NULL) {
   stopifnot(is.logical(annotate_zeros), length(annotate_zeros) == 1L)
   stopifnot(is.logical(annotate_wave),  length(annotate_wave)  == 1L)
   stopifnot(is.logical(annotate_shift), length(annotate_shift) == 1L)
   layout <- match.arg(layout)
+  color_by <- match.arg(color_by)
+  if (!is.null(color_by_wave)) {
+    color_by <- if (isTRUE(color_by_wave)) "wave" else "constant"
+  }
   ol <- margot_lmtp_overlap(
     x,
     outcomes = outcome,
@@ -52,7 +65,9 @@ margot_plot_lmtp_overlap_grid <- function(x,
     scale = scale,
     digits = digits,
     verbose = FALSE,
+    color_by = color_by,
     color_by_wave = color_by_wave,
+    fill_palette = fill_palette,
     bins = bins,
     binwidth = binwidth,
     xlim = xlim
@@ -89,6 +104,7 @@ margot_plot_lmtp_overlap_grid <- function(x,
     xlim = xlim,
     layout = layout,
     ymax_by_wave = ymax_by_wave,
-    headroom = headroom
+    headroom = headroom,
+    text_size = text_size
   )
 }

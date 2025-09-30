@@ -13,7 +13,9 @@ margot_lmtp_overlap(
   scale = "log10",
   digits = 3,
   verbose = TRUE,
-  color_by_wave = TRUE,
+  color_by = c("wave", "shift", "constant"),
+  color_by_wave = NULL,
+  fill_palette = NULL,
   bins = 40,
   binwidth = NULL,
   xlim = NULL,
@@ -40,6 +42,16 @@ shows log10(density ratio) for w>0, or "linear" shows the raw ratio.}
 \item{digits}{Integer rounding for summaries (passed to positivity helper).}
 
 \item{verbose}{Logical; emit informative messages.}
+
+\item{color_by}{Character; how to colour histogram fills: `"wave"` (default),
+`"shift"` (one colour per shift), or `"constant"` (single colour).}
+
+\item{color_by_wave}{Legacy logical alias for `color_by` (`TRUE` = `"wave"`,
+`FALSE` = `"constant"`).}
+
+\item{fill_palette}{Optional vector of colours (named or unnamed) used when colouring histograms.
+Character aliases include `"lab"` (blue/red/grey with a constant fallback) and
+`"classic"` (the default qualitative palette).}
 
 \item{...}{Ignored. Present for backward compatibility with older
 arguments like `save_plots` and `output_dir` that are being phased out.}

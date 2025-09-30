@@ -16,6 +16,13 @@
 #'   shows log10(density ratio) for w>0, or "linear" shows the raw ratio.
 #' @param digits Integer rounding for summaries (passed to positivity helper).
 #' @param verbose Logical; emit informative messages.
+#' @param color_by Character; how to colour histogram fills: `"wave"` (default),
+#'   `"shift"` (one colour per shift), or `"constant"` (single colour).
+#' @param color_by_wave Legacy logical alias for `color_by` (`TRUE` = `"wave"`,
+#'   `FALSE` = `"constant"`).
+#' @param fill_palette Optional vector of colours (named or unnamed) used when colouring histograms.
+#'   Character aliases include `"lab"` (blue/red/grey with a constant fallback) and
+#'   `"classic"` (the default qualitative palette).
 #' @param ... Ignored. Present for backward compatibility with older
 #'   arguments like `save_plots` and `output_dir` that are being phased out.
 #'
@@ -34,7 +41,9 @@ margot_lmtp_overlap <- function(x,
                                 scale = "log10",
                                 digits = 3,
                                 verbose = TRUE,
-                                color_by_wave = TRUE,
+                                color_by = c("wave", "shift", "constant"),
+                                color_by_wave = NULL,
+                                fill_palette = NULL,
                                 bins = 40,
                                 binwidth = NULL,
                                 xlim = NULL,
@@ -46,6 +55,11 @@ margot_lmtp_overlap <- function(x,
   by_wave <- pos$by_wave
   overall <- pos$overall
   flags   <- pos$flags
+
+  color_by <- match.arg(color_by)
+  if (!is.null(color_by_wave)) {
+    color_by <- if (isTRUE(color_by_wave)) "wave" else "constant"
+  }
 
   # Normalize/clean shift suffixes for easy filtering
   clean_shift <- function(df) {
@@ -105,6 +119,52 @@ margot_lmtp_overlap <- function(x,
                         void    = ggplot2::theme_void(),
                         ggplot2::theme_classic())
 
+      default_palette <- c("#4f88c6", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7", "#D55E00", "#999999")
+      palette_aliases <- list(
+        lab = c(shift_up = "#2c7fb8", shift_down = "#f03b20", null = "#7f7f7f", constant = "#4f88c6"),
+        classic = default_palette
+      )
+      if (is.character(fill_palette) && length(fill_palette) == 1L && fill_palette %in% names(palette_aliases)) {
+        fill_palette <- palette_aliases[[fill_palette]]
+      }
+      shift_names_global <- unique(unlist(lapply(models, names)))
+      palette_vec <- if (is.null(fill_palette)) default_palette else as.character(fill_palette)
+      if (!length(palette_vec)) palette_vec <- default_palette
+      palette_names <- if (is.null(fill_palette)) NULL else names(fill_palette)
+
+      fetch_named_color <- function(key) {
+        if (is.null(palette_names) || is.null(key)) return(NA_character_)
+        key_chr <- as.character(key)
+        if (!(key_chr %in% palette_names)) return(NA_character_)
+        val <- fill_palette[[key_chr]]
+        if (is.null(val)) return(NA_character_)
+        val_chr <- as.character(val)
+        if (!nzchar(val_chr)) return(NA_character_)
+        val_chr
+      }
+
+      clean_shift_name <- function(outc, sh) {
+        if (startsWith(sh, paste0(outc, "_"))) substring(sh, nchar(outc) + 2L) else sh
+      }
+      get_wave_color <- function(idx) {
+        named <- fetch_named_color(idx)
+        if (!is.na(named)) return(named)
+        palette_vec[((as.integer(idx) - 1L) %% length(palette_vec)) + 1L]
+      }
+      get_shift_color <- function(outcome_name, shift_name) {
+        named <- fetch_named_color(shift_name)
+        if (!is.na(named)) return(named)
+        named_clean <- fetch_named_color(clean_shift_name(outcome_name, shift_name))
+        if (!is.na(named_clean)) return(named_clean)
+        idx <- match(shift_name, shift_names_global)
+        if (is.na(idx)) idx <- 1L
+        palette_vec[((idx - 1L) %% length(palette_vec)) + 1L]
+      }
+      get_constant_color <- function() {
+        named <- fetch_named_color("constant")
+        if (!is.na(named)) return(named)
+        palette_vec[1L]
+      }
       add_plot <- function(outcome_name, shift_name, wave_idx, w_vec) {
         # separate zeros for text annotation
         prop_zero <- mean(w_vec == 0)
@@ -118,12 +178,12 @@ margot_lmtp_overlap <- function(x,
           ratio_plots[[paste(outcome_name, shift_name, wave_idx, sep = "::")]] <<- p
           return(invisible())
         }
-        # choose fill based on wave if requested
-        fill_col <- if (isTRUE(color_by_wave)) {
-          pal <- c("#4f88c6", "#E69F00", "#56B4E9", "#009E73", "#CC79A7")
-          pal[(as.integer(wave_idx - 1L) %% length(pal)) + 1L]
-        } else {
-          "#4f88c6"
+        # choose fill colouring strategy
+        fill_col <- get_constant_color()
+        if (identical(color_by, "wave")) {
+          fill_col <- get_wave_color(wave_idx)
+        } else if (identical(color_by, "shift")) {
+          fill_col <- get_shift_color(outcome_name, shift_name)
         }
         if (identical(tolower(scale), "log10")) {
           plot_df <- data.frame(x = log10(w_pos + 1e-12))

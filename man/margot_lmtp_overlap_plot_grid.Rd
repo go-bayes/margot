@@ -21,7 +21,8 @@ margot_lmtp_overlap_plot_grid(
   xlim = NULL,
   layout = c("waves_by_shifts", "shifts_by_waves"),
   ymax_by_wave = NULL,
-  headroom = 0.06
+  headroom = 0.06,
+  text_size = text_size
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ via `transform_label()` when available.}
 \item{annotate_zeros}{Character; one of "column" (default), "facet", "none".
 "column" appends the zeros for the top-row wave to the column title;
 "facet" prints zeros in the top-right of each panel; "none" disables.}
+
+\item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).}
 }
 \value{
 A patchwork object combining the selected plots.

@@ -116,6 +116,7 @@ reference:
     - margot_flip_forests
     - margot_inspect_qini
     - margot_interpret_lmtp_positivity
+    - margot_interpret_lmtp_learners
     - margot_interpret_stability
     - margot_interpret_stability_batch
     - margot_report_consensus_policy_value
@@ -165,6 +166,7 @@ reference:
     - margot_plot
     - margot_plot_decision_tree
     - margot_plot_lmtp_overlap_grid
+    - margot_plot_lmtp_learners
     - margot_plot_multi_arm
     - margot_plot_policy_combo
     - margot_plot_policy_tree

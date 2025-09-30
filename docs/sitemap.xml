@@ -182,6 +182,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_inspect_qini.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_bootstrap.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_heterogeneity.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_learners.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity_overview.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_marginal.html</loc></url>
@@ -229,6 +230,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_histogram.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_histogram_intervals.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_individual_responses.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_lmtp_learners.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_lmtp_overlap_grid.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_lmtp_positivity.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_lmtp_positivity_batch.html</loc></url>
@@ -349,6 +351,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/simulate_ate_data_with_weights.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/stability_single_model.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/strict_exposure_outcome_censoring.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/summarise_lmtp_learners.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/summary.margot_bootstrap_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/summary.margot_qini_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/summary.margot_stability_policy_tree.html</loc></url>
