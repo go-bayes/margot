@@ -4,12 +4,17 @@
 #' `margot_lmtp_overlap_plot_grid()` that returns a panel grid with optional
 #' harmonised or user-specified y-axis limits for histogram counts.
 #'
+#' By default, histograms show only **uncensored observations** (r > 0) as zeros
+#' primarily reflect dropout/censoring. Use `show_censored = TRUE` to include zeros.
+#'
 #' @param x LMTP run output with `$models` or any input accepted by
 #'   `margot_lmtp_overlap()`.
 #' @param outcome Character outcome to plot (required).
 #' @param shifts Optional character vector of shifts to include (full or
 #'   cleaned names).
 #' @param label_mapping Optional label map for pretty titles.
+#' @param show_censored Logical; if FALSE (default), histograms exclude zeros (r = 0).
+#'   If TRUE, includes zeros. Censoring rate always shown in titles.
 #' @param scale Character, "log10" or "linear" for the ratio scale (passed to
 #'   `margot_lmtp_overlap()`).
 #' @param theme Character ggplot theme keyword passed to
@@ -41,6 +46,7 @@ margot_plot_lmtp_overlap_grid <- function(x,
                                           outcome,
                                           shifts = NULL,
                                           label_mapping = NULL,
+                                          show_censored = FALSE,
                                           scale = "linear",
                                           theme = "empty",
                                           ymax = NULL,
@@ -60,6 +66,7 @@ margot_plot_lmtp_overlap_grid <- function(x,
                                           bins = 40,
                                           binwidth = NULL) {
   stopifnot(is.logical(annotate_zeros), length(annotate_zeros) == 1L)
+  stopifnot(is.logical(show_censored), length(show_censored) == 1L)
   annotate_graph <- match.arg(annotate_graph)
   layout <- match.arg(layout)
   color_by <- match.arg(color_by)
@@ -71,6 +78,7 @@ margot_plot_lmtp_overlap_grid <- function(x,
     outcomes = outcome,
     shifts = shifts,
     plot = TRUE,
+    show_censored = show_censored,
     theme = theme,
     scale = scale,
     digits = digits,

@@ -41,13 +41,29 @@ margot_lmtp_positivity(
 }
 \value{
 A list with:
-  \item{by_wave}{data.frame of per-wave summaries (one row per outcome/shift/wave).}
-  \item{overall}{data.frame of pooled summaries across waves (one row per outcome/shift).}
+  \item{by_wave}{data.frame of per-wave summaries (one row per outcome/shift/wave).
+    Columns include both all-observations metrics and uncensored-only (`*_pos`) metrics.}
+  \item{overall}{data.frame of pooled summaries across waves (one row per outcome/shift).
+    Also includes `*_pos` columns for uncensored diagnostics.}
   \item{flags}{data.frame of flagged issues (subset of rows from by_wave/overall with reasons).}
 }
 \description{
 Computes by-wave and overall summaries of density ratios, including
 zeros, extreme quantiles, tail mass above thresholds, and effective sample size (ESS).
+}
+\details{
+**Censoring vs. Treatment Positivity:** In longitudinal LMTP, zeros (\eqn{r_t = 0})
+in density ratios primarily reflect **censoring** (dropout) rather than treatment
+positivity violations. When an individual is censored at time \eqn{t}, they have no
+observed treatment at subsequent waves, yielding \eqn{r_t = 0} in the numerator
+regardless of the policy. These censoring-induced zeros appear identically across
+all policies for the same individual.
+
+In contrast, true **treatment positivity violations** are policy-specific: an observed
+treatment trajectory may be incompatible with one policy but not another. To distinguish
+these cases, this function computes metrics for both all observations (including zeros)
+and **uncensored observations** (\eqn{r > 0}), with the latter denoted by `*_pos` suffixes
+in column names. The `prop_zero` column reports the censoring rate per wave.
 }
 \examples{
 # Single model:

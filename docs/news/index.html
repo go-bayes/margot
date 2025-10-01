@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.251</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.252</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,45 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.252" id="id_2025-10-02-margot-10252">[2025-10-02] margot 1.0.252<a class="anchor" aria-label="anchor" href="#id_2025-10-02-margot-10252"></a></h2>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-252">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-252"></a></h4>
+<ul><li>
+<strong>LMTP positivity diagnostics now focus on uncensored observations</strong>: <code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> reports ESS metrics computed only on density ratios &gt; 0 (uncensored observations). Censoring rate (proportion of r = 0) is reported separately per shift.</li>
+<li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: output format changed. Each shift line now shows: <code>censoring = X%; uncensored ESS by wave — ...</code>.</li>
+<li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: internal <code>summarise_shift()</code> now returns <code>ess_pos</code>, <code>ess_pos_frac</code>, <code>n_all</code>, <code>n_pos</code>, <code>prop_censored</code> instead of <code>ess</code>, <code>ess_frac</code>, <code>n</code>.</li>
+<li>
+<strong>LMTP density ratio plots now show only uncensored observations by default</strong>: <code><a href="../reference/margot_lmtp_overlap.html">margot_lmtp_overlap()</a></code> and <code><a href="../reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code> histograms exclude zeros (r = 0) by default. Use <code>show_censored = TRUE</code> to include zeros. Plot titles now indicate “uncensored | censored: X%” or “censored: X%” depending on parameter.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="conceptual-change-1-0-252">Conceptual Change<a class="anchor" aria-label="anchor" href="#conceptual-change-1-0-252"></a></h4>
+<ul><li>
+<strong>Zeros in LMTP density ratios primarily reflect censoring, not positivity violations</strong>: Following expert guidance, zeros (r = 0) in longitudinal LMTP density ratios arise when individuals drop out (censored) and have no treatment observed at subsequent waves. These censoring-induced zeros appear identically across all policies. True treatment positivity violations are policy-specific. Therefore, ESS and distributional diagnostics should focus on uncensored observations (r &gt; 0) to assess positivity where treatment was actually observed.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="added-1-0-252">Added<a class="anchor" aria-label="anchor" href="#added-1-0-252"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: methods section (<code>include_methods = TRUE</code>) now includes “Censoring vs. Treatment Positivity” subsection explaining the distinction and rationale for focusing on uncensored observations.</li>
+<li>
+<code><a href="../reference/margot_lmtp_positivity.html">margot_lmtp_positivity()</a></code>: enhanced documentation explaining censoring vs. treatment positivity and the role of <code>*_pos</code> columns. Now computes <code>min_pos</code>, <code>max_pos</code>, <code>mean_pos</code>, <code>sd_pos</code>, <code>cv_pos</code> for uncensored observations.</li>
+<li>
+<code><a href="../reference/margot_lmtp_overlap.html">margot_lmtp_overlap()</a></code> and <code><a href="../reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code>: new <code>show_censored</code> parameter (default: FALSE) controls whether zeros are included in histograms.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improved-1-0-252">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-252"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: header now reads “LMTP positivity diagnostics for [outcome] (uncensored observations).”</li>
+<li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: detailed diagnostics (<code>include_diagnostics = TRUE</code>) now use <code>*_pos</code> columns (range_pos, mean_pos, sd_pos, cv_pos, q<em><em>pos, p_gt</em></em>_pos) from <code><a href="../reference/margot_lmtp_positivity.html">margot_lmtp_positivity()</a></code> and display “Censoring rate” separately.</li>
+<li>Per-shift lines now clearly distinguish censoring rate from uncensored ESS metrics for better interpretability.</li>
+<li>
+<code><a href="../reference/margot_lmtp_overlap.html">margot_lmtp_overlap()</a></code>: plot titles clarify whether showing uncensored observations or all observations with censoring rate.</li>
+<li>All LMTP positivity/overlap documentation updated to explain censoring vs. treatment positivity distinction.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.251" id="id_2025-10-01-margot-10251">[2025-10-01] margot 1.0.251<a class="anchor" aria-label="anchor" href="#id_2025-10-01-margot-10251"></a></h2>
 <div class="section level4">

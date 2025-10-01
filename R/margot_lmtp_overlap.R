@@ -1,8 +1,14 @@
 #' Assess Overlap/Positivity from LMTP Models via Density Ratios
 #'
-#' Summarizes density-ratio overlap and effective sample size (ESS) for LMTP
+#' Summarises density-ratio overlap and effective sample size (ESS) for LMTP
 #' models using `margot_lmtp_positivity()`, and optionally creates diagnostic
 #' plots of the density-ratio distributions by wave and shift.
+#'
+#' **Censoring vs. Treatment Positivity:** By default, histograms show only
+#' **uncensored observations** (density ratios r > 0), as zeros primarily reflect
+#' dropout/censoring rather than treatment positivity violations. The censoring
+#' rate (proportion r = 0) is reported in plot titles and summaries. Use
+#' `show_censored = TRUE` to include zeros in histograms (shown as a bar at r = 0).
 #'
 #' @param x LMTP run output with `$models` (e.g., result from margot_lmtp()),
 #'   or a list compatible with `margot_lmtp_positivity()`.
@@ -10,6 +16,9 @@
 #' @param shifts Optional character vector of shifts/policies to include
 #'   (accepts full names like `t5_pwi_z_shift_up` or cleaned names like `shift_up`).
 #' @param plot Logical; if TRUE, create ratio distribution plots.
+#' @param show_censored Logical; if FALSE (default), histograms exclude zeros (r = 0)
+#'   to focus on uncensored observations. If TRUE, includes zeros in the histogram.
+#'   Censoring rate is always reported in plot titles.
 #' @param theme ggplot2 theme keyword: "classic" (default), "minimal", "bw",
 #'   "gray", "light", "dark", "void".
 #' @param scale Character; x-axis scale for plotted ratios: "log10" (default)
@@ -37,6 +46,7 @@ margot_lmtp_overlap <- function(x,
                                 outcomes = NULL,
                                 shifts = NULL,
                                 plot = TRUE,
+                                show_censored = FALSE,
                                 theme = "classic",
                                 scale = "log10",
                                 digits = 3,
@@ -172,18 +182,23 @@ margot_lmtp_overlap <- function(x,
         palette_vec[1L]
       }
       add_plot <- function(outcome_name, shift_name, wave_idx, w_vec) {
-        # separate zeros for text annotation
+        # separate zeros for censoring rate annotation
         prop_zero <- mean(w_vec == 0)
         w_pos <- w_vec[w_vec > 0]
-        # Handle all-zero case (e.g., censored/no support)
+
+        # determine what to plot based on show_censored parameter
+        w_plot <- if (isTRUE(show_censored)) w_vec else w_pos
+
+        # handle all-zero case (e.g., censored/no support)
         if (length(w_pos) == 0L) {
           p <- ggplot2::ggplot() + ggplot2::theme_void() +
             ggplot2::annotate("text", x = 0, y = 0,
-                               label = "all ratios = 0",
+                               label = "all ratios = 0 (fully censored)",
                                hjust = 0, vjust = 0, size = 3)
           ratio_plots[[paste(outcome_name, shift_name, wave_idx, sep = "::")]] <<- p
           return(invisible())
         }
+
         # choose fill colouring strategy
         fill_col <- get_constant_color()
         if (identical(color_by, "wave")) {
@@ -191,18 +206,24 @@ margot_lmtp_overlap <- function(x,
         } else if (identical(color_by, "shift")) {
           fill_col <- get_shift_color(outcome_name, shift_name)
         }
+
+        # prepare plot data based on scale
         if (identical(tolower(scale), "log10")) {
+          # for log scale, always exclude zeros (log(0) undefined)
           plot_df <- data.frame(x = log10(w_pos + 1e-12))
           xlab <- NULL
           scale_txt <- "log10"
         } else {
-          plot_df <- data.frame(x = w_pos)
+          # for linear scale, respect show_censored parameter
+          plot_df <- data.frame(x = w_plot)
           xlab <- NULL
           scale_txt <- "linear"
         }
+
+        censor_label <- if (isTRUE(show_censored)) "censored: " else "uncensored | censored: "
         title_txt <- paste0("Density ratios — ", outcome_name, " | ", shift_name,
                              " | wave ", wave_idx,
-                             " | zeros: ", sprintf("%.1f%%", 100*prop_zero),
+                             " | ", censor_label, sprintf("%.1f%%", 100*prop_zero),
                              " | scale: ", scale_txt)
         p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = x)) +
           { if (!is.null(binwidth)) ggplot2::geom_histogram(binwidth = binwidth, color = "white", fill = fill_col, linewidth = 0.3) else ggplot2::geom_histogram(bins = bins, color = "white", fill = fill_col, linewidth = 0.3) } +

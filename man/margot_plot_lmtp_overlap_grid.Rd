@@ -9,6 +9,7 @@ margot_plot_lmtp_overlap_grid(
   outcome,
   shifts = NULL,
   label_mapping = NULL,
+  show_censored = FALSE,
   scale = "linear",
   theme = "empty",
   ymax = NULL,
@@ -39,6 +40,9 @@ margot_plot_lmtp_overlap_grid(
 cleaned names).}
 
 \item{label_mapping}{Optional label map for pretty titles.}
+
+\item{show_censored}{Logical; if FALSE (default), histograms exclude zeros (r = 0).
+If TRUE, includes zeros. Censoring rate always shown in titles.}
 
 \item{scale}{Character, "log10" or "linear" for the ratio scale (passed to
 `margot_lmtp_overlap()`).}
@@ -85,4 +89,8 @@ A patchwork grid object.
 Thin wrapper around `margot_lmtp_overlap()` and
 `margot_lmtp_overlap_plot_grid()` that returns a panel grid with optional
 harmonised or user-specified y-axis limits for histogram counts.
+}
+\details{
+By default, histograms show only **uncensored observations** (r > 0) as zeros
+primarily reflect dropout/censoring. Use `show_censored = TRUE` to include zeros.
 }

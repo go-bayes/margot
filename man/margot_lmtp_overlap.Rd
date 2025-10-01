@@ -9,6 +9,7 @@ margot_lmtp_overlap(
   outcomes = NULL,
   shifts = NULL,
   plot = TRUE,
+  show_censored = FALSE,
   theme = "classic",
   scale = "log10",
   digits = 3,
@@ -32,6 +33,10 @@ or a list compatible with `margot_lmtp_positivity()`.}
 (accepts full names like `t5_pwi_z_shift_up` or cleaned names like `shift_up`).}
 
 \item{plot}{Logical; if TRUE, create ratio distribution plots.}
+
+\item{show_censored}{Logical; if FALSE (default), histograms exclude zeros (r = 0)
+to focus on uncensored observations. If TRUE, includes zeros in the histogram.
+Censoring rate is always reported in plot titles.}
 
 \item{theme}{ggplot2 theme keyword: "classic" (default), "minimal", "bw",
 "gray", "light", "dark", "void".}
@@ -64,7 +69,14 @@ A list with:
   - text_summary: brief prose summary
 }
 \description{
-Summarizes density-ratio overlap and effective sample size (ESS) for LMTP
+Summarises density-ratio overlap and effective sample size (ESS) for LMTP
 models using `margot_lmtp_positivity()`, and optionally creates diagnostic
 plots of the density-ratio distributions by wave and shift.
+}
+\details{
+**Censoring vs. Treatment Positivity:** By default, histograms show only
+**uncensored observations** (density ratios r > 0), as zeros primarily reflect
+dropout/censoring rather than treatment positivity violations. The censoring
+rate (proportion r = 0) is reported in plot titles and summaries. Use
+`show_censored = TRUE` to include zeros in histograms (shown as a bar at r = 0).
 }

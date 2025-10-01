@@ -1,3 +1,25 @@
+# [2025-10-02] margot 1.0.252
+### Breaking Changes
+- **LMTP positivity diagnostics now focus on uncensored observations**: `margot_interpret_lmtp_positivity()` reports ESS metrics computed only on density ratios > 0 (uncensored observations). Censoring rate (proportion of r = 0) is reported separately per shift.
+- `margot_interpret_lmtp_positivity()`: output format changed. Each shift line now shows: `censoring = X%; uncensored ESS by wave — ...`.
+- `margot_interpret_lmtp_positivity()`: internal `summarise_shift()` now returns `ess_pos`, `ess_pos_frac`, `n_all`, `n_pos`, `prop_censored` instead of `ess`, `ess_frac`, `n`.
+- **LMTP density ratio plots now show only uncensored observations by default**: `margot_lmtp_overlap()` and `margot_plot_lmtp_overlap_grid()` histograms exclude zeros (r = 0) by default. Use `show_censored = TRUE` to include zeros. Plot titles now indicate "uncensored | censored: X%" or "censored: X%" depending on parameter.
+
+### Conceptual Change
+- **Zeros in LMTP density ratios primarily reflect censoring, not positivity violations**: Following expert guidance, zeros (r = 0) in longitudinal LMTP density ratios arise when individuals drop out (censored) and have no treatment observed at subsequent waves. These censoring-induced zeros appear identically across all policies. True treatment positivity violations are policy-specific. Therefore, ESS and distributional diagnostics should focus on uncensored observations (r > 0) to assess positivity where treatment was actually observed.
+
+### Added
+- `margot_interpret_lmtp_positivity()`: methods section (`include_methods = TRUE`) now includes "Censoring vs. Treatment Positivity" subsection explaining the distinction and rationale for focusing on uncensored observations.
+- `margot_lmtp_positivity()`: enhanced documentation explaining censoring vs. treatment positivity and the role of `*_pos` columns. Now computes `min_pos`, `max_pos`, `mean_pos`, `sd_pos`, `cv_pos` for uncensored observations.
+- `margot_lmtp_overlap()` and `margot_plot_lmtp_overlap_grid()`: new `show_censored` parameter (default: FALSE) controls whether zeros are included in histograms.
+
+### Improved
+- `margot_interpret_lmtp_positivity()`: header now reads "LMTP positivity diagnostics for [outcome] (uncensored observations)."
+- `margot_interpret_lmtp_positivity()`: detailed diagnostics (`include_diagnostics = TRUE`) now use `*_pos` columns (range_pos, mean_pos, sd_pos, cv_pos, q*_pos, p_gt_*_pos) from `margot_lmtp_positivity()` and display "Censoring rate" separately.
+- Per-shift lines now clearly distinguish censoring rate from uncensored ESS metrics for better interpretability.
+- `margot_lmtp_overlap()`: plot titles clarify whether showing uncensored observations or all observations with censoring rate.
+- All LMTP positivity/overlap documentation updated to explain censoring vs. treatment positivity distinction.
+
 # [2025-10-01] margot 1.0.251
 ### Breaking Changes
 - `margot_interpret_lmtp_positivity()`: removed `include_overview` parameter. Averaging statistics across interventions is incoherent and has been removed.

@@ -3,6 +3,19 @@
 #' Computes by-wave and overall summaries of density ratios, including
 #' zeros, extreme quantiles, tail mass above thresholds, and effective sample size (ESS).
 #'
+#' **Censoring vs. Treatment Positivity:** In longitudinal LMTP, zeros (\eqn{r_t = 0})
+#' in density ratios primarily reflect **censoring** (dropout) rather than treatment
+#' positivity violations. When an individual is censored at time \eqn{t}, they have no
+#' observed treatment at subsequent waves, yielding \eqn{r_t = 0} in the numerator
+#' regardless of the policy. These censoring-induced zeros appear identically across
+#' all policies for the same individual.
+#'
+#' In contrast, true **treatment positivity violations** are policy-specific: an observed
+#' treatment trajectory may be incompatible with one policy but not another. To distinguish
+#' these cases, this function computes metrics for both all observations (including zeros)
+#' and **uncensored observations** (\eqn{r > 0}), with the latter denoted by `*_pos` suffixes
+#' in column names. The `prop_zero` column reports the censoring rate per wave.
+#'
 #' @param x Either:
 #'   - the full result of `margot_lmtp()` (list with $models),
 #'   - a single LMTP model fit (must have $density_ratios),
@@ -18,8 +31,10 @@
 #' @param verbose If TRUE, prints concise CLI messages when flags are raised.
 #'
 #' @return A list with:
-#'   \item{by_wave}{data.frame of per-wave summaries (one row per outcome/shift/wave).}
-#'   \item{overall}{data.frame of pooled summaries across waves (one row per outcome/shift).}
+#'   \item{by_wave}{data.frame of per-wave summaries (one row per outcome/shift/wave).
+#'     Columns include both all-observations metrics and uncensored-only (`*_pos`) metrics.}
+#'   \item{overall}{data.frame of pooled summaries across waves (one row per outcome/shift).
+#'     Also includes `*_pos` columns for uncensored diagnostics.}
 #'   \item{flags}{data.frame of flagged issues (subset of rows from by_wave/overall with reasons).}
 #'
 #' @examples
@@ -51,76 +66,147 @@ margot_lmtp_positivity <- function(
     (s1^2) / s2
   }
   .summ_one <- function(w, wave_idx = NA_integer_, thresholds, probs) {
+    # clean input
     w <- .finite(as.numeric(w))
-    n  <- length(w)
-    if (!n) {
-      out <- data.frame(wave = wave_idx, n = 0, prop_zero = NA_real_,
-                        min = NA_real_, max = NA_real_, mean = NA_real_, sd = NA_real_,
-                        cv = NA_real_, ess = NA_real_, ess_frac = NA_real_,
-                        n_pos = NA_real_, prop_nonzero = NA_real_,
-                        ess_pos = NA_real_, ess_pos_frac = NA_real_)
-      # add quantiles & tails with NA (all and positive-only)
-      qn <- paste0("q", gsub("\\.", "", sprintf("%g", probs)))
-      qs <- setNames(rep(NA_real_, length(probs)), qn)
-      qs_pos <- setNames(rep(NA_real_, length(probs)), paste0(qn, "_pos"))
-      tails <- setNames(rep(NA_real_, length(thresholds)), paste0("p_gt_", thresholds))
-      tails_pos <- setNames(rep(NA_real_, length(thresholds)), paste0("p_gt_", thresholds, "_pos"))
-      return(cbind(out,
-                   as.data.frame(as.list(qs)),
-                   as.data.frame(as.list(tails)),
-                   as.data.frame(as.list(qs_pos)),
-                   as.data.frame(as.list(tails_pos))))
+    n <- length(w)
+
+    # quantile names
+    qn <- paste0("q", gsub("\\.", "", sprintf("%g", probs)))
+
+    # handle empty case
+    if (n == 0) {
+      empty_row <- list(
+        wave = wave_idx,
+        n = 0,
+        prop_zero = NA_real_,
+        min = NA_real_,
+        max = NA_real_,
+        mean = NA_real_,
+        sd = NA_real_,
+        cv = NA_real_
+      )
+      # quantiles (all)
+      for (q in qn) empty_row[[q]] <- NA_real_
+      # tails (all)
+      for (t in thresholds) empty_row[[paste0("p_gt_", t)]] <- NA_real_
+      # uncensored moments
+      empty_row$min_pos <- NA_real_
+      empty_row$max_pos <- NA_real_
+      empty_row$mean_pos <- NA_real_
+      empty_row$sd_pos <- NA_real_
+      empty_row$cv_pos <- NA_real_
+      # quantiles (uncensored)
+      for (q in qn) empty_row[[paste0(q, "_pos")]] <- NA_real_
+      # tails (uncensored)
+      for (t in thresholds) empty_row[[paste0("p_gt_", t, "_pos")]] <- NA_real_
+      # ESS
+      empty_row$ess <- NA_real_
+      empty_row$ess_frac <- NA_real_
+      empty_row$n_pos <- 0
+      empty_row$prop_nonzero <- NA_real_
+      empty_row$ess_pos <- NA_real_
+      empty_row$ess_pos_frac <- NA_real_
+
+      return(as.data.frame(empty_row, stringsAsFactors = FALSE))
     }
 
-    # basic moments
-    mn <- mean(w); sdv <- stats::sd(w)
-    cv <- if (isTRUE(all.equal(mn, 0))) NA_real_ else sdv / mn
-    qn <- paste0("q", gsub("\\.", "", sprintf("%g", probs)))
-    qv <- setNames(.q(w, probs), qn)
-    tails <- sapply(thresholds, function(t) mean(w > t))
-    names(tails) <- paste0("p_gt_", thresholds)
+    # all observations statistics
+    prop_zero <- mean(w == 0)
+    min_all <- min(w)
+    max_all <- max(w)
+    mean_all <- mean(w)
+    sd_all <- stats::sd(w)
+    cv_all <- if (isTRUE(all.equal(mean_all, 0))) NA_real_ else sd_all / mean_all
 
-    ess <- .ess(w)
-    ess_frac <- ess / n
+    # quantiles (all)
+    quants_all <- stats::quantile(w, probs = probs, names = FALSE, na.rm = TRUE)
+    names(quants_all) <- qn
 
-    # positive-only (uncensored) diagnostics
+    # tails (all)
+    tails_all <- sapply(thresholds, function(t) mean(w > t))
+    names(tails_all) <- paste0("p_gt_", thresholds)
+
+    # ESS (all)
+    ess_all <- .ess(w)
+    ess_frac_all <- ess_all / n
+
+    # uncensored observations (r > 0)
     w_pos <- w[w > 0]
     n_pos <- length(w_pos)
-    prop_nonzero <- if (n > 0) n_pos / n else NA_real_
-    ess_pos <- if (n_pos > 0) .ess(w_pos) else NA_real_
-    ess_pos_frac <- if (n_pos > 0) ess_pos / n_pos else NA_real_
+    prop_nonzero <- n_pos / n
 
-    # positive-only quantiles and tails
     if (n_pos > 0) {
-      qv_pos <- setNames(.q(w_pos, probs), paste0(qn, "_pos"))
-      tails_pos <- setNames(sapply(thresholds, function(t) mean(w_pos > t)), paste0("p_gt_", thresholds, "_pos"))
+      min_pos <- min(w_pos)
+      max_pos <- max(w_pos)
+      mean_pos <- mean(w_pos)
+      sd_pos <- stats::sd(w_pos)
+      cv_pos <- if (isTRUE(all.equal(mean_pos, 0))) NA_real_ else sd_pos / mean_pos
+      quants_pos <- stats::quantile(w_pos, probs = probs, names = FALSE, na.rm = TRUE)
+      names(quants_pos) <- paste0(qn, "_pos")
+      tails_pos <- sapply(thresholds, function(t) mean(w_pos > t))
+      names(tails_pos) <- paste0("p_gt_", thresholds, "_pos")
+      ess_pos <- .ess(w_pos)
+      ess_pos_frac <- ess_pos / n_pos
     } else {
-      qv_pos <- setNames(rep(NA_real_, length(probs)), paste0(qn, "_pos"))
+      min_pos <- NA_real_
+      max_pos <- NA_real_
+      mean_pos <- NA_real_
+      sd_pos <- NA_real_
+      cv_pos <- NA_real_
+      quants_pos <- setNames(rep(NA_real_, length(probs)), paste0(qn, "_pos"))
       tails_pos <- setNames(rep(NA_real_, length(thresholds)), paste0("p_gt_", thresholds, "_pos"))
+      ess_pos <- NA_real_
+      ess_pos_frac <- NA_real_
     }
 
-    data.frame(
+    # build result as named list, then convert to data.frame
+    result <- list(
       wave = wave_idx,
       n = n,
-      prop_zero = mean(w == 0),
-      min = min(w),
-      max = max(w),
-      mean = mn,
-      sd = sdv,
-      cv = cv,
-      t(qv),
-      as.data.frame(as.list(tails)),
-      t(qv_pos),
-      as.data.frame(as.list(tails_pos)),
-      ess = ess,
-      ess_frac = ess_frac,
-      n_pos = n_pos,
-      prop_nonzero = prop_nonzero,
-      ess_pos = ess_pos,
-      ess_pos_frac = ess_pos_frac,
-      row.names = NULL,
-      check.names = FALSE
+      prop_zero = prop_zero,
+      min = min_all,
+      max = max_all,
+      mean = mean_all,
+      sd = sd_all,
+      cv = cv_all
     )
+
+    # add quantiles (all)
+    for (i in seq_along(quants_all)) {
+      result[[names(quants_all)[i]]] <- quants_all[i]
+    }
+
+    # add tails (all)
+    for (i in seq_along(tails_all)) {
+      result[[names(tails_all)[i]]] <- tails_all[i]
+    }
+
+    # add uncensored moments
+    result$min_pos <- min_pos
+    result$max_pos <- max_pos
+    result$mean_pos <- mean_pos
+    result$sd_pos <- sd_pos
+    result$cv_pos <- cv_pos
+
+    # add quantiles (uncensored)
+    for (i in seq_along(quants_pos)) {
+      result[[names(quants_pos)[i]]] <- quants_pos[i]
+    }
+
+    # add tails (uncensored)
+    for (i in seq_along(tails_pos)) {
+      result[[names(tails_pos)[i]]] <- tails_pos[i]
+    }
+
+    # add ESS
+    result$ess <- ess_all
+    result$ess_frac <- ess_frac_all
+    result$n_pos <- n_pos
+    result$prop_nonzero <- prop_nonzero
+    result$ess_pos <- ess_pos
+    result$ess_pos_frac <- ess_pos_frac
+
+    as.data.frame(result, stringsAsFactors = FALSE)
   }
 
   .as_df <- function(x) if (isTRUE(requireNamespace("tibble", quietly = TRUE))) tibble::as_tibble(x) else x
@@ -242,12 +328,15 @@ margot_lmtp_positivity <- function(
       mids2 <- c("mean", "sd", "cv")
       tails <- paste0("p_gt_", thresholds)
       tails_pos <- paste0("p_gt_", thresholds, "_pos")
+      # uncensored moments
+      mids_pos <- c("min_pos", "max_pos", "mean_pos", "sd_pos", "cv_pos")
       # include positive-only diagnostics in the kept columns
       right <- c("ess", "ess_frac", "n_pos", "prop_nonzero", "ess_pos", "ess_pos_frac")
       keep  <- unique(c(left,
                         mids1[mids1 %in% names(wave_df)],
                         mids2,
                         tails[tails %in% names(wave_df)],
+                        mids_pos[mids_pos %in% names(wave_df)],
                         tails_pos[tails_pos %in% names(wave_df)],
                         right))
       wave_df <- wave_df[, intersect(keep, names(wave_df)), drop = FALSE]
