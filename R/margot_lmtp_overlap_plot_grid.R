@@ -22,9 +22,16 @@
 #' @param title Optional overall title; if NULL, a default is constructed.
 #' @param label_mapping Optional named list to prettify column (shift) labels
 #'   via `transform_label()` when available.
-#' @param annotate_zeros Character; one of "column" (default), "facet", "none".
-#'   "column" appends the zeros for the top-row wave to the column title;
-#'   "facet" prints zeros in the top-right of each panel; "none" disables.
+#' @param annotate_zeros Logical; if TRUE, adds "zeros: X%" label to top-right of each panel.
+#'   Default is FALSE.
+#' @param annotate_graph Character; controls graph annotations: `"waves"` places wave labels at top,
+#'   `"shifts"` places shift labels at top, `"none"` disables annotations (default: `"none"`).
+#' @param ymax_harmonize Character or named vector; controls y-axis harmonization: `"none"` (default) gives
+#'   each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+#'   `"global"` harmonizes all plots. Can also be a named vector with custom values.
+#' @param xlim_harmonize Character or named vector; controls x-axis harmonization: `"none"` (default) gives
+#'   each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+#'   `"global"` harmonizes all plots. Can also be a named vector with custom values.
 #' @param text_size Numeric size for facet annotations (wave/shift/zeros labels).
 #'
 #' @return A patchwork object combining the selected plots.
@@ -34,25 +41,47 @@ margot_lmtp_overlap_plot_grid <- function(x,
                                           outcome = NULL,
                                           shifts = NULL,
                                           waves = NULL,
-                                          remove_waves = NULL,
                                           ncol = NULL,
                                           drop_titles = TRUE,
                                           title = NULL,
                                           label_mapping = NULL,
                                           annotate_zeros = FALSE,
                                           ymax = NULL,
-                                          annotate_wave = TRUE,
-                                          annotate_shift = TRUE,
+                                          annotate_graph = c("none", "waves", "shifts"),
                                           xlim = NULL,
                                           layout = c("waves_by_shifts","shifts_by_waves"),
-                                          ymax_by_wave = NULL,
-                                          headroom = 0.06,
+                                          ymax_harmonize = "none",
+                                          xlim_harmonize = "none",
+                                          headroom = 0.12,
                                           text_size = text_size) {
 
   stopifnot(is.logical(annotate_zeros), length(annotate_zeros) == 1L)
-  stopifnot(is.logical(annotate_wave),  length(annotate_wave)  == 1L)
-  stopifnot(is.logical(annotate_shift), length(annotate_shift) == 1L)
+  annotate_graph <- match.arg(annotate_graph)
   layout         <- match.arg(layout)
+
+  # validate ymax_harmonize: either a character option or a named/unnamed vector
+  harmonize_y_mode <- "none"  # default
+  harmonize_y_custom <- NULL
+  if (is.character(ymax_harmonize) && length(ymax_harmonize) == 1L) {
+    harmonize_y_mode <- match.arg(ymax_harmonize, c("none", "row", "column", "global"))
+  } else if (is.numeric(ymax_harmonize) || (is.character(ymax_harmonize) && length(ymax_harmonize) > 1L)) {
+    harmonize_y_mode <- "custom"
+    harmonize_y_custom <- ymax_harmonize
+  } else {
+    stop("`ymax_harmonize` must be one of 'none', 'row', 'column', 'global', or a named vector.")
+  }
+
+  # validate xlim_harmonize: either a character option or a named/unnamed vector
+  harmonize_x_mode <- "none"  # default
+  harmonize_x_custom <- NULL
+  if (is.character(xlim_harmonize) && length(xlim_harmonize) == 1L) {
+    harmonize_x_mode <- match.arg(xlim_harmonize, c("none", "row", "column", "global"))
+  } else if (is.numeric(xlim_harmonize) || (is.character(xlim_harmonize) && length(xlim_harmonize) > 1L)) {
+    harmonize_x_mode <- "custom"
+    harmonize_x_custom <- xlim_harmonize
+  } else {
+    stop("`xlim_harmonize` must be one of 'none', 'row', 'column', 'global', or a named vector.")
+  }
 
   # Extract ratio_plots list
   ratio_plots <- NULL
@@ -97,10 +126,9 @@ margot_lmtp_overlap_plot_grid <- function(x,
   }
   info$shift_clean <- vapply(info$shift, clean_shift, character(1), outc = outcome)
 
-  # Filter by waves
+  # filter by waves
   info$wave_num <- suppressWarnings(as.integer(info$wave))
   if (!is.null(waves)) info <- info[info$wave_num %in% waves, , drop = FALSE]
-  if (!is.null(remove_waves)) info <- info[!(info$wave_num %in% remove_waves), , drop = FALSE]
   if (!nrow(info)) stop("No plots after applying wave filter.")
 
   # Select shifts: allow full or cleaned name matching
@@ -149,7 +177,7 @@ margot_lmtp_overlap_plot_grid <- function(x,
   waves_order <- sort(unique(info$wave_num))
   if (is.null(ncol)) ncol <- if (identical(layout, "waves_by_shifts")) length(shifts_order_full) else length(waves_order)
 
-  # Compute Y-axis maxima: global and per-wave; allow explicit per-wave override via `ymax_by_wave`.
+  # compute y-axis and x-axis maxima: global, per-wave, and per-shift
   safe_max_count <- function(p) {
     if (is.null(p)) return(NA_real_)
     gb <- tryCatch(ggplot2::ggplot_build(p), error = function(e) NULL)
@@ -159,24 +187,60 @@ margot_lmtp_overlap_plot_grid <- function(x,
     if (!length(ycols)) return(NA_real_)
     max(unlist(d[ycols]), na.rm = TRUE)
   }
+  safe_max_x <- function(p) {
+    if (is.null(p)) return(NA_real_)
+    gb <- tryCatch(ggplot2::ggplot_build(p), error = function(e) NULL)
+    if (is.null(gb) || !length(gb$data)) return(NA_real_)
+    d <- gb$data[[1]]
+    xcols <- intersect(c("x", "xmin", "xmax"), names(d))
+    if (!length(xcols)) return(NA_real_)
+    max(unlist(d[xcols]), na.rm = TRUE)
+  }
   selected_keys <- paste(info$outcome, info$shift, as.character(info$wave_num), sep = "::")
-  max_y <- 0
+  max_y_global <- 0
   max_y_by_wave <- setNames(rep(0, length(unique(info$wave_num))), sort(unique(info$wave_num)))
+  max_y_by_shift <- setNames(rep(0, length(shifts_order_full)), shifts_order_full)
+  max_x_global <- 0
+  max_x_by_wave <- setNames(rep(0, length(unique(info$wave_num))), sort(unique(info$wave_num)))
+  max_x_by_shift <- setNames(rep(0, length(shifts_order_full)), shifts_order_full)
+
   for (k in selected_keys) {
-    max_y <- max(max_y, safe_max_count(ratio_plots[[k]]), na.rm = TRUE)
-    # parse wave number from key (3rd part)
+    count_val <- safe_max_count(ratio_plots[[k]])
+    x_val <- safe_max_x(ratio_plots[[k]])
+    max_y_global <- max(max_y_global, count_val, na.rm = TRUE)
+    max_x_global <- max(max_x_global, x_val, na.rm = TRUE)
+
+    # parse key components: outcome::shift::wave
     parts <- strsplit(k, "::", fixed = TRUE)[[1]]
+    shift_k <- if (length(parts) >= 2) parts[[2]] else NA_character_
     wv <- suppressWarnings(as.integer(parts[3]))
-    if (!is.na(wv)) max_y_by_wave[as.character(wv)] <- max(max_y_by_wave[as.character(wv)], safe_max_count(ratio_plots[[k]]), na.rm = TRUE)
-  }
-  if (!is.null(ymax) && is.finite(ymax) && ymax > 0) {
-    max_y <- ymax
-  }
-  if (is.logical(ymax_by_wave) && length(ymax_by_wave) == 1L) {
-    ymax_by_wave <- if (isTRUE(ymax_by_wave)) max_y_by_wave else NULL
+
+    # update per-wave max
+    if (!is.na(wv)) {
+      max_y_by_wave[as.character(wv)] <- max(max_y_by_wave[as.character(wv)], count_val, na.rm = TRUE)
+      max_x_by_wave[as.character(wv)] <- max(max_x_by_wave[as.character(wv)], x_val, na.rm = TRUE)
+    }
+
+    # update per-shift max
+    if (!is.na(shift_k) && shift_k %in% names(max_y_by_shift)) {
+      max_y_by_shift[[shift_k]] <- max(max_y_by_shift[[shift_k]], count_val, na.rm = TRUE)
+      max_x_by_shift[[shift_k]] <- max(max_x_by_shift[[shift_k]], x_val, na.rm = TRUE)
+    }
   }
 
-  if (!is.finite(max_y) || max_y <= 0) max_y <- NA_real_
+  # override global max if ymax specified
+  if (!is.null(ymax) && is.finite(ymax) && ymax > 0) {
+    max_y_global <- ymax
+  }
+  if (!is.finite(max_y_global) || max_y_global <= 0) max_y_global <- NA_real_
+
+  # handle xlim: if xlim is a 2-element vector, it's a fixed range (backward compat)
+  # otherwise xlim_harmonize controls behavior
+  xlim_fixed <- NULL
+  if (!is.null(xlim) && length(xlim) == 2 && is.finite(xlim[1]) && is.finite(xlim[2])) {
+    xlim_fixed <- xlim
+  }
+  if (!is.finite(max_x_global) || max_x_global <= 0) max_x_global <- NA_real_
 
   # Helper to extract zeros% from original plot title
   parse_zeros <- function(p) {
@@ -191,7 +255,7 @@ margot_lmtp_overlap_plot_grid <- function(x,
     layout <- "waves_by_shifts"
   }
 
-  # Column labels depend on layout
+  # column labels depend on layout
   if (identical(layout, "waves_by_shifts")) {
     # columns are shifts
     col_lab_vals <- col_labels
@@ -204,17 +268,8 @@ margot_lmtp_overlap_plot_grid <- function(x,
     top_key_context <- list(type = "shift", value = shifts_order_full[1])
   }
 
-  # Optionally fix x-axis limits across all selected plots
-  if (!is.null(xlim) && length(xlim) == 2 && is.finite(xlim[1]) && is.finite(xlim[2])) {
-    for (k in selected_keys) {
-      if (!is.null(ratio_plots[[k]])) {
-        ratio_plots[[k]] <- ratio_plots[[k]] + ggplot2::scale_x_continuous(limits = xlim)
-      }
-    }
-  }
-
-  # Build grid: row-major by waves x shifts
-  get_plot <- function(outc, sh_full, w_num, is_top, col_idx) {
+  # build grid: row-major by waves x shifts
+  get_plot <- function(outc, sh_full, w_num, is_top, col_idx, row_idx) {
     k <- paste(outc, sh_full, as.character(w_num), sep = "::")
     p <- ratio_plots[[k]]
     zeros_str <- parse_zeros(ratio_plots[[k]])
@@ -229,43 +284,124 @@ margot_lmtp_overlap_plot_grid <- function(x,
         p <- p + ggplot2::labs(title = NULL)
       }
     }
-    # Harmonize Y-axis limits across panels, when available
-    # Apply Y-axis limit (override > per-wave auto > global)
+
+    # determine y-axis limit based on harmonize_y_mode and layout
     y_top <- NA_real_
-    # explicit override
-    if (!is.null(ymax_by_wave)) {
-      if (!is.null(names(ymax_by_wave)) && as.character(w_num) %in% names(ymax_by_wave)) {
-        y_top <- ymax_by_wave[[as.character(w_num)]]
-      } else if (length(ymax_by_wave) == length(waves_order)) {
-        idx <- match(w_num, waves_order)
-        if (!is.na(idx)) y_top <- ymax_by_wave[[idx]]
+
+    if (harmonize_y_mode == "custom") {
+      # custom values: check for named match on wave or shift
+      if (!is.null(names(harmonize_y_custom))) {
+        # try wave key
+        wave_key <- paste0("wave_", w_num)
+        if (wave_key %in% names(harmonize_y_custom)) {
+          y_top <- harmonize_y_custom[[wave_key]]
+        } else if (as.character(w_num) %in% names(harmonize_y_custom)) {
+          y_top <- harmonize_y_custom[[as.character(w_num)]]
+        } else if (sh_full %in% names(harmonize_y_custom)) {
+          y_top <- harmonize_y_custom[[sh_full]]
+        }
+      } else {
+        # unnamed vector: index by row
+        if (row_idx <= length(harmonize_y_custom)) {
+          y_top <- harmonize_y_custom[[row_idx]]
+        }
+      }
+    } else if (harmonize_y_mode == "global") {
+      y_top <- max_y_global
+    } else if (harmonize_y_mode == "row") {
+      # row harmonization depends on layout
+      if (identical(layout, "waves_by_shifts")) {
+        # rows are waves
+        y_top <- max_y_by_wave[as.character(w_num)]
+      } else {
+        # rows are shifts
+        y_top <- max_y_by_shift[[sh_full]]
+      }
+    } else if (harmonize_y_mode == "column") {
+      # column harmonization depends on layout
+      if (identical(layout, "waves_by_shifts")) {
+        # columns are shifts
+        y_top <- max_y_by_shift[[sh_full]]
+      } else {
+        # columns are waves
+        y_top <- max_y_by_wave[as.character(w_num)]
       }
     }
-    # if no explicit, use per-wave auto
-    if (!is.finite(y_top) || is.na(y_top)) {
-      if (is.finite(max_y_by_wave[as.character(w_num)])) y_top <- max_y_by_wave[as.character(w_num)]
-    }
-    # fall back to global
-    if (!is.finite(y_top) || is.na(y_top)) {
-      if (is.finite(max_y)) y_top <- max_y
-    }
-    if (is.finite(y_top)) {
+    # else harmonize_y_mode == "none": y_top stays NA, each plot independent
+
+    # apply y-axis limit if determined
+    if (is.finite(y_top) && !is.na(y_top) && y_top > 0) {
       y_top_adj <- y_top * (1 + max(0, headroom))
       p <- p + ggplot2::scale_y_continuous(limits = c(0, y_top_adj))
     }
 
-    if (isTRUE(annotate_wave)) {
+    # determine x-axis limit based on xlim_fixed (backward compat) or harmonize_x_mode
+    x_max <- NA_real_
+
+    if (!is.null(xlim_fixed)) {
+      # backward compatibility: fixed xlim overrides harmonization
+      p <- p + ggplot2::scale_x_continuous(limits = xlim_fixed)
+    } else {
+      # determine x-max based on harmonize_x_mode
+      if (harmonize_x_mode == "custom") {
+        # custom values: check for named match on wave or shift
+        if (!is.null(names(harmonize_x_custom))) {
+          wave_key <- paste0("wave_", w_num)
+          if (wave_key %in% names(harmonize_x_custom)) {
+            x_max <- harmonize_x_custom[[wave_key]]
+          } else if (as.character(w_num) %in% names(harmonize_x_custom)) {
+            x_max <- harmonize_x_custom[[as.character(w_num)]]
+          } else if (sh_full %in% names(harmonize_x_custom)) {
+            x_max <- harmonize_x_custom[[sh_full]]
+          }
+        } else {
+          # unnamed vector: index by row
+          if (row_idx <= length(harmonize_x_custom)) {
+            x_max <- harmonize_x_custom[[row_idx]]
+          }
+        }
+      } else if (harmonize_x_mode == "global") {
+        x_max <- max_x_global
+      } else if (harmonize_x_mode == "row") {
+        # row harmonization depends on layout
+        if (identical(layout, "waves_by_shifts")) {
+          # rows are waves
+          x_max <- max_x_by_wave[as.character(w_num)]
+        } else {
+          # rows are shifts
+          x_max <- max_x_by_shift[[sh_full]]
+        }
+      } else if (harmonize_x_mode == "column") {
+        # column harmonization depends on layout
+        if (identical(layout, "waves_by_shifts")) {
+          # columns are shifts
+          x_max <- max_x_by_shift[[sh_full]]
+        } else {
+          # columns are waves
+          x_max <- max_x_by_wave[as.character(w_num)]
+        }
+      }
+      # else harmonize_x_mode == "none": x_max stays NA, each plot independent
+
+      # apply x-axis limit if determined
+      if (is.finite(x_max) && !is.na(x_max) && x_max > 0) {
+        p <- p + ggplot2::scale_x_continuous(limits = c(NA, x_max))
+      }
+    }
+
+    # apply annotations based on annotate_graph parameter
+    if (annotate_graph == "waves") {
+      # place wave label at top of graph
       p <- p + ggplot2::annotate("text", x = -Inf, y = Inf,
                                  label = paste0("Wave ", w_num),
-                                 hjust = -0.1, vjust = 1.1, size = text_size)
-    }
-    if (isTRUE(annotate_shift)) {
-      # pretty shift label for facet annotation (bottom-left, nudged inside)
+                                 hjust = -0.1, vjust = 1.2, size = text_size)
+    } else if (annotate_graph == "shifts") {
+      # place shift label at top of graph (ensure sufficient space with adjusted vjust)
       sh_clean <- if (startsWith(sh_full, paste0(outc, "_"))) substring(sh_full, nchar(outc) + 2L) else sh_full
       sh_pretty <- map_label(sh_clean)
-      p <- p + ggplot2::annotate("text", x = -Inf, y = -Inf,
+      p <- p + ggplot2::annotate("text", x = -Inf, y = Inf,
                                  label = sh_pretty,
-                                 hjust = -0.1, vjust = -0.6, size = text_size)
+                                 hjust = -0.1, vjust = 1.2, size = text_size)
     }
     if (isTRUE(annotate_zeros)) {
       if (!is.na(zeros_str)) {
@@ -279,21 +415,25 @@ margot_lmtp_overlap_plot_grid <- function(x,
 
   plots <- list()
   if (identical(layout, "waves_by_shifts")) {
+    # rows = waves, columns = shifts
     for (w_idx in seq_along(waves_order)) {
       w <- waves_order[[w_idx]]
       for (sc_idx in seq_along(shifts_order_full)) {
         is_top <- (w_idx == 1L)
         col_idx <- sc_idx
-        plots[[length(plots) + 1]] <- get_plot(outcome, shifts_order_full[[sc_idx]], w, is_top, col_idx)
+        row_idx <- w_idx
+        plots[[length(plots) + 1]] <- get_plot(outcome, shifts_order_full[[sc_idx]], w, is_top, col_idx, row_idx)
       }
     }
   } else {
+    # rows = shifts, columns = waves
     for (sc_idx in seq_along(shifts_order_full)) {
       sh <- shifts_order_full[[sc_idx]]
       for (w_idx in seq_along(waves_order)) {
         is_top <- (sc_idx == 1L)
         col_idx <- w_idx
-        plots[[length(plots) + 1]] <- get_plot(outcome, sh, waves_order[[w_idx]], is_top, col_idx)
+        row_idx <- sc_idx
+        plots[[length(plots) + 1]] <- get_plot(outcome, sh, waves_order[[w_idx]], is_top, col_idx, row_idx)
       }
     }
   }

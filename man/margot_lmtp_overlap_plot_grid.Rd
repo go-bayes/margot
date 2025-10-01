@@ -9,19 +9,18 @@ margot_lmtp_overlap_plot_grid(
   outcome = NULL,
   shifts = NULL,
   waves = NULL,
-  remove_waves = NULL,
   ncol = NULL,
   drop_titles = TRUE,
   title = NULL,
   label_mapping = NULL,
   annotate_zeros = FALSE,
   ymax = NULL,
-  annotate_wave = TRUE,
-  annotate_shift = TRUE,
+  annotate_graph = c("none", "waves", "shifts"),
   xlim = NULL,
   layout = c("waves_by_shifts", "shifts_by_waves"),
-  ymax_by_wave = NULL,
-  headroom = 0.06,
+  ymax_harmonize = "none",
+  xlim_harmonize = "none",
+  headroom = 0.12,
   text_size = text_size
 )
 }
@@ -50,9 +49,19 @@ plots and add a single overall title.}
 \item{label_mapping}{Optional named list to prettify column (shift) labels
 via `transform_label()` when available.}
 
-\item{annotate_zeros}{Character; one of "column" (default), "facet", "none".
-"column" appends the zeros for the top-row wave to the column title;
-"facet" prints zeros in the top-right of each panel; "none" disables.}
+\item{annotate_zeros}{Logical; if TRUE, adds "zeros: X%" label to top-right of each panel.
+Default is FALSE.}
+
+\item{annotate_graph}{Character; controls graph annotations: `"waves"` places wave labels at top,
+`"shifts"` places shift labels at top, `"none"` disables annotations (default: `"none"`).}
+
+\item{ymax_harmonize}{Character or named vector; controls y-axis harmonization: `"none"` (default) gives
+each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+`"global"` harmonizes all plots. Can also be a named vector with custom values.}
+
+\item{xlim_harmonize}{Character or named vector; controls x-axis harmonization: `"none"` (default) gives
+each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+`"global"` harmonizes all plots. Can also be a named vector with custom values.}
 
 \item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).}
 }

@@ -22,6 +22,18 @@
 #' @param color_by_wave Legacy logical alias for `color_by` (`TRUE` = `"wave"`,
 #'   `FALSE` = `"constant"`).
 #' @param fill_palette Optional vector of colours (named or unnamed) used when colouring histograms.
+#' @param annotate_graph Character; controls graph annotations: `"waves"` places wave labels at top,
+#'   `"shifts"` places shift labels at top, `"none"` disables annotations (default: `"none"`).
+#' @param annotate_zeros Logical; if TRUE, adds "zeros: X%" label to top-right of each panel.
+#'   Default is FALSE.
+#' @param waves Optional integer vector specifying which waves to include (e.g., `c(1, 2, 3)`). If NULL,
+#'   includes all waves found for the outcome.
+#' @param ymax_harmonize Character or named vector; controls y-axis harmonization: `"none"` (default) gives
+#'   each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+#'   `"global"` harmonizes all plots. Can also be a named vector with custom values (e.g., `c(wave_1 = 1000)`).
+#' @param xlim_harmonize Character or named vector; controls x-axis harmonization: `"none"` (default) gives
+#'   each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+#'   `"global"` harmonizes all plots. Can also be a named vector with custom values.
 #' @param text_size Numeric size for facet annotations (wave/shift/zeros labels).
 #' @return A patchwork grid object.
 #' @export
@@ -33,15 +45,14 @@ margot_plot_lmtp_overlap_grid <- function(x,
                                           theme = "empty",
                                           ymax = NULL,
                                           digits = 3,
-                                          annotate_wave = TRUE,
+                                          annotate_graph = c("none", "waves", "shifts"),
                                           annotate_zeros = FALSE,
                                           waves = NULL,
-                                          remove_waves = NULL,
                                           xlim = NULL,
                                           layout = c("waves_by_shifts","shifts_by_waves"),
-                                          annotate_shift = TRUE,
-                                          ymax_by_wave = NULL,
-                                          headroom = 0.06,
+                                          ymax_harmonize = "none",
+                                          xlim_harmonize = "none",
+                                          headroom = 0.12,
                                           color_by = c("wave", "shift", "constant"),
                                           color_by_wave = NULL,
                                           fill_palette = NULL,
@@ -49,8 +60,7 @@ margot_plot_lmtp_overlap_grid <- function(x,
                                           bins = 40,
                                           binwidth = NULL) {
   stopifnot(is.logical(annotate_zeros), length(annotate_zeros) == 1L)
-  stopifnot(is.logical(annotate_wave),  length(annotate_wave)  == 1L)
-  stopifnot(is.logical(annotate_shift), length(annotate_shift) == 1L)
+  annotate_graph <- match.arg(annotate_graph)
   layout <- match.arg(layout)
   color_by <- match.arg(color_by)
   if (!is.null(color_by_wave)) {
@@ -72,7 +82,7 @@ margot_plot_lmtp_overlap_grid <- function(x,
     binwidth = binwidth,
     xlim = xlim
   )
-  # Build a pretty outcome label for the main title
+  # build a pretty outcome label for the main title
   outcome_label <- tryCatch({
     if (exists("transform_label", mode = "function")) {
       out <- transform_label(
@@ -97,13 +107,12 @@ margot_plot_lmtp_overlap_grid <- function(x,
     label_mapping = label_mapping,
     annotate_zeros = annotate_zeros,
     ymax = ymax,
-    annotate_wave = annotate_wave,
-    annotate_shift = annotate_shift,
+    annotate_graph = annotate_graph,
     waves = waves,
-    remove_waves = remove_waves,
     xlim = xlim,
     layout = layout,
-    ymax_by_wave = ymax_by_wave,
+    ymax_harmonize = ymax_harmonize,
+    xlim_harmonize = xlim_harmonize,
     headroom = headroom,
     text_size = text_size
   )

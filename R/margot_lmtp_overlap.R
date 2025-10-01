@@ -121,7 +121,7 @@ margot_lmtp_overlap <- function(x,
 
       default_palette <- c("#4f88c6", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7", "#D55E00", "#999999")
       palette_aliases <- list(
-        lab = c(shift_up = "#2c7fb8", shift_down = "#f03b20", null = "#7f7f7f", constant = "#4f88c6"),
+        lab = c(shift_up = "#d95f0e", shift_down = "#2c7fb8", null = "#7f7f7f", constant = "#4f88c6"),
         classic = default_palette
       )
       if (is.character(fill_palette) && length(fill_palette) == 1L && fill_palette %in% names(palette_aliases)) {
@@ -156,6 +156,12 @@ margot_lmtp_overlap <- function(x,
         if (!is.na(named)) return(named)
         named_clean <- fetch_named_color(clean_shift_name(outcome_name, shift_name))
         if (!is.na(named_clean)) return(named_clean)
+        # pattern-based fallback for common shift types
+        shift_lower <- tolower(shift_name)
+        if (grepl("null", shift_lower)) return("#7f7f7f")  # grey for null
+        if (grepl("up", shift_lower)) return("#d95f0e")    # orange for up
+        if (grepl("down", shift_lower)) return("#2c7fb8")  # blue for down
+        # final fallback: cycle through palette
         idx <- match(shift_name, shift_names_global)
         if (is.na(idx)) idx <- 1L
         palette_vec[((idx - 1L) %% length(palette_vec)) + 1L]

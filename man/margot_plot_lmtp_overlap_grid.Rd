@@ -13,15 +13,14 @@ margot_plot_lmtp_overlap_grid(
   theme = "empty",
   ymax = NULL,
   digits = 3,
-  annotate_wave = TRUE,
+  annotate_graph = c("none", "waves", "shifts"),
   annotate_zeros = FALSE,
   waves = NULL,
-  remove_waves = NULL,
   xlim = NULL,
   layout = c("waves_by_shifts", "shifts_by_waves"),
-  annotate_shift = TRUE,
-  ymax_by_wave = NULL,
-  headroom = 0.06,
+  ymax_harmonize = "none",
+  xlim_harmonize = "none",
+  headroom = 0.12,
   color_by = c("wave", "shift", "constant"),
   color_by_wave = NULL,
   fill_palette = NULL,
@@ -51,6 +50,23 @@ cleaned names).}
 panels (passed to `margot_lmtp_overlap_plot_grid()`).}
 
 \item{digits}{Integer rounding for summaries (not used in plot aesthetics).}
+
+\item{annotate_graph}{Character; controls graph annotations: `"waves"` places wave labels at top,
+`"shifts"` places shift labels at top, `"none"` disables annotations (default: `"none"`).}
+
+\item{annotate_zeros}{Logical; if TRUE, adds "zeros: X%" label to top-right of each panel.
+Default is FALSE.}
+
+\item{waves}{Optional integer vector specifying which waves to include (e.g., `c(1, 2, 3)`). If NULL,
+includes all waves found for the outcome.}
+
+\item{ymax_harmonize}{Character or named vector; controls y-axis harmonization: `"none"` (default) gives
+each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+`"global"` harmonizes all plots. Can also be a named vector with custom values (e.g., `c(wave_1 = 1000)`).}
+
+\item{xlim_harmonize}{Character or named vector; controls x-axis harmonization: `"none"` (default) gives
+each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+`"global"` harmonizes all plots. Can also be a named vector with custom values.}
 
 \item{color_by}{Character; how histogram fills are coloured (`"wave"`,
 `"shift"`, or `"constant"`).}

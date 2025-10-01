@@ -1,3 +1,21 @@
+# [2025-10-01] margot 1.0.250
+### Breaking Changes
+- `margot_plot_lmtp_overlap_grid()` and `margot_lmtp_overlap_plot_grid()`: replaced `annotate_wave` and `annotate_shift` parameters with unified `annotate_graph` parameter accepting "none", "waves", or "shifts".
+- `margot_plot_lmtp_overlap_grid()` and `margot_lmtp_overlap_plot_grid()`: replaced `ymax_by_wave` with more flexible `ymax_harmonize` parameter accepting "none" (default), "row", "column", "global", or custom named vectors.
+- Removed `remove_waves` parameter; use `waves` parameter for positive selection instead.
+
+### Added
+- `xlim_harmonize` parameter for x-axis harmonization in `margot_plot_lmtp_overlap_grid()` and `margot_lmtp_overlap_plot_grid()` with options: "none" (default), "row", "column", "global", or custom values.
+- Automatic colour detection for shifts in `margot_lmtp_overlap()`: shifts containing "null" → grey (#7f7f7f), "up" → orange (#d95f0e), "down" → blue (#2c7fb8).
+- Layout-aware axis harmonization: "row" and "column" options intelligently adapt based on whether rows/columns represent waves or shifts.
+
+### Improved
+- Default `headroom` increased from 0.06 to 0.12 for better annotation visibility.
+- Annotation positioning adjusted (vjust = 1.2) for clearer wave/shift labels at top of plots.
+- Updated "lab" palette alias to match automatic shift colours.
+- Fixed `annotate_zeros` documentation to correctly reflect logical (TRUE/FALSE) implementation.
+- Added `@param waves` documentation to wrapper function.
+
 # [2025-09-30] margot 1.0.249
 ### Added
 - `margot_plot_lmtp_learners()` heatmap summarising Super Learner weights by wave/component.

@@ -11,7 +11,7 @@ harmonised or user-specified y-axis limits for histogram counts."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.249</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.250</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,15 +54,14 @@ harmonised or user-specified y-axis limits for histogram counts.</p>
 <span>  theme <span class="op">=</span> <span class="st">"empty"</span>,</span>
 <span>  ymax <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>  annotate_wave <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  annotate_graph <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"waves"</span>, <span class="st">"shifts"</span><span class="op">)</span>,</span>
 <span>  annotate_zeros <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  remove_waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  xlim <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  layout <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"waves_by_shifts"</span>, <span class="st">"shifts_by_waves"</span><span class="op">)</span>,</span>
-<span>  annotate_shift <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  ymax_by_wave <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  headroom <span class="op">=</span> <span class="fl">0.06</span>,</span>
+<span>  ymax_harmonize <span class="op">=</span> <span class="st">"none"</span>,</span>
+<span>  xlim_harmonize <span class="op">=</span> <span class="st">"none"</span>,</span>
+<span>  headroom <span class="op">=</span> <span class="fl">0.12</span>,</span>
 <span>  color_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wave"</span>, <span class="st">"shift"</span>, <span class="st">"constant"</span><span class="op">)</span>,</span>
 <span>  color_by_wave <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -111,6 +110,33 @@ panels (passed to `margot_lmtp_overlap_plot_grid()`).</p></dd>
 
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
 <dd><p>Integer rounding for summaries (not used in plot aesthetics).</p></dd>
+
+
+<dt id="arg-annotate-graph">annotate_graph<a class="anchor" aria-label="anchor" href="#arg-annotate-graph"></a></dt>
+<dd><p>Character; controls graph annotations: `"waves"` places wave labels at top,
+`"shifts"` places shift labels at top, `"none"` disables annotations (default: `"none"`).</p></dd>
+
+
+<dt id="arg-annotate-zeros">annotate_zeros<a class="anchor" aria-label="anchor" href="#arg-annotate-zeros"></a></dt>
+<dd><p>Logical; if TRUE, adds "zeros: X<!-- %" label to top-right of each panel. -->
+Default is FALSE.</p></dd>
+
+
+<dt id="arg-waves">waves<a class="anchor" aria-label="anchor" href="#arg-waves"></a></dt>
+<dd><p>Optional integer vector specifying which waves to include (e.g., `c(1, 2, 3)`). If NULL,
+includes all waves found for the outcome.</p></dd>
+
+
+<dt id="arg-ymax-harmonize">ymax_harmonize<a class="anchor" aria-label="anchor" href="#arg-ymax-harmonize"></a></dt>
+<dd><p>Character or named vector; controls y-axis harmonization: `"none"` (default) gives
+each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+`"global"` harmonizes all plots. Can also be a named vector with custom values (e.g., `c(wave_1 = 1000)`).</p></dd>
+
+
+<dt id="arg-xlim-harmonize">xlim_harmonize<a class="anchor" aria-label="anchor" href="#arg-xlim-harmonize"></a></dt>
+<dd><p>Character or named vector; controls x-axis harmonization: `"none"` (default) gives
+each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+`"global"` harmonizes all plots. Can also be a named vector with custom values.</p></dd>
 
 
 <dt id="arg-color-by">color_by<a class="anchor" aria-label="anchor" href="#arg-color-by"></a></dt>
