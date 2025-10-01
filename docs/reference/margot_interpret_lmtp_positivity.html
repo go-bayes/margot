@@ -19,7 +19,7 @@ graphics."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.250</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.251</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,8 @@ graphics.</p>
 <span>  waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  remove_waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  include_overview <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  include_methods <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  include_diagnostics <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"text"</span>, <span class="st">"list"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -112,10 +113,14 @@ inclusion via `waves`.</p></dd>
 ESS-based fractions (e.g., `ESS/N`).</p></dd>
 
 
-<dt id="arg-include-overview">include_overview<a class="anchor" aria-label="anchor" href="#arg-include-overview"></a></dt>
-<dd><p>Logical; if `TRUE`, append a short paragraph
-summarising the distribution of ESS across the selected waves and the
-pooled estimates across shifts.</p></dd>
+<dt id="arg-include-methods">include_methods<a class="anchor" aria-label="anchor" href="#arg-include-methods"></a></dt>
+<dd><p>Logical; if TRUE, prepends a methodological explanation of
+density ratios, their interpretation, and ESS computation (default: FALSE).</p></dd>
+
+
+<dt id="arg-include-diagnostics">include_diagnostics<a class="anchor" aria-label="anchor" href="#arg-include-diagnostics"></a></dt>
+<dd><p>Logical; if TRUE, appends detailed diagnostics per shift
+including zeros, range, quantiles, and tail probabilities (default: FALSE).</p></dd>
 
 
 <dt id="arg-return">return<a class="anchor" aria-label="anchor" href="#arg-return"></a></dt>
@@ -134,12 +139,56 @@ tables).</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">txt</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_lmtp_positivity</span><span class="op">(</span><span class="va">fit</span>,</span></span>
+<span class="r-in"><span><span class="co"># Basic usage</span></span></span>
+<span class="r-in"><span><span class="va">txt</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_lmtp_positivity</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">fit</span>,</span></span>
 <span class="r-in"><span>  outcome <span class="op">=</span> <span class="st">"t5_pwi_z"</span>,</span></span>
 <span class="r-in"><span>  shifts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"shift_up"</span>, <span class="st">"shift_down"</span>, <span class="st">"null"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">txt</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># With methodological explanation</span></span></span>
+<span class="r-in"><span><span class="va">txt_methods</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_lmtp_positivity</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">fit</span>,</span></span>
+<span class="r-in"><span>  outcome <span class="op">=</span> <span class="st">"t5_pwi_z"</span>,</span></span>
+<span class="r-in"><span>  shifts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"shift_up"</span>, <span class="st">"shift_down"</span>, <span class="st">"null"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span>,</span></span>
+<span class="r-in"><span>  include_methods <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">txt_methods</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># With detailed diagnostics</span></span></span>
+<span class="r-in"><span><span class="va">txt_diagnostics</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_lmtp_positivity</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">fit</span>,</span></span>
+<span class="r-in"><span>  outcome <span class="op">=</span> <span class="st">"t5_pwi_z"</span>,</span></span>
+<span class="r-in"><span>  shifts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"shift_up"</span>, <span class="st">"shift_down"</span>, <span class="st">"null"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span>,</span></span>
+<span class="r-in"><span>  include_diagnostics <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">txt_diagnostics</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Complete report with methods and diagnostics</span></span></span>
+<span class="r-in"><span><span class="va">txt_full</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_lmtp_positivity</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">fit</span>,</span></span>
+<span class="r-in"><span>  outcome <span class="op">=</span> <span class="st">"t5_pwi_z"</span>,</span></span>
+<span class="r-in"><span>  shifts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"shift_up"</span>, <span class="st">"shift_down"</span>, <span class="st">"null"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span>,</span></span>
+<span class="r-in"><span>  include_methods <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  include_diagnostics <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">txt_full</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Get structured list output</span></span></span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">margot_interpret_lmtp_positivity</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">fit</span>,</span></span>
+<span class="r-in"><span>  outcome <span class="op">=</span> <span class="st">"t5_pwi_z"</span>,</span></span>
+<span class="r-in"><span>  shifts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"shift_up"</span>, <span class="st">"shift_down"</span>, <span class="st">"null"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  include_methods <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  include_diagnostics <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  return <span class="op">=</span> <span class="st">"list"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Access components: result$methods, result$diagnostics, result$shifts</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

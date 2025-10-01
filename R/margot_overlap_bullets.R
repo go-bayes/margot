@@ -23,9 +23,10 @@
 #'   inclusion via `waves`.
 #' @param digits Integer number of decimal places to use when reporting
 #'   ESS-based fractions (e.g., `ESS/N`).
-#' @param include_overview Logical; if `TRUE`, append a short paragraph
-#'   summarising the distribution of ESS across the selected waves and the
-#'   pooled estimates across shifts.
+#' @param include_methods Logical; if TRUE, prepends a methodological explanation of
+#'   density ratios, their interpretation, and ESS computation (default: FALSE).
+#' @param include_diagnostics Logical; if TRUE, appends detailed diagnostics per shift
+#'   including zeros, range, quantiles, and tail probabilities (default: FALSE).
 #' @param return Character; either `"text"` (default, a single markdown-ready
 #'   string) or `"list"` (detailed components including the computed ESS
 #'   tables).
@@ -36,12 +37,56 @@
 #'
 #' @examples
 #' \dontrun{
-#' txt <- margot_interpret_lmtp_positivity(fit,
+#' # Basic usage
+#' txt <- margot_interpret_lmtp_positivity(
+#'   fit,
 #'   outcome = "t5_pwi_z",
 #'   shifts = c("shift_up", "shift_down", "null"),
 #'   label_mapping = label_mapping
 #' )
 #' cat(txt)
+#'
+#' # With methodological explanation
+#' txt_methods <- margot_interpret_lmtp_positivity(
+#'   fit,
+#'   outcome = "t5_pwi_z",
+#'   shifts = c("shift_up", "shift_down", "null"),
+#'   label_mapping = label_mapping,
+#'   include_methods = TRUE
+#' )
+#' cat(txt_methods)
+#'
+#' # With detailed diagnostics
+#' txt_diagnostics <- margot_interpret_lmtp_positivity(
+#'   fit,
+#'   outcome = "t5_pwi_z",
+#'   shifts = c("shift_up", "shift_down", "null"),
+#'   label_mapping = label_mapping,
+#'   include_diagnostics = TRUE
+#' )
+#' cat(txt_diagnostics)
+#'
+#' # Complete report with methods and diagnostics
+#' txt_full <- margot_interpret_lmtp_positivity(
+#'   fit,
+#'   outcome = "t5_pwi_z",
+#'   shifts = c("shift_up", "shift_down", "null"),
+#'   label_mapping = label_mapping,
+#'   include_methods = TRUE,
+#'   include_diagnostics = TRUE
+#' )
+#' cat(txt_full)
+#'
+#' # Get structured list output
+#' result <- margot_interpret_lmtp_positivity(
+#'   fit,
+#'   outcome = "t5_pwi_z",
+#'   shifts = c("shift_up", "shift_down", "null"),
+#'   include_methods = TRUE,
+#'   include_diagnostics = TRUE,
+#'   return = "list"
+#' )
+#' # Access components: result$methods, result$diagnostics, result$shifts
 #' }
 #'
 #' @export
@@ -52,7 +97,8 @@ margot_interpret_lmtp_positivity <- function(x,
                                              waves = NULL,
                                              remove_waves = NULL,
                                              digits = 2,
-                                             include_overview = TRUE,
+                                             include_methods = FALSE,
+                                             include_diagnostics = FALSE,
                                              return = c("text", "list")) {
   stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
@@ -116,7 +162,23 @@ margot_interpret_lmtp_positivity <- function(x,
            setdiff(shift_df$shift_clean, pref_order))
   shift_df <- shift_df[match(ord, shift_df$shift_clean), , drop = FALSE]
 
-  # Helpers ----------------------------------------------------------------
+  # methods text helper ----------------------------------------------------
+  methods_text <- function() {
+    c(
+      "## Understanding Density Ratios in LMTP",
+      "",
+      "Density ratios act as weights in the estimator to rebalance the observed data to mimic the distribution under the modified policy. A value $r_t > 1$ indicates that the observed treatment $A_t$ is more likely under the modified policy than under the observed mechanism, so the observation is up-weighted at that time point. Conversely, $r_t < 1$ down-weights it, and $r_t = 0$ means the observed treatment is incompatible with the policy (e.g., effectively excluding that trajectory).",
+      "",
+      "Examining the distribution of density ratios allows us to assess practical positivity. Many values near 0 or extremely large suggest violations of the positivity assumption, where certain treatments are improbable under the policy, leading to unstable estimates.",
+      "",
+      "In a single-time-point average treatment effect (ATE) where the policy sets treatment to 1, the density ratio reduces to the inverse probability weight $1 / \\Pr(A=1 \\mid W)$ for treated units (and 0 for untreated). Where exposures are repeated, the product of ratios across time points gives the overall weight for each observation.",
+      "",
+      "**Effective Sample Size (ESS)** summarises the effective information in weighted data using the formula: $\\text{ESS} = (\\sum w)^2 / \\sum w^2$. Higher variance in weights reduces ESS. When all weights are equal, $\\text{ESS} = N$ (the actual sample size). $\\text{ESS}/N$ gives the proportion of effective information retained.",
+      ""
+    )
+  }
+
+  # helpers ----------------------------------------------------------------
   fmt_frac <- function(x) {
     out <- rep("NA", length(x))
     idx <- is.finite(x)
@@ -219,6 +281,108 @@ margot_interpret_lmtp_positivity <- function(x,
     return(if (identical(return, "text")) "" else list())
   }
 
+  # diagnostics helper -----------------------------------------------------
+  diagnostics_text <- function() {
+    if (!isTRUE(include_diagnostics)) return(character(0))
+
+    # call margot_lmtp_positivity() to get detailed diagnostics
+    pos_result <- tryCatch({
+      margot_lmtp_positivity(x, verbose = FALSE)
+    }, error = function(e) {
+      if (requireNamespace("cli", quietly = TRUE)) {
+        cli::cli_alert_warning("Could not compute detailed diagnostics: {e$message}")
+      }
+      return(NULL)
+    })
+
+    if (is.null(pos_result)) return(character(0))
+
+    # filter to selected outcome and shifts
+    by_wave <- pos_result$by_wave
+    by_wave <- by_wave[by_wave$outcome == outcome, , drop = FALSE]
+    if (!is.null(shifts)) {
+      keep <- by_wave$shift %in% shifts |
+              sapply(by_wave$shift, function(s) {
+                clean <- if (startsWith(s, paste0(outcome, "_"))) {
+                  substring(s, nchar(outcome) + 2L)
+                } else s
+                clean %in% shifts
+              })
+      by_wave <- by_wave[keep, , drop = FALSE]
+    }
+    if (!is.null(waves)) {
+      by_wave <- by_wave[by_wave$wave %in% waves, , drop = FALSE]
+    }
+    if (!is.null(remove_waves)) {
+      by_wave <- by_wave[!(by_wave$wave %in% remove_waves), , drop = FALSE]
+    }
+
+    if (!nrow(by_wave)) return(character(0))
+
+    # build detailed text per shift
+    diag_lines <- character(0)
+    for (shift_name in names(shift_results)) {
+      shift_full <- shift_results[[shift_name]]$waves$shift_full[1]
+      shift_data <- by_wave[by_wave$shift == shift_full, , drop = FALSE]
+      if (!nrow(shift_data)) next
+
+      # aggregate across waves for shift-level summary
+      zeros_pct <- mean(shift_data$prop_zero, na.rm = TRUE) * 100
+      range_min <- min(shift_data$min, na.rm = TRUE)
+      range_max <- max(shift_data$max, na.rm = TRUE)
+      mean_val <- mean(shift_data$mean, na.rm = TRUE)
+      sd_val <- mean(shift_data$sd, na.rm = TRUE)
+      cv_val <- mean(shift_data$cv, na.rm = TRUE)
+
+      # tail probabilities (average across waves)
+      tail_cols <- grep("^p_gt_", names(shift_data), value = TRUE)
+      tail_cols <- setdiff(tail_cols, grep("_pos$", tail_cols, value = TRUE))
+      tail_vals <- if (length(tail_cols)) {
+        sapply(tail_cols, function(col) mean(shift_data[[col]], na.rm = TRUE) * 100)
+      } else NULL
+
+      # quantiles (average across waves)
+      quant_cols <- grep("^q", names(shift_data), value = TRUE)
+      quant_cols <- setdiff(quant_cols, grep("_pos$", quant_cols, value = TRUE))
+      quants <- if (length(quant_cols)) {
+        sapply(quant_cols, function(col) mean(shift_data[[col]], na.rm = TRUE))
+      } else NULL
+
+      shift_label <- shift_results[[shift_name]]$label
+
+      diag_lines <- c(diag_lines,
+                      paste0("### ", shift_label, " — Detailed Diagnostics"),
+                      paste0("- **Zeros**: ", fmt_frac(zeros_pct), "%"),
+                      paste0("- **Range**: [", fmt_frac(range_min), ", ", fmt_frac(range_max), "]"),
+                      paste0("- **Mean ± SD**: ", fmt_frac(mean_val), " ± ", fmt_frac(sd_val),
+                             " (CV = ", fmt_frac(cv_val), ")"))
+
+      if (!is.null(tail_vals) && length(tail_vals)) {
+        tail_text <- paste(names(tail_vals), "=", paste0(fmt_frac(tail_vals), "%"), collapse = ", ")
+        diag_lines <- c(diag_lines, paste0("- **Tails**: ", gsub("p_gt_", "P(r > ", gsub("=", ") = ", tail_text))))
+      }
+
+      if (!is.null(quants) && length(quants) >= 4) {
+        # show key quantiles: 1st, 5th, 95th, 99.9th if available
+        q_labels <- c("q0001" = "p0.1%", "q001" = "p1%", "q005" = "p5%", "q05" = "p50%",
+                      "q095" = "p95%", "q0999" = "p99.9%")
+        available_q <- intersect(names(quants), names(q_labels))
+        if (length(available_q)) {
+          q_text <- paste(q_labels[available_q], "=", fmt_frac(quants[available_q]), collapse = ", ")
+          diag_lines <- c(diag_lines, paste0("- **Quantiles**: ", q_text))
+        }
+      }
+
+      diag_lines <- c(diag_lines, "")
+    }
+
+    if (length(diag_lines)) {
+      c("", "## Detailed Diagnostics by Shift", "", diag_lines)
+    } else {
+      character(0)
+    }
+  }
+
   # Reference counts from the first shift for baseline N / person-time
   ref_waves <- shift_results[[1]]$waves
   baseline_n <- if (nrow(ref_waves)) max(ref_waves$n, na.rm = TRUE) else NA_real_
@@ -226,45 +390,17 @@ margot_interpret_lmtp_positivity <- function(x,
 
   outcome_label <- map_label(outcome)
 
-  # Summary statistics across shifts/waves
-  all_wave_ess <- unlist(lapply(shift_results, function(res) res$waves$ess))
-  all_wave_ess <- all_wave_ess[is.finite(all_wave_ess)]
-  overall_ess_vals <- vapply(shift_results, function(res) res$overall$ess, numeric(1))
-  overall_ess_vals <- overall_ess_vals[is.finite(overall_ess_vals)]
-
-  wave_summary_line <- NULL
-  if (length(all_wave_ess)) {
-    q <- stats::quantile(all_wave_ess, probs = c(0.25, 0.5, 0.75), names = FALSE, type = 2)
-    wave_summary_line <- paste0(
-      "Across selected shifts and waves, ESS had median ", fmt_int(q[2]),
-      " (IQR ", fmt_int(q[1]), "–", fmt_int(q[3]), ")."
-    )
-  }
-  overall_summary_line <- NULL
-  if (length(overall_ess_vals)) {
-    med <- stats::median(overall_ess_vals)
-    rng <- range(overall_ess_vals)
-    overall_summary_line <- paste0(
-      "Overall ESS (pooled within shifts) ranged ", fmt_int(rng[1]), "–",
-      fmt_int(rng[2]), " (median ", fmt_int(med), ")."
-    )
-  }
-
   header_bits <- c(
-    paste0("LMTP positivity for ", outcome_label, ". Effective sample sizes",
-           " (ESS) are computed from raw density ratios using colSums."),
-    if (is.finite(baseline_n)) paste0("Baseline N ≈ ", fmt_int(baseline_n), ".") else "",
+    paste0("LMTP positivity for ", outcome_label, "."),
+    if (is.finite(baseline_n)) paste0("Baseline N $\\approx$ ", fmt_int(baseline_n), ".") else "",
     if (is.finite(person_time)) paste0("Person-time rows per shift (selected waves) = ", fmt_int(person_time), ".") else ""
   )
   header <- paste(header_bits[nzchar(header_bits)], collapse = " ")
 
+  # overview lines removed - averaging across interventions is incoherent
   overview_lines <- character(0)
-  if (isTRUE(include_overview)) {
-    overview_lines <- c(wave_summary_line, overall_summary_line)
-    overview_lines <- overview_lines[nzchar(overview_lines)]
-  }
 
-  # Per-shift bullet lines -------------------------------------------------
+  # per-shift bullet lines -------------------------------------------------
   lines <- vapply(names(shift_results), function(name) {
     res <- shift_results[[name]]
     wave_df <- res$waves
@@ -285,7 +421,11 @@ margot_interpret_lmtp_positivity <- function(x,
   }, character(1))
   lines <- lines[nzchar(lines)]
 
-  text_lines <- c(header, overview_lines, lines)
+  # assemble final output with optional methods and diagnostics
+  methods_section <- if (isTRUE(include_methods)) methods_text() else character(0)
+  diagnostics_section <- diagnostics_text()  # returns empty vector if include_diagnostics = FALSE
+
+  text_lines <- c(methods_section, header, overview_lines, lines, diagnostics_section)
   text <- paste(text_lines, collapse = "\n")
 
   if (identical(return, "text")) {
@@ -293,9 +433,11 @@ margot_interpret_lmtp_positivity <- function(x,
   } else {
     list(
       text = text,
+      methods = if (isTRUE(include_methods)) paste(methods_section, collapse = "\n") else NULL,
       header = header,
       overview = overview_lines,
       lines = lines,
+      diagnostics = if (isTRUE(include_diagnostics)) paste(diagnostics_section, collapse = "\n") else NULL,
       outcome_label = outcome_label,
       shifts = shift_results,
       baseline_n = baseline_n,

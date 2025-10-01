@@ -1,3 +1,16 @@
+# [2025-10-01] margot 1.0.251
+### Breaking Changes
+- `margot_interpret_lmtp_positivity()`: removed `include_overview` parameter. Averaging statistics across interventions is incoherent and has been removed.
+
+### Added
+- `margot_interpret_lmtp_positivity()`: new `include_methods` parameter (default: FALSE) prepends methodological explanation of density ratios, their interpretation as rebalancing weights, and ESS computation formula.
+- `margot_interpret_lmtp_positivity()`: new `include_diagnostics` parameter (default: FALSE) appends detailed diagnostics per shift including zeros, range, mean ± SD, CV, tail probabilities, and quantiles. Uses `margot_lmtp_positivity()` internally.
+
+### Improved
+- `margot_interpret_lmtp_positivity()`: all mathematical notation now uses LaTeX formatting (e.g., `$r_t > 1$`, `$\text{ESS} = (\sum w)^2 / \sum w^2$`) for proper rendering in Quarto markdown.
+- `margot_interpret_lmtp_positivity()`: removed redundant "ESS computed from raw density ratios using colSums" text from header.
+- `margot_interpret_lmtp_positivity()`: when `return = "list"`, now includes `$methods` and `$diagnostics` components for programmatic access.
+
 # [2025-10-01] margot 1.0.250
 ### Breaking Changes
 - `margot_plot_lmtp_overlap_grid()` and `margot_lmtp_overlap_plot_grid()`: replaced `annotate_wave` and `annotate_shift` parameters with unified `annotate_graph` parameter accepting "none", "waves", or "shifts".

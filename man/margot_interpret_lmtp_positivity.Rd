@@ -13,7 +13,8 @@ margot_interpret_lmtp_positivity(
   waves = NULL,
   remove_waves = NULL,
   digits = 2,
-  include_overview = TRUE,
+  include_methods = FALSE,
+  include_diagnostics = FALSE,
   return = c("text", "list")
 )
 
@@ -42,9 +43,11 @@ inclusion via `waves`.}
 \item{digits}{Integer number of decimal places to use when reporting
 ESS-based fractions (e.g., `ESS/N`).}
 
-\item{include_overview}{Logical; if `TRUE`, append a short paragraph
-summarising the distribution of ESS across the selected waves and the
-pooled estimates across shifts.}
+\item{include_methods}{Logical; if TRUE, prepends a methodological explanation of
+density ratios, their interpretation, and ESS computation (default: FALSE).}
+
+\item{include_diagnostics}{Logical; if TRUE, appends detailed diagnostics per shift
+including zeros, range, quantiles, and tail probabilities (default: FALSE).}
 
 \item{return}{Character; either `"text"` (default, a single markdown-ready
 string) or `"list"` (detailed components including the computed ESS
@@ -66,12 +69,56 @@ graphics.
 }
 \examples{
 \dontrun{
-txt <- margot_interpret_lmtp_positivity(fit,
+# Basic usage
+txt <- margot_interpret_lmtp_positivity(
+  fit,
   outcome = "t5_pwi_z",
   shifts = c("shift_up", "shift_down", "null"),
   label_mapping = label_mapping
 )
 cat(txt)
+
+# With methodological explanation
+txt_methods <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  label_mapping = label_mapping,
+  include_methods = TRUE
+)
+cat(txt_methods)
+
+# With detailed diagnostics
+txt_diagnostics <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  label_mapping = label_mapping,
+  include_diagnostics = TRUE
+)
+cat(txt_diagnostics)
+
+# Complete report with methods and diagnostics
+txt_full <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  label_mapping = label_mapping,
+  include_methods = TRUE,
+  include_diagnostics = TRUE
+)
+cat(txt_full)
+
+# Get structured list output
+result <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  include_methods = TRUE,
+  include_diagnostics = TRUE,
+  return = "list"
+)
+# Access components: result$methods, result$diagnostics, result$shifts
 }
 
 }

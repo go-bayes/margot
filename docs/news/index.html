@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.250</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.251</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,30 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.251" id="id_2025-10-01-margot-10251">[2025-10-01] margot 1.0.251<a class="anchor" aria-label="anchor" href="#id_2025-10-01-margot-10251"></a></h2>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-251">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-251"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: removed <code>include_overview</code> parameter. Averaging statistics across interventions is incoherent and has been removed.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="added-1-0-251">Added<a class="anchor" aria-label="anchor" href="#added-1-0-251"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: new <code>include_methods</code> parameter (default: FALSE) prepends methodological explanation of density ratios, their interpretation as rebalancing weights, and ESS computation formula.</li>
+<li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: new <code>include_diagnostics</code> parameter (default: FALSE) appends detailed diagnostics per shift including zeros, range, mean ± SD, CV, tail probabilities, and quantiles. Uses <code><a href="../reference/margot_lmtp_positivity.html">margot_lmtp_positivity()</a></code> internally.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improved-1-0-251">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-251"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: all mathematical notation now uses LaTeX formatting (e.g., <code>$r_t &gt; 1$</code>, <code>$\text{ESS} = (\sum w)^2 / \sum w^2$</code>) for proper rendering in Quarto markdown.</li>
+<li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: removed redundant “ESS computed from raw density ratios using colSums” text from header.</li>
+<li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: when <code>return = "list"</code>, now includes <code>$methods</code> and <code>$diagnostics</code> components for programmatic access.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.250" id="id_2025-10-01-margot-10250">[2025-10-01] margot 1.0.250<a class="anchor" aria-label="anchor" href="#id_2025-10-01-margot-10250"></a></h2>
 <div class="section level4">
