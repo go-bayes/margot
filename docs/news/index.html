@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.252</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.254</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,71 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.254" id="id_2025-10-02-margot-10254">[2025-10-02] margot 1.0.254<a class="anchor" aria-label="anchor" href="#id_2025-10-02-margot-10254"></a></h2>
+<div class="section level4">
+<h4 id="performance-improvements-1-0-254">Performance Improvements<a class="anchor" aria-label="anchor" href="#performance-improvements-1-0-254"></a></h4>
+<ul><li>
+<strong>CRITICAL FIX</strong>: <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code> now respects user’s external <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> when <code>manage_future_plan = FALSE</code> (default), enabling parallel cross-validation within each model (~5x speedup)</li>
+<li>
+<strong>CRITICAL FIX</strong>: Removed <code>future::plan(sequential)</code> override that was disabling all parallelization when <code>manage_future_plan = FALSE</code>
+</li>
+<li>
+<strong>Fixed</strong>: Set <code>mc.cores</code> and <code>parallelly.maxWorkers.localhost</code> early when <code>manage_future_plan = TRUE</code> to prevent “only 1 CPU cores available” errors with nested futures</li>
+<li>
+<strong>Fixed</strong>: User interrupts (Ctrl+C) now work correctly - removed interrupt detection code that was catching interrupts as errors</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-254">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-254"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: When <code>manage_future_plan = FALSE</code>, models run sequentially but each model can now use user’s future plan for parallel CV</li>
+<li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: Improved CLI diagnostics show whether LMTP internal parallelization is enabled and how many workers are available</li>
+<li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: Treatment variable preflight check now handles character vectors properly and provides better error messages</li>
+</ul></div>
+<div class="section level4">
+<h4 id="expected-performance-1-0-254">Expected Performance<a class="anchor" aria-label="anchor" href="#expected-performance-1-0-254"></a></h4>
+<ul><li>
+<strong>With external future plan</strong>: Set <code>future::plan(multisession, workers = 5)</code> before calling <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code> with default <code>manage_future_plan = FALSE</code> → ~5x faster (sequential models, parallel CV)</li>
+<li>
+<strong>With managed nested futures</strong>: Use <code>margot_lmtp(..., manage_future_plan = TRUE, cv_workers = 5, n_cores = 12)</code> → ~10x faster (2 models × 5 CV workers = 10 cores)</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.253" id="id_2025-10-02-margot-10253">[2025-10-02] margot 1.0.253<a class="anchor" aria-label="anchor" href="#id_2025-10-02-margot-10253"></a></h2>
+<div class="section level4">
+<h4 id="breaking-changes-1-0-253">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-253"></a></h4>
+<ul><li>None</li>
+</ul></div>
+<div class="section level4">
+<h4 id="added-1-0-253">Added<a class="anchor" aria-label="anchor" href="#added-1-0-253"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: incremental checkpointing system saves each model immediately after completion to timestamped subdirectory (<code>save_path/checkpoints/prefix_YYYYMMDD_HHMMSS/</code>), protecting against power failures and interruptions.</li>
+<li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: preflight validation checks all required variables (treatment, outcomes, baseline, time_vary, cens) exist in data before expensive computation begins.</li>
+<li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: enhanced error messages showing available variables when validation fails.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="fixed-1-0-253">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-253"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: future parallelization conflicts resolved. When <code>manage_future_plan = FALSE</code>, explicitly sets sequential outer loop while preserving user’s <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> for LMTP’s internal cross-validation.</li>
+<li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: null model validation crash fixed. Now checks null model exists and is valid before computing contrasts, preventing “attempt to select less than one element” error.</li>
+<li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: error logs saved to checkpoint directory for failed models.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improved-1-0-253">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-253"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: checkpoint saves use <code><a href="https://rdrr.io/pkg/qs/man/qsave.html" class="external-link">qs::qsave()</a></code> with high compression and single thread for compatibility with future parallelization.</li>
+<li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: CLI messages show checkpoint directory path and individual file saves.</li>
+<li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: preflight checks provide detailed feedback on missing variables with suggestions.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.252" id="id_2025-10-02-margot-10252">[2025-10-02] margot 1.0.252<a class="anchor" aria-label="anchor" href="#id_2025-10-02-margot-10252"></a></h2>
 <div class="section level4">

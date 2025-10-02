@@ -105,6 +105,97 @@ margot_lmtp <- function(
   }
   shift_names <- names(shift_functions)
 
+  # preflight validation: check all required variables exist in data
+  cli::cli_h2("Preflight Checks")
+
+  # check treatment variable (if it's a character vector of column names)
+  if (is.character(trt)) {
+    missing_trt <- setdiff(trt, names(data))
+    if (length(missing_trt) > 0) {
+      cli::cli_alert_danger("Treatment variable{?s} not found in data: {.val {missing_trt}}")
+      cli::cli_text("Available variables: {paste(head(names(data), 20), collapse = ', ')}...")
+      stop("Treatment variable not found in data", call. = FALSE)
+    }
+    cli::cli_alert_success("Treatment variable{?s} found: {.val {trt}}")
+  } else {
+    cli::cli_alert_info("Treatment specified as non-character (indices or list) - skipping validation")
+  }
+
+  # check outcome variables
+  missing_outcomes <- setdiff(outcome_vars, names(data))
+  if (length(missing_outcomes) > 0) {
+    cli::cli_alert_danger(
+      "Outcome variable{?s} not found in data: {.val {missing_outcomes}}"
+    )
+    cli::cli_text("Available variables: {paste(names(data), collapse = ', ')}")
+    stop("Missing outcome variables in data", call. = FALSE)
+  }
+  cli::cli_alert_success(
+    "All {length(outcome_vars)} outcome variable{?s} found"
+  )
+
+  # check baseline variables (if specified)
+  if (!is.null(lmtp_defaults$baseline)) {
+    missing_baseline <- setdiff(lmtp_defaults$baseline, names(data))
+    if (length(missing_baseline) > 0) {
+      cli::cli_alert_danger(
+        "Baseline variable{?s} not found in data: {.val {missing_baseline}}"
+      )
+      cli::cli_text("Available variables: {paste(names(data), collapse = ', ')}")
+      stop("Missing baseline variables in data", call. = FALSE)
+    }
+    cli::cli_alert_success(
+      "All {length(lmtp_defaults$baseline)} baseline variable{?s} found"
+    )
+  }
+
+  # check time-varying variables (if specified)
+  if (!is.null(lmtp_defaults$time_vary)) {
+    # time_vary can be a list of vectors, so flatten it first
+    if (is.list(lmtp_defaults$time_vary)) {
+      time_vary_vars <- unique(unlist(lmtp_defaults$time_vary))
+    } else {
+      time_vary_vars <- lmtp_defaults$time_vary
+    }
+    missing_time_vary <- setdiff(time_vary_vars, names(data))
+    if (length(missing_time_vary) > 0) {
+      cli::cli_alert_danger(
+        "Time-varying variable{?s} not found in data: {.val {missing_time_vary}}"
+      )
+      cli::cli_text("Available variables: {paste(names(data), collapse = ', ')}")
+      stop("Missing time-varying variables in data", call. = FALSE)
+    }
+    cli::cli_alert_success(
+      "All {length(time_vary_vars)} time-varying variable{?s} found"
+    )
+  }
+
+  # check cens variables (if specified)
+  if (!is.null(lmtp_defaults$cens)) {
+    # cens can be a vector
+    missing_cens <- setdiff(lmtp_defaults$cens, names(data))
+    if (length(missing_cens) > 0) {
+      cli::cli_alert_danger(
+        "Censoring variable{?s} not found in data: {.val {missing_cens}}"
+      )
+      cli::cli_text("Available variables: {paste(names(data), collapse = ', ')}")
+      stop("Missing censoring variables in data", call. = FALSE)
+    }
+    cli::cli_alert_success(
+      "All {length(lmtp_defaults$cens)} censoring variable{?s} found"
+    )
+  }
+
+  # check for null contrast compatibility
+  if (contrast_type == "null" && !include_null_shift && !("null" %in% shift_names)) {
+    cli::cli_alert_danger(
+      "contrast_type = 'null' requires a null shift, but include_null_shift = FALSE and no 'null' shift provided"
+    )
+    stop("Cannot compute null contrasts without null shift", call. = FALSE)
+  }
+
+  cli::cli_alert_success("All preflight checks passed")
+
   # check if SuperLearner library is specified, if not, default to "SL.ranger"
   if (is.null(lmtp_defaults$learners_trt)) {
     lmtp_defaults$learners_trt <- "SL.ranger"
@@ -181,9 +272,29 @@ margot_lmtp <- function(
     stringsAsFactors = FALSE
   )
 
+  # create checkpoint directory if saving output
+  checkpoint_dir <- NULL
+  if (save_output) {
+    checkpoint_dir <- file.path(
+      save_path,
+      "checkpoints",
+      paste0(
+        ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+        format(Sys.time(), "%Y%m%d_%H%M%S")
+      )
+    )
+
+    dir.create(checkpoint_dir, recursive = TRUE, showWarnings = FALSE)
+    cli::cli_alert_info("Checkpoints \u2192 {.path {checkpoint_dir}}")
+  }
+
   # Optionally manage the future plan internally (nested outer × inner). By default,
   # do not touch the user's plan and rely on their external configuration.
   if (isTRUE(manage_future_plan)) {
+    # set options BEFORE creating nested futures to avoid worker limit errors
+    options(mc.cores = total_cores)
+    options(parallelly.maxWorkers.localhost = total_cores)
+
     old_plan <- future::plan()
     on.exit(future::plan(old_plan, substitute = FALSE), add = TRUE)
 
@@ -194,7 +305,8 @@ margot_lmtp <- function(
     }
 
     inner_strategy <- if (inferred_cv_workers > 1L) {
-      future::tweak(future::multisession, workers = inferred_cv_workers)
+      # use I() to tell future we know what we're doing with nested parallelization
+      future::tweak(future::multisession, workers = I(inferred_cv_workers))
     } else {
       future::sequential
     }
@@ -204,6 +316,35 @@ margot_lmtp <- function(
       combined_plan <- c(combined_plan, list(inner_strategy))
     }
     future::plan(combined_plan, substitute = FALSE)
+  } else {
+    # when manage_future_plan = FALSE, respect user's external future plan
+    # models run sequentially via lapply, but each model can use parallel CV
+
+    # detect current plan to inform user
+    current_plan_info <- tryCatch({
+      plan_list <- future::plan("list")
+      n_workers <- future::nbrOfWorkers()
+      list(workers = n_workers, plan = class(plan_list[[1]])[1])
+    }, error = function(e) {
+      list(workers = 1, plan = "unknown")
+    })
+
+    cli::cli_alert_info(
+      "Running {total_tasks} LMTP fit{?s} sequentially (one at a time)."
+    )
+    cli::cli_alert_info(
+      "Each model will use your future plan for internal CV: {.strong {current_plan_info$plan}} with {.strong {current_plan_info$workers}} worker{?s}"
+    )
+
+    if (current_plan_info$workers == 1 || current_plan_info$plan == "sequential") {
+      cli::cli_alert_warning(
+        "LMTP internal parallelization {.emph disabled}. Set future::plan(multisession, workers = 5) before margot_lmtp() to enable parallel CV."
+      )
+    } else {
+      cli::cli_alert_success(
+        "LMTP internal parallelization {.emph enabled} - each model uses {current_plan_info$workers} parallel worker{?s} for cross-validation"
+      )
+    }
   }
 
   if (identical(progress, "progressr")) {
@@ -222,13 +363,9 @@ margot_lmtp <- function(
         .old_opts <- options()
         on.exit(options(.old_opts), add = TRUE)
         inner_needed <- max(1L, as.integer(cv_workers %||% 1L))
-        mc_now <- getOption("mc.cores", 1L)
-        if (!is.numeric(mc_now) || !is.finite(mc_now)) mc_now <- 1L
-        # allow at least the requested inner workers
-        options(mc.cores = max(mc_now, inner_needed))
-        local_cap <- getOption("parallelly.maxWorkers.localhost", 3L)
-        if (!is.numeric(local_cap) || !is.finite(local_cap)) local_cap <- 3L
-        options(parallelly.maxWorkers.localhost = max(local_cap, 3L * inner_needed))
+        # use total_cores from parent environment, not getOption defaults
+        options(mc.cores = total_cores)
+        options(parallelly.maxWorkers.localhost = total_cores)
       }
       
       outcome <- task_grid$outcome[[task_idx]]
@@ -268,9 +405,53 @@ margot_lmtp <- function(
         model <- do.call(lmtp_model_type, lmtp_args)
         result$success <- TRUE
         result$model <- model
+
+        # checkpoint: save immediately after successful fit
+        if (save_output && !is.null(checkpoint_dir)) {
+          checkpoint_file <- paste0(outcome, "_", shift_name, ".qs")
+          checkpoint_path <- file.path(checkpoint_dir, checkpoint_file)
+
+          checkpoint_obj <- list(
+            model = model,
+            outcome = outcome,
+            shift_name = shift_name,
+            timestamp = Sys.time()
+          )
+
+          qs::qsave(x = checkpoint_obj, file = checkpoint_path, preset = "high", nthreads = 1)
+
+          result$checkpoint_path <- checkpoint_path
+          cli::cli_alert_success("Saved checkpoint: {.file {checkpoint_file}}")
+        }
+
         result
       }, error = function(e) {
-        result$error <- conditionMessage(e)
+        error_msg <- conditionMessage(e)
+        result$error <- error_msg
+
+        # display error immediately
+        cli::cli_alert_danger(
+          "Model failed: {.val {outcome}} - {.val {shift_name}}"
+        )
+        cli::cli_text("{.emph {error_msg}}")
+
+        # save error log
+        if (save_output && !is.null(checkpoint_dir)) {
+          error_file <- paste0("ERROR_", outcome, "_", shift_name, ".txt")
+          writeLines(
+            c(
+              paste("Error:", error_msg),
+              paste("Time:", Sys.time()),
+              paste("Model:", outcome, "-", shift_name),
+              "",
+              "Full traceback:",
+              paste(capture.output(print(e)), collapse = "\n")
+            ),
+            file.path(checkpoint_dir, error_file)
+          )
+          cli::cli_text("Error log saved: {.file {error_file}}")
+        }
+
         result
       })
 
@@ -306,12 +487,9 @@ margot_lmtp <- function(
         .old_opts <- options()
         on.exit(options(.old_opts), add = TRUE)
         inner_needed <- max(1L, as.integer(cv_workers %||% 1L))
-        mc_now <- getOption("mc.cores", 1L)
-        if (!is.numeric(mc_now) || !is.finite(mc_now)) mc_now <- 1L
-        options(mc.cores = max(mc_now, inner_needed))
-        local_cap <- getOption("parallelly.maxWorkers.localhost", 3L)
-        if (!is.numeric(local_cap) || !is.finite(local_cap)) local_cap <- 3L
-        options(parallelly.maxWorkers.localhost = max(local_cap, 3L * inner_needed))
+        # use total_cores from parent environment, not getOption defaults
+        options(mc.cores = total_cores)
+        options(parallelly.maxWorkers.localhost = total_cores)
       }
 
       outcome <- task_grid$outcome[[task_idx]]
@@ -348,9 +526,53 @@ margot_lmtp <- function(
         model <- do.call(lmtp_model_type, lmtp_args)
         result$success <- TRUE
         result$model <- model
+
+        # checkpoint: save immediately after successful fit
+        if (save_output && !is.null(checkpoint_dir)) {
+          checkpoint_file <- paste0(outcome, "_", shift_name, ".qs")
+          checkpoint_path <- file.path(checkpoint_dir, checkpoint_file)
+
+          checkpoint_obj <- list(
+            model = model,
+            outcome = outcome,
+            shift_name = shift_name,
+            timestamp = Sys.time()
+          )
+
+          qs::qsave(x = checkpoint_obj, file = checkpoint_path, preset = "high", nthreads = 1)
+
+          result$checkpoint_path <- checkpoint_path
+          cli::cli_alert_success("Saved checkpoint: {.file {checkpoint_file}}")
+        }
+
         result
       }, error = function(e) {
-        result$error <- conditionMessage(e)
+        error_msg <- conditionMessage(e)
+        result$error <- error_msg
+
+        # display error immediately
+        cli::cli_alert_danger(
+          "Model failed: {.val {outcome}} - {.val {shift_name}}"
+        )
+        cli::cli_text("{.emph {error_msg}}")
+
+        # save error log
+        if (save_output && !is.null(checkpoint_dir)) {
+          error_file <- paste0("ERROR_", outcome, "_", shift_name, ".txt")
+          writeLines(
+            c(
+              paste("Error:", error_msg),
+              paste("Time:", Sys.time()),
+              paste("Model:", outcome, "-", shift_name),
+              "",
+              "Full traceback:",
+              paste(capture.output(print(e)), collapse = "\n")
+            ),
+            file.path(checkpoint_dir, error_file)
+          )
+          cli::cli_text("Error log saved: {.file {error_file}}")
+        }
+
         result
       })
 
@@ -413,7 +635,38 @@ margot_lmtp <- function(
 
     if (contrast_type == "null") {
       null_model_name <- grep("null", model_names, value = TRUE)
+
+      # validation: check if null model exists
+      if (length(null_model_name) == 0) {
+        cli::cli_alert_danger(
+          "No null model found for {.val {outcome}}. Cannot compute null contrasts."
+        )
+        cli::cli_text("Available models: {paste(model_names, collapse = ', ')}")
+        all_contrasts[[outcome]] <- list()
+        all_tables[[outcome]] <- list()
+        next
+      }
+
+      # validation: handle multiple null models
+      if (length(null_model_name) > 1) {
+        cli::cli_alert_warning(
+          "Multiple null models found. Using first: {null_model_name[1]}"
+        )
+        null_model_name <- null_model_name[1]
+      }
+
       null_model <- outcome_models[[null_model_name]]
+
+      # validation: check null model is valid
+      if (is.null(null_model)) {
+        cli::cli_alert_danger(
+          "Null model {null_model_name} exists but is NULL. Cannot compute contrasts."
+        )
+        all_contrasts[[outcome]] <- list()
+        all_tables[[outcome]] <- list()
+        next
+      }
+
       for (model_name in model_names) {
         if (!grepl("null", model_name, fixed = TRUE)) {
           contrast_name <- paste0(model_name, "_vs_null")

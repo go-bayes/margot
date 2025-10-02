@@ -1,3 +1,38 @@
+# [2025-10-02] margot 1.0.254
+### Performance Improvements
+- **CRITICAL FIX**: `margot_lmtp()` now respects user's external `future::plan()` when `manage_future_plan = FALSE` (default), enabling parallel cross-validation within each model (~5x speedup)
+- **CRITICAL FIX**: Removed `future::plan(sequential)` override that was disabling all parallelization when `manage_future_plan = FALSE`
+- **Fixed**: Set `mc.cores` and `parallelly.maxWorkers.localhost` early when `manage_future_plan = TRUE` to prevent "only 1 CPU cores available" errors with nested futures
+- **Fixed**: User interrupts (Ctrl+C) now work correctly - removed interrupt detection code that was catching interrupts as errors
+
+### Changed
+- `margot_lmtp()`: When `manage_future_plan = FALSE`, models run sequentially but each model can now use user's future plan for parallel CV
+- `margot_lmtp()`: Improved CLI diagnostics show whether LMTP internal parallelization is enabled and how many workers are available
+- `margot_lmtp()`: Treatment variable preflight check now handles character vectors properly and provides better error messages
+
+### Expected Performance
+- **With external future plan**: Set `future::plan(multisession, workers = 5)` before calling `margot_lmtp()` with default `manage_future_plan = FALSE` → ~5x faster (sequential models, parallel CV)
+- **With managed nested futures**: Use `margot_lmtp(..., manage_future_plan = TRUE, cv_workers = 5, n_cores = 12)` → ~10x faster (2 models × 5 CV workers = 10 cores)
+
+# [2025-10-02] margot 1.0.253
+### Breaking Changes
+- None
+
+### Added
+- `margot_lmtp()`: incremental checkpointing system saves each model immediately after completion to timestamped subdirectory (`save_path/checkpoints/prefix_YYYYMMDD_HHMMSS/`), protecting against power failures and interruptions.
+- `margot_lmtp()`: preflight validation checks all required variables (treatment, outcomes, baseline, time_vary, cens) exist in data before expensive computation begins.
+- `margot_lmtp()`: enhanced error messages showing available variables when validation fails.
+
+### Fixed
+- `margot_lmtp()`: future parallelization conflicts resolved. When `manage_future_plan = FALSE`, explicitly sets sequential outer loop while preserving user's `future::plan()` for LMTP's internal cross-validation.
+- `margot_lmtp()`: null model validation crash fixed. Now checks null model exists and is valid before computing contrasts, preventing "attempt to select less than one element" error.
+- `margot_lmtp()`: error logs saved to checkpoint directory for failed models.
+
+### Improved
+- `margot_lmtp()`: checkpoint saves use `qs::qsave()` with high compression and single thread for compatibility with future parallelization.
+- `margot_lmtp()`: CLI messages show checkpoint directory path and individual file saves.
+- `margot_lmtp()`: preflight checks provide detailed feedback on missing variables with suggestions.
+
 # [2025-10-02] margot 1.0.252
 ### Breaking Changes
 - **LMTP positivity diagnostics now focus on uncensored observations**: `margot_interpret_lmtp_positivity()` reports ESS metrics computed only on density ratios > 0 (uncensored observations). Censoring rate (proportion of r = 0) is reported separately per shift.
