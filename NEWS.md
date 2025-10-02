@@ -1,3 +1,17 @@
+# [2025-10-02] margot 1.0.255
+### Fixed
+- **CRITICAL**: `margot_lmtp()` now explicitly shuts down all parallel workers when `manage_future_plan = TRUE` to prevent zombie processes and resource leaks
+- **CRITICAL**: Automatically disables thread spawning in underlying libraries (ranger, BLAS, OpenMP) when `manage_future_plan = TRUE` to prevent core oversubscription
+- Added `gc()` call after worker shutdown to ensure memory cleanup
+- Added CLI message "Shutting down parallel workers..." for transparency
+
+### Changed
+- Worker cleanup now always sets `future::plan(sequential)` on exit, regardless of initial plan state
+- Thread settings (OMP_NUM_THREADS, OPENBLAS_NUM_THREADS, MKL_NUM_THREADS) automatically managed and restored when `manage_future_plan = TRUE`
+
+### Improved
+- When `manage_future_plan = TRUE`, function now uses exactly `n_cores` cores without thread explosion - no manual configuration needed!
+
 # [2025-10-02] margot 1.0.254
 ### Performance Improvements
 - **CRITICAL FIX**: `margot_lmtp()` now respects user's external `future::plan()` when `manage_future_plan = FALSE` (default), enabling parallel cross-validation within each model (~5x speedup)

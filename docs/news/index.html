@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.254</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.255</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,28 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.255" id="id_2025-10-02-margot-10255">[2025-10-02] margot 1.0.255<a class="anchor" aria-label="anchor" href="#id_2025-10-02-margot-10255"></a></h2>
+<div class="section level4">
+<h4 id="fixed-1-0-255">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-255"></a></h4>
+<ul><li>
+<strong>CRITICAL</strong>: <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code> now explicitly shuts down all parallel workers when <code>manage_future_plan = TRUE</code> to prevent zombie processes and resource leaks</li>
+<li>
+<strong>CRITICAL</strong>: Automatically disables thread spawning in underlying libraries (ranger, BLAS, OpenMP) when <code>manage_future_plan = TRUE</code> to prevent core oversubscription</li>
+<li>Added <code><a href="https://rdrr.io/r/base/gc.html" class="external-link">gc()</a></code> call after worker shutdown to ensure memory cleanup</li>
+<li>Added CLI message “Shutting down parallel workers…” for transparency</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-255">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-255"></a></h4>
+<ul><li>Worker cleanup now always sets <code>future::plan(sequential)</code> on exit, regardless of initial plan state</li>
+<li>Thread settings (OMP_NUM_THREADS, OPENBLAS_NUM_THREADS, MKL_NUM_THREADS) automatically managed and restored when <code>manage_future_plan = TRUE</code>
+</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improved-1-0-255">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-255"></a></h4>
+<ul><li>When <code>manage_future_plan = TRUE</code>, function now uses exactly <code>n_cores</code> cores without thread explosion - no manual configuration needed!</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.254" id="id_2025-10-02-margot-10254">[2025-10-02] margot 1.0.254<a class="anchor" aria-label="anchor" href="#id_2025-10-02-margot-10254"></a></h2>
 <div class="section level4">

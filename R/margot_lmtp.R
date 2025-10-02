@@ -295,8 +295,27 @@ margot_lmtp <- function(
     options(mc.cores = total_cores)
     options(parallelly.maxWorkers.localhost = total_cores)
 
+    # prevent underlying libraries (ranger, BLAS, OpenMP) from spawning extra threads
+    # this ensures we use exactly the cores we specify, no more
+    old_omp <- Sys.getenv("OMP_NUM_THREADS", unset = NA)
+    old_openblas <- Sys.getenv("OPENBLAS_NUM_THREADS", unset = NA)
+    old_mkl <- Sys.getenv("MKL_NUM_THREADS", unset = NA)
+
+    Sys.setenv(OMP_NUM_THREADS = 1)
+    Sys.setenv(OPENBLAS_NUM_THREADS = 1)
+    Sys.setenv(MKL_NUM_THREADS = 1)
+
     old_plan <- future::plan()
-    on.exit(future::plan(old_plan, substitute = FALSE), add = TRUE)
+    # always shut down workers when done, even if old_plan wasn't sequential
+    on.exit({
+      future::plan(future::sequential)
+      gc()  # garbage collect to clean up
+
+      # restore thread settings
+      if (is.na(old_omp)) Sys.unsetenv("OMP_NUM_THREADS") else Sys.setenv(OMP_NUM_THREADS = old_omp)
+      if (is.na(old_openblas)) Sys.unsetenv("OPENBLAS_NUM_THREADS") else Sys.setenv(OPENBLAS_NUM_THREADS = old_openblas)
+      if (is.na(old_mkl)) Sys.unsetenv("MKL_NUM_THREADS") else Sys.setenv(MKL_NUM_THREADS = old_mkl)
+    }, add = TRUE)
 
     outer_strategy <- if (inferred_models_in_parallel > 1L) {
       future::tweak(future::multisession, workers = inferred_models_in_parallel)
@@ -812,6 +831,10 @@ margot_lmtp <- function(
   }
 
   cli::cli_alert_success("Analysis complete \U0001F44D")
+
+  if (isTRUE(manage_future_plan)) {
+    cli::cli_alert_info("Shutting down parallel workers...")
+  }
 
   return(complete_output)
 }
