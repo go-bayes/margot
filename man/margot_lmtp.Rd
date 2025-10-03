@@ -60,6 +60,10 @@ margot_lmtp(
 \item{use_timestamp}{Logical, whether to include a timestamp in the filename. Default is FALSE.}
 
 \item{prefix}{Optional prefix to add to the saved output filename. Default is NULL.}
+
+\item{manage_future_plan}{Logical, whether to manage the future plan internally for nested parallelization. Default is FALSE. When TRUE, margot_lmtp sets up nested futures (outer loop for models, inner loop for CV) and automatically cleans up workers on exit. When FALSE, models run sequentially but can use the user's external future::plan() for parallel CV.}
+
+\item{progress}{Progress reporting method: "cli" (default CLI progress bar), "progressr" (use progressr package handlers), or "none" (no progress reporting).}
 }
 \value{
 A list containing:
@@ -71,6 +75,13 @@ A list containing:
 \description{
 This function runs multiple Longitudinal Modified Treatment Policy (LMTP) models for specified outcome variables,
 calculates contrasts, creates evaluation tables, and optionally saves the complete output.
+}
+\details{
+For very large datasets or models with many time points, parallel processing may not improve performance
+as much as expected. This is because LMTP models can be memory-bound rather than CPU-bound when working
+with large data. In such cases, memory pressure and data copying between workers may offset the benefits
+of parallelization. Consider using fewer cores or sequential processing for very large models if you
+experience performance degradation.
 }
 \examples{
 \dontrun{

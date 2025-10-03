@@ -9,7 +9,7 @@ calculates contrasts, creates evaluation tables, and optionally saves the comple
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.255</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.256</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,6 +136,14 @@ calculates contrasts, creates evaluation tables, and optionally saves the comple
 <dt id="arg-prefix">prefix<a class="anchor" aria-label="anchor" href="#arg-prefix"></a></dt>
 <dd><p>Optional prefix to add to the saved output filename. Default is NULL.</p></dd>
 
+
+<dt id="arg-manage-future-plan">manage_future_plan<a class="anchor" aria-label="anchor" href="#arg-manage-future-plan"></a></dt>
+<dd><p>Logical, whether to manage the future plan internally for nested parallelization. Default is FALSE. When TRUE, margot_lmtp sets up nested futures (outer loop for models, inner loop for CV) and automatically cleans up workers on exit. When FALSE, models run sequentially but can use the user's external future::plan() for parallel CV.</p></dd>
+
+
+<dt id="arg-progress">progress<a class="anchor" aria-label="anchor" href="#arg-progress"></a></dt>
+<dd><p>Progress reporting method: "cli" (default CLI progress bar), "progressr" (use progressr package handlers), or "none" (no progress reporting).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -153,6 +161,14 @@ calculates contrasts, creates evaluation tables, and optionally saves the comple
 <dd><p>A list of combined tables for each contrast type across all outcomes.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>For very large datasets or models with many time points, parallel processing may not improve performance
+as much as expected. This is because LMTP models can be memory-bound rather than CPU-bound when working
+with large data. In such cases, memory pressure and data copying between workers may offset the benefits
+of parallelization. Consider using fewer cores or sequential processing for very large models if you
+experience performance degradation.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
