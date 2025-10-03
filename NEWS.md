@@ -1,3 +1,9 @@
+# [2025-10-03] margot 1.0.256
+### Changed
+- **Removed**: `gc()` call from worker cleanup in `margot_lmtp()` - let R manage memory naturally instead of forcing aggressive garbage collection
+- **Added**: CLI message showing how many cores are being used when `manage_future_plan = TRUE`
+- **Documentation**: Added `@details` section explaining that very large models may not benefit from parallelization due to memory constraints
+
 # [2025-10-02] margot 1.0.255
 ### Fixed
 - **CRITICAL**: `margot_lmtp()` now explicitly shuts down all parallel workers when `manage_future_plan = TRUE` to prevent zombie processes and resource leaks

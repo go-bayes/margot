@@ -3,6 +3,13 @@
 #' This function runs multiple Longitudinal Modified Treatment Policy (LMTP) models for specified outcome variables,
 #' calculates contrasts, creates evaluation tables, and optionally saves the complete output.
 #'
+#' @details
+#' For very large datasets or models with many time points, parallel processing may not improve performance
+#' as much as expected. This is because LMTP models can be memory-bound rather than CPU-bound when working
+#' with large data. In such cases, memory pressure and data copying between workers may offset the benefits
+#' of parallelization. Consider using fewer cores or sequential processing for very large models if you
+#' experience performance degradation.
+#'
 #' @param data A data frame containing all necessary variables.
 #' @param outcome_vars A character vector of outcome variable names to be modeled.
 #' @param trt A character string specifying the treatment variable.
@@ -20,6 +27,8 @@
 #' @param base_filename The base filename for saving the output. Default is "lmtp_output".
 #' @param use_timestamp Logical, whether to include a timestamp in the filename. Default is FALSE.
 #' @param prefix Optional prefix to add to the saved output filename. Default is NULL.
+#' @param manage_future_plan Logical, whether to manage the future plan internally for nested parallelization. Default is FALSE. When TRUE, margot_lmtp sets up nested futures (outer loop for models, inner loop for CV) and automatically cleans up workers on exit. When FALSE, models run sequentially but can use the user's external future::plan() for parallel CV.
+#' @param progress Progress reporting method: "cli" (default CLI progress bar), "progressr" (use progressr package handlers), or "none" (no progress reporting).
 #'
 #' @return A list containing:
 #'   \item{models}{A list of all LMTP models for each outcome and shift function.}
@@ -295,11 +304,12 @@ margot_lmtp <- function(
     options(mc.cores = total_cores)
     options(parallelly.maxWorkers.localhost = total_cores)
 
+    cli::cli_alert_info("Using {total_cores} core{?s} for parallel processing")
+
     old_plan <- future::plan()
     # always shut down workers when done, even if old_plan wasn't sequential
     on.exit({
       future::plan(future::sequential)
-      gc()  # garbage collect to clean up
     }, add = TRUE)
 
     outer_strategy <- if (inferred_models_in_parallel > 1L) {
