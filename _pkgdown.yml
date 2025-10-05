@@ -134,6 +134,7 @@ reference:
     - margot_interpret_rate_cv
     - margot_interpret_heterogeneity
     - margot_interpret_rate_comparison
+    - margot_lmtp_combine_and_contrast
     - margot_lmtp_evalue
     - margot_lmtp_positivity
     - margot_model_evalue

@@ -1,3 +1,12 @@
+# [2025-10-05] margot 1.0.257
+### Added
+- **New function**: `margot_lmtp_combine_and_contrast()` - combines LMTP models from multiple batches and computes cross-batch contrasts
+  - Enables contrasts between shifts estimated in separate runs (e.g., shift_zero from batch 2 vs ipsi_02 from batch 1)
+  - Validates outcomes match across batches and warns about mismatches while proceeding with valid contrasts
+  - Supports user-specified contrast pairs or automatic pairwise contrasts via `auto_pairwise = TRUE`
+  - Full error handling with informative CLI messages and statistics summary
+  - Tracks source batch for each model in diagnostic messages
+
 # [2025-10-03] margot 1.0.256
 ### Changed
 - **Removed**: `gc()` call from worker cleanup in `margot_lmtp()` - let R manage memory naturally instead of forcing aggressive garbage collection

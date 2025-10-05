@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.256</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.257</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,21 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.257" id="id_2025-10-05-margot-10257">[2025-10-05] margot 1.0.257<a class="anchor" aria-label="anchor" href="#id_2025-10-05-margot-10257"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-257">Added<a class="anchor" aria-label="anchor" href="#added-1-0-257"></a></h4>
+<ul><li>
+<strong>New function</strong>: <code><a href="../reference/margot_lmtp_combine_and_contrast.html">margot_lmtp_combine_and_contrast()</a></code> - combines LMTP models from multiple batches and computes cross-batch contrasts
+<ul><li>Enables contrasts between shifts estimated in separate runs (e.g., shift_zero from batch 2 vs ipsi_02 from batch 1)</li>
+<li>Validates outcomes match across batches and warns about mismatches while proceeding with valid contrasts</li>
+<li>Supports user-specified contrast pairs or automatic pairwise contrasts via <code>auto_pairwise = TRUE</code>
+</li>
+<li>Full error handling with informative CLI messages and statistics summary</li>
+<li>Tracks source batch for each model in diagnostic messages</li>
+</ul></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.256" id="id_2025-10-03-margot-10256">[2025-10-03] margot 1.0.256<a class="anchor" aria-label="anchor" href="#id_2025-10-03-margot-10256"></a></h2>
 <div class="section level4">
