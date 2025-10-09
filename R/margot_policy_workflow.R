@@ -119,80 +119,75 @@ margot_policy_workflow <- function(stability,
     }
   }
 
-  out <- list(
+  masks <- summary$unit_masks
+  not_excluded_ids_by_model <- if (is.null(masks) || !length(masks)) {
+    list()
+  } else {
+    lapply(masks, function(x) x$not_excluded_ids)
+  }
+
+  not_excluded_ids_df <- if (is.null(masks) || !length(masks)) {
+    data.frame()
+  } else {
+    nm <- names(masks)
+    dfs <- lapply(nm, function(mn) {
+      ids <- masks[[mn]]$not_excluded_ids
+      if (is.null(ids) || !length(ids)) return(NULL)
+      data.frame(
+        model = mn,
+        outcome = tryCatch(.apply_label_stability(gsub("^model_", "", mn), label_mapping), error = function(e) gsub("^model_", "", mn)),
+        depth = if (!is.null(best$depth_map) && mn %in% names(best$depth_map)) best$depth_map[[mn]] else NA_integer_,
+        eval_id = ids,
+        stringsAsFactors = FALSE
+      )
+    })
+    dfs <- Filter(Negate(is.null), dfs)
+    if (length(dfs)) do.call(rbind, dfs) else data.frame()
+  }
+
+  wins_neutral_keep <- unique(c(summary$wins_model_ids, summary$neutral_model_ids))
+  wins_neutral_ids_by_model <- if (is.null(masks) || !length(masks) || !length(wins_neutral_keep)) {
+    list()
+  } else {
+    sel <- intersect(names(masks), wins_neutral_keep)
+    if (!length(sel)) list() else lapply(masks[sel], function(x) x$not_excluded_ids)
+  }
+
+  wins_neutral_ids_df <- if (!length(wins_neutral_ids_by_model)) {
+    data.frame()
+  } else {
+    dfs <- lapply(names(wins_neutral_ids_by_model), function(mn) {
+      ids <- wins_neutral_ids_by_model[[mn]]
+      if (is.null(ids) || !length(ids)) return(NULL)
+      data.frame(
+        model = mn,
+        outcome = tryCatch(.apply_label_stability(gsub("^model_", "", mn), label_mapping), error = function(e) gsub("^model_", "", mn)),
+        depth = if (!is.null(best$depth_map) && mn %in% names(best$depth_map)) best$depth_map[[mn]] else NA_integer_,
+        eval_id = ids,
+        stringsAsFactors = FALSE
+      )
+    })
+    dfs <- Filter(Negate(is.null), dfs)
+    if (length(dfs)) do.call(rbind, dfs) else data.frame()
+  }
+
+  models_wins_or_has_ids <- unique(c(names(wins_neutral_ids_by_model), summary$wins_model_ids))
+  models_wins_or_has_ids_labels <- if (!length(models_wins_or_has_ids)) character(0) else vapply(
+    models_wins_or_has_ids,
+    function(mn) tryCatch(.apply_label_stability(gsub("^model_", "", mn), label_mapping), error = function(e) gsub("^model_", "", mn)),
+    character(1)
+  )
+
+  list(
     best = best,
     summary = summary,
     interpret = interpret,
     policy_brief_df = brief_out,
-    not_excluded_ids_by_model = {
-      masks <- summary$unit_masks
-      if (is.null(masks) || !length(masks)) list() else lapply(masks, function(x) x$not_excluded_ids)
-    },
-    not_excluded_ids_df = {
-      masks <- summary$unit_masks
-      if (is.null(masks) || !length(masks)) {
-        data.frame()
-      } else {
-        nm <- names(masks)
-        dfs <- lapply(nm, function(mn) {
-          ids <- masks[[mn]]$not_excluded_ids
-          if (is.null(ids) || !length(ids)) return(NULL)
-          data.frame(
-            model = mn,
-            outcome = tryCatch(.apply_label_stability(gsub("^model_", "", mn), label_mapping), error = function(e) gsub("^model_", "", mn)),
-            depth = if (!is.null(best$depth_map) && mn %in% names(best$depth_map)) best$depth_map[[mn]] else NA_integer_,
-            eval_id = ids,
-            stringsAsFactors = FALSE
-          )
-        })
-        dfs <- Filter(Negate(is.null), dfs)
-        if (length(dfs)) do.call(rbind, dfs) else data.frame()
-      }
-    },
-    wins_neutral_ids_by_model = {
-      masks <- summary$unit_masks
-      if (is.null(masks) || !length(masks)) {
-        list()
-      } else {
-        keep <- unique(c(summary$wins_model_ids, summary$neutral_model_ids))
-        masks <- masks[names(masks) %in% keep]
-        lapply(masks, function(x) x$not_excluded_ids)
-      }
-    },
-    wins_neutral_ids_df = {
-      df <- NULL
-      if (!is.null(summary$unit_masks) && length(summary$unit_masks)) {
-        keep <- unique(c(summary$wins_model_ids, summary$neutral_model_ids))
-        nm <- intersect(names(summary$unit_masks), keep)
-        if (length(nm)) {
-          dfs <- lapply(nm, function(mn) {
-            ids <- summary$unit_masks[[mn]]$not_excluded_ids
-            if (is.null(ids) || !length(ids)) return(NULL)
-            data.frame(
-              model = mn,
-              outcome = tryCatch(.apply_label_stability(gsub("^model_", "", mn), label_mapping), error = function(e) gsub("^model_", "", mn)),
-              depth = if (!is.null(best$depth_map) && mn %in% names(best$depth_map)) best$depth_map[[mn]] else NA_integer_,
-              eval_id = ids,
-              stringsAsFactors = FALSE
-            )
-          })
-          dfs <- Filter(Negate(is.null), dfs)
-          if (length(dfs)) df <- do.call(rbind, dfs) else df <- data.frame()
-        } else df <- data.frame()
-      } else df <- data.frame()
-      df
-    },
-    models_wins_or_has_ids = {
-      ids_models <- unique(wins_neutral_ids_df$model)
-      win_models <- unique(summary$wins_model_ids)
-      unique(c(ids_models, win_models))
-    },
-    models_wins_or_has_ids_labels = {
-      mods <- unique(out$models_wins_or_has_ids)
-      if (!length(mods)) character(0) else vapply(mods, function(mn) {
-        tryCatch(.apply_label_stability(gsub('^model_', '', mn), label_mapping), error = function(e) gsub('^model_', '', mn))
-      }, character(1))
-    }
+    not_excluded_ids_by_model = not_excluded_ids_by_model,
+    not_excluded_ids_df = not_excluded_ids_df,
+    wins_neutral_ids_by_model = wins_neutral_ids_by_model,
+    wins_neutral_ids_df = wins_neutral_ids_df,
+    models_wins_or_has_ids = models_wins_or_has_ids,
+    models_wins_or_has_ids_labels = models_wins_or_has_ids_labels
   )
-  out
 }

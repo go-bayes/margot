@@ -1,3 +1,7 @@
+# [2025-10-09] margot 1.0.258
+### Fixed
+- `margot_policy_workflow()` now guards against missing win/neutral ID tables so the workflow no longer errors when no models meet those criteria. The existing summary outputs remain unchanged.
+
 # [2025-10-05] margot 1.0.257
 ### Added
 - **New function**: `margot_lmtp_combine_and_contrast()` - combines LMTP models from multiple batches and computes cross-batch contrasts
