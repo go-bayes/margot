@@ -1,3 +1,11 @@
+# [2025-10-10] margot 1.0.259
+### Added
+- **New function**: `margot_lmtp_restore_checkpoints()` loads saved LMTP checkpoints, rebuilds contrasts/tables, and surfaces any shift coverage gaps so long runs interrupted midstream can be recovered without recomputing finished models.
+
+### Changed
+- `margot_lmtp()` now delegates post-processing to a shared helper, reducing duplicated logic and ensuring restored checkpoints produce identical summaries.
+- Checkpoint restoration now reports missing shift models per outcome using robust CLI glue evaluation (fixes `{table_name}` errors when warning about absent tables).
+
 # [2025-10-09] margot 1.0.258
 ### Fixed
 - `margot_policy_workflow()` now guards against missing win/neutral ID tables so the workflow no longer errors when no models meet those criteria. The existing summary outputs remain unchanged.

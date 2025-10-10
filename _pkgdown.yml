@@ -96,6 +96,7 @@ reference:
     contents:
     - margot_causal_forest
     - margot_lmtp
+    - margot_lmtp_restore_checkpoints
     - margot_naive_regressions
     - margot_policy_tree
     - margot_policy_tree_stability

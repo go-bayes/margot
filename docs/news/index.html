@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.258</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.259</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,20 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.259" id="id_2025-10-10-margot-10259">[2025-10-10] margot 1.0.259<a class="anchor" aria-label="anchor" href="#id_2025-10-10-margot-10259"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-259">Added<a class="anchor" aria-label="anchor" href="#added-1-0-259"></a></h4>
+<ul><li>
+<strong>New function</strong>: <code><a href="../reference/margot_lmtp_restore_checkpoints.html">margot_lmtp_restore_checkpoints()</a></code> loads saved LMTP checkpoints, rebuilds contrasts/tables, and surfaces any shift coverage gaps so long runs interrupted midstream can be recovered without recomputing finished models.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-259">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-259"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code> now delegates post-processing to a shared helper, reducing duplicated logic and ensuring restored checkpoints produce identical summaries.</li>
+<li>Checkpoint restoration now reports missing shift models per outcome using robust CLI glue evaluation (fixes <code>{table_name}</code> errors when warning about absent tables).</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.258" id="id_2025-10-09-margot-10258">[2025-10-09] margot 1.0.258<a class="anchor" aria-label="anchor" href="#id_2025-10-09-margot-10258"></a></h2>
 <div class="section level4">

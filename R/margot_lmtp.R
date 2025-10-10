@@ -634,155 +634,20 @@ margot_lmtp <- function(
     }
 
     all_models[[outcome]] <- outcome_models
-
-    # contrasts
-    cli::cli_h3("Calculating contrasts")
-    contrasts <- list()
-    model_names <- names(outcome_models)
-
-    if (length(model_names) == 0) {
-      cli::cli_alert_warning("No models available for contrasts for {.val {outcome}}")
-      all_contrasts[[outcome]] <- contrasts
-      all_tables[[outcome]] <- list()
-      next
-    }
-
-    if (contrast_type == "null") {
-      null_model_name <- grep("null", model_names, value = TRUE)
-
-      # validation: check if null model exists
-      if (length(null_model_name) == 0) {
-        cli::cli_alert_danger(
-          "No null model found for {.val {outcome}}. Cannot compute null contrasts."
-        )
-        cli::cli_text("Available models: {paste(model_names, collapse = ', ')}")
-        all_contrasts[[outcome]] <- list()
-        all_tables[[outcome]] <- list()
-        next
-      }
-
-      # validation: handle multiple null models
-      if (length(null_model_name) > 1) {
-        cli::cli_alert_warning(
-          "Multiple null models found. Using first: {null_model_name[1]}"
-        )
-        null_model_name <- null_model_name[1]
-      }
-
-      null_model <- outcome_models[[null_model_name]]
-
-      # validation: check null model is valid
-      if (is.null(null_model)) {
-        cli::cli_alert_danger(
-          "Null model {null_model_name} exists but is NULL. Cannot compute contrasts."
-        )
-        all_contrasts[[outcome]] <- list()
-        all_tables[[outcome]] <- list()
-        next
-      }
-
-      for (model_name in model_names) {
-        if (!grepl("null", model_name, fixed = TRUE)) {
-          contrast_name <- paste0(model_name, "_vs_null")
-          tryCatch(
-            {
-              contrast <- lmtp::lmtp_contrast(outcome_models[[model_name]], ref = null_model, type = contrast_scale)
-              contrasts[[contrast_name]] <- contrast
-              cli::cli_alert_success("Completed contrast: {.val {contrast_name}}")
-            },
-            error = function(e) {
-              cli::cli_alert_danger("Error in contrast {.val {contrast_name}} for {.val {outcome}}: {e$message}")
-            }
-          )
-        }
-      }
-    } else {
-      for (i in 1:(length(model_names) - 1)) {
-        for (j in (i + 1):length(model_names)) {
-          contrast_name <- paste0(model_names[i], "_vs_", model_names[j])
-          tryCatch(
-            {
-              contrast <- lmtp::lmtp_contrast(outcome_models[[model_names[i]]], ref = outcome_models[[model_names[j]]], type = contrast_scale)
-              contrasts[[contrast_name]] <- contrast
-              cli::cli_alert_success("Completed contrast: {.val {contrast_name}}")
-            },
-            error = function(e) {
-              cli::cli_alert_danger("Error in contrast {.val {contrast_name}} for {.val {outcome}}: {e$message}")
-            }
-          )
-        }
-      }
-    }
-
-    all_contrasts[[outcome]] <- contrasts
-
-    # tables
-    cli::cli_h3("Creating tables")
-    tables <- list()
-    for (contrast_name in names(contrasts)) {
-      tryCatch(
-        {
-          scale <- if (contrast_scale == "additive") "RD" else "RR"
-          table <- margot::margot_lmtp_evalue(contrasts[[contrast_name]], scale = scale, new_name = outcome)
-          tables[[contrast_name]] <- table
-          cli::cli_alert_success("Created table for contrast: {.val {contrast_name}}")
-        },
-        error = function(e) {
-          cli::cli_alert_danger("Error in creating table for contrast {.val {contrast_name}}, outcome {.val {outcome}}: {e$message}")
-        }
-      )
-    }
-
-    all_tables[[outcome]] <- tables
   }
 
-  # combine tables across outcomes
-  cli::cli_h2("Combining tables across outcomes")
-  combined_tables <- list()
-
-  if (contrast_type == "null") {
-    for (shift_name in shift_names) {
-      if (shift_name != "null") {
-        contrast_name <- paste0("combined_outcomes_", shift_name, "_vs_null")
-        combined_table <- do.call(rbind, lapply(outcome_vars, function(outcome) {
-          table_name <- paste0(outcome, "_", shift_name, "_vs_null")
-          if (!is.null(all_tables[[outcome]][[table_name]])) {
-            all_tables[[outcome]][[table_name]]
-          } else {
-            cli::cli_alert_warning(paste("Table not found for:", table_name))
-            NULL
-          }
-        }))
-        if (!is.null(combined_table) && nrow(combined_table) > 0) {
-          combined_tables[[contrast_name]] <- combined_table
-          cli::cli_alert_success("Created combined table: {.val {contrast_name}}")
-        } else {
-          cli::cli_alert_warning(paste("No data for combined table:", contrast_name))
-        }
-      }
-    }
-  } else {
-    for (i in 1:(length(shift_names) - 1)) {
-      for (j in (i + 1):length(shift_names)) {
-        contrast_name <- paste0("combined_outcomes_", shift_names[i], "_vs_", shift_names[j])
-        combined_table <- do.call(rbind, lapply(outcome_vars, function(outcome) {
-          table_name <- paste0(outcome, "_", shift_names[i], "_vs_", outcome, "_", shift_names[j])
-          if (!is.null(all_tables[[outcome]][[table_name]])) {
-            all_tables[[outcome]][[table_name]]
-          } else {
-            cli::cli_alert_warning(paste("Table not found for:", table_name))
-            NULL
-          }
-        }))
-        if (!is.null(combined_table) && nrow(combined_table) > 0) {
-          combined_tables[[contrast_name]] <- combined_table
-          cli::cli_alert_success("Created combined table: {.val {contrast_name}}")
-        } else {
-          cli::cli_alert_warning(paste("No data for combined table:", contrast_name))
-        }
-      }
-    }
-  }
+  finalized <- margot_lmtp_finalize_outputs(
+    all_models = all_models,
+    outcome_vars = outcome_vars,
+    shift_names = shift_names,
+    contrast_type = contrast_type,
+    contrast_scale = contrast_scale,
+    quiet = FALSE
+  )
+  all_models <- finalized$models
+  all_contrasts <- finalized$contrasts
+  all_tables <- finalized$individual_tables
+  combined_tables <- finalized$combined_tables
 
   # Prepare the complete output
   complete_output <- list(
