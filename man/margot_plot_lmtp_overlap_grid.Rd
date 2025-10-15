@@ -26,6 +26,9 @@ margot_plot_lmtp_overlap_grid(
   color_by_wave = NULL,
   fill_palette = NULL,
   text_size = 3,
+  annotate_wave_size = NULL,
+  annotate_shift_size = NULL,
+  annotate_zero_size = NULL,
   bins = 40,
   binwidth = NULL
 )
@@ -55,8 +58,8 @@ panels (passed to `margot_lmtp_overlap_plot_grid()`).}
 
 \item{digits}{Integer rounding for summaries (not used in plot aesthetics).}
 
-\item{annotate_graph}{Character; controls graph annotations: `"waves"` places wave labels at top,
-`"shifts"` places shift labels at top, `"none"` disables annotations (default: `"none"`).}
+\item{annotate_graph}{Deprecated. Shift labels are always annotated along rows and wave labels appear
+as column titles; the supplied value is ignored.}
 
 \item{annotate_zeros}{Logical; if TRUE, adds "zeros: X%" label to top-right of each panel.
 Default is FALSE.}
@@ -81,6 +84,12 @@ each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmon
 \item{fill_palette}{Optional vector of colours (named or unnamed) used when colouring histograms.}
 
 \item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).}
+
+\item{annotate_wave_size}{Numeric; overrides the size of wave titles across columns.}
+
+\item{annotate_shift_size}{Numeric; controls the size of shift annotations inside each panel.}
+
+\item{annotate_zero_size}{Numeric; controls the size of zero-percentage annotations.}
 }
 \value{
 A patchwork grid object.

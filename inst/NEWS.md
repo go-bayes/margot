@@ -1,5 +1,23 @@
 # margot NEWS
 
+## Changes in version 1.0.260
+
+### Fixes
+- Restored per-wave facets in LMTP overlap grids by coercing `density_ratios` from `Matrix`/`data.frame` to base matrices before iterating waves.
+- Avoided dropped bars when harmonising axes by switching to `coord_cartesian()`.
+- Ensured the `shifts` order is respected without losing wave panels.
+
+### Improvements
+- `margot_plot_lmtp_overlap_grid()` now defaults to `layout = "shifts_by_waves"` and `color_by = "shift"` (with a CLI note when overriding user settings) for robust mapping and consistent colouring.
+- `margot_interpret_lmtp_positivity()` prints per-wave uncensored diagnostics; ESS labels clarified to `ESS+/(N+)` and, when helpful, `ESS+/(N_pt)`.
+- Methods text clarifies that `null` includes censoring adjustment, so ratios may not centre at 1.
+
+### Internal
+- New internal palette helper `margot_palette("lab")` expands colours for `null`, `shift_zero`, and `ipsi_*` variants.
+
+### Backward compatibility
+- No exported function changes; `_pkgdown.yml` unchanged.
+
 ## Changes in version 1.0.150
 
 ### New features

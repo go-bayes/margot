@@ -21,7 +21,10 @@ margot_lmtp_overlap_plot_grid(
   ymax_harmonize = "none",
   xlim_harmonize = "none",
   headroom = 0.12,
-  text_size = text_size
+  text_size = text_size,
+  annotate_wave_size = text_size,
+  annotate_shift_size = text_size,
+  annotate_zero_size = text_size
 )
 }
 \arguments{
@@ -52,8 +55,8 @@ via `transform_label()` when available.}
 \item{annotate_zeros}{Logical; if TRUE, adds "zeros: X%" label to top-right of each panel.
 Default is FALSE.}
 
-\item{annotate_graph}{Character; controls graph annotations: `"waves"` places wave labels at top,
-`"shifts"` places shift labels at top, `"none"` disables annotations (default: `"none"`).}
+\item{annotate_graph}{Deprecated. Shift labels are always annotated along rows and wave labels appear
+as column titles; the supplied value is ignored.}
 
 \item{ymax_harmonize}{Character or named vector; controls y-axis harmonization: `"none"` (default) gives
 each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
@@ -64,6 +67,12 @@ each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmon
 `"global"` harmonizes all plots. Can also be a named vector with custom values.}
 
 \item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).}
+
+\item{annotate_wave_size}{Numeric; overrides the size of the column wave titles when `drop_titles = TRUE`.}
+
+\item{annotate_shift_size}{Numeric; controls the size of shift annotations inside each panel.}
+
+\item{annotate_zero_size}{Numeric; controls the size of zero-percentage annotations.}
 }
 \value{
 A patchwork object combining the selected plots.

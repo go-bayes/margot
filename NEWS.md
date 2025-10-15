@@ -1,3 +1,7 @@
+# [2025-10-15] margot 2.0.260
+### Changed
+- `margot_plot_lmtp_overlap_grid()` always annotates panels by shift (deprecated `annotate_graph`) and now respects `annotate_wave_size` when styling wave titles.
+
 # [2025-10-10] margot 1.0.259
 ### Added
 - **New function**: `margot_lmtp_restore_checkpoints()` loads saved LMTP checkpoints, rebuilds contrasts/tables, and surfaces any shift coverage gaps so long runs interrupted midstream can be recovered without recomputing finished models.
@@ -3219,3 +3223,23 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ### Documentation
 - Added `README.qmd` with quick-start usage of the new policy workflow and a summary of 1.0.242 changes.
+# margot NEWS
+
+## [2025-10-15] margot 1.0.260
+
+### Fixes
+- LMTP overlap grid now respects multi-wave density ratios when stored as `Matrix` or `data.frame` by coercing to base matrices before iterating waves. This restores one panel per wave × shift.
+- Grid axis limits use `coord_cartesian()` to avoid dropping bars (no more "Removed rows" warnings when harmonising x/y ranges).
+- Shift order in grids and text respects the user-supplied `shifts` vector without dropping additional wave panels.
+
+### Improvements
+- `margot_plot_lmtp_overlap_grid()` enforces robust defaults — `layout = "shifts_by_waves"` and `color_by = "shift"` — and prints a brief CLI info message when overriding user inputs. This stabilises mapping of waves/shifts and colouring across waves.
+- `margot_interpret_lmtp_positivity()` diagnostics section reports per-wave, uncensored (r>0) summaries, aligning directly with practical positivity assessment.
+- ESS labelling clarified: bullets report `ESS+/(N+)` for uncensored-only fractions and additionally `ESS+/(N_pt)` relative to person-time when helpful.
+- Methods text clarifies that the `null` policy includes censoring adjustment to recover the baseline population, so null ratios need not be centred at 1.
+
+### Internal
+- Added internal helper `margot_palette("lab")` with expanded colours for `null`, `shift_zero`, and `ipsi_*` variants used by overlap plots. Not exported; no API changes.
+
+### Notes
+- No exported functions were added or removed; `_pkgdown.yml` unchanged.

@@ -27,8 +27,8 @@
 #' @param color_by_wave Legacy logical alias for `color_by` (`TRUE` = `"wave"`,
 #'   `FALSE` = `"constant"`).
 #' @param fill_palette Optional vector of colours (named or unnamed) used when colouring histograms.
-#' @param annotate_graph Character; controls graph annotations: `"waves"` places wave labels at top,
-#'   `"shifts"` places shift labels at top, `"none"` disables annotations (default: `"none"`).
+#' @param annotate_graph Deprecated. Shift labels are always annotated along rows and wave labels appear
+#'   as column titles; the supplied value is ignored.
 #' @param annotate_zeros Logical; if TRUE, adds "zeros: X%" label to top-right of each panel.
 #'   Default is FALSE.
 #' @param waves Optional integer vector specifying which waves to include (e.g., `c(1, 2, 3)`). If NULL,
@@ -40,6 +40,9 @@
 #'   each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
 #'   `"global"` harmonizes all plots. Can also be a named vector with custom values.
 #' @param text_size Numeric size for facet annotations (wave/shift/zeros labels).
+#' @param annotate_wave_size Numeric; overrides the size of wave titles across columns.
+#' @param annotate_shift_size Numeric; controls the size of shift annotations inside each panel.
+#' @param annotate_zero_size Numeric; controls the size of zero-percentage annotations.
 #' @return A patchwork grid object.
 #' @export
 margot_plot_lmtp_overlap_grid <- function(x,
@@ -63,16 +66,35 @@ margot_plot_lmtp_overlap_grid <- function(x,
                                           color_by_wave = NULL,
                                           fill_palette = NULL,
                                           text_size = 3,
+                                          annotate_wave_size = NULL,
+                                          annotate_shift_size = NULL,
+                                          annotate_zero_size = NULL,
                                           bins = 40,
                                           binwidth = NULL) {
   stopifnot(is.logical(annotate_zeros), length(annotate_zeros) == 1L)
   stopifnot(is.logical(show_censored), length(show_censored) == 1L)
-  annotate_graph <- match.arg(annotate_graph)
-  layout <- match.arg(layout)
+  if (!missing(annotate_graph)) {
+    annotate_graph_user <- match.arg(annotate_graph)
+    if (!identical(annotate_graph_user, "shifts") &&
+        requireNamespace("cli", quietly = TRUE)) {
+      cli::cli_alert_info("`annotate_graph` is now fixed to 'shifts'; ignoring '{annotate_graph_user}'.")
+    }
+  }
+  annotate_graph <- "shifts"
+  layout_requested <- layout
+  if (!is.null(layout_requested) && length(layout_requested) && !identical(layout_requested, "") && !identical(layout_requested, "shifts_by_waves")) {
+    if (requireNamespace("cli", quietly = TRUE)) {
+      cli::cli_alert_info("`layout` is deprecated; using 'shifts_by_waves'.")
+    }
+  }
+  layout <- "shifts_by_waves"
   color_by <- match.arg(color_by)
   if (!is.null(color_by_wave)) {
     color_by <- if (isTRUE(color_by_wave)) "wave" else "constant"
   }
+  if (is.null(annotate_wave_size)) annotate_wave_size <- text_size
+  if (is.null(annotate_shift_size)) annotate_shift_size <- text_size
+  if (is.null(annotate_zero_size)) annotate_zero_size <- text_size
   ol <- margot_lmtp_overlap(
     x,
     outcomes = outcome,
@@ -122,6 +144,9 @@ margot_plot_lmtp_overlap_grid <- function(x,
     ymax_harmonize = ymax_harmonize,
     xlim_harmonize = xlim_harmonize,
     headroom = headroom,
-    text_size = text_size
+    text_size = text_size,
+    annotate_wave_size = annotate_wave_size,
+    annotate_shift_size = annotate_shift_size,
+    annotate_zero_size = annotate_zero_size
   )
 }

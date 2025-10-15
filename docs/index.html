@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.259</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.260</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,6 +68,18 @@
 <li>performing sensitivity analyses</li>
 </ul>
 <p><code>margot</code> streamlines the estimation of (Marginal) Average Treatment Effects (ATT, ATE), but it also supports workflows for Heterogeneous Treatment Effects (CATE) (estimated via <code>grf</code>), as well as Longitudinal Modified Treatment Policies (estimated via <code>lmtp</code>). It has extensive graphical and reporting functions to ease burdens for understanding.</p>
+<div class="section level2">
+<h2 id="lmtp-positivity-diagnostics">LMTP positivity diagnostics<a class="anchor" aria-label="anchor" href="#lmtp-positivity-diagnostics"></a>
+</h2>
+<p>For longitudinal overlap checks, <code><a href="reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code> now:</p>
+<ul>
+<li>Automatically arranges panels by <strong>shifts × waves</strong> and respects the shift order you request.</li>
+<li>Uses the expanded “lab” palette (grey <code>null</code>, blue <code>shift_zero</code>, distinct oranges for IPSI shifts) so panels stay visually consistent across waves.</li>
+<li>Applies sensible defaults for headroom and axis harmonisation—no need to hand-tune <code>layout</code>, <code>ymax_harmonize</code>, or <code>xlim_harmonize</code>.</li>
+<li>Treats the legacy <code>layout</code> argument as deprecated: it always reverts to the stable shifts-by-waves layout (with a CLI note if a different value is supplied).</li>
+</ul>
+<p>Pair these plots with <code><a href="reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> for per-wave ESS and tail diagnostics computed on uncensored weights.</p>
+</div>
 </div>
 
 

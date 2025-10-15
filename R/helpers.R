@@ -193,6 +193,49 @@ back_transform_estimates <- function(results_df, original_df) {
 }
 
 
+# palettes ---------------------------------------------------------------
+
+#' Retrieve a named color palette for plotting
+#'
+#' Provides centralised, named palettes used across margot plotting functions.
+#' The "lab" palette is intended for LMTP positivity/overlap plots and includes
+#' explicit colours for common shift names (cleaned suffixes), including
+#' `null`, `shift_zero`, and `ipsi_` variants (e.g., `ipsi_02`, `ipsi_05`, `ipsi_10`).
+#'
+#' @param name Character palette name. Currently supported: "lab", "classic".
+#' @return A named character vector of hex colours.
+#' @keywords internal
+margot_palette <- function(name = c("lab", "classic")) {
+  name <- match.arg(name)
+
+  # Classic qualitative fallback
+  classic <- c(
+    "#4f88c6", "#E69F00", "#56B4E9", "#009E73", "#F0E442",
+    "#CC79A7", "#D55E00", "#999999"
+  )
+
+  if (identical(name, "classic")) return(classic)
+
+  # Lab palette for positivity/overlap: anchors
+  # - null: grey
+  # - shift_zero: blue
+  # - ipsi_*: oranges from light (small shift) to dark (large shift)
+  lab_named <- c(
+    null = "#7f7f7f",
+    shift_zero = "#2c7fb8",
+    ipsi_02 = "#fdd0a2",
+    ipsi_05 = "#fd8d3c",
+    ipsi_10 = "#d95f0e",
+    ipsi_15 = "#a63603",
+    shift_up = "#d95f0e",
+    shift_down = "#2c7fb8",
+    constant = "#4f88c6"
+  )
+
+  # Return named palette; consumers can cycle through additional classic colours if needed
+  lab_named
+}
+
 # label and plotting for causal forest models -----------------------------
 #' works with transform to original scale
 #' @keywords internal

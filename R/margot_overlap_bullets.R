@@ -148,19 +148,25 @@ margot_interpret_lmtp_positivity <- function(x,
 
   if (is.null(shifts)) {
     keep_idx <- seq_len(nrow(shift_df))
+    shift_df <- shift_df[keep_idx, , drop = FALSE]
+    # Default ordering preference when no explicit order supplied
+    pref_order <- c("null", "shift_down", "shift_up")
+    ord <- c(intersect(pref_order, shift_df$shift_clean),
+             setdiff(shift_df$shift_clean, pref_order))
+    shift_df <- shift_df[match(ord, shift_df$shift_clean), , drop = FALSE]
   } else {
+    # Keep only requested shifts and respect the order provided by `shifts`
     keep_idx <- which(shift_df$shift_full %in% shifts | shift_df$shift_clean %in% shifts)
     if (!length(keep_idx)) {
       stop("Requested shifts not found for outcome ", outcome, ": ", paste(shifts, collapse = ", "))
     }
+    shift_df <- shift_df[keep_idx, , drop = FALSE]
+    ord_idx <- unlist(lapply(shifts, function(s) {
+      which(shift_df$shift_full == s | shift_df$shift_clean == s)[1]
+    }))
+    ord_idx <- ord_idx[is.finite(ord_idx) & !is.na(ord_idx)]
+    if (length(ord_idx)) shift_df <- shift_df[ord_idx, , drop = FALSE]
   }
-  shift_df <- shift_df[keep_idx, , drop = FALSE]
-
-  # Preferred ordering for reporting
-  pref_order <- c("null", "shift_down", "shift_up")
-  ord <- c(intersect(pref_order, shift_df$shift_clean),
-           setdiff(shift_df$shift_clean, pref_order))
-  shift_df <- shift_df[match(ord, shift_df$shift_clean), , drop = FALSE]
 
   # methods text helper ----------------------------------------------------
   methods_text <- function() {
@@ -182,6 +188,8 @@ margot_interpret_lmtp_positivity <- function(x,
       "In contrast, true **treatment positivity violations** are policy-specific: an observed treatment trajectory may be incompatible with one policy but not another. To distinguish these cases, we focus positivity diagnostics on **uncensored observations** ($r > 0$), where the density ratio reflects actual treatment mechanism compatibility rather than missing data.",
       "",
       "The censoring rate (proportion of $r = 0$) is reported separately per shift to quantify data loss, while ESS and distributional diagnostics are computed only on uncensored observations to assess positivity where treatment was actually observed.",
+      "",
+      "Note: In this analysis framework, even the `null` policy includes weighting to recover the baseline population via censoring adjustment. As a result, `null` density ratios need not be centred at 1. Departures from 1 under `null` reflect this censoring/stabilization adjustment rather than a treatment positivity issue.",
       ""
     )
   }
@@ -305,6 +313,8 @@ margot_interpret_lmtp_positivity <- function(x,
     } else NA_real_
 
     overall_ess_pos_frac <- if (overall_n_pos > 0) overall_ess_pos / overall_n_pos else NA_real_
+    # relative to person-time denominator (includes zeros)
+    overall_ess_pos_frac_pt <- if (overall_n_all > 0) overall_ess_pos / overall_n_all else NA_real_
 
     list(
       waves = wave_df,
@@ -316,6 +326,7 @@ margot_interpret_lmtp_positivity <- function(x,
         prop_censored = overall_prop_censored,
         ess_pos = overall_ess_pos,
         ess_pos_frac = overall_ess_pos_frac,
+        ess_pos_frac_pt = overall_ess_pos_frac_pt,
         stringsAsFactors = FALSE
       ),
       label = map_label(shift_clean)
@@ -379,59 +390,57 @@ margot_interpret_lmtp_positivity <- function(x,
 
     if (!nrow(by_wave)) return(character(0))
 
-    # build detailed text per shift
+    # build detailed text per shift with wave-by-wave diagnostics (uncensored)
     diag_lines <- character(0)
     for (shift_name in names(shift_results)) {
       shift_full <- shift_results[[shift_name]]$waves$shift_full[1]
       shift_data <- by_wave[by_wave$shift == shift_full, , drop = FALSE]
       if (!nrow(shift_data)) next
 
-      # aggregate across waves for shift-level summary
-      zeros_pct <- mean(shift_data$prop_zero, na.rm = TRUE) * 100
-
-      # use uncensored (_pos) metrics for distributional diagnostics
-      range_min_pos <- min(shift_data$min_pos, na.rm = TRUE)
-      range_max_pos <- max(shift_data$max_pos, na.rm = TRUE)
-      mean_val_pos <- mean(shift_data$mean_pos, na.rm = TRUE)
-      sd_val_pos <- mean(shift_data$sd_pos, na.rm = TRUE)
-      cv_val_pos <- mean(shift_data$cv_pos, na.rm = TRUE)
-
-      # tail probabilities (average across waves) - uncensored only
-      tail_cols <- grep("^p_gt_.*_pos$", names(shift_data), value = TRUE)
-      tail_vals <- if (length(tail_cols)) {
-        sapply(tail_cols, function(col) mean(shift_data[[col]], na.rm = TRUE) * 100)
-      } else NULL
-
-      # quantiles (average across waves) - uncensored only
-      quant_cols <- grep("^q.*_pos$", names(shift_data), value = TRUE)
-      quants <- if (length(quant_cols)) {
-        sapply(quant_cols, function(col) mean(shift_data[[col]], na.rm = TRUE))
-      } else NULL
-
       shift_label <- shift_results[[shift_name]]$label
+      diag_lines <- c(diag_lines, paste0("### ", shift_label, " — Wave-by-wave Diagnostics (Uncensored)"))
 
-      diag_lines <- c(diag_lines,
-                      paste0("### ", shift_label, " — Detailed Diagnostics (Uncensored)"),
-                      paste0("- **Censoring rate**: ", fmt_frac(zeros_pct), "%"),
-                      paste0("- **Range**: [", fmt_frac(range_min_pos), ", ", fmt_frac(range_max_pos), "]"),
-                      paste0("- **Mean ± SD**: ", fmt_frac(mean_val_pos), " ± ", fmt_frac(sd_val_pos),
-                             " (CV = ", fmt_frac(cv_val_pos), ")"))
+      # iterate over waves in order
+      waves_ord <- order(suppressWarnings(as.integer(shift_data$wave)))
+      shift_data <- shift_data[waves_ord, , drop = FALSE]
+      for (i in seq_len(nrow(shift_data))) {
+        row <- shift_data[i, ]
+        wv <- row$wave
+        zeros_pct <- as.numeric(row$prop_zero) * 100
+        # per-wave uncensored metrics
+        range_min_pos <- as.numeric(row$min_pos)
+        range_max_pos <- as.numeric(row$max_pos)
+        mean_val_pos <- as.numeric(row$mean_pos)
+        sd_val_pos <- as.numeric(row$sd_pos)
+        cv_val_pos <- as.numeric(row$cv_pos)
 
-      if (!is.null(tail_vals) && length(tail_vals)) {
-        # clean up column names for display
-        names_clean <- gsub("^p_gt_", "", gsub("_pos$", "", names(tail_vals)))
-        tail_text <- paste(paste0("P(r > ", names_clean, ")"), "=", paste0(fmt_frac(tail_vals), "%"), collapse = ", ")
-        diag_lines <- c(diag_lines, paste0("- **Tails**: ", tail_text))
-      }
+        # tails (uncensored)
+        tail_cols <- grep("^p_gt_.*_pos$", names(row), value = TRUE)
+        tail_vals <- if (length(tail_cols)) sapply(tail_cols, function(col) as.numeric(row[[col]]) * 100) else NULL
+        # quantiles (uncensored)
+        quant_cols <- grep("^q.*_pos$", names(row), value = TRUE)
+        quants <- if (length(quant_cols)) sapply(quant_cols, function(col) as.numeric(row[[col]])) else NULL
 
-      if (!is.null(quants) && length(quants) >= 4) {
-        # show key quantiles: 1st, 5th, 95th, 99.9th if available
-        q_labels <- c("q0001_pos" = "p0.1%", "q001_pos" = "p1%", "q005_pos" = "p5%", "q05_pos" = "p50%",
-                      "q095_pos" = "p95%", "q0999_pos" = "p99.9%")
-        available_q <- intersect(names(quants), names(q_labels))
-        if (length(available_q)) {
-          q_text <- paste(q_labels[available_q], "=", fmt_frac(quants[available_q]), collapse = ", ")
-          diag_lines <- c(diag_lines, paste0("- **Quantiles**: ", q_text))
+        line1 <- paste0("- Wave ", wv, ": censoring = ", fmt_frac(zeros_pct), "%; ",
+                        "range [", fmt_frac(range_min_pos), ", ", fmt_frac(range_max_pos), "];")
+        line2 <- paste0("  mean ± SD = ", fmt_frac(mean_val_pos), " ± ", fmt_frac(sd_val_pos),
+                        " (CV = ", fmt_frac(cv_val_pos), ")")
+        diag_lines <- c(diag_lines, line1, line2)
+
+        if (!is.null(tail_vals) && length(tail_vals)) {
+          names_clean <- gsub("^p_gt_", "", gsub("_pos$", "", names(tail_vals)))
+          tail_text <- paste(paste0("P(r > ", names_clean, ")"), "=", paste0(fmt_frac(tail_vals), "%"), collapse = ", ")
+          diag_lines <- c(diag_lines, paste0("  tails: ", tail_text))
+        }
+
+        if (!is.null(quants) && length(quants)) {
+          q_labels <- c("q0001_pos" = "p0.1%", "q001_pos" = "p1%", "q005_pos" = "p5%", "q05_pos" = "p50%",
+                        "q095_pos" = "p95%", "q0999_pos" = "p99.9%")
+          available_q <- intersect(names(quants), names(q_labels))
+          if (length(available_q)) {
+            q_text <- paste(q_labels[available_q], "=", fmt_frac(quants[available_q]), collapse = ", ")
+            diag_lines <- c(diag_lines, paste0("  quantiles: ", q_text))
+          }
         }
       }
 
@@ -476,7 +485,7 @@ margot_interpret_lmtp_positivity <- function(x,
     # uncensored ESS by wave
     wave_bits <- paste0(
       wave_df$wave, ": ", fmt_int(wave_df$ess_pos),
-      " (ESS/N = ", fmt_frac(wave_df$ess_pos_frac), ")"
+      " (ESS+/(N+) = ", fmt_frac(wave_df$ess_pos_frac), ")"
     )
     wave_clause <- paste(wave_bits, collapse = ", ")
 
@@ -484,7 +493,11 @@ margot_interpret_lmtp_positivity <- function(x,
     overall_clause <- ifelse(
       is.finite(overall_df$ess_pos),
       paste0("; overall ESS = ", fmt_int(overall_df$ess_pos),
-             " (ESS/N_pt = ", fmt_frac(overall_df$ess_pos_frac), ")"),
+             " (ESS+/(N+) = ", fmt_frac(overall_df$ess_pos_frac), ")",
+             if ("ess_pos_frac_pt" %in% names(overall_df) && is.finite(overall_df$ess_pos_frac_pt))
+               paste0("; ESS+/(N_pt) = ", fmt_frac(overall_df$ess_pos_frac_pt))
+             else
+               ""),
       ""
     )
 

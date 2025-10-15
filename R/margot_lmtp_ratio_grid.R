@@ -66,6 +66,10 @@ margot_lmtp_ratio_grid <- function(x,
   dr  <- mod$density_ratios
   if (is.null(dr)) stop("No density ratios found for outcome=", outcome, ", shift=", shift_name)
 
+  if (inherits(dr, "Matrix")) dr <- as.matrix(dr)
+  if (is.data.frame(dr)) dr <- as.matrix(dr)
+  if (!is.matrix(dr) && !is.vector(dr)) dr <- as.matrix(dr)
+
   # Theme
   ggtheme <- switch(theme,
                    classic = ggplot2::theme_classic(),
@@ -116,4 +120,3 @@ margot_lmtp_ratio_grid <- function(x,
   patchwork::wrap_plots(plots, ncol = ncol) +
     patchwork::plot_annotation(title = title_main)
 }
-

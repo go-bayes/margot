@@ -129,11 +129,30 @@ margot_lmtp_overlap <- function(x,
                         void    = ggplot2::theme_void(),
                         ggplot2::theme_classic())
 
-      default_palette <- c("#4f88c6", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7", "#D55E00", "#999999")
+      default_palette <- if (exists("margot_palette", mode = "function")) {
+        tryCatch(margot_palette("classic"), error = function(e) NULL)
+      } else NULL
+      if (is.null(default_palette) || !length(default_palette)) {
+        default_palette <- c("#4f88c6", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7", "#D55E00", "#999999")
+      }
       palette_aliases <- list(
-        lab = c(shift_up = "#d95f0e", shift_down = "#2c7fb8", null = "#7f7f7f", constant = "#4f88c6"),
+        lab = if (exists("margot_palette", mode = "function")) {
+          tryCatch(margot_palette("lab"), error = function(e) NULL)
+        } else NULL,
         classic = default_palette
       )
+      if (is.null(palette_aliases$lab) || !length(palette_aliases$lab)) {
+        palette_aliases$lab <- c(
+          shift_up = "#d95f0e",
+          shift_down = "#2c7fb8",
+          null = "#7f7f7f",
+          constant = "#4f88c6",
+          ipsi_02 = "#fdd0a2",
+          ipsi_05 = "#fd8d3c",
+          ipsi_10 = "#d95f0e",
+          ipsi_15 = "#a63603"
+        )
+      }
       if (is.character(fill_palette) && length(fill_palette) == 1L && fill_palette %in% names(palette_aliases)) {
         fill_palette <- palette_aliases[[fill_palette]]
       }
@@ -241,6 +260,10 @@ margot_lmtp_overlap <- function(x,
           mod <- shifts_list[[shift_name]]
           dr  <- mod$density_ratios
           if (is.null(dr)) next
+
+          if (inherits(dr, "Matrix")) dr <- as.matrix(dr)
+          if (is.data.frame(dr)) dr <- as.matrix(dr)
+          if (!is.matrix(dr) && !is.vector(dr)) dr <- as.matrix(dr)
 
           # filter based on requested subsets if provided
           if (!is.null(outcomes) && !(outcome_name %in% outcomes)) next

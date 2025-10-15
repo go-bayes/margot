@@ -11,7 +11,7 @@ harmonised or user-specified y-axis limits for histogram counts."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.259</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.260</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,9 @@ harmonised or user-specified y-axis limits for histogram counts.</p>
 <span>  color_by_wave <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_size <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  annotate_wave_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotate_shift_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotate_zero_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  bins <span class="op">=</span> <span class="fl">40</span>,</span>
 <span>  binwidth <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -119,8 +122,8 @@ panels (passed to `margot_lmtp_overlap_plot_grid()`).</p></dd>
 
 
 <dt id="arg-annotate-graph">annotate_graph<a class="anchor" aria-label="anchor" href="#arg-annotate-graph"></a></dt>
-<dd><p>Character; controls graph annotations: `"waves"` places wave labels at top,
-`"shifts"` places shift labels at top, `"none"` disables annotations (default: `"none"`).</p></dd>
+<dd><p>Deprecated. Shift labels are always annotated along rows and wave labels appear
+as column titles; the supplied value is ignored.</p></dd>
 
 
 <dt id="arg-annotate-zeros">annotate_zeros<a class="anchor" aria-label="anchor" href="#arg-annotate-zeros"></a></dt>
@@ -161,6 +164,18 @@ each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmon
 
 <dt id="arg-text-size">text_size<a class="anchor" aria-label="anchor" href="#arg-text-size"></a></dt>
 <dd><p>Numeric size for facet annotations (wave/shift/zeros labels).</p></dd>
+
+
+<dt id="arg-annotate-wave-size">annotate_wave_size<a class="anchor" aria-label="anchor" href="#arg-annotate-wave-size"></a></dt>
+<dd><p>Numeric; overrides the size of wave titles across columns.</p></dd>
+
+
+<dt id="arg-annotate-shift-size">annotate_shift_size<a class="anchor" aria-label="anchor" href="#arg-annotate-shift-size"></a></dt>
+<dd><p>Numeric; controls the size of shift annotations inside each panel.</p></dd>
+
+
+<dt id="arg-annotate-zero-size">annotate_zero_size<a class="anchor" aria-label="anchor" href="#arg-annotate-zero-size"></a></dt>
+<dd><p>Numeric; controls the size of zero-percentage annotations.</p></dd>
 
 </dl></div>
     <div class="section level2">
