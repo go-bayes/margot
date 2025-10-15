@@ -1,6 +1,8 @@
 # [2025-10-15] margot 2.0.260
 ### Changed
 - `margot_plot_lmtp_overlap_grid()` always annotates panels by shift (deprecated `annotate_graph`) and now respects `annotate_wave_size` when styling wave titles.
+- `margot_interpret_lmtp_positivity()` improved reportins 
+
 
 # [2025-10-10] margot 1.0.259
 ### Added
