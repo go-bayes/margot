@@ -42,6 +42,9 @@ margot_policy_summary_report(
   strict_branch = FALSE,
   restricted_scope = c("leaf", "branch"),
   audience = c("policy", "research"),
+  show_neutral = NULL,
+  signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
+  signals_k = 3,
   return_unit_masks = FALSE
 )
 }
@@ -119,6 +122,17 @@ CI lower bound > 0 to consider a branch favorable (default FALSE).}
 
 \item{restricted_scope}{Character; one of "leaf" (default) or "branch"; defines the granularity
 used to construct the restricted policy (treat inside selected branch/leaf; control elsewhere).}
+
+\item{show_neutral}{Logical or NULL; controls inclusion of the Neutral group. Default NULL
+shows Neutral for research audiences and hides it for policy audiences. Set TRUE/FALSE
+to override explicitly.}
+
+\item{signal_score}{Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
+"none", the summary text includes a "Signals Worth Monitoring" section ranking Neutral
+models by the selected score (magnitude relative to uncertainty) and stores a `signals_df`
+data frame in the returned list.}
+
+\item{signals_k}{Integer; number of top signals to display when `signal_score != "none"`.}
 }
 \value{
 A list with:
@@ -165,6 +179,7 @@ Generates a concise textual summary and a markdown table for policy tree results
 - Average uplift among treated (95% CI) and coverage treated (%)
 - Optional stability highlights (consensus strength and top split variable)
 - Optional split breakdown: per-branch selective uplifts and contributions
+- Optional Signals Worth Monitoring ranking (large magnitude, low certainty)
 }
 \details{
 Method (estimation and identities):

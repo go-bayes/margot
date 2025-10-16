@@ -113,14 +113,14 @@ margot_interpret_policy_tree <- function(model,
     if (output_format == "prose") {
       text <- glue::glue(
         "#### Findings for {transform_var(model_name)} at the end of study\n\n",
-        "The policy-tree analysis divided the sample on baseline {transform_var(var1)}. ",
-        "Respondents who scored ≤ {sp1} formed one branch and were assigned to the {act_labels[leaf_left]} policy. ",
-        "Those with baseline {transform_var(var1)} > {sp1} formed the second branch and were assigned to {act_labels[leaf_right]}.\n\n"
+        "The policy-tree analysis divides cases on baseline {transform_var(var1)}. ",
+        "Those who score ≤ {sp1} are advised {act_labels[leaf_left]}. ",
+        "Those above {sp1} are advised {act_labels[leaf_right]}.\n\n"
       )
     } else {
       text <- glue::glue(
         "**Findings for {transform_var(model_name)} at the end of study:**\n\n",
-        "Participants are split on baseline {transform_var(var1)} at {sp1}. ",
+        "Cases are split on baseline {transform_var(var1)} at {sp1}. ",
         "Those with baseline {transform_var(var1)} ≤ threshold are recommended **{act_labels[leaf_left]}**, ",
         "and those with baseline {transform_var(var1)} > threshold are recommended **{act_labels[leaf_right]}**.\n"
       )
@@ -144,15 +144,13 @@ margot_interpret_policy_tree <- function(model,
     if (output_format == "prose") {
       text <- glue::glue(
         "#### Findings for {transform_var(model_name)} at the end of study\n\n",
-        "The policy-tree analysis first divided the sample on baseline {transform_var(var1)}. ",
-        "Respondents who scored ≤ {sp1} formed one branch. ",
-        "Within this subgroup, a second split occurred on baseline {transform_var(var2)}: ",
-        "individuals with baseline {transform_var(var2)} ≤ {sp2} were assigned to the {act_labels[leaf_22]} policy, ",
-        "whereas those with baseline {transform_var(var2)} > {sp2} were assigned to {act_labels[leaf_23]}.\n\n",
-        "Participants with baseline {transform_var(var1)} scores > {sp1} formed the second major branch. ",
-        "In that branch, the tree split on baseline {transform_var(var3)}: ",
-        "respondents whose baseline {transform_var(var3)} was ≤ {sp3} were routed to the {act_labels[leaf_32]} policy, ",
-        "and those scoring above that threshold were routed to {act_labels[leaf_33]}.\n\n"
+        "The policy-tree analysis divides cases on baseline {transform_var(var1)}. ",
+        "Those who score ≤ {sp1} are then split on {transform_var(var2)}: ",
+        "those at or below {sp2} are advised {act_labels[leaf_22]}, ",
+        "and those above {sp2} are advised {act_labels[leaf_23]}.\n\n",
+        "Those above {sp1} on {transform_var(var1)} split on {transform_var(var3)}: ",
+        "those at or below {sp3} are advised {act_labels[leaf_32]}, ",
+        "and those above {sp3} are advised {act_labels[leaf_33]}.\n\n"
       )
     } else {
       text <- glue::glue(
@@ -411,14 +409,14 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
     if (max_depth == 2L) {
       text <- paste0(
         text,
-        "A depth-two policy tree therefore produced four terminal leaves. ",
-        "Conditional average treatment effects (CATEs) were estimated within each leaf:\n\n"
+        "A depth-two policy tree therefore produces four terminal leaves. ",
+        "Conditional average treatment effects (CATEs) are estimated within each leaf:\n\n"
       )
     } else {
       text <- paste0(
         text,
-        "The policy tree produced two terminal leaves. ",
-        "Conditional average treatment effects (CATEs) were estimated within each leaf:\n\n"
+        "The policy tree produces two terminal leaves. ",
+        "Conditional average treatment effects (CATEs) are estimated within each leaf:\n\n"
       )
     }
   } else {
@@ -848,13 +846,13 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
           n_treatment <- sum(test_predictions == 2)
 
           if (n_control > 0 && n_treatment > 0) {
-            text <- paste0(
-              text,
-              "Among the test set:\n",
-              "- ", n_control, " units were assigned to ", act_labels[1], "\n",
-              "- ", n_treatment, " units were assigned to ", act_labels[2], "\n\n",
-              "(Detailed leaf analysis not available due to missing covariate data)\n\n"
-            )
+              text <- paste0(
+                text,
+                "Among the test set:\n",
+                "- ", n_control, " cases are advised ", act_labels[1], "\n",
+                "- ", n_treatment, " cases are advised ", act_labels[2], "\n\n",
+                "(Detailed leaf analysis not available due to missing covariate data)\n\n"
+              )
           }
         },
         error = function(e) {
@@ -997,7 +995,7 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
 
         text <- paste0(
           text,
-          "• **Leaf ", i, "—", tolower(leaf_names[i]), "** ",
+          "* **Leaf ", i, "—", tolower(leaf_names[i]), "** ",
           "(n = ", formatC(length(idx), format = "d", big.mark = ","), "; ", pct_of_test, "% of the test set): ",
           assignment_text, ". "
         )

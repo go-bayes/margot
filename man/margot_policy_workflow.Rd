@@ -17,6 +17,11 @@ margot_policy_workflow(
   audience = c("policy", "research"),
   use_coherent_in_interpret = TRUE,
   brief_include_group = FALSE,
+  expand_acronyms = FALSE,
+  show_neutral = NULL,
+  prefer_stability = FALSE,
+  signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
+  signals_k = 3,
   ...
 )
 }
@@ -53,13 +58,33 @@ interpretations instead of recomputing (default TRUE).}
 column (Wins/Neutral/Caution). If FALSE, returns a simplified brief without Group.
 Default FALSE for policy audiences.}
 
+\item{expand_acronyms}{Logical; if TRUE, expand common acronyms in labels (e.g.,
+RWA → Right-Wing Authoritarianism (RWA)). You may also supply custom expansions via
+`options(margot.boilerplate.acronyms = list(SES = "Socioeconomic Status"))`.}
+
+\item{show_neutral}{Logical or NULL; controls inclusion of the Neutral group. Default NULL
+shows Neutral for research audiences and hides it for policy audiences. Set TRUE/FALSE
+to override explicitly.}
+
+\item{prefer_stability}{Logical; if TRUE, raise the parsimony threshold for switching to
+depth-2 (min_gain_for_depth_switch ≥ 0.01) to prefer depth-1 unless depth-2 gains are
+clearly larger.}
+
+\item{signal_score}{Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
+"none", the summary text includes a "Signals Worth Monitoring" section that ranks Neutral
+models by the selected score (magnitude relative to uncertainty, optionally weighted by
+coverage and stability). See the package NEWS for details.}
+
+\item{signals_k}{Integer; number of top signals to display when `signal_score != "none"`}
+
 \item{...}{Additional pass-through args to [margot_policy_summary_report()], e.g.,
 `split_compact`, `split_top_only`, etc.}
 }
 \value{
 A list with components from depth selection (best), summary (summary), and
   optional interpretations (interpret). Includes `policy_brief_df` shortcut drawn from
-  `summary$group_table_df`.
+  `summary$group_table_df`. Also returns `method_explanation` (long/short/prereg) and
+  `summary$signals_df` when `signal_score != "none"`.
 }
 \description{
 Runs depth comparison, produces a mixed-depth policy summary report, and (optionally)

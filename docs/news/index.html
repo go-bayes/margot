@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.260</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.262</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,11 +33,21 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.261" id="id_2025-10-16-margot-10261">[2025-10-16] margot 1.0.261<a class="anchor" aria-label="anchor" href="#id_2025-10-16-margot-10261"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-261">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-261"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_lmtp_overlap.html">margot_lmtp_overlap()</a></code> now pulls its <code>text_summary</code> directly from <code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>, ensuring overlap diagnostics match the upgraded prose helper and optional report sections.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.260" id="id_2025-10-15-margot-20260">[2025-10-15] margot 2.0.260<a class="anchor" aria-label="anchor" href="#id_2025-10-15-margot-20260"></a></h2>
 <div class="section level4">
 <h4 id="changed-2-0-260">Changed<a class="anchor" aria-label="anchor" href="#changed-2-0-260"></a></h4>
 <ul><li>
 <code><a href="../reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code> always annotates panels by shift (deprecated <code>annotate_graph</code>) and now respects <code>annotate_wave_size</code> when styling wave titles.</li>
+<li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> improved reporting</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -4737,7 +4747,29 @@
 </ul></div>
 <div class="section level4">
 <h4 id="notes-1-0-242">Notes<a class="anchor" aria-label="anchor" href="#notes-1-0-242"></a></h4>
-<ul><li>No exported functions were added or removed; <code>_pkgdown.yml</code> unchanged.</li>
+<ul><li><p>No exported functions were added or removed; <code>_pkgdown.yml</code> unchanged. # 1.0.262</p></li>
+<li>
+<p>Added boilerplate provider hooks with glue support:</p>
+<ul><li>
+<code>options(margot.boilerplate)</code> accepts list/function/JSON for explainer/methods slots</li>
+<li>Slots: <code>policy_value_explainer</code>, <code>methods_long</code>, <code>methods_short</code>, <code>methods_prereg</code>
+</li>
+<li>
+<code>options(margot.boilerplate.acronyms)</code> and <code>options(margot.boilerplate.labels)</code> for global acronyms/labels</li>
+</ul></li>
+<li><p>Workflow now returns <code>method_explanation</code> (long/short/prereg) describing the actual analysis settings</p></li>
+<li>
+<p>Added <code>signal_score</code> (“pv_snr”, “uplift_snr”, “hybrid”) and <code>signals_k</code>:</p>
+<ul><li>Renders a “Signals Worth Monitoring” section ranking Neutral models by magnitude/uncertainty</li>
+<li>Exposes a <code>signals_df</code> with top‑K ranked signals and metadata</li>
+<li>Adds a programmatic <code>signals_df_all</code> with a full ranking across all models</li>
+<li>Falls back to ranking non‑wins when Neutral is empty, ensuring interesting signals are surfaced</li>
+<li>Fixes a rendering bug where signal scores were computed after classification (now computed before), so Neutral subsets include the score columns</li>
+</ul></li>
+<li><p>Present‑tense, general prose in interpretation; moved harm flags into a separate Risk Notes section</p></li>
+<li><p>Soft‑deprecate Neutral in policy audience (configurable via <code>show_neutral</code>)</p></li>
+<li><p><code>prefer_stability</code> biases depth selection toward depth‑1 unless depth‑2 gains are clearly larger</p></li>
+<li><p>Acronym expansion opt‑in: <code>expand_acronyms</code> with user‑overrides via options</p></li>
 </ul></div>
 </div>
 </div>

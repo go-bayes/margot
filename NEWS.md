@@ -1,7 +1,11 @@
+# [2025-10-16] margot 1.0.261
+### Changed
+- `margot_lmtp_overlap()` now pulls its `text_summary` directly from `margot_interpret_lmtp_positivity()`, ensuring overlap diagnostics match the upgraded prose helper and optional report sections.
+
 # [2025-10-15] margot 2.0.260
 ### Changed
 - `margot_plot_lmtp_overlap_grid()` always annotates panels by shift (deprecated `annotate_graph`) and now respects `annotate_wave_size` when styling wave titles.
-- `margot_interpret_lmtp_positivity()` improved reportins 
+- `margot_interpret_lmtp_positivity()` improved reporting
 
 
 # [2025-10-10] margot 1.0.259
@@ -3245,3 +3249,20 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ### Notes
 - No exported functions were added or removed; `_pkgdown.yml` unchanged.
+# 1.0.262
+
+- Added boilerplate provider hooks with glue support:
+  - `options(margot.boilerplate)` accepts list/function/JSON for explainer/methods slots
+  - Slots: `policy_value_explainer`, `methods_long`, `methods_short`, `methods_prereg`
+  - `options(margot.boilerplate.acronyms)` and `options(margot.boilerplate.labels)` for global acronyms/labels
+- Workflow now returns `method_explanation` (long/short/prereg) describing the actual analysis settings
+- Added `signal_score` ("pv_snr", "uplift_snr", "hybrid") and `signals_k`:
+  - Renders a "Signals Worth Monitoring" section ranking Neutral models by magnitude/uncertainty
+  - Exposes a `signals_df` with top‑K ranked signals and metadata
+  - Adds a programmatic `signals_df_all` with a full ranking across all models
+  - Falls back to ranking non‑wins when Neutral is empty, ensuring interesting signals are surfaced
+  - Fixes a rendering bug where signal scores were computed after classification (now computed before), so Neutral subsets include the score columns
+- Present‑tense, general prose in interpretation; moved harm flags into a separate Risk Notes section
+- Soft‑deprecate Neutral in policy audience (configurable via `show_neutral`)
+- `prefer_stability` biases depth selection toward depth‑1 unless depth‑2 gains are clearly larger
+- Acronym expansion opt‑in: `expand_acronyms` with user‑overrides via options

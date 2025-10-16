@@ -55,7 +55,7 @@ margot_policy_methods_statement <- function(object,
 
   s3 <- if (isTRUE(include_treated_only)) {
     paste0(
-      "We also report the average uplift among units recommended for treatment (treated-only uplift) and the coverage (proportion recommended treated), providing a concise link between expected impact and resource needs."
+      "We also report the average uplift among units recommended for treatment (treated-only uplift) and the coverage (proportion recommended treatment), providing a concise link between expected impact and resource needs."
     )
   } else ""
 
@@ -76,4 +76,3 @@ margot_policy_methods_statement <- function(object,
 
   if (style == "short") paste(s1, s2, s3, s4) else paste(s1, s2, s3, s4, sep = "\n\n")
 }
-

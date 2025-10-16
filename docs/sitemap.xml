@@ -149,6 +149,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_batch_policy.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_bind_models.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_bind_tables.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_build_method_explanation.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_causal_forest_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_causal_forest_parallel.html</loc></url>
@@ -172,6 +173,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_flip_forests_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_flip_forests_parallel.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_generate_qini_data.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_get_boilerplate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_get_labels.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_causal_forest.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_grf_overlap.html</loc></url>
@@ -206,6 +208,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_ratio_multigrid.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_restore_checkpoints.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_tab.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_load_boilerplate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_log_transform_vars.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_make_tables.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_merge_databases.html</loc></url>

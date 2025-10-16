@@ -25,12 +25,27 @@
 #' @param brief_include_group Logical; if TRUE, `policy_brief_df` includes the Group
 #'   column (Wins/Neutral/Caution). If FALSE, returns a simplified brief without Group.
 #'   Default FALSE for policy audiences.
+#' @param expand_acronyms Logical; if TRUE, expand common acronyms in labels (e.g.,
+#'   RWA → Right-Wing Authoritarianism (RWA)). You may also supply custom expansions via
+#'   `options(margot.boilerplate.acronyms = list(SES = "Socioeconomic Status"))`.
+#' @param show_neutral Logical or NULL; controls inclusion of the Neutral group. Default NULL
+#'   shows Neutral for research audiences and hides it for policy audiences. Set TRUE/FALSE
+#'   to override explicitly.
+#' @param prefer_stability Logical; if TRUE, raise the parsimony threshold for switching to
+#'   depth-2 (min_gain_for_depth_switch ≥ 0.01) to prefer depth-1 unless depth-2 gains are
+#'   clearly larger.
+#' @param signal_score Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
+#'   "none", the summary text includes a "Signals Worth Monitoring" section that ranks Neutral
+#'   models by the selected score (magnitude relative to uncertainty, optionally weighted by
+#'   coverage and stability). See the package NEWS for details.
+#' @param signals_k Integer; number of top signals to display when `signal_score != "none"`
 #' @param ... Additional pass-through args to [margot_policy_summary_report()], e.g.,
 #'   `split_compact`, `split_top_only`, etc.
 #'
 #' @return A list with components from depth selection (best), summary (summary), and
 #'   optional interpretations (interpret). Includes `policy_brief_df` shortcut drawn from
-#'   `summary$group_table_df`.
+#'   `summary$group_table_df`. Also returns `method_explanation` (long/short/prereg) and
+#'   `summary$signals_df` when `signal_score != "none"`.
 #' @export
 margot_policy_workflow <- function(stability,
                                    original_df = NULL,
@@ -44,11 +59,31 @@ margot_policy_workflow <- function(stability,
                                    audience = c("policy", "research"),
                                    use_coherent_in_interpret = TRUE,
                                    brief_include_group = FALSE,
+                                   expand_acronyms = FALSE,
+                                   show_neutral = NULL,
+                                   prefer_stability = FALSE,
+                                   signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
+                                   signals_k = 3,
                                    ...) {
   se_method <- match.arg(se_method)
   audience <- match.arg(audience)
+  signal_score <- match.arg(signal_score)
+
+  # Configure acronym expansion scope
+  old_opt <- options(margot.expand_acronyms = isTRUE(expand_acronyms))
+  on.exit(options(old_opt), add = TRUE)
+
+  # Merge default labels (from boilerplate options) with user-provided mapping (user wins)
+  bp_labels <- getOption("margot.boilerplate.labels", NULL)
+  if (!is.null(bp_labels)) {
+    if (is.null(label_mapping)) label_mapping <- list()
+    label_mapping <- utils::modifyList(bp_labels, label_mapping)
+  }
 
   # 1) Depth comparison with parsimony threshold
+  # Prefer stability: increase the gain required to switch to depth-2
+  eff_min_gain <- if (isTRUE(prefer_stability)) max(min_gain_for_depth_switch, 0.01) else min_gain_for_depth_switch
+
   best <- margot_policy_summary_compare_depths(
     stability,
     original_df = original_df,
@@ -63,7 +98,7 @@ margot_policy_workflow <- function(stability,
     split_drop_zero = TRUE,
     split_top_only = TRUE,
     verbose = TRUE,
-    min_gain_for_depth_switch = min_gain_for_depth_switch
+    min_gain_for_depth_switch = eff_min_gain
   )
 
   # 2) Mixed-depth summary using chosen depths
@@ -80,6 +115,9 @@ margot_policy_workflow <- function(stability,
     dominance_threshold = dominance_threshold,
     strict_branch = strict_branch,
     audience = audience,
+    show_neutral = show_neutral,
+    signal_score = signal_score,
+    signals_k = signals_k,
     return_unit_masks = TRUE,
     ...
   )
@@ -104,6 +142,27 @@ margot_policy_workflow <- function(stability,
       coherent_values = summary$coherent_policy_values
     )
   }
+
+  # 4) Methods explanation (long/short/prereg), built from actual settings
+  method_context <- list(
+    se_method = se_method,
+    R = R,
+    audience = audience,
+    min_gain_for_depth_switch = eff_min_gain,
+    prefer_stability = isTRUE(prefer_stability),
+    dominance_threshold = dominance_threshold,
+    strict_branch = strict_branch,
+    restricted_scope_1 = "branch",
+    restricted_scope_2 = "leaf",
+    show_neutral = show_neutral,
+    expand_acronyms = isTRUE(expand_acronyms),
+    signal_score = list(...)[["signal_score"]] %||% tryCatch(match.arg(signal_score), error = function(e) NULL),
+    signals_k = list(...)[["signals_k"]] %||% tryCatch(signals_k, error = function(e) NULL)
+  )
+  method_explanation <- tryCatch(
+    margot_build_method_explanation(stability, best, summary, method_context, citations = TRUE),
+    error = function(e) list(long = "", short = "", prereg = "")
+  )
 
   # Build policy brief table: either grouped (with Group column) or simplified
   brief_full <- summary$group_table_df
@@ -182,6 +241,7 @@ margot_policy_workflow <- function(stability,
     best = best,
     summary = summary,
     interpret = interpret,
+    method_explanation = method_explanation,
     policy_brief_df = brief_out,
     not_excluded_ids_by_model = not_excluded_ids_by_model,
     not_excluded_ids_df = not_excluded_ids_df,

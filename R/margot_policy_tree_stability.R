@@ -4,8 +4,9 @@
   if (!is.null(label_mapping) && var_name %in% names(label_mapping)) {
     return(label_mapping[[var_name]])
   }
-  # fall back to transform_var_name with silent mode
-  suppressMessages(transform_var_name(var_name, label_mapping))
+  # fall back to transform_var_name with silent mode; respect global option for acronym expansion
+  expand <- isTRUE(getOption("margot.expand_acronyms", FALSE))
+  suppressMessages(transform_var_name(var_name, label_mapping, expand_acronyms = expand))
 }
 
 #' Stability Analysis for Policy Trees

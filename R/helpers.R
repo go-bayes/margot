@@ -780,14 +780,28 @@ s <- function(results_df, original_df, label_mapping = NULL) {
 #' @param remove_z_suffix Logical; remove trailing '_z'
 #' @param use_title_case Logical; convert to title case
 #' @param remove_underscores Logical; replace underscores with spaces
+#' @param expand_acronyms Logical; expand common acronyms (RWA, SDO, PWI, NZSEI)
+#'   to their full names while retaining the acronym in parentheses. Defaults to FALSE.
 #'
 #' @return A character scalar of the transformed label, or NA if input missing
+#'
+#' @examples
+#' # Basic usage with mapping
+#' transform_var_name("t2_rwa_z", label_mapping = list(rwa = "Right-Wing Authoritarianism"))
+#'
+#' # Expand common acronyms without an explicit mapping
+#' transform_var_name("baseline RWA", expand_acronyms = TRUE)
+#' # => "Baseline Right-Wing Authoritarianism (RWA)"
+#'
+#' # Mapping takes precedence; expansion still applies to remaining acronyms
+#' transform_var_name("PWI overall", label_mapping = list(PWI = "Personal Well-Being Index"), expand_acronyms = TRUE)
 #' @keywords internal
 transform_var_name <- function(var_name, label_mapping = NULL,
                                remove_tx_prefix = TRUE,
                                remove_z_suffix = TRUE,
                                use_title_case = TRUE,
-                               remove_underscores = TRUE) {
+                               remove_underscores = TRUE,
+                               expand_acronyms = FALSE) {
   if (is.na(var_name) || length(var_name) == 0) {
     return(NA_character_)
   }
@@ -855,6 +869,25 @@ transform_var_name <- function(var_name, label_mapping = NULL,
     # capitalize NZSEI and NZDEP
     display_name <- gsub("Nzsei", "NZSEI", display_name, fixed = TRUE)
     display_name <- gsub("Nzdep", "NZDEP", display_name, fixed = TRUE)
+  }
+
+  # optional acronym expansion (append meanings while retaining acronym)
+  if (isTRUE(expand_acronyms)) {
+    expand_one <- function(txt, pat, long) {
+      gsub(paste0("\\b", pat, "\\b"), paste0(long, " (", pat, ")"), txt)
+    }
+    # user-provided acronyms first
+    acr_map <- getOption("margot.boilerplate.acronyms", NULL)
+    if (is.list(acr_map) || is.vector(acr_map)) {
+      for (nm in names(acr_map)) {
+        display_name <- expand_one(display_name, nm, acr_map[[nm]])
+      }
+    }
+    # defaults
+    display_name <- expand_one(display_name, "RWA", "Right-Wing Authoritarianism")
+    display_name <- expand_one(display_name, "SDO", "Social Dominance Orientation")
+    display_name <- expand_one(display_name, "PWI", "Personal Well-Being Index")
+    display_name <- expand_one(display_name, "NZSEI", "Occupational Prestige Index")
   }
 
   # add (log) suffix if variable was log-transformed

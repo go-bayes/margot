@@ -58,15 +58,18 @@ shows log10(density ratio) for w>0, or "linear" shows the raw ratio.}
 Character aliases include `"lab"` (blue/red/grey with a constant fallback) and
 `"classic"` (the default qualitative palette).}
 
-\item{...}{Ignored. Present for backward compatibility with older
-arguments like `save_plots` and `output_dir` that are being phased out.}
+\item{...}{Optional named arguments recognised by
+`margot_interpret_lmtp_positivity()` when assembling the text summary
+(e.g., `label_mapping`, `waves`, `remove_waves`, `include_methods`,
+`include_diagnostics`). Unrecognised entries are silently ignored for
+backward compatibility with deprecated arguments such as `save_plots`.}
 }
 \value{
 A list with:
   - overlap_summary: tibble combining by-wave and overall positivity/overlap metrics
   - ratio_plots: list of ggplot objects (if plot = TRUE)
   - flags: tibble of positivity flags
-  - text_summary: brief prose summary
+  - text_summary: markdown-ready prose from `margot_interpret_lmtp_positivity()`
 }
 \description{
 Summarises density-ratio overlap and effective sample size (ESS) for LMTP

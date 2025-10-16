@@ -10,7 +10,8 @@ transform_var_name(
   remove_tx_prefix = TRUE,
   remove_z_suffix = TRUE,
   use_title_case = TRUE,
-  remove_underscores = TRUE
+  remove_underscores = TRUE,
+  expand_acronyms = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ transform_var_name(
 \item{use_title_case}{Logical; convert to title case}
 
 \item{remove_underscores}{Logical; replace underscores with spaces}
+
+\item{expand_acronyms}{Logical; expand common acronyms (RWA, SDO, PWI, NZSEI)
+to their full names while retaining the acronym in parentheses. Defaults to FALSE.}
 }
 \value{
 A character scalar of the transformed label, or NA if input missing
@@ -33,5 +37,16 @@ A character scalar of the transformed label, or NA if input missing
 This function applies explicit mappings, strips numeric-range suffixes,
 removes time-prefixes and z-suffixes, replaces underscores, and converts
 to title case while preserving NZ, SDO, and RWA acronyms.
+}
+\examples{
+# Basic usage with mapping
+transform_var_name("t2_rwa_z", label_mapping = list(rwa = "Right-Wing Authoritarianism"))
+
+# Expand common acronyms without an explicit mapping
+transform_var_name("baseline RWA", expand_acronyms = TRUE)
+# => "Baseline Right-Wing Authoritarianism (RWA)"
+
+# Mapping takes precedence; expansion still applies to remaining acronyms
+transform_var_name("PWI overall", label_mapping = list(PWI = "Personal Well-Being Index"), expand_acronyms = TRUE)
 }
 \keyword{internal}

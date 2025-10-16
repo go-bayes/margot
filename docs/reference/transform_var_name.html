@@ -11,7 +11,7 @@ to title case while preserving NZ, SDO, and RWA acronyms."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.260</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.262</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,8 @@ to title case while preserving NZ, SDO, and RWA acronyms.</p>
 <span>  remove_tx_prefix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  remove_z_suffix <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  remove_underscores <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  remove_underscores <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  expand_acronyms <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -82,12 +83,33 @@ to title case while preserving NZ, SDO, and RWA acronyms.</p>
 <dt id="arg-remove-underscores">remove_underscores<a class="anchor" aria-label="anchor" href="#arg-remove-underscores"></a></dt>
 <dd><p>Logical; replace underscores with spaces</p></dd>
 
+
+<dt id="arg-expand-acronyms">expand_acronyms<a class="anchor" aria-label="anchor" href="#arg-expand-acronyms"></a></dt>
+<dd><p>Logical; expand common acronyms (RWA, SDO, PWI, NZSEI)
+to their full names while retaining the acronym in parentheses. Defaults to FALSE.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A character scalar of the transformed label, or NA if input missing</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Basic usage with mapping</span></span></span>
+<span class="r-in"><span><span class="fu">transform_var_name</span><span class="op">(</span><span class="st">"t2_rwa_z"</span>, label_mapping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>rwa <span class="op">=</span> <span class="st">"Right-Wing Authoritarianism"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in transform_var_name("t2_rwa_z", label_mapping = list(rwa = "Right-Wing Authoritarianism")):</span> could not find function "transform_var_name"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Expand common acronyms without an explicit mapping</span></span></span>
+<span class="r-in"><span><span class="fu">transform_var_name</span><span class="op">(</span><span class="st">"baseline RWA"</span>, expand_acronyms <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in transform_var_name("baseline RWA", expand_acronyms = TRUE):</span> could not find function "transform_var_name"</span>
+<span class="r-in"><span><span class="co"># =&gt; "Baseline Right-Wing Authoritarianism (RWA)"</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Mapping takes precedence; expansion still applies to remaining acronyms</span></span></span>
+<span class="r-in"><span><span class="fu">transform_var_name</span><span class="op">(</span><span class="st">"PWI overall"</span>, label_mapping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>PWI <span class="op">=</span> <span class="st">"Personal Well-Being Index"</span><span class="op">)</span>, expand_acronyms <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in transform_var_name("PWI overall", label_mapping = list(PWI = "Personal Well-Being Index"),     expand_acronyms = TRUE):</span> could not find function "transform_var_name"</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

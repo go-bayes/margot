@@ -6,6 +6,7 @@
 #' - Average uplift among treated (95% CI) and coverage treated (%)
 #' - Optional stability highlights (consensus strength and top split variable)
 #' - Optional split breakdown: per-branch selective uplifts and contributions
+#' - Optional Signals Worth Monitoring ranking (large magnitude, low certainty)
 #'
 #' Method (estimation and identities):
 #' - For each model and depth, we evaluate the consensus policy on the held-out test set
@@ -124,6 +125,15 @@
 #'   - `recommended_depth2_model_ids`: Recommended-for-deployment models evaluated at depth 2
 #'   - `recommended_depth2_model_names`: Human-readable labels for recommended depth-2 models
 #'
+#' @param show_neutral Logical or NULL; controls inclusion of the Neutral group. Default NULL
+#'   shows Neutral for research audiences and hides it for policy audiences. Set TRUE/FALSE
+#'   to override explicitly.
+#' @param signal_score Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
+#'   "none", the summary text includes a "Signals Worth Monitoring" section ranking Neutral
+#'   models by the selected score (magnitude relative to uncertainty) and stores a `signals_df`
+#'   data frame in the returned list.
+#' @param signals_k Integer; number of top signals to display when `signal_score != "none"`.
+#'
 #' @export
 margot_policy_summary_report <- function(object,
                                          model_names = NULL,
@@ -162,6 +172,9 @@ margot_policy_summary_report <- function(object,
                                          strict_branch = FALSE,
                                          restricted_scope = c("leaf", "branch"),
                                          audience = c("policy", "research"),
+                                         show_neutral = NULL,
+                                         signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
+                                         signals_k = 3,
                                          return_unit_masks = FALSE) {
   stopifnot(inherits(object, "margot_stability_policy_tree"))
   table_type <- match.arg(table_type)
@@ -170,6 +183,7 @@ margot_policy_summary_report <- function(object,
   restricted_scope <- match.arg(restricted_scope)
   contrib_scale <- match.arg(contrib_scale)
   se_method <- match.arg(se_method)
+  signal_score <- match.arg(signal_score)
 
   # determine model set
   if (is.null(model_names)) {
@@ -461,7 +475,7 @@ margot_policy_summary_report <- function(object,
   if (length(unique_depths) > 1) {
     depth_lines <- paste(vapply(model_names, function(mn) {
       lab <- .apply_label_stability(gsub("^model_", "", mn), label_mapping)
-      paste0(lab, " → ", model_depths[[mn]])
+      paste0(lab, " $\\rightarrow$ ", model_depths[[mn]])
     }, character(1)), collapse = "; ")
     lines <- c(lines, paste0("Depth assignments: ", depth_lines))
   }
@@ -529,18 +543,51 @@ margot_policy_summary_report <- function(object,
 
   fmt_ci <- function(lo, hi) paste0("[", round(lo, digits), ", ", round(hi, digits), "]")
 
-  # classify models by sign of pv_control_all (always available for downstream uses)
+  # (moved) classification occurs after computing stability and signal columns
+
+  # Compute stability strength per model (0-1), depth-aware
+  stability_strength <- setNames(rep(NA_real_, length(unique(mm$model))), unique(mm$model))
+  for (mn in unique(mm$model)) {
+    sm <- tryCatch(object$results[[mn]]$stability_metrics, error = function(e) NULL)
+    dsel <- tryCatch(model_depths[[mn]], error = function(e) 2L)
+    if (!is.null(sm) && !is.null(sm$consensus_strength)) {
+      s <- tryCatch(if (dsel == 2L && !is.null(sm$consensus_strength$depth_2)) sm$consensus_strength$depth_2 else sm$consensus_strength$depth_1, error = function(e) NA_real_)
+      if (!is.null(s) && !is.na(s)) stability_strength[[mn]] <- s
+    }
+  }
+  mm$stab_strength <- vapply(mm$model, function(mn) stability_strength[[mn]] %||% NA_real_, numeric(1))
+
+  # Signal scores: PV-SNR and uplift-SNR with coverage + stability weights
+  hw_pv <- (mm$ci_hi_ctrl - mm$ci_lo_ctrl) / 2
+  hw_uplift <- (mm$uplift_hi - mm$uplift_lo) / 2
+  snr_pv <- ifelse(is.finite(hw_pv) & hw_pv > 0, abs(mm$estimate_ctrl) / hw_pv, NA_real_)
+  snr_u <- ifelse(is.finite(hw_uplift) & hw_uplift > 0, abs(mm$uplift) / hw_uplift, NA_real_)
+  w_cov <- ifelse(is.finite(mm$coverage) & mm$coverage >= 0, sqrt(mm$coverage), NA_real_)
+  w_stab <- ifelse(is.finite(mm$stab_strength), 0.5 + 0.5 * mm$stab_strength, 1.0)
+  mm$signal_pv_snr_w <- snr_pv * w_cov * w_stab
+  mm$signal_uplift_snr_w <- snr_u * w_cov * w_stab
+  mm$signal_hybrid <- ifelse(!is.na(mm$signal_pv_snr_w) | !is.na(mm$signal_uplift_snr_w),
+                             0.7 * ifelse(is.na(mm$signal_pv_snr_w), 0, mm$signal_pv_snr_w) +
+                               0.3 * ifelse(is.na(mm$signal_uplift_snr_w), 0, mm$signal_uplift_snr_w),
+                             NA_real_)
+
+  # classify models by sign of pv_control_all (now includes signal columns in subsets)
   wins <- mm[mm$ci_lo_ctrl > 0, , drop = FALSE]
   neutral <- mm[mm$ci_lo_ctrl <= 0 & mm$ci_hi_ctrl >= 0, , drop = FALSE]
   harm <- mm[mm$ci_hi_ctrl < 0, , drop = FALSE]
 
+  # Soft switch for including neutral group based on audience or explicit flag
+  show_neutral_eff <- if (is.null(show_neutral)) identical(audience, "research") else isTRUE(show_neutral)
+
   # Optionally group by sign for text/table rendering
   if (isTRUE(group_by_sign)) {
     groups <- list(
-      "Wins (pv vs control-all > 0, CI>0)" = wins,
-      "Neutral (pv vs control-all ~ 0)" = neutral,
-      "Caution (pv vs control-all < 0, CI<0)" = harm
+      "Wins (policy value vs control-all 95% CI entirely > 0)" = wins,
+      "Caution (policy value vs control-all 95% CI entirely < 0)" = harm
     )
+    if (isTRUE(show_neutral_eff)) {
+      groups[["Neutral (policy value vs control-all CI spans zero)"]] <- neutral
+    }
   } else {
     groups <- list("Summary" = mm)
   }
@@ -713,6 +760,8 @@ margot_policy_summary_report <- function(object,
       out_rows[[length(out_rows) + 1L]] <- data.frame(
         group = if (local_mode == "branch") if (g == 1L) "Left" else "Right" else paste0("Leaf ", g),
         label = mk_label(g),
+        split_var = var1,
+        split_var_label = v1lab,
         n_group = n_g,
         share = share,
         treated_within = treat_within,
@@ -872,6 +921,13 @@ margot_policy_summary_report <- function(object,
 
   # Automated recommendations: restricted policy per model treating only in dominant favorable split
   recommendations_by_model <- list()
+  # collect recommendation lines by decision bucket for grouped rendering
+  rec_buckets <- list(
+    deploy_full = character(),
+    deploy_restricted = character(),
+    caution = character(),
+    do_not_deploy = character()
+  )
   recommendations_text <- ""
   practical_takeaways_text <- ""
   recommended_model_ids <- character()
@@ -1090,7 +1146,7 @@ margot_policy_summary_report <- function(object,
         }
       }
       # build text
-      lab <- sb$label[best]
+      split_label <- sb$label[best]
       # Build nuanced per-model summary using split stats
       fmt_ci2 <- function(lo, hi) if (is.na(lo) || is.na(hi)) "" else sprintf(" [%.3f, %.3f]", lo, hi)
       # order branches by contribution
@@ -1098,42 +1154,67 @@ margot_policy_summary_report <- function(object,
       dom <- ord[1]; oth <- ord[2]
       mk_branch_line <- function(idx) {
         if (is.na(idx) || idx < 1 || idx > nrow(sb)) return("")
-        sprintf("%s — Share %.1f%%, Treated %.1f%%, Uplift_T %.3f%s, PVc %.1f%%",
+        sprintf("%s — Group share %.1f%%; Treated %.1f%%; Uplift (treated) %.3f%s; PV (control-all) share %.1f%%",
                 sb$label[idx], 100*sb$share[idx], 100*sb$treated_within[idx],
                 sb$uplift_treated[idx], fmt_ci2(sb$uplift_treated_lo[idx], sb$uplift_treated_hi[idx]), shares[idx])
       }
       dom_line <- mk_branch_line(dom)
       oth_line <- mk_branch_line(oth)
       # Restricted policy detail if available
-      restr_line <- if (!is.null(res_restr)) sprintf("Restricted PV=%.3f%s, Coverage=%.1f%% (Δ vs full = %.3f)",
+      restr_line <- if (!is.null(res_restr)) sprintf("Restricted PV=%.3f%s, Coverage=%.1f%% (change vs full = %.3f)",
                           res_restr$pv_ctrl, fmt_ci2(res_restr$lo_ctrl, res_restr$hi_ctrl), 100*res_restr$coverage, res_restr$pv_ctrl - full_pv) else ""
+      # human-friendly model label
+      model_label <- tryCatch({ out_name <- gsub("^model_", "", mn); .apply_label_stability(out_name, label_mapping) },
+                              error = function(e) gsub("^model_", "", mn))
+      # who-to-treat line: only if dominant split contributes positively
+      who_line <- ""
+      if (length(best) == 1 && !is.na(contrib[best]) && contrib[best] > 0) {
+        who_line <- paste0("  * Who to treat (dominant): ", split_label)
+      }
       head_line <- switch(decision,
-        deploy_restricted = sprintf("- %s: Recommend restricted policy (treat only in %s). PV=%.3f%s, Coverage=%.1f%%. Full PV=%.3f%s.",
-                                    gsub("^model_", "", mn), lab, res_restr$pv_ctrl, fmt_ci2(res_restr$lo_ctrl, res_restr$hi_ctrl), 100*res_restr$coverage,
+        deploy_restricted = sprintf("* %s: PV(restricted)=%.3f%s; Coverage=%.1f%%; Full PV=%.3f%s.",
+                                    model_label, res_restr$pv_ctrl, fmt_ci2(res_restr$lo_ctrl, res_restr$hi_ctrl), 100*res_restr$coverage,
                                     full_pv, fmt_ci2(full_lo, full_hi)),
-        deploy_full = sprintf("- %s: Recommend deploying full policy. PV=%.3f%s.",
-                               gsub("^model_", "", mn), full_pv, fmt_ci2(full_lo, full_hi)),
-        do_not_deploy = sprintf("- %s: Do not deploy (no favorable dominant split / PV ≤ 0). Full PV=%.3f%s.",
-                                 gsub("^model_", "", mn), full_pv, fmt_ci2(full_lo, full_hi)),
-        sprintf("- %s: Caution. Restricted policy improves PV but uncertain.", gsub("^model_", "", mn))
+        deploy_full = sprintf("* %s: PV=%.3f%s.", model_label, full_pv, fmt_ci2(full_lo, full_hi)),
+        do_not_deploy = sprintf("* %s: Reason: %s. Full PV=%.3f%s.", model_label, reason, full_pv, fmt_ci2(full_lo, full_hi)),
+        sprintf("* %s: Restricted improves PV but CI includes zero.", model_label)
       )
       rec_line <- paste(
         head_line,
-        if (nzchar(dom_line)) paste0("  • Dominant: ", dom_line) else "",
-        if (nzchar(oth_line)) paste0("  • Other: ", oth_line) else "",
-        if (nzchar(restr_line)) paste0("  • ", restr_line) else "",
+        who_line,
+        if (nzchar(dom_line)) paste0("  * Dominant: ", dom_line) else "",
+        if (nzchar(oth_line)) paste0("  * Other: ", oth_line) else "",
+        if (nzchar(restr_line)) paste0("  * ", restr_line) else "",
         sep = "\n"
       )
-      recommendations_text <- paste(recommendations_text, rec_line, sep = if (nzchar(recommendations_text)) "\n" else "")
+      # bucketize
+      rec_buckets[[decision]] <- c(rec_buckets[[decision]], rec_line)
       recommendations_by_model[[mn]] <- list(
         decision = decision,
         reason = reason,
-        selected_label = if (length(best)) lab else NA_character_,
+        selected_label = if (length(best)) split_label else NA_character_,
         dominance_pct = if (length(best) && abs_sum > 0) round(100 * abs(contrib[best]) / abs_sum, 1) else NA_real_,
         full = list(pv = full_pv, lo = full_lo, hi = full_hi),
         restricted = res_restr
       )
     }
+  }
+  # Render grouped recommendations text
+  if (length(Filter(length, rec_buckets))) {
+    parts <- character()
+    if (length(rec_buckets$deploy_full)) {
+      parts <- c(parts, paste0("#### Recommend deploying full policy\n\n", paste(rec_buckets$deploy_full, collapse = "\n")))
+    }
+    if (length(rec_buckets$deploy_restricted)) {
+      parts <- c(parts, paste0("\n\n#### Recommend restricted policy\n\n", paste(rec_buckets$deploy_restricted, collapse = "\n")))
+    }
+    if (length(rec_buckets$caution)) {
+      parts <- c(parts, paste0("\n\n#### Caution\n\n", paste(rec_buckets$caution, collapse = "\n")))
+    }
+    if (length(rec_buckets$do_not_deploy)) {
+      parts <- c(parts, paste0("\n\n#### Do not deploy\n\n", paste(rec_buckets$do_not_deploy, collapse = "\n")))
+    }
+    recommendations_text <- paste(parts, collapse = "")
   }
 
   # Build compact split tables (per-model and combined) if requested
@@ -1183,19 +1264,19 @@ margot_policy_summary_report <- function(object,
         pv_t_val <- if (denom_rel_abs > 0) 100 * sign(pv_treat) * abs(pv_treat) / denom_rel_abs else rep(NA_real_, length(pv_treat))
         pv_c_val <- pv_c_val[idx]
         pv_t_val <- pv_t_val[idx]
-        pv_c_label <- "PVc %"
-        pv_t_label <- "PVT %"
+        pv_c_label <- "PV (control-all) %"
+        pv_t_label <- "PV (treat-all) %"
       } else if (contrib_scale == "rel_signed") {
         pv_c_val <- if (abs(denom_rel_signed) > 0) 100 * pv_ctrl / denom_rel_signed else rep(NA_real_, length(pv_ctrl))
         pv_t_val <- if (abs(denom_rel_signed) > 0) 100 * pv_treat / denom_rel_signed else rep(NA_real_, length(pv_treat))
         pv_c_val <- pv_c_val[idx]
         pv_t_val <- pv_t_val[idx]
-        pv_c_label <- "PVc %"
-        pv_t_label <- "PVT %"
+        pv_c_label <- "PV (control-all) %"
+        pv_t_label <- "PV (treat-all) %"
       } else {
         # already subset above
-        pv_c_label <- "PVc"
-        pv_t_label <- "PVT"
+        pv_c_label <- "PV (control-all)"
+        pv_t_label <- "PV (treat-all)"
       }
       # Construct data frame
       out <- data.frame(
@@ -1215,8 +1296,8 @@ margot_policy_summary_report <- function(object,
         if (!uc_show[i]) return("—")
         fmt_eff_ci(sb$uplift_control[i], sb$uplift_control_lo[i], sb$uplift_control_hi[i], digits, show_ci_compact)
       }, character(1))
-      out$`Uplift_T [CI]` <- ut_col
-      out$`AvoidedHarm_C [CI]` <- uc_col
+      out$`Uplift (treated) [CI]` <- ut_col
+      out$`Avoided harm (control) [CI]` <- uc_col
       out[[pv_c_label]] <- ifelse(is.na(pv_c_val), NA, round(pv_c_val, 1))
       if (isTRUE(show_pvt)) {
         out[[pv_t_label]] <- ifelse(is.na(pv_t_val), NA, round(pv_t_val, 1))
@@ -1411,7 +1492,7 @@ margot_policy_summary_report <- function(object,
     }
     entries <- vapply(
       seq_len(nrow(df)),
-      function(idx) paste0("- ", format_report_entry(df[idx, , drop = FALSE])),
+      function(idx) paste0("* ", format_report_entry(df[idx, , drop = FALSE])),
       character(1)
     )
     paste(c(heading, "", entries, ""), collapse = "\n")
@@ -1419,7 +1500,7 @@ margot_policy_summary_report <- function(object,
 
   report_sections <- list()
   if (isTRUE(include_explanation)) {
-    report_sections <- c(report_sections, list(policy_expl, ""))
+    report_sections <- c(report_sections, list("### What Policy Value Means", "", policy_expl, ""))
   }
 
   depth_sentence <- if (length(unique_depths) == 1) {
@@ -1433,25 +1514,33 @@ margot_policy_summary_report <- function(object,
     )
   }
 
-  report_sections <- c(report_sections, list(
+  # Build the blocks for report view (include Neutral only when enabled)
+  section_list <- list(
     depth_sentence,
     "",
     build_group_block(
       "Wins (policy value vs control-all 95% CI entirely > 0)",
       wins,
       "No wins: no models delivered a statistically significant policy value gain vs control-all (95% CI > 0)."
-    ),
-    build_group_block(
-      "Neutral (policy value vs control-all CI spans zero)",
-      neutral,
-      "No neutral models: every evaluable policy was classified as win or caution."
-    ),
+    )
+  )
+  if (isTRUE(show_neutral_eff)) {
+    section_list <- c(section_list, list(
+      build_group_block(
+        "Neutral (policy value vs control-all CI spans zero)",
+        neutral,
+        "No neutral models: every evaluable policy was classified as win or caution."
+      )
+    ))
+  }
+  section_list <- c(section_list, list(
     build_group_block(
       "Caution (policy value vs control-all 95% CI entirely < 0)",
       harm,
       "No caution models: no policy value estimates fell entirely below zero."
     )
   ))
+  report_sections <- c(report_sections, section_list)
 
   report_text <- paste(unlist(report_sections), collapse = "\n")
 
@@ -1518,14 +1607,14 @@ margot_policy_summary_report <- function(object,
       if (isTRUE(compact)) {
         # compact line: focus on control-all PV + treated-only uplift + coverage
         lines <- c(lines, paste0(
-          "- ", out_label, depth_note, ": ",
+          "* ", out_label, depth_note, ": ",
           "PV(control-all) = ", pv_ctrl_text, "; ",
           "Uplift(treated) = ", uplift_text, "; ",
           "Coverage = ", coverage_text
         ))
       } else {
         lines <- c(lines, paste0(
-          "- ", out_label, depth_note, ": ",
+          "* ", out_label, depth_note, ": ",
           "policy vs control-all = ", pv_ctrl_text, "; ",
           "policy vs treat-all = ", pv_treat_text, "; ",
           "avg uplift (treated) = ", uplift_text, ", coverage = ", coverage_text, stab_text
@@ -1542,7 +1631,7 @@ margot_policy_summary_report <- function(object,
               if (length(shares) && max(shares, na.rm = TRUE) >= 0.6) {
                 top_idx <- which.max(shares)
                 dom_lab <- sb$label[top_idx]
-                dom_msg <- paste0("; dominance: ", round(100 * shares[top_idx], 1), "% of PV(control-all) from ", dom_lab)
+                dom_msg <- paste0("Dominance: ", round(100 * shares[top_idx], 1), "% of PV(control-all) from ", dom_lab)
               }
             }
             # build compact lines per group
@@ -1565,10 +1654,10 @@ margot_policy_summary_report <- function(object,
               }
               parts <- c(parts, paste0("PV(ctrl-all) contrib ", round(row_sb$contrib_pv_control_all, digits)))
               parts <- c(parts, paste0("PV(treat-all) contrib ", round(row_sb$contrib_pv_treat_all, digits)))
-              lines <- c(lines, paste0("  • By split: ", paste(parts, collapse = "; ")))
+              lines <- c(lines, paste0("  * By split: ", paste(parts, collapse = "; ")))
             }
             if (nzchar(dom_msg)) {
-              lines <- c(lines, paste0("  • ", dom_msg))
+              lines <- c(lines, paste0("  * ", dom_msg))
             }
           }
         }
@@ -1581,9 +1670,9 @@ margot_policy_summary_report <- function(object,
     "We evaluate the consensus policy on the held-out test set used for the policy tree evaluation. ",
     "For each unit, we obtain conditional means (μ0, μ1) via double-robust scores and predict the policy action a(x). ",
     "Policy value contrasts are computed as sample averages of per-unit contributions: ",
-    "PV(control-all) = mean(1{a=Treat} × (μ1−μ0)), PV(treat-all) = mean(1{a=Control} × (μ0−μ1)). ",
+    "PV(control-all) = mean(1{a=Treat} $\\times$ (μ1−μ0)), PV(treat-all) = mean(1{a=Control} $\\times$ (μ0−μ1)). ",
     "Coverage = mean(1{a=Treat}) and uplift among treated = mean(μ1−μ0 | a=Treat), satisfying ",
-    "PV(control-all) = Coverage × Uplift_Treated. Split contributions decompose these means over the first split (or leaves) and sum exactly to the overall values. ",
+    "PV(control-all) = Coverage $\\times$ Uplift_Treated. Split contributions decompose these means over the first split (or leaves) and sum exactly to the overall values. ",
     sprintf("Standard errors use %s (R=%d for bootstrap).", se_method, ifelse(se_method == "bootstrap", R, NA_integer_))
   )
 
@@ -1621,7 +1710,7 @@ margot_policy_summary_report <- function(object,
     n_caut <- sum(decs == "caution", na.rm = TRUE)
     n_no <- sum(decs == "do_not_deploy", na.rm = TRUE)
     auto_decision_counts <- c(full = n_full, restricted = n_restr, caution = n_caut, do_not_deploy = n_no)
-    decision_line <- sprintf("• Decisions — Full: %d, Restricted: %d, Caution: %d, Do not deploy: %d.", n_full, n_restr, n_caut, n_no)
+    decision_line <- sprintf("* Decisions — Full: %d, Restricted: %d, Caution: %d, Do not deploy: %d.", n_full, n_restr, n_caut, n_no)
 
     dom_ok <- vapply(
       recommendations_by_model,
@@ -1632,16 +1721,18 @@ margot_policy_summary_report <- function(object,
     if (any(dom_ok)) {
       for (nm in names(recommendations_by_model)[dom_ok]) {
         r <- recommendations_by_model[[nm]]
-        dom_lines <- c(dom_lines, sprintf("%s: %s (%.1f%% of PVc)", gsub("^model_", "", nm), r$selected_label, r$dominance_pct))
+        out_name <- gsub("^model_", "", nm)
+        out_label <- tryCatch(.apply_label_stability(out_name, label_mapping), error = function(e) out_name)
+        dom_lines <- c(dom_lines, sprintf("%s: %s (share of PV (control-all): %.1f%%)", out_label, r$selected_label, r$dominance_pct))
       }
     }
     dominance_block <- if (length(dom_lines)) {
-      paste0("• Dominant positive split(s):\n  - ", paste(dom_lines, collapse = "\n  - "))
+      paste0("* Dominant positive split(s):\n  * ", paste(dom_lines, collapse = "\n  * "))
     } else {
-      "• No strong single dominant positive split across models."
+      "* No strong single dominant positive split across models."
     }
-    uncertainty_line <- "• Uncertainty: Most branch/leaf uplift CIs cross zero; treat as directional. Depth-1 policies may stabilize at a cost of nuance."
-    risk_line <- "• Harm flags: If dominant contribution is negative or full PV ≤ 0, avoid deployment or restrict to favorable branches and re-evaluate."
+    uncertainty_line <- "* Uncertainty: Many subgroup uplift intervals include zero — interpret subgroup effects as exploratory. Prefer depth‑1 for stability unless depth‑2 gains are clear and consistent."
+    risk_line <- "* Harm flags: If the dominant contribution is negative or the 95% CI for policy value includes zero, avoid deployment or restrict to favorable branches and re‑evaluate."
   }
 
   if (length(recommendations_by_model)) {
@@ -1656,25 +1747,43 @@ margot_policy_summary_report <- function(object,
     }
   }
 
+  # Construct a top-of-report deployment summary line (recommended models only)
+  deployment_summary_line <- ""
+  deployment_summary_counts_line <- ""
+  if (length(recommended_model_ids)) {
+    items <- vapply(recommended_model_ids, function(mn) {
+      out_name <- gsub("^model_", "", mn)
+      lab <- tryCatch(.apply_label_stability(out_name, label_mapping), error = function(e) out_name)
+      d <- model_depths[[mn]]
+      dec <- tryCatch(recommendations_by_model[[mn]]$decision, error = function(e) NA_character_)
+      mode <- if (identical(dec, "deploy_restricted")) "restricted" else "full"
+      sprintf("%s (depth %s; %s)", lab, d, mode)
+    }, character(1))
+    deployment_summary_line <- paste0("* Deployment summary: ", paste(items, collapse = ", "), ".")
+    # counts
+    if (!is.null(auto_decision_counts)) {
+      n_full <- auto_decision_counts[["full"]] %||% sum(vapply(recommended_model_ids, function(mn) tryCatch(recommendations_by_model[[mn]]$decision, error=function(e) NA_character_) == "deploy_full", logical(1)))
+      n_restr <- auto_decision_counts[["restricted"]] %||% sum(vapply(recommended_model_ids, function(mn) tryCatch(recommendations_by_model[[mn]]$decision, error=function(e) NA_character_) == "deploy_restricted", logical(1)))
+      deployment_summary_counts_line <- sprintf("* Deployment summary — counts: Full: %d; Restricted: %d.", n_full, n_restr)
+    }
+  }
+
   recommended_depth1_model_ids <- if (length(recommended_model_ids)) recommended_model_ids[model_depths[recommended_model_ids] == 1L] else character()
   recommended_depth2_model_ids <- if (length(recommended_model_ids)) recommended_model_ids[model_depths[recommended_model_ids] == 2L] else character()
   recommended_depth1_model_names <- if (length(recommended_depth1_model_ids)) vapply(recommended_depth1_model_ids, function(mn) .apply_label_stability(gsub("^model_", "", mn), label_mapping), character(1)) else character()
   recommended_depth2_model_names <- if (length(recommended_depth2_model_ids)) vapply(recommended_depth2_model_ids, function(mn) .apply_label_stability(gsub("^model_", "", mn), label_mapping), character(1)) else character()
-
-  depth_summary_line <- paste0(
-    "• Depth allocation — depth 1: ", length(depth1_model_ids), " model(s); depth 2: ", length(depth2_model_ids), " model(s)."
-  )
-  depth_pref_line <- paste0(
-    "• Depth preference — 1-level: ", format_name_list(depth1_model_names),
-    "; 2-level: ", format_name_list(depth2_model_names), "."
-  )
 
   practical_lines <- character()
   if (!is.null(auto_decision_counts)) {
     if (!is.null(decision_line)) practical_lines <- c(practical_lines, decision_line)
     if (!is.null(dominance_block)) practical_lines <- c(practical_lines, dominance_block)
     if (!is.null(uncertainty_line)) practical_lines <- c(practical_lines, uncertainty_line)
-    if (!is.null(risk_line)) practical_lines <- c(practical_lines, risk_line)
+    # risk_line moved to a standalone Risk Notes section below
+    # Specific harms alert when any CI is entirely below zero
+    if (length(caution_model_names)) {
+      harms_list <- paste(caution_model_names, collapse = ", ")
+      practical_lines <- c(practical_lines, paste0("* Harms alert: ", harms_list, " (CI < 0)."))
+    }
     if (length(recommended_model_ids)) {
       deployment_details <- paste(
         sprintf(
@@ -1684,24 +1793,12 @@ margot_policy_summary_report <- function(object,
         ),
         collapse = ", "
       )
-      practical_lines <- c(practical_lines, paste0("• Recommended for deployment: ", deployment_details, "."))
+      practical_lines <- c(practical_lines, paste0("* Recommended for deployment: ", deployment_details, "."))
     } else {
-      practical_lines <- c(practical_lines, "• Recommended for deployment: none.")
+      practical_lines <- c(practical_lines, "* Recommended for deployment: none.")
     }
-    if (length(recommended_depth1_model_names)) {
-      practical_lines <- c(
-        practical_lines,
-        paste0("• Recommended depth-1 models: ", paste(recommended_depth1_model_names, collapse = ", "), ".")
-      )
-    }
-    if (length(recommended_depth2_model_names)) {
-      practical_lines <- c(
-        practical_lines,
-        paste0("• Recommended depth-2 models: ", paste(recommended_depth2_model_names, collapse = ", "), ".")
-      )
-    }
+    # Depth allocation and depth preference bullets intentionally omitted to avoid implying deployment.
   }
-  practical_lines <- c(practical_lines, depth_summary_line, depth_pref_line)
   practical_takeaways_text <- paste(practical_lines[nzchar(practical_lines)], collapse = "\n")
 
   if (length(unique_depths) == 1) {
@@ -1709,10 +1806,237 @@ margot_policy_summary_report <- function(object,
   } else {
     header <- "### Policy Summary (mixed depths)\n\n"
   }
-  expl <- if (isTRUE(include_explanation)) paste0("\n\n", policy_expl, "\n\n") else "\n"
-  text <- paste0(header, paste(lines, collapse = "\n"), expl)
+  lead_expl <- if (isTRUE(include_explanation)) paste0("### What Policy Value Means\n\n", policy_expl, "\n\n") else ""
+  # Put deployment summary at the start of the Policy Summary subsection (not at the very top)
+  deploy_block <- if (nzchar(deployment_summary_line)) {
+    paste0("#### Deployment Summary\n\n",
+           deployment_summary_line,
+           if (nzchar(deployment_summary_counts_line)) paste0("\n", deployment_summary_counts_line) else "",
+           "\n\n")
+  } else ""
+  text <- paste0(lead_expl, header, deploy_block, paste(lines, collapse = "\n"), "\n")
   if (isTRUE(auto_recommend) && nzchar(recommendations_text)) {
     text <- paste0(text, "\n### Recommendations\n\n", recommendations_text, "\n")
+  }
+
+  # Analysis highlights: recurring first-split variables
+  analysis_block <- ""
+  if (length(split_breakdown)) {
+    all_vars <- unlist(lapply(split_breakdown, function(sb) unique(na.omit(sb$split_var_label))), use.names = FALSE)
+    if (length(all_vars)) {
+      tab_all <- sort(table(all_vars), decreasing = TRUE)
+      top_all <- paste(names(tab_all), sprintf("(n=%d)", as.integer(tab_all)), collapse = ", ")
+      analysis_lines <- c(paste0("* Common first-split variables (all models): ", top_all))
+      if (length(recommended_model_ids)) {
+        rec_vars <- unlist(lapply(split_breakdown[names(split_breakdown) %in% recommended_model_ids], function(sb) unique(na.omit(sb$split_var_label))), use.names = FALSE)
+        if (length(rec_vars)) {
+          tab_rec <- sort(table(rec_vars), decreasing = TRUE)
+          top_rec <- paste(names(tab_rec), sprintf("(n=%d)", as.integer(tab_rec)), collapse = ", ")
+          analysis_lines <- c(analysis_lines, paste0("* Common first-split variables (recommended): ", top_rec))
+        }
+      }
+      analysis_block <- paste0("\n### Analysis Highlights\n\n", paste(analysis_lines, collapse = "\n"), "\n")
+    }
+  }
+  # Signals worth monitoring: large magnitude but uncertain (CI spans zero) ranked by chosen signal score
+  signals_block <- ""
+  signals_df <- data.frame()
+  signals_df_all <- data.frame()
+  signals_brief_df <- data.frame()
+  signals_brief_df_all <- data.frame()
+  if (!identical(signal_score, "none")) {
+    score_col <- switch(signal_score,
+                        pv_snr = "signal_pv_snr_w",
+                        uplift_snr = "signal_uplift_snr_w",
+                        hybrid = "signal_hybrid",
+                        "")
+    # Build a full-model ranking (for programmatic access)
+    if (nzchar(score_col) && score_col %in% names(mm)) {
+      mm_sc <- mm[is.finite(mm[[score_col]]) & !is.na(mm[[score_col]]), , drop = FALSE]
+      if (nrow(mm_sc)) {
+        ord_all <- order(mm_sc[[score_col]], decreasing = TRUE, na.last = TRUE)
+        # annotate dominant split for each model once
+        get_dom_split <- function(mn) {
+          sb <- split_breakdown[[mn]]
+          if (is.null(sb) || !nrow(sb)) return(NA_character_)
+          contrib <- sb$contrib_pv_control_all
+          if (!any(is.finite(contrib)) || sum(abs(contrib), na.rm = TRUE) == 0) return(NA_character_)
+          sb$label[which.max(abs(contrib))]
+        }
+        signals_df_all <- within(mm_sc[ord_all, , drop = FALSE], {
+          outcome_label <- if (!is.null(label_mapping)) vapply(outcome, function(x) .apply_label_stability(x, label_mapping), character(1)) else outcome
+          signal_type <- signal_score
+          signal_value <- mm_sc[[score_col]][ord_all]
+          dominant_split <- vapply(model[ord_all], get_dom_split, character(1))
+        })
+        # keep relevant columns tidy
+        signals_df_all <- signals_df_all[, c("model", "outcome", "outcome_label", "depth",
+                                             "signal_type", "signal_value",
+                                             "estimate_ctrl", "ci_lo_ctrl", "ci_hi_ctrl",
+                                             "uplift", "uplift_lo", "uplift_hi",
+                                             "coverage", "stab_strength", "dominant_split")]
+        rownames(signals_df_all) <- NULL
+        # also build a brief table for the full ranking (rounded)
+        make_brief_all <- function(df_in) {
+          if (is.null(df_in) || !nrow(df_in)) return(data.frame())
+          rnd <- function(x) ifelse(is.na(x), NA, round(as.numeric(x), 3))
+          covp <- function(x) ifelse(is.na(x), NA, round(100 * as.numeric(x), 1))
+          data.frame(
+            Outcome = df_in$outcome_label,
+            Depth = df_in$depth,
+            Signal = rnd(df_in$signal_value),
+            `PV [CI]` = paste0(rnd(df_in$estimate_ctrl), " ", "[", rnd(df_in$ci_lo_ctrl), ", ", rnd(df_in$ci_hi_ctrl), "]"),
+            `Uplift (treated) [CI]` = paste0(rnd(df_in$uplift), " ", "[", rnd(df_in$uplift_lo), ", ", rnd(df_in$uplift_hi), "]"),
+            `Coverage %` = covp(df_in$coverage),
+            Stability = rnd(df_in$stab_strength),
+            `Dominant split` = df_in$dominant_split,
+            check.names = FALSE
+          )
+        }
+        signals_brief_df_all <- make_brief_all(signals_df_all)
+      }
+    }
+    # Build text block prioritising Neutral; fallback to non-wins if Neutral empty
+    cand <- neutral
+    header_label <- "### Signals Worth Monitoring (large magnitude, low certainty)\n\n"
+    if (!exists("neutral") || !nrow(neutral)) {
+      cand <- mm[!(mm$ci_lo_ctrl > 0), , drop = FALSE]  # non-wins fallback
+      header_label <- "### Top Signals in Non‑Wins (magnitude vs uncertainty)\n\n"
+    }
+    if (nzchar(score_col) && score_col %in% names(cand) && nrow(cand)) {
+      sc <- cand[[score_col]]
+      ord_neu <- order(sc, decreasing = TRUE, na.last = TRUE)
+      keep_idx <- ord_neu[seq_len(min(as.integer(signals_k), length(ord_neu)))]
+      keep_idx <- keep_idx[is.finite(sc[keep_idx]) & sc[keep_idx] > 0]
+      if (length(keep_idx)) {
+        # brief explainer line for the chosen signal score
+        expl <- switch(signal_score,
+          pv_snr = "Signal score (PV‑SNR) = |PV(control‑all)| / (CI half‑width), weighted by sqrt(Coverage) and stability (0.5 + 0.5×consensus strength).",
+          uplift_snr = "Signal score (uplift‑SNR) = |Uplift (treated)| / (CI half‑width), weighted by sqrt(Coverage) and stability (0.5 + 0.5×consensus strength).",
+          hybrid = "Signal score (hybrid) = 0.7×PV‑SNR + 0.3×uplift‑SNR.",
+          "Signal score ranks magnitude relative to uncertainty; no gating is implied."
+        )
+        lines_sig <- vapply(keep_idx, function(i) {
+          row <- cand[i, ]
+          mn <- row$model
+          out <- row$outcome
+          out_label <- if (!is.null(label_mapping)) .apply_label_stability(out, label_mapping) else row$outcome_label %||% out
+          # dominant split label if available
+          ds <- ""
+          sb <- split_breakdown[[mn]]
+          if (!is.null(sb) && nrow(sb)) {
+            contrib <- sb$contrib_pv_control_all
+            if (any(is.finite(contrib)) && sum(abs(contrib), na.rm = TRUE) > 0) {
+              top <- which.max(abs(contrib))
+              ds <- paste0("; Dominant split: ", sb$label[top])
+            }
+          }
+          sig_val <- if (!is.na(row[[score_col]])) paste0("; Signal score (", signal_score, "): ", round(row[[score_col]], 2)) else ""
+          paste0("* ", out_label, ": Uplift (treated) ",
+                 if (!is.na(row$uplift)) paste0(round(row$uplift, digits), if (!is.na(row$uplift_lo) & !is.na(row$uplift_hi)) paste0(" ", fmt_ci(row$uplift_lo, row$uplift_hi)) else "") else "NA",
+                 "; Coverage ", if (!is.na(row$coverage)) paste0(round(100*row$coverage,1), "%") else "NA",
+                 "; PV(control-all) ", round(row$estimate_ctrl, digits), " ", fmt_ci(row$ci_lo_ctrl, row$ci_hi_ctrl), sig_val, ds)
+        }, character(1))
+        # build a data frame with the same ordering
+        build_one <- function(i) {
+          row <- cand[i, ]
+          mn <- row$model
+          out <- row$outcome
+          out_label <- if (!is.null(label_mapping)) .apply_label_stability(out, label_mapping) else row$outcome_label %||% out
+          sb <- split_breakdown[[mn]]
+          dom_split <- NA_character_
+          if (!is.null(sb) && nrow(sb)) {
+            contrib <- sb$contrib_pv_control_all
+            if (any(is.finite(contrib)) && sum(abs(contrib), na.rm = TRUE) > 0) {
+              top <- which.max(abs(contrib))
+              dom_split <- sb$label[top]
+            }
+          }
+          data.frame(
+            model = mn,
+            outcome = out,
+            outcome_label = out_label,
+            depth = row$depth,
+            signal_type = signal_score,
+            signal_value = row[[score_col]],
+            pv_ctrl = row$estimate_ctrl,
+            pv_ctrl_lo = row$ci_lo_ctrl,
+            pv_ctrl_hi = row$ci_hi_ctrl,
+            uplift_treated = row$uplift,
+            uplift_lo = row$uplift_lo,
+            uplift_hi = row$uplift_hi,
+            coverage = row$coverage,
+            stability_strength = row$stab_strength,
+            dominant_split = dom_split,
+            stringsAsFactors = FALSE
+          )
+        }
+        sdf_list <- lapply(keep_idx, build_one)
+        signals_df <- do.call(rbind, sdf_list)
+        rownames(signals_df) <- NULL
+        # Build rounded brief tables for top-K signals
+        make_brief <- function(df_in) {
+          if (is.null(df_in) || !nrow(df_in)) return(data.frame())
+          out <- df_in
+          rnd <- function(x) ifelse(is.na(x), NA, round(as.numeric(x), 3))
+          out$Signal <- rnd(out$signal_value)
+          out$PV <- rnd(out$pv_ctrl)
+          out$PV_lo <- rnd(out$pv_ctrl_lo)
+          out$PV_hi <- rnd(out$pv_ctrl_hi)
+          out$Uplift <- rnd(out$uplift_treated)
+          out$U_lo <- rnd(out$uplift_lo)
+          out$U_hi <- rnd(out$uplift_hi)
+          out$Coverage <- ifelse(is.na(out$coverage), NA, round(100 * as.numeric(out$coverage), 1))
+          out$Stability <- ifelse(is.na(out$stability_strength), NA, round(as.numeric(out$stability_strength), 3))
+          data.frame(
+            Outcome = out$outcome_label,
+            Depth = out$depth,
+            `Signal` = out$Signal,
+            `PV [CI]` = paste0(out$PV, " ", "[", out$PV_lo, ", ", out$PV_hi, "]"),
+            `Uplift (treated) [CI]` = paste0(out$Uplift, " ", "[", out$U_lo, ", ", out$U_hi, "]"),
+            `Coverage %` = out$Coverage,
+            `Stability` = out$Stability,
+            `Dominant split` = out$dominant_split,
+            check.names = FALSE
+          )
+        }
+        signals_brief_df <- make_brief(signals_df)
+        # Render markdown for top-K brief table
+        signals_brief_md <- ""
+        if (nrow(signals_brief_df)) {
+          signals_brief_md <- tryCatch(knitr::kable(signals_brief_df, format = "markdown"),
+                                       error = function(e) paste(capture.output(print(signals_brief_df)), collapse = "\n"))
+        }
+        # normalize to single string for nzchar
+        signals_brief_md_str <- if (length(signals_brief_md)) paste(signals_brief_md, collapse = "\n") else ""
+        signals_block <- paste0("\n", header_label, expl, "\n\n",
+                                if (nzchar(signals_brief_md_str)) paste0(signals_brief_md_str, "\n\n") else "",
+                                paste(lines_sig, collapse = "\n"), "\n")
+      }
+    }
+  }
+  if (nzchar(analysis_block)) {
+    text <- paste0(text, analysis_block)
+  }
+  # Add table definitions to support interpretation
+  definitions_block <- paste0(
+    "\n### Table Definitions\n\n",
+    "* PV(control-all): mean predicted treatment effect among those recommended for treatment; equals Coverage × Uplift (treated).\n",
+    "* Uplift (treated): mean predicted treatment effect among those recommended for treatment.\n",
+    "* Coverage: percentage of cases recommended for treatment.\n",
+    "* Stability strength: consensus strength (0–1) from stability analysis. As a guide: ≥ 0.7 indicates a robust, repeatable split structure; around 0.5 is borderline; < 0.3 suggests highly exploratory patterns. Higher values imply more consistent trees across resamples.\n",
+    "* Signal score: magnitude relative to uncertainty (PV‑SNR, uplift‑SNR, or hybrid), optionally weighted by coverage and stability.\n",
+    "* Dominant split: first‑level split that contributes most (by absolute policy value contribution).\n",
+    "* unit_masks: per‑model evaluation details (IDs, full/restricted actions, masks, and coverage); used for auditing and exporting which cases are recommended treatment.\n"
+  )
+  text <- paste0(text, definitions_block)
+  if (nzchar(signals_block)) {
+    text <- paste0(text, signals_block)
+  }
+  # Risk notes (non-actionable cautions)
+  risk_block <- if (!is.null(risk_line) && nzchar(risk_line)) paste0("\n### Risk Notes\n\n", risk_line, "\n") else ""
+  if (nzchar(risk_block)) {
+    text <- paste0(text, risk_block)
   }
   if (nzchar(practical_takeaways_text)) {
     text <- paste0(text, "\n### Practical Takeaways\n\n", practical_takeaways_text, "\n")
@@ -1874,11 +2198,16 @@ margot_policy_summary_report <- function(object,
     interpretation = interpretation_text,
     table_md = table_md,
     table_df = tbl_df,
+    signals_df = signals_df,
+    signals_df_all = signals_df_all,
+    signals_brief_df = if (exists("signals_brief_df")) signals_brief_df else data.frame(),
+    signals_brief_df_all = if (exists("signals_brief_df_all")) signals_brief_df_all else data.frame(),
     split_breakdown = split_breakdown,
     split_table_compact = split_table_compact,
     split_table_compact_df = split_table_compact_df,
     split_table_compact_md = split_table_compact_md,
     split_table_compact_md_combined = split_table_compact_md_combined,
+    signals_df_all = signals_df_all,
     coherence_audit = coherence_audit,
     method_overview = method_overview,
     method_by_model = method_by_model,

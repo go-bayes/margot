@@ -11,7 +11,7 @@ plots of the density-ratio distributions by wave and shift."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.260</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.262</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -128,8 +128,11 @@ Character aliases include `"lab"` (blue/red/grey with a constant fallback) and
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored. Present for backward compatibility with older
-arguments like `save_plots` and `output_dir` that are being phased out.</p></dd>
+<dd><p>Optional named arguments recognised by
+`margot_interpret_lmtp_positivity()` when assembling the text summary
+(e.g., `label_mapping`, `waves`, `remove_waves`, `include_methods`,
+`include_diagnostics`). Unrecognised entries are silently ignored for
+backward compatibility with deprecated arguments such as `save_plots`.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -138,7 +141,7 @@ arguments like `save_plots` and `output_dir` that are being phased out.</p></dd>
   - overlap_summary: tibble combining by-wave and overall positivity/overlap metrics
   - ratio_plots: list of ggplot objects (if plot = TRUE)
   - flags: tibble of positivity flags
-  - text_summary: brief prose summary</p>
+  - text_summary: markdown-ready prose from `margot_interpret_lmtp_positivity()`</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

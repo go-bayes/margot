@@ -32,14 +32,17 @@
 #' @param fill_palette Optional vector of colours (named or unnamed) used when colouring histograms.
 #'   Character aliases include `"lab"` (blue/red/grey with a constant fallback) and
 #'   `"classic"` (the default qualitative palette).
-#' @param ... Ignored. Present for backward compatibility with older
-#'   arguments like `save_plots` and `output_dir` that are being phased out.
+#' @param ... Optional named arguments recognised by
+#'   `margot_interpret_lmtp_positivity()` when assembling the text summary
+#'   (e.g., `label_mapping`, `waves`, `remove_waves`, `include_methods`,
+#'   `include_diagnostics`). Unrecognised entries are silently ignored for
+#'   backward compatibility with deprecated arguments such as `save_plots`.
 #'
 #' @return A list with:
 #'   - overlap_summary: tibble combining by-wave and overall positivity/overlap metrics
 #'   - ratio_plots: list of ggplot objects (if plot = TRUE)
 #'   - flags: tibble of positivity flags
-#'   - text_summary: brief prose summary
+#'   - text_summary: markdown-ready prose from `margot_interpret_lmtp_positivity()`
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_histogram labs theme_classic theme_minimal theme_bw theme_gray theme_light theme_dark theme_void
 margot_lmtp_overlap <- function(x,
@@ -281,14 +284,45 @@ margot_lmtp_overlap <- function(x,
     }
   }
 
-  # Text summary
-  key_cols <- c("prop_zero","ess_frac","ess_pos_frac")
-  med <- function(v) if (length(v)) median(v, na.rm = TRUE) else NA_real_
-  medians <- vapply(key_cols, function(k) med(overlap_summary[[k]]), numeric(1))
-  text_summary <- sprintf(
-    "Across selected LMTP models: median zeros = %.1f%%, median ESS/N = %.3f, median ESS+/(N+) = %.3f.",
-    100*medians[["prop_zero"]], medians[["ess_frac"]], medians[["ess_pos_frac"]]
-  )
+  # Text summary assembled via margot_interpret_lmtp_positivity()
+  dots <- list(...)
+  allowed_opts <- c("label_mapping", "waves", "remove_waves",
+                    "include_methods", "include_diagnostics", "digits")
+  interpret_opts <- dots[intersect(names(dots), allowed_opts)]
+  if (!("digits" %in% names(interpret_opts))) {
+    interpret_opts$digits <- digits
+  }
+  interpret_opts$shifts <- shifts
+  interpret_opts$return <- "text"
+
+  selected_outcomes <- unique(overlap_summary$outcome)
+  selected_outcomes <- selected_outcomes[!is.na(selected_outcomes) & nzchar(selected_outcomes)]
+
+  text_chunks <- vapply(selected_outcomes, function(outcome_name) {
+    res <- tryCatch(
+      do.call(
+        margot_interpret_lmtp_positivity,
+        c(list(x = x, outcome = outcome_name), interpret_opts)
+      ),
+      error = function(e) {
+        if (isTRUE(verbose)) {
+          warn_msg <- paste0(
+            "margot_interpret_lmtp_positivity() failed for outcome ",
+            outcome_name, ": ", conditionMessage(e)
+          )
+          if (requireNamespace("cli", quietly = TRUE)) {
+            cli::cli_alert_warning(warn_msg)
+          } else {
+            warning(warn_msg, call. = FALSE)
+          }
+        }
+        ""
+      }
+    )
+    if (is.null(res)) "" else res
+  }, character(1))
+  text_chunks <- text_chunks[nzchar(text_chunks)]
+  text_summary <- if (length(text_chunks)) paste(text_chunks, collapse = "\n\n") else ""
 
   list(
     overlap_summary = overlap_summary,

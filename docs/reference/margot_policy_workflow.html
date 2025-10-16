@@ -13,7 +13,7 @@ depth-2 gains are material."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.260</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.262</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,6 +61,11 @@ depth-2 gains are material.</p>
 <span>  audience <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"policy"</span>, <span class="st">"research"</span><span class="op">)</span>,</span>
 <span>  use_coherent_in_interpret <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  brief_include_group <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  expand_acronyms <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  show_neutral <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  prefer_stability <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  signal_score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"pv_snr"</span>, <span class="st">"uplift_snr"</span>, <span class="st">"hybrid"</span><span class="op">)</span>,</span>
+<span>  signals_k <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -125,6 +130,35 @@ column (Wins/Neutral/Caution). If FALSE, returns a simplified brief without Grou
 Default FALSE for policy audiences.</p></dd>
 
 
+<dt id="arg-expand-acronyms">expand_acronyms<a class="anchor" aria-label="anchor" href="#arg-expand-acronyms"></a></dt>
+<dd><p>Logical; if TRUE, expand common acronyms in labels (e.g.,
+RWA → Right-Wing Authoritarianism (RWA)). You may also supply custom expansions via
+`options(margot.boilerplate.acronyms = list(SES = "Socioeconomic Status"))`.</p></dd>
+
+
+<dt id="arg-show-neutral">show_neutral<a class="anchor" aria-label="anchor" href="#arg-show-neutral"></a></dt>
+<dd><p>Logical or NULL; controls inclusion of the Neutral group. Default NULL
+shows Neutral for research audiences and hides it for policy audiences. Set TRUE/FALSE
+to override explicitly.</p></dd>
+
+
+<dt id="arg-prefer-stability">prefer_stability<a class="anchor" aria-label="anchor" href="#arg-prefer-stability"></a></dt>
+<dd><p>Logical; if TRUE, raise the parsimony threshold for switching to
+depth-2 (min_gain_for_depth_switch ≥ 0.01) to prefer depth-1 unless depth-2 gains are
+clearly larger.</p></dd>
+
+
+<dt id="arg-signal-score">signal_score<a class="anchor" aria-label="anchor" href="#arg-signal-score"></a></dt>
+<dd><p>Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
+"none", the summary text includes a "Signals Worth Monitoring" section that ranks Neutral
+models by the selected score (magnitude relative to uncertainty, optionally weighted by
+coverage and stability). See the package NEWS for details.</p></dd>
+
+
+<dt id="arg-signals-k">signals_k<a class="anchor" aria-label="anchor" href="#arg-signals-k"></a></dt>
+<dd><p>Integer; number of top signals to display when `signal_score != "none"`</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional pass-through args to [margot_policy_summary_report()], e.g.,
 `split_compact`, `split_top_only`, etc.</p></dd>
@@ -134,7 +168,8 @@ Default FALSE for policy audiences.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with components from depth selection (best), summary (summary), and
   optional interpretations (interpret). Includes `policy_brief_df` shortcut drawn from
-  `summary$group_table_df`.</p>
+  `summary$group_table_df`. Also returns `method_explanation` (long/short/prereg) and
+  `summary$signals_df` when `signal_score != "none"`.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

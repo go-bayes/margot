@@ -1,5 +1,10 @@
 # margot NEWS
 
+## Changes in version 1.0.261
+
+### Improvements
+- `margot_lmtp_overlap()` now sources its `text_summary` from `margot_interpret_lmtp_positivity()`, so overlap summaries mirror the enhanced prose and optional diagnostics provided by the helper.
+
 ## Changes in version 1.0.260
 
 ### Fixes

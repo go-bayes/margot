@@ -279,13 +279,13 @@ margot_policy_summary_compare_depths <- function(object,
       pv <- r$full$pv; lo <- r$full$lo; hi <- r$full$hi
       sel_label <- r$selected_label
       line <- switch(decision,
-        deploy_restricted = sprintf("- %s (depth %s): Recommend restricted policy (split: %s). PV=%.3f [%.3f, %.3f]",
+        deploy_restricted = sprintf("* %s (depth %s): Recommend restricted policy (split: %s). PV=%.3f [%.3f, %.3f]",
                                     lab, pick, ifelse(is.na(sel_label), "—", sel_label), pv, lo, hi),
-        deploy_full = sprintf("- %s (depth %s): Recommend deploying full policy. PV=%.3f [%.3f, %.3f]",
+        deploy_full = sprintf("* %s (depth %s): Recommend deploying full policy. PV=%.3f [%.3f, %.3f]",
                               lab, pick, pv, lo, hi),
-        do_not_deploy = sprintf("- %s (depth %s): Do not deploy. PV=%.3f [%.3f, %.3f]",
+        do_not_deploy = sprintf("* %s (depth %s): Do not deploy. PV=%.3f [%.3f, %.3f]",
                                 lab, pick, pv, lo, hi),
-        sprintf("- %s (depth %s): Caution. PV=%.3f [%.3f, %.3f]",
+        sprintf("* %s (depth %s): Caution. PV=%.3f [%.3f, %.3f]",
                 lab, pick, pv, lo, hi)
       )
       best_lines <- c(best_lines, line)
@@ -298,7 +298,7 @@ margot_policy_summary_compare_depths <- function(object,
           pv <- ca$pv_ctrl_rep[i]; lo <- NA_real_; hi <- NA_real_
           best_by_model[[mn]] <- list(decision = "caution", reason = "no recommendations available",
                                       selected_label = NA_character_, full = list(pv = pv, lo = lo, hi = hi))
-          best_lines <- c(best_lines, sprintf("- %s (depth %s): PV=%.3f", lab, pick, pv))
+          best_lines <- c(best_lines, sprintf("* %s (depth %s): PV=%.3f", lab, pick, pv))
         }
       } else {
         # last fallback to raw reporter values
@@ -307,12 +307,36 @@ margot_policy_summary_compare_depths <- function(object,
           pv <- val[1, "pv"]; lo <- val[1, "lo"]; hi <- val[1, "hi"]
           best_by_model[[mn]] <- list(decision = "caution", reason = "raw reporter fallback",
                                       selected_label = NA_character_, full = list(pv = pv, lo = lo, hi = hi))
-          best_lines <- c(best_lines, sprintf("- %s (depth %s): PV=%.3f%s", lab, pick, pv, if (!is.na(lo) && !is.na(hi)) sprintf(" [%.3f, %.3f]", lo, hi) else ""))
+          best_lines <- c(best_lines, sprintf("* %s (depth %s): PV=%.3f%s", lab, pick, pv, if (!is.na(lo) && !is.na(hi)) sprintf(" [%.3f, %.3f]", lo, hi) else ""))
         }
       }
     }
   }
   best_text <- if (length(best_lines)) paste(c("### Best-of-Depths Summary", "", best_lines, ""), collapse = "\n") else ""
+
+  # Build a compact deployment summary for the best-of-depth selection
+  deploy_line <- ""
+  deploy_counts <- ""
+  if (length(best_by_model)) {
+    rec_ids <- names(Filter(function(x) x$decision %in% c("deploy_full", "deploy_restricted"), best_by_model))
+    if (length(rec_ids)) {
+      items <- vapply(rec_ids, function(mn) {
+        out <- gsub("^model_", "", mn)
+        lab <- tryCatch(.apply_label_stability(out, label_mapping), error = function(e) out)
+        d <- sel[[mn]]
+        dec <- best_by_model[[mn]]$decision
+        mode <- if (identical(dec, "deploy_restricted")) "restricted" else "full"
+        sprintf("%s (depth %s; %s)", lab, d, mode)
+      }, character(1))
+      deploy_line <- paste0("* Deployment summary: ", paste(items, collapse = ", "), ".")
+      n_full <- sum(vapply(rec_ids, function(mn) best_by_model[[mn]]$decision == "deploy_full", logical(1)))
+      n_restr <- sum(vapply(rec_ids, function(mn) best_by_model[[mn]]$decision == "deploy_restricted", logical(1)))
+      deploy_counts <- sprintf("* Deployment summary — counts: Full: %d; Restricted: %d.", n_full, n_restr)
+    }
+  }
+  if (nzchar(deploy_line)) {
+    best_text <- paste(c(deploy_line, deploy_counts, "", best_text), collapse = "\n")
+  }
 
   best_summary <- NULL
   depth_mapping <- sel[!is.na(sel)]
@@ -351,7 +375,7 @@ margot_policy_summary_compare_depths <- function(object,
       }
     )
     if (!is.null(best_summary)) {
-      best_text <- best_summary$report
+      # Keep best_text as the compact best-of-depths list to avoid confusion.
       best_by_model <- best_summary$recommendations_by_model
       best_split_df <- best_summary$split_table_compact_df
       best_split_md <- best_summary$split_table_compact_md
@@ -473,7 +497,8 @@ margot_policy_summary_compare_depths <- function(object,
   depth_takeaways_text <- paste(depth_takeaways_lines, collapse = "\n")
 
   if (nzchar(depth_takeaways_text)) {
-    depth_block <- paste(c("### Depth Selection", "", depth_takeaways_text, ""), collapse = "\n")
+    depth_note <- "Note: Depth preference indicates which tree depth achieved a higher policy value for each outcome. It does not, on its own, imply that the policy should be deployed; deployment recommendations depend on statistical certainty and are summarized below."
+    depth_block <- paste(c("### Depth Selection", "", depth_takeaways_text, "", depth_note, ""), collapse = "\n")
     if (nzchar(best_text)) {
       best_text <- paste0(depth_block, best_text)
     } else {
