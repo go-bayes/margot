@@ -4769,7 +4769,24 @@
 <li><p>Present‑tense, general prose in interpretation; moved harm flags into a separate Risk Notes section</p></li>
 <li><p>Soft‑deprecate Neutral in policy audience (configurable via <code>show_neutral</code>)</p></li>
 <li><p><code>prefer_stability</code> biases depth selection toward depth‑1 unless depth‑2 gains are clearly larger</p></li>
-<li><p>Acronym expansion opt‑in: <code>expand_acronyms</code> with user‑overrides via options</p></li>
+<li><p>Acronym expansion opt‑in: <code>expand_acronyms</code> with user‑overrides via options # [2025-10-22] margot 1.0.263 ### Added</p></li>
+<li><p>IPSI context (odds‑free) in <code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> with a simple probability‑scale formula and small illustrative translations (domain‑agnostic; defaults to “exposure”).</p></li>
+<li><p>Deterministic policy context describing history‑dependent rules (e.g., A_t^d := d_t(A_t, H_t)) and listing included policies.</p></li>
+<li><p>Optional policy‑implied exposure rates by wave and overall using reweighted means; non‑binary exposures are thresholded via an indicator 1(A_t op tau) (defaults: op is &gt;, tau = 0).</p></li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-242">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-242"></a></h4>
+<ul><li>Wave labels in positivity text respect user <code>label_mapping</code> (e.g., “Baseline (2018/19)”), supporting skipped panels.</li>
+<li>Clarified positivity vs target: diagnostics labelled “positivity; uncensored rows” with a note that estimation reweights to the baseline cohort via censoring adjustment.</li>
+<li>Per‑wave bullets include both <code>ESS+/(N+)</code> and <code>ESS+/(N_pt)</code>.</li>
+<li>Censoring wording clarified: “censoring to next wave” for intermediate waves, “censoring end of study” for the final exposure; shift summaries show “censoring (zeros across person‑time)”.</li>
+<li>LaTeX sanitisation of common glyphs in generated text (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>→</mo><annotation encoding="application/x-tex">\to</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>±</mi><annotation encoding="application/x-tex">\pm</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≥</mo><annotation encoding="application/x-tex">\ge</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≤</mo><annotation encoding="application/x-tex">\le</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≈</mo><annotation encoding="application/x-tex">\approx</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>×</mi><annotation encoding="application/x-tex">\times</annotation></semantics></math>).</li>
+<li>
+<code><a href="../reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code>: suppress deprecated <code>layout</code> warning unless <code>layout</code> is explicitly supplied.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="docs-1-0-242">Docs<a class="anchor" aria-label="anchor" href="#docs-1-0-242"></a></h4>
+<ul><li>Rd parameter docs avoid LaTeX macros to prevent Rd warnings; pkgdown reference updated to include <code>margot_multi_evalue</code>.</li>
 </ul></div>
 </div>
 </div>

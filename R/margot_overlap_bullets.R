@@ -297,6 +297,7 @@ margot_interpret_lmtp_positivity <- function(x,
         "the IPSI with parameter $\\delta>0$ modifies the assignment mechanism to ",
         "$q_t(H_t) = \\dfrac{\\delta\\, g_t(H_t)}{(1 - g_t(H_t)) + \\delta\\, g_t(H_t)}$, applied at each wave conditional on history $H_t$."
       ),
+      "Definitions: $\\delta>0$ is the policy intensity; $g_t(H_t)=\\Pr(A_t=1\\mid H_t)$ is the observed conditional risk at wave $t$; $q_t(H_t)$ is the policy‑modified risk; $H_t$ denotes the measured history at wave $t$; $A_t$ is the binary exposure.",
       if (!is.null(delta_set)) paste0("We considered ", delta_set, ".") else "",
       if (length(example_lines)) "Illustration on the probability scale (not estimates; for intuition only):" else "",
       if (length(example_lines)) paste0("- ", example_lines) else ""
@@ -325,6 +326,7 @@ margot_interpret_lmtp_positivity <- function(x,
         "(e.g., setting a minimum or maximum) or depend on covariate history $\\mathcal H_t$."
       )
     )
+    lines <- c(lines, "Definitions: $A_t$ is the exposure at wave $t$; $d_t$ is a policy rule (possibly history‑dependent); $\\mathcal H_t$ denotes the measured history available at wave $t$.")
     if (length(labeled)) {
       # List detected policies in a single line
       lines <- c(lines, paste0("Included deterministic policies: ", paste(unique(labeled), collapse = ", "), "."))
@@ -337,7 +339,7 @@ margot_interpret_lmtp_positivity <- function(x,
     if (!isTRUE(include_policy_rates)) return(character(0))
     c(
       "",
-      "Policy rates report $\\Pr(A_t=1)$ under each policy by reweighting the observed data. When the exposure is not binary, we create an indicator $\\mathbb{1}(A_t \\;{op}\\; \\tau)$ before aggregation (defaults: $op$ is $>$ and $\\tau=0$).",
+      "Policy rates report $\\Pr(A_t=1)$ under each policy by reweighting the observed data. Definitions: $r_{i,t}$ are per‑wave density‑ratio weights; $A_{i,t}$ is the exposure indicator (after thresholding if needed); $\\hat p_t = \\sum_i r_{i,t} A_{i,t} / \\sum_i r_{i,t}$. When the exposure is not binary, we create an indicator $\\mathbb{1}(A_t \\;{op}\\; \\tau)$ before aggregation (defaults: $op$ is $>$ and $\\tau=0$).",
       ""
     )
   }
