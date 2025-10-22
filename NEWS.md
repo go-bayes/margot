@@ -1,3 +1,9 @@
+# [2025-10-22] margot 1.0.265
+
+### Fixed
+- `margot_plot()` restored to wrking order.
+
+
 # [2025-10-22] margot 1.0.264
 ### Added
 - IPSI context (odds‑free) in `margot_interpret_lmtp_positivity()` with a simple probability‑scale formula and small illustrative translations; domain‑agnostic default labelling ("exposure").
@@ -13,6 +19,9 @@
 - LaTeX sanitisation of common glyphs in generated text ($\to$, $\pm$, $\ge$, $\le$, $\approx$, $\times$).
 - `margot_plot_lmtp_overlap_grid()`: suppress deprecated `layout` warning unless `layout` is explicitly supplied.
 - `margot_plot_dev()`: hides subtitle spacing when subtitle is empty.
+
+### Fixed
+- Reverted `margot_plot()` to the last known stable implementation (pre‑DEV) to resolve recent breakages and restore previous behaviour and API. `margot_plot_dev()` remains available for advanced workflows.
 
 ### Docs
 - Rd parameter docs avoid LaTeX macros to prevent Rd warnings; pkgdown reference updated to include `margot_plot_dev` and `margot_multi_evalue`.

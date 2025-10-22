@@ -112,15 +112,8 @@ margot_correct_combined_table <- function(combined_table,
 
   tbl <- combined_table
 
-  # ---- numeric coercion guardrails ----------------------------------------
-  to_num <- function(x) suppressWarnings(as.numeric(x))
-  for (cn in c(est_col, "2.5 %", "97.5 %")) {
-    if (cn %in% names(tbl)) tbl[[cn]] <- to_num(tbl[[cn]])
-  }
-  # if coercion produced NAs everywhere, abort gracefully
-  if (all(is.na(tbl[[est_col]])) || all(is.na(tbl$`2.5 %`)) || all(is.na(tbl$`97.5 %`))) {
-    stop("combined_table contains non-numeric estimates or CIs after coercion; cannot adjust.")
-  }
+  # Keep original numeric columns as provided; avoid coercion to prevent
+  # introducing accidental NAs in downstream interpretation/tables.
 
   ## ---- 1  adjust the CI ----------------------------------------------------
   if (adjust == "bonferroni") {
@@ -192,20 +185,21 @@ margot_correct_combined_table <- function(combined_table,
       se0 = (tbl$`97.5 %` - tbl[[est_col]]) / stats::qnorm(0.975)
     ),
     \(est, lo, hi, se0) {
-      # guard against non-numeric inputs
-      est <- to_num(est); lo <- to_num(lo); hi <- to_num(hi); se0 <- to_num(se0)
-      if (any(!is.finite(c(est, lo, hi, se0)))) {
-        return(tibble::tibble(E_Value = NA_real_, E_Val_bound = NA_real_))
+      if (scale == "RD") {
+        # OLS E-values on the difference scale; robust and should not yield NA
+        ev <- EValue::evalues.OLS(est, se = se0, sd = sd, delta = delta, true = 0)
+        ev_df <- as.data.frame(ev)[2, c("point", "lower", "upper"), drop = FALSE]
+        tibble::tibble(E_Value = ev_df$point, E_Val_bound = dplyr::coalesce(ev_df$lower, ev_df$upper, 1))
+      } else {
+        # RR path retained with safety catch; users can revisit later
+        out <- try(EValue::evalues.RR(est, lo = lo, hi = hi, true = 1), silent = TRUE)
+        if (inherits(out, "try-error")) {
+          tibble::tibble(E_Value = NA_real_, E_Val_bound = NA_real_)
+        } else {
+          ev_df <- as.data.frame(out)[2, c("point", "lower", "upper"), drop = FALSE]
+          tibble::tibble(E_Value = ev_df$point, E_Val_bound = dplyr::coalesce(ev_df$lower, ev_df$upper, 1))
+        }
       }
-      tmp <- tibble::tibble(
-        `E[Y(1)]-E[Y(0)]` = est,
-        `E[Y(1)]/E[Y(0)]` = if (scale == "RR") est else NA_real_,
-        `2.5 %`           = lo,
-        `97.5 %`          = hi,
-        standard_error    = se0
-      )
-      out <- try(process_evalue(tmp, scale, delta, sd), silent = TRUE)
-      if (inherits(out, "try-error")) tibble::tibble(E_Value = NA_real_, E_Val_bound = NA_real_) else out
     }
   )
 

@@ -182,12 +182,20 @@ margot_plot_dev <- function(
   )
   sorted_df$outcome <- factor(sorted_df$outcome, levels = sorted_df$outcome)
 
-  cat_vec <- with(sorted_df,
-    ifelse(
-      E_Val_bound > thresh & `2.5 %` > null_val & `97.5 %` > null_val, "positive",
-      ifelse(E_Val_bound > thresh & `2.5 %` < null_val & `97.5 %` < null_val, "negative", "not reliable")
+  # Colour categories should reflect the contrast sign and CI only
+  # (previous stable behaviour). E-value thresholds are used for
+  # interpretation and optional styling, not for colouring.
+  if ("Estimate" %in% names(sorted_df)) {
+    # trust group_tab's CI-based categorisation when available
+    cat_vec <- as.character(sorted_df$Estimate)
+  } else {
+    cat_vec <- with(sorted_df,
+      ifelse(
+        `2.5 %` > null_val & `97.5 %` > null_val, "positive",
+        ifelse(`2.5 %` < null_val & `97.5 %` < null_val, "negative", "not reliable")
+      )
     )
-  )
+  }
   sorted_df$Estimate <- factor(cat_vec, levels = c("positive", "not reliable", "negative"))
 
   # x‑axis label

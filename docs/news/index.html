@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.264</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.265</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,14 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.265" id="id_2025-10-22-margot-10265">[2025-10-22] margot 1.0.265<a class="anchor" aria-label="anchor" href="#id_2025-10-22-margot-10265"></a></h2>
+<div class="section level4">
+<h4 id="fixed-1-0-265">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-265"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code> restored to wrking order.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.264" id="id_2025-10-22-margot-10264">[2025-10-22] margot 1.0.264<a class="anchor" aria-label="anchor" href="#id_2025-10-22-margot-10264"></a></h2>
 <div class="section level4">
 <h4 id="added-1-0-264">Added<a class="anchor" aria-label="anchor" href="#added-1-0-264"></a></h4>
@@ -52,6 +60,10 @@
 <code><a href="../reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code>: suppress deprecated <code>layout</code> warning unless <code>layout</code> is explicitly supplied.</li>
 <li>
 <code><a href="../reference/margot_plot_dev.html">margot_plot_dev()</a></code>: hides subtitle spacing when subtitle is empty.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="fixed-1-0-264">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-264"></a></h4>
+<ul><li>Reverted <code><a href="../reference/margot_plot.html">margot_plot()</a></code> to the last known stable implementation (pre‑DEV) to resolve recent breakages and restore previous behaviour and API. <code><a href="../reference/margot_plot_dev.html">margot_plot_dev()</a></code> remains available for advanced workflows.</li>
 </ul></div>
 <div class="section level4">
 <h4 id="docs-1-0-264">Docs<a class="anchor" aria-label="anchor" href="#docs-1-0-264"></a></h4>
@@ -929,7 +941,7 @@
 <ul><li>Removed multiplicative percentage language from all interpretation functions</li>
 <li>Confidence intervals now displayed in original scale units (dollars, minutes, etc.)</li>
 <li>Cleaner format: “$463 average increase (95% CI: $137 to $883)” instead of “44% multiplicative increase (~$463 average increase; 95% CI: 13% to 84%)”</li>
-<li>Updated both <code>margot_interpret_marginal()</code> and <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> functions</li>
+<li>Updated both <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> and <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> functions</li>
 <li>Makes output more consistent and easier to interpret</li>
 </ul></li>
 </ul></div>
@@ -939,7 +951,7 @@
 <div class="section level4">
 <h4 id="improvements-1-0-215">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-215"></a></h4>
 <ul><li>
-<strong>Updated <code>margot_interpret_marginal()</code> with correct back-transformation logic</strong>:
+<strong>Updated <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> with correct back-transformation logic</strong>:
 <ul><li>Now properly handles log+z transformed variables with multiplicative interpretation</li>
 <li>Displays percentage changes and absolute changes for log-transformed outcomes</li>
 <li>Includes unit detection for monetary and time variables with appropriate formatting</li>
@@ -2749,7 +2761,7 @@
 <ul><li>
 <code><a href="../reference/margot_plot.html">margot_plot()</a></code> only uses correction method if there is more than one outcome.</li>
 <li>
-<code>margot_interpret_marginal()</code> also updated.</li>
+<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> also updated.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.43" id="id_2025-05-15-margot-1043">[2025-05-15] margot 1.0.43<a class="anchor" aria-label="anchor" href="#id_2025-05-15-margot-1043"></a></h2>
@@ -3020,7 +3032,7 @@
 <li>
 <code><a href="../reference/margot_plot.html">margot_plot()</a></code> - added options to transform colname for the estimand to “ATE”, also the E_value colnames.</li>
 <li>
-<code>margot_interpret_marginal()</code> and <code><a href="../reference/group_tab.html">group_tab()</a></code> now return order consistent with the plot</li>
+<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> and <code><a href="../reference/group_tab.html">group_tab()</a></code> now return order consistent with the plot</li>
 <li>
 <code><a href="../reference/margot_interpret_rate.html">margot_interpret_rate()</a></code> better language, <code><a href="../reference/margot_interpret_rate_comparison.html">margot_interpret_rate_comparison()</a></code> now a helper (not exported).</li>
 <li>
@@ -3069,7 +3081,7 @@
 <div class="section level3">
 <h3 id="improved-1-0-15">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-15"></a></h3>
 <ul><li>
-<code>margot_interpret_marginal()</code> - clearer wording, outcomes listed rather than dull sentences.</li>
+<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> - clearer wording, outcomes listed rather than dull sentences.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3078,7 +3090,7 @@
 <h3 id="improved-1-0-14">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-14"></a></h3>
 <ul><li>
 <code><a href="../reference/margot_bind_tables.html">margot_bind_tables()</a></code> has additional parameter, <code>sort_E_val_bound = c("none", "asc", "desc")</code>, which allows users to order multiple tables by E_value thresholds.</li>
-<li>fixed multiple functions to get assending order for <code><a href="../reference/margot_plot.html">margot_plot()</a></code>, these are <code><a href="../reference/margot_plot.html">margot_plot()</a></code>, <code><a href="../reference/group_tab.html">group_tab()</a></code>, <code>margot_interpret_marginal()</code> <code>transform_label()</code>, <code>transform_table_rownames()</code> – and removing stray <code>transform_label()</code> label functions from various functions. <code>transform_table_rownames()</code> now internal.</li>
+<li>fixed multiple functions to get assending order for <code><a href="../reference/margot_plot.html">margot_plot()</a></code>, these are <code><a href="../reference/margot_plot.html">margot_plot()</a></code>, <code><a href="../reference/group_tab.html">group_tab()</a></code>, <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> <code>transform_label()</code>, <code>transform_table_rownames()</code> – and removing stray <code>transform_label()</code> label functions from various functions. <code>transform_table_rownames()</code> now internal.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3386,7 +3398,7 @@
 <li>
 <code><a href="../reference/group_tab.html">group_tab()</a></code> function re-factored</li>
 <li>
-<code>margot_interpret_marginal()</code> corrected order &amp; small improvements</li>
+<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> corrected order &amp; small improvements</li>
 <li>
 <code><a href="../reference/margot_plot.html">margot_plot()</a></code> function refactored for clarity.</li>
 </ul></div>
@@ -3453,7 +3465,7 @@
 <div class="section level3">
 <h3 id="improved-0-3-1-6">Improved<a class="anchor" aria-label="anchor" href="#improved-0-3-1-6"></a></h3>
 <ul><li>
-<code>margot_interpret_marginal()</code> made robust when when units are not given in the the input model.</li>
+<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> made robust when when units are not given in the the input model.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3711,7 +3723,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-3-9">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-3-9"></a></h3>
 <ul><li>
-<code>margot_interpret_marginal()</code> gives correct interpretation of ‘strong’ evidence using Evalues.</li>
+<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> gives correct interpretation of ‘strong’ evidence using Evalues.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3746,7 +3758,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-3-5">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-3-5"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_plot.html">margot_plot()</a></code>, and <code>margot_interpret_marginal()</code> produce interpretable results. Fixed issue with <code><a href="../reference/margot_plot.html">margot_plot()</a></code> when risk ratios are selected, where colours were not being plotted.</li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code>, and <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> produce interpretable results. Fixed issue with <code><a href="../reference/margot_plot.html">margot_plot()</a></code> when risk ratios are selected, where colours were not being plotted.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3776,7 +3788,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-3-2">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-3-2"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_plot.html">margot_plot()</a></code> <code>margot_interpret_marginal()</code> now back transform values to data scale.</li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code> <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> now back transform values to data scale.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3818,7 +3830,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-1-64">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-1-64"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_plot.html">margot_plot()</a></code>,<code>margot_interpret_marginal()</code>, <code><a href="../reference/group_tab.html">group_tab()</a></code> overhauled so that now we get reporting back-tranformed from standardised effects to effects on the data scale – greatly benefiting interpretations.</li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code>,<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code>, <code><a href="../reference/group_tab.html">group_tab()</a></code> overhauled so that now we get reporting back-tranformed from standardised effects to effects on the data scale – greatly benefiting interpretations.</li>
 <li>
 <code>transform_to_original_scale()</code> new helper introduced to back-transform estimates.</li>
 </ul></div>
