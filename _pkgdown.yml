@@ -167,6 +167,7 @@ reference:
   - title: "Visualise Causal Effect Estimates"
     contents:
     - margot_plot
+    - margot_plot_dev
     - margot_plot_decision_tree
     - margot_plot_lmtp_overlap_grid
     - margot_plot_lmtp_learners

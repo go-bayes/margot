@@ -112,6 +112,16 @@ margot_correct_combined_table <- function(combined_table,
 
   tbl <- combined_table
 
+  # ---- numeric coercion guardrails ----------------------------------------
+  to_num <- function(x) suppressWarnings(as.numeric(x))
+  for (cn in c(est_col, "2.5 %", "97.5 %")) {
+    if (cn %in% names(tbl)) tbl[[cn]] <- to_num(tbl[[cn]])
+  }
+  # if coercion produced NAs everywhere, abort gracefully
+  if (all(is.na(tbl[[est_col]])) || all(is.na(tbl$`2.5 %`)) || all(is.na(tbl$`97.5 %`))) {
+    stop("combined_table contains non-numeric estimates or CIs after coercion; cannot adjust.")
+  }
+
   ## ---- 1  adjust the CI ----------------------------------------------------
   if (adjust == "bonferroni") {
     z_star <- stats::qnorm(1 - alpha / (2 * m))
@@ -182,14 +192,20 @@ margot_correct_combined_table <- function(combined_table,
       se0 = (tbl$`97.5 %` - tbl[[est_col]]) / stats::qnorm(0.975)
     ),
     \(est, lo, hi, se0) {
+      # guard against non-numeric inputs
+      est <- to_num(est); lo <- to_num(lo); hi <- to_num(hi); se0 <- to_num(se0)
+      if (any(!is.finite(c(est, lo, hi, se0)))) {
+        return(tibble::tibble(E_Value = NA_real_, E_Val_bound = NA_real_))
+      }
       tmp <- tibble::tibble(
         `E[Y(1)]-E[Y(0)]` = est,
-        `E[Y(1)]/E[Y(0)]` = NA_real_, # ignored for RD
+        `E[Y(1)]/E[Y(0)]` = if (scale == "RR") est else NA_real_,
         `2.5 %`           = lo,
         `97.5 %`          = hi,
         standard_error    = se0
       )
-      process_evalue(tmp, scale, delta, sd)
+      out <- try(process_evalue(tmp, scale, delta, sd), silent = TRUE)
+      if (inherits(out, "try-error")) tibble::tibble(E_Value = NA_real_, E_Val_bound = NA_real_) else out
     }
   )
 

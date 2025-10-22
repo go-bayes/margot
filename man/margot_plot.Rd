@@ -2,49 +2,52 @@
 % Please edit documentation in R/margot_plot.R
 \name{margot_plot}
 \alias{margot_plot}
-\title{Create a Margot Plot with Proper Multiplicity Correction}
+\title{Visualise Causal Effect Estimates with Enhanced Flexibility}
 \usage{
-margot_plot(
-  .data,
-  type = c("RD", "RR"),
-  order = c("alphabetical", "magnitude_desc", "magnitude_asc", "evaluebound_desc",
-    "evaluebound_asc", "custom", "default"),
-  custom_order = NULL,
-  title_binary = NULL,
-  include_coefficients = TRUE,
-  standardize_label = c("NZ", "US", "none"),
-  e_val_bound_threshold = 1.2,
-  adjust = c("none", "bonferroni"),
-  alpha = 0.05,
-  ...,
-  options = list(),
-  label_mapping = NULL,
-  save_output = FALSE,
-  use_timestamp = FALSE,
-  base_filename = "margot_plot_output",
-  prefix = NULL,
-  save_path = here::here("push_mods"),
-  original_df = NULL,
-  bold_rows = FALSE,
-  rename_cols = FALSE,
-  col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
-  rename_ate = FALSE,
-  rename_evalue = FALSE
-)
+margot_plot(...)
 }
 \arguments{
-\item{.data}{data frame containing causal effect estimates with columns for
-effect sizes, confidence intervals, E-values and E-value bounds}
+\item{.data}{A data frame of causal effect estimates, ideally output by a `group_tab` function or similar. The data should include confidence intervals and effect estimate values.}
 
-\item{type}{character. type of effect estimate: "RD" (risk difference) or "RR" (risk ratio)}
+\item{type}{Character string indicating the scale of effect estimates: "RD" for risk difference or "RR" for risk ratio, with "RD" as the default.}
 
-\item{adjust}{character. multiplicity correction method: "none", "bonferroni"}
+\item{order}{Character string indicating the ordering of the output: "default" for default descending, "alphabetical" for alphabetical, and "custom" for custom order provided in .data.}
 
-\item{alpha}{numeric. significance level for corrections}
+\item{custom_order}{Optional vector specifying custom ordering if 'order' is set to 'custom'.}
 
-\item{...}{other parameters as in original function}
+\item{title}{Main title for the plot.}
+
+\item{subtitle}{Subtitle for the plot.}
+
+\item{estimate_scale}{Numeric multiplier to adjust the horizontal offset of estimate labels, aiding in plot clarity. Default is 1.}
+
+\item{base_size}{Base font size for the plot, applied globally unless overridden. Default is 11.}
+
+\item{text_size}{Font size for the estimate labels. Default is 2.75.}
+
+\item{point_size}{Size of points representing the estimates. Default is 0.5.}
+
+\item{title_size}{Font size for the plot title. Default is 10.}
+
+\item{subtitle_size}{Font size for the plot subtitle. Default is 9.}
+
+\item{legend_text_size}{Font size for legend text. Default is 6.}
+
+\item{legend_title_size}{Font size for legend titles. Default is 6.}
+
+\item{x_offset}{Horizontal adjustment for estimate labels, varied based on `type`. Default adjustments are 0 for "RR" and -1.75 for "RD".}
+
+\item{x_lim_lo}{Lower limit of the x-axis, automatically adjusted based on `type`.}
+
+\item{x_lim_hi}{Upper limit of the x-axis, automatically adjusted based on `type`.}
+
+\item{linewidth}{Width of the error bars in the plot. Default is 0.5.}
+
+\item{plot_theme}{ggplot2 theme object for customising plot appearance. Inherits `base_size` from `base_size` parameter to maintain consistency. Uses `theme_classic()` as default but allows for customisation.}
+}
+\value{
+A ggplot object displaying the causal effect estimates with categorisation and error bars. This plot is tailored for further modifications or direct usage.
 }
 \description{
-Create a margot plot for visualising causal effects with proper simultaneous
-confidence intervals using multcomp for family-wise error rate control.
+This function renders a graphical representation of causal effect estimates, organised by effect size on either the risk difference (RD) or risk ratio (RR) scale. It categorises estimates into "positive", "negative", or "zero_crossing" based on their confidence intervals. The function features advanced customisability for graphical parameters, including error bar width and the application of custom ggplot2 themes. Notably, it avoids direct manipulation of the input data and implements an advanced labelling strategy for the x-axis to prevent incoherent negative values for RR.
 }

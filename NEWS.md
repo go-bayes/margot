@@ -1,3 +1,25 @@
+# [2025-10-22] margot 1.0.264
+### Added
+- IPSI context (odds‑free) in `margot_interpret_lmtp_positivity()` with a simple probability‑scale formula and small illustrative translations; domain‑agnostic default labelling ("exposure").
+- Deterministic policy context describing history‑dependent rules (e.g., A_t^d := d_t(A_t, H_t)) and listing included policies.
+- Optional policy‑implied exposure rates by wave and overall using reweighted means; supports thresholding non‑binary exposures with an indicator 1(A_t op tau) (defaults: op is >, tau = 0).
+- Experimental `margot_plot_dev()` retains advanced bias analysis features (optional multiplicity correction, label mapping/renaming, interpretation); `margot_plot()` now delegates to `margot_plot_dev()` under the hood so existing scripts gain advanced options without code churn.
+
+### Changed
+- Wave labels in positivity text respect user `label_mapping` (e.g., “Baseline (2018/19)”), supporting skipped panels.
+- Clarified positivity vs target: diagnostics labelled “positivity; uncensored rows” with a note that estimation reweights to the baseline cohort via censoring adjustment.
+- Per‑wave bullets include both `ESS+/(N+)` and `ESS+/(N_pt)`.
+- Censoring wording clarified: “censoring to next wave” for intermediate waves, “censoring end of study” for the final exposure; shift summaries show “censoring (zeros across person‑time)”.
+- LaTeX sanitisation of common glyphs in generated text ($\to$, $\pm$, $\ge$, $\le$, $\approx$, $\times$).
+- `margot_plot_lmtp_overlap_grid()`: suppress deprecated `layout` warning unless `layout` is explicitly supplied.
+- `margot_plot_dev()`: hides subtitle spacing when subtitle is empty.
+
+### Docs
+- Rd parameter docs avoid LaTeX macros to prevent Rd warnings; pkgdown reference updated to include `margot_plot_dev` and `margot_multi_evalue`.
+
+### Note
+- We are consolidating plotting on the experimental engine while we stabilise risk‑ratio E‑value logic and multiplicity adjustments. Further robustness improvements will ship in a follow‑up.
+
 # [2025-10-16] margot 1.0.261
 ### Changed
 - `margot_lmtp_overlap()` now pulls its `text_summary` directly from `margot_interpret_lmtp_positivity()`, ensuring overlap diagnostics match the upgraded prose helper and optional report sections.
@@ -3266,11 +3288,13 @@ These deprecated functions will continue to work but will issue warnings. They w
 - Soft‑deprecate Neutral in policy audience (configurable via `show_neutral`)
 - `prefer_stability` biases depth selection toward depth‑1 unless depth‑2 gains are clearly larger
 - Acronym expansion opt‑in: `expand_acronyms` with user‑overrides via options
-# [2025-10-22] margot 1.0.263
+# [2025-10-22] margot 1.0.264
 ### Added
 - IPSI context (odds‑free) in `margot_interpret_lmtp_positivity()` with a simple probability‑scale formula and small illustrative translations (domain‑agnostic; defaults to “exposure”).
 - Deterministic policy context describing history‑dependent rules (e.g., A_t^d := d_t(A_t, H_t)) and listing included policies.
 - Optional policy‑implied exposure rates by wave and overall using reweighted means; non‑binary exposures are thresholded via an indicator 1(A_t op tau) (defaults: op is >, tau = 0).
+- Experimental `margot_plot_dev()` retains advanced bias analysis features (optional multiplicity correction, label mapping/renaming, interpretation), while the stable `margot_plot()` reverts to the pre‑multiplicity API.
+ - `margot_plot()` now delegates to `margot_plot_dev()` under the hood, so existing scripts gain advanced options without code churn. We will continue to stabilise RR/E‑value handling.
 
 ### Changed
 - Wave labels in positivity text respect user `label_mapping` (e.g., “Baseline (2018/19)”), supporting skipped panels.
@@ -3279,6 +3303,10 @@ These deprecated functions will continue to work but will issue warnings. They w
 - Censoring wording clarified: “censoring to next wave” for intermediate waves, “censoring end of study” for the final exposure; shift summaries show “censoring (zeros across person‑time)”.
 - LaTeX sanitisation of common glyphs in generated text ($\to$, $\pm$, $\ge$, $\le$, $\approx$, $\times$).
 - `margot_plot_lmtp_overlap_grid()`: suppress deprecated `layout` warning unless `layout` is explicitly supplied.
+ - `margot_plot_dev()`: hides subtitle line when subtitle is empty (no extra spacing under title).
 
 ### Docs
-- Rd parameter docs avoid LaTeX macros to prevent Rd warnings; pkgdown reference updated to include `margot_multi_evalue`.
+- Rd parameter docs avoid LaTeX macros to prevent Rd warnings; pkgdown reference updated to include `margot_multi_evalue` and `margot_plot_dev`.
+
+### Note
+- We now route `margot_plot()` through the experimental engine to preserve advanced options while we stabilise RR/E‑value logic. Further improvements to robust RR E‑values and multiplicity adjustments will ship in a follow‑up.

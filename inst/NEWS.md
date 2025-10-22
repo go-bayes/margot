@@ -1,6 +1,6 @@
 # margot NEWS
 
-## Changes in version 1.0.263
+## Changes in version 1.0.264
 
 ### New
 - IPSI context block in `margot_interpret_lmtp_positivity()` (odds‑free, LaTeX) explaining $q_t(H_t) = \frac{\delta g_t(H_t)}{(1-g_t(H_t)) + \delta g_t(H_t)}$ and small probability illustrations. Auto‑labels treatment as “exposure” (domain‑agnostic).
@@ -16,6 +16,10 @@
 
 ### Fixes
 - `margot_plot_lmtp_overlap_grid()`: stop showing the deprecated `layout` warning unless the user explicitly supplies `layout`.
+- `margot_plot_dev()`: remove subtitle spacing when subtitle is empty.
+
+### Plotting API
+- `margot_plot()` now wraps `margot_plot_dev()` so existing scripts gain advanced options without churn while we stabilise RR/E‑value handling.
 
 ## Changes in version 1.0.261
 

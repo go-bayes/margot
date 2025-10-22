@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.263</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.264</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,36 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.264" id="id_2025-10-22-margot-10264">[2025-10-22] margot 1.0.264<a class="anchor" aria-label="anchor" href="#id_2025-10-22-margot-10264"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-264">Added<a class="anchor" aria-label="anchor" href="#added-1-0-264"></a></h4>
+<ul><li>IPSI context (odds‑free) in <code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> with a simple probability‑scale formula and small illustrative translations; domain‑agnostic default labelling (“exposure”).</li>
+<li>Deterministic policy context describing history‑dependent rules (e.g., A_t^d := d_t(A_t, H_t)) and listing included policies.</li>
+<li>Optional policy‑implied exposure rates by wave and overall using reweighted means; supports thresholding non‑binary exposures with an indicator 1(A_t op tau) (defaults: op is &gt;, tau = 0).</li>
+<li>Experimental <code><a href="../reference/margot_plot_dev.html">margot_plot_dev()</a></code> retains advanced bias analysis features (optional multiplicity correction, label mapping/renaming, interpretation); <code><a href="../reference/margot_plot.html">margot_plot()</a></code> now delegates to <code><a href="../reference/margot_plot_dev.html">margot_plot_dev()</a></code> under the hood so existing scripts gain advanced options without code churn.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-264">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-264"></a></h4>
+<ul><li>Wave labels in positivity text respect user <code>label_mapping</code> (e.g., “Baseline (2018/19)”), supporting skipped panels.</li>
+<li>Clarified positivity vs target: diagnostics labelled “positivity; uncensored rows” with a note that estimation reweights to the baseline cohort via censoring adjustment.</li>
+<li>Per‑wave bullets include both <code>ESS+/(N+)</code> and <code>ESS+/(N_pt)</code>.</li>
+<li>Censoring wording clarified: “censoring to next wave” for intermediate waves, “censoring end of study” for the final exposure; shift summaries show “censoring (zeros across person‑time)”.</li>
+<li>LaTeX sanitisation of common glyphs in generated text (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>→</mo><annotation encoding="application/x-tex">\to</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>±</mi><annotation encoding="application/x-tex">\pm</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≥</mo><annotation encoding="application/x-tex">\ge</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≤</mo><annotation encoding="application/x-tex">\le</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≈</mo><annotation encoding="application/x-tex">\approx</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>×</mi><annotation encoding="application/x-tex">\times</annotation></semantics></math>).</li>
+<li>
+<code><a href="../reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code>: suppress deprecated <code>layout</code> warning unless <code>layout</code> is explicitly supplied.</li>
+<li>
+<code><a href="../reference/margot_plot_dev.html">margot_plot_dev()</a></code>: hides subtitle spacing when subtitle is empty.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="docs-1-0-264">Docs<a class="anchor" aria-label="anchor" href="#docs-1-0-264"></a></h4>
+<ul><li>Rd parameter docs avoid LaTeX macros to prevent Rd warnings; pkgdown reference updated to include <code>margot_plot_dev</code> and <code>margot_multi_evalue</code>.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="note-1-0-264">Note<a class="anchor" aria-label="anchor" href="#note-1-0-264"></a></h4>
+<ul><li>We are consolidating plotting on the experimental engine while we stabilise risk‑ratio E‑value logic and multiplicity adjustments. Further robustness improvements will ship in a follow‑up.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.261" id="id_2025-10-16-margot-10261">[2025-10-16] margot 1.0.261<a class="anchor" aria-label="anchor" href="#id_2025-10-16-margot-10261"></a></h2>
 <div class="section level4">
@@ -899,7 +929,7 @@
 <ul><li>Removed multiplicative percentage language from all interpretation functions</li>
 <li>Confidence intervals now displayed in original scale units (dollars, minutes, etc.)</li>
 <li>Cleaner format: “$463 average increase (95% CI: $137 to $883)” instead of “44% multiplicative increase (~$463 average increase; 95% CI: 13% to 84%)”</li>
-<li>Updated both <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> and <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> functions</li>
+<li>Updated both <code>margot_interpret_marginal()</code> and <code><a href="../reference/margot_interpret_policy_tree.html">margot_interpret_policy_tree()</a></code> functions</li>
 <li>Makes output more consistent and easier to interpret</li>
 </ul></li>
 </ul></div>
@@ -909,7 +939,7 @@
 <div class="section level4">
 <h4 id="improvements-1-0-215">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-215"></a></h4>
 <ul><li>
-<strong>Updated <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> with correct back-transformation logic</strong>:
+<strong>Updated <code>margot_interpret_marginal()</code> with correct back-transformation logic</strong>:
 <ul><li>Now properly handles log+z transformed variables with multiplicative interpretation</li>
 <li>Displays percentage changes and absolute changes for log-transformed outcomes</li>
 <li>Includes unit detection for monetary and time variables with appropriate formatting</li>
@@ -2719,7 +2749,7 @@
 <ul><li>
 <code><a href="../reference/margot_plot.html">margot_plot()</a></code> only uses correction method if there is more than one outcome.</li>
 <li>
-<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> also updated.</li>
+<code>margot_interpret_marginal()</code> also updated.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.43" id="id_2025-05-15-margot-1043">[2025-05-15] margot 1.0.43<a class="anchor" aria-label="anchor" href="#id_2025-05-15-margot-1043"></a></h2>
@@ -2990,7 +3020,7 @@
 <li>
 <code><a href="../reference/margot_plot.html">margot_plot()</a></code> - added options to transform colname for the estimand to “ATE”, also the E_value colnames.</li>
 <li>
-<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> and <code><a href="../reference/group_tab.html">group_tab()</a></code> now return order consistent with the plot</li>
+<code>margot_interpret_marginal()</code> and <code><a href="../reference/group_tab.html">group_tab()</a></code> now return order consistent with the plot</li>
 <li>
 <code><a href="../reference/margot_interpret_rate.html">margot_interpret_rate()</a></code> better language, <code><a href="../reference/margot_interpret_rate_comparison.html">margot_interpret_rate_comparison()</a></code> now a helper (not exported).</li>
 <li>
@@ -3039,7 +3069,7 @@
 <div class="section level3">
 <h3 id="improved-1-0-15">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-15"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> - clearer wording, outcomes listed rather than dull sentences.</li>
+<code>margot_interpret_marginal()</code> - clearer wording, outcomes listed rather than dull sentences.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3048,7 +3078,7 @@
 <h3 id="improved-1-0-14">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-14"></a></h3>
 <ul><li>
 <code><a href="../reference/margot_bind_tables.html">margot_bind_tables()</a></code> has additional parameter, <code>sort_E_val_bound = c("none", "asc", "desc")</code>, which allows users to order multiple tables by E_value thresholds.</li>
-<li>fixed multiple functions to get assending order for <code><a href="../reference/margot_plot.html">margot_plot()</a></code>, these are <code><a href="../reference/margot_plot.html">margot_plot()</a></code>, <code><a href="../reference/group_tab.html">group_tab()</a></code>, <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> <code>transform_label()</code>, <code>transform_table_rownames()</code> – and removing stray <code>transform_label()</code> label functions from various functions. <code>transform_table_rownames()</code> now internal.</li>
+<li>fixed multiple functions to get assending order for <code><a href="../reference/margot_plot.html">margot_plot()</a></code>, these are <code><a href="../reference/margot_plot.html">margot_plot()</a></code>, <code><a href="../reference/group_tab.html">group_tab()</a></code>, <code>margot_interpret_marginal()</code> <code>transform_label()</code>, <code>transform_table_rownames()</code> – and removing stray <code>transform_label()</code> label functions from various functions. <code>transform_table_rownames()</code> now internal.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3356,7 +3386,7 @@
 <li>
 <code><a href="../reference/group_tab.html">group_tab()</a></code> function re-factored</li>
 <li>
-<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> corrected order &amp; small improvements</li>
+<code>margot_interpret_marginal()</code> corrected order &amp; small improvements</li>
 <li>
 <code><a href="../reference/margot_plot.html">margot_plot()</a></code> function refactored for clarity.</li>
 </ul></div>
@@ -3423,7 +3453,7 @@
 <div class="section level3">
 <h3 id="improved-0-3-1-6">Improved<a class="anchor" aria-label="anchor" href="#improved-0-3-1-6"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> made robust when when units are not given in the the input model.</li>
+<code>margot_interpret_marginal()</code> made robust when when units are not given in the the input model.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3681,7 +3711,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-3-9">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-3-9"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> gives correct interpretation of ‘strong’ evidence using Evalues.</li>
+<code>margot_interpret_marginal()</code> gives correct interpretation of ‘strong’ evidence using Evalues.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3716,7 +3746,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-3-5">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-3-5"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_plot.html">margot_plot()</a></code>, and <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> produce interpretable results. Fixed issue with <code><a href="../reference/margot_plot.html">margot_plot()</a></code> when risk ratios are selected, where colours were not being plotted.</li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code>, and <code>margot_interpret_marginal()</code> produce interpretable results. Fixed issue with <code><a href="../reference/margot_plot.html">margot_plot()</a></code> when risk ratios are selected, where colours were not being plotted.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3746,7 +3776,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-3-2">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-3-2"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_plot.html">margot_plot()</a></code> <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> now back transform values to data scale.</li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code> <code>margot_interpret_marginal()</code> now back transform values to data scale.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3788,7 +3818,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-1-64">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-1-64"></a></h3>
 <ul><li>
-<code><a href="../reference/margot_plot.html">margot_plot()</a></code>,<code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code>, <code><a href="../reference/group_tab.html">group_tab()</a></code> overhauled so that now we get reporting back-tranformed from standardised effects to effects on the data scale – greatly benefiting interpretations.</li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code>,<code>margot_interpret_marginal()</code>, <code><a href="../reference/group_tab.html">group_tab()</a></code> overhauled so that now we get reporting back-tranformed from standardised effects to effects on the data scale – greatly benefiting interpretations.</li>
 <li>
 <code>transform_to_original_scale()</code> new helper introduced to back-transform estimates.</li>
 </ul></div>
@@ -4769,10 +4799,12 @@
 <li><p>Present‑tense, general prose in interpretation; moved harm flags into a separate Risk Notes section</p></li>
 <li><p>Soft‑deprecate Neutral in policy audience (configurable via <code>show_neutral</code>)</p></li>
 <li><p><code>prefer_stability</code> biases depth selection toward depth‑1 unless depth‑2 gains are clearly larger</p></li>
-<li><p>Acronym expansion opt‑in: <code>expand_acronyms</code> with user‑overrides via options # [2025-10-22] margot 1.0.263 ### Added</p></li>
+<li><p>Acronym expansion opt‑in: <code>expand_acronyms</code> with user‑overrides via options # [2025-10-22] margot 1.0.264 ### Added</p></li>
 <li><p>IPSI context (odds‑free) in <code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> with a simple probability‑scale formula and small illustrative translations (domain‑agnostic; defaults to “exposure”).</p></li>
 <li><p>Deterministic policy context describing history‑dependent rules (e.g., A_t^d := d_t(A_t, H_t)) and listing included policies.</p></li>
 <li><p>Optional policy‑implied exposure rates by wave and overall using reweighted means; non‑binary exposures are thresholded via an indicator 1(A_t op tau) (defaults: op is &gt;, tau = 0).</p></li>
+<li><p>Experimental <code><a href="../reference/margot_plot_dev.html">margot_plot_dev()</a></code> retains advanced bias analysis features (optional multiplicity correction, label mapping/renaming, interpretation), while the stable <code><a href="../reference/margot_plot.html">margot_plot()</a></code> reverts to the pre‑multiplicity API.</p></li>
+<li><p><code><a href="../reference/margot_plot.html">margot_plot()</a></code> now delegates to <code><a href="../reference/margot_plot_dev.html">margot_plot_dev()</a></code> under the hood, so existing scripts gain advanced options without code churn. We will continue to stabilise RR/E‑value handling.</p></li>
 </ul></div>
 <div class="section level4">
 <h4 id="changed-1-0-242">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-242"></a></h4>
@@ -4783,10 +4815,16 @@
 <li>LaTeX sanitisation of common glyphs in generated text (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>→</mo><annotation encoding="application/x-tex">\to</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>±</mi><annotation encoding="application/x-tex">\pm</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≥</mo><annotation encoding="application/x-tex">\ge</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≤</mo><annotation encoding="application/x-tex">\le</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≈</mo><annotation encoding="application/x-tex">\approx</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>×</mi><annotation encoding="application/x-tex">\times</annotation></semantics></math>).</li>
 <li>
 <code><a href="../reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code>: suppress deprecated <code>layout</code> warning unless <code>layout</code> is explicitly supplied.</li>
+<li>
+<code><a href="../reference/margot_plot_dev.html">margot_plot_dev()</a></code>: hides subtitle line when subtitle is empty (no extra spacing under title).</li>
 </ul></div>
 <div class="section level4">
 <h4 id="docs-1-0-242">Docs<a class="anchor" aria-label="anchor" href="#docs-1-0-242"></a></h4>
-<ul><li>Rd parameter docs avoid LaTeX macros to prevent Rd warnings; pkgdown reference updated to include <code>margot_multi_evalue</code>.</li>
+<ul><li>Rd parameter docs avoid LaTeX macros to prevent Rd warnings; pkgdown reference updated to include <code>margot_multi_evalue</code> and <code>margot_plot_dev</code>.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="note-1-0-242">Note<a class="anchor" aria-label="anchor" href="#note-1-0-242"></a></h4>
+<ul><li>We now route <code><a href="../reference/margot_plot.html">margot_plot()</a></code> through the experimental engine to preserve advanced options while we stabilise RR/E‑value logic. Further improvements to robust RR E‑values and multiplicity adjustments will ship in a follow‑up.</li>
 </ul></div>
 </div>
 </div>
