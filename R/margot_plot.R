@@ -83,38 +83,7 @@ margot_plot <- function(
     order <- "magnitude_desc"
   }
 
-  # keep raw copy before any correction
-  raw_table_df <- .data
-
-  # detect single‑outcome case ---------------------------------------------
-  n_outcomes <- nrow(raw_table_df)
-  single_outcome <- n_outcomes == 1L
-
-  if (single_outcome && adjust != "none") {
-    cli::cli_alert_info("single outcome detected; multiplicity correction skipped")
-    adjust <- "none"
-  }
-
-  # apply correction -------------------------------------------------------
-  if (adjust != "none") {
-    cli::cli_alert_info(
-      "applying {adjust} correction (α = {alpha}) to confidence intervals"
-    )
-    corrected_table_df <- margot_correct_combined_table(
-      raw_table_df,
-      adjust = adjust,
-      alpha  = alpha,
-      scale  = type
-    )
-    .data <- corrected_table_df
-  } else {
-    cli::cli_alert_info("no multiplicity adjustment applied")
-  }
-
-  # rest of function remains the same...
-  # [continuing with existing code for plotting, interpretation, etc.]
-
-  # merge user options with defaults ---------------------------------------
+  # merge user options with defaults early (needed for CI/E-value plumbing)
   default_opts <- list(
     title = NULL,
     subtitle = NULL,
@@ -144,10 +113,49 @@ margot_plot <- function(
     remove_tx_prefix = TRUE,
     remove_z_suffix = TRUE,
     use_title_case = TRUE,
-    remove_underscores = TRUE
+    remove_underscores = TRUE,
+    # new: parameters for continuous-exposure E-values and intervention context
+    delta_exposure = 1,
+    sd_outcome = 1,
+    intervention_type = "exposure_shift"
   )
 
   opts <- modifyList(modifyList(default_opts, options), list(...))
+
+  # keep raw copy before any correction
+  raw_table_df <- .data
+
+  # detect single‑outcome case ---------------------------------------------
+  n_outcomes <- nrow(raw_table_df)
+  single_outcome <- n_outcomes == 1L
+
+  if (single_outcome && adjust != "none") {
+    cli::cli_alert_info("single outcome detected; multiplicity correction skipped")
+    adjust <- "none"
+  }
+
+  # apply correction -------------------------------------------------------
+  if (adjust != "none") {
+    cli::cli_alert_info(
+      "applying {adjust} correction (α = {alpha}) to confidence intervals"
+    )
+    corrected_table_df <- margot_correct_combined_table(
+      raw_table_df,
+      adjust = adjust,
+      alpha  = alpha,
+      scale  = type,
+      delta  = opts$delta_exposure,
+      sd     = opts$sd_outcome
+    )
+    .data <- corrected_table_df
+  } else {
+    cli::cli_alert_info("no multiplicity adjustment applied")
+  }
+
+  # rest of function remains the same...
+  # [continuing with existing code for plotting, interpretation, etc.]
+
+  # opts already prepared above
 
   # coerce logical flags -----------------------------------------------------
   for (nm in c(
@@ -315,7 +323,10 @@ margot_plot <- function(
     adjust                = adjust,
     alpha                 = alpha,
     include_adjust_note   = !single_outcome,
-    effect_type           = effect_type
+    effect_type           = effect_type,
+    intervention_type     = opts$intervention_type,
+    delta                 = opts$delta_exposure,
+    sd                    = opts$sd_outcome
   )$interpretation
 
   # transform table for display -------------------------------------------
@@ -451,10 +462,14 @@ margot_interpret_marginal <- function(
     adjust = c("none", "bonferroni"),
     alpha = 0.05,
     include_adjust_note = TRUE,
-    effect_type = "ATE") {
+    effect_type = "ATE",
+    intervention_type = c("exposure_shift", "ipsi"),
+    delta = 1,
+    sd = 1) {
   type <- match.arg(type)
   order <- match.arg(order)
   adjust <- match.arg(adjust)
+  intervention_type <- match.arg(intervention_type)
   alpha <- as.numeric(alpha)[1]
 
   # build adjustment sentences only when requested ------------------------
@@ -646,10 +661,27 @@ margot_interpret_marginal <- function(
     ) %>%
     dplyr::pull(text)
 
+  # policy/intervention interpretation note (LaTeX-ready for Quarto)
+  policy_note <- if (intervention_type == "ipsi") {
+    paste0(
+      "\n\n",
+      "Interpretation is per the stated policy contrast; estimates reflect $\\mathbf{E}[Y(1)] - \\mathbf{E}[Y(0)]$ on standardized outcome units. ",
+      "For IPSI (risk-scale) interventions, the E-value pertains to the contrast between policies ($\\alpha_1$ vs $\\alpha_0$)."
+    )
+  } else {
+    paste0(
+      "\n\n",
+      "Interpretation is per the stated policy contrast; estimates reflect $\\mathbf{E}[Y(1)] - \\mathbf{E}[Y(0)]$ on standardized outcome units. ",
+      "For continuous outcomes, E-values use an OLS-to-RR approximation with exposure contrast $\\delta = ",
+      delta, "$ and outcome SD = ", sd, "."
+    )
+  }
+
   interpretation_text <- paste0(
     if (nzchar(adj_note)) paste0(adj_note, "\n\n") else "",
     intro,
-    paste(bullets, collapse = "\n")
+    paste(bullets, collapse = "\n"),
+    policy_note
   )
 
   list(interpretation = interpretation_text)
@@ -1005,14 +1037,30 @@ margot_correct_combined_table <- function(combined_table,
   if (adjust == "bonferroni") {
     z_star <- stats::qnorm(1 - alpha / (2 * m))
 
-    # original half-width so we don't need the raw SE
-    half_w <- (tbl$`97.5 %` - tbl$`2.5 %`) / 2
+    if (scale == "RR") {
+      # Adjust on the log scale, then exponentiate back to preserve positivity
+      eps <- .Machine$double.eps
+      est_rr   <- pmax(tbl[[est_col]], eps)
+      lo_rr    <- pmax(tbl$`2.5 %`, eps)
+      hi_rr    <- pmax(tbl$`97.5 %`, eps)
 
-    tbl <- tbl |>
-      dplyr::mutate(
-        `2.5 %`  = !!rlang::sym(est_col) - (half_w * z_star / z_orig),
-        `97.5 %` = !!rlang::sym(est_col) + (half_w * z_star / z_orig)
-      )
+      est_log  <- log(est_rr)
+      hi_log   <- log(hi_rr)
+      se_log   <- (hi_log - est_log) / z_orig
+      new_lo   <- exp(est_log - z_star * se_log)
+      new_hi   <- exp(est_log + z_star * se_log)
+
+      tbl$`2.5 %`  <- new_lo
+      tbl$`97.5 %` <- new_hi
+    } else {
+      # RD: rescale original half-width (symmetric Wald on difference scale)
+      half_w <- (tbl$`97.5 %` - tbl$`2.5 %`) / 2
+      tbl <- tbl |>
+        dplyr::mutate(
+          `2.5 %`  = !!rlang::sym(est_col) - (half_w * z_star / z_orig),
+          `97.5 %` = !!rlang::sym(est_col) + (half_w * z_star / z_orig)
+        )
+    }
   }
   # note: if adjust == "none", no CI adjustment is applied
 

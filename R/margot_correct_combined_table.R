@@ -116,14 +116,31 @@ margot_correct_combined_table <- function(combined_table,
   if (adjust == "bonferroni") {
     z_star <- stats::qnorm(1 - alpha / (2 * m))
 
-    # original half-width so we don't need the raw SE
-    half_w <- (tbl$`97.5 %` - tbl$`2.5 %`) / 2
+    if (scale == "RR") {
+      # Adjust on the log scale, then exponentiate back to preserve positivity
+      eps <- .Machine$double.eps
+      est_rr   <- pmax(tbl[[est_col]], eps)
+      lo_rr    <- pmax(tbl$`2.5 %`, eps)
+      hi_rr    <- pmax(tbl$`97.5 %`, eps)
 
-    tbl <- tbl |>
-      dplyr::mutate(
-        `2.5 %`  = !!rlang::sym(est_col) - (half_w * z_star / z_orig),
-        `97.5 %` = !!rlang::sym(est_col) + (half_w * z_star / z_orig)
-      )
+      est_log  <- log(est_rr)
+      hi_log   <- log(hi_rr)
+      # infer log-SE from original 97.5% bound
+      se_log   <- (hi_log - est_log) / z_orig
+      new_lo   <- exp(est_log - z_star * se_log)
+      new_hi   <- exp(est_log + z_star * se_log)
+
+      tbl$`2.5 %`  <- new_lo
+      tbl$`97.5 %` <- new_hi
+    } else {
+      # RD: rescale original half-width (symmetric Wald on difference scale)
+      half_w <- (tbl$`97.5 %` - tbl$`2.5 %`) / 2
+      tbl <- tbl |>
+        dplyr::mutate(
+          `2.5 %`  = !!rlang::sym(est_col) - (half_w * z_star / z_orig),
+          `97.5 %` = !!rlang::sym(est_col) + (half_w * z_star / z_orig)
+        )
+    }
   } else if (adjust == "holm") { # -------- Holm ------------------------------
 
     ## back-calculate SE from the *original* CI

@@ -4,13 +4,14 @@ devtools::load_all("/Users/joseph/GIT/margot/")
 
 
 # directory for pulling models
-# push_mods <- here::wf$summary$signals_brief_df:here("/Users/joseph/v-project\ Dropbox/data/25-hannah-grf-church-personality")
-#original data frame before z transform
-# original_df <- margot::here_read("df_wide", push_mods)
+push_mods <- here::here("/Users/joseph/v-project\ Dropbox/data/25-hannah-grf-church-personality")
 
-e example
+#original data frame before z transform
+original_df <- margot::here_read("df_wide", push_mods)
+
+# e example
 # pull results from
-# policy_tree_result_stability <- here_read_qs("policy_tree_result_stability", push_mods)
+policy_tree_result_stability <- here_read_qs("policy_tree_result_stability", push_mods)
 
 
 # function
@@ -26,7 +27,7 @@ wf <- margot_policy_workflow(
   dominance_threshold = 0.1,
   strict_branch = TRUE,
   include_interpretation = TRUE,
-  # min_gain_for_depth_switch = 0.005,
+  min_gain_for_depth_switch = 0.01,
   audience = "policy",
   prefer_stability = TRUE,
   show_neutral = TRUE,
@@ -39,7 +40,6 @@ cat(wf$best$depth_takeaways_text)
 # view model
 cat(wf$summary$text)
 wf$policy_brief_df
-str(wf, max.level = 1)
 str(wf$method_explanation, max.level = 1)
 str(wf$method_explanation, max.level = 1)
 cat(wf$method_explanation$long)
@@ -48,11 +48,6 @@ cat(wf$interpret$report_full)
 cat(wf$interpret$policy_value_explanation)
 wf$models_wins_or_has_ids
 str(wf$summary, max.level = 1)
-wf$best
-
-wf$interpret
-
-
 wf$summary$signals_brief_df
 wf$summary$signals_brief_df_all
 wf$method_explanation$long

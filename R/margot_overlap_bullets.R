@@ -27,6 +27,31 @@
 #'   density ratios, their interpretation, and ESS computation (default: FALSE).
 #' @param include_diagnostics Logical; if TRUE, appends detailed diagnostics per shift
 #'   including zeros, range, quantiles, and tail probabilities (default: FALSE).
+#' @param include_ipsi_context Logical; if TRUE and any `ipsi_*` shifts are
+#'   included, prepends a short IPSI context block that explains the policy on the
+#'   probability (risk) scale with a simple formula and small illustrative translations
+#'   (default: TRUE).
+#' @param treatment_label Character label used for $A_t$ in the IPSI context block.
+#'   If NULL, attempts to infer a domain-appropriate label from model/shift names
+#'   (e.g., "attendance" when shift/outcome names contain religious service
+#'   keywords); otherwise falls back to "exposure". Default: NULL.
+#' @param ipsi_example_g Numeric vector of example baseline risks g used to
+#'   illustrate the transformation q = delta * g / ((1 - g) + delta * g) for the
+#'   included delta values (default: `c(0.05, 0.10, 0.20)`).
+#' @param include_policy_rates Logical; if TRUE and exposure-by-wave data are
+#'   available and aligned with the density ratios, reports policy-implied exposure
+#'   probabilities by wave using the reweighted mean p_hat_t = sum(r_{i,t} * A_{i,t}) / sum(r_{i,t})
+#'   on uncensored rows (default: TRUE). If required inputs are missing, silently
+#'   skips this section.
+#' @param policy_rate_threshold Numeric; when computing policy rates and the attached
+#'   exposure columns are counts or continuous, converts them to a binary indicator
+#'   1(A_t op tau) before aggregation. Default tau = 0 (i.e., any exposure).
+#' @param policy_rate_strict Logical; comparison operator used with the threshold when building
+#'   the indicator: if TRUE uses '>' (strict), else uses '>=' (inclusive). Default TRUE.
+#' @param include_deterministic_context Logical; if TRUE and any deterministic
+#'   shifts are present (e.g., names starting with `shift_`), prepends a concise
+#'   description of history‑dependent policies (e.g., A_t^d := d_t(A_t, H_t)) and,
+#'   when possible, lists the named deterministic policies included (default: TRUE).
 #' @param return Character; either `"text"` (default, a single markdown-ready
 #'   string) or `"list"` (detailed components including the computed ESS
 #'   tables).
@@ -99,6 +124,13 @@ margot_interpret_lmtp_positivity <- function(x,
                                              digits = 2,
                                              include_methods = FALSE,
                                              include_diagnostics = FALSE,
+                                             include_ipsi_context = TRUE,
+                                             treatment_label = NULL,
+                                             ipsi_example_g = NULL,
+                                             include_policy_rates = TRUE,
+                                             policy_rate_threshold = 0,
+                                             policy_rate_strict = TRUE,
+                                             include_deterministic_context = TRUE,
                                              return = c("text", "list")) {
   stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
@@ -189,7 +221,123 @@ margot_interpret_lmtp_positivity <- function(x,
       "",
       "The censoring rate (proportion of $r = 0$) is reported separately per shift to quantify data loss, while ESS and distributional diagnostics are computed only on uncensored observations to assess positivity where treatment was actually observed.",
       "",
-      "Note: In this analysis framework, even the `null` policy includes weighting to recover the baseline population via censoring adjustment. As a result, `null` density ratios need not be centred at 1. Departures from 1 under `null` reflect this censoring/stabilization adjustment rather than a treatment positivity issue.",
+      "Note: In this analysis framework, even the `null` policy includes weighting to recover the baseline population via censoring adjustment. As a result, `null` density ratios need not be centred at 1. Departures from 1 under `null` reflect this censoring/stabilisation adjustment rather than a treatment positivity issue.",
+      ""
+    )
+  }
+
+  # ipsi context helper ----------------------------------------------------
+  ipsi_context_text <- function() {
+    # Determine if any requested/available shifts are IPSI-type
+    has_ipsi <- any(grepl("^ipsi(?:_|$)", shift_df$shift_clean, ignore.case = TRUE))
+    if (!isTRUE(include_ipsi_context) || !has_ipsi) return(character(0))
+
+    # Extract delta values from shift names like "ipsi_02", "ipsi_5", "ipsi_10", "ipsi_100"
+    ipsi_names <- shift_df$shift_clean[grepl("^ipsi(?:_|$)", shift_df$shift_clean, ignore.case = TRUE)]
+    parse_delta <- function(nm) {
+      # remove leading pattern and any non-numeric characters except '.'
+      raw <- sub("^ipsi_?", "", tolower(nm))
+      raw <- gsub("[^0-9\\.]", "", raw)
+      suppressWarnings(as.numeric(raw))
+    }
+    deltas <- unique(vapply(ipsi_names, parse_delta, numeric(1)))
+    deltas <- deltas[is.finite(deltas)]
+    deltas <- sort(deltas)
+
+    # Build LaTeX-ready delta set string if any parsed
+    delta_set <- if (length(deltas)) {
+      paste0("$\\delta \\in \\{", paste(deltas, collapse = ", "), "\\}$")
+    } else {
+      NULL
+    }
+
+    # Infer treatment label if not provided
+    infer_label <- function() {
+      # Use keywords in outcome/shift names to pick a sensible domain label
+      text <- tolower(paste(c(outcome, shift_df$shift_full, shift_df$shift_clean), collapse = " "))
+      if (grepl("attend|attendance|church|service|relig", text)) return("attendance")
+      "exposure"
+    }
+    label_to_use <- if (is.null(treatment_label) || !nzchar(treatment_label)) infer_label() else treatment_label
+
+    # Choose example g values if not provided (domain-aware heuristics)
+    if (is.null(ipsi_example_g)) {
+      if (identical(label_to_use, "attendance")) {
+        example_g_vals <- c(0.02, 0.05, 0.10)
+      } else {
+        example_g_vals <- c(0.05, 0.10, 0.20)
+      }
+    } else {
+      example_g_vals <- as.numeric(ipsi_example_g)
+      example_g_vals <- example_g_vals[is.finite(example_g_vals) & example_g_vals > 0 & example_g_vals < 1]
+      if (!length(example_g_vals)) example_g_vals <- c(0.05, 0.10, 0.20)
+    }
+
+    # Example translations on the probability scale (illustrative only)
+    q_fun <- function(g, d) (d * g) / (1 - g + d * g)
+    fmt_num <- function(x) sprintf("%.3f", x)
+
+    example_lines <- character(0)
+    if (length(deltas)) {
+      # for each example g, show mapping for all deltas present
+      for (g in example_g_vals) {
+        qs <- vapply(deltas, function(d) fmt_num(q_fun(g, d)), character(1))
+        lhs <- sprintf("for $g=%s$:", fmt_num(g))
+        rhs <- paste(paste0("ipsi(", deltas, ") $\\to$ ", qs), collapse = ", ")
+        example_lines <- c(example_lines, paste(lhs, rhs))
+      }
+    }
+
+    # Assemble block
+    block <- c(
+      "## Incremental Propensity Score Interventions (IPSI)",
+      "",
+      paste0(
+        "For binary ", label_to_use, " $A_t$ with observed $g_t(H_t)=\\Pr(A_t=1\\mid H_t)$, ",
+        "the IPSI with parameter $\\delta>0$ modifies the assignment mechanism to ",
+        "$q_t(H_t) = \\dfrac{\\delta\\, g_t(H_t)}{(1 - g_t(H_t)) + \\delta\\, g_t(H_t)}$, applied at each wave conditional on history $H_t$."
+      ),
+      if (!is.null(delta_set)) paste0("We considered ", delta_set, ".") else "",
+      if (length(example_lines)) "Illustration on the probability scale (not estimates; for intuition only):" else "",
+      if (length(example_lines)) paste0("- ", example_lines) else ""
+    )
+    block[nzchar(block)]
+  }
+
+  # deterministic policies context helper ----------------------------------
+  deterministic_context_text <- function() {
+    if (!isTRUE(include_deterministic_context)) return(character(0))
+    # Identify non-ipsi, non-null shifts that look deterministic by naming
+    det_idx <- which(!grepl("^ipsi(?:_|$)", shift_df$shift_clean, ignore.case = TRUE) &
+                       !grepl("^null$", shift_df$shift_clean, ignore.case = TRUE))
+    if (!length(det_idx)) return(character(0))
+
+    # Construct a small list of named policies if available
+    det_names <- shift_df$shift_clean[det_idx]
+    labeled <- vapply(det_names, map_label, character(1))
+    # Provide a one-paragraph description with LaTeX
+    lines <- c(
+      "## Deterministic Policies",
+      "",
+      paste0(
+        "Deterministic policies modify the current exposure directly via a rule $d_t$, ",
+        "yielding $A_t^{\\bar d} := d_t(A_t,\\mathcal H_t)$. These rules may be history-independent ",
+        "(e.g., setting a minimum or maximum) or depend on covariate history $\\mathcal H_t$."
+      )
+    )
+    if (length(labeled)) {
+      # List detected policies in a single line
+      lines <- c(lines, paste0("Included deterministic policies: ", paste(unique(labeled), collapse = ", "), "."))
+    }
+    lines
+  }
+
+  # policy-rate context helper ---------------------------------------------
+  policy_rate_context_text <- function() {
+    if (!isTRUE(include_policy_rates)) return(character(0))
+    c(
+      "",
+      "Policy rates report $\\Pr(A_t=1)$ under each policy by reweighting the observed data. When the exposure is not binary, we create an indicator $\\mathbb{1}(A_t \\;{op}\\; \\tau)$ before aggregation (defaults: $op$ is $>$ and $\\tau=0$).",
       ""
     )
   }
@@ -208,6 +356,19 @@ margot_interpret_lmtp_positivity <- function(x,
     } else {
       formatter(x)
     }
+  }
+  # LaTeX sanitiser for common Unicode glyphs
+  sanitize_latex <- function(txt) {
+    if (!is.character(txt) || !length(txt)) return(txt)
+    out <- txt
+    # arrows and math symbols
+    out <- gsub("→", " $\\\\to$ ", out, fixed = TRUE)
+    out <- gsub("±", " $\\\\pm$ ", out, fixed = TRUE)
+    out <- gsub("≥", " $\\\\ge$ ", out, fixed = TRUE)
+    out <- gsub("≤", " $\\\\le$ ", out, fixed = TRUE)
+    out <- gsub("≈", " $\\\\approx$ ", out, fixed = TRUE)
+    out <- gsub("×", " $\\\\times$ ", out, fixed = TRUE)
+    out
   }
   map_label <- function(lbl) {
     if (exists("transform_label", mode = "function")) {
@@ -230,6 +391,30 @@ margot_interpret_lmtp_positivity <- function(x,
     gsub("_", " ", tools::toTitleCase(lbl))
   }
 
+  # wave label helper -------------------------------------------------------
+  wave_label <- function(wv) {
+    key <- paste0("wave_", as.integer(wv))
+    # try transform_label with provided mapping; fall back to "Wave i"
+    if (exists("transform_label", mode = "function")) {
+      out <- tryCatch(
+        transform_label(
+          label = key,
+          label_mapping = label_mapping,
+          options = list(
+            remove_tx_prefix = FALSE,
+            remove_z_suffix = FALSE,
+            remove_underscores = FALSE,
+            use_title_case = FALSE,
+            quiet = TRUE
+          )
+        ),
+        error = function(e) NULL
+      )
+      if (!is.null(out) && is.character(out) && nzchar(out)) return(out)
+    }
+    paste0("Wave ", as.integer(wv))
+  }
+
   summarise_shift <- function(shift_full, shift_clean) {
     mod <- outcome_models[[shift_full]]
     dr <- mod$density_ratios
@@ -238,6 +423,16 @@ margot_interpret_lmtp_positivity <- function(x,
     if (is.vector(dr)) dr <- matrix(dr, ncol = 1L)
     if (!is.matrix(dr)) dr <- as.matrix(dr)
     storage.mode(dr) <- "double"
+
+    # Attempt to obtain exposure-by-wave (must align with density ratios)
+    exp_by_wave <- NULL
+    if (isTRUE(include_policy_rates) && !is.null(mod$exposure_by_wave)) {
+      exp_by_wave <- mod$exposure_by_wave
+      if (inherits(exp_by_wave, "Matrix")) exp_by_wave <- as.matrix(exp_by_wave)
+      if (is.vector(exp_by_wave)) exp_by_wave <- matrix(exp_by_wave, ncol = 1L)
+      if (!is.matrix(exp_by_wave)) exp_by_wave <- try(as.matrix(exp_by_wave), silent = TRUE)
+      if (inherits(exp_by_wave, "try-error")) exp_by_wave <- NULL
+    }
 
     total_cols <- ncol(dr)
     if (total_cols == 0L) return(NULL)
@@ -250,6 +445,29 @@ margot_interpret_lmtp_positivity <- function(x,
     sub_dr <- dr[, col_idx, drop = FALSE]
     # Ensure matrix structure even when a single column is selected
     if (!is.matrix(sub_dr)) sub_dr <- matrix(sub_dr, ncol = 1L)
+
+    # align exposure-by-wave if available; otherwise keep NULL
+    sub_exp <- NULL
+    if (!is.null(exp_by_wave)) {
+      # try to align on columns; truncate or subset if needed
+      if (ncol(exp_by_wave) >= length(col_idx)) {
+        sub_exp <- exp_by_wave[, col_idx, drop = FALSE]
+      }
+      # basic sanity: same nrow as dr
+      if (!is.null(sub_exp)) {
+        ok_dim <- nrow(sub_exp) == nrow(sub_dr)
+        if (!ok_dim) {
+          sub_exp <- NULL
+        } else {
+          # If not already in [0,1], map to binary using threshold
+          rng <- range(sub_exp[is.finite(sub_exp)], na.rm = TRUE)
+          if (!(is.finite(rng[1]) && is.finite(rng[2]) && rng[1] >= 0 && rng[2] <= 1)) {
+            comp <- if (isTRUE(policy_rate_strict)) function(a,b) a > b else function(a,b) a >= b
+            sub_exp <- ifelse(comp(sub_exp, policy_rate_threshold), 1, 0)
+          }
+        }
+      }
+    }
 
     # compute metrics per wave using uncensored observations (r > 0)
     wave_metrics <- lapply(seq_along(col_idx), function(i) {
@@ -271,6 +489,18 @@ margot_interpret_lmtp_positivity <- function(x,
       } else NA_real_
 
       ess_pos_frac <- if (n_pos > 0) ess_pos / n_pos else NA_real_
+      ess_pos_frac_pt <- if (n_all > 0 && is.finite(ess_pos)) ess_pos / n_all else NA_real_
+
+      # policy-implied exposure probability by wave (uncensored)
+      p_hat <- NA_real_
+      if (!is.null(sub_exp)) {
+        e <- sub_exp[, i]
+        mask <- is.finite(w) & is.finite(e) & (w > 0)
+        if (any(mask)) {
+          sw <- sum(w[mask])
+          if (sw > 0) p_hat <- sum(w[mask] * e[mask]) / sw
+        }
+      }
 
       list(
         wave = col_idx[i],
@@ -278,7 +508,9 @@ margot_interpret_lmtp_positivity <- function(x,
         n_pos = n_pos,
         prop_censored = prop_censored,
         ess_pos = ess_pos,
-        ess_pos_frac = ess_pos_frac
+        ess_pos_frac = ess_pos_frac,
+        ess_pos_frac_pt = ess_pos_frac_pt,
+        policy_rate = p_hat
       )
     })
 
@@ -292,6 +524,8 @@ margot_interpret_lmtp_positivity <- function(x,
         prop_censored = m$prop_censored,
         ess_pos = m$ess_pos,
         ess_pos_frac = m$ess_pos_frac,
+        ess_pos_frac_pt = m$ess_pos_frac_pt,
+        policy_rate = m$policy_rate,
         stringsAsFactors = FALSE
       )
     }))
@@ -316,6 +550,17 @@ margot_interpret_lmtp_positivity <- function(x,
     # relative to person-time denominator (includes zeros)
     overall_ess_pos_frac_pt <- if (overall_n_all > 0) overall_ess_pos / overall_n_all else NA_real_
 
+    # overall policy-implied exposure probability across selected waves (uncensored)
+    overall_policy_rate <- NA_real_
+    if (!is.null(sub_exp)) {
+      e_all <- as.vector(sub_exp)
+      mask_all <- is.finite(all_w) & is.finite(e_all) & (all_w > 0)
+      if (any(mask_all)) {
+        sw <- sum(all_w[mask_all])
+        if (sw > 0) overall_policy_rate <- sum(all_w[mask_all] * e_all[mask_all]) / sw
+      }
+    }
+
     list(
       waves = wave_df,
       overall = data.frame(
@@ -327,6 +572,7 @@ margot_interpret_lmtp_positivity <- function(x,
         ess_pos = overall_ess_pos,
         ess_pos_frac = overall_ess_pos_frac,
         ess_pos_frac_pt = overall_ess_pos_frac_pt,
+        policy_rate = overall_policy_rate,
         stringsAsFactors = FALSE
       ),
       label = map_label(shift_clean)
@@ -398,7 +644,8 @@ margot_interpret_lmtp_positivity <- function(x,
       if (!nrow(shift_data)) next
 
       shift_label <- shift_results[[shift_name]]$label
-      diag_lines <- c(diag_lines, paste0("### ", shift_label, " — Wave-by-wave Diagnostics (Uncensored)"))
+      diag_lines <- c(diag_lines, paste0("### ", shift_label, " — Wave-by-wave Diagnostics (positivity; uncensored rows)"))
+      diag_lines <- c(diag_lines, "  note: positivity diagnostics only; point estimates target the baseline cohort via censoring adjustment.")
 
       # iterate over waves in order
       waves_ord <- order(suppressWarnings(as.integer(shift_data$wave)))
@@ -406,6 +653,7 @@ margot_interpret_lmtp_positivity <- function(x,
       for (i in seq_len(nrow(shift_data))) {
         row <- shift_data[i, ]
         wv <- row$wave
+        wv_label <- wave_label(wv)
         zeros_pct <- as.numeric(row$prop_zero) * 100
         # per-wave uncensored metrics
         range_min_pos <- as.numeric(row$min_pos)
@@ -421,9 +669,11 @@ margot_interpret_lmtp_positivity <- function(x,
         quant_cols <- grep("^q.*_pos$", names(row), value = TRUE)
         quants <- if (length(quant_cols)) sapply(quant_cols, function(col) as.numeric(row[[col]])) else NULL
 
-        line1 <- paste0("- Wave ", wv, ": censoring = ", fmt_frac(zeros_pct), "%; ",
+        # Clarify censoring semantics: to next wave except final wave (end-of-study)
+        cens_label <- if (i < nrow(shift_data)) "censoring to next wave = " else "censoring end of study = "
+        line1 <- paste0("- ", wv_label, ": ", cens_label, fmt_frac(zeros_pct), "%; ",
                         "range [", fmt_frac(range_min_pos), ", ", fmt_frac(range_max_pos), "];")
-        line2 <- paste0("  mean ± SD = ", fmt_frac(mean_val_pos), " ± ", fmt_frac(sd_val_pos),
+        line2 <- paste0("  mean $\\pm$ SD = ", fmt_frac(mean_val_pos), " $\\pm$ ", fmt_frac(sd_val_pos),
                         " (CV = ", fmt_frac(cv_val_pos), ")")
         diag_lines <- c(diag_lines, line1, line2)
 
@@ -462,7 +712,8 @@ margot_interpret_lmtp_positivity <- function(x,
   outcome_label <- map_label(outcome)
 
   header_bits <- c(
-    paste0("LMTP positivity diagnostics for ", outcome_label, " (uncensored observations)."),
+    paste0("LMTP positivity diagnostics for ", outcome_label, " (positivity on uncensored rows)."),
+    "Estimation reweights to the baseline cohort via censoring adjustment.",
     if (is.finite(baseline_n)) paste0("Baseline N $\\approx$ ", fmt_int(baseline_n), ".") else "",
     if (is.finite(person_time)) paste0("Person-time rows per shift (selected waves) = ", fmt_int(person_time), ".") else ""
   )
@@ -480,12 +731,14 @@ margot_interpret_lmtp_positivity <- function(x,
 
     # censoring rate (shown once per shift)
     cens_pct <- fmt_frac(overall_df$prop_censored * 100)
-    cens_clause <- paste0("censoring = ", cens_pct, "%")
+    cens_clause <- paste0("censoring (zeros across person-time) = ", cens_pct, "%")
 
     # uncensored ESS by wave
+    wave_names <- vapply(wave_df$wave, wave_label, character(1))
     wave_bits <- paste0(
-      wave_df$wave, ": ", fmt_int(wave_df$ess_pos),
-      " (ESS+/(N+) = ", fmt_frac(wave_df$ess_pos_frac), ")"
+      wave_names, ": ", fmt_int(wave_df$ess_pos),
+      " (ESS+/(N+) = ", fmt_frac(wave_df$ess_pos_frac),
+      ", ESS+/(N_pt) = ", fmt_frac(wave_df$ess_pos_frac_pt), ")"
     )
     wave_clause <- paste(wave_bits, collapse = ", ")
 
@@ -500,17 +753,31 @@ margot_interpret_lmtp_positivity <- function(x,
                ""),
       ""
     )
+    # policy rates (optional)
+    policy_clause <- ""
+    if (isTRUE(include_policy_rates) && "policy_rate" %in% names(wave_df)) {
+      if (any(is.finite(wave_df$policy_rate))) {
+        pr_bits <- paste0(vapply(wave_df$wave, wave_label, character(1)), ": ", fmt_frac(wave_df$policy_rate))
+        pr_clause <- paste(pr_bits, collapse = ", ")
+        pr_overall <- if ("policy_rate" %in% names(overall_df) && is.finite(overall_df$policy_rate)) paste0("; overall = ", fmt_frac(overall_df$policy_rate)) else ""
+        policy_clause <- paste0("; policy $\\Pr(A_t=1)$ by wave — ", pr_clause, pr_overall)
+      }
+    }
 
-    paste0("- ", res$label, ": ", cens_clause, "; uncensored ESS by wave — ", wave_clause, overall_clause)
+    paste0("- ", res$label, ": ", cens_clause, "; uncensored ESS by wave — ", wave_clause, overall_clause, policy_clause)
   }, character(1))
   lines <- lines[nzchar(lines)]
 
   # assemble final output with optional methods and diagnostics
   methods_section <- if (isTRUE(include_methods)) methods_text() else character(0)
+  ipsi_section <- ipsi_context_text()
+  det_section <- deterministic_context_text()
+  policy_section <- policy_rate_context_text()
   diagnostics_section <- diagnostics_text()  # returns empty vector if include_diagnostics = FALSE
 
-  text_lines <- c(methods_section, header, overview_lines, lines, diagnostics_section)
+  text_lines <- c(methods_section, ipsi_section, det_section, policy_section, header, overview_lines, lines, diagnostics_section)
   text <- paste(text_lines, collapse = "\n")
+  text <- sanitize_latex(text)
 
   if (identical(return, "text")) {
     text

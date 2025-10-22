@@ -19,7 +19,7 @@ graphics."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.262</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.263</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,13 @@ graphics.</p>
 <span>  digits <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  include_methods <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  include_diagnostics <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  include_ipsi_context <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  treatment_label <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ipsi_example_g <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  include_policy_rates <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  policy_rate_threshold <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  policy_rate_strict <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  include_deterministic_context <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"text"</span>, <span class="st">"list"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -121,6 +128,52 @@ density ratios, their interpretation, and ESS computation (default: FALSE).</p><
 <dt id="arg-include-diagnostics">include_diagnostics<a class="anchor" aria-label="anchor" href="#arg-include-diagnostics"></a></dt>
 <dd><p>Logical; if TRUE, appends detailed diagnostics per shift
 including zeros, range, quantiles, and tail probabilities (default: FALSE).</p></dd>
+
+
+<dt id="arg-include-ipsi-context">include_ipsi_context<a class="anchor" aria-label="anchor" href="#arg-include-ipsi-context"></a></dt>
+<dd><p>Logical; if TRUE and any `ipsi_*` shifts are
+included, prepends a short IPSI context block that explains the policy on the
+probability (risk) scale with a simple formula and small illustrative translations
+(default: TRUE).</p></dd>
+
+
+<dt id="arg-treatment-label">treatment_label<a class="anchor" aria-label="anchor" href="#arg-treatment-label"></a></dt>
+<dd><p>Character label used for $A_t$ in the IPSI context block.
+If NULL, attempts to infer a domain-appropriate label from model/shift names
+(e.g., "attendance" when shift/outcome names contain religious service
+keywords); otherwise falls back to "exposure". Default: NULL.</p></dd>
+
+
+<dt id="arg-ipsi-example-g">ipsi_example_g<a class="anchor" aria-label="anchor" href="#arg-ipsi-example-g"></a></dt>
+<dd><p>Numeric vector of example baseline risks g used to
+illustrate the transformation q = delta * g / ((1 - g) + delta * g) for the
+included delta values (default: `c(0.05, 0.10, 0.20)`).</p></dd>
+
+
+<dt id="arg-include-policy-rates">include_policy_rates<a class="anchor" aria-label="anchor" href="#arg-include-policy-rates"></a></dt>
+<dd><p>Logical; if TRUE and exposure-by-wave data are
+available and aligned with the density ratios, reports policy-implied exposure
+probabilities by wave using the reweighted mean p_hat_t = sum(r_i,t * A_i,t) / sum(r_i,t)
+on uncensored rows (default: TRUE). If required inputs are missing, silently
+skips this section.</p></dd>
+
+
+<dt id="arg-policy-rate-threshold">policy_rate_threshold<a class="anchor" aria-label="anchor" href="#arg-policy-rate-threshold"></a></dt>
+<dd><p>Numeric; when computing policy rates and the attached
+exposure columns are counts or continuous, converts them to a binary indicator
+1(A_t op tau) before aggregation. Default tau = 0 (i.e., any exposure).</p></dd>
+
+
+<dt id="arg-policy-rate-strict">policy_rate_strict<a class="anchor" aria-label="anchor" href="#arg-policy-rate-strict"></a></dt>
+<dd><p>Logical; comparison operator used with the threshold when building
+the indicator: if TRUE uses '&gt;' (strict), else uses '&gt;=' (inclusive). Default TRUE.</p></dd>
+
+
+<dt id="arg-include-deterministic-context">include_deterministic_context<a class="anchor" aria-label="anchor" href="#arg-include-deterministic-context"></a></dt>
+<dd><p>Logical; if TRUE and any deterministic
+shifts are present (e.g., names starting with `shift_`), prepends a concise
+description of history‑dependent policies (e.g., A_t^d := d_t(A_t, H_t)) and,
+when possible, lists the named deterministic policies included (default: TRUE).</p></dd>
 
 
 <dt id="arg-return">return<a class="anchor" aria-label="anchor" href="#arg-return"></a></dt>

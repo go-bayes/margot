@@ -1,5 +1,22 @@
 # margot NEWS
 
+## Changes in version 1.0.263
+
+### New
+- IPSI context block in `margot_interpret_lmtp_positivity()` (odds‑free, LaTeX) explaining $q_t(H_t) = \frac{\delta g_t(H_t)}{(1-g_t(H_t)) + \delta g_t(H_t)}$ and small probability illustrations. Auto‑labels treatment as “exposure” (domain‑agnostic).
+- Deterministic policy context in `margot_interpret_lmtp_positivity()` describing $A_t^{\bar d} := d_t(A_t,\mathcal H_t)$ and listing included policies.
+- Policy‑implied exposure rates (optional) reported by wave and overall using $\hat p_t = \sum_i r_{i,t} A_{i,t}/\sum_i r_{i,t}$ on uncensored rows. If exposures are not binary, an indicator $\mathbb{1}(A_t \;{op}\; \tau)$ is used (defaults: $op$ is $>$ and $\tau=0$).
+
+### Improvements
+- Wave labels in positivity text now respect user `label_mapping` (e.g., “Baseline (2018/19)”, “Year 1 Follow‑up”) and support skipped panels.
+- Clarified positivity vs. target: diagnostics labelled “positivity; uncensored rows” and text notes that estimation reweights to the baseline cohort via censoring adjustment.
+- Per‑wave bullets now include both `ESS+/(N+)` and `ESS+/(N_pt)`.
+- Detailed diagnostics clarify censoring semantics: “censoring to next wave” for intermediate waves; “censoring end of study” for the final exposure.
+- LaTeX sanitisation of common glyphs in text ($\to$, $\pm$, $\ge$, $\le$, $\approx$, $\times$).
+
+### Fixes
+- `margot_plot_lmtp_overlap_grid()`: stop showing the deprecated `layout` warning unless the user explicitly supplies `layout`.
+
 ## Changes in version 1.0.261
 
 ### Improvements

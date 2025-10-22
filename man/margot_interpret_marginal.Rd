@@ -14,7 +14,10 @@ margot_interpret_marginal(
   adjust = c("none", "bonferroni"),
   alpha = 0.05,
   include_adjust_note = TRUE,
-  effect_type = "ATE"
+  effect_type = "ATE",
+  intervention_type = c("exposure_shift", "ipsi"),
+  delta = 1,
+  sd = 1
 )
 }
 \arguments{

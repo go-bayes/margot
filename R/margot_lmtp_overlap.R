@@ -286,8 +286,22 @@ margot_lmtp_overlap <- function(x,
 
   # Text summary assembled via margot_interpret_lmtp_positivity()
   dots <- list(...)
-  allowed_opts <- c("label_mapping", "waves", "remove_waves",
-                    "include_methods", "include_diagnostics", "digits")
+  allowed_opts <- c(
+    "label_mapping",
+    "waves",
+    "remove_waves",
+    "include_methods",
+    "include_diagnostics",
+    "digits",
+    # Forward IPSI/context and policy-rate options to the interpreter
+    "include_ipsi_context",
+    "treatment_label",
+    "ipsi_example_g",
+    "include_policy_rates",
+    "policy_rate_threshold",
+    "policy_rate_strict",
+    "include_deterministic_context"
+  )
   interpret_opts <- dots[intersect(names(dots), allowed_opts)]
   if (!("digits" %in% names(interpret_opts))) {
     interpret_opts$digits <- digits
@@ -323,6 +337,19 @@ margot_lmtp_overlap <- function(x,
   }, character(1))
   text_chunks <- text_chunks[nzchar(text_chunks)]
   text_summary <- if (length(text_chunks)) paste(text_chunks, collapse = "\n\n") else ""
+  # LaTeX sanitiser for any residual glyphs
+  sanitize_latex <- function(txt) {
+    if (!is.character(txt) || !length(txt)) return(txt)
+    out <- txt
+    out <- gsub("→", " $\\\\to$ ", out, fixed = TRUE)
+    out <- gsub("±", " $\\\\pm$ ", out, fixed = TRUE)
+    out <- gsub("≥", " $\\\\ge$ ", out, fixed = TRUE)
+    out <- gsub("≤", " $\\\\le$ ", out, fixed = TRUE)
+    out <- gsub("≈", " $\\\\approx$ ", out, fixed = TRUE)
+    out <- gsub("×", " $\\\\times$ ", out, fixed = TRUE)
+    out
+  }
+  text_summary <- sanitize_latex(text_summary)
 
   list(
     overlap_summary = overlap_summary,

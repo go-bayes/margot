@@ -81,10 +81,13 @@ margot_plot_lmtp_overlap_grid <- function(x,
     }
   }
   annotate_graph <- "shifts"
-  layout_requested <- layout
-  if (!is.null(layout_requested) && length(layout_requested) && !identical(layout_requested, "") && !identical(layout_requested, "shifts_by_waves")) {
-    if (requireNamespace("cli", quietly = TRUE)) {
-      cli::cli_alert_info("`layout` is deprecated; using 'shifts_by_waves'.")
+  # Respect legacy layout argument only when explicitly provided
+  if (!missing(layout)) {
+    layout_requested <- layout
+    if (!is.null(layout_requested) && length(layout_requested) && !identical(layout_requested, "") && !identical(layout_requested, "shifts_by_waves")) {
+      if (requireNamespace("cli", quietly = TRUE)) {
+        cli::cli_alert_info("`layout` is deprecated; using 'shifts_by_waves'.")
+      }
     }
   }
   layout <- "shifts_by_waves"

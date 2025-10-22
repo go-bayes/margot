@@ -417,6 +417,27 @@ margot_lmtp <- function(
 
       res <- tryCatch({
         model <- do.call(lmtp_model_type, lmtp_args)
+        # Attach exposure-by-wave for downstream policy-rate summaries when possible
+        # Best-effort: only if `trt` is a character vector of column names and
+        # dimensions align with the model's density ratios.
+        try({
+          dr_cols <- try(ncol(model$density_ratios), silent = TRUE)
+          if (!inherits(dr_cols, "try-error") && is.numeric(dr_cols) && dr_cols > 0) {
+            if (is.character(trt)) {
+              if (all(trt %in% colnames(data))) {
+                exp_mat <- as.matrix(data[, trt, drop = FALSE])
+                # If there are more exposure columns than waves used, keep the first ones
+                if (ncol(exp_mat) >= dr_cols) {
+                  exp_mat <- exp_mat[, seq_len(dr_cols), drop = FALSE]
+                }
+                # Basic sanity: same number of rows
+                if (nrow(exp_mat) == nrow(model$density_ratios)) {
+                  model$exposure_by_wave <- exp_mat
+                }
+              }
+            }
+          }
+        }, silent = TRUE)
         result$success <- TRUE
         result$model <- model
 

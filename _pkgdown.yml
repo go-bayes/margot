@@ -139,6 +139,7 @@ reference:
     - margot_lmtp_evalue
     - margot_lmtp_positivity
     - margot_model_evalue
+    - margot_multi_evalue
     - margot_omnibus_hetero_test
     - margot_planned_subgroups_batch
     - margot_policy

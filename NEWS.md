@@ -3266,3 +3266,19 @@ These deprecated functions will continue to work but will issue warnings. They w
 - Soft‑deprecate Neutral in policy audience (configurable via `show_neutral`)
 - `prefer_stability` biases depth selection toward depth‑1 unless depth‑2 gains are clearly larger
 - Acronym expansion opt‑in: `expand_acronyms` with user‑overrides via options
+# [2025-10-22] margot 1.0.263
+### Added
+- IPSI context (odds‑free) in `margot_interpret_lmtp_positivity()` with a simple probability‑scale formula and small illustrative translations (domain‑agnostic; defaults to “exposure”).
+- Deterministic policy context describing history‑dependent rules (e.g., A_t^d := d_t(A_t, H_t)) and listing included policies.
+- Optional policy‑implied exposure rates by wave and overall using reweighted means; non‑binary exposures are thresholded via an indicator 1(A_t op tau) (defaults: op is >, tau = 0).
+
+### Changed
+- Wave labels in positivity text respect user `label_mapping` (e.g., “Baseline (2018/19)”), supporting skipped panels.
+- Clarified positivity vs target: diagnostics labelled “positivity; uncensored rows” with a note that estimation reweights to the baseline cohort via censoring adjustment.
+- Per‑wave bullets include both `ESS+/(N+)` and `ESS+/(N_pt)`.
+- Censoring wording clarified: “censoring to next wave” for intermediate waves, “censoring end of study” for the final exposure; shift summaries show “censoring (zeros across person‑time)”.
+- LaTeX sanitisation of common glyphs in generated text ($\to$, $\pm$, $\ge$, $\le$, $\approx$, $\times$).
+- `margot_plot_lmtp_overlap_grid()`: suppress deprecated `layout` warning unless `layout` is explicitly supplied.
+
+### Docs
+- Rd parameter docs avoid LaTeX macros to prevent Rd warnings; pkgdown reference updated to include `margot_multi_evalue`.

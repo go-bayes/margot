@@ -15,6 +15,13 @@ margot_interpret_lmtp_positivity(
   digits = 2,
   include_methods = FALSE,
   include_diagnostics = FALSE,
+  include_ipsi_context = TRUE,
+  treatment_label = NULL,
+  ipsi_example_g = NULL,
+  include_policy_rates = TRUE,
+  policy_rate_threshold = 0,
+  policy_rate_strict = TRUE,
+  include_deterministic_context = TRUE,
   return = c("text", "list")
 )
 
@@ -48,6 +55,38 @@ density ratios, their interpretation, and ESS computation (default: FALSE).}
 
 \item{include_diagnostics}{Logical; if TRUE, appends detailed diagnostics per shift
 including zeros, range, quantiles, and tail probabilities (default: FALSE).}
+
+\item{include_ipsi_context}{Logical; if TRUE and any `ipsi_*` shifts are
+included, prepends a short IPSI context block that explains the policy on the
+probability (risk) scale with a simple formula and small illustrative translations
+(default: TRUE).}
+
+\item{treatment_label}{Character label used for $A_t$ in the IPSI context block.
+If NULL, attempts to infer a domain-appropriate label from model/shift names
+(e.g., "attendance" when shift/outcome names contain religious service
+keywords); otherwise falls back to "exposure". Default: NULL.}
+
+\item{ipsi_example_g}{Numeric vector of example baseline risks g used to
+illustrate the transformation q = delta * g / ((1 - g) + delta * g) for the
+included delta values (default: `c(0.05, 0.10, 0.20)`).}
+
+\item{include_policy_rates}{Logical; if TRUE and exposure-by-wave data are
+available and aligned with the density ratios, reports policy-implied exposure
+probabilities by wave using the reweighted mean p_hat_t = sum(r_{i,t} * A_{i,t}) / sum(r_{i,t})
+on uncensored rows (default: TRUE). If required inputs are missing, silently
+skips this section.}
+
+\item{policy_rate_threshold}{Numeric; when computing policy rates and the attached
+exposure columns are counts or continuous, converts them to a binary indicator
+1(A_t op tau) before aggregation. Default tau = 0 (i.e., any exposure).}
+
+\item{policy_rate_strict}{Logical; comparison operator used with the threshold when building
+the indicator: if TRUE uses '>' (strict), else uses '>=' (inclusive). Default TRUE.}
+
+\item{include_deterministic_context}{Logical; if TRUE and any deterministic
+shifts are present (e.g., names starting with `shift_`), prepends a concise
+description of history‑dependent policies (e.g., A_t^d := d_t(A_t, H_t)) and,
+when possible, lists the named deterministic policies included (default: TRUE).}
 
 \item{return}{Character; either `"text"` (default, a single markdown-ready
 string) or `"list"` (detailed components including the computed ESS
