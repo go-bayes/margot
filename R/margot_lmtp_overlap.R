@@ -300,7 +300,12 @@ margot_lmtp_overlap <- function(x,
     "include_policy_rates",
     "policy_rate_threshold",
     "policy_rate_strict",
-    "include_deterministic_context"
+    "include_deterministic_context",
+    # New testing and IPSI recommendation options
+    "include_tests",
+    "test_thresholds",
+    "include_ipsi_recommend",
+    "include_test_explanations"
   )
   interpret_opts <- dots[intersect(names(dots), allowed_opts)]
   if (!("digits" %in% names(interpret_opts))) {

@@ -74,6 +74,10 @@ graphics.</p>
 <span>  policy_rate_threshold <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  policy_rate_strict <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  include_deterministic_context <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  include_tests <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  test_thresholds <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  include_ipsi_recommend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  include_test_explanations <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"text"</span>, <span class="st">"list"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -174,6 +178,29 @@ the indicator: if TRUE uses '&gt;' (strict), else uses '&gt;=' (inclusive). Defa
 shifts are present (e.g., names starting with `shift_`), prepends a concise
 description of history‑dependent policies (e.g., A_t^d := d_t(A_t, H_t)) and,
 when possible, lists the named deterministic policies included (default: TRUE).</p></dd>
+
+
+<dt id="arg-include-tests">include_tests<a class="anchor" aria-label="anchor" href="#arg-include-tests"></a></dt>
+<dd><p>Logical; if TRUE, runs extra overlap/positivity checks and prints
+CLI messages summarising results (near‑zero uniform weights, product‑of‑r collapse,
+monotone support checks). Default TRUE.</p></dd>
+
+
+<dt id="arg-test-thresholds">test_thresholds<a class="anchor" aria-label="anchor" href="#arg-test-thresholds"></a></dt>
+<dd><p>Named list of thresholds for `include_tests`. Recognised names:
+`near_zero_median` (default 1e-3), `near_zero_cv` (0.05), `prod_log10` (-8),
+and `prod_frac_warn` (0.20). Unrecognised entries are ignored.</p></dd>
+
+
+<dt id="arg-include-ipsi-recommend">include_ipsi_recommend<a class="anchor" aria-label="anchor" href="#arg-include-ipsi-recommend"></a></dt>
+<dd><p>Logical; if TRUE and IPSI shifts are present, evaluates candidate
+deltas using the same tests and prints a recommendation for the largest delta that passes
+guardrails. Also adds an "IPSI Recommendation" section to the returned text. Default TRUE.</p></dd>
+
+
+<dt id="arg-include-test-explanations">include_test_explanations<a class="anchor" aria-label="anchor" href="#arg-include-test-explanations"></a></dt>
+<dd><p>Logical; if TRUE, adds a short "Test Explanations" section that
+explains near‑zero flags, the product‑of‑r summary, and how censoring is handled via IPCW. Default FALSE.</p></dd>
 
 
 <dt id="arg-return">return<a class="anchor" aria-label="anchor" href="#arg-return"></a></dt>

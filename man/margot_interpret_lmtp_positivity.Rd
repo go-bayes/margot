@@ -22,6 +22,10 @@ margot_interpret_lmtp_positivity(
   policy_rate_threshold = 0,
   policy_rate_strict = TRUE,
   include_deterministic_context = TRUE,
+  include_tests = TRUE,
+  test_thresholds = NULL,
+  include_ipsi_recommend = TRUE,
+  include_test_explanations = FALSE,
   return = c("text", "list")
 )
 
@@ -87,6 +91,21 @@ the indicator: if TRUE uses '>' (strict), else uses '>=' (inclusive). Default TR
 shifts are present (e.g., names starting with `shift_`), prepends a concise
 description of history‑dependent policies (e.g., A_t^d := d_t(A_t, H_t)) and,
 when possible, lists the named deterministic policies included (default: TRUE).}
+
+\item{include_tests}{Logical; if TRUE, runs extra overlap/positivity checks and prints
+CLI messages summarising results (near‑zero uniform weights, product‑of‑r collapse,
+monotone support checks). Default TRUE.}
+
+\item{test_thresholds}{Named list of thresholds for `include_tests`. Recognised names:
+`near_zero_median` (default 1e-3), `near_zero_cv` (0.05), `prod_log10` (-8),
+and `prod_frac_warn` (0.20). Unrecognised entries are ignored.}
+
+\item{include_ipsi_recommend}{Logical; if TRUE and IPSI shifts are present, evaluates candidate
+deltas using the same tests and prints a recommendation for the largest delta that passes
+guardrails. Also adds an "IPSI Recommendation" section to the returned text. Default TRUE.}
+
+\item{include_test_explanations}{Logical; if TRUE, adds a short "Test Explanations" section that
+explains near‑zero flags, the product‑of‑r summary, and how censoring is handled via IPCW. Default FALSE.}
 
 \item{return}{Character; either `"text"` (default, a single markdown-ready
 string) or `"list"` (detailed components including the computed ESS

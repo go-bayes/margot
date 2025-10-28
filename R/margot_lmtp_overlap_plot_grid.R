@@ -76,6 +76,7 @@ margot_lmtp_overlap_plot_grid <- function(x,
     }
   }
   layout <- "shifts_by_waves"
+  # keep legacy defaults (sizes already passed in via defaults above)
 
   # validate ymax_harmonize: either a character option or a named/unnamed vector
   if (is.null(ymax_harmonize)) ymax_harmonize <- "none"
