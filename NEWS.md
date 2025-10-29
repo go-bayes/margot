@@ -1,7 +1,19 @@
+# [2025-10-22] margot 1.0.266
+
+### New 1.0.266 entry summarizing:
+- Example added for `margot_ipsi_summary()`
+- Compact table refinements (ATT [CI], friendly Prod headers, hide policy cols if unused, explanation attribute)
+
+
+### Fixed
+- `margot_plot()` restored to working order.
+
+
+
 # [2025-10-22] margot 1.0.265
 
 ### Fixed
-- `margot_plot()` restored to wrking order.
+- `margot_plot()` restored to working order.
 
 
 # [2025-10-22] margot 1.0.264
