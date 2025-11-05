@@ -11,7 +11,7 @@ in separate runs (e.g., comparing shift_zero from batch 2 with ipsi_02 from batc
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.266</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.268</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,8 @@ in separate runs (e.g., comparing shift_zero from batch 2 with ipsi_02 from batc
 <span>  contrast_scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"additive"</span>, <span class="st">"rr"</span>, <span class="st">"or"</span><span class="op">)</span>,</span>
 <span>  auto_pairwise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  include_null_contrasts <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  duplicate_policy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"overwrite"</span>, <span class="st">"skip"</span>, <span class="st">"error"</span><span class="op">)</span>,</span>
+<span>  keep_models <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -60,7 +62,8 @@ in separate runs (e.g., comparing shift_zero from batch 2 with ipsi_02 from batc
 
 
 <dl><dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>One or more LMTP output objects from margot_lmtp()</p></dd>
+<dd><p>One or more LMTP output objects from `margot_lmtp()` and/or
+standalone checkpoint lists that contain `model`, `outcome`, and `shift_name`</p></dd>
 
 
 <dt id="arg-contrasts">contrasts<a class="anchor" aria-label="anchor" href="#arg-contrasts"></a></dt>
@@ -82,6 +85,19 @@ Default is FALSE. If both contrasts and auto_pairwise are specified, contrasts t
 auto_pairwise = TRUE. Default is TRUE. Ignored when auto_pairwise = FALSE.</p></dd>
 
 
+<dt id="arg-duplicate-policy">duplicate_policy<a class="anchor" aria-label="anchor" href="#arg-duplicate-policy"></a></dt>
+<dd><p>How to handle duplicate outcome/shift models encountered across
+inputs. `"overwrite"` keeps the most recently encountered model (default), `"skip"`
+preserves the first version and ignores later duplicates, and `"error"` aborts when a
+duplicate is found.</p></dd>
+
+
+<dt id="arg-keep-models">keep_models<a class="anchor" aria-label="anchor" href="#arg-keep-models"></a></dt>
+<dd><p>Logical; if TRUE, the returned object retains the combined LMTP models
+(merged across batches/standalone checkpoints). Keeping models enables downstream learner
+diagnostics but increases the output size. Default is FALSE.</p></dd>
+
+
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Logical, if TRUE suppress informational CLI messages. Default is FALSE.</p></dd>
 
@@ -90,7 +106,7 @@ auto_pairwise = TRUE. Default is TRUE. Ignored when auto_pairwise = FALSE.</p></
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with the standard LMTP output structure:</p>
 <dl><dt>models</dt>
-<dd><p>NULL (not retained per design)</p></dd>
+<dd><p>NULL by default; when `keep_models = TRUE`, contains the merged LMTP models</p></dd>
 
   <dt>contrasts</dt>
 <dd><p>List of contrasts by outcome</p></dd>
@@ -105,7 +121,8 @@ auto_pairwise = TRUE. Default is TRUE. Ignored when auto_pairwise = FALSE.</p></
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function merges models by outcome and shift, then computes specified contrasts only
-where both shifts exist for the same outcome. Original models are not retained in the output.
+where both shifts exist for the same outcome. Original models are retained only when
+`keep_models = TRUE` (default is to omit them to keep the object lightweight).
 If an outcome is missing from one batch or a shift doesn't exist for a particular outcome,
 the function warns but continues processing valid contrasts.</p>
     </div>
@@ -163,7 +180,7 @@ the function warns but continues processing valid contrasts.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

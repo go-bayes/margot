@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.266</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.268</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,21 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.268" id="id_2025-11-05-margot-10268">[2025-11-05] margot 1.0.268<a class="anchor" aria-label="anchor" href="#id_2025-11-05-margot-10268"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-268">Added<a class="anchor" aria-label="anchor" href="#added-1-0-268"></a></h4>
+<ul><li>
+<code>duplicate_policy</code> argument in <code><a href="../reference/margot_lmtp_combine_and_contrast.html">margot_lmtp_combine_and_contrast()</a></code> so duplicate outcome/shift models can be overwritten, skipped, or treated as errors explicitly.</li>
+<li>Optional <code>keep_models = TRUE</code> flag in <code><a href="../reference/margot_lmtp_combine_and_contrast.html">margot_lmtp_combine_and_contrast()</a></code> to retain merged LMTP models for downstream learner diagnostics.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-268">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-268"></a></h4>
+<ul><li>Standalone checkpoint ingestion paths now emit deterministic CLI messages (no cli pluralisation helpers required), ensuring recovery runs that only pass checkpoints complete without glue errors.</li>
+<li>
+<code><a href="../reference/margot_lmtp_resort_contrast.html">margot_resort_contrast_lmtp()</a></code> renamed to <code><a href="../reference/margot_lmtp_resort_contrast.html">margot_lmtp_resort_contrast()</a></code>; the old name remains available but issues a soft deprecation warning.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.266" id="id_2025-10-22-margot-10266">[2025-10-22] margot 1.0.266<a class="anchor" aria-label="anchor" href="#id_2025-10-22-margot-10266"></a></h2>
 <div class="section level4">
@@ -2940,7 +2955,7 @@
 </li>
 </ul></div>
 <div class="section level3">
-<h3 id="refactored-to-acceptl-depth-policy-trees-thumbsup-1-0-29">Refactored to accept 1L depth policy trees 👍<a class="anchor" aria-label="anchor" href="#refactored-to-acceptl-depth-policy-trees-thumbsup-1-0-29"></a></h3>
+<h3 id="refactored-to-acceptl-depth-policy-trees--1-0-29">Refactored to accept 1L depth policy trees 👍<a class="anchor" aria-label="anchor" href="#refactored-to-acceptl-depth-policy-trees--1-0-29"></a></h3>
 <ul><li>
 <code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code> will plot a tree of depth = 1L.</li>
 <li><code><a href="../reference/margot_recalculate_policy_trees.html">margot_recalculate_policy_trees()</a></code></li>
@@ -4317,10 +4332,10 @@
 <li><p><code>boilerplate_methods_statistical_estimator()</code> is deprecated. Use <code>boilerplate::boilerplate_report_statistical_estimator()</code> instead.</p></li>
 <li><p><code>boilerplate_methods_target_population()</code> is deprecated. Use <code>boilerplate::boilerplate_report_target_population()</code> instead.</p></li>
 <li><p><code>boilerplate_methods_variables()</code> is deprecated. Use <code>boilerplate::boilerplate_report_variables()</code> instead.</p></li>
-<li><p><code>margot_create_database()</code> is deprecated. Use <code>boilerplate::boilerplate_manage_measures()</code> instead.</p></li>
-<li><p><code>manager_boilerplate_measures()</code> is deprecated. Use <code>boilerplate::boilerplate_manage_measures()</code> instead.</p></li>
+<li><p><code>margot_create_database()</code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_manage_measures.html" class="external-link">boilerplate::boilerplate_manage_measures()</a></code> instead.</p></li>
+<li><p><code>manager_boilerplate_measures()</code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_manage_measures.html" class="external-link">boilerplate::boilerplate_manage_measures()</a></code> instead.</p></li>
 <li><p><code>margot_create_bibliography()</code> is deprecated. Use <code>boilerplate::boilerplate_report_measures()</code> instead.</p></li>
-<li><p><code>margot_merge_databases()</code> is deprecated. Use <code>boilerplate::boilerplate_merge_databases()</code> instead. (Note the plural ‘databases’ in the new function name.)</p></li>
+<li><p><code>margot_merge_databases()</code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_merge_databases.html" class="external-link">boilerplate::boilerplate_merge_databases()</a></code> instead. (Note the plural ‘databases’ in the new function name.)</p></li>
 <li><p>to obtain these new functions, use <code>devtools::install_github("go-bayes/boilerplate")</code></p></li>
 </ul></div>
 </div>
@@ -4863,7 +4878,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>
