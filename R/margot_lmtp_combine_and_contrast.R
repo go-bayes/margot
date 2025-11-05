@@ -5,7 +5,8 @@
 #' contrasts across batches. This enables comparisons between shifts that were estimated
 #' in separate runs (e.g., comparing shift_zero from batch 2 with ipsi_02 from batch 1).
 #'
-#' @param ... One or more LMTP output objects from margot_lmtp()
+#' @param ... One or more LMTP output objects from `margot_lmtp()` and/or
+#'   standalone checkpoint lists that contain `model`, `outcome`, and `shift_name`
 #' @param contrasts Optional list of character vectors (each length 2) specifying contrast pairs.
 #'   Example: list(c("shift_zero", "ipsi_02"), c("ipsi_10", "ipsi_05"))
 #' @param contrast_scale Scale for contrasts: "additive", "rr", or "or". Default is "additive".
@@ -13,16 +14,24 @@
 #'   Default is FALSE. If both contrasts and auto_pairwise are specified, contrasts takes precedence.
 #' @param include_null_contrasts Logical, if TRUE include contrasts against null shift when
 #'   auto_pairwise = TRUE. Default is TRUE. Ignored when auto_pairwise = FALSE.
+#' @param duplicate_policy How to handle duplicate outcome/shift models encountered across
+#'   inputs. `"overwrite"` keeps the most recently encountered model (default), `"skip"`
+#'   preserves the first version and ignores later duplicates, and `"error"` aborts when a
+#'   duplicate is found.
+#' @param keep_models Logical; if TRUE, the returned object retains the combined LMTP models
+#'   (merged across batches/standalone checkpoints). Keeping models enables downstream learner
+#'   diagnostics but increases the output size. Default is FALSE.
 #' @param quiet Logical, if TRUE suppress informational CLI messages. Default is FALSE.
 #'
 #' @details
 #' The function merges models by outcome and shift, then computes specified contrasts only
-#' where both shifts exist for the same outcome. Original models are not retained in the output.
+#' where both shifts exist for the same outcome. Original models are retained only when
+#' `keep_models = TRUE` (default is to omit them to keep the object lightweight).
 #' If an outcome is missing from one batch or a shift doesn't exist for a particular outcome,
 #' the function warns but continues processing valid contrasts.
 #'
 #' @return A list with the standard LMTP output structure:
-#'   \item{models}{NULL (not retained per design)}
+#'   \item{models}{NULL by default; when `keep_models = TRUE`, contains the merged LMTP models}
 #'   \item{contrasts}{List of contrasts by outcome}
 #'   \item{individual_tables}{List of evaluation tables by outcome}
 #'   \item{combined_tables}{List of combined tables across outcomes}
@@ -78,37 +87,200 @@ margot_lmtp_combine_and_contrast <- function(
     contrast_scale = c("additive", "rr", "or"),
     auto_pairwise = FALSE,
     include_null_contrasts = TRUE,
+    duplicate_policy = c("overwrite", "skip", "error"),
+    keep_models = FALSE,
     quiet = FALSE) {
 
   contrast_scale <- match.arg(contrast_scale)
-  lmtp_outputs <- list(...)
+  duplicate_policy <- match.arg(duplicate_policy)
+  raw_inputs <- list(...)
+
+  if (length(raw_inputs) == 0) {
+    cli::cli_alert_danger("No LMTP inputs provided")
+    stop("No LMTP inputs provided", call. = FALSE)
+  }
+
+  lmtp_structure <- c("models", "contrasts", "individual_tables", "combined_tables")
+
+  is_lmtp_output <- function(x) {
+    is.list(x) && all(lmtp_structure %in% names(x))
+  }
+
+  is_checkpoint_model <- function(x) {
+    is.list(x) &&
+      !is.null(x$model) &&
+      !is.null(x$outcome) && nzchar(x$outcome) &&
+      !is.null(x$shift_name) && nzchar(x$shift_name)
+  }
+
+  flatten_inputs <- function(x) {
+    flattened <- list()
+    add <- function(obj) {
+      flattened[[length(flattened) + 1]] <<- obj
+    }
+    recurse <- function(obj) {
+      if (is_lmtp_output(obj) || is_checkpoint_model(obj)) {
+        add(obj)
+      } else if (is.list(obj) && !inherits(obj, "lmtp")) {
+        if (length(obj) == 0) {
+          add(obj)
+        } else {
+          for (item in obj) {
+            recurse(item)
+          }
+        }
+      } else {
+        add(obj)
+      }
+    }
+    for (entry in x) {
+      recurse(entry)
+    }
+    flattened
+  }
+
+  flattened_inputs <- flatten_inputs(raw_inputs)
+
+  lmtp_outputs <- list()
+  standalone_models <- list()
+  invalid_inputs <- integer(0)
+
+  for (idx in seq_along(flattened_inputs)) {
+    obj <- flattened_inputs[[idx]]
+
+    if (is_lmtp_output(obj)) {
+      lmtp_outputs[[length(lmtp_outputs) + 1]] <- obj
+
+      # embedded checkpoint-like structure shouldn't be present but guard just in case
+      if (is_checkpoint_model(obj)) {
+        candidate <- list(
+          model = obj$model,
+          outcome = obj$outcome,
+          shift_name = obj$shift_name,
+          source = sprintf("embedded in batch %d", length(lmtp_outputs))
+        )
+        standalone_models[[length(standalone_models) + 1]] <- candidate
+      }
+      next
+    }
+
+    if (is_checkpoint_model(obj)) {
+      if (is.null(obj$source)) {
+        obj$source <- sprintf("standalone model #%d", length(standalone_models) + 1)
+      }
+      standalone_models[[length(standalone_models) + 1]] <- obj
+      next
+    }
+
+    if (inherits(obj, "lmtp")) {
+      invalid_inputs <- c(invalid_inputs, idx)
+      next
+    }
+
+    if (is.null(obj)) {
+      next
+    }
+
+    invalid_inputs <- c(invalid_inputs, idx)
+  }
+
+  if (length(invalid_inputs) > 0) {
+    cli::cli_alert_danger(
+      "Unsupported LMTP input type at position{?s}: {invalid_inputs}. Inputs must be complete margot_lmtp() outputs or checkpoint models with `model`, `outcome`, and `shift_name`."
+    )
+    stop(
+      "Invalid LMTP input supplied. Provide full margot_lmtp() outputs or checkpoint models with `model`, `outcome`, and `shift_name`.",
+      call. = FALSE
+    )
+  }
+
+  if (length(lmtp_outputs) == 0 && length(standalone_models) == 0) {
+    cli::cli_alert_danger("No LMTP outputs or standalone models available to combine")
+    stop("No LMTP outputs or standalone models available to combine", call. = FALSE)
+  }
+
   n_batches <- length(lmtp_outputs)
 
   # validate inputs
-  if (n_batches < 1) {
-    cli::cli_alert_danger("No LMTP outputs provided")
-    stop("No LMTP outputs provided", call. = FALSE)
-  }
-
-  # check all inputs are lmtp outputs
-  lmtp_structure <- c("models", "contrasts", "individual_tables", "combined_tables")
-  is_valid <- purrr::map_lgl(lmtp_outputs, ~ all(lmtp_structure %in% names(.x)))
-
-  if (!all(is_valid)) {
-    invalid_idx <- which(!is_valid)
-    cli::cli_alert_danger("Invalid LMTP output structure at position{?s}: {invalid_idx}")
-    stop("All inputs must be LMTP output objects from margot_lmtp()", call. = FALSE)
+  if (length(lmtp_outputs) > 0) {
+    is_valid <- purrr::map_lgl(lmtp_outputs, ~ all(lmtp_structure %in% names(.x)))
+    if (!all(is_valid)) {
+      invalid_idx <- which(!is_valid)
+      cli::cli_alert_danger("Invalid LMTP output structure at position{?s}: {invalid_idx}")
+      stop("All inputs must be LMTP output objects from margot_lmtp()", call. = FALSE)
+    }
   }
 
   if (!quiet) {
     cli::cli_h1("Combining LMTP Models from Multiple Batches")
-    cli::cli_alert_info("Processing {n_batches} LMTP batch{?es}...")
+    if (n_batches > 0) {
+      cli::cli_alert_info("Processing {n_batches} LMTP batch{?es}...")
+    }
+    if (length(standalone_models) > 0) {
+      count <- length(standalone_models)
+      msg <- if (count == 1L) {
+        "Integrating 1 standalone model (e.g., checkpoints)"
+      } else {
+        sprintf("Integrating %d standalone models (e.g., checkpoints)", count)
+      }
+      cli::cli_alert_info(msg)
+    }
   }
 
   # extract and organize models by outcome and shift
   # structure: all_models[[outcome]][[shift]] <- model_object
   all_models <- list()
   model_sources <- list()  # track which batch each model came from
+
+  add_model <- function(outcome, shift_name, model, source_label) {
+    if (is.null(model)) {
+      return(invisible(FALSE))
+    }
+
+    if (is.null(all_models[[outcome]])) {
+      all_models[[outcome]] <<- list()
+      model_sources[[outcome]] <<- list()
+    }
+
+    existing <- !is.null(all_models[[outcome]][[shift_name]])
+    existing_source <- if (existing) model_sources[[outcome]][[shift_name]] else NA_character_
+
+    if (existing) {
+      msg <- paste0(
+        "Duplicate model for outcome {.val {outcome}}, shift {.val {shift_name}} ",
+        "(existing from {.val {existing_source}}, new from {.val {source_label}})"
+      )
+
+      if (duplicate_policy == "error") {
+        if (!quiet) {
+          cli::cli_alert_danger("{msg} (duplicate_policy = 'error')")
+        }
+        stop(
+          sprintf(
+            "Duplicate model encountered for outcome '%s', shift '%s' (policy = 'error').",
+            outcome,
+            shift_name
+          ),
+          call. = FALSE
+        )
+      }
+
+      if (duplicate_policy == "skip") {
+        if (!quiet) {
+          cli::cli_alert_info("{msg} - keeping existing model (duplicate_policy = 'skip')")
+        }
+        return(invisible(FALSE))
+      }
+
+      if (!quiet) {
+        cli::cli_alert_warning("{msg} - replacing existing model (duplicate_policy = 'overwrite')")
+      }
+    }
+
+    all_models[[outcome]][[shift_name]] <<- model
+    model_sources[[outcome]][[shift_name]] <<- source_label
+    invisible(TRUE)
+  }
 
   for (batch_idx in seq_along(lmtp_outputs)) {
     batch_models <- lmtp_outputs[[batch_idx]]$models
@@ -132,18 +304,56 @@ margot_lmtp_combine_and_contrast <- function(
         # extract shift name from model name (format: outcome_shift)
         shift_name <- gsub(paste0("^", outcome, "_"), "", model_name)
 
-        # check for duplicates
-        if (shift_name %in% names(all_models[[outcome]])) {
-          if (!quiet) {
-            cli::cli_alert_warning(
-              "Duplicate model found: outcome={.val {outcome}}, shift={.val {shift_name}}. Using model from batch {batch_idx}"
-            )
-          }
-        }
-
-        all_models[[outcome]][[shift_name]] <- outcome_models[[model_name]]
-        model_sources[[outcome]][[shift_name]] <- batch_idx
+        add_model(
+          outcome = outcome,
+          shift_name = shift_name,
+          model = outcome_models[[model_name]],
+          source_label = paste0("batch ", batch_idx)
+        )
       }
+    }
+  }
+
+  if (length(standalone_models) > 0) {
+    count <- length(standalone_models)
+    if (!quiet) {
+      msg <- if (count == 1L) {
+        "Augmenting with 1 standalone model for missing outcome-shift combinations"
+      } else {
+        sprintf(
+          "Augmenting with %d standalone models for missing outcome-shift combinations",
+          count
+        )
+      }
+      cli::cli_alert_info(msg)
+    }
+
+    for (idx in seq_along(standalone_models)) {
+      candidate <- standalone_models[[idx]]
+      outcome <- candidate$outcome
+      shift_name <- candidate$shift_name
+      model <- candidate$model
+
+      if (is.null(model)) {
+        if (!quiet) {
+          cli::cli_alert_warning(
+            "Standalone model {idx} for outcome '{outcome}', shift '{shift_name}' is NULL - skipping"
+          )
+        }
+        next
+      }
+
+      source_label <- candidate$source
+      if (is.null(source_label) || !nzchar(source_label)) {
+        source_label <- paste0("standalone model #", idx)
+      }
+
+      add_model(
+        outcome = outcome,
+        shift_name = shift_name,
+        model = model,
+        source_label = source_label
+      )
     }
   }
 
@@ -352,8 +562,14 @@ margot_lmtp_combine_and_contrast <- function(
           if (!quiet) {
             source1 <- model_sources[[outcome]][[shift1]]
             source2 <- model_sources[[outcome]][[shift2]]
+            describe_source <- function(src) {
+              if (is.null(src) || !nzchar(src)) {
+                return("unknown source")
+              }
+              src
+            }
             cli::cli_alert_success(
-              "Contrast: {.val {shift1}} (batch {source1}) vs {.val {shift2}} (batch {source2})"
+              "Contrast: {.val {shift1}} ({describe_source(source1)}) vs {.val {shift2}} ({describe_source(source2)})"
             )
           }
         },
@@ -447,9 +663,22 @@ margot_lmtp_combine_and_contrast <- function(
     cli::cli_alert_success("Analysis complete \U0001F44D")
   }
 
-  # return standard lmtp output structure (without models)
+  models_out <- NULL
+  if (keep_models) {
+    models_out <- lapply(unique_outcomes, function(outcome) {
+      if (!length(all_models[[outcome]])) {
+        return(list())
+      }
+      stats::setNames(
+        all_models[[outcome]],
+        paste0(outcome, "_", names(all_models[[outcome]]))
+      )
+    })
+    names(models_out) <- unique_outcomes
+  }
+
   output <- list(
-    models = NULL,  # not retained per design
+    models = models_out,
     contrasts = all_contrasts,
     individual_tables = all_tables,
     combined_tables = combined_tables

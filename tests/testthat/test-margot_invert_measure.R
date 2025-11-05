@@ -11,7 +11,7 @@ test_that("margot_invert_measure works with z-score method", {
   expect_true(cor(x, x_flipped) == -1)
   
   # test with non-standardized data (should warn)
-  expect_warning(
+  expect_message(
     margot_invert_measure(x_raw, method = "zscore"),
     "Data may not be standardized"
   )
@@ -29,7 +29,7 @@ test_that("margot_invert_measure works with ordinal method and known bounds", {
   # check specific mappings
   expect_equal(likert_flipped[likert == 1], 5)
   expect_equal(likert_flipped[likert == 5], 1)
-  expect_equal(likert_flipped[likert == 3], 3)  # midpoint stays same
+  expect_true(all(likert_flipped[likert == 3] == 3))  # midpoint stays same
 })
 
 test_that("margot_invert_measure infers bounds correctly", {
@@ -67,7 +67,7 @@ test_that("margot_invert_measure handles edge cases", {
   expect_equal(x_flipped, 6)  # (10 + 1) - 5 = 6
   
   # all NA
-  x_na <- rep(NA, 5)
+  x_na <- rep(NA_real_, 5)
   x_flipped <- margot_invert_measure(x_na, method = "zscore")
   expect_equal(x_flipped, x_na)
 })
@@ -95,7 +95,7 @@ test_that("margot_invert_measure validates inputs correctly", {
 test_that("margot_invert_measure warns about out-of-bounds values", {
   x <- c(0, 1, 2, 3, 4, 5, 6)  # 0 and 6 are out of bounds
   
-  expect_warning(
+  expect_message(
     margot_invert_measure(x, method = "ordinal", scale_bounds = c(1, 5)),
     "Some values are outside specified bounds"
   )

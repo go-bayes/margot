@@ -17,13 +17,13 @@
 #' @examples
 #' \dontrun{
 #' # reorder all contrasts with new preference order
-#' result_reordered <- margot_resort_contrast_lmtp(
+#' result_reordered <- margot_lmtp_resort_contrast(
 #'   models_6_cp,
 #'   contrast_order = c("convert", "religious", "done", "secular", "null")
 #' )
 #'
 #' # compute specific contrasts only
-#' result_specific <- margot_resort_contrast_lmtp(
+#' result_specific <- margot_lmtp_resort_contrast(
 #'   models_6_cp,
 #'   specific_contrasts = list(
 #'     c("convert", "religious"),
@@ -39,7 +39,7 @@
 #' @importFrom stringr str_detect str_remove
 #'
 #' @export
-margot_resort_contrast_lmtp <- function(
+margot_lmtp_resort_contrast <- function(
     lmtp_output,
     contrast_order = NULL,
     contrast_type = c("pairwise", "null"),
@@ -250,9 +250,32 @@ margot_resort_contrast_lmtp <- function(
   return(output)
 }
 
+#' @rdname margot_lmtp_resort_contrast
+#' @export
+margot_resort_contrast_lmtp <- function(
+    lmtp_output,
+    contrast_order = NULL,
+    contrast_type = c("pairwise", "null"),
+    contrast_scale = c("additive", "rr", "or"),
+    specific_contrasts = NULL) {
+  lifecycle::deprecate_soft(
+    when = "1.0.268",
+    what = "margot_resort_contrast_lmtp()",
+    with = "margot_lmtp_resort_contrast()"
+  )
+
+  margot_lmtp_resort_contrast(
+    lmtp_output = lmtp_output,
+    contrast_order = contrast_order,
+    contrast_type = contrast_type,
+    contrast_scale = contrast_scale,
+    specific_contrasts = specific_contrasts
+  )
+}
+
 #' Helper function to view available models and contrasts
 #'
-#' @param lmtp_output Output from margot_lmtp() or margot_resort_contrast_lmtp()
+#' @param lmtp_output Output from margot_lmtp() or margot_lmtp_resort_contrast()
 #' @param show What to show: "models", "contrasts", "tables", or "all"
 #'
 #' @import cli

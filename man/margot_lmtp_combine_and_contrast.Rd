@@ -10,11 +10,14 @@ margot_lmtp_combine_and_contrast(
   contrast_scale = c("additive", "rr", "or"),
   auto_pairwise = FALSE,
   include_null_contrasts = TRUE,
+  duplicate_policy = c("overwrite", "skip", "error"),
+  keep_models = FALSE,
   quiet = FALSE
 )
 }
 \arguments{
-\item{...}{One or more LMTP output objects from margot_lmtp()}
+\item{...}{One or more LMTP output objects from `margot_lmtp()` and/or
+standalone checkpoint lists that contain `model`, `outcome`, and `shift_name`}
 
 \item{contrasts}{Optional list of character vectors (each length 2) specifying contrast pairs.
 Example: list(c("shift_zero", "ipsi_02"), c("ipsi_10", "ipsi_05"))}
@@ -27,11 +30,20 @@ Default is FALSE. If both contrasts and auto_pairwise are specified, contrasts t
 \item{include_null_contrasts}{Logical, if TRUE include contrasts against null shift when
 auto_pairwise = TRUE. Default is TRUE. Ignored when auto_pairwise = FALSE.}
 
+\item{duplicate_policy}{How to handle duplicate outcome/shift models encountered across
+inputs. `"overwrite"` keeps the most recently encountered model (default), `"skip"`
+preserves the first version and ignores later duplicates, and `"error"` aborts when a
+duplicate is found.}
+
+\item{keep_models}{Logical; if TRUE, the returned object retains the combined LMTP models
+(merged across batches/standalone checkpoints). Keeping models enables downstream learner
+diagnostics but increases the output size. Default is FALSE.}
+
 \item{quiet}{Logical, if TRUE suppress informational CLI messages. Default is FALSE.}
 }
 \value{
 A list with the standard LMTP output structure:
-  \item{models}{NULL (not retained per design)}
+  \item{models}{NULL by default; when `keep_models = TRUE`, contains the merged LMTP models}
   \item{contrasts}{List of contrasts by outcome}
   \item{individual_tables}{List of evaluation tables by outcome}
   \item{combined_tables}{List of combined tables across outcomes}
@@ -43,7 +55,8 @@ in separate runs (e.g., comparing shift_zero from batch 2 with ipsi_02 from batc
 }
 \details{
 The function merges models by outcome and shift, then computes specified contrasts only
-where both shifts exist for the same outcome. Original models are not retained in the output.
+where both shifts exist for the same outcome. Original models are retained only when
+`keep_models = TRUE` (default is to omit them to keep the object lightweight).
 If an outcome is missing from one batch or a shift doesn't exist for a particular outcome,
 the function warns but continues processing valid contrasts.
 }

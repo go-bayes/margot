@@ -7,7 +7,7 @@
 margot_view_lmtp_structure(lmtp_output, show = "all")
 }
 \arguments{
-\item{lmtp_output}{Output from margot_lmtp() or margot_resort_contrast_lmtp()}
+\item{lmtp_output}{Output from margot_lmtp() or margot_lmtp_resort_contrast()}
 
 \item{show}{What to show: "models", "contrasts", "tables", or "all"}
 }

@@ -1,3 +1,13 @@
+# [2025-11-05] margot 1.0.268
+
+### Added
+- `duplicate_policy` argument in `margot_lmtp_combine_and_contrast()` so duplicate outcome/shift models can be overwritten, skipped, or treated as errors explicitly.
+- Optional `keep_models = TRUE` flag in `margot_lmtp_combine_and_contrast()` to retain merged LMTP models for downstream learner diagnostics.
+
+### Changed
+- Standalone checkpoint ingestion paths now emit deterministic CLI messages (no cli pluralisation helpers required), ensuring recovery runs that only pass checkpoints complete without glue errors.
+- `margot_resort_contrast_lmtp()` renamed to `margot_lmtp_resort_contrast()`; the old name remains available but issues a soft deprecation warning.
+
 # [2025-10-22] margot 1.0.266
 
 ### New 1.0.266 entry summarizing:

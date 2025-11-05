@@ -152,7 +152,7 @@ reference:
     - margot_recompute_qini_ipw
     - margot_report_lmtp_positivity
     - margot_rescue_qini
-    - margot_resort_contrast_lmtp
+    - margot_lmtp_resort_contrast
     - margot_policy_workflow
     - margot_subset_model
     - margot_subset_batch
