@@ -28,6 +28,14 @@
 #' @param use_timestamp Logical, whether to include a timestamp in the filename. 
 #'   Default is FALSE.
 #' @param prefix Optional prefix to add to the saved output filename. Default is NULL.
+#' @param flip_outcomes Optional character vector or named list specifying outcomes to
+#'   reverse-score. Behaves like the `flip_outcomes` argument in `margot_causal_forest()`
+#'   and appends an `_r` suffix to flipped outcomes.
+#' @param flip_method Default inversion method when `flip_outcomes` is supplied. One of
+#'   "zscore" (simple negation, default) or "ordinal" (bounded scale inversion).
+#' @param flip_scale_bounds Numeric vector of length 2 [min, max] or named list supplying
+#'   bounds for ordinal flipping. Required when `flip_method = "ordinal"` unless bounds
+#'   should be inferred from the data.
 #'
 #' @return A list containing:
 #'   \item{models}{A list of lm() model objects for each outcome.}
@@ -90,7 +98,13 @@ margot_naive_regressions <- function(
     save_path = here::here("push_mods"),
     base_filename = "naive_regressions_output",
     use_timestamp = FALSE,
-    prefix = NULL) {
+    prefix = NULL,
+    flip_outcomes = NULL,
+    flip_method = "zscore",
+    flip_scale_bounds = NULL) {
+
+  # capture original expression for better diagnostics
+  flip_outcomes_expr <- substitute(flip_outcomes)
   
   # validate arguments
   scale <- match.arg(scale)
@@ -110,6 +124,37 @@ margot_naive_regressions <- function(
     stop(paste("Variables not found in data:", paste(missing_vars, collapse = ", ")))
   }
   
+  # validate and prepare flip specifications if provided
+  if (is.character(flip_outcomes) &&
+      length(flip_outcomes) == 1 &&
+      !(flip_outcomes %in% outcome_vars)) {
+    if (exists(flip_outcomes, envir = parent.frame(), inherits = TRUE)) {
+      cli::cli_alert_info("Retrieving flip_outcomes specification from parent environment: {.var {flip_outcomes}}")
+      flip_outcomes <- get(flip_outcomes, envir = parent.frame(), inherits = TRUE)
+    } else if (identical(flip_outcomes_expr, flip_outcomes)) {
+      cli::cli_alert_warning(
+        "flip_outcomes = \"{flip_outcomes}\" did not match outcome variables and no object with that name was found. Proceeding without flipping."
+      )
+      flip_outcomes <- NULL
+    }
+  }
+  
+  flip_info <- NULL
+  flip_spec <- NULL
+  if (!is.null(flip_outcomes)) {
+    flip_spec <- .validate_flip_spec(
+      flip_outcomes = flip_outcomes,
+      outcome_vars = outcome_vars,
+      flip_method = flip_method,
+      flip_scale_bounds = flip_scale_bounds
+    )
+    
+    if (length(flip_spec) == 0) {
+      cli::cli_alert_warning("No valid outcomes to flip found; proceeding without flipping")
+      flip_spec <- NULL
+    }
+  }
+  
   # initialize storage following margot_causal_forest pattern
   models <- list()
   results <- list()  # changed from individual_results to match pattern
@@ -121,6 +166,46 @@ margot_naive_regressions <- function(
     cli::cli_alert_info("Baseline covariates: {.var {paste(baseline_vars, collapse = ', ')}}")
   }
   cli::cli_alert_warning("These are naive regressions that ignore confounding")
+  
+  # apply flipping before modeling to mirror causal forest behavior
+  if (!is.null(flip_spec)) {
+    cli::cli_alert_info("Applying outcome flipping transformations")
+    data_processed <- data
+    flip_info <- list()
+    
+    for (outcome in names(flip_spec)) {
+      spec <- flip_spec[[outcome]]
+      
+      flipped_values <- margot_invert_measure(
+        x = data_processed[[outcome]],
+        method = spec$method,
+        scale_bounds = spec$scale_bounds
+      )
+      
+      flipped_name <- paste0(outcome, "_r")
+      data_processed[[flipped_name]] <- flipped_values
+      data_processed[[outcome]] <- NULL
+      
+      flip_info[[flipped_name]] <- list(
+        original_name = outcome,
+        method = spec$method,
+        scale_bounds = spec$scale_bounds
+      )
+      
+      original_mean <- mean(data[[outcome]], na.rm = TRUE)
+      flipped_mean <- mean(flipped_values, na.rm = TRUE)
+      cli::cli_alert_success("Flipped {outcome} -> {flipped_name} (mean: {round(original_mean, 3)} -> {round(flipped_mean, 3)})")
+    }
+    
+    outcome_vars <- sapply(outcome_vars, function(v) {
+      if (v %in% names(flip_spec)) {
+        paste0(v, "_r")
+      } else {
+        v
+      }
+    })
+    data <- data_processed
+  }
   
   # fit regression for each outcome with error handling
   for (i in seq_along(outcome_vars)) {
@@ -246,7 +331,12 @@ margot_naive_regressions <- function(
         model = model,
         custom_table = combined_result,  # this is the key element for combining
         formula = formula_str,
-        outcome = outcome_var
+        outcome = outcome_var,
+        original_outcome = if (!is.null(flip_info) && outcome_var %in% names(flip_info)) {
+          flip_info[[outcome_var]]$original_name
+        } else {
+          outcome_var
+        }
       )
       
       cli::cli_alert_success("Successfully processed {.var {outcome_var}}")
@@ -291,7 +381,8 @@ margot_naive_regressions <- function(
       models = models,
       exposure_var = exposure_var,
       outcome_vars = outcome_vars[outcome_vars %in% sapply(results, function(x) x$outcome)], # only successful outcomes
-      scale = scale
+      scale = scale,
+      flip_info = flip_info
     )
     
     here_save_qs(output_list, file.path(save_path, filename))
@@ -305,7 +396,8 @@ margot_naive_regressions <- function(
     models = models,                      # all fitted models
     exposure_var = exposure_var,
     outcome_vars = outcome_vars[outcome_vars %in% sapply(results, function(x) x$outcome)], # only successful outcomes
-    scale = scale
+    scale = scale,
+    flip_info = flip_info
   ))
 }
 

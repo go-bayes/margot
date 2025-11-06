@@ -1,3 +1,8 @@
+# [2025-11-06] margot 1.0.269
+
+### Fixed
+- `margot_naive_regressions()` now recognizes `flip_outcomes` vectors supplied via quoted object names (e.g., `"flip_outcomes_naive"`), automatically resolving them and applying the same flipping workflow used by `margot_causal_forest()`.
+
 # [2025-11-05] margot 1.0.268
 
 ### Added
