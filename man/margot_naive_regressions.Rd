@@ -17,7 +17,10 @@ margot_naive_regressions(
   save_path = here::here("push_mods"),
   base_filename = "naive_regressions_output",
   use_timestamp = FALSE,
-  prefix = NULL
+  prefix = NULL,
+  flip_outcomes = NULL,
+  flip_method = "zscore",
+  flip_scale_bounds = NULL
 )
 }
 \arguments{
@@ -55,6 +58,17 @@ in the current working directory.}
 Default is FALSE.}
 
 \item{prefix}{Optional prefix to add to the saved output filename. Default is NULL.}
+
+\item{flip_outcomes}{Optional character vector or named list specifying outcomes to
+reverse-score. Behaves like the `flip_outcomes` argument in `margot_causal_forest()`
+and appends an `_r` suffix to flipped outcomes.}
+
+\item{flip_method}{Default inversion method when `flip_outcomes` is supplied. One of
+"zscore" (simple negation, default) or "ordinal" (bounded scale inversion).}
+
+\item{flip_scale_bounds}{Numeric vector of length 2 [min, max] or named list supplying
+bounds for ordinal flipping. Required when `flip_method = "ordinal"` unless bounds
+should be inferred from the data.}
 }
 \value{
 A list containing:

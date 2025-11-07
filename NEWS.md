@@ -1,3 +1,11 @@
+# [2025-11-07] margot 1.0.270
+
+### Added
+- `margot_make_tables()` now supports richer categorical handling via `ordinal_vars`, `ordinal_levels`, `binary_to_yesno`, `binary_labels`, `auto_integer_ordinals`, and `integer_ordinal_range`, allowing ordinal/binary columns to render as frequency rows with custom labels.
+
+### Fixed
+- Ordinal conversion guardrails ensure zero-length or mismatched label vectors no longer crash table generation; offending label specs are dropped with informative warnings.
+
 # [2025-11-06] margot 1.0.269
 
 ### Fixed

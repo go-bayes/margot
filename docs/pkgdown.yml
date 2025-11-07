@@ -1,10 +1,10 @@
-pandoc: '3.2'
+pandoc: 3.8.2.1
 pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   margot-simulation: margot-simulation.html
   margot-workflow: margot-workflow.html
-last_built: 2025-11-05T10:26Z
+last_built: 2025-11-07T04:49Z
 urls:
   reference: https://go-bayes.github.io/margot/reference
   article: https://go-bayes.github.io/margot/articles

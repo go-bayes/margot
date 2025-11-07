@@ -15,7 +15,7 @@ models that do not account for confounding."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.268</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.270</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,10 @@ models that do not account for confounding.</p>
 <span>  save_path <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"push_mods"</span><span class="op">)</span>,</span>
 <span>  base_filename <span class="op">=</span> <span class="st">"naive_regressions_output"</span>,</span>
 <span>  use_timestamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  prefix <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  prefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  flip_outcomes <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  flip_method <span class="op">=</span> <span class="st">"zscore"</span>,</span>
+<span>  flip_scale_bounds <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -131,6 +134,23 @@ Default is FALSE.</p></dd>
 
 <dt id="arg-prefix">prefix<a class="anchor" aria-label="anchor" href="#arg-prefix"></a></dt>
 <dd><p>Optional prefix to add to the saved output filename. Default is NULL.</p></dd>
+
+
+<dt id="arg-flip-outcomes">flip_outcomes<a class="anchor" aria-label="anchor" href="#arg-flip-outcomes"></a></dt>
+<dd><p>Optional character vector or named list specifying outcomes to
+reverse-score. Behaves like the `flip_outcomes` argument in `margot_causal_forest()`
+and appends an `_r` suffix to flipped outcomes.</p></dd>
+
+
+<dt id="arg-flip-method">flip_method<a class="anchor" aria-label="anchor" href="#arg-flip-method"></a></dt>
+<dd><p>Default inversion method when `flip_outcomes` is supplied. One of
+"zscore" (simple negation, default) or "ordinal" (bounded scale inversion).</p></dd>
+
+
+<dt id="arg-flip-scale-bounds">flip_scale_bounds<a class="anchor" aria-label="anchor" href="#arg-flip-scale-bounds"></a></dt>
+<dd><p>Numeric vector of length 2 [min, max] or named list supplying
+bounds for ordinal flipping. Required when `flip_method = "ordinal"` unless bounds
+should be inferred from the data.</p></dd>
 
 </dl></div>
     <div class="section level2">

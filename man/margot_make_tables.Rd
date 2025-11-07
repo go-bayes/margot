@@ -10,6 +10,12 @@ margot_make_tables(
   by,
   labels = NULL,
   factor_vars = NULL,
+  ordinal_vars = NULL,
+  ordinal_levels = list(),
+  binary_to_yesno = FALSE,
+  binary_labels = c("No", "Yes"),
+  auto_integer_ordinals = FALSE,
+  integer_ordinal_range = 0:10,
   table1_opts = list(),
   format = c("markdown", "latex", "flextable"),
   kable_opts = list(),
@@ -27,6 +33,18 @@ margot_make_tables(
 \item{labels}{A named character vector for custom variable labels. Names should correspond to variable names in \code{vars}.}
 
 \item{factor_vars}{An optional character vector of variable names in \code{vars} to convert to factors for frequency tables.}
+
+\item{ordinal_vars}{An optional character vector of variable names in \code{vars} to convert to ordered factors for ordinal frequency displays.}
+
+\item{ordinal_levels}{An optional named list that specifies custom level orderings/labels for ordinal variables. Each entry can be either a vector of desired levels, a named vector where names identify the raw values, or a list with \code{levels} and optional \code{labels} components.}
+
+\item{binary_to_yesno}{Logical toggle; when \code{TRUE}, numeric 0/1 indicators in \code{vars} are converted to factors that show frequencies.}
+
+\item{binary_labels}{Character vector of length two that labels binary indicators when \code{binary_to_yesno = TRUE}. Defaults to \code{c("No", "Yes")}.}
+
+\item{auto_integer_ordinals}{Logical toggle; when \code{TRUE}, numeric variables whose unique values fall inside \code{integer_ordinal_range} are treated as ordered factors in the table output.}
+
+\item{integer_ordinal_range}{Integer vector that defines the permissible values for automatic ordinal detection (default: \code{0:10}).}
 
 \item{table1_opts}{A list of additional options to pass to \code{table1::table1()}. For example, \code{list(overall = FALSE, transpose = TRUE)}.}
 
@@ -62,6 +80,20 @@ A table object formatted for the specified output:
 \code{margot_make_tables} is a wrapper for \code{table1::table1()} which simplifies the creation of summary tables.
 It provides custom variable labelling, formatting, factor conversion, and additional table options.
 This function is optimized for \code{"markdown"}, \code{"latex"}, and \code{"flextable"} outputs, with special support for Quarto documents.
+}
+\details{
+Ordinal/binary controls:
+\itemize{
+  \item \code{binary_to_yesno} detects numeric/logical 0/1 columns in \code{vars} and converts them
+    to two-level factors (defaults to \code{"No"/"Yes"} labels via \code{binary_labels}).
+  \item Explicit ordinal variables can be supplied via \code{ordinal_vars}; these are coerced to ordered factors before table construction.
+  \item Use \code{ordinal_levels} (a named list) to specify per-variable level order and, optionally, display labels.
+    Each entry can be a simple vector of desired levels, a named vector (names = raw values, values = labels),
+    or a list with \code{levels}/\code{labels}.
+  \item When \code{auto_integer_ordinals = TRUE}, any numeric variable whose unique values fall fully inside
+    \code{integer_ordinal_range} (default \code{0:10}) is automatically treated as ordered, unless it was already converted.
+    This is useful for Likert-style items stored as integers.
+}
 }
 \examples{
 \dontrun{

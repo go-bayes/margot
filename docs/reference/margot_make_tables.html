@@ -11,7 +11,7 @@ This function is optimized for "markdown", "latex", and "flextable" outputs, wit
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.268</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.270</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,12 @@ This function is optimized for <code>"markdown"</code>, <code>"latex"</code>, an
 <span>  <span class="va">by</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  factor_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ordinal_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ordinal_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  binary_to_yesno <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  binary_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"No"</span>, <span class="st">"Yes"</span><span class="op">)</span>,</span>
+<span>  auto_integer_ordinals <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  integer_ordinal_range <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">10</span>,</span>
 <span>  table1_opts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"markdown"</span>, <span class="st">"latex"</span>, <span class="st">"flextable"</span><span class="op">)</span>,</span>
 <span>  kable_opts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -81,6 +87,30 @@ This function is optimized for <code>"markdown"</code>, <code>"latex"</code>, an
 
 <dt id="arg-factor-vars">factor_vars<a class="anchor" aria-label="anchor" href="#arg-factor-vars"></a></dt>
 <dd><p>An optional character vector of variable names in <code>vars</code> to convert to factors for frequency tables.</p></dd>
+
+
+<dt id="arg-ordinal-vars">ordinal_vars<a class="anchor" aria-label="anchor" href="#arg-ordinal-vars"></a></dt>
+<dd><p>An optional character vector of variable names in <code>vars</code> to convert to ordered factors for ordinal frequency displays.</p></dd>
+
+
+<dt id="arg-ordinal-levels">ordinal_levels<a class="anchor" aria-label="anchor" href="#arg-ordinal-levels"></a></dt>
+<dd><p>An optional named list that specifies custom level orderings/labels for ordinal variables. Each entry can be either a vector of desired levels, a named vector where names identify the raw values, or a list with <code>levels</code> and optional <code>labels</code> components.</p></dd>
+
+
+<dt id="arg-binary-to-yesno">binary_to_yesno<a class="anchor" aria-label="anchor" href="#arg-binary-to-yesno"></a></dt>
+<dd><p>Logical toggle; when <code>TRUE</code>, numeric 0/1 indicators in <code>vars</code> are converted to factors that show frequencies.</p></dd>
+
+
+<dt id="arg-binary-labels">binary_labels<a class="anchor" aria-label="anchor" href="#arg-binary-labels"></a></dt>
+<dd><p>Character vector of length two that labels binary indicators when <code>binary_to_yesno = TRUE</code>. Defaults to <code>c("No", "Yes")</code>.</p></dd>
+
+
+<dt id="arg-auto-integer-ordinals">auto_integer_ordinals<a class="anchor" aria-label="anchor" href="#arg-auto-integer-ordinals"></a></dt>
+<dd><p>Logical toggle; when <code>TRUE</code>, numeric variables whose unique values fall inside <code>integer_ordinal_range</code> are treated as ordered factors in the table output.</p></dd>
+
+
+<dt id="arg-integer-ordinal-range">integer_ordinal_range<a class="anchor" aria-label="anchor" href="#arg-integer-ordinal-range"></a></dt>
+<dd><p>Integer vector that defines the permissible values for automatic ordinal detection (default: <code>0:10</code>).</p></dd>
 
 
 <dt id="arg-table-opts">table1_opts<a class="anchor" aria-label="anchor" href="#arg-table-opts"></a></dt>
@@ -116,6 +146,18 @@ this adds a <code>\label{}</code> command to enable Quarto's cross-referencing s
     <p>A table object formatted for the specified output:</p><ul><li><p>For <code>format = "latex"</code>, a kableExtra-formatted LaTeX table with optional Quarto label</p></li>
 <li><p>For <code>format = "markdown"</code>, a markdown-formatted kable table with bold variable names</p></li>
 <li><p>For <code>format = "flextable"</code>, a flextable object optimized for Word output</p></li>
+</ul></div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Ordinal/binary controls:</p><ul><li><p><code>binary_to_yesno</code> detects numeric/logical 0/1 columns in <code>vars</code> and converts them
+    to two-level factors (defaults to <code>"No"/"Yes"</code> labels via <code>binary_labels</code>).</p></li>
+<li><p>Explicit ordinal variables can be supplied via <code>ordinal_vars</code>; these are coerced to ordered factors before table construction.</p></li>
+<li><p>Use <code>ordinal_levels</code> (a named list) to specify per-variable level order and, optionally, display labels.
+    Each entry can be a simple vector of desired levels, a named vector (names = raw values, values = labels),
+    or a list with <code>levels</code>/<code>labels</code>.</p></li>
+<li><p>When <code>auto_integer_ordinals = TRUE</code>, any numeric variable whose unique values fall fully inside
+    <code>integer_ordinal_range</code> (default <code>0:10</code>) is automatically treated as ordered, unless it was already converted.
+    This is useful for Likert-style items stored as integers.</p></li>
 </ul></div>
 
     <div class="section level2">

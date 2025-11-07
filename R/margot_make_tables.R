@@ -4,11 +4,30 @@
 #' It provides custom variable labelling, formatting, factor conversion, and additional table options.
 #' This function is optimized for \code{"markdown"}, \code{"latex"}, and \code{"flextable"} outputs, with special support for Quarto documents.
 #'
+#' Ordinal/binary controls:
+#' \itemize{
+#'   \item \code{binary_to_yesno} detects numeric/logical 0/1 columns in \code{vars} and converts them
+#'     to two-level factors (defaults to \code{"No"/"Yes"} labels via \code{binary_labels}).
+#'   \item Explicit ordinal variables can be supplied via \code{ordinal_vars}; these are coerced to ordered factors before table construction.
+#'   \item Use \code{ordinal_levels} (a named list) to specify per-variable level order and, optionally, display labels.
+#'     Each entry can be a simple vector of desired levels, a named vector (names = raw values, values = labels),
+#'     or a list with \code{levels}/\code{labels}.
+#'   \item When \code{auto_integer_ordinals = TRUE}, any numeric variable whose unique values fall fully inside
+#'     \code{integer_ordinal_range} (default \code{0:10}) is automatically treated as ordered, unless it was already converted.
+#'     This is useful for Likert-style items stored as integers.
+#' }
+#' 
 #' @param data A \code{data.frame} containing the dataset.
 #' @param vars A character vector of variable names to include on the left-hand side of the table.
 #' @param by A character vector of variable names to stratify the table by. Supports multiple variables for interactions.
 #' @param labels A named character vector for custom variable labels. Names should correspond to variable names in \code{vars}.
 #' @param factor_vars An optional character vector of variable names in \code{vars} to convert to factors for frequency tables.
+#' @param ordinal_vars An optional character vector of variable names in \code{vars} to convert to ordered factors for ordinal frequency displays.
+#' @param ordinal_levels An optional named list that specifies custom level orderings/labels for ordinal variables. Each entry can be either a vector of desired levels, a named vector where names identify the raw values, or a list with \code{levels} and optional \code{labels} components.
+#' @param binary_to_yesno Logical toggle; when \code{TRUE}, numeric 0/1 indicators in \code{vars} are converted to factors that show frequencies.
+#' @param binary_labels Character vector of length two that labels binary indicators when \code{binary_to_yesno = TRUE}. Defaults to \code{c("No", "Yes")}.
+#' @param auto_integer_ordinals Logical toggle; when \code{TRUE}, numeric variables whose unique values fall inside \code{integer_ordinal_range} are treated as ordered factors in the table output.
+#' @param integer_ordinal_range Integer vector that defines the permissible values for automatic ordinal detection (default: \code{0:10}).
 #' @param table1_opts A list of additional options to pass to \code{table1::table1()}. For example, \code{list(overall = FALSE, transpose = TRUE)}.
 #' @param format A character string specifying the output format. Options are \code{"markdown"} (default), \code{"latex"}, or \code{"flextable"}.
 #' @param kable_opts A list of additional options controlling table styling:
@@ -54,7 +73,11 @@
 #' @importFrom flextable flextable fontsize theme_vanilla theme_box theme_booktabs theme_alafoli autofit set_table_properties align
 #' @importFrom stats as.formula
 #' @export
-margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL, table1_opts = list(),
+margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL,
+                               ordinal_vars = NULL, ordinal_levels = list(),
+                               binary_to_yesno = FALSE, binary_labels = c("No", "Yes"),
+                               auto_integer_ordinals = FALSE, integer_ordinal_range = 0:10,
+                               table1_opts = list(),
                                format = c("markdown", "latex", "flextable"),
                                kable_opts = list(), flex_opts = list(), quarto_label = NULL) {
   # match and validate format argument
@@ -98,7 +121,143 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
     trimws(name)
   }
 
-  # convert specified variables to factors if needed
+  # retain the original data for type-aware conversions
+  original_data <- data
+
+  # helper: drop empty label vectors
+  normalize_labels <- function(labels) {
+    if (is.null(labels) || length(labels) == 0) {
+      return(NULL)
+    }
+    labels
+  }
+
+  # helper: sorted unique non-missing values
+  unique_non_missing <- function(x) {
+    vals <- unique(x[!is.na(x)])
+    if (is.numeric(x)) {
+      vals <- sort(vals)
+    } else {
+      vals <- sort(vals)
+    }
+    vals
+  }
+
+  # helper: parse ordinal level specifications
+  get_ordinal_spec <- function(entry) {
+    if (is.null(entry)) {
+      return(list(levels = NULL, labels = NULL))
+    }
+    if (is.list(entry) && !is.null(entry$levels)) {
+      levels <- entry$levels
+      labels <- if (!is.null(entry$labels)) entry$labels else NULL
+    } else if (!is.null(names(entry)) && any(names(entry) != "")) {
+      levels <- names(entry)
+      labels <- unname(entry)
+    } else {
+      levels <- entry
+      labels <- NULL
+    }
+    labels <- normalize_labels(labels)
+    if (!is.null(labels) && length(labels) != length(levels)) {
+      stop("each 'labels' entry in 'ordinal_levels' must be the same length as its 'levels'.")
+    }
+    list(levels = levels, labels = labels)
+  }
+
+  # helper: convert to ordered factor
+  convert_to_ordinal <- function(x, levels = NULL, labels = NULL, var_name = NULL) {
+    if (is.null(levels)) {
+      levels <- unique_non_missing(x)
+    }
+    labels <- normalize_labels(labels)
+    if (!is.null(labels) && length(labels) != length(levels)) {
+      stop("length of 'labels' must match the length of 'levels' when converting to ordinal factors.")
+    }
+
+    build_factor <- function() {
+      if (is.null(labels)) {
+        factor(x, levels = levels, ordered = TRUE)
+      } else {
+        factor(x, levels = levels, labels = labels, ordered = TRUE)
+      }
+    }
+
+    tryCatch(
+      build_factor(),
+      error = function(e) {
+        if (!is.null(labels) && grepl("invalid 'labels'", e$message, fixed = TRUE)) {
+          warn_var <- if (!is.null(var_name)) paste0(" '", var_name, "'") else ""
+          warning(sprintf("dropping custom labels for%s because: %s", warn_var, e$message))
+          return(factor(x, levels = levels, labels = NULL, ordered = TRUE))
+        }
+        stop(
+          sprintf(
+            "error while converting%s to an ordinal factor: %s",
+            if (!is.null(var_name)) paste0(" '", var_name, "'") else "",
+            e$message
+          ),
+          call. = FALSE
+        )
+      }
+    )
+  }
+
+  # helper: detect binary 0/1 indicator
+  is_binary_indicator <- function(x) {
+    if (!(is.numeric(x) || is.integer(x) || is.logical(x))) {
+      return(FALSE)
+    }
+    unique_vals <- unique(x[!is.na(x)])
+    length(unique_vals) > 0 && all(unique_vals %in% c(0, 1))
+  }
+
+  # helper: detect integer ordinal range
+  is_integer_ordinal <- function(x, allowed_values) {
+    if (!is.numeric(x) && !is.integer(x)) {
+      return(FALSE)
+    }
+    unique_vals <- unique(x[!is.na(x)])
+    length(unique_vals) > 0 && all(unique_vals %in% allowed_values)
+  }
+
+  # validate ordinal specifications
+  if (!is.null(ordinal_vars)) {
+    missing_ordinal_vars <- ordinal_vars[!ordinal_vars %in% vars]
+    if (length(missing_ordinal_vars) > 0) {
+      stop(paste(
+        "the following 'ordinal_vars' are not in 'vars':",
+        paste(missing_ordinal_vars, collapse = ", ")
+      ))
+    }
+  }
+
+  if (length(ordinal_levels) > 0) {
+    if (is.null(names(ordinal_levels)) || any(names(ordinal_levels) == "")) {
+      stop("'ordinal_levels' must be a named list with names corresponding to variables in 'vars'.")
+    }
+    invalid_ord_level_vars <- setdiff(names(ordinal_levels), vars)
+    if (length(invalid_ord_level_vars) > 0) {
+      stop(paste(
+        "the following 'ordinal_levels' entries are not in 'vars':",
+        paste(invalid_ord_level_vars, collapse = ", ")
+      ))
+    }
+  }
+
+  # convert explicit ordinal variables
+  if (!is.null(ordinal_vars)) {
+    for (var in ordinal_vars) {
+      spec <- get_ordinal_spec(ordinal_levels[[var]])
+      data[[var]] <- convert_to_ordinal(original_data[[var]],
+        levels = spec$levels,
+        labels = spec$labels,
+        var_name = var
+      )
+    }
+  }
+
+  # convert specified variables to factors if needed (excluding already ordinal vars)
   if (!is.null(factor_vars)) {
     missing_factor_vars <- factor_vars[!factor_vars %in% vars]
     if (length(missing_factor_vars) > 0) {
@@ -108,9 +267,48 @@ margot_make_tables <- function(data, vars, by, labels = NULL, factor_vars = NULL
       ))
     }
 
-    # Convert to factors using base R
-    for (var in factor_vars) {
-      data[[var]] <- as.factor(data[[var]])
+    for (var in setdiff(factor_vars, ordinal_vars)) {
+      data[[var]] <- as.factor(original_data[[var]])
+    }
+  }
+
+  # optionally convert binary indicators to Yes/No factors
+  if (binary_to_yesno) {
+    if (length(binary_labels) != 2) {
+      stop("'binary_labels' must be a character vector of length two.")
+    }
+    for (var in vars) {
+      if (is.factor(data[[var]])) {
+        next
+      }
+      var_data <- original_data[[var]]
+      if (is_binary_indicator(var_data)) {
+        data[[var]] <- factor(var_data,
+          levels = c(0, 1),
+          labels = binary_labels,
+          ordered = FALSE
+        )
+      }
+    }
+  }
+
+  # automatically treat bounded integer responses as ordinal factors
+  if (auto_integer_ordinals) {
+    allowed_values <- sort(unique(integer_ordinal_range))
+    for (var in vars) {
+      if (is.factor(data[[var]])) {
+        next
+      }
+      var_data <- original_data[[var]]
+      if (is_integer_ordinal(var_data, allowed_values)) {
+        spec <- get_ordinal_spec(ordinal_levels[[var]])
+        default_levels <- allowed_values[allowed_values %in% unique(var_data[!is.na(var_data)])]
+        data[[var]] <- convert_to_ordinal(var_data,
+          levels = if (!is.null(spec$levels)) spec$levels else default_levels,
+          labels = spec$labels,
+          var_name = var
+        )
+      }
     }
   }
 
