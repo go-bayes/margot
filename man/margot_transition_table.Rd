@@ -39,10 +39,40 @@ margot_transition_table(
 an object of class \code{margot_transitions} with
   \code{tables} (markdown-formatted matrices), paired \code{tables_data}
   (the underlying numeric data frames), \code{explanation}, \code{wave_info},
-  and a \code{quarto_code} helper.
+  and a \code{quarto_code} helper. The returned object also includes
+  convenience functions \code{$get_table_data()} and
+  \code{$compute_ipsi_probabilities()} to retrieve the raw counts or to run
+  \code{margot_compute_ipsi_probability()} directly from each table.
 }
 \description{
 Reshapes a long‑format transition frequency data frame into a
 wide‑format table with totals, and formats it using markdown.
 Diagonal elements are bolded to highlight state stability.
+}
+\examples{
+dt <- data.frame(
+  id = rep(1:3, each = 3),
+  wave = rep(c(2018, 2019, 2022), times = 3),
+  religion_church_binary = c(0, 0, 1,
+                             0, 1, 1,
+                             1, 1, 1),
+  year_measured = 1
+)
+
+transitions <- margot_transition_table(
+  dt,
+  state_var = "religion_church_binary",
+  id_var = "id",
+  wave_var = "wave",
+  observed_var = "year_measured",
+  observed_val = 1,
+  waves = c(2018, 2019, 2022)
+)
+
+# Extract machine-readable counts for the first transition
+transitions$get_table_data(which = 1)
+
+# Compute IPSI counterfactual initiation probabilities for the first transition
+ipsi_wave1 <- transitions$compute_ipsi_probabilities(which = 1)
+ipsi_wave1$probabilities
 }

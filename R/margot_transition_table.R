@@ -17,7 +17,37 @@
 #' @return an object of class \code{margot_transitions} with
 #'   \code{tables} (markdown-formatted matrices), paired \code{tables_data}
 #'   (the underlying numeric data frames), \code{explanation}, \code{wave_info},
-#'   and a \code{quarto_code} helper.
+#'   and a \code{quarto_code} helper. The returned object also includes
+#'   convenience functions \code{$get_table_data()} and
+#'   \code{$compute_ipsi_probabilities()} to retrieve the raw counts or to run
+#'   \code{margot_compute_ipsi_probability()} directly from each table.
+#'
+#' @examples
+#' dt <- data.frame(
+#'   id = rep(1:3, each = 3),
+#'   wave = rep(c(2018, 2019, 2022), times = 3),
+#'   religion_church_binary = c(0, 0, 1,
+#'                              0, 1, 1,
+#'                              1, 1, 1),
+#'   year_measured = 1
+#' )
+#'
+#' transitions <- margot_transition_table(
+#'   dt,
+#'   state_var = "religion_church_binary",
+#'   id_var = "id",
+#'   wave_var = "wave",
+#'   observed_var = "year_measured",
+#'   observed_val = 1,
+#'   waves = c(2018, 2019, 2022)
+#' )
+#'
+#' # Extract machine-readable counts for the first transition
+#' transitions$get_table_data(which = 1)
+#'
+#' # Compute IPSI counterfactual initiation probabilities for the first transition
+#' ipsi_wave1 <- transitions$compute_ipsi_probabilities(which = 1)
+#' ipsi_wave1$probabilities
 #' @export
 margot_transition_table <- function(data, state_var, id_var, wave_var,
                                     waves = NULL, state_names = NULL,
@@ -95,6 +125,62 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
     results$tables[[i]] <- res$table
     results$tables_data[[i]] <- res$table_data
     results$waves[[i]] <- c(w1, w2)
+  }
+
+  resolve_indices <- function(which, n = length(results$tables), caller = "access tables") {
+    if (n == 0L) stop("No transition tables were created; cannot ", caller, ".")
+    if (is.null(which)) return(seq_len(n))
+    if (!is.numeric(which)) stop("`which` must be numeric indices.")
+    idx <- as.integer(which)
+    if (any(is.na(idx))) stop("`which` must contain finite integers.")
+    if (any(idx < 1L | idx > n)) {
+      stop("`which` indices must be between 1 and ", n, ".")
+    }
+    unique(idx)
+  }
+
+  extract_table_data <- function(idx) {
+    if (!is.null(results$tables_data) &&
+        length(results$tables_data) >= idx &&
+        !is.null(results$tables_data[[idx]])) {
+      return(results$tables_data[[idx]])
+    }
+    tab <- results$tables[[idx]]
+    if (is.null(tab)) stop("Transition table index ", idx, " not found.")
+    tab_data <- attr(tab, "table_data")
+    if (is.null(tab_data)) {
+      stop("Underlying table data missing for table ", idx,
+           "; please recompute transition tables with the current version of margot.")
+    }
+    tab_data
+  }
+
+  results$get_table_data <- function(which = NULL, drop = TRUE) {
+    idx <- resolve_indices(which, caller = "retrieve table data")
+    out <- lapply(idx, extract_table_data)
+    names(out) <- paste0("table_", idx)
+    if (drop && length(out) == 1L) return(out[[1L]])
+    out
+  }
+
+  results$compute_ipsi_probabilities <- function(which = NULL,
+                                                 deltas = c(2, 5, 10),
+                                                 drop = TRUE) {
+    idx <- resolve_indices(which, caller = "compute IPSI probabilities")
+    out <- lapply(idx, function(i) {
+      tbl <- extract_table_data(i)
+      probs <- margot_compute_ipsi_probability(tbl, deltas = deltas)
+      list(
+        table_index = i,
+        waves = results$waves[[i]],
+        table_data = tbl,
+        probabilities = probs,
+        counts = attr(probs, "counts")
+      )
+    })
+    names(out) <- paste0("table_", idx)
+    if (drop && length(out) == 1L) return(out[[1L]])
+    out
   }
 
   results$quarto_code <- function() {

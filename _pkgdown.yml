@@ -119,6 +119,7 @@ reference:
     - margot_interpret_lmtp_positivity
     - margot_ipsi_summary
     - margot_compute_ipsi_probability
+    - margot_transition_ipsi_summary
     - margot_interpret_lmtp_learners
     - margot_interpret_stability
     - margot_interpret_stability_batch

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.271</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.272</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,16 +33,31 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.272" id="id_2025-11-08-margot-10272">[2025-11-08] margot 1.0.272<a class="anchor" aria-label="anchor" href="#id_2025-11-08-margot-10272"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-272">Added<a class="anchor" aria-label="anchor" href="#added-1-0-272"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_transition_ipsi_summary.html">margot_transition_ipsi_summary()</a></code> now emits both a kable-ready table (via <code>pretty = TRUE</code>) and a LaTeX-ready narrative describing each wave pair’s natural rate plus the δ-specific counterfactual probabilities/fold increases.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-272">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-272"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_transition_table.html">margot_transition_table()</a></code> provides <code>$get_table_data()</code> and <code>$compute_ipsi_probabilities()</code> helpers and stores machine-readable matrices alongside each markdown table so downstream IPSI utilities can operate without parsing strings.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.271" id="id_2025-11-08-margot-10271">[2025-11-08] margot 1.0.271<a class="anchor" aria-label="anchor" href="#id_2025-11-08-margot-10271"></a></h2>
 <div class="section level4">
 <h4 id="added-1-0-271">Added<a class="anchor" aria-label="anchor" href="#added-1-0-271"></a></h4>
 <ul><li>
 <code><a href="../reference/margot_compute_ipsi_probability.html">margot_compute_ipsi_probability()</a></code> converts any formatted transition matrix (including those produced by <code><a href="../reference/margot_transition_table.html">margot_transition_table()</a></code>) into natural vs counterfactual initiation probabilities for IPSI deltas, reporting fold changes plus the raw counts used in each estimate.</li>
+<li>
+<code><a href="../reference/margot_transition_ipsi_summary.html">margot_transition_ipsi_summary()</a></code> automates IPSI reporting by digesting the entire <code><a href="../reference/margot_transition_table.html">margot_transition_table()</a></code> output (or any compatible list of matrices) and returning a tidy table of wave-pair initiation rates across the requested deltas; <code>pretty = TRUE</code> formats the result for direct use with <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code>.</li>
 </ul></div>
 <div class="section level4">
 <h4 id="changed-1-0-271">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-271"></a></h4>
 <ul><li>
-<code><a href="../reference/margot_transition_table.html">margot_transition_table()</a></code> now ships the machine-readable matrices alongside the rendered markdown (<code>tables_data</code> plus a <code>table_data</code> attribute on each <code>knitr_kable</code>), enabling downstream helpers and reports to consume the exact counts without re-parsing the table.</li>
+<code><a href="../reference/margot_transition_table.html">margot_transition_table()</a></code> now ships the machine-readable matrices alongside the rendered markdown (<code>tables_data</code> plus a <code>table_data</code> attribute on each <code>knitr_kable</code>) and attaches <code>$get_table_data()</code> / <code>$compute_ipsi_probabilities()</code> helpers so downstream code can retrieve counts or run IPSI summaries without manual parsing.</li>
 <li>Pkgdown reference index lists <code><a href="../reference/margot_compute_ipsi_probability.html">margot_compute_ipsi_probability()</a></code> so the new helper appears in the online docs without build warnings.</li>
 </ul></div>
 </div>

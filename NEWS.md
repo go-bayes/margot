@@ -1,10 +1,19 @@
+# [2025-11-08] margot 1.0.272
+
+### Added
+- `margot_transition_ipsi_summary()` now emits both a kable-ready table (via `pretty = TRUE`) and a LaTeX-ready narrative describing each wave pair’s natural rate plus the δ-specific counterfactual probabilities/fold increases.
+
+### Changed
+- `margot_transition_table()` provides `$get_table_data()` and `$compute_ipsi_probabilities()` helpers and stores machine-readable matrices alongside each markdown table so downstream IPSI utilities can operate without parsing strings.
+
 # [2025-11-08] margot 1.0.271
 
 ### Added
 - `margot_compute_ipsi_probability()` converts any formatted transition matrix (including those produced by `margot_transition_table()`) into natural vs counterfactual initiation probabilities for IPSI deltas, reporting fold changes plus the raw counts used in each estimate.
+- `margot_transition_ipsi_summary()` automates IPSI reporting by digesting the entire `margot_transition_table()` output (or any compatible list of matrices) and returning a tidy table of wave-pair initiation rates across the requested deltas; `pretty = TRUE` formats the result for direct use with `knitr::kable()`.
 
 ### Changed
-- `margot_transition_table()` now ships the machine-readable matrices alongside the rendered markdown (`tables_data` plus a `table_data` attribute on each `knitr_kable`), enabling downstream helpers and reports to consume the exact counts without re-parsing the table.
+- `margot_transition_table()` now ships the machine-readable matrices alongside the rendered markdown (`tables_data` plus a `table_data` attribute on each `knitr_kable`) and attaches `$get_table_data()` / `$compute_ipsi_probabilities()` helpers so downstream code can retrieve counts or run IPSI summaries without manual parsing.
 - Pkgdown reference index lists `margot_compute_ipsi_probability()` so the new helper appears in the online docs without build warnings.
 
 # [2025-11-07] margot 1.0.270
