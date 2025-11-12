@@ -37,8 +37,9 @@ margot_transition_table(
 }
 \value{
 an object of class \code{margot_transitions} with
-  \code{tables}, \code{explanation}, \code{wave_info}, and a
-  \code{quarto_code} helper.
+  \code{tables} (markdown-formatted matrices), paired \code{tables_data}
+  (the underlying numeric data frames), \code{explanation}, \code{wave_info},
+  and a \code{quarto_code} helper.
 }
 \description{
 Reshapes a long‑format transition frequency data frame into a

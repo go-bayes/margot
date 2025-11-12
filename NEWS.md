@@ -1,3 +1,12 @@
+# [2025-11-08] margot 1.0.271
+
+### Added
+- `margot_compute_ipsi_probability()` converts any formatted transition matrix (including those produced by `margot_transition_table()`) into natural vs counterfactual initiation probabilities for IPSI deltas, reporting fold changes plus the raw counts used in each estimate.
+
+### Changed
+- `margot_transition_table()` now ships the machine-readable matrices alongside the rendered markdown (`tables_data` plus a `table_data` attribute on each `knitr_kable`), enabling downstream helpers and reports to consume the exact counts without re-parsing the table.
+- Pkgdown reference index lists `margot_compute_ipsi_probability()` so the new helper appears in the online docs without build warnings.
+
 # [2025-11-07] margot 1.0.270
 
 ### Added

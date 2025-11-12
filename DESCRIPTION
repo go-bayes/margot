@@ -1,11 +1,11 @@
 Package: margot
 Type: Package
 Title: MARGinal Observational Treatment-effects
-Version: 1.0.270
+Version: 1.0.271
 Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
 Author: Joseph A Bulbulia [aut, cre]
 Maintainer: Joseph A Bulbulia <joseph.bulbulia@gmail.com>
-Description: Functions to obtain MARGinal Observational Treatment-effects from observational data. The plotting API has been reverted to the last stable implementation for reliability ('margot_plot()'); an experimental advanced plot ('margot_plot_dev()') remains available for users who want multiplicity/E-value workflows and extended ordering. Robust handling of risk‑ratio E-values remains under active refinement. The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.
+Description: Functions to obtain MARGinal Observational Treatment-effects from observational data. The plotting API has been reverted to the last stable implementation for reliability ('margot_plot()'); an experimental advanced plot ('margot_plot_dev()') remains available for users who want multiplicity/E-value workflows and extended ordering. Robust handling of risk‑ratio E-values remains under active refinement. Utilities for incremental propensity score interventions summarise transition matrices and counterfactual initiation probabilities (e.g., `margot_transition_table()` and `margot_compute_ipsi_probability()`). The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.
 License: CC BY 4.0
 Encoding: UTF-8
 LazyData: true

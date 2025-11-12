@@ -15,8 +15,9 @@
 #' @param table_name name for the output object (default "transition_table").
 #'
 #' @return an object of class \code{margot_transitions} with
-#'   \code{tables}, \code{explanation}, \code{wave_info}, and a
-#'   \code{quarto_code} helper.
+#'   \code{tables} (markdown-formatted matrices), paired \code{tables_data}
+#'   (the underlying numeric data frames), \code{explanation}, \code{wave_info},
+#'   and a \code{quarto_code} helper.
 #' @export
 margot_transition_table <- function(data, state_var, id_var, wave_var,
                                     waves = NULL, state_names = NULL,
@@ -35,7 +36,12 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
   }
   waves <- sort(waves)
 
-  results <- list(tables = list(), waves = list(), table_name = table_name)
+  results <- list(
+    tables = list(),
+    tables_data = list(),
+    waves = list(),
+    table_name = table_name
+  )
   results$explanation <- paste0(
     "These transition matrices capture shifts in states between consecutive waves. ",
     "Each cell shows the count of individuals transitioning from one state to another. ",
@@ -87,6 +93,7 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
     )
 
     results$tables[[i]] <- res$table
+    results$tables_data[[i]] <- res$table_data
     results$waves[[i]] <- c(w1, w2)
   }
 
@@ -145,6 +152,7 @@ transition_table <- function(trans_df, state_names = NULL,
   }
 
   formatted <- knitr::kable(trans_wide, format = "markdown")
+  attr(formatted, "table_data") <- trans_wide
   # bold diagonal
   for (r in seq_len(nrow(trans_wide))) {
     state <- trans_wide[r, "From / To"]
@@ -161,12 +169,14 @@ transition_table <- function(trans_df, state_names = NULL,
   if (!is.null(wave_info)) {
     header <- paste0("### ", wave_info, "\n\n")
     formatted_with_hdr <- paste0(header, formatted)
+    attr(formatted_with_hdr, "table_data") <- trans_wide
     return(list(
       table             = formatted,
       table_with_header = formatted_with_hdr,
       wave_info         = wave_info,
-      table_name        = table_name
+      table_name        = table_name,
+      table_data        = trans_wide
     ))
   }
-  list(table = formatted, table_name = table_name)
+  list(table = formatted, table_name = table_name, table_data = trans_wide)
 }
