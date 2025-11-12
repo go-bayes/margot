@@ -19,9 +19,10 @@ defaults match the standard IPSI reporting set `c(2, 5, 10)`.}
 }
 \value{
 A data frame with one row per delta containing the natural initiation
-  probability `p`, the counterfactual probability `p' = 1 - (1 - p) / delta`,
-  and the fold increase `p'/p`. The result carries a `counts` attribute with
-  the raw initiation and at-risk totals used to compute `p`.
+  probability `p`, its exact 95% Clopper-Pearson confidence limits, the
+  counterfactual probability `p' = 1 - (1 - p) / delta`, and the fold increase
+  `p'/p`. The result carries a `counts` attribute with the raw initiation and
+  at-risk totals and the natural-probability interval used to compute `p`.
 }
 \description{
 Takes a formatted transition matrix (for example, one of the formatted tables

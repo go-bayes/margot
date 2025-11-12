@@ -19,7 +19,7 @@ graphics."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.272</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.273</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,6 +65,7 @@ graphics.</p>
 <span>  waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  remove_waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  trim_right <span class="op">=</span> <span class="fl">0.999</span>,</span>
 <span>  include_methods <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  include_diagnostics <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  include_ipsi_context <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -122,6 +123,11 @@ inclusion via `waves`.</p></dd>
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
 <dd><p>Integer number of decimal places to use when reporting
 ESS-based fractions (e.g., `ESS/N`).</p></dd>
+
+
+<dt id="arg-trim-right">trim_right<a class="anchor" aria-label="anchor" href="#arg-trim-right"></a></dt>
+<dd><p>Numeric in (0, 1]; optional per-wave winsorisation level
+applied before forming cumulative density-ratio products (default 0.999).</p></dd>
 
 
 <dt id="arg-include-methods">include_methods<a class="anchor" aria-label="anchor" href="#arg-include-methods"></a></dt>

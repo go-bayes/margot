@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.272</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.273</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,11 +33,32 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.273" id="id_2025-11-09-margot-10273">[2025-11-09] margot 1.0.273<a class="anchor" aria-label="anchor" href="#id_2025-11-09-margot-10273"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-273">Added<a class="anchor" aria-label="anchor" href="#added-1-0-273"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_lmtp_weight_diag_from_fit.html">margot_lmtp_weight_diag_from_fit()</a></code> reconstructs censoring masks from <code>density_ratios &gt; 0</code>, reports wave-specific tail summaries, and tracks cumulative ESS (raw and trimmed) even when the original censor columns aren’t available.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-273">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-273"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> now accepts <code>trim_right</code>, masks density ratios via <code>dr &gt; 0</code> for IPSIs, and reports cumulative ESS alongside the existing per-wave metrics.</li>
+<li>
+<code><a href="../reference/margot_transition_ipsi_summary.html">margot_transition_ipsi_summary()</a></code> emits LaTeX-ready narrative blocks and shows natural initiation rates with their exact Clopper–Pearson CIs.</li>
+<li>
+<code><a href="../reference/margot_compute_ipsi_probability.html">margot_compute_ipsi_probability()</a></code> keeps raw probabilities plus 95% CIs, so downstream helpers don’t need to re-compute binomial intervals.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.272" id="id_2025-11-08-margot-10272">[2025-11-08] margot 1.0.272<a class="anchor" aria-label="anchor" href="#id_2025-11-08-margot-10272"></a></h2>
 <div class="section level4">
 <h4 id="added-1-0-272">Added<a class="anchor" aria-label="anchor" href="#added-1-0-272"></a></h4>
 <ul><li>
 <code><a href="../reference/margot_transition_ipsi_summary.html">margot_transition_ipsi_summary()</a></code> now emits both a kable-ready table (via <code>pretty = TRUE</code>) and a LaTeX-ready narrative describing each wave pair’s natural rate plus the δ-specific counterfactual probabilities/fold increases.</li>
+<li>
+<code><a href="../reference/margot_compute_ipsi_probability.html">margot_compute_ipsi_probability()</a></code> attaches exact (Clopper-Pearson) 95% confidence intervals for the natural initiation rate so downstream summaries can report uncertainty without re-running binomial tests.</li>
+<li>
+<code><a href="../reference/margot_lmtp_weight_diag_from_fit.html">margot_lmtp_weight_diag_from_fit()</a></code> reconstructs censoring masks from <code>density_ratios &gt; 0</code>, reports per-wave quantiles/tail mass, and tracks cumulative ESS (raw and winsorised) for LMTP fits where the original censor nodes are not available.</li>
 </ul></div>
 <div class="section level4">
 <h4 id="changed-1-0-272">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-272"></a></h4>

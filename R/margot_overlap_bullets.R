@@ -23,6 +23,8 @@
 #'   inclusion via `waves`.
 #' @param digits Integer number of decimal places to use when reporting
 #'   ESS-based fractions (e.g., `ESS/N`).
+#' @param trim_right Numeric in (0, 1]; optional per-wave winsorisation level
+#'   applied before forming cumulative density-ratio products (default 0.999).
 #' @param include_methods Logical; if TRUE, prepends a methodological explanation of
 #'   density ratios, their interpretation, and ESS computation (default: FALSE).
 #' @param include_diagnostics Logical; if TRUE, appends detailed diagnostics per shift
@@ -139,6 +141,7 @@ margot_interpret_lmtp_positivity <- function(x,
                                              waves = NULL,
                                              remove_waves = NULL,
                                              digits = 2,
+                                             trim_right = 0.999,
                                              include_methods = FALSE,
                                              include_diagnostics = FALSE,
                                              include_ipsi_context = TRUE,
@@ -158,6 +161,7 @@ margot_interpret_lmtp_positivity <- function(x,
   if (!is.null(waves)) stopifnot(is.numeric(waves))
   if (!is.null(remove_waves)) stopifnot(is.numeric(remove_waves))
   digits <- max(0L, as.integer(digits))
+  trim_right <- max(0, min(1, as.numeric(trim_right)))
   return <- match.arg(return)
 
   # -----------------------------------------------------------------------
@@ -481,6 +485,48 @@ margot_interpret_lmtp_positivity <- function(x,
     # Ensure matrix structure even when a single column is selected
     if (!is.matrix(sub_dr)) sub_dr <- matrix(sub_dr, ncol = 1L)
 
+    sub_mask <- is.finite(sub_dr) & (sub_dr > 0)
+    sub_dr_masked <- sub_dr
+    sub_dr_masked[!sub_mask] <- NA_real_
+
+    sub_dr_trim <- sub_dr_masked
+    if (trim_right > 0 && trim_right < 1) {
+      for (j in seq_len(ncol(sub_dr_trim))) {
+        col_vals <- sub_dr_trim[, j]
+        finite_vals <- col_vals[is.finite(col_vals)]
+        if (length(finite_vals)) {
+          q <- stats::quantile(finite_vals, probs = trim_right, names = FALSE)
+          sub_dr_trim[, j] <- ifelse(is.finite(col_vals), pmin(col_vals, q), NA_real_)
+        }
+      }
+    }
+
+    ess_fun <- function(w) {
+      w <- w[is.finite(w) & (w > 0)]
+      if (!length(w)) return(NA_real_)
+      s1 <- sum(w)
+      s2 <- sum(w^2)
+      if (s2 <= 0) return(NA_real_)
+      (s1^2) / s2
+    }
+
+    cumulate <- function(mat) {
+      res <- matrix(NA_real_, nrow(mat), ncol(mat))
+      if (!ncol(mat)) return(res)
+      res[, 1] <- mat[, 1]
+      if (ncol(mat) >= 2) {
+        for (j in 2:ncol(mat)) {
+          prev <- res[, j - 1]
+          curr <- mat[, j]
+          res[, j] <- ifelse(is.finite(prev) & is.finite(curr), prev * curr, NA_real_)
+        }
+      }
+      res
+    }
+
+    cum_raw <- cumulate(sub_dr_masked)
+    cum_trim <- cumulate(sub_dr_trim)
+
     # align exposure-by-wave if available; otherwise keep NULL
     sub_exp <- NULL
     if (!is.null(exp_by_wave)) {
@@ -506,45 +552,43 @@ margot_interpret_lmtp_positivity <- function(x,
 
     # compute metrics per wave using uncensored observations (r > 0)
     wave_metrics <- lapply(seq_along(col_idx), function(i) {
-      w <- sub_dr[, i]
-      w_all <- w[!is.na(w)]
-      n_all <- length(w_all)
-      n_zero <- sum(w_all == 0)
-      prop_censored <- if (n_all > 0) n_zero / n_all else NA_real_
+      w <- sub_dr_masked[, i]
+      mask_col <- sub_mask[, i]
+      n_total <- sum(is.finite(sub_dr[, i]))
+      n_obs <- sum(mask_col, na.rm = TRUE)
+      prop_censored <- if (n_total > 0) (n_total - n_obs) / n_total else NA_real_
 
-      # uncensored subset
-      w_pos <- w_all[w_all > 0]
+      w_pos <- w[is.finite(w)]
       n_pos <- length(w_pos)
 
-      # uncensored ESS
-      ess_pos <- if (n_pos > 0) {
-        sum_w <- sum(w_pos)
-        sum_w2 <- sum(w_pos^2)
-        if (sum_w2 > 0) (sum_w^2) / sum_w2 else NA_real_
-      } else NA_real_
+      ess_pos <- ess_fun(w_pos)
+      ess_pos_frac <- if (n_pos > 0 && is.finite(ess_pos)) ess_pos / n_pos else NA_real_
+      ess_pos_frac_pt <- if (n_total > 0 && is.finite(ess_pos)) ess_pos / n_total else NA_real_
 
-      ess_pos_frac <- if (n_pos > 0) ess_pos / n_pos else NA_real_
-      ess_pos_frac_pt <- if (n_all > 0 && is.finite(ess_pos)) ess_pos / n_all else NA_real_
+      ess_cum_raw <- ess_fun(cum_raw[, i])
+      ess_cum_trim <- ess_fun(cum_trim[, i])
 
       # policy-implied exposure probability by wave (uncensored)
       p_hat <- NA_real_
       if (!is.null(sub_exp)) {
         e <- sub_exp[, i]
-        mask <- is.finite(w) & is.finite(e) & (w > 0)
-        if (any(mask)) {
-          sw <- sum(w[mask])
-          if (sw > 0) p_hat <- sum(w[mask] * e[mask]) / sw
+        mask_e <- is.finite(sub_dr[, i]) & is.finite(e) & mask_col
+        if (any(mask_e)) {
+          sw <- sum(sub_dr[, i][mask_e])
+          if (sw > 0) p_hat <- sum(sub_dr[, i][mask_e] * e[mask_e]) / sw
         }
       }
 
       list(
         wave = col_idx[i],
-        n_all = n_all,
+        n_all = n_total,
         n_pos = n_pos,
         prop_censored = prop_censored,
         ess_pos = ess_pos,
         ess_pos_frac = ess_pos_frac,
         ess_pos_frac_pt = ess_pos_frac_pt,
+        ess_cum_raw = ess_cum_raw,
+        ess_cum_trim = ess_cum_trim,
         policy_rate = p_hat
       )
     })
@@ -560,6 +604,8 @@ margot_interpret_lmtp_positivity <- function(x,
         ess_pos = m$ess_pos,
         ess_pos_frac = m$ess_pos_frac,
         ess_pos_frac_pt = m$ess_pos_frac_pt,
+        ess_cum_raw = m$ess_cum_raw,
+        ess_cum_trim = m$ess_cum_trim,
         policy_rate = m$policy_rate,
         stringsAsFactors = FALSE
       )
@@ -567,23 +613,21 @@ margot_interpret_lmtp_positivity <- function(x,
 
     # overall metrics across waves (uncensored)
     all_w <- as.vector(sub_dr)
-    all_w <- all_w[!is.na(all_w)]
-    overall_n_all <- length(all_w)
-    overall_n_zero <- sum(all_w == 0)
-    overall_prop_censored <- if (overall_n_all > 0) overall_n_zero / overall_n_all else NA_real_
+    overall_n_all <- sum(is.finite(all_w))
+    overall_n_obs <- sum(sub_mask, na.rm = TRUE)
+    overall_prop_censored <- if (overall_n_all > 0) (overall_n_all - overall_n_obs) / overall_n_all else NA_real_
 
-    all_w_pos <- all_w[all_w > 0]
+    all_w_pos <- as.vector(sub_dr_masked)
+    all_w_pos <- all_w_pos[is.finite(all_w_pos)]
     overall_n_pos <- length(all_w_pos)
 
-    overall_ess_pos <- if (overall_n_pos > 0) {
-      sum_w <- sum(all_w_pos)
-      sum_w2 <- sum(all_w_pos^2)
-      if (sum_w2 > 0) (sum_w^2) / sum_w2 else NA_real_
-    } else NA_real_
+    overall_ess_pos <- ess_fun(all_w_pos)
 
-    overall_ess_pos_frac <- if (overall_n_pos > 0) overall_ess_pos / overall_n_pos else NA_real_
-    # relative to person-time denominator (includes zeros)
-    overall_ess_pos_frac_pt <- if (overall_n_all > 0) overall_ess_pos / overall_n_all else NA_real_
+    overall_ess_pos_frac <- if (overall_n_pos > 0 && is.finite(overall_ess_pos)) overall_ess_pos / overall_n_pos else NA_real_
+    overall_ess_pos_frac_pt <- if (overall_n_all > 0 && is.finite(overall_ess_pos)) overall_ess_pos / overall_n_all else NA_real_
+
+    overall_ess_cum_raw <- ess_fun(cum_raw[, ncol(cum_raw), drop = TRUE])
+    overall_ess_cum_trim <- ess_fun(cum_trim[, ncol(cum_trim), drop = TRUE])
 
     # overall policy-implied exposure probability across selected waves (uncensored)
     overall_policy_rate <- NA_real_
@@ -607,6 +651,8 @@ margot_interpret_lmtp_positivity <- function(x,
         ess_pos = overall_ess_pos,
         ess_pos_frac = overall_ess_pos_frac,
         ess_pos_frac_pt = overall_ess_pos_frac_pt,
+        ess_cum_raw = overall_ess_cum_raw,
+        ess_cum_trim = overall_ess_cum_trim,
         policy_rate = overall_policy_rate,
         stringsAsFactors = FALSE
       ),
@@ -925,23 +971,33 @@ margot_interpret_lmtp_positivity <- function(x,
     # uncensored ESS by wave
     wave_names <- vapply(wave_df$wave, wave_label, character(1))
     wave_bits <- paste0(
-      wave_names, ": ", fmt_int(wave_df$ess_pos),
+      wave_names, ": ESS = ", fmt_int(wave_df$ess_pos),
       " (ESS+/(N+) = ", fmt_frac(wave_df$ess_pos_frac),
-      ", ESS+/(N_pt) = ", fmt_frac(wave_df$ess_pos_frac_pt), ")"
+      ", ESS+/(N_pt) = ", fmt_frac(wave_df$ess_pos_frac_pt), "); ",
+      "cum ESS = ", fmt_int(wave_df$ess_cum_raw),
+      ifelse(is.finite(wave_df$ess_cum_trim),
+             paste0(" (trim ", fmt_int(wave_df$ess_cum_trim), ")"),
+             "")
     )
     wave_clause <- paste(wave_bits, collapse = ", ")
 
     # overall uncensored ESS
-    overall_clause <- ifelse(
-      is.finite(overall_df$ess_pos),
-      paste0("; overall ESS = ", fmt_int(overall_df$ess_pos),
-             " (ESS+/(N+) = ", fmt_frac(overall_df$ess_pos_frac), ")",
-             if ("ess_pos_frac_pt" %in% names(overall_df) && is.finite(overall_df$ess_pos_frac_pt))
-               paste0("; ESS+/(N_pt) = ", fmt_frac(overall_df$ess_pos_frac_pt))
-             else
-               ""),
-      ""
-    )
+    overall_clause <- ""
+    if (is.finite(overall_df$ess_pos)) {
+      overall_clause <- paste0(
+        "; overall ESS = ", fmt_int(overall_df$ess_pos),
+        " (ESS+/(N+) = ", fmt_frac(overall_df$ess_pos_frac), ")"
+      )
+      if ("ess_pos_frac_pt" %in% names(overall_df) && is.finite(overall_df$ess_pos_frac_pt)) {
+        overall_clause <- paste0(overall_clause, "; ESS+/(N_pt) = ", fmt_frac(overall_df$ess_pos_frac_pt))
+      }
+      if ("ess_cum_raw" %in% names(overall_df) && is.finite(overall_df$ess_cum_raw)) {
+        overall_clause <- paste0(overall_clause, "; cumulative ESS = ", fmt_int(overall_df$ess_cum_raw))
+        if ("ess_cum_trim" %in% names(overall_df) && is.finite(overall_df$ess_cum_trim)) {
+          overall_clause <- paste0(overall_clause, " (trim ", fmt_int(overall_df$ess_cum_trim), ")")
+        }
+      }
+    }
     # policy rates (optional)
     policy_clause <- ""
     if (isTRUE(include_policy_rates) && "policy_rate" %in% names(wave_df)) {

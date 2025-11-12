@@ -1,7 +1,19 @@
+# [2025-11-09] margot 1.0.273
+
+### Added
+- `margot_lmtp_weight_diag_from_fit()` reconstructs censoring masks from `density_ratios > 0`, reports wave-specific tail summaries, and tracks cumulative ESS (raw and trimmed) even when the original censor columns aren’t available.
+
+### Changed
+- `margot_interpret_lmtp_positivity()` now accepts `trim_right`, masks density ratios via `dr > 0` for IPSIs, and reports cumulative ESS alongside the existing per-wave metrics.
+- `margot_transition_ipsi_summary()` emits LaTeX-ready narrative blocks and shows natural initiation rates with their exact Clopper–Pearson CIs.
+- `margot_compute_ipsi_probability()` keeps raw probabilities plus 95% CIs, so downstream helpers don’t need to re-compute binomial intervals.
+
 # [2025-11-08] margot 1.0.272
 
 ### Added
 - `margot_transition_ipsi_summary()` now emits both a kable-ready table (via `pretty = TRUE`) and a LaTeX-ready narrative describing each wave pair’s natural rate plus the δ-specific counterfactual probabilities/fold increases.
+- `margot_compute_ipsi_probability()` attaches exact (Clopper-Pearson) 95% confidence intervals for the natural initiation rate so downstream summaries can report uncertainty without re-running binomial tests.
+- `margot_lmtp_weight_diag_from_fit()` reconstructs censoring masks from `density_ratios > 0`, reports per-wave quantiles/tail mass, and tracks cumulative ESS (raw and winsorised) for LMTP fits where the original censor nodes are not available.
 
 ### Changed
 - `margot_transition_table()` provides `$get_table_data()` and `$compute_ipsi_probabilities()` helpers and stores machine-readable matrices alongside each markdown table so downstream IPSI utilities can operate without parsing strings.

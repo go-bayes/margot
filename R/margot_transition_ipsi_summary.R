@@ -24,8 +24,8 @@
 #' @return A list with two elements:
 #'   \describe{
 #'     \item{`table`}{Data frame with one row per wave pair × delta containing
-#'       the natural and counterfactual initiation probabilities, fold increases,
-#'       and raw counts (string-formatted when `pretty = TRUE`).}
+#'       the natural initiation rate (with 95% CI), counterfactual probabilities,
+#'       fold increases, and raw counts (string-formatted when `pretty = TRUE`).}
 #'     \item{`report`}{Character vector of NZ-English sentences, with LaTeX math
 #'       markup (e.g., `$\\to$`, `$\\delta$`, `$p'$`), summarising each wave pair.}
 #'   }
@@ -145,10 +145,16 @@ margot_transition_ipsi_summary <- function(transitions,
     idx <- idx_split[[label]]
     df <- out[idx, , drop = FALSE]
     counts <- df[1, ]
+    ci_text <- sprintf(
+      "%s--%s",
+      format_pct_sentence(counts$natural_p_l),
+      format_pct_sentence(counts$natural_p_u)
+    )
     header <- sprintf(
-      "%s: The natural initiation rate was approximately %s (%s / %s non-attenders).",
+      "%s: The natural initiation rate was approximately %s (95\\%% CI %s) based on %s initiations out of %s non-attenders.",
       label,
       format_pct_sentence(counts$natural_p),
+      ci_text,
       format_count(counts$initiations),
       format_count(counts$non_attenders)
     )
@@ -156,10 +162,11 @@ margot_transition_ipsi_summary <- function(transitions,
     delta_lines <- vapply(
       seq_len(nrow(df)),
       function(j) sprintf(
-        "For $\\delta = %s$ (so $1/\\delta = %s$), the counterfactual initiation probability is about %s, representing a %s.",
+        "For $\\delta = %s$ (so $1/\\delta = %s$), the counterfactual initiation probability is about %s (natural $p$ %s; %s).",
         df$delta[j],
         format_num(df$delta_inverse[j]),
         format_pct_sentence(df$counterfactual_p[j]),
+        format_pct_sentence(df$natural_p[j]),
         format_fold_sentence(df$fold_increase[j])
       ),
       character(1)
@@ -176,22 +183,27 @@ margot_transition_ipsi_summary <- function(transitions,
 
   table_out <- out
   if (pretty) {
-    percent_fmt <- function(x) ifelse(
+    percent_fmt <- function(x, d = digits_prob) ifelse(
       is.na(x),
       NA_character_,
-      sprintf(paste0("%.", digits_prob, "f%%"), 100 * x)
+      sprintf(paste0("%.", d, "f%%"), 100 * x)
     )
-    fold_fmt <- function(x) ifelse(
+    fold_fmt <- function(x, d = digits_fold) ifelse(
       is.na(x),
       NA_character_,
-      sprintf(paste0("%.", digits_fold, "f×"), x)
+      sprintf(paste0("%.", d, "f×"), x)
     )
     table_pretty <- data.frame(
       `Wave pair` = wave_pair,
       Delta = out$delta,
       `1/Delta` = out$delta_inverse,
       `Initiations / at-risk` = sprintf("%s / %s", out$initiations, out$non_attenders),
-      `Natural p` = percent_fmt(out$natural_p),
+      `Natural p (95% CI)` = sprintf(
+        "%s (%s, %s)",
+        percent_fmt(out$natural_p),
+        percent_fmt(out$natural_p_l),
+        percent_fmt(out$natural_p_u)
+      ),
       `Counterfactual p` = percent_fmt(out$counterfactual_p),
       `Fold increase` = fold_fmt(out$fold_increase),
       stringsAsFactors = FALSE,
@@ -202,8 +214,19 @@ margot_transition_ipsi_summary <- function(transitions,
     table_out <- table_pretty
   }
 
+  make_block <- function(format = c("latex", "markdown")) {
+    format <- match.arg(format)
+    if (!length(report)) return("")
+    if (format == "latex") {
+      paste0("\\begin{quote}\n", paste(report, collapse = "\n"), "\n\\end{quote}\n")
+    } else {
+      paste(report, collapse = "\n")
+    }
+  }
+
   list(
     table = table_out,
-    report = report
+    report = report,
+    report_block = make_block
   )
 }

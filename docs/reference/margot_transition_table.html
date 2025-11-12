@@ -11,7 +11,7 @@ Diagonal elements are bolded to highlight state stability."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.272</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.273</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,10 +141,14 @@ Diagonal elements are bolded to highlight state stability.</p>
 <span class="r-in"><span><span class="co"># Compute IPSI counterfactual initiation probabilities for the first transition</span></span></span>
 <span class="r-in"><span><span class="va">ipsi_wave1</span> <span class="op">&lt;-</span> <span class="va">transitions</span><span class="op">$</span><span class="fu">compute_ipsi_probabilities</span><span class="op">(</span>which <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ipsi_wave1</span><span class="op">$</span><span class="va">probabilities</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   delta delta_inverse natural_p counterfactual_p fold_increase</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     2           0.5       0.5             0.75           1.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2     5           0.2       0.5             0.90           1.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    10           0.1       0.5             0.95           1.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   delta delta_inverse natural_p natural_p_l natural_p_u counterfactual_p</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     2           0.5       0.5  0.01257912   0.9874209             0.75</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     5           0.2       0.5  0.01257912   0.9874209             0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    10           0.1       0.5  0.01257912   0.9874209             0.95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   fold_increase</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1           1.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           1.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3           1.9</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

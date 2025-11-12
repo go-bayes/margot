@@ -25,7 +25,8 @@ test_that("margot_transition_ipsi_summary works with margot_transition_table obj
   summary <- margot_transition_ipsi_summary(transitions, deltas = c(2, 4))
   tbl <- summary$table
   expect_s3_class(tbl, "data.frame")
-  expect_true(all(c("table_index", "delta", "natural_p", "counterfactual_p",
+  expect_true(all(c("table_index", "delta", "natural_p", "natural_p_l",
+                    "natural_p_u", "counterfactual_p",
                     "initiations", "non_attenders") %in% names(tbl)))
   expect_equal(unique(tbl$delta), c(2, 4))
   expect_equal(length(unique(tbl$table_index)), 2)
@@ -33,6 +34,8 @@ test_that("margot_transition_ipsi_summary works with margot_transition_table obj
   expect_true(length(summary$report) > 0)
   expect_true(any(grepl("\\\\to", summary$report)))
   expect_true(any(grepl("\\\\delta", summary$report)))
+  expect_match(summary$report_block("latex"), "\\\\begin\\{quote\\}")
+  expect_match(summary$report_block("markdown"), "Wave")
 })
 
 test_that("margot_transition_ipsi_summary accepts list inputs", {
@@ -74,8 +77,8 @@ test_that("margot_transition_ipsi_summary pretty output formats strings", {
   )
   out <- margot_transition_ipsi_summary(transitions, deltas = 2, pretty = TRUE)
   pretty_tbl <- out$table
-  expect_true(all(c("Wave pair", "Delta", "Natural p", "Counterfactual p") %in% names(pretty_tbl)))
-  expect_true(all(grepl("%", pretty_tbl$`Natural p`, fixed = TRUE)))
+  expect_true(all(c("Wave pair", "Delta", "Natural p (95% CI)", "Counterfactual p") %in% names(pretty_tbl)))
+  expect_true(all(grepl("%", pretty_tbl$`Natural p (95% CI)`, fixed = TRUE)))
   expect_true(any(grepl("\\\\delta", out$report)))
   raw <- attr(pretty_tbl, "raw")
   expect_s3_class(raw, "data.frame")

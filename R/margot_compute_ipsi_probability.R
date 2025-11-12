@@ -18,9 +18,10 @@
 #'   defaults match the standard IPSI reporting set `c(2, 5, 10)`.
 #'
 #' @return A data frame with one row per delta containing the natural initiation
-#'   probability `p`, the counterfactual probability `p' = 1 - (1 - p) / delta`,
-#'   and the fold increase `p'/p`. The result carries a `counts` attribute with
-#'   the raw initiation and at-risk totals used to compute `p`.
+#'   probability `p`, its exact 95% Clopper-Pearson confidence limits, the
+#'   counterfactual probability `p' = 1 - (1 - p) / delta`, and the fold increase
+#'   `p'/p`. The result carries a `counts` attribute with the raw initiation and
+#'   at-risk totals and the natural-probability interval used to compute `p`.
 #' @examples
 #' trans <- data.frame(
 #'   `From / To` = c("State 0", "State 1"),
@@ -67,6 +68,7 @@ margot_compute_ipsi_probability <- function(trans_matrix, deltas = c(2, 5, 10)) 
   }
 
   p <- initiations / non_attenders
+  ci <- stats::binom.test(initiations, non_attenders)$conf.int
   if (!is.finite(p) || p < 0) stop("Natural initiation probability is not well-defined.")
   if (p > 1) {
     warning("Natural initiation probability exceeds 1; resetting to 1 for downstream calculations.")
@@ -91,15 +93,19 @@ margot_compute_ipsi_probability <- function(trans_matrix, deltas = c(2, 5, 10)) 
   result <- data.frame(
     delta = deltas,
     delta_inverse = round(1 / deltas, 3),
-    natural_p = round(rep(p, length(deltas)), 4),
-    counterfactual_p = round(p_prime, 4),
-    fold_increase = round(fold, 1),
+    natural_p = rep(p, length(deltas)),
+    natural_p_l = rep(ci[1], length(deltas)),
+    natural_p_u = rep(ci[2], length(deltas)),
+    counterfactual_p = p_prime,
+    fold_increase = fold,
     stringsAsFactors = FALSE
   )
   attr(result, "counts") <- list(
     initiations = initiations,
     non_attenders = non_attenders,
-    natural_p = p
+    natural_p = p,
+    natural_p_l = ci[1],
+    natural_p_u = ci[2]
   )
   result
 }

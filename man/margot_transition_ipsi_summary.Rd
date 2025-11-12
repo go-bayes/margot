@@ -35,8 +35,8 @@ to `margot_compute_ipsi_probability()`; defaults to the standard set
 A list with two elements:
   \describe{
     \item{`table`}{Data frame with one row per wave pair × delta containing
-      the natural and counterfactual initiation probabilities, fold increases,
-      and raw counts (string-formatted when `pretty = TRUE`).}
+      the natural initiation rate (with 95% CI), counterfactual probabilities,
+      fold increases, and raw counts (string-formatted when `pretty = TRUE`).}
     \item{`report`}{Character vector of NZ-English sentences, with LaTeX math
       markup (e.g., `$\\to$`, `$\\delta$`, `$p'$`), summarising each wave pair.}
   }

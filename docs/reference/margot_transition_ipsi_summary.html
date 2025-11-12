@@ -17,7 +17,7 @@ fold increases, and the raw counts used in each estimate."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.272</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.273</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,8 +99,8 @@ to `margot_compute_ipsi_probability()`; defaults to the standard set
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with two elements:</p><dl><dt>`table`</dt>
 <dd><p>Data frame with one row per wave pair × delta containing
-      the natural and counterfactual initiation probabilities, fold increases,
-      and raw counts (string-formatted when `pretty = TRUE`).</p></dd>
+      the natural initiation rate (with 95<!-- % CI), counterfactual probabilities, -->
+      fold increases, and raw counts (string-formatted when `pretty = TRUE`).</p></dd>
 
     <dt>`report`</dt>
 <dd><p>Character vector of NZ-English sentences, with LaTeX math
@@ -137,26 +137,50 @@ to `margot_compute_ipsi_probability()`; defaults to the standard set
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4           2    table_2      2019    2022           1             1     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5           2    table_2      2019    2022           1             1     5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6           2    table_2      2019    2022           1             1    10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   delta_inverse natural_p counterfactual_p fold_increase</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1           0.5       0.5             0.75           1.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2           0.2       0.5             0.90           1.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3           0.1       0.5             0.95           1.9</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4           0.5       1.0             1.00           1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5           0.2       1.0             1.00           1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6           0.1       1.0             1.00           1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   delta_inverse natural_p natural_p_l natural_p_u counterfactual_p</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1           0.5       0.5  0.01257912   0.9874209             0.75</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           0.2       0.5  0.01257912   0.9874209             0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3           0.1       0.5  0.01257912   0.9874209             0.95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4           0.5       1.0  0.02500000   1.0000000             1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5           0.2       1.0  0.02500000   1.0000000             1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6           0.1       1.0  0.02500000   1.0000000             1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   fold_increase</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1           1.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           1.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3           1.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4           1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5           1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6           1.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $report</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "Wave 2018 $\\to$ 2019: The natural initiation rate was approximately 50.0\\% (1 / 2 non-attenders)."                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [2] "Counterfactual probabilities follow $p' = 1 - (1 - p)/\\delta$ for this transition."                                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [3] "For $\\delta = 2$ (so $1/\\delta = 0.5$), the counterfactual initiation probability is about 75.0\\%, representing a 1.5-fold increase."  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "For $\\delta = 5$ (so $1/\\delta = 0.2$), the counterfactual initiation probability is about 90.0\\%, representing a 1.8-fold increase."  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [5] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual initiation probability is about 95.0\\%, representing a 1.9-fold increase." </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [6] ""                                                                                                                                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "Wave 2019 $\\to$ 2022: The natural initiation rate was approximately 100.0\\% (1 / 1 non-attenders)."                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [8] "Counterfactual probabilities follow $p' = 1 - (1 - p)/\\delta$ for this transition."                                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [9] "For $\\delta = 2$ (so $1/\\delta = 0.5$), the counterfactual initiation probability is about 100.0\\%, representing a 1.0-fold increase." </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "For $\\delta = 5$ (so $1/\\delta = 0.2$), the counterfactual initiation probability is about 100.0\\%, representing a 1.0-fold increase." </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [11] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual initiation probability is about 100.0\\%, representing a 1.0-fold increase."</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "Wave 2018 $\\to$ 2019: The natural initiation rate was approximately 50.0\\% (95\\% CI 1.3\\%--98.7\\%) based on 1 initiations out of 2 non-attenders."  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [2] "Counterfactual probabilities follow $p' = 1 - (1 - p)/\\delta$ for this transition."                                                                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [3] "For $\\delta = 2$ (so $1/\\delta = 0.5$), the counterfactual initiation probability is about 75.0\\% (natural $p$ 50.0\\%; 1.5-fold increase)."          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "For $\\delta = 5$ (so $1/\\delta = 0.2$), the counterfactual initiation probability is about 90.0\\% (natural $p$ 50.0\\%; 1.8-fold increase)."          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [5] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual initiation probability is about 95.0\\% (natural $p$ 50.0\\%; 1.9-fold increase)."         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [6] ""                                                                                                                                                        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "Wave 2019 $\\to$ 2022: The natural initiation rate was approximately 100.0\\% (95\\% CI 2.5\\%--100.0\\%) based on 1 initiations out of 1 non-attenders."</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [8] "Counterfactual probabilities follow $p' = 1 - (1 - p)/\\delta$ for this transition."                                                                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [9] "For $\\delta = 2$ (so $1/\\delta = 0.5$), the counterfactual initiation probability is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "For $\\delta = 5$ (so $1/\\delta = 0.2$), the counterfactual initiation probability is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual initiation probability is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $report_block</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function (format = c("latex", "markdown")) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     format &lt;- match.arg(format)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     if (!length(report)) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         return("")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     if (format == "latex") {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         paste0("\\begin{quote}\n", paste(report, collapse = "\n"), </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             "\n\\end{quote}\n")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     else {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         paste(report, collapse = "\n")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x10af35e78&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x10af30c18&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

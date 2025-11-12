@@ -13,6 +13,7 @@ margot_interpret_lmtp_positivity(
   waves = NULL,
   remove_waves = NULL,
   digits = 2,
+  trim_right = 0.999,
   include_methods = FALSE,
   include_diagnostics = FALSE,
   include_ipsi_context = TRUE,
@@ -53,6 +54,9 @@ inclusion via `waves`.}
 
 \item{digits}{Integer number of decimal places to use when reporting
 ESS-based fractions (e.g., `ESS/N`).}
+
+\item{trim_right}{Numeric in (0, 1]; optional per-wave winsorisation level
+applied before forming cumulative density-ratio products (default 0.999).}
 
 \item{include_methods}{Logical; if TRUE, prepends a methodological explanation of
 density ratios, their interpretation, and ESS computation (default: FALSE).}
