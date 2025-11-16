@@ -1,5 +1,13 @@
 # margot NEWS
 
+## Changes in version 1.0.274
+
+### Improvements
+- `margot_lmtp_overlap()` now detects lab palette requests and uses the resolver so shift labels like `null`, cadence names, and `ipsi_*` deltas keep their intended colours even when prefixed/suffixed.
+
+### Internal
+- Added internal helper `margot_palette_lab_resolve()` plus tests to expose the canonical lab palette entries and fuzzy-matching behaviour.
+
 ## Changes in version 1.0.264
 
 ### New
@@ -40,6 +48,7 @@
 
 ### Internal
 - New internal palette helper `margot_palette("lab")` expands colours for `null`, `shift_zero`, and `ipsi_*` variants.
+- The lab palette helper now includes a resolver so LMTP overlap plots detect `null`, cadence labels (weekly/monthly), and IPSI deltas even when shifts include outcome prefixes.
 
 ### Backward compatibility
 - No exported function changes; `_pkgdown.yml` unchanged.

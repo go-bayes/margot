@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.273</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.274</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,19 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.274" id="id_2025-11-10-margot-10274">[2025-11-10] margot 1.0.274<a class="anchor" aria-label="anchor" href="#id_2025-11-10-margot-10274"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-274">Added<a class="anchor" aria-label="anchor" href="#added-1-0-274"></a></h4>
+<ul><li>New internal <code><a href="../reference/margot_palette_lab_resolve.html">margot_palette_lab_resolve()</a></code> helper exposes consistent colours for canonical LMTP shift names (null, weekly/monthly cadence, and <code>ipsi_*</code> deltas) even after outcome prefixes are attached.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-274">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-274"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_lmtp_overlap.html">margot_lmtp_overlap()</a></code> now routes shift/constant fills through the lab palette resolver whenever the lab palette is requested, ensuring plots stay on-brand without manual colour overrides.</li>
+<li>Added focused palette tests to guard the extended mappings.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.273" id="id_2025-11-09-margot-10273">[2025-11-09] margot 1.0.273<a class="anchor" aria-label="anchor" href="#id_2025-11-09-margot-10273"></a></h2>
 <div class="section level4">
 <h4 id="added-1-0-273">Added<a class="anchor" aria-label="anchor" href="#added-1-0-273"></a></h4>
@@ -41,7 +54,8 @@
 </ul></div>
 <div class="section level4">
 <h4 id="changed-1-0-273">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-273"></a></h4>
-<ul><li>
+<ul><li>LMTP overlap plots now use an enhanced <code>margot_palette("lab")</code> resolver so common shift labels (e.g., <code>null</code>, cadence labels like <code>weekly</code>/<code>monthly</code>, and <code>ipsi_*</code> deltas) keep consistent colours even when outcome prefixes are present.</li>
+<li>
 <code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> now accepts <code>trim_right</code>, masks density ratios via <code>dr &gt; 0</code> for IPSIs, and reports cumulative ESS alongside the existing per-wave metrics.</li>
 <li>
 <code><a href="../reference/margot_transition_ipsi_summary.html">margot_transition_ipsi_summary()</a></code> emits LaTeX-ready narrative blocks and shows natural initiation rates with their exact Clopper–Pearson CIs.</li>
@@ -4402,10 +4416,10 @@
 <li><p><code>boilerplate_methods_statistical_estimator()</code> is deprecated. Use <code>boilerplate::boilerplate_report_statistical_estimator()</code> instead.</p></li>
 <li><p><code>boilerplate_methods_target_population()</code> is deprecated. Use <code>boilerplate::boilerplate_report_target_population()</code> instead.</p></li>
 <li><p><code>boilerplate_methods_variables()</code> is deprecated. Use <code>boilerplate::boilerplate_report_variables()</code> instead.</p></li>
-<li><p><code>margot_create_database()</code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_manage_measures.html" class="external-link">boilerplate::boilerplate_manage_measures()</a></code> instead.</p></li>
-<li><p><code>manager_boilerplate_measures()</code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_manage_measures.html" class="external-link">boilerplate::boilerplate_manage_measures()</a></code> instead.</p></li>
+<li><p><code>margot_create_database()</code> is deprecated. Use <code>boilerplate::boilerplate_manage_measures()</code> instead.</p></li>
+<li><p><code>manager_boilerplate_measures()</code> is deprecated. Use <code>boilerplate::boilerplate_manage_measures()</code> instead.</p></li>
 <li><p><code>margot_create_bibliography()</code> is deprecated. Use <code>boilerplate::boilerplate_report_measures()</code> instead.</p></li>
-<li><p><code>margot_merge_databases()</code> is deprecated. Use <code><a href="https://go-bayes.github.io/boilerplate/reference/boilerplate_merge_databases.html" class="external-link">boilerplate::boilerplate_merge_databases()</a></code> instead. (Note the plural ‘databases’ in the new function name.)</p></li>
+<li><p><code>margot_merge_databases()</code> is deprecated. Use <code>boilerplate::boilerplate_merge_databases()</code> instead. (Note the plural ‘databases’ in the new function name.)</p></li>
 <li><p>to obtain these new functions, use <code>devtools::install_github("go-bayes/boilerplate")</code></p></li>
 </ul></div>
 </div>
@@ -4948,7 +4962,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

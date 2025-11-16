@@ -138,10 +138,14 @@ margot_lmtp_overlap <- function(x,
       if (is.null(default_palette) || !length(default_palette)) {
         default_palette <- c("#4f88c6", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7", "#D55E00", "#999999")
       }
+      lab_palette_internal <- if (exists("margot_palette", mode = "function")) {
+        tryCatch(margot_palette("lab"), error = function(e) NULL)
+      } else NULL
+      lab_resolver <- if (exists("margot_palette_lab_resolve", mode = "function")) {
+        get("margot_palette_lab_resolve", mode = "function")
+      } else NULL
       palette_aliases <- list(
-        lab = if (exists("margot_palette", mode = "function")) {
-          tryCatch(margot_palette("lab"), error = function(e) NULL)
-        } else NULL,
+        lab = lab_palette_internal,
         classic = default_palette
       )
       if (is.null(palette_aliases$lab) || !length(palette_aliases$lab)) {
@@ -156,8 +160,14 @@ margot_lmtp_overlap <- function(x,
           ipsi_15 = "#a63603"
         )
       }
+      fill_palette_alias <- NULL
       if (is.character(fill_palette) && length(fill_palette) == 1L && fill_palette %in% names(palette_aliases)) {
+        fill_palette_alias <- fill_palette
         fill_palette <- palette_aliases[[fill_palette]]
+      }
+      lab_palette_in_use <- identical(fill_palette_alias, "lab")
+      if (!lab_palette_in_use && !is.null(fill_palette) && !is.null(palette_aliases$lab)) {
+        lab_palette_in_use <- isTRUE(all.equal(unname(fill_palette), unname(palette_aliases$lab)))
       }
       shift_names_global <- unique(unlist(lapply(models, names)))
       palette_vec <- if (is.null(fill_palette)) default_palette else as.character(fill_palette)
@@ -188,6 +198,15 @@ margot_lmtp_overlap <- function(x,
         if (!is.na(named)) return(named)
         named_clean <- fetch_named_color(clean_shift_name(outcome_name, shift_name))
         if (!is.na(named_clean)) return(named_clean)
+        if (isTRUE(lab_palette_in_use) && !is.null(lab_resolver) && !is.null(palette_aliases$lab)) {
+          resolved <- tryCatch(lab_resolver(
+            labels = c(shift_name, clean_shift_name(outcome_name, shift_name)),
+            palette = palette_aliases$lab,
+            default = NA_character_
+          ), error = function(e) c(NA_character_, NA_character_))
+          resolved <- resolved[!is.na(resolved)]
+          if (length(resolved)) return(resolved[[1L]])
+        }
         # pattern-based fallback for common shift types
         shift_lower <- tolower(shift_name)
         if (grepl("null", shift_lower)) return("#7f7f7f")  # grey for null
@@ -201,6 +220,14 @@ margot_lmtp_overlap <- function(x,
       get_constant_color <- function() {
         named <- fetch_named_color("constant")
         if (!is.na(named)) return(named)
+        if (isTRUE(lab_palette_in_use) && !is.null(lab_resolver) && !is.null(palette_aliases$lab)) {
+          resolved <- tryCatch(lab_resolver(
+            labels = "constant",
+            palette = palette_aliases$lab,
+            default = NA_character_
+          ), error = function(e) NA_character_)
+          if (!is.na(resolved)) return(resolved)
+        }
         palette_vec[1L]
       }
       add_plot <- function(outcome_name, shift_name, wave_idx, w_vec) {

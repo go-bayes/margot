@@ -216,24 +216,129 @@ margot_palette <- function(name = c("lab", "classic")) {
 
   if (identical(name, "classic")) return(classic)
 
-  # Lab palette for positivity/overlap: anchors
-  # - null: grey
-  # - shift_zero: blue
-  # - ipsi_*: oranges from light (small shift) to dark (large shift)
+  # Lab palette for positivity/overlap. Named entries anchor specific
+  # shift keywords to semantically consistent hues, while helper
+  # `margot_palette_lab_resolve()` handles fuzzy matching (e.g.,
+  # outcome-prefixed shift names).
   lab_named <- c(
     null = "#7f7f7f",
     shift_zero = "#2c7fb8",
+    shift_down = "#2c7fb8",
+    shift_up = "#d95f0e",
+    constant = "#4f88c6",
+    weekly = "#4292c6",
+    monthly = "#9ecae1",
     ipsi_02 = "#fdd0a2",
     ipsi_05 = "#fd8d3c",
     ipsi_10 = "#d95f0e",
-    ipsi_15 = "#a63603",
-    shift_up = "#d95f0e",
-    shift_down = "#2c7fb8",
-    constant = "#4f88c6"
+    ipsi_15 = "#a63603"
   )
 
   # Return named palette; consumers can cycle through additional classic colours if needed
   lab_named
+}
+
+#' Resolve lab palette colours for arbitrary shift labels
+#'
+#' @param labels Character vector of shift/policy names.
+#' @param palette Character vector returned by `margot_palette("lab")`.
+#' @param default Hex colour used when no match is found.
+#' @return Character vector of colours aligned with `labels`.
+#' @keywords internal
+margot_palette_lab_resolve <- function(labels,
+                                       palette = margot_palette("lab"),
+                                       default = NA_character_) {
+  if (is.null(labels)) return(character())
+
+  pal <- as.character(palette %||% character())
+  pal_names <- names(pal)
+  if (is.null(pal_names)) pal_names <- rep("", length(pal))
+  pal_names_lower <- tolower(pal_names)
+
+  anchor_hex <- function(key, fallback_hex) {
+    idx <- which(pal_names_lower == key)
+    if (length(idx)) pal[[idx[[1L]]]] else fallback_hex
+  }
+
+  defaults <- list(
+    null = "#7f7f7f",
+    shift_zero = "#2c7fb8",
+    shift_down = "#2c7fb8",
+    shift_up = "#d95f0e",
+    constant = "#4f88c6",
+    weekly = "#4292c6",
+    monthly = "#9ecae1"
+  )
+
+  anchors <- lapply(names(defaults), function(key) anchor_hex(key, defaults[[key]]))
+  names(anchors) <- names(defaults)
+
+  ipsi_palette <- pal[grepl("^ipsi_", pal_names_lower)]
+  if (!length(ipsi_palette)) {
+    ipsi_palette <- c(ipsi_02 = "#fdd0a2", ipsi_05 = "#fd8d3c", ipsi_10 = "#d95f0e", ipsi_15 = "#a63603")
+  }
+  ipsi_levels <- sub("^ipsi_", "", names(ipsi_palette))
+  ipsi_numeric <- suppressWarnings(as.numeric(ipsi_levels))
+
+  resolve_ipsi <- function(magnitude) {
+    if (!length(ipsi_palette)) return(default)
+    if (is.na(magnitude) || !nzchar(magnitude)) {
+      return(ipsi_palette[[1L]])
+    }
+    mag_num <- suppressWarnings(as.numeric(magnitude))
+    if (!is.na(mag_num) && length(ipsi_numeric) && !all(is.na(ipsi_numeric))) {
+      idx <- which.min(abs(ipsi_numeric - mag_num))
+      return(ipsi_palette[[idx]])
+    }
+    ipsi_palette[[length(ipsi_palette)]]
+  }
+
+  detect_single <- function(label) {
+    if (is.null(label) || is.na(label)) return(default)
+    label_chr <- as.character(label)
+    if (!nzchar(label_chr)) return(default)
+
+    exact_idx <- match(label_chr, pal_names)
+    if (!is.na(exact_idx)) return(pal[[exact_idx]])
+
+    label_lower <- tolower(label_chr)
+    lower_idx <- match(label_lower, pal_names_lower)
+    if (!is.na(lower_idx)) return(pal[[lower_idx]])
+
+    parts <- unlist(strsplit(label_lower, "_"))
+    if (length(parts) >= 1) {
+      tail_one <- tail(parts, 1)
+      idx_tail <- match(tail_one, pal_names_lower)
+      if (!is.na(idx_tail)) return(pal[[idx_tail]])
+    }
+    if (length(parts) >= 2) {
+      tail_two <- paste(tail(parts, 2), collapse = "_")
+      idx_tail_two <- match(tail_two, pal_names_lower)
+      if (!is.na(idx_tail_two)) return(pal[[idx_tail_two]])
+    }
+
+    if (grepl("null", label_lower, fixed = TRUE)) return(anchors$null)
+    if (grepl("shift[_-]?zero", label_lower)) return(anchors$shift_zero)
+    if (grepl("shift[_-]?down", label_lower)) return(anchors$shift_down)
+    if (grepl("shift[_-]?up", label_lower)) return(anchors$shift_up)
+    if (grepl("constant", label_lower, fixed = TRUE)) return(anchors$constant)
+    if (grepl("weekly", label_lower, fixed = TRUE)) return(anchors$weekly)
+    if (grepl("monthly", label_lower, fixed = TRUE)) return(anchors$monthly)
+
+    ipsi_match <- regexpr("ipsi[_-]?(\\d{2})", label_lower, perl = TRUE)
+    if (ipsi_match > 0) {
+      match_str <- regmatches(label_lower, ipsi_match)
+      mag <- sub(".*?(\\d{2})$", "\\1", match_str)
+      return(resolve_ipsi(mag))
+    }
+    if (grepl("ipsi", label_lower, fixed = TRUE)) {
+      return(resolve_ipsi(NA_character_))
+    }
+
+    default
+  }
+
+  vapply(labels, detect_single, character(1), USE.NAMES = FALSE)
 }
 
 # label and plotting for causal forest models -----------------------------

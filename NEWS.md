@@ -1,9 +1,19 @@
+# [2025-11-10] margot 1.0.274
+
+### Added
+- New internal `margot_palette_lab_resolve()` helper exposes consistent colours for canonical LMTP shift names (null, weekly/monthly cadence, and `ipsi_*` deltas) even after outcome prefixes are attached.
+
+### Changed
+- `margot_lmtp_overlap()` now routes shift/constant fills through the lab palette resolver whenever the lab palette is requested, ensuring plots stay on-brand without manual colour overrides.
+- Added focused palette tests to guard the extended mappings.
+
 # [2025-11-09] margot 1.0.273
 
 ### Added
 - `margot_lmtp_weight_diag_from_fit()` reconstructs censoring masks from `density_ratios > 0`, reports wave-specific tail summaries, and tracks cumulative ESS (raw and trimmed) even when the original censor columns aren’t available.
 
 ### Changed
+- LMTP overlap plots now use an enhanced `margot_palette("lab")` resolver so common shift labels (e.g., `null`, cadence labels like `weekly`/`monthly`, and `ipsi_*` deltas) keep consistent colours even when outcome prefixes are present.
 - `margot_interpret_lmtp_positivity()` now accepts `trim_right`, masks density ratios via `dr > 0` for IPSIs, and reports cumulative ESS alongside the existing per-wave metrics.
 - `margot_transition_ipsi_summary()` emits LaTeX-ready narrative blocks and shows natural initiation rates with their exact Clopper–Pearson CIs.
 - `margot_compute_ipsi_probability()` keeps raw probabilities plus 95% CIs, so downstream helpers don’t need to re-compute binomial intervals.
