@@ -114,7 +114,8 @@ margot_positivity_report <- function(x,
   }
 
   method_statement <- build_positivity_method_statement(include_policy_rates)
-  relationship_summary <- build_shift_relationship_summary(diagnostics, label_mapping)
+  wave_summary_table <- build_wave_summary_table(diagnostics, label_mapping, digits = digits)
+  censoring_summary <- build_censoring_summary(summary_tbl, label_mapping, digits = digits)
 
   list(
     summary_table = summary_tbl,
@@ -122,7 +123,8 @@ margot_positivity_report <- function(x,
     overlap_plot = overlap_plot,
     narrative = narrative,
     method_statement = method_statement,
-    relationship_summary = relationship_summary,
+    wave_summary_table = wave_summary_table,
+    censoring_summary = censoring_summary,
     metadata = list(
       outcome = outcome,
       shifts = if (is.null(shifts)) names(diagnostics) else shifts,
@@ -181,45 +183,59 @@ pretty_shift_label <- function(shift_name, label_mapping = NULL) {
   gsub("_", " ", lbl)
 }
 
-describe_shift <- function(shift_info, label_mapping = NULL) {
-  sc <- shift_info$shift_clean %||% shift_info$shift_full
-  sc_lower <- tolower(sc %||% "")
-  label <- pretty_shift_label(sc, label_mapping)
-  extra <- ""
-  if (sc_lower %in% c("null", "identity")) {
-    extra <- " (baseline/observed policy)"
-  } else if (grepl("zero", sc_lower, fixed = TRUE)) {
-    extra <- " (sets exposure to zero each wave)"
-  } else if (grepl("weekly", sc_lower, fixed = TRUE)) {
-    extra <- " (encourages weekly exposure)"
-  } else if (grepl("monthly", sc_lower, fixed = TRUE)) {
-    extra <- " (targets monthly exposure)"
-  } else if (grepl("^ipsi", sc_lower)) {
-    raw <- gsub("[^0-9\\.]", "", sub("^ipsi_?", "", sc_lower))
-    delta <- suppressWarnings(as.numeric(raw))
-    extra <- if (is.finite(delta)) {
-      paste0(" (IPSI with \u03b4 = ", delta, ")")
-    } else {
-      " (incremental propensity shift)"
+build_wave_summary_table <- function(diagnostics, label_mapping = NULL, digits = 3) {
+  if (!is.list(diagnostics) || !length(diagnostics)) return(NULL)
+  diag_list <- diagnostics
+  if (!is.null(diag_list$wave_table)) diag_list <- list(diag_list)
+  # collect wave identifiers and labels
+  wave_keys <- list()
+  for (d in diag_list) {
+    wt <- d$wave_table
+    if (is.null(wt)) next
+    for (i in seq_len(nrow(wt))) {
+      wave_id <- wt$wave[i]
+      label <- as.character(wt$wave_label[i])
+      wave_keys[[paste0(wave_id, "::", label)]] <- list(id = wave_id, label = label)
     }
   }
-  paste0(label, extra)
+  if (!length(wave_keys)) return(NULL)
+  wave_df <- do.call(rbind, lapply(wave_keys, function(x) data.frame(id = x$id, label = x$label, stringsAsFactors = FALSE)))
+  wave_df <- wave_df[order(wave_df$id), , drop = FALSE]
+  wave_df <- wave_df[!duplicated(wave_df$id), , drop = FALSE]
+  wave_ids <- wave_df$id
+  wave_labels <- wave_df$label
+
+  shift_labels <- vapply(diag_list, function(d) pretty_shift_label(d$shift_clean %||% d$shift_full, label_mapping), character(1))
+  if (!length(shift_labels)) return(NULL)
+  mat <- matrix(NA_real_, nrow = length(diag_list), ncol = length(wave_ids))
+  colnames(mat) <- wave_labels
+  for (i in seq_along(diag_list)) {
+    wt <- diag_list[[i]]$wave_table
+    if (is.null(wt)) next
+    for (j in seq_len(nrow(wt))) {
+      idx <- match(wt$wave[j], wave_ids)
+      if (!is.na(idx)) {
+        val <- suppressWarnings(as.numeric(wt$ess_pos_frac_pt[j]))
+        if (length(val) && is.finite(val)) mat[i, idx] <- val
+      }
+    }
+  }
+  mat <- round(mat, digits)
+  colnames(mat) <- paste0("ESS per N% : ", wave_labels)
+  out <- as.data.frame(mat, check.names = FALSE, stringsAsFactors = FALSE)
+  rownames(out) <- shift_labels
+  out
 }
 
-build_shift_relationship_summary <- function(diagnostics, label_mapping = NULL) {
-  if (!is.list(diagnostics) || !length(diagnostics)) return(NULL)
-  if (!is.null(diagnostics$wave_table)) {
-    diagnostics <- list(diagnostics)
+build_censoring_summary <- function(summary_table, label_mapping = NULL, digits = 1) {
+  zeros <- attr(summary_table, "prop_zero_pct")
+  if (is.null(zeros)) return(NULL)
+  entries <- character(0)
+  for (nm in names(zeros)) {
+    lab <- pretty_shift_label(nm, label_mapping)
+    entries <- c(entries, paste0(lab, ": ", round(zeros[[nm]], digits), "%"))
   }
-  labels <- vapply(diagnostics, describe_shift, character(1), label_mapping = label_mapping)
-  labels <- labels[nzchar(labels)]
-  if (!length(labels)) return(NULL)
-  ordered <- paste(labels, collapse = " \u2192 ")
-  baseline_note <- if (any(grepl("(baseline", labels, fixed = TRUE))) {
-    " Identity serves as the baseline for contrasts."
-  } else ""
-  paste0("Policies examined (ordered as supplied): ", ordered, ".", baseline_note)
+  if (!length(entries)) return(NULL)
+  paste0("Censoring burden (zeros across person-time): ", paste(entries, collapse = "; "), ".")
 }
-# This file adds high-level wrappers; provide a local `%||%` helper
-`%||%` <- function(x, y) if (!is.null(x)) x else y
 #' Assemble a full LMTP positivity report (table, diagnostics, text, plot, methods)

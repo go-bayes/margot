@@ -57,7 +57,8 @@ margot_positivity_report(
 }
 \value{
 A named list containing the summary table, diagnostics list, optional plot,
-structured narrative, methods paragraph, relationship summary, and metadata describing the request.
+structured narrative, methods paragraph, per-wave summary table,
+and metadata (including a censoring summary) describing the request.
 }
 \description{
 Bundles the LMTP positivity summary table, density-ratio diagnostics,

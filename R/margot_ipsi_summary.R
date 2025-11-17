@@ -370,33 +370,35 @@ margot_positivity_summary <- function(x,
 
     Shift <- vapply(out$shift_clean, pretty_shift, character(1))
     k <- out$prod_log10_threshold[1]
-    # Build a friendlier column label for product threshold
-    prod_label <- if (is.finite(k)) {
+    # Build human-readable description
+    prod_label_print <- "Prod < 10^k"
+    if (is.finite(k)) {
       if (abs(k + 1) < 1e-8) {
-        "Prod<10%"
+        prod_label_print <- "Prod < 10%"
       } else if (abs(k + 2) < 1e-8) {
-        "Prod<1%"
+        prod_label_print <- "Prod < 1%"
       } else {
-        "Prod<10^k (%)"
+        prod_label_print <- paste0("Prod < 10^{", k, "}")
       }
-    } else {
-      "Prod (threshold)"
     }
+
+    zero_attr <- setNames(out$prop_zero_prod_pct, out$shift_clean)
 
     compact_df <- data.frame(
       Shift = Shift,
       Verdict = out$verdict,
       Prod = out$prod_frac_below_pct,
-      `Zeros (%)` = out$prop_zero_prod_pct,
-      `ESS+/N_pt` = out$ess_pos_frac_pt,
+      ESS_per_Npt = out$ess_pos_frac_pt,
       p_hat = out$p_hat_overall,
       Delta_p = out$dp_hat_overall,
       stringsAsFactors = FALSE
     )
     if (!is.null(att_ci_str)) compact_df$`ATT [CI]` <- att_ci_str
 
-    # Rename product column to friendly label
-    names(compact_df)[names(compact_df) == "Prod"] <- prod_label
+    # Rename columns to friendly labels
+    names(compact_df)[names(compact_df) == "Prod"] <- prod_label_print
+    ess_label_print <- "ESS per N%"
+    names(compact_df)[names(compact_df) == "ESS_per_Npt"] <- ess_label_print
 
     # Optionally drop policy-rate columns when not requested or all NA
     if (!isTRUE(include_policy_rates) || (all(is.na(compact_df$p_hat)) && all(is.na(compact_df$Delta_p)))) {
@@ -410,15 +412,17 @@ margot_positivity_summary <- function(x,
       waves_txt <- if (is.null(waves)) "all available waves" else paste0("waves ", paste(waves, collapse = ", "))
       expl <- paste(
         "Notes:",
-        paste0("- Censoring handled via IPCW; 'Zeros (%)' quantifies censoring burden across person‑time."),
-        paste0("- '", prod_label, "' = % uncensored rows with log10(product of ratios across ", waves_txt, ") below k (", thr_txt, ")."),
-        "- 'ESS+/N_pt' = effective sample size relative to person-time among uncensored rows.",
+        "- Censoring handled via IPCW; zeros are summarised once in the accompanying text.",
+        paste0("- '", prod_label_print, "' = % uncensored rows with log10(product of ratios across ", waves_txt, ") below k (", thr_txt, ")."),
+        "- '", ess_label_print, "' = effective sample size relative to person-time among uncensored rows.",
         if (isTRUE(include_policy_rates)) "- 'p_hat' = policy-implied Pr(A_t=1) (uncensored); 'Delta_p' = difference vs null." else NULL,
         "- 'ATT [CI]' = average treatment effect with 95% CI.",
         sep = "\n"
       )
       attr(compact_df, "explanation") <- expl
     }
+
+    attr(compact_df, "prop_zero_pct") <- zero_attr
 
     out <- compact_df
   }

@@ -98,6 +98,9 @@ margot_plot_lmtp_overlap_grid <- function(x,
   if (!is.null(color_by_wave)) {
     color_by <- if (isTRUE(color_by_wave)) "wave" else "constant"
   }
+  if (is.null(annotate_shift_size)) annotate_shift_size <- text_size
+  if (is.null(annotate_wave_size)) annotate_wave_size <- text_size + 5
+  if (is.null(annotate_zero_size)) annotate_zero_size <- text_size
   ol <- margot_lmtp_overlap(
     x,
     outcomes = outcome,

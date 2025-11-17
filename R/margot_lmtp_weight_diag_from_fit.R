@@ -209,11 +209,23 @@ margot_lmtp_weight_diag_from_fit <- function(fit,
       xt_tr <- r_trim[, t]
       wt <- w_raw[, t]
       wt_tr <- w_trim[, t]
+      mask_col <- mask[, t]
+      w_col <- as.numeric(r_raw[, t])
+      mask_finite <- is.finite(w_col)
+      n_total <- sum(mask_finite)
+      w_pos_vec <- w_col[mask_col & mask_finite]
+      n_pos <- length(w_pos_vec)
+      ess_pos <- if (n_pos > 0) ess(w_pos_vec) else NA_real_
+      ess_pos_frac <- if (n_pos > 0 && is.finite(ess_pos)) ess_pos / n_pos else NA_real_
+      ess_pos_frac_pt <- if (n_total > 0 && is.finite(ess_pos)) ess_pos / n_total else NA_real_
       fracs <- vapply(thresholds, function(a) mean(xt > a, na.rm = TRUE), numeric(1))
       data.frame(
         wave = t,
-        n_obs = sum(mask[, t], na.rm = TRUE),
-        prop_censored = mean(!mask[, t], na.rm = TRUE),
+        n_obs = sum(mask_col, na.rm = TRUE),
+        prop_censored = mean(!mask_col, na.rm = TRUE),
+        ess_pos = ess_pos,
+        ess_pos_frac = ess_pos_frac,
+        ess_pos_frac_pt = ess_pos_frac_pt,
         r_q50  = stats::quantile(xt,    probs = q_probs[1], na.rm = TRUE, names = FALSE),
         r_q90  = stats::quantile(xt,    probs = q_probs[2], na.rm = TRUE, names = FALSE),
         r_q95  = stats::quantile(xt,    probs = q_probs[3], na.rm = TRUE, names = FALSE),

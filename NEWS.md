@@ -1,3 +1,14 @@
+# [2025-11-11] margot 1.0.280
+
+### Added
+- `margot_positivity_report()` now returns `wave_summary_table` (shift × wave ESS per N% grid mirroring the overlap plot) and `censoring_summary`, so Quarto sections can drop both numerical grids and a single sentence about zeros without recomputing diagnostics.
+- `margot_lmtp_weight_diag_from_fit()` records per-wave ESS metrics (`ess_pos`, `ESS+/N+`, `ESS+/N_pt`) so downstream summaries inherit the same values used in the narrative.
+
+### Changed
+- Default wave-title text in `margot_plot_lmtp_overlap_grid()` is now `text_size + 5`, keeping column headers legible when shift annotations are enlarged.
+- Compact positivity tables use plain-language headers (`Prod < 10%`, `ESS per N%`) and reserve censoring information for the new `censoring_summary`.
+- The new wave summary table labels its columns as `ESS per N% : <wave>` to clarify what each cell contains.
+
 # [2025-11-10] margot 1.0.274
 
 ### Added
