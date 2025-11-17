@@ -1,4 +1,4 @@
-#' Tidy per-shift LMTP positivity summary (IPSI-friendly)
+#' Tidy per-shift LMTP positivity summary
 #'
 #' Builds a single, tidy table per shift with practical-positivity diagnostics and
 #' optional effect columns (ATT, CI, E-value) when supplied. Designed to compare
@@ -20,7 +20,8 @@
 #'   models may include `$exposure_by_wave` to enable policy-rate summaries.
 #' @param outcome Character outcome name (must exist under `x$models`).
 #' @param shifts Character vector of shifts to include (full names or cleaned suffixes).
-#'   If NULL, includes all available for the outcome.
+#'   If NULL, includes all available for the outcome. When supplied, the output
+#'   preserves the order provided here.
 #' @param waves Optional integer vector of waves to include; defaults to all.
 #' @param test_thresholds Named list controlling tests. Recognised names:
 #'   - `prod_log10` (default -1) threshold on log10(product of ratios) for uncensored rows.
@@ -35,14 +36,14 @@
 #' @param digits Integer; rounding for numeric outputs.
 #'
 #' @return A tibble/data.frame with one row per shift containing: `outcome`, `shift_full`,
-#'   `shift_clean`, optional `delta` (parsed from IPSI names), product-of-r metrics, verdict,
+#'   `shift_clean`, product-of-r metrics, verdict,
 #'   ESS metrics, optional policy rates (per-wave `p_hat_wave_k` and `p_hat_overall`), optional
 #'   effect columns if provided.
 #'
 #' @examples
 #' \dontrun{
 #' # Given an LMTP run with IPSI shifts
-#' tbl <- margot_ipsi_summary(
+#' tbl <- margot_positivity_summary(
 #'   x = fit_ipsi,
 #'   outcome = "t5_meaning_purpose_z",
 #'   shifts = c("null", "ipsi_02", "ipsi_05", "ipsi_10"),
@@ -52,7 +53,7 @@
 #' )
 #'
 #' # Compact table for reporting (kable-friendly headers)
-#' tbl_compact <- margot_ipsi_summary(
+#' tbl_compact <- margot_positivity_summary(
 #'   x = fit_ipsi,
 #'   outcome = "t5_meaning_purpose_z",
 #'   shifts = c("null", "ipsi_02", "ipsi_05", "ipsi_10"),
@@ -70,19 +71,19 @@
 #' }
 #'
 #' @export
-margot_ipsi_summary <- function(x,
-                                outcome,
-                                shifts = NULL,
-                                waves = NULL,
-                                test_thresholds = list(prod_log10 = -1,
-                                                       prod_frac_warn = 0.10,
-                                                       near_zero_median = 1e-3,
-                                                       near_zero_cv = 0.05),
-                                include_policy_rates = TRUE,
-                                effect_table = NULL,
-                                digits = 3,
-                                compact = TRUE,
-                                include_explanation = TRUE) {
+margot_positivity_summary <- function(x,
+                                      outcome,
+                                      shifts = NULL,
+                                      waves = NULL,
+                                      test_thresholds = list(prod_log10 = -1,
+                                                             prod_frac_warn = 0.10,
+                                                             near_zero_median = 1e-3,
+                                                             near_zero_cv = 0.05),
+                                      include_policy_rates = TRUE,
+                                      effect_table = NULL,
+                                      digits = 3,
+                                      compact = TRUE,
+                                      include_explanation = TRUE) {
   stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
   if (!is.null(waves)) stopifnot(is.numeric(waves))
@@ -111,7 +112,26 @@ margot_ipsi_summary <- function(x,
   }
   all_full  <- names(out_models)
   all_clean <- vapply(all_full, clean_shift, character(1))
-  sel_idx <- if (is.null(shifts)) seq_along(all_full) else which(all_full %in% shifts | all_clean %in% shifts)
+  if (is.null(shifts)) {
+    sel_idx <- seq_along(all_full)
+  } else {
+    sel_idx <- integer(0)
+    missing <- character(0)
+    for (sh in shifts) {
+      hit <- which(all_full == sh | all_clean == sh)
+      if (!length(hit)) {
+        missing <- c(missing, sh)
+      } else {
+        sel_idx <- c(sel_idx, hit[1])
+      }
+    }
+    if (length(missing)) {
+      stop(
+        "Requested shifts not found for outcome=", outcome, ": ",
+        paste(unique(missing), collapse = ", ")
+      )
+    }
+  }
   if (!length(sel_idx)) stop("Requested shifts not found for outcome=", outcome)
 
   # thresholds
@@ -257,17 +277,10 @@ margot_ipsi_summary <- function(x,
       }
     }
 
-    delta <- NA_real_
-    if (grepl("^ipsi", sh_clean, ignore.case = TRUE)) {
-      raw <- sub("^ipsi_?", "", tolower(sh_clean)); raw <- gsub("[^0-9\\.]", "", raw)
-      delta <- suppressWarnings(as.numeric(raw))
-    }
-
     rows[[k]] <- c(list(
       outcome = outcome,
       shift_full = sh_full,
       shift_clean = sh_clean,
-      delta = delta,
       prod_log10_threshold = thr$prod_log10,
       prod_frac_below = frac_below,
       prod_frac_below_pct = if (is.finite(frac_below)) 100*frac_below else NA_real_,
@@ -310,7 +323,7 @@ margot_ipsi_summary <- function(x,
         if ("97.5 %" %in% names(ef2)) names(ef2)[names(ef2) == "97.5 %"] <- "ci_high"
         if ("e-value" %in% names(ef2)) names(ef2)[names(ef2) == "e-value"] <- "e_value"
         # merge
-        out <- merge(out, ef2, by = c("outcome","shift_clean"), all.x = TRUE)
+        out <- merge(out, ef2, by = c("outcome","shift_clean"), all.x = TRUE, sort = FALSE)
       }
     }
   }
@@ -370,13 +383,8 @@ margot_ipsi_summary <- function(x,
       "Prod (threshold)"
     }
 
-    sel <- c("delta","verdict","prod_frac_below_pct","prop_zero_prod_pct",
-             "ess_pos_frac_pt","p_hat_overall","dp_hat_overall",
-             intersect(c("att"), names(out)))
-    keep <- intersect(sel, names(out))
     compact_df <- data.frame(
       Shift = Shift,
-      Delta = out$delta,
       Verdict = out$verdict,
       Prod = out$prod_frac_below_pct,
       `Zeros (%)` = out$prop_zero_prod_pct,
@@ -386,7 +394,6 @@ margot_ipsi_summary <- function(x,
       stringsAsFactors = FALSE
     )
     if (!is.null(att_ci_str)) compact_df$`ATT [CI]` <- att_ci_str
-    if ("e_value" %in% names(out)) compact_df$E_val <- out$e_value
 
     # Rename product column to friendly label
     names(compact_df)[names(compact_df) == "Prod"] <- prod_label
@@ -407,7 +414,7 @@ margot_ipsi_summary <- function(x,
         paste0("- '", prod_label, "' = % uncensored rows with log10(product of ratios across ", waves_txt, ") below k (", thr_txt, ")."),
         "- 'ESS+/N_pt' = effective sample size relative to person-time among uncensored rows.",
         if (isTRUE(include_policy_rates)) "- 'p_hat' = policy-implied Pr(A_t=1) (uncensored); 'Delta_p' = difference vs null." else NULL,
-        "- 'ATT [CI]' = average treatment effect with 95% CI; E_val is the E-value.",
+        "- 'ATT [CI]' = average treatment effect with 95% CI.",
         sep = "\n"
       )
       attr(compact_df, "explanation") <- expl
@@ -417,4 +424,11 @@ margot_ipsi_summary <- function(x,
   }
 
   if (isTRUE(requireNamespace("tibble", quietly = TRUE))) tibble::as_tibble(out) else out
+}
+
+#' @rdname margot_positivity_summary
+#' @export
+margot_ipsi_summary <- function(...) {
+  .Deprecated("margot_positivity_summary", package = "margot")
+  margot_positivity_summary(...)
 }

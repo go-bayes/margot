@@ -213,6 +213,7 @@ margot_lmtp_overlap <- function(x,
         # pattern-based fallback for common shift types
         shift_lower <- tolower(shift_name)
         if (grepl("null", shift_lower)) return("#7f7f7f")  # grey for null
+        if (grepl("zero", shift_lower)) return("#2c7fb8")  # default blue for zero/hold treatments
         if (grepl("up", shift_lower)) return("#d95f0e")    # orange for up
         if (grepl("down", shift_lower)) return("#2c7fb8")  # blue for down
         # final fallback: cycle through palette

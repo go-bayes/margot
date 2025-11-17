@@ -8,8 +8,10 @@ margot_lmtp_weight_diag_from_fit(
   fit,
   outcome = NULL,
   shift = NULL,
+  shifts = NULL,
   trim_right = 0.999,
-  thresholds = c(5, 10, 25, 50, 100)
+  thresholds = c(5, 10, 25, 50, 100),
+  label_mapping = NULL
 )
 }
 \arguments{
@@ -20,18 +22,29 @@ a full `margot_lmtp()` result.}
 `margot_lmtp()` run).}
 
 \item{shift}{Optional shift name (clean suffix or full). Required when `fit`
-is a full `margot_lmtp()` run with multiple shifts.}
+is a full `margot_lmtp()` run with multiple shifts. Ignored when `shifts`
+is supplied.}
+
+\item{shifts}{Optional character vector of shifts to summarise in a single
+call. When supplied, diagnostics are returned in the same order. Defaults
+to all available shifts only when a single shift exists in the fit.}
 
 \item{trim_right}{Numeric in `(0, 1]`; optional right-tail winsorisation level
 applied per wave before forming cumulative products (default `0.999`).}
 
 \item{thresholds}{Numeric vector of ratio thresholds used when computing tail
 mass (`Pr(r_t > a)`).}
+
+\item{label_mapping}{Optional named list for relabelling wave indices (e.g.,
+via `label_mapping$wave_labels` or `label_mapping$wave_1 = "Baseline"`).
+Mirrors the conventions used by `margot_interpret_lmtp_positivity()`.}
 }
 \value{
-A list with `wave_table` (per-wave diagnostics), `mask_from_fit`
-  (logical observation mask), `density_ratios`, and cumulative weights
-  (`w_cum_raw`, `w_cum_trim`).
+For a single shift, a list with `wave_table` (per-wave diagnostics),
+  `mask_from_fit` (logical observation mask), `density_ratios`, cumulative
+  weights (`w_cum_raw`, `w_cum_trim`), and shift metadata. When multiple
+  shifts are requested, a named list of such objects (one per shift) is
+  returned.
 }
 \description{
 Constructs per-wave density-ratio summaries and cumulative effective sample

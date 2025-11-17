@@ -40,7 +40,10 @@
 #'   each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
 #'   `"global"` harmonizes all plots. Can also be a named vector with custom values.
 #' @param text_size Numeric size for facet annotations (wave/shift/zeros labels).
+#'   Defaults to 3.
 #' @param annotate_wave_size Numeric; overrides the size of wave titles across columns.
+#'   When `NULL`, inherits the default determined inside
+#'   [margot_lmtp_overlap_plot_grid()].
 #' @param annotate_shift_size Numeric; controls the size of shift annotations inside each panel.
 #' @param annotate_zero_size Numeric; controls the size of zero-percentage annotations.
 #' @return A patchwork grid object.
@@ -95,9 +98,6 @@ margot_plot_lmtp_overlap_grid <- function(x,
   if (!is.null(color_by_wave)) {
     color_by <- if (isTRUE(color_by_wave)) "wave" else "constant"
   }
-  if (is.null(annotate_wave_size)) annotate_wave_size <- text_size
-  if (is.null(annotate_shift_size)) annotate_shift_size <- text_size
-  if (is.null(annotate_zero_size)) annotate_zero_size <- text_size
   ol <- margot_lmtp_overlap(
     x,
     outcomes = outcome,

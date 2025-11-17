@@ -21,10 +21,10 @@ margot_lmtp_overlap_plot_grid(
   ymax_harmonize = "none",
   xlim_harmonize = "none",
   headroom = 0.12,
-  text_size = text_size,
-  annotate_wave_size = text_size,
-  annotate_shift_size = text_size,
-  annotate_zero_size = text_size
+  text_size = 3,
+  annotate_wave_size = NULL,
+  annotate_shift_size = NULL,
+  annotate_zero_size = NULL
 )
 }
 \arguments{
@@ -66,9 +66,11 @@ each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmon
 each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
 `"global"` harmonizes all plots. Can also be a named vector with custom values.}
 
-\item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).}
+\item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).
+Defaults to 3.}
 
-\item{annotate_wave_size}{Numeric; overrides the size of the column wave titles when `drop_titles = TRUE`.}
+\item{annotate_wave_size}{Numeric; overrides the size of the column wave titles when `drop_titles = TRUE`.
+When `NULL`, defaults to a slightly larger value than `text_size`.}
 
 \item{annotate_shift_size}{Numeric; controls the size of shift annotations inside each panel.}
 

@@ -190,6 +190,8 @@ component_titles <- function(component) {
 #'   used by the LMTP fits).
 #' @param remove_waves Optional integer vector of waves to drop after
 #'   subsetting.
+#' @param title Optional plot title. Defaults to the pretty outcome label of the
+#'   requested contrast when `NULL`.
 #' @param component Which nuisance models to include: `"both"` (default),
 #'   `"outcome"` (only `m`), or `"treatment"` (only `r`).
 #' @return A `ggplot2` object.
@@ -200,6 +202,7 @@ margot_plot_lmtp_learners <- function(x,
                                       label_mapping = NULL,
                                       waves = NULL,
                                       remove_waves = NULL,
+                                      title = NULL,
                                       component = c("both", "outcome", "treatment")) {
   component <- match.arg(component)
   data <- summarise_lmtp_learners(x, outcome, shifts, label_mapping, waves, remove_waves)
@@ -229,6 +232,12 @@ margot_plot_lmtp_learners <- function(x,
     pmax(pmin(x, range[2]), range[1])
   }
 
+  if (is.null(title)) {
+    title <- data$outcome_label[1]
+  } else {
+    title <- as.character(title)[1]
+  }
+
   ggplot2::ggplot(data, ggplot2::aes(x = wave_label, y = learner_label, fill = weight_mean)) +
     ggplot2::geom_tile(color = "white") +
     ggplot2::geom_text(ggplot2::aes(label = sprintf("%.0f%%", 100 * weight_mean), colour = text_colour), size = 3) +
@@ -240,7 +249,7 @@ margot_plot_lmtp_learners <- function(x,
       limits = c(0, 1),
       oob = clamp01
     ) +
-    ggplot2::labs(x = "Wave", y = "Learner", title = data$outcome_label[1]) +
+    ggplot2::labs(x = "Wave", y = "Learner", title = title) +
     ggplot2::facet_grid(component_label ~ shift_label, scales = "free_y") +
     ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(
@@ -363,4 +372,3 @@ margot_interpret_lmtp_learners <- function(x,
     )
   }
 }
-

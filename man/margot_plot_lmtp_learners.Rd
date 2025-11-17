@@ -11,6 +11,7 @@ margot_plot_lmtp_learners(
   label_mapping = NULL,
   waves = NULL,
   remove_waves = NULL,
+  title = NULL,
   component = c("both", "outcome", "treatment")
 )
 }
@@ -32,6 +33,9 @@ used by the LMTP fits).}
 
 \item{remove_waves}{Optional integer vector of waves to drop after
 subsetting.}
+
+\item{title}{Optional plot title. Defaults to the pretty outcome label of the
+requested contrast when `NULL`.}
 
 \item{component}{Which nuisance models to include: `"both"` (default),
 `"outcome"` (only `m`), or `"treatment"` (only `r`).}

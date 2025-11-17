@@ -83,9 +83,11 @@ each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmon
 
 \item{fill_palette}{Optional vector of colours (named or unnamed) used when colouring histograms.}
 
-\item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).}
+\item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).
+Defaults to 3.}
 
-\item{annotate_wave_size}{Numeric; overrides the size of wave titles across columns.}
+\item{annotate_wave_size}{Numeric; overrides the size of wave titles across columns.
+When `NULL`, the downstream grid helper selects a size relative to `text_size`.}
 
 \item{annotate_shift_size}{Numeric; controls the size of shift annotations inside each panel.}
 

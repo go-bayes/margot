@@ -33,7 +33,10 @@
 #'   each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
 #'   `"global"` harmonizes all plots. Can also be a named vector with custom values.
 #' @param text_size Numeric size for facet annotations (wave/shift/zeros labels).
-#' @param annotate_wave_size Numeric; overrides the size of the column wave titles when `drop_titles = TRUE`.
+#'   Defaults to 3.
+#' @param annotate_wave_size Numeric; overrides the size of the column wave
+#'   titles when `drop_titles = TRUE`. When `NULL`, defaults to a slightly larger
+#'   value than `text_size` for readability.
 #' @param annotate_shift_size Numeric; controls the size of shift annotations inside each panel.
 #' @param annotate_zero_size Numeric; controls the size of zero-percentage annotations.
 #'
@@ -56,10 +59,10 @@ margot_lmtp_overlap_plot_grid <- function(x,
                                           ymax_harmonize = "none",
                                           xlim_harmonize = "none",
                                           headroom = 0.12,
-                                          text_size = text_size,
-                                          annotate_wave_size = text_size,
-                                          annotate_shift_size = text_size,
-                                          annotate_zero_size = text_size) {
+                                          text_size = 3,
+                                          annotate_wave_size = NULL,
+                                          annotate_shift_size = NULL,
+                                          annotate_zero_size = NULL) {
 
   stopifnot(is.logical(annotate_zeros), length(annotate_zeros) == 1L)
   annotate_graph_missing <- missing(annotate_graph)
@@ -76,7 +79,32 @@ margot_lmtp_overlap_plot_grid <- function(x,
     }
   }
   layout <- "shifts_by_waves"
-  # keep legacy defaults (sizes already passed in via defaults above)
+  # default sizes for annotations
+  if (is.null(text_size) || !is.numeric(text_size) || !length(text_size)) {
+    text_size <- 3
+  }
+  text_size <- as.numeric(text_size)[1]
+  if (!is.finite(text_size)) text_size <- 3
+
+  if (is.null(annotate_shift_size) || !length(annotate_shift_size)) {
+    annotate_shift_size <- text_size
+  }
+  annotate_shift_size <- as.numeric(annotate_shift_size)[1]
+  if (!is.finite(annotate_shift_size)) annotate_shift_size <- text_size
+
+  if (is.null(annotate_wave_size) || !length(annotate_wave_size)) {
+    annotate_wave_size <- max(text_size, annotate_shift_size)
+  }
+  annotate_wave_size <- as.numeric(annotate_wave_size)[1]
+  if (!is.finite(annotate_wave_size)) {
+    annotate_wave_size <- max(text_size, annotate_shift_size)
+  }
+
+  if (is.null(annotate_zero_size) || !length(annotate_zero_size)) {
+    annotate_zero_size <- text_size
+  }
+  annotate_zero_size <- as.numeric(annotate_zero_size)[1]
+  if (!is.finite(annotate_zero_size)) annotate_zero_size <- text_size
 
   # validate ymax_harmonize: either a character option or a named/unnamed vector
   if (is.null(ymax_harmonize)) ymax_harmonize <- "none"
