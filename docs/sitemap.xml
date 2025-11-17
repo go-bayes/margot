@@ -199,7 +199,6 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_stability_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_invert_measure.html</loc></url>
-<url><loc>https://go-bayes.github.io/margot/reference/margot_ipsi_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_combine_and_contrast.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_evalue.html</loc></url>
@@ -281,6 +280,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_value_explainer.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_workflow.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_positivity_panel.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_positivity_report.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_positivity_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_positivity_tails_panel.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_binary_vars.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_process_longitudinal_data.html</loc></url>

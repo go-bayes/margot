@@ -87,7 +87,8 @@ each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmon
 Defaults to 3.}
 
 \item{annotate_wave_size}{Numeric; overrides the size of wave titles across columns.
-When `NULL`, the downstream grid helper selects a size relative to `text_size`.}
+When `NULL`, inherits the default determined inside
+[margot_lmtp_overlap_plot_grid()].}
 
 \item{annotate_shift_size}{Numeric; controls the size of shift annotations inside each panel.}
 

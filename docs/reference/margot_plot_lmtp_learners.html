@@ -13,7 +13,7 @@ cross-fitting folds."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.274</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.280</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,6 +55,7 @@ cross-fitting folds.</p>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  remove_waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  component <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"both"</span>, <span class="st">"outcome"</span>, <span class="st">"treatment"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -91,6 +92,11 @@ used by the LMTP fits).</p></dd>
 <dt id="arg-remove-waves">remove_waves<a class="anchor" aria-label="anchor" href="#arg-remove-waves"></a></dt>
 <dd><p>Optional integer vector of waves to drop after
 subsetting.</p></dd>
+
+
+<dt id="arg-title">title<a class="anchor" aria-label="anchor" href="#arg-title"></a></dt>
+<dd><p>Optional plot title. Defaults to the pretty outcome label of the
+requested contrast when `NULL`.</p></dd>
 
 
 <dt id="arg-component">component<a class="anchor" aria-label="anchor" href="#arg-component"></a></dt>

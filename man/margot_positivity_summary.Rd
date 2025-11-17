@@ -51,8 +51,9 @@ cleaned), and any of `att`, `ci_low`, `ci_high`, `e_value`, `e_value_bound`.}
 }
 \value{
 A tibble/data.frame with one row per shift containing: `outcome`, `shift_full`,
-  `shift_clean`, product-of-r metrics, verdict, ESS metrics, optional policy rates
-  (per-wave `p_hat_wave_k` and `p_hat_overall`), optional effect columns if provided.
+  `shift_clean`, product-of-r metrics, verdict,
+  ESS metrics, optional policy rates (per-wave `p_hat_wave_k` and `p_hat_overall`), optional
+  effect columns if provided.
 }
 \description{
 Builds a single, tidy table per shift with practical-positivity diagnostics and
@@ -74,7 +75,7 @@ Metrics include:
 \examples{
 \dontrun{
 # Given an LMTP run with IPSI shifts
-tbl <- margot_ipsi_summary(
+tbl <- margot_positivity_summary(
   x = fit_ipsi,
   outcome = "t5_meaning_purpose_z",
   shifts = c("null", "ipsi_02", "ipsi_05", "ipsi_10"),
@@ -84,7 +85,7 @@ tbl <- margot_ipsi_summary(
 )
 
 # Compact table for reporting (kable-friendly headers)
-tbl_compact <- margot_ipsi_summary(
+tbl_compact <- margot_positivity_summary(
   x = fit_ipsi,
   outcome = "t5_meaning_purpose_z",
   shifts = c("null", "ipsi_02", "ipsi_05", "ipsi_10"),

@@ -11,7 +11,7 @@ harmonised or user-specified y-axis limits for histogram counts."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.274</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.280</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -163,11 +163,14 @@ each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmon
 
 
 <dt id="arg-text-size">text_size<a class="anchor" aria-label="anchor" href="#arg-text-size"></a></dt>
-<dd><p>Numeric size for facet annotations (wave/shift/zeros labels).</p></dd>
+<dd><p>Numeric size for facet annotations (wave/shift/zeros labels).
+Defaults to 3.</p></dd>
 
 
 <dt id="arg-annotate-wave-size">annotate_wave_size<a class="anchor" aria-label="anchor" href="#arg-annotate-wave-size"></a></dt>
-<dd><p>Numeric; overrides the size of wave titles across columns.</p></dd>
+<dd><p>Numeric; overrides the size of wave titles across columns.
+When `NULL`, inherits the default determined inside
+[margot_lmtp_overlap_plot_grid()].</p></dd>
 
 
 <dt id="arg-annotate-shift-size">annotate_shift_size<a class="anchor" aria-label="anchor" href="#arg-annotate-shift-size"></a></dt>

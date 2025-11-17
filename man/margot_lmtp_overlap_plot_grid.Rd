@@ -69,8 +69,9 @@ each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmon
 \item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).
 Defaults to 3.}
 
-\item{annotate_wave_size}{Numeric; overrides the size of the column wave titles when `drop_titles = TRUE`.
-When `NULL`, defaults to a slightly larger value than `text_size`.}
+\item{annotate_wave_size}{Numeric; overrides the size of the column wave
+titles when `drop_titles = TRUE`. When `NULL`, defaults to a slightly larger
+value than `text_size` for readability.}
 
 \item{annotate_shift_size}{Numeric; controls the size of shift annotations inside each panel.}
 
