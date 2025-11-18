@@ -68,6 +68,29 @@ margot_policy_workflow <- function(stability,
   se_method <- match.arg(se_method)
   audience <- match.arg(audience)
   signal_score <- match.arg(signal_score)
+  dots <- list(...)
+
+  model_names_override <- NULL
+  if ("model_names" %in% names(dots)) {
+    model_names_override <- dots[["model_names"]]
+    dots[["model_names"]] <- NULL
+  }
+
+  split_compact <- TRUE
+  if ("split_compact" %in% names(dots)) {
+    split_compact <- dots[["split_compact"]]
+    dots[["split_compact"]] <- NULL
+  }
+  split_drop_zero <- TRUE
+  if ("split_drop_zero" %in% names(dots)) {
+    split_drop_zero <- dots[["split_drop_zero"]]
+    dots[["split_drop_zero"]] <- NULL
+  }
+  split_top_only <- TRUE
+  if ("split_top_only" %in% names(dots)) {
+    split_top_only <- dots[["split_top_only"]]
+    dots[["split_top_only"]] <- NULL
+  }
 
   # Configure acronym expansion scope
   old_opt <- options(margot.expand_acronyms = isTRUE(expand_acronyms))
@@ -94,32 +117,39 @@ margot_policy_workflow <- function(stability,
     auto_recommend = TRUE,
     dominance_threshold = dominance_threshold,
     strict_branch = strict_branch,
-    split_compact = TRUE,
-    split_drop_zero = TRUE,
-    split_top_only = TRUE,
+    model_names = model_names_override,
+    split_compact = split_compact,
+    split_drop_zero = split_drop_zero,
+    split_top_only = split_top_only,
     verbose = TRUE,
     min_gain_for_depth_switch = eff_min_gain
   )
 
   # 2) Mixed-depth summary using chosen depths
-  summary <- margot_policy_summary_report(
-    stability,
-    depths_by_model = best$depth_map,
-    auto_recommend = TRUE,
-    split_compact = TRUE,
-    split_drop_zero = TRUE,
-    split_top_only = TRUE,
-    se_method = se_method,
-    label_mapping = label_mapping,
-    original_df = original_df,
-    dominance_threshold = dominance_threshold,
-    strict_branch = strict_branch,
-    audience = audience,
-    show_neutral = show_neutral,
-    signal_score = signal_score,
-    signals_k = signals_k,
-    return_unit_masks = TRUE,
-    ...
+  summary <- do.call(
+    margot_policy_summary_report,
+    c(
+      list(
+        object = stability,
+        model_names = model_names_override,
+        depths_by_model = best$depth_map,
+        auto_recommend = TRUE,
+        split_compact = split_compact,
+        split_drop_zero = split_drop_zero,
+        split_top_only = split_top_only,
+        se_method = se_method,
+        label_mapping = label_mapping,
+        original_df = original_df,
+        dominance_threshold = dominance_threshold,
+        strict_branch = strict_branch,
+        audience = audience,
+        show_neutral = show_neutral,
+        signal_score = signal_score,
+        signals_k = signals_k,
+        return_unit_masks = TRUE
+      ),
+      dots
+    )
   )
 
   # 3) Optional interpretations on selected depths
@@ -156,8 +186,8 @@ margot_policy_workflow <- function(stability,
     restricted_scope_2 = "leaf",
     show_neutral = show_neutral,
     expand_acronyms = isTRUE(expand_acronyms),
-    signal_score = list(...)[["signal_score"]] %||% tryCatch(match.arg(signal_score), error = function(e) NULL),
-    signals_k = list(...)[["signals_k"]] %||% tryCatch(signals_k, error = function(e) NULL)
+    signal_score = dots[["signal_score"]] %||% signal_score,
+    signals_k = dots[["signals_k"]] %||% signals_k
   )
   method_explanation <- tryCatch(
     margot_build_method_explanation(stability, best, summary, method_context, citations = TRUE),

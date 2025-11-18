@@ -1,3 +1,9 @@
+# [2025-11-12] margot 1.0.281
+
+### Changed
+- `margot_policy_workflow()` now honours caller overrides for `split_compact`, `split_drop_zero`, and `split_top_only` across both the depth comparison and mixed-depth summary, preventing duplicate-argument errors and letting users surface full depth-2 leaf breakdowns when desired.
+- `margot_policy_workflow()` accepts a `model_names` vector that propagates through depth selection, summary, and recommendations so workshop pipelines can exclude specific outcomes (e.g., drop a homogeneous volunteering model) without re-running upstream objects; the method context now reflects the final signalling options after overrides.
+
 # [2025-11-11] margot 1.0.280
 
 ### Added

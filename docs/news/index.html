@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.280</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.281</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,16 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.281" id="id_2025-11-12-margot-10281">[2025-11-12] margot 1.0.281<a class="anchor" aria-label="anchor" href="#id_2025-11-12-margot-10281"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-281">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-281"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> now honours caller overrides for <code>split_compact</code>, <code>split_drop_zero</code>, and <code>split_top_only</code> across both the depth comparison and mixed-depth summary, preventing duplicate-argument errors and letting users surface full depth-2 leaf breakdowns when desired.</li>
+<li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> accepts a <code>model_names</code> vector that propagates through depth selection, summary, and recommendations so workshop pipelines can exclude specific outcomes (e.g., drop a homogeneous volunteering model) without re-running upstream objects; the method context now reflects the final signalling options after overrides.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.280" id="id_2025-11-11-margot-10280">[2025-11-11] margot 1.0.280<a class="anchor" aria-label="anchor" href="#id_2025-11-11-margot-10280"></a></h2>
 <div class="section level4">
