@@ -83,8 +83,12 @@ coverage and stability). See the package NEWS for details.}
 \value{
 A list with components from depth selection (best), summary (summary), and
   optional interpretations (interpret). Includes `policy_brief_df` shortcut drawn from
-  `summary$group_table_df`. Also returns `method_explanation` (long/short/prereg) and
-  `summary$signals_df` when `signal_score != "none"`.
+  `summary$group_table_df`. Also returns `method_explanation` (long/short/prereg),
+  `depth_comparison_report` (a list with `text` and `data` showing both depth-1 and
+  depth-2 policy values for all outcomes with selection rationale),
+  `summary$signals_df` when `signal_score != "none"`, and top-level `report`,
+  `report_prose`, and `report_detail` for convenient access to narrative summaries
+  (bullets, prose, or detailed per-model interpretations respectively).
 }
 \description{
 Runs depth comparison, produces a mixed-depth policy summary report, and (optionally)

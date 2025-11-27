@@ -1,0 +1,133 @@
+# Compare Depth-1 vs Depth-2 Policy Summaries and Pick Best per Outcome
+
+Runs \[margot_policy_summary_report()\] twice (depth 1 and depth 2) with
+consistent evaluation settings, then produces a side-by-side comparison
+of policy values vs control-all and selects the preferred depth per
+outcome. By default, uses se_method = "plugin" and turns on
+\`auto_recommend\` to obtain numeric PV and CIs.
+
+## Usage
+
+``` r
+margot_policy_summary_compare_depths(
+  object,
+  model_names = NULL,
+  original_df = NULL,
+  se_method = c("plugin", "bootstrap"),
+  R = 499L,
+  seed = 42L,
+  label_mapping = NULL,
+  include_split_breakdown_1 = "branch",
+  include_split_breakdown_2 = "leaf",
+  auto_recommend = TRUE,
+  dominance_threshold = 0.6,
+  strict_branch = FALSE,
+  restricted_scope_1 = "branch",
+  restricted_scope_2 = "leaf",
+  split_compact = TRUE,
+  min_action_pct = 5,
+  split_drop_zero = TRUE,
+  split_top_only = FALSE,
+  verbose = TRUE,
+  min_gain_for_depth_switch = 0.005
+)
+```
+
+## Arguments
+
+- object:
+
+  A \`margot_stability_policy_tree\` object with consensus trees for
+  depth 1 and/or depth 2 (run with \`depth = "both"\` in
+  \`margot_policy_tree_stability()\`).
+
+- model_names:
+
+  Optional character vector of outcomes (with or without \`model\_\`).
+
+- original_df:
+
+  Optional original-scale data for scale annotations (passed through).
+
+- se_method:
+
+  Character; "plugin" (default) or "bootstrap"; passed to reporter.
+
+- R:
+
+  Integer; bootstrap replicates when \`se_method = "bootstrap"\`
+  (default 499).
+
+- seed:
+
+  Integer; RNG seed (default 42).
+
+- label_mapping:
+
+  Optional named list mapping outcome names to display labels.
+
+- include_split_breakdown_1:
+
+  Character; split view for depth 1 (default "branch").
+
+- include_split_breakdown_2:
+
+  Character; split view for depth 2 (default "leaf").
+
+- auto_recommend:
+
+  Logical; turn on automated restricted-policy recommendations (default
+  TRUE).
+
+- dominance_threshold:
+
+  Numeric; see \[margot_policy_summary_report()\].
+
+- strict_branch:
+
+  Logical; see \[margot_policy_summary_report()\].
+
+- restricted_scope_1:
+
+  Character; restricted scope for depth 1 (default "branch").
+
+- restricted_scope_2:
+
+  Character; restricted scope for depth 2 (default "leaf").
+
+- split_compact:
+
+  Logical; pass-through to \[margot_policy_summary_report()\]
+  controlling whether compact split tables are generated (default TRUE).
+
+- min_action_pct:
+
+  Numeric; minimum treated/control share ( action-specific uplifts in
+  compact tables (default 5). Lowering this can restore split rows that
+  would otherwise be suppressed.
+
+- split_drop_zero:
+
+  Logical; drop rows with zero contributions from compact tables
+  (default TRUE).
+
+- split_top_only:
+
+  Logical; keep only the top-contributing split per model when building
+  compact tables (default FALSE).
+
+- verbose:
+
+  Logical; print progress (default TRUE).
+
+## Value
+
+A list with: - \`depth_map\`: named integer vector indicating the
+preferred depth (1 or 2) per model. - \`depth_summary_df\`: tidy
+per-model summary (preferred depth, policy values, gain vs alternative,
+decision). - \`depth_table_df\` / \`depth_table_md\`: formatted
+comparison of depth-1 vs depth-2 policy values. -
+\`depth_takeaways_text\`: concise prose describing which outcomes favour
+depth-1 vs depth-2. - \`summary_text\`: markdown narrative combining
+depth takeaways with key recommendations. - \`recommendations_df\`:
+deployment recommendations with policy value details by depth.

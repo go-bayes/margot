@@ -1,0 +1,230 @@
+# Cross-Validation Test for Treatment Effect Heterogeneity
+
+Performs uncorrelated sequential cross-validation to test for treatment
+effect heterogeneity using the approach recommended by the grf package
+(Wager 2024). This method provides robust statistical testing that
+avoids overfitting by using sequential, non-overlapping training sets.
+
+## Usage
+
+``` r
+margot_rate_cv(
+  model_results,
+  num_folds = 5,
+  target = c("AUTOC", "QINI"),
+  model_names = NULL,
+  use_full_data = TRUE,
+  seed = 12345,
+  verbose = TRUE,
+  parallel = FALSE,
+  n_cores = future::availableCores() - 1,
+  future_globals_maxSize = 22,
+  alpha = 0.05,
+  adjust = "none",
+  label_mapping = NULL,
+  ...
+)
+```
+
+## Arguments
+
+- model_results:
+
+  Output from \`margot_causal_forest()\` or \`margot_flip_forests()\`
+
+- num_folds:
+
+  Integer. Number of cross-validation folds (default 5). Must be at
+  least 3.
+
+- target:
+
+  Character vector. RATE targets to test: "AUTOC", "QINI", or c("AUTOC",
+  "QINI") for both (default). When both are specified, results are
+  combined with adjusted p-values accounting for testing both metrics.
+
+- model_names:
+
+  Character vector. Specific models to test (default NULL tests all)
+
+- use_full_data:
+
+  Logical. If TRUE and data is available, refit forests on full data
+  rather than using the training split (default TRUE)
+
+- seed:
+
+  Integer or NULL. Random seed for reproducibility. If NULL, defaults to
+  12345
+
+- verbose:
+
+  Logical. Print progress messages (default TRUE)
+
+- parallel:
+
+  Logical. Use parallel processing for multiple models (default FALSE).
+  Note: Parallel processing requires the margot package to be installed
+  (not just loaded with devtools::load_all()). If the package is not
+  installed, the function will fall back to sequential processing with a
+  warning.
+
+- n_cores:
+
+  Integer. Number of cores for parallel processing when parallel = TRUE
+  (default all cores - 1)
+
+- future_globals_maxSize:
+
+  Numeric. Maximum allowed size for exporting globals to parallel
+  workers in GiB. Default is 22. Set to Inf to disable the limit.
+
+- alpha:
+
+  Numeric. Significance level for hypothesis tests (default 0.05). When
+  using Bonferroni correction, consider alpha = 0.2 due to its
+  conservative nature.
+
+- adjust:
+
+  Character. Multiple testing adjustment method. Only "bonferroni" or
+  "none" are valid for cross-validation due to the martingale
+  aggregation method. Default is "none". Other methods like BH/BY/FDR
+  are not statistically appropriate for CV aggregation.
+
+- label_mapping:
+
+  Optional named list for custom label mappings. Keys should be model
+  names (with or without "model\_" prefix), and values should be the
+  desired display labels.
+
+- ...:
+
+  Additional arguments passed to grf::causal_forest
+
+## Value
+
+A list containing:
+
+- cv_results:
+
+  Data frame with CV test results for each model
+
+- interpretation:
+
+  Character string interpreting the results
+
+- significant_models:
+
+  Character vector of models with significant heterogeneity
+
+- tables:
+
+  List of formatted tables similar to margot_rate() output (rate_autoc,
+  rate_qini)
+
+- method_details:
+
+  List with details about the CV procedure
+
+## Details
+
+The function implements the sequential cross-validation approach from
+Wager (2024) and Nie & Wager (2020). This method: - Splits data into K
+folds - Trains on folds 1 to k-1, tests on fold k - Aggregates
+t-statistics using the martingale property - Provides valid p-values for
+heterogeneity testing
+
+The null hypothesis is that there is no treatment effect heterogeneity
+(all individuals have the same treatment effect).
+
+\## Multiple Testing Correction
+
+Due to the martingale aggregation method used in CV, only Bonferroni
+correction or no correction are statistically valid. Methods like
+Benjamini-Hochberg (BH) or false discovery rate (FDR) control are not
+appropriate because they assume independent p-values, which is violated
+by the sequential CV structure.
+
+Bonferroni correction is very conservative, especially with noisy
+heterogeneous treatment effect models. We recommend using alpha = 0.2
+when applying Bonferroni correction to maintain reasonable statistical
+power.
+
+For memory efficiency with large model objects, the function
+pre-extracts only the necessary data for each model before parallel
+processing. However, parallel processing is currently experimental and
+disabled by default due to potential memory issues with large model
+objects. If you want to try parallel processing, set parallel = TRUE and
+consider increasing the future.globals.maxSize option with:
+options(future.globals.maxSize = 15 \* 1024^3) \# 15 GB
+
+## References
+
+Wager, S. (2024). Sequential validation for heterogeneous treatment
+effects. arXiv preprint arXiv:2401.06818.
+
+Nie, X., & Wager, S. (2021). Quasi-oracle estimation of heterogeneous
+treatment effects. Biometrika, 108(2), 299-319.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Run causal forest
+cf_results <- margot_causal_forest(
+  data = mydata,
+  outcome_vars = c("outcome1", "outcome2"),
+  covariates = covariates,
+  W = treatment,
+  save_data = TRUE # Important for CV
+)
+
+# Test for heterogeneity with cross-validation (both targets by default)
+cv_results <- margot_rate_cv(
+  model_results = cf_results,
+  num_folds = 5,
+  alpha = 0.2, # recommended with Bonferroni
+  adjust = "bonferroni"
+)
+
+# With custom labels
+label_mapping <- list(
+  "model_happiness" = "Happiness",
+  "model_depression" = "Depression"
+)
+cv_results <- margot_rate_cv(
+  model_results = cf_results,
+  label_mapping = label_mapping
+)
+
+# Test single target only
+cv_results_autoc <- margot_rate_cv(
+  model_results = cf_results,
+  target = "AUTOC"
+)
+
+# View results
+cat(cv_results$interpretation)
+
+# Access formatted tables (similar to margot_rate output)
+cv_results$tables$rate_autoc # AUTOC table
+cv_results$tables$rate_qini # QINI table
+
+# Get detailed interpretation with tables (similar to margot_interpret_rate)
+detailed_results <- margot_interpret_rate_cv(cv_results)
+cat(detailed_results$interpretation)
+
+# View individual target interpretations
+cat(detailed_results$autoc_results)
+cat(detailed_results$qini_results)
+
+# Comparison between AUTOC and QINI
+if (!is.null(detailed_results$comparison)) {
+  cat(detailed_results$comparison)
+}
+
+# Create visualization
+plot <- margot_plot_cv_results(cv_results)
+} # }
+```

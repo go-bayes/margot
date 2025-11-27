@@ -1,3 +1,56 @@
+# [2025-11-28] margot 1.0.286
+
+### Changed
+- `margot_build_method_explanation()`: Converted inline citations to Quarto format (`[@key]`) for proper bibliography generation when rendering in Quarto/R Markdown. Citations now reference BibTeX keys: `@athey2021`, `@grf2024`, `@policytree_package_2024`, `@meinshausen2010stability`, `@efron2012large`, `@tusher2001significance`, `@smyth2004linear`, `@gelman2006difference`.
+- Signal score methods text now includes clarification: "This descriptive ranking shows potentially actionable heterogeneity that warrants further investigation."
+- Replaced Unicode special characters (em-dash, multiplication sign) with ASCII equivalents for cross-platform compatibility in methods output.
+- Removed placeholder "Ehrlich et al., 2024" citation; policy value methods now correctly cite `@athey2021` and `@policytree_package_2024`.
+
+# [2025-11-28] margot 1.0.285
+
+### Changed
+- `margot_interpret_policy_batch()`: Replaced Unicode arrows with LaTeX (`$\rightarrow$`) in the mixed-depth summary header for proper rendering in Quarto/R Markdown.
+- `margot_interpret_policy_batch()`: Renamed return element from `report_full` to `report_detail` for consistency with other reporting functions.
+- `margot_policy_workflow()` now exposes `report_detail` at the top level (alongside `report` and `report_prose`) for convenient access to detailed per-model interpretations.
+- Policy value explanation in interpret batch uses consistent terminology with the policy explainer: "*Policy value*" and "*uplift*" are italicised as defined terms.
+
+# [2025-11-28] margot 1.0.284
+
+### Added
+- `margot_policy_summary_report()` gains a new `report_format` parameter with options `"bullets"` (default) and `"prose"`. The prose format generates paragraphs suitable for direct inclusion in scientific reports, more or less.
+- New `report_prose` element in the return list always contains the prose-formatted report, regardless of the `report_format` setting, so users can access both formats.
+- `margot_policy_workflow()` now exposes `report` and `report_prose` at the top level for convenient access (previously only available via `wf$summary$report`).
+- Both bullet and prose report formats now distinguish "borderline positive" outcomes (CI lower bound > -0.01 with positive point estimate) from truly "inconclusive" outcomes. This classification is consistent across `summary$text`, `report`, and `report_prose`.
+- New return elements: `borderline_model_ids`, `borderline_model_names`, `inconclusive_model_ids`, `inconclusive_model_names` for programmatic access to the refined classification.
+- New `include_acronyms` parameter in `margot_policy_summary_report()` (default FALSE) controls whether common acronyms (RWA, SDO, PWI, NZSEI) are appended to the policy value explanation.
+
+### Changed
+- Prose output now uses present tense ("yields", "is") rather than past tense ("yielded", "was") because inferences are made to the population, not the sample.
+- Policy value explainer is now more concise: adds an introductory sentence ("The following terms are used throughout this report"), removes the technically problematic definition of confidence intervals (now simply states "All estimates are reported with 95% confidence intervals"), and tightens prose throughout.  
+
+# [2025-11-28] margot 1.0.283
+
+### Changed
+- `margot_policy_workflow()`: Renamed table columns from "Effect Size" to "Policy Value" and "Effect in Treated" to "Uplift in Treated" for consistency with policy learning terminology.
+- `margot_policy_summary_report()`: Updated `group_table_df` column names to match the terminology used in the methods documentation.
+- Replaced Unicode mathematical symbols with LaTeX equivalents using double backslashes for proper rendering when output is passed through `cat()` in Quarto/R Markdown (e.g., `×` becomes `$\\times$`, `≥` becomes `$\\geq$`).
+- Fixed Unicode en-dash characters in signal score descriptions to use standard ASCII hyphens for cross-platform compatibility.
+
+### Documentation
+- Terminology now consistently uses "Policy Value" (the expected welfare gain from targeting vs a baseline) rather than "Effect Size" throughout the policy workflow output.
+
+# [2025-11-26] margot 1.0.282
+
+### Added
+- `margot_policy_workflow()` now returns `depth_comparison_report`, a list with `text` (formatted markdown table) and `data` (data frame) showing both depth-1 and depth-2 policy values for all outcomes, along with the gain (Δ), selected depth, and rationale. This provides transparency about the depth selection decision regardless of which depth is ultimately chosen.
+- New internal helper `.build_depth_comparison_report()` generates the depth comparison report with parsimony threshold context.
+
+### Changed
+- Depth selection rationale is now explicitly documented: for **additive heterogeneity** (e.g., τ = α + β₁X₁ + β₂X₂), depth-1 trees are preferred when the policy value gain from depth-2 is below the threshold (default 0.005), as the dominant variable captures most actionable variation. For **nonlinear/piecewise heterogeneity** (e.g., quadrant indicators), depth-2 provides substantial gains and is correctly selected.
+
+### Documentation
+- Updated `@return` documentation for `margot_policy_workflow()` to describe the new `depth_comparison_report` field.
+
 # [2025-11-12] margot 1.0.281
 
 ### Changed

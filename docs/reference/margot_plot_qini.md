@@ -1,0 +1,246 @@
+# Plot Qini Curves from margot_multi_arm_causal_forest Results
+
+This function creates a ggplot object displaying Qini curves based on
+the results of a margot_multi_arm_causal_forest() model. It includes
+label transformations and informative CLI messages. The function is
+designed to be consistent with maq::plot() functionality while providing
+additional features like theme selection and spend level indicators.
+
+## Usage
+
+``` r
+margot_plot_qini(
+  mc_result,
+  outcome_var,
+  label_mapping = NULL,
+  spend_levels = c(0.1, 0.4),
+  show_spend_lines = TRUE,
+  spend_line_color = "red",
+  spend_line_alpha = 0.5,
+  theme = "classic",
+  show_ci = FALSE,
+  ci_alpha = 0.05,
+  ci_n_points = 20,
+  ci_ribbon_alpha = 0.3,
+  ci_ribbon_color = NULL,
+  horizontal_line = TRUE,
+  grid_step = NULL,
+  return_data = FALSE,
+  ylim = NULL,
+  fixed_ylim = FALSE,
+  baseline_method = "auto",
+  cate_color = "#d8a739",
+  ate_color = "#4d4d4d",
+  scale = "average",
+  treatment_cost = NULL,
+  seed = 12345,
+  x_axis = c("proportion", "budget")
+)
+```
+
+## Arguments
+
+- mc_result:
+
+  A list containing the results from margot_multi_arm_causal_forest().
+
+- outcome_var:
+
+  A character string specifying the name of the outcome variable to
+  plot. This should match one of the model names in mc_result\$results.
+
+- label_mapping:
+
+  Optional named list for custom label mappings. Keys should be original
+  variable names (with or without "model\_" prefix), and values should
+  be the desired display labels. Default is NULL.
+
+- spend_levels:
+
+  Numeric vector of spend levels to show with vertical lines. Default is
+  0.1.
+
+- show_spend_lines:
+
+  Logical indicating whether to show vertical lines at spend levels.
+  Default is TRUE.
+
+- spend_line_color:
+
+  Color for spend level lines. Default is "red".
+
+- spend_line_alpha:
+
+  Alpha transparency for spend lines. Default is 0.5.
+
+- theme:
+
+  Character string specifying the ggplot2 theme. Default is "classic".
+  Options include "classic", "minimal", "bw", "gray", "light", "dark",
+  "void".
+
+- show_ci:
+
+  Logical or character indicating which confidence intervals to show.
+  Options: FALSE (none), TRUE or "both" (both curves), "cate" (CATE
+  only), "ate" (ATE only). Default is FALSE.
+
+- ci_alpha:
+
+  Significance level for confidence intervals. Default is 0.05.
+
+- ci_n_points:
+
+  Number of points at which to compute confidence intervals. Default is
+  20.
+
+- ci_ribbon_alpha:
+
+  Alpha transparency for confidence interval ribbons. Default is 0.3.
+
+- ci_ribbon_color:
+
+  Color for confidence interval ribbons. If NULL (default), uses the
+  curve color.
+
+- horizontal_line:
+
+  Logical indicating whether to draw horizontal lines where Qini curves
+  plateau when the path is complete. Default is TRUE. Consistent with
+  maq::plot() behavior.
+
+- grid_step:
+
+  Integer specifying the step size for subsampling the curve data. If
+  NULL (default), uses max(floor(nrow(qini_data) / 1000), 1). Set to 1
+  to plot all points.
+
+- return_data:
+
+  Logical indicating whether to return the plot data as a data.frame
+  instead of the ggplot object. Default is FALSE. When TRUE, returns
+  data with columns: proportion, gain, lower, upper, curve.
+
+- ylim:
+
+  Numeric vector of length 2 specifying the y-axis limits c(min, max).
+  Default is NULL (automatic scaling).
+
+- fixed_ylim:
+
+  Logical; if TRUE and ylim is NULL, uses the actual data range with
+  padding for consistent y-axis scaling across plots. Default is FALSE.
+
+- baseline_method:
+
+  Method for generating baseline: "auto" (default), "maq_no_covariates",
+  "simple", "maq_only", or "none". See details in
+  margot_generate_qini_data().
+
+- cate_color:
+
+  Color for the CATE (targeted treatment) curve. Default is "#d8a739"
+  (gold).
+
+- ate_color:
+
+  Color for the ATE (no-priority/uniform assignment) curve. Default is
+  "#4d4d4d" (dark gray).
+
+- scale:
+
+  Character string specifying the scale for gains: "average" (default),
+  "cumulative", or "population". "average" shows expected policy effect
+  per unit (maq default), "cumulative" shows traditional cumulative
+  gains, "population" shows total population impact.
+
+- treatment_cost:
+
+  Numeric scalar; the treatment cost used in QINI calculations. Default
+  is NULL, which attempts to extract the cost from model metadata. If
+  not found, assumes cost = 1. When cost differs from stored cost, QINI
+  curves are automatically regenerated. When cost differs from 1, it
+  will be shown in the plot subtitle.
+
+- seed:
+
+  Integer; seed for reproducible QINI generation when treatment_cost
+  differs from stored cost. Default is 12345.
+
+- x_axis:
+
+  Type of x-axis for QINI curves: "proportion" (default) or "budget".
+  "proportion" shows proportion of population treated (0 to 1). "budget"
+  shows budget per unit (0 to treatment_cost), matching maq's
+  visualization.
+
+## Value
+
+If return_data is FALSE (default), returns a ggplot object. If
+return_data is TRUE, returns a data.frame with the plot data.
+
+## Details
+
+This function provides maq::plot() compatible features including:
+
+- Horizontal line extension for complete paths
+
+- Grid step subsampling for large datasets
+
+- Data frame return option matching maq::plot() output format
+
+- Standard error extraction from maq objects
+
+Key differences from maq::plot():
+
+- Uses ggplot2 instead of base R graphics
+
+- More descriptive axis labels
+
+- Additional features like theme selection and spend indicators
+
+- Confidence intervals computed via maq::average_gain() for accuracy
+
+- Binary treatment colors: Customizable via cate_color and ate_color
+  parameters
+
+**Important Note on Scale:** The y-axis shows **expected policy effects
+per unit**, not cumulative gains. This follows the maq package
+implementation where gains represent Q(B) = E\[⟨πB(Xi), τ(Xi)⟩\], the
+expected (average) gain from treating units according to the policy πB.
+This differs from traditional uplift modeling QINI curves which show
+cumulative gains. At 100% spend, both CATE and ATE curves converge to
+similar values because the average effect is similar regardless of
+treatment ordering when everyone is treated.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Basic usage - uses stored treatment cost
+margot_plot_qini(cf_results, "model_anxiety")
+
+# Auto-regenerates with different treatment cost
+plot1 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 1)
+plot2 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 5)
+
+# Compare costs with fixed y-axis scaling
+plot3 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 5, fixed_ylim = TRUE)
+
+# Show CI only for CATE curve
+plot4 <- margot_plot_qini(cf_results, "model_anxiety", show_ci = "cate")
+
+# Show CI for both curves
+plot5 <- margot_plot_qini(cf_results, "model_anxiety", show_ci = TRUE)
+
+# Custom seed for reproducibility when regenerating
+plot6 <- margot_plot_qini(cf_results, "model_anxiety", treatment_cost = 2, seed = 42)
+
+# Using custom label mapping
+label_mapping <- list(
+  "anxiety" = "Anxiety Symptoms",
+  "depression" = "Depression Symptoms"
+)
+margot_plot_qini(cf_results, "model_anxiety", label_mapping = label_mapping)
+} # }
+```

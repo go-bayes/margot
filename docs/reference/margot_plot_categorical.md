@@ -1,0 +1,70 @@
+# Create a coloured histogram with summary lines and optional median
+
+Create a coloured histogram with summary lines and optional median
+
+## Usage
+
+``` r
+margot_plot_categorical(
+  df,
+  col_name,
+  label_mapping = NULL,
+  n_divisions = NULL,
+  custom_breaks = NULL,
+  cutpoint_inclusive = "upper",
+  ties.method = NULL,
+  colour_palette = NULL,
+  hist_colour = NA,
+  line_type = "solid",
+  line_width = 0.75,
+  title = NULL,
+  subtitle = NULL,
+  x_lab = NULL,
+  y_lab = "Count",
+  theme_choice = theme_classic(),
+  text_size = 12,
+  axis_text_angle = 45,
+  x_scale_transform = NULL,
+  y_scale_transform = NULL,
+  additional_layers = NULL,
+  binwidth = NULL,
+  legend_position = "right",
+  show_mean = FALSE,
+  show_sd = FALSE,
+  sd_multipliers = c(-2, 1),
+  show_median = FALSE,
+  print_summary = TRUE,
+  save_path = NULL,
+  width = 16,
+  height = 10,
+  include_timestamp = FALSE,
+  file_prefix = ""
+)
+```
+
+## Arguments
+
+- label_mapping:
+
+  named vector; optional remapping of variable names for labels.
+
+- show_mean:
+
+  logical; draw vertical line at mean. default FALSE.
+
+- show_sd:
+
+  logical; draw dashed lines at mean ± sd_multipliers. default FALSE.
+
+- sd_multipliers:
+
+  numeric(2); multipliers for sd bands, c(lower, upper). default
+  c(-2,1).
+
+- show_median:
+
+  logical; draw vertical line at median. default FALSE.
+
+- print_summary:
+
+  logical; annotate mean/median values. default TRUE.

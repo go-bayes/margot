@@ -1,0 +1,144 @@
+# Combine LMTP Models from Multiple Batches and Compute Cross-Batch Contrasts
+
+This function merges LMTP models from multiple batch runs and computes
+user-specified contrasts across batches. This enables comparisons
+between shifts that were estimated in separate runs (e.g., comparing
+shift_zero from batch 2 with ipsi_02 from batch 1).
+
+## Usage
+
+``` r
+margot_lmtp_combine_and_contrast(
+  ...,
+  contrasts = NULL,
+  contrast_scale = c("additive", "rr", "or"),
+  auto_pairwise = FALSE,
+  include_null_contrasts = TRUE,
+  duplicate_policy = c("overwrite", "skip", "error"),
+  keep_models = FALSE,
+  quiet = FALSE
+)
+```
+
+## Arguments
+
+- ...:
+
+  One or more LMTP output objects from \`margot_lmtp()\` and/or
+  standalone checkpoint lists that contain \`model\`, \`outcome\`, and
+  \`shift_name\`
+
+- contrasts:
+
+  Optional list of character vectors (each length 2) specifying contrast
+  pairs. Example: list(c("shift_zero", "ipsi_02"), c("ipsi_10",
+  "ipsi_05"))
+
+- contrast_scale:
+
+  Scale for contrasts: "additive", "rr", or "or". Default is "additive".
+
+- auto_pairwise:
+
+  Logical, if TRUE compute all pairwise contrasts among available
+  shifts. Default is FALSE. If both contrasts and auto_pairwise are
+  specified, contrasts takes precedence.
+
+- include_null_contrasts:
+
+  Logical, if TRUE include contrasts against null shift when
+  auto_pairwise = TRUE. Default is TRUE. Ignored when auto_pairwise =
+  FALSE.
+
+- duplicate_policy:
+
+  How to handle duplicate outcome/shift models encountered across
+  inputs. \`"overwrite"\` keeps the most recently encountered model
+  (default), \`"skip"\` preserves the first version and ignores later
+  duplicates, and \`"error"\` aborts when a duplicate is found.
+
+- keep_models:
+
+  Logical; if TRUE, the returned object retains the combined LMTP models
+  (merged across batches/standalone checkpoints). Keeping models enables
+  downstream learner diagnostics but increases the output size. Default
+  is FALSE.
+
+- quiet:
+
+  Logical, if TRUE suppress informational CLI messages. Default is
+  FALSE.
+
+## Value
+
+A list with the standard LMTP output structure:
+
+- models:
+
+  NULL by default; when \`keep_models = TRUE\`, contains the merged LMTP
+  models
+
+- contrasts:
+
+  List of contrasts by outcome
+
+- individual_tables:
+
+  List of evaluation tables by outcome
+
+- combined_tables:
+
+  List of combined tables across outcomes
+
+## Details
+
+The function merges models by outcome and shift, then computes specified
+contrasts only where both shifts exist for the same outcome. Original
+models are retained only when \`keep_models = TRUE\` (default is to omit
+them to keep the object lightweight). If an outcome is missing from one
+batch or a shift doesn't exist for a particular outcome, the function
+warns but continues processing valid contrasts.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Run two separate LMTP batches with non-overlapping shifts
+fit_batch_1 <- margot_lmtp(
+  data = df,
+  outcome_vars = c("outcome1", "outcome2"),
+  trt = A,
+  shift_functions = list(ipsi_02 = ipsi(2), ipsi_05 = ipsi(5)),
+  include_null_shift = TRUE
+)
+
+fit_batch_2 <- margot_lmtp(
+  data = df,
+  outcome_vars = c("outcome1", "outcome2"),
+  trt = A,
+  shift_functions = list(ipsi_10 = ipsi(10), shift_zero = treatment_zero),
+  include_null_shift = TRUE
+)
+
+# Combine and compute cross-batch contrasts
+combined <- margot_lmtp_combine_and_contrast(
+  fit_batch_1,
+  fit_batch_2,
+  contrasts = list(
+    c("shift_zero", "ipsi_02"),
+    c("shift_zero", "ipsi_05"),
+    c("ipsi_10", "ipsi_02")
+  ),
+  contrast_scale = "additive"
+)
+
+# Or use automatic pairwise contrasts
+combined_auto <- margot_lmtp_combine_and_contrast(
+  fit_batch_1,
+  fit_batch_2,
+  auto_pairwise = TRUE,
+  include_null_contrasts = TRUE,
+  contrast_scale = "additive"
+)
+} # }
+```

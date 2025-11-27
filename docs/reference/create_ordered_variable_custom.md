@@ -1,0 +1,78 @@
+# create_ordered_variable_custom (Deprecated)
+
+This function is deprecated. Please use \`create_ordered_variable()\`
+instead. Create Ordered Variable with Custom Breaks and Auto-generated
+Labels
+
+This function creates an ordered categorical variable in a dataframe
+based on user-specified breaks. It automatically generates labels
+reflecting the break points and handles various edge cases.
+
+## Usage
+
+``` r
+create_ordered_variable_custom(
+  df,
+  var_name,
+  breaks,
+  include_lowest = TRUE,
+  right = TRUE,
+  cutpoint_inclusive = "upper",
+  inf_label = "Inf",
+  neg_inf_label = "-Inf"
+)
+```
+
+## Arguments
+
+- df:
+
+  A data frame containing the variable to be transformed.
+
+- var_name:
+
+  The name of the numeric variable within the data frame to be converted
+  into an ordered factor. This variable should ideally be continuous.
+
+- breaks:
+
+  A numeric vector specifying the breakpoints between intervals. The
+  breakpoints should cover the entire range of the variable.
+
+- include_lowest:
+
+  Logical, should the lowest value be included in the first interval?
+  Default is TRUE.
+
+- right:
+
+  Logical, should intervals be closed on the right (and open on the
+  left)? Default is TRUE.
+
+- cutpoint_inclusive:
+
+  A character string specifying whether cutpoints should be included in
+  the lower or upper category. Must be either "lower" or "upper".
+  Default is "upper".
+
+- inf_label:
+
+  A string to use for infinity in labels. Default is "Inf".
+
+- neg_inf_label:
+
+  A string to use for negative infinity in labels. Default is "-Inf".
+
+## Value
+
+Returns the data frame with an additional column representing the
+ordered factor variable. The new column is named by combining the
+original variable name and the suffix "\_cat".
+
+## Examples
+
+``` r
+df <- data.frame(x = runif(100, 0, 10))
+df_updated <- create_ordered_variable_custom(df, "x", c(0, 2, 5, 10))
+#> Error in create_ordered_variable_custom(df, "x", c(0, 2, 5, 10)): could not find function "create_ordered_variable_custom"
+```

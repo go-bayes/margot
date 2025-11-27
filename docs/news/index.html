@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.281</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.284</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,82 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.286" id="id_2025-11-28-margot-10286">[2025-11-28] margot 1.0.286<a class="anchor" aria-label="anchor" href="#id_2025-11-28-margot-10286"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-286">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-286"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_build_method_explanation.html">margot_build_method_explanation()</a></code>: Converted inline citations to Quarto format (<code>[@key]</code>) for proper bibliography generation when rendering in Quarto/R Markdown. Citations now reference BibTeX keys: <code>@athey2021</code>, <code>@grf2024</code>, <code>@policytree_package_2024</code>, <code>@meinshausen2010stability</code>, <code>@efron2012large</code>, <code>@tusher2001significance</code>, <code>@smyth2004linear</code>, <code>@gelman2006difference</code>.</li>
+<li>Signal score methods text now includes clarification: “This descriptive ranking shows potentially actionable heterogeneity that warrants further investigation.”</li>
+<li>Replaced Unicode special characters (em-dash, multiplication sign) with ASCII equivalents for cross-platform compatibility in methods output.</li>
+<li>Removed placeholder “Ehrlich et al., 2024” citation; policy value methods now correctly cite <code>@athey2021</code> and <code>@policytree_package_2024</code>.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.285" id="id_2025-11-28-margot-10285">[2025-11-28] margot 1.0.285<a class="anchor" aria-label="anchor" href="#id_2025-11-28-margot-10285"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-285">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-285"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code>: Replaced Unicode arrows with LaTeX (<code>$\rightarrow$</code>) in the mixed-depth summary header for proper rendering in Quarto/R Markdown.</li>
+<li>
+<code><a href="../reference/margot_interpret_policy_batch.html">margot_interpret_policy_batch()</a></code>: Renamed return element from <code>report_full</code> to <code>report_detail</code> for consistency with other reporting functions.</li>
+<li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> now exposes <code>report_detail</code> at the top level (alongside <code>report</code> and <code>report_prose</code>) for convenient access to detailed per-model interpretations.</li>
+<li>Policy value explanation in interpret batch uses consistent terminology with the policy explainer: “<em>Policy value</em>” and “<em>uplift</em>” are italicised as defined terms.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.284" id="id_2025-11-28-margot-10284">[2025-11-28] margot 1.0.284<a class="anchor" aria-label="anchor" href="#id_2025-11-28-margot-10284"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-284">Added<a class="anchor" aria-label="anchor" href="#added-1-0-284"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code> gains a new <code>report_format</code> parameter with options <code>"bullets"</code> (default) and <code>"prose"</code>. The prose format generates paragraphs suitable for direct inclusion in scientific reports, more or less.</li>
+<li>New <code>report_prose</code> element in the return list always contains the prose-formatted report, regardless of the <code>report_format</code> setting, so users can access both formats.</li>
+<li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> now exposes <code>report</code> and <code>report_prose</code> at the top level for convenient access (previously only available via <code>wf$summary$report</code>).</li>
+<li>Both bullet and prose report formats now distinguish “borderline positive” outcomes (CI lower bound &gt; -0.01 with positive point estimate) from truly “inconclusive” outcomes. This classification is consistent across <code>summary$text</code>, <code>report</code>, and <code>report_prose</code>.</li>
+<li>New return elements: <code>borderline_model_ids</code>, <code>borderline_model_names</code>, <code>inconclusive_model_ids</code>, <code>inconclusive_model_names</code> for programmatic access to the refined classification.</li>
+<li>New <code>include_acronyms</code> parameter in <code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code> (default FALSE) controls whether common acronyms (RWA, SDO, PWI, NZSEI) are appended to the policy value explanation.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-284">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-284"></a></h4>
+<ul><li>Prose output now uses present tense (“yields”, “is”) rather than past tense (“yielded”, “was”) because inferences are made to the population, not the sample.</li>
+<li>Policy value explainer is now more concise: adds an introductory sentence (“The following terms are used throughout this report”), removes the technically problematic definition of confidence intervals (now simply states “All estimates are reported with 95% confidence intervals”), and tightens prose throughout.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.283" id="id_2025-11-28-margot-10283">[2025-11-28] margot 1.0.283<a class="anchor" aria-label="anchor" href="#id_2025-11-28-margot-10283"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-283">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-283"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code>: Renamed table columns from “Effect Size” to “Policy Value” and “Effect in Treated” to “Uplift in Treated” for consistency with policy learning terminology.</li>
+<li>
+<code><a href="../reference/margot_policy_summary_report.html">margot_policy_summary_report()</a></code>: Updated <code>group_table_df</code> column names to match the terminology used in the methods documentation.</li>
+<li>Replaced Unicode mathematical symbols with LaTeX equivalents using double backslashes for proper rendering when output is passed through <code><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat()</a></code> in Quarto/R Markdown (e.g., <code>×</code> becomes <code>$\\times$</code>, <code>≥</code> becomes <code>$\\geq$</code>).</li>
+<li>Fixed Unicode en-dash characters in signal score descriptions to use standard ASCII hyphens for cross-platform compatibility.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="documentation-1-0-283">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-283"></a></h4>
+<ul><li>Terminology now consistently uses “Policy Value” (the expected welfare gain from targeting vs a baseline) rather than “Effect Size” throughout the policy workflow output.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.282" id="id_2025-11-26-margot-10282">[2025-11-26] margot 1.0.282<a class="anchor" aria-label="anchor" href="#id_2025-11-26-margot-10282"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-282">Added<a class="anchor" aria-label="anchor" href="#added-1-0-282"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> now returns <code>depth_comparison_report</code>, a list with <code>text</code> (formatted markdown table) and <code>data</code> (data frame) showing both depth-1 and depth-2 policy values for all outcomes, along with the gain (Δ), selected depth, and rationale. This provides transparency about the depth selection decision regardless of which depth is ultimately chosen.</li>
+<li>New internal helper <code><a href="../reference/dot-build_depth_comparison_report.html">.build_depth_comparison_report()</a></code> generates the depth comparison report with parsimony threshold context.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-282">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-282"></a></h4>
+<ul><li>Depth selection rationale is now explicitly documented: for <strong>additive heterogeneity</strong> (e.g., τ = α + β₁X₁ + β₂X₂), depth-1 trees are preferred when the policy value gain from depth-2 is below the threshold (default 0.005), as the dominant variable captures most actionable variation. For <strong>nonlinear/piecewise heterogeneity</strong> (e.g., quadrant indicators), depth-2 provides substantial gains and is correctly selected.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="documentation-1-0-282">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-282"></a></h4>
+<ul><li>Updated <code>@return</code> documentation for <code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> to describe the new <code>depth_comparison_report</code> field.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.281" id="id_2025-11-12-margot-10281">[2025-11-12] margot 1.0.281<a class="anchor" aria-label="anchor" href="#id_2025-11-12-margot-10281"></a></h2>
 <div class="section level4">
@@ -4988,7 +5064,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

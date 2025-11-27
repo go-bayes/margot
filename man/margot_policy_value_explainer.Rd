@@ -4,11 +4,17 @@
 \alias{margot_policy_value_explainer}
 \title{Policy Value Explainer (shared text)}
 \usage{
-margot_policy_value_explainer(audience = c("policy", "research"))
+margot_policy_value_explainer(
+  audience = c("policy", "research"),
+  include_acronyms = FALSE
+)
 }
 \arguments{
 \item{audience}{Character; one of "policy" or "research". The wording is
 identical for now, but the parameter allows future tailoring.}
+
+\item{include_acronyms}{Logical; if TRUE, append a list of common acronyms
+used in NZAVS research (RWA, SDO, PWI, NZSEI). Default FALSE.}
 }
 \value{
 A single character string with the explanation paragraph(s).

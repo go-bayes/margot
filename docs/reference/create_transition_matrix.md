@@ -1,0 +1,63 @@
+# Create transition matrix for state transitions
+
+To satisify the positivity assumption of causal inference, we must
+ensure that the exposure occurs in the data. This function computes a
+transition matrix for a given state variable across subjects, tracking
+changes between consecutive observations. The function handles both
+numeric and factor state variables, excluding NA values in the
+transition count.
+
+## Usage
+
+``` r
+create_transition_matrix(data, state_var, id_var)
+```
+
+## Arguments
+
+- data:
+
+  A data frame containing the observations.
+
+- state_var:
+
+  The name of the state variable column in \`data\` as a string. This
+  variable tracks the state changes to be analyzed.
+
+- id_var:
+
+  The name of the identifier variable column in \`data\` as a string.
+  This variable distinguishes between different subjects or entities.
+
+## Value
+
+A matrix indicating the number of transitions between states. The rows
+represent the initial state ('from'), and the columns represent the
+subsequent state ('to'). Diagonal entries indicate the number of times
+the state did not change, while off-diagonal entries indicate
+transitions from one state to another.
+
+## Note
+
+This function explicitly excludes NA values from the transition matrix
+calculation. It treats numeric state variables by converting them to
+factors, ensuring a consistent analysis approach for both numeric and
+factor types.
+
+## Examples
+
+``` r
+df <- read.table(header = TRUE, text = "
+id wave year_measured religion_believe_god
+3 0 1 0
+3 1 1 1
+4 0 1 0
+4 1 1 1
+5 0 1 1
+5 1 1 0")
+
+transition_matrix <- create_transition_matrix(df, "religion_believe_god", "id")
+#> Error in create_transition_matrix(df, "religion_believe_god", "id"): could not find function "create_transition_matrix"
+print(transition_matrix)
+#> Error: object 'transition_matrix' not found
+```

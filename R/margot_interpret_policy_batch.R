@@ -30,8 +30,12 @@
 #' @param brief_save_to Optional path to save the brief treated-only summary as text.
 #'
 #' @return A single character string containing the combined markdown output. When
-#'   `return_as_list = TRUE`, returns a list with the full report, brief summary,
-#'   per-model sections, policy value explanation, and `model_depths`/`depth_map`.
+#'   `return_as_list = TRUE`, returns a list with:
+#'   - `report_detail`: The full detailed interpretation text
+#'   - `report_brief`: Brief treated-only summary lines (if `brief = TRUE`)
+#'   - `by_model`: List of per-model interpretation sections
+#'   - `policy_value_explanation`: Short explanation of policy value terms
+#'   - `model_depths` / `depth_map`: Named vector of depths used per model
 #' @export
 margot_interpret_policy_batch <- function(models,
                                           model_names = NULL,
@@ -293,10 +297,10 @@ margot_interpret_policy_batch <- function(models,
   if (length(unique_depths) == 1) {
     header <- paste0("### Policy Tree Interpretations (depth ", unique_depths, ")\n\n")
   } else {
-    depth_summary <- paste(sprintf("%s → %s",
+    depth_summary <- paste(sprintf("%s $\\rightarrow$ %s",
       if (!is.null(label_mapping)) vapply(model_names, function(mn) .apply_label_stability(gsub('^model_', '', mn), label_mapping), character(1)) else gsub('^model_', '', model_names),
       model_depths[model_names]
-    ), collapse = ", ")
+    ), collapse = "; ")
     header <- paste0("### Policy Tree Interpretations (mixed depths)\n\nDepth assignments: ", depth_summary, "\n\n")
   }
   if (isTRUE(brief) && length(brief_lines)) {
@@ -308,13 +312,11 @@ margot_interpret_policy_batch <- function(models,
 
   if (isTRUE(return_as_list)) {
     policy_value_explanation <- paste0(
-      "Policy value vs control-all: mean benefit when treating only those recommended; ",
-      "policy value vs treat-all: mean benefit when withholding treatment only where the policy ",
-      "recommends control. Avg uplift among treated: average (DR_treat − DR_control) across units ",
-      "the policy recommends to treat."
+      "*Policy value* vs control-all: mean benefit when treating only those recommended; ",
+      "*uplift*: average predicted treatment effect among those recommended for treatment."
     )
     return(list(
-      report_full = final_output,
+      report_detail = final_output,
       report_brief = if (length(brief_lines)) brief_lines else character(0),
       by_model = valid_interpretations,
       policy_value_explanation = policy_value_explanation,

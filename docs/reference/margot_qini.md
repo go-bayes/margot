@@ -1,0 +1,199 @@
+# Generate QINI Curves and Difference Gain Summaries
+
+Computes QINI curves and difference gain summaries for causal forest
+models. This function provides a direct way to generate QINI results
+without running full policy analysis, paralleling the functionality of
+margot_rate().
+
+Computes QINI curves for causal forest models using the exact
+methodology from GRF/MAQ packages. Uses test set data when train/test
+splits were used in margot_causal_forest().
+
+This function provides backward compatibility for margot_interpret_qini
+by formatting the output of margot_qini_alternative into the expected
+structure.
+
+## Usage
+
+``` r
+margot_qini(
+  margot_result,
+  model_names = NULL,
+  seed = 12345,
+  n_bootstrap = 200,
+  verbose = TRUE,
+  spend_levels = c(0.1, 0.4),
+  label_mapping = NULL
+)
+
+margot_qini(
+  margot_result,
+  model_names = NULL,
+  seed = 12345,
+  n_bootstrap = 200,
+  verbose = TRUE,
+  spend_levels = c(0.1, 0.4),
+  label_mapping = NULL
+)
+
+margot_qini(
+  margot_result,
+  model_names = NULL,
+  seed = 12345,
+  n_bootstrap = 200,
+  verbose = TRUE,
+  spend_levels = c(0.1, 0.4),
+  label_mapping = NULL
+)
+```
+
+## Arguments
+
+- margot_result:
+
+  Output from margot_causal_forest()
+
+- model_names:
+
+  Character vector of model names to process (NULL = all)
+
+- seed:
+
+  Random seed for reproducibility
+
+- n_bootstrap:
+
+  Number of bootstrap replicates for confidence intervals
+
+- verbose:
+
+  Print progress messages
+
+- spend_levels:
+
+  Numeric vector of spend levels for analysis (default 0.1)
+
+- label_mapping:
+
+  Named list for label transformations
+
+- models:
+
+  List returned by margot_causal_forest(), containing results and
+  optionally full_models.
+
+- baseline_method:
+
+  Method for generating baseline: "maq_no_covariates" (default), "auto",
+  "simple", "maq_only", or "none". See margot_generate_qini_data() for
+  details.
+
+- remove_tx_prefix:
+
+  Logical; remove treatment prefix from variable names (default TRUE).
+
+- remove_z_suffix:
+
+  Logical; remove z-score suffix from variable names (default TRUE).
+
+- use_title_case:
+
+  Logical; convert variable names to title case (default TRUE).
+
+- remove_underscores:
+
+  Logical; replace underscores with spaces (default TRUE).
+
+- treatment_cost:
+
+  Scalar treatment cost per unit. Default 1. Lower values (e.g., 0.2)
+  represent cheap treatments; higher values (e.g., 5) represent
+  expensive treatments. Affects QINI curve shape - lower costs create
+  steeper curves, higher costs create shallower curves.
+
+## Value
+
+A list where each element corresponds to a model and contains:
+qini_objects (maq objects for CATE and baseline curves), qini_data
+(data.frame with proportion, gain, and curve columns for plotting),
+diff_gain_summaries (list of difference gain summaries at each spend
+level), model_name (the processed model name).
+
+The input margot_result object with added qini_results component
+containing:
+
+- cate:
+
+  MAQ object for CATE-based targeting
+
+- baseline:
+
+  MAQ object for no-priority baseline
+
+- test_indices:
+
+  Indices used for QINI computation
+
+- n_test:
+
+  Number of observations used
+
+List formatted for margot_interpret_qini with diff_gain_summaries
+
+## Details
+
+This function generates QINI curves on-demand using
+margot_generate_qini_data(). For binary treatments, it creates both CATE
+and baseline (e.g., ATE) curves. The difference gain summaries quantify
+how much better CATE-based targeting performs compared to the baseline
+at specified spend levels.
+
+The treatment_cost parameter allows for cost sensitivity analysis
+without rerunning the causal forest models. Lower costs (e.g., 0.2)
+create steeper QINI curves indicating more people can be treated
+cost-effectively, while higher costs (e.g., 5) create shallower curves
+indicating only the highest-effect individuals justify treatment.
+
+Cost Invariance Property: When treatment costs are uniform across
+individuals, the relative benefit of CATE-based targeting over uniform
+allocation remains constant regardless of cost level. While absolute
+gains scale inversely with cost (gain at cost c = gain at cost 1 / c),
+the difference between CATE and ATE curves scales proportionally,
+preserving the relative advantage of personalized treatment. This means
+the value of heterogeneous treatment effects for targeting decisions is
+independent of the uniform cost level.
+
+The output is structured to be compatible with margot_interpret_qini()
+and other QINI visualization functions.
+
+This function implements the standard QINI curve methodology from the
+GRF and MAQ packages. It computes two curves:
+
+1\. CATE curve: Prioritizes treatment based on estimated individual
+treatment effects 2. Baseline curve: No-priority assignment (random
+allocation)
+
+When margot_causal_forest() was run with use_train_test_split = TRUE,
+QINI curves are computed on the test set only, following best practices
+for avoiding overfitting in policy evaluation.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Run causal forest with train/test split
+cf_results <- margot_causal_forest(
+  data = mydata,
+  outcome_vars = c("outcome1", "outcome2"),
+  covariates = covariates,
+  W = treatment,
+  use_train_test_split = TRUE
+)
+
+# Compute QINI curves
+cf_results <- margot_qini(cf_results)
+
+# Plot results
+margot_plot_qini(cf_results, model_name = "model_outcome1")
+} # }
+```

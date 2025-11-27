@@ -7,31 +7,38 @@
 #'
 #' @param audience Character; one of "policy" or "research". The wording is
 #'   identical for now, but the parameter allows future tailoring.
+#' @param include_acronyms Logical; if TRUE, append a list of common acronyms
+#'   used in NZAVS research (RWA, SDO, PWI, NZSEI). Default FALSE.
 #' @return A single character string with the explanation paragraph(s).
 #' @keywords internal
-margot_policy_value_explainer <- function(audience = c("policy", "research")) {
+margot_policy_value_explainer <- function(audience = c("policy", "research"),
+                                          include_acronyms = FALSE) {
   audience <- match.arg(audience)
   # allow boilerplate override
   bp <- margot_get_boilerplate("policy_value_explainer", audience = audience, context = list(audience = audience))
   if (!is.null(bp) && nzchar(bp)) return(bp)
-  paste0(
-    "Policy Value (PV): the average predicted benefit from following the policy, ",
-    "compared to a simple baseline. ",
-    "PV vs control-all: average benefit when treating only those recommended by the policy ",
-    "instead of treating no one; formally, the mean of the predicted treatment effect among ",
-    "those the policy chooses to treat. ",
-    "PV vs treat-all: average benefit when withholding treatment only where the policy recommends control ",
-    "instead of treating everyone; formally, the mean predicted benefit of withholding among those the policy chooses to control. ",
-    "Average uplift (treated): the mean predicted treatment effect among units the policy recommends to treat. ",
-    "Coverage: the share of people the policy recommends to treat. ",
-    "Confidence interval (CI): the 95% uncertainty range for each estimate. ",
-    "Identity: PV(control-all) = Coverage $\\times$ Average uplift (treated). ",
-    "Dominant split: the branch at the first split that contributes the largest share of PV(control-all). ",
-    "Restricted policy: a simplified policy that treats only within the dominant split and withholds elsewhere.",
-    "\n\nCommon acronyms:\n",
-    "* RWA — Right-Wing Authoritarianism\n",
-    "* SDO — Social Dominance Orientation\n",
-    "* PWI — Personal Well-Being Index\n",
-    "* NZSEI — Occupational Prestige Index"
+
+  base_text <- paste0(
+    "The following terms are used throughout this report. ",
+    "*Policy value* (PV) is the average predicted benefit from following the learned treatment rule compared to treating no one (control-all baseline). ",
+    "*Coverage* is the proportion of participants recommended for treatment. ",
+    "*Uplift* is the mean predicted treatment effect among those recommended for treatment. ",
+    "By construction, PV = Coverage $\\times$ Uplift. ",
+    "All estimates are reported with 95% confidence intervals. ",
+    "The *dominant split* is the first-level branch contributing most to PV. ",
+    "A *restricted policy* treats only within the dominant split and withholds elsewhere."
   )
+
+  if (isTRUE(include_acronyms)) {
+    acronyms_text <- paste0(
+      "\n\nCommon acronyms:\n",
+      "* RWA — Right-Wing Authoritarianism\n",
+      "* SDO — Social Dominance Orientation\n",
+      "* PWI — Personal Well-Being Index\n",
+      "* NZSEI — Occupational Prestige Index"
+    )
+    base_text <- paste0(base_text, acronyms_text)
+  }
+
+  base_text
 }

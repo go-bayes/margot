@@ -1,0 +1,168 @@
+# Interpret Heterogeneity Evidence from Multiple Sources
+
+Combines evidence from multiple heterogeneity tests (RATE AUTOC, RATE
+QINI, QINI curves, and omnibus calibration tests) to provide unified
+recommendations about which models show treatment effect heterogeneity.
+
+## Usage
+
+``` r
+margot_interpret_heterogeneity(
+  models = NULL,
+  model_names = NULL,
+  spend_levels = c(0.1, 0.4),
+  require_any_positive = TRUE,
+  exclude_negative_any = TRUE,
+  require_omnibus = FALSE,
+  alpha = 0.05,
+  adjust = "none",
+  flipped_outcomes = NULL,
+  label_mapping = NULL,
+  verbose = TRUE,
+  include_extended_report = TRUE,
+  rate_results = NULL,
+  qini_results = NULL,
+  omnibus_results = NULL,
+  use_cross_validation = TRUE,
+  cv_num_folds = 5,
+  cv_results = NULL,
+  seed = 12345,
+  parallel = FALSE,
+  n_cores = future::availableCores() - 1
+)
+```
+
+## Arguments
+
+- models:
+
+  Output from margot_causal_forest() containing model results
+
+- model_names:
+
+  Character vector of model names to analyse. If NULL (default),
+  analyses all models. Model names can be specified with or without
+  "model\_" prefix.
+
+- spend_levels:
+
+  Numeric vector of spend levels for QINI analysis. Default is 0.1 (10
+  percent spend captures early heterogeneity patterns effectively).
+
+- require_any_positive:
+
+  Logical. If TRUE (default), include models that show positive evidence
+  in ANY method. If FALSE, require positive evidence in ALL methods.
+
+- exclude_negative_any:
+
+  Logical. If TRUE (default), exclude models that show negative evidence
+  in ANY RATE test (AUTOC or QINI). Models with any negative RATE
+  evidence are classified as "excluded_negative_rate" and will not
+  appear in selected or exploratory lists.
+
+- require_omnibus:
+
+  Logical. If TRUE, only include models that pass the omnibus
+  calibration test. Default is FALSE.
+
+- alpha:
+
+  Numeric. Significance level for RATE tests. Default is 0.05. Note:
+  this controls which RATE estimates are considered statistically
+  significant after multiple testing correction.
+
+- adjust:
+
+  Character. Multiple testing adjustment method for RATE estimates.
+  Options include "BH" (Benjamini-Hochberg), "BY" (Benjamini-Yekutieli),
+  "bonferroni", "holm", "fdr", or "none". Default is "none". Note: When
+  use_cross_validation = TRUE (the default), only "bonferroni" or "none"
+  are valid. Invalid methods will be automatically converted to "none"
+  without warning.
+
+- flipped_outcomes:
+
+  Character vector of outcome names that were flipped (reversed) in
+  preprocessing. Used for interpretation text.
+
+- label_mapping:
+
+  Named list for mapping model names to human-readable labels.
+
+- verbose:
+
+  Logical. If TRUE, show progress messages. Default is TRUE.
+
+- include_extended_report:
+
+  Logical. If TRUE (default), generate detailed academic-style report
+  with full statistics and confidence intervals.
+
+- rate_results:
+
+  Optional pre-computed RATE results to skip computation.
+
+- qini_results:
+
+  Optional pre-computed QINI results to skip computation.
+
+- omnibus_results:
+
+  Optional pre-computed omnibus test results to skip computation.
+
+- use_cross_validation:
+
+  Logical. If TRUE (default), use cross-validation for RATE tests
+  instead of standard approach. This provides confidence intervals
+  through robust inference.
+
+- cv_num_folds:
+
+  Integer. Number of CV folds when use_cross_validation = TRUE (default
+  5).
+
+- cv_results:
+
+  Optional pre-computed CV results to skip computation.
+
+- seed:
+
+  Integer. Random seed for reproducibility in all computations (default
+  12345).
+
+- parallel:
+
+  Logical. Use parallel processing for cross-validation when
+  use_cross_validation = TRUE (default FALSE). Note: Parallel processing
+  is experimental and may encounter memory issues.
+
+- n_cores:
+
+  Integer. Number of cores for parallel processing when parallel = TRUE
+  (default all cores - 1). Only applies when use_cross_validation =
+  TRUE.
+
+## Value
+
+A list containing the following components: selected_model_ids
+(character vector of model IDs with heterogeneity evidence),
+selected_model_names (character vector of human-readable model names),
+exploratory_model_ids (character vector of model IDs with exploratory
+evidence), exploratory_model_names (character vector of human-readable
+model names with exploratory evidence), all_selected_model_ids (combined
+vector of selected_model_ids and exploratory_model_ids),
+all_selected_model_names (combined vector of selected_model_names and
+exploratory_model_names), excluded_model_ids (character vector of model
+IDs to exclude), excluded_model_names (character vector of
+human-readable excluded model names), evidence_summary (data frame with
+detailed evidence by source), interpretation (character string with main
+interpretation text), summary (character string with brief summary),
+recommendations (character string with actionable recommendations),
+rate_results (list containing AUTOC and QINI RATE results), qini_results
+(QINI curve interpretation results), omnibus_results (omnibus
+calibration test results), concordance (list analysing agreement between
+methods), extended_report (character string with detailed academic
+report if requested), cv_results (cross-validation results object if
+use_cross_validation = TRUE), method_used (character string indicating
+whether "cross_validation" or "standard" method was used)

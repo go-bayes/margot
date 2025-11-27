@@ -90,7 +90,8 @@
 #'
 #' @return A list with:
 #'   - `text`: Combined summary text (character scalar)
-#'   - `report`: Narrative policy summary formatted for scientific reporting
+#'   - `report`: Narrative policy summary (uses `report_format` selection: bullets or prose)
+#'   - `report_prose`: Prose-style narrative suitable for scientific papers (always generated)
 #'   - `interpretation`: Concise sentence-level summary listing wins, caution, and uncertain models
 #'   - `table_md`: Markdown table (character scalar) when `render_markdown = TRUE`
 #'   - `table_df`: Data frame of policy value summary rows (title-case columns)
@@ -108,8 +109,12 @@
 #'   - `practical_takeaways_text`: Optional high-level bullet summary of deployment guidance
 #'   - `wins_model_ids`: Character vector of model identifiers where policy vs control-all is strictly positive (CI > 0)
 #'   - `wins_model_names`: Character vector of human-readable labels matching `wins_model_ids`
-#'   - `neutral_model_ids`: Character vector of model identifiers with inconclusive policy vs control-all evidence (CI crosses 0)
+#'   - `borderline_model_ids`: Character vector of model identifiers with borderline positive evidence (CI marginally crosses zero but point estimate positive)
+#'   - `borderline_model_names`: Character vector of human-readable labels matching `borderline_model_ids`
+#'   - `neutral_model_ids`: Character vector of model identifiers with CI crossing zero (includes both borderline and inconclusive)
 #'   - `neutral_model_names`: Character vector of human-readable labels matching `neutral_model_ids`
+#'   - `inconclusive_model_ids`: Character vector of model identifiers with truly inconclusive evidence (CI clearly spans zero)
+#'   - `inconclusive_model_names`: Character vector of human-readable labels matching `inconclusive_model_ids`
 #'   - `caution_model_ids`: Character vector of model identifiers where policy vs control-all is negative (CI < 0)
 #'   - `caution_model_names`: Character vector of human-readable labels matching `caution_model_ids`
 #'   - `group_table`: Named list of grouped brief tables (data frames)
@@ -133,6 +138,11 @@
 #'   models by the selected score (magnitude relative to uncertainty) and stores a `signals_df`
 #'   data frame in the returned list.
 #' @param signals_k Integer; number of top signals to display when `signal_score != "none"`.
+#' @param report_format Character; one of "bullets" (default) or "prose". When "prose",
+#'   generates flowing paragraphs suitable for direct inclusion in scientific reports
+#'   instead of bullet-point lists.
+#' @param include_acronyms Logical; if TRUE, append a list of common acronyms
+#'   (RWA, SDO, PWI, NZSEI) to the policy value explanation. Default FALSE.
 #'
 #' @export
 margot_policy_summary_report <- function(object,
@@ -175,6 +185,8 @@ margot_policy_summary_report <- function(object,
                                          show_neutral = NULL,
                                          signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
                                          signals_k = 3,
+                                         report_format = c("bullets", "prose"),
+                                         include_acronyms = FALSE,
                                          return_unit_masks = FALSE) {
   stopifnot(inherits(object, "margot_stability_policy_tree"))
   table_type <- match.arg(table_type)
@@ -184,6 +196,7 @@ margot_policy_summary_report <- function(object,
   contrib_scale <- match.arg(contrib_scale)
   se_method <- match.arg(se_method)
   signal_score <- match.arg(signal_score)
+  report_format <- match.arg(report_format)
 
   # determine model set
   if (is.null(model_names)) {
@@ -468,7 +481,7 @@ margot_policy_summary_report <- function(object,
 
   # small helper for policy value explanation (single source of truth)
   audience <- match.arg(audience)
-  policy_expl <- margot_policy_value_explainer(audience)
+  policy_expl <- margot_policy_value_explainer(audience, include_acronyms = include_acronyms)
 
   # build per-model text
   lines <- character()
@@ -576,6 +589,17 @@ margot_policy_summary_report <- function(object,
   neutral <- mm[mm$ci_lo_ctrl <= 0 & mm$ci_hi_ctrl >= 0, , drop = FALSE]
   harm <- mm[mm$ci_hi_ctrl < 0, , drop = FALSE]
 
+  # split neutral into borderline (CI lower bound > -0.01 with positive point estimate) and truly inconclusive
+  borderline_threshold <- 0.01
+  if (nrow(neutral)) {
+    borderline_idx <- neutral$ci_lo_ctrl > -borderline_threshold & neutral$estimate_ctrl > 0
+    borderline <- neutral[borderline_idx, , drop = FALSE]
+    truly_neutral <- neutral[!borderline_idx, , drop = FALSE]
+  } else {
+    borderline <- neutral[FALSE, , drop = FALSE]
+    truly_neutral <- neutral
+  }
+
   # Soft switch for including neutral group based on audience or explicit flag
   show_neutral_eff <- if (is.null(show_neutral)) identical(audience, "research") else isTRUE(show_neutral)
 
@@ -586,7 +610,12 @@ margot_policy_summary_report <- function(object,
       "Caution (policy value vs control-all 95% CI entirely < 0)" = harm
     )
     if (isTRUE(show_neutral_eff)) {
-      groups[["Neutral (policy value vs control-all CI spans zero)"]] <- neutral
+      if (nrow(borderline)) {
+        groups[["Borderline (95% CI marginally includes zero, positive point estimate)"]] <- borderline
+      }
+      if (nrow(truly_neutral)) {
+        groups[["Inconclusive (95% CI spans zero)"]] <- truly_neutral
+      }
     }
   } else {
     groups <- list("Summary" = mm)
@@ -1420,8 +1449,12 @@ margot_policy_summary_report <- function(object,
 
   wins_model_ids <- wins$model
   wins_model_names <- resolve_outcome_labels(wins)
+  borderline_model_ids <- borderline$model
+  borderline_model_names <- resolve_outcome_labels(borderline)
   neutral_model_ids <- neutral$model
   neutral_model_names <- resolve_outcome_labels(neutral)
+  inconclusive_model_ids <- truly_neutral$model
+  inconclusive_model_names <- resolve_outcome_labels(truly_neutral)
   caution_model_ids <- harm$model
   caution_model_names <- resolve_outcome_labels(harm)
 
@@ -1443,14 +1476,24 @@ margot_policy_summary_report <- function(object,
     "No models delivered a policy value gain vs control-all (wins)."
   }
 
-  neutral_sentence <- if (length(neutral_model_names)) {
+  borderline_sentence <- if (length(borderline_model_names)) {
     paste0(
-      "Policy value confidence intervals crossed zero for: ",
-      format_name_list(neutral_model_names),
+      "Borderline positive (CI marginally includes zero): ",
+      format_name_list(borderline_model_names),
       "."
     )
   } else {
-    "No models had policy value confidence intervals that crossed zero."
+    ""
+  }
+
+  inconclusive_sentence <- if (length(inconclusive_model_names)) {
+    paste0(
+      "Inconclusive (CI spans zero): ",
+      format_name_list(inconclusive_model_names),
+      "."
+    )
+  } else {
+    ""
   }
 
   caution_sentence <- if (length(caution_model_names)) {
@@ -1463,7 +1506,7 @@ margot_policy_summary_report <- function(object,
     "No models showed policy value estimates entirely below zero (caution)."
   }
 
-  interpretation_text <- paste(wins_sentence, neutral_sentence, caution_sentence)
+  interpretation_text <- paste(c(wins_sentence, borderline_sentence, inconclusive_sentence, caution_sentence)[nzchar(c(wins_sentence, borderline_sentence, inconclusive_sentence, caution_sentence))], collapse = " ")
 
   depth_pref_sentence <- if (length(unique_depths) == 1) {
     if (unique_depths == 1L) {
@@ -1525,13 +1568,24 @@ margot_policy_summary_report <- function(object,
     )
   )
   if (isTRUE(show_neutral_eff)) {
-    section_list <- c(section_list, list(
-      build_group_block(
-        "Neutral (policy value vs control-all CI spans zero)",
-        neutral,
-        "No neutral models: every evaluable policy was classified as win or caution."
-      )
-    ))
+    if (nrow(borderline)) {
+      section_list <- c(section_list, list(
+        build_group_block(
+          "Borderline (95% CI marginally includes zero, positive point estimate)",
+          borderline,
+          "No borderline models."
+        )
+      ))
+    }
+    if (nrow(truly_neutral)) {
+      section_list <- c(section_list, list(
+        build_group_block(
+          "Inconclusive (95% CI spans zero)",
+          truly_neutral,
+          "No inconclusive models: every evaluable policy was classified as win, borderline, or caution."
+        )
+      ))
+    }
   }
   section_list <- c(section_list, list(
     build_group_block(
@@ -1543,6 +1597,159 @@ margot_policy_summary_report <- function(object,
   report_sections <- c(report_sections, section_list)
 
   report_text <- paste(unlist(report_sections), collapse = "\n")
+
+  # prose-style report generation for scientific papers
+  format_prose_entry <- function(df_row, position = "middle") {
+    if (!nrow(df_row)) return("")
+    label <- resolve_outcome_labels(df_row)[1]
+    est_ctrl <- df_row[["estimate_ctrl"]]
+    lo_ctrl <- df_row[["ci_lo_ctrl"]]
+    hi_ctrl <- df_row[["ci_hi_ctrl"]]
+    uplift_val <- df_row[["uplift"]]
+    uplift_lo <- df_row[["uplift_lo"]]
+    uplift_hi <- df_row[["uplift_hi"]]
+    cov_val <- df_row[["coverage"]]
+
+    # build the sentence
+    pv_part <- paste0(
+      "policy value = ", round(est_ctrl, digits),
+      ", 95% CI [", round(lo_ctrl, digits), ", ", round(hi_ctrl, digits), "]"
+    )
+
+    uplift_part <- if (!is.na(uplift_val)) {
+      paste0(
+        "uplift = ", round(uplift_val, digits),
+        if (!is.na(uplift_lo) && !is.na(uplift_hi)) {
+          paste0(", 95% CI [", round(uplift_lo, digits), ", ", round(uplift_hi, digits), "]")
+        } else ""
+      )
+    } else ""
+
+    cov_part <- if (!is.na(cov_val)) {
+      paste0("coverage = ", round(100 * cov_val, 1), "%")
+    } else ""
+
+    # construct sentence
+    sentence <- paste0(
+      label, " (", pv_part,
+      if (nzchar(uplift_part)) paste0("; ", uplift_part) else "",
+      if (nzchar(cov_part)) paste0("; ", cov_part) else "",
+      ")"
+    )
+    sentence
+  }
+
+  build_prose_paragraph <- function(df, group_type) {
+    if (!nrow(df)) return("")
+
+    n_outcomes <- nrow(df)
+    entries <- vapply(
+      seq_len(n_outcomes),
+      function(idx) format_prose_entry(df[idx, , drop = FALSE]),
+      character(1)
+    )
+
+    # construct paragraph based on group type and number of outcomes (present tense)
+    if (group_type == "wins") {
+      intro <- if (n_outcomes == 1) {
+        "Targeted treatment assignment yields a statistically reliable policy value gain (95% CI entirely above zero) for one outcome: "
+      } else {
+        paste0(
+          "Targeted treatment assignment yields statistically reliable policy value gains (95% CI entirely above zero) for ",
+          n_outcomes, " outcomes: "
+        )
+      }
+    } else if (group_type == "borderline") {
+      intro <- if (n_outcomes == 1) {
+        "Evidence is borderline positive (95% CI marginally includes zero but point estimate is positive) for one outcome: "
+      } else {
+        paste0(
+          "Evidence is borderline positive (95% CI marginally includes zero but point estimate is positive) for ",
+          n_outcomes, " outcomes: "
+        )
+      }
+    } else if (group_type == "neutral") {
+      intro <- if (n_outcomes == 1) {
+        "Evidence is inconclusive (95% CI spanning zero) for one outcome: "
+      } else {
+        paste0(
+          "Evidence is inconclusive (95% CI spanning zero) for ",
+          n_outcomes, " outcomes: "
+        )
+      }
+    } else { # caution
+      intro <- if (n_outcomes == 1) {
+        "Targeted treatment assignment underperforms universal control (95% CI entirely below zero) for one outcome: "
+      } else {
+        paste0(
+          "Targeted treatment assignment underperforms universal control (95% CI entirely below zero) for ",
+          n_outcomes, " outcomes: "
+        )
+      }
+    }
+
+    # join entries
+    if (n_outcomes == 1) {
+      body <- entries[1]
+    } else if (n_outcomes == 2) {
+      body <- paste(entries, collapse = " and ")
+    } else {
+      body <- paste0(paste(entries[-n_outcomes], collapse = "; "), "; and ", entries[n_outcomes])
+    }
+
+    paste0(intro, body, ".")
+  }
+
+  # build prose report
+  prose_sections <- list()
+
+  if (isTRUE(include_explanation)) {
+    prose_sections <- c(prose_sections, list(policy_expl, ""))
+  }
+
+  # depth context (present tense)
+  prose_depth <- if (length(unique_depths) == 1) {
+    paste0(
+      "We evaluate consensus policies at depth ", unique_depths,
+      ", comparing targeted treatment assignment against universal control (the control-all baseline)."
+    )
+  } else {
+    "We evaluate consensus policies at varying depths per outcome, comparing targeted treatment assignment against universal control."
+  }
+  prose_sections <- c(prose_sections, list(prose_depth, ""))
+
+  # wins paragraph
+  if (nrow(wins)) {
+    prose_sections <- c(prose_sections, list(build_prose_paragraph(wins, "wins"), ""))
+  } else {
+    prose_sections <- c(prose_sections, list(
+      "No outcomes demonstrate statistically reliable policy value gains relative to universal control (all 95% CIs include zero or negative values).",
+      ""
+    ))
+  }
+
+  # borderline paragraph (if showing neutral)
+  # note: borderline and truly_neutral were computed earlier alongside the main classification
+  if (isTRUE(show_neutral_eff) && nrow(borderline)) {
+    prose_sections <- c(prose_sections, list(build_prose_paragraph(borderline, "borderline"), ""))
+  }
+
+  # truly inconclusive paragraph (if showing)
+  if (isTRUE(show_neutral_eff) && nrow(truly_neutral)) {
+    prose_sections <- c(prose_sections, list(build_prose_paragraph(truly_neutral, "neutral"), ""))
+  }
+
+  # caution paragraph
+  if (nrow(harm)) {
+    prose_sections <- c(prose_sections, list(build_prose_paragraph(harm, "caution"), ""))
+  }
+
+  report_prose <- paste(unlist(prose_sections), collapse = "\n")
+
+  # select which report format to use as primary
+  if (report_format == "prose") {
+    report_text <- report_prose
+  }
 
   # build grouped text
   for (gname in names(groups)) {
@@ -1911,9 +2118,9 @@ margot_policy_summary_report <- function(object,
       if (length(keep_idx)) {
         # brief explainer line for the chosen signal score
         expl <- switch(signal_score,
-          pv_snr = "Signal score (PV‑SNR) = |PV(control‑all)| / (CI half‑width), weighted by sqrt(Coverage) and stability (0.5 + 0.5×consensus strength).",
-          uplift_snr = "Signal score (uplift‑SNR) = |Uplift (treated)| / (CI half‑width), weighted by sqrt(Coverage) and stability (0.5 + 0.5×consensus strength).",
-          hybrid = "Signal score (hybrid) = 0.7×PV‑SNR + 0.3×uplift‑SNR.",
+          pv_snr = "Signal score (PV-SNR) = |PV(control-all)| / (CI half-width), weighted by sqrt(Coverage) and stability (0.5 + 0.5 $\\times$ consensus strength).",
+          uplift_snr = "Signal score (uplift-SNR) = |Uplift (treated)| / (CI half-width), weighted by sqrt(Coverage) and stability (0.5 + 0.5 $\\times$ consensus strength).",
+          hybrid = "Signal score (hybrid) = 0.7 $\\times$ PV-SNR + 0.3 $\\times$ uplift-SNR.",
           "Signal score ranks magnitude relative to uncertainty; no gating is implied."
         )
         lines_sig <- vapply(keep_idx, function(i) {
@@ -2021,13 +2228,13 @@ margot_policy_summary_report <- function(object,
   # Add table definitions to support interpretation
   definitions_block <- paste0(
     "\n### Table Definitions\n\n",
-    "* PV(control-all): mean predicted treatment effect among those recommended for treatment; equals Coverage × Uplift (treated).\n",
+    "* PV(control-all): mean predicted treatment effect among those recommended for treatment; equals Coverage $\\times$ Uplift (treated).\n",
     "* Uplift (treated): mean predicted treatment effect among those recommended for treatment.\n",
     "* Coverage: percentage of cases recommended for treatment.\n",
-    "* Stability strength: consensus strength (0–1) from stability analysis. As a guide: ≥ 0.7 indicates a robust, repeatable split structure; around 0.5 is borderline; < 0.3 suggests highly exploratory patterns. Higher values imply more consistent trees across resamples.\n",
-    "* Signal score: magnitude relative to uncertainty (PV‑SNR, uplift‑SNR, or hybrid), optionally weighted by coverage and stability.\n",
-    "* Dominant split: first‑level split that contributes most (by absolute policy value contribution).\n",
-    "* unit_masks: per‑model evaluation details (IDs, full/restricted actions, masks, and coverage); used for auditing and exporting which cases are recommended treatment.\n"
+    "* Stability strength: consensus strength (0-1) from stability analysis. As a guide: $\\geq$ 0.7 indicates a robust, repeatable split structure; around 0.5 is borderline; < 0.3 suggests highly exploratory patterns. Higher values imply more consistent trees across resamples.\n",
+    "* Signal score: magnitude relative to uncertainty (PV-SNR, uplift-SNR, or hybrid), optionally weighted by coverage and stability.\n",
+    "* Dominant split: first-level split that contributes most (by absolute policy value contribution).\n",
+    "* unit_masks: per-model evaluation details (IDs, full/restricted actions, masks, and coverage); used for auditing and exporting which cases are recommended treatment.\n"
   )
   text <- paste0(text, definitions_block)
   if (nzchar(signals_block)) {
@@ -2058,8 +2265,8 @@ margot_policy_summary_report <- function(object,
     df_out <- data.frame(
       Outcome = lab,
       Depth = df$depth,
-      `Effect Size (95% CI)` = pv_ctrl,
-      `Effect in Treated (95% CI)` = uplift,
+      `Policy Value (95% CI)` = pv_ctrl,
+      `Uplift in Treated (95% CI)` = uplift,
       `Coverage (%)` = cov,
       check.names = FALSE
     )
@@ -2195,6 +2402,7 @@ margot_policy_summary_report <- function(object,
   list(
     text = text,
     report = report_text,
+    report_prose = report_prose,
     interpretation = interpretation_text,
     table_md = table_md,
     table_df = tbl_df,
@@ -2223,8 +2431,12 @@ margot_policy_summary_report <- function(object,
   practical_takeaways_text = practical_takeaways_text,
     wins_model_ids = wins_model_ids,
     wins_model_names = wins_model_names,
+    borderline_model_ids = borderline_model_ids,
+    borderline_model_names = borderline_model_names,
     neutral_model_ids = neutral_model_ids,
     neutral_model_names = neutral_model_names,
+    inconclusive_model_ids = inconclusive_model_ids,
+    inconclusive_model_names = inconclusive_model_names,
     caution_model_ids = caution_model_ids,
     caution_model_names = caution_model_names,
     group_table = group_tables,

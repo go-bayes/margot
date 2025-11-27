@@ -1,0 +1,59 @@
+# margot
+
+![Margot package logo showing the package
+name](reference/figures/margot.png)
+
+> **⚠️ IMPORTANT**: The margot package is undergoing refactoring as we
+> transition to the **margotverse** suite of packages. The package will
+> be split into focuse. Please expect breaking changes in upcoming
+> releases.
+
+**MARG**inal **O**bservational **T**reatment-effects.[^1]
+
+Causal inference requires **balance** across the treatments to be
+compared. In observational studies, such balance is not guaranteed;
+quantifying causality therefore requires careful, multi-step workflows.
+
+The goal of `margot` is to enhance understanding of causality in
+observational research.
+
+The package offers functions for:
+
+- evaluating causal assumptions
+- modelling time-series data
+- reporting results
+- performing sensitivity analyses
+
+`margot` streamlines the estimation of (Marginal) Average Treatment
+Effects (ATT, ATE), but it also supports workflows for Heterogeneous
+Treatment Effects (CATE) (estimated via `grf`), as well as Longitudinal
+Modified Treatment Policies (estimated via `lmtp`). It has extensive
+graphical and reporting functions to ease burdens for understanding.
+
+## LMTP positivity diagnostics
+
+For longitudinal overlap checks,
+[`margot_plot_lmtp_overlap_grid()`](https://go-bayes.github.io/margot/reference/margot_plot_lmtp_overlap_grid.md)
+now:
+
+- Automatically arranges panels by **shifts × waves** and respects the
+  shift order you request.
+- Uses the expanded “lab” palette (grey `null`, blue `shift_zero`,
+  distinct oranges for IPSI shifts) so panels stay visually consistent
+  across waves.
+- Applies sensible defaults for headroom and axis harmonisation—no need
+  to hand-tune `layout`, `ymax_harmonize`, or `xlim_harmonize`.
+- Treats the legacy `layout` argument as deprecated: it always reverts
+  to the stable shifts-by-waves layout (with a CLI note if a different
+  value is supplied).
+
+Pair these plots with
+[`margot_interpret_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
+for per-wave ESS and tail diagnostics computed on uncensored weights.
+
+[^1]: The logo is a *Single World Intervention Template* (SWIT). We use
+    a SWIT to generate *Single World Intervention Graphs* (SWIGs) –
+    causal diagrams for which identification assumptions can be read
+    separately for each treatment (regime) to be compared. The name
+    `margot` reflects the contents and aims of this package; it is also
+    the name of my daughter, Margot.

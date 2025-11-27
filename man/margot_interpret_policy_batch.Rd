@@ -63,8 +63,12 @@ output_format ("bullet" or "prose"), original_df, label_mapping, and policy valu
 }
 \value{
 A single character string containing the combined markdown output. When
-  `return_as_list = TRUE`, returns a list with the full report, brief summary,
-  per-model sections, policy value explanation, and `model_depths`/`depth_map`.
+  `return_as_list = TRUE`, returns a list with:
+  - `report_detail`: The full detailed interpretation text
+  - `report_brief`: Brief treated-only summary lines (if `brief = TRUE`)
+  - `by_model`: List of per-model interpretation sections
+  - `policy_value_explanation`: Short explanation of policy value terms
+  - `model_depths` / `depth_map`: Named vector of depths used per model
 }
 \description{
 This function now accepts a vector of model names to process and produces

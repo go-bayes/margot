@@ -1,0 +1,261 @@
+# Create a Slope Plot for Multiple Variables
+
+This function creates a ggplot2 visualization to show trends in multiple
+variables over time. It's possible to add vertical lines at significant
+events. The function now also counts and reports the number of unique
+participants and observations. It includes options for faceting to avoid
+overplotting when dealing with multiple variables.
+
+## Usage
+
+``` r
+margot_plot_slope(
+  data,
+  y_vars,
+  event_dates = NULL,
+  event_names = NULL,
+  start_date = NULL,
+  end_date = NULL,
+  title = NULL,
+  y_label = NULL,
+  x_label = NULL,
+  data_fraction = 1,
+  seed = 12345,
+  plot_points = FALSE,
+  point_alpha = 0.03,
+  jitter_width = 1,
+  base_date = as.Date("2009-06-30"),
+  save_path = NULL,
+  width = 12,
+  height = 8,
+  event_line_color = "darkred",
+  event_line_alpha = 0.7,
+  event_line_type = "dashed",
+  event_line_width = 0.5,
+  event_label_size = 3,
+  event_label_color = "darkred",
+  legend_position = "bottom",
+  use_title_case = TRUE,
+  remove_underscores = TRUE,
+  y_limits = NULL,
+  color_palette = NULL,
+  use_facets = TRUE,
+  facet_scales = "free_y",
+  facet_ncol = NULL,
+  facet_nrow = NULL
+)
+```
+
+## Arguments
+
+- data:
+
+  A data frame containing the variables to be plotted.
+
+- y_vars:
+
+  A list of variable names or a single variable name to be plotted on
+  the y-axis.
+
+- event_dates:
+
+  An optional vector of dates representing the events.
+
+- event_names:
+
+  An optional vector of names for the events. If NULL, events will be
+  labeled "Event 1", "Event 2", etc.
+
+- start_date:
+
+  An optional start date for the x-axis.
+
+- end_date:
+
+  An optional end date for the x-axis.
+
+- title:
+
+  An optional title for the plot. If NULL, an automatic title will be
+  generated including the count of participants and observations.
+
+- y_label:
+
+  An optional label for the y-axis.
+
+- x_label:
+
+  An optional label for the x-axis.
+
+- data_fraction:
+
+  The fraction of data to use. Default is 1 (use all data).
+
+- seed:
+
+  An optional seed for reproducibility when sampling data.
+
+- plot_points:
+
+  Logical, whether to plot individual data points. Default is FALSE.
+
+- point_alpha:
+
+  The alpha (transparency) of the data points. Default is 0.03.
+
+- jitter_width:
+
+  The width of the jitter for the data points. Default is 1.
+
+- base_date:
+
+  The base date for the timeline. Default is "2009-06-30".
+
+- save_path:
+
+  An optional path to save the plot.
+
+- width:
+
+  The width of the saved plot in inches. Default is 12.
+
+- height:
+
+  The height of the saved plot in inches. Default is 8.
+
+- event_line_color:
+
+  The color of the event lines. Default is "darkred".
+
+- event_line_alpha:
+
+  The alpha of the event lines. Default is 0.7.
+
+- event_line_type:
+
+  The type of the event lines. Default is "dashed".
+
+- event_line_width:
+
+  The width of the event lines. Default is 0.5.
+
+- event_label_size:
+
+  The size of the event labels. Default is 3.
+
+- event_label_color:
+
+  The color of the event labels. Default is "darkred".
+
+- legend_position:
+
+  The position of the legend. Default is "bottom".
+
+- use_title_case:
+
+  Logical, whether to use title case for labels. Default is TRUE.
+
+- remove_underscores:
+
+  Logical, whether to remove underscores from labels. Default is TRUE.
+
+- y_limits:
+
+  An optional vector of two numbers specifying the y-axis limits.
+
+- color_palette:
+
+  An optional custom color palette. If NULL, a default palette will be
+  used.
+
+- use_facets:
+
+  Logical, whether to use faceting for multiple variables. Default is
+  TRUE.
+
+- facet_scales:
+
+  The scales parameter for facet_wrap. Default is "free_y".
+
+- facet_ncol:
+
+  The number of columns for facet_wrap. Default is NULL.
+
+- facet_nrow:
+
+  The number of rows for facet_wrap. Default is NULL.
+
+## Value
+
+A ggplot2 object representing the slope plot.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(here)
+
+# Basic usage with a single variable
+single_var_plot <- margot_plot_slope(
+  data = dat,
+  y_vars = "warm_muslims",
+  start_date = "2012-06-06",
+  y_label = "Warmth",
+  x_label = "NZAVS Time 4 - 14 Cohort (2012-2023)"
+)
+
+# Multiple variables with events and custom y-axis limits
+multi_var_plot <- margot_plot_slope(
+  data = dat,
+  y_vars = list("warm_muslims", "warm_immigrants"),
+  event_dates = c("2019-03-15", "2021-01-01"),
+  event_names = c("Christchurch Attack", "COVID-19 Lockdown"),
+  start_date = "2012-06-06",
+  y_label = "Warmth",
+  x_label = "NZAVS Time 4 - 14 Cohort (2012-2023)",
+  y_limits = c(1, 7),
+  use_facets = TRUE
+)
+
+# Plot with points, using a subset of data and custom facet layout
+point_plot <- margot_plot_slope(
+  data = dat,
+  y_vars = list("warm_asians", "warm_pacific", "warm_immigrants"),
+  plot_points = TRUE,
+  point_alpha = 0.05,
+  data_fraction = 0.1,
+  seed = 123,
+  y_label = "Warmth",
+  use_facets = TRUE,
+  facet_ncol = 2
+)
+
+# Save the plot
+saved_plot <- margot_plot_slope(
+  data = dat,
+  y_vars = list("political_orientation", "social_dominance_orientation"),
+  save_path = here::here("outputs", "plots"),
+  width = 10,
+  height = 6,
+  use_facets = TRUE
+)
+
+# Custom styling and color palette
+custom_plot <- margot_plot_slope(
+  data = dat,
+  y_vars = list("sat_government", "sat_nz_econ_conditions"),
+  event_dates = "2017-10-26",
+  event_names = "2017 Election",
+  y_label = "Satisfaction Level (0-10)",
+  y_limits = c(0, 10),
+  event_line_color = "blue",
+  event_label_color = "blue",
+  legend_position = "top",
+  color_palette = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"),
+  use_facets = TRUE
+)
+} # }
+```

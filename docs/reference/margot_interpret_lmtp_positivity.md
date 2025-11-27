@@ -1,0 +1,235 @@
+# Interpret LMTP positivity via effective sample sizes
+
+Builds a concise textual summary of LMTP density-ratio diagnostics for a
+single outcome. For each requested shift, the function computes
+effective sample sizes (ESS) by wave and for the pooled person-time
+using \`colSums()\` over the underlying density ratios. The output
+mirrors the filtering and labelling conventions used by
+\[\`margot_plot_lmtp_overlap_grid()\`\] for consistency between prose
+and graphics.
+
+## Usage
+
+``` r
+margot_interpret_lmtp_positivity(
+  x,
+  outcome,
+  shifts = NULL,
+  label_mapping = NULL,
+  waves = NULL,
+  remove_waves = NULL,
+  digits = 2,
+  trim_right = 0.999,
+  include_methods = FALSE,
+  include_diagnostics = FALSE,
+  include_ipsi_context = TRUE,
+  treatment_label = NULL,
+  ipsi_example_g = NULL,
+  include_policy_rates = TRUE,
+  policy_rate_threshold = 0,
+  policy_rate_strict = TRUE,
+  include_deterministic_context = TRUE,
+  include_tests = TRUE,
+  test_thresholds = NULL,
+  include_ipsi_recommend = TRUE,
+  include_test_explanations = FALSE,
+  return = c("text", "list")
+)
+
+margot_interpret_lmtp_overlap(...)
+```
+
+## Arguments
+
+- x:
+
+  LMTP run output (e.g., the result of \[margot_lmtp()\]) or any object
+  that exposes \`\$density_ratios\` in the same structure as the plot
+  helpers.
+
+- outcome:
+
+  Character scalar giving the outcome name to summarise.
+
+- shifts:
+
+  Optional character vector of shifts to include (either full names such
+  as \`t5_pwi_z_shift_up\` or cleaned suffixes such as \`shift_up\`). If
+  \`NULL\`, all available shifts for the outcome are used.
+
+- label_mapping:
+
+  Optional named list passed to \[transform_label()\] for readable
+  outcome/shift labels.
+
+- waves:
+
+  Optional integer vector of wave indices to keep (matching the column
+  positions used by the overlap plot). Defaults to all available waves.
+
+- remove_waves:
+
+  Optional integer vector of waves to exclude after any inclusion via
+  \`waves\`.
+
+- digits:
+
+  Integer number of decimal places to use when reporting ESS-based
+  fractions (e.g., \`ESS/N\`).
+
+- trim_right:
+
+  Numeric in (0, 1\]; optional per-wave winsorisation level applied
+  before forming cumulative density-ratio products (default 0.999).
+
+- include_methods:
+
+  Logical; if TRUE, prepends a methodological explanation of density
+  ratios, their interpretation, and ESS computation (default: FALSE).
+
+- include_diagnostics:
+
+  Logical; if TRUE, appends detailed diagnostics per shift including
+  zeros, range, quantiles, and tail probabilities (default: FALSE).
+
+- include_ipsi_context:
+
+  Logical; if TRUE and any \`ipsi\_\*\` shifts are included, prepends a
+  short IPSI context block that explains the policy on the probability
+  (risk) scale with a simple formula and small illustrative translations
+  (default: TRUE).
+
+- treatment_label:
+
+  Character label used for \$A_t\$ in the IPSI context block. If NULL,
+  attempts to infer a domain-appropriate label from model/shift names
+  (e.g., "attendance" when shift/outcome names contain religious service
+  keywords); otherwise falls back to "exposure". Default: NULL.
+
+- ipsi_example_g:
+
+  Numeric vector of example baseline risks g used to illustrate the
+  transformation q = delta \* g / ((1 - g) + delta \* g) for the
+  included delta values (default: \`c(0.05, 0.10, 0.20)\`).
+
+- include_policy_rates:
+
+  Logical; if TRUE and exposure-by-wave data are available and aligned
+  with the density ratios, reports policy-implied exposure probabilities
+  by wave using the reweighted mean p_hat_t = sum(r_i,t \* A_i,t) /
+  sum(r_i,t) on uncensored rows (default: TRUE). If required inputs are
+  missing, silently skips this section.
+
+- policy_rate_threshold:
+
+  Numeric; when computing policy rates and the attached exposure columns
+  are counts or continuous, converts them to a binary indicator 1(A_t op
+  tau) before aggregation. Default tau = 0 (i.e., any exposure).
+
+- policy_rate_strict:
+
+  Logical; comparison operator used with the threshold when building the
+  indicator: if TRUE uses '\>' (strict), else uses '\>=' (inclusive).
+  Default TRUE.
+
+- include_deterministic_context:
+
+  Logical; if TRUE and any deterministic shifts are present (e.g., names
+  starting with \`shift\_\`), prepends a concise description of
+  history‑dependent policies (e.g., A_t^d := d_t(A_t, H_t)) and, when
+  possible, lists the named deterministic policies included (default:
+  TRUE).
+
+- include_tests:
+
+  Logical; if TRUE, runs extra overlap/positivity checks and prints CLI
+  messages summarising results (near‑zero uniform weights, product‑of‑r
+  collapse, monotone support checks). Default TRUE.
+
+- test_thresholds:
+
+  Named list of thresholds for \`include_tests\`. Recognised names:
+  \`near_zero_median\` (default 1e-3), \`near_zero_cv\` (0.05),
+  \`prod_log10\` (-8), and \`prod_frac_warn\` (0.20). Unrecognised
+  entries are ignored.
+
+- include_ipsi_recommend:
+
+  Logical; if TRUE and IPSI shifts are present, evaluates candidate
+  deltas using the same tests and prints a recommendation for the
+  largest delta that passes guardrails. Also adds an "IPSI
+  Recommendation" section to the returned text. Default TRUE.
+
+- include_test_explanations:
+
+  Logical; if TRUE, adds a short "Test Explanations" section that
+  explains near‑zero flags, the product‑of‑r summary, and how censoring
+  is handled via IPCW. Default FALSE.
+
+- return:
+
+  Character; either \`"text"\` (default, a single markdown-ready string)
+  or \`"list"\` (detailed components including the computed ESS tables).
+
+## Value
+
+Either a single character string (default) or a list containing the
+header, per-shift lines, overview text, and the underlying ESS summaries
+when \`return = "list"\`.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Basic usage
+txt <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  label_mapping = label_mapping
+)
+cat(txt)
+
+# With methodological explanation
+txt_methods <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  label_mapping = label_mapping,
+  include_methods = TRUE
+)
+cat(txt_methods)
+
+# With detailed diagnostics
+txt_diagnostics <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  label_mapping = label_mapping,
+  include_diagnostics = TRUE
+)
+cat(txt_diagnostics)
+
+# Complete report with methods and diagnostics
+txt_full <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  label_mapping = label_mapping,
+  include_methods = TRUE,
+  include_diagnostics = TRUE
+)
+cat(txt_full)
+
+# Get structured list output
+result <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  include_methods = TRUE,
+  include_diagnostics = TRUE,
+  return = "list"
+)
+# Access components: result$methods, result$diagnostics, result$shifts
+} # }
+```

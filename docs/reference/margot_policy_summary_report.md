@@ -1,0 +1,324 @@
+# Policy Tree Summary Report (text + markdown table)
+
+Generates a concise textual summary and a markdown table for policy tree
+results (typically from \`margot_policy_tree_stability()\`). The report
+focuses on: - Policy value vs control-all and vs treat-all (95 - Average
+uplift among treated (95 - Optional stability highlights (consensus
+strength and top split variable) - Optional split breakdown: per-branch
+selective uplifts and contributions - Optional Signals Worth Monitoring
+ranking (large magnitude, low certainty)
+
+## Usage
+
+``` r
+margot_policy_summary_report(
+  object,
+  model_names = NULL,
+  depth = 2L,
+  depths_by_model = NULL,
+  R = 499L,
+  seed = 42L,
+  label_mapping = NULL,
+  digits = 3,
+  include_stability = TRUE,
+  include_explanation = TRUE,
+  table_type = c("full", "treated_only"),
+  original_df = NULL,
+  verbose = TRUE,
+  report_df = NULL,
+  order_by = c("pv_control_all", "uplift_treated", "none"),
+  decreasing = TRUE,
+  filter_significant = FALSE,
+  alpha = 0.05,
+  group_by_sign = TRUE,
+  compact = FALSE,
+  render_markdown = TRUE,
+  include_split_breakdown = c("branch", "leaf", "none"),
+  split_compact = TRUE,
+  contrib_scale = c("rel_abs", "rel_signed", "abs"),
+  show_pvt = FALSE,
+  show_ci_compact = TRUE,
+  min_action_pct = 5,
+  split_drop_zero = TRUE,
+  split_top_only = FALSE,
+  se_method = c("bootstrap", "plugin"),
+  source_models = NULL,
+  audit_with_policytree = FALSE,
+  auto_recommend = FALSE,
+  dominance_threshold = 0.6,
+  strict_branch = FALSE,
+  restricted_scope = c("leaf", "branch"),
+  audience = c("policy", "research"),
+  show_neutral = NULL,
+  signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
+  signals_k = 3,
+  report_format = c("bullets", "prose"),
+  include_acronyms = FALSE,
+  return_unit_masks = FALSE
+)
+```
+
+## Arguments
+
+- object:
+
+  A \`margot_stability_policy_tree\` object.
+
+- model_names:
+
+  Optional character vector of outcome names (with or without
+  \`model\_\` prefix). Default: all models in \`object\`.
+
+- depth:
+
+  Integer; policy tree depth to summarize (default 2).
+
+- depths_by_model:
+
+  Optional named vector/list mapping models (with or without \`model\_\`
+  prefix) to depth 1 or 2; overrides \`depth\` on a per-model basis so
+  mixed-depth reports can be generated.
+
+- R:
+
+  Integer ≥ 199; bootstrap replicates for reporter CIs (default 499).
+
+- seed:
+
+  Integer or NULL; RNG seed (default 42).
+
+- label_mapping:
+
+  Optional named list for display labels.
+
+- digits:
+
+  Integer; rounding for numeric displays (default 3).
+
+- include_stability:
+
+  Logical; include stability highlights per model (default TRUE).
+
+- include_explanation:
+
+  Logical; include policy value explanation block (default TRUE).
+
+- table_type:
+
+  Character; one of "full" (default) or "treated_only" for condensed
+  table.
+
+- include_split_breakdown:
+
+  Character; one of "branch" (default), "leaf", or "none". Adds a
+  compact per-split summary per model with action-conditional
+  treated-only uplift(s) and contributions to policy value vs
+  control-all and vs treat-all. Coherent by construction: we only report
+  uplift among treated in treated subgroups and uplift among controlled
+  in controlled subgroups.
+
+- split_compact:
+
+  Logical; if TRUE (default), builds compact split tables from
+  \`split_breakdown\` with reduced columns.
+
+- contrib_scale:
+
+  Character; one of "rel_abs" (default, signed share of \|PV\|),
+  "rel_signed" (share of signed PV), or "abs" (raw contribution values).
+
+- show_pvt:
+
+  Logical; include PV vs treat-all contribution column in compact tables
+  (default FALSE).
+
+- show_ci_compact:
+
+  Logical; include CIs in compact tables (default TRUE).
+
+- min_action_pct:
+
+  Numeric (default 5); below this percent treated or controlled in a
+  split, suppress the corresponding action-specific uplift (report as
+  "—").
+
+- split_drop_zero:
+
+  Logical (default TRUE); drop split rows whose PV contributions are
+  numerically zero for both baselines in the compact tables.
+
+- split_top_only:
+
+  Logical (default FALSE); when TRUE, retain only the top-contributing
+  split per model in the compact tables (helpful for depth-1 trees where
+  complementary branches are redundant).
+
+- se_method:
+
+  Character; one of "bootstrap" (default) or "plugin" for
+  influence-function plug-in SEs based on per-unit DR contributions.
+
+- source_models:
+
+  Optional original model container (e.g., from
+  \`margot_causal_forest()\`) if you wish to run external audits; not
+  required for estimation.
+
+- audit_with_policytree:
+
+  Logical; if TRUE and \`source_models\` are available, performs a
+  side-by-side audit using the original GRF predictions on the same test
+  rows: (i) tau_hat-based policy values PVc = mean(1a=Treat×tau_hat),
+  PVT = mean(1a=Control×(-tau_hat)); and (ii) conditional-means-based
+  values using \`conditional_means\` if present. This helps validate
+  that DR-based values agree with GRF-based alternatives on the same
+  evaluation slice.
+
+- auto_recommend:
+
+  Logical; if TRUE, compute and report restricted-policy recommendations
+  derived from dominant favorable split(s). Default FALSE.
+
+- dominance_threshold:
+
+  Numeric in (0,1); minimum share of \|PV(control-all)\| contribution to
+  consider a split dominant (default 0.6).
+
+- strict_branch:
+
+  Logical; if TRUE, require positive branch-level treated-only uplift
+  with CI lower bound \> 0 to consider a branch favorable (default
+  FALSE).
+
+- restricted_scope:
+
+  Character; one of "leaf" (default) or "branch"; defines the
+  granularity used to construct the restricted policy (treat inside
+  selected branch/leaf; control elsewhere).
+
+- show_neutral:
+
+  Logical or NULL; controls inclusion of the Neutral group. Default NULL
+  shows Neutral for research audiences and hides it for policy
+  audiences. Set TRUE/FALSE to override explicitly.
+
+- signal_score:
+
+  Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When
+  not "none", the summary text includes a "Signals Worth Monitoring"
+  section ranking Neutral models by the selected score (magnitude
+  relative to uncertainty) and stores a \`signals_df\` data frame in the
+  returned list.
+
+- signals_k:
+
+  Integer; number of top signals to display when \`signal_score !=
+  "none"\`.
+
+- report_format:
+
+  Character; one of "bullets" (default) or "prose". When "prose",
+  generates flowing paragraphs suitable for direct inclusion in
+  scientific reports instead of bullet-point lists.
+
+- include_acronyms:
+
+  Logical; if TRUE, append a list of common acronyms (RWA, SDO, PWI,
+  NZSEI) to the policy value explanation. Default FALSE.
+
+## Value
+
+A list with: - \`text\`: Combined summary text (character scalar) -
+\`report\`: Narrative policy summary (uses \`report_format\` selection:
+bullets or prose) - \`report_prose\`: Prose-style narrative suitable for
+scientific papers (always generated) - \`interpretation\`: Concise
+sentence-level summary listing wins, caution, and uncertain models -
+\`table_md\`: Markdown table (character scalar) when \`render_markdown =
+TRUE\` - \`table_df\`: Data frame of policy value summary rows
+(title-case columns) - \`split_breakdown\`: Named list mapping model id
+-\> data frame of split-level metrics - \`split_table_compact\`: Named
+list mapping model id -\> compact split table (data frame) -
+\`split_table_compact_df\`: Combined compact split table with
+\`Outcome\` column - \`split_table_compact_md\`: Markdown rendering of
+combined compact table - \`method_overview\`: Character string
+describing the estimation approach and identities - \`method_by_model\`:
+Named list of per-model method blurbs (including n_eval, coverage, SE
+method) - \`policy_value_audit\`: Optional named list of audit results
+when \`audit_with_policytree = TRUE\` - \`recommendations_by_model\`:
+Optional per-model recommendation objects when \`auto_recommend =
+TRUE\` - \`recommendations_text\`: Optional combined markdown text for
+recommendations - \`recommended_model_ids\`: Character vector of model
+identifiers flagged for deployment - \`recommended_model_names\`:
+Character vector of human-readable labels for the recommended models -
+\`practical_takeaways_text\`: Optional high-level bullet summary of
+deployment guidance - \`wins_model_ids\`: Character vector of model
+identifiers where policy vs control-all is strictly positive (CI \> 0) -
+\`wins_model_names\`: Character vector of human-readable labels matching
+\`wins_model_ids\` - \`borderline_model_ids\`: Character vector of model
+identifiers with borderline positive evidence (CI marginally crosses
+zero but point estimate positive) - \`borderline_model_names\`:
+Character vector of human-readable labels matching
+\`borderline_model_ids\` - \`neutral_model_ids\`: Character vector of
+model identifiers with CI crossing zero (includes both borderline and
+inconclusive) - \`neutral_model_names\`: Character vector of
+human-readable labels matching \`neutral_model_ids\` -
+\`inconclusive_model_ids\`: Character vector of model identifiers with
+truly inconclusive evidence (CI clearly spans zero) -
+\`inconclusive_model_names\`: Character vector of human-readable labels
+matching \`inconclusive_model_ids\` - \`caution_model_ids\`: Character
+vector of model identifiers where policy vs control-all is negative (CI
+\< 0) - \`caution_model_names\`: Character vector of human-readable
+labels matching \`caution_model_ids\` - \`group_table\`: Named list of
+grouped brief tables (data frames) - \`group_table_df\`: Combined
+grouped table with a \`Group\` column - \`model_depths\`: Named integer
+vector giving the depth used for each model in the report -
+\`depth_map\`: Convenience alias for \`model_depths\` (for passing to
+\`depths_by_model\`) - \`depth1_model_ids\`: Character vector of model
+identifiers summarised at depth 1 - \`depth1_model_names\`: Character
+vector of human-readable labels for depth-1 models -
+\`depth2_model_ids\`: Character vector of model identifiers summarised
+at depth 2 - \`depth2_model_names\`: Character vector of human-readable
+labels for depth-2 models - \`recommended_depth1_model_ids\`:
+Recommended-for-deployment models evaluated at depth 1 -
+\`recommended_depth1_model_names\`: Human-readable labels for
+recommended depth-1 models - \`recommended_depth2_model_ids\`:
+Recommended-for-deployment models evaluated at depth 2 -
+\`recommended_depth2_model_names\`: Human-readable labels for
+recommended depth-2 models
+
+## Details
+
+Method (estimation and identities): - For each model and depth, we
+evaluate the consensus policy on the held-out test set used to build
+\`plot_data\` (policytree test indices). - Let μ0(x), μ1(x) be
+conditional means E\[Y(0)\|X=x\], E\[Y(1)\|X=x\] estimated by
+policytree/GRF. We use \`double_robust_scores()\` stored in
+\`dr_scores\` to obtain per-unit estimates for μ0 and μ1 on the test
+rows, and we predict policy actions a(x) from the consensus policy tree.
+We ensure all quantities are aligned to the same test rows by mapping
+via rownames and a single complete-case mask over the policy columns. -
+Policy value contrasts are computed as sample averages (plugin DR
+estimators): PV vs control-all = mean( 1a(x)=Treat × (μ1(x) − μ0(x)) )
+PV vs treat-all = mean( 1a(x)=Control × (μ0(x) − μ1(x)) ) - Treated-only
+metrics link to these via the identity: Coverage = mean(1a(x)=Treat),
+Uplift_Treated = mean(μ1 − μ0 \| a(x)=Treat) PV vs control-all =
+Coverage × Uplift_Treated - Split contributions report the subgroup
+decomposition of these means over the first split (or leaves), and sum
+exactly to the overall policy values.
+
+Standard errors: - \`se_method = "bootstrap"\` (default): bootstrap
+resampling of the test rows and re-prediction of the policy actions to
+obtain SEs and CIs. - \`se_method = "plugin"\`: influence-function
+plug-in SEs via the sample variance of the per-unit contributions (e.g.,
+TreatMask × (μ1−μ0) for PV vs control-all); i.e., se =
+sd(contribution)/sqrt(n). This mimics the asymptotic SE used by
+policytree for value estimators based on DR pseudo-outcomes when raw (Y,
+W) are not required.
+
+Automated recommendations (optional): - When \`auto_recommend = TRUE\`,
+the reporter identifies a dominant favorable split (by PV(control-all)
+contribution share) and evaluates a restricted policy that treats only
+inside that split (keeps the learned actions there; forces control
+elsewhere). It then compares full vs restricted policies and emits a
+recommendation per model: deploy_full, deploy_restricted, caution, or
+do_not_deploy.

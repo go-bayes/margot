@@ -45,6 +45,8 @@ margot_policy_summary_report(
   show_neutral = NULL,
   signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
   signals_k = 3,
+  report_format = c("bullets", "prose"),
+  include_acronyms = FALSE,
   return_unit_masks = FALSE
 )
 }
@@ -133,11 +135,19 @@ models by the selected score (magnitude relative to uncertainty) and stores a `s
 data frame in the returned list.}
 
 \item{signals_k}{Integer; number of top signals to display when `signal_score != "none"`.}
+
+\item{report_format}{Character; one of "bullets" (default) or "prose". When "prose",
+generates flowing paragraphs suitable for direct inclusion in scientific reports
+instead of bullet-point lists.}
+
+\item{include_acronyms}{Logical; if TRUE, append a list of common acronyms
+(RWA, SDO, PWI, NZSEI) to the policy value explanation. Default FALSE.}
 }
 \value{
 A list with:
   - `text`: Combined summary text (character scalar)
-  - `report`: Narrative policy summary formatted for scientific reporting
+  - `report`: Narrative policy summary (uses `report_format` selection: bullets or prose)
+  - `report_prose`: Prose-style narrative suitable for scientific papers (always generated)
   - `interpretation`: Concise sentence-level summary listing wins, caution, and uncertain models
   - `table_md`: Markdown table (character scalar) when `render_markdown = TRUE`
   - `table_df`: Data frame of policy value summary rows (title-case columns)
@@ -155,8 +165,12 @@ A list with:
   - `practical_takeaways_text`: Optional high-level bullet summary of deployment guidance
   - `wins_model_ids`: Character vector of model identifiers where policy vs control-all is strictly positive (CI > 0)
   - `wins_model_names`: Character vector of human-readable labels matching `wins_model_ids`
-  - `neutral_model_ids`: Character vector of model identifiers with inconclusive policy vs control-all evidence (CI crosses 0)
+  - `borderline_model_ids`: Character vector of model identifiers with borderline positive evidence (CI marginally crosses zero but point estimate positive)
+  - `borderline_model_names`: Character vector of human-readable labels matching `borderline_model_ids`
+  - `neutral_model_ids`: Character vector of model identifiers with CI crossing zero (includes both borderline and inconclusive)
   - `neutral_model_names`: Character vector of human-readable labels matching `neutral_model_ids`
+  - `inconclusive_model_ids`: Character vector of model identifiers with truly inconclusive evidence (CI clearly spans zero)
+  - `inconclusive_model_names`: Character vector of human-readable labels matching `inconclusive_model_ids`
   - `caution_model_ids`: Character vector of model identifiers where policy vs control-all is negative (CI < 0)
   - `caution_model_names`: Character vector of human-readable labels matching `caution_model_ids`
   - `group_table`: Named list of grouped brief tables (data frames)

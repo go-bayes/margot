@@ -15,7 +15,7 @@ per-model depth choices via `depths_by_model`."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.281</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.284</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -143,8 +143,12 @@ output_format ("bullet" or "prose"), original_df, label_mapping, and policy valu
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A single character string containing the combined markdown output. When
-  `return_as_list = TRUE`, returns a list with the full report, brief summary,
-  per-model sections, policy value explanation, and `model_depths`/`depth_map`.</p>
+  `return_as_list = TRUE`, returns a list with:
+  - `report_detail`: The full detailed interpretation text
+  - `report_brief`: Brief treated-only summary lines (if `brief = TRUE`)
+  - `by_model`: List of per-model interpretation sections
+  - `policy_value_explanation`: Short explanation of policy value terms
+  - `model_depths` / `depth_map`: Named vector of depths used per model</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -156,7 +160,7 @@ output_format ("bullet" or "prose"), original_df, label_mapping, and policy valu
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

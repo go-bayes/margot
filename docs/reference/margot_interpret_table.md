@@ -1,0 +1,87 @@
+# Interpret and Describe Causal Effect Estimates Using E-values (Deprecated)
+
+\`r lifecycle::badge("deprecated")\`
+
+This function is deprecated. Please use \`margot_interpret_marginal()\`
+instead.
+
+This function interprets the output of causal effect analysis, providing
+textual descriptions of causal effect estimates. It categorises the
+strength of evidence for causality based on E-values and confidence
+intervals, and generates a detailed interpretation of the effect
+estimates according to specified causal scales (i.e.,
+"causal_difference" or "risk_ratio") and estimands. This function
+supports interpreting results on both the causal difference and risk
+ratio scales.
+
+## Usage
+
+``` r
+margot_interpret_table(
+  df,
+  type = c("RD", "RR"),
+  estimand = NULL,
+  order = "default",
+  original_df = NULL
+)
+```
+
+## Arguments
+
+- df:
+
+  Data frame containing causal effect estimates, expected to include
+  columns for outcome names, effect estimates (either differences or
+  ratios), confidence intervals, E-values, and a summary estimate label.
+  The structure of \`df\` should align with the specified
+  \`causal_scale\`.
+
+- estimand:
+
+  Optional character string indicating the type of causal estimand
+  interpreted: "PATE" (Population Average Treatment Effect), "ATE"
+  (Average Treatment Effect), "ATT" (Average Treatment Effect in the
+  Treated), "CATE" (Conditional Average Treatment Effect), or "LMTP"
+  (Longitudinal Modified Treatment Policy). Default is NULL.
+
+- order:
+
+  Character string specifying the order of results. Default is
+  "default".
+
+- causal_scale:
+
+  Character string specifying the causal scale used in the analysis.
+  Currently supports "causal_difference" for differences in means or
+  medians, and "risk_ratio" for comparing ratios of probabilities or
+  risks.
+
+## Value
+
+A list containing two elements:
+
+- estimand_description:
+
+  A character string describing the specified estimand, or NULL if no
+  estimand was provided.
+
+- interpretation:
+
+  A character string containing a detailed interpretation of each
+  outcome in \`df\`, including the causal contrast, E-values, and the
+  strength of evidence for causality.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Assuming `group_tab_output` is the result from a causal analysis
+result <- margot_interpret_table(group_tab_output, "causal_difference", "ATE")
+cat(result$estimand_description)
+cat(result$interpretation)
+
+# Without specifying an estimand
+result <- margot_interpret_table(group_tab_output, "risk_ratio")
+cat(result$interpretation)
+} # }
+```

@@ -1,0 +1,85 @@
+# Visualise Shifts in Data Distributions with Highlighted Ranges (DEPRECATED)
+
+\`r lifecycle::badge("deprecated")\` This function is deprecated. Please
+use \`margot_plot_shift()\` instead.
+
+This function creates a histogram that highlights a specified range of
+values to visualize shifts in data distributions. The highlighted range
+can indicate areas of interest, such as shifts up or down in the
+distribution. This visualization is useful for understanding the
+implications of causal contrasts, such as modified treatment policies.
+The fill colour of the histogram is dynamically adjusted based on the
+specified direction of the shift.
+
+## Usage
+
+``` r
+coloured_histogram_shift(
+  df,
+  col_name,
+  binwidth = 1,
+  range_highlight = NULL,
+  shift = "up",
+  show_avg_line = TRUE
+)
+```
+
+## Arguments
+
+- df:
+
+  A dataframe containing the variable of interest.
+
+- col_name:
+
+  The name of the column in \`df\` to be visualized in the histogram.
+  This should be a numeric variable.
+
+- binwidth:
+
+  The width of the bins for the histogram. Default is 1. Adjust this
+  based on the distribution and scale of your data to create a
+  meaningful visualization.
+
+- range_highlight:
+
+  A numeric vector of length 2 specifying the start and end of the range
+  to highlight. If \`NULL\`, no range is highlighted.
+
+- shift:
+
+  A character string indicating the direction of the shift, with "up"
+  highlighting in gold and "down" highlighting in dodger blue. The
+  default is "up".
+
+- show_avg_line:
+
+  A logical value indicating whether to display a vertical line
+  representing the average value of the specified column using a red
+  dashed line. Default is \`TRUE\`.
+
+## Value
+
+A \`ggplot\` object representing the histogram with specified
+highlights. This object can be printed or further modified using
+\`ggplot2\` functions.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Assuming df_margot_example is your dataframe and it includes a numeric variable 'forgiveness'
+# Filter to a specific subset, for example, wave 1
+df_19 <- dplyr::filter(df_margot_example, wave == 1)
+
+# Create and print the histogram
+graph_density_of_exposure <- coloured_histogram_shift(
+  df = df_19,
+  shift = "down",
+  col_name = "forgiveness",
+  binwidth = .5, # Adjust binwidth for your data
+  range_highlight = c(3.9, 10)
+)
+print(graph_density_of_exposure)
+} # }
+```

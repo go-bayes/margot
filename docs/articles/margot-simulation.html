@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.281</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.284</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://go-bayes.github.io/margot">margot</a></span><span class="op">)</span>   <span class="co"># core simulation + estimation tools</span></span>
-<span><span class="co">#&gt; margot 1.0.281</span></span>
+<span><span class="co">#&gt; margot 1.0.284</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span>    <span class="co"># tidy manipulation</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
@@ -212,28 +212,28 @@ development)</td>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">basic_dat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; tibble [500 × 10] (S3: tbl_df/tbl/data.frame)</span></span>
 <span><span class="co">#&gt;  $ id: int [1:500] 1 2 3 4 5 6 7 8 9 10 ...</span></span>
-<span><span class="co">#&gt;  $ B1: num [1:500] -0.792 1.332 -0.245 -1.159 -1.712 ...</span></span>
-<span><span class="co">#&gt;  $ B2: num [1:500] 0.73 -1.733 0.283 -1.453 -0.11 ...</span></span>
-<span><span class="co">#&gt;  $ B3: num [1:500] 0.306 -2.069 -1.352 -2.105 -1.475 ...</span></span>
-<span><span class="co">#&gt;  $ B4: num [1:500] -0.647 0.231 -1.929 -0.545 0.299 ...</span></span>
-<span><span class="co">#&gt;  $ B5: num [1:500] -0.376 -0.302 -1.994 -0.312 -0.3 ...</span></span>
-<span><span class="co">#&gt;  $ B6: num [1:500] -0.201 -0.427 -0.402 -0.418 0.278 ...</span></span>
-<span><span class="co">#&gt;  $ B7: num [1:500] 0.128 1.205 -0.959 -1.054 -2.097 ...</span></span>
-<span><span class="co">#&gt;  $ B8: num [1:500] 0.206 0.174 -0.49 -0.459 0.583 ...</span></span>
-<span><span class="co">#&gt;  $ B9: num [1:500] -1.0513 0.0444 0.6933 0.0259 -0.7786 ...</span></span>
+<span><span class="co">#&gt;  $ B1: num [1:500] 0.132 0.863 0.214 -2.152 -0.852 ...</span></span>
+<span><span class="co">#&gt;  $ B2: num [1:500] -1.01 1.07 -1.95 -1.8 -1.41 ...</span></span>
+<span><span class="co">#&gt;  $ B3: num [1:500] -1.301 0.151 0.223 -0.939 -1.378 ...</span></span>
+<span><span class="co">#&gt;  $ B4: num [1:500] -0.31 0.577 -1.354 0.356 -0.213 ...</span></span>
+<span><span class="co">#&gt;  $ B5: num [1:500] -0.583 -0.177 -1.222 0.49 0.38 ...</span></span>
+<span><span class="co">#&gt;  $ B6: num [1:500] -0.287 -1.24 -0.61 -1.611 -1.148 ...</span></span>
+<span><span class="co">#&gt;  $ B7: num [1:500] -0.8515 0.5045 -0.4612 0.0602 0.6699 ...</span></span>
+<span><span class="co">#&gt;  $ B8: num [1:500] 0.6405 -2.0945 -1.6452 -0.6159 -0.0657 ...</span></span>
+<span><span class="co">#&gt;  $ B9: num [1:500] 0.559 -0.249 -0.309 -0.182 -1.007 ...</span></span>
 <span><span class="co">#&gt;  - attr(*, "margot_meta")=List of 2</span></span>
 <span><span class="co">#&gt;   ..$ args     : language margot_simulate(n = 500, waves = 3, seed = 2025)</span></span>
-<span><span class="co">#&gt;   ..$ timestamp: POSIXct[1:1], format: "2025-11-18 20:51:46"</span></span>
+<span><span class="co">#&gt;   ..$ timestamp: POSIXct[1:1], format: "2025-11-28 01:38:56"</span></span>
 <span></span>
 <span><span class="co"># summarize treatment and outcome</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">basic_dat</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"t1_A1"</span>, <span class="st">"t2_A1"</span>, <span class="st">"t3_A1"</span>, <span class="st">"t4_Y"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      t1_A1            t2_A1            t3_A1             t4_Y        </span></span>
-<span><span class="co">#&gt;  Min.   :0.0000   Min.   :0.0000   Min.   :0.0000   Min.   :-2.4453  </span></span>
-<span><span class="co">#&gt;  1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:-0.5044  </span></span>
-<span><span class="co">#&gt;  Median :0.0000   Median :0.0000   Median :0.0000   Median : 0.1533  </span></span>
-<span><span class="co">#&gt;  Mean   :0.4423   Mean   :0.4652   Mean   :0.3641   Mean   : 0.1401  </span></span>
-<span><span class="co">#&gt;  3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.: 0.9146  </span></span>
-<span><span class="co">#&gt;  Max.   :1.0000   Max.   :1.0000   Max.   :1.0000   Max.   : 2.7243  </span></span>
+<span><span class="co">#&gt;  Min.   :0.0000   Min.   :0.0000   Min.   :0.0000   Min.   :-2.5492  </span></span>
+<span><span class="co">#&gt;  1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:-0.5680  </span></span>
+<span><span class="co">#&gt;  Median :0.0000   Median :0.0000   Median :0.0000   Median : 0.2513  </span></span>
+<span><span class="co">#&gt;  Mean   :0.4423   Mean   :0.4652   Mean   :0.3641   Mean   : 0.1492  </span></span>
+<span><span class="co">#&gt;  3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.: 1.0270  </span></span>
+<span><span class="co">#&gt;  Max.   :1.0000   Max.   :1.0000   Max.   :1.0000   Max.   : 2.4752  </span></span>
 <span><span class="co">#&gt;  NA's   :136      NA's   :227      NA's   :305      NA's   :363</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -260,11 +260,11 @@ baseline covariate <code>B2</code>. We encode this via the
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_het</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">t4_Y</span> <span class="op">~</span> <span class="va">t3_A1</span> <span class="op">*</span> <span class="va">B2</span>, data <span class="op">=</span> <span class="va">het_dat</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_het</span><span class="op">)</span><span class="op">$</span><span class="va">coefficients</span></span>
-<span><span class="co">#&gt;               Estimate Std. Error    t value     Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; (Intercept) 0.01650478 0.03845638  0.4291819 6.678640e-01</span></span>
-<span><span class="co">#&gt; t3_A1       0.42220419 0.05588604  7.5547343 8.019120e-14</span></span>
-<span><span class="co">#&gt; B2          0.07359943 0.03916117  1.8793981 6.042006e-02</span></span>
-<span><span class="co">#&gt; t3_A1:B2    0.72038968 0.05588497 12.8905800 8.232715e-36</span></span></code></pre></div>
+<span><span class="co">#&gt;               Estimate Std. Error   t value     Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt; (Intercept) 0.01370956 0.03867721  0.354461 7.230526e-01</span></span>
+<span><span class="co">#&gt; t3_A1       0.42410945 0.05625734  7.538740 9.018607e-14</span></span>
+<span><span class="co">#&gt; B2          0.04897493 0.03731334  1.312531 1.895792e-01</span></span>
+<span><span class="co">#&gt; t3_A1:B2    0.57218904 0.05351406 10.692313 1.323361e-25</span></span></code></pre></div>
 <blockquote>
 <p><strong>Take-away.</strong> The interaction term
 (<code>t3_A1:B2</code>) recovers<br><span class="math inline">$\\beta_{\\text{het}} \\approx 0.6$</span>,
@@ -351,7 +351,7 @@ with and without <code>y_feedback</code>:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_color_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"No feedback"</span> <span class="op">=</span> <span class="st">"darkgray"</span>, </span>
 <span>                                <span class="st">"With feedback (0.8)"</span> <span class="op">=</span> <span class="st">"steelblue"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="margot-simulation_files/figure-html/feedback-plot-1.png" alt="Comparison of treatment probability trends" width="672"></p>
+<p><img src="margot-simulation_files/figure-html/feedback-plot-1.png" class="r-plt" alt="Comparison of treatment probability trends" width="672"></p>
 <p>Note: The <code>y_feedback</code> parameter affects how past outcomes
 influence future treatment assignment. The specific pattern depends on
 the interaction between outcome values, baseline covariates, and the
@@ -382,7 +382,7 @@ final observed wave in the heterogeneous-effects example.</p>
 <span>    fill <span class="op">=</span> <span class="st">"A1 at wave 3"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="margot-simulation_files/figure-html/positivity-plot-1.png" alt="Histogram showing propensity score distributions for treated and control groups with good overlap" width="672"></p>
+<p><img src="margot-simulation_files/figure-html/positivity-plot-1.png" class="r-plt" alt="Histogram showing propensity score distributions for treated and control groups with good overlap" width="672"></p>
 </div>
 <div class="section level2">
 <h2 id="censoring-missingness">4. Censoring &amp; missingness<a class="anchor" aria-label="anchor" href="#censoring-missingness"></a>
@@ -441,7 +441,7 @@ confounding.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
