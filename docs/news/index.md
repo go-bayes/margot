@@ -1,5 +1,13 @@
 # Changelog
 
+## \[2025-11-28\] margot 1.0.287
+
+#### Fixed
+
+- [`margot_plot_categorical()`](https://go-bayes.github.io/margot/reference/margot_plot_categorical.md):
+  Replaced Unicode sigma (σ) with “SD” in standard deviation labels to
+  fix encoding errors when rendering to PDF/docx via Quarto.
+
 ## \[2025-11-28\] margot 1.0.286
 
 #### Changed
