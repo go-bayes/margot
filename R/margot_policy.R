@@ -321,7 +321,7 @@ margot_policy <- function(
   }
 
   cli::cli_progress_done()
-  cli::cli_alert_success("margot_policy completed 👍")
+  cli::cli_alert_success("margot_policy completed")
   attr(output_list, "depth_map") <- model_depths
   output_list
 }

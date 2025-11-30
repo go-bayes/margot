@@ -102,7 +102,7 @@ margot_plot <- function(
   # apply correction -------------------------------------------------------
   if (adjust != "none") {
     cli::cli_alert_info(
-      "applying {adjust} correction (α = {alpha}) to confidence intervals"
+      "applying {adjust} correction (alpha = {alpha}) to confidence intervals"
     )
     corrected_table_df <- margot_correct_combined_table(
       raw_table_df,

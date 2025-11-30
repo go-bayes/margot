@@ -139,7 +139,7 @@ margot_plot_cv_results <- function(cv_results,
       "No multiple testing correction"
     } else {
       sprintf(
-        "%s correction (α = %.2f)",
+        "%s correction (alpha = %.2f)",
         tools::toTitleCase(method_details$adjust),
         method_details$alpha
       )
@@ -248,7 +248,7 @@ margot_plot_cv_results <- function(cv_results,
       )
   }
 
-  cli::cli_alert_success("CV results forest plot created successfully 👍")
+  cli::cli_alert_success("CV results forest plot created successfully")
   return(p)
 }
 

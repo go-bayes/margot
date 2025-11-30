@@ -951,7 +951,7 @@ create_cv_interpretation <- function(cv_results, alpha, adjust, num_folds, targe
   if (adjust == "bonferroni") {
     interpretation <- paste0(
       interpretation,
-      sprintf("Significance level: α = %.3f\n", alpha),
+      sprintf("Significance level: alpha = %.3f\n", alpha),
       sprintf("Multiple testing correction: %s\n\n", adjust_name)
     )
   } else {
@@ -1422,7 +1422,7 @@ interpret_single_cv_target <- function(cv_data, target, flipped_outcomes = NULL)
       paste0(
         "Evidence inconclusive for: ",
         paste(outcome_labels[inc], collapse = ", "),
-        " (p > α)."
+        " (p > alpha)."
       )
     )
   }

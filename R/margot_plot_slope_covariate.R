@@ -164,7 +164,7 @@ margot_plot_slope_covariate <- function(data,
         cli::cli_alert_info("No save path provided. Plot not saved.")
       }
 
-      cli::cli_alert_success("Margot plot ggeffects created successfully \U0001F44D")
+      cli::cli_alert_success("Margot plot ggeffects created successfully")
 
       return(list(plot = p, total_unique = total_unique, total_obs = total_obs, ids = filtered_data[[id_col]]))
     },

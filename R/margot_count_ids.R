@@ -207,7 +207,7 @@ margot_count_ids <- function(dat,
     n_wave_4plus = "In 4+ Previous Waves"
   )
 
-  cli::cli_alert_success("Participant count calculation completed \U0001F44D")
+  cli::cli_alert_success("Participant count calculation completed")
   return(results)
 }
 

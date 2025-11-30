@@ -1,4 +1,4 @@
-# End-to-end Policy Workflow (depth selection → report → interpretation)
+# End-to-end Policy Workflow (depth selection -\> report -\> interpretation)
 
 Runs depth comparison, produces a mixed-depth policy summary report, and
 (optionally) generates per-model interpretations. Designed as a one-call
@@ -91,7 +91,7 @@ margot_policy_workflow(
 
 - expand_acronyms:
 
-  Logical; if TRUE, expand common acronyms in labels (e.g., RWA →
+  Logical; if TRUE, expand common acronyms in labels (e.g., RWA -\>
   Right-Wing Authoritarianism (RWA)). You may also supply custom
   expansions via \`options(margot.boilerplate.acronyms = list(SES =
   "Socioeconomic Status"))\`.
@@ -105,7 +105,7 @@ margot_policy_workflow(
 - prefer_stability:
 
   Logical; if TRUE, raise the parsimony threshold for switching to
-  depth-2 (min_gain_for_depth_switch ≥ 0.01) to prefer depth-1 unless
+  depth-2 (min_gain_for_depth_switch \>= 0.01) to prefer depth-1 unless
   depth-2 gains are clearly larger.
 
 - signal_score:

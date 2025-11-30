@@ -212,7 +212,7 @@ margot_plot_response_timeline <- function(df_timeline,
     )
   }
 
-  cli::cli_alert_success(paste("Response timeline plot creation complete!", "\U0001F44D"))
+  cli::cli_alert_success("Response timeline plot creation complete")
 
   # Return the ggplot object
   return(gg)

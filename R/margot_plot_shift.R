@@ -154,7 +154,7 @@ margot_plot_shift <- function(df, col_name, binwidth = 1, range_highlight = NULL
         cli::cli_alert_info("No save path provided. Plot not saved.")
       }
 
-      cli::cli_alert_success("Margot plot shift created successfully \U0001F44D")
+      cli::cli_alert_success("Margot plot shift created successfully")
       return(p)
     },
     error = function(e) {

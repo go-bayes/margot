@@ -414,7 +414,7 @@ margot_plot_slope <- function(data,
         cli::cli_alert_info("No save path provided. Plot not saved.")
       }
 
-      cli::cli_alert_success("Margot plot slope created successfully \U0001F44D")
+      cli::cli_alert_success("Margot plot slope created successfully")
 
       # return the ggplot object
       return(p)

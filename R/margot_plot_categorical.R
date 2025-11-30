@@ -165,11 +165,11 @@ margot_plot_categorical <- function(
           geom_vline(xintercept = hi, linetype = "dotted", linewidth = 0.5)
         if (print_summary) {
           p <- p + annotate("text",
-            x = lo, label = paste0(sd_multipliers[1], "SD"), y = 0,
+            x = lo, label = paste0(sd_multipliers[1], " SD"), y = 0,
             hjust = 1.1, vjust = -0.5
           ) +
             annotate("text",
-              x = hi, label = paste0("+", sd_multipliers[2], "SD"), y = 0,
+              x = hi, label = paste0("+", sd_multipliers[2], " SD"), y = 0,
               hjust = -0.1, vjust = -0.5
             )
         }

@@ -177,7 +177,7 @@ margot_impute_carry_forward <- function(
         }
       }
     }
-    cli::cli_alert_success("Imputation done 👍")
+    cli::cli_alert_success("Imputation done")
   }
 
   return(out)
@@ -364,7 +364,7 @@ margot_impute_carry_forward <- function(
 #'         }
 #'       }
 #'     }
-#'     cli::cli_alert_success("Imputation done 👍")
+#'     cli::cli_alert_success("Imputation done")
 #'   }
 #'
 #'   return(out)

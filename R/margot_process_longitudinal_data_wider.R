@@ -204,11 +204,11 @@ margot_process_longitudinal_data_wider <- function(
     order_cols <- c(order_cols, others, zcols, expo, nl, lc)
   }
   df <- df[, intersect(order_cols, names(df))]
-  cli::cli_alert_success("reordered columns 👍")
+  cli::cli_alert_success("reordered columns")
 
   # summary
   cli::cli_h2("summary")
-  cli::cli_alert_info("rows: {nrow(df)}, cols: {ncol(df)}, waves: {length(time_points)} completed 👍")
+  cli::cli_alert_success("rows: {nrow(df)}, cols: {ncol(df)}, waves: {length(time_points)} completed")
 
   df
 }

@@ -660,7 +660,7 @@ margot_lmtp_combine_and_contrast <- function(
     if (contrast_stats$errors > 0) {
       cli::cli_alert_danger("Errors: {contrast_stats$errors}")
     }
-    cli::cli_alert_success("Analysis complete \U0001F44D")
+    cli::cli_alert_success("Analysis complete")
   }
 
   models_out <- NULL

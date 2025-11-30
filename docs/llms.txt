@@ -285,7 +285,7 @@ for per-wave ESS and tail diagnostics computed on uncensored weights.
 - [`margot_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
   : Assemble a full LMTP positivity report
 - [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
-  : End-to-end Policy Workflow (depth selection → report →
+  : End-to-end Policy Workflow (depth selection -\> report -\>
   interpretation)
 - [`margot_subset_model()`](https://go-bayes.github.io/margot/reference/margot_subset_model.md)
   : Subset Model Results for Binary and Categorical Exposures

@@ -103,7 +103,7 @@ margot_interpret_policy_tree <- function(model,
   cli::cli_alert_success("Generated general interpretation")
 
   if (max_depth == 1L) {
-    # single split → two leaves
+    # single split -> two leaves
     n1 <- nodes[[1]]
     var1 <- cols[n1$split_variable]
     sp1 <- format_split(var1, n1$split_value)
@@ -114,19 +114,19 @@ margot_interpret_policy_tree <- function(model,
       text <- glue::glue(
         "#### Findings for {transform_var(model_name)} at the end of study\n\n",
         "The policy-tree analysis divides cases on baseline {transform_var(var1)}. ",
-        "Those who score ≤ {sp1} are advised {act_labels[leaf_left]}. ",
+        "Those who score <= {sp1} are advised {act_labels[leaf_left]}. ",
         "Those above {sp1} are advised {act_labels[leaf_right]}.\n\n"
       )
     } else {
       text <- glue::glue(
         "**Findings for {transform_var(model_name)} at the end of study:**\n\n",
         "Cases are split on baseline {transform_var(var1)} at {sp1}. ",
-        "Those with baseline {transform_var(var1)} ≤ threshold are recommended **{act_labels[leaf_left]}**, ",
+        "Those with baseline {transform_var(var1)} <= threshold are recommended **{act_labels[leaf_left]}**, ",
         "and those with baseline {transform_var(var1)} > threshold are recommended **{act_labels[leaf_right]}**.\n"
       )
     }
   } else {
-    # depth=2 → four leaves
+    # depth=2 -> four leaves
     n1 <- nodes[[1]]
     var1 <- cols[n1$split_variable]
     sp1 <- format_split(var1, n1$split_value)
@@ -145,7 +145,7 @@ margot_interpret_policy_tree <- function(model,
       text <- glue::glue(
         "#### Findings for {transform_var(model_name)} at the end of study\n\n",
         "The policy-tree analysis divides cases on baseline {transform_var(var1)}. ",
-        "Those who score ≤ {sp1} are then split on {transform_var(var2)}: ",
+        "Those who score <= {sp1} are then split on {transform_var(var2)}: ",
         "those at or below {sp2} are advised {act_labels[leaf_22]}, ",
         "and those above {sp2} are advised {act_labels[leaf_23]}.\n\n",
         "Those above {sp1} on {transform_var(var1)} split on {transform_var(var3)}: ",
@@ -155,14 +155,14 @@ margot_interpret_policy_tree <- function(model,
     } else {
       text <- glue::glue(
         "**Findings for {transform_var(model_name)} at the end of study:**\n\n",
-        "Split 1: baseline {transform_var(var1)} ≤ {sp1}.  ",
-        "Within that subgroup, split 2a: baseline {transform_var(var2)} ≤ {sp2}, ",
-        "→ **{act_labels[leaf_22]}**; ",
-        "baseline {transform_var(var2)} > {sp2} → **{act_labels[leaf_23]}**.\n\n",
+        "Split 1: baseline {transform_var(var1)} <= {sp1}.  ",
+        "Within that subgroup, split 2a: baseline {transform_var(var2)} <= {sp2}, ",
+        "-> **{act_labels[leaf_22]}**; ",
+        "baseline {transform_var(var2)} > {sp2} -> **{act_labels[leaf_23]}**.\n\n",
         "Split 2: baseline {transform_var(var1)} > {sp1}.  ",
-        "Within that subgroup, split 2b: baseline {transform_var(var3)} ≤ {sp3}, ",
-        "→ **{act_labels[leaf_32]}**; ",
-        "baseline {transform_var(var3)} > {sp3} → **{act_labels[leaf_33]}**.\n"
+        "Within that subgroup, split 2b: baseline {transform_var(var3)} <= {sp3}, ",
+        "-> **{act_labels[leaf_32]}**; ",
+        "baseline {transform_var(var3)} > {sp3} -> **{act_labels[leaf_33]}**.\n"
       )
     }
   }
@@ -426,9 +426,9 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
     if (use_math_notation) {
       text <- paste0(
         text,
-        "The following table shows conditional mean outcomes E[Y(a)|X∈leaf] for each treatment arm a∈{0,1}, ",
-        "where Y(a) denotes the potential outcome under treatment a. ",
-        "The conditional average treatment effect (CATE) is τ(x) = E[Y(1)|X∈leaf] - E[Y(0)|X∈leaf].\n\n"
+        "The following table shows conditional mean outcomes $E[Y(a)|X \\in \\text{leaf}]$ for each treatment arm $a \\in \\{0,1\\}$, ",
+        "where $Y(a)$ denotes the potential outcome under treatment $a$. ",
+        "The conditional average treatment effect (CATE) is $\\tau(x) = E[Y(1)|X \\in \\text{leaf}] - E[Y(0)|X \\in \\text{leaf}]$.\n\n"
       )
     } else {
       text <- paste0(
@@ -458,7 +458,7 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
         conditional_means = test_conditional_means,
         act_labels = act_labels,
         leaf_names = c(
-          paste0("baseline ", transform_var(var1), " ≤ ", round(split1, 3)),
+          paste0("baseline ", transform_var(var1), " <= ", round(split1, 3)),
           paste0("baseline ", transform_var(var1), " > ", round(split1, 3))
         ),
         use_math_notation = use_math_notation,
@@ -558,16 +558,16 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
       leaf_indices <- list(leaf1_idx, leaf2_idx, leaf3_idx, leaf4_idx)
       leaf_names <- c(
         paste0(
-          "baseline ", transform_var(var1), " ≤ ", round(split1, 3), " & baseline ",
-          transform_var(var2), " ≤ ", round(split2, 3)
+          "baseline ", transform_var(var1), " <= ", round(split1, 3), " & baseline ",
+          transform_var(var2), " <= ", round(split2, 3)
         ),
         paste0(
-          "baseline ", transform_var(var1), " ≤ ", round(split1, 3), " & baseline ",
+          "baseline ", transform_var(var1), " <= ", round(split1, 3), " & baseline ",
           transform_var(var2), " > ", round(split2, 3)
         ),
         paste0(
           "baseline ", transform_var(var1), " > ", round(split1, 3), " & baseline ",
-          transform_var(var3), " ≤ ", round(split3, 3)
+          transform_var(var3), " <= ", round(split3, 3)
         ),
         paste0(
           "baseline ", transform_var(var1), " > ", round(split1, 3), " & baseline ",
@@ -995,7 +995,7 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
 
         text <- paste0(
           text,
-          "* **Leaf ", i, "—", tolower(leaf_names[i]), "** ",
+          "* **Leaf ", i, " - ", tolower(leaf_names[i]), "** ",
           "(n = ", formatC(length(idx), format = "d", big.mark = ","), "; ", pct_of_test, "% of the test set): ",
           assignment_text, ". "
         )

@@ -482,7 +482,7 @@ margot_policy_summary_compare_depths <- function(object,
     items <- vapply(seq_len(nrow(df)), function(i) {
       lbl <- df$outcome_label[i]
       gain <- df$pv_gain[i]
-      if (is.na(gain)) lbl else paste0(lbl, " (Δ = ", round(gain, 3), ")")
+      if (is.na(gain)) lbl else paste0(lbl, " (delta = ", round(gain, 3), ")")
     }, character(1))
     paste(items, collapse = "; ")
   }

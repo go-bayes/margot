@@ -1,3 +1,16 @@
+# [2025-12-01] margot 1.0.288
+
+### Changed
+- Systematic removal of Unicode characters throughout the R codebase for improved cross-platform compatibility and encoding reliability:
+  - Replaced Unicode arrows (→) with ASCII equivalents (`->`) in CLI messages, comments, and output text.
+  - Replaced Unicode mathematical symbols (≥, ≤, Δ, α, μ, τ) with ASCII equivalents (`>=`, `<=`, `delta`, `alpha`, `mu`, `tau`) in user-facing messages.
+  - Replaced emoji thumbs up (👍, `\U0001F44D`) with `cli::cli_alert_success()` messages for consistent terminal output.
+  - Replaced Unicode dashes (–, —) with standard ASCII hyphens in output text.
+- Applied NZ English spelling where appropriate (e.g., "finalised" in user-facing messages).
+
+### Note
+- Unicode symbols in roxygen documentation comments and LaTeX sanitisation functions (which intentionally convert Unicode to LaTeX for rendering) have been preserved.
+
 # [2025-11-28] margot 1.0.287
 
 ### Fixed

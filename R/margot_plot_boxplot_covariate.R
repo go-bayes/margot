@@ -265,7 +265,7 @@ margot_plot_boxplot_covariate <- function(data,
         cli::cli_alert_info("No save path provided. Plot not saved.")
       }
 
-      cli::cli_alert_success("Margot plot boxplot with covariate created successfully \U0001F44D")
+      cli::cli_alert_success("Margot plot boxplot with covariate created successfully")
 
       return(p)
     },

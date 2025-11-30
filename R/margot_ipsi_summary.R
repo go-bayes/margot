@@ -408,7 +408,7 @@ margot_positivity_summary <- function(x,
 
     # Attach explanation as an attribute for users to print alongside the table
     if (isTRUE(include_explanation)) {
-      thr_txt <- paste0("k = ", k, "; verdict Pass when fraction ≤ ", round(100*thr$prod_frac_warn, 1), "%.")
+      thr_txt <- paste0("k = ", k, "; verdict Pass when fraction <= ", round(100*thr$prod_frac_warn, 1), "%.")
       waves_txt <- if (is.null(waves)) "all available waves" else paste0("waves ", paste(waves, collapse = ", "))
       expl <- paste(
         "Notes:",

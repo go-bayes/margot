@@ -102,7 +102,7 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
 
     # skip empty transitions
     if (nrow(transition_matrix) == 0 || ncol(transition_matrix) == 0) {
-      warning("no observed transitions for waves ", w1, "→", w2, "; skipping")
+      warning("no observed transitions for waves ", w1, " -> ", w2, "; skipping")
       next
     }
 
@@ -118,7 +118,7 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
 
     res <- transition_table(long_df,
       state_names = labels,
-      wave_info   = paste0("Wave ", w1, " → Wave ", w2),
+      wave_info   = paste0("Wave ", w1, " -> Wave ", w2),
       table_name  = table_name
     )
 
@@ -189,7 +189,7 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
       w1 <- results$waves[[i]][1]
       w2 <- results$waves[[i]][2]
       cat(sprintf(
-        "```{r}\n#| label: %s-wave%s-%s\n#| tbl-cap: \"Transition Matrix: Wave %s → %s\"\n%s$tables[[%d]]\n```\n\n",
+        "```{r}\n#| label: %s-wave%s-%s\n#| tbl-cap: \"Transition Matrix: Wave %s -> %s\"\n%s$tables[[%d]]\n```\n\n",
         table_name, w1, w2, w1, w2, table_name, i
       ))
     }

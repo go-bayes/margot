@@ -1162,7 +1162,7 @@ margot_plot_qini <- function(mc_result, outcome_var,
       if (!is.null(ylim)) coord_cartesian(ylim = ylim)
     }
 
-  cli::cli_alert_success("Qini curves plot created successfully 👍")
+  cli::cli_alert_success("Qini curves plot created successfully")
 
   # return data if requested
   if (return_data) {

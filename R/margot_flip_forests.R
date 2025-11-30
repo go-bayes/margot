@@ -264,7 +264,7 @@ margot_flip_forests <- function(model_results,
     }
     outcome_names <- c(outcome_names, flipped_outcome_name)
 
-    if (verbose) cli::cli_alert_info("Prepared flipped outcome: {outcome_name} → {flipped_outcome_name}")
+    if (verbose) cli::cli_alert_info("Prepared flipped outcome: {outcome_name} -> {flipped_outcome_name}")
   }
 
   if (length(outcome_list) == 0) {

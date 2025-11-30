@@ -44,7 +44,7 @@ margot_process_longitudinal_data <- function(df_wide, ordinal_columns = NULL, co
   cli::cli_h2("Step 1: Creating NA conditions")
   t0_na_condition <- rowSums(is.na(dplyr::select(df_wide, dplyr::starts_with("t1_")))) > 0
   t1_na_condition <- rowSums(is.na(dplyr::select(df_wide, dplyr::starts_with("t2_")))) > 0
-  cli::cli_alert_success("Created NA conditions for t0 and t1 \U0001F44D")
+  cli::cli_alert_success("Created NA conditions for t0 and t1")
 
   cli::cli_h2("Step 2: Handling columns and applying attrition logic")
   df_wide_use <- df_wide |>
@@ -78,7 +78,7 @@ margot_process_longitudinal_data <- function(df_wide, ordinal_columns = NULL, co
           factor(levels = levels(.), ordered = is.ordered(.))
       )
     )
-  cli::cli_alert_success("Handled non-factor and factor columns \U0001F44D")
+  cli::cli_alert_success("Handled non-factor and factor columns")
 
   cli::cli_h2("Step 3: Scaling numeric variables")
   df_wide_use <- df_wide_use |>
@@ -91,7 +91,7 @@ margot_process_longitudinal_data <- function(df_wide, ordinal_columns = NULL, co
         .names = "{.col}_z"
       )
     )
-  cli::cli_alert_success("Scaled numeric variables and created binary variables \U0001F44D")
+  cli::cli_alert_success("Scaled numeric variables and created binary variables")
 
   cli::cli_h2("Step 4: Selecting and ordering columns")
   df_wide_use <- df_wide_use |>
@@ -110,7 +110,7 @@ margot_process_longitudinal_data <- function(df_wide, ordinal_columns = NULL, co
     dplyr::relocate(dplyr::starts_with("t0_"), .before = dplyr::starts_with("t1_")) |>
     dplyr::relocate(dplyr::starts_with("t1_"), .before = dplyr::starts_with("t2_")) |>
     droplevels()
-  cli::cli_alert_success("Selected and ordered columns \U0001F44D")
+  cli::cli_alert_success("Selected and ordered columns")
 
   cli::cli_h2("Step 5: Encoding ordinal columns")
   df_wide_encoded <- fastDummies::dummy_cols(df_wide_use,
@@ -128,9 +128,9 @@ margot_process_longitudinal_data <- function(df_wide, ordinal_columns = NULL, co
     dplyr::relocate(dplyr::starts_with("t1_"), .before = dplyr::starts_with("t2_")) |>
     dplyr::relocate("t0_not_lost", .before = dplyr::starts_with("t1_")) |>
     dplyr::relocate("t1_not_lost", .before = dplyr::starts_with("t2_"))
-  cli::cli_alert_success("Encoded ordinal columns and finalized column order \U0001F44D")
+  cli::cli_alert_success("Encoded ordinal columns and finalised column order")
 
-  cli::cli_alert_success("Data processing completed successfully \U0001F44D")
+  cli::cli_alert_success("Data processing completed successfully")
   cli::cli_h2("Summary")
   cli::cli_ul(c(
     paste("Total rows processed:", nrow(df_wide_encoded)),

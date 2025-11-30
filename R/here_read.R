@@ -53,7 +53,7 @@ here_read <- function(name, dir_path = NULL, quiet = FALSE) {
     # Print CLI message
     cat(sprintf("Object read from: %s\n", file_path))
     cat(sprintf("Object size: %s\n", obj_size))
-    cat("👍 Read operation completed successfully!\n")
+    cli::cli_alert_success("Read operation completed successfully")
   }
   return(obj)
 }

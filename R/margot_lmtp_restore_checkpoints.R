@@ -155,7 +155,7 @@ margot_lmtp_restore_checkpoints <- function(
 
     if (!quiet) {
       cli::cli_alert_success(
-        "Loaded {.file {file_name}} → outcome {.val {outcome}}, shift {.val {shift_name}}"
+        "Loaded {.file {file_name}} -> outcome {.val {outcome}}, shift {.val {shift_name}}"
       )
     }
   }

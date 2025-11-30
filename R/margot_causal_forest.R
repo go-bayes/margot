@@ -951,7 +951,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
     if (verbose) cli::cli_alert_info("flip information saved in output")
   }
 
-  if (verbose) cli::cli_alert_success("margot_causal_forest function completed successfully \U0001F44D")
+  if (verbose) cli::cli_alert_success("margot_causal_forest function completed successfully")
 
   return(output)
 }

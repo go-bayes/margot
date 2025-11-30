@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_policy_workflow.R
 \name{margot_policy_workflow}
 \alias{margot_policy_workflow}
-\title{End-to-end Policy Workflow (depth selection → report → interpretation)}
+\title{End-to-end Policy Workflow (depth selection -> report -> interpretation)}
 \usage{
 margot_policy_workflow(
   stability,
@@ -59,7 +59,7 @@ column (Wins/Neutral/Caution). If FALSE, returns a simplified brief without Grou
 Default FALSE for policy audiences.}
 
 \item{expand_acronyms}{Logical; if TRUE, expand common acronyms in labels (e.g.,
-RWA → Right-Wing Authoritarianism (RWA)). You may also supply custom expansions via
+RWA -> Right-Wing Authoritarianism (RWA)). You may also supply custom expansions via
 `options(margot.boilerplate.acronyms = list(SES = "Socioeconomic Status"))`.}
 
 \item{show_neutral}{Logical or NULL; controls inclusion of the Neutral group. Default NULL
@@ -67,7 +67,7 @@ shows Neutral for research audiences and hides it for policy audiences. Set TRUE
 to override explicitly.}
 
 \item{prefer_stability}{Logical; if TRUE, raise the parsimony threshold for switching to
-depth-2 (min_gain_for_depth_switch ≥ 0.01) to prefer depth-1 unless depth-2 gains are
+depth-2 (min_gain_for_depth_switch >= 0.01) to prefer depth-1 unless depth-2 gains are
 clearly larger.}
 
 \item{signal_score}{Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not

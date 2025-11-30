@@ -711,7 +711,7 @@ margot_lmtp <- function(
     )
   }
 
-  cli::cli_alert_success("Analysis complete \U0001F44D")
+  cli::cli_alert_success("Analysis complete")
 
   if (isTRUE(manage_future_plan)) {
     cli::cli_alert_info("Shutting down parallel workers...")

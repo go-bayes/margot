@@ -261,6 +261,6 @@ margot_subset_model <- function(model_results,
     )
   )
 
-  cli::cli_alert_success("processing complete. returning results. \U0001F44D")
+  cli::cli_alert_success("processing complete. returning results.")
   return(result)
 }

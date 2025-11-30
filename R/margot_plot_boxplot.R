@@ -315,7 +315,7 @@ margot_plot_boxplot <- function(data,
         cli::cli_alert_info("No save path provided. Plot not saved.")
       }
 
-      cli::cli_alert_success("Margot plot boxplot created successfully \U0001F44D")
+      cli::cli_alert_success("Margot plot boxplot created successfully")
 
       return(p)
     },

@@ -102,7 +102,7 @@ margot_log_transform_vars <- function(data,
   cli::cli_text(paste("  variables transformed:", length(numeric_vars)))
   cli::cli_text(paste("  variables excluded:", length(exceptions) + length(non_numeric)))
 
-  cli::cli_alert_success("log transformation completed successfully! 👍")
+  cli::cli_alert_success("log transformation completed successfully")
   cli::cli_rule()
 
   data_transformed

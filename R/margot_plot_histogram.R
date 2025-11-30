@@ -316,7 +316,7 @@ margot_plot_histogram <- function(data,
         cli::cli_alert_info("No save path provided. Plot not saved.")
       }
 
-      cli::cli_alert_success("Margot plot histogram created successfully \U0001F44D")
+      cli::cli_alert_success("Margot plot histogram created successfully")
 
       return(p)
     },

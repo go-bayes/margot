@@ -32,7 +32,7 @@ here_save_qs <- function(obj, name, dir_path, preset = "high", nthreads = 1) {
   # Print CLI message
   cat(sprintf("Object saved to: %s\n", file_path))
   cat(sprintf("Object size: %s\n", file_size))
-  cat("👍 Save operation completed successfully!\n")
+  cli::cli_alert_success("Save operation completed successfully")
 
   invisible(NULL)
 }

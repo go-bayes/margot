@@ -36,7 +36,7 @@ group_tab(
 
   Sorting option for outcomes. Options are:
 
-  - 'alphabetical': sort by outcome name (A–Z)
+  - 'alphabetical': sort by outcome name (A-Z)
 
   - 'magnitude_desc': sort by absolute effect size, descending (default
     for 'magnitude')

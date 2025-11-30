@@ -161,7 +161,7 @@ create_ordered_variable <- function(df, var_name, n_divisions = NULL,
   summary_table <- table(df[[new_col_name]], useNA = "ifany")
   print(knitr::kable(data.frame(Category = names(summary_table), Count = as.vector(summary_table)), format = "pipe"))
 
-  cli::cli_alert_success("Ordered variable created successfully \U0001F44D")
+  cli::cli_alert_success("Ordered variable created successfully")
   cli::cli_rule()
 
   return(df)

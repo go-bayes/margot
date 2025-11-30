@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.287</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.288</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,23 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.288" id="id_2025-12-01-margot-10288">[2025-12-01] margot 1.0.288<a class="anchor" aria-label="anchor" href="#id_2025-12-01-margot-10288"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-288">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-288"></a></h4>
+<ul><li>Systematic removal of Unicode characters throughout the R codebase for improved cross-platform compatibility and encoding reliability:
+<ul><li>Replaced Unicode arrows (→) with ASCII equivalents (<code>-&gt;</code>) in CLI messages, comments, and output text.</li>
+<li>Replaced Unicode mathematical symbols (≥, ≤, Δ, α, μ, τ) with ASCII equivalents (<code>&gt;=</code>, <code>&lt;=</code>, <code>delta</code>, <code>alpha</code>, <code>mu</code>, <code>tau</code>) in user-facing messages.</li>
+<li>Replaced emoji thumbs up (👍, <code>\U0001F44D</code>) with <code><a href="https://cli.r-lib.org/reference/cli_alert.html" class="external-link">cli::cli_alert_success()</a></code> messages for consistent terminal output.</li>
+<li>Replaced Unicode dashes (–, —) with standard ASCII hyphens in output text.</li>
+</ul></li>
+<li>Applied NZ English spelling where appropriate (e.g., “finalised” in user-facing messages).</li>
+</ul></div>
+<div class="section level4">
+<h4 id="note-1-0-288">Note<a class="anchor" aria-label="anchor" href="#note-1-0-288"></a></h4>
+<ul><li>Unicode symbols in roxygen documentation comments and LaTeX sanitisation functions (which intentionally convert Unicode to LaTeX for rendering) have been preserved.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.287" id="id_2025-11-28-margot-10287">[2025-11-28] margot 1.0.287<a class="anchor" aria-label="anchor" href="#id_2025-11-28-margot-10287"></a></h2>
 <div class="section level4">

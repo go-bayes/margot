@@ -131,6 +131,6 @@ margot_count_dyads <- function(dat,
     n_wave_4plus = "In 4+ Previous Waves"
   )
 
-  cli::cli_alert_success("Dyad count calculation completed \U0001F44D")
+  cli::cli_alert_success("Dyad count calculation completed")
   return(results)
 }

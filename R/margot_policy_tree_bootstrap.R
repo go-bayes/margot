@@ -1255,7 +1255,7 @@ margot_interpret_bootstrap <- function(
       interpretation <- c(interpretation, paste0(
         " The consensus suggests considering ", tolower(left_action),
         " for individuals with lower values of ", consensus_var_d1_label,
-        " (≤ ", sprintf("%.*f", decimal_places + 1, consensus_thresh_d1),
+        " (<= ", sprintf("%.*f", decimal_places + 1, consensus_thresh_d1),
         ") and ", tolower(right_action), " for those with higher values",
         " (> ", sprintf("%.*f", decimal_places + 1, consensus_thresh_d1), "). ",
         "However, practitioners should consider that other correlated variables ",

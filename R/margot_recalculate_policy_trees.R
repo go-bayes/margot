@@ -325,7 +325,7 @@ recalculate_policy_trees_single <- function(model_result,
     # not enough covariates for depth-2
     if (verbose) {
       cli::cli_alert_warning(
-        "unable to create depth-2 policy tree. only {length(depth2_covars)} covariate(s) available (need ≥2)"
+        "unable to create depth-2 policy tree. only {length(depth2_covars)} covariate(s) available (need >= 2)"
       )
     }
     model_result$policy_tree_depth_2 <- NULL

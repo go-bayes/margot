@@ -187,6 +187,6 @@ margot_plot_rate <- function(x,
     p <- p + dots
   }
 
-  cli::cli_alert_success("RATE plot created successfully 👍")
+  cli::cli_alert_success("RATE plot created successfully")
   return(p)
 }

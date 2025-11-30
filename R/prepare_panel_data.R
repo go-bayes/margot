@@ -67,7 +67,7 @@ prepare_panel_data <- function(dat, wave_col = "wave", tscore_col = "tscore", id
 
   result <- list(df_timeline = df_timeline, n_total_participants = n_total_participants)
 
-  cli::cli_alert_success("Panel data preparation complete! \U0001F44D")
+  cli::cli_alert_success("Panel data preparation complete")
 
   return(result)
 }

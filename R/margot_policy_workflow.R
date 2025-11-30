@@ -1,4 +1,4 @@
-#' End-to-end Policy Workflow (depth selection → report → interpretation)
+#' End-to-end Policy Workflow (depth selection -> report -> interpretation)
 #'
 #' Runs depth comparison, produces a mixed-depth policy summary report, and (optionally)
 #' generates per-model interpretations. Designed as a one-call wrapper for
@@ -26,13 +26,13 @@
 #'   column (Wins/Neutral/Caution). If FALSE, returns a simplified brief without Group.
 #'   Default FALSE for policy audiences.
 #' @param expand_acronyms Logical; if TRUE, expand common acronyms in labels (e.g.,
-#'   RWA → Right-Wing Authoritarianism (RWA)). You may also supply custom expansions via
+#'   RWA -> Right-Wing Authoritarianism (RWA)). You may also supply custom expansions via
 #'   `options(margot.boilerplate.acronyms = list(SES = "Socioeconomic Status"))`.
 #' @param show_neutral Logical or NULL; controls inclusion of the Neutral group. Default NULL
 #'   shows Neutral for research audiences and hides it for policy audiences. Set TRUE/FALSE
 #'   to override explicitly.
 #' @param prefer_stability Logical; if TRUE, raise the parsimony threshold for switching to
-#'   depth-2 (min_gain_for_depth_switch ≥ 0.01) to prefer depth-1 unless depth-2 gains are
+#'   depth-2 (min_gain_for_depth_switch >= 0.01) to prefer depth-1 unless depth-2 gains are
 #'   clearly larger.
 #' @param signal_score Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
 #'   "none", the summary text includes a "Signals Worth Monitoring" section that ranks Neutral
@@ -321,7 +321,7 @@ margot_policy_workflow <- function(stability,
   lines <- c(lines, sprintf("Parsimony threshold: %.3f (%.1f%% policy value improvement required for depth-2)",
                             threshold, threshold * 100))
   lines <- c(lines, "")
-  lines <- c(lines, "| Outcome | Depth-1 PV | Depth-2 PV | Gain (Δ) | Selected | Rationale |")
+  lines <- c(lines, "| Outcome | Depth-1 PV | Depth-2 PV | Gain (delta) | Selected | Rationale |")
   lines <- c(lines, "|---------|------------|------------|----------|----------|-----------|")
 
 

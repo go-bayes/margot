@@ -706,7 +706,7 @@ margot_policy_summary_report <- function(object,
     mk_label <- function(gid) {
       if (local_mode == "branch") {
         if (gid == 1L) {
-          paste0("baseline ", v1lab, " ≤ ", round(thr1, digits))
+          paste0("baseline ", v1lab, " <= ", round(thr1, digits))
         } else {
           paste0("baseline ", v1lab, " > ", round(thr1, digits))
         }
@@ -718,12 +718,12 @@ margot_policy_summary_report <- function(object,
         thr3 <- nodes[[3]]$split_value
         v2lab <- .apply_label_stability(var2, label_mapping)
         v3lab <- .apply_label_stability(var3, label_mapping)
-        if (gid == 1L) paste0("baseline ", v1lab, " ≤ ", round(thr1, digits),
-                              " & baseline ", v2lab, " ≤ ", round(thr2, digits))
-        else if (gid == 2L) paste0("baseline ", v1lab, " ≤ ", round(thr1, digits),
+        if (gid == 1L) paste0("baseline ", v1lab, " <= ", round(thr1, digits),
+                              " & baseline ", v2lab, " <= ", round(thr2, digits))
+        else if (gid == 2L) paste0("baseline ", v1lab, " <= ", round(thr1, digits),
                                    " & baseline ", v2lab, " > ", round(thr2, digits))
         else if (gid == 3L) paste0("baseline ", v1lab, " > ", round(thr1, digits),
-                                   " & baseline ", v3lab, " ≤ ", round(thr3, digits))
+                                   " & baseline ", v3lab, " <= ", round(thr3, digits))
         else paste0("baseline ", v1lab, " > ", round(thr1, digits),
                     " & baseline ", v3lab, " > ", round(thr3, digits))
       }
@@ -868,9 +868,9 @@ margot_policy_summary_report <- function(object,
       )
       # warn if mismatch
       tol <- 1e-6
-      if (!is.na(d1) && abs(d1) > tol) cli::cli_alert_warning("Coherence check (treated-only) mismatch for {.var {mn}}: Δ = {signif(d1, 3)}")
-      if (!is.na(d2) && abs(d2) > tol) cli::cli_alert_warning("Coherence check (splits sum) mismatch for {.var {mn}}: Δ = {signif(d2, 3)}")
-      if (!is.na(d3) && abs(d3) > tol) cli::cli_alert_warning("Coherence check (treat-all splits) mismatch for {.var {mn}}: Δ = {signif(d3, 3)}")
+      if (!is.na(d1) && abs(d1) > tol) cli::cli_alert_warning("Coherence check (treated-only) mismatch for {.var {mn}}: delta = {signif(d1, 3)}")
+      if (!is.na(d2) && abs(d2) > tol) cli::cli_alert_warning("Coherence check (splits sum) mismatch for {.var {mn}}: delta = {signif(d2, 3)}")
+      if (!is.na(d3) && abs(d3) > tol) cli::cli_alert_warning("Coherence check (treat-all splits) mismatch for {.var {mn}}: delta = {signif(d3, 3)}")
     }
     if (length(rows)) coherence_audit <- do.call(rbind, rows)
   }
@@ -1154,7 +1154,7 @@ margot_policy_summary_report <- function(object,
       if (!is.null(res_restr)) {
         if (res_restr$pv_ctrl > max(0, full_pv) && res_restr$lo_ctrl > 0) {
           decision <- "deploy_restricted"
-          reason <- "restricted PV(control-all) > 0 with 95% CI > 0 and ≥ full"
+          reason <- "restricted PV(control-all) > 0 with 95% CI > 0 and >= full"
         } else if (full_lo > 0) {
           decision <- "deploy_full"
           reason <- "full PV(control-all) 95% CI > 0"
@@ -1163,7 +1163,7 @@ margot_policy_summary_report <- function(object,
           reason <- "restricted PV improved but CI crosses 0"
         } else if (full_pv <= 0 && res_restr$pv_ctrl <= 0) {
           decision <- "do_not_deploy"
-          reason <- "both full and restricted PV ≤ 0"
+          reason <- "both full and restricted PV <= 0"
         }
       } else {
         if (full_lo > 0) {

@@ -106,7 +106,7 @@ margot_summary_panel <- function(data,
   cli::cli_alert_info(paste("Total unique participants:", nrow(id_wave_counts)))
   cli::cli_alert_info(paste("Number of waves:", n_distinct(data[[wave_col]])))
 
-  cli::cli_alert("Analysis complete \U0001F44D")
+  cli::cli_alert_success("Analysis complete")
 
   return(list(
     unique_ids_by_wave = table1,

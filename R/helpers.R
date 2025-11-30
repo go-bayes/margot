@@ -938,7 +938,7 @@ transform_var_name <- function(var_name, label_mapping = NULL,
     return(mapped_label)
   }
 
-  # t0_ → t2_ fallback
+  # t0_ -> t2_ fallback
   if (startsWith(display_name, "t0_")) {
     t2_var <- sub("^t0_", "t2_", display_name)
     if (!is.null(label_mapping) && t2_var %in% names(label_mapping)) {
@@ -1082,7 +1082,7 @@ here_save_arrow <- function(df, name) {
 #'   'RD' (Risk Difference). Defaults to 'RD'.
 #' @param order Sorting option for outcomes. Options are:
 #'   \itemize{
-#'     \item 'alphabetical': sort by outcome name (A–Z)
+#'     \item 'alphabetical': sort by outcome name (A-Z)
 #'     \item 'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')
 #'     \item 'magnitude_asc': sort by absolute effect size, ascending
 #'     \item 'evaluebound_desc': sort by E-value bound, descending

@@ -319,7 +319,7 @@ margot_plot_discontinuity <- function(data,
         cli::cli_alert_info("No save path provided. Plot not saved.")
       }
 
-      cli::cli_alert_success("Margot plot discontinuity created successfully \U0001F44D")
+      cli::cli_alert_success("Margot plot discontinuity created successfully")
 
       # return the ggplot object
       return(p)

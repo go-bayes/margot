@@ -990,7 +990,7 @@ generate_extended_report <- function(evidence_summary, selection_results,
   # format spend levels for text
   spend_text <- paste0(spend_levels * 100, "%")
   if (length(spend_levels) == 2) {
-    spend_range <- paste0(spend_text[1], "–", spend_text[2])
+    spend_range <- paste0(spend_text[1], "-", spend_text[2])
   } else {
     spend_range <- paste(spend_text, collapse = ", ")
   }
@@ -1018,7 +1018,7 @@ generate_extended_report <- function(evidence_summary, selection_results,
     "" # No mention of alpha when no adjustment is applied
   } else {
     sprintf(
-      "Statistical significance was assessed at α = %.3f with %s correction for multiple testing. ",
+      "Statistical significance was assessed at alpha = %.3f with %s correction for multiple testing. ",
       alpha, adjust_name
     )
   }
@@ -1053,21 +1053,21 @@ generate_extended_report <- function(evidence_summary, selection_results,
     "For each outcome model:\n\n",
     "#### 1. EXCLUSION CHECK\n",
     "Is RATE QINI < 0 (sig) OR RATE AUTOC < 0 (sig)?\n\n",
-    "→ YES: EXCLUDED (Issue warning)\n",
-    "       Action: Avoid targeting based on this outcome - targeting would worsen results\n",
-    "       Stop analysis\n",
-    "       \n",
-    "→ NO:  Continue to Step 2\n\n",
+    "-> YES: EXCLUDED (Issue warning)\n",
+    "        Action: Avoid targeting based on this outcome - targeting would worsen results\n",
+    "        Stop analysis\n",
+    "        \n",
+    "-> NO:  Continue to Step 2\n\n",
     "#### 2. GLOBAL HETEROGENEITY CHECK\n",
     "Is RATE QINI > 0 (sig) OR RATE AUTOC > 0 (sig)?\n\n",
-    "→ YES: Evidence of global heterogeneity\n",
-    "→ NO:  No global heterogeneity detected\n",
+    "-> YES: Evidence of global heterogeneity\n",
+    "-> NO:  No global heterogeneity detected\n",
     "Continue to Step 3 for all non-excluded models\n\n",
     "#### 3. QINI CURVE ANALYSIS (All non-excluded models)\n",
     "Analyse practical gains at specific budget levels (", paste(spend_text, collapse = ", "), ")\n",
     "Do QINI curves show positive gains at any budget level?\n\n",
-    "→ YES: Evidence of targeted heterogeneity at specific budgets\n",
-    "→ NO:  No evidence of practical gains\n\n",
+    "-> YES: Evidence of targeted heterogeneity at specific budgets\n",
+    "-> NO:  No evidence of practical gains\n\n",
     "#### 4. FINAL SELECTION\n",
     "Model is SELECTED FOR TARGETING if:\n",
     "- Positive RATE tests (Step 2) OR\n",
@@ -1075,7 +1075,7 @@ generate_extended_report <- function(evidence_summary, selection_results,
     "Otherwise: PERMITTED (not excluded, but no positive evidence)\n\n",
     "#### 5. CALIBRATION CHECK (Selected models only)\n",
     "Check mean_prediction_test status\n",
-    "→ Record calibration status (affects confidence in predictions)\n\n"
+    "-> Record calibration status (affects confidence in predictions)\n\n"
   )
 
   # selected models section
