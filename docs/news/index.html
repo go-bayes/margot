@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.288</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.292</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,42 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.292" id="id_2025-12-03-margot-10292">[2025-12-03] margot 1.0.292<a class="anchor" aria-label="anchor" href="#id_2025-12-03-margot-10292"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-292">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-292"></a></h4>
+<ul><li>
+<code>policy_brief_df</code> now respects <code>order_models = "alphabetical"</code> for consistent ordering across all outputs.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.291" id="id_2025-12-03-margot-10291">[2025-12-03] margot 1.0.291<a class="anchor" aria-label="anchor" href="#id_2025-12-03-margot-10291"></a></h2>
+<div class="section level4">
+<h4 id="fixed-1-0-291">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-291"></a></h4>
+<ul><li>Alphabetical sorting now strips leading punctuation (e.g., “(reduced) Neuroticism” sorts under “R” not “(”).</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.290" id="id_2025-12-03-margot-10290">[2025-12-03] margot 1.0.290<a class="anchor" aria-label="anchor" href="#id_2025-12-03-margot-10290"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-290">Added<a class="anchor" aria-label="anchor" href="#added-1-0-290"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> gains <code>order_models</code> parameter: <code>"alphabetical"</code> (default) or <code>"by_effect"</code>. Models in interpretations and plots are now sorted alphabetically by label for easier navigation.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.289" id="id_2025-12-03-margot-10289">[2025-12-03] margot 1.0.289<a class="anchor" aria-label="anchor" href="#id_2025-12-03-margot-10289"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-289">Added<a class="anchor" aria-label="anchor" href="#added-1-0-289"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> gains <code>interpret_models</code> parameter to control which models receive full interpretations: <code>"wins"</code> (default), <code>"wins_borderline"</code>, <code>"recommended"</code>, or a character vector of specific model names.</li>
+<li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> gains <code>plot_models</code> parameter to generate plots via <code><a href="../reference/margot_policy.html">margot_policy()</a></code>: <code>"none"</code> (default), <code>"same"</code> (match interpret_models), <code>"wins"</code>, <code>"wins_borderline"</code>, <code>"recommended"</code>, or specific model names.</li>
+<li>New parameters <code>plot_output_objects</code>, <code>policy_tree_args</code>, <code>decision_tree_args</code>, and <code>qini_args</code> for plot customisation.</li>
+<li>Plots returned in <code>wf$plots</code> when <code>plot_models != "none"</code>.</li>
+<li>Added worked examples to roxygen documentation.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.288" id="id_2025-12-01-margot-10288">[2025-12-01] margot 1.0.288<a class="anchor" aria-label="anchor" href="#id_2025-12-01-margot-10288"></a></h2>
 <div class="section level4">

@@ -19,6 +19,28 @@
 #'   to depth-2 (default 0.005 on standardized outcomes).
 #' @param include_interpretation Logical; also run [margot_interpret_policy_batch()] with the
 #'   selected depths (default TRUE).
+#' @param interpret_models Character; controls which models receive full interpretations when
+#'   `include_interpretation = TRUE`. Options are:
+#'   - `"wins"` (default): only models with statistically reliable policy value gains (95% CI > 0)
+#'   - `"wins_borderline"`: models in Wins plus Borderline categories (useful for exploratory work)
+#'   - `"recommended"`: all models flagged for deployment (current behaviour prior to this parameter)
+#'   - A character vector of specific model names (e.g., `c("model_t2_neuroticism_z_r", "model_t2_agreeableness_z")`)
+#' @param plot_models Character; controls which models receive policy tree plots. Options are:
+#'   - `"none"` (default): do not generate plots
+#'   - `"same"`: use the same models as `interpret_models`
+#'   - `"wins"`: only models with statistically reliable policy value gains (95% CI > 0)
+#'   - `"wins_borderline"`: models in Wins plus Borderline categories
+#'   - `"recommended"`: all models flagged for deployment
+#'   - A character vector of specific model names
+#' @param plot_output_objects Character vector; which plot types to generate when `plot_models != "none"`.
+#'   Options: `"policy_tree"`, `"decision_tree"`, `"combined_plot"`, `"qini_plot"`, `"diff_gain_summaries"`.
+#'   Default: `"combined_plot"`.
+#' @param policy_tree_args List; additional arguments passed to [margot_plot_policy_tree()]. Default: `list()`.
+#' @param decision_tree_args List; additional arguments passed to [margot_plot_decision_tree()]. Default: `list()`.
+#' @param qini_args List; additional arguments passed to [margot_plot_qini()]. Default: `list()`.
+#' @param order_models Character; controls the order in which models appear in interpretations and plots.
+#'   - `"alphabetical"` (default): sort models alphabetically by their label
+#'   - `"by_effect"`: order by policy value (strongest effects first, as in previous versions)
 #' @param audience Character; one of "policy" or "research" (default "policy").
 #' @param use_coherent_in_interpret Logical; if TRUE, reuse PV rows from the coherent summary in
 #'   interpretations instead of recomputing (default TRUE).
@@ -50,6 +72,81 @@
 #'   `summary$signals_df` when `signal_score != "none"`, and top-level `report`,
 #'   `report_prose`, and `report_detail` for convenient access to narrative summaries
 #'   (bullets, prose, or detailed per-model interpretations respectively).
+#'   When `plot_models != "none"`, also returns `plots` (output from [margot_policy()]).
+#'
+#' @examples
+#' \dontrun{
+#' # minimal call - interpretations for wins only, no plots (defaults)
+#' wf <- margot_policy_workflow(
+#'   policy_tree_result_stability,
+#'   original_df = original_df,
+#'   label_mapping = label_mapping
+#' )
+#'
+#' # access key outputs
+#' wf$policy_brief_df    # summary table
+#' wf$report_detail      # detailed interpretations
+#' cat(wf$report_prose)
+#'
+#' # exploratory analysis - include borderline models in interpretations
+#' wf <- margot_policy_workflow(
+#'   policy_tree_result_stability,
+#'   original_df = original_df,
+#'   label_mapping = label_mapping,
+#'   interpret_models = "wins_borderline",
+#'   show_neutral = TRUE,
+#'   signal_score = "pv_snr"
+#' )
+#'
+#' # generate plots for the same models as interpretations
+#' wf <- margot_policy_workflow(
+#'   policy_tree_result_stability,
+#'   original_df = original_df,
+#'   label_mapping = label_mapping,
+#'   interpret_models = "wins_borderline",
+#'   plot_models = "same",
+#'   plot_output_objects = "combined_plot"
+#' )
+#'
+#' # access plots
+#' wf$plots$model_t2_neuroticism_z_r$combined_plot
+#'
+#' # generate multiple plot types
+#' wf <- margot_policy_workflow(
+#'   policy_tree_result_stability,
+#'   original_df = original_df,
+#'   label_mapping = label_mapping,
+#'   interpret_models = "wins",
+#'   plot_models = "wins",
+#'   plot_output_objects = c("combined_plot", "qini_plot")
+#' )
+#'
+#' # interpret and plot specific models only
+#' wf <- margot_policy_workflow(
+#'   policy_tree_result_stability,
+#'   original_df = original_df,
+#'   label_mapping = label_mapping,
+#'   interpret_models = c("model_t2_neuroticism_z_r", "model_t2_conscientiousness_z"),
+#'   plot_models = c("model_t2_neuroticism_z_r")
+#' )
+#'
+#' # full analysis with all options
+#' wf <- margot_policy_workflow(
+#'   policy_tree_result_stability,
+#'   original_df = original_df,
+#'   label_mapping = label_mapping,
+#'   se_method = "plugin",
+#'   interpret_models = "wins_borderline",
+#'   plot_models = "same",
+#'   plot_output_objects = "combined_plot",
+#'   audience = "policy",
+#'   prefer_stability = TRUE,
+#'   show_neutral = TRUE,
+#'   signal_score = "pv_snr",
+#'   signals_k = 3
+#' )
+#' }
+#'
 #' @export
 margot_policy_workflow <- function(stability,
                                    original_df = NULL,
@@ -60,6 +157,13 @@ margot_policy_workflow <- function(stability,
                                    strict_branch = TRUE,
                                    min_gain_for_depth_switch = 0.005,
                                    include_interpretation = TRUE,
+                                   interpret_models = c("wins", "wins_borderline", "recommended"),
+                                   plot_models = c("none", "same", "wins", "wins_borderline", "recommended"),
+                                   plot_output_objects = "combined_plot",
+                                   policy_tree_args = list(),
+                                   decision_tree_args = list(),
+                                   qini_args = list(),
+                                   order_models = c("alphabetical", "by_effect"),
                                    audience = c("policy", "research"),
                                    use_coherent_in_interpret = TRUE,
                                    brief_include_group = FALSE,
@@ -72,6 +176,30 @@ margot_policy_workflow <- function(stability,
   se_method <- match.arg(se_method)
   audience <- match.arg(audience)
   signal_score <- match.arg(signal_score)
+  order_models <- match.arg(order_models)
+
+  # interpret_models can be a preset keyword or a character vector of model names
+  if (length(interpret_models) == 1 && interpret_models %in% c("wins", "wins_borderline", "recommended")) {
+    interpret_models_preset <- interpret_models
+  } else if (is.character(interpret_models) && length(interpret_models) >= 1) {
+    # user supplied specific model names
+    interpret_models_preset <- "custom"
+    interpret_models_custom <- interpret_models
+  } else {
+    interpret_models_preset <- "wins"
+  }
+
+  # plot_models can be a preset keyword or a character vector of model names
+  if (length(plot_models) == 1 && plot_models %in% c("none", "same", "wins", "wins_borderline", "recommended")) {
+    plot_models_preset <- plot_models
+  } else if (is.character(plot_models) && length(plot_models) >= 1) {
+    # user supplied specific model names
+    plot_models_preset <- "custom"
+    plot_models_custom <- plot_models
+  } else {
+    plot_models_preset <- "none"
+  }
+
   dots <- list(...)
 
   model_names_override <- NULL
@@ -164,12 +292,52 @@ margot_policy_workflow <- function(stability,
   )
 
   # 3) Optional interpretations on selected depths
+ # determine which models to interpret based on interpret_models parameter
+  interpret_model_ids <- if (interpret_models_preset == "wins") {
+    summary$wins_model_ids
+  } else if (interpret_models_preset == "wins_borderline") {
+    unique(c(summary$wins_model_ids, summary$borderline_model_ids))
+  } else if (interpret_models_preset == "recommended") {
+    summary$recommended_model_ids
+  } else if (interpret_models_preset == "custom") {
+    # validate that custom model names exist
+    valid_models <- intersect(interpret_models_custom, names(best$depth_map))
+    if (length(valid_models) < length(interpret_models_custom)) {
+      missing <- setdiff(interpret_models_custom, valid_models)
+      cli::cli_warn("Some interpret_models not found and will be skipped: {.val {missing}}")
+    }
+    valid_models
+  } else {
+    summary$wins_model_ids
+  }
+
+  # helper function to sort model IDs alphabetically by their labels
+  sort_models_alphabetically <- function(model_ids, label_mapping) {
+    if (length(model_ids) <= 1) return(model_ids)
+    # get labels for each model
+    labels <- vapply(model_ids, function(mn) {
+      tryCatch(
+        .apply_label_stability(gsub("^model_", "", mn), label_mapping),
+        error = function(e) gsub("^model_", "", mn)
+      )
+    }, character(1))
+    # strip leading punctuation/parentheses for sorting
+    # e.g., "(reduced) Neuroticism" sorts under "N" not "("
+    sort_keys <- gsub("^[^A-Za-z]+", "", tolower(labels))
+    model_ids[order(sort_keys)]
+  }
+
+  # apply ordering to interpret_model_ids
+  if (order_models == "alphabetical" && length(interpret_model_ids) > 0) {
+    interpret_model_ids <- sort_models_alphabetically(interpret_model_ids, label_mapping)
+  }
+
   interpret <- NULL
-  if (isTRUE(include_interpretation)) {
+  if (isTRUE(include_interpretation) && length(interpret_model_ids) > 0) {
     pv_source <- if (isTRUE(use_coherent_in_interpret)) "use_coherent" else "compute"
     interpret <- margot_interpret_policy_batch(
       stability,
-      model_names = summary$recommended_model_ids,
+      model_names = interpret_model_ids,
       depths_by_model = best$depth_map,
       report_policy_value = if (pv_source == "compute") "both" else "none",
       policy_value_R = R,
@@ -182,9 +350,63 @@ margot_policy_workflow <- function(stability,
       policy_value_source = pv_source,
       coherent_values = summary$coherent_policy_values
     )
+  } else if (isTRUE(include_interpretation) && length(interpret_model_ids) == 0) {
+    cli::cli_inform("No models matched interpret_models = {.val {interpret_models_preset}}; skipping interpretations.")
   }
 
-  # 4) Methods explanation (long/short/prereg), built from actual settings
+  # 4) Optional plots via margot_policy()
+  # determine which models to plot based on plot_models parameter
+  plot_model_ids <- if (plot_models_preset == "none") {
+    character(0)
+  } else if (plot_models_preset == "same") {
+    # use the same models as interpret_model_ids
+    interpret_model_ids
+  } else if (plot_models_preset == "wins") {
+    summary$wins_model_ids
+  } else if (plot_models_preset == "wins_borderline") {
+    unique(c(summary$wins_model_ids, summary$borderline_model_ids))
+  } else if (plot_models_preset == "recommended") {
+    summary$recommended_model_ids
+  } else if (plot_models_preset == "custom") {
+    # validate that custom model names exist
+    valid_plot_models <- intersect(plot_models_custom, names(best$depth_map))
+    if (length(valid_plot_models) < length(plot_models_custom)) {
+      missing <- setdiff(plot_models_custom, valid_plot_models)
+      cli::cli_warn("Some plot_models not found and will be skipped: {.val {missing}}")
+    }
+    valid_plot_models
+  } else {
+    character(0)
+  }
+
+  # apply ordering to plot_model_ids (unless "same", which inherits from interpret_model_ids)
+  if (order_models == "alphabetical" && length(plot_model_ids) > 0 && plot_models_preset != "same") {
+    plot_model_ids <- sort_models_alphabetically(plot_model_ids, label_mapping)
+  }
+
+  plots <- NULL
+  if (length(plot_model_ids) > 0) {
+    cli::cli_inform("Generating plots for {length(plot_model_ids)} model(s)...")
+    plots <- tryCatch(
+      margot_policy(
+        result_outcomes = stability,
+        model_names = plot_model_ids,
+        depths_by_model = best$depth_map,
+        original_df = original_df,
+        label_mapping = label_mapping,
+        output_objects = plot_output_objects,
+        policy_tree_args = policy_tree_args,
+        decision_tree_args = decision_tree_args,
+        qini_args = qini_args
+      ),
+      error = function(e) {
+        cli::cli_warn("Failed to generate plots: {e$message}")
+        NULL
+      }
+    )
+  }
+
+  # 5) Methods explanation (long/short/prereg), built from actual settings
   method_context <- list(
     se_method = se_method,
     R = R,
@@ -217,6 +439,14 @@ margot_policy_workflow <- function(stability,
       have <- intersect(cols, names(brief_full))
       brief_out <- brief_full[, c(if (all(cols %in% names(brief_full))) cols else have), drop = FALSE]
     }
+  }
+
+  # apply alphabetical ordering to policy_brief_df if requested
+ if (order_models == "alphabetical" && !is.null(brief_out) && nrow(brief_out) > 0 && "Outcome" %in% names(brief_out)) {
+    # strip leading punctuation for sorting (same logic as sort_models_alphabetically)
+    sort_keys <- gsub("^[^A-Za-z]+", "", tolower(brief_out$Outcome))
+    brief_out <- brief_out[order(sort_keys), , drop = FALSE]
+    rownames(brief_out) <- NULL
   }
 
   masks <- summary$unit_masks
@@ -282,6 +512,7 @@ margot_policy_workflow <- function(stability,
     best = best,
     summary = summary,
     interpret = interpret,
+    plots = plots,
     method_explanation = method_explanation,
     depth_comparison_report = depth_comparison_report,
     policy_brief_df = brief_out,

@@ -3,7 +3,7 @@
 ``` r
 
 library(margot)   # core simulation + estimation tools
-#> margot 1.0.288
+#> margot 1.0.292
 library(dplyr)    # tidy manipulation
 #> 
 #> Attaching package: 'dplyr'
@@ -107,7 +107,7 @@ str(basic_dat[, 1:10])
 #>  $ B9: num [1:500] 0.559 -0.249 -0.309 -0.182 -1.007 ...
 #>  - attr(*, "margot_meta")=List of 2
 #>   ..$ args     : language margot_simulate(n = 500, waves = 3, seed = 2025)
-#>   ..$ timestamp: POSIXct[1:1], format: "2025-12-01 11:40:04"
+#>   ..$ timestamp: POSIXct[1:1], format: "2025-12-03 18:04:52"
 
 # summarize treatment and outcome
 summary(basic_dat[c("t1_A1", "t2_A1", "t3_A1", "t4_Y")])

@@ -18,6 +18,13 @@ margot_policy_workflow(
   strict_branch = TRUE,
   min_gain_for_depth_switch = 0.005,
   include_interpretation = TRUE,
+  interpret_models = c("wins", "wins_borderline", "recommended"),
+  plot_models = c("none", "same", "wins", "wins_borderline", "recommended"),
+  plot_output_objects = "combined_plot",
+  policy_tree_args = list(),
+  decision_tree_args = list(),
+  qini_args = list(),
+  order_models = c("alphabetical", "by_effect"),
   audience = c("policy", "research"),
   use_coherent_in_interpret = TRUE,
   brief_include_group = FALSE,
@@ -73,6 +80,56 @@ margot_policy_workflow(
 
   Logical; also run \[margot_interpret_policy_batch()\] with the
   selected depths (default TRUE).
+
+- interpret_models:
+
+  Character; controls which models receive full interpretations when
+  \`include_interpretation = TRUE\`. Options are: - \`"wins"\`
+  (default): only models with statistically reliable policy value gains
+  (95 - \`"wins_borderline"\`: models in Wins plus Borderline categories
+  (useful for exploratory work) - \`"recommended"\`: all models flagged
+  for deployment (current behaviour prior to this parameter) - A
+  character vector of specific model names (e.g.,
+  \`c("model_t2_neuroticism_z_r", "model_t2_agreeableness_z")\`)
+
+- plot_models:
+
+  Character; controls which models receive policy tree plots. Options
+  are: - \`"none"\` (default): do not generate plots - \`"same"\`: use
+  the same models as \`interpret_models\` - \`"wins"\`: only models with
+  statistically reliable policy value gains (95 - \`"wins_borderline"\`:
+  models in Wins plus Borderline categories - \`"recommended"\`: all
+  models flagged for deployment - A character vector of specific model
+  names
+
+- plot_output_objects:
+
+  Character vector; which plot types to generate when \`plot_models !=
+  "none"\`. Options: \`"policy_tree"\`, \`"decision_tree"\`,
+  \`"combined_plot"\`, \`"qini_plot"\`, \`"diff_gain_summaries"\`.
+  Default: \`"combined_plot"\`.
+
+- policy_tree_args:
+
+  List; additional arguments passed to \[margot_plot_policy_tree()\].
+  Default: \`list()\`.
+
+- decision_tree_args:
+
+  List; additional arguments passed to \[margot_plot_decision_tree()\].
+  Default: \`list()\`.
+
+- qini_args:
+
+  List; additional arguments passed to \[margot_plot_qini()\]. Default:
+  \`list()\`.
+
+- order_models:
+
+  Character; controls the order in which models appear in
+  interpretations and plots. - \`"alphabetical"\` (default): sort models
+  alphabetically by their label - \`"by_effect"\`: order by policy value
+  (strongest effects first, as in previous versions)
 
 - audience:
 
@@ -137,4 +194,81 @@ policy values for all outcomes with selection rationale),
 \`summary\$signals_df\` when \`signal_score != "none"\`, and top-level
 \`report\`, \`report_prose\`, and \`report_detail\` for convenient
 access to narrative summaries (bullets, prose, or detailed per-model
-interpretations respectively).
+interpretations respectively). When \`plot_models != "none"\`, also
+returns \`plots\` (output from \[margot_policy()\]).
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# minimal call - interpretations for wins only, no plots (defaults)
+wf <- margot_policy_workflow(
+  policy_tree_result_stability,
+  original_df = original_df,
+  label_mapping = label_mapping
+)
+
+# access key outputs
+wf$policy_brief_df    # summary table
+wf$report_detail      # detailed interpretations
+cat(wf$report_prose)
+
+# exploratory analysis - include borderline models in interpretations
+wf <- margot_policy_workflow(
+  policy_tree_result_stability,
+  original_df = original_df,
+  label_mapping = label_mapping,
+  interpret_models = "wins_borderline",
+  show_neutral = TRUE,
+  signal_score = "pv_snr"
+)
+
+# generate plots for the same models as interpretations
+wf <- margot_policy_workflow(
+  policy_tree_result_stability,
+  original_df = original_df,
+  label_mapping = label_mapping,
+  interpret_models = "wins_borderline",
+  plot_models = "same",
+  plot_output_objects = "combined_plot"
+)
+
+# access plots
+wf$plots$model_t2_neuroticism_z_r$combined_plot
+
+# generate multiple plot types
+wf <- margot_policy_workflow(
+  policy_tree_result_stability,
+  original_df = original_df,
+  label_mapping = label_mapping,
+  interpret_models = "wins",
+  plot_models = "wins",
+  plot_output_objects = c("combined_plot", "qini_plot")
+)
+
+# interpret and plot specific models only
+wf <- margot_policy_workflow(
+  policy_tree_result_stability,
+  original_df = original_df,
+  label_mapping = label_mapping,
+  interpret_models = c("model_t2_neuroticism_z_r", "model_t2_conscientiousness_z"),
+  plot_models = c("model_t2_neuroticism_z_r")
+)
+
+# full analysis with all options
+wf <- margot_policy_workflow(
+  policy_tree_result_stability,
+  original_df = original_df,
+  label_mapping = label_mapping,
+  se_method = "plugin",
+  interpret_models = "wins_borderline",
+  plot_models = "same",
+  plot_output_objects = "combined_plot",
+  audience = "policy",
+  prefer_stability = TRUE,
+  show_neutral = TRUE,
+  signal_score = "pv_snr",
+  signals_k = 3
+)
+} # }
+```

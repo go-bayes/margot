@@ -13,7 +13,7 @@ depth-2 gains are material."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.288</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.292</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,13 @@ depth-2 gains are material.</p>
 <span>  strict_branch <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  min_gain_for_depth_switch <span class="op">=</span> <span class="fl">0.005</span>,</span>
 <span>  include_interpretation <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  interpret_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wins"</span>, <span class="st">"wins_borderline"</span>, <span class="st">"recommended"</span><span class="op">)</span>,</span>
+<span>  plot_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"same"</span>, <span class="st">"wins"</span>, <span class="st">"wins_borderline"</span>, <span class="st">"recommended"</span><span class="op">)</span>,</span>
+<span>  plot_output_objects <span class="op">=</span> <span class="st">"combined_plot"</span>,</span>
+<span>  policy_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  decision_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  qini_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  order_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alphabetical"</span>, <span class="st">"by_effect"</span><span class="op">)</span>,</span>
 <span>  audience <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"policy"</span>, <span class="st">"research"</span><span class="op">)</span>,</span>
 <span>  use_coherent_in_interpret <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  brief_include_group <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -113,6 +120,49 @@ to depth-2 (default 0.005 on standardized outcomes).</p></dd>
 <dt id="arg-include-interpretation">include_interpretation<a class="anchor" aria-label="anchor" href="#arg-include-interpretation"></a></dt>
 <dd><p>Logical; also run [margot_interpret_policy_batch()] with the
 selected depths (default TRUE).</p></dd>
+
+
+<dt id="arg-interpret-models">interpret_models<a class="anchor" aria-label="anchor" href="#arg-interpret-models"></a></dt>
+<dd><p>Character; controls which models receive full interpretations when
+`include_interpretation = TRUE`. Options are:
+- `"wins"` (default): only models with statistically reliable policy value gains (95<!-- % CI &gt; 0) -->
+- `"wins_borderline"`: models in Wins plus Borderline categories (useful for exploratory work)
+- `"recommended"`: all models flagged for deployment (current behaviour prior to this parameter)
+- A character vector of specific model names (e.g., `c("model_t2_neuroticism_z_r", "model_t2_agreeableness_z")`)</p></dd>
+
+
+<dt id="arg-plot-models">plot_models<a class="anchor" aria-label="anchor" href="#arg-plot-models"></a></dt>
+<dd><p>Character; controls which models receive policy tree plots. Options are:
+- `"none"` (default): do not generate plots
+- `"same"`: use the same models as `interpret_models`
+- `"wins"`: only models with statistically reliable policy value gains (95<!-- % CI &gt; 0) -->
+- `"wins_borderline"`: models in Wins plus Borderline categories
+- `"recommended"`: all models flagged for deployment
+- A character vector of specific model names</p></dd>
+
+
+<dt id="arg-plot-output-objects">plot_output_objects<a class="anchor" aria-label="anchor" href="#arg-plot-output-objects"></a></dt>
+<dd><p>Character vector; which plot types to generate when `plot_models != "none"`.
+Options: `"policy_tree"`, `"decision_tree"`, `"combined_plot"`, `"qini_plot"`, `"diff_gain_summaries"`.
+Default: `"combined_plot"`.</p></dd>
+
+
+<dt id="arg-policy-tree-args">policy_tree_args<a class="anchor" aria-label="anchor" href="#arg-policy-tree-args"></a></dt>
+<dd><p>List; additional arguments passed to [margot_plot_policy_tree()]. Default: `list()`.</p></dd>
+
+
+<dt id="arg-decision-tree-args">decision_tree_args<a class="anchor" aria-label="anchor" href="#arg-decision-tree-args"></a></dt>
+<dd><p>List; additional arguments passed to [margot_plot_decision_tree()]. Default: `list()`.</p></dd>
+
+
+<dt id="arg-qini-args">qini_args<a class="anchor" aria-label="anchor" href="#arg-qini-args"></a></dt>
+<dd><p>List; additional arguments passed to [margot_plot_qini()]. Default: `list()`.</p></dd>
+
+
+<dt id="arg-order-models">order_models<a class="anchor" aria-label="anchor" href="#arg-order-models"></a></dt>
+<dd><p>Character; controls the order in which models appear in interpretations and plots.
+- `"alphabetical"` (default): sort models alphabetically by their label
+- `"by_effect"`: order by policy value (strongest effects first, as in previous versions)</p></dd>
 
 
 <dt id="arg-audience">audience<a class="anchor" aria-label="anchor" href="#arg-audience"></a></dt>
@@ -173,9 +223,86 @@ coverage and stability). See the package NEWS for details.</p></dd>
   depth-2 policy values for all outcomes with selection rationale),
   `summary$signals_df` when `signal_score != "none"`, and top-level `report`,
   `report_prose`, and `report_detail` for convenient access to narrative summaries
-  (bullets, prose, or detailed per-model interpretations respectively).</p>
+  (bullets, prose, or detailed per-model interpretations respectively).
+  When `plot_models != "none"`, also returns `plots` (output from [margot_policy()]).</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># minimal call - interpretations for wins only, no plots (defaults)</span></span></span>
+<span class="r-in"><span><span class="va">wf</span> <span class="op">&lt;-</span> <span class="fu">margot_policy_workflow</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">policy_tree_result_stability</span>,</span></span>
+<span class="r-in"><span>  original_df <span class="op">=</span> <span class="va">original_df</span>,</span></span>
+<span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># access key outputs</span></span></span>
+<span class="r-in"><span><span class="va">wf</span><span class="op">$</span><span class="va">policy_brief_df</span>    <span class="co"># summary table</span></span></span>
+<span class="r-in"><span><span class="va">wf</span><span class="op">$</span><span class="va">report_detail</span>      <span class="co"># detailed interpretations</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">wf</span><span class="op">$</span><span class="va">report_prose</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># exploratory analysis - include borderline models in interpretations</span></span></span>
+<span class="r-in"><span><span class="va">wf</span> <span class="op">&lt;-</span> <span class="fu">margot_policy_workflow</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">policy_tree_result_stability</span>,</span></span>
+<span class="r-in"><span>  original_df <span class="op">=</span> <span class="va">original_df</span>,</span></span>
+<span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span>,</span></span>
+<span class="r-in"><span>  interpret_models <span class="op">=</span> <span class="st">"wins_borderline"</span>,</span></span>
+<span class="r-in"><span>  show_neutral <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  signal_score <span class="op">=</span> <span class="st">"pv_snr"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># generate plots for the same models as interpretations</span></span></span>
+<span class="r-in"><span><span class="va">wf</span> <span class="op">&lt;-</span> <span class="fu">margot_policy_workflow</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">policy_tree_result_stability</span>,</span></span>
+<span class="r-in"><span>  original_df <span class="op">=</span> <span class="va">original_df</span>,</span></span>
+<span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span>,</span></span>
+<span class="r-in"><span>  interpret_models <span class="op">=</span> <span class="st">"wins_borderline"</span>,</span></span>
+<span class="r-in"><span>  plot_models <span class="op">=</span> <span class="st">"same"</span>,</span></span>
+<span class="r-in"><span>  plot_output_objects <span class="op">=</span> <span class="st">"combined_plot"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># access plots</span></span></span>
+<span class="r-in"><span><span class="va">wf</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">model_t2_neuroticism_z_r</span><span class="op">$</span><span class="va">combined_plot</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># generate multiple plot types</span></span></span>
+<span class="r-in"><span><span class="va">wf</span> <span class="op">&lt;-</span> <span class="fu">margot_policy_workflow</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">policy_tree_result_stability</span>,</span></span>
+<span class="r-in"><span>  original_df <span class="op">=</span> <span class="va">original_df</span>,</span></span>
+<span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span>,</span></span>
+<span class="r-in"><span>  interpret_models <span class="op">=</span> <span class="st">"wins"</span>,</span></span>
+<span class="r-in"><span>  plot_models <span class="op">=</span> <span class="st">"wins"</span>,</span></span>
+<span class="r-in"><span>  plot_output_objects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"combined_plot"</span>, <span class="st">"qini_plot"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># interpret and plot specific models only</span></span></span>
+<span class="r-in"><span><span class="va">wf</span> <span class="op">&lt;-</span> <span class="fu">margot_policy_workflow</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">policy_tree_result_stability</span>,</span></span>
+<span class="r-in"><span>  original_df <span class="op">=</span> <span class="va">original_df</span>,</span></span>
+<span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span>,</span></span>
+<span class="r-in"><span>  interpret_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"model_t2_neuroticism_z_r"</span>, <span class="st">"model_t2_conscientiousness_z"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  plot_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"model_t2_neuroticism_z_r"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># full analysis with all options</span></span></span>
+<span class="r-in"><span><span class="va">wf</span> <span class="op">&lt;-</span> <span class="fu">margot_policy_workflow</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">policy_tree_result_stability</span>,</span></span>
+<span class="r-in"><span>  original_df <span class="op">=</span> <span class="va">original_df</span>,</span></span>
+<span class="r-in"><span>  label_mapping <span class="op">=</span> <span class="va">label_mapping</span>,</span></span>
+<span class="r-in"><span>  se_method <span class="op">=</span> <span class="st">"plugin"</span>,</span></span>
+<span class="r-in"><span>  interpret_models <span class="op">=</span> <span class="st">"wins_borderline"</span>,</span></span>
+<span class="r-in"><span>  plot_models <span class="op">=</span> <span class="st">"same"</span>,</span></span>
+<span class="r-in"><span>  plot_output_objects <span class="op">=</span> <span class="st">"combined_plot"</span>,</span></span>
+<span class="r-in"><span>  audience <span class="op">=</span> <span class="st">"policy"</span>,</span></span>
+<span class="r-in"><span>  prefer_stability <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  show_neutral <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  signal_score <span class="op">=</span> <span class="st">"pv_snr"</span>,</span></span>
+<span class="r-in"><span>  signals_k <span class="op">=</span> <span class="fl">3</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

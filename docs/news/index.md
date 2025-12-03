@@ -1,5 +1,46 @@
 # Changelog
 
+## \[2025-12-03\] margot 1.0.292
+
+#### Changed
+
+- `policy_brief_df` now respects `order_models = "alphabetical"` for
+  consistent ordering across all outputs.
+
+## \[2025-12-03\] margot 1.0.291
+
+#### Fixed
+
+- Alphabetical sorting now strips leading punctuation (e.g., “(reduced)
+  Neuroticism” sorts under “R” not “(”).
+
+## \[2025-12-03\] margot 1.0.290
+
+#### Added
+
+- [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
+  gains `order_models` parameter: `"alphabetical"` (default) or
+  `"by_effect"`. Models in interpretations and plots are now sorted
+  alphabetically by label for easier navigation.
+
+## \[2025-12-03\] margot 1.0.289
+
+#### Added
+
+- [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
+  gains `interpret_models` parameter to control which models receive
+  full interpretations: `"wins"` (default), `"wins_borderline"`,
+  `"recommended"`, or a character vector of specific model names.
+- [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
+  gains `plot_models` parameter to generate plots via
+  [`margot_policy()`](https://go-bayes.github.io/margot/reference/margot_policy.md):
+  `"none"` (default), `"same"` (match interpret_models), `"wins"`,
+  `"wins_borderline"`, `"recommended"`, or specific model names.
+- New parameters `plot_output_objects`, `policy_tree_args`,
+  `decision_tree_args`, and `qini_args` for plot customisation.
+- Plots returned in `wf$plots` when `plot_models != "none"`.
+- Added worked examples to roxygen documentation.
+
 ## \[2025-12-01\] margot 1.0.288
 
 #### Changed
