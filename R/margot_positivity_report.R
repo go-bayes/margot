@@ -49,7 +49,7 @@ margot_positivity_report <- function(x,
                                                             prod_frac_warn = 0.10,
                                                             near_zero_median = 1e-3,
                                                             near_zero_cv = 0.05),
-                                     include_policy_rates = TRUE,
+                                     include_policy_rates = FALSE,
                                      effect_table = NULL,
                                      digits = 3,
                                      trim_right = 0.999,
@@ -160,7 +160,7 @@ margot_positivity_report_single_model <- function(x,
                                                                          prod_frac_warn = 0.10,
                                                                          near_zero_median = 1e-3,
                                                                          near_zero_cv = 0.05),
-                                                  include_policy_rates = TRUE,
+                                                  include_policy_rates = FALSE,
                                                   effect_table = NULL,
                                                   digits = 3,
                                                   trim_right = 0.999,
@@ -200,7 +200,7 @@ build_positivity_method_statement <- function(include_policy_rates = TRUE) {
   )
   if (isTRUE(include_policy_rates)) {
     paragraphs <- c(
-      "Policy rates report Pr(A_t = 1) under each policy by reweighting observed exposures with the density ratios; when exposures are not binary we threshold them before computing the weighted average.",
+      "Policy rates report Pr(A_t = 1) using the supplied exposure_by_wave; for non-binary exposures, provide a binary indicator (e.g., I(A_t > tau)) if you want probability-scale summaries.",
       paragraphs
     )
   }

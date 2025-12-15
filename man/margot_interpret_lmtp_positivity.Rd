@@ -19,7 +19,7 @@ margot_interpret_lmtp_positivity(
   include_ipsi_context = TRUE,
   treatment_label = NULL,
   ipsi_example_g = NULL,
-  include_policy_rates = TRUE,
+  include_policy_rates = FALSE,
   policy_rate_threshold = 0,
   policy_rate_strict = TRUE,
   include_deterministic_context = TRUE,

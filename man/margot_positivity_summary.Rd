@@ -12,7 +12,7 @@ margot_positivity_summary(
   waves = NULL,
   test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
     near_zero_cv = 0.05),
-  include_policy_rates = TRUE,
+  include_policy_rates = FALSE,
   effect_table = NULL,
   digits = 3,
   compact = TRUE,
