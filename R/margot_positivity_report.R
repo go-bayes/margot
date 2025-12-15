@@ -194,7 +194,7 @@ build_positivity_method_statement <- function(include_policy_rates = TRUE) {
   paragraphs <- c(
     "Density ratios act as weights in the LMTP estimator to rebalance the observed data so it mimics the intervention of interest; large or near-zero values indicate practical positivity strain.",
     "We assess positivity on uncensored rows by examining the distribution of ratios across waves and by monitoring the fraction of person-time with tiny products of ratios, which signal unstable estimators.",
-    "Effective sample size (ESS) summarises how much information the weighted data retain: ESS = (sum w)^2 / sum w^2, so higher variance reduces precision; we report ESS relative to both uncensored rows and total person-time.",
+    "Effective sample size (ESS) summarises weight variability/precision: ESS = (sum w)^2 / sum w^2. It is a precision indicator (low ESS = noisier estimates), not a positivity test; we report ESS relative to uncensored rows and total person-time.",
     "Zeros in density ratios primarily reflect censoring, not treatment-positivity violations, because censoring removes follow-up treatment data; we therefore separate censoring rates from the uncensored ratio diagnostics.",
     "All estimands reweight to the baseline cohort via inverse probability of censoring, so even the null policy features non-trivial weights."
   )
