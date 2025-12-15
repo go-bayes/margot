@@ -1,5 +1,6 @@
 \name{margot_positivity_report}
 \alias{margot_positivity_report}
+\alias{margot_positivity_report_single_model}
 \title{Assemble a full LMTP positivity report}
 \usage{
 margot_positivity_report(
@@ -21,11 +22,33 @@ margot_positivity_report(
   plot_args = list(),
   interpret_args = list()
 )
+
+margot_positivity_report_single_model(
+  x,
+  outcome,
+  shift = NULL,
+  label_mapping = NULL,
+  waves = NULL,
+  remove_waves = NULL,
+  test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
+    near_zero_cv = 0.05),
+  include_policy_rates = TRUE,
+  effect_table = NULL,
+  digits = 3,
+  trim_right = 0.999,
+  thresholds = c(5, 10, 25, 50, 100),
+  summary_compact = TRUE,
+  include_plot = TRUE,
+  plot_args = list(),
+  interpret_args = list()
+)
 }
 \arguments{
 \item{x}{Result of `margot_lmtp()` (with `$models`) or another object accepted by the positivity helpers.}
 
 \item{outcome}{Character outcome name.}
+
+\item{shift}{Optional name for a single shift/policy when working with a standalone LMTP fit. Defaults to `x$shift` when present.}
 
 \item{shifts}{Optional character vector of shifts to include (full or cleaned names). If `NULL`, all shifts are used.}
 

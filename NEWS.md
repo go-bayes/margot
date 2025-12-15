@@ -1,3 +1,8 @@
+# [2025-12-03] margot 1.0.293
+
+### Added
+- `margot_positivity_report_single_model()` wraps standalone LMTP fits (single shift) so positivity reports work without batching, while preserving the existing multi-shift defaults.
+
 # [2025-12-03] margot 1.0.292
 
 ### Changed

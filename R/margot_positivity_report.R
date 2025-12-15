@@ -138,6 +138,56 @@ margot_positivity_report <- function(x,
   )
 }
 
+#' Assemble a full LMTP positivity report for a single model
+#'
+#' Convenience wrapper that accepts a single LMTP fit (exposing
+#' `$density_ratios`) and forwards it to [margot_positivity_report()] after
+#' coercing it into the expected nested structure.
+#'
+#' @inheritParams margot_positivity_report
+#' @param shift Optional name for the single shift/policy. Defaults to `x$shift`
+#'   when present, otherwise `"(shift)"`.
+#' @export
+margot_positivity_report_single_model <- function(x,
+                                                  outcome,
+                                                  shift = NULL,
+                                                  label_mapping = NULL,
+                                                  waves = NULL,
+                                                  remove_waves = NULL,
+                                                  test_thresholds = list(prod_log10 = -1,
+                                                                         prod_frac_warn = 0.10,
+                                                                         near_zero_median = 1e-3,
+                                                                         near_zero_cv = 0.05),
+                                                  include_policy_rates = TRUE,
+                                                  effect_table = NULL,
+                                                  digits = 3,
+                                                  trim_right = 0.999,
+                                                  thresholds = c(5, 10, 25, 50, 100),
+                                                  summary_compact = TRUE,
+                                                  include_plot = TRUE,
+                                                  plot_args = list(),
+                                                  interpret_args = list()) {
+  coerced <- coerce_single_lmtp_model(x, outcome = outcome, shift = shift)
+  margot_positivity_report(
+    x = coerced$fit,
+    outcome = outcome,
+    shifts = coerced$shift_name,
+    label_mapping = label_mapping,
+    waves = waves,
+    remove_waves = remove_waves,
+    test_thresholds = test_thresholds,
+    include_policy_rates = include_policy_rates,
+    effect_table = effect_table,
+    digits = digits,
+    trim_right = trim_right,
+    thresholds = thresholds,
+    summary_compact = summary_compact,
+    include_plot = include_plot,
+    plot_args = plot_args,
+    interpret_args = interpret_args
+  )
+}
+
 build_positivity_method_statement <- function(include_policy_rates = TRUE) {
   paragraphs <- c(
     "Density ratios act as weights in the LMTP estimator to rebalance the observed data so it mimics the intervention of interest; large or near-zero values indicate practical positivity strain.",
@@ -237,5 +287,24 @@ build_censoring_summary <- function(summary_table, label_mapping = NULL, digits 
   }
   if (!length(entries)) return(NULL)
   paste0("Censoring burden (zeros across person-time): ", paste(entries, collapse = "; "), ".")
+}
+
+coerce_single_lmtp_model <- function(x, outcome, shift = NULL) {
+  stopifnot(is.character(outcome), length(outcome) == 1L)
+  if (!is.null(shift)) stopifnot(is.character(shift), length(shift) == 1L)
+  `%||%` <- function(a, b) if (is.null(a)) b else a
+  if (is.numeric(x)) x <- list(density_ratios = x)
+  if (is.environment(x)) x <- as.list.environment(x)
+  if (inherits(x, "lmtp")) x <- as.list(x)
+  if (!is.list(x) || is.null(x$density_ratios)) {
+    stop("`x` must be a single LMTP model exposing $density_ratios.")
+  }
+  shift_name <- shift %||% x$shift %||% "(shift)"
+  if (!nzchar(as.character(shift_name)[1])) shift_name <- "(shift)"
+  nested <- list()
+  nested[[as.character(shift_name)[1]]] <- x
+  fit <- list(models = list())
+  fit$models[[outcome]] <- nested
+  list(fit = fit, shift_name = as.character(shift_name)[1])
 }
 #' Assemble a full LMTP positivity report (table, diagnostics, text, plot, methods)
