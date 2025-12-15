@@ -397,7 +397,7 @@ margot_positivity_summary <- function(x,
 
     # Rename columns to friendly labels
     names(compact_df)[names(compact_df) == "Prod"] <- prod_label_print
-    ess_label_print <- "ESS per N%"
+    ess_label_print <- "ESS per N% (precision)"
     names(compact_df)[names(compact_df) == "ESS_per_Npt"] <- ess_label_print
 
     # Optionally drop policy-rate columns when not requested or all NA
@@ -414,7 +414,7 @@ margot_positivity_summary <- function(x,
         "Notes:",
         "- Censoring handled via IPCW; zeros are summarised once in the accompanying text.",
         paste0("- '", prod_label_print, "' = % uncensored rows with log10(product of ratios across ", waves_txt, ") below k (", thr_txt, ")."),
-        "- '", ess_label_print, "' = effective sample size relative to person-time among uncensored rows.",
+        paste0("- '", ess_label_print, "' = ESS/N_pt on uncensored rows (precision indicator; lower = more variance in weights, not a positivity test)."),
         if (isTRUE(include_policy_rates)) "- 'p_hat' = policy-implied Pr(A_t=1) (uncensored); 'Delta_p' = difference vs null." else NULL,
         "- 'ATT [CI]' = average treatment effect with 95% CI.",
         sep = "\n"
@@ -423,6 +423,10 @@ margot_positivity_summary <- function(x,
     }
 
     attr(compact_df, "prop_zero_pct") <- zero_attr
+    attr(compact_df, "precision_note") <- paste0(
+      ess_label_print,
+      " summarises weight variability (ESS/N_pt) for uncensored rows; small values indicate imprecision rather than support failure."
+    )
 
     out <- compact_df
   }

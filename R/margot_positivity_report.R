@@ -271,7 +271,7 @@ build_wave_summary_table <- function(diagnostics, label_mapping = NULL, digits =
     }
   }
   mat <- round(mat, digits)
-  colnames(mat) <- paste0("ESS per N% : ", wave_labels)
+  colnames(mat) <- paste0("ESS per N% (precision) : ", wave_labels)
   out <- as.data.frame(mat, check.names = FALSE, stringsAsFactors = FALSE)
   rownames(out) <- shift_labels
   out
