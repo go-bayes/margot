@@ -1,3 +1,8 @@
+# [2025-12-03] margot 1.0.294
+
+### Changed
+- `include_policy_rates` now defaults to FALSE across positivity helpers; policy rates require user-supplied binary indicators for non-binary exposures. Method text clarifies policy-rate expectations.
+
 # [2025-12-03] margot 1.0.293
 
 ### Added
