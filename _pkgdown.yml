@@ -157,6 +157,7 @@ reference:
     - margot_rescue_qini
     - margot_lmtp_resort_contrast
     - margot_positivity_report
+    - margot_positivity_report_single_model
     - margot_policy_workflow
     - margot_subset_model
     - margot_subset_batch
