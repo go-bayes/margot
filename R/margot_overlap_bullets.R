@@ -957,18 +957,14 @@ margot_interpret_lmtp_positivity <- function(x,
   # overview lines removed - averaging across interventions is incoherent
   overview_lines <- character(0)
 
-  # per-shift bullet lines -------------------------------------------------
+  # per-shift precision lines (ESS = precision, not positivity) ------------
   lines <- vapply(names(shift_results), function(name) {
     res <- shift_results[[name]]
     wave_df <- res$waves
     overall_df <- res$overall
     if (!nrow(wave_df)) return("")
 
-    # censoring rate (shown once per shift)
-    cens_pct <- fmt_frac(overall_df$prop_censored * 100)
-    cens_clause <- paste0("censoring (zeros across person-time) = ", cens_pct, "%")
-
-    # uncensored ESS by wave
+    # uncensored ESS by wave (precision)
     wave_names <- vapply(wave_df$wave, wave_label, character(1))
     wave_bits <- paste0(
       wave_names, ": ESS = ", fmt_int(wave_df$ess_pos),
@@ -1009,7 +1005,7 @@ margot_interpret_lmtp_positivity <- function(x,
       }
     }
 
-    paste0("- ", res$label, ": ", cens_clause, "; uncensored ESS by wave — ", wave_clause, overall_clause, policy_clause)
+    paste0("- ", res$label, ": ESS by wave — ", wave_clause, overall_clause, policy_clause)
   }, character(1))
   lines <- lines[nzchar(lines)]
 
@@ -1031,7 +1027,15 @@ margot_interpret_lmtp_positivity <- function(x,
   tests_expl_block <- tests_explanations_text()
   tests_block <- if (length(tests_section)) c(tests_intro, tests_expl_block, tests_section) else character(0)
 
-  text_lines <- c(methods_section, ipsi_section, det_section, policy_section, header, ipsi_block, tests_block, overview_lines, lines, diagnostics_section)
+  precision_block <- if (length(lines)) c(
+    "",
+    "## Precision (weights)",
+    "",
+    "ESS/N summaries describe weight variability (precision). Lower values mean noisier estimates; they are not positivity tests.",
+    lines
+  ) else character(0)
+
+  text_lines <- c(methods_section, ipsi_section, det_section, policy_section, header, ipsi_block, tests_block, overview_lines, precision_block, diagnostics_section)
   text <- paste(text_lines, collapse = "\n")
   text <- sanitize_latex(text)
 
