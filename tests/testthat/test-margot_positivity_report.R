@@ -30,8 +30,9 @@ test_that("margot_positivity_report bundles components", {
   expect_true(is.character(rep$method_statement))
   expect_true(is.null(rep$censoring_summary) || is.character(rep$censoring_summary))
   expect_true(is.null(rep$wave_summary_table) || is.data.frame(rep$wave_summary_table))
+  expect_true(is.null(rep$precision_table) || is.data.frame(rep$precision_table))
   expect_false(is.null(rep$narrative))
-  expect_true(any(names(rep$summary_table) == "ESS per N% (precision)"))
+  expect_true(!any(names(rep$summary_table) == "ESS per N% (precision)"))
 })
 
 test_that("margot_positivity_report_single_model wraps single LMTP outputs", {

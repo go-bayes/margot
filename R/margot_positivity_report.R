@@ -116,9 +116,11 @@ margot_positivity_report <- function(x,
   method_statement <- build_positivity_method_statement(include_policy_rates)
   wave_summary_table <- build_wave_summary_table(diagnostics, label_mapping, digits = digits)
   censoring_summary <- build_censoring_summary(summary_tbl, label_mapping, digits = digits)
+  precision_table <- attr(summary_tbl, "precision_table")
 
   list(
     summary_table = summary_tbl,
+    precision_table = precision_table,
     diagnostics = diagnostics,
     overlap_plot = overlap_plot,
     narrative = narrative,

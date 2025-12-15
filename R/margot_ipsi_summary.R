@@ -388,7 +388,6 @@ margot_positivity_summary <- function(x,
       Shift = Shift,
       Verdict = out$verdict,
       Prod = out$prod_frac_below_pct,
-      ESS_per_Npt = out$ess_pos_frac_pt,
       p_hat = out$p_hat_overall,
       Delta_p = out$dp_hat_overall,
       stringsAsFactors = FALSE
@@ -398,7 +397,6 @@ margot_positivity_summary <- function(x,
     # Rename columns to friendly labels
     names(compact_df)[names(compact_df) == "Prod"] <- prod_label_print
     ess_label_print <- "ESS per N% (precision)"
-    names(compact_df)[names(compact_df) == "ESS_per_Npt"] <- ess_label_print
 
     # Optionally drop policy-rate columns when not requested or all NA
     if (!isTRUE(include_policy_rates) || (all(is.na(compact_df$p_hat)) && all(is.na(compact_df$Delta_p)))) {
@@ -414,18 +412,25 @@ margot_positivity_summary <- function(x,
         "Notes:",
         "- Censoring handled via IPCW; zeros are summarised once in the accompanying text.",
         paste0("- '", prod_label_print, "' = % uncensored rows with log10(product of ratios across ", waves_txt, ") below k (", thr_txt, ")."),
-        paste0("- '", ess_label_print, "' = ESS/N_pt on uncensored rows (precision indicator; lower = more variance in weights, not a positivity test)."),
         if (isTRUE(include_policy_rates)) "- 'p_hat' = policy-implied Pr(A_t=1) (uncensored); 'Delta_p' = difference vs null." else NULL,
         "- 'ATT [CI]' = average treatment effect with 95% CI.",
+        "- Precision (separate table): ESS/N_pt on uncensored rows; lower = more weight variability (imprecision), not a positivity test.",
         sep = "\n"
       )
       attr(compact_df, "explanation") <- expl
     }
 
     attr(compact_df, "prop_zero_pct") <- zero_attr
+    precision_tbl <- data.frame(
+      Shift = Shift,
+      ess_per_Npt = out$ess_pos_frac_pt,
+      stringsAsFactors = FALSE
+    )
+    names(precision_tbl)[names(precision_tbl) == "ess_per_Npt"] <- ess_label_print
+    attr(compact_df, "precision_table") <- precision_tbl
     attr(compact_df, "precision_note") <- paste0(
       ess_label_print,
-      " summarises weight variability (ESS/N_pt) for uncensored rows; small values indicate imprecision rather than support failure."
+      " summarises weight variability (ESS/N_pt) on uncensored rows; small values indicate imprecision rather than support failure."
     )
 
     out <- compact_df
