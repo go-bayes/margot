@@ -48,7 +48,7 @@ The package offers functions for:
 - reporting results
 - performing sensitivity analyses
 
-`margot` streamlines the estimation of (Marginal) Average Treatment Effects (ATT, ATE), but it also supports workflows for Heterogeneous Treatment Effects (CATE) (estimated via `grf`), as well as Longitudinal Modified Treatment Policies (estimated via `lmtp`). It has extensive graphical and reporting functions to ease burdens for understanding. 
+`margot` streamlines the estimation of (Marginal) Average Treatment Effects (ATT, ATE), but it also supports workflows for Heterogeneous Treatment Effects (CATE) (estimated via `grf`), as well as Longitudinal Modified Treatment Policies (estimated via `lmtp`). It has extensive graphical and reporting functions to ease burdens for understanding.
 
 ## LMTP positivity diagnostics
 
@@ -64,6 +64,4 @@ Pair these plots with `margot_interpret_lmtp_positivity()` for per-wave ESS and 
 [^1]: The logo is a *Single World Intervention Template* (SWIT). We use
     a SWIT to generate *Single World Intervention Graphs* (SWIGs) –
     causal diagrams for which identification assumptions can be read
-    separately for each treatment (regime) to be compared. The name
-    `margot` reflects the contents and aims of this package; it is also
-    the name of my daughter, Margot.
+    separately for each treatment (regime) to be compared.
