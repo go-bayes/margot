@@ -51,15 +51,18 @@
   <main id="main" class="col-md-9"><p><img src="reference/figures/margot.png" width="600" alt="Margot package logo showing the package name"></p>
 <!-- badges: end -->
 <!-- badges: end -->
-<div class="section level1">
-<div class="page-header"><h1 id="margot">margot<a class="anchor" aria-label="anchor" href="#margot"></a>
-</h1></div>
-<blockquote>
-<p><strong>⚠️ IMPORTANT</strong>: The margot package is undergoing refactoring as we transition to the <strong>margotverse</strong> suite of packages. The package will be split into focuse. Please expect breaking changes in upcoming releases.</p>
-</blockquote>
-<p><strong>MARG</strong>inal <strong>O</strong>bservational <strong>T</strong>reatment-effects.<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;The logo is a &lt;em&gt;Single World Intervention Template&lt;/em&gt; (SWIT). We use a SWIT to generate &lt;em&gt;Single World Intervention Graphs&lt;/em&gt; (SWIGs) – causal diagrams for which identification assumptions can be read separately for each treatment (regime) to be compared. The name &lt;code&gt;margot&lt;/code&gt; reflects the contents and aims of this package; it is also the name of my daughter, Margot.&lt;/p&gt;"><sup>1</sup></a></p>
-<p>Causal inference requires <strong>balance</strong> across the treatments to be compared. In observational studies, such balance is not guaranteed; quantifying causality therefore requires careful, multi-step workflows.</p>
-<p>The goal of <code>margot</code> is to enhance understanding of causality in observational research.</p>
+<div class="section level2">
+<h2 id="margot">margot<a class="anchor" aria-label="anchor" href="#margot"></a>
+</h2>
+<p><strong>MARG</strong>inal <strong>O</strong>bservational <strong>T</strong>reatment-effects.<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;The logo is a &lt;em&gt;Single World Intervention Template&lt;/em&gt; (SWIT). We use a SWIT to generate &lt;em&gt;Single World Intervention Graphs&lt;/em&gt; (SWIGs) – causal diagrams for which identification assumptions can be read separately for each treatment (regime) to be compared.&lt;/p&gt;"><sup>1</sup></a></p>
+<p>The goal of <code>margot</code> is to enhance understanding of causality in observational research. We do this by:</p>
+<ol style="list-style-type: decimal">
+<li><p>Stating a clear causal question, specifying the intervention(s) to be contrasted, outcome, relative timing of interventions and outcomes, potential confounders, and target population. That is, we define our causal estimand, drawing on specialist expertise. We call this targeted quantity our <strong>causal estimand.</strong></p></li>
+<li><p>Consider obstacles to identifying our causal estimand from data. This involves considering whether findings from the sample population at baseline can transport to the target population, whether processes of selection on the sample itself lead to further distortion. It involves checking the three fundamental assumptions for causal inference: consistency, exchangeability, and positivity. It moreover involves considering and where relevant adjusting for systematic measurement error biases besides those arising from selection biases and failures in satisfying the three fundamental assumptions. If finally involves stating quantitative sensitivity and measurement bias analyses. Ideally steps 1 and 2 are conducted before any data are collected, but investigators rarely have such luxury.</p></li>
+<li><p>Define our statistical estimator, or our method for estimating the targeted causal questions from data.</p></li>
+<li><p>Perform data-analysis, interpret results, and convey these results to interested audiences.</p></li>
+</ol>
+<p>Although steps 1-3 are routinely skipped in Social Scientific research, they are indispensable. Without them, we have know way of assigning meaning to the statistical relationships we observe from data.</p>
 <p>The package offers functions for:</p>
 <ul>
 <li>evaluating causal assumptions</li>
@@ -67,19 +70,20 @@
 <li>reporting results</li>
 <li>performing sensitivity analyses</li>
 </ul>
-<p><code>margot</code> streamlines the estimation of (Marginal) Average Treatment Effects (ATT, ATE), but it also supports workflows for Heterogeneous Treatment Effects (CATE) (estimated via <code>grf</code>), as well as Longitudinal Modified Treatment Policies (estimated via <code>lmtp</code>). It has extensive graphical and reporting functions to ease burdens for understanding.</p>
-<div class="section level2">
-<h2 id="lmtp-positivity-diagnostics">LMTP positivity diagnostics<a class="anchor" aria-label="anchor" href="#lmtp-positivity-diagnostics"></a>
-</h2>
-<p>For longitudinal overlap checks, <code><a href="reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code> now:</p>
-<ul>
-<li>Automatically arranges panels by <strong>shifts × waves</strong> and respects the shift order you request.</li>
-<li>Uses the expanded “lab” palette (grey <code>null</code>, blue <code>shift_zero</code>, distinct oranges for IPSI shifts) so panels stay visually consistent across waves.</li>
-<li>Applies sensible defaults for headroom and axis harmonisation—no need to hand-tune <code>layout</code>, <code>ymax_harmonize</code>, or <code>xlim_harmonize</code>.</li>
-<li>Treats the legacy <code>layout</code> argument as deprecated: it always reverts to the stable shifts-by-waves layout (with a CLI note if a different value is supplied).</li>
-</ul>
-<p>Pair these plots with <code><a href="reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> for per-wave ESS and tail diagnostics computed on uncensored weights.</p>
 </div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p><code>margot</code> is currently available only on GitHub. Install it with <code>pak</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"go-bayes/margot"</span><span class="op">)</span></span></code></pre></div>
+<p>If you prefer <code>remotes</code>, use:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"go-bayes/margot"</span><span class="op">)</span></span></code></pre></div>
+<p><code>margot</code> streamlines the estimation of (Marginal) Average Treatment Effects (ATT, ATE), but it also supports workflows for Heterogeneous Treatment Effects (CATE) (estimated using the <code>grf</code> package in R), as well as Longitudinal Modified Treatment Policies (estimated using <code>lmtp</code> package in R). <code>margot</code> is greatly indebted to the authors of these two excellent packages. <code>margot</code> is best seen as an extensive system of graphical and reporting functions that assist with the challenging tasks of asking and answering causal questions precisely.</p>
+<p>Note that Margot is being actively developed, and is not currently in a stable state. Expect breaking changes.</p>
 </div>
 
 
