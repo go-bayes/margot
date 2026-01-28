@@ -14,6 +14,7 @@ navbar:
 
 template:
   bootstrap: 5
+  assets: pkgdown
   bslib:
     font_scale: 1.05
     bg: "#eff1f5"

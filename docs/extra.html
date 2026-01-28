@@ -1,0 +1,56 @@
+<script>
+(function() {
+  const storageKey = "margot-theme";
+  const root = document.documentElement;
+  const applyTheme = (theme) => {
+    if (theme === "light" || theme === "dark") {
+      root.setAttribute("data-theme", theme);
+    } else {
+      root.removeAttribute("data-theme");
+    }
+  };
+
+  const stored = window.localStorage.getItem(storageKey);
+  applyTheme(stored);
+
+  const updateButton = (btn, theme) => {
+    if (!btn) return;
+    const label = theme === "dark" ? "Light" : "Dark";
+    btn.setAttribute("aria-label", "Toggle colour theme");
+    btn.textContent = `Theme: ${label}`;
+  };
+
+  const toggleTheme = (btn) => {
+    const current = root.getAttribute("data-theme") || "auto";
+    const next = current === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    window.localStorage.setItem(storageKey, next);
+    updateButton(btn, next);
+  };
+
+  const initButton = () => {
+    const navs = document.querySelectorAll(".navbar .navbar-nav");
+    const nav = navs.length ? navs[navs.length - 1] : null;
+    if (!nav) return;
+
+    const item = document.createElement("li");
+    item.className = "nav-item";
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-theme-toggle";
+    const current = root.getAttribute("data-theme") || "light";
+    updateButton(button, current);
+    button.addEventListener("click", () => toggleTheme(button));
+
+    item.appendChild(button);
+    nav.appendChild(item);
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initButton);
+  } else {
+    initButton();
+  }
+})();
+</script>
