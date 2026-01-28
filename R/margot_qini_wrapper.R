@@ -14,14 +14,14 @@
 #'
 #' @return List formatted for margot_interpret_qini with diff_gain_summaries
 #'
-#' @export
-margot_qini <- function(margot_result,
-                        model_names = NULL,
-                        seed = 12345,
-                        n_bootstrap = 200,
-                        verbose = TRUE,
-                        spend_levels = c(0.1, 0.4),
-                        label_mapping = NULL) {
+#' @keywords internal
+margot_qini_wrapper <- function(margot_result,
+                                model_names = NULL,
+                                seed = 12345,
+                                n_bootstrap = 200,
+                                verbose = TRUE,
+                                spend_levels = c(0.1, 0.4),
+                                label_mapping = NULL) {
   # apply new qini computation
   result <- margot_qini_alternative(
     margot_result = margot_result,

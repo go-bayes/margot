@@ -48,17 +48,17 @@
 #' margot_plot_qini(cf_results, model_name = "model_outcome1")
 #' }
 #'
-#' @export
+#' @keywords internal
 #' @importFrom maq maq get_ipw_scores
 #' @importFrom cli cli_h2 cli_alert_info cli_alert_success cli_alert_warning
 #' @importFrom grf causal_forest
-margot_qini <- function(margot_result,
-                        model_names = NULL,
-                        seed = 12345,
-                        n_bootstrap = 200,
-                        verbose = TRUE,
-                        spend_levels = NULL, # for compatibility, not used
-                        label_mapping = NULL) { # for compatibility, not used
+margot_qini_new <- function(margot_result,
+                            model_names = NULL,
+                            seed = 12345,
+                            n_bootstrap = 200,
+                            verbose = TRUE,
+                            spend_levels = NULL, # for compatibility, not used
+                            label_mapping = NULL) { # for compatibility, not used
 
   # validate inputs
   if (!is.list(margot_result) || !("results" %in% names(margot_result))) {
