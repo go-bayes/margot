@@ -2,18 +2,36 @@
 % Please edit documentation in R/helpers.R
 \name{here_save_arrow}
 \alias{here_save_arrow}
-\title{Save Data Frame to Parquet File in a Specified Directory (Deprecated)}
+\title{Save Data Frame to Parquet File in a Specified Directory}
 \usage{
-here_save_arrow(df, name)
+here_save_arrow(
+  df,
+  name,
+  dir_path = NULL,
+  compression = "zstd",
+  compression_level = NULL,
+  quiet = FALSE,
+  ...
+)
 }
 \arguments{
 \item{df}{Data frame to be saved.}
 
 \item{name}{Character string specifying the base name of the file.}
+
+\item{dir_path}{Character string specifying the directory path where the file will be saved. If NULL (default), uses `push_mods`.}
+
+\item{compression}{Character string specifying the compression codec. Default is "zstd".}
+
+\item{compression_level}{Optional integer for the compression level. Default is NULL.}
+
+\item{quiet}{Logical. If TRUE, suppresses console output. Default is FALSE.}
+
+\item{...}{Additional arguments passed to `arrow::write_parquet()`.}
 }
 \description{
-This function is deprecated and will be removed in future releases.
-For saving data frames, consider using the `here_save_qs` function.
+Saves the provided data frame or object as a `.parquet` file using the specified name,
+within a directory defined by `dir_path`. This function uses `arrow::write_parquet()`.
 }
 \examples{
 \dontrun{

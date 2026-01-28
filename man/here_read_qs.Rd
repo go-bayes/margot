@@ -20,7 +20,7 @@ A data frame or object representing the data stored in the specified `.qs` file.
 }
 \description{
 Reads a `.qs` file specified by `name` from a directory defined by `dir_path`, returning the data frame or object stored within.
-This function uses the `qs` package to efficiently read `.qs` files and the `here` package to construct the file path in a consistent, platform-independent manner.
+This function uses the `qs` package to efficiently read `.qs` files and the `here` package to construct the file path in a consistent, platform-independent manner. The `.qs` format is retained for compatibility; for new workflows, prefer `here_read_arrow()`.
 }
 \details{
 If `dir_path` is NULL, the `push_mods` variable must be defined in the user's environment or within the package, pointing to the directory from where files are to be read.

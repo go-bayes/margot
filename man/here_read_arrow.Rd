@@ -2,16 +2,23 @@
 % Please edit documentation in R/helpers.R
 \name{here_read_arrow}
 \alias{here_read_arrow}
-\title{Read Data Frame from Parquet File in a Specified Directory (Deprecated)}
+\title{Read Data Frame from Parquet File in a Specified Directory}
 \usage{
-here_read_arrow(name)
+here_read_arrow(name, dir_path = NULL, quiet = FALSE, ...)
 }
 \arguments{
-\item{name}{Character string specifying the name of the Parquet file to be read.}
+\item{name}{Character string specifying the name of the Parquet file to be read (without the ".parquet" extension).}
+
+\item{dir_path}{Character string specifying the directory path from which the file will be read. If NULL (default), uses `push_mods`.}
+
+\item{quiet}{Logical. If TRUE, suppresses console output. Default is FALSE.}
+
+\item{...}{Additional arguments passed to `arrow::read_parquet()`.}
 }
 \description{
-This function is deprecated and will be removed in future releases.
-For reading data frames, consider using the `here_read_qs` function.
+Reads a `.parquet` file specified by `name` from a directory defined by
+`dir_path`, returning the data frame or object stored within. This function uses
+`arrow::read_parquet()` and `here::here()` to construct portable file paths.
 }
 \examples{
 \dontrun{

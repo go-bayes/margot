@@ -15,26 +15,17 @@ navbar:
 template:
   bootstrap: 5
   bslib:
-    # set the base font family using a Google Font
-    base_font: {google: "Fira Code"}
-    # set the font for headings
-    heading_font: {google: "Fira Sans"}
-    # set the font for code elements
-    code_font: {google: "Fira Code"}
-
-    # adjust the overall font size scale
-    font_scale: 0.75  # makes the font smaller; 1 is the default size
-    bg: "#ffffff"      # white background
-    fg: "#333333"      # dark gray font color for better readability
-    primary: "#007bff" # primary blue theme color for links, buttons, etc.
-    secondary: "#6c757d" # secondary color (used for muted text, etc.)
-    # Additional color settings for a cohesive blue theme
-    info: "#17a2b8"    # info color (light blue)
-    success: "#28a745" # success color (green)
-    warning: "#ffc107" # warning color (yellow)
-    danger: "#dc3545"  # danger color (red)
-    light: "#f8f9fa"   # light color for contrasts
-    dark: "#343a40"    # dark color for contrasts
+    font_scale: 1.05
+    bg: "#eff1f5"
+    fg: "#5c5f77"
+    primary: "#1e66f5"
+    secondary: "#6c6f85"
+    info: "#209fb5"
+    success: "#40a02b"
+    warning: "#fe640b"
+    danger: "#d20f39"
+    light: "#f8f9fa"
+    dark: "#11111b"
 
 
 authors:

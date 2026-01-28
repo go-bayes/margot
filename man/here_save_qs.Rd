@@ -4,7 +4,7 @@
 \alias{here_save_qs}
 \title{Save Data Frame or Object to qs File in a Specified Directory with Enhanced Compression}
 \usage{
-here_save_qs(obj, name, dir_path, preset = "high", nthreads = 1)
+here_save_qs(obj, name, dir_path, preset = "high", nthreads = 1, quiet = FALSE)
 }
 \arguments{
 \item{obj}{Data frame or object to be saved. This is the object you want to persist to disk in `.qs` format.}
@@ -16,13 +16,15 @@ here_save_qs(obj, name, dir_path, preset = "high", nthreads = 1)
 \item{preset}{Character string specifying the compression preset. Default is "high" for better compression.}
 
 \item{nthreads}{Integer specifying the number of threads to use for compression. Default is 1.}
+
+\item{quiet}{Logical. If TRUE, suppresses console output. Default is FALSE.}
 }
 \value{
 Invisible NULL. The primary effect of this function is the side effect of writing a `.qs` file to disk.
 }
 \description{
 Saves the provided data frame or object as a `.qs` file using the specified name, within a directory defined by `dir_path`.
-This function leverages the `qs` package to write data to `.qs` format with enhanced compression for efficient storage and quick access in R.
+This function leverages the `qs` package to write data to `.qs` format with enhanced compression for efficient storage and quick access in R. The `.qs` format is retained for compatibility; for new workflows, prefer `here_save_arrow()`.
 }
 \details{
 The `dir_path` argument must point to an existing directory. The function does not create directories; it assumes that the specified directory already exists.

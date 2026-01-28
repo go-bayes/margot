@@ -1,3 +1,11 @@
+# [2026-01-28] margot 1.0.295
+
+### Added
+- `here_read_arrow()` and `here_save_arrow()` restored as supported helpers for Parquet workflows, which we now use to replace deprecated qs calls.
+
+### Changed
+- `here_read_qs()` and `here_save_qs()` now produce a compatibility warning and suggest Arrow helpers for new workflows (suppressed when `quiet = TRUE`).
+
 # [2025-12-03] margot 1.0.294
 
 ### Changed

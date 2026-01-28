@@ -1018,12 +1018,16 @@ transform_var_name <- function(var_name, label_mapping = NULL,
 
 # read utilities ----------------------------------------------------------
 
-#' @title Read Data Frame from Parquet File in a Specified Directory (Deprecated)
+#' @title Read Data Frame from Parquet File in a Specified Directory
 #'
-#' @description This function is deprecated and will be removed in future releases.
-#' For reading data frames, consider using the `here_read_qs` function.
+#' @description Reads a `.parquet` file specified by `name` from a directory defined by
+#' `dir_path`, returning the data frame or object stored within. This function uses
+#' `arrow::read_parquet()` and `here::here()` to construct portable file paths.
 #'
-#' @param name Character string specifying the name of the Parquet file to be read.
+#' @param name Character string specifying the name of the Parquet file to be read (without the ".parquet" extension).
+#' @param dir_path Character string specifying the directory path from which the file will be read. If NULL (default), uses `push_mods`.
+#' @param quiet Logical. If TRUE, suppresses console output. Default is FALSE.
+#' @param ... Additional arguments passed to `arrow::read_parquet()`.
 #'
 #' @examples
 #' \dontrun{
@@ -1032,22 +1036,39 @@ transform_var_name <- function(var_name, label_mapping = NULL,
 #'
 #' @export
 #' @keywords internal
-here_read_arrow <- function(name) {
-  .Deprecated("here_read_qs")
-  message("here_read_arrow is deprecated and will be removed in a future release. Please use here_read_qs instead.")
-  # function logic
-  df <- arrow::read_parquet(here::here(name, ".parquet"))
+here_read_arrow <- function(name, dir_path = NULL, quiet = FALSE, ...) {
+  read_dir <- if (is.null(dir_path)) push_mods else dir_path
+  file_path <- here::here(read_dir, paste0(name, ".parquet"))
+
+  if (!file.exists(file_path)) {
+    stop(sprintf("File not found: %s", file_path))
+  }
+
+  df <- arrow::read_parquet(file_path, ...)
+
+  if (!quiet) {
+    file_size <- margot_size(df)
+    cat(sprintf("Object read from: %s\n", file_path))
+    cat(sprintf("Object size: %s\n", file_size))
+    cli::cli_alert_success("Read operation completed successfully")
+  }
+
   return(df)
 }
 
 
-#' @title Save Data Frame to Parquet File in a Specified Directory (Deprecated)
+#' @title Save Data Frame to Parquet File in a Specified Directory
 #'
-#' @description This function is deprecated and will be removed in future releases.
-#' For saving data frames, consider using the `here_save_qs` function.
+#' @description Saves the provided data frame or object as a `.parquet` file using the specified name,
+#' within a directory defined by `dir_path`. This function uses `arrow::write_parquet()`.
 #'
 #' @param df Data frame to be saved.
 #' @param name Character string specifying the base name of the file.
+#' @param dir_path Character string specifying the directory path where the file will be saved. If NULL (default), uses `push_mods`.
+#' @param compression Character string specifying the compression codec. Default is "zstd".
+#' @param compression_level Optional integer for the compression level. Default is NULL.
+#' @param quiet Logical. If TRUE, suppresses console output. Default is FALSE.
+#' @param ... Additional arguments passed to `arrow::write_parquet()`.
 #'
 #' @examples
 #' \dontrun{
@@ -1057,11 +1078,26 @@ here_read_arrow <- function(name) {
 #'
 #' @export
 #' @keywords internal
-here_save_arrow <- function(df, name) {
-  .Deprecated("here_save_qs", package = "margot")
-  message("here_save_arrow is deprecated and will be removed in a future release. Please use here_save_qs instead.")
-  # function logic
-  arrow::write_parquet(df, here::here(name, ".parquet"))
+here_save_arrow <- function(df, name, dir_path = NULL, compression = "zstd", compression_level = NULL, quiet = FALSE, ...) {
+  save_dir <- if (is.null(dir_path)) push_mods else dir_path
+  file_path <- here::here(save_dir, paste0(name, ".parquet"))
+
+  arrow::write_parquet(
+    df,
+    file_path,
+    compression = compression,
+    compression_level = compression_level,
+    ...
+  )
+
+  if (!quiet) {
+    file_size <- margot_size(df)
+    cat(sprintf("Object saved to: %s\n", file_path))
+    cat(sprintf("Object size: %s\n", file_size))
+    cli::cli_alert_success("Save operation completed successfully")
+  }
+
+  invisible(file_path)
 }
 
 

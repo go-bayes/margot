@@ -1,7 +1,7 @@
 #' Read Data Frame or Object from qs File in a Specified Directory
 #'
 #' Reads a `.qs` file specified by `name` from a directory defined by `dir_path`, returning the data frame or object stored within.
-#' This function uses the `qs` package to efficiently read `.qs` files and the `here` package to construct the file path in a consistent, platform-independent manner.
+#' This function uses the `qs` package to efficiently read `.qs` files and the `here` package to construct the file path in a consistent, platform-independent manner. The `.qs` format is retained for compatibility; for new workflows, prefer `here_read_arrow()`.
 #'
 #' @param name Character string specifying the name of the `.qs` file to be read (without the ".qs" extension).
 #' @param dir_path Character string specifying the directory path from which the file will be read. If NULL (default), uses `push_mods`.
@@ -33,6 +33,10 @@ here_read_qs <- function(name, dir_path = NULL, nthreads = 1, quiet = FALSE) {
 
   if (!file.exists(file_path)) {
     stop(sprintf("File not found: %s", file_path))
+  }
+
+  if (!quiet) {
+    cli::cli_alert_warning("The .qs format is retained for compatibility. For new workflows, prefer here_read_arrow().")
   }
 
   obj <- qs::qread(file_path, nthreads = nthreads)
