@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.296</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.298</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,10 +45,13 @@
 <span>  end_wave <span class="op">=</span> <span class="fl">2022</span>,</span>
 <span>  prev_wave_counts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span>,</span>
 <span>  opt_in_var <span class="op">=</span> <span class="st">"sample_frame_opt_in"</span>,</span>
+<span>  track_opt_ins <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  opt_in_true <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  opt_in_false <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  strata_var <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  strata_levels <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  strata_levels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  strata_filter <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  strata_filter_scope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"all_counts"</span>, <span class="st">"strata_only"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -76,6 +79,10 @@
 <dd><p>character. name of the opt-in variable to track (default: "sample_frame_opt_in")</p></dd>
 
 
+<dt id="arg-track-opt-ins">track_opt_ins<a class="anchor" aria-label="anchor" href="#arg-track-opt-ins"></a></dt>
+<dd><p>logical. whether to track opt-in counts (default: NULL uses opt_in_var presence)</p></dd>
+
+
 <dt id="arg-opt-in-true">opt_in_true<a class="anchor" aria-label="anchor" href="#arg-opt-in-true"></a></dt>
 <dd><p>value indicating opted-in status (default: 1)</p></dd>
 
@@ -90,6 +97,16 @@
 
 <dt id="arg-strata-levels">strata_levels<a class="anchor" aria-label="anchor" href="#arg-strata-levels"></a></dt>
 <dd><p>character. optional levels to include for stratification (default: NULL uses all levels in data)</p></dd>
+
+
+<dt id="arg-strata-filter">strata_filter<a class="anchor" aria-label="anchor" href="#arg-strata-filter"></a></dt>
+<dd><p>character. optional levels used to focus stratified output (default: NULL)</p></dd>
+
+
+<dt id="arg-strata-filter-scope">strata_filter_scope<a class="anchor" aria-label="anchor" href="#arg-strata-filter-scope"></a></dt>
+<dd><p>character. whether strata_filter applies to all counts ("all_counts"),
+only stratified columns ("strata_only"), or automatic ("auto", default). in auto mode, strata_filter
+applies to all counts when supplied, and leaves totals unchanged when strata_filter is NULL.</p></dd>
 
 </dl></div>
     <div class="section level2">

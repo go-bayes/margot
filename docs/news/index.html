@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.296</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.298</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,11 +33,26 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.298" id="id_2026-02-03-margot-10298">[2026-02-03] margot 1.0.298<a class="anchor" aria-label="anchor" href="#id_2026-02-03-margot-10298"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-298">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-298"></a></h4>
+<ul><li>margot_count_ids() now defaults to filtering all counts when strata_filter is supplied (strata_filter_scope = “auto”), while leaving totals unchanged when strata_filter is NULL.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.297" id="id_2026-02-03-margot-10297">[2026-02-03] margot 1.0.297<a class="anchor" aria-label="anchor" href="#id_2026-02-03-margot-10297"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-297">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-297"></a></h4>
+<ul><li>margot_count_ids() now keeps overall counts when using strata_filter (default strata_filter_scope = “strata_only”) and warns if all_counts would drop deceased rows.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.296" id="id_2026-02-03-margot-10296">[2026-02-03] margot 1.0.296<a class="anchor" aria-label="anchor" href="#id_2026-02-03-margot-10296"></a></h2>
 <div class="section level4">
 <h4 id="added-1-0-296">Added<a class="anchor" aria-label="anchor" href="#added-1-0-296"></a></h4>
-<p>margot_count_ids() summarises cumulative and wave-specific participant counts, with optional opt-in and stratified active totals.</p>
-</div>
+<ul><li>margot_count_ids() summarises cumulative and wave-specific participant counts, with optional opt-in tracking and stratified active totals.</li>
+<li>margot_count_ids() gains track_opt_ins, strata_filter, and strata_filter_scope to control opt-in counting and focus on selected strata levels without dropping overall counts.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.295" id="id_2026-01-28-margot-10295">[2026-01-28] margot 1.0.295<a class="anchor" aria-label="anchor" href="#id_2026-01-28-margot-10295"></a></h2>

@@ -1,7 +1,18 @@
+# [2026-02-03] margot 1.0.298
+
+### Changed
+- margot_count_ids() now defaults to filtering all counts when strata_filter is supplied (strata_filter_scope = "auto"), while leaving totals unchanged when strata_filter is NULL.
+
+# [2026-02-03] margot 1.0.297
+
+### Changed
+- margot_count_ids() now keeps overall counts when using strata_filter (default strata_filter_scope = "strata_only") and warns if all_counts would drop deceased rows.
+
 # [2026-02-03] margot 1.0.296
 
 ### Added
-margot_count_ids() summarises cumulative and wave-specific participant counts, with optional opt-in and stratified active totals.
+- margot_count_ids() summarises cumulative and wave-specific participant counts, with optional opt-in tracking and stratified active totals.
+- margot_count_ids() gains track_opt_ins, strata_filter, and strata_filter_scope to control opt-in counting and focus on selected strata levels without dropping overall counts.
 
 # [2026-01-28] margot 1.0.295
 

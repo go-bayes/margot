@@ -5,10 +5,15 @@
 #' @param end_wave integer. the last wave to process (default: 2022)
 #' @param prev_wave_counts integer vector. previous wave thresholds to count (default: c(1,2,3,4))
 #' @param opt_in_var character. name of the opt-in variable to track (default: "sample_frame_opt_in")
+#' @param track_opt_ins logical. whether to track opt-in counts (default: NULL uses opt_in_var presence)
 #' @param opt_in_true value indicating opted-in status (default: 1)
 #' @param opt_in_false value indicating not opted-in status (default: 0)
 #' @param strata_var character. optional name of a variable used to stratify active counts (default: NULL)
 #' @param strata_levels character. optional levels to include for stratification (default: NULL uses all levels in data)
+#' @param strata_filter character. optional levels used to focus stratified output (default: NULL)
+#' @param strata_filter_scope character. whether strata_filter applies to all counts ("all_counts"),
+#'   only stratified columns ("strata_only"), or automatic ("auto", default). in auto mode, strata_filter
+#'   applies to all counts when supplied, and leaves totals unchanged when strata_filter is NULL.
 #'
 #' @return a tibble with columns for:
 #'   - wave: survey wave number
@@ -28,8 +33,8 @@
 #'
 #' @importFrom dplyr filter mutate pull anti_join bind_rows %>%
 #' @importFrom tibble tibble
-#' @importFrom cli cli_alert_info cli_alert_warning cli_alert_success
-#' @importFrom rlang sym !!
+#' @importFrom cli cli_alert_info cli_alert_success
+#' @importFrom rlang sym !! warn
 #'
 #' @export
 margot_count_ids <- function(dat,
@@ -37,19 +42,28 @@ margot_count_ids <- function(dat,
                              end_wave = 2022,
                              prev_wave_counts = c(1, 2, 3, 4),
                              opt_in_var = "sample_frame_opt_in",
+                             track_opt_ins = NULL,
                              opt_in_true = 1,
                              opt_in_false = 0,
                              strata_var = NULL,
-                             strata_levels = NULL) {
+                             strata_levels = NULL,
+                             strata_filter = NULL,
+                             strata_filter_scope = c("auto", "all_counts", "strata_only")) {
   cli::cli_alert_info("Starting participant count calculation")
   results <- tibble::tibble()
 
   # validate opt_in variable exists if needed
-  if (opt_in_var %in% names(dat)) {
-    track_opt_ins <- TRUE
-  } else {
+  if (!is.null(track_opt_ins) && (!is.logical(track_opt_ins) || length(track_opt_ins) != 1)) {
+    stop("track_opt_ins must be TRUE, FALSE, or NULL")
+  }
+  if (is.null(track_opt_ins)) {
+    track_opt_ins <- opt_in_var %in% names(dat)
+    if (!track_opt_ins) {
+      rlang::warn(sprintf("opt_in variable '%s' not found in data - opt-in tracking disabled", opt_in_var))
+    }
+  } else if (isTRUE(track_opt_ins) && !(opt_in_var %in% names(dat))) {
     track_opt_ins <- FALSE
-    cli::cli_alert_warning(sprintf("opt_in variable '%s' not found in data - opt-in tracking disabled", opt_in_var))
+    rlang::warn(sprintf("opt_in variable '%s' not found in data - opt-in tracking disabled", opt_in_var))
   }
 
   # validate strata variable if provided
@@ -58,10 +72,64 @@ margot_count_ids <- function(dat,
       track_strata <- TRUE
     } else {
       track_strata <- FALSE
-      cli::cli_alert_warning(sprintf("strata variable '%s' not found in data - stratification disabled", strata_var))
+      rlang::warn(sprintf("strata variable '%s' not found in data - stratification disabled", strata_var))
     }
   } else {
     track_strata <- FALSE
+  }
+
+  strata_filter_scope <- match.arg(strata_filter_scope)
+  if (strata_filter_scope == "auto") {
+    if (is.null(strata_filter)) {
+      strata_filter_scope <- "strata_only"
+    } else {
+      strata_filter_scope <- "all_counts"
+    }
+  }
+  strata_filter_levels <- NULL
+
+  # optionally subset to selected strata levels
+  if (!is.null(strata_filter)) {
+    if (track_strata) {
+      strata_filter <- as.character(strata_filter)
+      strata_filter <- strata_filter[!is.na(strata_filter)]
+      if (length(strata_filter) == 0) {
+        rlang::warn("strata_filter empty after removing missing values - no filtering applied")
+      } else {
+        available_levels <- unique(as.character(dat[[strata_var]]))
+        available_levels <- available_levels[!is.na(available_levels)]
+        missing_levels <- setdiff(strata_filter, available_levels)
+        if (length(missing_levels) > 0) {
+          rlang::warn(paste0(
+            "strata_filter level(s) not found: ",
+            paste(missing_levels, collapse = ", ")
+          ))
+        }
+        strata_filter_levels <- intersect(strata_filter, available_levels)
+        if (strata_filter_scope == "all_counts") {
+          if ("year_measured" %in% names(dat)) {
+            n_deceased_all <- sum(dat$year_measured == -1, na.rm = TRUE)
+            if (n_deceased_all > 0) {
+              deceased_strata <- dat[[strata_var]][dat$year_measured == -1]
+              deceased_keep <- deceased_strata %in% strata_filter_levels
+              if (sum(deceased_keep, na.rm = TRUE) == 0) {
+                rlang::warn(paste0(
+                  "strata_filter removes all deceased rows; n_deceased will be zero. ",
+                  "Use strata_filter_scope = 'strata_only' to keep totals."
+                ))
+              }
+            }
+          }
+          dat <- dat %>%
+            dplyr::filter(!!rlang::sym(strata_var) %in% strata_filter_levels)
+          if (nrow(dat) == 0) {
+            rlang::warn("no rows remain after applying strata_filter")
+          }
+        }
+      }
+    } else {
+      rlang::warn("strata_filter supplied but strata_var not found - no filtering applied")
+    }
   }
 
   # establish strata levels and column names if needed
@@ -69,16 +137,23 @@ margot_count_ids <- function(dat,
     if (is.null(strata_levels)) {
       strata_values <- dat[[strata_var]]
       if (is.factor(strata_values)) {
-        strata_levels <- levels(strata_values)
+        if (!is.null(strata_filter)) {
+          strata_levels <- unique(as.character(strata_values))
+        } else {
+          strata_levels <- levels(strata_values)
+        }
       } else {
         strata_levels <- sort(unique(strata_values))
       }
     }
     strata_levels <- as.character(strata_levels)
     strata_levels <- strata_levels[!is.na(strata_levels)]
+    if (!is.null(strata_filter_levels)) {
+      strata_levels <- intersect(strata_levels, strata_filter_levels)
+    }
     if (length(strata_levels) == 0) {
       track_strata <- FALSE
-      cli::cli_alert_warning("strata levels empty after removing missing values - stratification disabled")
+      rlang::warn("strata levels empty after removing missing values - stratification disabled")
     }
   }
 
