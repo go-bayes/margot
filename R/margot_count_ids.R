@@ -7,6 +7,8 @@
 #' @param opt_in_var character. name of the opt-in variable to track (default: "sample_frame_opt_in")
 #' @param opt_in_true value indicating opted-in status (default: 1)
 #' @param opt_in_false value indicating not opted-in status (default: 0)
+#' @param strata_var character. optional name of a variable used to stratify active counts (default: NULL)
+#' @param strata_levels character. optional levels to include for stratification (default: NULL uses all levels in data)
 #'
 #' @return a tibble with columns for:
 #'   - wave: survey wave number
@@ -22,6 +24,7 @@
 #'   - n_wave_2plus: participants in 2+ previous waves
 #'   - n_wave_3plus: participants in 3+ previous waves
 #'   - n_wave_4plus: participants in 4+ previous waves
+#'   - n_active_{strata_var}_{level}: active participants in current wave for each stratum (if stratified)
 #'
 #' @importFrom dplyr filter mutate pull anti_join bind_rows %>%
 #' @importFrom tibble tibble
@@ -35,7 +38,9 @@ margot_count_ids <- function(dat,
                              prev_wave_counts = c(1, 2, 3, 4),
                              opt_in_var = "sample_frame_opt_in",
                              opt_in_true = 1,
-                             opt_in_false = 0) {
+                             opt_in_false = 0,
+                             strata_var = NULL,
+                             strata_levels = NULL) {
   cli::cli_alert_info("Starting participant count calculation")
   results <- tibble::tibble()
 
@@ -45,6 +50,36 @@ margot_count_ids <- function(dat,
   } else {
     track_opt_ins <- FALSE
     cli::cli_alert_warning(sprintf("opt_in variable '%s' not found in data - opt-in tracking disabled", opt_in_var))
+  }
+
+  # validate strata variable if provided
+  if (!is.null(strata_var)) {
+    if (strata_var %in% names(dat)) {
+      track_strata <- TRUE
+    } else {
+      track_strata <- FALSE
+      cli::cli_alert_warning(sprintf("strata variable '%s' not found in data - stratification disabled", strata_var))
+    }
+  } else {
+    track_strata <- FALSE
+  }
+
+  # establish strata levels and column names if needed
+  if (track_strata) {
+    if (is.null(strata_levels)) {
+      strata_values <- dat[[strata_var]]
+      if (is.factor(strata_values)) {
+        strata_levels <- levels(strata_values)
+      } else {
+        strata_levels <- sort(unique(strata_values))
+      }
+    }
+    strata_levels <- as.character(strata_levels)
+    strata_levels <- strata_levels[!is.na(strata_levels)]
+    if (length(strata_levels) == 0) {
+      track_strata <- FALSE
+      cli::cli_alert_warning("strata levels empty after removing missing values - stratification disabled")
+    }
   }
 
   # ensure wave is numeric
@@ -59,6 +94,25 @@ margot_count_ids <- function(dat,
   deceased_ids <- character(0)
   returned_ids <- character(0)
   opted_in_ids <- character(0)
+
+  # helper to build safe column names
+  sanitize_name <- function(x) {
+    x <- tolower(as.character(x))
+    x <- gsub("[^a-z0-9]+", "_", x)
+    x <- gsub("^_+|_+$", "", x)
+    if (nchar(x) == 0) {
+      "missing"
+    } else {
+      x
+    }
+  }
+
+  if (track_strata) {
+    strata_base <- sanitize_name(strata_var)
+    strata_level_names <- vapply(strata_levels, sanitize_name, character(1))
+    strata_level_names <- make.unique(strata_level_names, sep = "_")
+    strata_col_names <- paste0("n_active_", strata_base, "_", strata_level_names)
+  }
 
   # validate prev_wave_counts
   if (!is.numeric(prev_wave_counts) || any(prev_wave_counts < 1)) {
@@ -180,6 +234,25 @@ margot_count_ids <- function(dat,
       n_opt_in_total = length(opted_in_ids)
     )
 
+    # add stratified active counts if requested
+    if (track_strata) {
+      active_strata <- wave_data %>%
+        dplyr::filter(year_measured == 1) %>%
+        dplyr::pull(!!rlang::sym(strata_var))
+
+      active_strata <- as.character(active_strata)
+      active_strata <- active_strata[!is.na(active_strata)]
+      strata_counts <- setNames(rep(0L, length(strata_levels)), strata_levels)
+      if (length(active_strata) > 0) {
+        wave_counts <- table(active_strata)
+        wave_counts <- wave_counts[names(wave_counts) %in% strata_levels]
+        strata_counts[names(wave_counts)] <- as.integer(wave_counts)
+      }
+      for (idx in seq_along(strata_levels)) {
+        temp_tibble[[strata_col_names[idx]]] <- strata_counts[[strata_levels[idx]]]
+      }
+    }
+
     # add previous wave counts with new naming convention
     for (count in prev_wave_counts) {
       temp_tibble[[paste0("n_wave_", count, "plus")]] <-
@@ -191,7 +264,7 @@ margot_count_ids <- function(dat,
   }
 
   # add variable labels using attributes
-  attr(results, "variable.labels") <- c(
+  variable_labels <- c(
     wave = "Survey Wave",
     n_total = "Total Unique Participants (Cumulative)",
     n_active = "Active Participants",
@@ -206,6 +279,15 @@ margot_count_ids <- function(dat,
     n_wave_3plus = "In 3+ Previous Waves",
     n_wave_4plus = "In 4+ Previous Waves"
   )
+
+  if (track_strata) {
+    for (idx in seq_along(strata_levels)) {
+      variable_labels[[strata_col_names[idx]]] <-
+        paste0("Active Participants: ", strata_var, " = ", strata_levels[idx])
+    }
+  }
+
+  attr(results, "variable.labels") <- variable_labels
 
   cli::cli_alert_success("Participant count calculation completed")
   return(results)

@@ -11,7 +11,9 @@ margot_count_ids(
   prev_wave_counts = c(1, 2, 3, 4),
   opt_in_var = "sample_frame_opt_in",
   opt_in_true = 1,
-  opt_in_false = 0
+  opt_in_false = 0,
+  strata_var = NULL,
+  strata_levels = NULL
 )
 }
 \arguments{
@@ -28,6 +30,10 @@ margot_count_ids(
 \item{opt_in_true}{value indicating opted-in status (default: 1)}
 
 \item{opt_in_false}{value indicating not opted-in status (default: 0)}
+
+\item{strata_var}{character. optional name of a variable used to stratify active counts (default: NULL)}
+
+\item{strata_levels}{character. optional levels to include for stratification (default: NULL uses all levels in data)}
 }
 \value{
 a tibble with columns for:
@@ -44,6 +50,7 @@ a tibble with columns for:
   - n_wave_2plus: participants in 2+ previous waves
   - n_wave_3plus: participants in 3+ previous waves
   - n_wave_4plus: participants in 4+ previous waves
+  - n_active_{strata_var}_{level}: active participants in current wave for each stratum (if stratified)
 }
 \description{
 count individual participants in longitudinal data

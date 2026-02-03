@@ -1,3 +1,8 @@
+# [2026-02-03] margot 1.0.296
+
+### Added
+margot_count_ids() summarises cumulative and wave-specific participant counts, with optional opt-in and stratified active totals.
+
 # [2026-01-28] margot 1.0.295
 
 ### Added
