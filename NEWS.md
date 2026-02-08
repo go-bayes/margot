@@ -1,3 +1,8 @@
+# [2026-02-09] margot 1.0.299
+
+### Fixed
+- `prepare_panel_data()` no longer fails with recent dplyr versions when `wave_breaks` is supplied. The old code unquoted Date objects into tidy expressions (`!!`), stripping their class and causing type errors in `dplyr::between()`. Wave assignment now uses direct date comparison.
+
 # [2026-02-03] margot 1.0.298
 
 ### Changed

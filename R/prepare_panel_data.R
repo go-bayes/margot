@@ -46,16 +46,14 @@ prepare_panel_data <- function(dat, wave_col = "wave", tscore_col = "tscore", id
     dplyr::count(day = lubridate::floor_date(timeline, "day"), name = "n_responses")
 
   if (!is.null(wave_breaks)) {
-    wave_conditions <- lapply(names(wave_breaks), function(wave_name) {
-      range <- wave_breaks[[wave_name]]
-      dplyr::expr(dplyr::between(day, !!range[1], !!range[2]) ~ !!wave_name)
-    })
-
-    df_timeline <- df_timeline %>%
-      dplyr::mutate(wave = factor(dplyr::case_when(
-        !!!wave_conditions,
-        TRUE ~ NA_character_
-      )))
+    # assign wave labels using direct date comparison (avoids !! date coercion issues)
+    wave_labels <- rep(NA_character_, nrow(df_timeline))
+    for (wn in names(wave_breaks)) {
+      r <- wave_breaks[[wn]]
+      idx <- df_timeline$day >= r[1] & df_timeline$day <= r[2]
+      wave_labels[idx] <- wn
+    }
+    df_timeline$wave <- factor(wave_labels, levels = names(wave_breaks))
   }
 
   df_timeline <- df_timeline %>% dplyr::arrange(day, wave)
