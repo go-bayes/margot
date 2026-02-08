@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.299</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.301</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,11 +33,26 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.0.299" id="id_2026-02-09-margot-10299">[2026-02-09] margot 1.0.299<a class="anchor" aria-label="anchor" href="#id_2026-02-09-margot-10299"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.0.301" id="id_2026-02-09-margot-10301">[2026-02-09] margot 1.0.301<a class="anchor" aria-label="anchor" href="#id_2026-02-09-margot-10301"></a></h2>
 <div class="section level4">
-<h4 id="fixed-1-0-299">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-299"></a></h4>
+<h4 id="changed-1-0-301">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-301"></a></h4>
 <ul><li>
-<code><a href="../reference/prepare_panel_data.html">prepare_panel_data()</a></code> no longer fails with recent dplyr versions when <code>wave_breaks</code> is supplied. The old code unquoted Date objects into tidy expressions (<code>!!</code>), stripping their class and causing type errors in <code><a href="https://dplyr.tidyverse.org/reference/between.html" class="external-link">dplyr::between()</a></code>. Wave assignment now uses direct date comparison.</li>
+<code><a href="../reference/margot_plot_response_timeline.html">margot_plot_response_timeline()</a></code> now saves plots in both <code>.rds</code> (base R, future-proof) and <code>.qs</code> (backwards compatibility) formats. The <code>.qs</code> save will be removed in a future version.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.300" id="id_2026-02-09-margot-10300">[2026-02-09] margot 1.0.300<a class="anchor" aria-label="anchor" href="#id_2026-02-09-margot-10300"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-300">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-300"></a></h4>
+<ul><li>
+<code><a href="../reference/prepare_panel_data.html">prepare_panel_data()</a></code> now returns one row per response in <code>df_timeline</code> (columns <code>day</code> and <code>wave</code>), so <code><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow()</a></code> and <code>table(wave)</code> give response counts. Daily aggregation for plotting is now handled internally by <code><a href="../reference/margot_plot_response_timeline.html">margot_plot_response_timeline()</a></code>.</li>
+<li>
+<code><a href="../reference/margot_plot_response_timeline.html">margot_plot_response_timeline()</a></code> aggregates response-level data to daily counts internally before plotting.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="fixed-1-0-300">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-300"></a></h4>
+<ul><li>
+<code><a href="../reference/prepare_panel_data.html">prepare_panel_data()</a></code> no longer fails with recent dplyr versions when <code>wave_breaks</code> is supplied. Wave assignment now uses direct date comparison instead of <code><a href="https://rlang.r-lib.org/reference/expr.html" class="external-link">dplyr::expr()</a></code> with <code>!!</code> on Date objects.</li>
 </ul></div>
 </div>
     <div class="section level2">

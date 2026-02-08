@@ -1,7 +1,16 @@
-# [2026-02-09] margot 1.0.299
+# [2026-02-09] margot 1.0.301
+
+### Changed
+- `margot_plot_response_timeline()` now saves plots in both `.rds` (base R, future-proof) and `.qs` (backwards compatibility) formats. The `.qs` save will be removed in a future version.
+
+# [2026-02-09] margot 1.0.300
+
+### Changed
+- `prepare_panel_data()` now returns one row per response in `df_timeline` (columns `day` and `wave`), so `nrow()` and `table(wave)` give response counts. Daily aggregation for plotting is now handled internally by `margot_plot_response_timeline()`.
+- `margot_plot_response_timeline()` aggregates response-level data to daily counts internally before plotting.
 
 ### Fixed
-- `prepare_panel_data()` no longer fails with recent dplyr versions when `wave_breaks` is supplied. The old code unquoted Date objects into tidy expressions (`!!`), stripping their class and causing type errors in `dplyr::between()`. Wave assignment now uses direct date comparison.
+- `prepare_panel_data()` no longer fails with recent dplyr versions when `wave_breaks` is supplied. Wave assignment now uses direct date comparison instead of `dplyr::expr()` with `!!` on Date objects.
 
 # [2026-02-03] margot 1.0.298
 

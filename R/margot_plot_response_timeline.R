@@ -96,7 +96,7 @@ margot_plot_response_timeline <- function(df_timeline,
   cli::cli_alert_info("Starting to create response timeline plot...")
 
   # Check if required columns exist
-  required_cols <- c("day", "n_responses", "wave")
+  required_cols <- c("day", "wave")
   missing_cols <- setdiff(required_cols, names(df_timeline))
   if (length(missing_cols) > 0) {
     cli::cli_alert_danger(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
@@ -109,11 +109,15 @@ margot_plot_response_timeline <- function(df_timeline,
     df_timeline$day <- as.Date(df_timeline$day)
   }
 
-  # calculate year range
-  year_range <- range(lubridate::year(df_timeline$day), na.rm = TRUE)
+  # total responses = number of rows (one row per response)
+  total_responses <- nrow(df_timeline)
 
-  # calculate total responses
-  total_responses <- sum(df_timeline$n_responses, na.rm = TRUE)
+  # aggregate to daily counts for plotting
+  df_plot <- df_timeline %>%
+    dplyr::count(day, wave, name = "n_responses")
+
+  # calculate year range
+  year_range <- range(lubridate::year(df_plot$day), na.rm = TRUE)
 
   # handle n_total_participants
   if (is.null(n_total_participants) && "n_total_participants" %in% names(df_timeline)) {
@@ -146,7 +150,7 @@ margot_plot_response_timeline <- function(df_timeline,
   }
 
   # get the number of unique waves
-  n_waves <- length(unique(df_timeline$wave))
+  n_waves <- length(unique(df_plot$wave))
 
   # explicitly recycle colors
   recycled_colors <- rep_len(color_palette, length.out = n_waves)
@@ -154,7 +158,7 @@ margot_plot_response_timeline <- function(df_timeline,
   cli::cli_alert_info("Creating ggplot...")
 
   # Create ggplot
-  gg <- ggplot2::ggplot(df_timeline, ggplot2::aes(x = day, y = n_responses, fill = wave)) +
+  gg <- ggplot2::ggplot(df_plot, ggplot2::aes(x = day, y = n_responses, fill = wave)) +
     ggplot2::geom_col() +
     ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
     ggplot2::labs(
@@ -178,14 +182,21 @@ margot_plot_response_timeline <- function(df_timeline,
     cli::cli_alert_info("Saving plot...")
     tryCatch(
       {
+        # save as .rds (future-proof, base R)
+        rds_path <- file.path(save_path, paste0(base_filename, ".rds"))
+        saveRDS(gg, rds_path)
+        cli::cli_alert_success(paste("Plot saved as .rds file:", rds_path))
+
+        # save as .qs (backwards compatibility, will be removed in future)
         margot::here_save_qs(
           obj = gg,
           name = base_filename,
           dir_path = save_path,
           preset = "high",
-          nthreads = 1
+          nthreads = 1,
+          quiet = TRUE
         )
-        cli::cli_alert_success("Plot saved as .qs file successfully")
+        cli::cli_alert_success("Plot also saved as .qs file (deprecated format)")
 
         if (save_png) {
           # Generate filename for PNG

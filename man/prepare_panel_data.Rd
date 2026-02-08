@@ -28,7 +28,7 @@ prepare_panel_data(
 }
 \value{
 A list containing two elements:
-  \item{df_timeline}{A data frame with the processed timeline data}
+  \item{df_timeline}{A data frame with one row per response, containing columns `day` (Date) and optionally `wave` (factor)}
   \item{n_total_participants}{The total number of unique participants in the dataset}
 }
 \description{

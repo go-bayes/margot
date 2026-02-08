@@ -10,7 +10,7 @@
 #' @param wave_breaks A named list of date ranges for each wave. If NULL, waves will not be categorized.
 #'
 #' @return A list containing two elements:
-#'   \item{df_timeline}{A data frame with the processed timeline data}
+#'   \item{df_timeline}{A data frame with one row per response, containing columns `day` (Date) and optionally `wave` (factor)}
 #'   \item{n_total_participants}{The total number of unique participants in the dataset}
 #'
 #' @examples
@@ -37,13 +37,15 @@ prepare_panel_data <- function(dat, wave_col = "wave", tscore_col = "tscore", id
   cli::cli_alert_info("Starting to prepare panel data...")
 
   df_timeline <- dat %>%
-    dplyr::mutate(year = as.numeric(as.character(!!sym(wave_col)))) %>%
-    dplyr::mutate(timeline = lubridate::make_date(
-      year = lubridate::year(base_date),
-      month = lubridate::month(base_date),
-      day = lubridate::day(base_date)
-    ) + !!sym(tscore_col)) %>%
-    dplyr::count(day = lubridate::floor_date(timeline, "day"), name = "n_responses")
+    dplyr::mutate(
+      timeline = lubridate::make_date(
+        year = lubridate::year(base_date),
+        month = lubridate::month(base_date),
+        day = lubridate::day(base_date)
+      ) + !!sym(tscore_col),
+      day = lubridate::floor_date(timeline, "day")
+    ) %>%
+    dplyr::select(day)
 
   if (!is.null(wave_breaks)) {
     # assign wave labels using direct date comparison (avoids !! date coercion issues)
@@ -56,7 +58,7 @@ prepare_panel_data <- function(dat, wave_col = "wave", tscore_col = "tscore", id
     df_timeline$wave <- factor(wave_labels, levels = names(wave_breaks))
   }
 
-  df_timeline <- df_timeline %>% dplyr::arrange(day, wave)
+  df_timeline <- df_timeline %>% dplyr::arrange(day)
 
   cli::cli_alert_success("Timeline data prepared successfully.")
 
