@@ -109,6 +109,9 @@ margot_plot_response_timeline <- function(df_timeline,
     df_timeline$day <- as.Date(df_timeline$day)
   }
 
+  # drop responses with missing day or wave
+  df_timeline <- df_timeline %>% dplyr::filter(!is.na(day), !is.na(wave))
+
   # total responses = number of rows (one row per response)
   total_responses <- nrow(df_timeline)
 

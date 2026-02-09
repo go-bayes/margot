@@ -56,6 +56,14 @@ prepare_panel_data <- function(dat, wave_col = "wave", tscore_col = "tscore", id
       wave_labels[idx] <- wn
     }
     df_timeline$wave <- factor(wave_labels, levels = names(wave_breaks))
+
+    # drop responses outside wave breaks or with missing dates
+    n_before <- nrow(df_timeline)
+    df_timeline <- df_timeline %>% dplyr::filter(!is.na(day), !is.na(wave))
+    n_dropped <- n_before - nrow(df_timeline)
+    if (n_dropped > 0) {
+      cli::cli_alert_info(paste(n_dropped, "responses outside wave breaks removed"))
+    }
   }
 
   df_timeline <- df_timeline %>% dplyr::arrange(day)

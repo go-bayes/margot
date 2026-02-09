@@ -1,3 +1,9 @@
+# [2026-02-09] margot 1.0.302
+
+### Fixed
+- `prepare_panel_data()` now drops responses with missing dates or outside wave breaks, preventing a large NA group from distorting the y-axis in timeline plots.
+- `margot_plot_response_timeline()` also filters NA day/wave as a safety net.
+
 # [2026-02-09] margot 1.0.301
 
 ### Changed

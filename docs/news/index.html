@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.301</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.302</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,16 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.302" id="id_2026-02-09-margot-10302">[2026-02-09] margot 1.0.302<a class="anchor" aria-label="anchor" href="#id_2026-02-09-margot-10302"></a></h2>
+<div class="section level4">
+<h4 id="fixed-1-0-302">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-302"></a></h4>
+<ul><li>
+<code><a href="../reference/prepare_panel_data.html">prepare_panel_data()</a></code> now drops responses with missing dates or outside wave breaks, preventing a large NA group from distorting the y-axis in timeline plots.</li>
+<li>
+<code><a href="../reference/margot_plot_response_timeline.html">margot_plot_response_timeline()</a></code> also filters NA day/wave as a safety net.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.301" id="id_2026-02-09-margot-10301">[2026-02-09] margot 1.0.301<a class="anchor" aria-label="anchor" href="#id_2026-02-09-margot-10301"></a></h2>
 <div class="section level4">
