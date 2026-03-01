@@ -51,7 +51,8 @@ A list containing two elements:
 
 - df_timeline:
 
-  A data frame with the processed timeline data
+  A data frame with one row per response, containing columns \`day\`
+  (Date) and optionally \`wave\` (factor)
 
 - n_total_participants:
 

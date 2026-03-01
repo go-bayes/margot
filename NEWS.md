@@ -1,3 +1,8 @@
+# [2026-03-01] margot 1.0.303
+
+### Fixed
+- `margot_interpret_lmtp_positivity()`: corrected the IPSI formula and illustration values. The function previously described an odds-multiplier parameterisation (q = delta*g / (1 - g + delta*g)), but `lmtp::ipsi()` implements a stochastic keep-or-set policy (q = 1 - (1 - g) / delta). For rare exposures the difference is large (e.g., g = 0.03, delta = 5: keep-or-set gives 0.81; odds-multiplier gives 0.13). The output now documents the correct formula, adds a note on the parameterisation difference, and computes illustration values using the correct transformation.
+
 # [2026-02-09] margot 1.0.302
 
 ### Fixed

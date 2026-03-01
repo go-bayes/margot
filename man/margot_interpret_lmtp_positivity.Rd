@@ -75,8 +75,8 @@ If NULL, attempts to infer a domain-appropriate label from model/shift names
 keywords); otherwise falls back to "exposure". Default: NULL.}
 
 \item{ipsi_example_g}{Numeric vector of example baseline risks g used to
-illustrate the transformation q = delta * g / ((1 - g) + delta * g) for the
-included delta values (default: `c(0.05, 0.10, 0.20)`).}
+illustrate the transformation q = 1 - (1 - g) / delta for the included
+delta values (default: `c(0.05, 0.10, 0.20)`).}
 
 \item{include_policy_rates}{Logical; if TRUE and exposure-by-wave data are
 available and aligned with the density ratios, reports policy-implied exposure

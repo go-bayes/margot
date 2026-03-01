@@ -1,5 +1,123 @@
 # Changelog
 
+## \[2026-03-01\] margot 1.0.303
+
+#### Fixed
+
+- [`margot_interpret_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md):
+  corrected the IPSI formula and illustration values. The function
+  previously described an odds-multiplier parameterisation (q = delta*g
+  / (1 - g + delta*g)), but
+  [`lmtp::ipsi()`](https://rdrr.io/pkg/lmtp/man/ipsi.html) implements a
+  stochastic keep-or-set policy (q = 1 - (1 - g) / delta). For rare
+  exposures the difference is large (e.g., g = 0.03, delta = 5:
+  keep-or-set gives 0.81; odds-multiplier gives 0.13). The output now
+  documents the correct formula, adds a note on the parameterisation
+  difference, and computes illustration values using the correct
+  transformation.
+
+## \[2026-02-09\] margot 1.0.302
+
+#### Fixed
+
+- [`prepare_panel_data()`](https://go-bayes.github.io/margot/reference/prepare_panel_data.md)
+  now drops responses with missing dates or outside wave breaks,
+  preventing a large NA group from distorting the y-axis in timeline
+  plots.
+- [`margot_plot_response_timeline()`](https://go-bayes.github.io/margot/reference/margot_plot_response_timeline.md)
+  also filters NA day/wave as a safety net.
+
+## \[2026-02-09\] margot 1.0.301
+
+#### Changed
+
+- [`margot_plot_response_timeline()`](https://go-bayes.github.io/margot/reference/margot_plot_response_timeline.md)
+  now saves plots in both `.rds` (base R, future-proof) and `.qs`
+  (backwards compatibility) formats. The `.qs` save will be removed in a
+  future version.
+
+## \[2026-02-09\] margot 1.0.300
+
+#### Changed
+
+- [`prepare_panel_data()`](https://go-bayes.github.io/margot/reference/prepare_panel_data.md)
+  now returns one row per response in `df_timeline` (columns `day` and
+  `wave`), so [`nrow()`](https://rdrr.io/r/base/nrow.html) and
+  `table(wave)` give response counts. Daily aggregation for plotting is
+  now handled internally by
+  [`margot_plot_response_timeline()`](https://go-bayes.github.io/margot/reference/margot_plot_response_timeline.md).
+- [`margot_plot_response_timeline()`](https://go-bayes.github.io/margot/reference/margot_plot_response_timeline.md)
+  aggregates response-level data to daily counts internally before
+  plotting.
+
+#### Fixed
+
+- [`prepare_panel_data()`](https://go-bayes.github.io/margot/reference/prepare_panel_data.md)
+  no longer fails with recent dplyr versions when `wave_breaks` is
+  supplied. Wave assignment now uses direct date comparison instead of
+  [`dplyr::expr()`](https://rlang.r-lib.org/reference/expr.html) with
+  `!!` on Date objects.
+
+## \[2026-02-03\] margot 1.0.298
+
+#### Changed
+
+- margot_count_ids() now defaults to filtering all counts when
+  strata_filter is supplied (strata_filter_scope = “auto”), while
+  leaving totals unchanged when strata_filter is NULL.
+
+## \[2026-02-03\] margot 1.0.297
+
+#### Changed
+
+- margot_count_ids() now keeps overall counts when using strata_filter
+  (default strata_filter_scope = “strata_only”) and warns if all_counts
+  would drop deceased rows.
+
+## \[2026-02-03\] margot 1.0.296
+
+#### Added
+
+- margot_count_ids() summarises cumulative and wave-specific participant
+  counts, with optional opt-in tracking and stratified active totals.
+- margot_count_ids() gains track_opt_ins, strata_filter, and
+  strata_filter_scope to control opt-in counting and focus on selected
+  strata levels without dropping overall counts.
+
+## \[2026-01-28\] margot 1.0.295
+
+#### Added
+
+- [`here_read_arrow()`](https://go-bayes.github.io/margot/reference/here_read_arrow.md)
+  and
+  [`here_save_arrow()`](https://go-bayes.github.io/margot/reference/here_save_arrow.md)
+  restored as supported helpers for Parquet workflows, which we now use
+  to replace deprecated qs calls.
+
+#### Changed
+
+- [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
+  and
+  [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
+  now produce a compatibility warning and suggest Arrow helpers for new
+  workflows (suppressed when `quiet = TRUE`).
+
+## \[2025-12-03\] margot 1.0.294
+
+#### Changed
+
+- `include_policy_rates` now defaults to FALSE across positivity
+  helpers; policy rates require user-supplied binary indicators for
+  non-binary exposures. Method text clarifies policy-rate expectations.
+
+## \[2025-12-03\] margot 1.0.293
+
+#### Added
+
+- [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.html)
+  wraps standalone LMTP fits (single shift) so positivity reports work
+  without batching, while preserving the existing multi-shift defaults.
+
 ## \[2025-12-03\] margot 1.0.292
 
 #### Changed
@@ -3722,10 +3840,10 @@ fixes.
 
 - [`margot_impute_carry_forward()`](https://go-bayes.github.io/margot/reference/margot_impute_carry_forward.md)
   - eligibility now requires an observed value in the **current** or a
-    following wave, rather than only in a future wave.  
+    following wave, rather than only in a future wave.\
 
   - The baseline wave (`t0_`) is always checked and reported –even when
-    no later waves exist—preventing silent skips.  
+    no later waves exist—preventing silent skips.\
 
   - Internal check now uses
 

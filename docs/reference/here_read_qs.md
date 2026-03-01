@@ -4,7 +4,8 @@ Reads a \`.qs\` file specified by \`name\` from a directory defined by
 \`dir_path\`, returning the data frame or object stored within. This
 function uses the \`qs\` package to efficiently read \`.qs\` files and
 the \`here\` package to construct the file path in a consistent,
-platform-independent manner.
+platform-independent manner. The \`.qs\` format is retained for
+compatibility; for new workflows, prefer \`here_read_arrow()\`.
 
 ## Usage
 

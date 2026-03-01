@@ -223,7 +223,10 @@
   [`margot_resort_contrast_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp_resort_contrast.md)
   : Resort/Reorder LMTP Contrasts by Recomputing from Models
 - [`margot_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
+  [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
   : Assemble a full LMTP positivity report
+- [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report_single_model.md)
+  : Assemble a full LMTP positivity report for a single model
 - [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
   : End-to-end Policy Workflow (depth selection -\> report -\>
   interpretation)

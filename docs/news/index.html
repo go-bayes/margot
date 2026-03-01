@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.302</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.303</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,14 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.303" id="id_2026-03-01-margot-10303">[2026-03-01] margot 1.0.303<a class="anchor" aria-label="anchor" href="#id_2026-03-01-margot-10303"></a></h2>
+<div class="section level4">
+<h4 id="fixed-1-0-303">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-303"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>: corrected the IPSI formula and illustration values. The function previously described an odds-multiplier parameterisation (q = delta<em>g / (1 - g + delta</em>g)), but <code><a href="https://rdrr.io/pkg/lmtp/man/ipsi.html" class="external-link">lmtp::ipsi()</a></code> implements a stochastic keep-or-set policy (q = 1 - (1 - g) / delta). For rare exposures the difference is large (e.g., g = 0.03, delta = 5: keep-or-set gives 0.81; odds-multiplier gives 0.13). The output now documents the correct formula, adds a note on the parameterisation difference, and computes illustration values using the correct transformation.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.302" id="id_2026-02-09-margot-10302">[2026-02-09] margot 1.0.302<a class="anchor" aria-label="anchor" href="#id_2026-02-09-margot-10302"></a></h2>
 <div class="section level4">
@@ -5209,7 +5217,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

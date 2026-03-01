@@ -4,11 +4,13 @@ Saves the provided data frame or object as a \`.qs\` file using the
 specified name, within a directory defined by \`dir_path\`. This
 function leverages the \`qs\` package to write data to \`.qs\` format
 with enhanced compression for efficient storage and quick access in R.
+The \`.qs\` format is retained for compatibility; for new workflows,
+prefer \`here_save_arrow()\`.
 
 ## Usage
 
 ``` r
-here_save_qs(obj, name, dir_path, preset = "high", nthreads = 1)
+here_save_qs(obj, name, dir_path, preset = "high", nthreads = 1, quiet = FALSE)
 ```
 
 ## Arguments
@@ -37,6 +39,10 @@ here_save_qs(obj, name, dir_path, preset = "high", nthreads = 1)
 
   Integer specifying the number of threads to use for compression.
   Default is 1.
+
+- quiet:
+
+  Logical. If TRUE, suppresses console output. Default is FALSE.
 
 ## Value
 

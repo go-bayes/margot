@@ -16,7 +16,27 @@ margot_positivity_report(
   remove_waves = NULL,
   test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
     near_zero_cv = 0.05),
-  include_policy_rates = TRUE,
+  include_policy_rates = FALSE,
+  effect_table = NULL,
+  digits = 3,
+  trim_right = 0.999,
+  thresholds = c(5, 10, 25, 50, 100),
+  summary_compact = TRUE,
+  include_plot = TRUE,
+  plot_args = list(),
+  interpret_args = list()
+)
+
+margot_positivity_report_single_model(
+  x,
+  outcome,
+  shift = NULL,
+  label_mapping = NULL,
+  waves = NULL,
+  remove_waves = NULL,
+  test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
+    near_zero_cv = 0.05),
+  include_policy_rates = FALSE,
   effect_table = NULL,
   digits = 3,
   trim_right = 0.999,
@@ -38,6 +58,11 @@ margot_positivity_report(
 - outcome:
 
   Character outcome name.
+
+- shift:
+
+  Optional name for a single shift/policy when working with a standalone
+  LMTP fit. Defaults to \`x\$shift\` when present.
 
 - shifts:
 

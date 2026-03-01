@@ -3,7 +3,7 @@
 ``` r
 
 library(margot)   # core simulation + estimation tools
-#> margot 1.0.292
+#> margot 1.0.303
 library(dplyr)    # tidy manipulation
 #> 
 #> Attaching package: 'dplyr'
@@ -107,7 +107,7 @@ str(basic_dat[, 1:10])
 #>  $ B9: num [1:500] 0.559 -0.249 -0.309 -0.182 -1.007 ...
 #>  - attr(*, "margot_meta")=List of 2
 #>   ..$ args     : language margot_simulate(n = 500, waves = 3, seed = 2025)
-#>   ..$ timestamp: POSIXct[1:1], format: "2025-12-03 18:04:52"
+#>   ..$ timestamp: POSIXct[1:1], format: "2026-03-01 19:01:53"
 
 # summarize treatment and outcome
 summary(basic_dat[c("t1_A1", "t2_A1", "t3_A1", "t4_Y")])
@@ -156,7 +156,7 @@ summary(fit_het)$coefficients
 #> t3_A1:B2    0.57218904 0.05351406 10.692313 1.323361e-25
 ```
 
-> **Take-away.** The interaction term (`t3_A1:B2`) recovers  
+> **Take-away.** The interaction term (`t3_A1:B2`) recovers\
 > \$\\beta\_{\\text{het}} \\approx 0.6\$, matching the data-generating
 > value.
 

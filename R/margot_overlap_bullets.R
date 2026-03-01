@@ -38,8 +38,8 @@
 #'   (e.g., "attendance" when shift/outcome names contain religious service
 #'   keywords); otherwise falls back to "exposure". Default: NULL.
 #' @param ipsi_example_g Numeric vector of example baseline risks g used to
-#'   illustrate the transformation q = delta * g / ((1 - g) + delta * g) for the
-#'   included delta values (default: `c(0.05, 0.10, 0.20)`).
+#'   illustrate the transformation q = 1 - (1 - g) / delta for the included
+#'   delta values (default: `c(0.05, 0.10, 0.20)`).
 #' @param include_policy_rates Logical; if TRUE and exposure-by-wave data are
 #'   available and aligned with the density ratios, reports policy-implied exposure
 #'   probabilities by wave using the reweighted mean p_hat_t = sum(r_{i,t} * A_{i,t}) / sum(r_{i,t})
@@ -298,8 +298,16 @@ margot_interpret_lmtp_positivity <- function(x,
       if (!length(example_g_vals)) example_g_vals <- c(0.05, 0.10, 0.20)
     }
 
-    # Example translations on the probability scale (illustrative only)
-    q_fun <- function(g, d) (d * g) / (1 - g + d * g)
+    # example translations on the probability scale (illustrative only)
+    # note: lmtp::ipsi() implements a stochastic keep-or-set policy, not the
+    # odds-multiplier formula sometimes attributed to IPSI in the literature.
+    # for delta > 1, ipsi_up(1/delta) keeps the observed value with probability
+    # 1/delta and sets treatment to 1 otherwise, giving:
+    #   q(g, delta) = 1 - (1 - g) / delta
+    # this differs from the odds-multiplier q = delta*g / (1 - g + delta*g).
+    # for rare exposures the difference is large (e.g., g=0.03, delta=5:
+    # keep-or-set gives 0.81; odds-multiplier gives 0.13).
+    q_fun <- function(g, d) 1 - (1 - g) / d
     fmt_num <- function(x) sprintf("%.3f", x)
 
     example_lines <- character(0)
@@ -313,16 +321,29 @@ margot_interpret_lmtp_positivity <- function(x,
       }
     }
 
-    # Assemble block
+    # assemble block
     block <- c(
       "## Incremental Propensity Score Interventions (IPSI)",
       "",
       paste0(
         "For binary ", label_to_use, " $A_t$ with observed $g_t(H_t)=\\Pr(A_t=1\\mid H_t)$, ",
-        "the IPSI with parameter $\\delta>0$ modifies the assignment mechanism to ",
-        "$q_t(H_t) = \\dfrac{\\delta\\, g_t(H_t)}{(1 - g_t(H_t)) + \\delta\\, g_t(H_t)}$, applied at each wave conditional on history $H_t$."
+        "the IPSI with parameter $\\delta>1$ is a stochastic intervention: each individual retains their ",
+        "observed value with probability $1/\\delta$ and is assigned to treatment otherwise, yielding ",
+        "$q_t(H_t) = 1 - \\dfrac{1 - g_t(H_t)}{\\delta}$, applied at each wave conditional on history $H_t$. ",
+        "This is the policy implemented by `lmtp::ipsi()`."
       ),
-      "Definitions: $\\delta>0$ is the policy intensity; $g_t(H_t)=\\Pr(A_t=1\\mid H_t)$ is the observed conditional risk at wave $t$; $q_t(H_t)$ is the policy‑modified risk; $H_t$ denotes the measured history at wave $t$; $A_t$ is the binary exposure.",
+      paste0(
+        "Definitions: $\\delta>1$ is the policy intensity (larger values produce stronger shifts); ",
+        "$g_t(H_t)=\\Pr(A_t=1\\mid H_t)$ is the observed conditional probability of treatment at wave $t$; ",
+        "$q_t(H_t)$ is the policy-modified probability; $H_t$ denotes the measured history at wave $t$; ",
+        "$A_t$ is the binary exposure."
+      ),
+      paste0(
+        "**Note on parameterisation.** The formula above divides the probability of *non-treatment* by $\\delta$. ",
+        "This differs from an odds-multiplier parameterisation ($q = \\delta g / (1 - g + \\delta g)$) sometimes described ",
+        "in the IPSI literature. For rare exposures the difference is substantial (e.g., $g = 0.03$, $\\delta = 5$: ",
+        "keep-or-set gives $q = 0.81$; odds-multiplier gives $q = 0.13$). The `lmtp` package implements the keep-or-set version."
+      ),
       if (!is.null(delta_set)) paste0("We considered ", delta_set, ".") else "",
       if (length(example_lines)) "Illustration on the probability scale (not estimates; for intuition only):" else "",
       if (length(example_lines)) paste0("- ", example_lines) else ""
