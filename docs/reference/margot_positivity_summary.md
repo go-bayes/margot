@@ -11,11 +11,11 @@ but works for any set of shifts available in an LMTP run object.
 ``` r
 margot_positivity_summary(
   x,
-  outcome,
+  outcome = NULL,
   shifts = NULL,
   waves = NULL,
-  test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
-    near_zero_cv = 0.05),
+  test_thresholds = list(prod_log10 = -1, prod_frac_ok = 0.05, prod_frac_warn = 0.2,
+    near_zero_median = 0.001, near_zero_cv = 0.05),
   include_policy_rates = FALSE,
   effect_table = NULL,
   digits = 3,
@@ -37,7 +37,8 @@ margot_ipsi_summary(...)
 
 - outcome:
 
-  Character outcome name (must exist under \`x\$models\`).
+  Optional character outcome name. When \`NULL\`, the first stored
+  outcome is used.
 
 - shifts:
 
@@ -52,11 +53,13 @@ margot_ipsi_summary(...)
 - test_thresholds:
 
   Named list controlling tests. Recognised names: - \`prod_log10\`
-  (default -1) threshold on log10(product of ratios) for uncensored
-  rows. - \`prod_frac_warn\` (default 0.10) warning fraction; verdict is
-  Pass when fraction ≤ this. - \`near_zero_median\` (default 1e-3) and
-  \`near_zero_cv\` (default 0.05) are computed but not included in the
-  verdict; they are returned as counts of flagged waves per shift.
+  (default -1) defining the central support band \`\[10^prod_log10,
+  10^-prod_log10\]\`; \`-1\` corresponds to \`\[0.1, 10\]\`. -
+  \`prod_frac_ok\` (default 0.05) and \`prod_frac_warn\` (default 0.20),
+  defining the graded support screen from the combined fraction outside
+  the band. - \`near_zero_median\` (default 1e-3) and \`near_zero_cv\`
+  (default 0.05) are computed but not included in the support screen;
+  they are returned as counts of flagged waves per shift.
 
 - include_policy_rates:
 
@@ -77,16 +80,18 @@ margot_ipsi_summary(...)
 ## Value
 
 A tibble/data.frame with one row per shift containing: \`outcome\`,
-\`shift_full\`, \`shift_clean\`, product-of-r metrics, verdict, ESS
-metrics, optional policy rates (per-wave \`p_hat_wave_k\` and
-\`p_hat_overall\`), optional effect columns if provided.
+\`shift_full\`, \`shift_clean\`, cumulative density-ratio metrics,
+support screen, ESS metrics (including final cumulative ESS), optional
+policy rates (per-wave \`p_hat_wave_k\` and \`p_hat_overall\`), optional
+effect columns if provided.
 
 ## Details
 
-Metrics include: - Product-of-r collapse across selected waves
-(uncensored fraction below a user threshold on log10 scale, with
-Pass/Fail verdict), and percent collapsing to zero including censoring
-(IPCW zeros). - ESS on uncensored rows overall and relative to
+Metrics include: - Cumulative density-ratio support across selected
+waves, summarised as the fraction of uncensored rows falling below and
+above a user-defined central band, plus a graded support screen, percent
+collapsing to zero including censoring (IPCW zeros), and the final
+cumulative ESS. - ESS on uncensored rows overall and relative to
 person-time (ESS+/(N_pt)). - Policy-implied exposure rates by wave (and
 overall) on uncensored rows when \`exposure_by_wave\` is attached to
 models (best-effort from \`margot_lmtp()\`). - Optional effect columns

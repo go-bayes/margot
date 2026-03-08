@@ -15,7 +15,7 @@ suffixes; missing cells are filled with blank panels."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.303</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.310</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@ suffixes; missing cells are filled with blank panels.</p>
 <span>  annotate_graph <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"waves"</span>, <span class="st">"shifts"</span><span class="op">)</span>,</span>
 <span>  xlim <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  layout <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"waves_by_shifts"</span>, <span class="st">"shifts_by_waves"</span><span class="op">)</span>,</span>
-<span>  ymax_harmonize <span class="op">=</span> <span class="st">"none"</span>,</span>
+<span>  ymax_harmonize <span class="op">=</span> <span class="st">"global"</span>,</span>
 <span>  xlim_harmonize <span class="op">=</span> <span class="st">"none"</span>,</span>
 <span>  headroom <span class="op">=</span> <span class="fl">0.12</span>,</span>
 <span>  text_size <span class="op">=</span> <span class="fl">3</span>,</span>
@@ -130,8 +130,8 @@ as column titles; the supplied value is ignored.</p></dd>
 
 
 <dt id="arg-ymax-harmonize">ymax_harmonize<a class="anchor" aria-label="anchor" href="#arg-ymax-harmonize"></a></dt>
-<dd><p>Character or named vector; controls y-axis harmonization: `"none"` (default) gives
-each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+<dd><p>Character or named vector; controls y-axis harmonization: `"global"` (default) harmonizes
+all plots, `"row"` harmonizes within rows, `"none"` gives each plot independent y-scale, `"column"` harmonizes within columns,
 `"global"` harmonizes all plots. Can also be a named vector with custom values.</p></dd>
 
 

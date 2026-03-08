@@ -1,5 +1,10 @@
 # Margot CRAN Submission Refactoring Plan
 
+Companion internal notes:
+
+- `WORKFLOW_NOTES.md` for workflow learnings and implementation suggestions
+- `DECISIONS.md` for conventions that new refactor work should follow
+
 ## Overview
 Refactor margot to reduce Imports from 54 to ~15 packages while maintaining all functionality for active users. This will be done gradually and safely.
 

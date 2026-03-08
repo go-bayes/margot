@@ -20,6 +20,8 @@ margot_lmtp_overlap(
   color_by = c("wave", "shift", "constant"),
   color_by_wave = NULL,
   fill_palette = NULL,
+  show_reference_line = TRUE,
+  reference_line_value = 1,
   bins = 40,
   binwidth = NULL,
   xlim = NULL,
@@ -87,6 +89,17 @@ margot_lmtp_overlap(
   histograms. Character aliases include \`"lab"\` (blue/red/grey with a
   constant fallback) and \`"classic"\` (the default qualitative
   palette).
+
+- show_reference_line:
+
+  Logical; if TRUE (default), adds a faint dotted reference line at
+  \`reference_line_value\`.
+
+- reference_line_value:
+
+  Numeric; density-ratio reference value shown by the dotted line
+  (default \`1\`). On the log10 scale this is plotted at
+  \`log10(reference_line_value)\`.
 
 - ...:
 

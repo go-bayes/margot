@@ -7,7 +7,7 @@
 \usage{
 margot_interpret_lmtp_positivity(
   x,
-  outcome,
+  outcome = NULL,
   shifts = NULL,
   label_mapping = NULL,
   waves = NULL,
@@ -27,6 +27,7 @@ margot_interpret_lmtp_positivity(
   test_thresholds = NULL,
   include_ipsi_recommend = TRUE,
   include_test_explanations = FALSE,
+  output_style = c("report", "manuscript"),
   return = c("text", "list")
 )
 
@@ -36,7 +37,8 @@ margot_interpret_lmtp_overlap(...)
 \item{x}{LMTP run output (e.g., the result of [margot_lmtp()]) or any object
 that exposes `$density_ratios` in the same structure as the plot helpers.}
 
-\item{outcome}{Character scalar giving the outcome name to summarise.}
+\item{outcome}{Optional character scalar giving the outcome name to
+summarise. When `NULL`, the first stored outcome is used.}
 
 \item{shifts}{Optional character vector of shifts to include (either full
 names such as `t5_pwi_z_shift_up` or cleaned suffixes such as `shift_up`).
@@ -100,9 +102,11 @@ when possible, lists the named deterministic policies included (default: TRUE).}
 CLI messages summarising results (near‑zero uniform weights, product‑of‑r collapse,
 monotone support checks). Default TRUE.}
 
-\item{test_thresholds}{Named list of thresholds for `include_tests`. Recognised names:
-`near_zero_median` (default 1e-3), `near_zero_cv` (0.05), `prod_log10` (-8),
-and `prod_frac_warn` (0.20). Unrecognised entries are ignored.}
+\item{test_thresholds}{Named list of thresholds for `include_tests`.
+Recognised names: `near_zero_median` (default 1e-3), `near_zero_cv` (0.05),
+`prod_log10` (-1, corresponding to the central band `[0.1, 10]`),
+`prod_frac_ok` (0.05), and `prod_frac_warn` (0.20). Unrecognised entries
+are ignored.}
 
 \item{include_ipsi_recommend}{Logical; if TRUE and IPSI shifts are present, evaluates candidate
 deltas using the same tests and prints a recommendation for the largest delta that passes
@@ -110,6 +114,10 @@ guardrails. Also adds an "IPSI Recommendation" section to the returned text. Def
 
 \item{include_test_explanations}{Logical; if TRUE, adds a short "Test Explanations" section that
 explains near‑zero flags, the product‑of‑r summary, and how censoring is handled via IPCW. Default FALSE.}
+
+\item{output_style}{Character; `"report"` (default) returns the existing
+markdown-style report layout, while `"manuscript"` returns compact prose
+paragraphs designed to drop more cleanly into a manuscript.}
 
 \item{return}{Character; either `"text"` (default, a single markdown-ready
 string) or `"list"` (detailed components including the computed ESS
@@ -159,6 +167,16 @@ txt_diagnostics <- margot_interpret_lmtp_positivity(
   include_diagnostics = TRUE
 )
 cat(txt_diagnostics)
+
+# Manuscript-ready paragraph
+txt_manuscript <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  label_mapping = label_mapping,
+  output_style = "manuscript"
+)
+cat(txt_manuscript)
 
 # Complete report with methods and diagnostics
 txt_full <- margot_interpret_lmtp_positivity(

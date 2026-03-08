@@ -7,11 +7,11 @@
 \usage{
 margot_positivity_summary(
   x,
-  outcome,
+  outcome = NULL,
   shifts = NULL,
   waves = NULL,
-  test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
-    near_zero_cv = 0.05),
+  test_thresholds = list(prod_log10 = -1, prod_frac_ok = 0.05, prod_frac_warn = 0.2,
+    near_zero_median = 0.001, near_zero_cv = 0.05),
   include_policy_rates = FALSE,
   effect_table = NULL,
   digits = 3,
@@ -26,7 +26,8 @@ margot_ipsi_summary(...)
 each exposing `$density_ratios` (matrix with waves in columns). Optionally
 models may include `$exposure_by_wave` to enable policy-rate summaries.}
 
-\item{outcome}{Character outcome name (must exist under `x$models`).}
+\item{outcome}{Optional character outcome name. When `NULL`, the first stored
+outcome is used.}
 
 \item{shifts}{Character vector of shifts to include (full names or cleaned suffixes).
 If NULL, includes all available for the outcome. When supplied, the output
@@ -35,10 +36,12 @@ preserves the order provided here.}
 \item{waves}{Optional integer vector of waves to include; defaults to all.}
 
 \item{test_thresholds}{Named list controlling tests. Recognised names:
-- `prod_log10` (default -1) threshold on log10(product of ratios) for uncensored rows.
-- `prod_frac_warn` (default 0.10) warning fraction; verdict is Pass when fraction ≤ this.
+- `prod_log10` (default -1) defining the central support band
+  `[10^{prod_log10}, 10^{-prod_log10}]`; `-1` corresponds to `[0.1, 10]`.
+- `prod_frac_ok` (default 0.05) and `prod_frac_warn` (default 0.20),
+  defining the graded support screen from the combined fraction outside the band.
 - `near_zero_median` (default 1e-3) and `near_zero_cv` (default 0.05) are computed but
-  not included in the verdict; they are returned as counts of flagged waves per shift.}
+  not included in the support screen; they are returned as counts of flagged waves per shift.}
 
 \item{include_policy_rates}{Logical; if TRUE and exposure-by-wave aligned with density ratios
 is available, returns policy-implied Pr(A_t=1) by wave (uncensored rows).}
@@ -51,9 +54,10 @@ cleaned), and any of `att`, `ci_low`, `ci_high`, `e_value`, `e_value_bound`.}
 }
 \value{
 A tibble/data.frame with one row per shift containing: `outcome`, `shift_full`,
-  `shift_clean`, product-of-r metrics, verdict,
-  ESS metrics, optional policy rates (per-wave `p_hat_wave_k` and `p_hat_overall`), optional
-  effect columns if provided.
+  `shift_clean`, cumulative density-ratio metrics, support screen,
+  ESS metrics (including final cumulative ESS), optional policy rates
+  (per-wave `p_hat_wave_k` and `p_hat_overall`), optional effect columns
+  if provided.
 }
 \description{
 Builds a single, tidy table per shift with practical-positivity diagnostics and
@@ -64,9 +68,10 @@ LMTP run object.
 }
 \details{
 Metrics include:
-- Product-of-r collapse across selected waves (uncensored fraction below a user
-  threshold on log10 scale, with Pass/Fail verdict), and percent collapsing to
-  zero including censoring (IPCW zeros).
+- Cumulative density-ratio support across selected waves, summarised as the
+  fraction of uncensored rows falling below and above a user-defined central
+  band, plus a graded support screen, percent collapsing to zero including
+  censoring (IPCW zeros), and the final cumulative ESS.
 - ESS on uncensored rows overall and relative to person-time (ESS+/(N_pt)).
 - Policy-implied exposure rates by wave (and overall) on uncensored rows when
   `exposure_by_wave` is attached to models (best-effort from `margot_lmtp()`).

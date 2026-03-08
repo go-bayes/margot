@@ -30,7 +30,8 @@ margot_plot_lmtp_learners(
 
 - outcome:
 
-  Character scalar giving the outcome name to summarise.
+  Optional character scalar giving the outcome name to summarise. When
+  \`NULL\`, the first stored outcome is used.
 
 - shifts:
 

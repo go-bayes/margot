@@ -37,3 +37,28 @@ test_that("margot_lmtp_weight_diag_from_fit respects shift order and wave labels
   expect_true(all(c("wave", "wave_label") %in% names(diags[[1]]$wave_table)))
   expect_equal(diags[[1]]$wave_table$wave_label[1], "Baseline")
 })
+
+test_that("margot_lmtp_weight_diag_from_fit defaults to first outcome and all shifts", {
+  dr1 <- matrix(c(2, 1, 1,
+                  1, 1, 0), nrow = 2, byrow = TRUE)
+  dr2 <- matrix(c(1, 1, 1,
+                  2, 2, 2), nrow = 2, byrow = TRUE)
+  fit <- list(
+    models = list(
+      first_outcome = list(
+        first_outcome_shift_zero = list(density_ratios = dr2),
+        first_outcome_null = list(density_ratios = dr1)
+      ),
+      second_outcome = list(
+        second_outcome_null = list(density_ratios = dr1)
+      )
+    )
+  )
+
+  diags <- margot_lmtp_weight_diag_from_fit(fit)
+
+  expect_true(is.list(diags))
+  expect_equal(names(diags), c("null", "shift_zero"))
+  expect_equal(diags[[1]]$shift_full, "first_outcome_null")
+  expect_equal(diags[[2]]$shift_full, "first_outcome_shift_zero")
+})

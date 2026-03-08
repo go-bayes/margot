@@ -19,7 +19,8 @@ margot_plot_lmtp_learners(
 \item{x}{LMTP run output (e.g., the result of [margot_lmtp()]) or any object
 that exposes `$density_ratios` in the same structure as the plot helpers.}
 
-\item{outcome}{Character scalar giving the outcome name to summarise.}
+\item{outcome}{Optional character scalar giving the outcome name to
+summarise. When `NULL`, the first stored outcome is used.}
 
 \item{shifts}{Optional character vector of shifts to include (either full
 names such as `t5_pwi_z_shift_up` or cleaned suffixes such as `shift_up`).

@@ -32,6 +32,11 @@
 #' @param fill_palette Optional vector of colours (named or unnamed) used when colouring histograms.
 #'   Character aliases include `"lab"` (blue/red/grey with a constant fallback) and
 #'   `"classic"` (the default qualitative palette).
+#' @param show_reference_line Logical; if TRUE (default), adds a faint dotted
+#'   reference line at `reference_line_value`.
+#' @param reference_line_value Numeric; density-ratio reference value shown by
+#'   the dotted line (default `1`). On the log10 scale this is plotted at
+#'   `log10(reference_line_value)`.
 #' @param ... Optional named arguments recognised by
 #'   `margot_interpret_lmtp_positivity()` when assembling the text summary
 #'   (e.g., `label_mapping`, `waves`, `remove_waves`, `include_methods`,
@@ -57,6 +62,8 @@ margot_lmtp_overlap <- function(x,
                                 color_by = c("wave", "shift", "constant"),
                                 color_by_wave = NULL,
                                 fill_palette = NULL,
+                                show_reference_line = TRUE,
+                                reference_line_value = 1,
                                 bins = 40,
                                 binwidth = NULL,
                                 xlim = NULL,
@@ -72,6 +79,11 @@ margot_lmtp_overlap <- function(x,
   color_by <- match.arg(color_by)
   if (!is.null(color_by_wave)) {
     color_by <- if (isTRUE(color_by_wave)) "wave" else "constant"
+  }
+  stopifnot(is.logical(show_reference_line), length(show_reference_line) == 1L)
+  reference_line_value <- as.numeric(reference_line_value)[1]
+  if (!is.finite(reference_line_value) || reference_line_value <= 0) {
+    stop("`reference_line_value` must be a single positive finite number.")
   }
 
   # Normalize/clean shift suffixes for easy filtering
@@ -238,6 +250,10 @@ margot_lmtp_overlap <- function(x,
         # separate zeros for censoring rate annotation
         prop_zero <- mean(w_vec == 0)
         w_pos <- w_vec[w_vec > 0]
+        shift_pretty <- margot_pretty_positivity_shift(
+          shift_name = shift_name,
+          outcome = outcome_name
+        )
 
         # determine what to plot based on show_censored parameter
         w_plot <- if (isTRUE(show_censored)) w_vec else w_pos
@@ -259,6 +275,10 @@ margot_lmtp_overlap <- function(x,
         } else if (identical(color_by, "shift")) {
           fill_col <- get_shift_color(outcome_name, shift_name)
         }
+        hist_border <- "white"
+        if (grepl("null", tolower(clean_shift_name(outcome_name, shift_name)))) {
+          hist_border <- NA
+        }
 
         # prepare plot data based on scale
         if (identical(tolower(scale), "log10")) {
@@ -266,20 +286,39 @@ margot_lmtp_overlap <- function(x,
           plot_df <- data.frame(x = log10(w_pos + 1e-12))
           xlab <- NULL
           scale_txt <- "log10"
+          reference_x <- log10(reference_line_value)
         } else {
           # for linear scale, respect show_censored parameter
           plot_df <- data.frame(x = w_plot)
           xlab <- NULL
           scale_txt <- "linear"
+          reference_x <- reference_line_value
         }
 
         censor_label <- if (isTRUE(show_censored)) "censored: " else "uncensored | censored: "
-        title_txt <- paste0("Density ratios — ", outcome_name, " | ", shift_name,
+        title_txt <- paste0("Density ratios — ", outcome_name, " | ", shift_pretty,
                              " | wave ", wave_idx,
                              " | ", censor_label, sprintf("%.1f%%", 100*prop_zero),
                              " | scale: ", scale_txt)
         p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = x)) +
-          { if (!is.null(binwidth)) ggplot2::geom_histogram(binwidth = binwidth, color = "white", fill = fill_col, linewidth = 0.3) else ggplot2::geom_histogram(bins = bins, color = "white", fill = fill_col, linewidth = 0.3) } +
+          {
+            if (!is.null(binwidth)) {
+              ggplot2::geom_histogram(binwidth = binwidth, color = hist_border, fill = fill_col, linewidth = 0.3)
+            } else {
+              ggplot2::geom_histogram(bins = bins, color = hist_border, fill = fill_col, linewidth = 0.3)
+            }
+          } +
+          {
+            if (isTRUE(show_reference_line)) {
+              ggplot2::geom_vline(
+                xintercept = reference_x,
+                linetype = "dotted",
+                colour = "#666666",
+                linewidth = 0.4,
+                alpha = 0.7
+              )
+            }
+          } +
           ggplot2::labs(title = title_txt, x = xlab, y = "Count") +
           ggtheme
         if (!is.null(xlim) && length(xlim) == 2 && is.finite(xlim[1]) && is.finite(xlim[2])) {

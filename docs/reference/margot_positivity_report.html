@@ -11,7 +11,7 @@ into a single object for Quarto or reporting workflows."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.303</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.310</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,13 +47,13 @@ into a single object for Quarto or reporting workflows.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_positivity_report</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
-<span>  <span class="va">outcome</span>,</span>
+<span>  outcome <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  shifts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  remove_waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  test_thresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>prod_log10 <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, prod_frac_warn <span class="op">=</span> <span class="fl">0.1</span>, near_zero_median <span class="op">=</span> <span class="fl">0.001</span>,</span>
-<span>    near_zero_cv <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>,</span>
+<span>  test_thresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>prod_log10 <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, prod_frac_ok <span class="op">=</span> <span class="fl">0.05</span>, prod_frac_warn <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>    near_zero_median <span class="op">=</span> <span class="fl">0.001</span>, near_zero_cv <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>,</span>
 <span>  include_policy_rates <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  effect_table <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
@@ -65,15 +65,15 @@ into a single object for Quarto or reporting workflows.</p>
 <span>  interpret_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://go-bayes.github.io/margot/reference/margot_positivity_report.html">margot_positivity_report_single_model</a></span><span class="op">(</span></span>
+<span><span class="fu">margot_positivity_report_single_model</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">outcome</span>,</span>
 <span>  shift <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  remove_waves <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  test_thresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>prod_log10 <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, prod_frac_warn <span class="op">=</span> <span class="fl">0.1</span>, near_zero_median <span class="op">=</span> <span class="fl">0.001</span>,</span>
-<span>    near_zero_cv <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>,</span>
+<span>  test_thresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>prod_log10 <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, prod_frac_ok <span class="op">=</span> <span class="fl">0.05</span>, prod_frac_warn <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>    near_zero_median <span class="op">=</span> <span class="fl">0.001</span>, near_zero_cv <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>,</span>
 <span>  include_policy_rates <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  effect_table <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
@@ -95,7 +95,7 @@ into a single object for Quarto or reporting workflows.</p>
 
 
 <dt id="arg-outcome">outcome<a class="anchor" aria-label="anchor" href="#arg-outcome"></a></dt>
-<dd><p>Character outcome name.</p></dd>
+<dd><p>Outcome name. For `margot_positivity_report()`, this is optional and defaults to the first stored outcome. For `margot_positivity_report_single_model()`, supply the outcome explicitly.</p></dd>
 
 
 <dt id="arg-shift">shift<a class="anchor" aria-label="anchor" href="#arg-shift"></a></dt>
@@ -103,7 +103,7 @@ into a single object for Quarto or reporting workflows.</p>
 
 
 <dt id="arg-shifts">shifts<a class="anchor" aria-label="anchor" href="#arg-shifts"></a></dt>
-<dd><p>Optional character vector of shifts to include (full or cleaned names). If `NULL`, all shifts are used.</p></dd>
+<dd><p>Optional character vector of shifts to include (full or cleaned names). If `NULL`, all available shifts are used.</p></dd>
 
 
 <dt id="arg-label-mapping">label_mapping<a class="anchor" aria-label="anchor" href="#arg-label-mapping"></a></dt>
@@ -119,7 +119,7 @@ into a single object for Quarto or reporting workflows.</p>
 
 
 <dt id="arg-test-thresholds">test_thresholds<a class="anchor" aria-label="anchor" href="#arg-test-thresholds"></a></dt>
-<dd><p>Named list of thresholds forwarded to the summary and narrative functions.</p></dd>
+<dd><p>Named list of thresholds forwarded to the summary and narrative functions. The default support screen uses a central cumulative density-ratio band of `[0.1, 10]` and classifies support from the combined share outside that band.</p></dd>
 
 
 <dt id="arg-include-policy-rates">include_policy_rates<a class="anchor" aria-label="anchor" href="#arg-include-policy-rates"></a></dt>

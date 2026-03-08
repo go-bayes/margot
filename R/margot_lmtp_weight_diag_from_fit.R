@@ -10,14 +10,14 @@
 #'
 #' @param fit Either a single LMTP model (anything exposing `$density_ratios`) or
 #'   a full `margot_lmtp()` result.
-#' @param outcome Optional outcome name (required when `fit` is a full
-#'   `margot_lmtp()` run).
+#' @param outcome Optional outcome name. When `fit` is a full `margot_lmtp()`
+#'   run and `outcome = NULL`, the first stored outcome is used.
 #' @param shift Optional shift name (clean suffix or full). Required when `fit`
 #'   is a full `margot_lmtp()` run with multiple shifts. Ignored when `shifts`
 #'   is supplied.
 #' @param shifts Optional character vector of shifts to summarise in a single
-#'   call. When supplied, diagnostics are returned in the same order. Defaults
-#'   to all available shifts only when a single shift exists in the fit.
+#'   call. When supplied, diagnostics are returned in the same order. When
+#'   `NULL`, all available shifts for the selected outcome are returned.
 #' @param trim_right Numeric in `(0, 1]`; optional right-tail winsorisation level
 #'   applied per wave before forming cumulative products (default `0.999`).
 #' @param thresholds Numeric vector of ratio thresholds used when computing tail
@@ -45,88 +45,24 @@ margot_lmtp_weight_diag_from_fit <- function(fit,
                                              trim_right = 0.999,
                                              thresholds = c(5, 10, 25, 50, 100),
                                              label_mapping = NULL) {
-  if (!is.null(shifts)) {
-    stopifnot(is.character(shifts))
-  }
+  if (!is.null(shifts)) stopifnot(is.character(shifts))
   if (!is.null(shift)) {
     stopifnot(is.character(shift))
     if (is.null(shifts)) {
       shifts <- shift
     }
   }
-  `%||%` <- function(x, y) if (is.null(x)) y else x
-
-  normalise_models <- function(obj) {
-    if (is.list(obj) && !is.null(obj$models) && is.list(obj$models)) {
-      if (is.null(outcome)) stop("Provide `outcome` when passing a margot_lmtp() run.")
-      if (!outcome %in% names(obj$models)) stop("Outcome not found in fit$models: ", outcome)
-      out <- obj$models[[outcome]]
-      if (!length(out)) stop("No shift models stored for outcome ", outcome)
-      return(out)
-    }
-    if (is.list(obj) && !is.null(obj$density_ratios)) {
-      return(list(`(shift)` = obj))
-    }
-    if (is.numeric(obj)) {
-      fake <- list(density_ratios = obj)
-      return(list(`(shift)` = fake))
-    }
-    if (is.list(obj) && length(obj) &&
-        all(vapply(obj, function(z) is.list(z) && !is.null(z$density_ratios), logical(1)))) {
-      return(obj)
-    }
-    stop("Unsupported input to `margot_lmtp_weight_diag_from_fit()`. Pass a margot_lmtp() result, a single LMTP model, or a list with $density_ratios.")
-  }
-
-  shift_models <- normalise_models(fit)
-  shift_names <- names(shift_models)
-  if (is.null(shift_names) || !length(shift_names)) {
-    shift_names <- paste0("shift_", seq_along(shift_models))
-    names(shift_models) <- shift_names
-  } else {
-    missing_names <- which(!nzchar(shift_names))
-    if (length(missing_names)) {
-      for (idx in missing_names) {
-        shift_names[[idx]] <- paste0("shift_", idx)
-      }
-      names(shift_models) <- shift_names
-    }
-  }
-  clean_shift <- function(nm) {
-    if (!is.null(outcome)) {
-      pref <- paste0(outcome, "_")
-      if (startsWith(nm, pref)) return(substring(nm, nchar(pref) + 1L))
-    }
-    nm
-  }
-  shift_clean_names <- vapply(shift_names, clean_shift, character(1))
-
-  if (!is.null(shifts)) {
-    sel_idx <- integer(0)
-    missing <- character(0)
-    for (sh in shifts) {
-      hit <- which(shift_names == sh | shift_clean_names == sh)
-      if (!length(hit)) {
-        missing <- c(missing, sh)
-      } else {
-        sel_idx <- c(sel_idx, hit[1])
-      }
-    }
-    if (length(missing)) {
-      stop(
-        "Requested shifts not found for outcome ", outcome %||% "", ": ",
-        paste(unique(missing), collapse = ", ")
-      )
-    }
-    if (!length(sel_idx)) {
-      stop("Requested shifts not found for outcome ", outcome %||% "")
-    }
-  } else {
-    if (length(shift_models) == 1L) {
-      sel_idx <- 1L
-    } else {
-      stop("Multiple shifts available; supply `shift` or `shifts`.")
-    }
+  selection <- margot_resolve_positivity_selection(
+    x = fit,
+    outcome = outcome,
+    shifts = shifts,
+    caller = "margot_lmtp_weight_diag_from_fit"
+  )
+  outcome <- selection$outcome
+  shift_models <- selection$outcome_models
+  shift_df <- selection$shift_df
+  if (!nrow(shift_df)) {
+    stop("No shift models stored for outcome ", outcome)
   }
 
   map_wave_label <- function(idx) {
@@ -258,12 +194,12 @@ margot_lmtp_weight_diag_from_fit <- function(fit,
     )
   }
 
-  selected <- lapply(seq_along(sel_idx), function(pos) {
-    idx <- sel_idx[pos]
+  selected <- lapply(seq_len(nrow(shift_df)), function(i) {
+    shift_full <- shift_df$shift_full[[i]]
     list(
-      shift_full = shift_names[[idx]],
-      shift_clean = shift_clean_names[[idx]],
-      model = shift_models[[idx]]
+      shift_full = shift_full,
+      shift_clean = shift_df$shift_clean[[i]],
+      model = shift_models[[shift_full]]
     )
   })
 

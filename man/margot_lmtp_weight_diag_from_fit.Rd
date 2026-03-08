@@ -18,16 +18,16 @@ margot_lmtp_weight_diag_from_fit(
 \item{fit}{Either a single LMTP model (anything exposing `$density_ratios`) or
 a full `margot_lmtp()` result.}
 
-\item{outcome}{Optional outcome name (required when `fit` is a full
-`margot_lmtp()` run).}
+\item{outcome}{Optional outcome name. When `fit` is a full `margot_lmtp()`
+run and `outcome = NULL`, the first stored outcome is used.}
 
 \item{shift}{Optional shift name (clean suffix or full). Required when `fit`
 is a full `margot_lmtp()` run with multiple shifts. Ignored when `shifts`
 is supplied.}
 
 \item{shifts}{Optional character vector of shifts to summarise in a single
-call. When supplied, diagnostics are returned in the same order. Defaults
-to all available shifts only when a single shift exists in the fit.}
+call. When supplied, diagnostics are returned in the same order. When
+`NULL`, all available shifts for the selected outcome are returned.}
 
 \item{trim_right}{Numeric in `(0, 1]`; optional right-tail winsorisation level
 applied per wave before forming cumulative products (default `0.999`).}

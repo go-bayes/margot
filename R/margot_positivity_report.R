@@ -7,7 +7,8 @@
 #'
 #' @param x Result of `margot_lmtp()` (with `$models`) or another object
 #'   accepted by the underlying helpers.
-#' @param outcome Character outcome name.
+#' @param outcome Optional character outcome name. When `NULL`, the first
+#'   stored outcome is used.
 #' @param shifts Optional character vector of shifts to include (full or cleaned
 #'   names). If `NULL`, all available shifts are used.
 #' @param label_mapping Optional label map passed through to downstream helpers.
@@ -40,13 +41,14 @@
 #'   - `metadata`: list of context (outcome, shifts, waves, thresholds).
 #' @export
 margot_positivity_report <- function(x,
-                                     outcome,
+                                     outcome = NULL,
                                      shifts = NULL,
                                      label_mapping = NULL,
                                      waves = NULL,
                                      remove_waves = NULL,
                                      test_thresholds = list(prod_log10 = -1,
-                                                            prod_frac_warn = 0.10,
+                                                            prod_frac_ok = 0.05,
+                                                            prod_frac_warn = 0.20,
                                                             near_zero_median = 1e-3,
                                                             near_zero_cv = 0.05),
                                      include_policy_rates = FALSE,
@@ -58,15 +60,31 @@ margot_positivity_report <- function(x,
                                      include_plot = TRUE,
                                      plot_args = list(),
                                      interpret_args = list()) {
-  stopifnot(is.character(outcome), length(outcome) == 1L)
+  if (!is.null(outcome)) stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
+
+  selection <- margot_resolve_positivity_selection(
+    x = x,
+    outcome = outcome,
+    shifts = shifts,
+    caller = "margot_positivity_report"
+  )
+  outcome <- selection$outcome
+  selected_shifts <- selection$shift_df$shift_full
+  report_test_thresholds <- test_thresholds
+  if (is.list(interpret_args$test_thresholds) && length(interpret_args$test_thresholds)) {
+    report_test_thresholds <- utils::modifyList(
+      report_test_thresholds,
+      interpret_args$test_thresholds
+    )
+  }
 
   summary_tbl <- margot_positivity_summary(
     x = x,
     outcome = outcome,
-    shifts = shifts,
+    shifts = selected_shifts,
     waves = waves,
-    test_thresholds = test_thresholds,
+    test_thresholds = report_test_thresholds,
     include_policy_rates = include_policy_rates,
     effect_table = effect_table,
     digits = digits,
@@ -77,7 +95,7 @@ margot_positivity_report <- function(x,
   diagnostics <- margot_lmtp_weight_diag_from_fit(
     fit = x,
     outcome = outcome,
-    shifts = shifts,
+    shifts = selected_shifts,
     trim_right = trim_right,
     thresholds = thresholds,
     label_mapping = label_mapping
@@ -88,7 +106,7 @@ margot_positivity_report <- function(x,
     plot_defaults <- list(
       x = x,
       outcome = outcome,
-      shifts = shifts,
+      shifts = selected_shifts,
       label_mapping = label_mapping
     )
     plot_call <- utils::modifyList(plot_defaults, plot_args)
@@ -98,12 +116,12 @@ margot_positivity_report <- function(x,
   interpret_defaults <- list(
     x = x,
     outcome = outcome,
-    shifts = shifts,
+    shifts = selected_shifts,
     waves = waves,
     remove_waves = remove_waves,
     label_mapping = label_mapping,
     include_policy_rates = include_policy_rates,
-    test_thresholds = test_thresholds,
+    test_thresholds = report_test_thresholds,
     digits = digits,
     return = "list"
   )
@@ -113,7 +131,10 @@ margot_positivity_report <- function(x,
     narrative <- list(text = narrative)
   }
 
-  method_statement <- build_positivity_method_statement(include_policy_rates)
+  method_statement <- build_positivity_method_statement(
+    include_policy_rates = include_policy_rates,
+    test_thresholds = report_test_thresholds
+  )
   wave_summary_table <- build_wave_summary_table(diagnostics, label_mapping, digits = digits)
   censoring_summary <- build_censoring_summary(summary_tbl, label_mapping, digits = digits)
   precision_table <- attr(summary_tbl, "precision_table")
@@ -129,10 +150,10 @@ margot_positivity_report <- function(x,
     censoring_summary = censoring_summary,
     metadata = list(
       outcome = outcome,
-      shifts = if (is.null(shifts)) names(diagnostics) else shifts,
+      shifts = selected_shifts,
       waves = waves,
       remove_waves = remove_waves,
-      test_thresholds = test_thresholds,
+      test_thresholds = report_test_thresholds,
       include_policy_rates = include_policy_rates,
       trim_right = trim_right,
       thresholds = thresholds
@@ -146,7 +167,7 @@ margot_positivity_report <- function(x,
 #' `$density_ratios`) and forwards it to [margot_positivity_report()] after
 #' coercing it into the expected nested structure.
 #'
-#' @inheritParams margot_positivity_report
+#' @rdname margot_positivity_report
 #' @param shift Optional name for the single shift/policy. Defaults to `x$shift`
 #'   when present, otherwise `"(shift)"`.
 #' @export
@@ -157,7 +178,8 @@ margot_positivity_report_single_model <- function(x,
                                                   waves = NULL,
                                                   remove_waves = NULL,
                                                   test_thresholds = list(prod_log10 = -1,
-                                                                         prod_frac_warn = 0.10,
+                                                                         prod_frac_ok = 0.05,
+                                                                         prod_frac_warn = 0.20,
                                                                          near_zero_median = 1e-3,
                                                                          near_zero_cv = 0.05),
                                                   include_policy_rates = FALSE,
@@ -190,13 +212,19 @@ margot_positivity_report_single_model <- function(x,
   )
 }
 
-build_positivity_method_statement <- function(include_policy_rates = TRUE) {
+build_positivity_method_statement <- function(include_policy_rates = TRUE,
+                                              test_thresholds = NULL) {
+  thr <- margot_positivity_thresholds(test_thresholds)
+  band_strings <- margot_positivity_band_strings(thr)
   paragraphs <- c(
     "Density ratios act as weights in the LMTP estimator to rebalance the observed data so it mimics the intervention of interest; large or near-zero values indicate practical positivity strain.",
-    "We assess positivity on uncensored rows by examining the distribution of ratios across waves and by monitoring the fraction of person-time with tiny products of ratios, which signal unstable estimators.",
+    paste0(
+      "We assess support on uncensored rows by monitoring the cumulative density ratio across waves and reporting the share of rows outside the central band ",
+      band_strings$interval_label, ". We classify support as adequate, caution, or limited using this share as a reporting screen."
+    ),
     "Effective sample size (ESS) summarises weight variability/precision: ESS = (sum w)^2 / sum w^2. It is a precision indicator (low ESS = noisier estimates), not a positivity test; we report ESS relative to uncensored rows and total person-time.",
     "Zeros in density ratios primarily reflect censoring, not treatment-positivity violations, because censoring removes follow-up treatment data; we therefore separate censoring rates from the uncensored ratio diagnostics.",
-    "All estimands reweight to the baseline cohort via inverse probability of censoring, so even the null policy features non-trivial weights."
+    "All estimands reweight to the baseline cohort via inverse probability of censoring, so even the identity intervention features non-trivial weights."
   )
   if (isTRUE(include_policy_rates)) {
     paragraphs <- c(
@@ -210,29 +238,10 @@ build_positivity_method_statement <- function(include_policy_rates = TRUE) {
 }
 
 pretty_shift_label <- function(shift_name, label_mapping = NULL) {
-  lbl <- shift_name %||% ""
-  if (length(lbl) == 0 || is.na(lbl)) lbl <- ""
-  if (exists("transform_label", mode = "function")) {
-    lbl <- tryCatch(
-      transform_label(
-        label = shift_name,
-        label_mapping = label_mapping,
-        options = list(
-          remove_tx_prefix = TRUE,
-          remove_z_suffix = TRUE,
-          remove_underscores = TRUE,
-          use_title_case = TRUE,
-          quiet = TRUE
-        )
-      ),
-      error = function(e) shift_name
-    )
-  }
-  lbl <- as.character(lbl)
-  if (length(lbl) == 0 || all(!nzchar(lbl)) || all(is.na(lbl))) {
-    lbl <- shift_name %||% ""
-  }
-  gsub("_", " ", lbl)
+  margot_pretty_positivity_shift(
+    shift_name = shift_name,
+    label_mapping = label_mapping
+  )
 }
 
 build_wave_summary_table <- function(diagnostics, label_mapping = NULL, digits = 3) {
@@ -273,7 +282,7 @@ build_wave_summary_table <- function(diagnostics, label_mapping = NULL, digits =
     }
   }
   mat <- round(mat, digits)
-  colnames(mat) <- paste0("ESS per N% (precision) : ", wave_labels)
+  colnames(mat) <- paste0("ESS/N_pt (precision): ", wave_labels)
   out <- as.data.frame(mat, check.names = FALSE, stringsAsFactors = FALSE)
   rownames(out) <- shift_labels
   out
@@ -288,7 +297,7 @@ build_censoring_summary <- function(summary_table, label_mapping = NULL, digits 
     entries <- c(entries, paste0(lab, ": ", round(zeros[[nm]], digits), "%"))
   }
   if (!length(entries)) return(NULL)
-  paste0("Censoring burden (zeros across person-time): ", paste(entries, collapse = "; "), ".")
+  paste0("Censoring burden (cumulative ratio = 0): ", paste(entries, collapse = "; "), ".")
 }
 
 coerce_single_lmtp_model <- function(x, outcome, shift = NULL) {
@@ -309,4 +318,3 @@ coerce_single_lmtp_model <- function(x, outcome, shift = NULL) {
   fit$models[[outcome]] <- nested
   list(fit = fit, shift_name = as.character(shift_name)[1])
 }
-#' Assemble a full LMTP positivity report (table, diagnostics, text, plot, methods)

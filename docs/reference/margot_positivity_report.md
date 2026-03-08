@@ -9,13 +9,13 @@ paragraph into a single object for Quarto or reporting workflows.
 ``` r
 margot_positivity_report(
   x,
-  outcome,
+  outcome = NULL,
   shifts = NULL,
   label_mapping = NULL,
   waves = NULL,
   remove_waves = NULL,
-  test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
-    near_zero_cv = 0.05),
+  test_thresholds = list(prod_log10 = -1, prod_frac_ok = 0.05, prod_frac_warn = 0.2,
+    near_zero_median = 0.001, near_zero_cv = 0.05),
   include_policy_rates = FALSE,
   effect_table = NULL,
   digits = 3,
@@ -34,8 +34,8 @@ margot_positivity_report_single_model(
   label_mapping = NULL,
   waves = NULL,
   remove_waves = NULL,
-  test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
-    near_zero_cv = 0.05),
+  test_thresholds = list(prod_log10 = -1, prod_frac_ok = 0.05, prod_frac_warn = 0.2,
+    near_zero_median = 0.001, near_zero_cv = 0.05),
   include_policy_rates = FALSE,
   effect_table = NULL,
   digits = 3,
@@ -57,7 +57,10 @@ margot_positivity_report_single_model(
 
 - outcome:
 
-  Character outcome name.
+  Outcome name. For \`margot_positivity_report()\`, this is optional and
+  defaults to the first stored outcome. For
+  \`margot_positivity_report_single_model()\`, supply the outcome
+  explicitly.
 
 - shift:
 
@@ -67,7 +70,7 @@ margot_positivity_report_single_model(
 - shifts:
 
   Optional character vector of shifts to include (full or cleaned
-  names). If \`NULL\`, all shifts are used.
+  names). If \`NULL\`, all available shifts are used.
 
 - label_mapping:
 
@@ -84,7 +87,9 @@ margot_positivity_report_single_model(
 - test_thresholds:
 
   Named list of thresholds forwarded to the summary and narrative
-  functions.
+  functions. The default support screen uses a central cumulative
+  density-ratio band of \`\[0.1, 10\]\` and classifies support from the
+  combined share outside that band.
 
 - include_policy_rates:
 

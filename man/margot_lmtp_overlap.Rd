@@ -17,6 +17,8 @@ margot_lmtp_overlap(
   color_by = c("wave", "shift", "constant"),
   color_by_wave = NULL,
   fill_palette = NULL,
+  show_reference_line = TRUE,
+  reference_line_value = 1,
   bins = 40,
   binwidth = NULL,
   xlim = NULL,
@@ -57,6 +59,13 @@ shows log10(density ratio) for w>0, or "linear" shows the raw ratio.}
 \item{fill_palette}{Optional vector of colours (named or unnamed) used when colouring histograms.
 Character aliases include `"lab"` (blue/red/grey with a constant fallback) and
 `"classic"` (the default qualitative palette).}
+
+\item{show_reference_line}{Logical; if TRUE (default), adds a faint dotted
+reference line at `reference_line_value`.}
+
+\item{reference_line_value}{Numeric; density-ratio reference value shown by
+the dotted line (default `1`). On the log10 scale this is plotted at
+`log10(reference_line_value)`.}
 
 \item{...}{Optional named arguments recognised by
 `margot_interpret_lmtp_positivity()` when assembling the text summary

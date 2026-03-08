@@ -74,25 +74,11 @@ margot_report_lmtp_positivity <- function(x,
 
   # Build estimand labels
   estimand_label <- function(sh) {
-    sh_clean <- sh
-    if (exists("transform_label", mode = "function")) {
-      out <- tryCatch(
-        transform_label(
-          label = sh_clean,
-          label_mapping = label_mapping,
-          options = list(
-            remove_tx_prefix = TRUE,
-            remove_z_suffix = TRUE,
-            remove_underscores = TRUE,
-            use_title_case = TRUE,
-            quiet = TRUE
-          )
-        ),
-        error = function(e) sh_clean
-      )
-      if (!is.null(out) && !is.na(out)) return(out)
-    }
-    gsub("_", " ", tools::toTitleCase(sh_clean))
+    margot_pretty_positivity_shift(
+      shift_name = sh,
+      label_mapping = label_mapping,
+      outcome = outcome
+    )
   }
 
   # Outcome label for titles
@@ -138,14 +124,14 @@ margot_report_lmtp_positivity <- function(x,
       names_from = "Estimand",
       values_from = "ess"
     )
-    # Compact ESS by wave with cleaned shift columns (e.g., Shift Up, Shift Down, Null)
+    # Compact ESS by wave with cleaned shift columns (e.g., Shift Up, Shift Down, Identity)
     present <- unique(bw$shift_clean)
-    pref_order <- c("shift_up", "shift_down", "null", "religious", "secular")
+    pref_order <- c("null", "shift_up", "shift_down", "religious", "secular")
     order_clean <- c(intersect(pref_order, present), setdiff(sort(present), pref_order))
     title_map <- c(
       shift_up = "Shift Up",
       shift_down = "Shift Down",
-      null = "Null",
+      null = "Identity",
       religious = "Religious",
       secular = "Secular"
     )

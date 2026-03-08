@@ -26,8 +26,8 @@
 #'   Default is FALSE.
 #' @param annotate_graph Deprecated. Shift labels are always annotated along rows and wave labels appear
 #'   as column titles; the supplied value is ignored.
-#' @param ymax_harmonize Character or named vector; controls y-axis harmonization: `"none"` (default) gives
-#'   each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+#' @param ymax_harmonize Character or named vector; controls y-axis harmonization: `"global"` (default) harmonizes
+#'   all plots, `"row"` harmonizes within rows, `"none"` gives each plot independent y-scale, `"column"` harmonizes within columns,
 #'   `"global"` harmonizes all plots. Can also be a named vector with custom values.
 #' @param xlim_harmonize Character or named vector; controls x-axis harmonization: `"none"` (default) gives
 #'   each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
@@ -56,7 +56,7 @@ margot_lmtp_overlap_plot_grid <- function(x,
                                           annotate_graph = c("none", "waves", "shifts"),
                                           xlim = NULL,
                                           layout = c("waves_by_shifts","shifts_by_waves"),
-                                          ymax_harmonize = "none",
+                                          ymax_harmonize = "global",
                                           xlim_harmonize = "none",
                                           headroom = 0.12,
                                           text_size = 3,
@@ -107,8 +107,8 @@ margot_lmtp_overlap_plot_grid <- function(x,
   if (!is.finite(annotate_zero_size)) annotate_zero_size <- text_size
 
   # validate ymax_harmonize: either a character option or a named/unnamed vector
-  if (is.null(ymax_harmonize)) ymax_harmonize <- "none"
-  harmonize_y_mode <- "none"  # default
+  if (is.null(ymax_harmonize)) ymax_harmonize <- "global"
+  harmonize_y_mode <- "global"  # default
   harmonize_y_custom <- NULL
   if (is.character(ymax_harmonize) && length(ymax_harmonize) == 1L) {
     harmonize_y_mode <- match.arg(ymax_harmonize, c("none", "row", "column", "global"))
@@ -211,27 +211,14 @@ margot_lmtp_overlap_plot_grid <- function(x,
   }
 
   # Build pretty labels for columns using transform_label when available
-  map_label <- function(lbl) {
-    if (exists("transform_label", mode = "function")) {
-      out <- tryCatch(
-        transform_label(
-          label = lbl,
-          label_mapping = label_mapping,
-          options = list(
-            remove_tx_prefix = TRUE,
-            remove_z_suffix = TRUE,
-            remove_underscores = TRUE,
-            use_title_case = TRUE
-          )
-        ),
-        error = function(e) lbl
-      )
-      if (is.null(out) || is.na(out)) lbl else out
-    } else {
-      gsub("_", " ", tools::toTitleCase(lbl))
-    }
+  map_shift_label <- function(lbl) {
+    margot_pretty_positivity_shift(
+      shift_name = lbl,
+      label_mapping = label_mapping,
+      outcome = outcome
+    )
   }
-  col_labels <- vapply(shifts_order_clean, map_label, character(1))
+  col_labels <- vapply(shifts_order_clean, map_shift_label, character(1))
 
   map_wave <- function(w) {
     key_num <- as.character(w)
@@ -514,7 +501,7 @@ if (!is.finite(min_x_global)) min_x_global <- NA_real_
     } else if (annotate_graph == "shifts") {
       # place shift label at top of graph (ensure sufficient space with adjusted vjust)
       sh_clean <- if (startsWith(sh_full, paste0(outc, "_"))) substring(sh_full, nchar(outc) + 2L) else sh_full
-      sh_pretty <- map_label(sh_clean)
+      sh_pretty <- map_shift_label(sh_clean)
       p <- p + ggplot2::annotate("text", x = -Inf, y = Inf,
                                  label = sh_pretty,
                                  hjust = -0.1, vjust = 1.2, size = annotate_shift_size)

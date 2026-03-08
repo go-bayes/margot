@@ -114,7 +114,7 @@
 
 #### Added
 
-- [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.html)
+- [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
   wraps standalone LMTP fits (single shift) so positivity reports work
   without batching, while preserving the existing multi-shift defaults.
 

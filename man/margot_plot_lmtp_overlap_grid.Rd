@@ -19,12 +19,14 @@ margot_plot_lmtp_overlap_grid(
   waves = NULL,
   xlim = NULL,
   layout = c("waves_by_shifts", "shifts_by_waves"),
-  ymax_harmonize = "none",
+  ymax_harmonize = "global",
   xlim_harmonize = "none",
   headroom = 0.12,
   color_by = c("wave", "shift", "constant"),
   color_by_wave = NULL,
   fill_palette = NULL,
+  show_reference_line = TRUE,
+  reference_line_value = 1,
   text_size = 3,
   annotate_wave_size = NULL,
   annotate_shift_size = NULL,
@@ -67,8 +69,8 @@ Default is FALSE.}
 \item{waves}{Optional integer vector specifying which waves to include (e.g., `c(1, 2, 3)`). If NULL,
 includes all waves found for the outcome.}
 
-\item{ymax_harmonize}{Character or named vector; controls y-axis harmonization: `"none"` (default) gives
-each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+\item{ymax_harmonize}{Character or named vector; controls y-axis harmonization: `"global"` (default) harmonizes
+all plots, `"row"` harmonizes within rows, `"none"` gives each plot independent y-scale, `"column"` harmonizes within columns,
 `"global"` harmonizes all plots. Can also be a named vector with custom values (e.g., `c(wave_1 = 1000)`).}
 
 \item{xlim_harmonize}{Character or named vector; controls x-axis harmonization: `"none"` (default) gives
@@ -82,6 +84,12 @@ each plot independent x-scale, `"row"` harmonizes within rows, `"column"` harmon
 `FALSE` = `"constant"`).}
 
 \item{fill_palette}{Optional vector of colours (named or unnamed) used when colouring histograms.}
+
+\item{show_reference_line}{Logical; if TRUE (default), adds a faint dotted
+reference line at `reference_line_value`.}
+
+\item{reference_line_value}{Numeric; density-ratio reference value shown by
+the dotted line (default `1`).}
 
 \item{text_size}{Numeric size for facet annotations (wave/shift/zeros labels).
 Defaults to 3.}

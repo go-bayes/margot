@@ -19,7 +19,7 @@ trajectories (raw and trimmed)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.303</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.310</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,8 +78,8 @@ a full `margot_lmtp()` result.</p></dd>
 
 
 <dt id="arg-outcome">outcome<a class="anchor" aria-label="anchor" href="#arg-outcome"></a></dt>
-<dd><p>Optional outcome name (required when `fit` is a full
-`margot_lmtp()` run).</p></dd>
+<dd><p>Optional outcome name. When `fit` is a full `margot_lmtp()`
+run and `outcome = NULL`, the first stored outcome is used.</p></dd>
 
 
 <dt id="arg-shift">shift<a class="anchor" aria-label="anchor" href="#arg-shift"></a></dt>
@@ -90,8 +90,8 @@ is supplied.</p></dd>
 
 <dt id="arg-shifts">shifts<a class="anchor" aria-label="anchor" href="#arg-shifts"></a></dt>
 <dd><p>Optional character vector of shifts to summarise in a single
-call. When supplied, diagnostics are returned in the same order. Defaults
-to all available shifts only when a single shift exists in the fit.</p></dd>
+call. When supplied, diagnostics are returned in the same order. When
+`NULL`, all available shifts for the selected outcome are returned.</p></dd>
 
 
 <dt id="arg-trim-right">trim_right<a class="anchor" aria-label="anchor" href="#arg-trim-right"></a></dt>

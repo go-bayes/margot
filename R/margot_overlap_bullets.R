@@ -10,7 +10,8 @@
 #'
 #' @param x LMTP run output (e.g., the result of [margot_lmtp()]) or any object
 #'   that exposes `$density_ratios` in the same structure as the plot helpers.
-#' @param outcome Character scalar giving the outcome name to summarise.
+#' @param outcome Optional character scalar giving the outcome name to
+#'   summarise. When `NULL`, the first stored outcome is used.
 #' @param shifts Optional character vector of shifts to include (either full
 #'   names such as `t5_pwi_z_shift_up` or cleaned suffixes such as `shift_up`).
 #'   If `NULL`, all available shifts for the outcome are used.
@@ -57,20 +58,19 @@
 #' @param include_tests Logical; if TRUE, runs extra overlap/positivity checks and prints
 #'   CLI messages summarising results (near‑zero uniform weights, product‑of‑r collapse,
 #'   monotone support checks). Default TRUE.
-#' @param test_thresholds Named list of thresholds for `include_tests`. Recognised names:
-#'   `near_zero_median` (default 1e-3), `near_zero_cv` (0.05), `prod_log10` (-8),
-#'   and `prod_frac_warn` (0.20). Unrecognised entries are ignored.
+#' @param test_thresholds Named list of thresholds for `include_tests`.
+#'   Recognised names: `near_zero_median` (default 1e-3), `near_zero_cv` (0.05),
+#'   `prod_log10` (-1, corresponding to the central band `[0.1, 10]`),
+#'   `prod_frac_ok` (0.05), and `prod_frac_warn` (0.20). Unrecognised entries
+#'   are ignored.
 #' @param include_ipsi_recommend Logical; if TRUE and IPSI shifts are present, evaluates candidate
 #'   deltas using the same tests and prints a recommendation for the largest delta that passes
 #'   guardrails. Also adds an "IPSI Recommendation" section to the returned text. Default TRUE.
 #' @param include_test_explanations Logical; if TRUE, adds a short "Test Explanations" section that
 #'   explains near‑zero flags, the product‑of‑r summary, and how censoring is handled via IPCW. Default FALSE.
-#' @param include_tests Logical; if TRUE, runs extra overlap/positivity checks and prints
-#'   CLI messages summarising results (near‑zero uniform weights, product‑of‑r collapse,
-#'   monotone support checks). Default TRUE.
-#' @param test_thresholds Named list of thresholds for `include_tests`. Recognised names:
-#'   `near_zero_median` (default 1e-3), `near_zero_cv` (0.05), `prod_log10` (-8),
-#'   and `prod_frac_warn` (0.20). Unrecognised entries are ignored.
+#' @param output_style Character; `"report"` (default) returns the existing
+#'   markdown-style report layout, while `"manuscript"` returns compact prose
+#'   paragraphs designed to drop more cleanly into a manuscript.
 #' @param return Character; either `"text"` (default, a single markdown-ready
 #'   string) or `"list"` (detailed components including the computed ESS
 #'   tables).
@@ -110,6 +110,16 @@
 #' )
 #' cat(txt_diagnostics)
 #'
+#' # Manuscript-ready paragraph
+#' txt_manuscript <- margot_interpret_lmtp_positivity(
+#'   fit,
+#'   outcome = "t5_pwi_z",
+#'   shifts = c("shift_up", "shift_down", "null"),
+#'   label_mapping = label_mapping,
+#'   output_style = "manuscript"
+#' )
+#' cat(txt_manuscript)
+#'
 #' # Complete report with methods and diagnostics
 #' txt_full <- margot_interpret_lmtp_positivity(
 #'   fit,
@@ -135,7 +145,7 @@
 #'
 #' @export
 margot_interpret_lmtp_positivity <- function(x,
-                                             outcome,
+                                             outcome = NULL,
                                              shifts = NULL,
                                              label_mapping = NULL,
                                              waves = NULL,
@@ -155,74 +165,28 @@ margot_interpret_lmtp_positivity <- function(x,
                                              test_thresholds = NULL,
                                              include_ipsi_recommend = TRUE,
                                              include_test_explanations = FALSE,
+                                             output_style = c("report", "manuscript"),
                                              return = c("text", "list")) {
-  stopifnot(is.character(outcome), length(outcome) == 1L)
+  if (!is.null(outcome)) stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
   if (!is.null(waves)) stopifnot(is.numeric(waves))
   if (!is.null(remove_waves)) stopifnot(is.numeric(remove_waves))
   digits <- max(0L, as.integer(digits))
   trim_right <- max(0, min(1, as.numeric(trim_right)))
+  output_style <- match.arg(output_style)
   return <- match.arg(return)
 
-  # -----------------------------------------------------------------------
-  # Normalise input to outcome -> shift -> model (with density ratios)
-  normalise_models <- function(obj) {
-    if (is.list(obj) && !is.null(obj$models) && is.list(obj$models)) {
-      return(obj$models)
-    }
-    if (is.list(obj) && !is.null(obj$density_ratios)) {
-      return(list(`(outcome)` = list(`(shift)` = obj)))
-    }
-    if (is.numeric(obj)) {
-      fake <- list(density_ratios = obj)
-      return(list(`(outcome)` = list(`(shift)` = fake)))
-    }
-    if (is.list(obj) && length(obj) &&
-        all(vapply(obj, function(z) is.list(z) && !is.null(z$density_ratios), logical(1)))) {
-      return(list(`(outcome)` = obj))
-    }
-    stop("Unsupported input to `margot_interpret_lmtp_positivity()`. Pass a `margot_lmtp()` result, a single LMTP model, or a numeric vector/matrix of density ratios.")
-  }
-
-  models_nested <- normalise_models(x)
-  if (!outcome %in% names(models_nested)) {
-    stop("Outcome not found in models: ", outcome)
-  }
-  outcome_models <- models_nested[[outcome]]
-  if (!length(outcome_models)) {
-    return(if (identical(return, "text")) "" else list())
-  }
-
-  clean_shift <- function(name) {
-    prefix <- paste0(outcome, "_")
-    if (startsWith(name, prefix)) substring(name, nchar(prefix) + 1L) else name
-  }
-  shift_df <- data.frame(
-    shift_full = names(outcome_models),
-    stringsAsFactors = FALSE
+  selection <- margot_resolve_positivity_selection(
+    x = x,
+    outcome = outcome,
+    shifts = shifts,
+    caller = "margot_interpret_lmtp_positivity"
   )
-  shift_df$shift_clean <- vapply(shift_df$shift_full, clean_shift, character(1))
-
-  if (is.null(shifts)) {
-    keep_idx <- seq_len(nrow(shift_df))
-    shift_df <- shift_df[keep_idx, , drop = FALSE]
-    # Default ordering preference when no explicit order supplied
-    pref_order <- c("null", "shift_down", "shift_up")
-    ord <- c(intersect(pref_order, shift_df$shift_clean),
-             setdiff(shift_df$shift_clean, pref_order))
-    shift_df <- shift_df[match(ord, shift_df$shift_clean), , drop = FALSE]
-  } else {
-    # Keep only requested shifts and respect the order provided by `shifts`
-    keep_idx <- which(shift_df$shift_full %in% shifts | shift_df$shift_clean %in% shifts)
-    if (!length(keep_idx)) {
-      stop("Requested shifts not found for outcome ", outcome, ": ", paste(shifts, collapse = ", "))
-    }
-    shift_df <- shift_df[keep_idx, , drop = FALSE]
-    ord_idx <- unlist(lapply(shifts, function(s) {
-      which(shift_df$shift_full == s | shift_df$shift_clean == s)[1]
-    }))
-    ord_idx <- ord_idx[is.finite(ord_idx) & !is.na(ord_idx)]
-    if (length(ord_idx)) shift_df <- shift_df[ord_idx, , drop = FALSE]
+  outcome <- selection$outcome
+  outcome_models <- selection$outcome_models
+  shift_df <- selection$shift_df
+  if (!length(outcome_models) || !nrow(shift_df)) {
+    return(if (identical(return, "text")) "" else list())
   }
 
   # methods text helper ----------------------------------------------------
@@ -246,7 +210,7 @@ margot_interpret_lmtp_positivity <- function(x,
       "",
       "The censoring rate (proportion of $r = 0$) is reported separately per shift to quantify data loss, while ESS and distributional diagnostics are computed only on uncensored observations to assess positivity where treatment was actually observed.",
       "",
-      "Note: In this analysis framework, even the `null` policy includes weighting to recover the baseline population via censoring adjustment. As a result, `null` density ratios need not be centred at 1. Departures from 1 under `null` reflect this censoring/stabilisation adjustment rather than a treatment positivity issue.",
+      "Note: In this analysis framework, even the identity intervention includes weighting to recover the baseline population via censoring adjustment. As a result, identity-intervention density ratios need not be centred at 1. Departures from 1 under the identity intervention reflect this censoring/stabilisation adjustment rather than a treatment positivity issue.",
       ""
     )
   }
@@ -393,12 +357,18 @@ margot_interpret_lmtp_positivity <- function(x,
   # tests explanations helper ----------------------------------------------
   tests_explanations_text <- function() {
     if (!isTRUE(include_test_explanations)) return(character(0))
+    band_strings <- margot_positivity_band_strings(margot_positivity_thresholds(test_thresholds))
     c(
       "## Test Explanations",
       "",
-      "Near‑zero uniform weights: flags per‑wave when positive ratios are tiny and nearly constant. ESS+/(N+) can look high because it is scale‑invariant; this test highlights rare‑exposure regimes.",
-      "Product‑of‑r across waves: the SDR/TMLE estimator reweights by the product of per‑wave ratios along observed histories. We report (i) % zero including censoring (IPCW sets censored rows to zero weight), and (ii) among uncensored rows, the fraction with log10(product) below a threshold (e.g., −1 = 10%). The latter is a practical‑positivity screen.",
-      "Censoring adjustment (IPCW): zeros in density‑ratio columns primarily reflect censoring. We up‑weight by inverse censoring probability to target the baseline cohort; high % zeros quantifies censoring burden rather than a treatment‑positivity violation."
+      "Near-zero uniform weights: flags per-wave when positive ratios are tiny and nearly constant. ESS+/(N+) can look high because it is scale-invariant; this test highlights rare-exposure regimes.",
+      paste0(
+        "Product-of-r across waves: the SDR/TMLE estimator reweights by the product of per-wave ratios along observed histories. ",
+        "We report (i) % zero including censoring (IPCW sets censored rows to zero weight), and (ii) among uncensored rows, ",
+        "the fraction below ", band_strings$lower_label, " and above ", band_strings$upper_label,
+        ". The combined share outside ", band_strings$interval_label, " is a practical support screen."
+      ),
+      "Censoring adjustment (IPCW): zeros in density-ratio columns primarily reflect censoring. We up-weight by inverse censoring probability to target the baseline cohort; high % zeros quantifies censoring burden rather than a treatment-positivity violation."
     )
   }
 
@@ -416,6 +386,18 @@ margot_interpret_lmtp_positivity <- function(x,
     } else {
       formatter(x)
     }
+  }
+  fmt_pct <- function(x) paste0(fmt_frac(x), "%")
+  collapse_phrases <- function(x, conjunction = "and") {
+    x <- x[nzchar(x)]
+    if (!length(x)) return("")
+    if (length(x) == 1L) return(x)
+    if (length(x) == 2L) return(paste(x, collapse = paste0(" ", conjunction, " ")))
+    paste0(
+      paste(x[-length(x)], collapse = ", "),
+      ", ", conjunction, " ",
+      x[length(x)]
+    )
   }
   # LaTeX sanitiser for common Unicode glyphs
   sanitize_latex <- function(txt) {
@@ -449,6 +431,13 @@ margot_interpret_lmtp_positivity <- function(x,
       if (!is.null(out) && !is.na(out)) return(out)
     }
     gsub("_", " ", tools::toTitleCase(lbl))
+  }
+  map_shift_label <- function(lbl) {
+    margot_pretty_positivity_shift(
+      shift_name = lbl,
+      label_mapping = label_mapping,
+      outcome = outcome
+    )
   }
 
   # wave label helper -------------------------------------------------------
@@ -677,7 +666,7 @@ margot_interpret_lmtp_positivity <- function(x,
         policy_rate = overall_policy_rate,
         stringsAsFactors = FALSE
       ),
-      label = map_label(shift_clean)
+      label = map_shift_label(shift_clean)
     )
   }
 
@@ -690,156 +679,210 @@ margot_interpret_lmtp_positivity <- function(x,
     return(if (identical(return, "text")) "" else list())
   }
 
-  # additional overlap/positivity tests (CLI + text) and IPSI recommendation
+  # overlap/positivity metrics used by tests and manuscript summaries
+  thr <- margot_positivity_thresholds(test_thresholds)
+  band_strings <- margot_positivity_band_strings(thr)
+  safe_cv <- function(v) {
+    v <- v[is.finite(v)]
+    if (!length(v)) return(NA_real_)
+    mu <- mean(v)
+    if (!is.finite(mu) || mu == 0) return(NA_real_)
+    stats::sd(v) / mu
+  }
+  compute_metrics <- function(nm) {
+    wdf <- shift_results[[nm]]$waves
+    mod <- outcome_models[[wdf$shift_full[1]]]
+    dr <- mod$density_ratios
+    if (inherits(dr, "Matrix")) dr <- as.matrix(dr)
+    if (!is.matrix(dr)) dr <- as.matrix(dr)
+    cols <- seq_len(ncol(dr))
+    if (!is.null(waves)) cols <- intersect(cols, as.integer(waves))
+    if (!is.null(remove_waves)) cols <- setdiff(cols, as.integer(remove_waves))
+    near_zero <- list()
+    for (j in cols) {
+      w <- dr[, j]
+      w_pos <- w[is.finite(w) & (w > 0)]
+      if (!length(w_pos)) next
+      med <- stats::median(w_pos)
+      cv <- safe_cv(w_pos)
+      if (!is.na(med) && med < thr$near_zero_median && !is.na(cv) && cv < thr$near_zero_cv) {
+        near_zero[[length(near_zero) + 1L]] <- list(wave = j, median = med, cv = cv)
+      }
+    }
+    prod_metrics <- margot_positivity_product_metrics(dr = dr, cols = cols, thresholds = thr)
+    list(
+      near_zero = near_zero,
+      prop_zero_prod = prod_metrics$prop_zero_prod,
+      frac_below = prod_metrics$prod_frac_below,
+      frac_above = prod_metrics$prod_frac_above,
+      frac_outside = prod_metrics$prod_frac_outside,
+      support_status = margot_positivity_support_status(prod_metrics$prod_frac_outside, thr)
+    )
+  }
+  metrics <- lapply(names(shift_results), compute_metrics)
+  names(metrics) <- names(shift_results)
+
+  get_overall_num <- function(res, column) {
+    val <- res$overall[[column]]
+    if (!length(val)) return(NA_real_)
+    as.numeric(val[[1]])
+  }
+  support_df <- data.frame(
+    shift_full = vapply(shift_results, function(res) as.character(res$overall$shift_full[[1]]), character(1)),
+    shift_clean = names(shift_results),
+    shift_label = vapply(shift_results, function(res) res$label, character(1)),
+    prop_zero_pct = vapply(names(shift_results), function(nm) 100 * metrics[[nm]]$prop_zero_prod, numeric(1)),
+    prod_frac_below_pct = vapply(names(shift_results), function(nm) 100 * metrics[[nm]]$frac_below, numeric(1)),
+    prod_frac_above_pct = vapply(names(shift_results), function(nm) 100 * metrics[[nm]]$frac_above, numeric(1)),
+    prod_frac_outside_pct = vapply(names(shift_results), function(nm) 100 * metrics[[nm]]$frac_outside, numeric(1)),
+    support_status = vapply(names(shift_results), function(nm) metrics[[nm]]$support_status, character(1)),
+    ess_cum_raw = vapply(shift_results, get_overall_num, numeric(1), column = "ess_cum_raw"),
+    ess_pos_frac_pt = vapply(shift_results, get_overall_num, numeric(1), column = "ess_pos_frac_pt"),
+    stringsAsFactors = FALSE
+  )
+
   tests_section <- character(0)
   ipsi_recommend_section <- character(0)
-  if (isTRUE(include_tests) || isTRUE(include_ipsi_recommend)) {
-    thr <- list(
-      near_zero_median = 1e-3,
-      near_zero_cv = 0.05,
-      prod_log10 = -8,
-      prod_frac_warn = 0.20
-    )
-    if (is.list(test_thresholds) && length(test_thresholds)) {
-      for (nm in intersect(names(test_thresholds), names(thr))) thr[[nm]] <- test_thresholds[[nm]]
-    }
-    safe_cv <- function(v) {
-      v <- v[is.finite(v)]
-      if (!length(v)) return(NA_real_)
-      mu <- mean(v)
-      if (!is.finite(mu) || mu == 0) return(NA_real_)
-      stats::sd(v) / mu
-    }
-    # helper to compute metrics per shift (near-zero flags and product-of-r)
-    compute_metrics <- function(nm) {
-      wdf <- shift_results[[nm]]$waves
-      mod <- outcome_models[[wdf$shift_full[1]]]
-      dr <- mod$density_ratios
-      if (inherits(dr, "Matrix")) dr <- as.matrix(dr)
-      if (!is.matrix(dr)) dr <- as.matrix(dr)
-      cols <- if (is.null(waves)) seq_len(ncol(dr)) else intersect(seq_len(ncol(dr)), as.integer(waves))
-      near_zero <- list()
-      for (j in cols) {
-        w <- dr[, j]
-        w_pos <- w[is.finite(w) & (w > 0)]
-        if (!length(w_pos)) next
-        med <- stats::median(w_pos)
-        cv  <- safe_cv(w_pos)
-        if (!is.na(med) && med < thr$near_zero_median && !is.na(cv) && cv < thr$near_zero_cv) near_zero[[length(near_zero) + 1L]] <- list(wave = j, median = med, cv = cv)
-      }
-      if (!length(cols)) return(list(near_zero = near_zero, prop_zero_prod = NA_real_, frac_below = NA_real_))
-      sub <- dr[, cols, drop = FALSE]
-      prod_all <- apply(sub, 1L, function(row) {
-        row <- row[is.finite(row)]
-        if (!length(row)) return(NA_real_)
-        if (any(row == 0)) return(0)
-        exp(sum(log(row)))
-      })
-      prod_pos <- apply(sub, 1L, function(row) {
-        row <- row[is.finite(row) & row > 0]
-        if (!length(row)) return(NA_real_)
-        exp(sum(log(row)))
-      })
-      prop_zero_prod <- mean(prod_all == 0, na.rm = TRUE)
-      log10_pos <- suppressWarnings(log10(prod_pos))
-      frac_below <- mean(is.finite(log10_pos) & (log10_pos < thr$prod_log10), na.rm = TRUE)
-      list(near_zero = near_zero, prop_zero_prod = prop_zero_prod, frac_below = frac_below)
-    }
-    metrics <- lapply(names(shift_results), compute_metrics)
-    names(metrics) <- names(shift_results)
-
-    if (isTRUE(include_tests)) {
-      # emit messages and assemble test section
-      for (nm in names(shift_results)) {
-        f <- metrics[[nm]]$near_zero
-        if (length(f)) {
-          for (j in seq_along(f)) {
-            wave <- f[[j]]$wave; med <- f[[j]]$median; cv <- f[[j]]$cv
-            if (requireNamespace("cli", quietly = TRUE)) {
-              cli::cli_alert_info("Near-zero uniform weights (outcome={outcome}, shift={nm}, wave={wave}): median={signif(med, 3)}, CV={signif(cv, 3)}.")
-              cli::cli_alert_info("ESS+/(N+) ≈ 1 can hide collapse when multiplying across waves; see product-of-r check.")
-            }
-            tests_section <- c(tests_section,
-              paste0("- Near-zero uniform weights — ", map_label(nm), ", ", wave_label(wave), ": median=", signif(med, 3), ", CV=", signif(cv, 3)))
+  if (isTRUE(include_tests)) {
+    for (nm in names(shift_results)) {
+      f <- metrics[[nm]]$near_zero
+      if (length(f)) {
+        for (j in seq_along(f)) {
+          wave <- f[[j]]$wave
+          med <- f[[j]]$median
+          cv <- f[[j]]$cv
+          if (requireNamespace("cli", quietly = TRUE)) {
+            cli::cli_alert_info("Near-zero uniform weights (outcome={outcome}, shift={nm}, wave={wave}): median={signif(med, 3)}, CV={signif(cv, 3)}.")
+            cli::cli_alert_info("ESS+/(N+) ≈ 1 can hide collapse when multiplying across waves; see product-of-r check.")
           }
+          tests_section <- c(
+            tests_section,
+            paste0(
+              "- Near-zero uniform weights — ",
+              map_shift_label(nm), ", ", wave_label(wave),
+              ": median=", signif(med, 3), ", CV=", signif(cv, 3)
+            )
+          )
         }
-        prop_zero_prod <- metrics[[nm]]$prop_zero_prod
-        frac_below <- metrics[[nm]]$frac_below
-        if (requireNamespace("cli", quietly = TRUE)) {
-          if (is.finite(frac_below) && frac_below > thr$prod_frac_warn) {
-            cli::cli_alert_warning("Product-of-r collapse (outcome={outcome}, shift={nm}): {round(100*frac_below,1)}% of uncensored rows have log10(prod r) < {thr$prod_log10}; {round(100*prop_zero_prod,1)}% collapse to zero including censoring.")
-          } else {
-            cli::cli_alert_info("Product-of-r summary (outcome={outcome}, shift={nm}): {round(100*prop_zero_prod,1)}% zero (with censoring); {round(100*frac_below,1)}% uncensored < 10^{thr$prod_log10}.")
-          }
-        }
-        verdict <- if (is.finite(frac_below) && (frac_below <= thr$prod_frac_warn)) "Pass" else "Fail"
-        tests_section <- c(tests_section,
-          paste0("- Product-of-r — ", map_label(nm), ": ", round(100*prop_zero_prod,1), "% zero (with censoring); ",
-                 round(100*frac_below,1), "% uncensored < 10^{", thr$prod_log10, "} ",
-                 "(verdict: ", verdict, ")"))
       }
+      prop_zero_prod <- metrics[[nm]]$prop_zero_prod
+      frac_below <- metrics[[nm]]$frac_below
+      frac_above <- metrics[[nm]]$frac_above
+      frac_outside <- metrics[[nm]]$frac_outside
+      support_status <- metrics[[nm]]$support_status
+      if (requireNamespace("cli", quietly = TRUE)) {
+        if (is.finite(frac_outside) && frac_outside > thr$prod_frac_warn) {
+          cli::cli_alert_warning(paste0(
+            "Product-of-r support strain (outcome={outcome}, shift={nm}): ",
+            "{round(100*frac_outside,1)}% of uncensored rows fall outside ",
+            "{band_strings$interval_label} ",
+            "(low={round(100*frac_below,1)}%, high={round(100*frac_above,1)}%); ",
+            "{round(100*prop_zero_prod,1)}% collapse to zero including censoring."
+          ))
+        } else {
+          cli::cli_alert_info(paste0(
+            "Product-of-r summary (outcome={outcome}, shift={nm}): ",
+            "{round(100*prop_zero_prod,1)}% zero (with censoring); ",
+            "{round(100*frac_below,1)}% below {band_strings$lower_label}; ",
+            "{round(100*frac_above,1)}% above {band_strings$upper_label}; ",
+            "support={support_status}."
+          ))
+        }
+      }
+      tests_section <- c(
+        tests_section,
+        paste0(
+          "- Product-of-r - ", map_shift_label(nm), ": ",
+          round(100 * prop_zero_prod, 1), "% zero (with censoring); ",
+          round(100 * frac_below, 1), "% < ", band_strings$lower_label, "; ",
+          round(100 * frac_above, 1), "% > ", band_strings$upper_label, "; ",
+          "support = ", support_status
+        )
+      )
     }
 
-    # monotone support: shift_weekly ≤ shift_zero (when both present)
     prs <- names(shift_results)
-    if (all(c("shift_zero","shift_weekly") %in% prs)) {
+    if (all(c("shift_zero", "shift_weekly") %in% prs)) {
       z <- shift_results[["shift_zero"]]$waves
       w <- shift_results[["shift_weekly"]]$waves
-      mm <- merge(z[, c("wave","n_pos")], w[, c("wave","n_pos")], by = "wave", suffixes = c("_zero","_weekly"))
+      mm <- merge(z[, c("wave", "n_pos")], w[, c("wave", "n_pos")], by = "wave", suffixes = c("_zero", "_weekly"))
       bad <- mm$n_pos_weekly > mm$n_pos_zero
       if (any(bad, na.rm = TRUE)) {
         if (requireNamespace("cli", quietly = TRUE)) {
-          cli::cli_alert_warning("Monotone support: weekly exceeds zero at waves {paste(mm$wave[bad], collapse=", ")}. Check shift definitions.")
+          cli::cli_alert_warning("Monotone support: weekly exceeds zero at waves {paste(mm$wave[bad], collapse=\", \")}. Check shift definitions.")
         }
-        tests_section <- c(tests_section, paste0("- Monotone support: FAILED weekly ≤ zero at waves ", paste(mm$wave[bad], collapse=", "), "."))
+        tests_section <- c(
+          tests_section,
+          paste0("- Monotone support: FAILED weekly ≤ zero at waves ", paste(mm$wave[bad], collapse = ", "), ".")
+        )
       } else if (nrow(mm)) {
-        if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info("Monotone support OK: weekly ≤ zero at all overlapping waves.")
+        if (requireNamespace("cli", quietly = TRUE)) {
+          cli::cli_alert_info("Monotone support OK: weekly ≤ zero at all overlapping waves.")
+        }
         tests_section <- c(tests_section, "- Monotone support: OK (weekly ≤ zero for all waves)")
       }
     }
-    # IPSI recommendation: choose largest δ passing guardrails
-    if (isTRUE(include_ipsi_recommend)) {
-      is_ipsi <- function(nm) grepl("^ipsi(?:_|$)", nm, ignore.case = TRUE)
-      ipsi_names <- names(shift_results)[vapply(names(shift_results), is_ipsi, logical(1))]
-      if (length(ipsi_names)) {
-        parse_delta <- function(nm) {
-          raw <- sub("^ipsi_?", "", tolower(nm))
-          raw <- gsub("[^0-9\\.]", "", raw)
-          suppressWarnings(as.numeric(raw))
+  }
+
+  if (isTRUE(include_ipsi_recommend)) {
+    is_ipsi <- function(nm) grepl("^ipsi(?:_|$)", nm, ignore.case = TRUE)
+    ipsi_names <- names(shift_results)[vapply(names(shift_results), is_ipsi, logical(1))]
+    if (length(ipsi_names)) {
+      parse_delta <- function(nm) {
+        raw <- sub("^ipsi_?", "", tolower(nm))
+        raw <- gsub("[^0-9\\.]", "", raw)
+        suppressWarnings(as.numeric(raw))
+      }
+      deltas <- vapply(ipsi_names, parse_delta, numeric(1))
+      frac_below_vec <- vapply(ipsi_names, function(nm) metrics[[nm]]$frac_below, numeric(1))
+      frac_above_vec <- vapply(ipsi_names, function(nm) metrics[[nm]]$frac_above, numeric(1))
+      frac_outside_vec <- vapply(ipsi_names, function(nm) metrics[[nm]]$frac_outside, numeric(1))
+      prop_zero_vec <- vapply(ipsi_names, function(nm) metrics[[nm]]$prop_zero_prod, numeric(1))
+      near_zero_ct <- vapply(ipsi_names, function(nm) length(metrics[[nm]]$near_zero), integer(1))
+      support_vec <- vapply(ipsi_names, function(nm) metrics[[nm]]$support_status, character(1))
+      passes <- is.finite(frac_outside_vec) & (frac_outside_vec <= thr$prod_frac_warn)
+      rec_idx <- NA_integer_
+      if (any(passes, na.rm = TRUE)) {
+        idx_pass <- which(passes)
+        rec_idx <- idx_pass[which.max(deltas[idx_pass])]
+      } else if (any(is.finite(frac_outside_vec))) {
+        min_val <- min(frac_outside_vec[is.finite(frac_outside_vec)], na.rm = TRUE)
+        cand <- which(is.finite(frac_outside_vec) & frac_outside_vec == min_val)
+        rec_idx <- cand[which.min(deltas[cand])]
+      }
+      if (is.finite(rec_idx) && !is.na(rec_idx)) {
+        rec_name <- ipsi_names[rec_idx]
+        rec_delta <- deltas[rec_idx]
+        rec_pass <- passes[rec_idx]
+        rec_msg <- if (rec_pass) {
+          paste0(
+            "Recommended delta = ", rec_delta, " (", map_shift_label(rec_name), ") with ",
+            round(100 * frac_outside_vec[rec_idx], 1), "% outside ",
+            band_strings$interval_label, "."
+          )
+        } else {
+          paste0(
+            "No candidate meets the reporting screen; choose delta = ", rec_delta,
+            " (", map_shift_label(rec_name), ") with the smallest share outside ",
+            band_strings$interval_label, "."
+          )
         }
-        deltas <- vapply(ipsi_names, parse_delta, numeric(1))
-        frac_below_vec <- vapply(ipsi_names, function(nm) metrics[[nm]]$frac_below, numeric(1))
-        prop_zero_vec  <- vapply(ipsi_names, function(nm) metrics[[nm]]$prop_zero_prod, numeric(1))
-        near_zero_ct   <- vapply(ipsi_names, function(nm) length(metrics[[nm]]$near_zero), integer(1))
-        passes <- is.finite(frac_below_vec) & (frac_below_vec <= thr$prod_frac_warn)
-        rec_idx <- NA_integer_
-        if (any(passes, na.rm = TRUE)) {
-          idx_pass <- which(passes)
-          rec_idx <- idx_pass[which.max(deltas[idx_pass])]
-        } else if (any(is.finite(frac_below_vec))) {
-          min_val <- min(frac_below_vec[is.finite(frac_below_vec)], na.rm = TRUE)
-          cand <- which(is.finite(frac_below_vec) & frac_below_vec == min_val)
-          rec_idx <- cand[which.min(deltas[cand])]  # conservative
+        if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info(rec_msg)
+        ipsi_lines <- character(0)
+        for (k in order(deltas)) {
+          ipsi_lines <- c(
+            ipsi_lines,
+            paste0(
+              "- ", map_shift_label(ipsi_names[k]), " (delta=", deltas[k], "): ",
+              round(100 * prop_zero_vec[k], 1), "% zero; ",
+              round(100 * frac_below_vec[k], 1), "% < ", band_strings$lower_label, "; ",
+              round(100 * frac_above_vec[k], 1), "% > ", band_strings$upper_label, "; ",
+              "support = ", support_vec[k],
+              "; near-zero flags = ", near_zero_ct[k]
+            )
+          )
         }
-        if (is.finite(rec_idx) && !is.na(rec_idx)) {
-          rec_name <- ipsi_names[rec_idx]
-          rec_delta <- deltas[rec_idx]
-          rec_pass  <- passes[rec_idx]
-          rec_msg <- if (rec_pass) {
-            paste0("Recommended δ = ", rec_delta, " (", map_label(rec_name), ") — passes guardrails (≤ ", 100*thr$prod_frac_warn, "% with product < 10^{", thr$prod_log10, "}).")
-          } else {
-            paste0("No candidate passes guardrails; choose δ = ", rec_delta, " (", map_label(rec_name), ") with least product-of-r shortfall.")
-          }
-          if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info(rec_msg)
-          ipsi_lines <- character(0)
-          for (k in order(deltas)) {
-            ipsi_lines <- c(ipsi_lines,
-              paste0("- ", map_label(ipsi_names[k]), " (δ=", deltas[k], "): ",
-                     round(100*prop_zero_vec[k],1), "% zero; ", round(100*frac_below_vec[k],1),
-                     "% uncensored < 10^{", thr$prod_log10, "}; near-zero flags = ", near_zero_ct[k]))
-          }
-          ipsi_recommend_section <- c("## IPSI Recommendation", rec_msg, "", ipsi_lines)
-        }
+        ipsi_recommend_section <- c("## IPSI Recommendation", rec_msg, "", ipsi_lines)
       }
     }
   }
@@ -1030,6 +1073,159 @@ margot_interpret_lmtp_positivity <- function(x,
   }, character(1))
   lines <- lines[nzchar(lines)]
 
+  manuscript_paragraphs <- character(0)
+  if (identical(output_style, "manuscript")) {
+    zero_vals <- support_df$prop_zero_pct
+    same_zero <- length(zero_vals) &&
+      all(is.finite(zero_vals)) &&
+      (max(zero_vals) - min(zero_vals) < 1e-8)
+
+    counts_sentence <- paste0(
+      "For ", outcome_label, ", ",
+      if (is.finite(baseline_n)) {
+        paste0("approximately ", fmt_int(baseline_n), " baseline participants")
+      } else {
+        "the selected baseline cohort"
+      },
+      if (is.finite(person_time)) {
+        paste0(" contributed ", fmt_int(person_time), " person-time rows per policy")
+      } else {
+        ""
+      },
+      "."
+    )
+
+    zero_sentence <- if (same_zero) {
+      paste0(
+        fmt_pct(zero_vals[1]),
+        " of cumulative density ratios were zero under every policy, indicating censoring burden that was shared across interventions rather than policy-specific treatment support."
+      )
+    } else {
+      paste0(
+        "The cumulative density ratio was zero for ",
+        collapse_phrases(paste0(support_df$shift_label, " (", fmt_pct(support_df$prop_zero_pct), ")")),
+        ", indicating material censoring burden."
+      )
+    }
+
+    support_bits <- vapply(seq_len(nrow(support_df)), function(i) {
+      row <- support_df[i, , drop = FALSE]
+      if (!is.finite(row$prod_frac_outside_pct)) return("")
+      if (identical(row$shift_clean, "null")) {
+        return(paste0(
+          row$shift_label,
+          " had ",
+          fmt_pct(row$prod_frac_outside_pct),
+          " outside ",
+          band_strings$interval_label
+        ))
+      }
+      descriptor <- switch(
+        row$support_status,
+        Adequate = "adequate support",
+        Caution = "some support strain",
+        Limited = "marked support strain",
+        "uncertain support"
+      )
+      driver <- ""
+      if (is.finite(row$prod_frac_below_pct) && is.finite(row$prod_frac_above_pct)) {
+        if (row$prod_frac_below_pct > row$prod_frac_above_pct + 0.1) {
+          driver <- paste0(
+            ", driven mainly by small ratios (",
+            fmt_pct(row$prod_frac_below_pct), " < ", band_strings$lower_label,
+            "; ", fmt_pct(row$prod_frac_above_pct), " > ", band_strings$upper_label, ")"
+          )
+        } else if (row$prod_frac_above_pct > row$prod_frac_below_pct + 0.1) {
+          driver <- paste0(
+            ", driven mainly by large ratios (",
+            fmt_pct(row$prod_frac_below_pct), " < ", band_strings$lower_label,
+            "; ", fmt_pct(row$prod_frac_above_pct), " > ", band_strings$upper_label, ")"
+          )
+        } else if (row$prod_frac_outside_pct > 0) {
+          driver <- paste0(
+            " (",
+            fmt_pct(row$prod_frac_below_pct), " < ", band_strings$lower_label,
+            "; ", fmt_pct(row$prod_frac_above_pct), " > ", band_strings$upper_label, ")"
+          )
+        }
+      }
+      paste0(
+        row$shift_label, " showed ", descriptor,
+        " with ", fmt_pct(row$prod_frac_outside_pct),
+        " outside ", band_strings$interval_label,
+        driver
+      )
+    }, character(1))
+    support_bits <- support_bits[nzchar(support_bits)]
+    support_sentence <- if (length(support_bits)) {
+      paste0("On uncensored rows, ", collapse_phrases(support_bits), ".")
+    } else {
+      ""
+    }
+
+    precision_bits <- vapply(seq_len(nrow(support_df)), function(i) {
+      if (!is.finite(support_df$ess_cum_raw[i])) return("")
+      paste0(fmt_int(support_df$ess_cum_raw[i]), " for ", support_df$shift_label[i])
+    }, character(1))
+    precision_bits <- precision_bits[nzchar(precision_bits)]
+    precision_sentence <- if (length(precision_bits)) {
+      paste0(
+        "Precision showed the same pattern, with final cumulative ESS of ",
+        collapse_phrases(precision_bits), "."
+      )
+    } else {
+      ""
+    }
+
+    limited_labels <- support_df$shift_label[
+      support_df$support_status == "Limited" & support_df$shift_clean != "null"
+    ]
+    caution_labels <- support_df$shift_label[
+      support_df$support_status == "Caution" & support_df$shift_clean != "null"
+    ]
+    conclusion_sentence <- if (length(limited_labels)) {
+      out <- paste0(
+        "These diagnostics suggest that estimates under ",
+        collapse_phrases(limited_labels),
+        " rely heavily on extrapolation."
+      )
+      if (length(caution_labels)) {
+        out <- paste0(
+          out, " ",
+          collapse_phrases(caution_labels),
+          if (length(caution_labels) == 1L) " may still be interpretable" else " may still be interpretable",
+          ", but with caution."
+        )
+      }
+      out
+    } else if (length(caution_labels)) {
+      paste0(
+        "These diagnostics suggest moderate support strain for ",
+        collapse_phrases(caution_labels),
+        ", so those estimates should be interpreted cautiously."
+      )
+    } else {
+      "These diagnostics do not indicate material practical positivity problems for the selected policies."
+    }
+
+    if (isTRUE(include_methods)) {
+      manuscript_paragraphs <- c(
+        manuscript_paragraphs,
+        paste0(
+          "We screened practical support on uncensored rows using the share of cumulative density ratios outside ",
+          band_strings$interval_label,
+          "; ESS was treated as a precision diagnostic rather than a positivity test, and zero cumulative ratios were interpreted primarily as censoring burden."
+        )
+      )
+    }
+    manuscript_paragraphs <- c(
+      manuscript_paragraphs,
+      paste(counts_sentence, zero_sentence, support_sentence),
+      paste(precision_sentence, conclusion_sentence)
+    )
+    manuscript_paragraphs <- manuscript_paragraphs[nzchar(manuscript_paragraphs)]
+  }
+
   # assemble final output with optional methods and diagnostics
   methods_section <- if (isTRUE(include_methods)) methods_text() else character(0)
   ipsi_section <- ipsi_context_text()
@@ -1043,7 +1239,7 @@ margot_interpret_lmtp_positivity <- function(x,
     "",
     "## Positivity/Overlap Tests",
     "",
-    "Censoring is handled via inverse probability weighting (IPCW) to target the baseline cohort. The 'zero %' below quantifies the censoring burden across person‑time; the 'uncensored < 10^k' fraction screens treatment‑positivity among observed rows."
+    "Censoring is handled via inverse probability weighting (IPCW) to target the baseline cohort. The 'zero %' below quantifies how often the cumulative density ratio collapses to zero, usually because follow-up was censored; the remaining columns screen treatment support among uncensored rows."
   ) else character(0)
   tests_expl_block <- tests_explanations_text()
   tests_block <- if (length(tests_section)) c(tests_intro, tests_expl_block, tests_section) else character(0)
@@ -1056,8 +1252,27 @@ margot_interpret_lmtp_positivity <- function(x,
     lines
   ) else character(0)
 
-  text_lines <- c(methods_section, ipsi_section, det_section, policy_section, header, ipsi_block, tests_block, overview_lines, precision_block, diagnostics_section)
-  text <- paste(text_lines, collapse = "\n")
+  if (identical(output_style, "manuscript")) {
+    text_lines <- manuscript_paragraphs
+    if (isTRUE(include_diagnostics) && length(diagnostics_section)) {
+      text_lines <- c(text_lines, paste(diagnostics_section, collapse = "\n"))
+    }
+    text <- paste(text_lines[nzchar(text_lines)], collapse = "\n\n")
+  } else {
+    text_lines <- c(
+      methods_section,
+      ipsi_section,
+      det_section,
+      policy_section,
+      header,
+      ipsi_block,
+      tests_block,
+      overview_lines,
+      precision_block,
+      diagnostics_section
+    )
+    text <- paste(text_lines, collapse = "\n")
+  }
   text <- sanitize_latex(text)
 
   if (identical(return, "text")) {
@@ -1065,12 +1280,21 @@ margot_interpret_lmtp_positivity <- function(x,
   } else {
     list(
       text = text,
-      methods = if (isTRUE(include_methods)) paste(methods_section, collapse = "\n") else NULL,
+      output_style = output_style,
+      paragraphs = manuscript_paragraphs,
+      methods = if (isTRUE(include_methods)) {
+        if (identical(output_style, "manuscript") && length(manuscript_paragraphs)) {
+          manuscript_paragraphs[[1]]
+        } else {
+          paste(methods_section, collapse = "\n")
+        }
+      } else NULL,
       header = header,
       overview = overview_lines,
       lines = lines,
       diagnostics = if (isTRUE(include_diagnostics)) paste(diagnostics_section, collapse = "\n") else NULL,
       outcome_label = outcome_label,
+      support_metrics = support_df,
       shifts = shift_results,
       baseline_n = baseline_n,
       person_time = person_time

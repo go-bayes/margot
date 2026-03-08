@@ -5,13 +5,13 @@
 \usage{
 margot_positivity_report(
   x,
-  outcome,
+  outcome = NULL,
   shifts = NULL,
   label_mapping = NULL,
   waves = NULL,
   remove_waves = NULL,
-  test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
-    near_zero_cv = 0.05),
+  test_thresholds = list(prod_log10 = -1, prod_frac_ok = 0.05, prod_frac_warn = 0.2,
+    near_zero_median = 0.001, near_zero_cv = 0.05),
   include_policy_rates = FALSE,
   effect_table = NULL,
   digits = 3,
@@ -30,8 +30,8 @@ margot_positivity_report_single_model(
   label_mapping = NULL,
   waves = NULL,
   remove_waves = NULL,
-  test_thresholds = list(prod_log10 = -1, prod_frac_warn = 0.1, near_zero_median = 0.001,
-    near_zero_cv = 0.05),
+  test_thresholds = list(prod_log10 = -1, prod_frac_ok = 0.05, prod_frac_warn = 0.2,
+    near_zero_median = 0.001, near_zero_cv = 0.05),
   include_policy_rates = FALSE,
   effect_table = NULL,
   digits = 3,
@@ -46,11 +46,11 @@ margot_positivity_report_single_model(
 \arguments{
 \item{x}{Result of `margot_lmtp()` (with `$models`) or another object accepted by the positivity helpers.}
 
-\item{outcome}{Character outcome name.}
+\item{outcome}{Outcome name. For `margot_positivity_report()`, this is optional and defaults to the first stored outcome. For `margot_positivity_report_single_model()`, supply the outcome explicitly.}
 
 \item{shift}{Optional name for a single shift/policy when working with a standalone LMTP fit. Defaults to `x$shift` when present.}
 
-\item{shifts}{Optional character vector of shifts to include (full or cleaned names). If `NULL`, all shifts are used.}
+\item{shifts}{Optional character vector of shifts to include (full or cleaned names). If `NULL`, all available shifts are used.}
 
 \item{label_mapping}{Optional label map passed to downstream helpers.}
 
@@ -58,7 +58,7 @@ margot_positivity_report_single_model(
 
 \item{remove_waves}{Optional integer vector of waves to drop after subsetting.}
 
-\item{test_thresholds}{Named list of thresholds forwarded to the summary and narrative functions.}
+\item{test_thresholds}{Named list of thresholds forwarded to the summary and narrative functions. The default support screen uses a central cumulative density-ratio band of `[0.1, 10]` and classifies support from the combined share outside that band.}
 
 \item{include_policy_rates}{Logical; whether to compute policy-rate columns and include the policy-rate narrative.}
 

@@ -18,7 +18,7 @@ margot_lmtp_overlap_plot_grid(
   annotate_graph = c("none", "waves", "shifts"),
   xlim = NULL,
   layout = c("waves_by_shifts", "shifts_by_waves"),
-  ymax_harmonize = "none",
+  ymax_harmonize = "global",
   xlim_harmonize = "none",
   headroom = 0.12,
   text_size = 3,
@@ -58,8 +58,8 @@ Default is FALSE.}
 \item{annotate_graph}{Deprecated. Shift labels are always annotated along rows and wave labels appear
 as column titles; the supplied value is ignored.}
 
-\item{ymax_harmonize}{Character or named vector; controls y-axis harmonization: `"none"` (default) gives
-each plot independent y-scale, `"row"` harmonizes within rows, `"column"` harmonizes within columns,
+\item{ymax_harmonize}{Character or named vector; controls y-axis harmonization: `"global"` (default) harmonizes
+all plots, `"row"` harmonizes within rows, `"none"` gives each plot independent y-scale, `"column"` harmonizes within columns,
 `"global"` harmonizes all plots. Can also be a named vector with custom values.}
 
 \item{xlim_harmonize}{Character or named vector; controls x-axis harmonization: `"none"` (default) gives

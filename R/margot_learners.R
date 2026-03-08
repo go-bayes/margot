@@ -138,6 +138,13 @@ summarise_lmtp_learners <- function(x,
   outcome_label <- map_label(outcome)
 
   learner_rows <- list()
+  shift_label_levels <- vapply(
+    shift_df$shift_clean,
+    margot_pretty_positivity_shift,
+    character(1),
+    label_mapping = label_mapping,
+    outcome = outcome
+  )
   for (i in seq_len(nrow(shift_df))) {
     shift_full <- shift_df$shift_full[i]
     shift_clean <- shift_df$shift_clean[i]
@@ -155,7 +162,11 @@ summarise_lmtp_learners <- function(x,
 
     combined$shift_full <- shift_full
     combined$shift_clean <- shift_clean
-    combined$shift_label <- map_label(shift_clean)
+    combined$shift_label <- margot_pretty_positivity_shift(
+      shift_name = shift_clean,
+      label_mapping = label_mapping,
+      outcome = outcome
+    )
     combined$outcome_label <- outcome_label
     learner_rows[[length(learner_rows) + 1L]] <- combined
   }
@@ -163,6 +174,7 @@ summarise_lmtp_learners <- function(x,
   if (!length(learner_rows)) return(data.frame())
   out <- do.call(rbind, learner_rows)
   rownames(out) <- NULL
+  out$shift_label <- factor(out$shift_label, levels = unique(shift_label_levels))
   out
 }
 
@@ -176,6 +188,11 @@ pretty_learner_label <- function(x) {
 component_titles <- function(component) {
   out <- ifelse(component == "outcome", "Outcome regression (m)", "Treatment regression (r)")
   factor(out, levels = c("Outcome regression (m)", "Treatment regression (r)"))
+}
+
+component_strip_titles <- function(component) {
+  out <- ifelse(component == "outcome", "Outcome regression\n(m)", "Treatment regression\n(r)")
+  factor(out, levels = c("Outcome regression\n(m)", "Treatment regression\n(r)"))
 }
 
 #' Plot Super Learner weights for LMTP nuisance fits
@@ -226,6 +243,7 @@ margot_plot_lmtp_learners <- function(x,
   data$wave_label <- factor(data$wave_label, levels = wave_levels)
 
   data$component_label <- component_titles(data$component)
+  data$component_strip_label <- component_strip_titles(data$component)
   data$text_colour <- ifelse(data$weight_mean >= 0.6, "#ffffff", "#222222")
 
   clamp01 <- function(x, range) {
@@ -240,7 +258,10 @@ margot_plot_lmtp_learners <- function(x,
 
   ggplot2::ggplot(data, ggplot2::aes(x = wave_label, y = learner_label, fill = weight_mean)) +
     ggplot2::geom_tile(color = "white") +
-    ggplot2::geom_text(ggplot2::aes(label = sprintf("%.0f%%", 100 * weight_mean), colour = text_colour), size = 3) +
+    ggplot2::geom_text(
+      ggplot2::aes(label = sprintf("%.0f%%", 100 * weight_mean), colour = text_colour),
+      size = 3.2
+    ) +
     ggplot2::scale_colour_identity() +
     ggplot2::scale_fill_gradient(
       name = "Mean weight",
@@ -249,13 +270,33 @@ margot_plot_lmtp_learners <- function(x,
       limits = c(0, 1),
       oob = clamp01
     ) +
-    ggplot2::labs(x = "Wave", y = "Learner", title = title) +
-    ggplot2::facet_grid(component_label ~ shift_label, scales = "free_y") +
-    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::labs(x = "Wave", y = NULL, title = title) +
+    ggplot2::facet_grid(component_strip_label ~ shift_label, scales = "free_y", switch = "y") +
+    ggplot2::theme_minimal(base_size = 12) +
     ggplot2::theme(
       panel.grid = ggplot2::element_blank(),
+      panel.spacing = grid::unit(0.7, "lines"),
       axis.text.x = ggplot2::element_text(angle = 0, hjust = 0.5),
-      strip.text = ggplot2::element_text(face = "bold"),
+      axis.text.y = ggplot2::element_text(size = 10),
+      strip.placement = "outside",
+      strip.clip = "off",
+      strip.background.x = ggplot2::element_rect(fill = "#eceff3", color = NA),
+      strip.background.y = ggplot2::element_rect(fill = "#6b7280", color = NA),
+      strip.text.x = ggplot2::element_text(
+        face = "bold",
+        size = 11.5,
+        colour = "#16324f",
+        margin = ggplot2::margin(t = 5, r = 6, b = 5, l = 6)
+      ),
+      strip.text.y.left = ggplot2::element_text(
+        angle = 0,
+        face = "bold",
+        size = 11.5,
+        colour = "white",
+        lineheight = 1,
+        margin = ggplot2::margin(t = 0, r = 8, b = 0, l = 8)
+      ),
+      plot.title = ggplot2::element_text(face = "bold", margin = ggplot2::margin(b = 8)),
       legend.position = "bottom"
     )
 }
@@ -365,6 +406,7 @@ margot_interpret_lmtp_learners <- function(x,
     text
   } else {
     list(
+      text = text,
       header = header,
       bullets = bullets,
       details = details,

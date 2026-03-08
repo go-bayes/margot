@@ -11,7 +11,7 @@ plots of the density-ratio distributions by wave and shift."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.303</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.310</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,8 @@ plots of the density-ratio distributions by wave and shift.</p>
 <span>  color_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wave"</span>, <span class="st">"shift"</span>, <span class="st">"constant"</span><span class="op">)</span>,</span>
 <span>  color_by_wave <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  show_reference_line <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  reference_line_value <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  bins <span class="op">=</span> <span class="fl">40</span>,</span>
 <span>  binwidth <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  xlim <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -125,6 +127,17 @@ shows log10(density ratio) for w&gt;0, or "linear" shows the raw ratio.</p></dd>
 <dd><p>Optional vector of colours (named or unnamed) used when colouring histograms.
 Character aliases include `"lab"` (blue/red/grey with a constant fallback) and
 `"classic"` (the default qualitative palette).</p></dd>
+
+
+<dt id="arg-show-reference-line">show_reference_line<a class="anchor" aria-label="anchor" href="#arg-show-reference-line"></a></dt>
+<dd><p>Logical; if TRUE (default), adds a faint dotted
+reference line at `reference_line_value`.</p></dd>
+
+
+<dt id="arg-reference-line-value">reference_line_value<a class="anchor" aria-label="anchor" href="#arg-reference-line-value"></a></dt>
+<dd><p>Numeric; density-ratio reference value shown by
+the dotted line (default `1`). On the log10 scale this is plotted at
+`log10(reference_line_value)`.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

@@ -58,6 +58,8 @@ reference:
     - margot_grf_overlap
     - margot_lmtp_overlap
     - margot_report_lmtp_positivity
+    - margot_positivity_report
+    - margot_positivity_report_single_model
     - margot_lmtp_ratio_grid
     - margot_lmtp_overlap_plot_grid
     - margot_lmtp_weight_diag_from_fit
@@ -114,6 +116,7 @@ reference:
     - margot_compute_ipsi_probability
     - margot_transition_ipsi_summary
     - margot_interpret_lmtp_learners
+    - margot_report_lmtp_learners
     - margot_interpret_stability
     - margot_interpret_stability_batch
     - margot_report_consensus_policy_value
@@ -145,11 +148,8 @@ reference:
     - margot_rate_cv
     - margot_recompute_qini_aipw
     - margot_recompute_qini_ipw
-    - margot_report_lmtp_positivity
     - margot_rescue_qini
     - margot_lmtp_resort_contrast
-    - margot_positivity_report
-    - margot_positivity_report_single_model
     - margot_policy_workflow
     - margot_subset_model
     - margot_subset_batch

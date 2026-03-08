@@ -36,6 +36,9 @@
   : Assess Overlap/Positivity from LMTP Models via Density Ratios
 - [`margot_report_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md)
   : One-stop LMTP positivity/overlap reporting for an analysis
+- [`margot_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
+  [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
+  : Assemble a full LMTP positivity report
 - [`margot_lmtp_ratio_grid()`](https://go-bayes.github.io/margot/reference/margot_lmtp_ratio_grid.md)
   : LMTP density-ratio panel (per-wave grid)
 - [`margot_lmtp_overlap_plot_grid()`](https://go-bayes.github.io/margot/reference/margot_lmtp_overlap_plot_grid.md)
@@ -149,6 +152,8 @@
   : Summarize IPSI probabilities from transition tables
 - [`margot_interpret_lmtp_learners()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_learners.md)
   : Interpret Super Learner weights for LMTP nuisance fits
+- [`margot_report_lmtp_learners()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_learners.md)
+  : Assemble LMTP learner diagnostics for reporting
 - [`margot_interpret_stability()`](https://go-bayes.github.io/margot/reference/margot_interpret_stability.md)
   : Interpret Policy Tree Stability Results
 - [`margot_interpret_stability_batch()`](https://go-bayes.github.io/margot/reference/margot_interpret_stability_batch.md)
@@ -215,18 +220,11 @@
   : Recompute QINI Curves Using AIPW Scores
 - [`margot_recompute_qini_ipw()`](https://go-bayes.github.io/margot/reference/margot_recompute_qini_ipw.md)
   : Recompute QINI Curves Using IPW Scores
-- [`margot_report_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md)
-  : One-stop LMTP positivity/overlap reporting for an analysis
 - [`margot_rescue_qini()`](https://go-bayes.github.io/margot/reference/margot_rescue_qini.md)
   : Post-process models to recover Qini curves via propensity trimming
 - [`margot_lmtp_resort_contrast()`](https://go-bayes.github.io/margot/reference/margot_lmtp_resort_contrast.md)
   [`margot_resort_contrast_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp_resort_contrast.md)
   : Resort/Reorder LMTP Contrasts by Recomputing from Models
-- [`margot_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
-  [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
-  : Assemble a full LMTP positivity report
-- [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report_single_model.md)
-  : Assemble a full LMTP positivity report for a single model
 - [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
   : End-to-end Policy Workflow (depth selection -\> report -\>
   interpretation)

@@ -13,7 +13,7 @@ and graphics.
 ``` r
 margot_interpret_lmtp_positivity(
   x,
-  outcome,
+  outcome = NULL,
   shifts = NULL,
   label_mapping = NULL,
   waves = NULL,
@@ -33,6 +33,7 @@ margot_interpret_lmtp_positivity(
   test_thresholds = NULL,
   include_ipsi_recommend = TRUE,
   include_test_explanations = FALSE,
+  output_style = c("report", "manuscript"),
   return = c("text", "list")
 )
 
@@ -49,7 +50,8 @@ margot_interpret_lmtp_overlap(...)
 
 - outcome:
 
-  Character scalar giving the outcome name to summarise.
+  Optional character scalar giving the outcome name to summarise. When
+  \`NULL\`, the first stored outcome is used.
 
 - shifts:
 
@@ -150,8 +152,9 @@ margot_interpret_lmtp_overlap(...)
 
   Named list of thresholds for \`include_tests\`. Recognised names:
   \`near_zero_median\` (default 1e-3), \`near_zero_cv\` (0.05),
-  \`prod_log10\` (-8), and \`prod_frac_warn\` (0.20). Unrecognised
-  entries are ignored.
+  \`prod_log10\` (-1, corresponding to the central band \`\[0.1,
+  10\]\`), \`prod_frac_ok\` (0.05), and \`prod_frac_warn\` (0.20).
+  Unrecognised entries are ignored.
 
 - include_ipsi_recommend:
 
@@ -165,6 +168,12 @@ margot_interpret_lmtp_overlap(...)
   Logical; if TRUE, adds a short "Test Explanations" section that
   explains near‑zero flags, the product‑of‑r summary, and how censoring
   is handled via IPCW. Default FALSE.
+
+- output_style:
+
+  Character; \`"report"\` (default) returns the existing markdown-style
+  report layout, while \`"manuscript"\` returns compact prose paragraphs
+  designed to drop more cleanly into a manuscript.
 
 - return:
 
@@ -209,6 +218,16 @@ txt_diagnostics <- margot_interpret_lmtp_positivity(
   include_diagnostics = TRUE
 )
 cat(txt_diagnostics)
+
+# Manuscript-ready paragraph
+txt_manuscript <- margot_interpret_lmtp_positivity(
+  fit,
+  outcome = "t5_pwi_z",
+  shifts = c("shift_up", "shift_down", "null"),
+  label_mapping = label_mapping,
+  output_style = "manuscript"
+)
+cat(txt_manuscript)
 
 # Complete report with methods and diagnostics
 txt_full <- margot_interpret_lmtp_positivity(
