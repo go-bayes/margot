@@ -461,20 +461,19 @@ margot_interpret_marginal <- function(
 
   # build adjustment sentences only when requested ------------------------
   if (include_adjust_note) {
+    m <- nrow(df)
+
     ci_sentence <- switch(adjust,
       none = "No adjustment was made for family‑wise error rates to confidence intervals.",
       bonferroni = paste0(
-        "Confidence intervals were adjusted for multiple comparisons using Bonferroni correction",
-        " ($\\alpha$ = ", alpha, ")."
+        "Confidence intervals and E-values were adjusted for ",
+        m, " comparisons using Bonferroni correction."
       ),
     )
 
     ev_sentence <- switch(adjust,
       none = "No adjustment was made for family‑wise error rates to E‑values.",
-      bonferroni = paste0(
-        "E‑values were also adjusted using Bonferroni correction",
-        " ($\\alpha$ = ", alpha, ")."
-      ),
+      bonferroni = NULL,
     )
     adj_note <- paste(ci_sentence, ev_sentence)
   } else {

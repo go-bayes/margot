@@ -124,14 +124,14 @@ margot_report_lmtp_positivity <- function(x,
       names_from = "Estimand",
       values_from = "ess"
     )
-    # compact ESS by wave with cleaned shift columns (e.g., Shift Up, Shift Down, Natural Course)
+    # compact ESS by wave with cleaned shift columns (e.g., Shift Up, Shift Down, Observed (Censoring-Adjusted))
     present <- unique(bw$shift_clean)
     pref_order <- c("null", "shift_up", "shift_down", "religious", "secular")
     order_clean <- c(intersect(pref_order, present), setdiff(sort(present), pref_order))
     title_map <- c(
       shift_up = "Shift Up",
       shift_down = "Shift Down",
-      null = "Natural Course",
+      null = "Observed (Censoring-Adjusted)",
       religious = "Religious",
       secular = "Secular"
     )

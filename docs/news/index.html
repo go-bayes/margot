@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.311</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.313</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,10 +33,15 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.0.311" id="id_2026-03-13-margot-10311">[2026-03-13] margot 1.0.311<a class="anchor" aria-label="anchor" href="#id_2026-03-13-margot-10311"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.0.313" id="id_2026-03-13-margot-10313">[2026-03-13] margot 1.0.313<a class="anchor" aria-label="anchor" href="#id_2026-03-13-margot-10313"></a></h2>
 <div class="section level4">
-<h4 id="changed-1-0-311">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-311"></a></h4>
-<ul><li>Positivity reporting now labels the null shift as “Natural Course” instead of “Identity” when no custom label is supplied, in both <code>margot_pretty_positivity_shift()</code> and <code><a href="../reference/margot_report_lmtp_positivity.html">margot_report_lmtp_positivity()</a></code>.</li>
+<h4 id="changed-1-0-313">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-313"></a></h4>
+<ul><li>Positivity reporting now labels the null shift as “Observed (Censoring-Adjusted)” instead of “Identity” when no custom label is supplied, in both <code>margot_pretty_positivity_shift()</code> and <code><a href="../reference/margot_report_lmtp_positivity.html">margot_report_lmtp_positivity()</a></code>.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="fixed-1-0-313">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-313"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code> Bonferroni reporting text now states the number of comparisons explicitly (e.g., “adjusted for 20 comparisons using Bonferroni correction”). Previously the text reported only “<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> = 0.05”, which could be misread as the unadjusted per-comparison threshold.</li>
 </ul></div>
 </div>
     <div class="section level2">

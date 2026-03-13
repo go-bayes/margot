@@ -1,13 +1,21 @@
 # Changelog
 
-## \[2026-03-13\] margot 1.0.311
+## \[2026-03-13\] margot 1.0.313
 
 #### Changed
 
-- Positivity reporting now labels the null shift as “Natural Course”
-  instead of “Identity” when no custom label is supplied, in both
-  `margot_pretty_positivity_shift()` and
+- Positivity reporting now labels the null shift as “Observed
+  (Censoring-Adjusted)” instead of “Identity” when no custom label is
+  supplied, in both `margot_pretty_positivity_shift()` and
   [`margot_report_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md).
+
+#### Fixed
+
+- [`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md)
+  Bonferroni reporting text now states the number of comparisons
+  explicitly (e.g., “adjusted for 20 comparisons using Bonferroni
+  correction”). Previously the text reported only “$`\alpha`$ = 0.05”,
+  which could be misread as the unadjusted per-comparison threshold.
 
 ## \[2026-03-01\] margot 1.0.303
 
