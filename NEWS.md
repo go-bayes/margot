@@ -1,3 +1,8 @@
+# [2026-03-13] margot 1.0.311
+
+### Changed
+- Positivity reporting now labels the null shift as "Natural Course" instead of "Identity" when no custom label is supplied, in both `margot_pretty_positivity_shift()` and `margot_report_lmtp_positivity()`.
+
 # [2026-03-01] margot 1.0.303
 
 ### Fixed

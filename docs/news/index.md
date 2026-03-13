@@ -1,5 +1,14 @@
 # Changelog
 
+## \[2026-03-13\] margot 1.0.311
+
+#### Changed
+
+- Positivity reporting now labels the null shift as “Natural Course”
+  instead of “Identity” when no custom label is supplied, in both
+  `margot_pretty_positivity_shift()` and
+  [`margot_report_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md).
+
 ## \[2026-03-01\] margot 1.0.303
 
 #### Fixed
@@ -1913,7 +1922,7 @@
   to store transformation metadata
 - This will eliminate the need to pass `original_df` and make
   transformations more robust
-- See PLANNING.md for detailed implementation plan
+- See `planning/PLANNING.md` for the detailed implementation plan
 
 ## \[2025-07-29\] margot 1.0.209
 

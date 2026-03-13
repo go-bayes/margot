@@ -32,5 +32,5 @@ str(cleaned_df)
 #> 'data.frame':    3 obs. of  3 variables:
 #>  $ a: 'AsIs' int  1 2 3
 #>  $ b: chr  "x" "y" "z"
-#>  $ c: 'AsIs' num  1.200965.... 1.044751.... -1.00320....
+#>  $ c: 'AsIs' num  -0.86079.... -1.13173.... -1.45921....
 ```

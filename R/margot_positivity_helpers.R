@@ -42,7 +42,7 @@ margot_pretty_positivity_shift <- function(shift_name,
     return("")
   }
   if (identical(tolower(lbl), "null")) {
-    return("Identity")
+    return("Natural Course")
   }
   if (exists("transform_label", mode = "function")) {
     out <- tryCatch(

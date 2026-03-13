@@ -36,7 +36,7 @@ data(africa) # example dataset from Amelia package
 amelia_output <- amelia(x = africa, m = 5, idvars = "country") # impute data
 #> -- Imputation 1 --
 #> 
-#>   1  2  3  4
+#>   1  2  3
 #> 
 #> -- Imputation 2 --
 #> 
