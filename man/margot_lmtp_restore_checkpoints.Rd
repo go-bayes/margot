@@ -13,8 +13,10 @@ margot_lmtp_restore_checkpoints(
 )
 }
 \arguments{
-\item{checkpoint_dir}{Path to the directory that contains the `.qs` checkpoint
-files saved by `margot_lmtp()` (e.g., `.../checkpoints/prefix_YYYYMMDD_HHMMSS`).}
+\item{checkpoint_dir}{Path to the directory that contains the checkpoint
+files saved by `margot_lmtp()` (e.g.,
+`.../checkpoints/prefix_YYYYMMDD_HHMMSS`). Current checkpoints are saved as
+`.rds` files; legacy `.qs` checkpoints are also supported.}
 
 \item{outcome_vars}{Optional character vector giving the desired ordering of
 outcomes. When omitted, the order is inferred from the checkpoints.}

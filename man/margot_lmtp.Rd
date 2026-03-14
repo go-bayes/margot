@@ -51,7 +51,9 @@ margot_lmtp(
 
 \item{cv_workers}{Number of workers consumed internally by each LMTP fit (usually the cross-validation folds). Defaults to future::nbrOfWorkers().}
 
-\item{save_output}{Logical, whether to save the complete output. Default is FALSE.}
+\item{save_output}{Logical, whether to save per-model checkpoints and the
+complete output. Saved artefacts are written as `.rds` files. Default is
+FALSE.}
 
 \item{save_path}{The directory path to save the output. Default is "push_mods" in the current working directory.}
 
@@ -74,7 +76,8 @@ A list containing:
 }
 \description{
 This function runs multiple Longitudinal Modified Treatment Policy (LMTP) models for specified outcome variables,
-calculates contrasts, creates evaluation tables, and optionally saves the complete output.
+calculates contrasts, creates evaluation tables, and optionally saves
+checkpoints and the complete output as `.rds` files.
 }
 \details{
 For very large datasets or models with many time points, parallel processing may not improve performance

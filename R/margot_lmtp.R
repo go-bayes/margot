@@ -1,7 +1,8 @@
 #' Batch Process LMTP Models
 #'
 #' This function runs multiple Longitudinal Modified Treatment Policy (LMTP) models for specified outcome variables,
-#' calculates contrasts, creates evaluation tables, and optionally saves the complete output.
+#' calculates contrasts, creates evaluation tables, and optionally saves
+#' checkpoints and the complete output as `.rds` files.
 #'
 #' @details
 #' For very large datasets or models with many time points, parallel processing may not improve performance
@@ -22,7 +23,9 @@
 #' @param n_cores Total number of CPU cores to budget for the batch run. Default is detectCores() - 1 (includes efficiency cores on Apple Silicon, so set manually if you want to cap at performance cores).
 #' @param models_in_parallel Optional cap on how many LMTP models to run at once. Defaults to floor(n_cores / cv_workers).
 #' @param cv_workers Number of workers consumed internally by each LMTP fit (usually the cross-validation folds). Defaults to future::nbrOfWorkers().
-#' @param save_output Logical, whether to save the complete output. Default is FALSE.
+#' @param save_output Logical, whether to save per-model checkpoints and the
+#'   complete output. Saved artefacts are written as `.rds` files. Default is
+#'   FALSE.
 #' @param save_path The directory path to save the output. Default is "push_mods" in the current working directory.
 #' @param base_filename The base filename for saving the output. Default is "lmtp_output".
 #' @param use_timestamp Logical, whether to include a timestamp in the filename. Default is FALSE.
@@ -443,7 +446,7 @@ margot_lmtp <- function(
 
         # checkpoint: save immediately after successful fit
         if (save_output && !is.null(checkpoint_dir)) {
-          checkpoint_file <- paste0(outcome, "_", shift_name, ".qs")
+          checkpoint_file <- paste0(outcome, "_", shift_name, ".rds")
           checkpoint_path <- file.path(checkpoint_dir, checkpoint_file)
 
           checkpoint_obj <- list(
@@ -453,7 +456,7 @@ margot_lmtp <- function(
             timestamp = Sys.time()
           )
 
-          qs::qsave(x = checkpoint_obj, file = checkpoint_path, preset = "high", nthreads = 1)
+          saveRDS(checkpoint_obj, file = checkpoint_path, compress = TRUE)
 
           result$checkpoint_path <- checkpoint_path
           cli::cli_alert_success("Saved checkpoint: {.file {checkpoint_file}}")
@@ -564,7 +567,7 @@ margot_lmtp <- function(
 
         # checkpoint: save immediately after successful fit
         if (save_output && !is.null(checkpoint_dir)) {
-          checkpoint_file <- paste0(outcome, "_", shift_name, ".qs")
+          checkpoint_file <- paste0(outcome, "_", shift_name, ".rds")
           checkpoint_path <- file.path(checkpoint_dir, checkpoint_file)
 
           checkpoint_obj <- list(
@@ -574,7 +577,7 @@ margot_lmtp <- function(
             timestamp = Sys.time()
           )
 
-          qs::qsave(x = checkpoint_obj, file = checkpoint_path, preset = "high", nthreads = 1)
+          saveRDS(checkpoint_obj, file = checkpoint_path, compress = TRUE)
 
           result$checkpoint_path <- checkpoint_path
           cli::cli_alert_success("Saved checkpoint: {.file {checkpoint_file}}")
@@ -696,14 +699,9 @@ margot_lmtp <- function(
           )
         }
 
-        margot::here_save_qs(
-          obj = complete_output,
-          name = output_filename,
-          dir_path = save_path,
-          preset = "high",
-          nthreads = 1
-        )
-        cli::cli_alert_success("Complete output saved successfully")
+        output_path <- file.path(save_path, paste0(output_filename, ".rds"))
+        saveRDS(complete_output, file = output_path, compress = TRUE)
+        cli::cli_alert_success("Complete output saved successfully: {.file {basename(output_path)}}")
       },
       error = function(e) {
         cli::cli_alert_danger(paste("Failed to save complete output:", e$message))

@@ -22,9 +22,10 @@ margot_lmtp_restore_checkpoints(
 
 - checkpoint_dir:
 
-  Path to the directory that contains the \`.qs\` checkpoint files saved
-  by \`margot_lmtp()\` (e.g.,
-  \`.../checkpoints/prefix_YYYYMMDD_HHMMSS\`).
+  Path to the directory that contains the checkpoint files saved by
+  \`margot_lmtp()\` (e.g., \`.../checkpoints/prefix_YYYYMMDD_HHMMSS\`).
+  Current checkpoints are saved as \`.rds\` files; legacy \`.qs\`
+  checkpoints are also supported.
 
 - outcome_vars:
 

@@ -6,8 +6,10 @@
 #' a successful call to `margot_lmtp()`. This is useful when a long-running
 #' batch completed all model fits but failed before combining results.
 #'
-#' @param checkpoint_dir Path to the directory that contains the `.qs` checkpoint
-#'   files saved by `margot_lmtp()` (e.g., `.../checkpoints/prefix_YYYYMMDD_HHMMSS`).
+#' @param checkpoint_dir Path to the directory that contains the checkpoint
+#'   files saved by `margot_lmtp()` (e.g.,
+#'   `.../checkpoints/prefix_YYYYMMDD_HHMMSS`). Current checkpoints are saved as
+#'   `.rds` files; legacy `.qs` checkpoints are also supported.
 #' @param outcome_vars Optional character vector giving the desired ordering of
 #'   outcomes. When omitted, the order is inferred from the checkpoints.
 #' @param contrast_type Type of contrasts to compute: `"pairwise"` or `"null"`.
@@ -51,14 +53,14 @@ margot_lmtp_restore_checkpoints <- function(
 
   checkpoint_files <- list.files(
     checkpoint_dir,
-    pattern = "\\.qs$",
+    pattern = "\\.(rds|qs)$",
     full.names = TRUE
   )
 
   if (length(checkpoint_files) == 0) {
     stop(
       sprintf(
-        "No checkpoint files (*.qs) found in directory: %s",
+        "No checkpoint files (*.rds or *.qs) found in directory: %s",
         checkpoint_dir
       ),
       call. = FALSE
@@ -79,8 +81,17 @@ margot_lmtp_restore_checkpoints <- function(
 
   for (file_path in checkpoint_files) {
     file_name <- basename(file_path)
+    file_ext <- tolower(tools::file_ext(file_name))
     checkpoint_obj <- tryCatch(
-      qs::qread(file_path, nthreads = 1),
+      {
+        if (identical(file_ext, "rds")) {
+          readRDS(file_path)
+        } else if (identical(file_ext, "qs")) {
+          qs::qread(file_path, nthreads = 1)
+        } else {
+          stop(sprintf("Unsupported checkpoint extension: %s", file_ext), call. = FALSE)
+        }
+      },
       error = function(e) {
         if (!quiet) {
           cli::cli_alert_warning(

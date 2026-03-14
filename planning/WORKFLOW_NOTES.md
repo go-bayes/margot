@@ -86,6 +86,49 @@ Centralise cross-cutting LMTP helpers rather than repeating them across files:
 The positivity helper layer added in `margot_positivity_helpers.R` is a useful
 pattern to extend.
 
+### Future LMTP optimisation target
+
+The main repeated work in multi-outcome LMTP workflows is treatment-side, not
+outcome-side. For a fixed shift policy, the exposure and censoring nuisance
+fits, fold structure, and density-ratio construction do not depend on which
+outcome is being analysed. By contrast, the outcome regression and TMLE update
+remain outcome-specific.
+
+A clean optimisation target is therefore a two-stage LMTP workflow:
+
+1. precompute and save shift-specific treatment objects
+2. reuse those fixed shift objects across multiple outcomes
+
+Concretely, stage 1 would build, for each shift:
+
+- fixed cross-fitting fold assignments
+- treatment and censoring nuisance fits
+- density ratios
+- support and censoring diagnostics
+
+Stage 2 would then, for each outcome:
+
+- fit the outcome regression using the same fold assignments
+- combine that outcome fit with the saved shift-specific treatment object
+- run the targeting and contrast steps
+
+Fixed fold assignments are the key requirement. Without them, the treatment-side
+object is not truly reusable across outcomes because each fit would be trained
+and evaluated on a different cross-fitting split. That breaks reproducibility
+and weakens the statistical coherence of the cached nuisance stage.
+
+This is not a small wrapper tweak. `lmtp` currently exposes `folds` as a count,
+but not an obvious public interface for injecting saved fold IDs or prefit
+treatment-side objects. So the two-stage idea is best treated as a medium-term
+refactor that may require either:
+
+- an upstream extension in `lmtp`, or
+- a lower-level `margot` interface that works with `lmtp` internals.
+
+Until then, the smaller practical improvement is to centralise the shared LMTP
+configuration and preserve crash-safe per-model checkpoints, while accepting the
+current repeated nuisance fitting across outcomes.
+
 ### Documentation and build hygiene
 
 - Internal planning notes belong in `planning/`

@@ -2,7 +2,8 @@
 
 This function runs multiple Longitudinal Modified Treatment Policy
 (LMTP) models for specified outcome variables, calculates contrasts,
-creates evaluation tables, and optionally saves the complete output.
+creates evaluation tables, and optionally saves checkpoints and the
+complete output as \`.rds\` files.
 
 ## Usage
 
@@ -88,7 +89,9 @@ margot_lmtp(
 
 - save_output:
 
-  Logical, whether to save the complete output. Default is FALSE.
+  Logical, whether to save per-model checkpoints and the complete
+  output. Saved artefacts are written as \`.rds\` files. Default is
+  FALSE.
 
 - save_path:
 

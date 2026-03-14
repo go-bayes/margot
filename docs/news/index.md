@@ -1,5 +1,21 @@
 # Changelog
 
+## \[2026-03-15\] margot 1.0.314
+
+#### Changed
+
+- [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md)
+  now writes per-model checkpoints and complete saved outputs as `.rds`
+  files instead of `.qs` when `save_output = TRUE`. This restores
+  crash-safe incremental saves for long LMTP runs without relying on the
+  deprecated `qs` workflow.
+
+#### Fixed
+
+- [`margot_lmtp_restore_checkpoints()`](https://go-bayes.github.io/margot/reference/margot_lmtp_restore_checkpoints.md)
+  now restores the new `.rds` checkpoints and remains backwards
+  compatible with legacy `.qs` checkpoint directories.
+
 ## \[2026-03-13\] margot 1.0.313
 
 #### Changed
