@@ -1,15 +1,15 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Serif:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 
 :root {
   --header-dark: #4c4f69;
-  --header-border: #dce0e8;
-  --text-dark: #4c4f69;
-  --text-body: #5c5f77;
-  --text-light: #6c6f85;
-  --bg-light: #eff1f5;
+  --header-border: #e4e4ec;
+  --text-dark: #1a1a2e;
+  --text-body: #2c2c3a;
+  --text-light: #6b6b80;
+  --bg-light: #ffffff;
   --bg-white: #ffffff;
-  --accent-primary: #1e66f5;
-  --accent-hover: #1a5bd6;
+  --accent-primary: #5872f5;
+  --accent-hover: #4660d9;
   --success: #40a02b;
   --warning: #fe640b;
 }
@@ -17,23 +17,23 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --header-dark: #11111b;
-    --header-border: #313244;
-    --text-dark: #cdd6f4;
-    --text-body: #bac2de;
-    --text-light: #a6adc8;
-    --bg-light: #1e1e2e;
-    --bg-white: #181825;
-    --accent-primary: #89b4fa;
-    --accent-hover: #74c7ec;
+    --header-border: #2e2e48;
+    --text-dark: #e8e8f0;
+    --text-body: #d4d4e0;
+    --text-light: #9898ac;
+    --bg-light: #1a1a2e;
+    --bg-white: #222240;
+    --accent-primary: #93bbfc;
+    --accent-hover: #aeccfd;
     --success: #a6e3a1;
     --warning: #fab387;
   }
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-weight: 400;
-  line-height: 1.5;
+  font-family: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
   background-color: var(--bg-light);
   color: var(--text-body);
 }
