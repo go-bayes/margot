@@ -1,3 +1,16 @@
+# [2026-03-17] margot 1.0.315
+
+### Added
+- `margot_plot_multi()` now provides a shared-axis wrapper for stacking comparable marginal-effect plots.
+
+### Changed
+- `margot_plot()` now honours recognised top-level controls passed through `options`, aligns coefficient labels with a monospace layout, and labels adjusted confidence intervals directly in plot captions and output tables.
+- `margot_correct_combined_table()` now carries confidence-level metadata through corrected tables so adjusted interval coverage can be reported accurately downstream.
+
+### Fixed
+- `margot_plot()` now treats `E_Val_bound >= threshold` as reliable, rather than dropping exact-threshold rows.
+- `margot_plot_create_options()` no longer silently injects Bonferroni adjustment or `alpha = 0.05`.
+
 # [2026-03-15] margot 1.0.314
 
 ### Changed

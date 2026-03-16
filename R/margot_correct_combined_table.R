@@ -95,11 +95,16 @@ margot_correct_combined_table <- function(combined_table,
   scale <- match.arg(scale)
 
   ## ---- 0 • sanity checks ----------------------------------------------------
-  if ("E[Y(1)]-E[Y(0)]" %in% names(combined_table)) {
-    est_col <- "E[Y(1)]-E[Y(0)]"
+  if (scale == "RD") {
+    rd_cols <- c("ATE", "ATT", "ATC", "ATO", "E[Y(1)]-E[Y(0)]")
+    est_col <- rd_cols[rd_cols %in% names(combined_table)][1]
   } else if ("E[Y(1)]/E[Y(0)]" %in% names(combined_table)) {
     est_col <- "E[Y(1)]/E[Y(0)]"
   } else {
+    est_col <- NULL
+  }
+
+  if (is.null(est_col) || is.na(est_col)) {
     stop("Couldn't find a point-estimate column in `combined_table`.")
   }
 
@@ -111,6 +116,7 @@ margot_correct_combined_table <- function(combined_table,
   z_orig <- stats::qnorm(0.975) # 1.96
 
   tbl <- combined_table
+  confidence_level <- rep(1 - alpha, m)
 
   # Keep original numeric columns as provided; avoid coercion to prevent
   # introducing accidental NAs in downstream interpretation/tables.
@@ -118,6 +124,7 @@ margot_correct_combined_table <- function(combined_table,
   ## ---- 1  adjust the CI ----------------------------------------------------
   if (adjust == "bonferroni") {
     z_star <- stats::qnorm(1 - alpha / (2 * m))
+    confidence_level <- rep(1 - (alpha / m), m)
 
     if (scale == "RR") {
       # Adjust on the log scale, then exponentiate back to preserve positivity
@@ -151,6 +158,7 @@ margot_correct_combined_table <- function(combined_table,
     z <- tbl[[est_col]] / se
     p <- 2 * (1 - stats::pnorm(abs(z))) # two-sided
     p_adj <- stats::p.adjust(p, method = "holm")
+    confidence_level <- 1 - p_adj
 
     z_star <- stats::qnorm(1 - p_adj / 2)
 
@@ -166,6 +174,7 @@ margot_correct_combined_table <- function(combined_table,
     z <- tbl[[est_col]] / se
     p <- 2 * (1 - stats::pnorm(abs(z))) # two-sided
     p_adj <- stats::p.adjust(p, method = "BH") # benjamini-hochberg FDR
+    confidence_level <- 1 - p_adj
 
     z_star <- stats::qnorm(1 - p_adj / 2)
 
@@ -204,8 +213,14 @@ margot_correct_combined_table <- function(combined_table,
   )
 
   ## ---- 3 bind & round -----------------------------------------------------
-  tbl |>
-    dplyr::select(-dplyr::any_of(c("E_Value", "E_Val_bound"))) |>
+  out <- tbl |>
+    dplyr::select(-dplyr::any_of(c("E_Value", "E_Val_bound", "confidence_level"))) |>
     dplyr::bind_cols(new_EV) |>
-    dplyr::mutate(across(where(is.numeric), ~ round(.x, 3)))
+    dplyr::mutate(confidence_level = confidence_level)
+
+  numeric_cols <- names(out)[vapply(out, is.numeric, logical(1))]
+  numeric_cols <- setdiff(numeric_cols, "confidence_level")
+  out[numeric_cols] <- lapply(out[numeric_cols], round, digits = 3)
+  attr(out, "confidence_level") <- confidence_level
+  out
 }

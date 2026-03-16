@@ -30,6 +30,110 @@ detect_effect_column <- function(data) {
   return(NULL)
 }
 
+#' @keywords internal
+format_margot_percent <- function(x, digits = 2) {
+  out <- sprintf(paste0("%.", digits, "f"), x * 100)
+  out <- sub("\\.?0+$", "", out)
+  paste0(out, "%")
+}
+
+#' @keywords internal
+format_margot_probability_column <- function(x, digits = 2) {
+  sub("%$", " %", format_margot_percent(x, digits = digits))
+}
+
+#' @keywords internal
+format_margot_ci_level <- function(level) {
+  if (length(level) == 0 || is.na(level[1])) {
+    return("CI")
+  }
+
+  paste0(format_margot_percent(level[1]), " CI")
+}
+
+#' @keywords internal
+margot_adjust_label <- function(adjust) {
+  switch(adjust,
+    none = NULL,
+    bonferroni = "Bonferroni",
+    holm = "Holm",
+    BH = "BH",
+    adjust
+  )
+}
+
+#' @keywords internal
+normalise_margot_confidence_levels <- function(df, default_level = 0.95) {
+  levels <- if ("confidence_level" %in% names(df)) df$confidence_level else rep(default_level, nrow(df))
+  levels <- as.numeric(levels)
+  levels[is.na(levels)] <- default_level
+  levels
+}
+
+#' @keywords internal
+margot_ci_column_names <- function(df, default_level = 0.95) {
+  levels <- normalise_margot_confidence_levels(df, default_level = default_level)
+  unique_levels <- unique(round(levels, 10))
+
+  if (length(unique_levels) == 1L) {
+    alpha_level <- 1 - unique_levels[1]
+    lower <- alpha_level / 2
+    upper <- 1 - lower
+
+    return(c(
+      format_margot_probability_column(lower),
+      format_margot_probability_column(upper)
+    ))
+  }
+
+  c("CI lower", "CI upper")
+}
+
+#' @keywords internal
+margot_ci_caption <- function(df, adjust = "none", default_level = 0.95) {
+  levels <- normalise_margot_confidence_levels(df, default_level = default_level)
+  unique_levels <- unique(round(levels, 10))
+
+  if (length(unique_levels) == 1L) {
+    if (identical(adjust, "none") && isTRUE(all.equal(unique_levels[1], default_level))) {
+      return(NULL)
+    }
+
+    prefix <- margot_adjust_label(adjust)
+    prefix <- if (is.null(prefix)) "" else paste0(prefix, "-adjusted ")
+    return(paste0(prefix, format_margot_percent(unique_levels[1]), " confidence intervals"))
+  }
+
+  prefix <- margot_adjust_label(adjust)
+  prefix <- if (is.null(prefix)) "" else paste0(prefix, "-adjusted ")
+  paste0(prefix, "confidence interval coverage varies by outcome")
+}
+
+#' @keywords internal
+format_margot_coefficient_labels <- function(x, digits = 2) {
+  base_labels <- sprintf(paste0("%.", digits, "f"), x)
+  width <- max(nchar(base_labels), na.rm = TRUE)
+  sprintf(paste0("%", width, ".", digits, "f"), x)
+}
+
+#' @keywords internal
+compute_margot_plot_limits <- function(df, effect_col, x_lim_lo = NULL, x_lim_hi = NULL, expansion = 0.1) {
+  if (!is.null(x_lim_lo) && !is.null(x_lim_hi)) {
+    return(c(x_lim_lo, x_lim_hi))
+  }
+
+  data_range <- range(c(df[[effect_col]], df$`2.5 %`, df$`97.5 %`), na.rm = TRUE)
+  x_range <- diff(data_range)
+  if (!is.finite(x_range) || x_range == 0) {
+    x_range <- max(abs(data_range), 1, na.rm = TRUE)
+  }
+
+  lo <- if (is.null(x_lim_lo)) data_range[1] - (expansion * x_range) else x_lim_lo
+  hi <- if (is.null(x_lim_hi)) data_range[2] + (expansion * x_range) else x_lim_hi
+
+  c(lo, hi)
+}
+
 #' @title Create a Margot Plot with Proper Multiplicity Correction
 #' @description
 #' Create a margot plot for visualising causal effects with proper simultaneous
@@ -55,7 +159,7 @@ margot_plot <- function(
     include_coefficients = TRUE,
     standardize_label = c("NZ", "US", "none"),
     e_val_bound_threshold = 1.2,
-    adjust = c("none", "bonferroni"),
+    adjust = c("none", "bonferroni", "holm", "BH"),
     alpha = 0.05,
     ...,
     options = list(),
@@ -74,6 +178,37 @@ margot_plot <- function(
     ),
     rename_ate = FALSE,
     rename_evalue = FALSE) {
+  matched_call <- as.list(match.call(expand.dots = FALSE))
+  control_arg_names <- c(
+    "type",
+    "order",
+    "custom_order",
+    "title_binary",
+    "include_coefficients",
+    "standardize_label",
+    "e_val_bound_threshold",
+    "adjust",
+    "alpha",
+    "label_mapping",
+    "save_output",
+    "use_timestamp",
+    "base_filename",
+    "prefix",
+    "save_path",
+    "original_df",
+    "bold_rows",
+    "rename_cols",
+    "col_renames",
+    "rename_ate",
+    "rename_evalue"
+  )
+
+  for (nm in control_arg_names) {
+    if (!(nm %in% names(matched_call)) && !is.null(options[[nm]])) {
+      assign(nm, options[[nm]], envir = environment())
+    }
+  }
+
   # match and validate args -------------------------------------------------
   type <- match.arg(type)
   order <- match.arg(order)
@@ -115,6 +250,12 @@ margot_plot <- function(
     cli::cli_alert_info("no multiplicity adjustment applied")
   }
 
+  if (!"confidence_level" %in% names(.data)) {
+    .data$confidence_level <- rep(1 - alpha, nrow(.data))
+  } else {
+    .data$confidence_level <- normalise_margot_confidence_levels(.data, default_level = 1 - alpha)
+  }
+
   # merge user options with defaults ---------------------------------------
   default_opts <- list(
     title = NULL,
@@ -140,15 +281,18 @@ margot_plot <- function(
     facet_var = NULL,
     confidence_level = 0.95,
     annotations = NULL,
+    caption = NULL,
     show_evalues = TRUE,
     evalue_digits = 2,
+    coefficient_digits = 2,
     remove_tx_prefix = TRUE,
     remove_z_suffix = TRUE,
     use_title_case = TRUE,
     remove_underscores = TRUE
   )
 
-  opts <- modifyList(modifyList(default_opts, options), list(...))
+  plot_options <- options[setdiff(names(options), control_arg_names)]
+  opts <- modifyList(modifyList(default_opts, plot_options), list(...))
 
   # coerce logical flags -----------------------------------------------------
   for (nm in c(
@@ -208,9 +352,9 @@ margot_plot <- function(
   cat_vec <- with(
     sorted_df,
     ifelse(
-      E_Val_bound > thresh & `2.5 %` > null_val & `97.5 %` > null_val, "positive",
+      E_Val_bound >= thresh & `2.5 %` > null_val & `97.5 %` > null_val, "positive",
       ifelse(
-        E_Val_bound > thresh & `2.5 %` < null_val & `97.5 %` < null_val, "negative",
+        E_Val_bound >= thresh & `2.5 %` < null_val & `97.5 %` < null_val, "negative",
         "not reliable"
       )
     )
@@ -257,7 +401,8 @@ margot_plot <- function(
       x        = xlab,
       y        = "",
       title    = opts$title,
-      subtitle = opts$subtitle
+      subtitle = opts$subtitle,
+      caption  = opts$caption %||% margot_ci_caption(sorted_df, adjust = adjust, default_level = 1 - alpha)
     ) +
     ggplot2::coord_cartesian(xlim = c(opts$x_lim_lo, opts$x_lim_hi)) +
     ggplot2::theme_classic(base_size = opts$base_size) +
@@ -278,31 +423,32 @@ margot_plot <- function(
   # add numeric labels if requested ----------------------------------------
   # coefficients aligned along inside edge of plot area
   if (include_coefficients) {
-    # get plot limits to determine positioning
-    if (is.null(opts$x_lim_lo) || is.null(opts$x_lim_hi)) {
-      # calculate default limits based on data range
-      data_range <- range(c(sorted_df[[eff_col]], sorted_df$`2.5 %`, sorted_df$`97.5 %`), na.rm = TRUE)
-      x_range <- diff(data_range)
-      x_lim_lo <- data_range[1] - 0.1 * x_range
-      x_lim_hi <- data_range[2] + 0.1 * x_range
-    } else {
-      x_lim_lo <- opts$x_lim_lo
-      x_lim_hi <- opts$x_lim_hi
-    }
-    
-    # position coefficients at fixed offset from the left edge of plot area
+    plot_limits <- compute_margot_plot_limits(
+      sorted_df,
+      effect_col = eff_col,
+      x_lim_lo = opts$x_lim_lo,
+      x_lim_hi = opts$x_lim_hi
+    )
+    x_lim_lo <- plot_limits[1]
+    x_lim_hi <- plot_limits[2]
+
     plot_width <- x_lim_hi - x_lim_lo
-    fixed_offset_pct <- 0.05  # 5% from left edge of plot area
+    fixed_offset_pct <- 0.05
     coeff_x_position <- x_lim_lo + (fixed_offset_pct * plot_width)
+    coefficient_labels <- format_margot_coefficient_labels(
+      sorted_df[[eff_col]],
+      digits = opts$coefficient_digits
+    )
     
     out_plot <- out_plot + ggplot2::geom_text(
       ggplot2::aes(
         x     = coeff_x_position,
-        label = sprintf("%.2f", !!rlang::sym(eff_col))
+        label = coefficient_labels
       ),
       size = opts$text_size,
-      hjust = 0,  # left-align text
-      fontface = "bold"
+      hjust = 0,
+      fontface = "bold",
+      family = "mono"
     )
   }
 
@@ -326,6 +472,7 @@ margot_plot <- function(
   # keep only the core columns needed for display
   keep_cols <- c(eff_col, "2.5 %", "97.5 %", "E_Value", "E_Val_bound")
   table_for_transform <- table_for_transform[, intersect(keep_cols, names(table_for_transform)), drop = FALSE]
+  table_for_transform <- as.data.frame(table_for_transform)
 
   # set rownames to outcome names (already transformed)
   rownames(table_for_transform) <- as.character(sorted_df$outcome)
@@ -390,12 +537,20 @@ margot_plot <- function(
       "E_Val_bound" # original
     }
     if (bound_nm %in% names(transformed_table)) {
-      above <- transformed_table[[bound_nm]] > e_val_bound_threshold
+      above <- transformed_table[[bound_nm]] >= e_val_bound_threshold
       if (any(above)) {
         rn <- rownames(transformed_table)
         rownames(transformed_table)[above] <- paste0("**", rn[above], "**")
       }
     }
+  }
+
+  ci_headers <- margot_ci_column_names(sorted_df, default_level = 1 - alpha)
+  if ("2.5 %" %in% names(transformed_table)) {
+    names(transformed_table)[names(transformed_table) == "2.5 %"] <- ci_headers[1]
+  }
+  if ("97.5 %" %in% names(transformed_table)) {
+    names(transformed_table)[names(transformed_table) == "97.5 %"] <- ci_headers[2]
   }
 
   # optional save -----------------------------------------------------------
@@ -450,7 +605,7 @@ margot_interpret_marginal <- function(
     ),
     original_df = NULL,
     e_val_bound_threshold = 1,
-    adjust = c("none", "bonferroni"),
+    adjust = c("none", "bonferroni", "holm", "BH"),
     alpha = 0.05,
     include_adjust_note = TRUE,
     effect_type = "ATE") {
@@ -459,21 +614,39 @@ margot_interpret_marginal <- function(
   adjust <- match.arg(adjust)
   alpha <- as.numeric(alpha)[1]
 
+  if (!"confidence_level" %in% names(df)) {
+    df$confidence_level <- rep(1 - alpha, nrow(df))
+  } else {
+    df$confidence_level <- normalise_margot_confidence_levels(df, default_level = 1 - alpha)
+  }
+
   # build adjustment sentences only when requested ------------------------
   if (include_adjust_note) {
     m <- nrow(df)
+    ci_note <- margot_ci_caption(df, adjust = adjust, default_level = 1 - alpha)
 
     ci_sentence <- switch(adjust,
-      none = "No adjustment was made for family‑wise error rates to confidence intervals.",
+      none = paste0("Confidence intervals were reported as ", format_margot_ci_level(1 - alpha), "."),
       bonferroni = paste0(
         "Confidence intervals and E-values were adjusted for ",
-        m, " comparisons using Bonferroni correction."
+        m, " comparisons using Bonferroni correction",
+        if (!is.null(ci_note)) paste0(" (", ci_note, ").") else "."
       ),
+      holm = paste0(
+        "Confidence intervals and E-values were adjusted using Holm correction",
+        if (!is.null(ci_note)) paste0(" (", ci_note, ").") else "."
+      ),
+      BH = paste0(
+        "Confidence intervals and E-values were adjusted using BH correction",
+        if (!is.null(ci_note)) paste0(" (", ci_note, ").") else "."
+      )
     )
 
     ev_sentence <- switch(adjust,
       none = "No adjustment was made for family‑wise error rates to E‑values.",
       bonferroni = NULL,
+      holm = NULL,
+      BH = NULL
     )
     adj_note <- paste(ci_sentence, ev_sentence)
   } else {
@@ -493,7 +666,7 @@ margot_interpret_marginal <- function(
 
   # filter reliable effects -----------------------------------------------
   df_f <- df %>%
-    dplyr::filter(E_Value > 1, E_Val_bound > e_val_bound_threshold)
+    dplyr::filter(E_Value >= 1, E_Val_bound >= e_val_bound_threshold)
 
   if (nrow(df_f) == 0) {
     no_effects_msg <- "No reliable effects are evident."
@@ -521,13 +694,13 @@ margot_interpret_marginal <- function(
   intro <- if (effect_type == "naive") {
     glue::glue(
       "The following outcomes show associations in {effect_desc} ",
-      "(E‑value lower bound > {e_val_bound_threshold}):\n\n",
+      "(E‑value lower bound >= {e_val_bound_threshold}):\n\n",
       "**Warning:** These are naive associations that ignore confounding and should NOT be interpreted causally.\n\n\n"
     )
   } else {
     glue::glue(
       "The following outcomes present reliable causal evidence for {effect_desc} ",
-      "(E‑value lower bound > {e_val_bound_threshold}):\n\n\n"
+      "(E‑value lower bound >= {e_val_bound_threshold}):\n\n\n"
     )
   }
 
@@ -547,6 +720,8 @@ margot_interpret_marginal <- function(
         "{format_minimal_decimals(`2.5 %`)},",
         "{format_minimal_decimals(`97.5 %`)})"
       ),
+
+      ci_label = format_margot_ci_level(confidence_level),
 
       # format original scale label with proper interpretation
       lab_orig = if (paste0(effect_col, "_original") %in% names(df)) {
@@ -595,21 +770,21 @@ margot_interpret_marginal <- function(
                 # format with confidence intervals in original units
                 glue::glue(
                   "{units_info$symbol}{format_minimal_decimals(abs(abs_change))} average {change_word} ",
-                  "(95% CI: {units_info$symbol}{format_minimal_decimals(abs(abs_change_lower))} to ",
+                  "({ci_label}: {units_info$symbol}{format_minimal_decimals(abs(abs_change_lower))} to ",
                   "{units_info$symbol}{format_minimal_decimals(abs(abs_change_upper))})"
                 )
               } else if (units_info$type == "time") {
                 # format with confidence intervals in original units
                 glue::glue(
                   "{format_minimal_decimals(abs(abs_change))} {units_info$name} average {change_word} ",
-                  "(95% CI: {format_minimal_decimals(abs(abs_change_lower))} to ",
+                  "({ci_label}: {format_minimal_decimals(abs(abs_change_lower))} to ",
                   "{format_minimal_decimals(abs(abs_change_upper))} {units_info$name})"
                 )
               } else {
                 # generic format - use standardized effect since units are unknown
                 glue::glue(
                   "{format_minimal_decimals(.data[[effect_col]])} standardized effect ",
-                  "(95% CI: {format_minimal_decimals(.data[['2.5 %']])} to ",
+                  "({ci_label}: {format_minimal_decimals(.data[['2.5 %']])} to ",
                   "{format_minimal_decimals(.data[['97.5 %']])})"
                 )
               }

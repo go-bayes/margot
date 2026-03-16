@@ -97,9 +97,7 @@ margot_plot_create_options <- function(subtitle,
       remove_underscores = TRUE,
       show_evalues = TRUE,
       evalue_digits = 2,
-      e_val_bound_threshold = 1.2,
-      adjust = "bonferroni", #<- new
-      alpha = 0.05, # <- new
+      e_val_bound_threshold = 1.2
     )
   }
 
@@ -148,6 +146,6 @@ margot_plot_create_options <- function(subtitle,
     }
   }
 
-  cli::cli_alert_success("Plot options created successfully for '{subtitle}' \U0001F44D")
+  cli::cli_alert_success("Plot options created successfully for '{subtitle}'")
   return(final_options)
 }
