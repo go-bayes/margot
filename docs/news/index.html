@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.314</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.315</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,28 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.315" id="id_2026-03-17-margot-10315">[2026-03-17] margot 1.0.315<a class="anchor" aria-label="anchor" href="#id_2026-03-17-margot-10315"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-315">Added<a class="anchor" aria-label="anchor" href="#added-1-0-315"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_plot_multi.html">margot_plot_multi()</a></code> now provides a shared-axis wrapper for stacking comparable marginal-effect plots.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-315">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-315"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code> now honours recognised top-level controls passed through <code>options</code>, aligns coefficient labels with a monospace layout, and labels adjusted confidence intervals directly in plot captions and output tables.</li>
+<li>
+<code><a href="../reference/margot_correct_combined_table.html">margot_correct_combined_table()</a></code> now carries confidence-level metadata through corrected tables so adjusted interval coverage can be reported accurately downstream.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="fixed-1-0-315">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-315"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code> now treats <code>E_Val_bound &gt;= threshold</code> as reliable, rather than dropping exact-threshold rows.</li>
+<li>
+<code><a href="../reference/margot_plot_create_options.html">margot_plot_create_options()</a></code> no longer silently injects Bonferroni adjustment or <code>alpha = 0.05</code>.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.314" id="id_2026-03-15-margot-10314">[2026-03-15] margot 1.0.314<a class="anchor" aria-label="anchor" href="#id_2026-03-15-margot-10314"></a></h2>
 <div class="section level4">

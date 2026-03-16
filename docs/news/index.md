@@ -1,5 +1,31 @@
 # Changelog
 
+## \[2026-03-17\] margot 1.0.315
+
+#### Added
+
+- [`margot_plot_multi()`](https://go-bayes.github.io/margot/reference/margot_plot_multi.md)
+  now provides a shared-axis wrapper for stacking comparable
+  marginal-effect plots.
+
+#### Changed
+
+- [`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md)
+  now honours recognised top-level controls passed through `options`,
+  aligns coefficient labels with a monospace layout, and labels adjusted
+  confidence intervals directly in plot captions and output tables.
+- [`margot_correct_combined_table()`](https://go-bayes.github.io/margot/reference/margot_correct_combined_table.md)
+  now carries confidence-level metadata through corrected tables so
+  adjusted interval coverage can be reported accurately downstream.
+
+#### Fixed
+
+- [`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md)
+  now treats `E_Val_bound >= threshold` as reliable, rather than
+  dropping exact-threshold rows.
+- [`margot_plot_create_options()`](https://go-bayes.github.io/margot/reference/margot_plot_create_options.md)
+  no longer silently injects Bonferroni adjustment or `alpha = 0.05`.
+
 ## \[2026-03-15\] margot 1.0.314
 
 #### Changed

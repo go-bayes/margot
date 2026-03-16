@@ -339,6 +339,8 @@ stable state. Expect breaking changes.
   : Plot LMTP density-ratio grid (waves x shifts)
 - [`margot_plot_lmtp_learners()`](https://go-bayes.github.io/margot/reference/margot_plot_lmtp_learners.md)
   : Plot Super Learner weights for LMTP nuisance fits
+- [`margot_plot_multi()`](https://go-bayes.github.io/margot/reference/margot_plot_multi.md)
+  : Create Multi-panel Margot Plots with Shared Axes
 - [`margot_plot_multi_arm()`](https://go-bayes.github.io/margot/reference/margot_plot_multi_arm.md)
   : Create a Multi-arm Margot Plot with User-specified Contrast
 - [`margot_plot_policy_combo()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_combo.md)

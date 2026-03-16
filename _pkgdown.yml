@@ -169,6 +169,7 @@ reference:
     - margot_plot_decision_tree
     - margot_plot_lmtp_overlap_grid
     - margot_plot_lmtp_learners
+    - margot_plot_multi
     - margot_plot_multi_arm
     - margot_plot_policy_combo
     - margot_plot_policy_tree

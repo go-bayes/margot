@@ -15,7 +15,7 @@ margot_interpret_marginal(
     "evaluebound_asc", "custom", "default"),
   original_df = NULL,
   e_val_bound_threshold = 1,
-  adjust = c("none", "bonferroni"),
+  adjust = c("none", "bonferroni", "holm", "BH"),
   alpha = 0.05,
   include_adjust_note = TRUE,
   effect_type = "ATE"

@@ -14,7 +14,7 @@ margot_plot(
   include_coefficients = TRUE,
   standardize_label = c("NZ", "US", "none"),
   e_val_bound_threshold = 1.2,
-  adjust = c("none", "bonferroni"),
+  adjust = c("none", "bonferroni", "holm", "BH"),
   alpha = 0.05,
   ...,
   options = list(),
