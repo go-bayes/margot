@@ -1,5 +1,22 @@
 # Changelog
 
+## \[2026-03-20\] margot 1.0.316
+
+#### Changed
+
+- Archived stale planning notes and vignette sources under
+  `planning/archive/`, leaving the active planning surface smaller and
+  easier to navigate.
+- Rebuilt the pkgdown reference index around workflow stages so the
+  function page now reads as a workflow guide rather than an inventory
+  of exports.
+
+#### Fixed
+
+- Removed stale generated site pages and obsolete vignette artefacts
+  from `docs/`, reducing build clutter and keeping the published site
+  aligned with the maintained package surface.
+
 ## \[2026-03-17\] margot 1.0.315
 
 #### Added
