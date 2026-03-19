@@ -52,6 +52,11 @@ processed_df <- margot_process_binary_vars(df, exceptions = "c")
 #> Loading required package: cli
 #> Loading required package: knitr
 #> 
+#> Attaching package: ‘knitr’
+#> The following object is masked from ‘package:pkgdown’:
+#> 
+#>     clean_cache
+#> 
 #> ── Processing Binary Variables ─────────────────────────────────────────────────
 #> ℹ Ignoring variables with suffix '_binary': e_binary
 #> 

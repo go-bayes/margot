@@ -70,12 +70,12 @@
 <p><code>margot</code> is currently available only on GitHub. Install it with <code>pak</code>:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"go-bayes/margot"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pak/man/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"go-bayes/margot"</span><span class="op">)</span></span></code></pre></div>
 <p>If you prefer <code>remotes</code>, use:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"go-bayes/margot"</span><span class="op">)</span></span></code></pre></div>
-<p><code>margot</code> streamlines the estimation of (Marginal) Average Treatment Effects (ATT, ATE). It also supports workflows for Heterogeneous Treatment Effects (CATE) using <code>grf</code>, and Longitudinal Modified Treatment Policies using <code>lmtp</code>. <code>margot</code> is greatly indebted to the authors of these two excellent packages. <code>margot</code> is best seen as an extensive system of graphical and reporting functions that assist with the challenging tasks of asking and answering causal questions precisely.</p>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/remotes/man/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"go-bayes/margot"</span><span class="op">)</span></span></code></pre></div>
+<p><code>margot</code> streamlines the estimation of marginal treatment effects such as the ATE and ATT. It also supports workflows for heterogeneous treatment effects using <code>grf</code>, and longitudinal modified treatment policies using <code>lmtp</code>. <code>margot</code> is greatly indebted to the authors of these two excellent packages. <code>margot</code> is best seen as a workflow package for preparing data, checking assumptions, estimating causal effects, and communicating results precisely.</p>
 <p>Note that Margot is being actively developed, and is not currently in a stable state. Expect breaking changes.</p>
 </div>
 

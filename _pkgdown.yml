@@ -38,40 +38,7 @@ development:
   version_tooltip: "Version"
 
 reference:
-  - title: "Describe Longitudinal Data"
-    contents:
-    - margot_count_dyads
-    - margot_count_ids
-    - margot_plot_boxplot
-    - margot_plot_boxplot_covariate
-    - margot_plot_discontinuity
-    - margot_plot_histogram
-    - margot_plot_response_timeline
-    - margot_plot_slope
-    - margot_plot_slope_covariate
-    - margot_plot_slope_covariate_batch
-    - margot_plot_slope_covariate_combo
-    - margot_summary_panel
-
-  - title: "Check assumptions"
-    contents:
-    - margot_grf_overlap
-    - margot_lmtp_overlap
-    - margot_report_lmtp_positivity
-    - margot_positivity_report
-    - margot_positivity_report_single_model
-    - margot_lmtp_ratio_grid
-    - margot_lmtp_overlap_plot_grid
-    - margot_lmtp_weight_diag_from_fit
-    - margot_assess_overlap
-    - margot_make_tables
-    - margot_plot_categorical
-    - margot_plot_individual_responses
-    - margot_plot_shift
-    - margot_propensity_model_and_plots
-    - margot_transition_table
-
-  - title: "Prepare data for models"
+  - title: "Prepare data"
     contents:
     - create_ordered_variable
     - impute_and_combine
@@ -87,7 +54,35 @@ reference:
     - margot_process_longitudinal_data_wider
     - margot_wide_machine
 
-  - title: "Treatment effect estimation"
+  - title: "Describe data"
+    contents:
+    - margot_count_dyads
+    - margot_count_ids
+    - margot_make_tables
+    - margot_summary_panel
+    - margot_transition_table
+    - margot_compute_ipsi_probability
+    - margot_transition_ipsi_summary
+
+  - title: "Diagnose support"
+    contents:
+    - margot_grf_overlap
+    - margot_assess_overlap
+    - margot_lmtp_overlap
+    - margot_positivity_report
+    - margot_report_lmtp_positivity
+    - margot_lmtp_ratio_grid
+    - margot_lmtp_overlap_plot_grid
+    - margot_plot_lmtp_overlap_grid
+    - margot_lmtp_weight_diag_from_fit
+    - margot_lmtp_positivity
+    - margot_interpret_lmtp_positivity
+    - margot_interpret_lmtp_positivity_overview
+    - margot_positivity_summary
+    - margot_report_lmtp_learners
+    - margot_interpret_lmtp_learners
+
+  - title: "Estimate effects"
     contents:
     - margot_causal_forest
     - margot_lmtp
@@ -96,64 +91,32 @@ reference:
     - margot_policy_tree
     - margot_policy_tree_stability
     - margot_policy_tree_bootstrap
-    - margot_assess_variable_correlation
-    - margot_identify_variable_clusters
-    - margot_stability_diagnostics
-    - margot_recalculate_policy_trees
-    - margot_recompute_ate
-    - margot_recompute_ate_batch
-
-  - title: "Interpret and Report Results"
-    contents:
-    - margot_bind_tables
-    - margot_bind_models
-    - margot_compare_groups
-    - margot_correct_combined_table
-    - margot_flip_forests
-    - margot_inspect_qini
-    - margot_interpret_lmtp_positivity
-    - margot_ipsi_summary
-    - margot_compute_ipsi_probability
-    - margot_transition_ipsi_summary
-    - margot_interpret_lmtp_learners
-    - margot_report_lmtp_learners
-    - margot_interpret_stability
-    - margot_interpret_stability_batch
-    - margot_report_consensus_policy_value
-    - margot_table_consensus_policy_value
-    - margot_table_treated_only
-    - margot_policy_summary_report
-    - margot_policy_summary_compare_depths
-    - margot_policy_methods_statement
-    - margot_interpret_bootstrap
-    - margot_interpret_lmtp_positivity_overview
-    - margot_interpret_policy_batch
-    - margot_interpret_policy_tree
-    - margot_interpret_qini
-    - margot_interpret_rate
-    - margot_interpret_rate_cv
-    - margot_interpret_heterogeneity
-    - margot_interpret_rate_comparison
-    - margot_lmtp_combine_and_contrast
-    - margot_lmtp_evalue
-    - margot_lmtp_positivity
-    - margot_model_evalue
-    - margot_multi_evalue
-    - margot_omnibus_hetero_test
-    - margot_planned_subgroups_batch
-    - margot_policy
     - margot_qini
     - margot_rate
     - margot_rate_batch
     - margot_rate_cv
+    - margot_recompute_ate
+    - margot_recompute_ate_batch
     - margot_recompute_qini_aipw
     - margot_recompute_qini_ipw
-    - margot_rescue_qini
+    - margot_lmtp_combine_and_contrast
     - margot_lmtp_resort_contrast
+
+  - title: "Interpret heterogeneity and policy"
+    contents:
+    - margot_interpret_heterogeneity
+    - margot_omnibus_hetero_test
     - margot_policy_workflow
-    - margot_subset_model
-    - margot_subset_batch
-    - margot_summary_cate_difference_gain
+    - margot_policy_summary_report
+    - margot_policy_summary_compare_depths
+    - margot_policy_methods_statement
+    - margot_interpret_policy_tree
+    - margot_interpret_policy_batch
+    - margot_interpret_stability
+    - margot_interpret_stability_batch
+    - margot_interpret_bootstrap
+    - margot_report_consensus_policy_value
+    - margot_table_consensus_policy_value
     - get_consensus_info
     - get_variable_importance
     - summary.margot_stability_policy_tree
@@ -162,17 +125,27 @@ reference:
     - print.margot_bootstrap_policy_tree
     - print.margot_correlation_assessment
 
-  - title: "Visualise Causal Effect Estimates"
+  - title: "Tables and reports"
+    contents:
+    - margot_bind_tables
+    - margot_bind_models
+    - margot_compare_groups
+    - margot_correct_combined_table
+    - margot_table_treated_only
+    - margot_lmtp_evalue
+    - margot_model_evalue
+    - margot_multi_evalue
+    - margot_interpret_qini
+    - margot_interpret_rate
+    - margot_interpret_rate_cv
+    - margot_interpret_rate_comparison
+    - margot_summary_cate_difference_gain
+
+  - title: "Plots"
     contents:
     - margot_plot
-    - margot_plot_dev
-    - margot_plot_decision_tree
-    - margot_plot_lmtp_overlap_grid
-    - margot_plot_lmtp_learners
-    - margot_plot_multi
-    - margot_plot_multi_arm
-    - margot_plot_policy_combo
     - margot_plot_policy_tree
+    - margot_plot_policy_combo
     - margot_plot_qini
     - margot_plot_qini_batch
     - margot_plot_qini_batch_cost_sensitivity
@@ -183,36 +156,80 @@ reference:
     - margot_plot_tau
     - margot_plot_cv_results
     - margot_plot_cv_summary
+    - margot_plot_lmtp_learners
+    - margot_plot_decision_tree
     - margot_view_lmtp_structure
 
-  - title: "Utility functions"
+  - title: "Exploratory plots"
     contents:
+    - margot_plot_boxplot
+    - margot_plot_boxplot_covariate
+    - margot_plot_discontinuity
+    - margot_plot_histogram
+    - margot_plot_response_timeline
+    - margot_plot_slope
+    - margot_plot_slope_covariate
+    - margot_plot_slope_covariate_batch
+    - margot_plot_slope_covariate_combo
+    - margot_plot_categorical
+    - margot_plot_individual_responses
+    - margot_plot_shift
+    - margot_plot_exposure
+    - margot_plot_qini_simple
+
+  - title: "Store and recover"
+    contents:
+    - here_read
+    - here_save
+    - here_read_arrow
+    - here_save_arrow
+    - here_read_qs
+    - here_save_qs
+    - margot_save_png
+    - clear_margot_cache
+
+  - title: "Simulation and example data"
+    contents:
+    - df_margot_example
+    - fetch_margot_data
+    - list_margot_data
+    - margot_simulate
+    - margot_simulate_test_data_flip
+    - simulate_ate_data_with_weights
+
+  - title: "Advanced and legacy helpers"
+    contents:
+    - margot_plot_dev
+    - margot_plot_multi
+    - margot_plot_multi_arm
+    - margot_policy
+    - margot_planned_subgroups_batch
+    - margot_subset_model
+    - margot_subset_batch
+    - margot_flip_forests
+    - margot_inspect_qini
+    - margot_rescue_qini
+    - margot_assess_variable_correlation
+    - margot_identify_variable_clusters
+    - margot_stability_diagnostics
+    - margot_propensity_model_and_plots
     - back_transform_logmean
     - back_transform_log_z
     - back_transform_zscore
-    - here_read
-    - here_save
-    - here_read_qs
-    - here_save_qs
     - lmtp_evalue_tab
     - margot_back_transform_log_z
     - margot_debug_qini
     - margot_get_labels
     - margot_invert_measure
-    - margot_log_transform_vars
     - margot_plot_create_options
-    - margot_plot_exposure
-    - margot_plot_qini_simple
+    - margot_prop_missing
     - margot_qini_alternative
     - margot_qini_cost_sensitivity
     - margot_qini_diagnostic
     - margot_qini_scale_note
     - margot_qini_scale_subtitle
-    - margot_process_binary_vars
-    - margot_prop_missing
-    - margot_rescue_qini
+    - margot_recalculate_policy_trees
     - margot_reversed_labels
-    - margot_save_png
     - margot_size
     - margot_trim_sample_weights
     - prepare_panel_data
@@ -221,13 +238,3 @@ reference:
     - read_multiple_images
     - regress_with_covariates
     - select_and_rename_cols
-
-  - title: "Data and Simulation"
-    contents:
-    - df_margot_example
-    - fetch_margot_data
-    - list_margot_data
-    - clear_margot_cache
-    - margot_simulate
-    - margot_simulate_test_data_flip
-    - simulate_ate_data_with_weights

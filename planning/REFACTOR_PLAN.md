@@ -2,17 +2,72 @@
 
 Companion internal notes:
 
-- `WORKFLOW_NOTES.md` for workflow learnings and implementation suggestions
+- `API_REDESIGN.md` for the current workflow-first API redesign
 - `DECISIONS.md` for conventions that new refactor work should follow
 
 ## Overview
 Refactor margot to reduce Imports from 54 to ~15 packages while maintaining all functionality for active users. This will be done gradually and safely.
+
+This refactor now sits inside a broader workflow-first redesign.
+The package remains one repo and one namespace for the `1.x` line.
+Any future `2.0.0` release should represent a working refactor prototype, not
+an aspirational branch.
 
 ## Core Principles
 1. **No breaking changes** - All current code must continue to work
 2. **Gradual implementation** - Small, tested changes
 3. **Clear error messages** - Users know exactly what to install
 4. **Lab workflow priority** - Teaching and research use cases come first
+5. **Batch first** - Batch results are the default, singleton outputs are
+   size-one batches
+6. **Compatibility tiers** - Older teaching helpers may remain exported without
+   defining the main package story
+
+## Immediate `1.x` Stabilisation Work
+
+Before deeper refactor work, stabilise the conservative `1.x` line.
+
+- [ ] Merge the conservative cleanup branch after review
+- [ ] Rebuild pkgdown and confirm active workflows still run
+- [ ] Tag the next stable `1.x` release from `main`
+- [ ] Record compatibility tiers for core, helper, legacy, and
+      soft-deprecated functions
+
+## Compatibility Tiers
+
+### Core
+
+Active workflow functions that should remain first-class in `1.x`.
+
+### Helper
+
+Useful support functions that remain available, but are not part of the main
+package story.
+
+Current examples:
+
+- `create_ordered_variable()` unless active workflows prove otherwise
+- `margot_get_labels()`
+
+### Legacy teaching
+
+Functions retained because they protect older teaching and manuscript code.
+
+Current examples:
+
+- `margot_subset_model()`
+- `margot_subset_batch()`
+
+### Soft-deprecated
+
+Functions that remain available for compatibility, but should lose prominence
+and should not attract new development.
+
+Current examples:
+
+- `impute_and_combine()`
+- `here_read_qs()`
+- `here_save_qs()`
 
 ## Implementation Strategy
 
@@ -38,7 +93,7 @@ Refactor margot to reduce Imports from 54 to ~15 packages while maintaining all 
 - [ ] Maintain a rollback branch
 
 ### Phase 5: Documentation and Vignettes (Weeks 9-10)
-- [ ] Write vignettes based on course workflows
+- [ ] Write or restore only maintained vignettes based on course workflows
 - [ ] Update all function documentation
 - [ ] Create migration guide for users
 
@@ -66,9 +121,8 @@ lubridate, here, tools, tibble
 grf, lmtp, policytree, maq, SuperLearner,
 clarify, EValue, WeightIt, MatchIt, MatchThem
 ```
-**Note**: Rather than creating a single `margot.models` meta-package, we will create
-focused packages `margot.lmtp` and `margot.grf` for our core causal inference methods.
-Traditional parametric approaches are available through LMTP for comparison purposes.
+Traditional parametric approaches are available through LMTP for comparison
+purposes.
 
 ### Visualisation Stack
 ```
@@ -90,6 +144,15 @@ fastDummies, glue, magrittr, tidyverse,
 future.apply, vctrs, furrr, labelled
 ```
 
+Near-term removal candidates include:
+
+- `ggeffects`
+- `tidyverse`
+
+Near-term internalisation targets include:
+
+- `ggokabeito`, once a stable internal `margot` palette is in place
+
 ## Helper Function Pattern
 ```r
 # R/utils-suggests.R
@@ -100,11 +163,7 @@ check_suggests <- function(pkg, fun = NULL, purpose = NULL) {
     
     cli::cli_abort(c(
       "Package {.pkg {pkg}} is required{fun_msg}{purpose_msg}.",
-      "i" = "Install it with: {.code install.packages('{pkg}')}",
-      "i" = "For causal forest methods: {.code install.packages('margot.grf')}",
-      "i" = "For LMTP methods: {.code install.packages('margot.lmtp')}",
-      "i" = "For all visualisation packages: {.code install.packages('margot.viz')}",
-      "i" = "For all reporting packages: {.code install.packages('margot.report')}"
+      "i" = "Install it with: {.code install.packages('{pkg}')}"
     ))
   }
 }
@@ -131,7 +190,8 @@ margot_causal_forest <- function(...) {
 4. Automated CI tests for both configurations
 
 ## Rollback Plan
-- Tag current version as v1.0.100-stable
+- Tag the next reviewed stable release from `main` before deeper behavioural
+  refactor work
 - Create refactor branch
 - Keep main branch unchanged until fully tested
 - Ability to revert any change within 24 hours

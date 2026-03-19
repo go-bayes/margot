@@ -114,8 +114,8 @@
 - [`prepare_panel_data()`](https://go-bayes.github.io/margot/reference/prepare_panel_data.md)
   no longer fails with recent dplyr versions when `wave_breaks` is
   supplied. Wave assignment now uses direct date comparison instead of
-  [`dplyr::expr()`](https://rlang.r-lib.org/reference/expr.html) with
-  `!!` on Date objects.
+  [`dplyr::expr()`](https://rdrr.io/pkg/rlang/man/expr.html) with `!!`
+  on Date objects.
 
 ## \[2026-02-03\] margot 1.0.298
 
@@ -230,7 +230,7 @@
     equivalents (`>=`, `<=`, `delta`, `alpha`, `mu`, `tau`) in
     user-facing messages.
   - Replaced emoji thumbs up (👍, `\U0001F44D`) with
-    [`cli::cli_alert_success()`](https://cli.r-lib.org/reference/cli_alert.html)
+    [`cli::cli_alert_success()`](https://rdrr.io/pkg/cli/man/cli_alert.html)
     messages for consistent terminal output.
   - Replaced Unicode dashes (–, —) with standard ASCII hyphens in output
     text.
@@ -762,8 +762,8 @@
 - **CRITICAL FIX**:
   [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md)
   now respects user’s external
-  [`future::plan()`](https://future.futureverse.org/reference/plan.html)
-  when `manage_future_plan = FALSE` (default), enabling parallel
+  [`future::plan()`](https://rdrr.io/pkg/future/man/plan.html) when
+  `manage_future_plan = FALSE` (default), enabling parallel
   cross-validation within each model (~5x speedup)
 - **CRITICAL FIX**: Removed `future::plan(sequential)` override that was
   disabling all parallelization when `manage_future_plan = FALSE`
@@ -823,8 +823,8 @@
   future parallelization conflicts resolved. When
   `manage_future_plan = FALSE`, explicitly sets sequential outer loop
   while preserving user’s
-  [`future::plan()`](https://future.futureverse.org/reference/plan.html)
-  for LMTP’s internal cross-validation.
+  [`future::plan()`](https://rdrr.io/pkg/future/man/plan.html) for
+  LMTP’s internal cross-validation.
 - [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md):
   null model validation crash fixed. Now checks null model exists and is
   valid before computing contrasts, preventing “attempt to select less
@@ -1972,7 +1972,8 @@
   to store transformation metadata
 - This will eliminate the need to pass `original_df` and make
   transformations more robust
-- See `planning/PLANNING.md` for the detailed implementation plan
+- See `planning/API_REDESIGN.md` and `planning/DECISIONS.md` for the
+  current implementation plan
 
 ## \[2025-07-29\] margot 1.0.209
 
@@ -2752,7 +2753,7 @@
   - Added check for package installation - parallel processing requires
     margot to be installed
   - When using
-    [`devtools::load_all()`](https://devtools.r-lib.org/reference/load_all.html),
+    [`devtools::load_all()`](https://rdrr.io/pkg/devtools/man/load_all.html),
     the function automatically falls back to sequential processing
   - Clear warning message guides users to either install the package or
     use `parallel = FALSE`
@@ -5737,7 +5738,7 @@ warnings. They will be removed in a future version of the package.
 
 - `margot_plot_decision_tree`: policy action leafs different colours
   (user may specify palette). Defaults to
-  [`ggokabeito::scale_fill_okabe_ito()`](https://malcolmbarrett.github.io/ggokabeito/reference/scale_okabe_ito.html)
+  [`ggokabeito::scale_fill_okabe_ito()`](https://rdrr.io/pkg/ggokabeito/man/scale_okabe_ito.html)
   to match
   [`margot_plot_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_tree.md)
 - `margot_policy_tree` outputs a `margot_plot_policy_combo` in addition
@@ -5993,7 +5994,7 @@ warnings. They will be removed in a future version of the package.
   as `Matrix` or `data.frame` by coercing to base matrices before
   iterating waves. This restores one panel per wave × shift.
 - Grid axis limits use
-  [`coord_cartesian()`](https://ggplot2.tidyverse.org/reference/coord_cartesian.html)
+  [`coord_cartesian()`](https://rdrr.io/pkg/ggplot2/man/coord_cartesian.html)
   to avoid dropping bars (no more “Removed rows” warnings when
   harmonising x/y ranges).
 - Shift order in grids and text respects the user-supplied `shifts`

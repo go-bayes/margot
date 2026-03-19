@@ -977,7 +977,7 @@
 ### Future Plans (Phase 2)
 - Plan to update `margot_causal_forest()`, `margot_flip_forest()`, and `margot_policy_tree_stability()` to store transformation metadata
 - This will eliminate the need to pass `original_df` and make transformations more robust
-- See `planning/PLANNING.md` for the detailed implementation plan
+- See `planning/API_REDESIGN.md` and `planning/DECISIONS.md` for the current implementation plan
 
 # [2025-07-29] margot 1.0.209
 
