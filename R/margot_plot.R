@@ -386,10 +386,11 @@ margot_plot <- function(
       colour = Estimate
     )
   ) +
-    ggplot2::geom_errorbarh(
-      height    = 0.3,
-      linewidth = opts$linewidth,
-      position  = ggplot2::position_dodge(0.3)
+    ggplot2::geom_errorbar(
+      width      = 0.3,
+      linewidth  = opts$linewidth,
+      position   = ggplot2::position_dodge(0.3),
+      orientation = "y"
     ) +
     ggplot2::geom_point(
       size      = opts$point_size,
