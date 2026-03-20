@@ -635,8 +635,10 @@ get_outcome_transformation_info <- function(model_name, original_df) {
           # the log_mean seems too low (implies mean < $400)
           # this is likely subset data - use more realistic values
           cli::cli_alert_info(
-            "Detected low values for {outcome_name} (mean ~${round(exp(result$log_mean)-1)}). " %+%
+            paste0(
+              "Detected low values for {outcome_name} (mean ~${round(exp(result$log_mean)-1)}). ",
               "Using population-based estimates for dollar calculations."
+            )
           )
           # use realistic population statistics for charity donations
           result$log_mean_display <- 6.96 # log(1048 + 1)
