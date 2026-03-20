@@ -131,3 +131,32 @@ test_that("margot_plot_multi reuses shared x-axis limits across panels", {
   expect_equal(out$panels[[1]]$plot$coordinates$limits$x, out$panels[[2]]$plot$coordinates$limits$x)
   expect_equal(out$panels[[1]]$plot$coordinates$limits$x, out$shared_x_limits)
 })
+
+test_that("margot_plot_multi respects user-supplied shared x-axis limits", {
+  out <- margot_plot_multi(
+    tables = list(
+      first = make_margot_plot_test_data(
+        estimates = c(0.2, 0.4),
+        lower = c(0.1, 0.3),
+        upper = c(0.3, 0.5),
+        bounds = c(1.4, 1.5),
+        outcomes = c("a", "b")
+      ),
+      second = make_margot_plot_test_data(
+        estimates = c(1.2, 1.6),
+        lower = c(0.8, 1.1),
+        upper = c(1.5, 2.0),
+        bounds = c(2.0, 2.1),
+        outcomes = c("a", "b")
+      )
+    ),
+    shared_x_limits = c(-1, 3),
+    panel_titles = c("First", "Second"),
+    options = list(use_title_case = FALSE),
+    include_coefficients = FALSE
+  )
+
+  expect_equal(out$shared_x_limits, c(-1, 3))
+  expect_equal(out$panels[[1]]$plot$coordinates$limits$x, c(-1, 3))
+  expect_equal(out$panels[[2]]$plot$coordinates$limits$x, c(-1, 3))
+})

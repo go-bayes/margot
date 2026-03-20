@@ -79,16 +79,16 @@ margot_plot_multi <- function(
     panel_opts
   }
 
-  initial_panels <- lapply(seq_along(tables), function(i) {
-    margot_plot(
-      .data = tables[[i]],
-      options = build_panel_options(i),
-      ...
-    )
-  })
-  names(initial_panels) <- names(tables)
-
   if (is.null(shared_x_limits)) {
+    initial_panels <- lapply(seq_along(tables), function(i) {
+      margot_plot(
+        .data = tables[[i]],
+        options = build_panel_options(i),
+        ...
+      )
+    })
+    names(initial_panels) <- names(tables)
+
     panel_limits <- lapply(initial_panels, function(panel) {
       panel_data <- panel$plot$data
       effect_info <- detect_effect_column(panel_data)
@@ -105,6 +105,10 @@ margot_plot_multi <- function(
   } else {
     if (!is.numeric(shared_x_limits) || length(shared_x_limits) != 2) {
       cli::cli_abort("`shared_x_limits` must be a numeric vector of length two.")
+    }
+
+    if (any(!is.finite(shared_x_limits))) {
+      cli::cli_abort("`shared_x_limits` must contain finite numeric values.")
     }
   }
 
