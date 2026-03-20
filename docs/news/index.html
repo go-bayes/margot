@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.316</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.317</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,21 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.317" id="id_2026-03-20-margot-10317">[2026-03-20] margot 1.0.317<a class="anchor" aria-label="anchor" href="#id_2026-03-20-margot-10317"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-317">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-317"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_plot_multi.html">margot_plot_multi()</a></code> now skips an unnecessary first rendering pass when shared x-axis limits are supplied, while validating that the supplied limits are finite.</li>
+<li>Plot-related historical smoke scripts were moved out of the active test surface into <code>tests/archive/</code>, and <code>tests/testthat/</code> now carries a focused <code><a href="../reference/margot_interpret_marginal.html">margot_interpret_marginal()</a></code> contract test for original-scale interpretation.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="fixed-1-0-317">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-317"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code> now uses the current ggplot2 horizontal error-bar path, removing the deprecation warnings from the stable plotting tests.</li>
+<li>Removed a deprecated string concatenation path in helper code that surfaced during the new interpretation test.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.316" id="id_2026-03-20-margot-10316">[2026-03-20] margot 1.0.316<a class="anchor" aria-label="anchor" href="#id_2026-03-20-margot-10316"></a></h2>
 <div class="section level4">

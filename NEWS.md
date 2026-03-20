@@ -1,3 +1,13 @@
+# [2026-03-20] margot 1.0.317
+
+### Changed
+- `margot_plot_multi()` now skips an unnecessary first rendering pass when shared x-axis limits are supplied, while validating that the supplied limits are finite.
+- Plot-related historical smoke scripts were moved out of the active test surface into `tests/archive/`, and `tests/testthat/` now carries a focused `margot_interpret_marginal()` contract test for original-scale interpretation.
+
+### Fixed
+- `margot_plot()` now uses the current ggplot2 horizontal error-bar path, removing the deprecation warnings from the stable plotting tests.
+- Removed a deprecated string concatenation path in helper code that surfaced during the new interpretation test.
+
 # [2026-03-20] margot 1.0.316
 
 ### Changed
