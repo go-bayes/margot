@@ -9,7 +9,7 @@ home:
 
 navbar:
   structure:
-    left: [intro, reference, news]
+    left: [intro, reference, articles, news]
     right: [search, github]
 
 template:
@@ -28,6 +28,12 @@ template:
     light: "#f8f9fa"
     dark: "#11111b"
 
+
+articles:
+  - title: "Storage and migration"
+    navbar: ~
+    contents:
+    - migrating-qs-to-qs2
 
 authors:
   Joseph A Bulbulia:
