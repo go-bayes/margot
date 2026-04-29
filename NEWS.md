@@ -1,3 +1,16 @@
+# [2026-04-29] margot 1.0.318
+
+### Changed
+- `here_save_qs()` and `here_read_qs()` now use the **`qs2`** package internally. New saves write `.qs2` files at default `compress_level = 4`. `here_read_qs()` looks for `<name>.qs2` first and falls back to `<name>.qs` (legacy) when present and the optional `qs` package is installed; otherwise it errors with the exact migration command to run. The `preset` argument is soft-deprecated.
+- `here_save_arrow()` and `here_read_arrow()` now round-trip arbitrary R objects, not just data frames. Tabular inputs are written as native parquet; everything else (lists, fitted models, ggplots, lmtp/grf result objects) is wrapped in a single-row "margot envelope" parquet via `qs2::qs_serialize()` and transparently restored on read. Existing parquet files written by earlier margot versions still read identically.
+- `qs` is demoted from `Imports` to `Suggests`. Fresh installs of margot no longer require `qs`, which is important on R 4.6+ where `qs` cannot be built (CRAN-archived; uses removed R-internals symbols). `qs2` is added as a hard `Imports`.
+
+### Added
+- **`margot_convert_qs_dir()`** — recursively walks a directory and converts every `.qs` file to a `.qs2` sibling, with a built-in `identical()` read-verify before any optional original-deletion. Designed to be run once on a machine that still has `qs` installed.
+- **`margot_convert_qs_dir_docker()`** — the user-facing migration entry point for anyone on R 4.6+ who cannot build `qs` locally. Runs the same conversion inside a `rocker/r-ver:4.5` Docker container, using a pinned 2024-12-01 Posit Package Manager snapshot so `qs` 0.27.3 builds reproducibly against the contemporaneous `stringfish`/`BH`. One R call from the host; verified end-to-end on a 258 MB margot causal-forest output.
+- New tests: `tests/testthat/test-here-qs.R`, `test-here-arrow.R` (extended), `test-margot-convert-qs-dir.R`, `test-margot-convert-qs-dir-docker.R` (full integration test gated by `MARGOT_TEST_DOCKER=1`).
+- New article: `vignettes/migrating-qs-to-qs2.Rmd`, walking users through the migration from R 4.5 + `qs` to R 4.6+ + `qs2`.
+
 # [2026-03-20] margot 1.0.317
 
 ### Changed

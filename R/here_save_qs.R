@@ -1,39 +1,54 @@
-#' Save Data Frame or Object to qs File in a Specified Directory with Enhanced Compression
+#' Save Object to qs2 File in a Specified Directory
 #'
-#' Saves the provided data frame or object as a `.qs` file using the specified name, within a directory defined by `dir_path`.
-#' This function leverages the `qs` package to write data to `.qs` format with enhanced compression for efficient storage and quick access in R. The `.qs` format is retained for compatibility; for new workflows, prefer `here_save_arrow()`.
+#' Saves the provided object as a `.qs2` file using the specified `name`, within a
+#' directory defined by `dir_path`. Internally uses the `qs2` package, which
+#' supersedes the original `qs` package. Existing `.qs` files written by earlier
+#' versions of this function remain readable via `here_read_qs()`.
 #'
-#' @param obj Data frame or object to be saved. This is the object you want to persist to disk in `.qs` format.
-#' @param name Character string specifying the base name of the file (without the ".qs" extension).
-#' @param dir_path Character string specifying the directory path where the file will be saved.
-#' @param preset Character string specifying the compression preset. Default is "high" for better compression.
-#' @param nthreads Integer specifying the number of threads to use for compression. Default is 1.
-#' @param quiet Logical. If TRUE, suppresses console output. Default is FALSE.
+#' @param obj Object to be saved.
+#' @param name Character string specifying the base name of the file (no extension).
+#' @param dir_path Character string specifying the directory path.
+#' @param compress_level Integer between 1 and 22 controlling zstd compression.
+#'   Defaults to `4` (the `qs2` default). Higher values compress more but more slowly.
+#' @param nthreads Integer; number of threads for compression. Default `1`.
+#' @param preset Deprecated. Was used by the old `qs` backend; now ignored.
+#' @param quiet Logical. If TRUE, suppresses console output. Default FALSE.
 #'
 #' @details
-#' The `dir_path` argument must point to an existing directory. The function does not create directories; it assumes that the specified directory already exists.
-#' The function uses enhanced compression settings by default to minimize file size.
+#' `dir_path` must point to an existing directory. The function does not create
+#' directories.
 #'
-#' @return Invisible NULL. The primary effect of this function is the side effect of writing a `.qs` file to disk.
+#' @return Invisible NULL.
 #'
 #' @examples
-#' my_df <- data.frame(x = 1:5, y = letters[1:5])
-#' here_save_qs(my_df, "my_saved_dataframe", "~/mydata")
+#' \dontrun{
+#'   my_df <- data.frame(x = 1:5, y = letters[1:5])
+#'   here_save_qs(my_df, "my_saved_dataframe", "~/mydata")
+#' }
 #'
 #' @export
-#' @importFrom qs qsave
 #' @importFrom here here
-here_save_qs <- function(obj, name, dir_path, preset = "high", nthreads = 1, quiet = FALSE) {
-  file_path <- here::here(dir_path, paste0(name, ".qs"))
-  qs::qsave(obj, file_path, preset = preset, nthreads = nthreads)
+here_save_qs <- function(obj, name, dir_path,
+                         compress_level = 4, nthreads = 1,
+                         preset = lifecycle::deprecated(),
+                         quiet = FALSE) {
+  if (lifecycle::is_present(preset)) {
+    lifecycle::deprecate_soft(
+      when = "1.0.318",
+      what = "here_save_qs(preset)",
+      with = "here_save_qs(compress_level)"
+    )
+  }
+
+  if (!requireNamespace("qs2", quietly = TRUE)) {
+    stop("Package 'qs2' is required. Install with install.packages('qs2').")
+  }
+
+  file_path <- here::here(dir_path, paste0(name, ".qs2"))
+  qs2::qs_save(obj, file_path, compress_level = compress_level, nthreads = nthreads)
 
   if (!quiet) {
-    cli::cli_alert_warning("The .qs format is retained for compatibility. For new workflows, prefer here_save_arrow().")
-
-    # Get file size
     file_size <- margot_size(obj)
-
-    # Print CLI message
     cat(sprintf("Object saved to: %s\n", file_path))
     cat(sprintf("Object size: %s\n", file_size))
     cli::cli_alert_success("Save operation completed successfully")
