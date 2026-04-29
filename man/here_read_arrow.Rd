@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{here_read_arrow}
 \alias{here_read_arrow}
-\title{Read Data Frame from Parquet File in a Specified Directory}
+\title{Read Object from Parquet File in a Specified Directory}
 \usage{
 here_read_arrow(name, dir_path = NULL, quiet = FALSE, ...)
 }
@@ -17,8 +17,9 @@ here_read_arrow(name, dir_path = NULL, quiet = FALSE, ...)
 }
 \description{
 Reads a `.parquet` file specified by `name` from a directory defined by
-`dir_path`, returning the data frame or object stored within. This function uses
-`arrow::read_parquet()` and `here::here()` to construct portable file paths.
+`dir_path`. If the file is a tabular parquet, returns a data frame; if it is a
+margot envelope (single-row parquet wrapping a serialised R object), returns
+the original object.
 }
 \examples{
 \dontrun{

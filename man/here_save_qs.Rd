@@ -2,36 +2,51 @@
 % Please edit documentation in R/here_save_qs.R
 \name{here_save_qs}
 \alias{here_save_qs}
-\title{Save Data Frame or Object to qs File in a Specified Directory with Enhanced Compression}
+\title{Save Object to qs2 File in a Specified Directory}
 \usage{
-here_save_qs(obj, name, dir_path, preset = "high", nthreads = 1, quiet = FALSE)
+here_save_qs(
+  obj,
+  name,
+  dir_path,
+  compress_level = 4,
+  nthreads = 1,
+  preset = lifecycle::deprecated(),
+  quiet = FALSE
+)
 }
 \arguments{
-\item{obj}{Data frame or object to be saved. This is the object you want to persist to disk in `.qs` format.}
+\item{obj}{Object to be saved.}
 
-\item{name}{Character string specifying the base name of the file (without the ".qs" extension).}
+\item{name}{Character string specifying the base name of the file (no extension).}
 
-\item{dir_path}{Character string specifying the directory path where the file will be saved.}
+\item{dir_path}{Character string specifying the directory path.}
 
-\item{preset}{Character string specifying the compression preset. Default is "high" for better compression.}
+\item{compress_level}{Integer between 1 and 22 controlling zstd compression.
+Defaults to `4` (the `qs2` default). Higher values compress more but more slowly.}
 
-\item{nthreads}{Integer specifying the number of threads to use for compression. Default is 1.}
+\item{nthreads}{Integer; number of threads for compression. Default `1`.}
 
-\item{quiet}{Logical. If TRUE, suppresses console output. Default is FALSE.}
+\item{preset}{Deprecated. Was used by the old `qs` backend; now ignored.}
+
+\item{quiet}{Logical. If TRUE, suppresses console output. Default FALSE.}
 }
 \value{
-Invisible NULL. The primary effect of this function is the side effect of writing a `.qs` file to disk.
+Invisible NULL.
 }
 \description{
-Saves the provided data frame or object as a `.qs` file using the specified name, within a directory defined by `dir_path`.
-This function leverages the `qs` package to write data to `.qs` format with enhanced compression for efficient storage and quick access in R. The `.qs` format is retained for compatibility; for new workflows, prefer `here_save_arrow()`.
+Saves the provided object as a `.qs2` file using the specified `name`, within a
+directory defined by `dir_path`. Internally uses the `qs2` package, which
+supersedes the original `qs` package. Existing `.qs` files written by earlier
+versions of this function remain readable via `here_read_qs()`.
 }
 \details{
-The `dir_path` argument must point to an existing directory. The function does not create directories; it assumes that the specified directory already exists.
-The function uses enhanced compression settings by default to minimize file size.
+`dir_path` must point to an existing directory. The function does not create
+directories.
 }
 \examples{
-my_df <- data.frame(x = 1:5, y = letters[1:5])
-here_save_qs(my_df, "my_saved_dataframe", "~/mydata")
+\dontrun{
+  my_df <- data.frame(x = 1:5, y = letters[1:5])
+  here_save_qs(my_df, "my_saved_dataframe", "~/mydata")
+}
 
 }

@@ -1,14 +1,16 @@
-# Save Data Frame to Parquet File in a Specified Directory
+# Save Object to Parquet File in a Specified Directory
 
-Saves the provided data frame or object as a \`.parquet\` file using the
-specified name, within a directory defined by \`dir_path\`. This
-function uses \`arrow::write_parquet()\`.
+Saves the provided object as a \`.parquet\` file under \`name\`, in
+\`dir_path\`. Data frames (and arrow tables) are written natively. Other
+R objects (lists, fitted models, ggplots, ...) are serialised with
+\`qs2::qs_serialize()\` and embedded in a single-row parquet envelope so
+the round-trip is lossless via \`here_read_arrow()\`.
 
 ## Usage
 
 ``` r
 here_save_arrow(
-  df,
+  obj,
   name,
   dir_path = NULL,
   compression = "zstd",
@@ -20,9 +22,9 @@ here_save_arrow(
 
 ## Arguments
 
-- df:
+- obj:
 
-  Data frame to be saved.
+  Object to be saved.
 
 - name:
 
@@ -55,5 +57,8 @@ here_save_arrow(
 if (FALSE) { # \dontrun{
 my_df <- data.frame(x = 1:5, y = letters[1:5])
 here_save_arrow(my_df, "my_saved_dataframe")
+
+fit <- lm(mpg ~ wt, data = mtcars)
+here_save_arrow(fit, "fit_arrow")  # wrapped via qs2 envelope
 } # }
 ```

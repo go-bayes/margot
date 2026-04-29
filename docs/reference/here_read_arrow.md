@@ -1,9 +1,9 @@
-# Read Data Frame from Parquet File in a Specified Directory
+# Read Object from Parquet File in a Specified Directory
 
 Reads a \`.parquet\` file specified by \`name\` from a directory defined
-by \`dir_path\`, returning the data frame or object stored within. This
-function uses \`arrow::read_parquet()\` and \`here::here()\` to
-construct portable file paths.
+by \`dir_path\`. If the file is a tabular parquet, returns a data frame;
+if it is a margot envelope (single-row parquet wrapping a serialised R
+object), returns the original object.
 
 ## Usage
 

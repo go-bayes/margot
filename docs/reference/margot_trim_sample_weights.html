@@ -11,7 +11,7 @@ and/or above a specified upper‐quantile threshold, then standardises the
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.317</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.318</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,7 @@ of implausibly small or large weights, trading a bit of bias for lower variance.
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">w</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="fl">90</span>, <span class="fl">0</span>, <span class="fl">0.5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">5</span>, <span class="fl">20</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">0</span>, <span class="fl">0.01</span><span class="op">)</span>, <span class="cn">NA</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">w</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.      NA's </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.       NAs </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  0.001333  0.718449  1.071490  1.756801  1.440705 18.770846         1 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># trim both lower 1% and upper 99%, then standardise</span></span></span>
@@ -100,27 +100,27 @@ of implausibly small or large weights, trading a bit of bias for lower variance.
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Raised 1 weight(s) below the 1.0% quantile (threshold = 0.00286206).</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Lowered 1 weight(s) above the 99.0% quantile (threshold = 17.9478).</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">w_both</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.      NA's </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.       NAs </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  0.001637  0.410874  0.612776  1.000000  0.823926 10.264162         1 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># only upper trim at 95th percentile</span></span></span>
 <span class="r-in"><span><span class="va">w_up95</span> <span class="op">&lt;-</span> <span class="fu">margot_trim_sample_weights</span><span class="op">(</span><span class="va">w</span>, lower_quantile <span class="op">=</span> <span class="cn">NULL</span>, upper_quantile <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Lowered 5 weight(s) above the 95.0% quantile (threshold = 3.42476).</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">w_up95</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.     NA's </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.      NAs </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 0.001099 0.592212 0.883222 1.000000 1.187563 2.823008        1 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># only lower trim at 5th percentile</span></span></span>
 <span class="r-in"><span><span class="va">w_low5</span> <span class="op">&lt;-</span> <span class="fu">margot_trim_sample_weights</span><span class="op">(</span><span class="va">w</span>, lower_quantile <span class="op">=</span> <span class="fl">0.05</span>, upper_quantile <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Raised 5 weight(s) below the 5.0% quantile (threshold = 0.213166).</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">w_low5</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.     NAs </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  0.1206  0.4066  0.6063  1.0000  0.8153 10.6220       1 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># no trimming (both NULL), only standardise</span></span></span>
 <span class="r-in"><span><span class="va">w_std</span> <span class="op">&lt;-</span> <span class="fu">margot_trim_sample_weights</span><span class="op">(</span><span class="va">w</span>, lower_quantile <span class="op">=</span> <span class="cn">NULL</span>, upper_quantile <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">w_std</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.      NA's </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.       NAs </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 7.589e-04 4.090e-01 6.099e-01 1.000e+00 8.201e-01 1.068e+01         1 </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

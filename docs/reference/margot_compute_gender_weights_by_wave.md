@@ -94,7 +94,7 @@ weights <- margot_compute_gender_weights_by_wave(dat,
   target_male_prop = 0.52
 )
 head(weights)
-#> [1] 2.0000000 2.0000000 0.6486486 0.6486486 2.0000000 0.6486486
+#> [1] 0.6666667 1.8571429 0.6666667 0.6666667 0.6666667 0.6666667
 
 dat <- data.frame(
   id = 1:100,
@@ -108,5 +108,5 @@ weights <- margot_compute_gender_weights_by_wave(dat,
   target_male_prop = 0.52
 )
 head(weights)
-#> [1] 0.6486486 0.6486486 0.6486486 0.6486486 0.6486486 2.0000000
+#> [1] 1.3684211 1.3684211 0.7741935 0.7741935 0.7741935 0.7741935
 ```

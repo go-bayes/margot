@@ -2,36 +2,33 @@
 % Please edit documentation in R/here_read_qs.R
 \name{here_read_qs}
 \alias{here_read_qs}
-\title{Read Data Frame or Object from qs File in a Specified Directory}
+\title{Read Object from qs2 (or legacy qs) File in a Specified Directory}
 \usage{
 here_read_qs(name, dir_path = NULL, nthreads = 1, quiet = FALSE)
 }
 \arguments{
-\item{name}{Character string specifying the name of the `.qs` file to be read (without the ".qs" extension).}
+\item{name}{Character string; base file name (no extension).}
 
-\item{dir_path}{Character string specifying the directory path from which the file will be read. If NULL (default), uses `push_mods`.}
+\item{dir_path}{Character string; directory to read from. If NULL (default), uses `push_mods`.}
 
-\item{nthreads}{Integer specifying the number of threads to use for decompression. Default is 1.}
+\item{nthreads}{Integer; threads for decompression. Default `1`.}
 
-\item{quiet}{Logical. If TRUE, suppresses console output. Default is FALSE.}
+\item{quiet}{Logical. If TRUE, suppresses console output. Default FALSE.}
 }
 \value{
-A data frame or object representing the data stored in the specified `.qs` file.
+The object stored in the file.
 }
 \description{
-Reads a `.qs` file specified by `name` from a directory defined by `dir_path`, returning the data frame or object stored within.
-This function uses the `qs` package to efficiently read `.qs` files and the `here` package to construct the file path in a consistent, platform-independent manner. The `.qs` format is retained for compatibility; for new workflows, prefer `here_read_arrow()`.
-}
-\details{
-If `dir_path` is NULL, the `push_mods` variable must be defined in the user's environment or within the package, pointing to the directory from where files are to be read.
-This function will throw an error if the specified file does not exist or cannot be read as a `.qs` file.
+Reads a serialised R object stored under `name` in `dir_path`. The function
+looks for `<name>.qs2` first; if absent, it falls back to `<name>.qs`
+(legacy format). Reading legacy `.qs` files requires the `qs` package to be
+installed; if it is not, the function points at `margot_convert_qs_dir()` or
+`install.packages("qs")`.
 }
 \examples{
-# Assuming `push_mods` is set in your environment to "~/mydata"
-# and you have previously saved a `.qs` file named "my_dataset.qs" in that directory
-my_df <- here_read_qs("my_dataset")
-
-# Reading from a custom directory with multiple threads
-my_df <- here_read_qs("my_dataset", dir_path = "~/custom_dir", nthreads = 4)
+\dontrun{
+  my_df <- here_read_qs("my_dataset")
+  my_df <- here_read_qs("my_dataset", dir_path = "~/custom_dir")
+}
 
 }

@@ -1,5 +1,56 @@
 # Changelog
 
+## \[2026-04-29\] margot 1.0.318
+
+#### Changed
+
+- [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
+  and
+  [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
+  now use the **`qs2`** package internally. New saves write `.qs2` files
+  at default `compress_level = 4`.
+  [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
+  looks for `<name>.qs2` first and falls back to `<name>.qs` (legacy)
+  when present and the optional `qs` package is installed; otherwise it
+  errors with the exact migration command to run. The `preset` argument
+  is soft-deprecated.
+- [`here_save_arrow()`](https://go-bayes.github.io/margot/reference/here_save_arrow.md)
+  and
+  [`here_read_arrow()`](https://go-bayes.github.io/margot/reference/here_read_arrow.md)
+  now round-trip arbitrary R objects, not just data frames. Tabular
+  inputs are written as native parquet; everything else (lists, fitted
+  models, ggplots, lmtp/grf result objects) is wrapped in a single-row
+  “margot envelope” parquet via
+  [`qs2::qs_serialize()`](https://rdrr.io/pkg/qs2/man/qs_serialize.html)
+  and transparently restored on read. Existing parquet files written by
+  earlier margot versions still read identically.
+- `qs` is demoted from `Imports` to `Suggests`. Fresh installs of margot
+  no longer require `qs`, which is important on R 4.6+ where `qs` cannot
+  be built (CRAN-archived; uses removed R-internals symbols). `qs2` is
+  added as a hard `Imports`.
+
+#### Added
+
+- **[`margot_convert_qs_dir()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.md)**
+  — recursively walks a directory and converts every `.qs` file to a
+  `.qs2` sibling, with a built-in
+  [`identical()`](https://rdrr.io/r/base/identical.html) read-verify
+  before any optional original-deletion. Designed to be run once on a
+  machine that still has `qs` installed.
+- **[`margot_convert_qs_dir_docker()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.md)**
+  — the user-facing migration entry point for anyone on R 4.6+ who
+  cannot build `qs` locally. Runs the same conversion inside a
+  `rocker/r-ver:4.5` Docker container, using a pinned 2024-12-01 Posit
+  Package Manager snapshot so `qs` 0.27.3 builds reproducibly against
+  the contemporaneous `stringfish`/`BH`. One R call from the host;
+  verified end-to-end on a 258 MB margot causal-forest output.
+- New tests: `tests/testthat/test-here-qs.R`, `test-here-arrow.R`
+  (extended), `test-margot-convert-qs-dir.R`,
+  `test-margot-convert-qs-dir-docker.R` (full integration test gated by
+  `MARGOT_TEST_DOCKER=1`).
+- New article: `vignettes/migrating-qs-to-qs2.Rmd`, walking users
+  through the migration from R 4.5 + `qs` to R 4.6+ + `qs2`.
+
 ## \[2026-03-20\] margot 1.0.317
 
 #### Changed
@@ -153,8 +204,8 @@
 - [`prepare_panel_data()`](https://go-bayes.github.io/margot/reference/prepare_panel_data.md)
   no longer fails with recent dplyr versions when `wave_breaks` is
   supplied. Wave assignment now uses direct date comparison instead of
-  [`dplyr::expr()`](https://rdrr.io/pkg/rlang/man/expr.html) with `!!`
-  on Date objects.
+  [`dplyr::expr()`](https://rlang.r-lib.org/reference/expr.html) with
+  `!!` on Date objects.
 
 ## \[2026-02-03\] margot 1.0.298
 
@@ -269,7 +320,7 @@
     equivalents (`>=`, `<=`, `delta`, `alpha`, `mu`, `tau`) in
     user-facing messages.
   - Replaced emoji thumbs up (👍, `\U0001F44D`) with
-    [`cli::cli_alert_success()`](https://rdrr.io/pkg/cli/man/cli_alert.html)
+    [`cli::cli_alert_success()`](https://cli.r-lib.org/reference/cli_alert.html)
     messages for consistent terminal output.
   - Replaced Unicode dashes (–, —) with standard ASCII hyphens in output
     text.
@@ -801,8 +852,8 @@
 - **CRITICAL FIX**:
   [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md)
   now respects user’s external
-  [`future::plan()`](https://rdrr.io/pkg/future/man/plan.html) when
-  `manage_future_plan = FALSE` (default), enabling parallel
+  [`future::plan()`](https://future.futureverse.org/reference/plan.html)
+  when `manage_future_plan = FALSE` (default), enabling parallel
   cross-validation within each model (~5x speedup)
 - **CRITICAL FIX**: Removed `future::plan(sequential)` override that was
   disabling all parallelization when `manage_future_plan = FALSE`
@@ -862,8 +913,8 @@
   future parallelization conflicts resolved. When
   `manage_future_plan = FALSE`, explicitly sets sequential outer loop
   while preserving user’s
-  [`future::plan()`](https://rdrr.io/pkg/future/man/plan.html) for
-  LMTP’s internal cross-validation.
+  [`future::plan()`](https://future.futureverse.org/reference/plan.html)
+  for LMTP’s internal cross-validation.
 - [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md):
   null model validation crash fixed. Now checks null model exists and is
   valid before computing contrasts, preventing “attempt to select less
@@ -874,10 +925,8 @@
 #### Improved
 
 - [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md):
-  checkpoint saves use
-  [`qs::qsave()`](https://rdrr.io/pkg/qs/man/qsave.html) with high
-  compression and single thread for compatibility with future
-  parallelization.
+  checkpoint saves use `qs::qsave()` with high compression and single
+  thread for compatibility with future parallelization.
 - [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md):
   CLI messages show checkpoint directory path and individual file saves.
 - [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md):
@@ -2792,7 +2841,7 @@
   - Added check for package installation - parallel processing requires
     margot to be installed
   - When using
-    [`devtools::load_all()`](https://rdrr.io/pkg/devtools/man/load_all.html),
+    [`devtools::load_all()`](https://devtools.r-lib.org/reference/load_all.html),
     the function automatically falls back to sequential processing
   - Clear warning message guides users to either install the package or
     use `parallel = FALSE`
@@ -5777,7 +5826,7 @@ warnings. They will be removed in a future version of the package.
 
 - `margot_plot_decision_tree`: policy action leafs different colours
   (user may specify palette). Defaults to
-  [`ggokabeito::scale_fill_okabe_ito()`](https://rdrr.io/pkg/ggokabeito/man/scale_okabe_ito.html)
+  [`ggokabeito::scale_fill_okabe_ito()`](https://malcolmbarrett.github.io/ggokabeito/reference/scale_okabe_ito.html)
   to match
   [`margot_plot_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_tree.md)
 - `margot_policy_tree` outputs a `margot_plot_policy_combo` in addition
@@ -6033,7 +6082,7 @@ warnings. They will be removed in a future version of the package.
   as `Matrix` or `data.frame` by coercing to base matrices before
   iterating waves. This restores one panel per wave × shift.
 - Grid axis limits use
-  [`coord_cartesian()`](https://rdrr.io/pkg/ggplot2/man/coord_cartesian.html)
+  [`coord_cartesian()`](https://ggplot2.tidyverse.org/reference/coord_cartesian.html)
   to avoid dropping bars (no more “Removed rows” warnings when
   harmonising x/y ranges).
 - Shift order in grids and text respects the user-supplied `shifts`

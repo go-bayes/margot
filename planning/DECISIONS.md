@@ -106,3 +106,27 @@
 - Generic batch-of-batch plotting should not drive the package architecture
 - `margot_plot_multi()` may remain available, but should not define the future
   plotting API
+
+## 2026-04-18
+
+### Generated study workflows and baseline weights
+
+- Config-driven generated study scripts should treat the baseline design weight
+  as an explicit workflow input rather than an implicit side effect of older
+  data exports
+- For new NZAVS study scaffolds, generated `01` scripts should prefer
+  `target_nz_population_weights` from a configured Arrow or Parquet source and
+  fall back to legacy `sample_weights` only when the new weight is missing
+- Generated scripts should save a small provenance audit, for example
+  `baseline_sample_weight_source_summary`, so downstream workflows can confirm
+  how often the new weight source was used
+- Generated `02` scripts should carry the trimmed baseline design weight
+  forward explicitly as `t0_sample_weights` before any attrition or IPCW
+  weighting step
+
+### Script-generation configuration
+
+- Weight source paths should live in study configuration rather than being
+  duplicated across scripts
+- Large shared weight sources should be read through Arrow or Parquet helpers
+  in new workflows; `qs` remains compatibility-only for older pipelines

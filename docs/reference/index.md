@@ -281,14 +281,17 @@
 - [`here_save()`](https://go-bayes.github.io/margot/reference/here_save.md)
   : Save Data Frame as RDS File in a Specified Directory
 - [`here_read_arrow()`](https://go-bayes.github.io/margot/reference/here_read_arrow.md)
-  : Read Data Frame from Parquet File in a Specified Directory
+  : Read Object from Parquet File in a Specified Directory
 - [`here_save_arrow()`](https://go-bayes.github.io/margot/reference/here_save_arrow.md)
-  : Save Data Frame to Parquet File in a Specified Directory
+  : Save Object to Parquet File in a Specified Directory
 - [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  : Read Data Frame or Object from qs File in a Specified Directory
+  : Read Object from qs2 (or legacy qs) File in a Specified Directory
 - [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
-  : Save Data Frame or Object to qs File in a Specified Directory with
-  Enhanced Compression
+  : Save Object to qs2 File in a Specified Directory
+- [`margot_convert_qs_dir()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.md)
+  : Convert legacy \`.qs\` files in a directory to \`.qs2\`
+- [`margot_convert_qs_dir_docker()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.md)
+  : Convert legacy \`.qs\` files via a Docker R 4.5 container
 - [`margot_save_png()`](https://go-bayes.github.io/margot/reference/margot_save_png.md)
   : Save Margot Plot as PNG
 - [`clear_margot_cache()`](https://go-bayes.github.io/margot/reference/clear_margot_cache.md)

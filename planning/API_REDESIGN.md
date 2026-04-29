@@ -85,6 +85,28 @@ wrapper where checkpointing is a deliberate feature.
 The exception is crash recovery for long-running jobs.
 For those cases, checkpoint-aware wrappers are justified.
 
+### 5a. Explicit workflow inputs for generated studies
+
+Generated study scripts should make key workflow dependencies explicit in
+configuration rather than relying on hidden assumptions in legacy data exports.
+
+This is especially important for baseline design weights.
+
+For new NZAVS-based generated workflows, the scaffold should:
+
+- read a configured Arrow or Parquet object containing
+  `target_nz_population_weights`
+- join that weight by respondent and wave before study-specific filtering
+- fall back to the legacy baseline weight only where the new target weight is
+  missing
+- save a provenance audit of which baseline rows used the new versus legacy
+  weight
+- carry the trimmed baseline design weight forward explicitly as
+  `t0_sample_weights` into later attrition or IPCW weighting steps
+
+This keeps generated GRF and related workflows aligned with the current
+repository practice in `epic-models`.
+
 ### 6. Compatibility through wrappers
 
 Old public names may remain temporarily as wrappers.
@@ -257,6 +279,10 @@ Examples to avoid:
 Functions for reshaping, cleaning, and constructing analysis-ready data.
 
 This includes:
+
+- joining explicit baseline design weights from configured external sources
+- saving small workflow audits that document weight provenance and eligibility
+  decisions
 
 - longitudinal helpers
 - dyad workflows

@@ -1,6 +1,8 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://go-bayes.github.io/margot/404.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/LICENSE.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/articles/index.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/articles/migrating-qs-to-qs2.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/news/index.html</loc></url>
@@ -111,6 +113,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compare_groups.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compute_gender_weights_by_wave.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compute_ipsi_probability.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_correct_combined_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_count_dyads.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_count_ids.html</loc></url>

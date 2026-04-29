@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.317</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.318</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,27 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.318" id="id_2026-04-29-margot-10318">[2026-04-29] margot 1.0.318<a class="anchor" aria-label="anchor" href="#id_2026-04-29-margot-10318"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-318">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-318"></a></h4>
+<ul><li>
+<code><a href="../reference/here_save_qs.html">here_save_qs()</a></code> and <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> now use the <strong><code>qs2</code></strong> package internally. New saves write <code>.qs2</code> files at default <code>compress_level = 4</code>. <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> looks for <code>&lt;name&gt;.qs2</code> first and falls back to <code>&lt;name&gt;.qs</code> (legacy) when present and the optional <code>qs</code> package is installed; otherwise it errors with the exact migration command to run. The <code>preset</code> argument is soft-deprecated.</li>
+<li>
+<code><a href="../reference/here_save_arrow.html">here_save_arrow()</a></code> and <code><a href="../reference/here_read_arrow.html">here_read_arrow()</a></code> now round-trip arbitrary R objects, not just data frames. Tabular inputs are written as native parquet; everything else (lists, fitted models, ggplots, lmtp/grf result objects) is wrapped in a single-row “margot envelope” parquet via <code><a href="https://rdrr.io/pkg/qs2/man/qs_serialize.html" class="external-link">qs2::qs_serialize()</a></code> and transparently restored on read. Existing parquet files written by earlier margot versions still read identically.</li>
+<li>
+<code>qs</code> is demoted from <code>Imports</code> to <code>Suggests</code>. Fresh installs of margot no longer require <code>qs</code>, which is important on R 4.6+ where <code>qs</code> cannot be built (CRAN-archived; uses removed R-internals symbols). <code>qs2</code> is added as a hard <code>Imports</code>.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="added-1-0-318">Added<a class="anchor" aria-label="anchor" href="#added-1-0-318"></a></h4>
+<ul><li>
+<strong><code><a href="../reference/margot_convert_qs_dir.html">margot_convert_qs_dir()</a></code></strong> — recursively walks a directory and converts every <code>.qs</code> file to a <code>.qs2</code> sibling, with a built-in <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> read-verify before any optional original-deletion. Designed to be run once on a machine that still has <code>qs</code> installed.</li>
+<li>
+<strong><code><a href="../reference/margot_convert_qs_dir_docker.html">margot_convert_qs_dir_docker()</a></code></strong> — the user-facing migration entry point for anyone on R 4.6+ who cannot build <code>qs</code> locally. Runs the same conversion inside a <code>rocker/r-ver:4.5</code> Docker container, using a pinned 2024-12-01 Posit Package Manager snapshot so <code>qs</code> 0.27.3 builds reproducibly against the contemporaneous <code>stringfish</code>/<code>BH</code>. One R call from the host; verified end-to-end on a 258 MB margot causal-forest output.</li>
+<li>New tests: <code>tests/testthat/test-here-qs.R</code>, <code>test-here-arrow.R</code> (extended), <code>test-margot-convert-qs-dir.R</code>, <code>test-margot-convert-qs-dir-docker.R</code> (full integration test gated by <code>MARGOT_TEST_DOCKER=1</code>).</li>
+<li>New article: <code>vignettes/migrating-qs-to-qs2.Rmd</code>, walking users through the migration from R 4.5 + <code>qs</code> to R 4.6+ + <code>qs2</code>.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.317" id="id_2026-03-20-margot-10317">[2026-03-20] margot 1.0.317<a class="anchor" aria-label="anchor" href="#id_2026-03-20-margot-10317"></a></h2>
 <div class="section level4">
@@ -144,7 +165,7 @@
 <div class="section level4">
 <h4 id="fixed-1-0-300">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-300"></a></h4>
 <ul><li>
-<code><a href="../reference/prepare_panel_data.html">prepare_panel_data()</a></code> no longer fails with recent dplyr versions when <code>wave_breaks</code> is supplied. Wave assignment now uses direct date comparison instead of <code><a href="https://rdrr.io/pkg/rlang/man/expr.html" class="external-link">dplyr::expr()</a></code> with <code>!!</code> on Date objects.</li>
+<code><a href="../reference/prepare_panel_data.html">prepare_panel_data()</a></code> no longer fails with recent dplyr versions when <code>wave_breaks</code> is supplied. Wave assignment now uses direct date comparison instead of <code><a href="https://rlang.r-lib.org/reference/expr.html" class="external-link">dplyr::expr()</a></code> with <code>!!</code> on Date objects.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -241,7 +262,7 @@
 <ul><li>Systematic removal of Unicode characters throughout the R codebase for improved cross-platform compatibility and encoding reliability:
 <ul><li>Replaced Unicode arrows (→) with ASCII equivalents (<code>-&gt;</code>) in CLI messages, comments, and output text.</li>
 <li>Replaced Unicode mathematical symbols (≥, ≤, Δ, α, μ, τ) with ASCII equivalents (<code>&gt;=</code>, <code>&lt;=</code>, <code>delta</code>, <code>alpha</code>, <code>mu</code>, <code>tau</code>) in user-facing messages.</li>
-<li>Replaced emoji thumbs up (👍, <code>\U0001F44D</code>) with <code><a href="https://rdrr.io/pkg/cli/man/cli_alert.html" class="external-link">cli::cli_alert_success()</a></code> messages for consistent terminal output.</li>
+<li>Replaced emoji thumbs up (👍, <code>\U0001F44D</code>) with <code><a href="https://cli.r-lib.org/reference/cli_alert.html" class="external-link">cli::cli_alert_success()</a></code> messages for consistent terminal output.</li>
 <li>Replaced Unicode dashes (–, —) with standard ASCII hyphens in output text.</li>
 </ul></li>
 <li>Applied NZ English spelling where appropriate (e.g., “finalised” in user-facing messages).</li>
@@ -605,7 +626,7 @@
 <div class="section level4">
 <h4 id="performance-improvements-1-0-254">Performance Improvements<a class="anchor" aria-label="anchor" href="#performance-improvements-1-0-254"></a></h4>
 <ul><li>
-<strong>CRITICAL FIX</strong>: <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code> now respects user’s external <code><a href="https://rdrr.io/pkg/future/man/plan.html" class="external-link">future::plan()</a></code> when <code>manage_future_plan = FALSE</code> (default), enabling parallel cross-validation within each model (~5x speedup)</li>
+<strong>CRITICAL FIX</strong>: <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code> now respects user’s external <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> when <code>manage_future_plan = FALSE</code> (default), enabling parallel cross-validation within each model (~5x speedup)</li>
 <li>
 <strong>CRITICAL FIX</strong>: Removed <code>future::plan(sequential)</code> override that was disabling all parallelization when <code>manage_future_plan = FALSE</code>
 </li>
@@ -649,7 +670,7 @@
 <div class="section level4">
 <h4 id="fixed-1-0-253">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-253"></a></h4>
 <ul><li>
-<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: future parallelization conflicts resolved. When <code>manage_future_plan = FALSE</code>, explicitly sets sequential outer loop while preserving user’s <code><a href="https://rdrr.io/pkg/future/man/plan.html" class="external-link">future::plan()</a></code> for LMTP’s internal cross-validation.</li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: future parallelization conflicts resolved. When <code>manage_future_plan = FALSE</code>, explicitly sets sequential outer loop while preserving user’s <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> for LMTP’s internal cross-validation.</li>
 <li>
 <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: null model validation crash fixed. Now checks null model exists and is valid before computing contrasts, preventing “attempt to select less than one element” error.</li>
 <li>
@@ -658,7 +679,7 @@
 <div class="section level4">
 <h4 id="improved-1-0-253">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-253"></a></h4>
 <ul><li>
-<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: checkpoint saves use <code><a href="https://rdrr.io/pkg/qs/man/qsave.html" class="external-link">qs::qsave()</a></code> with high compression and single thread for compatibility with future parallelization.</li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: checkpoint saves use <code>qs::qsave()</code> with high compression and single thread for compatibility with future parallelization.</li>
 <li>
 <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: CLI messages show checkpoint directory path and individual file saves.</li>
 <li>
@@ -2245,7 +2266,7 @@
 <li>Function is explicitly passed to parallel workers via <code>future.globals</code> to ensure availability</li>
 <li>Required packages (margot, grf, cli) are loaded in each worker</li>
 <li>Added check for package installation - parallel processing requires margot to be installed</li>
-<li>When using <code><a href="https://rdrr.io/pkg/devtools/man/load_all.html" class="external-link">devtools::load_all()</a></code>, the function automatically falls back to sequential processing</li>
+<li>When using <code><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">devtools::load_all()</a></code>, the function automatically falls back to sequential processing</li>
 <li>Clear warning message guides users to either install the package or use <code>parallel = FALSE</code>
 </li>
 <li>This resolves the “could not find function” error when using <code>parallel = TRUE</code>
@@ -5007,7 +5028,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-1-0">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-1-0"></a></h3>
 <ul><li>
-<code>margot_plot_decision_tree</code>: policy action leafs different colours (user may specify palette). Defaults to <code><a href="https://rdrr.io/pkg/ggokabeito/man/scale_okabe_ito.html" class="external-link">ggokabeito::scale_fill_okabe_ito()</a></code> to match <code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code>
+<code>margot_plot_decision_tree</code>: policy action leafs different colours (user may specify palette). Defaults to <code><a href="https://malcolmbarrett.github.io/ggokabeito/reference/scale_okabe_ito.html" class="external-link">ggokabeito::scale_fill_okabe_ito()</a></code> to match <code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code>
 </li>
 <li>
 <code>margot_policy_tree</code> outputs a <code>margot_plot_policy_combo</code> in addition to the other otuputs.</li>
@@ -5213,7 +5234,7 @@
 <div class="section level4">
 <h4 id="fixes-1-0-242">Fixes<a class="anchor" aria-label="anchor" href="#fixes-1-0-242"></a></h4>
 <ul><li>LMTP overlap grid now respects multi-wave density ratios when stored as <code>Matrix</code> or <code>data.frame</code> by coercing to base matrices before iterating waves. This restores one panel per wave × shift.</li>
-<li>Grid axis limits use <code><a href="https://rdrr.io/pkg/ggplot2/man/coord_cartesian.html" class="external-link">coord_cartesian()</a></code> to avoid dropping bars (no more “Removed rows” warnings when harmonising x/y ranges).</li>
+<li>Grid axis limits use <code><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian()</a></code> to avoid dropping bars (no more “Removed rows” warnings when harmonising x/y ranges).</li>
 <li>Shift order in grids and text respects the user-supplied <code>shifts</code> vector without dropping additional wave panels.</li>
 </ul></div>
 <div class="section level4">

@@ -1,11 +1,10 @@
-# Read Data Frame or Object from qs File in a Specified Directory
+# Read Object from qs2 (or legacy qs) File in a Specified Directory
 
-Reads a \`.qs\` file specified by \`name\` from a directory defined by
-\`dir_path\`, returning the data frame or object stored within. This
-function uses the \`qs\` package to efficiently read \`.qs\` files and
-the \`here\` package to construct the file path in a consistent,
-platform-independent manner. The \`.qs\` format is retained for
-compatibility; for new workflows, prefer \`here_read_arrow()\`.
+Reads a serialised R object stored under \`name\` in \`dir_path\`. The
+function looks for \`\<name\>.qs2\` first; if absent, it falls back to
+\`\<name\>.qs\` (legacy format). Reading legacy \`.qs\` files requires
+the \`qs\` package to be installed; if it is not, the function points at
+\`margot_convert_qs_dir()\` or \`install.packages("qs")\`.
 
 ## Usage
 
@@ -17,44 +16,30 @@ here_read_qs(name, dir_path = NULL, nthreads = 1, quiet = FALSE)
 
 - name:
 
-  Character string specifying the name of the \`.qs\` file to be read
-  (without the ".qs" extension).
+  Character string; base file name (no extension).
 
 - dir_path:
 
-  Character string specifying the directory path from which the file
-  will be read. If NULL (default), uses \`push_mods\`.
+  Character string; directory to read from. If NULL (default), uses
+  \`push_mods\`.
 
 - nthreads:
 
-  Integer specifying the number of threads to use for decompression.
-  Default is 1.
+  Integer; threads for decompression. Default \`1\`.
 
 - quiet:
 
-  Logical. If TRUE, suppresses console output. Default is FALSE.
+  Logical. If TRUE, suppresses console output. Default FALSE.
 
 ## Value
 
-A data frame or object representing the data stored in the specified
-\`.qs\` file.
-
-## Details
-
-If \`dir_path\` is NULL, the \`push_mods\` variable must be defined in
-the user's environment or within the package, pointing to the directory
-from where files are to be read. This function will throw an error if
-the specified file does not exist or cannot be read as a \`.qs\` file.
+The object stored in the file.
 
 ## Examples
 
 ``` r
-# Assuming `push_mods` is set in your environment to "~/mydata"
-# and you have previously saved a `.qs` file named "my_dataset.qs" in that directory
-my_df <- here_read_qs("my_dataset")
-#> Error in here_read_qs("my_dataset"): object 'push_mods' not found
-
-# Reading from a custom directory with multiple threads
-my_df <- here_read_qs("my_dataset", dir_path = "~/custom_dir", nthreads = 4)
-#> Error in here_read_qs("my_dataset", dir_path = "~/custom_dir", nthreads = 4): File not found: ~/custom_dir/my_dataset.qs
+if (FALSE) { # \dontrun{
+  my_df <- here_read_qs("my_dataset")
+  my_df <- here_read_qs("my_dataset", dir_path = "~/custom_dir")
+} # }
 ```
