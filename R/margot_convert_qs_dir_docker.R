@@ -157,10 +157,11 @@ margot_convert_qs_dir_docker <- function(dir_path,
     cli::cli_alert_info("mounted: {abs_dir} -> /data")
   }
 
+  # shQuote each -v value so paths with spaces survive system2's shell pass.
   docker_args <- c(
     "run", "--rm",
-    "-v", sprintf("%s:/data", abs_dir),
-    "-v", sprintf("%s:/migrate", script_dir),
+    "-v", shQuote(sprintf("%s:/data", abs_dir)),
+    "-v", shQuote(sprintf("%s:/migrate", script_dir)),
     image,
     "Rscript", "/migrate/migrate.R"
   )

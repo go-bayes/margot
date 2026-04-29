@@ -1,3 +1,8 @@
+# [2026-04-30] margot 1.0.319
+
+### Fixed
+- `margot_convert_qs_dir_docker()` now `shQuote()`s the `-v` bind-mount values, so directory paths containing spaces (for example, `/Users/.../v-project Dropbox/data/...`) survive `system2()`'s shell pass to `docker run`. Without this, paths with spaces produced `docker: invalid reference format` and the migration aborted.
+
 # [2026-04-29] margot 1.0.318
 
 ### Changed
