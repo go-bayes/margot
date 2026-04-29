@@ -85,20 +85,72 @@ If you are on R 4.6+ and `qs` will not install, run the conversion inside
 a Docker container. margot does the heavy lifting; you only need a
 working Docker engine on your machine.
 
-### One-time setup on macOS
+### Prerequisites at a glance
 
-The lightest option is **Colima** (a tiny Linux VM that the standard
-Docker CLI talks to):
+| | What you need | How to check |
+|---|---|---|
+| 1 | A working Docker engine | `docker info` shows a "Server" section |
+| 2 | `margot` >= 1.0.318 in your R session | `packageVersion("margot") >= "1.0.318"` |
+| 3 | `qs2` in your host R session | `requireNamespace("qs2")` |
+| 4 | ~2 GB free disk (image + libs + converted files) | – |
+
+`qs2` is a hard `Imports` of margot, so a fresh `install.packages("margot")`
+or a `pak::pak("go-bayes/margot")` will pull it automatically. If you
+upgraded margot in place from a much older version, run
+`install.packages("qs2")` once.
+
+You do **not** need `qs`, R 4.5, Rcpp, or any compiler installed on your
+host. Everything that needs `qs` runs inside the container.
+
+### One-time Docker setup
+
+#### macOS
+
+The lightest option is **Colima** (a small Linux VM that the standard
+Docker CLI talks to). It is free and CLI-only:
 
 ```bash
+# install Homebrew first if you do not have it: https://brew.sh
 brew install docker colima
 colima start --memory 6 --cpu 4
 ```
 
-Verify with `docker info` — you should see a "Server" section listing
-"Operating System: Ubuntu …".
+Verify Docker is reachable before continuing:
 
-(Docker Desktop also works if you prefer a GUI app.)
+```bash
+docker info | head -10
+```
+
+You should see lines such as `Server Version: 29.x.x` and
+`Operating System: Ubuntu 24.04`. If the output ends with
+"failed to connect to the docker API", run `colima start` again.
+
+**Docker Desktop** also works if you prefer a GUI app. Download from
+<https://www.docker.com/products/docker-desktop>, install, launch the
+app, and wait for the whale icon in the menu bar to settle. Note that
+Docker Desktop requires a paid subscription for organisations above
+certain size thresholds; Colima has no such restriction.
+
+#### Linux
+
+Most distributions package Docker directly. On Debian/Ubuntu:
+
+```bash
+sudo apt-get update
+sudo apt-get install docker.io
+sudo systemctl start docker
+sudo usermod -aG docker $USER   # log out and back in for this to apply
+```
+
+On Fedora/RHEL: `sudo dnf install docker`.
+Then verify with `docker info`.
+
+#### Windows
+
+Install **Docker Desktop for Windows** (with the WSL 2 backend
+recommended): <https://www.docker.com/products/docker-desktop>.
+After installation, restart and open Docker Desktop once so the
+engine starts. Then verify with `docker info` from a terminal.
 
 ### Run the migration
 
