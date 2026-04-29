@@ -68,6 +68,10 @@ Use [margot_convert_qs_dir()] directly if you already have an R session with
 `qs` installed; use this wrapper if you are on a host where `qs` will not
 install.
 
+For prerequisites (installing Docker / Colima, verifying the daemon,
+Linux/Windows setup), see the package vignette
+\code{vignette("migrating-qs-to-qs2", package = "margot")}.
+
 Steps:
 \enumerate{
   \item Confirms `docker` is on `PATH`.

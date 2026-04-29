@@ -86,6 +86,10 @@ This function is the user-friendly counterpart to
 you already have an R session with \`qs\` installed; use this wrapper if
 you are on a host where \`qs\` will not install.
 
+For prerequisites (installing Docker / Colima, verifying the daemon,
+Linux/Windows setup), see the package vignette
+[`vignette("migrating-qs-to-qs2", package = "margot")`](https://go-bayes.github.io/margot/articles/migrating-qs-to-qs2.md).
+
 Steps:
 
 1.  Confirms \`docker\` is on \`PATH\`.
