@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.318</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.319</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,14 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.319" id="id_2026-04-30-margot-10319">[2026-04-30] margot 1.0.319<a class="anchor" aria-label="anchor" href="#id_2026-04-30-margot-10319"></a></h2>
+<div class="section level4">
+<h4 id="fixed-1-0-319">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-319"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_convert_qs_dir_docker.html">margot_convert_qs_dir_docker()</a></code> now <code><a href="https://rdrr.io/r/base/shQuote.html" class="external-link">shQuote()</a></code>s the <code>-v</code> bind-mount values, so directory paths containing spaces (for example, <code>/Users/.../v-project Dropbox/data/...</code>) survive <code><a href="https://rdrr.io/r/base/system2.html" class="external-link">system2()</a></code>’s shell pass to <code>docker run</code>. Without this, paths with spaces produced <code>docker: invalid reference format</code> and the migration aborted.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.318" id="id_2026-04-29-margot-10318">[2026-04-29] margot 1.0.318<a class="anchor" aria-label="anchor" href="#id_2026-04-29-margot-10318"></a></h2>
 <div class="section level4">
