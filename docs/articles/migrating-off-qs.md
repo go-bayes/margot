@@ -1,0 +1,272 @@
+# Migrating off \`qs\`
+
+## What happened to `qs`
+
+Earlier versions of margot used the `qs` package to write fast,
+compressed serialisations of fitted models, plot lists, lmtp results,
+and other analysis artefacts. `margot` users may have projects that
+accumulate archives of `.qs` files.
+
+`qs` was archived from CRAN in 2025 because it depends on R-internal C
+symbols (`LEVELS`, `OBJECT`, `ENCLOS`, `Rf_allocSExp`, …) that **R 4.6
+removed**. As a result `qs` cannot be built or installed on R 4.6+ —
+even from GitHub source.
+
+This is a pain, and a lesson.
+
+margot 1.0.320 deprecates the package’s qs-named helpers for new
+storage. New projects should use standard RDS save formats wherever
+possible. You can do this in margot using
+[`here_save()`](https://go-bayes.github.io/margot/reference/here_save.md)
+and
+[`here_read()`](https://go-bayes.github.io/margot/reference/here_read.md).
+The parquet-backed arrow helpers can be used for large rectangular data
+(such as dataframes):
+[`here_save_arrow()`](https://go-bayes.github.io/margot/reference/here_save_arrow.md)
+and
+[`here_read_arrow()`](https://go-bayes.github.io/margot/reference/here_read_arrow.md).
+It is unlikely that parquet will change in ways that render old files
+invalid, however, the loss of `qs` is a reminder to favour robustness
+where failure is costly. Direct local conversion remains available when
+an older R environment can load `qs`, and the Docker migration bridge
+remains available when local `qs` is not possible. So there are ways to
+get your stored data back.
+
+## What changed in margot
+
+- `here_save_qs(obj, name, dir_path)` and `here_read_qs(name, dir_path)`
+  are deprecated. They still handle existing `.qs2` files, but new work
+  should use
+  [`here_save()`](https://go-bayes.github.io/margot/reference/here_save.md)
+  and
+  [`here_read()`](https://go-bayes.github.io/margot/reference/here_read.md).
+- [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
+  still reads legacy `.qs` files when optional `qs` is installed, so old
+  archives can be opened and migrated without Docker in compatible R
+  environments.
+- `here_save_arrow(obj, name)` now round-trips arbitrary R objects — not
+  just data frames. Lists, fitted models, ggplots, and result objects
+  are wrapped in a single-row “margot envelope” parquet.
+- `qs` is listed in `Suggests`, not `Imports`. Recall, fresh installs of
+  margot on R 4.6+ *cannot* install it, but older R environments that
+  already have `qs` can still use the direct converter.
+
+Pipelines that already have `.qs2` files can still read them through the
+deprecated helpers while migrating to arrow. Pipelines with old `.qs`
+files need a one-off conversion first.
+
+## Decision tree
+
+    You have legacy .qs files you need to read.
+    │
+    ├── Do you have an R 4.5 environment available  ───  yes  ──>  margot_convert_qs_dir(dir)
+    │   with `qs` already installed?
+    │
+    └── Are you on R 4.6+ with no qs?  ───────────────  yes  ──>  margot_convert_qs_dir_docker(dir)
+                                                                  (needs Docker)
+
+Use the direct converter when you can. Use Docker only when local `qs`
+is not available.
+
+## Path A: direct local conversion (older machines that still have `qs`)
+
+If you have an older R environment where `qs` already works, use
+margot’s direct converter there:
+
+``` r
+
+margot::margot_convert_qs_dir(
+  "~/path/to/your/cache/dir"
+)
+```
+
+This recursively finds `.qs` files, writes `.qs2` siblings with `qs2`,
+and read-verifies each converted file before reporting success.
+Originals are kept by default.
+
+Once you have spot-checked the converted files, remove the originals
+with:
+
+``` r
+
+margot::margot_convert_qs_dir(
+  "~/path/to/your/cache/dir",
+  delete_qs = TRUE
+)
+```
+
+The converter verifies the `.qs2` round trip before deleting a source
+`.qs` file.
+
+## Path B: conversion via Docker (R 4.6+ users)
+
+If you are on R 4.6+ and `qs` will not install, run the conversion
+inside a Docker container. margot does the heavy lifting; you only need
+a working Docker engine on your machine.
+
+### Prerequisites at a glance
+
+|  | What you need | How to check |
+|----|----|----|
+| 1 | A working Docker engine | `docker info` shows a “Server” section |
+| 2 | `margot` \>= 1.0.320 in your R session | `packageVersion("margot") >= "1.0.320"` |
+| 3 | `qs2` in your host R session | [`requireNamespace("qs2")`](https://github.com/qsbase/qs2) |
+| 4 | ~2 GB free disk (image + libs + converted files) | – |
+
+`qs2` is a hard `Imports` of margot, so a fresh
+`install.packages("margot")` or a `pak::pak("go-bayes/margot")` will
+pull it automatically. If you upgraded margot in place from a much older
+version, run `install.packages("qs2")` once.
+
+You do **not** need `qs`, R 4.5, Rcpp, or any compiler installed on your
+host. Everything that needs `qs` runs inside the container.
+
+### One-time Docker setup
+
+#### macOS
+
+The lightest option is **Colima** (a small Linux VM that the standard
+Docker CLI talks to). It is free and CLI-only:
+
+``` bash
+# install Homebrew first if you do not have it: https://brew.sh
+brew install docker colima
+colima start --memory 6 --cpu 4
+```
+
+Verify Docker is reachable before continuing:
+
+``` bash
+docker info | head -10
+```
+
+You should see lines such as `Server Version: 29.x.x` and
+`Operating System: Ubuntu 24.04`. If the output ends with “failed to
+connect to the docker API”, run `colima start` again.
+
+**Docker Desktop** also works if you prefer a GUI app. Download from
+<https://www.docker.com/products/docker-desktop>, install, launch the
+app, and wait for the whale icon in the menu bar to settle. Note that
+Docker Desktop requires a paid subscription for organisations above
+certain size thresholds; Colima has no such restriction.
+
+#### Linux
+
+Most distributions package Docker directly. On Debian/Ubuntu:
+
+``` bash
+sudo apt-get update
+sudo apt-get install docker.io
+sudo systemctl start docker
+sudo usermod -aG docker $USER   # log out and back in for this to apply
+```
+
+On Fedora/RHEL: `sudo dnf install docker`. Then verify with
+`docker info`.
+
+#### Windows
+
+Install **Docker Desktop for Windows** (with the WSL 2 backend
+recommended): <https://www.docker.com/products/docker-desktop>. After
+installation, restart and open Docker Desktop once so the engine starts.
+Then verify with `docker info` from a terminal.
+
+### Run the migration
+
+From your normal R 4.6 session:
+
+``` r
+
+margot::margot_convert_qs_dir_docker(
+  "~/path/to/your/cache/dir"
+)
+```
+
+The first run pulls the `rocker/r-ver:4.5` image (~600 MB) and compiles
+`qs` 0.27.3 from a pinned **2024-12-01 Posit Package Manager snapshot**
+so the build is reproducible across machines and dates. Subsequent runs
+reuse the cached image and library and finish quickly.
+
+Per-file output looks like:
+
+    ℹ starting docker container (rocker/r-ver:4.5); first run pulls the image and compiles qs.
+    ℹ mounted: /Users/you/path/to/cache -> /data
+    found 12 .qs file(s) under /data
+    ok     project-a/models_binary.qs
+    ok     project-a/policy_workflow.qs
+    skip   project-b/old.qs (.qs2 exists)
+    …
+    converted: 11, skipped: 1, failed: 0
+    ✔ conversion finished. spot-check a .qs2 file before re-running with delete_qs = TRUE.
+
+### Spot-check, then delete
+
+After the first run, read one of the new `.qs2` files in your normal
+session to confirm the migration:
+
+``` r
+
+obj <- qs2::qs_read("~/path/to/your/cache/dir/something.qs2")
+str(obj, max.level = 1)
+```
+
+Once you’re satisfied, run again with `delete_qs = TRUE` to remove the
+originals:
+
+``` r
+
+margot::margot_convert_qs_dir_docker(
+  "~/path/to/your/cache/dir",
+  delete_qs = TRUE
+)
+```
+
+The container performs an
+[`identical()`](https://rdrr.io/r/base/identical.html) read-verify
+*before* any deletion, so the safety net stays in place even with
+`delete_qs = TRUE`. Still, make certain you want to delete the old qs
+files before setting this parameter to TRUE.
+
+## Caveats
+
+- **Bind-mount scope.** Colima and Docker Desktop on macOS share `~/`
+  into the VM by default. If your archive lives outside `~/` (e.g. on an
+  external volume), either move the work into `~/` first or extend the
+  Colima mount with `colima start --mount /Volumes/External:w`.
+- **Memory.** Default Colima allocates 2 GiB of RAM, which can OOM on
+  very large `qs` files (the deserialised object lives in memory).
+  `colima start --memory 6 --cpu 4` is a sensible baseline; users with
+  multi-gigabyte caches may want more.
+- **Rocker image size.** The first pull is ~600 MB. Once cached locally
+  it’s reused for every subsequent migration run on that machine.
+
+## After migration
+
+Move day-to-day object storage to the arrow helpers:
+
+``` r
+
+margot::here_save(my_models, "models")
+my_models <- margot::here_read("models")
+```
+
+LMTP crash-recovery checkpoints are separate. Keep using
+`margot_lmtp(save_output = TRUE)` for long LMTP runs; those per-model
+checkpoints are written as `.rds` files so interrupted work can be
+restored without `qs`, `qs2`, Arrow, or Docker.
+
+## Reporting issues
+
+If
+[`margot_convert_qs_dir_docker()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.md)
+fails on a specific archive, please open an issue at
+<https://github.com/go-bayes/margot/issues> with:
+
+- the per-file `FAIL` line(s) printed by the function,
+- the host R version (`R.version.string`),
+- the Docker engine in use (`docker info | head -20`),
+- the size of the failing `.qs` file (`file.info(path)$size`).
+
+The most common failure mode is an out-of-memory kill inside the
+container; the fix is usually `colima stop && colima start --memory 8`
+(or higher), then re-run.

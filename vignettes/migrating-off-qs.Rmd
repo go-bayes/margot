@@ -1,5 +1,5 @@
 ---
-title: "Migrating from `qs` to `qs2`"
+title: "Migrating off `qs`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Migrating from qs to qs2}

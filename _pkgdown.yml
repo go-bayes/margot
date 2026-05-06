@@ -33,7 +33,7 @@ articles:
   - title: "Storage and migration"
     navbar: ~
     contents:
-    - migrating-qs-to-qs2
+    - migrating-off-qs
 
 authors:
   Joseph A Bulbulia:
