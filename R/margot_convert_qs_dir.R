@@ -1,15 +1,13 @@
 #' Convert legacy `.qs` files in a directory to `.qs2`
 #'
-#' Walks `dir_path`, reads every `.qs` file with the legacy `qs` package, and
-#' writes a sibling `.qs2` file using `qs2::qs_save()`. Originals are kept by
-#' default; pass `delete_qs = TRUE` to remove them once the `.qs2` sibling is
-#' written and read-verified.
+#' Walks `dir_path`, reads every `.qs` file with the optional legacy `qs`
+#' package, and writes a sibling `.qs2` file using `qs2::qs_save()`. Originals
+#' are kept by default; pass `delete_qs = TRUE` to remove them once the `.qs2`
+#' sibling is written and read-verified.
 #'
-#' Useful when upgrading R to a version for which the `qs` package is not yet
-#' installable: convert your archive once on a machine that still has `qs`, and
-#' subsequent reads only need `qs2`. If you are on R 4.6+ where `qs` no longer
-#' builds, use [margot_convert_qs_dir_docker()] instead — it runs this same
-#' conversion inside a `rocker/r-ver:4.5` container.
+#' Use this direct converter when you have an R environment where `qs` is
+#' available. If local `qs` is not available, use
+#' [margot_convert_qs_dir_docker()] as a fallback.
 #'
 #' @param dir_path Character; directory to scan.
 #' @param recursive Logical; recurse into subdirectories. Default `TRUE`.
@@ -39,12 +37,6 @@ margot_convert_qs_dir <- function(dir_path,
   if (!dir.exists(dir_path)) {
     stop(sprintf("Directory not found: %s", dir_path))
   }
-  if (!requireNamespace("qs", quietly = TRUE)) {
-    stop("Package 'qs' is required to read legacy .qs files. Install with install.packages('qs').")
-  }
-  if (!requireNamespace("qs2", quietly = TRUE)) {
-    stop("Package 'qs2' is required to write .qs2 files. Install with install.packages('qs2').")
-  }
 
   qs_files <- list.files(
     dir_path,
@@ -57,6 +49,17 @@ margot_convert_qs_dir <- function(dir_path,
     return(invisible(tibble::tibble(
       path = character(), status = character(), message = character()
     )))
+  }
+
+  if (!requireNamespace("qs", quietly = TRUE)) {
+    stop(
+      "Package 'qs' is required to read legacy .qs files. Install or load margot ",
+      "in an R environment where 'qs' is available, then rerun margot_convert_qs_dir(). ",
+      "If local 'qs' is not available, use margot_convert_qs_dir_docker()."
+    )
+  }
+  if (!requireNamespace("qs2", quietly = TRUE)) {
+    stop("Package 'qs2' is required to write .qs2 files. Install with install.packages('qs2').")
   }
 
   results <- vector("list", length(qs_files))
@@ -75,7 +78,6 @@ margot_convert_qs_dir <- function(dir_path,
       obj <- qs::qread(src)
       qs2::qs_save(obj, dest, compress_level = compress_level)
 
-      # read-verify before any deletion
       check <- qs2::qs_read(dest)
       if (!identical(obj, check)) {
         stop("read-verify failed: deserialised object differs from source")

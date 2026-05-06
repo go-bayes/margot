@@ -1,4 +1,9 @@
 # /Users/joseph/GIT/margot/tests/test_margot_policy_summary_report.r
+if (Sys.getenv("MARGOT_RUN_MANUAL_TESTS") != "1") {
+  message("Skipping manual policy summary report script. Set MARGOT_RUN_MANUAL_TESTS=1 to run it.")
+  quit(save = "no", status = 0, runLast = FALSE)
+}
+
 #load package
 devtools::load_all("/Users/joseph/GIT/margot/")
 
@@ -11,7 +16,7 @@ original_df <- margot::here_read("df_wide", push_mods)
 
 # e example
 # pull results from
-policy_tree_result_stability <- here_read_qs("policy_tree_result_stability", push_mods)
+policy_tree_result_stability <- here_read_arrow("policy_tree_result_stability", push_mods)
 
 
 # function
@@ -63,17 +68,17 @@ data.frame(
   Outcome = df_in$outcome_label,
   Depth = df_in$depth,
   Signal = rnd(df_in$signal_value),
-  PV [CI] = paste0(rnd(df_in$estimate_ctrl), " [", rnd(df_in$ci_lo_ctrl), ", ", rnd(df_in$ci_hi_ctrl), "]"),
-  Uplift (treated) [CI] = paste0(rnd(df_in$uplift), " [", rnd(df_in$uplift_lo), ", ", rnd(df_in$uplift_hi), "]"),
-  Coverage % = covp(df_in$coverage),
+  `PV [CI]` = paste0(rnd(df_in$estimate_ctrl), " [", rnd(df_in$ci_lo_ctrl), ", ", rnd(df_in$ci_hi_ctrl), "]"),
+  `Uplift (treated) [CI]` = paste0(rnd(df_in$uplift), " [", rnd(df_in$uplift_lo), ", ", rnd(df_in$uplift_hi), "]"),
+  `Coverage %` = covp(df_in$coverage),
   Stability = rnd(df_in$stab_strength),
-  Dominant split = df_in$dominant_split,
+  `Dominant split` = df_in$dominant_split,
   check.names = FALSE
 )
 }
   signals_brief_df_all <- make_brief(wf$summary$signals_df_all)
 
-  - And top‑K for the Neutral list you saw in text:
+  # And top-K for the Neutral list you saw in text:
 
   signals_brief_df <- make_brief(wf$summary$signals_df)
 

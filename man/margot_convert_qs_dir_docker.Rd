@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_convert_qs_dir_docker.R
 \name{margot_convert_qs_dir_docker}
 \alias{margot_convert_qs_dir_docker}
-\title{Convert legacy `.qs` files via a Docker R 4.5 container}
+\title{Convert legacy `.qs` files via a Docker R 4.5 container (deprecated)}
 \usage{
 margot_convert_qs_dir_docker(
   dir_path,
@@ -63,10 +63,9 @@ Originals are kept by default. Re-run with `delete_qs = TRUE` once you have
 read-verified some `.qs2` files.
 
 
-This function is the user-friendly counterpart to [margot_convert_qs_dir()].
-Use [margot_convert_qs_dir()] directly if you already have an R session with
-`qs` installed; use this wrapper if you are on a host where `qs` will not
-install.
+This function is a temporary bridge for old archives. It keeps the
+unsupported `qs` package inside the container so margot does not depend on it
+in the host R session.
 
 For prerequisites (installing Docker / Colima, verifying the daemon,
 Linux/Windows setup), see the package vignette
@@ -93,5 +92,5 @@ Steps:
 
 }
 \seealso{
-[margot_convert_qs_dir()] for direct (non-Docker) use.
+[here_save_arrow()] for new checkpoint files.
 }

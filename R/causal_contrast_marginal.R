@@ -45,6 +45,11 @@ causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0, tre
                                      nsims = 200, cores = parallel::detectCores(), family = "gaussian",
                                      weights = NULL, continuous_X = FALSE, splines = FALSE, vcov = "HC2",
                                      verbose = FALSE) {
+  lifecycle::deprecate_soft(
+    when = "1.0.320",
+    what = "causal_contrast_marginal()"
+  )
+
   # Validate the type argument
   type <- match.arg(type, choices = c("RR", "RD"))
 

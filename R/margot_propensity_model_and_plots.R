@@ -49,7 +49,6 @@
 #' }
 #'
 #' @importFrom WeightIt weightit
-#' @import MatchIt
 #' @import cobalt
 #' @import cli
 #'
@@ -65,14 +64,15 @@ margot_propensity_model_and_plots <- function(
     love_plot_options = list(),
     bal_tab_options = list(),
     verbose = TRUE) {
-  # Check for required packages without attaching them
-  required_packages <- c("WeightIt", "MatchIt", "cobalt", "cli")
-  for (pkg in required_packages) {
-    if (!requireNamespace(pkg, quietly = TRUE)) {
-      message(paste("Package", pkg, "is not installed. Installing..."))
-      install.packages(pkg, dependencies = TRUE, quiet = TRUE)
-    }
-  }
+  lifecycle::deprecate_soft(
+    when = "1.0.320",
+    what = "margot_propensity_model_and_plots()"
+  )
+  check_suggests_multiple(
+    c("WeightIt", "cobalt"),
+    fun = "margot_propensity_model_and_plots",
+    purpose = "soft-deprecated propensity-score diagnostics"
+  )
 
   # Function to print messages if verbose is TRUE
   log_msg <- function(msg, level = "INFO") {
@@ -124,7 +124,7 @@ margot_propensity_model_and_plots <- function(
   cli::cli_progress_step("Creating propensity score model")
   result$match_propensity <- tryCatch(
     {
-      margot::match_mi_general(
+      match_mi_general(
         data = df_propensity,
         X = exposure_variable,
         baseline_vars = baseline_vars,

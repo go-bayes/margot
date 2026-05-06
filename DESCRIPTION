@@ -1,7 +1,7 @@
 Package: margot
 Type: Package
 Title: MARGinal Observational Treatment-effects
-Version: 1.0.319
+Version: 1.0.320
 Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
 Author: Joseph A Bulbulia [aut, cre]
 Maintainer: Joseph A Bulbulia <joseph.bulbulia@gmail.com>
@@ -30,13 +30,10 @@ Imports:
     grf,
     glue,
     here,
-    janitor,
     kableExtra,
     lifecycle,
     lubridate,
     magrittr,
-    MatchIt,
-    MatchThem,
     maq,
     MASS,
     mice,
@@ -48,7 +45,6 @@ Imports:
     progressr,
     purrr,
     qs2,
-    Rdpack,
     rlang,
     report,
     stats,
@@ -56,25 +52,21 @@ Imports:
     table1,
     tibble,
     tidyr,
-    tidyverse,
     WeightIt,
     stringr,
     zoo,
     lmtp,
-    clarify,
-    labelled,
     tools,
-    furrr,
     future.apply,
     vctrs,
     knitr
 Suggests:
+    clarify,
+    MatchThem,
     qs,
     rmarkdown,
-    testthat (>= 3.0.0),
-    fastpolicytree
+    testthat (>= 3.0.0)
 RoxygenNote: 7.3.3
-RdMacros: Rdpack
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://go-bayes.github.io/margot

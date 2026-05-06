@@ -33,17 +33,15 @@ Invisibly, a tibble of `path`, `status` (`"converted"`,
   `"skipped"`, `"failed"`), and `message` for every file processed.
 }
 \description{
-Walks `dir_path`, reads every `.qs` file with the legacy `qs` package, and
-writes a sibling `.qs2` file using `qs2::qs_save()`. Originals are kept by
-default; pass `delete_qs = TRUE` to remove them once the `.qs2` sibling is
-written and read-verified.
+Walks `dir_path`, reads every `.qs` file with the optional legacy `qs`
+package, and writes a sibling `.qs2` file using `qs2::qs_save()`. Originals
+are kept by default; pass `delete_qs = TRUE` to remove them once the `.qs2`
+sibling is written and read-verified.
 }
 \details{
-Useful when upgrading R to a version for which the `qs` package is not yet
-installable: convert your archive once on a machine that still has `qs`, and
-subsequent reads only need `qs2`. If you are on R 4.6+ where `qs` no longer
-builds, use [margot_convert_qs_dir_docker()] instead — it runs this same
-conversion inside a `rocker/r-ver:4.5` container.
+Use this direct converter when you have an R environment where `qs` is
+available. If local `qs` is not available, use
+[margot_convert_qs_dir_docker()] as a fallback.
 }
 \examples{
 \dontrun{

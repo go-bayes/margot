@@ -1,4 +1,4 @@
-#' Convert legacy `.qs` files via a Docker R 4.5 container
+#' Convert legacy `.qs` files via a Docker R 4.5 container (deprecated)
 #'
 #' Recursively converts every `.qs` file under `dir_path` to a `.qs2` sibling by
 #' running the conversion inside a `rocker/r-ver:4.5` container, where the
@@ -33,10 +33,9 @@
 #' @param quiet Logical; if TRUE, suppress per-file output. Default `FALSE`.
 #'
 #' @details
-#' This function is the user-friendly counterpart to [margot_convert_qs_dir()].
-#' Use [margot_convert_qs_dir()] directly if you already have an R session with
-#' `qs` installed; use this wrapper if you are on a host where `qs` will not
-#' install.
+#' This function is a temporary bridge for old archives. It keeps the
+#' unsupported `qs` package inside the container so margot does not depend on it
+#' in the host R session.
 #'
 #' For prerequisites (installing Docker / Colima, verifying the daemon,
 #' Linux/Windows setup), see the package vignette
@@ -63,7 +62,7 @@
 #'                                delete_qs = TRUE)
 #' }
 #'
-#' @seealso [margot_convert_qs_dir()] for direct (non-Docker) use.
+#' @seealso [here_save_arrow()] for new checkpoint files.
 #' @export
 margot_convert_qs_dir_docker <- function(dir_path,
                                          recursive = TRUE,
@@ -74,13 +73,18 @@ margot_convert_qs_dir_docker <- function(dir_path,
                                          qs_source_url = "https://cran.r-project.org/src/contrib/Archive/qs/qs_0.27.3.tar.gz",
                                          ppm_snapshot = "https://packagemanager.posit.co/cran/2024-12-01",
                                          quiet = FALSE) {
+  lifecycle::deprecate_warn(
+    when = "1.0.320",
+    what = "margot_convert_qs_dir_docker()"
+  )
+
   if (!dir.exists(dir_path)) {
     stop(sprintf("Directory not found: %s", dir_path))
   }
   if (Sys.which("docker") == "") {
     stop(
       "Docker not found on PATH. Install Docker Desktop (https://www.docker.com/products/docker-desktop) ",
-      "or, if you have an R 4.5 environment available, call margot_convert_qs_dir() directly from inside it."
+      "or run a one-off conversion script in an R 4.5 environment that already has 'qs' installed."
     )
   }
 

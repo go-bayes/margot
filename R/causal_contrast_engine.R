@@ -26,7 +26,6 @@
 #' @importFrom parallel detectCores
 #' @importFrom mice complete
 #' @importFrom cli cli_abort cli_alert_info cli_alert_warning
-#' @importFrom clarify misim sim sim_ame
 #' @keywords internal
 # compute causal contrasts using glm and clarify simulation
 causal_contrast_engine <- function(df, Y, X, baseline_vars, treat_0, treat_1,
@@ -35,6 +34,8 @@ causal_contrast_engine <- function(df, Y, X, baseline_vars, treat_0, treat_1,
                                    family = "gaussian", weights = TRUE,
                                    continuous_X = FALSE, splines = FALSE,
                                    vcov = "HC2", verbose = FALSE) {
+  check_suggests("clarify", fun = "causal_contrast_marginal", purpose = "soft-deprecated simulation workflow")
+
   # ensure valid estimand and type
   estimand <- match.arg(estimand)
   type <- match.arg(type)

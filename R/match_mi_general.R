@@ -40,12 +40,12 @@
 #' }
 #'
 #' @importFrom WeightIt weightit
-#' @importFrom MatchThem weightthem
 #' @references
 #' Detailed methodology and additional options can be found in:
 #' - \code{\link[WeightIt]{WeightIt}} package for propensity score estimation.
 #' - \code{\link[MatchThem]{MatchThem}} package for matching within imputed datasets.
 #' @keywords internal
+#' @noRd
 match_mi_general <-
   function(data,
            X,
@@ -55,15 +55,25 @@ match_mi_general <-
            subgroup = NULL,
            focal = NULL,
            sample_weights = NULL) {
-    data_class <- class(data)
+    lifecycle::deprecate_soft(
+      when = "1.0.320",
+      what = "match_mi_general()"
+    )
 
-    if (!data_class %in% c("mids", "data.frame")) {
+    is_mids <- inherits(data, "mids")
+    is_data_frame <- is.data.frame(data)
+    if (!is_mids && !is_data_frame) {
       stop("Input data must be either 'mids' or 'data.frame' object")
     }
+    check_suggests(
+      if (is_mids) "MatchThem" else "WeightIt",
+      fun = "match_mi_general",
+      purpose = "soft-deprecated weighting workflow"
+    )
 
     formula_str <- as.formula(paste(X, "~", paste(baseline_vars, collapse = "+")))
 
-    weight_function <- if (data_class == "mids") MatchThem::weightthem else WeightIt::weightit
+    weight_function <- if (is_mids) MatchThem::weightthem else WeightIt::weightit
 
     perform_matching <- function(data_subset) {
       if (is.null(sample_weights)) {

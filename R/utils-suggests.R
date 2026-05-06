@@ -19,7 +19,7 @@ check_suggests <- function(pkg, fun = NULL, purpose = NULL) {
     bundle_msg <- ""
     if (pkg %in% c(
       "grf", "lmtp", "policytree", "maq", "SuperLearner",
-      "clarify", "EValue", "WeightIt", "MatchIt", "MatchThem"
+      "clarify", "EValue", "WeightIt", "MatchThem"
     )) {
       bundle_msg <- c("i" = "For all estimation packages: {.code install.packages('margot.models')}")
     } else if (pkg %in% c("ggplot2", "patchwork", "ggokabeito", "ggeffects", "DiagrammeR")) {

@@ -1,5 +1,20 @@
 # margot NEWS
 
+## Changes in version 1.0.320
+
+### Improvements
+- Deprecated qs-named storage helpers and directed general object storage to `here_save_arrow()` and `here_read_arrow()`.
+- LMTP crash-recovery saves remain `.rds` files. `margot_lmtp(save_output = TRUE)` still writes per-model checkpoints immediately after each successful fit.
+- Retained direct host-session legacy `.qs` reads/conversion when optional `qs` is available, while keeping the Docker migration bridge for users who cannot install `qs` locally.
+- `margot_lmtp_restore_checkpoints()` restores `.rds` checkpoints and legacy `.qs` checkpoints when optional `qs` is installed.
+- Soft-deprecated older `clarify`/matching workflows and moved `clarify` and `MatchThem` out of hard imports.
+- `margot_policy_tree()` and `margot_recalculate_policy_trees()` now prefer `fastpolicytree` by default.
+
+### Internal
+- Retained `qs` in `Suggests` only, so older R environments can still convert archived `.qs` data directly without making `qs` a hard dependency.
+- Removed unused dependency metadata for `MatchIt`, `tidyverse`, `janitor`, `labelled`, `furrr`, and `Rdpack`.
+- Kept `fastpolicytree`, `doParallel`, and `SuperLearner` as hard imports for policy-tree and LMTP workflows.
+
 ## Changes in version 1.0.315
 
 ### New

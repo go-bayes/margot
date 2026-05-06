@@ -11,73 +11,83 @@ vignette: >
 knitr::opts_chunk$set(eval = FALSE)
 ```
 
-## Why this matters
+## What happened to `qs`
 
 Earlier versions of margot used the `qs` package to write fast, compressed
 serialisations of fitted models, plot lists, lmtp results, and other
-analysis artefacts. Many lab projects accumulated archives of `.qs` files
-this way.
+analysis artefacts. `margot` users may have projects that accumulate archives of `.qs` files.
 
 `qs` was archived from CRAN in 2025 because it depends on R-internal C
 symbols (`LEVELS`, `OBJECT`, `ENCLOS`, `Rf_allocSExp`, …) that **R 4.6
 removed**. As a result `qs` cannot be built or installed on R 4.6+ — even
 from GitHub source.
 
-margot 1.0.318 switches to **`qs2`** (the same author's actively
-maintained successor) and ships two migration tools so existing `.qs`
-archives remain accessible.
+This is a pain, and a lesson.
+
+margot 1.0.320 deprecates the package's qs-named helpers for new storage.
+New projects should use standard RDS save formats wherever possible. You can do this in margot using `here_save()` and `here_read()`. The parquet-backed arrow helpers can be used for large rectangular data (such as dataframes): `here_save_arrow()` and `here_read_arrow()`.  It is unlikely that parquet will change in ways that render old files invalid, however, the loss of `qs` is a reminder to favour robustness where failure is costly.  Direct local
+conversion remains available when an older R environment can load `qs`, and
+the Docker migration bridge remains available when local `qs` is not possible. So there are ways to get your stored data back.
 
 ## What changed in margot
 
-- `here_save_qs(obj, name, dir_path)` now writes **`.qs2`** files via
-  `qs2::qs_save()`.
-- `here_read_qs(name, dir_path)` looks for `<name>.qs2` first and falls
-  back to `<name>.qs` (legacy) when both are present and the optional
-  `qs` package is installed.
+- `here_save_qs(obj, name, dir_path)` and `here_read_qs(name, dir_path)`
+  are deprecated. They still handle existing `.qs2` files, but new work
+  should use `here_save()` and `here_read()`.
+- `here_read_qs()` still reads legacy `.qs` files when optional `qs` is
+  installed, so old archives can be opened and migrated without Docker in
+  compatible R environments.
 - `here_save_arrow(obj, name)` now round-trips arbitrary R objects — not
   just data frames. Lists, fitted models, ggplots, and result objects
   are wrapped in a single-row "margot envelope" parquet.
-- `qs` is now a `Suggests`, not an `Imports`. Fresh installs of margot
-  on R 4.6+ no longer fail.
+- `qs` is listed in `Suggests`, not `Imports`. Recall, fresh installs of margot on R 4.6+ *cannot* install it, but older R environments that already
+  have `qs` can still use the direct converter.
 
-These changes are backward-compatible: pipelines that previously called
-`here_save_qs(out, "models")` and then `here_read_qs("models")` continue
-to work with no code changes; the file extension on disk goes from `.qs`
-to `.qs2` for new saves.
+Pipelines that already have `.qs2` files can still read them through the
+deprecated helpers while migrating to arrow. Pipelines with old `.qs` files
+need a one-off conversion first.
 
 ## Decision tree
 
 ```
 You have legacy .qs files you need to read.
 │
-├── Do you have `qs` installed and working?  ────  yes  ──>  margot_convert_qs_dir(dir)
-│
-├── Do you have an R 4.5 environment available  ───  yes  ──>  in that R session:
-│   (rig, separate install, colleague's laptop)?              install qs, then
-│                                                             margot_convert_qs_dir(dir)
+├── Do you have an R 4.5 environment available  ───  yes  ──>  margot_convert_qs_dir(dir)
+│   with `qs` already installed?
 │
 └── Are you on R 4.6+ with no qs?  ───────────────  yes  ──>  margot_convert_qs_dir_docker(dir)
                                                               (needs Docker)
 ```
 
-The third branch is what most users will hit.
+Use the direct converter when you can. Use Docker only when local `qs` is not
+available.
 
-## Path A: direct conversion (machines that still have `qs`)
+## Path A: direct local conversion (older machines that still have `qs`)
 
-If `library(qs)` works on your machine, the simplest route is a single
-call:
+If you have an older R environment where `qs` already works, use margot's
+direct converter there:
+
+```{r}
+margot::margot_convert_qs_dir(
+  "~/path/to/your/cache/dir"
+)
+```
+
+This recursively finds `.qs` files, writes `.qs2` siblings with `qs2`, and
+read-verifies each converted file before reporting success. Originals are kept
+by default.
+
+Once you have spot-checked the converted files, remove the originals with:
 
 ```{r}
 margot::margot_convert_qs_dir(
   "~/path/to/your/cache/dir",
-  delete_qs = FALSE   # leave originals while you spot-check
+  delete_qs = TRUE
 )
 ```
 
-This walks the directory recursively, reads each `.qs` with `qs::qread()`,
-writes a `.qs2` sibling with `qs2::qs_save()`, and does an
-`identical()` read-verify. Originals are kept by default. Re-run with
-`delete_qs = TRUE` once you're satisfied.
+The converter verifies the `.qs2` round trip before deleting a source `.qs`
+file.
 
 ## Path B: conversion via Docker (R 4.6+ users)
 
@@ -90,7 +100,7 @@ working Docker engine on your machine.
 | | What you need | How to check |
 |---|---|---|
 | 1 | A working Docker engine | `docker info` shows a "Server" section |
-| 2 | `margot` >= 1.0.318 in your R session | `packageVersion("margot") >= "1.0.318"` |
+| 2 | `margot` >= 1.0.320 in your R session | `packageVersion("margot") >= "1.0.320"` |
 | 3 | `qs2` in your host R session | `requireNamespace("qs2")` |
 | 4 | ~2 GB free disk (image + libs + converted files) | – |
 
@@ -202,7 +212,7 @@ margot::margot_convert_qs_dir_docker(
 ```
 
 The container performs an `identical()` read-verify *before* any
-deletion, so the safety net stays in place even with `delete_qs = TRUE`.
+deletion, so the safety net stays in place even with `delete_qs = TRUE`. Still, make certain you want to delete the old qs files before setting this parameter to TRUE.
 
 ## Caveats
 
@@ -219,26 +229,17 @@ deletion, so the safety net stays in place even with `delete_qs = TRUE`.
 
 ## After migration
 
-Your day-to-day code does not need to change. New saves go to `.qs2` and
-read back the same way:
+Move day-to-day object storage to the arrow helpers:
 
 ```{r}
-margot::here_save_qs(my_models, "models", dir_path = "cache")  # writes models.qs2
-my_models <- margot::here_read_qs("models", dir_path = "cache") # reads models.qs2
+margot::here_save(my_models, "models")
+my_models <- margot::here_read("models")
 ```
 
-If you also want to migrate to the parquet-backed format (e.g. to share
-result objects with non-R tooling), use the arrow wrappers, which now
-round-trip arbitrary R objects:
-
-```{r}
-margot::here_save_arrow(my_models, "models", dir_path = "cache")
-my_models <- margot::here_read_arrow("models", dir_path = "cache")
-```
-
-The arrow envelope writes `.parquet` files, so non-R tools see a single
-row of metadata; full fidelity is preserved when read back through
-`here_read_arrow()`.
+LMTP crash-recovery checkpoints are separate. Keep using
+`margot_lmtp(save_output = TRUE)` for long LMTP runs; those per-model
+checkpoints are written as `.rds` files so interrupted work can be restored
+without `qs`, `qs2`, Arrow, or Docker.
 
 ## Reporting issues
 

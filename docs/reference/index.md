@@ -285,13 +285,14 @@
 - [`here_save_arrow()`](https://go-bayes.github.io/margot/reference/here_save_arrow.md)
   : Save Object to Parquet File in a Specified Directory
 - [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  : Read Object from qs2 (or legacy qs) File in a Specified Directory
+  : Read Object from a Deprecated qs2 or Legacy qs File
 - [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
-  : Save Object to qs2 File in a Specified Directory
+  : Save Object to a Deprecated qs2 File
 - [`margot_convert_qs_dir()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.md)
   : Convert legacy \`.qs\` files in a directory to \`.qs2\`
 - [`margot_convert_qs_dir_docker()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.md)
   : Convert legacy \`.qs\` files via a Docker R 4.5 container
+  (deprecated)
 - [`margot_save_png()`](https://go-bayes.github.io/margot/reference/margot_save_png.md)
   : Save Margot Plot as PNG
 - [`clear_margot_cache()`](https://go-bayes.github.io/margot/reference/clear_margot_cache.md)

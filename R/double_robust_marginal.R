@@ -62,6 +62,11 @@ double_robust_marginal <- function(df, Y, X, baseline_vars, treat_0, treat_1, ns
                                    weights = TRUE, continuous_X = FALSE, splines = FALSE, vcov = "HC2",
                                    verbose = FALSE, delta = 1, sd = 1, new_name, estimand = c("ATE", "ATT"),
                                    type_causal = c("RR", "RD"), type_tab = c("RR", "RD")) {
+  lifecycle::deprecate_soft(
+    when = "1.0.320",
+    what = "double_robust_marginal()"
+  )
+
   # check if df is a wimids object
   if (inherits(df, "wimids")) {
     # if it is, we don't need to do anything special here, as causal_contrast_marginal

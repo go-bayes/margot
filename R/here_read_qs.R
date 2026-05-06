@@ -1,10 +1,10 @@
-#' Read Object from qs2 (or legacy qs) File in a Specified Directory
+#' Read Object from a Deprecated qs2 or Legacy qs File
 #'
 #' Reads a serialised R object stored under `name` in `dir_path`. The function
-#' looks for `<name>.qs2` first; if absent, it falls back to `<name>.qs`
-#' (legacy format). Reading legacy `.qs` files requires the `qs` package to be
-#' installed; if it is not, the function points at `margot_convert_qs_dir()` or
-#' `install.packages("qs")`.
+#' looks for `<name>.qs2` first. If no `.qs2` file exists, it falls back to a
+#' legacy `<name>.qs` file when the optional `qs` package is installed. This
+#' helper is deprecated for new storage, but remains useful while converting old
+#' project archives.
 #'
 #' @param name Character string; base file name (no extension).
 #' @param dir_path Character string; directory to read from. If NULL (default), uses `push_mods`.
@@ -22,6 +22,12 @@
 #' @export
 #' @importFrom here here
 here_read_qs <- function(name, dir_path = NULL, nthreads = 1, quiet = FALSE) {
+  lifecycle::deprecate_warn(
+    when = "1.0.320",
+    what = "here_read_qs()",
+    with = "here_read_arrow()"
+  )
+
   read_dir <- if (is.null(dir_path)) push_mods else dir_path
 
   qs2_path <- here::here(read_dir, paste0(name, ".qs2"))
@@ -36,11 +42,10 @@ here_read_qs <- function(name, dir_path = NULL, nthreads = 1, quiet = FALSE) {
   } else if (file.exists(qs_path)) {
     if (!requireNamespace("qs", quietly = TRUE)) {
       stop(
-        "Found legacy file '", qs_path, "' but the 'qs' package is not installed. ",
-        "On R 4.6+ qs cannot be built from source; use ",
-        "margot_convert_qs_dir_docker('", read_dir, "') to migrate the directory ",
-        "(needs Docker), or run margot_convert_qs_dir('", read_dir,
-        "') from an R 4.5 environment that already has 'qs' installed."
+        "Found legacy file '", qs_path, "' but the optional 'qs' package is not installed. ",
+        "Install or load margot in an R environment where 'qs' is available, then run ",
+        "margot_convert_qs_dir('", read_dir, "') to migrate the directory to .qs2. ",
+        "If local 'qs' is not available, use margot_convert_qs_dir_docker('", read_dir, "')."
       )
     }
     obj <- qs::qread(qs_path, nthreads = nthreads)

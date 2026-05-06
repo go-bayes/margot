@@ -15,7 +15,7 @@ margot_recalculate_policy_trees(
   parallel = FALSE,
   n_cores = future::availableCores() - 1,
   seed = 12345,
-  tree_method = c("policytree", "fastpolicytree")
+  tree_method = c("fastpolicytree", "policytree")
 )
 }
 \arguments{

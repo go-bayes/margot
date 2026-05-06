@@ -3,16 +3,22 @@ test_that("margot_convert_qs_dir_docker errors helpfully when docker is missing"
   td <- tempfile("docker_missing_"); dir.create(td)
   on.exit(unlink(td, recursive = TRUE), add = TRUE)
 
-  expect_error(
-    margot::margot_convert_qs_dir_docker(td),
-    "Docker Desktop"
+  expect_warning(
+    expect_error(
+      margot::margot_convert_qs_dir_docker(td),
+      "Docker Desktop"
+    ),
+    "deprecated"
   )
 })
 
 test_that("margot_convert_qs_dir_docker errors when dir_path does not exist", {
-  expect_error(
-    margot::margot_convert_qs_dir_docker("/this/path/does/not/exist"),
-    "Directory not found"
+  expect_warning(
+    expect_error(
+      margot::margot_convert_qs_dir_docker("/this/path/does/not/exist"),
+      "Directory not found"
+    ),
+    "deprecated"
   )
 })
 
@@ -36,7 +42,10 @@ test_that("margot_convert_qs_dir_docker round-trips a real file end-to-end", {
   qs_files <- list.files(src_dir, pattern = "\\.qs$", recursive = TRUE, full.names = TRUE)
   testthat::skip_if(length(qs_files) == 0L, sprintf("no .qs files under %s", src_dir))
 
-  status <- margot::margot_convert_qs_dir_docker(src_dir, quiet = TRUE)
+  expect_warning(
+    status <- margot::margot_convert_qs_dir_docker(src_dir, quiet = TRUE),
+    "deprecated"
+  )
   expect_equal(status, 0L)
 
   # at least one .qs2 sibling should now exist and read back as something

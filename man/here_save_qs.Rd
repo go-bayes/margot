@@ -2,7 +2,7 @@
 % Please edit documentation in R/here_save_qs.R
 \name{here_save_qs}
 \alias{here_save_qs}
-\title{Save Object to qs2 File in a Specified Directory}
+\title{Save Object to a Deprecated qs2 File}
 \usage{
 here_save_qs(
   obj,
@@ -35,9 +35,9 @@ Invisible NULL.
 }
 \description{
 Saves the provided object as a `.qs2` file using the specified `name`, within a
-directory defined by `dir_path`. Internally uses the `qs2` package, which
-supersedes the original `qs` package. Existing `.qs` files written by earlier
-versions of this function remain readable via `here_read_qs()`.
+directory defined by `dir_path`. This helper is deprecated because its name
+and file format belong to the old qs workflow. Prefer [here_save_arrow()] for
+new checkpoints.
 }
 \details{
 `dir_path` must point to an existing directory. The function does not create

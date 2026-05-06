@@ -1,10 +1,9 @@
-# Save Object to qs2 File in a Specified Directory
+# Save Object to a Deprecated qs2 File
 
 Saves the provided object as a \`.qs2\` file using the specified
-\`name\`, within a directory defined by \`dir_path\`. Internally uses
-the \`qs2\` package, which supersedes the original \`qs\` package.
-Existing \`.qs\` files written by earlier versions of this function
-remain readable via \`here_read_qs()\`.
+\`name\`, within a directory defined by \`dir_path\`. This helper is
+deprecated because its name and file format belong to the old qs
+workflow. Prefer \[here_save_arrow()\] for new checkpoints.
 
 ## Usage
 

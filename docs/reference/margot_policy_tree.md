@@ -20,7 +20,7 @@ margot_policy_tree(
   label_mapping = NULL,
   verbose = TRUE,
   seed = 12345,
-  tree_method = c("policytree", "fastpolicytree")
+  tree_method = c("fastpolicytree", "policytree")
 )
 ```
 

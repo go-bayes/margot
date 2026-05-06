@@ -1,9 +1,9 @@
-#' Save Object to qs2 File in a Specified Directory
+#' Save Object to a Deprecated qs2 File
 #'
 #' Saves the provided object as a `.qs2` file using the specified `name`, within a
-#' directory defined by `dir_path`. Internally uses the `qs2` package, which
-#' supersedes the original `qs` package. Existing `.qs` files written by earlier
-#' versions of this function remain readable via `here_read_qs()`.
+#' directory defined by `dir_path`. This helper is deprecated because its name
+#' and file format belong to the old qs workflow. Prefer [here_save_arrow()] for
+#' new checkpoints.
 #'
 #' @param obj Object to be saved.
 #' @param name Character string specifying the base name of the file (no extension).
@@ -32,6 +32,12 @@ here_save_qs <- function(obj, name, dir_path,
                          compress_level = 4, nthreads = 1,
                          preset = lifecycle::deprecated(),
                          quiet = FALSE) {
+  lifecycle::deprecate_warn(
+    when = "1.0.320",
+    what = "here_save_qs()",
+    with = "here_save_arrow()"
+  )
+
   if (lifecycle::is_present(preset)) {
     lifecycle::deprecate_soft(
       when = "1.0.318",

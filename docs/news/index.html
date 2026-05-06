@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.319</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.320</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,24 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.320" id="id_2026-05-06-margot-10320">[2026-05-06] margot 1.0.320<a class="anchor" aria-label="anchor" href="#id_2026-05-06-margot-10320"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-320">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-320"></a></h4>
+<ul><li>Deprecated the remaining qs-named storage helpers. <code><a href="../reference/here_save_qs.html">here_save_qs()</a></code> and <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> now warn and point users to <code><a href="../reference/here_save_arrow.html">here_save_arrow()</a></code> and <code><a href="../reference/here_read_arrow.html">here_read_arrow()</a></code> for general object storage.</li>
+<li>LMTP crash-recovery saves remain <code>.rds</code> files. <code>margot_lmtp(save_output = TRUE)</code> still writes per-model checkpoints immediately after each successful fit, which keeps partial work recoverable after crashes or power cuts without relying on <code>qs</code>, <code>qs2</code>, Arrow, or Docker.</li>
+<li>Retained direct host-session support for legacy <code>.qs</code> reads and conversion when the optional <code>qs</code> package is available. <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> reads legacy <code>.qs</code> files as a migration bridge, and <code><a href="../reference/margot_convert_qs_dir.html">margot_convert_qs_dir()</a></code> remains the direct local <code>.qs</code> to <code>.qs2</code> converter.</li>
+<li>
+<code><a href="../reference/margot_lmtp_restore_checkpoints.html">margot_lmtp_restore_checkpoints()</a></code> now restores <code>.rds</code> checkpoints and legacy <code>.qs</code> checkpoints when optional <code>qs</code> is installed.</li>
+<li>Soft-deprecated older <code>clarify</code>/matching workflows and moved <code>clarify</code> and <code>MatchThem</code> out of hard imports.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="dependency-cleanup-1-0-320">Dependency cleanup<a class="anchor" aria-label="anchor" href="#dependency-cleanup-1-0-320"></a></h4>
+<ul><li>Retained <code>qs</code> in <code>Suggests</code> only, so fresh installs do not need it but older R environments can still convert archived <code>.qs</code> data directly.</li>
+<li>Removed <code>MatchIt</code>, <code>tidyverse</code>, <code>janitor</code>, <code>labelled</code>, <code>furrr</code>, and <code>Rdpack</code> from package dependency metadata.</li>
+<li>Kept <code>fastpolicytree</code>, <code>doParallel</code>, and <code>SuperLearner</code> as hard imports for the policy-tree and LMTP workflows.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.319" id="id_2026-04-30-margot-10319">[2026-04-30] margot 1.0.319<a class="anchor" aria-label="anchor" href="#id_2026-04-30-margot-10319"></a></h2>
 <div class="section level4">

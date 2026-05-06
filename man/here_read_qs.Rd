@@ -2,7 +2,7 @@
 % Please edit documentation in R/here_read_qs.R
 \name{here_read_qs}
 \alias{here_read_qs}
-\title{Read Object from qs2 (or legacy qs) File in a Specified Directory}
+\title{Read Object from a Deprecated qs2 or Legacy qs File}
 \usage{
 here_read_qs(name, dir_path = NULL, nthreads = 1, quiet = FALSE)
 }
@@ -20,10 +20,10 @@ The object stored in the file.
 }
 \description{
 Reads a serialised R object stored under `name` in `dir_path`. The function
-looks for `<name>.qs2` first; if absent, it falls back to `<name>.qs`
-(legacy format). Reading legacy `.qs` files requires the `qs` package to be
-installed; if it is not, the function points at `margot_convert_qs_dir()` or
-`install.packages("qs")`.
+looks for `<name>.qs2` first. If no `.qs2` file exists, it falls back to a
+legacy `<name>.qs` file when the optional `qs` package is installed. This
+helper is deprecated for new storage, but remains useful while converting old
+project archives.
 }
 \examples{
 \dontrun{

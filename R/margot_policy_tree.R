@@ -123,7 +123,7 @@ margot_policy_tree <- function(model_results,
                                label_mapping = NULL,
                                verbose = TRUE,
                                seed = 12345,
-                               tree_method = c("policytree", "fastpolicytree")) {
+                               tree_method = c("fastpolicytree", "policytree")) {
   # validate inputs
   if (!is.list(model_results) || !"results" %in% names(model_results)) {
     stop("model_results must be a list containing a 'results' element")

@@ -13,7 +13,7 @@ batch completed all model fits but failed before combining results."></head><bod
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.319</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.320</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,8 +68,9 @@ batch completed all model fits but failed before combining results.</p>
 <dl><dt id="arg-checkpoint-dir">checkpoint_dir<a class="anchor" aria-label="anchor" href="#arg-checkpoint-dir"></a></dt>
 <dd><p>Path to the directory that contains the checkpoint
 files saved by `margot_lmtp()` (e.g.,
-`.../checkpoints/prefix_YYYYMMDD_HHMMSS`). Current checkpoints are saved as
-`.rds` files; legacy `.qs` checkpoints are also supported.</p></dd>
+`.../checkpoints/prefix_YYYYMMDD_HHMMSS`). Checkpoints are read from
+`.rds` files. Legacy `.qs` checkpoints are also restored when the optional
+`qs` package is installed.</p></dd>
 
 
 <dt id="arg-outcome-vars">outcome_vars<a class="anchor" aria-label="anchor" href="#arg-outcome-vars"></a></dt>
