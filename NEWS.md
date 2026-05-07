@@ -1,3 +1,10 @@
+# [2026-05-07] margot 1.0.322
+
+### Fixed
+- `margot_policy_workflow()` now uses single-keyword defaults for `interpret_models`
+  and `plot_models`, preventing the default call from treating preset choices as
+  custom model names and silently skipping policy prose or plots.
+
 # [2026-05-07] margot 1.0.321
 
 ### Added
