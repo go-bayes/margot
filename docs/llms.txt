@@ -218,6 +218,8 @@ stable state. Expect breaking changes.
 - [`margot_policy_summary_compare_depths()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.md)
   : Compare Depth-1 vs Depth-2 Policy Summaries and Pick Best per
   Outcome
+- [`margot_select_grf_policy_trees()`](https://go-bayes.github.io/margot/reference/margot_select_grf_policy_trees.md)
+  : Select GRF policy trees for manuscript graphing
 - [`margot_policy_methods_statement()`](https://go-bayes.github.io/margot/reference/margot_policy_methods_statement.md)
   : Policy Learning Methods Statement
 - [`margot_interpret_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_interpret_policy_tree.md)

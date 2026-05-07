@@ -78,8 +78,32 @@ margot_assess_overlap <- function(model_results,
                                   output_dir = NULL,
                                   theme = "classic",
                                   verbose = TRUE) {
+  margot_assess_overlap_impl(
+    model_results = model_results,
+    model_names = model_names,
+    exposure_name = exposure_name,
+    label_mapping = label_mapping,
+    plot = plot,
+    save_plots = save_plots,
+    output_dir = output_dir,
+    theme = theme,
+    verbose = verbose,
+    deprecated_warning = TRUE
+  )
+}
+
+margot_assess_overlap_impl <- function(model_results,
+                                       model_names = NULL,
+                                       exposure_name = NULL,
+                                       label_mapping = NULL,
+                                       plot = TRUE,
+                                       save_plots = FALSE,
+                                       output_dir = NULL,
+                                       theme = "classic",
+                                       verbose = TRUE,
+                                       deprecated_warning = TRUE) {
   # soft deprecation notice
-  if (isTRUE(requireNamespace("cli", quietly = TRUE))) {
+  if (isTRUE(deprecated_warning) && isTRUE(requireNamespace("cli", quietly = TRUE))) {
     cli::cli_alert_warning("`margot_assess_overlap()` is soft-deprecated; use `margot_grf_overlap()` instead.")
   }
   # validate inputs
@@ -121,7 +145,8 @@ margot_assess_overlap <- function(model_results,
       remove_tx_prefix = TRUE,
       remove_z_suffix = TRUE,
       remove_underscores = TRUE,
-      use_title_case = TRUE
+      use_title_case = TRUE,
+      quiet = !isTRUE(verbose)
     )
   )
 
@@ -198,7 +223,8 @@ margot_assess_overlap <- function(model_results,
         remove_tx_prefix = TRUE,
         remove_z_suffix = TRUE,
         remove_underscores = TRUE,
-        use_title_case = TRUE
+        use_title_case = TRUE,
+        quiet = !isTRUE(verbose)
       )
     )
 
@@ -211,14 +237,9 @@ margot_assess_overlap <- function(model_results,
     # get test calibration
     test_cal <- model_results$results[[model_name]]$test_calibration
     if (!is.null(test_cal)) {
-      # test_calibration might be a vector or matrix, handle appropriately
-      if (is.matrix(test_cal) || (is.numeric(test_cal) && length(test_cal) > 1)) {
-        # if multiple values, store the p-value (typically the second element)
-        if (length(test_cal) >= 2) {
-          model_stats$test_calibration_pvalue <- test_cal[2]
-        }
-      } else {
-        model_stats$test_calibration_pvalue <- test_cal
+      test_cal_stats <- extract_grf_test_calibration(test_cal)
+      for (nm in names(test_cal_stats)) {
+        model_stats[[nm]] <- test_cal_stats[[nm]]
       }
     }
 
@@ -267,6 +288,76 @@ margot_assess_overlap <- function(model_results,
     trimming_summary = trimming_summary,
     text_summary = text_summary
   ))
+}
+
+#' Extract GRF calibration diagnostics
+#' @noRd
+extract_grf_test_calibration <- function(test_cal) {
+  if (is.null(test_cal)) {
+    return(list())
+  }
+
+  out <- list()
+
+  if (is.matrix(test_cal) || is.data.frame(test_cal)) {
+    mat <- as.matrix(test_cal)
+    row_name <- if ("differential.forest.prediction" %in% rownames(mat)) {
+      "differential.forest.prediction"
+    } else if (nrow(mat) >= 2) {
+      rownames(mat)[2]
+    } else {
+      rownames(mat)[1]
+    }
+
+    col_names <- colnames(mat)
+    if ("Estimate" %in% col_names) {
+      out$test_calibration_estimate <- unname(mat[row_name, "Estimate"])
+    }
+    if ("Std. Error" %in% col_names) {
+      out$test_calibration_se <- unname(mat[row_name, "Std. Error"])
+    }
+    if ("t value" %in% col_names) {
+      out$test_calibration_t <- unname(mat[row_name, "t value"])
+    }
+
+    p_col <- intersect(c("Pr(>t)", "Pr(>|t|)", "p.value", "p_value", "p"), col_names)
+    if (length(p_col) > 0) {
+      out$test_calibration_pvalue <- unname(mat[row_name, p_col[1]])
+    }
+
+    return(out)
+  }
+
+  if (is.numeric(test_cal)) {
+    cal_names <- names(test_cal)
+
+    if (!is.null(cal_names)) {
+      name_map <- stats::setNames(seq_along(cal_names), tolower(gsub("[ .]", "_", cal_names)))
+
+      if ("estimate" %in% names(name_map)) {
+        out$test_calibration_estimate <- unname(test_cal[name_map[["estimate"]]])
+      }
+      if ("std_error" %in% names(name_map)) {
+        out$test_calibration_se <- unname(test_cal[name_map[["std_error"]]])
+      }
+      if ("t_value" %in% names(name_map)) {
+        out$test_calibration_t <- unname(test_cal[name_map[["t_value"]]])
+      }
+      if ("p_value" %in% names(name_map)) {
+        out$test_calibration_pvalue <- unname(test_cal[name_map[["p_value"]]])
+      }
+
+      return(out)
+    }
+
+    if (length(test_cal) >= 2) {
+      out$test_calibration_pvalue <- unname(test_cal[2])
+    } else if (length(test_cal) == 1) {
+      out$test_calibration_pvalue <- unname(test_cal[1])
+    }
+  }
+
+  out
 }
 
 #' Calculate overlap statistics
@@ -365,7 +456,7 @@ calculate_covariate_balance <- function(covariates, W, W_hat, top_vars = NULL) {
   balance_list <- list()
 
   for (var in colnames(covariates)) {
-    var_data <- covariates[[var]]
+    var_data <- covariates[, var]
 
     # skip if not numeric
     if (!is.numeric(var_data)) next
@@ -393,6 +484,12 @@ calculate_covariate_balance <- function(covariates, W, W_hat, top_vars = NULL) {
       }
     }
 
+    max_abs_std_diff <- if (all(is.na(std_diff_quintiles))) {
+      NA_real_
+    } else {
+      round(max(abs(std_diff_quintiles), na.rm = TRUE), 3)
+    }
+
     balance_list[[var]] <- list(
       variable = var,
       std_diff_overall = round(std_diff_overall, 3),
@@ -401,7 +498,7 @@ calculate_covariate_balance <- function(covariates, W, W_hat, top_vars = NULL) {
       std_diff_q3 = round(std_diff_quintiles[3], 3),
       std_diff_q4 = round(std_diff_quintiles[4], 3),
       std_diff_q5 = round(std_diff_quintiles[5], 3),
-      max_abs_std_diff = round(max(abs(std_diff_quintiles), na.rm = TRUE), 3)
+      max_abs_std_diff = max_abs_std_diff
     )
   }
 

@@ -1,5 +1,34 @@
 # Changelog
 
+## \[2026-05-07\] margot 1.0.321
+
+#### Added
+
+- [`margot_select_grf_policy_trees()`](https://go-bayes.github.io/margot/reference/margot_select_grf_policy_trees.md)
+  applies the current manuscript graphing rule for GRF policy trees:
+  graph only selected policies whose policy-value and treated-uplift
+  lower confidence limits exceed configurable thresholds.
+
+#### Changed
+
+- [`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md)
+  now defaults difference-scale plots to `x_lim_lo = -0.5`,
+  `x_lim_hi = 0.5`, and `x_offset = -0.5`, giving standardised effect
+  plots a compact default range and fixed coefficient-label position.
+
+#### Fixed
+
+- [`margot_grf_overlap()`](https://go-bayes.github.io/margot/reference/margot_grf_overlap.md)
+  now handles saved causal-forest covariates stored as matrices and no
+  longer emits the soft-deprecation notice intended for direct
+  [`margot_assess_overlap()`](https://go-bayes.github.io/margot/reference/margot_assess_overlap.md)
+  calls.
+- GRF overlap summaries now extract the differential calibration
+  estimate and p-value from
+  [`grf::test_calibration()`](https://rdrr.io/pkg/grf/man/test_calibration.html)
+  explicitly, instead of mislabelling the matrix’s second cell as a
+  p-value.
+
 ## \[2026-05-06\] margot 1.0.320
 
 #### Changed

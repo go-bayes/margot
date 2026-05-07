@@ -1,8 +1,8 @@
 #' Assess Covariate Overlap from Causal Forest Models
 #'
 #' Wrapper around the original GRF overlap diagnostics. This function exists
-#' to provide a stable, descriptive name. It delegates to
-#' `margot_assess_overlap()` for the implementation.
+#' to provide a stable, descriptive name over the shared overlap
+#' implementation.
 #'
 #' @inheritParams margot_assess_overlap
 #' @return A list with overlap summaries, plots, and text summary.
@@ -16,14 +16,14 @@ margot_grf_overlap <- function(model_results,
                                output_dir = NULL,
                                theme = "classic",
                                verbose = TRUE) {
-  margot_assess_overlap(model_results = model_results,
-                        model_names = model_names,
-                        exposure_name = exposure_name,
-                        label_mapping = label_mapping,
-                        plot = plot,
-                        save_plots = save_plots,
-                        output_dir = output_dir,
-                        theme = theme,
-                        verbose = verbose)
+  margot_assess_overlap_impl(model_results = model_results,
+                             model_names = model_names,
+                             exposure_name = exposure_name,
+                             label_mapping = label_mapping,
+                             plot = plot,
+                             save_plots = save_plots,
+                             output_dir = output_dir,
+                             theme = theme,
+                             verbose = verbose,
+                             deprecated_warning = FALSE)
 }
-

@@ -87,7 +87,7 @@ depend on it in the host R session.
 
 For prerequisites (installing Docker / Colima, verifying the daemon,
 Linux/Windows setup), see the package vignette
-[`vignette("migrating-qs-to-qs2", package = "margot")`](https://go-bayes.github.io/margot/articles/migrating-qs-to-qs2.html).
+`vignette("migrating-qs-to-qs2", package = "margot")`.
 
 Steps:
 

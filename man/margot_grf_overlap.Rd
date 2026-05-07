@@ -40,6 +40,6 @@ A list with overlap summaries, plots, and text summary.
 }
 \description{
 Wrapper around the original GRF overlap diagnostics. This function exists
-to provide a stable, descriptive name. It delegates to
-`margot_assess_overlap()` for the implementation.
+to provide a stable, descriptive name over the shared overlap
+implementation.
 }

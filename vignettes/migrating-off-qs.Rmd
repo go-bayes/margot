@@ -2,7 +2,7 @@
 title: "Migrating off `qs`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Migrating from qs to qs2}
+  %\VignetteIndexEntry{Migrating off `qs`}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

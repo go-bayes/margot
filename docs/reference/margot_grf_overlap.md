@@ -1,8 +1,8 @@
 # Assess Covariate Overlap from Causal Forest Models
 
 Wrapper around the original GRF overlap diagnostics. This function
-exists to provide a stable, descriptive name. It delegates to
-\`margot_assess_overlap()\` for the implementation.
+exists to provide a stable, descriptive name over the shared overlap
+implementation.
 
 ## Usage
 

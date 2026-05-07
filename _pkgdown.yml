@@ -115,6 +115,7 @@ reference:
     - margot_policy_workflow
     - margot_policy_summary_report
     - margot_policy_summary_compare_depths
+    - margot_select_grf_policy_trees
     - margot_policy_methods_statement
     - margot_interpret_policy_tree
     - margot_interpret_policy_batch

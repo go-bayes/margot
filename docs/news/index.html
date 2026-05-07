@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.320</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.321</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,25 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.321" id="id_2026-05-07-margot-10321">[2026-05-07] margot 1.0.321<a class="anchor" aria-label="anchor" href="#id_2026-05-07-margot-10321"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-321">Added<a class="anchor" aria-label="anchor" href="#added-1-0-321"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_select_grf_policy_trees.html">margot_select_grf_policy_trees()</a></code> applies the current manuscript graphing rule for GRF policy trees: graph only selected policies whose policy-value and treated-uplift lower confidence limits exceed configurable thresholds.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-321">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-321"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_plot.html">margot_plot()</a></code> now defaults difference-scale plots to <code>x_lim_lo = -0.5</code>, <code>x_lim_hi = 0.5</code>, and <code>x_offset = -0.5</code>, giving standardised effect plots a compact default range and fixed coefficient-label position.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="fixed-1-0-321">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-321"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_grf_overlap.html">margot_grf_overlap()</a></code> now handles saved causal-forest covariates stored as matrices and no longer emits the soft-deprecation notice intended for direct <code><a href="../reference/margot_assess_overlap.html">margot_assess_overlap()</a></code> calls.</li>
+<li>GRF overlap summaries now extract the differential calibration estimate and p-value from <code><a href="https://rdrr.io/pkg/grf/man/test_calibration.html" class="external-link">grf::test_calibration()</a></code> explicitly, instead of mislabelling the matrix’s second cell as a p-value.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.320" id="id_2026-05-06-margot-10320">[2026-05-06] margot 1.0.320<a class="anchor" aria-label="anchor" href="#id_2026-05-06-margot-10320"></a></h2>
 <div class="section level4">

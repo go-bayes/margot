@@ -268,9 +268,9 @@ margot_plot <- function(
     subtitle_size = 18,
     legend_text_size = 10,
     legend_title_size = 10,
-    x_offset = NULL,
-    x_lim_lo = NULL,
-    x_lim_hi = NULL,
+    x_offset = if (type == "RR") NULL else -0.5,
+    x_lim_lo = if (type == "RR") NULL else -0.5,
+    x_lim_hi = if (type == "RR") NULL else 0.5,
     linewidth = 0.4,
     plot_theme = NULL,
     colors = c(
@@ -435,7 +435,7 @@ margot_plot <- function(
 
     plot_width <- x_lim_hi - x_lim_lo
     fixed_offset_pct <- 0.05
-    coeff_x_position <- x_lim_lo + (fixed_offset_pct * plot_width)
+    coeff_x_position <- opts$x_offset %||% (x_lim_lo + (fixed_offset_pct * plot_width))
     coefficient_labels <- format_margot_coefficient_labels(
       sorted_df[[eff_col]],
       digits = opts$coefficient_digits

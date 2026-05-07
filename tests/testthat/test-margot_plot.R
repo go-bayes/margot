@@ -58,6 +58,27 @@ test_that("coefficient labels use fixed-width monospace formatting", {
   expect_length(unique(nchar(labels)), 1)
 })
 
+test_that("difference-scale plots use compact default x limits and label offset", {
+  out <- margot_plot(
+    make_margot_plot_test_data(
+      estimates = c(0.2, 0.3),
+      lower = c(0.1, 0.2),
+      upper = c(0.3, 0.4),
+      bounds = c(1.4, 1.5),
+      outcomes = c("first", "second")
+    ),
+    type = "RD",
+    options = list(use_title_case = FALSE)
+  )
+
+  expect_equal(out$plot$coordinates$limits$x, c(-0.5, 0.5))
+
+  text_layer_index <- which(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1)))
+  text_data <- ggplot2::ggplot_build(out$plot)$data[[text_layer_index]]
+
+  expect_true(all(text_data$x == -0.5))
+})
+
 test_that("threshold equality is treated as reliable", {
   out <- margot_plot(
     make_margot_plot_test_data(
