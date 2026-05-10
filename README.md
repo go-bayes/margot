@@ -53,10 +53,6 @@ Although steps 1-3 are routinely skipped in social scientific research,
 they are indispensable. Without them, we have no way of assigning
 meaning to the statistical relationships we observe from data.
 
-The package offers functions for evaluating causal assumptions,
-modelling time-series data, reporting results, and performing
-sensitivity analyses.
-
 ## Installation
 
 `margot` is currently available only on GitHub. Install it with `pak`:
