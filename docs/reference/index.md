@@ -143,6 +143,9 @@
 - [`margot_policy_summary_compare_depths()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.md)
   : Compare Depth-1 vs Depth-2 Policy Summaries and Pick Best per
   Outcome
+- [`margot_policy_regret_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_regret_summary.md)
+  [`policy_regret_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_regret_summary.md)
+  : Summarise Policy-Tree Value and Oracle Regret
 - [`margot_select_grf_policy_trees()`](https://go-bayes.github.io/margot/reference/margot_select_grf_policy_trees.md)
   : Select GRF policy trees for manuscript graphing
 - [`margot_policy_methods_statement()`](https://go-bayes.github.io/margot/reference/margot_policy_methods_statement.md)
@@ -216,6 +219,8 @@
   : Plot a policy tree (depth-adaptive)
 - [`margot_plot_policy_combo()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_combo.md)
   : Create a Combined Decision Tree and Policy Relationship Graph
+- [`margot_plot_policy_regret()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_regret.md)
+  : Plot Policy-Tree Regret and Value Contrasts
 - [`margot_plot_qini()`](https://go-bayes.github.io/margot/reference/margot_plot_qini.md)
   : Plot Qini Curves from margot_multi_arm_causal_forest Results
 - [`margot_plot_qini_batch()`](https://go-bayes.github.io/margot/reference/margot_plot_qini_batch.md)

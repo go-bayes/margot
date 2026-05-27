@@ -115,6 +115,7 @@ reference:
     - margot_policy_workflow
     - margot_policy_summary_report
     - margot_policy_summary_compare_depths
+    - margot_policy_regret_summary
     - margot_select_grf_policy_trees
     - margot_policy_methods_statement
     - margot_interpret_policy_tree
@@ -153,6 +154,7 @@ reference:
     - margot_plot
     - margot_plot_policy_tree
     - margot_plot_policy_combo
+    - margot_plot_policy_regret
     - margot_plot_qini
     - margot_plot_qini_batch
     - margot_plot_qini_batch_cost_sensitivity

@@ -1,3 +1,9 @@
+# [2026-05-12] margot 1.0.323
+
+### Added
+- `margot_policy_regret_summary()` and shorthand `policy_regret_summary()` summarise learned policy-tree value against control-all, treat-all, and an oracle benchmark, reporting remaining model-implied regret with bootstrap uncertainty intervals.
+- `margot_plot_policy_regret()` plots policy-regret summaries as compact forest plots with bootstrap intervals for regret and value-gain contrasts.
+
 # [2026-05-07] margot 1.0.322
 
 ### Fixed
