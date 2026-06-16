@@ -349,6 +349,22 @@ margot_stability_diagnostics <- function(
     model_results,
     model_name,
     correlation_threshold = 0.5) {
+  # resolve model_name: tolerate flipped (_r) outcome names and single-model
+  # objects, and fail with the available names rather than a cryptic error.
+  avail <- names(model_results$results)
+  if (!is.null(model_name) && length(avail) > 0 && !(model_name %in% avail)) {
+    candidates <- unique(c(model_name, sub("_r$", "", model_name), paste0(model_name, "_r")))
+    hit <- candidates[candidates %in% avail]
+    if (length(hit) >= 1) {
+      model_name <- hit[1]
+    } else if (length(avail) == 1) {
+      model_name <- avail[1]
+    } else {
+      stop("model_name '", model_name, "' not found in model_results. Available: ",
+           paste(avail, collapse = ", "))
+    }
+  }
+
   # run correlation analysis
   cor_analysis <- margot_assess_variable_correlation(
     model_results = model_results,
@@ -357,16 +373,29 @@ margot_stability_diagnostics <- function(
     plot = FALSE
   )
 
-  # get stability metrics (handle both old and new naming)
-  if (!is.null(stability_results$results[[model_name]]$stability_metrics)) {
-    boot_metrics <- stability_results$results[[model_name]]$stability_metrics
-  } else if (!is.null(stability_results$results[[model_name]]$bootstrap_metrics)) {
-    # backwards compatibility
-    boot_metrics <- stability_results$results[[model_name]]$bootstrap_metrics
+  # variable-inclusion frequencies: try the per-model legacy locations first,
+  # then the current top-level summary_metrics$variable_importance (which carries
+  # the same depth_*_freq columns plus a `model` column).
+  per_model <- stability_results$results[[model_name]]
+  boot_metrics <- per_model$stability_metrics %||% per_model$bootstrap_metrics
+  if (!is.null(boot_metrics$var_inclusion_freq)) {
+    var_freq <- boot_metrics$var_inclusion_freq
+  } else if (!is.null(stability_results$summary_metrics$variable_importance)) {
+    vi <- as.data.frame(stability_results$summary_metrics$variable_importance)
+    if ("model" %in% names(vi) && length(unique(vi$model)) > 1 && any(vi$model == model_name)) {
+      vi <- vi[vi$model == model_name, , drop = FALSE]
+    }
+    var_freq <- vi[, setdiff(names(vi), "model"), drop = FALSE]
   } else {
-    stop("No stability metrics found for model ", model_name)
+    stop("No stability metrics found for model '", model_name,
+         "'. Expected results[['", model_name,
+         "']]$stability_metrics$var_inclusion_freq or summary_metrics$variable_importance.")
   }
-  var_freq <- boot_metrics$var_inclusion_freq
+
+  # depth-1 consensus strength: legacy per-model location, else current summary
+  consensus_d1 <- boot_metrics$consensus_strength$depth_1 %||%
+    stability_results$summary_metrics$convergence_diagnostics$mean_consensus_strength %||%
+    NA_real_
 
   # identify frequently selected variables
   freq_vars_d1 <- var_freq[var_freq$depth_1_freq > 0.1, ]
@@ -426,7 +455,7 @@ margot_stability_diagnostics <- function(
     )
   }
 
-  if (boot_metrics$consensus_strength$depth_1 < 0.5) {
+  if (!is.na(consensus_d1) && consensus_d1 < 0.5) {
     recommendations <- c(
       recommendations,
       "4. Consider the trade-off between stability and performance -- stable depth-1 trees often outperform unstable depth-2 trees",
@@ -438,7 +467,7 @@ margot_stability_diagnostics <- function(
   # compile results
   diagnostics <- list(
     correlation_analysis = cor_analysis,
-    stability_metrics = boot_metrics,
+    stability_metrics = boot_metrics %||% list(var_inclusion_freq = var_freq),
     correlated_frequent_vars = if (exists("correlated_freq_vars")) correlated_freq_vars else NULL,
     stability_interpretation = stability_interpretation,
     recommendations = recommendations

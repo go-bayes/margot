@@ -1,3 +1,8 @@
+# [2026-06-16] margot 1.0.324
+
+### Fixed
+- `margot_stability_diagnostics()` is robust to the current stability-object layout. It reads variable-inclusion frequencies from `summary_metrics$variable_importance` when the legacy per-model `stability_metrics` slot is absent, reads consensus strength from `summary_metrics$convergence_diagnostics` as a fallback, resolves flipped (`_r`) and single-model `model_name`s, and reports available model names on a genuine mismatch instead of a cryptic error.
+
 # [2026-05-12] margot 1.0.323
 
 ### Added
