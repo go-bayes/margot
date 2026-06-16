@@ -1,3 +1,8 @@
+# [2026-06-16] margot 1.0.325
+
+### Changed
+- `qs2` moves from Imports to Suggests. Every `qs2` call is already namespace-qualified and guarded by `requireNamespace("qs2")`, so margot now loads without `qs2` installed; it is needed only if you call the deprecated `.qs2` read/write/convert helpers. The default object store (`here_save()`/`here_read()`) uses base `saveRDS()`/`readRDS()` and never requires `qs2`. This avoids a hard dependency on a third-party serialiser for loading the package.
+
 # [2026-06-16] margot 1.0.324
 
 ### Fixed
