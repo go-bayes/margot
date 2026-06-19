@@ -25,6 +25,7 @@ margot_build_method_explanation <- function(stability, best, summary, context, c
 
   # Quarto-style citations using [@key] format
   cite <- function(txt) if (isTRUE(citations)) paste0(" ", txt) else ""
+  heldout_policy <- isTRUE(context$heldout_policy)
   train_txt <- if (descriptive_mode) {
     "the complete-case evaluation slice used for descriptive reporting"
   } else if (!is.null(train_props)) {
@@ -32,7 +33,19 @@ margot_build_method_explanation <- function(stability, best, summary, context, c
   } else {
     "the stored evaluation slice"
   }
-  overfit_txt <- if (descriptive_mode) {
+  eval_txt <- if (heldout_policy) {
+    folds <- context$heldout_num_folds %||% "K"
+    reps <- context$heldout_n_repeats %||% NULL
+    paste0(
+      "repeated ", folds, "-fold held-out cross-validation",
+      if (!is.null(reps)) paste0(" over ", reps, " repeat", if (reps == 1) "" else "s") else ""
+    )
+  } else {
+    train_txt
+  }
+  overfit_txt <- if (heldout_policy) {
+    "This repeated held-out evaluation targets the policy-learning procedure rather than a final full-sample display tree."
+  } else if (descriptive_mode) {
     "This descriptive value summary is not a held-out policy-value claim."
   } else {
     "This held-out evaluation reduces adaptive overfitting."
@@ -59,8 +72,12 @@ margot_build_method_explanation <- function(stability, best, summary, context, c
   # Core statements
   s1 <- paste0(
     "We estimated individualized treatment effects using doubly robust (DR) scores from causal forests and learned depth-1 and depth-2 policy trees to target treatment",
-    cite("[@athey2021; @grf2024; @policytree_package_2024]"), ". Policy trees were fit with ", method_engine,
-    ", and evaluated on ", train_txt, ". ", overfit_txt
+    cite("[@athey2021; @grf2024; @policytree_package_2024]"), ". Policy trees were fit with ", method_engine, ". ",
+    if (heldout_policy) {
+      paste0("Depth selection used ", eval_txt, " to evaluate the policy-learning procedure rather than a final full-sample display tree.")
+    } else {
+      paste0("Policy values were evaluated on ", eval_txt, ". ", overfit_txt)
+    }
   )
 
   s2 <- paste0(
@@ -124,6 +141,8 @@ margot_build_method_explanation <- function(stability, best, summary, context, c
                    vary_type = vt, n_iterations = n_iter, metaseed = metaseed,
                    dominance_threshold = context$dominance_threshold,
                    strict_branch = context$strict_branch))
+  bp_ctx$heldout_policy <- heldout_policy
+  bp_ctx$heldout_eval_txt <- eval_txt
   long_bp <- margot_get_boilerplate("methods_long", context = bp_ctx)
   short_bp <- margot_get_boilerplate("methods_short", context = bp_ctx)
   prereg_bp <- margot_get_boilerplate("methods_prereg", context = bp_ctx)
@@ -137,7 +156,11 @@ margot_build_method_explanation <- function(stability, best, summary, context, c
   # Preregistration-style enumerated steps
   prereg <- if (!is.null(prereg_bp) && nzchar(prereg_bp)) prereg_bp else paste0(
     "1) Estimate DR scores via causal forests and fit depth-1 and depth-2 policy trees (engine: ", method_engine, ").\n",
-    "2) Evaluate on ", train_txt, if (descriptive_mode) " (descriptive evaluation, not held-out policy value)." else " (held-out policy evaluation).", "\n",
+    "2) ", if (heldout_policy) {
+      paste0("Evaluate the policy-learning procedure using ", eval_txt, ".")
+    } else {
+      paste0("Evaluate policy values on ", eval_txt, if (descriptive_mode) " as descriptive output, not a held-out policy-value claim." else ".")
+    }, "\n",
     "3) Compute policy value contrasts (policy - control-all; policy - treat-all) with ",
     if (identical(context$se_method, "bootstrap")) paste0("bootstrap SEs, R=", context$R) else "plug-in SEs", ", CI=95%.\n",
     "4) Select depth using a parsimony rule: switch to depth-2 if gain >= ", format(context$min_gain_for_depth_switch, trim = TRUE),

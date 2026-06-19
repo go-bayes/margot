@@ -62,12 +62,25 @@
 #'   models by the selected score (magnitude relative to uncertainty, optionally weighted by
 #'   coverage and stability). See the package NEWS for details.
 #' @param signals_k Integer; number of top signals to display when `signal_score != "none"`
+#' @param use_heldout_policy Logical; if TRUE, attempt repeated held-out policy-tree
+#'   cross-validation with [margot_policy_tree_cv()] and use its depth map as the
+#'   primary depth-selection object when available. Default TRUE.
+#' @param heldout_policy Optional precomputed `margot_policy_tree_cv` object. When
+#'   supplied, this object is used instead of recomputing held-out policy diagnostics.
+#' @param heldout_num_folds Integer; number of folds for automatic held-out policy-tree
+#'   cross-validation. Default 5.
+#' @param heldout_n_repeats Integer; number of repeated fold partitions for automatic
+#'   held-out policy-tree cross-validation. Default 10.
+#' @param heldout_seed Integer; seed for automatic held-out policy-tree cross-validation.
+#' @param max_stability_loss_for_depth_switch Numeric; maximum root-stability loss
+#'   allowed when selecting depth two from held-out diagnostics. Default 0.05.
 #' @param ... Additional pass-through args to [margot_policy_summary_report()], e.g.,
 #'   `split_compact`, `split_top_only`, etc.
 #'
 #' @return A list with components from depth selection (best), summary (summary), and
 #'   optional interpretations (interpret). Includes `policy_brief_df` shortcut drawn from
-#'   `summary$group_table_df`. Also returns `method_explanation` (long/short/prereg),
+#'   `summary$group_table_df`, `heldout_policy` when available, and
+#'   `method_explanation` (long/short/prereg),
 #'   `depth_comparison_report` (a list with `text` and `data` showing both depth-1 and
 #'   depth-2 policy values for all outcomes with selection rationale),
 #'   `summary$signals_df` when `signal_score != "none"`, and top-level `report`,
@@ -173,6 +186,11 @@ margot_policy_workflow <- function(stability,
                                    prefer_stability = TRUE,
                                    max_stability_loss_for_depth_switch = 0.05,
                                    signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
+                                   use_heldout_policy = TRUE,
+                                   heldout_policy = NULL,
+                                   heldout_num_folds = 5L,
+                                   heldout_n_repeats = 10L,
+                                   heldout_seed = 42L,
                                    signals_k = 3,
                                    ...) {
   se_method <- match.arg(se_method)
@@ -241,6 +259,36 @@ margot_policy_workflow <- function(stability,
   eff_min_gain <- if (isTRUE(prefer_stability)) max(min_gain_for_depth_switch, 0.01) else min_gain_for_depth_switch
   eff_stability_loss <- if (isTRUE(prefer_stability)) max_stability_loss_for_depth_switch else Inf
 
+  # held-out policy-tree CV evaluates the learning procedure and supplies the
+  # default depth map when the stability object has the data required to run it.
+  heldout <- heldout_policy
+  if (is.null(heldout) && isTRUE(use_heldout_policy) &&
+      inherits(stability, "margot_stability_policy_tree") &&
+      !is.null(stability$covariates)) {
+    heldout <- tryCatch(
+      margot_policy_tree_cv(
+        stability,
+        model_names = model_names_override,
+        num_folds = heldout_num_folds,
+        n_repeats = heldout_n_repeats,
+        min_gain_for_depth_switch = eff_min_gain,
+        max_stability_loss_for_depth_switch = max_stability_loss_for_depth_switch,
+        label_mapping = label_mapping,
+        seed = heldout_seed,
+        tree_method = stability$metadata$tree_method %||% "fastpolicytree",
+        verbose = FALSE
+      ),
+      error = function(e) {
+        cli::cli_warn("Held-out policy-tree CV failed; falling back to consensus depth comparison: {e$message}")
+        NULL
+      }
+    )
+  }
+  heldout_depth_map <- if (!is.null(heldout) && !is.null(heldout$depth_map) && length(heldout$depth_map)) {
+    heldout$depth_map
+  } else NULL
+  compare_model_names <- heldout_depth_map %||% model_names_override
+
   best <- margot_policy_summary_compare_depths(
     stability,
     original_df = original_df,
@@ -251,7 +299,7 @@ margot_policy_workflow <- function(stability,
     auto_recommend = TRUE,
     dominance_threshold = dominance_threshold,
     strict_branch = strict_branch,
-    model_names = model_names_override,
+    model_names = compare_model_names,
     split_compact = split_compact,
     split_drop_zero = split_drop_zero,
     split_top_only = split_top_only,
@@ -259,6 +307,50 @@ margot_policy_workflow <- function(stability,
     min_gain_for_depth_switch = eff_min_gain,
     max_stability_loss_for_depth_switch = eff_stability_loss
   )
+
+  if (!is.null(heldout_depth_map) && !is.null(best$depth_summary_df) && nrow(best$depth_summary_df)) {
+    best$depth_map[names(heldout_depth_map)] <- as.integer(heldout_depth_map)
+    heldout_selection <- heldout$depth_selection
+    if (!is.null(heldout_selection) && nrow(heldout_selection)) {
+      heldout_selection <- heldout_selection[match(best$depth_summary_df$model, heldout_selection$model), , drop = FALSE]
+      matched <- !is.na(heldout_selection$model)
+      best$depth_summary_df$depth_source <- ifelse(matched, "held-out policy-tree CV", "consensus policy summary")
+      best$depth_summary_df$depth_reason <- ifelse(matched, heldout_selection$reason, NA_character_)
+      best$depth_summary_df$depth_selected[matched] <- heldout_selection$selected_depth[matched]
+      best$depth_summary_df$depth_label[matched] <- ifelse(
+        heldout_selection$selected_depth[matched] == 1L, "depth 1", "depth 2"
+      )
+      best$depth_summary_df$pv_depth1[matched] <- heldout_selection$pv_depth1[matched]
+      best$depth_summary_df$pv_depth2[matched] <- heldout_selection$pv_depth2[matched]
+      best$depth_summary_df$pv_selected[matched] <- ifelse(
+        heldout_selection$selected_depth[matched] == 1L,
+        heldout_selection$pv_depth1[matched],
+        heldout_selection$pv_depth2[matched]
+      )
+      best$depth_summary_df$pv_alternative[matched] <- ifelse(
+        heldout_selection$selected_depth[matched] == 1L,
+        heldout_selection$pv_depth2[matched],
+        heldout_selection$pv_depth1[matched]
+      )
+      best$depth_summary_df$pv_gain[matched] <- best$depth_summary_df$pv_selected[matched] -
+        best$depth_summary_df$pv_alternative[matched]
+      best$depth_summary_df$depth2_minus_depth1 <- NA_real_
+      best$depth_summary_df$depth2_minus_depth1[matched] <- heldout_selection$depth2_minus_depth1[matched]
+      best$depth_summary_df$depth1_root_stability <- NA_real_
+      best$depth_summary_df$depth1_root_stability[matched] <- heldout_selection$depth1_root_stability[matched]
+      best$depth_summary_df$depth2_root_stability <- NA_real_
+      best$depth_summary_df$depth2_root_stability[matched] <- heldout_selection$depth2_root_stability[matched]
+    } else {
+      best$depth_summary_df$depth_source <- ifelse(
+        best$depth_summary_df$model %in% names(heldout_depth_map),
+        "held-out policy-tree CV", "consensus policy summary"
+      )
+      best$depth_summary_df$depth_reason <- NA_character_
+    }
+  }
+
+  workflow_model_names <- names(best$depth_map)
+  if (!length(workflow_model_names)) workflow_model_names <- model_names_override
 
   # Build depth comparison report (always shows both depths for transparency)
   depth_comparison_report <- .build_depth_comparison_report(
@@ -274,7 +366,7 @@ margot_policy_workflow <- function(stability,
     c(
       list(
         object = stability,
-        model_names = model_names_override,
+        model_names = workflow_model_names,
         depths_by_model = best$depth_map,
         auto_recommend = TRUE,
         split_compact = split_compact,
@@ -422,6 +514,9 @@ margot_policy_workflow <- function(stability,
     strict_branch = strict_branch,
     restricted_scope_1 = "branch",
     restricted_scope_2 = "leaf",
+    heldout_policy = !is.null(heldout),
+    heldout_num_folds = heldout$metadata$num_folds %||% heldout_num_folds,
+    heldout_n_repeats = heldout$metadata$n_repeats %||% heldout_n_repeats,
     show_neutral = show_neutral,
     expand_acronyms = isTRUE(expand_acronyms),
     signal_score = dots[["signal_score"]] %||% signal_score,
@@ -516,6 +611,7 @@ margot_policy_workflow <- function(stability,
   list(
     best = best,
     summary = summary,
+    heldout_policy = heldout,
     interpret = interpret,
     plots = plots,
     method_explanation = method_explanation,
@@ -561,8 +657,8 @@ margot_policy_workflow <- function(stability,
     lines <- c(lines, sprintf("Stability guard: depth-2 consensus-strength loss must be <= %.3f", max_stability_loss))
   }
   lines <- c(lines, "")
-  lines <- c(lines, "| Outcome | Depth-1 PV | Depth-2 PV | Gain (delta) | Stability loss | Selected | Rationale |")
-  lines <- c(lines, "|---------|------------|------------|----------|----------------|----------|-----------|")
+  lines <- c(lines, "| Outcome | Source | Depth-1 PV | Depth-2 PV | Gain (delta) | Stability loss | Selected | Rationale |")
+  lines <- c(lines, "|---------|--------|------------|------------|--------------|----------------|----------|-----------|")
 
 
   for (i in seq_len(nrow(depth_summary_df))) {
@@ -571,13 +667,24 @@ margot_policy_workflow <- function(stability,
     pv1 <- row$pv_depth1
     pv2 <- row$pv_depth2
     selected <- row$depth_selected
-    stability_loss <- row$stability_loss_depth2 %||% NA_real_
+    source <- if ("depth_source" %in% names(row) && !is.na(row$depth_source)) {
+      row$depth_source
+    } else {
+      "consensus policy summary"
+    }
+    stability_loss <- if ("stability_loss_depth2" %in% names(row)) {
+      row$stability_loss_depth2
+    } else {
+      NA_real_
+    }
 
     # Calculate gain
     delta <- if (!is.na(pv1) && !is.na(pv2)) pv2 - pv1 else NA_real_
 
     # Determine rationale
-    if (is.na(delta)) {
+    if ("depth_reason" %in% names(row) && !is.na(row$depth_reason) && nzchar(row$depth_reason)) {
+      rationale <- row$depth_reason
+    } else if (is.na(delta)) {
       rationale <- "Missing data"
     } else if (delta >= threshold && (is.na(stability_loss) || !is.finite(max_stability_loss) || stability_loss <= max_stability_loss)) {
       rationale <- sprintf("Gain (%.3f) >= threshold", delta)
@@ -596,8 +703,9 @@ margot_policy_workflow <- function(stability,
     stability_loss_str <- if (!is.na(stability_loss)) sprintf("%.3f", stability_loss) else "—"
     selected_str <- if (!is.na(selected)) sprintf("Depth-%d", selected) else "—"
 
-    lines <- c(lines, sprintf("| %s | %s | %s | %s | %s | %s | %s |",
-                              outcome_label, pv1_str, pv2_str, delta_str, stability_loss_str, selected_str, rationale))
+    lines <- c(lines, sprintf("| %s | %s | %s | %s | %s | %s | %s | %s |",
+                              outcome_label, source, pv1_str, pv2_str, delta_str,
+                              stability_loss_str, selected_str, rationale))
   }
 
   lines <- c(lines, "")
@@ -610,11 +718,19 @@ margot_policy_workflow <- function(stability,
   # Add interpretation note
   lines <- c(lines, "")
   lines <- c(lines, "*Note: Depth-1 trees (single split) are preferred when the policy value gain from")
+  lines <- c(lines, "adding complexity is below the threshold. When the source is held-out policy-tree")
+  lines <- c(lines, "CV, values and rationales refer to repeated held-out evaluation of the learning")
+  lines <- c(lines, "procedure; selected full-sample or consensus trees remain display objects.*")
 
-  lines <- c(lines, "adding complexity is below the threshold. This favours interpretable, stable policies.*")
-
+  data_cols <- intersect(
+    c(
+      "outcome_label", "depth_source", "depth_reason", "pv_depth1", "pv_depth2",
+      "stability_loss_depth2", "depth_selected"
+    ),
+    names(depth_summary_df)
+  )
   list(
     text = paste(lines, collapse = "\n"),
-    data = depth_summary_df[, intersect(c("outcome_label", "pv_depth1", "pv_depth2", "stability_loss_depth2", "depth_selected"), names(depth_summary_df)), drop = FALSE]
+    data = depth_summary_df[, data_cols, drop = FALSE]
   )
 }

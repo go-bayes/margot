@@ -1,3 +1,12 @@
+# [2026-06-20] margot 1.0.328
+
+### Added
+- `margot_policy_tree_cv()` runs repeated held-out policy-tree learning and evaluation. It reports fold-level held-out policy values, split-variable and threshold distributions, and a depth rule that prefers depth one unless depth two clears the material-improvement threshold without losing unacceptable root-split stability.
+
+### Changed
+- `margot_policy_workflow()` now attempts held-out policy-tree cross-validation for stability objects by default and uses its depth map as the primary depth-selection object when available. Full-sample or consensus trees remain reporting/display objects rather than the default source of depth decisions.
+- Policy-tree methods text now distinguishes descriptive full-data summaries, one held-out split, and repeated held-out evaluation of the policy-learning procedure.
+
 # [2026-06-19] margot 1.0.327
 
 The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is descriptive**. We cannot at this stage offer guarantees for welfare maximisation.

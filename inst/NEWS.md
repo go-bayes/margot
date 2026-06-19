@@ -1,5 +1,11 @@
 # margot NEWS
 
+## Changes in version 1.0.328
+
+### New
+- Added `margot_policy_tree_cv()` for repeated held-out policy-tree learning and evaluation. The helper reports fold-level held-out policy values, split-variable and threshold distributions, and a depth rule that prefers depth one unless depth two clears the material-improvement threshold without losing unacceptable root-split stability.
+- Updated `margot_policy_workflow()` so held-out policy-tree cross-validation is attempted by default for stability objects and used as the primary depth-selection object when available. Full-sample or consensus trees remain display/reporting objects rather than the source of the default depth decision.
+
 ## Changes in version 1.0.323
 
 ### New

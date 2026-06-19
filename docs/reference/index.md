@@ -138,6 +138,8 @@
 - [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
   : End-to-end Policy Workflow (depth selection -\> report -\>
   interpretation)
+- [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
+  : Cross-validated held-out policy-tree diagnostics
 - [`margot_policy_summary_report()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_report.md)
   : Policy Tree Summary Report (text + markdown table)
 - [`margot_policy_summary_compare_depths()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.md)
@@ -172,6 +174,8 @@
   : Summary method for stability policy tree results
 - [`print(`*`<margot_stability_policy_tree>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_stability_policy_tree.md)
   : Print method for stability policy tree results
+- [`print(`*`<margot_policy_tree_cv>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_policy_tree_cv.md)
+  : Print held-out policy-tree CV results
 - [`summary(`*`<margot_bootstrap_policy_tree>`*`)`](https://go-bayes.github.io/margot/reference/summary.margot_bootstrap_policy_tree.md)
   : Summary method for bootstrap policy tree results
 - [`print(`*`<margot_bootstrap_policy_tree>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_bootstrap_policy_tree.md)

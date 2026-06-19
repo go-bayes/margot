@@ -39,24 +39,25 @@ margot_policy_methods_statement <- function(object,
 
   cite <- function(txt) if (citations) paste0(" (", txt, ")") else ""
   meth <- if (!is.null(tree_method)) tree_method else "policytree"
-  eval_txt <- if (descriptive_mode) {
-    "the complete-case evaluation slice used for descriptive reporting"
-  } else if (!is.null(train_props)) {
-    paste0("a held-out test fold (train proportion ", paste0(train_props, collapse = ","), ")")
+  heldout_cv <- inherits(object, "margot_policy_tree_cv") ||
+    identical(md$estimand %||% NULL, "held-out evaluation of the policy-learning procedure")
+  split_txt <- if (!is.null(train_props)) paste0("a held-out test fold (train proportion ", paste0(train_props, collapse = ","), ")") else "a held-out test fold"
+  eval_sentence <- if (heldout_cv) {
+    "Repeated held-out folds evaluate the policy-learning procedure, not the value of a final full-sample display tree."
+  } else if (descriptive_mode) {
+    "The complete-case evaluation slice is used for descriptive reporting; this descriptive value summary is not a held-out policy-value claim."
   } else {
-    "the stored evaluation slice"
-  }
-  overfit_txt <- if (descriptive_mode) {
-    "This descriptive value summary is not a held-out policy-value claim."
-  } else {
-    "This held-out evaluation reduces adaptive overfitting."
+    paste0(
+      "When train/test splits are available, policy values are evaluated on ", split_txt,
+      " to reduce adaptive overfitting."
+    )
   }
 
   s1 <- paste0(
     "We estimated individualized treatment effects using doubly robust (DR) scores and learned depth-", depth,
     " policy trees to target treatment. DR scores were computed from causal forests and used as the policy learning objective",
-    cite("Athey & Wager, 2021; grf; policytree"), ". Policy trees were fit with ", meth,
-    ", and evaluated on ", eval_txt, ". ", overfit_txt
+    cite("Athey & Wager, 2021; grf; policytree"), ". Policy trees were fit with ", meth, ". ",
+    eval_sentence
   )
 
   s2 <- if (isTRUE(include_policy_value)) {

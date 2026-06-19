@@ -243,7 +243,8 @@ margot_policy_tree <- function(model_results,
       compute_depth2 = compute_depth2,
       train_proportion = train_proportion,
       verbose = verbose,
-      seed = seed
+      seed = seed,
+      tree_method = actual_tree_method
     )
 
     output$results[[model_name]] <- updated_model
@@ -268,7 +269,8 @@ compute_policy_trees_for_model <- function(model_result,
                                            compute_depth2,
                                            train_proportion,
                                            verbose,
-                                           seed) {
+                                           seed,
+                                           tree_method) {
   # set seed for reproducibility
   if (!is.null(seed)) {
     set.seed(seed + as.integer(as.factor(model_name)))
@@ -364,7 +366,7 @@ compute_policy_trees_for_model <- function(model_result,
       covariates[train_idx, selected_covars, drop = FALSE],
       dr_scores[train_idx, ],
       depth = 1,
-      tree_method = actual_tree_method
+      tree_method = tree_method
     )
   }
 
@@ -400,7 +402,7 @@ compute_policy_trees_for_model <- function(model_result,
         covariates[train_idx, depth2_covars, drop = FALSE],
         dr_scores[train_idx, ],
         depth = 2,
-        tree_method = actual_tree_method
+        tree_method = tree_method
       )
 
       preds <- tryCatch(
@@ -450,7 +452,7 @@ compute_policy_trees_for_model <- function(model_result,
   output$policy_tree_metadata <- list(
     covariate_mode = covariate_mode,
     train_proportion = train_proportion,
-    tree_method = actual_tree_method,
+    tree_method = tree_method,
     actual_train_size = if (compute_depth2 && exists("train_idx")) length(train_idx) else NA,
     actual_test_size = if (compute_depth2 && exists("test_idx")) length(test_idx) else NA,
     depth1_covariates = if (compute_depth1) selected_covars else NULL,

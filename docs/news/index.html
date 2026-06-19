@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.327</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.328</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,20 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.328" id="id_2026-06-20-margot-10328">[2026-06-20] margot 1.0.328<a class="anchor" aria-label="anchor" href="#id_2026-06-20-margot-10328"></a></h2>
+<div class="section level4">
+<h4 id="added-1-0-328">Added<a class="anchor" aria-label="anchor" href="#added-1-0-328"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code> runs repeated held-out policy-tree learning and evaluation. It reports fold-level held-out policy values, split-variable and threshold distributions, and a depth rule that prefers depth one unless depth two clears the material-improvement threshold without losing unacceptable root-split stability.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-0-328">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-328"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_workflow.html">margot_policy_workflow()</a></code> now attempts held-out policy-tree cross-validation for stability objects by default and uses its depth map as the primary depth-selection object when available. Full-sample or consensus trees remain reporting/display objects rather than the default source of depth decisions.</li>
+<li>Policy-tree methods text now distinguishes descriptive full-data summaries, one held-out split, and repeated held-out evaluation of the policy-learning procedure.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.327" id="id_2026-06-19-margot-10327">[2026-06-19] margot 1.0.327<a class="anchor" aria-label="anchor" href="#id_2026-06-19-margot-10327"></a></h2>
 <p>The GRF policy-tree pipeline is reorganised to ensure the <strong>standard workflow is descriptive</strong>. We cannot at this stage offer guarantees for welfare maximisation.</p>
@@ -5449,4 +5463,3 @@
 
 
   </body></html>
-

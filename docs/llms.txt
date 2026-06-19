@@ -172,6 +172,8 @@ stable state. Expect breaking changes.
   : Perform Naive Cross-Sectional Regressions
 - [`margot_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_policy_tree.md)
   : Recompute Policy Trees with Custom Parameters
+- [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
+  : Repeated held-out policy-tree learning and evaluation
 - [`margot_policy_tree_stability()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.md)
   : Stability Analysis for Policy Trees
 - [`margot_policy_tree_bootstrap()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_bootstrap.md)

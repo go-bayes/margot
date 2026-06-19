@@ -114,6 +114,7 @@ reference:
     - margot_interpret_heterogeneity
     - margot_omnibus_hetero_test
     - margot_policy_workflow
+    - margot_policy_tree_cv
     - margot_policy_summary_report
     - margot_policy_summary_compare_depths
     - margot_policy_split_diagnostic
@@ -131,6 +132,7 @@ reference:
     - get_variable_importance
     - summary.margot_stability_policy_tree
     - print.margot_stability_policy_tree
+    - print.margot_policy_tree_cv
     - summary.margot_bootstrap_policy_tree
     - print.margot_bootstrap_policy_tree
     - print.margot_correlation_assessment
