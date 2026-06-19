@@ -13,7 +13,7 @@ depth-2 gains are material."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.323</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.326</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ depth-2 gains are material.</p>
 <span>  R <span class="op">=</span> <span class="fl">499L</span>,</span>
 <span>  dominance_threshold <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  strict_branch <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  min_gain_for_depth_switch <span class="op">=</span> <span class="fl">0.005</span>,</span>
+<span>  min_gain_for_depth_switch <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  include_interpretation <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  interpret_models <span class="op">=</span> <span class="st">"wins"</span>,</span>
 <span>  plot_models <span class="op">=</span> <span class="st">"none"</span>,</span>
@@ -74,7 +74,8 @@ depth-2 gains are material.</p>
 <span>  brief_include_group <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  expand_acronyms <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show_neutral <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  prefer_stability <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  prefer_stability <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  max_stability_loss_for_depth_switch <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  signal_score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"pv_snr"</span>, <span class="st">"uplift_snr"</span>, <span class="st">"hybrid"</span><span class="op">)</span>,</span>
 <span>  signals_k <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -118,7 +119,7 @@ recommending restricted deployment (default TRUE).</p></dd>
 
 <dt id="arg-min-gain-for-depth-switch">min_gain_for_depth_switch<a class="anchor" aria-label="anchor" href="#arg-min-gain-for-depth-switch"></a></dt>
 <dd><p>Numeric; minimum PV gain required to switch from depth-1
-to depth-2 (default 0.005 on standardized outcomes).</p></dd>
+to depth-2 (default 0.01 on standardized outcomes).</p></dd>
 
 
 <dt id="arg-include-interpretation">include_interpretation<a class="anchor" aria-label="anchor" href="#arg-include-interpretation"></a></dt>
@@ -197,9 +198,13 @@ to override explicitly.</p></dd>
 
 
 <dt id="arg-prefer-stability">prefer_stability<a class="anchor" aria-label="anchor" href="#arg-prefer-stability"></a></dt>
-<dd><p>Logical; if TRUE, raise the parsimony threshold for switching to
-depth-2 (min_gain_for_depth_switch &gt;= 0.01) to prefer depth-1 unless depth-2 gains are
-clearly larger.</p></dd>
+<dd><p>Logical; if TRUE, require material depth-2 gains and
+stable consensus before switching from depth-1. Default TRUE.</p></dd>
+
+
+<dt id="arg-max-stability-loss-for-depth-switch">max_stability_loss_for_depth_switch<a class="anchor" aria-label="anchor" href="#arg-max-stability-loss-for-depth-switch"></a></dt>
+<dd><p>Numeric; maximum permitted loss in
+consensus strength when switching to depth-2. Default 0.05.</p></dd>
 
 
 <dt id="arg-signal-score">signal_score<a class="anchor" aria-label="anchor" href="#arg-signal-score"></a></dt>
@@ -316,7 +321,7 @@ coverage and stability). See the package NEWS for details.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

@@ -62,8 +62,8 @@ test_that("Split info is created when use_train_test_split = TRUE", {
   expect_true("split_info" %in% names(results_split$results$model_Y1))
   expect_true("train_indices" %in% names(results_split$results$model_Y1$split_info))
   expect_true("test_indices" %in% names(results_split$results$model_Y1$split_info))
-  expect_true("ate_test_set" %in% names(results_split$results$model_Y1$split_info))
-  expect_true("custom_table_test_set" %in% names(results_split$results$model_Y1$split_info))
+  expect_true("ate_all_data" %in% names(results_split$results$model_Y1$split_info))
+  expect_true("custom_table_all_data" %in% names(results_split$results$model_Y1$split_info))
 })
 
 # check main output structure remains the same
@@ -89,32 +89,36 @@ cat("✓ Train/test split test passed\n\n")
 
 # test 3: margot_recompute_ate with split info
 cat("Test 3: margot_recompute_ate respects train/test split\n")
-ate_overlap <- margot_recompute_ate(
-  results_split,
-  target_sample = "overlap",
-  respect_train_test_split = TRUE
-)
+if (!is.null(results_split$full_models) && length(results_split$full_models) > 0) {
+  ate_overlap <- margot_recompute_ate(
+    results_split,
+    target_sample = "overlap",
+    respect_train_test_split = TRUE
+  )
 
-test_that("margot_recompute_ate preserves split_info", {
-  expect_true("split_info" %in% names(ate_overlap$results$model_Y1))
-  expect_true("ate_test_set" %in% names(ate_overlap$results$model_Y1$split_info))
-})
+  test_that("margot_recompute_ate preserves split_info", {
+    expect_true("split_info" %in% names(ate_overlap$results$model_Y1))
+    expect_true("ate_all_data" %in% names(ate_overlap$results$model_Y1$split_info))
+  })
 
-cat("✓ margot_recompute_ate test passed\n\n")
+  cat("✓ margot_recompute_ate test passed\n\n")
+} else {
+  cat("Skipping margot_recompute_ate check: full_models not available in this run\n\n")
+}
 
 # test 4: Compare ATEs
 cat("Test 4: Compare ATEs between all data and test set\n")
 ate_all_Y1 <- results_split$results$model_Y1$ate[1]
-ate_test_Y1 <- results_split$results$model_Y1$split_info$ate_test_set[1]
+ate_test_Y1 <- results_split$results$model_Y1$split_info$ate_all_data[1]
 
-cat(sprintf("Y1 - ATE (all data): %.3f\n", ate_all_Y1))
-cat(sprintf("Y1 - ATE (test set): %.3f\n", ate_test_Y1))
+cat(sprintf("Y1 - ATE (test set): %.3f\n", ate_all_Y1))
+cat(sprintf("Y1 - ATE (all data reference): %.3f\n", ate_test_Y1))
 cat(sprintf("Difference: %.3f\n\n", abs(ate_all_Y1 - ate_test_Y1)))
 
 # Summary
 cat("All tests passed! Summary:\n")
-cat("- Default behavior preserved (backward compatibility ✓)\n")
+cat("- Descriptive default behaviour verified (✓)\n")
 cat("- Train/test split functionality working (✓)\n")
 cat("- Split info stored correctly (✓)\n") 
 cat("- Main output format unchanged (✓)\n")
-cat("- margot_recompute_ate respects splits (✓)\n")
+cat("- margot_recompute_ate split check is conditional on saved full_models (✓)\n")

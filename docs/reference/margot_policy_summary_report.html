@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.323</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.326</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -313,8 +313,9 @@ instead of bullet-point lists.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Method (estimation and identities):
-- For each model and depth, we evaluate the consensus policy on the held-out test set
-  used to build `plot_data` (policytree test indices).
+- For each model and depth, we evaluate the consensus policy on the stored
+  evaluation slice used to build `plot_data`. In descriptive mode this slice
+  is the complete-case sample; in split mode it is the held-out test set.
 - Let μ0(x), μ1(x) be conditional means E[Y(0)|X=x], E[Y(1)|X=x] estimated by
   policytree/GRF. We use `double_robust_scores()` stored in `dr_scores` to obtain
   per-unit estimates for μ0 and μ1 on the test rows, and we predict policy actions a(x)
@@ -351,7 +352,7 @@ instead of bullet-point lists.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

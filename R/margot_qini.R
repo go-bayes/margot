@@ -23,6 +23,9 @@
 #'   represent cheap treatments; higher values (e.g., 5) represent expensive treatments.
 #'   Affects QINI curve shape - lower costs create steeper curves, higher costs create
 #'   shallower curves.
+#' @param allow_in_sample Logical. If FALSE (default), refuse to generate QINI
+#'   curves from descriptive no-split `margot_causal_forest()` objects. Set TRUE
+#'   only for explicitly exploratory in-sample curves.
 #'
 #' @return A list where each element corresponds to a model and contains:
 #'   qini_objects (maq objects for CATE and baseline curves),
@@ -68,10 +71,21 @@ margot_qini <- function(models,
                         remove_underscores = TRUE,
                         verbose = TRUE,
                         seed = 12345,
-                        treatment_cost = 1) {
+                        treatment_cost = 1,
+                        allow_in_sample = FALSE) {
   # validate inputs
   if (!is.list(models) || is.null(models$results)) {
     stop("models must be a list returned by margot_causal_forest() with a 'results' component")
+  }
+
+  # caution: QINI curves are exploratory. The evaluation forest is fit on the
+  # held-out rows it scores (OOB DR scores) and there is no fully cross-fitted
+  # curve protocol; treat QINI as supplementary, not a primary welfare claim.
+  if (verbose) {
+    cli::cli_alert_warning(paste(
+      "QINI curves are exploratory (no fully cross-fitted protocol);",
+      "report them in supplements, not as primary heterogeneity evidence."
+    ))
   }
 
   # determine which models to process
@@ -95,6 +109,15 @@ margot_qini <- function(models,
 
   if (length(selected_models) == 0) {
     stop("No valid models to process")
+  }
+
+  descriptive_mode <- identical(models$computation_params$use_train_test_split, FALSE)
+  if (isTRUE(descriptive_mode) && !isTRUE(allow_in_sample)) {
+    stop(
+      "margot_qini() would generate in-sample QINI curves from a descriptive no-split object. ",
+      "Re-run margot_causal_forest(use_train_test_split = TRUE) or set allow_in_sample = TRUE for exploratory curves.",
+      call. = FALSE
+    )
   }
 
   if (verbose) {

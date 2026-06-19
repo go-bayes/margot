@@ -44,7 +44,7 @@ results_split <- margot_causal_forest(
   verbose = FALSE
 )
 
-cat("Combined table (computed on ALL data):\n")
+cat("Combined table (computed on TEST data):\n")
 print(results_split$combined_table)
 cat("\nsplit_info present:", "split_info" %in% names(results_split$results$model_Y1), "\n")
 
@@ -56,15 +56,15 @@ if ("split_info" %in% names(results_split$results$model_Y1)) {
   cat("- Train proportion:", split_info$train_proportion, "\n")
 
   cat("\nComparison of ATEs:\n")
-  cat("- ATE (all data):", results_split$results$model_Y1$ate[1], "\n")
-  cat("- ATE (test set):", split_info$ate_test_set[1], "\n")
+  cat("- ATE (test set):", results_split$results$model_Y1$ate[1], "\n")
+  cat("- ATE (all data reference):", split_info$ate_all_data[1], "\n")
 
-  cat("\nTest set E-value table:\n")
-  print(split_info$custom_table_test_set)
+  cat("\nAll-data reference E-value table:\n")
+  print(split_info$custom_table_all_data)
 }
 
 cat("\n=== Summary ===\n")
 cat("✓ Default behavior unchanged\n")
 cat("✓ Main output format preserved\n")
-cat("✓ Test-set metrics stored separately in split_info\n")
-cat("✓ Zero breaking changes\n")
+cat("✓ All-data reference metrics stored separately in split_info\n")
+cat("✓ Split-mode reference fields verified\n")

@@ -11,7 +11,7 @@ full policy analysis, paralleling the functionality of margot_rate()."></head><b
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.323</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.326</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,8 @@ full policy analysis, paralleling the functionality of margot_rate().</p>
 <span>  remove_underscores <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
-<span>  treatment_cost <span class="op">=</span> <span class="fl">1</span></span>
+<span>  treatment_cost <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  allow_in_sample <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -123,6 +124,12 @@ represent cheap treatments; higher values (e.g., 5) represent expensive treatmen
 Affects QINI curve shape - lower costs create steeper curves, higher costs create
 shallower curves.</p></dd>
 
+
+<dt id="arg-allow-in-sample">allow_in_sample<a class="anchor" aria-label="anchor" href="#arg-allow-in-sample"></a></dt>
+<dd><p>Logical. If FALSE (default), refuse to generate QINI
+curves from descriptive no-split `margot_causal_forest()` objects. Set TRUE
+only for explicitly exploratory in-sample curves.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -163,7 +170,7 @@ other QINI visualization functions.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

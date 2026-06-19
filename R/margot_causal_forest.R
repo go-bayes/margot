@@ -340,7 +340,8 @@ margot_inspect_qini <- function(model_results,
 #' Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Qini Cross-Validation
 #'
 #' This function runs multiple GRF causal forest models with enhanced features. In addition to estimating
-#' causal effects, it can compute the Rank-Weighted Average Treatment Effect (RATE) for each model. It also
+#' causal effects, it stores placeholders for legacy inline RATE and directs inferential RATE to
+#' [margot_rate_cv()]. It also
 #' gives you the option to train a separate "Qini forest" on a subset of data and compute Qini curves on
 #' held-out data, thereby avoiding in-sample optimism in the Qini plots.
 #'
@@ -349,9 +350,15 @@ margot_inspect_qini <- function(model_results,
 #' @param covariates A matrix of covariates to be used in the GRF models.
 #' @param W A vector of binary treatment assignments.
 #' @param weights A vector of weights for the observations.
-#' @param grf_defaults A list of default parameters for the GRF models.
+#' @param grf_defaults A list of default parameters for the GRF models. Defaults
+#'   are `num.trees = 4000` and `min.node.size = 50`; user-supplied values
+#'   override these. For large samples (`n > 30000`), consider
+#'   `min.node.size = 100` as a sensitivity analysis.
 #' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
-#' @param compute_rate Logical indicating whether to compute RATE for each model. Default is TRUE.
+#' @param compute_rate Logical indicating whether to compute legacy inline RATE
+#'   for each model. Default is FALSE. Inline RATE is now skipped because GRF RATE
+#'   requires priorities constructed independently from evaluation data; use
+#'   [margot_rate_cv()] for inferential RATE.
 #'   Note: Direct computation of RATE, QINI, and policy trees within this function may be
 #'   deprecated in future versions. Use margot_rate(), margot_qini(), and margot_policy_tree() instead.
 #' @param top_n_vars Integer specifying the number of top variables to use for additional computations. Default is 15.
@@ -373,12 +380,14 @@ margot_inspect_qini <- function(model_results,
 #'   higher values (e.g., 5) represent expensive treatments creating shallower curves.
 #' @param seed Integer. Random seed for reproducibility of train/test splits for policy trees
 #'   and QINI evaluation. Default is 12345.
-#' @param use_train_test_split Logical. If TRUE (default), uses a consistent train/test split where:
-#'   - The main causal forest is trained on all data (following GRF best practices for honesty)
-#'   - All reported results (ATE, E-values, combined_table) are computed on the TEST SET
-#'   - Policy trees and QINI also use the same train/test split
-#'   - All-data results are stored in split_info for reference
-#'   If FALSE, the main forest uses all data for estimation and policy trees/QINI get their own splits.
+#' @param use_train_test_split Logical. Default FALSE (descriptive mode): the forest,
+#'   CATE, conditional means, DR scores and policy trees use all complete cases and are
+#'   reproducible given a fixed seed; RATE/AUTOC and QINI curves are not computed because
+#'   they are not honestly identified without a held-out split. Use
+#'   `margot_policy_tree_stability()` for the bootstrap robustness report on the descriptive
+#'   tree. Set TRUE for held-out QINI and policy diagnostics: one consistent train/test split
+#'   where the main forest trains on all data, reported ATE/E-values are computed on the TEST
+#'   set, and policy trees and QINI share that split (all-data results stored in split_info).
 #' @param flip_outcomes Character vector or list specifying outcomes to flip (reverse score).
 #'   - Character vector: applies default flip_method and flip_scale_bounds to all listed outcomes
 #'   - List: allows per-outcome specification, e.g., list(anxiety = list(method = "ordinal", scale_bounds = c(1, 7)))
@@ -406,7 +415,7 @@ margot_inspect_qini <- function(model_results,
 margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  grf_defaults = list(),
                                  save_data = FALSE,
-                                 compute_rate = TRUE,
+                                 compute_rate = FALSE,
                                  top_n_vars = 15,
                                  save_models = TRUE,
                                  train_proportion = 0.5,
@@ -417,7 +426,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
                                  verbose = TRUE,
                                  qini_treatment_cost = 1,
                                  seed = 12345,
-                                 use_train_test_split = TRUE, # changed default to TRUE
+                                 use_train_test_split = FALSE, # descriptive no-split default; set TRUE for held-out QINI
                                  flip_outcomes = NULL,
                                  flip_method = "zscore",
                                  flip_scale_bounds = NULL) {
@@ -559,6 +568,15 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
   if (length(not_missing) == 0) stop("no complete cases in covariates")
   if (verbose) cli::cli_alert_info(paste("number of complete cases:", length(not_missing)))
 
+  # use conservative GRF defaults unless callers explicitly override them.
+  grf_default_params <- list(num.trees = 4000, min.node.size = 50)
+  grf_defaults <- utils::modifyList(grf_default_params, grf_defaults)
+  if (verbose) {
+    cli::cli_alert_info(
+      "GRF defaults: num.trees = {grf_defaults$num.trees}, min.node.size = {grf_defaults$min.node.size}"
+    )
+  }
+
   # handle compute_marginal_only parameter
   if (compute_marginal_only) {
     if (verbose) {
@@ -594,6 +612,29 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       cli::cli_alert_info(paste(
         "train set size:", length(global_train_indices),
         "| test set size:", length(global_test_indices)
+      ))
+    }
+  }
+
+  # --- descriptive (no-split) mode notice ---
+  # in the default descriptive mode the forest, CATE, conditional means, DR
+  # scores and policy trees use all complete cases and are reproducible given a
+  # fixed seed. RATE/AUTOC and QINI curves are not honestly identified without a
+  # held-out split, so they are deferred to an explicit split run.
+  if (verbose && !compute_marginal_only && !use_train_test_split) {
+    cli::cli_alert_info(paste(
+      "descriptive mode (use_train_test_split = FALSE): forest, CATE,",
+      "conditional means, DR scores and policy trees use all data and are reproducible."
+    ))
+    if (compute_rate) {
+      cli::cli_alert_warning(paste(
+        "compute_rate = TRUE with use_train_test_split = FALSE: RATE will be skipped.",
+        "Use margot_rate_cv() for inferential RATE."
+      ))
+    } else {
+      cli::cli_alert_info(paste(
+        "RATE/AUTOC and QINI curves are not computed in descriptive mode;",
+        "re-run with use_train_test_split = TRUE for held-out QINI and use margot_rate_cv() for RATE."
       ))
     }
   }
@@ -664,26 +705,27 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
 
         tau_hat <- results[[model_name]]$tau_hat
 
-        if (!compute_marginal_only && compute_rate) {
-          results[[model_name]]$rate_result <- grf::rank_average_treatment_effect(model, tau_hat)
-          attr(results[[model_name]]$rate_result, "target") <- "AUTOC"
-          results[[model_name]]$rate_qini <- grf::rank_average_treatment_effect(model, tau_hat, target = "QINI")
-          attr(results[[model_name]]$rate_qini, "target") <- "QINI"
-        } else if (compute_marginal_only) {
-          # create empty structure for pipeline compatibility
-          results[[model_name]]$rate_result <- list(
-            estimate = NA,
-            std.err = NA,
-            computed = FALSE,
-            reason = "compute_marginal_only set to TRUE"
-          )
-          results[[model_name]]$rate_qini <- list(
-            estimate = NA,
-            std.err = NA,
-            computed = FALSE,
-            reason = "compute_marginal_only set to TRUE"
-          )
+        # inline RATE is intentionally not computed here because the GRF RATE
+        # protocol requires independent prioritisation and evaluation stages.
+        rate_reason <- if (compute_marginal_only) {
+          "compute_marginal_only set to TRUE"
+        } else if (compute_rate) {
+          "compute_rate = TRUE requested, but inline RATE is skipped; use margot_rate_cv() for inferential RATE"
+        } else {
+          "compute_rate = FALSE; use margot_rate_cv() for inferential RATE"
         }
+        results[[model_name]]$rate_result <- list(
+          estimate = NA,
+          std.err = NA,
+          computed = FALSE,
+          reason = rate_reason
+        )
+        results[[model_name]]$rate_qini <- list(
+          estimate = NA,
+          std.err = NA,
+          computed = FALSE,
+          reason = rate_reason
+        )
 
         # --- compute conditional means if requested ---
         if (compute_conditional_means && save_models) {
@@ -743,20 +785,19 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         # determine train/test indices for policy trees
         if (!compute_marginal_only) {
           if (use_train_test_split) {
-            # use global train/test split
+            # use global train/test split (held-out policy value available)
             train_indices <- global_train_indices
             test_indices <- global_test_indices
           } else {
-            # create new split specific to this model
-            n_non_missing <- length(not_missing)
-            train_size <- floor(train_proportion * n_non_missing)
-            if (train_size < 1) stop("train_proportion too low: resulting train_size is less than 1")
-            set.seed(seed + as.integer(factor(model_name)))
-            train_indices <- sample(not_missing, train_size)
-            test_indices <- setdiff(not_missing, train_indices)
+            # descriptive mode: fit the policy tree on all complete cases.
+            # deterministic and reproducible given a fixed forest seed; no
+            # held-out policy value is implied here. use
+            # margot_policy_tree_stability() for the bootstrap robustness report.
+            train_indices <- not_missing
+            test_indices <- not_missing
           }
 
-          if (length(test_indices) < 1) stop("test set is empty after splitting for policy tree")
+          if (length(test_indices) < 1) stop("no complete cases available for policy tree")
         }
 
         if (!compute_marginal_only) {
@@ -797,10 +838,16 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
           )
         }
 
-        # --- 4) compute qini curves ---
-        if (!compute_marginal_only) {
-          # Always use honest evaluation for QINI
-          if (verbose) cli::cli_alert_info("performing train/test split for honest QINI evaluation")
+        # --- 4) compute qini curves (honest evaluation requires a held-out split) ---
+        if (!compute_marginal_only && use_train_test_split) {
+          if (verbose) {
+            cli::cli_alert_info("performing train/test split for honest QINI evaluation")
+            cli::cli_alert_warning(paste(
+              "QINI curves are exploratory: the evaluation forest is fit on the",
+              "held-out rows it scores (OOB DR scores), and no fully cross-fitted",
+              "curve protocol exists. Report QINI in supplements only."
+            ))
+          }
 
           # determine train/test indices for QINI
           if (use_train_test_split) {
@@ -863,7 +910,17 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
           } else {
             if (verbose) cli::cli_alert_warning(crayon::yellow(paste("unable to compute QINI curves for", outcome)))
           }
-        } else { # compute_marginal_only
+        } else {
+          # QINI not computed: either compute_marginal_only or descriptive
+          # (no-split) mode. honest QINI requires a held-out split.
+          qini_reason <- if (compute_marginal_only) {
+            "compute_marginal_only set to TRUE"
+          } else {
+            "use_train_test_split = FALSE (descriptive mode); re-run with use_train_test_split = TRUE for QINI"
+          }
+          if (!compute_marginal_only && verbose) {
+            cli::cli_alert_info("skipping QINI for {outcome} (descriptive mode; no held-out split)")
+          }
           # create empty structure for pipeline compatibility
           results[[model_name]]$qini_data <- data.frame(
             proportion = numeric(0),
@@ -872,11 +929,11 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
           )
           results[[model_name]]$qini_objects <- list(
             computed = FALSE,
-            reason = "compute_marginal_only set to TRUE"
+            reason = qini_reason
           )
           results[[model_name]]$qini_metadata <- list(
             computed = FALSE,
-            reason = "compute_marginal_only set to TRUE",
+            reason = qini_reason,
             can_compute_later = TRUE
           )
         }
@@ -932,6 +989,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
     use_train_test_split = use_train_test_split,
     compute_conditional_means = compute_conditional_means
   )
+  output$grf_defaults <- grf_defaults
 
   if (save_data) {
     output$data <- data

@@ -10,3 +10,5 @@
 *.o
 *.so
 *.dll
+/planning/claude*.md
+/planning/codex*.md

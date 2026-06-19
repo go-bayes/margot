@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.323</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.326</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,59 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.326" id="id_2026-06-19-margot-10326">[2026-06-19] margot 1.0.326<a class="anchor" aria-label="anchor" href="#id_2026-06-19-margot-10326"></a></h2>
+<p>The GRF policy-tree pipeline is reorganised to ensure the <strong>standard workflow is descriptive</strong>. We cannot at this stage offer guarantees for welfare maximisation.</p>
+<div class="section level4">
+<h4 id="changed-1-0-326">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-326"></a></h4>
+<ul><li>
+<strong><code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> defaults to descriptive mode</strong> (<code>use_train_test_split = FALSE</code>, <code>compute_rate = FALSE</code>). The causal forest, CATE, conditional means, doubly-robust scores, outcome flips, and policy trees use all complete cases. Inline RATE/AUTOC and QINI curves are deferred (a notice is emitted; placeholders are kept for pipeline compatibility). Use <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code> for inferential RATE and set <code>use_train_test_split = TRUE</code> when an explicit held-out QINI diagnostic is required.</li>
+<li>
+<strong><code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> uses more regularised GRF defaults</strong> (<code>num.trees = 4000</code>, <code>min.node.size = 50</code>) unless callers override them. For large samples, <code>min.node.size = 100</code> is recommended as a sensitivity analysis.</li>
+<li>
+<strong>Depth selection now prefers depth-1 by default.</strong> Depth-2 must improve policy value by at least <code>0.01</code> outcome-standard-deviation units and must not reduce consensus strength by more than <code>0.05</code>.</li>
+<li>
+<strong><code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code> defaults to <code>vary_type = "bootstrap"</code></strong> (was <code>"split_only"</code>). Bootstrap resampling of rows is the descriptive robustness report for the full-data tree, and pure bootstrap mode now fits each tree on the full bootstrap sample rather than introducing a half-sample split.</li>
+<li>
+<strong>Policy-tree report prose is mode-aware.</strong> Default descriptive outputs no longer describe the evaluation slice as held-out or out-of-sample.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="added-1-0-326">Added<a class="anchor" aria-label="anchor" href="#added-1-0-326"></a></h4>
+<ul><li>Caution warnings on the QINI path (<code><a href="../reference/margot_qini.html">margot_qini()</a></code>, <code><a href="../reference/margot_plot_qini.html">margot_plot_qini()</a></code>, and inside <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code>). QINI curves are exploratory: the evaluation forest is fit on the held-out rows it scores (OOB DR scores) and there is no fully cross-fitted curve protocol. For now, suggest reporting QINI curve results in supplements with caution (i.e., not as primary heterogeneity evidence).</li>
+<li>
+<code><a href="../reference/margot_policy_split_diagnostic.html">margot_policy_split_diagnostic()</a></code> for repeated train/test split diagnostics of the policy-tree learning procedure.</li>
+<li>Inline RATE placeholders now point users to <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code>, avoiding in-sample or non-independent RATE claims inside <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code>.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="decisions-behind-the-change-1-0-326">Decisions behind the change<a class="anchor" aria-label="anchor" href="#decisions-behind-the-change-1-0-326"></a></h4>
+<ul><li>
+<strong>Honesty already covers the forest; the split protected the wrong thing.</strong> The causal forest’s honesty and out-of-bag prediction already make the CATE estimate honest. A train/test split protects the policy <em>value</em> (the winner’s curse from selecting the tree that maximises the doubly-robust score), which a descriptive claim never makes. So for the standard workflow the split is unnecessary, and it costs half the data and makes the displayed tree depend on the luck of the partition.</li>
+<li>
+<strong>Reproducibility is not stability.</strong> The policy-tree solver (<code>policytree</code> / <code>fastpolicytree</code>) is a deterministic exact optimiser; with a fixed seed and no split the descriptive tree reproduces exactly. Whether its splits are a real feature or a draw-specific artifact is a separate question, answered by the bootstrap robustness report — so stability is retained but reframed as a diagnostic, not an inference engine.</li>
+<li>
+<strong>Two paths, no false optimism.</strong> Descriptive (default): the full-data tree plus its bootstrap robustness, with no out-of-sample value claim. Inferential (opt-in): an honest held-out policy value via the split, clearly caveated. We deliberately do not ship a bespoke cross-fitted policy value — GRF has worked-out cross-fitting for RATE/AUTOC only, not for QINI curves or policy-tree value — so the inferential path is one honest split, not a manufactured precision.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="notes-1-0-326">Notes<a class="anchor" aria-label="anchor" href="#notes-1-0-326"></a></h4>
+<ul><li>No published results depend on the GRF policy-tree workflow, so these defaults change in place. The previous behaviour is reachable via explicit arguments (<code>use_train_test_split = TRUE</code>, <code>vary_type = "split_only"</code>), with RATE inference handled by <code><a href="../reference/margot_rate_cv.html">margot_rate_cv()</a></code>.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.325" id="id_2026-06-16-margot-10325">[2026-06-16] margot 1.0.325<a class="anchor" aria-label="anchor" href="#id_2026-06-16-margot-10325"></a></h2>
+<div class="section level4">
+<h4 id="changed-1-0-325">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-325"></a></h4>
+<ul><li>
+<code>qs2</code> moves from Imports to Suggests. Every <code>qs2</code> call is already namespace-qualified and guarded by <code><a href="https://github.com/qsbase/qs2" class="external-link">requireNamespace("qs2")</a></code>, so margot now loads without <code>qs2</code> installed; it is needed only if you call the deprecated <code>.qs2</code> read/write/convert helpers. The default object store (<code><a href="../reference/here_save.html">here_save()</a></code>/<code><a href="../reference/here_read.html">here_read()</a></code>) uses base <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>/<code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code> and never requires <code>qs2</code>. This avoids a hard dependency on a third-party serialiser for loading the package.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.324" id="id_2026-06-16-margot-10324">[2026-06-16] margot 1.0.324<a class="anchor" aria-label="anchor" href="#id_2026-06-16-margot-10324"></a></h2>
+<div class="section level4">
+<h4 id="fixed-1-0-324">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-324"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_stability_diagnostics.html">margot_stability_diagnostics()</a></code> is robust to the current stability-object layout. It reads variable-inclusion frequencies from <code>summary_metrics$variable_importance</code> when the legacy per-model <code>stability_metrics</code> slot is absent, reads consensus strength from <code>summary_metrics$convergence_diagnostics</code> as a fallback, resolves flipped (<code>_r</code>) and single-model <code>model_name</code>s, and reports available model names on a genuine mismatch instead of a cryptic error.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.323" id="id_2026-05-12-margot-10323">[2026-05-12] margot 1.0.323<a class="anchor" aria-label="anchor" href="#id_2026-05-12-margot-10323"></a></h2>
 <div class="section level4">
@@ -746,7 +799,7 @@
 <div class="section level4">
 <h4 id="improved-1-0-253">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-253"></a></h4>
 <ul><li>
-<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: checkpoint saves use <code>qs::qsave()</code> with high compression and single thread for compatibility with future parallelization.</li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: checkpoint saves use <code><a href="https://rdrr.io/pkg/qs/man/qsave.html" class="external-link">qs::qsave()</a></code> with high compression and single thread for compatibility with future parallelization.</li>
 <li>
 <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: CLI messages show checkpoint directory path and individual file saves.</li>
 <li>
@@ -5379,7 +5432,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

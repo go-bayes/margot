@@ -16,7 +16,8 @@ margot_qini(
   remove_underscores = TRUE,
   verbose = TRUE,
   seed = 12345,
-  treatment_cost = 1
+  treatment_cost = 1,
+  allow_in_sample = FALSE
 )
 }
 \arguments{
@@ -50,6 +51,10 @@ Default is 0.1 (10 percent spend captures early heterogeneity patterns effective
 represent cheap treatments; higher values (e.g., 5) represent expensive treatments.
 Affects QINI curve shape - lower costs create steeper curves, higher costs create
 shallower curves.}
+
+\item{allow_in_sample}{Logical. If FALSE (default), refuse to generate QINI
+curves from descriptive no-split `margot_causal_forest()` objects. Set TRUE
+only for explicitly exploratory in-sample curves.}
 }
 \value{
 A list where each element corresponds to a model and contains:

@@ -12,7 +12,7 @@ margot_policy_tree_stability(
   covariate_mode = c("original", "custom", "add", "all"),
   depth = 2,
   n_iterations = 300,
-  vary_type = c("split_only", "bootstrap", "both"),
+  vary_type = c("bootstrap", "split_only", "both"),
   consensus_threshold = 0.5,
   train_proportion = 0.5,
   vary_train_proportion = FALSE,
@@ -55,8 +55,10 @@ containing "_log").}
 
 \item{n_iterations}{Integer. Number of stability iterations (default 300).}
 
-\item{vary_type}{Character. Type of variation: "split_only" (vary train/test split via seeds),
-"bootstrap" (bootstrap resample), "both" (resample + split). Default is "split_only".}
+\item{vary_type}{Character. Type of variation: "bootstrap" (bootstrap resample of rows;
+the default, and the recommended resampling for a descriptive robustness report on a
+full-data tree), "split_only" (vary train/test split via seeds), "both" (resample + split).
+Default is "bootstrap".}
 
 \item{consensus_threshold}{Numeric. Minimum inclusion frequency for consensus (default 0.5).}
 

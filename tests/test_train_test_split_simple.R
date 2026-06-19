@@ -31,7 +31,7 @@ results <- margot_causal_forest(
 )
 
 cat("\n=== Results Summary ===\n")
-cat("\nCombined table (main results on all data):\n")
+cat("\nCombined table (main results on test data):\n")
 print(results$combined_table)
 
 cat("\nY1 - split_info present:", "split_info" %in% names(results$results$model_Y1), "\n")
@@ -39,8 +39,8 @@ if ("split_info" %in% names(results$results$model_Y1)) {
   split_info <- results$results$model_Y1$split_info
   cat("  - Train size:", length(split_info$train_indices), "\n")
   cat("  - Test size:", length(split_info$test_indices), "\n")
-  cat("  - ATE (all data):", results$results$model_Y1$ate[1], "\n")
-  cat("  - ATE (test set):", split_info$ate_test_set[1], "\n")
-  cat("\nTest set E-value table:\n")
-  print(split_info$custom_table_test_set)
+  cat("  - ATE (test set):", results$results$model_Y1$ate[1], "\n")
+  cat("  - ATE (all data reference):", split_info$ate_all_data[1], "\n")
+  cat("\nAll-data reference E-value table:\n")
+  print(split_info$custom_table_all_data)
 }

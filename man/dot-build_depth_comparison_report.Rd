@@ -7,6 +7,7 @@
 .build_depth_comparison_report(
   depth_summary_df,
   threshold,
+  max_stability_loss = Inf,
   label_mapping = NULL
 )
 }
@@ -14,6 +15,8 @@
 \item{depth_summary_df}{Data frame from margot_policy_summary_compare_depths}
 
 \item{threshold}{The min_gain_for_depth_switch threshold used}
+
+\item{max_stability_loss}{Maximum permitted depth-2 consensus-strength loss}
 
 \item{label_mapping}{Optional label mapping}
 }

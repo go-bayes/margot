@@ -11,7 +11,8 @@ margot_qini_cost_sensitivity(
   spend_levels = 0.1,
   baseline_method = "maq_no_covariates",
   verbose = TRUE,
-  seed = 12345
+  seed = 12345,
+  allow_in_sample = FALSE
 )
 }
 \arguments{
@@ -32,6 +33,8 @@ Default is 0.1.}
 \item{verbose}{Logical; print progress messages (default TRUE).}
 
 \item{seed}{Integer; base seed for reproducible computations (default 12345).}
+
+\item{allow_in_sample}{Logical; passed to [margot_qini()]. Default FALSE.}
 }
 \value{
 A list with class "margot_qini_cost_sensitivity" containing:

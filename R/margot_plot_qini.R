@@ -138,6 +138,11 @@ margot_plot_qini <- function(mc_result, outcome_var,
                              seed = 12345,
                              x_axis = c("proportion", "budget")) {
   cli::cli_h1("Margot Plot Qini Curves")
+  cli::cli_alert_warning(paste(
+    "QINI curves are exploratory (evaluation forest fit on the rows it scores;",
+    "no fully cross-fitted curve protocol). Report in supplements, not as a primary",
+    "welfare claim."
+  ))
 
   # match x_axis argument
   x_axis <- match.arg(x_axis)

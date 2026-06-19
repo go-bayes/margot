@@ -185,7 +185,7 @@ margot_interpret_policy_batch <- function(models,
                                cv$ctrl$estimate[1], cv$ctrl$ci_lo[1], cv$ctrl$ci_hi[1])
             pv_trt <- if (nrow(cv$trt) > 0) sprintf("Policy value vs treat-all: %.3f [% .3f, % .3f]",
                                                    cv$trt$estimate[1], cv$trt$ci_lo[1], cv$trt$ci_hi[1]) else NULL
-            extra <- paste(c("\nIn out-of-sample evaluation,", pv_trt, pv_ctrl), collapse = " ")
+            extra <- paste(c("\nIn the stored policy evaluation slice,", pv_trt, pv_ctrl), collapse = " ")
             interpretation <- paste0(interpretation, "\n", extra, "\n")
           }
         }

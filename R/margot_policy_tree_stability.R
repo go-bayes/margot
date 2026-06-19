@@ -31,8 +31,10 @@
 #' @param depth Numeric or character specifying which depth(s) to compute:
 #'   1 for single split, 2 for two splits (default), or "both" for both depths.
 #' @param n_iterations Integer. Number of stability iterations (default 300).
-#' @param vary_type Character. Type of variation: "split_only" (vary train/test split via seeds),
-#'   "bootstrap" (bootstrap resample), "both" (resample + split). Default is "split_only".
+#' @param vary_type Character. Type of variation: "bootstrap" (bootstrap resample of rows;
+#'   the default, and the recommended resampling for a descriptive robustness report on a
+#'   full-data tree), "split_only" (vary train/test split via seeds), "both" (resample + split).
+#'   Default is "bootstrap".
 #' @param consensus_threshold Numeric. Minimum inclusion frequency for consensus (default 0.5).
 #' @param train_proportion Numeric. Train/test split when vary_train_proportion = FALSE (default 0.5).
 #' @param vary_train_proportion Logical. Whether to vary train proportion (default FALSE).
@@ -238,7 +240,7 @@ margot_policy_tree_stability <- function(
     covariate_mode = c("original", "custom", "add", "all"),
     depth = 2,
     n_iterations = 300,
-    vary_type = c("split_only", "bootstrap", "both"),
+    vary_type = c("bootstrap", "split_only", "both"),
     consensus_threshold = 0.5,
     train_proportion = 0.5,
     vary_train_proportion = FALSE,
@@ -402,6 +404,12 @@ margot_policy_tree_stability <- function(
   } else {
     actual_train_props <- rep(train_proportion, n_iterations)
   }
+  if (identical(vary_type, "bootstrap") && any(actual_train_props != 1)) {
+    actual_train_props[] <- 1
+    if (verbose) {
+      cli::cli_alert_info("Bootstrap stability fits each tree on the full bootstrap sample; train_proportion is ignored.")
+    }
+  }
 
   # get data
   covariates <- model_results$covariates
@@ -419,7 +427,7 @@ margot_policy_tree_stability <- function(
       n_iterations = n_iterations,
       vary_type = vary_type,
       vary_train_proportion = vary_train_proportion,
-      train_proportions = if (vary_train_proportion) train_proportions else train_proportion,
+      train_proportions = if (vary_train_proportion) train_proportions else unique(actual_train_props),
       consensus_threshold = consensus_threshold,
       tree_method = actual_tree_method,
       compute_policy_values = compute_policy_values,
@@ -682,8 +690,11 @@ stability_single_model <- function(
   if (is.null(output$dr_scores)) output$dr_scores <- dr_scores
   if (is.null(output$dr_scores_flipped)) output$dr_scores_flipped <- model_result$dr_scores_flipped
 
-  # establish a consistent train/test split for consensus reconstruction and evaluation
-  if (length(not_missing) > 1L) {
+  # establish the reconstruction slice; pure bootstrap keeps the full sample.
+  if (identical(vary_type, "bootstrap")) {
+    train_idx_consensus <- not_missing
+    test_idx_consensus <- not_missing
+  } else if (length(not_missing) > 1L) {
     set.seed(all_seeds$split_seeds[1])
     train_prop_use <- median(actual_train_props)
     train_size <- floor(train_prop_use * length(not_missing))
@@ -852,10 +863,17 @@ get_stability_indices <- function(not_missing, vary_type, train_prop, sample_see
     boot_sample <- not_missing
   }
 
-  # step 2: train/test split (always use the split seed for variation)
-  set.seed(split_seed)
+  # step 2: split only for split-based diagnostics, not pure bootstrap stability.
+  if (identical(vary_type, "bootstrap")) {
+    return(list(
+      train_idx = boot_sample,
+      test_idx = integer(0)
+    ))
+  }
 
+  set.seed(split_seed)
   train_size <- floor(train_prop * length(boot_sample))
+  train_size <- max(1L, min(length(boot_sample) - 1L, train_size))
   train_positions <- sample(length(boot_sample), train_size)
 
   list(

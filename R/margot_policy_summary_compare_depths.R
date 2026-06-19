@@ -29,6 +29,10 @@
 #' @param split_top_only Logical; keep only the top-contributing split per model when building compact
 #'   tables (default FALSE).
 #' @param verbose Logical; print progress (default TRUE).
+#' @param min_gain_for_depth_switch Numeric. Minimum policy-value gain required
+#'   for depth-2 to replace depth-1. Default is 0.01 outcome-standard-deviation units.
+#' @param max_stability_loss_for_depth_switch Numeric. Maximum permitted loss in
+#'   consensus strength when switching from depth-1 to depth-2. Default is 0.05.
 #'
 #' @return A list with:
 #'   - `depth_map`: named integer vector indicating the preferred depth (1 or 2) per model.
@@ -58,7 +62,8 @@ margot_policy_summary_compare_depths <- function(object,
                                                  split_drop_zero = TRUE,
                                                  split_top_only = FALSE,
                                                  verbose = TRUE,
-                                                 min_gain_for_depth_switch = 0.005) {
+                                                 min_gain_for_depth_switch = 0.01,
+                                                 max_stability_loss_for_depth_switch = 0.05) {
   se_method <- match.arg(se_method)
 
   if (isTRUE(verbose)) cli::cli_alert_info("Comparing depth-1 and depth-2 policy summaries")
@@ -178,6 +183,15 @@ margot_policy_summary_compare_depths <- function(object,
   pv2 <- if (!is.null(d2)) get_pv(d2, 2L) else get_pv_from_rep(object, 2L)
   all_models <- sort(unique(c(pv1$models, pv2$models)))
 
+  get_stability_strength <- function(model_id, depth_sel) {
+    # read depth-specific consensus strength when stability metrics are available.
+    metrics <- object$results[[model_id]]$stability_metrics %||% list()
+    strength <- metrics$consensus_strength %||% list()
+    val <- if (depth_sel == 1L) strength$depth_1 else strength$depth_2
+    if (is.null(val) || length(val) == 0L) return(NA_real_)
+    as.numeric(val[[1]])
+  }
+
   # Build comparison table
   rows <- list()
   sel <- character()
@@ -192,16 +206,17 @@ margot_policy_summary_compare_depths <- function(object,
     v2 <- if (mn %in% pv2$models) pv2$pv[mn, "pv"] else NA_real_
     l2 <- if (mn %in% pv2$models) pv2$pv[mn, "lo"] else NA_real_
     h2 <- if (mn %in% pv2$models) pv2$pv[mn, "hi"] else NA_real_
-    # choose best by PV with parsimony threshold: only switch depth if
-    # the gain exceeds `min_gain_for_depth_switch`; otherwise prefer depth 1.
-    # If one depth missing, pick the available one. If both present and gain
-    # exceeds threshold, pick the higher PV; if equal within threshold, depth 1.
+    s1 <- get_stability_strength(mn, 1L)
+    s2 <- get_stability_strength(mn, 2L)
+    stability_loss <- if (is.finite(s1) && is.finite(s2)) s1 - s2 else NA_real_
+    # choose best by PV with a parsimony threshold and stability guard.
     pick <- NA_character_
     if (!is.na(v1) || !is.na(v2)) {
       both_have <- (!is.na(v1) && !is.na(v2))
       if (both_have) {
         delta <- v2 - v1
-        if (!is.na(delta) && delta > min_gain_for_depth_switch) {
+        stability_ok <- is.na(stability_loss) || stability_loss <= max_stability_loss_for_depth_switch
+        if (!is.na(delta) && delta >= min_gain_for_depth_switch && stability_ok) {
           pick <- "2"
         } else if (!is.na(delta) && (-delta) > min_gain_for_depth_switch) {
           pick <- "1"
@@ -223,6 +238,9 @@ margot_policy_summary_compare_depths <- function(object,
       Depth1_PV = round(v1, 3), Depth1_CI = if (!is.na(l1) && !is.na(h1)) sprintf("[%.3f, %.3f]", l1, h1) else "",
       Depth2_PV = round(v2, 3), Depth2_CI = if (!is.na(l2) && !is.na(h2)) sprintf("[%.3f, %.3f]", l2, h2) else "",
       Selected_Depth = pick,
+      Depth1_Stability = s1,
+      Depth2_Stability = s2,
+      Stability_Loss = stability_loss,
       stringsAsFactors = FALSE
     )
   }
@@ -248,14 +266,17 @@ margot_policy_summary_compare_depths <- function(object,
     pv_selected <- ifelse(depth_selected == 1L, pv_depth1, pv_depth2)
     pv_alternative <- ifelse(depth_selected == 1L, pv_depth2, pv_depth1)
     pv_gain <- pv_selected - pv_alternative
+    stability_depth1 <- Depth1_Stability
+    stability_depth2 <- Depth2_Stability
+    stability_loss_depth2 <- Stability_Loss
   })
-  depth_summary_df <- depth_summary_df[, c("Model", "Outcome", "depth_selected", "depth_label", "pv_depth1", "pv_depth2", "pv_selected", "pv_alternative", "pv_gain")]
+  depth_summary_df <- depth_summary_df[, c("Model", "Outcome", "depth_selected", "depth_label", "pv_depth1", "pv_depth2", "pv_selected", "pv_alternative", "pv_gain", "stability_depth1", "stability_depth2", "stability_loss_depth2")]
   names(depth_summary_df)[1:2] <- c("model", "outcome_label")
   depth_summary_df$outcome <- gsub("^model_", "", depth_summary_df$model)
-  depth_summary_df <- depth_summary_df[, c("model", "outcome", "outcome_label", "depth_selected", "depth_label", "pv_depth1", "pv_depth2", "pv_selected", "pv_alternative", "pv_gain")]
+  depth_summary_df <- depth_summary_df[, c("model", "outcome", "outcome_label", "depth_selected", "depth_label", "pv_depth1", "pv_depth2", "pv_selected", "pv_alternative", "pv_gain", "stability_depth1", "stability_depth2", "stability_loss_depth2")]
 
   compare_md <- if (nrow(compare_df)) {
-    tryCatch(knitr::kable(compare_df[, c("Outcome", "Depth1_PV", "Depth1_CI", "Depth2_PV", "Depth2_CI", "Selected_Depth")], format = "markdown"),
+    tryCatch(knitr::kable(compare_df[, c("Outcome", "Depth1_PV", "Depth1_CI", "Depth2_PV", "Depth2_CI", "Selected_Depth", "Stability_Loss")], format = "markdown"),
              error = function(e) paste(capture.output(print(compare_df)), collapse = "\n"))
   } else ""
 
@@ -468,10 +489,11 @@ margot_policy_summary_compare_depths <- function(object,
   depth_table_df$pv_selected <- round(depth_table_df$pv_selected, 3)
   depth_table_df$pv_alternative <- round(depth_table_df$pv_alternative, 3)
   depth_table_df$pv_gain <- round(depth_table_df$pv_gain, 3)
+  depth_table_df$stability_loss_depth2 <- round(depth_table_df$stability_loss_depth2, 3)
   depth_table_df$Preferred_Depth <- ifelse(is.na(depth_table_df$depth_selected), "unknown", paste0("depth ", depth_table_df$depth_selected))
   depth_table_df$Delta_vs_alt <- depth_table_df$pv_gain
   depth_table_df$Decision <- depth_table_df$decision
-  depth_table_df <- depth_table_df[, c("outcome_label", "pv_depth1", "pv_depth2", "Preferred_Depth", "Delta_vs_alt", "Decision")]
+  depth_table_df <- depth_table_df[, c("outcome_label", "pv_depth1", "pv_depth2", "Preferred_Depth", "Delta_vs_alt", "stability_loss_depth2", "Decision")]
   names(depth_table_df)[1] <- "Outcome"
   depth_table_md <- if (nrow(depth_table_df)) {
     tryCatch(knitr::kable(depth_table_df, format = "markdown"), error = function(e) paste(capture.output(print(depth_table_df)), collapse = "\n"))
@@ -497,7 +519,13 @@ margot_policy_summary_compare_depths <- function(object,
   depth_takeaways_text <- paste(depth_takeaways_lines, collapse = "\n")
 
   if (nzchar(depth_takeaways_text)) {
-    depth_note <- "Note: Depth preference indicates which tree depth achieved a higher policy value for each outcome. It does not, on its own, imply that the policy should be deployed; deployment recommendations depend on statistical certainty and are summarized below."
+    depth_note <- paste0(
+      "Note: Depth-2 is selected only when its policy-value gain is at least ",
+      format(min_gain_for_depth_switch, trim = TRUE),
+      " and its consensus-strength loss is no more than ",
+      format(max_stability_loss_for_depth_switch, trim = TRUE),
+      ". Depth preference does not, on its own, imply that the policy should be deployed."
+    )
     depth_block <- paste(c("### Depth Selection", "", depth_takeaways_text, "", depth_note, ""), collapse = "\n")
     if (nzchar(best_text)) {
       best_text <- paste0(depth_block, best_text)
@@ -506,7 +534,7 @@ margot_policy_summary_compare_depths <- function(object,
     }
   }
 
-  recommendations_df <- depth_summary_df[, c("model", "outcome", "outcome_label", "depth_selected", "depth_label", "pv_depth1", "pv_depth2", "pv_selected", "pv_alternative", "pv_gain", "decision")]
+  recommendations_df <- depth_summary_df[, c("model", "outcome", "outcome_label", "depth_selected", "depth_label", "pv_depth1", "pv_depth2", "pv_selected", "pv_alternative", "pv_gain", "stability_depth1", "stability_depth2", "stability_loss_depth2", "decision")]
 
   list(
     depth_map = depth_map_vec,

@@ -16,7 +16,7 @@
 #' @param strict_branch Logical; require positive uplift CI for dominant branch before
 #'   recommending restricted deployment (default TRUE).
 #' @param min_gain_for_depth_switch Numeric; minimum PV gain required to switch from depth-1
-#'   to depth-2 (default 0.005 on standardized outcomes).
+#'   to depth-2 (default 0.01 on standardized outcomes).
 #' @param include_interpretation Logical; also run [margot_interpret_policy_batch()] with the
 #'   selected depths (default TRUE).
 #' @param interpret_models Character; controls which models receive full interpretations when
@@ -53,9 +53,10 @@
 #' @param show_neutral Logical or NULL; controls inclusion of the Neutral group. Default NULL
 #'   shows Neutral for research audiences and hides it for policy audiences. Set TRUE/FALSE
 #'   to override explicitly.
-#' @param prefer_stability Logical; if TRUE, raise the parsimony threshold for switching to
-#'   depth-2 (min_gain_for_depth_switch >= 0.01) to prefer depth-1 unless depth-2 gains are
-#'   clearly larger.
+#' @param prefer_stability Logical; if TRUE, require material depth-2 gains and
+#'   stable consensus before switching from depth-1. Default TRUE.
+#' @param max_stability_loss_for_depth_switch Numeric; maximum permitted loss in
+#'   consensus strength when switching to depth-2. Default 0.05.
 #' @param signal_score Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
 #'   "none", the summary text includes a "Signals Worth Monitoring" section that ranks Neutral
 #'   models by the selected score (magnitude relative to uncertainty, optionally weighted by
@@ -155,7 +156,7 @@ margot_policy_workflow <- function(stability,
                                    R = 499L,
                                    dominance_threshold = 0.8,
                                    strict_branch = TRUE,
-                                   min_gain_for_depth_switch = 0.005,
+                                   min_gain_for_depth_switch = 0.01,
                                    include_interpretation = TRUE,
                                    interpret_models = "wins",
                                    plot_models = "none",
@@ -169,7 +170,8 @@ margot_policy_workflow <- function(stability,
                                    brief_include_group = FALSE,
                                    expand_acronyms = FALSE,
                                    show_neutral = NULL,
-                                   prefer_stability = FALSE,
+                                   prefer_stability = TRUE,
+                                   max_stability_loss_for_depth_switch = 0.05,
                                    signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
                                    signals_k = 3,
                                    ...) {
@@ -235,9 +237,9 @@ margot_policy_workflow <- function(stability,
     label_mapping <- utils::modifyList(bp_labels, label_mapping)
   }
 
-  # 1) Depth comparison with parsimony threshold
-  # Prefer stability: increase the gain required to switch to depth-2
+  # 1) Depth comparison with parsimony and stability thresholds
   eff_min_gain <- if (isTRUE(prefer_stability)) max(min_gain_for_depth_switch, 0.01) else min_gain_for_depth_switch
+  eff_stability_loss <- if (isTRUE(prefer_stability)) max_stability_loss_for_depth_switch else Inf
 
   best <- margot_policy_summary_compare_depths(
     stability,
@@ -254,13 +256,15 @@ margot_policy_workflow <- function(stability,
     split_drop_zero = split_drop_zero,
     split_top_only = split_top_only,
     verbose = TRUE,
-    min_gain_for_depth_switch = eff_min_gain
+    min_gain_for_depth_switch = eff_min_gain,
+    max_stability_loss_for_depth_switch = eff_stability_loss
   )
 
   # Build depth comparison report (always shows both depths for transparency)
   depth_comparison_report <- .build_depth_comparison_report(
     best$depth_summary_df,
     eff_min_gain,
+    eff_stability_loss,
     label_mapping
   )
 
@@ -412,6 +416,7 @@ margot_policy_workflow <- function(stability,
     R = R,
     audience = audience,
     min_gain_for_depth_switch = eff_min_gain,
+    max_stability_loss_for_depth_switch = eff_stability_loss,
     prefer_stability = isTRUE(prefer_stability),
     dominance_threshold = dominance_threshold,
     strict_branch = strict_branch,
@@ -535,10 +540,11 @@ margot_policy_workflow <- function(stability,
 #'
 #' @param depth_summary_df Data frame from margot_policy_summary_compare_depths
 #' @param threshold The min_gain_for_depth_switch threshold used
+#' @param max_stability_loss Maximum permitted depth-2 consensus-strength loss
 #' @param label_mapping Optional label mapping
 #' @return A list with text (formatted report) and data (summary data frame)
 #' @keywords internal
-.build_depth_comparison_report <- function(depth_summary_df, threshold, label_mapping = NULL) {
+.build_depth_comparison_report <- function(depth_summary_df, threshold, max_stability_loss = Inf, label_mapping = NULL) {
   if (is.null(depth_summary_df) || !nrow(depth_summary_df)) {
     return(list(
       text = "No depth comparison data available.",
@@ -551,9 +557,12 @@ margot_policy_workflow <- function(stability,
   lines <- c(lines, "## Depth Comparison Report", "")
   lines <- c(lines, sprintf("Parsimony threshold: %.3f (%.1f%% policy value improvement required for depth-2)",
                             threshold, threshold * 100))
+  if (is.finite(max_stability_loss)) {
+    lines <- c(lines, sprintf("Stability guard: depth-2 consensus-strength loss must be <= %.3f", max_stability_loss))
+  }
   lines <- c(lines, "")
-  lines <- c(lines, "| Outcome | Depth-1 PV | Depth-2 PV | Gain (delta) | Selected | Rationale |")
-  lines <- c(lines, "|---------|------------|------------|----------|----------|-----------|")
+  lines <- c(lines, "| Outcome | Depth-1 PV | Depth-2 PV | Gain (delta) | Stability loss | Selected | Rationale |")
+  lines <- c(lines, "|---------|------------|------------|----------|----------------|----------|-----------|")
 
 
   for (i in seq_len(nrow(depth_summary_df))) {
@@ -562,6 +571,7 @@ margot_policy_workflow <- function(stability,
     pv1 <- row$pv_depth1
     pv2 <- row$pv_depth2
     selected <- row$depth_selected
+    stability_loss <- row$stability_loss_depth2 %||% NA_real_
 
     # Calculate gain
     delta <- if (!is.na(pv1) && !is.na(pv2)) pv2 - pv1 else NA_real_
@@ -569,8 +579,10 @@ margot_policy_workflow <- function(stability,
     # Determine rationale
     if (is.na(delta)) {
       rationale <- "Missing data"
-    } else if (delta > threshold) {
-      rationale <- sprintf("Gain (%.3f) > threshold", delta)
+    } else if (delta >= threshold && (is.na(stability_loss) || !is.finite(max_stability_loss) || stability_loss <= max_stability_loss)) {
+      rationale <- sprintf("Gain (%.3f) >= threshold", delta)
+    } else if (delta >= threshold && !is.na(stability_loss) && stability_loss > max_stability_loss) {
+      rationale <- sprintf("Gain passes threshold, but stability loss %.3f is too large", stability_loss)
     } else if (delta > 0) {
       rationale <- sprintf("Gain (%.3f) below threshold; prefer simpler tree", delta)
     } else {
@@ -581,10 +593,11 @@ margot_policy_workflow <- function(stability,
     pv1_str <- if (!is.na(pv1)) sprintf("%.3f", pv1) else "—"
     pv2_str <- if (!is.na(pv2)) sprintf("%.3f", pv2) else "—"
     delta_str <- if (!is.na(delta)) sprintf("%.4f", delta) else "—"
+    stability_loss_str <- if (!is.na(stability_loss)) sprintf("%.3f", stability_loss) else "—"
     selected_str <- if (!is.na(selected)) sprintf("Depth-%d", selected) else "—"
 
-    lines <- c(lines, sprintf("| %s | %s | %s | %s | %s | %s |",
-                              outcome_label, pv1_str, pv2_str, delta_str, selected_str, rationale))
+    lines <- c(lines, sprintf("| %s | %s | %s | %s | %s | %s | %s |",
+                              outcome_label, pv1_str, pv2_str, delta_str, stability_loss_str, selected_str, rationale))
   }
 
   lines <- c(lines, "")
@@ -602,6 +615,6 @@ margot_policy_workflow <- function(stability,
 
   list(
     text = paste(lines, collapse = "\n"),
-    data = depth_summary_df[, c("outcome_label", "pv_depth1", "pv_depth2", "depth_selected"), drop = FALSE]
+    data = depth_summary_df[, intersect(c("outcome_label", "pv_depth1", "pv_depth2", "stability_loss_depth2", "depth_selected"), names(depth_summary_df)), drop = FALSE]
   )
 }

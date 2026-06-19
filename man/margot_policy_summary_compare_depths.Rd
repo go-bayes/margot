@@ -24,7 +24,8 @@ margot_policy_summary_compare_depths(
   split_drop_zero = TRUE,
   split_top_only = FALSE,
   verbose = TRUE,
-  min_gain_for_depth_switch = 0.005
+  min_gain_for_depth_switch = 0.01,
+  max_stability_loss_for_depth_switch = 0.05
 )
 }
 \arguments{
@@ -70,6 +71,12 @@ split rows that would otherwise be suppressed.}
 tables (default FALSE).}
 
 \item{verbose}{Logical; print progress (default TRUE).}
+
+\item{min_gain_for_depth_switch}{Numeric. Minimum policy-value gain required
+for depth-2 to replace depth-1. Default is 0.01 outcome-standard-deviation units.}
+
+\item{max_stability_loss_for_depth_switch}{Numeric. Maximum permitted loss in
+consensus strength when switching from depth-1 to depth-2. Default is 0.05.}
 }
 \value{
 A list with:

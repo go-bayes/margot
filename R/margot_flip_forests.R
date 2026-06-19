@@ -349,7 +349,7 @@ margot_flip_forests <- function(model_results,
   if (!is.null(model_results$computation_params)) {
     # inherit from saved computation parameters
     compute_marginal_only <- model_results$computation_params$compute_marginal_only %||% FALSE
-    compute_rate <- model_results$computation_params$compute_rate %||% TRUE
+    compute_rate <- model_results$computation_params$compute_rate %||% FALSE
     # qini_split parameter removed - always use honest evaluation
     qini_treatment_cost <- model_results$computation_params$qini_treatment_cost %||% qini_treatment_cost
     top_n_vars <- model_results$computation_params$top_n_vars %||% 15
@@ -362,7 +362,7 @@ margot_flip_forests <- function(model_results,
     } else {
       compute_marginal_only <- FALSE # assume full analysis for backward compatibility
     }
-    compute_rate <- !is.null(first_model$rate_result)
+    compute_rate <- isTRUE(first_model$rate_result$computed %||% !is.null(first_model$rate_result))
     # qini_split parameter removed - always use honest evaluation
     top_n_vars <- length(first_model$top_vars) %||% 15
   }
@@ -380,10 +380,12 @@ margot_flip_forests <- function(model_results,
   # extract use_train_test_split if not provided
   if (is.null(use_train_test_split)) {
     # check if original used train/test split
-    if (!is.null(first_model$split_info$use_train_test_split)) {
+    if (!is.null(model_results$computation_params$use_train_test_split)) {
+      use_train_test_split <- model_results$computation_params$use_train_test_split
+    } else if (!is.null(first_model$split_info$use_train_test_split)) {
       use_train_test_split <- first_model$split_info$use_train_test_split
     } else {
-      use_train_test_split <- TRUE # default matching margot_causal_forest
+      use_train_test_split <- FALSE # default matching margot_causal_forest
     }
   }
 
@@ -548,12 +550,12 @@ margot_lighten_for_flip <- function(cf_out, models) {
   if (!is.null(fm)) {
     th <- mdl$tau_hat
 
-    if (!is.null(mdl$rate_result)) {
+    if (!is.null(mdl$rate_result) && !identical(mdl$rate_result$computed, FALSE)) {
       mdl$rate_result_original <- mdl$rate_result
       mdl$rate_result <- grf::rank_average_treatment_effect(fm, th)
       attr(mdl$rate_result, "target") <- "AUTOC"
     }
-    if (!is.null(mdl$rate_qini)) {
+    if (!is.null(mdl$rate_qini) && !identical(mdl$rate_qini$computed, FALSE)) {
       mdl$rate_qini_original <- mdl$rate_qini
       mdl$rate_qini <- grf::rank_average_treatment_effect(fm, th, target = "QINI")
       attr(mdl$rate_qini, "target") <- "QINI"

@@ -3,7 +3,6 @@
 <url><loc>https://go-bayes.github.io/margot/LICENSE.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/migrating-off-qs.html</loc></url>
-<url><loc>https://go-bayes.github.io/margot/articles/migrating-qs-to-qs2.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/news/index.html</loc></url>
@@ -210,6 +209,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_methods_statement.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_regret_summary.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_split_diagnostic.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_summary_report.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree.html</loc></url>

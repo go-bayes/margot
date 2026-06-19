@@ -1,9 +1,9 @@
 #' Policy Learning Methods Statement
 #'
 #' Generates a boilerplate methods paragraph describing the policy learning
-#' workflow used for policy trees in `margot` (DR scores, tree fitting, honest
-#' evaluation, policy value contrasts with bootstrap CIs, treated-only uplift,
-#' and optional stability analysis).
+#' workflow used for policy trees in `margot` (DR scores, tree fitting,
+#' descriptive or held-out evaluation, policy value contrasts with bootstrap CIs,
+#' treated-only uplift, and optional stability analysis).
 #'
 #' @param object A `margot_stability_policy_tree` (preferred) or a list with
 #'   `$results` created by `margot_policy_tree()`.
@@ -35,16 +35,28 @@ margot_policy_methods_statement <- function(object,
   tree_method <- md$tree_method %||% NULL
   train_props <- md$train_proportions %||% md$train_proportion %||% NULL
   metaseed <- md$metaseed %||% NULL
+  descriptive_mode <- identical(vary_type, "bootstrap") && !is.null(train_props) && all(as.numeric(train_props) == 1)
 
   cite <- function(txt) if (citations) paste0(" (", txt, ")") else ""
   meth <- if (!is.null(tree_method)) tree_method else "policytree"
-  split_txt <- if (!is.null(train_props)) paste0("a held-out test fold (train proportion ", paste0(train_props, collapse = ","), ")") else "a held-out test fold"
+  eval_txt <- if (descriptive_mode) {
+    "the complete-case evaluation slice used for descriptive reporting"
+  } else if (!is.null(train_props)) {
+    paste0("a held-out test fold (train proportion ", paste0(train_props, collapse = ","), ")")
+  } else {
+    "the stored evaluation slice"
+  }
+  overfit_txt <- if (descriptive_mode) {
+    "This descriptive value summary is not a held-out policy-value claim."
+  } else {
+    "This held-out evaluation reduces adaptive overfitting."
+  }
 
   s1 <- paste0(
     "We estimated individualized treatment effects using doubly robust (DR) scores and learned depth-", depth,
     " policy trees to target treatment. DR scores were computed from causal forests and used as the policy learning objective",
     cite("Athey & Wager, 2021; grf; policytree"), ". Policy trees were fit with ", meth,
-    ", and evaluated on ", split_txt, " to avoid adaptive overfitting (honest evaluation)."
+    ", and evaluated on ", eval_txt, ". ", overfit_txt
   )
 
   s2 <- if (isTRUE(include_policy_value)) {

@@ -1,3 +1,45 @@
+# [2026-06-19] margot 1.0.326
+
+The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is descriptive**. We cannot at this stage offer guarantees for welfare maximisation.
+
+
+### Changed
+- **`margot_causal_forest()` defaults to descriptive mode** (`use_train_test_split = FALSE`, `compute_rate = FALSE`). The causal forest, CATE, conditional means, doubly-robust scores, outcome flips, and policy trees use all complete cases. Inline RATE/AUTOC and QINI curves are
+  deferred (a notice is emitted; placeholders are kept for pipeline compatibility). Use `margot_rate_cv()` for inferential RATE and set `use_train_test_split = TRUE` when an explicit held-out QINI diagnostic is required.
+- **`margot_causal_forest()` uses more regularised GRF defaults** (`num.trees = 4000`, `min.node.size = 50`) unless callers override them. For large samples, `min.node.size = 100` is recommended as a sensitivity analysis.
+- **Depth selection now prefers depth-1 by default.** Depth-2 must improve policy value by at least `0.01` outcome-standard-deviation units and must not reduce consensus strength by more than `0.05`.
+- **`margot_policy_tree_stability()` defaults to `vary_type = "bootstrap"`** (was `"split_only"`). Bootstrap resampling of rows is the descriptive robustness report for the full-data tree, and pure bootstrap mode now fits each tree on the full bootstrap sample rather than introducing a half-sample split.
+- **Policy-tree report prose is mode-aware.** Default descriptive outputs no longer describe the evaluation slice as held-out or out-of-sample.
+
+### Added
+- Caution warnings on the QINI path (`margot_qini()`, `margot_plot_qini()`, and inside `margot_causal_forest()`). QINI curves are exploratory: the evaluation forest is fit on the held-out rows it scores (OOB DR scores) and there is no fully cross-fitted curve protocol. For now, suggest reporting QINI curve results in supplements with caution (i.e., not as primary heterogeneity evidence).
+- `margot_policy_split_diagnostic()` for repeated train/test split diagnostics of the policy-tree learning procedure.
+- Inline RATE placeholders now point users to `margot_rate_cv()`, avoiding in-sample or non-independent RATE claims inside `margot_causal_forest()`.
+
+### Decisions behind the change
+- **Honesty already covers the forest; the split protected the wrong thing.** The causal
+  forest's honesty and out-of-bag prediction already make the CATE estimate honest. A
+  train/test split protects the policy *value* (the winner's curse from selecting the tree
+  that maximises the doubly-robust score), which a descriptive claim never makes. So for the
+  standard workflow the split is unnecessary, and it costs half the data and makes the
+  displayed tree depend on the luck of the partition.
+- **Reproducibility is not stability.** The policy-tree solver (`policytree` /
+  `fastpolicytree`) is a deterministic exact optimiser; with a fixed seed and no split the
+  descriptive tree reproduces exactly. Whether its splits are a real feature or a
+  draw-specific artifact is a separate question, answered by the bootstrap robustness report
+  — so stability is retained but reframed as a diagnostic, not an inference engine.
+- **Two paths, no false optimism.** Descriptive (default): the full-data tree plus its
+  bootstrap robustness, with no out-of-sample value claim. Inferential (opt-in): an honest
+  held-out policy value via the split, clearly caveated. We deliberately do not ship a
+  bespoke cross-fitted policy value — GRF has worked-out cross-fitting for RATE/AUTOC only,
+  not for QINI curves or policy-tree value — so the inferential path is one honest split, not
+  a manufactured precision.
+
+### Notes
+- No published results depend on the GRF policy-tree workflow, so these defaults change in
+  place. The previous behaviour is reachable via explicit arguments
+  (`use_train_test_split = TRUE`, `vary_type = "split_only"`), with RATE inference handled by `margot_rate_cv()`.
+
 # [2026-06-16] margot 1.0.325
 
 ### Changed

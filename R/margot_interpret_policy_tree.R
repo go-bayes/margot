@@ -288,7 +288,8 @@ margot_interpret_policy_tree <- function(model,
       }
 
       if (length(lines)) {
-        pv_block <- paste0("\n", if (output_format == "prose") "In out-of-sample evaluation, " else "", paste(lines, collapse = "; "), ".\n")
+        pv_prefix <- if (output_format == "prose") "In the stored policy evaluation slice, " else ""
+        pv_block <- paste0("\n", pv_prefix, paste(lines, collapse = "; "), ".\n")
         full <- paste0(full, pv_block)
       }
     }, silent = TRUE)

@@ -9,8 +9,9 @@
 #' - Optional Signals Worth Monitoring ranking (large magnitude, low certainty)
 #'
 #' Method (estimation and identities):
-#' - For each model and depth, we evaluate the consensus policy on the held-out test set
-#'   used to build `plot_data` (policytree test indices).
+#' - For each model and depth, we evaluate the consensus policy on the stored
+#'   evaluation slice used to build `plot_data`. In descriptive mode this slice
+#'   is the complete-case sample; in split mode it is the held-out test set.
 #' - Let μ0(x), μ1(x) be conditional means E[Y(0)|X=x], E[Y(1)|X=x] estimated by
 #'   policytree/GRF. We use `double_robust_scores()` stored in `dr_scores` to obtain
 #'   per-unit estimates for μ0 and μ1 on the test rows, and we predict policy actions a(x)
@@ -1873,8 +1874,19 @@ margot_policy_summary_report <- function(object,
   }
 
   # Method text (overview and per-model)
+  descriptive_eval <- tryCatch({
+    meta <- object$metadata %||% list()
+    identical(meta$vary_type, "bootstrap") &&
+      !is.null(meta$train_proportions) &&
+      all(as.numeric(meta$train_proportions) == 1)
+  }, error = function(e) FALSE)
+  eval_sentence <- if (isTRUE(descriptive_eval)) {
+    "We evaluate the consensus policy on the complete-case evaluation slice used for descriptive reporting; this is not a held-out policy-value claim. "
+  } else {
+    "We evaluate the consensus policy on the stored evaluation slice; when a train/test split was used, this slice is the held-out test set. "
+  }
   method_overview <- paste0(
-    "We evaluate the consensus policy on the held-out test set used for the policy tree evaluation. ",
+    eval_sentence,
     "For each unit, we obtain conditional means (μ0, μ1) via double-robust scores and predict the policy action a(x). ",
     "Policy value contrasts are computed as sample averages of per-unit contributions: ",
     "PV(control-all) = mean(1{a=Treat} $\\times$ (μ1−μ0)), PV(treat-all) = mean(1{a=Control} $\\times$ (μ0−μ1)). ",

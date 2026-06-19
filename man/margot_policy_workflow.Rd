@@ -12,7 +12,7 @@ margot_policy_workflow(
   R = 499L,
   dominance_threshold = 0.8,
   strict_branch = TRUE,
-  min_gain_for_depth_switch = 0.005,
+  min_gain_for_depth_switch = 0.01,
   include_interpretation = TRUE,
   interpret_models = "wins",
   plot_models = "none",
@@ -26,7 +26,8 @@ margot_policy_workflow(
   brief_include_group = FALSE,
   expand_acronyms = FALSE,
   show_neutral = NULL,
-  prefer_stability = FALSE,
+  prefer_stability = TRUE,
+  max_stability_loss_for_depth_switch = 0.05,
   signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
   signals_k = 3,
   ...
@@ -51,7 +52,7 @@ policy recommendation (default 0.8 for policy mode).}
 recommending restricted deployment (default TRUE).}
 
 \item{min_gain_for_depth_switch}{Numeric; minimum PV gain required to switch from depth-1
-to depth-2 (default 0.005 on standardized outcomes).}
+to depth-2 (default 0.01 on standardized outcomes).}
 
 \item{include_interpretation}{Logical; also run [margot_interpret_policy_batch()] with the
 selected depths (default TRUE).}
@@ -102,9 +103,11 @@ RWA -> Right-Wing Authoritarianism (RWA)). You may also supply custom expansions
 shows Neutral for research audiences and hides it for policy audiences. Set TRUE/FALSE
 to override explicitly.}
 
-\item{prefer_stability}{Logical; if TRUE, raise the parsimony threshold for switching to
-depth-2 (min_gain_for_depth_switch >= 0.01) to prefer depth-1 unless depth-2 gains are
-clearly larger.}
+\item{prefer_stability}{Logical; if TRUE, require material depth-2 gains and
+stable consensus before switching from depth-1. Default TRUE.}
+
+\item{max_stability_loss_for_depth_switch}{Numeric; maximum permitted loss in
+consensus strength when switching to depth-2. Default 0.05.}
 
 \item{signal_score}{Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
 "none", the summary text includes a "Signals Worth Monitoring" section that ranks Neutral

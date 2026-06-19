@@ -21,10 +21,22 @@ margot_build_method_explanation <- function(stability, best, summary, context, c
   train_props <- md$train_proportions %||% md$train_proportion %||% NULL
   tree_method <- md$tree_method %||% NULL
   metaseed <- md$metaseed %||% NULL
+  descriptive_mode <- identical(vary_type, "bootstrap") && !is.null(train_props) && all(as.numeric(train_props) == 1)
 
   # Quarto-style citations using [@key] format
   cite <- function(txt) if (isTRUE(citations)) paste0(" ", txt) else ""
-  train_txt <- if (!is.null(train_props)) paste0("a held-out test fold (train proportion ", paste0(train_props, collapse = ","), ")") else "a held-out test fold"
+  train_txt <- if (descriptive_mode) {
+    "the complete-case evaluation slice used for descriptive reporting"
+  } else if (!is.null(train_props)) {
+    paste0("a held-out test fold (train proportion ", paste0(train_props, collapse = ","), ")")
+  } else {
+    "the stored evaluation slice"
+  }
+  overfit_txt <- if (descriptive_mode) {
+    "This descriptive value summary is not a held-out policy-value claim."
+  } else {
+    "This held-out evaluation reduces adaptive overfitting."
+  }
   method_engine <- if (!is.null(tree_method)) tree_method else "policytree"
   vt <- if (!is.null(vary_type)) switch(vary_type,
                                        split_only = "random train/test splits",
@@ -48,7 +60,7 @@ margot_build_method_explanation <- function(stability, best, summary, context, c
   s1 <- paste0(
     "We estimated individualized treatment effects using doubly robust (DR) scores from causal forests and learned depth-1 and depth-2 policy trees to target treatment",
     cite("[@athey2021; @grf2024; @policytree_package_2024]"), ". Policy trees were fit with ", method_engine,
-    ", and evaluated on ", train_txt, " to avoid adaptive overfitting (honest evaluation)."
+    ", and evaluated on ", train_txt, ". ", overfit_txt
   )
 
   s2 <- paste0(
@@ -58,8 +70,14 @@ margot_build_method_explanation <- function(stability, best, summary, context, c
   )
 
   s3 <- paste0(
-    "Depth selection applied a parsimony rule: switch to depth-2 only when the policy-value gain exceeded ",
-    format(context$min_gain_for_depth_switch, trim = TRUE), ".",
+    "Depth selection applied a parsimony rule: switch to depth-2 only when the policy-value gain reached or exceeded ",
+    format(context$min_gain_for_depth_switch, trim = TRUE),
+    if (is.finite(context$max_stability_loss_for_depth_switch %||% Inf)) {
+      paste0(" and consensus-strength loss was no larger than ", format(context$max_stability_loss_for_depth_switch, trim = TRUE))
+    } else {
+      ""
+    },
+    ".",
     if (isTRUE(context$prefer_stability)) " We preferred stability by raising this threshold for deployment-focused summaries." else ""
   )
 
@@ -119,10 +137,11 @@ margot_build_method_explanation <- function(stability, best, summary, context, c
   # Preregistration-style enumerated steps
   prereg <- if (!is.null(prereg_bp) && nzchar(prereg_bp)) prereg_bp else paste0(
     "1) Estimate DR scores via causal forests and fit depth-1 and depth-2 policy trees (engine: ", method_engine, ").\n",
-    "2) Evaluate on ", train_txt, " (honest evaluation).\n",
+    "2) Evaluate on ", train_txt, if (descriptive_mode) " (descriptive evaluation, not held-out policy value)." else " (held-out policy evaluation).", "\n",
     "3) Compute policy value contrasts (policy - control-all; policy - treat-all) with ",
     if (identical(context$se_method, "bootstrap")) paste0("bootstrap SEs, R=", context$R) else "plug-in SEs", ", CI=95%.\n",
-    "4) Select depth using a parsimony rule: switch to depth-2 if gain > ", format(context$min_gain_for_depth_switch, trim = TRUE),
+    "4) Select depth using a parsimony rule: switch to depth-2 if gain >= ", format(context$min_gain_for_depth_switch, trim = TRUE),
+    if (is.finite(context$max_stability_loss_for_depth_switch %||% Inf)) paste0(" and consensus-strength loss <= ", format(context$max_stability_loss_for_depth_switch, trim = TRUE)) else "",
     if (isTRUE(context$prefer_stability)) " (stability preference applied)." else ".", "\n",
     "5) Generate restricted-policy recommendations when a dominant favorable split exists (dominance threshold ", format(context$dominance_threshold, trim = TRUE),
     if (isTRUE(context$strict_branch)) ", uplift CI excludes zero)." else ", uplift CI may include zero).", "\n",

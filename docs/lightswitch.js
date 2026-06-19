@@ -26,7 +26,7 @@ const setTheme = theme => {
   }
 }
 
-function bsSetupThemeToggle() {
+function bsSetupThemeToggle () {
   'use strict'
 
   const showActiveTheme = (theme, focus = false) => {

@@ -17,6 +17,7 @@
 #' @param baseline_method Method for generating baseline. See margot_qini() for details.
 #' @param verbose Logical; print progress messages (default TRUE).
 #' @param seed Integer; base seed for reproducible computations (default 12345).
+#' @param allow_in_sample Logical; passed to [margot_qini()]. Default FALSE.
 #'
 #' @return A list with class "margot_qini_cost_sensitivity" containing:
 #' \itemize{
@@ -72,7 +73,8 @@ margot_qini_cost_sensitivity <- function(models,
                                          spend_levels = 0.1,
                                          baseline_method = "maq_no_covariates",
                                          verbose = TRUE,
-                                         seed = 12345) {
+                                         seed = 12345,
+                                         allow_in_sample = FALSE) {
   # validate inputs
   if (!is.numeric(costs) || any(costs <= 0)) {
     stop("costs must be a numeric vector of positive values")
@@ -113,7 +115,8 @@ margot_qini_cost_sensitivity <- function(models,
       baseline_method = baseline_method,
       treatment_cost = cost,
       verbose = FALSE, # suppress individual run messages
-      seed = seed
+      seed = seed,
+      allow_in_sample = allow_in_sample
     )
   }
 
