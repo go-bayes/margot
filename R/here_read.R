@@ -15,12 +15,14 @@
 #' @return The data frame or R object stored in the file.
 #'
 #' @examples
+#' \dontrun{
 #' # Assuming `push_mods` is set in your environment to "~/mydata"
 #' # and you have previously saved an RDS file named "my_df.rds" in that directory
 #' my_df <- here_read("my_df")
 #'
 #' # Reading from a custom directory
 #' my_df <- here_read("my_df", dir_path = "~/custom_dir")
+#' }
 #'
 #' @export
 #' @importFrom here here

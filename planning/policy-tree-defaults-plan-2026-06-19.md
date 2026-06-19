@@ -28,7 +28,7 @@ GRF fit on complete cases
 ## Implementation choices
 
 - `margot_causal_forest()` defaults to descriptive mode: `use_train_test_split = FALSE`, `compute_rate = FALSE`, no default QINI, and no in-sample RATE claim.
-- GRF regularisation defaults are `num.trees = 4000` and `min.node.size = 50`. For typical `n > 30000` applications, `min.node.size = 100` is a recommended sensitivity analysis rather than the default.
+- GRF regularisation defaults are `num.trees = 5000` and `min.node.size = 50`. For typical `n > 30000` applications, `min.node.size = 100` is a recommended sensitivity analysis rather than the default.
 - `margot_policy_tree_stability()` defaults to row bootstrap. In bootstrap mode the policy tree is fit on the full bootstrap sample; train/test splitting is reserved for `split_only` and `both`.
 - Depth-2 must improve policy value by at least `0.01` outcome-standard-deviation units and must not reduce bootstrap consensus strength by more than `0.05`. Otherwise depth-1 is selected.
 - QINI curves remain exploratory and require explicit opt-in when the input object came from descriptive mode.

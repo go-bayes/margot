@@ -38,10 +38,12 @@ this function is specifically designed for datasets with exactly three waves (t0
 it may not work correctly for datasets with fewer or more waves.
 }
 \examples{
+\dontrun{
 # assuming df_wide is your wide-format dataframe with three waves
 processed_data <- margot_process_longitudinal_data(
   df_wide,
   ordinal_columns = c("education", "income_category"),
   continuous_columns_keep = c("age", "bmi")
 )
+}
 }

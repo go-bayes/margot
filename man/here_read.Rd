@@ -26,11 +26,13 @@ If `dir_path` is NULL, the `push_mods` variable must be defined in the user's en
 This function will first try to read an .rds file. If not found, it will attempt to read the file without the .rds extension.
 }
 \examples{
+\dontrun{
 # Assuming `push_mods` is set in your environment to "~/mydata"
 # and you have previously saved an RDS file named "my_df.rds" in that directory
 my_df <- here_read("my_df")
 
 # Reading from a custom directory
 my_df <- here_read("my_df", dir_path = "~/custom_dir")
+}
 
 }

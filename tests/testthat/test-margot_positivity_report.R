@@ -65,7 +65,7 @@ test_that("margot_positivity_report defaults to first outcome and all shifts", {
 
   expect_equal(rep$metadata$outcome, "first_outcome")
   expect_equal(rep$metadata$shifts, c("first_outcome_null", "first_outcome_shift_zero"))
-  expect_equal(rep$summary_table$Shift, c("Identity", "Shift Zero"))
+  expect_equal(rep$summary_table$Shift, c("Observed (Censoring-Adjusted)", "Shift Zero"))
 })
 
 test_that("margot_positivity_report_single_model wraps single LMTP outputs", {

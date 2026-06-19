@@ -34,10 +34,12 @@ print(original_values)
 
 # Real-world example: back-transforming household income z-scores
 # Get mean and sd from original log-transformed data
+original_df <- data.frame(t0_log_household_inc = log(c(35000, 50000, 75000, 110000)))
 log_mean_inc <- mean(original_df$t0_log_household_inc, na.rm = TRUE)
 log_sd_inc <- sd(original_df$t0_log_household_inc, na.rm = TRUE)
 
 # Back-transform all z-scores in the dataset
+df_grf <- data.frame(t0_log_household_inc_z = c(-1, 0, 1))
 original_data_scale <- back_transform_log_z(
   df_grf$t0_log_household_inc_z,
   log_mean = log_mean_inc,

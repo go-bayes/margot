@@ -27,8 +27,8 @@
 #'   col_name = "forgiveness",
 #'   binwidth = 0.5 # Adjust binwidth as needed
 #' )
-#' }
 #' print(graph_density_of_exposure)
+#' }
 #'
 #' @import ggplot2
 #' @importFrom rlang sym

@@ -80,6 +80,33 @@ test_that("margot_qini refuses descriptive in-sample regeneration by default", {
   )
 })
 
+test_that("causal forest caps top variables at the available covariate count", {
+  set.seed(42)
+  n <- 200
+  x <- matrix(stats::rnorm(n * 5), ncol = 5)
+  colnames(x) <- paste0("x", seq_len(5))
+  w <- stats::rbinom(n, 1, 0.5)
+  y <- x[, 1] + 0.2 * w + stats::rnorm(n)
+
+  out <- margot_causal_forest(
+    data = data.frame(y = y),
+    outcome_vars = "y",
+    covariates = x,
+    W = w,
+    weights = NULL,
+    grf_defaults = list(num.trees = 100),
+    top_n_vars = 15,
+    save_models = TRUE,
+    save_data = TRUE,
+    compute_rate = FALSE,
+    compute_conditional_means = FALSE,
+    verbose = FALSE
+  )
+
+  expect_equal(length(out$results$model_y$top_vars), 5L)
+  expect_equal(length(out$full_models), 1L)
+})
+
 test_that("margot_policy_split_diagnostic evaluates repeated held-out splits", {
   set.seed(42)
   n <- 60

@@ -13,7 +13,7 @@ and presents the results in a tidy data frame."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.326</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.327</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,10 +90,9 @@ representing common points in a normal distribution.</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Get mean and sd from original log-transformed income data</span></span></span>
+<span class="r-in"><span><span class="va">original_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t0_log_household_inc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">35000</span>, <span class="fl">50000</span>, <span class="fl">75000</span>, <span class="fl">110000</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">log_mean_inc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">original_df</span><span class="op">$</span><span class="va">t0_log_household_inc</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_df' not found</span>
 <span class="r-in"><span><span class="va">log_sd_inc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">original_df</span><span class="op">$</span><span class="va">t0_log_household_inc</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_df' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create mapping table with default z-scores</span></span></span>
 <span class="r-in"><span><span class="va">income_mapping</span> <span class="op">&lt;-</span> <span class="fu">margot_back_transform_log_z</span><span class="op">(</span></span></span>
@@ -101,9 +100,15 @@ representing common points in a normal distribution.</p></dd>
 <span class="r-in"><span>  log_sd <span class="op">=</span> <span class="va">log_sd_inc</span>,</span></span>
 <span class="r-in"><span>  label <span class="op">=</span> <span class="st">"household_income"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'log_mean_inc' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">income_mapping</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'income_mapping' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   z_score household_income</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    -2.0         22858.92</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2    -1.0         37537.42</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    -0.5         48102.62</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4     0.0         61641.47</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5     0.5         78990.95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6     1.0        101223.56</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7     2.0        166222.67</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create mapping with custom z-scores</span></span></span>
 <span class="r-in"><span><span class="va">custom_mapping</span> <span class="op">&lt;-</span> <span class="fu">margot_back_transform_log_z</span><span class="op">(</span></span></span>
@@ -112,9 +117,11 @@ representing common points in a normal distribution.</p></dd>
 <span class="r-in"><span>  z_scores <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  label <span class="op">=</span> <span class="st">"household_income"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'log_mean_inc' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">custom_mapping</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'custom_mapping' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   z_score household_income</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1      -1         37537.42</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2       0         61641.47</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3       1        101223.56</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

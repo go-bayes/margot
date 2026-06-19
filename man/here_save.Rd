@@ -29,11 +29,13 @@ If `dir_path` is NULL, the `push_mods` variable should be defined in the user's 
 It is assumed that the specified directory exists. This function does not create directories.
 }
 \examples{
+\dontrun{
 # assuming `push_mods` is set in your environment to "~/mydata"
 my_df <- data.frame(x = 1:5, y = letters[1:5])
 here_save(my_df, "my_df")
 
 # specifying a custom directory
 here_save(my_df, "my_df", dir_path = "~/custom_dir", compress = "xz")
+}
 
 }

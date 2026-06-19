@@ -88,11 +88,13 @@ A ggplot2 object representing the colored histogram.
 This function is deprecated. Please use `margot_plot_histogram()` instead.
 }
 \examples{
+\dontrun{
 df <- data.frame(value = rnorm(1000))
 coloured_histogram_quantiles(df, "value", n_divisions = 4)
 
 # With custom breaks
 coloured_histogram_quantiles(df, "value", custom_breaks = c(-2, -1, 0, 1, 2))
+}
 
 }
 \keyword{internal}

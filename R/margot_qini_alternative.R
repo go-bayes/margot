@@ -114,13 +114,22 @@ margot_qini_alternative <- function(margot_result,
       NULL
     }
 
-    # fit evaluation forest
-    eval_forest <- grf::causal_forest(
-      X = margot_result$covariates[test_indices, ],
-      Y = Y_test,
-      W = W_test,
-      sample.weights = weights_test,
-      num.trees = 2000 # match default from margot_causal_forest
+    # keep the held-out QINI evaluation forest aligned with the main GRF defaults.
+    eval_grf_defaults <- utils::modifyList(
+      list(num.trees = 5000, min.node.size = 50),
+      margot_result$grf_defaults %||% list()
+    )
+    eval_forest <- do.call(
+      grf::causal_forest,
+      c(
+        list(
+          X = margot_result$covariates[test_indices, ],
+          Y = Y_test,
+          W = W_test,
+          sample.weights = weights_test
+        ),
+        eval_grf_defaults
+      )
     )
 
     # get DR scores from evaluation forest

@@ -58,6 +58,7 @@ and 'evaluebound_asc' sort by the E-Value bound; 'alphabetical' sorts by outcome
 name; 'custom' respects a user-provided vector; 'default' is an alias for 'magnitude_desc'.
 }
 \examples{
+\dontrun{
 # descending magnitude (default for 'default')
 result_df <- group_tab(df = analysis_df, order = "default")
 
@@ -73,6 +74,7 @@ result_df <- group_tab(df = analysis_df, order = "alphabetical")
 # custom ordering
 custom_order <- c("Outcome3", "Outcome1", "Outcome2")
 result_df <- group_tab(df = analysis_df, order = "custom", custom_order = custom_order)
+}
 
 }
 \keyword{internal}

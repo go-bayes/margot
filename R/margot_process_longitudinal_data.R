@@ -28,12 +28,14 @@
 #' @importFrom cli cli_h1 cli_h2 cli_alert_info cli_alert_success cli_ul
 #'
 #' @examples
+#' \dontrun{
 #' # assuming df_wide is your wide-format dataframe with three waves
 #' processed_data <- margot_process_longitudinal_data(
 #'   df_wide,
 #'   ordinal_columns = c("education", "income_category"),
 #'   continuous_columns_keep = c("age", "bmi")
 #' )
+#' }
 #' @export
 margot_process_longitudinal_data <- function(df_wide, ordinal_columns = NULL, continuous_columns_keep = NULL) {
   cli::cli_h1("Longitudinal Data Processing")

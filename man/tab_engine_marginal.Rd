@@ -39,6 +39,7 @@ providing a summary suited for reporting. It supports both risk difference (RD) 
 types of estimates and handles continuous and categorical treatment variables.
 }
 \examples{
+\dontrun{
 # Assuming you have results from a simulation or model in `results_df`
 tabulated_results <- tab_engine_marginal(
   x = results_df,
@@ -47,6 +48,7 @@ tabulated_results <- tab_engine_marginal(
   sd = 0.2,
   type = "RD"
 ) # Corrected 'scale' to 'type'
+}
 
 }
 \keyword{internal}

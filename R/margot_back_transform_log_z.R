@@ -16,6 +16,7 @@
 #'
 #' @examples
 #' # Get mean and sd from original log-transformed income data
+#' original_df <- data.frame(t0_log_household_inc = log(c(35000, 50000, 75000, 110000)))
 #' log_mean_inc <- mean(original_df$t0_log_household_inc, na.rm = TRUE)
 #' log_sd_inc <- sd(original_df$t0_log_household_inc, na.rm = TRUE)
 #'

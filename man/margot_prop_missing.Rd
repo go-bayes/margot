@@ -22,10 +22,10 @@ If no wave column is found, it issues a warning and uses the entire dataset.
 }
 \examples{
 # Example using a dataset with a wave column
-# assume dat_long has a column called wave
+dat_long <- data.frame(wave = c(0, 0, 1), outcome = c(1, NA, 3))
 margot_prop_missing(dat_long)
 
 # Example using a dataset without a wave column
-# assume some_data is a dataset with no wave column
+some_data <- data.frame(outcome = c(1, NA, 3))
 margot_prop_missing(some_data)
 }

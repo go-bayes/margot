@@ -30,6 +30,7 @@
 #'         `tab_results` with the tabulated results including E-values and other statistics.
 #'
 #' @examples
+#' \dontrun{
 #' # Assuming you have a dataset `df_ate` and necessary variables defined
 #' results <- double_robust_marginal(
 #'   df = df_ate,
@@ -52,6 +53,7 @@
 #'   delta = 1,
 #'   sd = 1
 #' )
+#' }
 #'
 #' @keywords internal
 #' @importFrom parallel detectCores

@@ -101,6 +101,7 @@ reference:
     - margot_rate
     - margot_rate_batch
     - margot_rate_cv
+    - rate_sequential_cv
     - margot_recompute_ate
     - margot_recompute_ate_batch
     - margot_recompute_qini_aipw

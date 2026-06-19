@@ -45,7 +45,7 @@ test_that("margot_plot_lmtp_learners uses readable component strip headers", {
     levels(p$data$component_strip_label),
     c("Outcome regression\n(m)", "Treatment regression\n(r)")
   )
-  expect_equal(levels(p$data$shift_label), "Identity")
+  expect_equal(levels(p$data$shift_label), "Observed (Censoring-Adjusted)")
   expect_equal(p$theme$strip.placement, "outside")
   expect_equal(p$theme$strip.text.y.left$angle, 0)
   expect_equal(p$theme$strip.background.y$fill, "#6b7280")
@@ -176,7 +176,7 @@ test_that("margot_report_lmtp_learners bundles learner outputs", {
   expect_true(is.data.frame(rep$learner_data))
   expect_equal(rep$metadata$outcome, "first_outcome")
   expect_equal(rep$metadata$shifts, c("first_outcome_null", "first_outcome_shift_up"))
-  expect_equal(unique(rep$summary_table$Shift), c("Identity", "Shift Up"))
+  expect_equal(unique(rep$summary_table$Shift), c("Observed (Censoring-Adjusted)", "Shift Up"))
   expect_equal(unique(rep$summary_table$Component), c("Outcome regression (m)", "Treatment regression (r)"))
   expect_type(rep$narrative$text, "character")
   expect_match(rep$method_statement, "Super Learner diagnostics")

@@ -41,7 +41,7 @@ margot_causal_forest(
 \item{weights}{A vector of weights for the observations.}
 
 \item{grf_defaults}{A list of default parameters for the GRF models. Defaults
-are `num.trees = 4000` and `min.node.size = 50`; user-supplied values
+are `num.trees = 5000` and `min.node.size = 50`; user-supplied values
 override these. For large samples (`n > 30000`), consider
 `min.node.size = 100` as a sensitivity analysis.}
 

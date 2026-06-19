@@ -30,7 +30,8 @@ compute_qini_improved <- function(Y, W, X, tau_hat, weights = NULL,
         Y = Y,
         W = W,
         sample.weights = weights,
-        num.trees = 2000
+        num.trees = 5000,
+        min.node.size = 50
       )
 
       # get DR scores from evaluation forest
@@ -351,7 +352,7 @@ margot_inspect_qini <- function(model_results,
 #' @param W A vector of binary treatment assignments.
 #' @param weights A vector of weights for the observations.
 #' @param grf_defaults A list of default parameters for the GRF models. Defaults
-#'   are `num.trees = 4000` and `min.node.size = 50`; user-supplied values
+#'   are `num.trees = 5000` and `min.node.size = 50`; user-supplied values
 #'   override these. For large samples (`n > 30000`), consider
 #'   `min.node.size = 100` as a sensitivity analysis.
 #' @param save_data Logical indicating whether to save data, covariates, and weights. Default is FALSE.
@@ -569,7 +570,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
   if (verbose) cli::cli_alert_info(paste("number of complete cases:", length(not_missing)))
 
   # use conservative GRF defaults unless callers explicitly override them.
-  grf_default_params <- list(num.trees = 4000, min.node.size = 50)
+  grf_default_params <- list(num.trees = 5000, min.node.size = 50)
   grf_defaults <- utils::modifyList(grf_default_params, grf_defaults)
   if (verbose) {
     cli::cli_alert_info(
@@ -759,11 +760,12 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         # --- 3) variable importance and best linear projection ---
         varimp <- grf::variable_importance(model)
         ranked_vars <- order(varimp, decreasing = TRUE)
+        top_var_idx <- ranked_vars[seq_len(min(top_n_vars, length(ranked_vars)))]
         # if covariates have no column names, use numeric indices
         if (is.null(colnames(covariates))) {
-          top_vars <- ranked_vars[1:top_n_vars]
+          top_vars <- top_var_idx
         } else {
-          top_vars <- colnames(covariates)[ranked_vars[1:top_n_vars]]
+          top_vars <- colnames(covariates)[top_var_idx]
         }
         results[[model_name]]$top_vars <- top_vars
 

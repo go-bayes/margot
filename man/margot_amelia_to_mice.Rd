@@ -16,6 +16,7 @@ a `mids` object compatible with the `mice` package, structured with the original
 convert an amelia object to a mice object
 }
 \examples{
+\dontrun{
 # load Amelia package and perform imputation
 library(Amelia)
 data(africa) # example dataset from Amelia package
@@ -26,5 +27,6 @@ mids_obj <- margot_amelia_to_mice(amelia_output)
 
 # verify mids object
 print(mids_obj)
+}
 }
 \keyword{internal}

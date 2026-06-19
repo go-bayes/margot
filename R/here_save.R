@@ -16,12 +16,14 @@
 #' @return Invisibly returns the full path to the saved file.
 #'
 #' @examples
+#' \dontrun{
 #' # assuming `push_mods` is set in your environment to "~/mydata"
 #' my_df <- data.frame(x = 1:5, y = letters[1:5])
 #' here_save(my_df, "my_df")
 #'
 #' # specifying a custom directory
 #' here_save(my_df, "my_df", dir_path = "~/custom_dir", compress = "xz")
+#' }
 #'
 #' @importFrom here here
 #' @export

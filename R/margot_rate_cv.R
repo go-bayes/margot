@@ -269,16 +269,21 @@ margot_rate_cv <- function(model_results,
       cli::cli_progress_update(id = pb_extract_id)
     }
 
-    # Get the model
+    # use saved data directly when full model objects were deliberately omitted.
+    forest <- NULL
     if (!is.null(model_results$full_models) &&
       model_name %in% names(model_results$full_models)) {
       forest <- model_results$full_models[[model_name]]
-    } else {
+    } else if (!use_full_data || !has_full_data) {
       if (verbose) {
         cli::cli_alert_warning("Forest object not found for {model_name}")
       }
       model_data_list[[i]] <- NULL
       next
+    } else if (verbose) {
+      cli::cli_alert_info(
+        "Forest object not found for {model_name}; refitting CV folds from saved data."
+      )
     }
 
     # Extract data for CV
@@ -305,8 +310,8 @@ margot_rate_cv <- function(model_results,
         if (!is.null(weights)) weights <- weights[not_missing]
       }
 
-      grf_defaults <- list()
-      if (!is.null(forest$tunable.params)) {
+      grf_defaults <- model_results$grf_defaults %||% list()
+      if (!is.null(forest) && !is.null(forest$tunable.params)) {
         grf_defaults <- forest$tunable.params
       }
     } else {
@@ -315,7 +320,7 @@ margot_rate_cv <- function(model_results,
       X <- forest$X.orig
       W <- forest$W.orig
       weights <- forest$sample.weights
-      grf_defaults <- forest$tunable.params
+      grf_defaults <- forest$tunable.params %||% model_results$grf_defaults %||% list()
     }
 
     # Store extracted data
@@ -753,6 +758,55 @@ margot_rate_cv <- function(model_results,
 }
 
 
+#' Repair RATE CV fold summaries
+#'
+#' Internal helper that treats degenerate fold t-statistics as zero evidence
+#' while retaining the raw fold values for audit.
+#'
+#' @keywords internal
+#' @noRd
+.repair_rate_cv_folds <- function(t_statistics, fold_sizes, fold_estimates, fold_std_errors) {
+  # degenerate zero-standard-error folds should not determine the martingale statistic.
+  raw_t_statistics <- t_statistics
+  nonfinite_t_statistics <- !is.finite(t_statistics)
+  t_statistics[nonfinite_t_statistics] <- 0
+
+  aggregated_t <- sum(t_statistics) / sqrt(length(t_statistics))
+  p_value <- 2 * stats::pnorm(-abs(aggregated_t))
+
+  valid_estimate_folds <- is.finite(fold_sizes) &
+    fold_sizes > 0 &
+    is.finite(fold_estimates) &
+    is.finite(fold_std_errors) &
+    fold_std_errors >= 0
+
+  if (any(valid_estimate_folds)) {
+    valid_sizes <- fold_sizes[valid_estimate_folds]
+    fold_weights <- valid_sizes / sum(valid_sizes)
+    valid_estimates <- fold_estimates[valid_estimate_folds]
+    valid_std_errors <- fold_std_errors[valid_estimate_folds]
+
+    cv_estimate <- sum(valid_estimates * fold_weights)
+    within_variance <- sum((valid_std_errors^2) * fold_weights)
+    between_variance <- sum(fold_weights * (valid_estimates - cv_estimate)^2)
+    cv_std_error <- sqrt(within_variance + between_variance)
+  } else {
+    cv_estimate <- NA_real_
+    cv_std_error <- NA_real_
+  }
+
+  list(
+    p_value = p_value,
+    t_statistic = aggregated_t,
+    fold_t_statistics = t_statistics,
+    fold_t_statistics_raw = raw_t_statistics,
+    nonfinite_fold_t_statistics = nonfinite_t_statistics,
+    cv_estimate = cv_estimate,
+    cv_std_error = cv_std_error
+  )
+}
+
+
 #' Sequential Cross-Validation for RATE
 #'
 #' Internal function implementing the uncorrelated sequential cross-validation
@@ -858,37 +912,30 @@ rate_sequential_cv <- function(X, Y, W, weights = NULL,
     cli::cli_progress_done(id = pb_cv_id)
   }
 
-  # Aggregate t-statistics using martingale property
-  aggregated_t <- sum(t_statistics) / sqrt(num_folds - 1)
-  p_value <- 2 * pnorm(-abs(aggregated_t))
+  cv_summary <- .repair_rate_cv_folds(
+    t_statistics = t_statistics,
+    fold_sizes = fold_sizes,
+    fold_estimates = fold_estimates,
+    fold_std_errors = fold_std_errors
+  )
 
-  # Aggregate RATE estimates across folds
-  # Use weighted average where weights are proportional to fold sizes
-  total_test_size <- sum(fold_sizes)
-  fold_weights <- fold_sizes / total_test_size
-
-  # Weighted average of estimates
-  cv_estimate <- sum(fold_estimates * fold_weights)
-
-  # Combined standard error (accounting for between-fold variance)
-  # First, get weighted average of within-fold variances
-  within_variance <- sum((fold_std_errors^2) * fold_weights)
-
-  # Then add between-fold variance
-  between_variance <- sum(fold_weights * (fold_estimates - cv_estimate)^2)
-
-  # Combined standard error
-  cv_std_error <- sqrt(within_variance + between_variance)
+  if (verbose && any(cv_summary$nonfinite_fold_t_statistics)) {
+    cli::cli_alert_warning(
+      "RATE CV encountered {sum(cv_summary$nonfinite_fold_t_statistics)} degenerate fold{?s}; treating as zero evidence."
+    )
+  }
 
   list(
-    p_value = p_value,
-    t_statistic = aggregated_t,
-    fold_t_statistics = t_statistics,
+    p_value = cv_summary$p_value,
+    t_statistic = cv_summary$t_statistic,
+    fold_t_statistics = cv_summary$fold_t_statistics,
+    fold_t_statistics_raw = cv_summary$fold_t_statistics_raw,
+    nonfinite_fold_t_statistics = cv_summary$nonfinite_fold_t_statistics,
     fold_sizes = fold_sizes,
     fold_estimates = fold_estimates,
     fold_std_errors = fold_std_errors,
-    cv_estimate = cv_estimate,
-    cv_std_error = cv_std_error,
+    cv_estimate = cv_summary$cv_estimate,
+    cv_std_error = cv_summary$cv_std_error,
     num_folds = num_folds,
     target = target
   )

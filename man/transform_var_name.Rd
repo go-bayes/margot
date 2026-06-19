@@ -39,6 +39,7 @@ removes time-prefixes and z-suffixes, replaces underscores, and converts
 to title case while preserving NZ, SDO, and RWA acronyms.
 }
 \examples{
+\dontrun{
 # Basic usage with mapping
 transform_var_name("t2_rwa_z", label_mapping = list(rwa = "Right-Wing Authoritarianism"))
 
@@ -48,5 +49,6 @@ transform_var_name("baseline RWA", expand_acronyms = TRUE)
 
 # Mapping takes precedence; expansion still applies to remaining acronyms
 transform_var_name("PWI overall", label_mapping = list(PWI = "Personal Well-Being Index"), expand_acronyms = TRUE)
+}
 }
 \keyword{internal}

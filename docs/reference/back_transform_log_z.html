@@ -13,7 +13,7 @@ then exponentiating to return to the original scale."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.326</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.327</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,20 +91,19 @@ then exponentiating to return to the original scale.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Real-world example: back-transforming household income z-scores</span></span></span>
 <span class="r-in"><span><span class="co"># Get mean and sd from original log-transformed data</span></span></span>
+<span class="r-in"><span><span class="va">original_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t0_log_household_inc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">35000</span>, <span class="fl">50000</span>, <span class="fl">75000</span>, <span class="fl">110000</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">log_mean_inc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">original_df</span><span class="op">$</span><span class="va">t0_log_household_inc</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_df' not found</span>
 <span class="r-in"><span><span class="va">log_sd_inc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">original_df</span><span class="op">$</span><span class="va">t0_log_household_inc</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_df' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Back-transform all z-scores in the dataset</span></span></span>
+<span class="r-in"><span><span class="va">df_grf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t0_log_household_inc_z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">original_data_scale</span> <span class="op">&lt;-</span> <span class="fu">back_transform_log_z</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">df_grf</span><span class="op">$</span><span class="va">t0_log_household_inc_z</span>,</span></span>
 <span class="r-in"><span>  log_mean <span class="op">=</span> <span class="va">log_mean_inc</span>,</span></span>
 <span class="r-in"><span>  log_sd <span class="op">=</span> <span class="va">log_sd_inc</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'df_grf' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">original_data_scale</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'original_data_scale' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  37537.42  61641.47 101223.56</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Interpret key points on the distribution (-1 SD, mean, +1 SD)</span></span></span>
 <span class="r-in"><span><span class="va">z_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></span>
@@ -113,16 +112,17 @@ then exponentiating to return to the original scale.</p>
 <span class="r-in"><span>  log_mean <span class="op">=</span> <span class="va">log_mean_inc</span>,</span></span>
 <span class="r-in"><span>  log_sd <span class="op">=</span> <span class="va">log_sd_inc</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'log_mean_inc' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a data frame to display the relationship between z-scores and original values</span></span></span>
 <span class="r-in"><span><span class="va">results_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  z_score <span class="op">=</span> <span class="va">z_scores</span>,</span></span>
 <span class="r-in"><span>  data_scale <span class="op">=</span> <span class="va">scale_values</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'scale_values' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">results_df</span><span class="op">)</span> <span class="co"># Shows what values on the original scale correspond to each z-score</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'results_df' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   z_score data_scale</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1      -1   37537.42</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2       0   61641.47</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3       1  101223.56</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

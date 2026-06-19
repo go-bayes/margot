@@ -130,7 +130,7 @@ margot_recalculate_policy_trees <- function(model_results,
 #' results_custom <- margot_flip_forests(
 #'   results,
 #'   flip_outcomes = c("anxiety", "depression"),
-#'   grf_defaults = list(num.trees = 4000, honesty = TRUE, honesty.fraction = 0.5)
+#'   grf_defaults = list(num.trees = 5000, honesty = TRUE, honesty.fraction = 0.5)
 #' )
 #' }
 #'

@@ -79,6 +79,7 @@ results using `tab_engine_marginal`. The function handles both continuous and ca
 and allows specification of the type of effect measure for both causal estimation and tabulation.
 }
 \examples{
+\dontrun{
 # Assuming you have a dataset `df_ate` and necessary variables defined
 results <- double_robust_marginal(
   df = df_ate,
@@ -101,6 +102,7 @@ results <- double_robust_marginal(
   delta = 1,
   sd = 1
 )
+}
 
 }
 \keyword{internal}

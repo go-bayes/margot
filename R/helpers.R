@@ -893,6 +893,7 @@ s <- function(results_df, original_df, label_mapping = NULL) {
 #' @return A character scalar of the transformed label, or NA if input missing
 #'
 #' @examples
+#' \dontrun{
 #' # Basic usage with mapping
 #' transform_var_name("t2_rwa_z", label_mapping = list(rwa = "Right-Wing Authoritarianism"))
 #'
@@ -902,6 +903,7 @@ s <- function(results_df, original_df, label_mapping = NULL) {
 #'
 #' # Mapping takes precedence; expansion still applies to remaining acronyms
 #' transform_var_name("PWI overall", label_mapping = list(PWI = "Personal Well-Being Index"), expand_acronyms = TRUE)
+#' }
 #' @keywords internal
 transform_var_name <- function(var_name, label_mapping = NULL,
                                remove_tx_prefix = TRUE,
@@ -1203,6 +1205,7 @@ here_save_arrow <- function(obj, name, dir_path = NULL,
 #' name; 'custom' respects a user-provided vector; 'default' is an alias for 'magnitude_desc'.
 #'
 #' @examples
+#' \dontrun{
 #' # descending magnitude (default for 'default')
 #' result_df <- group_tab(df = analysis_df, order = "default")
 #'
@@ -1218,6 +1221,7 @@ here_save_arrow <- function(obj, name, dir_path = NULL,
 #' # custom ordering
 #' custom_order <- c("Outcome3", "Outcome1", "Outcome2")
 #' result_df <- group_tab(df = analysis_df, order = "custom", custom_order = custom_order)
+#' }
 #'
 #' @importFrom dplyr arrange desc mutate slice
 #' @importFrom tibble rownames_to_column
@@ -1380,6 +1384,7 @@ group_tab <- function(
 #'         for easy reporting.
 #'
 #' @examples
+#' \dontrun{
 #' # Assuming you have results from a simulation or model in `results_df`
 #' tabulated_results <- tab_engine_marginal(
 #'   x = results_df,
@@ -1388,6 +1393,7 @@ group_tab <- function(
 #'   sd = 0.2,
 #'   type = "RD"
 #' ) # Corrected 'scale' to 'type'
+#' }
 #'
 #' @importFrom dplyr filter mutate rename select
 #' @importFrom EValue evalues.OLS evalues.RR
@@ -1676,6 +1682,7 @@ margot_batch_glm <- function(
 #' @return A matrix indicating the number of transitions between states. The rows represent the initial state ('from'), and the columns represent the subsequent state ('to'). Diagonal entries indicate the number of times the state did not change, while off-diagonal entries indicate transitions from one state to another.
 #'
 #' @examples
+#' \dontrun{
 #' df <- read.table(header = TRUE, text = "
 #' id wave year_measured religion_believe_god
 #' 3 0 1 0
@@ -1687,6 +1694,7 @@ margot_batch_glm <- function(
 #'
 #' transition_matrix <- create_transition_matrix(df, "religion_believe_god", "id")
 #' print(transition_matrix)
+#' }
 #'
 #' @note This function explicitly excludes NA values from the transition matrix calculation. It treats numeric state variables by converting them to factors, ensuring a consistent analysis approach for both numeric and factor types.
 #'

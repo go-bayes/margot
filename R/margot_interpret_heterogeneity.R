@@ -1126,12 +1126,16 @@ generate_extended_report <- function(evidence_summary, selection_results,
 #' Extract GRF parameters from models
 #' @keywords internal
 extract_grf_params <- function(models) {
-  # default parameters
+  # mirror the causal-forest defaults when fitted model objects are unavailable.
   params <- list(
-    min.node.size = 20,
-    num.trees = 2000,
+    min.node.size = 50,
+    num.trees = 5000,
     honesty = TRUE
   )
+
+  if (!is.null(models$grf_defaults)) {
+    params <- utils::modifyList(params, models$grf_defaults)
+  }
 
   # try to extract from first model if available
   if (!is.null(models) && !is.null(models$results)) {
@@ -1139,6 +1143,9 @@ extract_grf_params <- function(models) {
     if (!is.null(models$full_models) &&
       first_model_name %in% names(models$full_models)) {
       forest <- models$full_models[[first_model_name]]
+      if (!is.null(forest$tunable.params)) {
+        params <- utils::modifyList(params, forest$tunable.params)
+      }
       if (!is.null(forest$min.node.size)) params$min.node.size <- forest$min.node.size
       if (!is.null(forest$num.trees)) params$num.trees <- forest$num.trees
       if (!is.null(forest$honesty)) params$honesty <- forest$honesty

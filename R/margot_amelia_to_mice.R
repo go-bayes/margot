@@ -6,6 +6,7 @@
 #' @keywords internal
 #'
 #' @examples
+#' \dontrun{
 #' # load Amelia package and perform imputation
 #' library(Amelia)
 #' data(africa) # example dataset from Amelia package
@@ -16,6 +17,7 @@
 #'
 #' # verify mids object
 #' print(mids_obj)
+#' }
 margot_amelia_to_mice <- function(amelia_obj) {
   # Verify input is an amelia object
   if (!inherits(amelia_obj, "amelia")) {

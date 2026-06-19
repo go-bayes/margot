@@ -28,7 +28,7 @@ test_that("margot_lmtp_overlap keeps null panels visible under shift colouring",
 
   expect_true("outcome::outcome_null::1" %in% names(ol$ratio_plots))
   expect_true("outcome::outcome_shift_up::1" %in% names(ol$ratio_plots))
-  expect_match(ol$ratio_plots[["outcome::outcome_null::1"]]$labels$title, "Identity")
+  expect_match(ol$ratio_plots[["outcome::outcome_null::1"]]$labels$title, "Observed \\(Censoring-Adjusted\\)")
   expect_true(is.na(ol$ratio_plots[["outcome::outcome_null::1"]]$layers[[1]]$aes_params$colour))
   expect_equal(ol$ratio_plots[["outcome::outcome_shift_up::1"]]$layers[[1]]$aes_params$colour, "white")
   null_layers <- ol$ratio_plots[["outcome::outcome_null::1"]]$layers
