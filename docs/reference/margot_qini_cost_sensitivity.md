@@ -15,7 +15,8 @@ margot_qini_cost_sensitivity(
   spend_levels = 0.1,
   baseline_method = "maq_no_covariates",
   verbose = TRUE,
-  seed = 12345
+  seed = 12345,
+  allow_in_sample = FALSE
 )
 ```
 
@@ -52,6 +53,10 @@ margot_qini_cost_sensitivity(
 - seed:
 
   Integer; base seed for reproducible computations (default 12345).
+
+- allow_in_sample:
+
+  Logical; passed to \[margot_qini()\]. Default FALSE.
 
 ## Value
 

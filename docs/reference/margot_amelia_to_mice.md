@@ -23,19 +23,16 @@ the original dataset and imputed values
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # load Amelia package and perform imputation
 library(Amelia)
-#> Error in library(Amelia): there is no package called ‘Amelia’
 data(africa) # example dataset from Amelia package
-#> Warning: data set ‘africa’ not found
 amelia_output <- amelia(x = africa, m = 5, idvars = "country") # impute data
-#> Error in amelia(x = africa, m = 5, idvars = "country"): could not find function "amelia"
 
 # convert amelia object to mice object
 mids_obj <- margot_amelia_to_mice(amelia_output)
-#> Error in margot_amelia_to_mice(amelia_output): could not find function "margot_amelia_to_mice"
 
 # verify mids object
 print(mids_obj)
-#> Error: object 'mids_obj' not found
+} # }
 ```

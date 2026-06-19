@@ -1,7 +1,7 @@
 Package: margot
 Type: Package
 Title: MARGinal Observational Treatment-effects
-Version: 1.0.328
+Version: 1.1.0
 Authors@R: person("Joseph A", "Bulbulia", email = "joseph.bulbulia@gmail.com", role = c("aut", "cre"))
 Author: Joseph A Bulbulia [aut, cre]
 Maintainer: Joseph A Bulbulia <joseph.bulbulia@gmail.com>
@@ -66,8 +66,8 @@ Suggests:
     qs2,
     rmarkdown,
     testthat (>= 3.0.0)
-RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://go-bayes.github.io/margot
 BugReports: https://github.com/go-bayes/margot/issues
+RoxygenNote: 7.3.3

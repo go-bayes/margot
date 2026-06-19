@@ -58,6 +58,7 @@ relevant statistics formatted for easy reporting.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # Assuming you have results from a simulation or model in `results_df`
 tabulated_results <- tab_engine_marginal(
   x = results_df,
@@ -66,5 +67,5 @@ tabulated_results <- tab_engine_marginal(
   sd = 0.2,
   type = "RD"
 ) # Corrected 'scale' to 'type'
-#> Error in tab_engine_marginal(x = results_df, new_name = "Treatment Effect",     delta = 1, sd = 0.2, type = "RD"): could not find function "tab_engine_marginal"
+} # }
 ```

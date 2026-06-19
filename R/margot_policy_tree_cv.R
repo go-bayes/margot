@@ -2,27 +2,28 @@
 #'
 #' @description
 #' Learns shallow policy trees on training folds and evaluates their policy
-#' values, selected split variables, and split thresholds on held-out folds.
+#' values, selected split variables, split thresholds, and leaf-level action
+#' gains on held-out folds.
 #' The target is the performance of the policy-learning procedure, not the value
 #' of a final full-sample display tree.
 #'
-#' @param model_results A list returned by [margot_causal_forest()],
-#'   [margot_policy_tree_stability()], or a compatible object with `results`,
-#'   `covariates`, and stored doubly robust action scores.
+#' @param model_results A list returned by \code{margot_causal_forest()},
+#'   \code{margot_policy_tree_stability()}, or a compatible object with
+#'   \code{results}, \code{covariates}, and stored doubly robust action scores.
 #' @param model_names Optional character vector of model names to process, with
-#'   or without the `model_` prefix. Defaults to all models.
+#'   or without the \code{model_} prefix. Defaults to all models.
 #' @param custom_covariates Optional character vector of covariates to use for
 #'   policy trees.
 #' @param exclude_covariates Optional character vector of covariate names or
 #'   patterns to exclude.
-#' @param covariate_mode Character. One of `"original"`, `"custom"`, `"add"`,
-#'   or `"all"`.
+#' @param covariate_mode Character. One of \code{"original"},
+#'   \code{"custom"}, \code{"add"}, or \code{"all"}.
 #' @param depths Integer vector containing 1, 2, or both. Character values
-#'   `"1"`, `"2"`, and `"both"` are also accepted.
+#'   \code{"1"}, \code{"2"}, and \code{"both"} are also accepted.
 #' @param num_folds Integer. Number of folds per repeat. Default is 5.
 #' @param n_repeats Integer. Number of repeated fold partitions. Default is 20.
-#' @param weights Optional numeric vector of evaluation weights. If `NULL`,
-#'   `model_results$weights` is used when available.
+#' @param weights Optional numeric vector of evaluation weights. If
+#'   \code{NULL}, \code{model_results$weights} is used when available.
 #' @param min_gain_for_depth_switch Numeric. Minimum held-out value gain required
 #'   before depth two can be selected over depth one. Default is 0.01.
 #' @param max_stability_loss_for_depth_switch Numeric. Maximum allowed loss in
@@ -30,13 +31,15 @@
 #' @param label_mapping Optional named list mapping outcome and variable names to
 #'   display labels.
 #' @param seed Integer. Base seed for reproducible fold assignments.
-#' @param tree_method Character. `"fastpolicytree"` or `"policytree"`.
+#' @param tree_method Character. \code{"fastpolicytree"} or
+#'   \code{"policytree"}.
 #' @param verbose Logical. Print progress messages.
 #'
-#' @return A `margot_policy_tree_cv` list with fold-level held-out values,
-#'   value summaries, split summaries, threshold summaries, depth selection, and
-#'   a named `depth_map` that can be passed to [margot_policy_workflow()] or
-#'   [margot_policy_summary_compare_depths()].
+#' @return A \code{margot_policy_tree_cv} list with fold-level held-out values,
+#'   value summaries, split summaries, leaf summaries, threshold summaries,
+#'   depth selection, and a named \code{depth_map} that can be passed to
+#'   \code{margot_policy_workflow()} or
+#'   \code{margot_policy_summary_compare_depths()}.
 #'
 #' @references
 #' Athey, S., & Wager, S. (2021). Policy learning with observational data.
@@ -100,6 +103,7 @@ margot_policy_tree_cv <- function(model_results,
 
   fold_rows <- list()
   split_rows <- list()
+  leaf_rows <- list()
 
   for (model_name in model_names) {
     if (isTRUE(verbose)) cli::cli_h2("Processing {model_name}")
@@ -192,6 +196,24 @@ margot_policy_tree_cv <- function(model_results,
           if (!is.null(split_df) && nrow(split_df)) {
             split_rows[[length(split_rows) + 1L]] <- split_df
           }
+
+          leaf_df <- tryCatch(
+            .policy_cv_leaf_rows(
+              tree = tree,
+              covariates = model_data$covariates[test_pos, , drop = FALSE],
+              dr_scores = model_data$dr_scores[test_pos, , drop = FALSE],
+              weights = if (!is.null(model_data$weights)) model_data$weights[test_pos] else NULL,
+              model_name = model_name,
+              repeat_id = repeat_id,
+              fold = fold,
+              depth = depth,
+              label_mapping = label_mapping
+            ),
+            error = function(e) NULL
+          )
+          if (!is.null(leaf_df) && nrow(leaf_df)) {
+            leaf_rows[[length(leaf_rows) + 1L]] <- leaf_df
+          }
         }
       }
     }
@@ -207,9 +229,15 @@ margot_policy_tree_cv <- function(model_results,
   } else {
     data.frame()
   }
+  leaf_values <- if (length(leaf_rows)) {
+    do.call(rbind, leaf_rows)
+  } else {
+    data.frame()
+  }
 
   value_summary <- .policy_cv_value_summary(fold_values)
   split_summary <- .policy_cv_split_summary(split_values, fold_values)
+  leaf_summary <- .policy_cv_leaf_summary(leaf_values)
   threshold_summary <- .policy_cv_threshold_summary(split_values)
   depth_selection <- .policy_cv_select_depths(
     value_summary = value_summary,
@@ -228,6 +256,8 @@ margot_policy_tree_cv <- function(model_results,
     value_summary = value_summary,
     split_values = split_values,
     split_summary = split_summary,
+    leaf_values = leaf_values,
+    leaf_summary = leaf_summary,
     threshold_summary = threshold_summary,
     depth_selection = depth_selection,
     depth_map = depth_map,
@@ -391,6 +421,7 @@ margot_policy_tree_cv <- function(model_results,
   if (!any(keep)) return(NULL)
   X <- X[keep, , drop = FALSE]
   dr_scores <- as.matrix(dr_scores[keep, , drop = FALSE])
+  if (ncol(dr_scores) != 2L) return(NULL)
   weights <- if (!is.null(weights)) weights[keep] else NULL
   if (nrow(X) < 1L || ncol(dr_scores) < 2L) return(NULL)
 
@@ -461,6 +492,77 @@ margot_policy_tree_cv <- function(model_results,
 }
 
 #' @keywords internal
+.policy_cv_leaf_rows <- function(tree,
+                                 covariates,
+                                 dr_scores,
+                                 weights = NULL,
+                                 model_name,
+                                 repeat_id,
+                                 fold,
+                                 depth,
+                                 label_mapping = NULL) {
+  # summarise action-conditional leaf gains on the held-out rows for one tree.
+  if (is.null(tree$columns) || !all(tree$columns %in% colnames(covariates))) return(NULL)
+  X <- as.data.frame(covariates[, tree$columns, drop = FALSE])
+  keep <- stats::complete.cases(X) & stats::complete.cases(dr_scores)
+  if (!any(keep)) return(NULL)
+  X <- X[keep, , drop = FALSE]
+  dr_scores <- as.matrix(dr_scores[keep, , drop = FALSE])
+  weights <- if (!is.null(weights)) weights[keep] else NULL
+  leaf_ids <- .margot_policy_tree_leaf_ids(tree, X)
+  ok <- is.finite(leaf_ids)
+  if (!any(ok)) return(NULL)
+  X <- X[ok, , drop = FALSE]
+  dr_scores <- dr_scores[ok, , drop = FALSE]
+  weights <- if (!is.null(weights)) weights[ok] else NULL
+  leaf_ids <- leaf_ids[ok]
+  total_weight <- if (!is.null(weights)) {
+    sum(weights[is.finite(weights) & weights > 0], na.rm = TRUE)
+  } else {
+    length(leaf_ids)
+  }
+  if (!is.finite(total_weight) || total_weight <= 0) return(NULL)
+
+  effect <- as.numeric(dr_scores[, 2L] - dr_scores[, 1L])
+  action_names <- tree$action.names %||% c("control", "treated")
+  rows <- lapply(sort(unique(leaf_ids)), function(leaf_id) {
+    idx <- which(leaf_ids == leaf_id)
+    node <- tree$nodes[[leaf_id]]
+    action_id <- as.integer(node$action)
+    if (!is.finite(action_id) || action_id < 1L || action_id > length(action_names)) return(NULL)
+    w <- if (!is.null(weights)) weights[idx] else rep(1, length(idx))
+    share <- sum(w, na.rm = TRUE) / total_weight
+    estimated_gain <- if (action_id == 2L) {
+      .policy_cv_mean(effect[idx], w)
+    } else {
+      .policy_cv_mean(-effect[idx], w)
+    }
+    contrast <- if (action_id == 2L) "gain_vs_control" else "gain_vs_treatment"
+    data.frame(
+      model = model_name,
+      outcome = gsub("^model_", "", model_name),
+      outcome_label = .policy_cv_label(gsub("^model_", "", model_name), label_mapping),
+      repeat_id = repeat_id,
+      fold = fold,
+      depth = depth,
+      node_id = leaf_id,
+      action_id = action_id,
+      action = action_names[[action_id]],
+      action_label = .margot_leaf_label_action(action_names[[action_id]], label_mapping),
+      contrast = contrast,
+      n_eval_leaf = length(idx),
+      sample_share = share,
+      estimated_gain = estimated_gain,
+      value_contribution_vs_control = if (action_id == 2L) share * estimated_gain else 0,
+      value_contribution_vs_treatment = if (action_id == 1L) share * estimated_gain else 0,
+      stringsAsFactors = FALSE
+    )
+  })
+  rows <- Filter(Negate(is.null), rows)
+  if (length(rows)) do.call(rbind, rows) else NULL
+}
+
+#' @keywords internal
 .policy_cv_value_summary <- function(fold_values) {
   # summarise held-out policy values by model and depth.
   if (is.null(fold_values) || !nrow(fold_values)) return(data.frame())
@@ -521,6 +623,40 @@ margot_policy_tree_cv <- function(model_results,
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
   out[order(out$model, out$depth, out$node_id, -out$selection_frequency), , drop = FALSE]
+}
+
+#' @keywords internal
+.policy_cv_leaf_summary <- function(leaf_values) {
+  # summarise held-out leaf gains by model, depth, action, and contrast.
+  if (is.null(leaf_values) || !nrow(leaf_values)) return(data.frame())
+  groups <- split(
+    leaf_values,
+    interaction(leaf_values$model, leaf_values$depth, leaf_values$action, leaf_values$contrast, drop = TRUE)
+  )
+  rows <- lapply(groups, function(df) {
+    weights <- df$n_eval_leaf
+    data.frame(
+      model = df$model[1],
+      outcome = df$outcome[1],
+      outcome_label = df$outcome_label[1],
+      depth = df$depth[1],
+      action = df$action[1],
+      action_label = df$action_label[1],
+      contrast = df$contrast[1],
+      n_leaves = nrow(df),
+      n_eval_leaf = sum(df$n_eval_leaf, na.rm = TRUE),
+      sample_share_mean = stats::weighted.mean(df$sample_share, weights, na.rm = TRUE),
+      sample_share_sd = stats::sd(df$sample_share, na.rm = TRUE),
+      estimated_gain_mean = stats::weighted.mean(df$estimated_gain, weights, na.rm = TRUE),
+      estimated_gain_sd = stats::sd(df$estimated_gain, na.rm = TRUE),
+      value_contribution_vs_control_mean = mean(df$value_contribution_vs_control, na.rm = TRUE),
+      value_contribution_vs_treatment_mean = mean(df$value_contribution_vs_treatment, na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+  })
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  out[order(out$model, out$depth, out$action), , drop = FALSE]
 }
 
 #' @keywords internal
@@ -635,9 +771,9 @@ margot_policy_tree_cv <- function(model_results,
 
 #' Print held-out policy-tree CV results
 #'
-#' @param x A `margot_policy_tree_cv` object.
+#' @param x A \code{margot_policy_tree_cv} object.
 #' @param ... Additional arguments.
-#' @return Invisibly returns `x`.
+#' @return Invisibly returns \code{x}.
 #' @export
 print.margot_policy_tree_cv <- function(x, ...) {
   cat("Held-out Policy-tree Cross-validation\n")

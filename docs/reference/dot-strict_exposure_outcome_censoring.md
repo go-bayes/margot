@@ -93,7 +93,6 @@ lacks exposures.
 \*\*Core Logic\*\* For wave t from 0 to T-2 (i.e., up to the penultimate
 wave):
 
-
       needed_exposures <- paste0(t+1, "_", exposure_vars)
       not_lost[t] = 1 if rowSums(!is.na(needed_exposures)) == length(needed_exposures)
                    else 0

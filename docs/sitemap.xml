@@ -3,6 +3,8 @@
 <url><loc>https://go-bayes.github.io/margot/LICENSE.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/migrating-off-qs.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/articles/migrating-qs-to-qs2.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/articles/standard-grf-policy-tree-workflow.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/news/index.html</loc></url>
@@ -207,7 +209,9 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_slope_covariate_combo.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_tau.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_methods_statement.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_regret_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_split_diagnostic.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.html</loc></url>
@@ -273,6 +277,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/print.margot_causal_forest_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/print.margot_correlation_assessment.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/print.margot_cv_results.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/print.margot_policy_tree_cv.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/print.margot_qini_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/print.margot_stability_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/process_evalue.html</loc></url>

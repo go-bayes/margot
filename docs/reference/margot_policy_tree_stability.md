@@ -17,7 +17,7 @@ margot_policy_tree_stability(
   covariate_mode = c("original", "custom", "add", "all"),
   depth = 2,
   n_iterations = 300,
-  vary_type = c("split_only", "bootstrap", "both"),
+  vary_type = c("bootstrap", "split_only", "both"),
   consensus_threshold = 0.5,
   train_proportion = 0.5,
   vary_train_proportion = FALSE,
@@ -78,9 +78,10 @@ margot_policy_tree_stability(
 
 - vary_type:
 
-  Character. Type of variation: "split_only" (vary train/test split via
-  seeds), "bootstrap" (bootstrap resample), "both" (resample + split).
-  Default is "split_only".
+  Character. Type of variation: "bootstrap" (bootstrap resample of rows;
+  the default, and the recommended resampling for a descriptive
+  robustness report on a full-data tree), "split_only" (vary train/test
+  split via seeds), "both" (resample + split). Default is "bootstrap".
 
 - consensus_threshold:
 
@@ -240,7 +241,6 @@ Three types of variation are supported:
 - "both": Varies both bootstrap sampling and train/test splits
 
 ## Complete Workflow Example
-
 
     # 1. Run causal forest (save data for correlation analysis)
     cf_results <- margot_causal_forest(

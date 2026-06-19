@@ -114,7 +114,6 @@ indicators, and lead outcomes \`Y\`. The object carries an attribute
 
 The default parameter set is
 
-
      .default_sim_params()
      ## $cens_exp_coef   0.4
      ## $cens_latent_rho 0.5

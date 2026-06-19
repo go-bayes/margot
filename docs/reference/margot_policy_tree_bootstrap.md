@@ -182,7 +182,6 @@ Three types of variation are supported:
 
 ## Complete Workflow Example
 
-
     # 1. Run causal forest (save data for correlation analysis)
     cf_results <- margot_causal_forest(
       data = your_data,

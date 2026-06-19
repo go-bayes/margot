@@ -9,6 +9,7 @@ showing both depth-1 and depth-2 policy values for all outcomes.
 .build_depth_comparison_report(
   depth_summary_df,
   threshold,
+  max_stability_loss = Inf,
   label_mapping = NULL
 )
 ```
@@ -22,6 +23,10 @@ showing both depth-1 and depth-2 policy values for all outcomes.
 - threshold:
 
   The min_gain_for_depth_switch threshold used
+
+- max_stability_loss:
+
+  Maximum permitted depth-2 consensus-strength loss
 
 - label_mapping:
 

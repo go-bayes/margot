@@ -1,5 +1,5 @@
 #' Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)
-#' @param result_object A list returned by `margot_causal_forest()`
+#' @param result_object A list returned by \code{margot_causal_forest()}.
 #' @param model_name Name of the model in the results to visualise
 #' @param max_depth Maximum depth of the tree (1L or 2L)
 #' @param original_df Optional dataframe with original data for showing untransformed values
@@ -18,6 +18,13 @@
 #' @param remove_underscores Whether to replace underscores with spaces in variable names
 #' @param remove_action_label Whether to remove "Action:" prefix from leaf node labels
 #' @param label_mapping Optional list for renaming variables in the display
+#' @param show_leaf_metrics Logical; if \code{TRUE}, leaf labels include
+#'   action-conditional estimated gains and sample shares from
+#'   \code{margot_policy_leaf_summary()}.
+#' @param leaf_metrics Optional data frame from
+#'   \code{margot_policy_leaf_summary()}.
+#'   If supplied, these labels are used instead of recomputing metrics.
+#' @param leaf_metric_digits Integer; number of decimals for leaf estimated gains.
 #' @importFrom dplyr case_when mutate
 #' @importFrom tibble tibble
 #' @importFrom purrr map_dfr
@@ -44,7 +51,10 @@ margot_plot_decision_tree <- function(
     use_title_case = TRUE,
     remove_underscores = TRUE,
     remove_action_label = TRUE,
-    label_mapping = NULL) {
+    label_mapping = NULL,
+    show_leaf_metrics = FALSE,
+    leaf_metrics = NULL,
+    leaf_metric_digits = 3L) {
   cli::cli_h1("Margot Plot Decision Tree")
 
   # safe wrappers for labelling
@@ -89,6 +99,35 @@ margot_plot_decision_tree <- function(
     cli::cli_abort("`{tag}` object missing for model `{model_name}`.")
   }
   cli::cli_alert_success("✔ Using decision tree at depth {max_depth} for model: {model_name}")
+
+  if (!is.null(leaf_metrics)) {
+    show_leaf_metrics <- TRUE
+  }
+  if (isTRUE(show_leaf_metrics) && is.null(leaf_metrics)) {
+    leaf_metrics <- tryCatch(
+      margot_policy_leaf_summary(
+        result_object,
+        model_name = model_name,
+        depth = max_depth,
+        digits = leaf_metric_digits,
+        label_mapping = label_mapping
+      ),
+      error = function(e) {
+        cli::cli_alert_warning("Could not compute leaf metrics: {e$message}")
+        NULL
+      }
+    )
+  }
+  if (!is.null(leaf_metrics)) {
+    metric_model <- attr(leaf_metrics, "model", exact = TRUE)
+    metric_depth <- attr(leaf_metrics, "depth", exact = TRUE)
+    if (!is.null(metric_model) && !identical(as.character(metric_model), as.character(model_name))) {
+      cli::cli_abort("`leaf_metrics` was computed for model `{metric_model}`, not `{model_name}`.")
+    }
+    if (!is.null(metric_depth) && as.integer(metric_depth) != as.integer(max_depth)) {
+      cli::cli_abort("`leaf_metrics` was computed for depth {metric_depth}, not {max_depth}.")
+    }
+  }
 
   # extract nodes
   nodes <- policy_tree_obj$nodes
@@ -136,8 +175,14 @@ margot_plot_decision_tree <- function(
   # 3 create labels
   for (i in seq_len(nrow(node_data))) {
     if (node_data$is_leaf[i]) {
-      lbl <- tl(action_names[node_data$action_id[i]])
-      if (!remove_action_label) lbl <- paste("Action:", lbl)
+      metric_label <- NULL
+      if (isTRUE(show_leaf_metrics) && !is.null(leaf_metrics) &&
+          "node_id" %in% names(leaf_metrics) && "label" %in% names(leaf_metrics)) {
+        metric_row <- leaf_metrics[leaf_metrics$node_id == node_data$id[i], , drop = FALSE]
+        if (nrow(metric_row)) metric_label <- metric_row$label[[1]]
+      }
+      lbl <- metric_label %||% tl(action_names[node_data$action_id[i]])
+      if (!remove_action_label && is.null(metric_label)) lbl <- paste("Action:", lbl)
       node_data$label[i] <- lbl
     } else {
       var <- node_data$split_var[i]

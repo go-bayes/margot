@@ -135,6 +135,7 @@ including E-values and other statistics.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # Assuming you have a dataset `df_ate` and necessary variables defined
 results <- double_robust_marginal(
   df = df_ate,
@@ -157,5 +158,5 @@ results <- double_robust_marginal(
   delta = 1,
   sd = 1
 )
-#> Error in double_robust_marginal(df = df_ate, Y = "t2_kessler_latent_anxiety_z",     X = "treatment_var", baseline_vars = c("age", "gender"),     treat_1 = "intervention", treat_0 = "control", nsims = 200,     cores = 4, family = "gaussian", weights = TRUE, continuous_X = FALSE,     splines = FALSE, estimand = "ATE", type_causal = "RD", type_tab = "RD",     vcov = "HC2", new_name = "Test Model Effect", delta = 1,     sd = 1): could not find function "double_robust_marginal"
+} # }
 ```

@@ -82,24 +82,21 @@ user-provided vector; 'default' is an alias for 'magnitude_desc'.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # descending magnitude (default for 'default')
 result_df <- group_tab(df = analysis_df, order = "default")
-#> Error in group_tab(df = analysis_df, order = "default"): could not find function "group_tab"
 
 # ascending magnitude
 result_df <- group_tab(df = analysis_df, order = "magnitude_asc")
-#> Error in group_tab(df = analysis_df, order = "magnitude_asc"): could not find function "group_tab"
 
 # strongest E-value bound first
 result_df <- group_tab(df = analysis_df, order = "evaluebound_desc")
-#> Error in group_tab(df = analysis_df, order = "evaluebound_desc"): could not find function "group_tab"
 
 # alphabetical
 result_df <- group_tab(df = analysis_df, order = "alphabetical")
-#> Error in group_tab(df = analysis_df, order = "alphabetical"): could not find function "group_tab"
 
 # custom ordering
 custom_order <- c("Outcome3", "Outcome1", "Outcome2")
 result_df <- group_tab(df = analysis_df, order = "custom", custom_order = custom_order)
-#> Error in group_tab(df = analysis_df, order = "custom", custom_order = custom_order): could not find function "group_tab"
+} # }
 ```

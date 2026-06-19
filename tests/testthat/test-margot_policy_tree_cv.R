@@ -40,6 +40,9 @@ test_that("margot_policy_tree_cv evaluates held-out folds", {
   expect_true(out$depth_map[["model_y"]] %in% c(1L, 2L))
   expect_true(all(c("gain_vs_control_mean", "gain_vs_treat_mean") %in% names(out$value_summary)))
   expect_true(any(out$split_summary$node_id == 1L))
+  expect_true(nrow(out$leaf_values) > 0)
+  expect_true(all(c("sample_share", "estimated_gain", "contrast") %in% names(out$leaf_values)))
+  expect_true(nrow(out$leaf_summary) > 0)
 })
 
 test_that("margot_policy_tree_cv aligns not_missing rows and weights", {
@@ -162,9 +165,13 @@ test_that("margot_policy_workflow uses held-out depth map when available", {
 })
 
 test_that("held-out policy CV export has manual docs and S3 registration", {
+  expect_true(is.function(getS3method("print", "margot_policy_tree_cv", optional = TRUE)))
   root <- getwd()
   while (!file.exists(file.path(root, "DESCRIPTION")) && dirname(root) != root) {
     root <- dirname(root)
+  }
+  if (!file.exists(file.path(root, "NAMESPACE"))) {
+    skip("source package files are not available in this installed-package check")
   }
   namespace <- readLines(file.path(root, "NAMESPACE"), warn = FALSE)
   expect_true(any(namespace == "S3method(print,margot_policy_tree_cv)"))

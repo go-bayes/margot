@@ -112,6 +112,7 @@ statistics like confidence intervals.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # Assume that df is your dataset with variables 'outcome', 'treatment', 'age', and 'gender'
 result <- causal_contrast_marginal(
   df = df, Y = "outcome", X = "treatment",
@@ -122,5 +123,5 @@ result <- causal_contrast_marginal(
   continuous_X = FALSE, splines = FALSE,
   vcov = "HC3", verbose = TRUE
 )
-#> Error in causal_contrast_marginal(df = df, Y = "outcome", X = "treatment",     baseline_vars = c("age", "gender"), treat_0 = "control",     treat_1 = "exposed", estimand = "ATE", type = "RD", nsims = 100,     cores = 2, family = "gaussian", weights = "weight_var", continuous_X = FALSE,     splines = FALSE, vcov = "HC3", verbose = TRUE): could not find function "causal_contrast_marginal"
+} # }
 ```

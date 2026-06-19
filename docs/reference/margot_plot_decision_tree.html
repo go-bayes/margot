@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.327</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/migrating-off-qs.html">Migrating off `qs`</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/migrating-off-qs.html">Migrating off `qs`</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -62,7 +63,10 @@
 <span>  use_title_case <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  remove_underscores <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  remove_action_label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  show_leaf_metrics <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  leaf_metrics <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  leaf_metric_digits <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -71,7 +75,7 @@
 
 
 <dl><dt id="arg-result-object">result_object<a class="anchor" aria-label="anchor" href="#arg-result-object"></a></dt>
-<dd><p>A list returned by `margot_causal_forest()`</p></dd>
+<dd><p>A list returned by <code><a href="margot_causal_forest.html">margot_causal_forest()</a></code>.</p></dd>
 
 
 <dt id="arg-model-name">model_name<a class="anchor" aria-label="anchor" href="#arg-model-name"></a></dt>
@@ -145,6 +149,22 @@
 <dt id="arg-label-mapping">label_mapping<a class="anchor" aria-label="anchor" href="#arg-label-mapping"></a></dt>
 <dd><p>Optional list for renaming variables in the display</p></dd>
 
+
+<dt id="arg-show-leaf-metrics">show_leaf_metrics<a class="anchor" aria-label="anchor" href="#arg-show-leaf-metrics"></a></dt>
+<dd><p>Logical; if <code>TRUE</code>, leaf labels include
+action-conditional estimated gains and sample shares from
+<code><a href="margot_policy_leaf_summary.html">margot_policy_leaf_summary()</a></code>.</p></dd>
+
+
+<dt id="arg-leaf-metrics">leaf_metrics<a class="anchor" aria-label="anchor" href="#arg-leaf-metrics"></a></dt>
+<dd><p>Optional data frame from
+<code><a href="margot_policy_leaf_summary.html">margot_policy_leaf_summary()</a></code>.
+If supplied, these labels are used instead of recomputing metrics.</p></dd>
+
+
+<dt id="arg-leaf-metric-digits">leaf_metric_digits<a class="anchor" aria-label="anchor" href="#arg-leaf-metric-digits"></a></dt>
+<dd><p>Integer; number of decimals for leaf estimated gains.</p></dd>
+
 </dl></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -156,7 +176,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

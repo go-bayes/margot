@@ -29,7 +29,8 @@ margot_policy_summary_compare_depths(
   split_drop_zero = TRUE,
   split_top_only = FALSE,
   verbose = TRUE,
-  min_gain_for_depth_switch = 0.005
+  min_gain_for_depth_switch = 0.01,
+  max_stability_loss_for_depth_switch = 0.05
 )
 ```
 
@@ -119,6 +120,16 @@ margot_policy_summary_compare_depths(
 - verbose:
 
   Logical; print progress (default TRUE).
+
+- min_gain_for_depth_switch:
+
+  Numeric. Minimum policy-value gain required for depth-2 to replace
+  depth-1. Default is 0.01 outcome-standard-deviation units.
+
+- max_stability_loss_for_depth_switch:
+
+  Numeric. Maximum permitted loss in consensus strength when switching
+  from depth-1 to depth-2. Default is 0.05.
 
 ## Value
 

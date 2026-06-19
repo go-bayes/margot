@@ -289,8 +289,9 @@ recommended depth-2 models
 ## Details
 
 Method (estimation and identities): - For each model and depth, we
-evaluate the consensus policy on the held-out test set used to build
-\`plot_data\` (policytree test indices). - Let μ0(x), μ1(x) be
+evaluate the consensus policy on the stored evaluation slice used to
+build \`plot_data\`. In descriptive mode this slice is the complete-case
+sample; in split mode it is the held-out test set. - Let μ0(x), μ1(x) be
 conditional means E\[Y(0)\|X=x\], E\[Y(1)\|X=x\] estimated by
 policytree/GRF. We use \`double_robust_scores()\` stored in
 \`dr_scores\` to obtain per-unit estimates for μ0 and μ1 on the test

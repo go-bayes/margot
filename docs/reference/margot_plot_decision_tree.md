@@ -25,7 +25,10 @@ margot_plot_decision_tree(
   use_title_case = TRUE,
   remove_underscores = TRUE,
   remove_action_label = TRUE,
-  label_mapping = NULL
+  label_mapping = NULL,
+  show_leaf_metrics = FALSE,
+  leaf_metrics = NULL,
+  leaf_metric_digits = 3L
 )
 ```
 
@@ -33,7 +36,8 @@ margot_plot_decision_tree(
 
 - result_object:
 
-  A list returned by \`margot_causal_forest()\`
+  A list returned by
+  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md).
 
 - model_name:
 
@@ -106,3 +110,19 @@ margot_plot_decision_tree(
 - label_mapping:
 
   Optional list for renaming variables in the display
+
+- show_leaf_metrics:
+
+  Logical; if `TRUE`, leaf labels include action-conditional estimated
+  gains and sample shares from
+  [`margot_policy_leaf_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md).
+
+- leaf_metrics:
+
+  Optional data frame from
+  [`margot_policy_leaf_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md).
+  If supplied, these labels are used instead of recomputing metrics.
+
+- leaf_metric_digits:
+
+  Integer; number of decimals for leaf estimated gains.

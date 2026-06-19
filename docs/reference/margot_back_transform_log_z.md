@@ -48,10 +48,9 @@ parameter.
 
 ``` r
 # Get mean and sd from original log-transformed income data
+original_df <- data.frame(t0_log_household_inc = log(c(35000, 50000, 75000, 110000)))
 log_mean_inc <- mean(original_df$t0_log_household_inc, na.rm = TRUE)
-#> Error: object 'original_df' not found
 log_sd_inc <- sd(original_df$t0_log_household_inc, na.rm = TRUE)
-#> Error: object 'original_df' not found
 
 # Create mapping table with default z-scores
 income_mapping <- margot_back_transform_log_z(
@@ -59,9 +58,15 @@ income_mapping <- margot_back_transform_log_z(
   log_sd = log_sd_inc,
   label = "household_income"
 )
-#> Error: object 'log_mean_inc' not found
 print(income_mapping)
-#> Error: object 'income_mapping' not found
+#>   z_score household_income
+#> 1    -2.0         22858.92
+#> 2    -1.0         37537.42
+#> 3    -0.5         48102.62
+#> 4     0.0         61641.47
+#> 5     0.5         78990.95
+#> 6     1.0        101223.56
+#> 7     2.0        166222.67
 
 # Create mapping with custom z-scores
 custom_mapping <- margot_back_transform_log_z(
@@ -70,7 +75,9 @@ custom_mapping <- margot_back_transform_log_z(
   z_scores = c(-1, 0, 1),
   label = "household_income"
 )
-#> Error: object 'log_mean_inc' not found
 print(custom_mapping)
-#> Error: object 'custom_mapping' not found
+#>   z_score household_income
+#> 1      -1         37537.42
+#> 2       0         61641.47
+#> 3       1        101223.56
 ```

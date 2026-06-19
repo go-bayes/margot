@@ -51,13 +51,12 @@ directory exists. This function does not create directories.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # assuming `push_mods` is set in your environment to "~/mydata"
 my_df <- data.frame(x = 1:5, y = letters[1:5])
 here_save(my_df, "my_df")
-#> Error in here_save(my_df, "my_df"): object 'push_mods' not found
 
 # specifying a custom directory
 here_save(my_df, "my_df", dir_path = "~/custom_dir", compress = "xz")
-#> Warning: cannot open compressed file '/Users/joseph/custom_dir/my_df.rds', probable reason 'No such file or directory'
-#> Error in xzfile(file, mode): cannot open the connection
+} # }
 ```

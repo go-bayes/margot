@@ -48,7 +48,6 @@ graph_density_of_exposure <- coloured_histogram_sd(
   col_name = "forgiveness",
   binwidth = 0.5 # Adjust binwidth as needed
 )
-} # }
 print(graph_density_of_exposure)
-#> Error: object 'graph_density_of_exposure' not found
+} # }
 ```

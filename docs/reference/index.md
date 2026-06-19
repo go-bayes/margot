@@ -114,6 +114,8 @@
   result
 - [`margot_rate_cv()`](https://go-bayes.github.io/margot/reference/margot_rate_cv.md)
   : Cross-Validation Test for Treatment Effect Heterogeneity
+- [`rate_sequential_cv()`](https://go-bayes.github.io/margot/reference/rate_sequential_cv.md)
+  : Sequential Cross-Validation for RATE
 - [`margot_recompute_ate()`](https://go-bayes.github.io/margot/reference/margot_recompute_ate.md)
   : Recompute Average Treatment Effects with Different Target Samples
 - [`margot_recompute_ate_batch()`](https://go-bayes.github.io/margot/reference/margot_recompute_ate_batch.md)
@@ -140,11 +142,18 @@
   interpretation)
 - [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
   : Cross-validated held-out policy-tree diagnostics
+- [`margot_policy_leaf_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md)
+  : Summarise policy-tree leaves with estimated action gains and sample
+  shares
+- [`margot_policy_recurrence_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.md)
+  : Summarise outcome-wide recurrence in held-out policy-tree splits
 - [`margot_policy_summary_report()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_report.md)
   : Policy Tree Summary Report (text + markdown table)
 - [`margot_policy_summary_compare_depths()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.md)
   : Compare Depth-1 vs Depth-2 Policy Summaries and Pick Best per
   Outcome
+- [`margot_policy_split_diagnostic()`](https://go-bayes.github.io/margot/reference/margot_policy_split_diagnostic.md)
+  : Repeated Split Diagnostic for Policy Trees
 - [`margot_policy_regret_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_regret_summary.md)
   [`policy_regret_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_regret_summary.md)
   : Summarise Policy-Tree Value and Oracle Regret

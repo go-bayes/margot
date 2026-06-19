@@ -50,20 +50,19 @@ print(original_values)
 
 # Real-world example: back-transforming household income z-scores
 # Get mean and sd from original log-transformed data
+original_df <- data.frame(t0_log_household_inc = log(c(35000, 50000, 75000, 110000)))
 log_mean_inc <- mean(original_df$t0_log_household_inc, na.rm = TRUE)
-#> Error: object 'original_df' not found
 log_sd_inc <- sd(original_df$t0_log_household_inc, na.rm = TRUE)
-#> Error: object 'original_df' not found
 
 # Back-transform all z-scores in the dataset
+df_grf <- data.frame(t0_log_household_inc_z = c(-1, 0, 1))
 original_data_scale <- back_transform_log_z(
   df_grf$t0_log_household_inc_z,
   log_mean = log_mean_inc,
   log_sd = log_sd_inc
 )
-#> Error: object 'df_grf' not found
 head(original_data_scale)
-#> Error: object 'original_data_scale' not found
+#> [1]  37537.42  61641.47 101223.56
 
 # Interpret key points on the distribution (-1 SD, mean, +1 SD)
 z_scores <- c(-1, 0, 1)
@@ -72,14 +71,15 @@ scale_values <- back_transform_log_z(
   log_mean = log_mean_inc,
   log_sd = log_sd_inc
 )
-#> Error: object 'log_mean_inc' not found
 
 # Create a data frame to display the relationship between z-scores and original values
 results_df <- data.frame(
   z_score = z_scores,
   data_scale = scale_values
 )
-#> Error: object 'scale_values' not found
 print(results_df) # Shows what values on the original scale correspond to each z-score
-#> Error: object 'results_df' not found
+#>   z_score data_scale
+#> 1      -1   37537.42
+#> 2       0   61641.47
+#> 3       1  101223.56
 ```

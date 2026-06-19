@@ -47,6 +47,7 @@ factor types.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 df <- read.table(header = TRUE, text = "
 id wave year_measured religion_believe_god
 3 0 1 0
@@ -57,7 +58,6 @@ id wave year_measured religion_believe_god
 5 1 1 0")
 
 transition_matrix <- create_transition_matrix(df, "religion_believe_god", "id")
-#> Error in create_transition_matrix(df, "religion_believe_god", "id"): could not find function "create_transition_matrix"
 print(transition_matrix)
-#> Error: object 'transition_matrix' not found
+} # }
 ```

@@ -1,5 +1,34 @@
 # Changelog
 
+## \[2026-06-20\] margot 1.1.0
+
+#### Added
+
+- [`margot_policy_leaf_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md)
+  computes action-conditional estimated gains, sample shares, and value
+  contributions for policy-tree leaves.
+- [`margot_policy_recurrence_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.md)
+  summarises outcome-wide recurrence in held-out policy-tree split
+  variables across outcomes.
+- [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
+  now returns held-out `leaf_values` and `leaf_summary` tables alongside
+  fold values, split summaries, and depth selection.
+- Added the `standard-grf-policy-tree-workflow` vignette with a
+  transparent two-outcome simulation and the standard ATE -\>
+  calibration/importance -\> held-out policy-tree -\> recurrence
+  workflow.
+
+#### Changed
+
+- [`margot_plot_decision_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_decision_tree.md)
+  can now annotate leaves with estimated gains and sample percentages
+  via `show_leaf_metrics = TRUE` or an explicit `leaf_metrics` table.
+  Existing plots are unchanged by default.
+- The standard GRF policy-tree workflow is held-out-first for
+  policy-tree learning and reporting. Full-data trees remain optional
+  displays; RATE/AUTOC and Qini/uplift reporting are optional extensions
+  rather than required outputs.
+
 ## \[2026-06-20\] margot 1.0.328
 
 #### Added
@@ -10,6 +39,9 @@
   distributions, and a depth rule that prefers depth one unless depth
   two clears the material-improvement threshold without losing
   unacceptable root-split stability.
+
+#### Changed
+
 - [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
   now attempts held-out policy-tree cross-validation for stability
   objects by default and uses its depth map as the primary
@@ -17,8 +49,134 @@
   remain reporting/display objects rather than the default source of
   depth decisions.
 - Policy-tree methods text now distinguishes descriptive full-data
-  summaries, one held-out split, and repeated held-out evaluation of
-  the policy-learning procedure.
+  summaries, one held-out split, and repeated held-out evaluation of the
+  policy-learning procedure.
+
+## \[2026-06-19\] margot 1.0.327
+
+The GRF policy-tree pipeline is reorganised to ensure the **standard
+workflow is descriptive**. We cannot at this stage offer guarantees for
+welfare maximisation.
+
+#### Changed
+
+- **[`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md)
+  defaults to descriptive mode** (`use_train_test_split = FALSE`,
+  `compute_rate = FALSE`). The causal forest, CATE, conditional means,
+  doubly-robust scores, outcome flips, and policy trees use all complete
+  cases. Inline RATE/AUTOC and QINI curves are deferred (a notice is
+  emitted; placeholders are kept for pipeline compatibility). Use
+  [`margot_rate_cv()`](https://go-bayes.github.io/margot/reference/margot_rate_cv.md)
+  for inferential RATE and set `use_train_test_split = TRUE` when an
+  explicit held-out QINI diagnostic is required.
+- **[`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md)
+  uses more regularised GRF defaults** (`num.trees = 5000`,
+  `min.node.size = 50`) unless callers override them. For large samples,
+  `min.node.size = 100` is recommended as a sensitivity analysis.
+- **Depth selection now prefers depth-1 by default.** Depth-2 must
+  improve policy value by at least `0.01` outcome-standard-deviation
+  units and must not reduce consensus strength by more than `0.05`.
+- **[`margot_policy_tree_stability()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.md)
+  defaults to `vary_type = "bootstrap"`** (was `"split_only"`).
+  Bootstrap resampling of rows is the descriptive robustness report for
+  the full-data tree, and pure bootstrap mode now fits each tree on the
+  full bootstrap sample rather than introducing a half-sample split.
+- **Policy-tree report prose is mode-aware.** Default descriptive
+  outputs no longer describe the evaluation slice as held-out or
+  out-of-sample.
+
+#### Added
+
+- Caution warnings on the QINI path
+  ([`margot_qini()`](https://go-bayes.github.io/margot/reference/margot_qini.md),
+  [`margot_plot_qini()`](https://go-bayes.github.io/margot/reference/margot_plot_qini.md),
+  and inside
+  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md)).
+  QINI curves are exploratory: the evaluation forest is fit on the
+  held-out rows it scores (OOB DR scores) and there is no fully
+  cross-fitted curve protocol. For now, suggest reporting QINI curve
+  results in supplements with caution (i.e., not as primary
+  heterogeneity evidence).
+- [`margot_policy_split_diagnostic()`](https://go-bayes.github.io/margot/reference/margot_policy_split_diagnostic.md)
+  for repeated train/test split diagnostics of the policy-tree learning
+  procedure.
+- Inline RATE placeholders now point users to
+  [`margot_rate_cv()`](https://go-bayes.github.io/margot/reference/margot_rate_cv.md),
+  avoiding in-sample or non-independent RATE claims inside
+  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md).
+- [`margot_rate_cv()`](https://go-bayes.github.io/margot/reference/margot_rate_cv.md)
+  now works with saved-data-only forest outputs (`save_data = TRUE`,
+  `save_models = FALSE`) by refitting the cross-validation forests from
+  the stored analysis data and `grf_defaults`; degenerate
+  zero-standard-error folds contribute zero evidence to the sequential
+  t-statistic and retain raw fold diagnostics.
+
+#### Fixed
+
+- [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md)
+  now caps `top_n_vars` at the number of available covariates, avoiding
+  a `subscript out of bounds` error in small synthetic examples and
+  other low-dimensional analyses.
+
+#### Decisions behind the change
+
+- **Honesty already covers the forest; the split protected the wrong
+  thing.** The causal forest’s honesty and out-of-bag prediction already
+  make the CATE estimate honest. A train/test split protects the policy
+  *value* (the winner’s curse from selecting the tree that maximises the
+  doubly-robust score), which a descriptive claim never makes. So for
+  the standard workflow the split is unnecessary, and it costs half the
+  data and makes the displayed tree depend on the luck of the partition.
+- **Reproducibility is not stability.** The policy-tree solver
+  (`policytree` / `fastpolicytree`) is a deterministic exact optimiser;
+  with a fixed seed and no split the descriptive tree reproduces
+  exactly. Whether its splits are a real feature or a draw-specific
+  artifact is a separate question, answered by the bootstrap robustness
+  report — so stability is retained but reframed as a diagnostic, not an
+  inference engine.
+- **Two paths, no false optimism.** Descriptive (default): the full-data
+  tree plus its bootstrap robustness, with no out-of-sample value claim.
+  Inferential (opt-in): an honest held-out policy value via the split,
+  clearly caveated. We deliberately do not ship a bespoke cross-fitted
+  policy value — GRF has worked-out cross-fitting for RATE/AUTOC only,
+  not for QINI curves or policy-tree value — so the inferential path is
+  one honest split, not a manufactured precision.
+
+#### Notes
+
+- No published results depend on the GRF policy-tree workflow, so these
+  defaults change in place. The previous behaviour is reachable via
+  explicit arguments (`use_train_test_split = TRUE`,
+  `vary_type = "split_only"`), with RATE inference handled by
+  [`margot_rate_cv()`](https://go-bayes.github.io/margot/reference/margot_rate_cv.md).
+
+## \[2026-06-16\] margot 1.0.325
+
+#### Changed
+
+- `qs2` moves from Imports to Suggests. Every `qs2` call is already
+  namespace-qualified and guarded by
+  [`requireNamespace("qs2")`](https://github.com/qsbase/qs2), so margot
+  now loads without `qs2` installed; it is needed only if you call the
+  deprecated `.qs2` read/write/convert helpers. The default object store
+  ([`here_save()`](https://go-bayes.github.io/margot/reference/here_save.md)/[`here_read()`](https://go-bayes.github.io/margot/reference/here_read.md))
+  uses base
+  [`saveRDS()`](https://rdrr.io/r/base/readRDS.html)/[`readRDS()`](https://rdrr.io/r/base/readRDS.html)
+  and never requires `qs2`. This avoids a hard dependency on a
+  third-party serialiser for loading the package.
+
+## \[2026-06-16\] margot 1.0.324
+
+#### Fixed
+
+- [`margot_stability_diagnostics()`](https://go-bayes.github.io/margot/reference/margot_stability_diagnostics.md)
+  is robust to the current stability-object layout. It reads
+  variable-inclusion frequencies from
+  `summary_metrics$variable_importance` when the legacy per-model
+  `stability_metrics` slot is absent, reads consensus strength from
+  `summary_metrics$convergence_diagnostics` as a fallback, resolves
+  flipped (`_r`) and single-model `model_name`s, and reports available
+  model names on a genuine mismatch instead of a cryptic error.
 
 ## \[2026-05-12\] margot 1.0.323
 

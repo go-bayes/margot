@@ -31,12 +31,13 @@ baseline wave.
 
 ``` r
 # Example using a dataset with a wave column
-# assume dat_long has a column called wave
+dat_long <- data.frame(wave = c(0, 0, 1), outcome = c(1, NA, 3))
 margot_prop_missing(dat_long)
-#> Error: object 'dat_long' not found
+#> [1] 0.25
 
 # Example using a dataset without a wave column
-# assume some_data is a dataset with no wave column
+some_data <- data.frame(outcome = c(1, NA, 3))
 margot_prop_missing(some_data)
-#> Error: object 'some_data' not found
+#> Warning: No wave column found. Using entire dataset.
+#> [1] 0.333
 ```

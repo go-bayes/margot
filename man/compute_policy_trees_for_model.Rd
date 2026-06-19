@@ -16,7 +16,8 @@ compute_policy_trees_for_model(
   compute_depth2,
   train_proportion,
   verbose,
-  seed
+  seed,
+  tree_method
 )
 }
 \description{

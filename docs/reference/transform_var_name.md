@@ -56,16 +56,15 @@ A character scalar of the transformed label, or NA if input missing
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # Basic usage with mapping
 transform_var_name("t2_rwa_z", label_mapping = list(rwa = "Right-Wing Authoritarianism"))
-#> Error in transform_var_name("t2_rwa_z", label_mapping = list(rwa = "Right-Wing Authoritarianism")): could not find function "transform_var_name"
 
 # Expand common acronyms without an explicit mapping
 transform_var_name("baseline RWA", expand_acronyms = TRUE)
-#> Error in transform_var_name("baseline RWA", expand_acronyms = TRUE): could not find function "transform_var_name"
 # => "Baseline Right-Wing Authoritarianism (RWA)"
 
 # Mapping takes precedence; expansion still applies to remaining acronyms
 transform_var_name("PWI overall", label_mapping = list(PWI = "Personal Well-Being Index"), expand_acronyms = TRUE)
-#> Error in transform_var_name("PWI overall", label_mapping = list(PWI = "Personal Well-Being Index"),     expand_acronyms = TRUE): could not find function "transform_var_name"
+} # }
 ```

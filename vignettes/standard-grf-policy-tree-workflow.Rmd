@@ -1,0 +1,217 @@
+---
+title: "Standard GRF and policy-tree workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Standard GRF and policy-tree workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+This vignette describes the standard `margot` workflow for generalised random
+forest (GRF) analyses with policy-tree reporting. The workflow is designed for
+outcome-wide studies: the same exposure, covariates, and analysis population are
+used to estimate effects for multiple outcomes.
+
+The workflow separates four tasks:
+
+1. Estimate average treatment effects (ATEs) for each outcome.
+2. Diagnose whether the forest predictions show calibrated heterogeneity.
+3. Evaluate policy-tree learning with held-out folds.
+4. Summarise cross-outcome recurrence descriptively.
+
+The ATE layer estimates the primary causal estimand. The policy-tree layer asks
+whether a shallow rule can summarise useful variation in the forest's doubly
+robust action scores. Because a policy tree is an optimiser, policy-tree
+learning should be evaluated on held-out observations.
+
+## Why this simulation is simple
+
+Athey, Imbens, Metzger, and Munro describe Wasserstein generative adversarial
+networks (WGANs) for designing Monte Carlo simulations that mimic real economic
+datasets. Their approach is valuable for estimator benchmarking, but it is not a
+good default for a package tutorial because it adds Python, GAN training, large
+generated-data artefacts, and additional tuning decisions. The standard `margot`
+tutorial instead uses a transparent R simulation with known heterogeneity and
+two outcomes. A WGAN benchmark could be added later as a separate stress-test
+article.
+
+## Simulate two outcomes
+
+The simulation creates two outcomes with related, but not identical,
+heterogeneity. Age and socioeconomic position recur as candidate organising
+variables, while the second outcome adds a distinct baseline variable.
+
+```{r}
+library(margot)
+library(dplyr)
+
+set.seed(20260620)
+n <- 900
+
+sim <- tibble(
+  age_z = rnorm(n),
+  status_z = rnorm(n),
+  income_z = rnorm(n),
+  baseline_y1 = rnorm(n),
+  baseline_y2 = rnorm(n)
+) |>
+  mutate(
+    propensity = plogis(-0.15 + 0.35 * age_z - 0.25 * status_z),
+    exposure = rbinom(n(), 1, propensity),
+    tau_y1 = 0.06 + 0.08 * (age_z > 0) + 0.04 * (status_z > 0),
+    tau_y2 = 0.03 + 0.06 * (age_z > 0) - 0.05 * (income_z < -0.5),
+    y1 = 0.25 * baseline_y1 + 0.15 * status_z + exposure * tau_y1 + rnorm(n(), sd = 0.8),
+    y2 = 0.30 * baseline_y2 - 0.10 * income_z + exposure * tau_y2 + rnorm(n(), sd = 0.8)
+  )
+
+covariates <- sim |>
+  select(age_z, status_z, income_z, baseline_y1, baseline_y2)
+```
+
+## Estimate outcome-wide ATEs
+
+The ATE layer uses the fitted forests and `grf::average_treatment_effect()`.
+Do not add an external policy-tree cross-validation step to the ATE estimate.
+
+```{r}
+fit <- margot_causal_forest(
+  data = sim,
+  outcome_vars = c("y1", "y2"),
+  covariates = covariates,
+  W = sim$exposure,
+  grf_defaults = list(num.trees = 500, min.node.size = 20, seed = 42),
+  use_train_test_split = FALSE,
+  compute_rate = FALSE,
+  compute_conditional_means = FALSE,
+  save_models = TRUE,
+  save_data = TRUE,
+  verbose = FALSE
+)
+
+ate_table <- margot_recompute_ate(fit)
+ate_table
+```
+
+## Add bridge diagnostics
+
+`grf::test_calibration()` evaluates whether forest predictions are calibrated on
+held-out forest predictions. The differential-prediction coefficient is also an
+omnibus diagnostic for heterogeneity. `grf::variable_importance()` is a
+descriptive split-use summary. It should not be interpreted as a confirmed
+moderator test.
+
+```{r}
+calibration <- lapply(fit$full_models, grf::test_calibration)
+
+importance <- lapply(fit$full_models, function(forest) {
+  tibble(
+    variable = colnames(covariates),
+    importance = as.numeric(grf::variable_importance(forest))
+  ) |>
+    arrange(desc(importance))
+})
+
+calibration
+importance
+```
+
+## Evaluate policy trees on held-out folds
+
+The policy-tree layer learns trees on training folds and evaluates the learned
+tree on held-out folds. The output includes policy value, split frequencies,
+threshold summaries, and leaf-level estimated gains.
+
+```{r}
+policy_cv <- margot_policy_tree_cv(
+  fit,
+  depths = c(1, 2),
+  num_folds = 5,
+  n_repeats = 10,
+  min_gain_for_depth_switch = 0.01,
+  max_stability_loss_for_depth_switch = 0.05,
+  tree_method = "fastpolicytree",
+  seed = 2026,
+  verbose = FALSE
+)
+
+policy_cv$depth_selection
+policy_cv$value_summary
+policy_cv$leaf_summary
+```
+
+Users may restrict candidate policy-tree variables when the scientific question
+justifies it. For confirmatory analyses, variable restrictions should be
+pre-specified or chosen inside the training folds.
+
+```{r}
+policy_cv_subset <- margot_policy_tree_cv(
+  fit,
+  custom_covariates = c("age_z", "status_z", "income_z"),
+  covariate_mode = "custom",
+  depths = c(1, 2),
+  num_folds = 5,
+  n_repeats = 10,
+  seed = 2026,
+  verbose = FALSE
+)
+```
+
+## Plot selected display trees
+
+The plot below shows a stored tree and annotates leaves with action-conditional
+estimated gains and sample shares. These labels describe the displayed tree. The
+held-out CV object remains the source for depth, value, and split-frequency
+claims.
+
+```{r}
+selected_depth <- policy_cv$depth_map[["model_y1"]]
+
+margot_plot_decision_tree(
+  fit,
+  model_name = "model_y1",
+  max_depth = selected_depth,
+  show_leaf_metrics = TRUE
+)
+```
+
+For a report, pair the plot with held-out summaries:
+
+```{r}
+policy_cv$split_summary |>
+  filter(model == "model_y1", depth == selected_depth, node_id == 1)
+
+policy_cv$leaf_summary |>
+  filter(model == "model_y1", depth == selected_depth)
+```
+
+## Summarise outcome-wide recurrence
+
+Outcome-wide recurrence asks whether the same baseline variables recur across
+outcomes. This layer is descriptive unless a study defines a formal family-level
+target.
+
+```{r}
+recurrence <- margot_policy_recurrence_summary(policy_cv)
+recurrence
+```
+
+A cautious report might say:
+
+> Age recurred as a root or near-root policy-tree variable across both outcomes,
+> but held-out gains were small. We treat age as a recurring exploratory
+> organiser, not a confirmed moderator.
+
+## Optional extensions
+
+RATE/AUTOC can be added when investigators need an explicit heterogeneity test.
+When used, RATE/AUTOC should be cross-validated. Qini/uplift curves remain
+optional and exploratory until the analysis has a clearly defined cost-benefit
+interpretation.

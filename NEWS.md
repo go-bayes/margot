@@ -1,3 +1,26 @@
+# [2026-06-20] margot 1.1.0
+
+### Added
+- `margot_policy_leaf_summary()` computes action-conditional estimated gains,
+  sample shares, and value contributions for policy-tree leaves.
+- `margot_policy_recurrence_summary()` summarises outcome-wide recurrence in
+  held-out policy-tree split variables across outcomes.
+- `margot_policy_tree_cv()` now returns held-out `leaf_values` and
+  `leaf_summary` tables alongside fold values, split summaries, and depth
+  selection.
+- Added the `standard-grf-policy-tree-workflow` vignette with a transparent
+  two-outcome simulation and the standard ATE -> calibration/importance ->
+  held-out policy-tree -> recurrence workflow.
+
+### Changed
+- `margot_plot_decision_tree()` can now annotate leaves with estimated gains and
+  sample percentages via `show_leaf_metrics = TRUE` or an explicit
+  `leaf_metrics` table. Existing plots are unchanged by default.
+- The standard GRF policy-tree workflow is held-out-first for policy-tree
+  learning and reporting. Full-data trees remain optional displays; RATE/AUTOC
+  and Qini/uplift reporting are optional extensions rather than required
+  outputs.
+
 # [2026-06-20] margot 1.0.328
 
 ### Added

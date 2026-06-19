@@ -1,11 +1,11 @@
 # Run Multiple Generalized Random Forest (GRF) Causal Forest Models with Enhanced Qini Cross-Validation
 
 This function runs multiple GRF causal forest models with enhanced
-features. In addition to estimating causal effects, it can compute the
-Rank-Weighted Average Treatment Effect (RATE) for each model. It also
-gives you the option to train a separate "Qini forest" on a subset of
-data and compute Qini curves on held-out data, thereby avoiding
-in-sample optimism in the Qini plots.
+features. In addition to estimating causal effects, it stores
+placeholders for legacy inline RATE and directs inferential RATE to
+\[margot_rate_cv()\]. It also gives you the option to train a separate
+"Qini forest" on a subset of data and compute Qini curves on held-out
+data, thereby avoiding in-sample optimism in the Qini plots.
 
 ## Usage
 
@@ -18,7 +18,7 @@ margot_causal_forest(
   weights,
   grf_defaults = list(),
   save_data = FALSE,
-  compute_rate = TRUE,
+  compute_rate = FALSE,
   top_n_vars = 15,
   save_models = TRUE,
   train_proportion = 0.5,
@@ -29,7 +29,7 @@ margot_causal_forest(
   verbose = TRUE,
   qini_treatment_cost = 1,
   seed = 12345,
-  use_train_test_split = TRUE,
+  use_train_test_split = FALSE,
   flip_outcomes = NULL,
   flip_method = "zscore",
   flip_scale_bounds = NULL
@@ -60,7 +60,10 @@ margot_causal_forest(
 
 - grf_defaults:
 
-  A list of default parameters for the GRF models.
+  A list of default parameters for the GRF models. Defaults are
+  \`num.trees = 5000\` and \`min.node.size = 50\`; user-supplied values
+  override these. For large samples (\`n \> 30000\`), consider
+  \`min.node.size = 100\` as a sensitivity analysis.
 
 - save_data:
 
@@ -69,10 +72,13 @@ margot_causal_forest(
 
 - compute_rate:
 
-  Logical indicating whether to compute RATE for each model. Default is
-  TRUE. Note: Direct computation of RATE, QINI, and policy trees within
-  this function may be deprecated in future versions. Use margot_rate(),
-  margot_qini(), and margot_policy_tree() instead.
+  Logical indicating whether to compute legacy inline RATE for each
+  model. Default is FALSE. Inline RATE is now skipped because GRF RATE
+  requires priorities constructed independently from evaluation data;
+  use \[margot_rate_cv()\] for inferential RATE. Note: Direct
+  computation of RATE, QINI, and policy trees within this function may
+  be deprecated in future versions. Use margot_rate(), margot_qini(),
+  and margot_policy_tree() instead.
 
 - top_n_vars:
 
@@ -132,13 +138,16 @@ margot_causal_forest(
 
 - use_train_test_split:
 
-  Logical. If TRUE (default), uses a consistent train/test split
-  where: - The main causal forest is trained on all data (following GRF
-  best practices for honesty) - All reported results (ATE, E-values,
-  combined_table) are computed on the TEST SET - Policy trees and QINI
-  also use the same train/test split - All-data results are stored in
-  split_info for reference If FALSE, the main forest uses all data for
-  estimation and policy trees/QINI get their own splits.
+  Logical. Default FALSE (descriptive mode): the forest, CATE,
+  conditional means, DR scores and policy trees use all complete cases
+  and are reproducible given a fixed seed; RATE/AUTOC and QINI curves
+  are not computed because they are not honestly identified without a
+  held-out split. Use \`margot_policy_tree_stability()\` for the
+  bootstrap robustness report on the descriptive tree. Set TRUE for
+  held-out QINI and policy diagnostics: one consistent train/test split
+  where the main forest trains on all data, reported ATE/E-values are
+  computed on the TEST set, and policy trees and QINI share that split
+  (all-data results stored in split_info).
 
 - flip_outcomes:
 

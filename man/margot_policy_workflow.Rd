@@ -29,6 +29,11 @@ margot_policy_workflow(
   prefer_stability = TRUE,
   max_stability_loss_for_depth_switch = 0.05,
   signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
+  use_heldout_policy = TRUE,
+  heldout_policy = NULL,
+  heldout_num_folds = 5L,
+  heldout_n_repeats = 10L,
+  heldout_seed = 42L,
   signals_k = 3,
   ...
 )
@@ -106,13 +111,28 @@ to override explicitly.}
 \item{prefer_stability}{Logical; if TRUE, require material depth-2 gains and
 stable consensus before switching from depth-1. Default TRUE.}
 
-\item{max_stability_loss_for_depth_switch}{Numeric; maximum permitted loss in
-consensus strength when switching to depth-2. Default 0.05.}
+\item{max_stability_loss_for_depth_switch}{Numeric; maximum root-stability loss
+allowed when selecting depth two from held-out diagnostics. Default 0.05.}
 
 \item{signal_score}{Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
 "none", the summary text includes a "Signals Worth Monitoring" section that ranks Neutral
 models by the selected score (magnitude relative to uncertainty, optionally weighted by
 coverage and stability). See the package NEWS for details.}
+
+\item{use_heldout_policy}{Logical; if TRUE, attempt repeated held-out policy-tree
+cross-validation with [margot_policy_tree_cv()] and use its depth map as the
+primary depth-selection object when available. Default TRUE.}
+
+\item{heldout_policy}{Optional precomputed `margot_policy_tree_cv` object. When
+supplied, this object is used instead of recomputing held-out policy diagnostics.}
+
+\item{heldout_num_folds}{Integer; number of folds for automatic held-out policy-tree
+cross-validation. Default 5.}
+
+\item{heldout_n_repeats}{Integer; number of repeated fold partitions for automatic
+held-out policy-tree cross-validation. Default 10.}
+
+\item{heldout_seed}{Integer; seed for automatic held-out policy-tree cross-validation.}
 
 \item{signals_k}{Integer; number of top signals to display when `signal_score != "none"`}
 
@@ -122,7 +142,8 @@ coverage and stability). See the package NEWS for details.}
 \value{
 A list with components from depth selection (best), summary (summary), and
   optional interpretations (interpret). Includes `policy_brief_df` shortcut drawn from
-  `summary$group_table_df`. Also returns `method_explanation` (long/short/prereg),
+  `summary$group_table_df`, `heldout_policy` when available, and
+  `method_explanation` (long/short/prereg),
   `depth_comparison_report` (a list with `text` and `data` showing both depth-1 and
   depth-2 policy values for all outcomes with selection rationale),
   `summary$signals_df` when `signal_score != "none"`, and top-level `report`,

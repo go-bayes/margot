@@ -144,11 +144,11 @@ A ggplot2 object representing the colored histogram.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 df <- data.frame(value = rnorm(1000))
 coloured_histogram_quantiles(df, "value", n_divisions = 4)
-#> Error in coloured_histogram_quantiles(df, "value", n_divisions = 4): could not find function "coloured_histogram_quantiles"
 
 # With custom breaks
 coloured_histogram_quantiles(df, "value", custom_breaks = c(-2, -1, 0, 1, 2))
-#> Error in coloured_histogram_quantiles(df, "value", custom_breaks = c(-2,     -1, 0, 1, 2)): could not find function "coloured_histogram_quantiles"
+} # }
 ```

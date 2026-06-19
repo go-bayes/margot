@@ -23,9 +23,9 @@ margot_policy_tree_cv(
 )
 }
 \arguments{
-\item{model_results}{A list returned by \code{\link[=margot_causal_forest]{margot_causal_forest()}},
-\code{\link[=margot_policy_tree_stability]{margot_policy_tree_stability()}}, or a compatible object with \code{results},
-\code{covariates}, and stored doubly robust action scores.}
+\item{model_results}{A list returned by \code{margot_causal_forest()},
+\code{margot_policy_tree_stability()}, or a compatible object with
+\code{results}, \code{covariates}, and stored doubly robust action scores.}
 
 \item{model_names}{Optional character vector of model names to process, with
 or without the \code{model_} prefix. Defaults to all models.}
@@ -36,8 +36,8 @@ policy trees.}
 \item{exclude_covariates}{Optional character vector of covariate names or
 patterns to exclude.}
 
-\item{covariate_mode}{Character. One of \code{"original"}, \code{"custom"}, \code{"add"},
-or \code{"all"}.}
+\item{covariate_mode}{Character. One of \code{"original"},
+\code{"custom"}, \code{"add"}, or \code{"all"}.}
 
 \item{depths}{Integer vector containing 1, 2, or both. Character values
 \code{"1"}, \code{"2"}, and \code{"both"} are also accepted.}
@@ -46,8 +46,8 @@ or \code{"all"}.}
 
 \item{n_repeats}{Integer. Number of repeated fold partitions. Default is 20.}
 
-\item{weights}{Optional numeric vector of evaluation weights. If \code{NULL},
-\code{model_results$weights} is used when available.}
+\item{weights}{Optional numeric vector of evaluation weights. If
+\code{NULL}, \code{model_results$weights} is used when available.}
 
 \item{min_gain_for_depth_switch}{Numeric. Minimum held-out value gain required
 before depth two can be selected over depth one. Default is 0.01.}
@@ -60,34 +60,24 @@ display labels.}
 
 \item{seed}{Integer. Base seed for reproducible fold assignments.}
 
-\item{tree_method}{Character. \code{"fastpolicytree"} or \code{"policytree"}.}
+\item{tree_method}{Character. \code{"fastpolicytree"} or
+\code{"policytree"}.}
 
 \item{verbose}{Logical. Print progress messages.}
 }
 \value{
 A \code{margot_policy_tree_cv} list with fold-level held-out values,
-value summaries, split summaries, threshold summaries, depth selection, and
-a named \code{depth_map} that can be passed to \code{\link[=margot_policy_workflow]{margot_policy_workflow()}} or
-\code{\link[=margot_policy_summary_compare_depths]{margot_policy_summary_compare_depths()}}.
+  value summaries, split summaries, leaf summaries, threshold summaries,
+  depth selection, and a named \code{depth_map} that can be passed to
+  \code{margot_policy_workflow()} or
+  \code{margot_policy_summary_compare_depths()}.
 }
 \description{
 Learns shallow policy trees on training folds and evaluates their policy
-values, selected split variables, and split thresholds on held-out folds.
+values, selected split variables, split thresholds, and leaf-level action
+gains on held-out folds.
 The target is the performance of the policy-learning procedure, not the value
 of a final full-sample display tree.
-}
-\examples{
-\dontrun{
-cv <- margot_policy_tree_cv(
-  policy_tree_result_stability,
-  depths = "both",
-  num_folds = 5,
-  n_repeats = 20
-)
-
-cv$depth_selection
-cv$depth_map
-}
 }
 \references{
 Athey, S., & Wager, S. (2021). Policy learning with observational data.

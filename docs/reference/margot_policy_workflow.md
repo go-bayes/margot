@@ -16,7 +16,7 @@ margot_policy_workflow(
   R = 499L,
   dominance_threshold = 0.8,
   strict_branch = TRUE,
-  min_gain_for_depth_switch = 0.005,
+  min_gain_for_depth_switch = 0.01,
   include_interpretation = TRUE,
   interpret_models = "wins",
   plot_models = "none",
@@ -30,8 +30,14 @@ margot_policy_workflow(
   brief_include_group = FALSE,
   expand_acronyms = FALSE,
   show_neutral = NULL,
-  prefer_stability = FALSE,
+  prefer_stability = TRUE,
+  max_stability_loss_for_depth_switch = 0.05,
   signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
+  use_heldout_policy = TRUE,
+  heldout_policy = NULL,
+  heldout_num_folds = 5L,
+  heldout_n_repeats = 10L,
+  heldout_seed = 42L,
   signals_k = 3,
   ...
 )
@@ -74,7 +80,7 @@ margot_policy_workflow(
 - min_gain_for_depth_switch:
 
   Numeric; minimum PV gain required to switch from depth-1 to depth-2
-  (default 0.005 on standardized outcomes).
+  (default 0.01 on standardized outcomes).
 
 - include_interpretation:
 
@@ -161,9 +167,13 @@ margot_policy_workflow(
 
 - prefer_stability:
 
-  Logical; if TRUE, raise the parsimony threshold for switching to
-  depth-2 (min_gain_for_depth_switch \>= 0.01) to prefer depth-1 unless
-  depth-2 gains are clearly larger.
+  Logical; if TRUE, require material depth-2 gains and stable consensus
+  before switching from depth-1. Default TRUE.
+
+- max_stability_loss_for_depth_switch:
+
+  Numeric; maximum root-stability loss allowed when selecting depth two
+  from held-out diagnostics. Default 0.05.
 
 - signal_score:
 
@@ -172,6 +182,33 @@ margot_policy_workflow(
   section that ranks Neutral models by the selected score (magnitude
   relative to uncertainty, optionally weighted by coverage and
   stability). See the package NEWS for details.
+
+- use_heldout_policy:
+
+  Logical; if TRUE, attempt repeated held-out policy-tree
+  cross-validation with \[margot_policy_tree_cv()\] and use its depth
+  map as the primary depth-selection object when available. Default
+  TRUE.
+
+- heldout_policy:
+
+  Optional precomputed \`margot_policy_tree_cv\` object. When supplied,
+  this object is used instead of recomputing held-out policy
+  diagnostics.
+
+- heldout_num_folds:
+
+  Integer; number of folds for automatic held-out policy-tree
+  cross-validation. Default 5.
+
+- heldout_n_repeats:
+
+  Integer; number of repeated fold partitions for automatic held-out
+  policy-tree cross-validation. Default 10.
+
+- heldout_seed:
+
+  Integer; seed for automatic held-out policy-tree cross-validation.
 
 - signals_k:
 
@@ -187,15 +224,15 @@ margot_policy_workflow(
 
 A list with components from depth selection (best), summary (summary),
 and optional interpretations (interpret). Includes \`policy_brief_df\`
-shortcut drawn from \`summary\$group_table_df\`. Also returns
-\`method_explanation\` (long/short/prereg), \`depth_comparison_report\`
-(a list with \`text\` and \`data\` showing both depth-1 and depth-2
-policy values for all outcomes with selection rationale),
-\`summary\$signals_df\` when \`signal_score != "none"\`, and top-level
-\`report\`, \`report_prose\`, and \`report_detail\` for convenient
-access to narrative summaries (bullets, prose, or detailed per-model
-interpretations respectively). When \`plot_models != "none"\`, also
-returns \`plots\` (output from \[margot_policy()\]).
+shortcut drawn from \`summary\$group_table_df\`, \`heldout_policy\` when
+available, and \`method_explanation\` (long/short/prereg),
+\`depth_comparison_report\` (a list with \`text\` and \`data\` showing
+both depth-1 and depth-2 policy values for all outcomes with selection
+rationale), \`summary\$signals_df\` when \`signal_score != "none"\`, and
+top-level \`report\`, \`report_prose\`, and \`report_detail\` for
+convenient access to narrative summaries (bullets, prose, or detailed
+per-model interpretations respectively). When \`plot_models != "none"\`,
+also returns \`plots\` (output from \[margot_policy()\]).
 
 ## Examples
 

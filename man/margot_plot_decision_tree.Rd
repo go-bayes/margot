@@ -23,11 +23,14 @@ margot_plot_decision_tree(
   use_title_case = TRUE,
   remove_underscores = TRUE,
   remove_action_label = TRUE,
-  label_mapping = NULL
+  label_mapping = NULL,
+  show_leaf_metrics = FALSE,
+  leaf_metrics = NULL,
+  leaf_metric_digits = 3L
 )
 }
 \arguments{
-\item{result_object}{A list returned by `margot_causal_forest()`}
+\item{result_object}{A list returned by \code{margot_causal_forest()}.}
 
 \item{model_name}{Name of the model in the results to visualise}
 
@@ -64,6 +67,16 @@ margot_plot_decision_tree(
 \item{remove_action_label}{Whether to remove "Action:" prefix from leaf node labels}
 
 \item{label_mapping}{Optional list for renaming variables in the display}
+
+\item{show_leaf_metrics}{Logical; if \code{TRUE}, leaf labels include
+action-conditional estimated gains and sample shares from
+\code{margot_policy_leaf_summary()}.}
+
+\item{leaf_metrics}{Optional data frame from
+\code{margot_policy_leaf_summary()}.
+If supplied, these labels are used instead of recomputing metrics.}
+
+\item{leaf_metric_digits}{Integer; number of decimals for leaf estimated gains.}
 }
 \description{
 Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)

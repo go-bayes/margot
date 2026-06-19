@@ -56,28 +56,28 @@ margot_subset_batch(
 
   var
 
-  :   A character string specifying the variable to subset on.
+  : A character string specifying the variable to subset on.
 
   value
 
-  :   The value used to define the subset.
+  : The value used to define the subset.
 
   operator
 
-  :   (Optional) A comparison operator (default is `"=="`).
+  : (Optional) A comparison operator (default is `"=="`).
 
   subset_condition
 
-  :   (Optional) A pre-computed logical vector defining the subset.
+  : (Optional) A pre-computed logical vector defining the subset.
 
   description
 
-  :   (Optional) A character string describing the subset.
+  : (Optional) A character string describing the subset.
 
   label
 
-  :   (Optional) A user-friendly label for the subset. If missing, the
-      list name is used.
+  : (Optional) A user-friendly label for the subset. If missing, the
+    list name is used.
 
 - debug:
 

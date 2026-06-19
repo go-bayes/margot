@@ -30,6 +30,10 @@ template:
 
 
 articles:
+  - title: "GRF and policy trees"
+    navbar: ~
+    contents:
+    - standard-grf-policy-tree-workflow
   - title: "Storage and migration"
     navbar: ~
     contents:
@@ -115,6 +119,8 @@ reference:
     - margot_omnibus_hetero_test
     - margot_policy_workflow
     - margot_policy_tree_cv
+    - margot_policy_leaf_summary
+    - margot_policy_recurrence_summary
     - margot_policy_summary_report
     - margot_policy_summary_compare_depths
     - margot_policy_split_diagnostic

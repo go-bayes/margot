@@ -44,12 +44,12 @@ from where files are to be read. This function will first try to read an
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # Assuming `push_mods` is set in your environment to "~/mydata"
 # and you have previously saved an RDS file named "my_df.rds" in that directory
 my_df <- here_read("my_df")
-#> Error in here_read("my_df"): object 'push_mods' not found
 
 # Reading from a custom directory
 my_df <- here_read("my_df", dir_path = "~/custom_dir")
-#> Error in here_read("my_df", dir_path = "~/custom_dir"): File not found: ~/custom_dir/my_df.rds or ~/custom_dir/my_df
+} # }
 ```

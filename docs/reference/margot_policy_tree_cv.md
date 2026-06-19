@@ -1,9 +1,10 @@
 # Cross-validated held-out policy-tree diagnostics
 
 Learns shallow policy trees on training folds and evaluates their policy
-values, selected split variables, and split thresholds on held-out folds.
-The target is the performance of the policy-learning procedure, not the
-value of a final full-sample display tree.
+values, selected split variables, split thresholds, and leaf-level
+action gains on held-out folds. The target is the performance of the
+policy-learning procedure, not the value of a final full-sample display
+tree.
 
 ## Usage
 
@@ -32,8 +33,8 @@ margot_policy_tree_cv(
 - model_results:
 
   A list returned by
-  [`margot_causal_forest`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md),
-  [`margot_policy_tree_stability`](https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.md),
+  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md),
+  [`margot_policy_tree_stability()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.md),
   or a compatible object with `results`, `covariates`, and stored doubly
   robust action scores.
 
@@ -56,8 +57,8 @@ margot_policy_tree_cv(
 
 - depths:
 
-  Integer vector containing 1, 2, or both. Character values `"1"`, `"2"`,
-  and `"both"` are also accepted.
+  Integer vector containing 1, 2, or both. Character values `"1"`,
+  `"2"`, and `"both"` are also accepted.
 
 - num_folds:
 
@@ -84,7 +85,8 @@ margot_policy_tree_cv(
 
 - label_mapping:
 
-  Optional named list mapping outcome and variable names to display labels.
+  Optional named list mapping outcome and variable names to display
+  labels.
 
 - seed:
 
@@ -101,29 +103,13 @@ margot_policy_tree_cv(
 ## Value
 
 A `margot_policy_tree_cv` list with fold-level held-out values, value
-summaries, split summaries, threshold summaries, depth selection, and a
-named `depth_map` that can be passed to
-[`margot_policy_workflow`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
+summaries, split summaries, leaf summaries, threshold summaries, depth
+selection, and a named `depth_map` that can be passed to
+[`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
 or
-[`margot_policy_summary_compare_depths`](https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.md).
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-cv <- margot_policy_tree_cv(
-  policy_tree_result_stability,
-  depths = "both",
-  num_folds = 5,
-  n_repeats = 20
-)
-
-cv$depth_selection
-cv$depth_map
-} # }
-```
+[`margot_policy_summary_compare_depths()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.md).
 
 ## References
 
 Athey, S., & Wager, S. (2021). Policy learning with observational data.
-*Econometrica*, 89(1), 133-161.
+Econometrica, 89(1), 133-161.

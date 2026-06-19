@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.328</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/migrating-off-qs.html">Migrating off `qs`</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/migrating-off-qs.html">Migrating off `qs`</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -36,6 +37,25 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.0" id="id_2026-06-20-margot-110">[2026-06-20] margot 1.1.0<a class="anchor" aria-label="anchor" href="#id_2026-06-20-margot-110"></a></h2>
+<div class="section level4">
+<h4 id="added-1-1-0">Added<a class="anchor" aria-label="anchor" href="#added-1-1-0"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_policy_leaf_summary.html">margot_policy_leaf_summary()</a></code> computes action-conditional estimated gains, sample shares, and value contributions for policy-tree leaves.</li>
+<li>
+<code><a href="../reference/margot_policy_recurrence_summary.html">margot_policy_recurrence_summary()</a></code> summarises outcome-wide recurrence in held-out policy-tree split variables across outcomes.</li>
+<li>
+<code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code> now returns held-out <code>leaf_values</code> and <code>leaf_summary</code> tables alongside fold values, split summaries, and depth selection.</li>
+<li>Added the <code>standard-grf-policy-tree-workflow</code> vignette with a transparent two-outcome simulation and the standard ATE -&gt; calibration/importance -&gt; held-out policy-tree -&gt; recurrence workflow.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-1-0">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-0"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_plot_decision_tree.html">margot_plot_decision_tree()</a></code> can now annotate leaves with estimated gains and sample percentages via <code>show_leaf_metrics = TRUE</code> or an explicit <code>leaf_metrics</code> table. Existing plots are unchanged by default.</li>
+<li>The standard GRF policy-tree workflow is held-out-first for policy-tree learning and reporting. Full-data trees remain optional displays; RATE/AUTOC and Qini/uplift reporting are optional extensions rather than required outputs.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.328" id="id_2026-06-20-margot-10328">[2026-06-20] margot 1.0.328<a class="anchor" aria-label="anchor" href="#id_2026-06-20-margot-10328"></a></h2>
 <div class="section level4">
@@ -820,7 +840,7 @@
 <div class="section level4">
 <h4 id="improved-1-0-253">Improved<a class="anchor" aria-label="anchor" href="#improved-1-0-253"></a></h4>
 <ul><li>
-<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: checkpoint saves use <code><a href="https://rdrr.io/pkg/qs/man/qsave.html" class="external-link">qs::qsave()</a></code> with high compression and single thread for compatibility with future parallelization.</li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: checkpoint saves use <code>qs::qsave()</code> with high compression and single thread for compatibility with future parallelization.</li>
 <li>
 <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code>: CLI messages show checkpoint directory path and individual file saves.</li>
 <li>
@@ -5453,7 +5473,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

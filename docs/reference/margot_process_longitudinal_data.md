@@ -52,17 +52,12 @@ more waves.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # assuming df_wide is your wide-format dataframe with three waves
 processed_data <- margot_process_longitudinal_data(
   df_wide,
   ordinal_columns = c("education", "income_category"),
   continuous_columns_keep = c("age", "bmi")
 )
-#> 
-#> ── Longitudinal Data Processing ────────────────────────────────────────────────
-#> ℹ Starting data processing for three waves (t0, t1, t2)
-#> 
-#> ── Step 1: Creating NA conditions ──
-#> 
-#> Error: object 'df_wide' not found
+} # }
 ```

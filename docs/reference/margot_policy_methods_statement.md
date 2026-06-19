@@ -2,8 +2,8 @@
 
 Generates a boilerplate methods paragraph describing the policy learning
 workflow used for policy trees in \`margot\` (DR scores, tree fitting,
-honest evaluation, policy value contrasts with bootstrap CIs,
-treated-only uplift, and optional stability analysis).
+descriptive or held-out evaluation, policy value contrasts with
+bootstrap CIs, treated-only uplift, and optional stability analysis).
 
 ## Usage
 
