@@ -1,5 +1,15 @@
 # margot NEWS
 
+## Changes in version 1.1.001
+
+### New
+- Added `margot_exposure_overlap()` for outcome-blind exposure-support
+  diagnostics before registration. The helper uses exposure and baseline
+  covariates only, supports supplied propensities, logistic exposure models, and
+  probability forests, and returns overlap, trimming, effective-sample-size,
+  prevalence, balance, and plot artefacts without fitting or viewing a causal
+  estimand.
+
 ## Changes in version 1.1.0
 
 ### New

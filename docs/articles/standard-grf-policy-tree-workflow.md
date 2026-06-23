@@ -13,23 +13,11 @@ The workflow separates four tasks:
 3.  Evaluate policy-tree learning with held-out folds.
 4.  Summarise cross-outcome recurrence descriptively.
 
-The ATE layer estimates the primary causal estimand. The policy-tree
-layer asks whether a shallow rule can summarise useful variation in the
+The ATE task estimates the primary causal estimand. The policy-tree task
+asks whether a shallow rule can summarise useful variation in the
 forest’s doubly robust action scores. Because a policy tree is an
 optimiser, policy-tree learning should be evaluated on held-out
-observations.
-
-## Why this simulation is simple
-
-Athey, Imbens, Metzger, and Munro describe Wasserstein generative
-adversarial networks (WGANs) for designing Monte Carlo simulations that
-mimic real economic datasets. Their approach is valuable for estimator
-benchmarking, but it is not a good default for a package tutorial
-because it adds Python, GAN training, large generated-data artefacts,
-and additional tuning decisions. The standard `margot` tutorial instead
-uses a transparent R simulation with known heterogeneity and two
-outcomes. A WGAN benchmark could be added later as a separate
-stress-test article.
+observations, and we do that using cross-validation.
 
 ## Simulate two outcomes
 
@@ -123,7 +111,8 @@ importance
 
 The policy-tree layer learns trees on training folds and evaluates the
 learned tree on held-out folds. The output includes policy value, split
-frequencies, threshold summaries, and leaf-level estimated gains.
+frequencies, threshold summaries, and leaf-level estimated action
+advantages.
 
 ``` r
 
@@ -165,9 +154,11 @@ policy_cv_subset <- margot_policy_tree_cv(
 ## Plot selected display trees
 
 The plot below shows a stored tree and annotates leaves with
-action-conditional estimated gains and sample shares. These labels
-describe the displayed tree. The held-out CV object remains the source
-for depth, value, and split-frequency claims.
+action-conditional estimated advantages and sample shares. The advantage
+is the estimated value of the displayed action minus the alternative
+action within the same leaf. These labels describe the displayed tree.
+The held-out CV object remains the source for depth, value, and
+split-frequency claims.
 
 ``` r
 
@@ -181,7 +172,7 @@ margot_plot_decision_tree(
 )
 ```
 
-For a report, pair the plot with held-out summaries:
+For a report, we can pair the plot with held-out summaries:
 
 ``` r
 

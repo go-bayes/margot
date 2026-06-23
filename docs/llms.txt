@@ -125,6 +125,8 @@ stable state. Expect breaking changes.
 
 ## Diagnose support
 
+- [`margot_exposure_overlap()`](https://go-bayes.github.io/margot/reference/margot_exposure_overlap.md)
+  : Outcome-blind exposure overlap diagnostics
 - [`margot_grf_overlap()`](https://go-bayes.github.io/margot/reference/margot_grf_overlap.md)
   : Assess Covariate Overlap from Causal Forest Models
 - [`margot_assess_overlap()`](https://go-bayes.github.io/margot/reference/margot_assess_overlap.md)
@@ -214,8 +216,8 @@ stable state. Expect breaking changes.
 - [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
   : Cross-validated held-out policy-tree diagnostics
 - [`margot_policy_leaf_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md)
-  : Summarise policy-tree leaves with estimated action gains and sample
-  shares
+  : Summarise policy-tree leaves with estimated action advantages and
+  sample shares
 - [`margot_policy_recurrence_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.md)
   : Summarise outcome-wide recurrence in held-out policy-tree splits
 - [`margot_policy_summary_report()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_report.md)

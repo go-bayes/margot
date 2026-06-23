@@ -1,10 +1,10 @@
-# Summarise policy-tree leaves with estimated action gains and sample shares
+# Summarise policy-tree leaves with estimated action advantages and sample shares
 
-Computes leaf-level summaries for a stored policy tree. Leaf gains are
-estimated from doubly robust action scores and are action conditional:
-treated leaves report the estimated gain of treatment relative to
-control, whereas control leaves report the estimated gain of control
-relative to treatment.
+Computes leaf-level summaries for a stored policy tree. Leaf advantages
+are estimated from doubly robust action scores and are action
+conditional: treated leaves report the estimated advantage of treatment
+relative to control, whereas control leaves report the estimated
+advantage of control relative to treatment.
 
 ## Usage
 
@@ -51,4 +51,5 @@ margot_policy_leaf_summary(
 
 A tibble with one row per leaf and columns for node id, action,
 unweighted count, weighted sample share, action-conditional estimated
-gain, and policy-value contributions.
+advantage, the legacy `estimated_gain` alias, and policy-value
+contributions.

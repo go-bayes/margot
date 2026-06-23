@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,24 +80,11 @@ heterogeneity.</li>
 <li>Evaluate policy-tree learning with held-out folds.</li>
 <li>Summarise cross-outcome recurrence descriptively.</li>
 </ol>
-<p>The ATE layer estimates the primary causal estimand. The policy-tree
-layer asks whether a shallow rule can summarise useful variation in the
+<p>The ATE task estimates the primary causal estimand. The policy-tree
+task asks whether a shallow rule can summarise useful variation in the
 forest’s doubly robust action scores. Because a policy tree is an
 optimiser, policy-tree learning should be evaluated on held-out
-observations.</p>
-<div class="section level2">
-<h2 id="why-this-simulation-is-simple">Why this simulation is simple<a class="anchor" aria-label="anchor" href="#why-this-simulation-is-simple"></a>
-</h2>
-<p>Athey, Imbens, Metzger, and Munro describe Wasserstein generative
-adversarial networks (WGANs) for designing Monte Carlo simulations that
-mimic real economic datasets. Their approach is valuable for estimator
-benchmarking, but it is not a good default for a package tutorial
-because it adds Python, GAN training, large generated-data artefacts,
-and additional tuning decisions. The standard <code>margot</code>
-tutorial instead uses a transparent R simulation with known
-heterogeneity and two outcomes. A WGAN benchmark could be added later as
-a separate stress-test article.</p>
-</div>
+observations, and we do that using cross-validation.</p>
 <div class="section level2">
 <h2 id="simulate-two-outcomes">Simulate two outcomes<a class="anchor" aria-label="anchor" href="#simulate-two-outcomes"></a>
 </h2>
@@ -183,8 +170,8 @@ test.</p>
 </h2>
 <p>The policy-tree layer learns trees on training folds and evaluates
 the learned tree on held-out folds. The output includes policy value,
-split frequencies, threshold summaries, and leaf-level estimated
-gains.</p>
+split frequencies, threshold summaries, and leaf-level estimated action
+advantages.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">policy_cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv</a></span><span class="op">(</span></span>
 <span>  <span class="va">fit</span>,</span>
@@ -221,9 +208,11 @@ folds.</p>
 <h2 id="plot-selected-display-trees">Plot selected display trees<a class="anchor" aria-label="anchor" href="#plot-selected-display-trees"></a>
 </h2>
 <p>The plot below shows a stored tree and annotates leaves with
-action-conditional estimated gains and sample shares. These labels
-describe the displayed tree. The held-out CV object remains the source
-for depth, value, and split-frequency claims.</p>
+action-conditional estimated advantages and sample shares. The advantage
+is the estimated value of the displayed action minus the alternative
+action within the same leaf. These labels describe the displayed tree.
+The held-out CV object remains the source for depth, value, and
+split-frequency claims.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">selected_depth</span> <span class="op">&lt;-</span> <span class="va">policy_cv</span><span class="op">$</span><span class="va">depth_map</span><span class="op">[[</span><span class="st">"model_y1"</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
@@ -233,7 +222,7 @@ for depth, value, and split-frequency claims.</p>
 <span>  max_depth <span class="op">=</span> <span class="va">selected_depth</span>,</span>
 <span>  show_leaf_metrics <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>For a report, pair the plot with held-out summaries:</p>
+<p>For a report, we can pair the plot with held-out summaries:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">policy_cv</span><span class="op">$</span><span class="va">split_summary</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">model</span> <span class="op">==</span> <span class="st">"model_y1"</span>, <span class="va">depth</span> <span class="op">==</span> <span class="va">selected_depth</span>, <span class="va">node_id</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span></span>

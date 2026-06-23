@@ -1,12 +1,26 @@
 # Changelog
 
+## \[2026-06-23\] margot 1.1.001
+
+#### Added
+
+- [`margot_exposure_overlap()`](https://go-bayes.github.io/margot/reference/margot_exposure_overlap.md)
+  provides outcome-blind exposure-support diagnostics for registration
+  workflows. The helper accepts supplied propensities or estimates them
+  from the exposure and baseline covariates only, then reports
+  propensity overlap, trimming counts, effective sample size, exposure
+  prevalence, covariate balance, and an optional overlap plot without
+  requiring an outcome.
+
 ## \[2026-06-20\] margot 1.1.0
 
 #### Added
 
 - [`margot_policy_leaf_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md)
-  computes action-conditional estimated gains, sample shares, and value
-  contributions for policy-tree leaves.
+  computes action-conditional estimated advantages, sample shares, and
+  value contributions for policy-tree leaves. The legacy
+  `estimated_gain` column remains available as an alias for
+  `estimated_advantage`.
 - [`margot_policy_recurrence_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.md)
   summarises outcome-wide recurrence in held-out policy-tree split
   variables across outcomes.
@@ -21,9 +35,9 @@
 #### Changed
 
 - [`margot_plot_decision_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_decision_tree.md)
-  can now annotate leaves with estimated gains and sample percentages
-  via `show_leaf_metrics = TRUE` or an explicit `leaf_metrics` table.
-  Existing plots are unchanged by default.
+  can now annotate leaves with estimated action advantages and sample
+  percentages via `show_leaf_metrics = TRUE` or an explicit
+  `leaf_metrics` table. Existing plots are unchanged by default.
 - The standard GRF policy-tree workflow is held-out-first for
   policy-tree learning and reporting. Full-data trees remain optional
   displays; RATE/AUTOC and Qini/uplift reporting are optional extensions

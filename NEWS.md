@@ -1,3 +1,13 @@
+# [2026-06-23] margot 1.1.001
+
+### Added
+- `margot_exposure_overlap()` provides outcome-blind exposure-support
+  diagnostics for registration workflows. The helper accepts supplied
+  propensities or estimates them from the exposure and baseline covariates only,
+  then reports propensity overlap, trimming counts, effective sample size,
+  exposure prevalence, covariate balance, and an optional overlap plot without
+  requiring an outcome.
+
 # [2026-06-20] margot 1.1.0
 
 ### Added
