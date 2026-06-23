@@ -41,7 +41,8 @@ test_that("margot_policy_tree_cv evaluates held-out folds", {
   expect_true(all(c("gain_vs_control_mean", "gain_vs_treat_mean") %in% names(out$value_summary)))
   expect_true(any(out$split_summary$node_id == 1L))
   expect_true(nrow(out$leaf_values) > 0)
-  expect_true(all(c("sample_share", "estimated_gain", "contrast") %in% names(out$leaf_values)))
+  expect_true(all(c("sample_share", "estimated_advantage", "estimated_gain", "contrast") %in% names(out$leaf_values)))
+  expect_equal(out$leaf_values$estimated_advantage, out$leaf_values$estimated_gain)
   expect_true(nrow(out$leaf_summary) > 0)
 })
 

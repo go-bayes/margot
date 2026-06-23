@@ -75,7 +75,7 @@ A \code{margot_policy_tree_cv} list with fold-level held-out values,
 \description{
 Learns shallow policy trees on training folds and evaluates their policy
 values, selected split variables, split thresholds, and leaf-level action
-gains on held-out folds.
+advantages on held-out folds.
 The target is the performance of the policy-learning procedure, not the value
 of a final full-sample display tree.
 }

@@ -3,8 +3,10 @@
 ## Changes in version 1.1.0
 
 ### New
-- Added `margot_policy_leaf_summary()` for action-conditional estimated gains,
-  sample shares, and value contributions for policy-tree leaves.
+- Added `margot_policy_leaf_summary()` for action-conditional estimated
+  advantages, sample shares, and value contributions for policy-tree leaves.
+  The legacy `estimated_gain` column remains available as an alias for
+  `estimated_advantage`.
 - Added `margot_policy_recurrence_summary()` for descriptive outcome-wide
   recurrence summaries from held-out policy-tree CV objects.
 - Added held-out `leaf_values` and `leaf_summary` outputs to
@@ -13,8 +15,8 @@
   outcomes.
 
 ### Improvements
-- `margot_plot_decision_tree()` can optionally show leaf-level estimated gains
-  and sample percentages. Existing plots are unchanged unless
+- `margot_plot_decision_tree()` can optionally show leaf-level estimated action
+  advantages and sample percentages. Existing plots are unchanged unless
   `show_leaf_metrics = TRUE` or `leaf_metrics` is supplied.
 - The documented standard workflow is ATE first, calibration/importance bridge
   diagnostics second, held-out policy-tree CV third, and optional RATE/AUTOC or

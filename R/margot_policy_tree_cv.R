@@ -3,7 +3,7 @@
 #' @description
 #' Learns shallow policy trees on training folds and evaluates their policy
 #' values, selected split variables, split thresholds, and leaf-level action
-#' gains on held-out folds.
+#' advantages on held-out folds.
 #' The target is the performance of the policy-learning procedure, not the value
 #' of a final full-sample display tree.
 #'
@@ -501,7 +501,7 @@ margot_policy_tree_cv <- function(model_results,
                                  fold,
                                  depth,
                                  label_mapping = NULL) {
-  # summarise action-conditional leaf gains on the held-out rows for one tree.
+  # summarise action-conditional leaf advantages on held-out rows for one tree.
   if (is.null(tree$columns) || !all(tree$columns %in% colnames(covariates))) return(NULL)
   X <- as.data.frame(covariates[, tree$columns, drop = FALSE])
   keep <- stats::complete.cases(X) & stats::complete.cases(dr_scores)
@@ -532,12 +532,17 @@ margot_policy_tree_cv <- function(model_results,
     if (!is.finite(action_id) || action_id < 1L || action_id > length(action_names)) return(NULL)
     w <- if (!is.null(weights)) weights[idx] else rep(1, length(idx))
     share <- sum(w, na.rm = TRUE) / total_weight
-    estimated_gain <- if (action_id == 2L) {
+    estimated_advantage <- if (action_id == 2L) {
       .policy_cv_mean(effect[idx], w)
     } else {
       .policy_cv_mean(-effect[idx], w)
     }
     contrast <- if (action_id == 2L) "gain_vs_control" else "gain_vs_treatment"
+    advantage_comparison <- if (action_id == 2L) {
+      "treatment advantage vs control"
+    } else {
+      "control advantage vs treatment"
+    }
     data.frame(
       model = model_name,
       outcome = gsub("^model_", "", model_name),
@@ -550,11 +555,13 @@ margot_policy_tree_cv <- function(model_results,
       action = action_names[[action_id]],
       action_label = .margot_leaf_label_action(action_names[[action_id]], label_mapping),
       contrast = contrast,
+      advantage_comparison = advantage_comparison,
       n_eval_leaf = length(idx),
       sample_share = share,
-      estimated_gain = estimated_gain,
-      value_contribution_vs_control = if (action_id == 2L) share * estimated_gain else 0,
-      value_contribution_vs_treatment = if (action_id == 1L) share * estimated_gain else 0,
+      estimated_advantage = estimated_advantage,
+      estimated_gain = estimated_advantage,
+      value_contribution_vs_control = if (action_id == 2L) share * estimated_advantage else 0,
+      value_contribution_vs_treatment = if (action_id == 1L) share * estimated_advantage else 0,
       stringsAsFactors = FALSE
     )
   })
@@ -627,7 +634,7 @@ margot_policy_tree_cv <- function(model_results,
 
 #' @keywords internal
 .policy_cv_leaf_summary <- function(leaf_values) {
-  # summarise held-out leaf gains by model, depth, action, and contrast.
+  # summarise held-out leaf advantages by model, depth, action, and contrast.
   if (is.null(leaf_values) || !nrow(leaf_values)) return(data.frame())
   groups <- split(
     leaf_values,
@@ -643,10 +650,13 @@ margot_policy_tree_cv <- function(model_results,
       action = df$action[1],
       action_label = df$action_label[1],
       contrast = df$contrast[1],
+      advantage_comparison = df$advantage_comparison[1],
       n_leaves = nrow(df),
       n_eval_leaf = sum(df$n_eval_leaf, na.rm = TRUE),
       sample_share_mean = stats::weighted.mean(df$sample_share, weights, na.rm = TRUE),
       sample_share_sd = stats::sd(df$sample_share, na.rm = TRUE),
+      estimated_advantage_mean = stats::weighted.mean(df$estimated_advantage, weights, na.rm = TRUE),
+      estimated_advantage_sd = stats::sd(df$estimated_advantage, na.rm = TRUE),
       estimated_gain_mean = stats::weighted.mean(df$estimated_gain, weights, na.rm = TRUE),
       estimated_gain_sd = stats::sd(df$estimated_gain, na.rm = TRUE),
       value_contribution_vs_control_mean = mean(df$value_contribution_vs_control, na.rm = TRUE),

@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_policy_leaf_summary.R
 \name{margot_policy_leaf_summary}
 \alias{margot_policy_leaf_summary}
-\title{Summarise policy-tree leaves with estimated action gains and sample shares}
+\title{Summarise policy-tree leaves with estimated action advantages and sample shares}
 \usage{
 margot_policy_leaf_summary(
   object,
@@ -31,12 +31,14 @@ prefix.}
 }
 \value{
 A tibble with one row per leaf and columns for node id, action,
-  unweighted count, weighted sample share, action-conditional estimated gain,
-  and policy-value contributions.
+  unweighted count, weighted sample share, action-conditional estimated
+  advantage, the legacy \code{estimated_gain} alias, and policy-value
+  contributions.
 }
 \description{
-Computes leaf-level summaries for a stored policy tree. Leaf gains are
+Computes leaf-level summaries for a stored policy tree. Leaf advantages are
 estimated from doubly robust action scores and are action conditional: treated
-leaves report the estimated gain of treatment relative to control, whereas
-control leaves report the estimated gain of control relative to treatment.
+leaves report the estimated advantage of treatment relative to control,
+whereas control leaves report the estimated advantage of control relative to
+treatment.
 }

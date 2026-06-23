@@ -1,4 +1,4 @@
-test_that("margot_policy_leaf_summary reports action gains and sample shares", {
+test_that("margot_policy_leaf_summary reports action advantages and sample shares", {
   old_options <- options(margot.policy_tree.min_node_size = 5L)
   on.exit(options(old_options), add = TRUE)
   set.seed(42)
@@ -26,11 +26,12 @@ test_that("margot_policy_leaf_summary reports action gains and sample shares", {
   out <- margot_policy_leaf_summary(object, "y", depth = 1)
 
   expect_s3_class(out, "tbl_df")
-  expect_true(all(c("node_id", "sample_share", "estimated_gain", "label") %in% names(out)))
+  expect_true(all(c("node_id", "sample_share", "estimated_advantage", "estimated_gain", "label") %in% names(out)))
   expect_equal(sum(out$n), n)
   expect_equal(sum(out$sample_share), 1, tolerance = 1e-8)
-  expect_true(all(is.finite(out$estimated_gain)))
-  expect_true(any(grepl("sample:", out$label, fixed = TRUE)))
+  expect_true(all(is.finite(out$estimated_advantage)))
+  expect_equal(out$estimated_advantage, out$estimated_gain)
+  expect_true(any(grepl("share:", out$label, fixed = TRUE)))
   expect_true(all(out$action_label %in% c("Treatment", "Control")))
 })
 
@@ -93,8 +94,8 @@ test_that("margot_plot_decision_tree can annotate leaf metrics", {
 
   expect_s3_class(p, "ggplot")
   labels <- ggplot2::ggplot_build(p)$data[[2]]$label
-  expect_true(any(grepl("gain:", labels, fixed = TRUE)))
-  expect_true(any(grepl("sample:", labels, fixed = TRUE)))
+  expect_true(any(grepl("adv:", labels, fixed = TRUE)))
+  expect_true(any(grepl("share:", labels, fixed = TRUE)))
 })
 
 test_that("margot_plot_decision_tree displays explicit leaf metrics", {
@@ -126,8 +127,8 @@ test_that("margot_plot_decision_tree displays explicit leaf metrics", {
 
   expect_s3_class(p, "ggplot")
   labels <- ggplot2::ggplot_build(p)$data[[2]]$label
-  expect_true(any(grepl("gain:", labels, fixed = TRUE)))
-  expect_true(any(grepl("sample:", labels, fixed = TRUE)))
+  expect_true(any(grepl("adv:", labels, fixed = TRUE)))
+  expect_true(any(grepl("share:", labels, fixed = TRUE)))
 })
 
 test_that("margot_plot_decision_tree rejects mismatched leaf metrics", {

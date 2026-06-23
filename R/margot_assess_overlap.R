@@ -362,11 +362,21 @@ extract_grf_test_calibration <- function(test_cal) {
 
 #' Calculate overlap statistics
 #' @keywords internal
-calculate_overlap_statistics <- function(W, W_hat, exposure_name) {
+calculate_overlap_statistics <- function(W,
+                                         W_hat,
+                                         exposure_name,
+                                         bounds = c(0.05, 0.95),
+                                         good_bounds = c(0.1, 0.9)) {
+  if (length(bounds) != 2L || bounds[1] >= bounds[2]) {
+    stop("`bounds` must be a numeric length-2 vector with lower < upper.", call. = FALSE)
+  }
+  if (length(good_bounds) != 2L || good_bounds[1] >= good_bounds[2]) {
+    stop("`good_bounds` must be a numeric length-2 vector with lower < upper.", call. = FALSE)
+  }
   # define overlap regions
-  good_overlap <- W_hat > 0.1 & W_hat < 0.9
-  moderate_overlap <- (W_hat > 0.05 & W_hat <= 0.1) | (W_hat >= 0.9 & W_hat < 0.95)
-  poor_overlap <- W_hat <= 0.05 | W_hat >= 0.95
+  good_overlap <- W_hat > good_bounds[1] & W_hat < good_bounds[2]
+  moderate_overlap <- (W_hat > bounds[1] & W_hat <= good_bounds[1]) | (W_hat >= good_bounds[2] & W_hat < bounds[2])
+  poor_overlap <- W_hat <= bounds[1] | W_hat >= bounds[2]
 
   # calculate statistics by treatment group
   treated_props <- W_hat[W == 1]
@@ -395,7 +405,11 @@ calculate_overlap_statistics <- function(W, W_hat, exposure_name) {
 
 #' Create propensity score plot
 #' @keywords internal
-create_propensity_plot <- function(W, W_hat, exposure_name, theme = "classic") {
+create_propensity_plot <- function(W,
+                                   W_hat,
+                                   exposure_name,
+                                   theme = "classic",
+                                   bounds = c(0.1, 0.9)) {
   # create data frame for plotting
   plot_data <- data.frame(
     propensity_score = W_hat,
@@ -413,10 +427,10 @@ create_propensity_plot <- function(W, W_hat, exposure_name, theme = "classic") {
     ) +
     ggplot2::facet_wrap(~treatment, ncol = 1, scales = "free_y") +
     ggplot2::scale_fill_manual(values = c("Control" = "#4f88c6", "Treated" = "#d8a739")) +
-    ggplot2::geom_vline(xintercept = c(0.1, 0.9), linetype = "dashed", alpha = 0.7, color = "black", linewidth = 0.7) +
+    ggplot2::geom_vline(xintercept = bounds, linetype = "dashed", alpha = 0.7, color = "black", linewidth = 0.7) +
     ggplot2::labs(
       title = paste("Propensity Score Distribution:", exposure_name),
-      subtitle = "Dashed lines indicate common support region (0.1, 0.9)",
+      subtitle = paste0("Dashed lines indicate support bounds (", bounds[1], ", ", bounds[2], ")"),
       x = "Propensity Score",
       y = "Count",
       fill = "Treatment"

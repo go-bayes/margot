@@ -1,10 +1,11 @@
-#' Summarise policy-tree leaves with estimated action gains and sample shares
+#' Summarise policy-tree leaves with estimated action advantages and sample shares
 #'
 #' @description
-#' Computes leaf-level summaries for a stored policy tree. Leaf gains are
+#' Computes leaf-level summaries for a stored policy tree. Leaf advantages are
 #' estimated from doubly robust action scores and are action conditional: treated
-#' leaves report the estimated gain of treatment relative to control, whereas
-#' control leaves report the estimated gain of control relative to treatment.
+#' leaves report the estimated advantage of treatment relative to control,
+#' whereas control leaves report the estimated advantage of control relative to
+#' treatment.
 #'
 #' @param object A \code{margot_causal_forest()}-style object containing
 #'   \code{results}, \code{covariates}, and optionally \code{weights}.
@@ -17,8 +18,9 @@
 #' @param label_mapping Optional named list used to label actions.
 #'
 #' @return A tibble with one row per leaf and columns for node id, action,
-#'   unweighted count, weighted sample share, action-conditional estimated gain,
-#'   and policy-value contributions.
+#'   unweighted count, weighted sample share, action-conditional estimated
+#'   advantage, the legacy \code{estimated_gain} alias, and policy-value
+#'   contributions.
 #' @export
 margot_policy_leaf_summary <- function(object,
                                        model_name,
@@ -93,14 +95,19 @@ margot_policy_leaf_summary <- function(object,
     w <- if (!is.null(eval_weights)) eval_weights[idx] else rep(1, length(idx))
     share <- sum(w, na.rm = TRUE) / total_weight
     effect_leaf <- effect[idx]
-    estimated_gain <- if (action_id == 2L) {
+    estimated_advantage <- if (action_id == 2L) {
       .policy_regret_mean(effect_leaf, w)
     } else {
       .policy_regret_mean(-effect_leaf, w)
     }
     contrast <- if (action_id == 2L) "gain_vs_control" else "gain_vs_treatment"
-    value_contribution_vs_control <- if (action_id == 2L) share * estimated_gain else 0
-    value_contribution_vs_treatment <- if (action_id == 1L) share * estimated_gain else 0
+    advantage_comparison <- if (action_id == 2L) {
+      "treatment advantage vs control"
+    } else {
+      "control advantage vs treatment"
+    }
+    value_contribution_vs_control <- if (action_id == 2L) share * estimated_advantage else 0
+    value_contribution_vs_treatment <- if (action_id == 1L) share * estimated_advantage else 0
     action_label <- .margot_leaf_label_action(action_name, label_mapping)
     tibble::tibble(
       node_id = leaf_id,
@@ -108,15 +115,17 @@ margot_policy_leaf_summary <- function(object,
       action = action_name,
       action_label = action_label,
       contrast = contrast,
+      advantage_comparison = advantage_comparison,
       n = length(idx),
       sample_share = share,
-      estimated_gain = estimated_gain,
+      estimated_advantage = estimated_advantage,
+      estimated_gain = estimated_advantage,
       value_contribution_vs_control = value_contribution_vs_control,
       value_contribution_vs_treatment = value_contribution_vs_treatment,
       label = .margot_leaf_metric_label(
         action_label = action_label,
         contrast = contrast,
-        estimated_gain = estimated_gain,
+        estimated_advantage = estimated_advantage,
         sample_share = share,
         digits = digits
       )
@@ -126,7 +135,7 @@ margot_policy_leaf_summary <- function(object,
   out <- dplyr::bind_rows(rows)
   attr(out, "model") <- model_name
   attr(out, "depth") <- depth
-  attr(out, "estimand") <- "action-conditional estimated gain from doubly robust scores"
+  attr(out, "estimand") <- "action-conditional estimated advantage from doubly robust scores"
   out
 }
 
@@ -203,12 +212,12 @@ margot_policy_leaf_summary <- function(object,
 #' @keywords internal
 .margot_leaf_metric_label <- function(action_label,
                                       contrast,
-                                      estimated_gain,
+                                      estimated_advantage,
                                       sample_share,
                                       digits = 3L) {
   # format a compact plot label for one policy-tree leaf.
-  gain_label <- if (is.finite(estimated_gain)) {
-    sprintf(paste0("%+.", digits, "f"), estimated_gain)
+  advantage_label <- if (is.finite(estimated_advantage)) {
+    sprintf(paste0("%+.", digits, "f"), estimated_advantage)
   } else {
     "NA"
   }
@@ -217,6 +226,6 @@ margot_policy_leaf_summary <- function(object,
   } else {
     "NA"
   }
-  paste(action_label, paste0("gain: ", gain_label),
-        paste0("sample: ", share_label), sep = "\n")
+  paste(action_label, paste0("adv: ", advantage_label),
+        paste0("share: ", share_label), sep = "\n")
 }
