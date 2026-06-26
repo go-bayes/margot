@@ -38,12 +38,71 @@ test_that("margot_policy_tree_cv evaluates held-out folds", {
   expect_true(all(out$fold_values$n_eval > 0))
   expect_named(out$depth_map, "model_y")
   expect_true(out$depth_map[["model_y"]] %in% c(1L, 2L))
-  expect_true(all(c("gain_vs_control_mean", "gain_vs_treat_mean") %in% names(out$value_summary)))
+  expect_true(all(c(
+    "gain_vs_control_mean", "gain_vs_treat_mean",
+    "gain_vs_best_constant_mean", "value_best_constant_mean",
+    "best_constant_action", "n_selected_actions_max",
+    "uniform_selected_action_all"
+  ) %in% names(out$value_summary)))
+  expect_true("gain_vs_best_constant" %in% names(out$fold_values))
   expect_true(any(out$split_summary$node_id == 1L))
   expect_true(nrow(out$leaf_values) > 0)
-  expect_true(all(c("sample_share", "estimated_advantage", "estimated_gain", "contrast") %in% names(out$leaf_values)))
+  expect_true(all(c(
+    "sample_share", "treatment_control_contrast",
+    "estimated_treatment_contrast", "estimated_advantage",
+    "estimated_gain", "contrast", "score_contrast"
+  ) %in% names(out$leaf_values)))
+  expect_true(all(out$leaf_values$score_contrast == "treatment_minus_control"))
+  expect_equal(out$leaf_values$treatment_control_contrast, out$leaf_values$estimated_treatment_contrast)
+  expect_equal(
+    out$leaf_values$estimated_advantage,
+    ifelse(out$leaf_values$action_id == 2L, out$leaf_values$treatment_control_contrast, -out$leaf_values$treatment_control_contrast)
+  )
   expect_equal(out$leaf_values$estimated_advantage, out$leaf_values$estimated_gain)
   expect_true(nrow(out$leaf_summary) > 0)
+  expect_true("treatment_control_contrast_mean" %in% names(out$leaf_summary))
+  expect_true("score_contrast" %in% names(out$leaf_summary))
+})
+
+test_that("margot_policy_tree_cv resolves reversed named action-score columns", {
+  old_options <- options(margot.policy_tree.min_node_size = 5L)
+  on.exit(options(old_options), add = TRUE)
+  set.seed(50)
+  n <- 90
+  x <- data.frame(
+    x1 = stats::rnorm(n),
+    x2 = stats::rnorm(n)
+  )
+  gamma <- cbind(
+    treated = rep(1, n),
+    control = rep(0, n)
+  )
+  object <- list(
+    results = list(
+      model_y = list(
+        dr_scores = gamma,
+        top_vars = c("x1", "x2")
+      )
+    ),
+    covariates = x,
+    weights = rep(1, n)
+  )
+
+  out <- margot_policy_tree_cv(
+    object,
+    model_names = "y",
+    depths = 1,
+    num_folds = 3,
+    n_repeats = 1,
+    tree_method = "policytree",
+    seed = 50,
+    verbose = FALSE
+  )
+
+  expect_equal(out$value_summary$value_control_all_mean, 0, tolerance = 1e-8)
+  expect_equal(out$value_summary$value_treat_all_mean, 1, tolerance = 1e-8)
+  expect_equal(out$value_summary$best_constant_action, "treated")
+  expect_true(all(out$fold_values$coverage == 1))
 })
 
 test_that("margot_policy_tree_cv aligns not_missing rows and weights", {

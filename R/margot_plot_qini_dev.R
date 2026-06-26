@@ -57,8 +57,8 @@
 #' @export
 #' @keywords internal
 #' @importFrom ggplot2 ggplot aes geom_line geom_ribbon geom_vline
-#'   scale_color_manual scale_fill_manual labs theme_minimal
-#'   facet_wrap facet_grid theme element_text
+#' @importFrom ggplot2 scale_color_manual scale_fill_manual labs theme_minimal
+#' @importFrom ggplot2 facet_wrap facet_grid theme element_text
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning
 margot_plot_qini_dev <- function(
     qini_results,

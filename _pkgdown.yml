@@ -121,6 +121,10 @@ reference:
     - margot_policy_workflow
     - margot_policy_tree_cv
     - margot_policy_leaf_summary
+    - margot_table_policy_tree
+    - margot_table_policy_value
+    - margot_text_policy_tree
+    - margot_report_policy_tree
     - margot_policy_recurrence_summary
     - margot_policy_summary_report
     - margot_policy_summary_compare_depths
@@ -165,6 +169,9 @@ reference:
     - margot_plot
     - margot_plot_policy_tree
     - margot_plot_policy_combo
+    - margot_plot_policy_decision_tree
+    - margot_plot_policy_projection
+    - margot_plot_policy_tree_panels
     - margot_plot_policy_regret
     - margot_plot_qini
     - margot_plot_qini_batch

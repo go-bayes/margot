@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.001</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,11 +38,19 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.1.001" id="id_2026-06-23-margot-11001">[2026-06-23] margot 1.1.001<a class="anchor" aria-label="anchor" href="#id_2026-06-23-margot-11001"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.1.010" id="id_2026-06-24-margot-11010">[2026-06-24] margot 1.1.010<a class="anchor" aria-label="anchor" href="#id_2026-06-24-margot-11010"></a></h2>
 <div class="section level4">
-<h4 id="added-1-1-001">Added<a class="anchor" aria-label="anchor" href="#added-1-1-001"></a></h4>
+<h4 id="added-1-1-010">Added<a class="anchor" aria-label="anchor" href="#added-1-1-010"></a></h4>
 <ul><li>
 <code><a href="../reference/margot_exposure_overlap.html">margot_exposure_overlap()</a></code> provides outcome-blind exposure-support diagnostics for registration workflows. The helper accepts supplied propensities or estimates them from the exposure and baseline covariates only, then reports propensity overlap, trimming counts, effective sample size, exposure prevalence, covariate balance, and an optional overlap plot without requiring an outcome.</li>
+<li>Added explicit policy-tree reporting helpers: <code><a href="../reference/margot_plot_policy_decision_tree.html">margot_plot_policy_decision_tree()</a></code>, <code><a href="../reference/margot_plot_policy_projection.html">margot_plot_policy_projection()</a></code>, <code><a href="../reference/margot_plot_policy_tree_panels.html">margot_plot_policy_tree_panels()</a></code>, <code><a href="../reference/margot_table_policy_tree.html">margot_table_policy_tree()</a></code>, <code><a href="../reference/margot_text_policy_tree.html">margot_text_policy_tree()</a></code>, and <code><a href="../reference/margot_report_policy_tree.html">margot_report_policy_tree()</a></code>.</li>
+<li>Added <code><a href="../reference/margot_table_policy_value.html">margot_table_policy_value()</a></code> for held-out policy-value reporting against all-control, all-treatment, and best-constant action baselines.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="changed-1-1-010">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-010"></a></h4>
+<ul><li>Policy-tree leaf summaries now use a fixed signed treatment-control contrast (<code>T-C</code>) with approximate score-summary interval columns. Positive values favour treatment and negative values favour control. The older action-conditional <code>estimated_advantage</code> and <code>estimated_gain</code> columns remain available for compatibility.</li>
+<li>Public policy-tree tables now lead with source, model, outcome label, depth, node identifier, selected action, signed <code>T-C</code>, interval, sample share, direction, and uniform-action metadata. Selected-action advantage and baseline-specific value-contribution columns are hidden unless explicitly requested.</li>
+<li>Held-out policy-tree CV summaries now report value against all-control, all-treatment, and best-constant baselines, and record whether a learned tree selects one action everywhere.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -5491,3 +5499,4 @@
 
 
   </body></html>
+

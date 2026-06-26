@@ -19,13 +19,13 @@
 #' @param remove_action_label Whether to remove "Action:" prefix from leaf node labels
 #' @param label_mapping Optional list for renaming variables in the display
 #' @param show_leaf_metrics Logical; if \code{TRUE}, leaf labels include
-#'   action-conditional estimated advantages and sample shares from
+#'   signed treatment-control contrasts and sample shares from
 #'   \code{margot_policy_leaf_summary()}.
 #' @param leaf_metrics Optional data frame from
 #'   \code{margot_policy_leaf_summary()}.
 #'   If supplied, these labels are used instead of recomputing metrics.
-#' @param leaf_metric_digits Integer; number of decimals for leaf estimated
-#'   advantages.
+#' @param leaf_metric_digits Integer; number of decimals for leaf
+#'   treatment-control contrasts.
 #' @importFrom dplyr case_when mutate
 #' @importFrom tibble tibble
 #' @importFrom purrr map_dfr

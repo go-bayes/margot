@@ -69,15 +69,15 @@ margot_plot_decision_tree(
 \item{label_mapping}{Optional list for renaming variables in the display}
 
 \item{show_leaf_metrics}{Logical; if \code{TRUE}, leaf labels include
-action-conditional estimated advantages and sample shares from
+signed treatment-control contrasts and sample shares from
 \code{margot_policy_leaf_summary()}.}
 
 \item{leaf_metrics}{Optional data frame from
 \code{margot_policy_leaf_summary()}.
 If supplied, these labels are used instead of recomputing metrics.}
 
-\item{leaf_metric_digits}{Integer; number of decimals for leaf estimated
-advantages.}
+\item{leaf_metric_digits}{Integer; number of decimals for leaf
+treatment-control contrasts.}
 }
 \description{
 Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)

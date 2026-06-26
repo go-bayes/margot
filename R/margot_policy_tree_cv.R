@@ -2,10 +2,22 @@
 #'
 #' @description
 #' Learns shallow policy trees on training folds and evaluates their policy
-#' values, selected split variables, split thresholds, and leaf-level action
-#' advantages on held-out folds.
+#' values, selected split variables, split thresholds, and leaf-level signed
+#' treatment-control contrasts on held-out folds.
 #' The target is the performance of the policy-learning procedure, not the value
 #' of a final full-sample display tree.
+#'
+#' @details
+#' Let \eqn{\Gamma_{ja}} denote the action score for observation \eqn{j} under
+#' action \eqn{a}. Policy-tree evaluation averages the score for the action
+#' selected by the learned policy \eqn{\pi}. For binary actions \eqn{C} and
+#' \eqn{T}, held-out summaries report value against all-control,
+#' all-treatment, and best-constant baselines. Leaf summaries report the signed
+#' held-out evaluation contrast \eqn{\Gamma_{jT} - \Gamma_{jC}} for observations
+#' routed by trees learned on training folds. Selected actions are the actions
+#' stored by those learned trees; held-out summaries do not reselect actions
+#' from held-out means. Between-leaf differences describe variation in
+#' score-contrast magnitude, not the policy decision rule itself.
 #'
 #' @param model_results A list returned by \code{margot_causal_forest()},
 #'   \code{margot_policy_tree_stability()}, or a compatible object with
@@ -178,8 +190,13 @@ margot_policy_tree_cv <- function(model_results,
             value_policy = heldout$value_policy,
             value_control_all = heldout$value_control_all,
             value_treat_all = heldout$value_treat_all,
+            value_best_constant = heldout$value_best_constant,
+            best_constant_action = heldout$best_constant_action,
             gain_vs_control = heldout$gain_vs_control,
             gain_vs_treat = heldout$gain_vs_treat,
+            gain_vs_best_constant = heldout$gain_vs_best_constant,
+            n_selected_actions = heldout$n_selected_actions,
+            uniform_selected_action = heldout$uniform_selected_action,
             stringsAsFactors = FALSE
           )
 
@@ -422,6 +439,15 @@ margot_policy_tree_cv <- function(model_results,
   X <- X[keep, , drop = FALSE]
   dr_scores <- as.matrix(dr_scores[keep, , drop = FALSE])
   if (ncol(dr_scores) != 2L) return(NULL)
+  action_columns <- tryCatch(
+    .margot_policy_binary_action_columns(
+      dr_scores = dr_scores,
+      tree = tree,
+      context = "margot_policy_tree_cv()"
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(action_columns)) return(NULL)
   weights <- if (!is.null(weights)) weights[keep] else NULL
   if (nrow(X) < 1L || ncol(dr_scores) < 2L) return(NULL)
 
@@ -436,21 +462,43 @@ margot_policy_tree_cv <- function(model_results,
   weights <- if (!is.null(weights)) weights[ok_actions] else NULL
 
   policy_score <- dr_scores[cbind(seq_along(actions), actions)]
-  control_score <- dr_scores[, 1L]
-  treated_score <- dr_scores[, 2L]
+  control_score <- dr_scores[, action_columns$control]
+  treated_score <- dr_scores[, action_columns$treatment]
 
   value_policy <- .policy_cv_mean(policy_score, weights)
   value_control_all <- .policy_cv_mean(control_score, weights)
   value_treat_all <- .policy_cv_mean(treated_score, weights)
+  constant_values <- c(value_control_all, value_treat_all)
+  value_best_constant <- if (all(is.na(constant_values))) {
+    NA_real_
+  } else {
+    max(constant_values, na.rm = TRUE)
+  }
+  best_constant_action <- if (all(is.na(constant_values))) {
+    NA_character_
+  } else if (isTRUE(all.equal(value_control_all, value_treat_all))) {
+    "tie"
+  } else if (!is.na(value_treat_all) &&
+             (is.na(value_control_all) || value_treat_all > value_control_all)) {
+    "treated"
+  } else {
+    "control"
+  }
+  n_selected_actions <- length(unique(stats::na.omit(actions)))
 
   list(
     n_eval = length(actions),
-    coverage = .policy_cv_mean(actions == 2L, weights),
+    coverage = .policy_cv_mean(actions == action_columns$treatment, weights),
     value_policy = value_policy,
     value_control_all = value_control_all,
     value_treat_all = value_treat_all,
+    value_best_constant = value_best_constant,
+    best_constant_action = best_constant_action,
     gain_vs_control = value_policy - value_control_all,
-    gain_vs_treat = value_policy - value_treat_all
+    gain_vs_treat = value_policy - value_treat_all,
+    gain_vs_best_constant = value_policy - value_best_constant,
+    n_selected_actions = n_selected_actions,
+    uniform_selected_action = n_selected_actions <= 1L
   )
 }
 
@@ -501,13 +549,22 @@ margot_policy_tree_cv <- function(model_results,
                                  fold,
                                  depth,
                                  label_mapping = NULL) {
-  # summarise action-conditional leaf advantages on held-out rows for one tree.
+  # summarise signed leaf contrasts on held-out rows for one tree.
   if (is.null(tree$columns) || !all(tree$columns %in% colnames(covariates))) return(NULL)
   X <- as.data.frame(covariates[, tree$columns, drop = FALSE])
   keep <- stats::complete.cases(X) & stats::complete.cases(dr_scores)
   if (!any(keep)) return(NULL)
   X <- X[keep, , drop = FALSE]
   dr_scores <- as.matrix(dr_scores[keep, , drop = FALSE])
+  action_columns <- tryCatch(
+    .margot_policy_binary_action_columns(
+      dr_scores = dr_scores,
+      tree = tree,
+      context = "margot_policy_tree_cv()"
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(action_columns)) return(NULL)
   weights <- if (!is.null(weights)) weights[keep] else NULL
   leaf_ids <- .margot_policy_tree_leaf_ids(tree, X)
   ok <- is.finite(leaf_ids)
@@ -523,8 +580,8 @@ margot_policy_tree_cv <- function(model_results,
   }
   if (!is.finite(total_weight) || total_weight <= 0) return(NULL)
 
-  effect <- as.numeric(dr_scores[, 2L] - dr_scores[, 1L])
-  action_names <- tree$action.names %||% c("control", "treated")
+  effect <- as.numeric(dr_scores[, action_columns$treatment] - dr_scores[, action_columns$control])
+  action_names <- action_columns$action_names
   rows <- lapply(sort(unique(leaf_ids)), function(leaf_id) {
     idx <- which(leaf_ids == leaf_id)
     node <- tree$nodes[[leaf_id]]
@@ -532,13 +589,15 @@ margot_policy_tree_cv <- function(model_results,
     if (!is.finite(action_id) || action_id < 1L || action_id > length(action_names)) return(NULL)
     w <- if (!is.null(weights)) weights[idx] else rep(1, length(idx))
     share <- sum(w, na.rm = TRUE) / total_weight
-    estimated_advantage <- if (action_id == 2L) {
-      .policy_cv_mean(effect[idx], w)
-    } else {
-      .policy_cv_mean(-effect[idx], w)
-    }
-    contrast <- if (action_id == 2L) "gain_vs_control" else "gain_vs_treatment"
-    advantage_comparison <- if (action_id == 2L) {
+    tc_interval <- .margot_policy_leaf_interval(effect[idx], w, ci_level = 0.95)
+    treatment_control_contrast <- tc_interval$estimate
+    selected_treatment <- action_id == action_columns$treatment
+    estimated_advantage <- if (selected_treatment) treatment_control_contrast else -treatment_control_contrast
+    advantage_ci_low <- if (selected_treatment) tc_interval$ci_low else -tc_interval$ci_high
+    advantage_ci_high <- if (selected_treatment) tc_interval$ci_high else -tc_interval$ci_low
+    contrast <- if (selected_treatment) "gain_vs_control" else "gain_vs_treatment"
+    score_contrast <- "treatment_minus_control"
+    advantage_comparison <- if (selected_treatment) {
       "treatment advantage vs control"
     } else {
       "control advantage vs treatment"
@@ -555,13 +614,23 @@ margot_policy_tree_cv <- function(model_results,
       action = action_names[[action_id]],
       action_label = .margot_leaf_label_action(action_names[[action_id]], label_mapping),
       contrast = contrast,
+      score_contrast = score_contrast,
       advantage_comparison = advantage_comparison,
       n_eval_leaf = length(idx),
       sample_share = share,
+      treatment_control_contrast = treatment_control_contrast,
+      estimated_treatment_contrast = treatment_control_contrast,
+      treatment_control_se = tc_interval$se,
+      treatment_control_ci_low = tc_interval$ci_low,
+      treatment_control_ci_high = tc_interval$ci_high,
+      treatment_control_n_eff = tc_interval$n_eff,
       estimated_advantage = estimated_advantage,
+      estimated_advantage_se = tc_interval$se,
+      estimated_advantage_ci_low = advantage_ci_low,
+      estimated_advantage_ci_high = advantage_ci_high,
       estimated_gain = estimated_advantage,
-      value_contribution_vs_control = if (action_id == 2L) share * estimated_advantage else 0,
-      value_contribution_vs_treatment = if (action_id == 1L) share * estimated_advantage else 0,
+      value_contribution_vs_control = if (selected_treatment) share * estimated_advantage else 0,
+      value_contribution_vs_treatment = if (!selected_treatment) share * estimated_advantage else 0,
       stringsAsFactors = FALSE
     )
   })
@@ -575,6 +644,25 @@ margot_policy_tree_cv <- function(model_results,
   if (is.null(fold_values) || !nrow(fold_values)) return(data.frame())
   groups <- split(fold_values, interaction(fold_values$model, fold_values$depth, drop = TRUE))
   rows <- lapply(groups, function(df) {
+    value_policy_mean <- stats::weighted.mean(df$value_policy, df$n_eval, na.rm = TRUE)
+    value_control_all_mean <- stats::weighted.mean(df$value_control_all, df$n_eval, na.rm = TRUE)
+    value_treat_all_mean <- stats::weighted.mean(df$value_treat_all, df$n_eval, na.rm = TRUE)
+    constant_values <- c(value_control_all_mean, value_treat_all_mean)
+    value_best_constant_mean <- if (all(is.na(constant_values))) {
+      NA_real_
+    } else {
+      max(constant_values, na.rm = TRUE)
+    }
+    best_constant_action <- if (all(is.na(constant_values))) {
+      NA_character_
+    } else if (isTRUE(all.equal(value_control_all_mean, value_treat_all_mean))) {
+      "tie"
+    } else if (!is.na(value_treat_all_mean) &&
+               (is.na(value_control_all_mean) || value_treat_all_mean > value_control_all_mean)) {
+      "treated"
+    } else {
+      "control"
+    }
     data.frame(
       model = df$model[1],
       outcome = df$outcome[1],
@@ -583,12 +671,21 @@ margot_policy_tree_cv <- function(model_results,
       n_folds = nrow(df),
       n_eval = sum(df$n_eval, na.rm = TRUE),
       coverage_mean = stats::weighted.mean(df$coverage, df$n_eval, na.rm = TRUE),
+      value_policy_mean = value_policy_mean,
+      value_control_all_mean = value_control_all_mean,
+      value_treat_all_mean = value_treat_all_mean,
+      value_best_constant_mean = value_best_constant_mean,
+      best_constant_action = best_constant_action,
       gain_vs_control_mean = stats::weighted.mean(df$gain_vs_control, df$n_eval, na.rm = TRUE),
       gain_vs_control_sd = stats::sd(df$gain_vs_control, na.rm = TRUE),
       gain_vs_control_q025 = stats::quantile(df$gain_vs_control, 0.025, na.rm = TRUE, names = FALSE),
       gain_vs_control_q975 = stats::quantile(df$gain_vs_control, 0.975, na.rm = TRUE, names = FALSE),
       gain_vs_treat_mean = stats::weighted.mean(df$gain_vs_treat, df$n_eval, na.rm = TRUE),
       gain_vs_treat_sd = stats::sd(df$gain_vs_treat, na.rm = TRUE),
+      gain_vs_best_constant_mean = value_policy_mean - value_best_constant_mean,
+      gain_vs_best_constant_sd = stats::sd(df$gain_vs_best_constant, na.rm = TRUE),
+      n_selected_actions_max = max(df$n_selected_actions, na.rm = TRUE),
+      uniform_selected_action_all = all(df$uniform_selected_action),
       stringsAsFactors = FALSE
     )
   })
@@ -634,11 +731,21 @@ margot_policy_tree_cv <- function(model_results,
 
 #' @keywords internal
 .policy_cv_leaf_summary <- function(leaf_values) {
-  # summarise held-out leaf advantages by model, depth, action, and contrast.
+  # summarise held-out leaf contrasts by model, depth, action, and contrast.
   if (is.null(leaf_values) || !nrow(leaf_values)) return(data.frame())
+  if (!"score_contrast" %in% names(leaf_values)) {
+    leaf_values$score_contrast <- "treatment_minus_control"
+  }
   groups <- split(
     leaf_values,
-    interaction(leaf_values$model, leaf_values$depth, leaf_values$action, leaf_values$contrast, drop = TRUE)
+    interaction(
+      leaf_values$model,
+      leaf_values$depth,
+      leaf_values$action,
+      leaf_values$contrast,
+      leaf_values$score_contrast,
+      drop = TRUE
+    )
   )
   rows <- lapply(groups, function(df) {
     weights <- df$n_eval_leaf
@@ -650,11 +757,18 @@ margot_policy_tree_cv <- function(model_results,
       action = df$action[1],
       action_label = df$action_label[1],
       contrast = df$contrast[1],
+      score_contrast = df$score_contrast[1],
       advantage_comparison = df$advantage_comparison[1],
       n_leaves = nrow(df),
       n_eval_leaf = sum(df$n_eval_leaf, na.rm = TRUE),
       sample_share_mean = stats::weighted.mean(df$sample_share, weights, na.rm = TRUE),
       sample_share_sd = stats::sd(df$sample_share, na.rm = TRUE),
+      treatment_control_contrast_mean = stats::weighted.mean(df$treatment_control_contrast, weights, na.rm = TRUE),
+      treatment_control_contrast_sd = stats::sd(df$treatment_control_contrast, na.rm = TRUE),
+      treatment_control_contrast_q025 = stats::quantile(df$treatment_control_contrast, 0.025, na.rm = TRUE, names = FALSE),
+      treatment_control_contrast_q975 = stats::quantile(df$treatment_control_contrast, 0.975, na.rm = TRUE, names = FALSE),
+      estimated_treatment_contrast_mean = stats::weighted.mean(df$estimated_treatment_contrast, weights, na.rm = TRUE),
+      estimated_treatment_contrast_sd = stats::sd(df$estimated_treatment_contrast, na.rm = TRUE),
       estimated_advantage_mean = stats::weighted.mean(df$estimated_advantage, weights, na.rm = TRUE),
       estimated_advantage_sd = stats::sd(df$estimated_advantage, na.rm = TRUE),
       estimated_gain_mean = stats::weighted.mean(df$estimated_gain, weights, na.rm = TRUE),

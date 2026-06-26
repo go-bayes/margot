@@ -64,7 +64,8 @@
   : Assess Overlap/Positivity from LMTP Models via Density Ratios
 - [`margot_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
   [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
-  : Assemble a full LMTP positivity report
+  : Assemble a full LMTP positivity report (table, diagnostics, text,
+  plot, methods)
 - [`margot_report_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md)
   : One-stop LMTP positivity/overlap reporting for an analysis
 - [`margot_lmtp_ratio_grid()`](https://go-bayes.github.io/margot/reference/margot_lmtp_ratio_grid.md)
@@ -145,8 +146,16 @@
 - [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
   : Cross-validated held-out policy-tree diagnostics
 - [`margot_policy_leaf_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md)
-  : Summarise policy-tree leaves with estimated action advantages and
+  : Summarise policy-tree leaves with treatment-control contrasts and
   sample shares
+- [`margot_table_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_table_policy_tree.md)
+  : Create a policy-tree leaf reporting table
+- [`margot_table_policy_value()`](https://go-bayes.github.io/margot/reference/margot_table_policy_value.md)
+  : Create a held-out policy-value reporting table
+- [`margot_text_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_text_policy_tree.md)
+  : Generate standard policy-tree reporting text
+- [`margot_report_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_report_policy_tree.md)
+  : Assemble policy-tree plots, table, and standard text
 - [`margot_policy_recurrence_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.md)
   : Summarise outcome-wide recurrence in held-out policy-tree splits
 - [`margot_policy_summary_report()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_report.md)
@@ -234,6 +243,12 @@
   : Plot a policy tree (depth-adaptive)
 - [`margot_plot_policy_combo()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_combo.md)
   : Create a Combined Decision Tree and Policy Relationship Graph
+- [`margot_plot_policy_decision_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_decision_tree.md)
+  : Plot a policy-tree branching decision tree
+- [`margot_plot_policy_projection()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_projection.md)
+  : Plot policy-tree projections of evaluation points
+- [`margot_plot_policy_tree_panels()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_tree_panels.md)
+  : Plot policy-tree decision and projection panels
 - [`margot_plot_policy_regret()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_regret.md)
   : Plot Policy-Tree Regret and Value Contrasts
 - [`margot_plot_qini()`](https://go-bayes.github.io/margot/reference/margot_plot_qini.md)

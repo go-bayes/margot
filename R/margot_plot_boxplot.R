@@ -29,8 +29,8 @@
 #' @return A ggplot object representing the boxplot.
 #'
 #' @importFrom ggplot2 ggplot aes geom_boxplot geom_jitter theme_minimal scale_fill_manual
-#'   scale_x_discrete scale_y_continuous scale_color_manual theme element_text unit
-#'   labs facet_wrap coord_flip ggsave
+#' @importFrom ggplot2 scale_x_discrete scale_y_continuous scale_color_manual
+#' @importFrom ggplot2 theme element_text unit labs facet_wrap coord_flip ggsave
 #' @importFrom dplyr filter mutate n_distinct %>%
 #' @importFrom tidyr pivot_longer all_of
 #' @importFrom cli cli_h1 cli_alert_info cli_alert_success cli_alert_danger

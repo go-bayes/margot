@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_policy_leaf_summary.R
 \name{margot_policy_leaf_summary}
 \alias{margot_policy_leaf_summary}
-\title{Summarise policy-tree leaves with estimated action advantages and sample shares}
+\title{Summarise policy-tree leaves with treatment-control contrasts and sample shares}
 \usage{
 margot_policy_leaf_summary(
   object,
@@ -10,6 +10,7 @@ margot_policy_leaf_summary(
   depth = 1L,
   weights = NULL,
   digits = 3L,
+  ci_level = 0.95,
   label_mapping = NULL
 )
 }
@@ -27,18 +28,44 @@ prefix.}
 
 \item{digits}{Integer; rounding used in formatted labels.}
 
+\item{ci_level}{Numeric confidence level for approximate row-level score
+intervals. Defaults to \code{0.95}.}
+
 \item{label_mapping}{Optional named list used to label actions.}
 }
 \value{
 A tibble with one row per leaf and columns for node id, action,
-  unweighted count, weighted sample share, action-conditional estimated
-  advantage, the legacy \code{estimated_gain} alias, and policy-value
-  contributions.
+  unweighted count, weighted sample share, signed treatment-control contrast,
+  approximate interval columns, legacy action-conditional advantage aliases,
+  selected-action metadata, and policy-value contributions.
 }
 \description{
-Computes leaf-level summaries for a stored policy tree. Leaf advantages are
-estimated from doubly robust action scores and are action conditional: treated
-leaves report the estimated advantage of treatment relative to control,
-whereas control leaves report the estimated advantage of control relative to
-treatment.
+Computes leaf-level summaries for a stored policy tree. Leaf contrasts are
+estimated from doubly robust action scores and use a fixed signed comparison:
+treatment minus control. Positive values favour treatment and negative values
+favour control. The legacy action-conditional advantage columns are retained
+as compatibility aliases.
+}
+\details{
+Let \eqn{\Gamma_{ja}} denote the action score for observation \eqn{j} under
+action \eqn{a}, let \eqn{L} denote a policy-tree leaf, and let
+\eqn{E_L} denote the evaluation observations routed to that leaf. For binary
+actions \eqn{C} and \eqn{T}, this helper reports the signed evaluation-sample
+contrast
+\deqn{
+  \Delta_L =
+  \frac{\sum_{j \in E_L} w_j\{\Gamma_{jT} - \Gamma_{jC}\}}
+       {\sum_{j \in E_L} w_j}.
+}
+The selected action is reported separately. For the fitted tree, the selected
+action is the action stored in the terminal node, learned on the training
+observations \eqn{S_L} routed to that node:
+\deqn{
+  \pi(L) = \arg\max_{a \in \{C,T\}}
+  \frac{\sum_{j \in S_L} w_j \Gamma_{ja}}{\sum_{j \in S_L} w_j}.
+}
+The reported \eqn{\Delta_L} is computed on the evaluation rows and does not
+reselect the action from evaluation-row means.
+Between-leaf differences in \eqn{\Delta_L} describe variation in magnitude.
+They are not the decision rule used by the policy tree.
 }

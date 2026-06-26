@@ -130,3 +130,21 @@
   duplicated across scripts
 - Large shared weight sources should be read through Arrow or Parquet helpers
   in new workflows; `qs` remains compatibility-only for older pipelines
+
+## 2026-06-24
+
+### Policy-tree reporting API
+
+- Policy-tree reporting should use specialised functions rather than a single
+  overloaded plot function
+- Plot helpers should distinguish the branching decision tree from the
+  projection plot of evaluation points; combined figures should place the
+  decision tree in panel A above the projection plot in panel B
+- Leaf displays should use a fixed signed treatment-control contrast (`T-C`)
+  across all leaves; positive values favour treatment and negative values
+  favour control
+- Confidence intervals for policy-tree leaves are descriptive intervals for
+  row-level score summaries; they should not be described as formal
+  post-selection subgroup tests
+- Higher-level report helpers may assemble plots, tables, and standard text,
+  but the component functions should remain independently callable and testable

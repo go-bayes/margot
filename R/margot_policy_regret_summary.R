@@ -251,8 +251,13 @@ policy_regret_summary <- function(object,
     stop("policy tree produced invalid action ids", call. = FALSE)
   }
 
-  control_score <- dr_scores[, 1]
-  treated_score <- dr_scores[, 2]
+  action_columns <- .margot_policy_binary_action_columns(
+    dr_scores = dr_scores,
+    tree = tree,
+    context = "margot_policy_regret_summary()"
+  )
+  control_score <- dr_scores[, action_columns$control]
+  treated_score <- dr_scores[, action_columns$treatment]
   policy_score <- dr_scores[cbind(seq_along(actions), actions)]
   oracle_score <- apply(dr_scores, 1L, max)
   oracle_action <- max.col(dr_scores, ties.method = "first")
@@ -289,8 +294,8 @@ policy_regret_summary <- function(object,
     outcome_label = outcome_label,
     depth = as.integer(depth),
     n = length(actions),
-    treat_share = .policy_regret_mean(actions == 2L, weights),
-    oracle_treat_share = .policy_regret_mean(oracle_action == 2L, weights),
+    treat_share = .policy_regret_mean(actions == action_columns$treatment, weights),
+    oracle_treat_share = .policy_regret_mean(oracle_action == action_columns$treatment, weights),
     oracle_disagreement = .policy_regret_mean(actions != oracle_action, weights),
     value_policy = .policy_regret_mean(policy_score, weights),
     value_control_all = .policy_regret_mean(control_score, weights),

@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.001</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,14 +59,14 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Standard GRF and policy-tree workflow</h1>
-
-
+            
+      
       <small class="dont-index">Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/vignettes/standard-grf-policy-tree-workflow.Rmd" class="external-link"><code>vignettes/standard-grf-policy-tree-workflow.Rmd</code></a></small>
       <div class="d-none name"><code>standard-grf-policy-tree-workflow.Rmd</code></div>
     </div>
 
-
-
+    
+    
 <p>This vignette describes the standard <code>margot</code> workflow for
 generalised random forest (GRF) analyses with policy-tree reporting. The
 workflow is designed for outcome-wide studies: the same exposure,
@@ -84,7 +84,84 @@ heterogeneity.</li>
 task asks whether a shallow rule can summarise useful variation in the
 forest’s doubly robust action scores. Because a policy tree is an
 optimiser, policy-tree learning should be evaluated on held-out
-observations, and we do that using cross-validation.</p>
+observations using cross-validation.</p>
+<p>The standard workflow uses the package defaults unless a registration
+states an override. For <code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code>, the
+defaults compare depths one and two with five held-out folds repeated 20
+times, select depth two only when it clears the package parsimony rule,
+and prefer <code>fastpolicytree</code> when it is available.</p>
+<div class="section level2">
+<h2 id="reporting-convention">Reporting convention<a class="anchor" aria-label="anchor" href="#reporting-convention"></a>
+</h2>
+<p>Policy trees optimise action-score rewards. The reporting layer
+therefore separates the action selected by the tree from the signed
+score contrast shown in each leaf.</p>
+<p>Let
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi mathvariant="normal">Γ</mi><mrow><mi>j</mi><mi>a</mi></mrow></msub><annotation encoding="application/x-tex">\Gamma_{ja}</annotation></semantics></math>
+denote the action score for observation
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+under action
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>,
+let
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>w</mi><mi>j</mi></msub><annotation encoding="application/x-tex">w_j</annotation></semantics></math>
+denote the evaluation weight, let
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>
+denote a policy-tree leaf, and let
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>E</mi><mi>L</mi></msub><annotation encoding="application/x-tex">E_L</annotation></semantics></math>
+denote the evaluation observations routed to that leaf. For binary
+actions
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>C</mi><annotation encoding="application/x-tex">C</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>T</mi><annotation encoding="application/x-tex">T</annotation></semantics></math>,
+<code>margot</code> reports the signed evaluation-sample
+treatment-control contrast</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">Δ</mi><mi>L</mi></msub><mo>=</mo><mfrac><mrow><munder><mo>∑</mo><mrow><mi>j</mi><mo>∈</mo><msub><mi>E</mi><mi>L</mi></msub></mrow></munder><msub><mi>w</mi><mi>j</mi></msub><mo stretchy="false" form="prefix">{</mo><msub><mi mathvariant="normal">Γ</mi><mrow><mi>j</mi><mi>T</mi></mrow></msub><mo>−</mo><msub><mi mathvariant="normal">Γ</mi><mrow><mi>j</mi><mi>C</mi></mrow></msub><mo stretchy="false" form="postfix">}</mo></mrow><mrow><munder><mo>∑</mo><mrow><mi>j</mi><mo>∈</mo><msub><mi>E</mi><mi>L</mi></msub></mrow></munder><msub><mi>w</mi><mi>j</mi></msub></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\Delta_L =
+\frac{\sum_{j \in E_L} w_j\{\Gamma_{jT} - \Gamma_{jC}\}}
+     {\sum_{j \in E_L} w_j}.
+</annotation></semantics></math></p>
+<p>Positive values of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi mathvariant="normal">Δ</mi><mi>L</mi></msub><annotation encoding="application/x-tex">\Delta_L</annotation></semantics></math>
+favour treatment, negative values favour control, and zero values
+indicate no directional contrast in the action scores. The selected
+action is reported separately. For a tree fitted on training
+observations
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>S</mi><mi>L</mi></msub><annotation encoding="application/x-tex">S_L</annotation></semantics></math>,
+the stored action is learned as</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>π</mi><mo stretchy="false" form="prefix">(</mo><mi>L</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mrow><mi mathvariant="normal">arg</mi><mo>⁡</mo></mrow><munder><mi mathvariant="normal">max</mi><mrow><mi>a</mi><mo>∈</mo><mo stretchy="false" form="prefix">{</mo><mi>C</mi><mo>,</mo><mi>T</mi><mo stretchy="false" form="postfix">}</mo></mrow></munder><mfrac><mrow><munder><mo>∑</mo><mrow><mi>j</mi><mo>∈</mo><msub><mi>S</mi><mi>L</mi></msub></mrow></munder><msub><mi>w</mi><mi>j</mi></msub><msub><mi mathvariant="normal">Γ</mi><mrow><mi>j</mi><mi>a</mi></mrow></msub></mrow><mrow><munder><mo>∑</mo><mrow><mi>j</mi><mo>∈</mo><msub><mi>S</mi><mi>L</mi></msub></mrow></munder><msub><mi>w</mi><mi>j</mi></msub></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\pi(L) = \arg\max_{a \in \{C,T\}}
+\frac{\sum_{j \in S_L} w_j \Gamma_{ja}}{\sum_{j \in S_L} w_j}.
+</annotation></semantics></math></p>
+<p>If action-score means tie within numerical tolerance, the leaf has no
+directional contrast. The reported selected action follows the action
+stored by the fitted tree or a prespecified tie rule; it should not be
+read as a substantive preference when
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">Δ</mi><mi>L</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta_L = 0</annotation></semantics></math>.
+In held-out CV summaries, the stored action is learned on training folds
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi mathvariant="normal">Δ</mi><mi>L</mi></msub><annotation encoding="application/x-tex">\Delta_L</annotation></semantics></math>
+is computed on held-out observations; the held-out table does not
+reselect actions from held-out means.</p>
+<p>This distinction affects interpretation when every leaf selects the
+same action. Such a tree may still split observations because
+score-contrast magnitude varies across the covariate space, but it
+should not be described as a selective rule that changes action across
+leaves. Between-leaf differences in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi mathvariant="normal">Δ</mi><mi>L</mi></msub><annotation encoding="application/x-tex">\Delta_L</annotation></semantics></math>
+describe variation in magnitude, not the decision rule itself.</p>
+<p>The standard public table therefore leads with
+<code>selected_action</code>, <code>tc_score_contrast</code>,
+<code>score_interval</code>, <code>sample_percent</code>, and
+<code>direction</code>. Lower-level diagnostics remain available, but
+selected-action advantage and value-contribution columns are hidden
+unless explicitly requested.</p>
+<p>The score interval is a source-specific action-score summary. For
+display-tree tables, it is an approximate interval for row-level scores
+after tree selection. For held-out CV tables, it summarises pooled
+held-out action-score summaries from fold-level trees that may have
+different leaf structures. In neither case should the interval be
+described as a formal post-selection subgroup test.</p>
+</div>
 <div class="section level2">
 <h2 id="simulate-two-outcomes">Simulate two outcomes<a class="anchor" aria-label="anchor" href="#simulate-two-outcomes"></a>
 </h2>
@@ -130,7 +207,7 @@ policy-tree cross-validation step to the ATE estimate.</p>
 <span>  outcome_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"y1"</span>, <span class="st">"y2"</span><span class="op">)</span>,</span>
 <span>  covariates <span class="op">=</span> <span class="va">covariates</span>,</span>
 <span>  W <span class="op">=</span> <span class="va">sim</span><span class="op">$</span><span class="va">exposure</span>,</span>
-<span>  grf_defaults <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">500</span>, min.node.size <span class="op">=</span> <span class="fl">20</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span>,</span>
+<span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_train_test_split <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  compute_rate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  compute_conditional_means <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -170,65 +247,161 @@ test.</p>
 </h2>
 <p>The policy-tree layer learns trees on training folds and evaluates
 the learned tree on held-out folds. The output includes policy value,
-split frequencies, threshold summaries, and leaf-level estimated action
-advantages.</p>
+split frequencies, threshold summaries, and leaf-level signed
+treatment-control contrasts. Tree-level policy value is summarised
+against all-control, all-treatment, and the best constant action, so an
+all-treatment or all-control tree is not mistaken for a selective
+rule.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">policy_cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv</a></span><span class="op">(</span></span>
 <span>  <span class="va">fit</span>,</span>
-<span>  depths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  num_folds <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  n_repeats <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  min_gain_for_depth_switch <span class="op">=</span> <span class="fl">0.01</span>,</span>
-<span>  max_stability_loss_for_depth_switch <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  tree_method <span class="op">=</span> <span class="st">"fastpolicytree"</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">2026</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">policy_cv</span><span class="op">$</span><span class="va">depth_selection</span></span>
 <span><span class="va">policy_cv</span><span class="op">$</span><span class="va">value_summary</span></span>
+<span><span class="fu"><a href="../reference/margot_table_policy_value.html">margot_table_policy_value</a></span><span class="op">(</span><span class="va">policy_cv</span><span class="op">)</span></span>
 <span><span class="va">policy_cv</span><span class="op">$</span><span class="va">leaf_summary</span></span></code></pre></div>
+<p>The first call uses the workflow defaults. To make the defaults
+explicit in a registration, record them as:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># record the standard policy-tree validation settings in the study protocol.</span></span>
+<span><span class="va">policy_tree_settings</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  depths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">2L</span><span class="op">)</span>,</span>
+<span>  num_folds <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>  n_repeats <span class="op">=</span> <span class="fl">20L</span>,</span>
+<span>  min_gain_for_depth_switch <span class="op">=</span> <span class="fl">0.01</span>,</span>
+<span>  max_stability_loss_for_depth_switch <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  tree_method <span class="op">=</span> <span class="st">"fastpolicytree"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Users may restrict candidate policy-tree variables when the
 scientific question justifies it. For confirmatory analyses, variable
 restrictions should be pre-specified or chosen inside the training
 folds.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">policy_cv_subset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv</a></span><span class="op">(</span></span>
 <span>  <span class="va">fit</span>,</span>
 <span>  custom_covariates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age_z"</span>, <span class="st">"status_z"</span>, <span class="st">"income_z"</span><span class="op">)</span>,</span>
 <span>  covariate_mode <span class="op">=</span> <span class="st">"custom"</span>,</span>
-<span>  depths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  num_folds <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  n_repeats <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">2026</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="plot-selected-display-trees">Plot selected display trees<a class="anchor" aria-label="anchor" href="#plot-selected-display-trees"></a>
+<h2 id="report-a-selected-policy-tree">Report a selected policy tree<a class="anchor" aria-label="anchor" href="#report-a-selected-policy-tree"></a>
 </h2>
-<p>The plot below shows a stored tree and annotates leaves with
-action-conditional estimated advantages and sample shares. The advantage
-is the estimated value of the displayed action minus the alternative
-action within the same leaf. These labels describe the displayed tree.
-The held-out CV object remains the source for depth, value, and
-split-frequency claims.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>The held-out CV object selects the reporting depth. The display tree
+then shows the fitted full-sample tree at that depth. Display-tree leaf
+labels describe the displayed tree; the held-out CV object remains the
+source for depth, value, and split-frequency claims.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">selected_depth</span> <span class="op">&lt;-</span> <span class="va">policy_cv</span><span class="op">$</span><span class="va">depth_map</span><span class="op">[[</span><span class="st">"model_y1"</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/margot_plot_decision_tree.html">margot_plot_decision_tree</a></span><span class="op">(</span></span>
+<span><span class="co"># use the policy-named wrapper for the branching decision tree.</span></span>
+<span><span class="fu"><a href="../reference/margot_plot_policy_decision_tree.html">margot_plot_policy_decision_tree</a></span><span class="op">(</span></span>
 <span>  <span class="va">fit</span>,</span>
 <span>  model_name <span class="op">=</span> <span class="st">"model_y1"</span>,</span>
 <span>  max_depth <span class="op">=</span> <span class="va">selected_depth</span>,</span>
 <span>  show_leaf_metrics <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>For a report, we can pair the plot with held-out summaries:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">policy_cv</span><span class="op">$</span><span class="va">split_summary</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">model</span> <span class="op">==</span> <span class="st">"model_y1"</span>, <span class="va">depth</span> <span class="op">==</span> <span class="va">selected_depth</span>, <span class="va">node_id</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span></span>
+<p>Use <code><a href="../reference/margot_plot_policy_projection.html">margot_plot_policy_projection()</a></code> when the intended
+artefact is the evaluation-point projection, and
+<code><a href="../reference/margot_plot_policy_tree_panels.html">margot_plot_policy_tree_panels()</a></code> when the report should
+show the branching tree in panel A and the projection in panel B. The
+older <code><a href="../reference/margot_plot_decision_tree.html">margot_plot_decision_tree()</a></code> and
+<code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code> remain available, but the
+policy-named wrappers make the intended plot type explicit.</p>
+<p>The modular reporting helpers expose the same convention at different
+levels:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># compute low-level leaf diagnostics for the selected display tree.</span></span>
+<span><span class="va">leaf_diagnostics</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_policy_leaf_summary.html">margot_policy_leaf_summary</a></span><span class="op">(</span></span>
+<span>  <span class="va">fit</span>,</span>
+<span>  model_name <span class="op">=</span> <span class="st">"model_y1"</span>,</span>
+<span>  depth <span class="op">=</span> <span class="va">selected_depth</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">policy_cv</span><span class="op">$</span><span class="va">leaf_summary</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">model</span> <span class="op">==</span> <span class="st">"model_y1"</span>, <span class="va">depth</span> <span class="op">==</span> <span class="va">selected_depth</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># create the public display-tree table with signed T-C first.</span></span>
+<span><span class="va">display_leaf_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_table_policy_tree.html">margot_table_policy_tree</a></span><span class="op">(</span></span>
+<span>  <span class="va">fit</span>,</span>
+<span>  model_name <span class="op">=</span> <span class="st">"model_y1"</span>,</span>
+<span>  depth <span class="op">=</span> <span class="va">selected_depth</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># create the held-out action-score summary table at the selected depth.</span></span>
+<span><span class="va">heldout_leaf_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_table_policy_tree.html">margot_table_policy_tree</a></span><span class="op">(</span></span>
+<span>  <span class="va">policy_cv</span>,</span>
+<span>  model_name <span class="op">=</span> <span class="st">"model_y1"</span>,</span>
+<span>  source <span class="op">=</span> <span class="st">"heldout_cv"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># compare the learned policy with universal action baselines.</span></span>
+<span><span class="va">value_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_table_policy_value.html">margot_table_policy_value</a></span><span class="op">(</span></span>
+<span>  <span class="va">policy_cv</span>,</span>
+<span>  model_name <span class="op">=</span> <span class="st">"model_y1"</span>,</span>
+<span>  depth <span class="op">=</span> <span class="va">selected_depth</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># generate cautious stock text for a manuscript or report.</span></span>
+<span><span class="va">policy_text</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_text_policy_tree.html">margot_text_policy_tree</a></span><span class="op">(</span>source <span class="op">=</span> <span class="st">"heldout_cv"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">display_leaf_table</span></span>
+<span><span class="va">heldout_leaf_table</span></span>
+<span><span class="va">value_table</span></span>
+<span><span class="va">policy_text</span></span></code></pre></div>
+<p>For exploratory diagnostics, callers can expose the lower-level
+selected-action advantage and value-contribution columns. These columns
+are useful for auditing the score arithmetic but should not lead public
+manuscript tables.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># request diagnostic columns only when auditing the policy-tree arithmetic.</span></span>
+<span><span class="fu"><a href="../reference/margot_table_policy_tree.html">margot_table_policy_tree</a></span><span class="op">(</span></span>
+<span>  <span class="va">fit</span>,</span>
+<span>  model_name <span class="op">=</span> <span class="st">"model_y1"</span>,</span>
+<span>  depth <span class="op">=</span> <span class="va">selected_depth</span>,</span>
+<span>  include_selected_action_difference <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  include_value_contribution <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The integrated helper assembles the standard plot, display-tree
+table, held-out leaf table, held-out policy-value table, and
+interpretation text. Each component remains an ordinary R object, so
+manuscript workflows can replace or omit pieces without losing the
+shared reporting convention.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># assemble the standard policy-tree report components for one outcome.</span></span>
+<span><span class="va">policy_report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_report_policy_tree.html">margot_report_policy_tree</a></span><span class="op">(</span></span>
+<span>  <span class="va">fit</span>,</span>
+<span>  model_name <span class="op">=</span> <span class="st">"model_y1"</span>,</span>
+<span>  policy_cv <span class="op">=</span> <span class="va">policy_cv</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">policy_report</span><span class="op">)</span></span>
+<span><span class="va">policy_report</span><span class="op">$</span><span class="va">metadata</span></span>
+<span><span class="va">policy_report</span><span class="op">$</span><span class="va">table</span></span>
+<span><span class="va">policy_report</span><span class="op">$</span><span class="va">heldout_table</span></span>
+<span><span class="va">policy_report</span><span class="op">$</span><span class="va">policy_value</span></span>
+<span><span class="va">policy_report</span><span class="op">$</span><span class="va">text</span></span>
+<span><span class="va">policy_report</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">combined_plot</span></span></code></pre></div>
+<p>The table-level metadata flags whether the selected actions vary
+across leaves. When <code>uniform_selected_action</code> is
+<code>TRUE</code>, avoid describing the tree as a selective rule even if
+the tree has multiple leaves.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># check whether the selected action changes across leaves.</span></span>
+<span><span class="va">display_leaf_table</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span></span>
+<span>    <span class="va">model</span>,</span>
+<span>    <span class="va">depth</span>,</span>
+<span>    <span class="va">node_id</span>,</span>
+<span>    <span class="va">selected_action</span>,</span>
+<span>    <span class="va">tc_score_contrast</span>,</span>
+<span>    <span class="va">n_selected_actions</span>,</span>
+<span>    <span class="va">uniform_selected_action</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p>The split summaries remain separate from leaf contrasts:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># inspect root-split stability at the selected reporting depth.</span></span>
+<span><span class="va">policy_cv</span><span class="op">$</span><span class="va">split_summary</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">model</span> <span class="op">==</span> <span class="st">"model_y1"</span>, <span class="va">depth</span> <span class="op">==</span> <span class="va">selected_depth</span>, <span class="va">node_id</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="summarise-outcome-wide-recurrence">Summarise outcome-wide recurrence<a class="anchor" aria-label="anchor" href="#summarise-outcome-wide-recurrence"></a>
@@ -236,14 +409,15 @@ split-frequency claims.</p>
 <p>Outcome-wide recurrence asks whether the same baseline variables
 recur across outcomes. This layer is descriptive unless a study defines
 a formal family-level target.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">recurrence</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_policy_recurrence_summary.html">margot_policy_recurrence_summary</a></span><span class="op">(</span><span class="va">policy_cv</span><span class="op">)</span></span>
 <span><span class="va">recurrence</span></span></code></pre></div>
 <p>A cautious report might say:</p>
 <blockquote>
 <p>Age recurred as a root or near-root policy-tree variable across both
-outcomes, but held-out gains were small. We treat age as a recurring
-exploratory organiser, not a confirmed moderator.</p>
+outcomes, while held-out value against the best constant action was
+small. We treat age as a recurring exploratory organiser, not a
+confirmed moderator.</p>
 </blockquote>
 </div>
 <div class="section level2">

@@ -2,9 +2,9 @@
 
 Learns shallow policy trees on training folds and evaluates their policy
 values, selected split variables, split thresholds, and leaf-level
-action advantages on held-out folds. The target is the performance of
-the policy-learning procedure, not the value of a final full-sample
-display tree.
+signed treatment-control contrasts on held-out folds. The target is the
+performance of the policy-learning procedure, not the value of a final
+full-sample display tree.
 
 ## Usage
 
@@ -108,6 +108,20 @@ selection, and a named `depth_map` that can be passed to
 [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
 or
 [`margot_policy_summary_compare_depths()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.md).
+
+## Details
+
+Let \\\Gamma\_{ja}\\ denote the action score for observation \\j\\ under
+action \\a\\. Policy-tree evaluation averages the score for the action
+selected by the learned policy \\\pi\\. For binary actions \\C\\ and
+\\T\\, held-out summaries report value against all-control,
+all-treatment, and best-constant baselines. Leaf summaries report the
+signed held-out evaluation contrast \\\Gamma\_{jT} - \Gamma\_{jC}\\ for
+observations routed by trees learned on training folds. Selected actions
+are the actions stored by those learned trees; held-out summaries do not
+reselect actions from held-out means. Between-leaf differences describe
+variation in score-contrast magnitude, not the policy decision rule
+itself.
 
 ## References
 

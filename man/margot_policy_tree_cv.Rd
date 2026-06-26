@@ -74,10 +74,22 @@ A \code{margot_policy_tree_cv} list with fold-level held-out values,
 }
 \description{
 Learns shallow policy trees on training folds and evaluates their policy
-values, selected split variables, split thresholds, and leaf-level action
-advantages on held-out folds.
+values, selected split variables, split thresholds, and leaf-level signed
+treatment-control contrasts on held-out folds.
 The target is the performance of the policy-learning procedure, not the value
 of a final full-sample display tree.
+}
+\details{
+Let \eqn{\Gamma_{ja}} denote the action score for observation \eqn{j} under
+action \eqn{a}. Policy-tree evaluation averages the score for the action
+selected by the learned policy \eqn{\pi}. For binary actions \eqn{C} and
+\eqn{T}, held-out summaries report value against all-control,
+all-treatment, and best-constant baselines. Leaf summaries report the signed
+held-out evaluation contrast \eqn{\Gamma_{jT} - \Gamma_{jC}} for observations
+routed by trees learned on training folds. Selected actions are the actions
+stored by those learned trees; held-out summaries do not reselect actions
+from held-out means. Between-leaf differences describe variation in
+score-contrast magnitude, not the policy decision rule itself.
 }
 \references{
 Athey, S., & Wager, S. (2021). Policy learning with observational data.

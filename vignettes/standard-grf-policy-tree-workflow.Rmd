@@ -30,7 +30,65 @@ The workflow separates four tasks:
 The ATE task estimates the primary causal estimand. The policy-tree task asks
 whether a shallow rule can summarise useful variation in the forest's doubly
 robust action scores. Because a policy tree is an optimiser, policy-tree
-learning should be evaluated on held-out observations, and we do that using cross-validation.
+learning should be evaluated on held-out observations using cross-validation.
+
+The standard workflow uses the package defaults unless a registration states an
+override. For `margot_policy_tree_cv()`, the defaults compare depths one and two
+with five held-out folds repeated 20 times, select depth two only when it clears
+the package parsimony rule, and prefer `fastpolicytree` when it is available.
+
+## Reporting convention
+
+Policy trees optimise action-score rewards. The reporting layer therefore
+separates the action selected by the tree from the signed score contrast shown
+in each leaf.
+
+Let $\Gamma_{ja}$ denote the action score for observation $j$ under action $a$,
+let $w_j$ denote the evaluation weight, let $L$ denote a policy-tree leaf, and
+let $E_L$ denote the evaluation observations routed to that leaf. For binary
+actions $C$ and $T$, `margot` reports the signed evaluation-sample
+treatment-control contrast
+
+$$
+\Delta_L =
+\frac{\sum_{j \in E_L} w_j\{\Gamma_{jT} - \Gamma_{jC}\}}
+     {\sum_{j \in E_L} w_j}.
+$$
+
+Positive values of $\Delta_L$ favour treatment, negative values favour control,
+and zero values indicate no directional contrast in the action scores. The
+selected action is reported separately. For a tree fitted on training
+observations $S_L$, the stored action is learned as
+
+$$
+\pi(L) = \arg\max_{a \in \{C,T\}}
+\frac{\sum_{j \in S_L} w_j \Gamma_{ja}}{\sum_{j \in S_L} w_j}.
+$$
+
+If action-score means tie within numerical tolerance, the leaf has no
+directional contrast. The reported selected action follows the action stored by
+the fitted tree or a prespecified tie rule; it should not be read as a
+substantive preference when $\Delta_L = 0$. In held-out CV summaries, the
+stored action is learned on training folds and $\Delta_L$ is computed on
+held-out observations; the held-out table does not reselect actions from
+held-out means.
+
+This distinction affects interpretation when every leaf selects the same action.
+Such a tree may still split observations because score-contrast magnitude varies
+across the covariate space, but it should not be described as a selective rule
+that changes action across leaves. Between-leaf differences in $\Delta_L$
+describe variation in magnitude, not the decision rule itself.
+
+The standard public table therefore leads with `selected_action`,
+`tc_score_contrast`, `score_interval`, `sample_percent`, and `direction`.
+Lower-level diagnostics remain available, but selected-action advantage and
+value-contribution columns are hidden unless explicitly requested.
+
+The score interval is a source-specific action-score summary. For display-tree
+tables, it is an approximate interval for row-level scores after tree selection.
+For held-out CV tables, it summarises pooled held-out action-score summaries
+from fold-level trees that may have different leaf structures. In neither case
+should the interval be described as a formal post-selection subgroup test.
 
 ## Simulate two outcomes
 
@@ -76,7 +134,7 @@ fit <- margot_causal_forest(
   outcome_vars = c("y1", "y2"),
   covariates = covariates,
   W = sim$exposure,
-  grf_defaults = list(num.trees = 500, min.node.size = 20, seed = 42),
+  weights = NULL,
   use_train_test_split = FALSE,
   compute_rate = FALSE,
   compute_conditional_means = FALSE,
@@ -116,24 +174,36 @@ importance
 
 The policy-tree layer learns trees on training folds and evaluates the learned
 tree on held-out folds. The output includes policy value, split frequencies,
-threshold summaries, and leaf-level estimated action advantages.
+threshold summaries, and leaf-level signed treatment-control contrasts.
+Tree-level policy value is summarised against all-control, all-treatment, and
+the best constant action, so an all-treatment or all-control tree is not
+mistaken for a selective rule.
 
 ```{r}
 policy_cv <- margot_policy_tree_cv(
   fit,
-  depths = c(1, 2),
-  num_folds = 5,
-  n_repeats = 10,
-  min_gain_for_depth_switch = 0.01,
-  max_stability_loss_for_depth_switch = 0.05,
-  tree_method = "fastpolicytree",
-  seed = 2026,
   verbose = FALSE
 )
 
 policy_cv$depth_selection
 policy_cv$value_summary
+margot_table_policy_value(policy_cv)
 policy_cv$leaf_summary
+```
+
+The first call uses the workflow defaults. To make the defaults explicit in a
+registration, record them as:
+
+```{r}
+# record the standard policy-tree validation settings in the study protocol.
+policy_tree_settings <- list(
+  depths = c(1L, 2L),
+  num_folds = 5L,
+  n_repeats = 20L,
+  min_gain_for_depth_switch = 0.01,
+  max_stability_loss_for_depth_switch = 0.05,
+  tree_method = "fastpolicytree"
+)
 ```
 
 Users may restrict candidate policy-tree variables when the scientific question
@@ -145,26 +215,22 @@ policy_cv_subset <- margot_policy_tree_cv(
   fit,
   custom_covariates = c("age_z", "status_z", "income_z"),
   covariate_mode = "custom",
-  depths = c(1, 2),
-  num_folds = 5,
-  n_repeats = 10,
-  seed = 2026,
   verbose = FALSE
 )
 ```
 
-## Plot selected display trees
+## Report a selected policy tree
 
-The plot below shows a stored tree and annotates leaves with action-conditional
-estimated advantages and sample shares. The advantage is the estimated value of
-the displayed action minus the alternative action within the same leaf. These
-labels describe the displayed tree. The held-out CV object remains the source
-for depth, value, and split-frequency claims.
+The held-out CV object selects the reporting depth. The display tree then shows
+the fitted full-sample tree at that depth. Display-tree leaf labels describe the
+displayed tree; the held-out CV object remains the source for depth, value, and
+split-frequency claims.
 
 ```{r}
 selected_depth <- policy_cv$depth_map[["model_y1"]]
 
-margot_plot_decision_tree(
+# use the policy-named wrapper for the branching decision tree.
+margot_plot_policy_decision_tree(
   fit,
   model_name = "model_y1",
   max_depth = selected_depth,
@@ -172,14 +238,113 @@ margot_plot_decision_tree(
 )
 ```
 
-For a report, we can pair the plot with held-out summaries:
+Use `margot_plot_policy_projection()` when the intended artefact is the
+evaluation-point projection, and `margot_plot_policy_tree_panels()` when the
+report should show the branching tree in panel A and the projection in panel B.
+The older `margot_plot_decision_tree()` and `margot_plot_policy_tree()` remain
+available, but the policy-named wrappers make the intended plot type explicit.
+
+The modular reporting helpers expose the same convention at different levels:
 
 ```{r}
+# compute low-level leaf diagnostics for the selected display tree.
+leaf_diagnostics <- margot_policy_leaf_summary(
+  fit,
+  model_name = "model_y1",
+  depth = selected_depth
+)
+
+# create the public display-tree table with signed T-C first.
+display_leaf_table <- margot_table_policy_tree(
+  fit,
+  model_name = "model_y1",
+  depth = selected_depth
+)
+
+# create the held-out action-score summary table at the selected depth.
+heldout_leaf_table <- margot_table_policy_tree(
+  policy_cv,
+  model_name = "model_y1",
+  source = "heldout_cv"
+)
+
+# compare the learned policy with universal action baselines.
+value_table <- margot_table_policy_value(
+  policy_cv,
+  model_name = "model_y1",
+  depth = selected_depth
+)
+
+# generate cautious stock text for a manuscript or report.
+policy_text <- margot_text_policy_tree(source = "heldout_cv")
+
+display_leaf_table
+heldout_leaf_table
+value_table
+policy_text
+```
+
+For exploratory diagnostics, callers can expose the lower-level selected-action
+advantage and value-contribution columns. These columns are useful for auditing
+the score arithmetic but should not lead public manuscript tables.
+
+```{r}
+# request diagnostic columns only when auditing the policy-tree arithmetic.
+margot_table_policy_tree(
+  fit,
+  model_name = "model_y1",
+  depth = selected_depth,
+  include_selected_action_difference = TRUE,
+  include_value_contribution = TRUE
+)
+```
+
+The integrated helper assembles the standard plot, display-tree table,
+held-out leaf table, held-out policy-value table, and interpretation text. Each
+component remains an ordinary R object, so manuscript workflows can replace or
+omit pieces without losing the shared reporting convention.
+
+```{r}
+# assemble the standard policy-tree report components for one outcome.
+policy_report <- margot_report_policy_tree(
+  fit,
+  model_name = "model_y1",
+  policy_cv = policy_cv
+)
+
+names(policy_report)
+policy_report$metadata
+policy_report$table
+policy_report$heldout_table
+policy_report$policy_value
+policy_report$text
+policy_report$plots$combined_plot
+```
+
+The table-level metadata flags whether the selected actions vary across leaves.
+When `uniform_selected_action` is `TRUE`, avoid describing the tree as a
+selective rule even if the tree has multiple leaves.
+
+```{r}
+# check whether the selected action changes across leaves.
+display_leaf_table |>
+  select(
+    model,
+    depth,
+    node_id,
+    selected_action,
+    tc_score_contrast,
+    n_selected_actions,
+    uniform_selected_action
+  )
+```
+
+The split summaries remain separate from leaf contrasts:
+
+```{r}
+# inspect root-split stability at the selected reporting depth.
 policy_cv$split_summary |>
   filter(model == "model_y1", depth == selected_depth, node_id == 1)
-
-policy_cv$leaf_summary |>
-  filter(model == "model_y1", depth == selected_depth)
 ```
 
 ## Summarise outcome-wide recurrence
@@ -196,8 +361,8 @@ recurrence
 A cautious report might say:
 
 > Age recurred as a root or near-root policy-tree variable across both outcomes,
-> but held-out gains were small. We treat age as a recurring exploratory
-> organiser, not a confirmed moderator.
+> while held-out value against the best constant action was small. We treat age
+> as a recurring exploratory organiser, not a confirmed moderator.
 
 ## Optional extensions
 

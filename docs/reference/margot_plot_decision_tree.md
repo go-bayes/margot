@@ -113,8 +113,8 @@ margot_plot_decision_tree(
 
 - show_leaf_metrics:
 
-  Logical; if `TRUE`, leaf labels include action-conditional estimated
-  advantages and sample shares from
+  Logical; if `TRUE`, leaf labels include signed treatment-control
+  contrasts and sample shares from
   [`margot_policy_leaf_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md).
 
 - leaf_metrics:
@@ -125,4 +125,4 @@ margot_plot_decision_tree(
 
 - leaf_metric_digits:
 
-  Integer; number of decimals for leaf estimated advantages.
+  Integer; number of decimals for leaf treatment-control contrasts.

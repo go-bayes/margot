@@ -38,9 +38,9 @@
 #' @return a ggplot object with faceted tau hat distributions
 #'
 #' @importFrom ggplot2 ggplot aes geom_histogram geom_vline facet_wrap
-#'   coord_cartesian labs theme_minimal theme_classic theme_bw theme_light
-#'   theme_dark theme_void theme_grey theme_linedraw theme element_text element_line
-#'   scale_fill_manual
+#' @importFrom ggplot2 coord_cartesian labs theme_minimal theme_classic theme_bw
+#' @importFrom ggplot2 theme_light theme_dark theme_void theme_grey theme_linedraw
+#' @importFrom ggplot2 theme element_text element_line scale_fill_manual
 #' @importFrom dplyr bind_rows group_by summarise mutate count case_when
 #' @importFrom cli cli_alert_warning cli_alert_info cli_alert_success
 #' @importFrom tools toTitleCase

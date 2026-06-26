@@ -1,6 +1,6 @@
 # margot NEWS
 
-## Changes in version 1.1.001
+## Changes in version 1.1.010
 
 ### New
 - Added `margot_exposure_overlap()` for outcome-blind exposure-support
@@ -9,6 +9,27 @@
   probability forests, and returns overlap, trimming, effective-sample-size,
   prevalence, balance, and plot artefacts without fitting or viewing a causal
   estimand.
+- Added explicit policy-tree reporting helpers:
+  `margot_plot_policy_decision_tree()`,
+  `margot_plot_policy_projection()`, `margot_plot_policy_tree_panels()`,
+  `margot_table_policy_tree()`, `margot_text_policy_tree()`, and
+  `margot_report_policy_tree()`.
+- Added `margot_table_policy_value()` for held-out policy-value reporting
+  against all-control, all-treatment, and best-constant action baselines.
+
+### Improvements
+- Policy-tree leaf summaries now report a fixed signed treatment-control
+  contrast (`T-C`) with approximate score-summary interval columns. Positive
+  values favour treatment and negative values favour control. Legacy
+  action-conditional advantage columns remain available for compatibility.
+- Public policy-tree tables now lead with source, model, outcome label, depth,
+  node identifier, selected action, signed `T-C`, interval, sample share,
+  direction, and uniform-action metadata. Selected-action advantage and
+  baseline-specific value-contribution columns are hidden unless explicitly
+  requested.
+- Held-out policy-tree CV summaries now report value against all-control,
+  all-treatment, and best-constant baselines, and record whether a learned tree
+  selects one action everywhere.
 
 ## Changes in version 1.1.0
 
