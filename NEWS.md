@@ -1,3 +1,23 @@
+# [2026-07-02] margot 1.1.011
+
+### Added
+- `margot_lmtp_positivity_gate()` applies a pre-registered trim-ladder
+  positivity decision rule to LMTP fits. At each rung (default 0.99, 0.98,
+  0.96) a policy passes when (1) the Kish effective sample size of the
+  rung-winsorised cumulative weights clears a floor (default 50% of
+  uncensored observations at every wave), (2) the winsorisation cap removes
+  no more than a registered share of cumulative ratio mass (default 5%),
+  and (3) the cumulative-product support status is not "Limited". The two
+  rung-dependent criteria move in opposite directions, so the ladder
+  descends while effective sample size can be rescued and stops when the
+  trimmed-mass budget is breached; the gate then directs the analysis to
+  the registered contingency. Returns per-rung diagnostics, a per-policy
+  selection with verdict strings, and the thresholds applied, so
+  registrations can cite the decision rule as code.
+- `margot_lmtp_weight_diag_from_fit()` wave tables now report
+  `trim_mass_share`, the share of cumulative ratio mass removed by the
+  winsorisation cap at each wave (the bias-side quantity the gate budgets).
+
 # [2026-06-24] margot 1.1.010
 
 ### Added

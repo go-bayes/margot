@@ -26,7 +26,9 @@
 #'   via `label_mapping$wave_labels` or `label_mapping$wave_1 = "Baseline"`).
 #'   Mirrors the conventions used by `margot_interpret_lmtp_positivity()`.
 #'
-#' @return For a single shift, a list with `wave_table` (per-wave diagnostics),
+#' @return For a single shift, a list with `wave_table` (per-wave diagnostics,
+#'   including cumulative ESS raw/trimmed and `trim_mass_share`, the share of
+#'   cumulative ratio mass removed by the winsorisation cap),
 #'   `mask_from_fit` (logical observation mask), `density_ratios`, cumulative
 #'   weights (`w_cum_raw`, `w_cum_trim`), and shift metadata. When multiple
 #'   shifts are requested, a named list of such objects (one per shift) is
@@ -175,7 +177,13 @@ margot_lmtp_weight_diag_from_fit <- function(fit,
         frac_gt_50  = fracs[match(50,  thresholds, nomatch = NA)],
         frac_gt_100 = fracs[match(100, thresholds, nomatch = NA)],
         ess_cum_raw  = ess(wt),
-        ess_cum_trim = ess(wt_tr)
+        ess_cum_trim = ess(wt_tr),
+        # share of cumulative ratio mass removed by the winsorisation cap;
+        # the bias-side quantity the registered trim-ladder gate budgets
+        trim_mass_share = {
+          raw_mass <- sum(wt, na.rm = TRUE)
+          if (raw_mass > 0) 1 - sum(wt_tr, na.rm = TRUE) / raw_mass else NA_real_
+        }
       )
     })
     wave_table <- do.call(rbind, wave_rows)

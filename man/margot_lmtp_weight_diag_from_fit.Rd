@@ -40,7 +40,9 @@ via `label_mapping$wave_labels` or `label_mapping$wave_1 = "Baseline"`).
 Mirrors the conventions used by `margot_interpret_lmtp_positivity()`.}
 }
 \value{
-For a single shift, a list with `wave_table` (per-wave diagnostics),
+For a single shift, a list with `wave_table` (per-wave diagnostics,
+  including cumulative ESS raw/trimmed and `trim_mass_share`, the share of
+  cumulative ratio mass removed by the winsorisation cap),
   `mask_from_fit` (logical observation mask), `density_ratios`, cumulative
   weights (`w_cum_raw`, `w_cum_trim`), and shift metadata. When multiple
   shifts are requested, a named list of such objects (one per shift) is
