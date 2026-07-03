@@ -149,6 +149,8 @@ stable state. Expect breaking changes.
   : Density-ratio diagnostics from an LMTP fit
 - [`margot_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_lmtp_positivity.md)
   : Summarize positivity via density ratios for LMTP fits
+- [`margot_lmtp_positivity_gate()`](https://go-bayes.github.io/margot/reference/margot_lmtp_positivity_gate.md)
+  : Registered trim-ladder positivity gate for LMTP fits
 - [`margot_interpret_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   [`margot_interpret_lmtp_overlap()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   : Interpret LMTP positivity via effective sample sizes

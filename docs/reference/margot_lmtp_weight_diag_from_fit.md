@@ -67,7 +67,9 @@ margot_lmtp_weight_diag_from_fit(
 
 ## Value
 
-For a single shift, a list with \`wave_table\` (per-wave diagnostics),
+For a single shift, a list with \`wave_table\` (per-wave diagnostics,
+including cumulative ESS raw/trimmed and \`trim_mass_share\`, the share
+of cumulative ratio mass removed by the winsorisation cap),
 \`mask_from_fit\` (logical observation mask), \`density_ratios\`,
 cumulative weights (\`w_cum_raw\`, \`w_cum_trim\`), and shift metadata.
 When multiple shifts are requested, a named list of such objects (one
@@ -89,8 +91,8 @@ diagnostics$wave_table
 #> 1  1.75  1.95 1.975 1.995 1.9995  1.994505   1.999001         0          0
 #> 2  0.50  0.50 0.500 0.500 0.5000  0.500000   0.500000         0          0
 #> 3  1.50  1.90 1.950 1.990 1.9990  1.989010   1.998001         0          0
-#>   frac_gt_25 frac_gt_50 frac_gt_100 ess_cum_raw ess_cum_trim
-#> 1          0          0           0        1.96     1.960067
-#> 2          0          0           0        1.00     1.000000
-#> 3          0          0           0        1.00     1.000000
+#>   frac_gt_25 frac_gt_50 frac_gt_100 ess_cum_raw ess_cum_trim trim_mass_share
+#> 1          0          0           0        1.96     1.960067    0.0001428571
+#> 2          0          0           0        1.00     1.000000    0.0000000000
+#> 3          0          0           0        1.00     1.000000    0.0005000000
 ```
