@@ -165,11 +165,13 @@ margot_transition_table <- function(data, state_var, id_var, wave_var,
 
   results$compute_ipsi_probabilities <- function(which = NULL,
                                                  deltas = c(2, 5, 10),
+                                                 direction = c("up", "down"),
                                                  drop = TRUE) {
+    direction <- match.arg(direction)
     idx <- resolve_indices(which, caller = "compute IPSI probabilities")
     out <- lapply(idx, function(i) {
       tbl <- extract_table_data(i)
-      probs <- margot_compute_ipsi_probability(tbl, deltas = deltas)
+      probs <- margot_compute_ipsi_probability(tbl, deltas = deltas, direction = direction)
       list(
         table_index = i,
         waves = results$waves[[i]],

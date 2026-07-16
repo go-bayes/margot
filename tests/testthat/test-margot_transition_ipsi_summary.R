@@ -84,3 +84,21 @@ test_that("margot_transition_ipsi_summary pretty output formats strings", {
   expect_s3_class(raw, "data.frame")
   expect_equal(raw$delta, 2)
 })
+
+test_that("margot_transition_ipsi_summary threads the down direction", {
+  trans1 <- data.frame(
+    `From / To` = c("State 0", "State 1"),
+    `State 0` = c(10, 4),
+    `State 1` = c(2, 6),
+    Total = c(12, 10),
+    check.names = FALSE
+  )
+  res <- margot_transition_ipsi_summary(list(trans1), deltas = 2, direction = "down")
+  tbl <- res$table
+  expect_equal(unique(tbl$direction), "down")
+  expect_equal(tbl$events, 4)
+  expect_equal(tbl$at_risk, 10)
+  expect_equal(tbl$counterfactual_p, 1 - (1 - 4 / 10) / 2)
+  expect_true(any(grepl("moving down", res$report)))
+  expect_false(any(grepl("odds multiplier increase", res$report)))
+})

@@ -66,3 +66,40 @@ test_that("margot_compute_ipsi_probability validates inputs", {
   expect_error(margot_compute_ipsi_probability(good_df, deltas = c(1, 2)),
                "greater than 1")
 })
+
+test_that("margot_compute_ipsi_probability handles the down direction", {
+  trans <- data.frame(
+    `From / To` = c("State 0", "State 1"),
+    `State 0` = c(27380, 330),
+    `State 1` = c(845, 170),
+    Total = c(28225, 500),
+    check.names = FALSE
+  )
+
+  res <- margot_compute_ipsi_probability(trans, deltas = c(2.5, 5), direction = "down")
+
+  # at-risk cohort is the State 1 row; the event is arrival in State 0
+  expect_equal(unique(res$direction), "down")
+  expect_equal(res$natural_p, rep(330 / 500, 2))
+  expect_equal(res$counterfactual_p, 1 - (1 - 330 / 500) / c(2.5, 5))
+
+  counts <- attr(res, "counts")
+  expect_equal(counts$direction, "down")
+  expect_equal(counts$events, 330)
+  expect_equal(counts$at_risk, 500)
+  # legacy aliases mirror the event/at-risk counts
+  expect_equal(counts$initiations, counts$events)
+  expect_equal(counts$non_attenders, counts$at_risk)
+})
+
+test_that("margot_compute_ipsi_probability down direction requires a State 1 row", {
+  trans <- data.frame(
+    `From / To` = "State 0",
+    `State 0` = 10,
+    `State 1` = 2,
+    Total = 12,
+    check.names = FALSE
+  )
+  expect_error(margot_compute_ipsi_probability(trans, direction = "down"),
+               "No 'State 1' row")
+})
