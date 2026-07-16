@@ -48,7 +48,7 @@
 - [`margot_transition_table()`](https://go-bayes.github.io/margot/reference/margot_transition_table.md)
   : Format a Transition Table with observed‑indicator filtering
 - [`margot_compute_ipsi_probability()`](https://go-bayes.github.io/margot/reference/margot_compute_ipsi_probability.md)
-  : Compute IPSI counterfactual initiation probabilities
+  : Compute IPSI counterfactual transition probabilities
 - [`margot_transition_ipsi_summary()`](https://go-bayes.github.io/margot/reference/margot_transition_ipsi_summary.md)
   : Summarize IPSI probabilities from transition tables
 

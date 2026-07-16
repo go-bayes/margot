@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   migrating-off-qs: migrating-off-qs.html
   standard-grf-policy-tree-workflow: standard-grf-policy-tree-workflow.html
-last_built: 2026-07-03T02:58Z
+last_built: 2026-07-16T09:18Z
 urls:
   reference: https://go-bayes.github.io/margot/reference
   article: https://go-bayes.github.io/margot/articles

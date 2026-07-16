@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.011</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,16 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.012" id="id_2026-07-16-margot-11012">[2026-07-16] margot 1.1.012<a class="anchor" aria-label="anchor" href="#id_2026-07-16-margot-11012"></a></h2>
+<div class="section level4">
+<h4 id="fixed-1-1-012">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-1-012"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_compute_ipsi_probability.html">margot_compute_ipsi_probability()</a></code> and <code><a href="../reference/margot_transition_ipsi_summary.html">margot_transition_ipsi_summary()</a></code> gain a <code>direction</code> argument (<code>"up"</code>, the previous behaviour, or <code>"down"</code>). The functions were hard-coded to the upward transition (State 0 cohort entering State 1), so support diagnostics for a downward-matched incremental propensity score contingency (raising the probability of the lower state among the upper-state cohort) silently described the opposite intervention. <code>direction = "down"</code> reads the State 1 row and the State 0 column. <code>margot_transition_table()$compute_ipsi_probabilities()</code> passes the argument through.</li>
+<li>Documentation and report text no longer describe delta as an odds multiplier. The implemented counterfactual <code>p' = 1 - (1 - p)/delta</code> matches <code><a href="https://rdrr.io/pkg/lmtp/man/ipsi.html" class="external-link">lmtp::ipsi()</a></code>, the risk-ratio incremental propensity score intervention (with probability <code>1 - 1/delta</code> set the exposure to the target state, else keep the natural value); it is not the Kennedy (2019) odds-multiplier IPSI. Registered estimand text should describe the intervention in risk-ratio terms.</li>
+<li>Result tables carry a <code>direction</code> column and direction-neutral count names (<code>events</code>, <code>at_risk</code>); the legacy <code>initiations</code>/<code>non_attenders</code> names remain as aliases.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.011" id="id_2026-07-02-margot-11011">[2026-07-02] margot 1.1.011<a class="anchor" aria-label="anchor" href="#id_2026-07-02-margot-11011"></a></h2>
 <div class="section level4">

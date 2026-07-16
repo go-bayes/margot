@@ -104,12 +104,12 @@ transitions$get_table_data(which = 1)
 # Compute IPSI counterfactual initiation probabilities for the first transition
 ipsi_wave1 <- transitions$compute_ipsi_probabilities(which = 1)
 ipsi_wave1$probabilities
-#>   delta delta_inverse natural_p natural_p_l natural_p_u counterfactual_p
-#> 1     2           0.5       0.5  0.01257912   0.9874209             0.75
-#> 2     5           0.2       0.5  0.01257912   0.9874209             0.90
-#> 3    10           0.1       0.5  0.01257912   0.9874209             0.95
-#>   fold_increase
-#> 1           1.5
-#> 2           1.8
-#> 3           1.9
+#>   direction delta delta_inverse natural_p natural_p_l natural_p_u
+#> 1        up     2           0.5       0.5  0.01257912   0.9874209
+#> 2        up     5           0.2       0.5  0.01257912   0.9874209
+#> 3        up    10           0.1       0.5  0.01257912   0.9874209
+#>   counterfactual_p fold_increase
+#> 1             0.75           1.5
+#> 2             0.90           1.8
+#> 3             0.95           1.9
 ```

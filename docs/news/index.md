@@ -1,5 +1,33 @@
 # Changelog
 
+## \[2026-07-16\] margot 1.1.012
+
+#### Fixed
+
+- [`margot_compute_ipsi_probability()`](https://go-bayes.github.io/margot/reference/margot_compute_ipsi_probability.md)
+  and
+  [`margot_transition_ipsi_summary()`](https://go-bayes.github.io/margot/reference/margot_transition_ipsi_summary.md)
+  gain a `direction` argument (`"up"`, the previous behaviour, or
+  `"down"`). The functions were hard-coded to the upward transition
+  (State 0 cohort entering State 1), so support diagnostics for a
+  downward-matched incremental propensity score contingency (raising the
+  probability of the lower state among the upper-state cohort) silently
+  described the opposite intervention. `direction = "down"` reads the
+  State 1 row and the State 0 column.
+  `margot_transition_table()$compute_ipsi_probabilities()` passes the
+  argument through.
+- Documentation and report text no longer describe delta as an odds
+  multiplier. The implemented counterfactual `p' = 1 - (1 - p)/delta`
+  matches [`lmtp::ipsi()`](https://rdrr.io/pkg/lmtp/man/ipsi.html), the
+  risk-ratio incremental propensity score intervention (with probability
+  `1 - 1/delta` set the exposure to the target state, else keep the
+  natural value); it is not the Kennedy (2019) odds-multiplier IPSI.
+  Registered estimand text should describe the intervention in
+  risk-ratio terms.
+- Result tables carry a `direction` column and direction-neutral count
+  names (`events`, `at_risk`); the legacy `initiations`/`non_attenders`
+  names remain as aliases.
+
 ## \[2026-07-02\] margot 1.1.011
 
 #### Added
