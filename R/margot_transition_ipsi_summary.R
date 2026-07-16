@@ -1,20 +1,31 @@
 #' Summarize IPSI probabilities from transition tables
 #'
 #' Consumes the output of `margot_transition_table()` (or a compatible list of
-#' transition matrices) and computes initiation probabilities for each wave pair
+#' transition matrices) and computes transition probabilities for each wave pair
 #' under incremental propensity score interventions (IPSIs). Internally it calls
 #' `margot_compute_ipsi_probability()` for every matrix, returning a tidy data
-#' frame that includes the natural initiation rate, counterfactual probabilities,
+#' frame that includes the natural transition rate, counterfactual probabilities,
 #' fold increases, and the raw counts used in each estimate.
+#'
+#' The deltas match `lmtp::ipsi()`: the intervention divides the natural
+#' probability of *not* reaching the target state by delta (a risk-ratio
+#' shift), so `p' = 1 - (1 - p)/delta`. Direction selects the transition of
+#' interest: `"up"` summarises movement from State 0 into State 1
+#' (initiation); `"down"` summarises movement from State 1 into State 0 (the
+#' natural reading for a contingency that raises the probability of the lower
+#' state among the upper-state cohort).
 #'
 #' @param transitions Either the object returned by `margot_transition_table()`
 #'   or a list of transition matrices (data frames or `knitr_kable`s containing
-#'   `"From / To"`, `"State 1"`, and `"Total"` columns). When an object from
-#'   `margot_transition_table()` is supplied, the stored wave labels are used in
-#'   the summary.
+#'   `"From / To"`, the state columns, and a `"Total"` column). When an object
+#'   from `margot_transition_table()` is supplied, the stored wave labels are
+#'   used in the summary.
 #' @param deltas Numeric vector of IPSI scaling factors (greater than 1). Passed
 #'   to `margot_compute_ipsi_probability()`; defaults to the standard set
 #'   `c(2, 5, 10)`.
+#' @param direction Either `"up"` (State 0 cohort moving to State 1; the
+#'   default) or `"down"` (State 1 cohort moving to State 0). Passed to
+#'   `margot_compute_ipsi_probability()`.
 #' @param pretty Logical; if `TRUE`, the table component is formatted for
 #'   `knitr::kable()` / `kbl()` while numeric values remain attached under
 #'   `attr(table, "raw")`.
@@ -24,7 +35,7 @@
 #' @return A list with two elements:
 #'   \describe{
 #'     \item{`table`}{Data frame with one row per wave pair × delta containing
-#'       the natural initiation rate (with 95% CI), counterfactual probabilities,
+#'       the natural transition rate (with 95% CI), counterfactual probabilities,
 #'       fold increases, and raw counts (string-formatted when `pretty = TRUE`).}
 #'     \item{`report`}{Character vector of NZ-English sentences, with LaTeX math
 #'       markup (e.g., `$\\to$`, `$\\delta$`, `$p'$`), summarising each wave pair.}
@@ -53,9 +64,11 @@
 #' @export
 margot_transition_ipsi_summary <- function(transitions,
                                            deltas = c(2, 5, 10),
+                                           direction = c("up", "down"),
                                            pretty = FALSE,
                                            digits_prob = 1,
                                            digits_fold = 1) {
+  direction <- match.arg(direction)
   stopifnot(length(deltas) > 0, all(is.finite(deltas)), all(deltas > 1))
   digits_prob <- max(0L, as.integer(digits_prob))
   digits_fold <- max(0L, as.integer(digits_fold))
@@ -103,7 +116,7 @@ margot_transition_ipsi_summary <- function(transitions,
     if (!is.data.frame(mat)) {
       stop("Each transition matrix must be a data frame or knitr_kable with table_data.")
     }
-    probs <- margot_compute_ipsi_probability(mat, deltas = deltas)
+    probs <- margot_compute_ipsi_probability(mat, deltas = deltas, direction = direction)
     counts <- attr(probs, "counts")
     waves <- if (!is.null(waves_list) && length(waves_list) >= i) waves_list[[i]] else c(NA, NA)
     rows[[i]] <- cbind(
@@ -111,8 +124,11 @@ margot_transition_ipsi_summary <- function(transitions,
       table_name = tbl_names[[i]],
       wave_from = waves[1],
       wave_to = waves[2],
-      initiations = counts$initiations,
-      non_attenders = counts$non_attenders,
+      events = counts$events,
+      at_risk = counts$at_risk,
+      # legacy column names retained for backward compatibility
+      initiations = counts$events,
+      non_attenders = counts$at_risk,
       probs,
       stringsAsFactors = FALSE
     )
@@ -150,21 +166,30 @@ margot_transition_ipsi_summary <- function(transitions,
       format_pct_sentence(counts$natural_p_l),
       format_pct_sentence(counts$natural_p_u)
     )
+    transition_phrase <- if (direction == "up") {
+      "moving up (State 0 $\\to$ State 1)"
+    } else {
+      "moving down (State 1 $\\to$ State 0)"
+    }
+    cohort_phrase <- if (direction == "up") "State 0" else "State 1"
     header <- sprintf(
-      "%s: The natural initiation rate was approximately %s (95\\%% CI %s) based on %s initiations out of %s non-attenders.",
+      "%s: The natural rate of %s was approximately %s (95\\%% CI %s) based on %s transitions out of %s at-risk participants in %s.",
       label,
+      transition_phrase,
       format_pct_sentence(counts$natural_p),
       ci_text,
-      format_count(counts$initiations),
-      format_count(counts$non_attenders)
+      format_count(counts$events),
+      format_count(counts$at_risk),
+      cohort_phrase
     )
-    formula_sentence <- "Counterfactual probabilities follow $p' = 1 - (1 - p)/\\delta$ for this transition."
+    formula_sentence <- "Counterfactual probabilities follow $p' = 1 - (1 - p)/\\delta$ for this transition (the risk-ratio incremental propensity score intervention of `lmtp::ipsi()`, which divides the probability of remaining in the natural state by $\\delta$; $\\delta$ is not an odds multiplier)."
     delta_lines <- vapply(
       seq_len(nrow(df)),
       function(j) sprintf(
-        "For $\\delta = %s$ (so $1/\\delta = %s$), the counterfactual initiation probability is about %s (natural $p$ %s; %s).",
+        "For $\\delta = %s$ (so $1/\\delta = %s$), the counterfactual probability of %s is about %s (natural $p$ %s; %s).",
         df$delta[j],
         format_num(df$delta_inverse[j]),
+        transition_phrase,
         format_pct_sentence(df$counterfactual_p[j]),
         format_pct_sentence(df$natural_p[j]),
         format_fold_sentence(df$fold_increase[j])
@@ -195,9 +220,10 @@ margot_transition_ipsi_summary <- function(transitions,
     )
     table_pretty <- data.frame(
       `Wave pair` = wave_pair,
+      Direction = out$direction,
       Delta = out$delta,
       `1/Delta` = out$delta_inverse,
-      `Initiations / at-risk` = sprintf("%s / %s", out$initiations, out$non_attenders),
+      `Transitions / at-risk` = sprintf("%s / %s", out$events, out$at_risk),
       `Natural p (95% CI)` = sprintf(
         "%s (%s, %s)",
         percent_fmt(out$natural_p),

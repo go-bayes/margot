@@ -7,6 +7,7 @@
 margot_transition_ipsi_summary(
   transitions,
   deltas = c(2, 5, 10),
+  direction = c("up", "down"),
   pretty = FALSE,
   digits_prob = 1,
   digits_fold = 1
@@ -15,13 +16,17 @@ margot_transition_ipsi_summary(
 \arguments{
 \item{transitions}{Either the object returned by `margot_transition_table()`
 or a list of transition matrices (data frames or `knitr_kable`s containing
-`"From / To"`, `"State 1"`, and `"Total"` columns). When an object from
-`margot_transition_table()` is supplied, the stored wave labels are used in
-the summary.}
+`"From / To"`, the state columns, and a `"Total"` column). When an object
+from `margot_transition_table()` is supplied, the stored wave labels are
+used in the summary.}
 
 \item{deltas}{Numeric vector of IPSI scaling factors (greater than 1). Passed
 to `margot_compute_ipsi_probability()`; defaults to the standard set
 `c(2, 5, 10)`.}
+
+\item{direction}{Either `"up"` (State 0 cohort moving to State 1; the
+default) or `"down"` (State 1 cohort moving to State 0). Passed to
+`margot_compute_ipsi_probability()`.}
 
 \item{pretty}{Logical; if `TRUE`, the table component is formatted for
 `knitr::kable()` / `kbl()` while numeric values remain attached under
@@ -35,7 +40,7 @@ to `margot_compute_ipsi_probability()`; defaults to the standard set
 A list with two elements:
   \describe{
     \item{`table`}{Data frame with one row per wave pair × delta containing
-      the natural initiation rate (with 95% CI), counterfactual probabilities,
+      the natural transition rate (with 95% CI), counterfactual probabilities,
       fold increases, and raw counts (string-formatted when `pretty = TRUE`).}
     \item{`report`}{Character vector of NZ-English sentences, with LaTeX math
       markup (e.g., `$\\to$`, `$\\delta$`, `$p'$`), summarising each wave pair.}
@@ -43,11 +48,20 @@ A list with two elements:
 }
 \description{
 Consumes the output of `margot_transition_table()` (or a compatible list of
-transition matrices) and computes initiation probabilities for each wave pair
+transition matrices) and computes transition probabilities for each wave pair
 under incremental propensity score interventions (IPSIs). Internally it calls
 `margot_compute_ipsi_probability()` for every matrix, returning a tidy data
-frame that includes the natural initiation rate, counterfactual probabilities,
+frame that includes the natural transition rate, counterfactual probabilities,
 fold increases, and the raw counts used in each estimate.
+}
+\details{
+The deltas match `lmtp::ipsi()`: the intervention divides the natural
+probability of *not* reaching the target state by delta (a risk-ratio
+shift), so `p' = 1 - (1 - p)/delta`. Direction selects the transition of
+interest: `"up"` summarises movement from State 0 into State 1
+(initiation); `"down"` summarises movement from State 1 into State 0 (the
+natural reading for a contingency that raises the probability of the lower
+state among the upper-state cohort).
 }
 \examples{
 transitions <- margot_transition_table(

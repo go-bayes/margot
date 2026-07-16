@@ -2,36 +2,64 @@
 % Please edit documentation in R/margot_compute_ipsi_probability.R
 \name{margot_compute_ipsi_probability}
 \alias{margot_compute_ipsi_probability}
-\title{Compute IPSI counterfactual initiation probabilities}
+\title{Compute IPSI counterfactual transition probabilities}
 \usage{
-margot_compute_ipsi_probability(trans_matrix, deltas = c(2, 5, 10))
+margot_compute_ipsi_probability(
+  trans_matrix,
+  deltas = c(2, 5, 10),
+  direction = c("up", "down")
+)
 }
 \arguments{
 \item{trans_matrix}{A data frame containing at least a `"From / To"` column,
-a `"State 1"` column, and a `"Total"` column. Must include a row identified
-as `"State 0"` under `"From / To"`, representing non-attenders at the prior
-wave. You can pass either the raw data frame or the `knitr_kable` object
+the two state columns (`"State 0"`, `"State 1"`), and a `"Total"` column.
+You can pass either the raw data frame or the `knitr_kable` object
 returned inside `margot_transition_table(... )$tables[[i]]` (the function
 automatically reads the attached `table_data` attribute).}
 
-\item{deltas}{Numeric vector of IPSI shift magnitudes (greater than 1). The
-defaults match the standard IPSI reporting set `c(2, 5, 10)`.}
+\item{deltas}{Numeric vector of IPSI shift magnitudes (greater than 1),
+interpreted as in `lmtp::ipsi()` (risk ratio on the probability of not
+reaching the target state). The defaults match the standard IPSI
+reporting set `c(2, 5, 10)`.}
+
+\item{direction}{Either `"up"` (State 0 cohort moving to State 1; the
+default) or `"down"` (State 1 cohort moving to State 0).}
 }
 \value{
-A data frame with one row per delta containing the natural initiation
-  probability `p`, its exact 95% Clopper-Pearson confidence limits, the
-  counterfactual probability `p' = 1 - (1 - p) / delta`, and the fold increase
-  `p'/p`. The result carries a `counts` attribute with the raw initiation and
-  at-risk totals and the natural-probability interval used to compute `p`.
+A data frame with one row per delta containing the direction, the
+  natural transition probability `p`, its exact 95% Clopper-Pearson
+  confidence limits, the counterfactual probability
+  `p' = 1 - (1 - p) / delta`, and the fold increase `p'/p`. The result
+  carries a `counts` attribute with the raw event and at-risk totals
+  (`events`, `at_risk`; the legacy names `initiations` and `non_attenders`
+  are kept as aliases) and the natural-probability interval used to compute
+  `p`.
 }
 \description{
 Takes a formatted transition matrix (for example, one of the formatted tables
 produced by `margot_transition_table()` such as
 `transition_tables$tables_data[[i]]` or the paired `knitr_kable` stored under
-`transition_tables$tables[[i]]`) and computes the natural initiation
-probability for baseline non-attenders along with the counterfactual
-probabilities implied by marginal incremental propensity score interventions
-(IPSIs) for a set of proposed deltas.
+`transition_tables$tables[[i]]`) and computes the natural probability of
+moving to the target state along with the counterfactual probabilities
+implied by incremental propensity score interventions (IPSIs) for a set of
+proposed deltas.
+}
+\details{
+The delta here matches `lmtp::ipsi()`, which implements the risk-ratio
+incremental propensity score intervention: with probability \eqn{1 - 1/\delta}
+the intervention sets the exposure to the target state, and otherwise leaves
+the natural value. The counterfactual probability of the target state is
+therefore \eqn{p' = 1 - (1 - p)/\delta}: the natural probability of *not*
+reaching the target state is divided by \eqn{\delta}. This is not the
+odds-multiplier IPSI of Kennedy (2019), where \eqn{\delta} multiplies the
+odds of exposure; describe registered estimands accordingly.
+
+Direction selects the transition of interest. With `direction = "up"` (the
+default, matching earlier versions) the at-risk cohort is the `"State 0"`
+row and the event is arrival in `"State 1"` (initiation). With
+`direction = "down"` the at-risk cohort is the `"State 1"` row and the event
+is arrival in `"State 0"` — the natural reading for a contingency that
+raises the probability of the lower state among the upper-state cohort.
 }
 \examples{
 trans <- data.frame(
@@ -43,5 +71,6 @@ trans <- data.frame(
 )
 margot_compute_ipsi_probability(trans)
 margot_compute_ipsi_probability(trans, deltas = c(1.5, 3))
+margot_compute_ipsi_probability(trans, direction = "down")
 
 }
