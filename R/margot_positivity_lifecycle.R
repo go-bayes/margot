@@ -26,13 +26,19 @@ margot_positivity_deprecation_details <- function() {
 }
 
 # one deprecation warning per session for a soft-deprecated positivity wrapper.
-# `what` and `with` are the "fun()" specifications lifecycle takes.
-margot_deprecate_positivity <- function(what, with = NULL) {
+# `what` and `with` are the "fun()" specifications lifecycle takes. `user_env` is
+# the environment two frames up: this helper's caller is the deprecated wrapper,
+# and the wrapper's caller is the user. Without it lifecycle attributes the call
+# to margot itself and reports that the deprecated function is "likely used in the
+# margot package", which sends the user looking in the wrong file.
+margot_deprecate_positivity <- function(what, with = NULL,
+                                        user_env = rlang::caller_env(2)) {
   lifecycle::deprecate_warn(
     when = margot_positivity_deprecation_when,
     what = what,
     with = with,
-    details = margot_positivity_deprecation_details()
+    details = margot_positivity_deprecation_details(),
+    user_env = user_env
   )
   invisible(NULL)
 }

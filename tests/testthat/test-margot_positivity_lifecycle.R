@@ -204,3 +204,20 @@ test_that("a soft-deprecated wrapper warns once per session", {
   expect_length(second, 0L)
   clear_lifecycle_cache()
 })
+
+test_that("the deprecation warning attributes the call to the user, not to margot", {
+  clear_lifecycle_cache()
+  seen <- collect_deprecations(
+    margot_positivity_summary(make_run(), include_explanation = FALSE)
+  )
+  expect_length(seen, 1L)
+  # lifecycle adds "likely used in the <pkg> package" when the user environment it
+  # is handed belongs to the package that signalled. forwarding user_env keeps that
+  # sentence out of a warning the user provoked from the global environment.
+  expect_false(grepl("likely used in the margot package", seen[[1]], fixed = TRUE))
+  clear_lifecycle_cache()
+
+  # and the argument is forwarded rather than defaulted away
+  expect_true("user_env" %in% names(formals(margot_deprecate_positivity)))
+  clear_lifecycle_cache()
+})
