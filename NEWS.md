@@ -1,3 +1,71 @@
+# [2026-07-29] margot 1.1.013
+
+### Retired the positivity enforcement machinery
+
+The guide-architecture change of 29 July 2026 removed every traffic light,
+tolerance, retention profile, and override from the longitudinal modified
+treatment policy workflow. No `margot` function now computes a verdict from a
+constant, and no return value carries one. The registered workflow moves to the
+new `margot.lmtp` package, which `margot` suggests rather than imports.
+Backwards compatibility is preserved with warnings everywhere except the two
+defunct exports.
+
+#### Defunct
+- `margot_lmtp_positivity_gate()` is defunct. It implemented the retired trim
+  ladder, the effective-sample-size floor, and the product support band as a
+  mechanical pass/fail per policy and rung. Calling it errors with a condition
+  of class `margot_error_defunct` naming the `margot.lmtp` question-review
+  workflow. No registered study used it.
+- The internal `margot_positivity_support_status()` is defunct in the same way.
+  It emitted "Adequate", "Caution", or "Limited" at the retired 5% and 20%
+  boundaries.
+
+#### Removed arguments and fields
+- `margot_lmtp_positivity()` loses the `ess_warn`, `zero_warn`, and `tail_warn`
+  arguments and the `flags` return field. The descriptive by-wave and overall
+  summaries remain. Supplying a removed argument errors with a condition of
+  class `margot_error_removed_argument` rather than being ignored.
+- `margot_lmtp_overlap()` loses the `flags` return field and the
+  `test_thresholds` and `policy_rate_strict` arguments, with the same error on
+  a stale call. The summaries and plots remain.
+- `margot_positivity_summary()` (and its `margot_ipsi_summary()` alias) loses
+  its `support_status` and `verdict` columns, its compact `Support` column, and
+  the graded support screen entirely. The extended no-cutpoints ruling covers
+  estimand-selecting constants, so the 15% incremental propensity score
+  prevalence screen goes with it: the binarised-state prevalence and the share
+  outside the central band remain as reported quantities with no status
+  attached. `test_thresholds` still defines the reported band; `prod_frac_ok`
+  and `prod_frac_warn` are accepted and ignored.
+- `margot_interpret_lmtp_positivity()` loses the `support_status` column of its
+  `support_metrics` table and every graded verdict in its prose. Its IPSI
+  section becomes a candidate summary describing each registered delta; the
+  delta-selecting screen and the recommendation are gone.
+- `margot_report_lmtp_positivity()` loses its `flags` return field.
+
+#### Soft-deprecated
+Seven positivity-named wrappers keep working and warn once per session, pointing
+to the `margot.lmtp` reporting family: `margot_lmtp_positivity_report()`,
+`margot_positivity_report()`, `margot_positivity_report_single_model()`,
+`margot_positivity_summary()`, `margot_interpret_lmtp_positivity()`,
+`margot_interpret_lmtp_positivity_overview()`, and
+`margot_report_lmtp_positivity()`. They warn through one full release cycle
+after `margot.lmtp` ships and are removed the cycle after. Their verdict and
+status fields are removed now.
+
+### Added
+- `margot_lmtp()` gains a `seed` argument seeding every stochastic step: the RNG
+  at entry, each model fit, and the parallel streams.
+- `margot_lmtp()` gains an `estimator_spec` argument taking a sealed
+  `margot_lmtp_estimator_spec` object from `margot.lmtp`. The `lmtp` call is then
+  built from the sealed contract's `call_arguments`, and a conflicting user
+  argument errors with a condition of class
+  `margot_error_estimator_spec_conflict` naming the conflict. `margot_lmtp()`
+  remains the exploratory batch driver and is documented as outside the
+  registered workflow, which runs through `margot.lmtp::margot_lmtp_estimate()`.
+- `margot.lmtp` joins Suggests. Every path that needs it guards with
+  `requireNamespace()` and errors with class `margot_error_missing_dependency`
+  when it is absent.
+
 # [2026-07-16] margot 1.1.012
 
 ### Fixed
