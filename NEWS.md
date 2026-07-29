@@ -30,16 +30,19 @@ defunct exports.
   a stale call. The summaries and plots remain.
 - `margot_positivity_summary()` (and its `margot_ipsi_summary()` alias) loses
   its `support_status` and `verdict` columns, its compact `Support` column, and
-  the graded support screen entirely. The extended no-cutpoints ruling covers
-  estimand-selecting constants, so the 15% incremental propensity score
-  prevalence screen goes with it: the binarised-state prevalence and the share
-  outside the central band remain as reported quantities with no status
-  attached. `test_thresholds` still defines the reported band; `prod_frac_ok`
-  and `prod_frac_warn` are accepted and ignored.
+  the graded support screen entirely. That screen graded the combined share of
+  uncensored rows falling outside the central band at 5% and 20%, and both
+  constants are gone with it: the share outside the band and the binarised-state
+  prevalence remain as reported quantities with no status attached.
+  `test_thresholds` still defines the reported band; `prod_frac_ok` and
+  `prod_frac_warn` are accepted and ignored.
 - `margot_interpret_lmtp_positivity()` loses the `support_status` column of its
-  `support_metrics` table and every graded verdict in its prose. Its IPSI
-  section becomes a candidate summary describing each registered delta; the
-  delta-selecting screen and the recommendation are gone.
+  `support_metrics` table and every graded verdict in its prose. Its
+  `include_ipsi_recommend` argument and its "IPSI Recommendation" section go
+  with them. The extended no-cutpoints ruling covers estimand-selecting
+  constants, and recommending the largest delta whose share outside the band
+  cleared a constant selected the estimand. Its IPSI section becomes a candidate
+  summary describing each registered delta.
 - `margot_report_lmtp_positivity()` loses its `flags` return field.
 
 #### Soft-deprecated
