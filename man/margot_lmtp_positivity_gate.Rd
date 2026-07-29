@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_lmtp_positivity_gate.R
 \name{margot_lmtp_positivity_gate}
 \alias{margot_lmtp_positivity_gate}
-\title{Registered trim-ladder positivity gate for LMTP fits}
+\title{Registered trim-ladder positivity gate for LMTP fits (defunct)}
 \usage{
 margot_lmtp_positivity_gate(
   fit,
@@ -17,89 +17,30 @@ margot_lmtp_positivity_gate(
 )
 }
 \arguments{
-\item{fit}{A `margot_lmtp()` result, a single LMTP model exposing
-`$density_ratios`, or a list of such models (the same inputs as
-[margot_lmtp_weight_diag_from_fit()]).}
-
-\item{outcome}{Optional outcome name when `fit` is a full run.}
-
-\item{shifts}{Optional character vector of shifts to gate; defaults to
-all shifts stored for the outcome.}
-
-\item{rungs}{Numeric vector of trim rungs, evaluated in order; the
-first passing rung is selected (default `c(0.99, 0.98, 0.96)`).}
-
-\item{ess_floor}{Minimum acceptable ESS fraction of uncensored
-observations at every wave (default 0.5, matching
-[margot_lmtp_positivity()]'s `ess_warn`).}
-
-\item{trim_mass_budget}{Maximum acceptable share of total cumulative
-ratio mass removed by winsorising at the rung (default 0.05).}
-
-\item{test_thresholds}{Optional list of product-band thresholds
-(defaults: `prod_log10 = -1`, `prod_frac_ok = 0.05`,
-`prod_frac_warn = 0.20`), matching `margot_ipsi_summary()`.}
-
-\item{label_mapping}{Optional label mapping forwarded to
-[margot_lmtp_weight_diag_from_fit()].}
-
-\item{verbose}{If TRUE, prints one verdict line per policy.}
+\item{fit, outcome, shifts, rungs, ess_floor, trim_mass_budget, test_thresholds, label_mapping, verbose}{Retained for signature compatibility; the function errors before reading
+any of them.}
 }
 \value{
-A list with:
-  \item{by_rung}{data.frame with one row per outcome/shift/rung:
-    `min_ess_frac`, `trim_mass_share`, `prod_frac_outside`,
-    `support_status`, the three criterion flags, and `pass`.}
-  \item{selection}{data.frame with one row per outcome/shift:
-    `selected_rung` (NA when no rung passes) and a `verdict` string.}
-  \item{criteria}{list recording the thresholds the gate applied, for
-    citation in registration documents.}
+Nothing. The function always errors.
 }
 \description{
-Applies a pre-registered positivity decision rule to one or more LMTP
-fits across a descending ladder of trim rungs (default 0.99, 0.98,
-0.96), returning a mechanical pass/fail per policy and rung plus the
-selected rung. The gate exists so that trim selection can be cited in a
-registration and reproduced from code rather than exercised as analyst
-judgement.
+`margot_lmtp_positivity_gate()` implemented the retired trim ladder, the
+effective-sample-size floor, and the product support band as a mechanical
+pass/fail per policy and rung. The guide-architecture change of 29 July 2026
+retired that machinery: no `margot` function computes a traffic light, a
+tolerance, a retention profile, or an override, and no return value carries a
+verdict. The function is therefore defunct, and calling it errors with a
+condition of class `margot_error_defunct`. No registered study used it.
 }
 \details{
-Three criteria must hold at a rung for a policy to pass:
-\enumerate{
-  \item \strong{Effective sample size (variance side).} The Kish ESS of
-    the rung-winsorised cumulative weights (`ess_cum_trim` from
-    [margot_lmtp_weight_diag_from_fit()]) must be at least `ess_floor`
-    of the uncensored observations at every wave. Winsorising harder
-    homogenises weights, so this criterion can be rescued by descending
-    the ladder.
-  \item \strong{Trimmed mass (bias side).} Winsorising at the rung must
-    remove no more than `trim_mass_budget` of total cumulative ratio
-    mass at the final wave (`trim_mass_share`). Capping harder always
-    removes more mass, so descending the ladder can only worsen this
-    criterion: it is the pre-registered budget on how much distortion a
-    study will buy for stability.
-  \item \strong{Product support band.} The fraction of uncensored
-    cumulative ratio products outside the support band (default
-    \eqn{[0.1, 10]}) must not reach "Limited" status under the shared
-    support-status rule (`Adequate` at 5 percent outside or less,
-    `Caution` to 20 percent, `Limited` beyond). This criterion is
-    computed on the raw ratios and does not vary with the rung.
-}
-
-The two rung-dependent criteria move in opposite directions, which
-gives the ladder its logic: descend while the ESS criterion fails and
-the mass budget still holds; once the budget is breached (or the rungs
-are exhausted), the policy fails the gate and the registered
-contingency applies.
-}
-\examples{
-set.seed(2026)
-tame <- matrix(stats::runif(300, 0.8, 1.25), ncol = 3)
-fit <- list(density_ratios = tame)
-gate <- margot_lmtp_positivity_gate(fit, verbose = FALSE)
-gate$selection
-
+The replacement is the question-review workflow in the `margot.lmtp` package.
+There an author precommits expectations against a controlled vocabulary of
+report quantities, the density-ratio report prints those expectations beside
+their realised values, and the retain, revise, withdraw, or stop decision is
+recorded as a human judgement rather than derived from a constant.
 }
 \seealso{
-[margot_lmtp_weight_diag_from_fit()], [margot_lmtp_positivity()]
+[margot_lmtp_positivity()] for the descriptive density-ratio
+  summaries that remain.
 }
+\keyword{internal}

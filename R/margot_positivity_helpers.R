@@ -323,15 +323,14 @@ margot_positivity_product_metrics <- function(dr, cols, thresholds) {
   )
 }
 
+# defunct: emitted "Adequate", "Caution", or "Limited" at the retired 5% and 20%
+# boundaries. its callers now report the share outside the band and stop there.
 margot_positivity_support_status <- function(prod_frac_outside, thresholds) {
-  if (!is.finite(prod_frac_outside)) {
-    return("Unknown")
-  }
-  if (prod_frac_outside <= thresholds$prod_frac_ok) {
-    return("Adequate")
-  }
-  if (prod_frac_outside <= thresholds$prod_frac_warn) {
-    return("Caution")
-  }
-  "Limited"
+  margot_positivity_defunct(
+    what = "margot_positivity_support_status",
+    replacement = paste(
+      "Report `prod_frac_outside` directly, and precommit an expectation for it",
+      "with `margot.lmtp::margot_lmtp_expectations_spec()`."
+    )
+  )
 }
