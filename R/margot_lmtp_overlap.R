@@ -42,11 +42,17 @@
 #'   (e.g., `label_mapping`, `waves`, `remove_waves`, `include_methods`,
 #'   `include_diagnostics`). Unrecognised entries are silently ignored for
 #'   backward compatibility with deprecated arguments such as `save_plots`.
+#'   The retired arguments `test_thresholds` and `policy_rate_strict` error.
+#'
+#' @details
+#' **Descriptive outputs only.** The `flags` return field and the
+#' `test_thresholds` and `policy_rate_strict` arguments were removed with the
+#' retired enforcement machinery. Supplying either retired argument errors with
+#' a condition of class `margot_error_removed_argument`.
 #'
 #' @return A list with:
-#'   - overlap_summary: tibble combining by-wave and overall positivity/overlap metrics
+#'   - overlap_summary: tibble combining by-wave and overall density-ratio metrics
 #'   - ratio_plots: list of ggplot objects (if plot = TRUE)
-#'   - flags: tibble of positivity flags
 #'   - text_summary: markdown-ready prose from `margot_interpret_lmtp_positivity()`
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_histogram labs theme_classic theme_minimal theme_bw theme_gray theme_light theme_dark theme_void
@@ -69,12 +75,22 @@ margot_lmtp_overlap <- function(x,
                                 xlim = NULL,
                                 ...) {
 
-  # compute positivity/overlap summaries
+  # the retired threshold arguments arrive through `...`; refuse them loudly
+  dots <- list(...)
+  retired <- intersect(c("test_thresholds", "policy_rate_strict"), names(dots) %||% character())
+  if (length(retired)) {
+    margot_stop_removed_arguments(
+      dots = dots[retired],
+      removed = c("test_thresholds", "policy_rate_strict"),
+      what = "margot_lmtp_overlap"
+    )
+  }
+
+  # compute density-ratio summaries
   pos <- margot_lmtp_positivity(x, digits = digits, verbose = verbose)
 
   by_wave <- pos$by_wave
   overall <- pos$overall
-  flags   <- pos$flags
 
   color_by <- match.arg(color_by)
   if (!is.null(color_by_wave)) {
@@ -95,21 +111,17 @@ margot_lmtp_overlap <- function(x,
   }
   by_wave <- clean_shift(by_wave)
   overall <- clean_shift(overall)
-  flags   <- clean_shift(flags)
 
   # Filter by requested outcomes/shifts
   if (!is.null(outcomes)) {
     by_wave <- by_wave[by_wave$outcome %in% outcomes, , drop = FALSE]
     overall <- overall[overall$outcome %in% outcomes, , drop = FALSE]
-    flags   <- flags[flags$outcome %in% outcomes, , drop = FALSE]
   }
   if (!is.null(shifts)) {
     keep_by <- by_wave$shift %in% shifts | by_wave$shift_clean %in% shifts
     keep_ov <- overall$shift %in% shifts | overall$shift_clean %in% shifts
-    keep_fl <- flags$shift %in% shifts | flags$shift_clean %in% shifts
     by_wave <- by_wave[keep_by, , drop = FALSE]
     overall <- overall[keep_ov, , drop = FALSE]
-    flags   <- flags[keep_fl, , drop = FALSE]
   }
 
   by_wave$type <- "by_wave"
@@ -355,7 +367,6 @@ margot_lmtp_overlap <- function(x,
   }
 
   # Text summary assembled via margot_interpret_lmtp_positivity()
-  dots <- list(...)
   allowed_opts <- c(
     "label_mapping",
     "waves",
@@ -369,11 +380,9 @@ margot_lmtp_overlap <- function(x,
     "ipsi_example_g",
     "include_policy_rates",
     "policy_rate_threshold",
-    "policy_rate_strict",
     "include_deterministic_context",
-    # New testing and IPSI recommendation options
+    # descriptive summary sections
     "include_tests",
-    "test_thresholds",
     "include_ipsi_recommend",
     "include_test_explanations"
   )
@@ -429,7 +438,6 @@ margot_lmtp_overlap <- function(x,
   list(
     overlap_summary = overlap_summary,
     ratio_plots = ratio_plots,
-    flags = flags,
     text_summary = text_summary
   )
 }

@@ -71,13 +71,13 @@ the dotted line (default `1`). On the log10 scale this is plotted at
 `margot_interpret_lmtp_positivity()` when assembling the text summary
 (e.g., `label_mapping`, `waves`, `remove_waves`, `include_methods`,
 `include_diagnostics`). Unrecognised entries are silently ignored for
-backward compatibility with deprecated arguments such as `save_plots`.}
+backward compatibility with deprecated arguments such as `save_plots`.
+The retired arguments `test_thresholds` and `policy_rate_strict` error.}
 }
 \value{
 A list with:
-  - overlap_summary: tibble combining by-wave and overall positivity/overlap metrics
+  - overlap_summary: tibble combining by-wave and overall density-ratio metrics
   - ratio_plots: list of ggplot objects (if plot = TRUE)
-  - flags: tibble of positivity flags
   - text_summary: markdown-ready prose from `margot_interpret_lmtp_positivity()`
 }
 \description{
@@ -91,4 +91,10 @@ plots of the density-ratio distributions by wave and shift.
 dropout/censoring rather than treatment positivity violations. The censoring
 rate (proportion r = 0) is reported in plot titles and summaries. Use
 `show_censored = TRUE` to include zeros in histograms (shown as a bar at r = 0).
+
+
+**Descriptive outputs only.** The `flags` return field and the
+`test_thresholds` and `policy_rate_strict` arguments were removed with the
+retired enforcement machinery. Supplying either retired argument errors with
+a condition of class `margot_error_removed_argument`.
 }
