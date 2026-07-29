@@ -1,6 +1,8 @@
 # margot_lmtp() built from a sealed margot.lmtp estimator contract. the sealed
 # object is a fixture: constructing a real one drives the whole margot.lmtp
-# workflow, and this test asserts the bridge, not the sealing.
+# workflow, and this test asserts the bridge, not the sealing. The fixture is
+# sealed the way margot.lmtp seals, because the bridge re-verifies the content
+# hash on entry and a fixture carrying an invented hash would be refused.
 
 fixture_spec <- function(seed = 20260714L,
                          profile = "glm",
@@ -8,33 +10,49 @@ fixture_spec <- function(seed = 20260714L,
                            list(arm_id = "null", mtp = FALSE, engine_class = "static"),
                            list(arm_id = "shift_up", mtp = TRUE, engine_class = "mtp")
                          )) {
-  structure(
+  seal_fixture(
     list(
-      content_hash = "fixture",
-      payload = list(
-        question_id = "q1",
-        estimator = "lmtp::lmtp_sdr",
-        call_arguments = list(
-          trt = c("t0_a", "t1_a"),
-          baseline = c("b1", "b2"),
-          time_vary = list("t0_l", "t1_l"),
-          cens = c("t0_c", "t1_c"),
-          compete = NULL,
-          outcome = "t2_y",
-          outcome_type = "continuous",
-          id = "id",
-          folds = 5L,
-          bounds = NULL
-        ),
-        arms = arms,
-        contrast = c("shift_up", "null"),
-        seed = seed,
-        trim = 0.999,
-        learner_profile = profile
-      )
+      question_id = "q1",
+      estimator = "lmtp::lmtp_sdr",
+      call_arguments = list(
+        trt = c("t0_a", "t1_a"),
+        baseline = c("b1", "b2"),
+        time_vary = list("t0_l", "t1_l"),
+        cens = c("t0_c", "t1_c"),
+        compete = NULL,
+        outcome = "t2_y",
+        outcome_type = "continuous",
+        id = "id",
+        folds = 5L,
+        bounds = NULL
+      ),
+      arms = arms,
+      contrast = c("shift_up", "null"),
+      seed = seed,
+      trim = 0.999,
+      learner_profile = profile
+    )
+  )
+}
+
+# a sealed object whose content hash is the hash margot.lmtp would have computed
+# for it, so that the bridge's seal verification accepts it
+seal_fixture <- function(payload) {
+  seal <- structure(
+    list(
+      object_type = "estimator_spec",
+      schema_version = "0",
+      payload = payload,
+      parents = character(0),
+      content_hash = "fixture"
     ),
     class = c("margot_lmtp_estimator_spec", "margot_seal", "list")
   )
+  if (requireNamespace("margot.lmtp", quietly = TRUE)) {
+    seal$schema_version <- margot.lmtp::margot_lmtp_schema_version()
+    seal$content_hash <- margot.lmtp:::seal_content_hash(seal)
+  }
+  seal
 }
 
 shift_up <- function(data, trt) data[[trt]] + 1
@@ -146,6 +164,82 @@ test_that("every conflicting user argument errors and names the conflict", {
     )
     expect_s3_class(err, "margot_error_estimator_spec_conflict")
     expect_match(conditionMessage(err), nm, info = nm)
+  }
+})
+
+test_that("an lmtp_defaults entry outside the sealed set is named, not discarded", {
+  local_mocked_bindings(has_margot_lmtp = function() TRUE)
+  arms <- list(null = NULL, shift_up = shift_up)
+
+  # `k` is not an argument the seal fixes, so the derived list would drop it in
+  # silence and the fit would run without the setting the caller asked for
+  err <- tryCatch(
+    margot_lmtp_args_from_spec(
+      fixture_spec(), NULL, NULL, list(k = 1L), lmtp::lmtp_sdr, NULL, arms, character()
+    ),
+    margot_error_estimator_spec_conflict = function(e) e
+  )
+  expect_s3_class(err, "margot_error_estimator_spec_conflict")
+  expect_match(conditionMessage(err), "k")
+
+  # an unnamed entry is named as such rather than passing unnoticed
+  expect_error(
+    margot_lmtp_args_from_spec(
+      fixture_spec(), NULL, NULL, list(1L), lmtp::lmtp_sdr, NULL, arms, character()
+    ),
+    class = "margot_error_estimator_spec_conflict"
+  )
+
+  # a sealed argument and an unsealed one arrive in the same condition
+  err <- tryCatch(
+    margot_lmtp_args_from_spec(
+      fixture_spec(), NULL, NULL, list(folds = 2L, k = 1L), lmtp::lmtp_sdr, NULL,
+      arms, character()
+    ),
+    margot_error_estimator_spec_conflict = function(e) e
+  )
+  expect_match(conditionMessage(err), "folds")
+  expect_match(conditionMessage(err), "k")
+
+  # and an empty list still builds the call
+  expect_type(
+    margot_lmtp_args_from_spec(
+      fixture_spec(), NULL, NULL, list(), lmtp::lmtp_sdr, NULL, arms, character()
+    ),
+    "list"
+  )
+})
+
+test_that("the bridge re-verifies the seal and refuses a doctored payload", {
+  skip_if_not_installed("margot.lmtp")
+  local_mocked_bindings(has_margot_lmtp = function() TRUE)
+  arms <- list(null = NULL, shift_up = shift_up)
+
+  doctored <- fixture_spec()
+  doctored$payload$seed <- 999L
+  expect_error(
+    margot_lmtp_args_from_spec(
+      doctored, NULL, NULL, list(), lmtp::lmtp_sdr, NULL, arms, character()
+    ),
+    class = "margot_error_hash_mismatch"
+  )
+
+  doctored <- fixture_spec()
+  doctored$payload$call_arguments$outcome <- "hacked"
+  expect_error(
+    margot_lmtp_args_from_spec(
+      doctored, NULL, NULL, list(), lmtp::lmtp_sdr, NULL, arms, character()
+    ),
+    class = "margot_error_hash_mismatch"
+  )
+})
+
+test_that("the learner mapping is margot.lmtp's, not a mirrored copy", {
+  skip_if_not_installed("margot.lmtp")
+  for (profile in c("glm", "ensemble")) {
+    expect_identical(
+      margot_lmtp_spec_learners(profile), margot.lmtp::lmtp_learner_library(profile)
+    )
   }
 })
 

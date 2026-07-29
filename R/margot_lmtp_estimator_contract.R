@@ -4,32 +4,64 @@
 # than being silently overridden.
 
 # the SuperLearner library each sealed learner profile names, in the form lmtp
-# takes. mirrors margot.lmtp::lmtp_learner_library().
+# takes. read from margot.lmtp rather than mirrored here: a mirrored copy drifts
+# silently, and a study's estimation then runs under learners its contract did
+# not seal. the caller has already established that margot.lmtp is installed.
 margot_lmtp_spec_learners <- function(profile, call = rlang::caller_env()) {
-  switch(
-    profile,
-    ensemble = c("SL.mean", "SL.ranger", "SL.xgboost", "SL.glmnet"),
-    glm = "SL.glm",
+  library <- tryCatch(
+    margot.lmtp::lmtp_learner_library(profile),
+    error = function(e) e
+  )
+  if (inherits(library, "condition")) {
     cli::cli_abort(
       c(
         "No {.pkg lmtp} learner library is registered for profile {.val {profile}}.",
-        "i" = "The sealed profiles are {.val ensemble} and {.val glm}."
+        "i" = "The sealed profiles are {.val ensemble} and {.val glm}.",
+        "i" = "The mapping comes from {.fn margot.lmtp::lmtp_learner_library}."
       ),
       class = "margot_error_invalid_input",
       call = call
     )
+  }
+  library
+}
+
+# re-verifies the seal on entry, so a sealed object edited between sealing and use
+# is refused here rather than read. the class vector alone proves nothing.
+margot_lmtp_spec_verify <- function(estimator_spec, call = rlang::caller_env()) {
+  verify <- tryCatch(
+    utils::getFromNamespace("margot_lmtp_verify_seal", "margot.lmtp"),
+    error = function(e) NULL
   )
+  if (is.function(verify)) {
+    verify(estimator_spec, "estimator_spec")
+  }
+  invisible(estimator_spec)
 }
 
 # errors naming the arguments the caller supplied that the sealed contract
-# already fixes
-margot_lmtp_spec_conflict <- function(conflicts, call = rlang::caller_env()) {
+# already fixes, and the `lmtp_defaults` entries the contract does not fix and
+# would otherwise discard in silence
+margot_lmtp_spec_conflict <- function(conflicts = character(),
+                                      discarded = character(),
+                                      call = rlang::caller_env()) {
+  bullets <- character()
+  if (length(conflicts)) {
+    bullets <- c(bullets, "x" = paste0(
+      "Already fixed by the seal: ",
+      paste(paste0("`", conflicts, "`"), collapse = ", "), "."
+    ))
+  }
+  if (length(discarded)) {
+    bullets <- c(bullets, "x" = paste0(
+      "Named in `lmtp_defaults` and not part of the sealed call: ",
+      paste(paste0("`", discarded, "`"), collapse = ", "), "."
+    ))
+  }
   cli::cli_abort(
     c(
-      "The sealed estimator contract already fixes these arguments.",
-      "x" = paste0(
-        "Conflicting: ", paste(paste0("`", conflicts, "`"), collapse = ", "), "."
-      ),
+      "The sealed estimator contract builds the whole `lmtp` call.",
+      bullets,
       "i" = paste(
         "Drop them and let `estimator_spec` supply them, or reseal the contract",
         "with `margot.lmtp::margot_lmtp_estimator_spec()`."
@@ -88,6 +120,7 @@ margot_lmtp_args_from_spec <- function(estimator_spec,
       call = call
     )
   }
+  margot_lmtp_spec_verify(estimator_spec, call = call)
   payload <- estimator_spec$payload
   arguments <- payload$call_arguments
   if (!is.list(arguments) || is.null(arguments$trt) || is.null(arguments$outcome)) {
@@ -115,7 +148,16 @@ margot_lmtp_args_from_spec <- function(estimator_spec,
       !identical(as.character(outcome_vars), as.character(arguments$outcome))) {
     conflicts <- c(conflicts, "outcome_vars")
   }
-  conflicts <- c(conflicts, intersect(sealed_defaults, names(lmtp_defaults)))
+  # the derived `lmtp_defaults` list is built from the seal alone, so every entry
+  # the caller names is either one the seal already fixes or one the derived list
+  # would drop on the floor. neither may pass in silence.
+  supplied_defaults <- names(lmtp_defaults) %||% character()
+  supplied_defaults <- supplied_defaults[nzchar(supplied_defaults)]
+  if (length(lmtp_defaults) > length(supplied_defaults)) {
+    supplied_defaults <- c(supplied_defaults, "<unnamed>")
+  }
+  conflicts <- c(conflicts, intersect(sealed_defaults, supplied_defaults))
+  discarded <- setdiff(supplied_defaults, sealed_defaults)
   if ("lmtp_model_type" %in% supplied &&
       !identical(lmtp_model_type, lmtp::lmtp_sdr)) {
     conflicts <- c(conflicts, "lmtp_model_type")
@@ -127,8 +169,8 @@ margot_lmtp_args_from_spec <- function(estimator_spec,
   if ("include_null_shift" %in% supplied && !("null" %in% arm_ids)) {
     conflicts <- c(conflicts, "include_null_shift")
   }
-  if (length(conflicts)) {
-    margot_lmtp_spec_conflict(unique(conflicts), call = call)
+  if (length(conflicts) || length(discarded)) {
+    margot_lmtp_spec_conflict(unique(conflicts), unique(discarded), call = call)
   }
   if (!length(shift_functions) || !setequal(names(shift_functions), arm_ids)) {
     cli::cli_abort(

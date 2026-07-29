@@ -45,7 +45,7 @@ margot_lmtp(
 
 \item{contrast_scale}{Scale for contrasts: "additive", "rr", or "or". Default is "additive".}
 
-\item{lmtp_defaults}{A list of default parameters for the LMTP models.}
+\item{lmtp_defaults}{A list of default parameters for the LMTP models. Must be empty when `estimator_spec` is supplied, which builds the whole list from the seal.}
 
 \item{n_cores}{Total number of CPU cores to budget for the batch run. Default is detectCores() - 1 (includes efficiency cores on Apple Silicon, so set manually if you want to cap at performance cores).}
 
@@ -112,9 +112,21 @@ baseline and time-varying covariates, the censoring and competing-event
 indicators, the outcome and its model, the identifier, the folds, the bounds,
 the registered learner library, and the sealed cap — and any conflicting user
 argument errors with a condition of class
-`margot_error_estimator_spec_conflict` that names the conflict. `margot` only
-suggests `margot.lmtp`; supplying `estimator_spec` without it installed errors
-with class `margot_error_missing_dependency`.
+`margot_error_estimator_spec_conflict` that names the conflict. The contract
+supplies the whole `lmtp_defaults` list, so any entry supplied alongside it —
+one the seal fixes, or one the derived list would drop — raises that condition
+rather than passing in silence. The seal itself is re-verified on entry with
+`margot.lmtp::margot_lmtp_verify_seal()`, so a sealed object edited between
+sealing and use is refused. `margot` only suggests `margot.lmtp`; supplying
+`estimator_spec` without it installed errors with class
+`margot_error_missing_dependency`.
+
+The design-stage `seed`, `folds`, and `learner_profile` sealed on
+`margot.lmtp::margot_lmtp_preassessment_manifest()` and the estimation-stage
+`seed`, `folds`, and `learner_profile` sealed on
+`margot.lmtp::margot_lmtp_estimator_spec()` are independent contracts with no
+inheritance: neither stage reads the other's settings, and `estimator_spec`
+supplies this function with the estimation-stage settings alone.
 }
 
 \examples{

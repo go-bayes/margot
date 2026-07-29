@@ -17,9 +17,21 @@
 #' indicators, the outcome and its model, the identifier, the folds, the bounds,
 #' the registered learner library, and the sealed cap — and any conflicting user
 #' argument errors with a condition of class
-#' `margot_error_estimator_spec_conflict` that names the conflict. `margot` only
-#' suggests `margot.lmtp`; supplying `estimator_spec` without it installed errors
-#' with class `margot_error_missing_dependency`.
+#' `margot_error_estimator_spec_conflict` that names the conflict. The contract
+#' supplies the whole `lmtp_defaults` list, so any entry supplied alongside it —
+#' one the seal fixes, or one the derived list would drop — raises that condition
+#' rather than passing in silence. The seal itself is re-verified on entry with
+#' `margot.lmtp::margot_lmtp_verify_seal()`, so a sealed object edited between
+#' sealing and use is refused. `margot` only suggests `margot.lmtp`; supplying
+#' `estimator_spec` without it installed errors with class
+#' `margot_error_missing_dependency`.
+#'
+#' The design-stage `seed`, `folds`, and `learner_profile` sealed on
+#' `margot.lmtp::margot_lmtp_preassessment_manifest()` and the estimation-stage
+#' `seed`, `folds`, and `learner_profile` sealed on
+#' `margot.lmtp::margot_lmtp_estimator_spec()` are independent contracts with no
+#' inheritance: neither stage reads the other's settings, and `estimator_spec`
+#' supplies this function with the estimation-stage settings alone.
 #'
 #' @details
 #' For very large datasets or models with many time points, parallel processing may not improve performance
@@ -36,7 +48,7 @@
 #' @param lmtp_model_type The LMTP model function to use. Default is lmtp_tmle.
 #' @param contrast_type Type of contrasts to compute: "pairwise" or "null". Default is "pairwise".
 #' @param contrast_scale Scale for contrasts: "additive", "rr", or "or". Default is "additive".
-#' @param lmtp_defaults A list of default parameters for the LMTP models.
+#' @param lmtp_defaults A list of default parameters for the LMTP models. Must be empty when `estimator_spec` is supplied, which builds the whole list from the seal.
 #' @param n_cores Total number of CPU cores to budget for the batch run. Default is detectCores() - 1 (includes efficiency cores on Apple Silicon, so set manually if you want to cap at performance cores).
 #' @param models_in_parallel Optional cap on how many LMTP models to run at once. Defaults to floor(n_cores / cv_workers).
 #' @param cv_workers Number of workers consumed internally by each LMTP fit (usually the cross-validation folds). Defaults to future::nbrOfWorkers().
