@@ -101,12 +101,19 @@ A named list with elements:
   - `metadata`: list of context (outcome, shifts, waves, thresholds).
 }
 \description{
-Bundles the per-shift diagnostics, compact summary table, interpretive text,
-overlap plot, and a ready-to-drop-in methods paragraph into a single object.
-Designed to streamline Quarto sections where you want consistent reporting
-across multiple shift functions.
+`r lifecycle::badge("deprecated")`
 
 Convenience wrapper that accepts a single LMTP fit (exposing
 `$density_ratios`) and forwards it to [margot_positivity_report()] after
 coercing it into the expected nested structure.
+}
+\details{
+`margot_positivity_report()` is soft-deprecated in favour of the `margot.lmtp`
+reporting family. It keeps working and warns once per session. Its verdict and
+status fields were removed with the retired enforcement machinery.
+
+Bundles the per-shift diagnostics, compact summary table, interpretive text,
+overlap plot, and a ready-to-drop-in methods paragraph into a single object.
+Designed to streamline Quarto sections where you want consistent reporting
+across multiple shift functions.
 }

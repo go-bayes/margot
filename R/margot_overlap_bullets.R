@@ -1,5 +1,14 @@
 #' Interpret LMTP positivity via effective sample sizes
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `margot_interpret_lmtp_positivity()` is soft-deprecated in favour of the
+#' `margot.lmtp` reporting family. It keeps working and warns once per session.
+#' Its `support_status` column and every graded verdict in its prose were
+#' removed with the retired enforcement machinery: the share of cumulative
+#' ratios outside the central band is reported, and no constant converts it into
+#' a status.
+#'
 #' Builds a concise textual summary of LMTP density-ratio diagnostics for a
 #' single outcome. For each requested shift, the function computes effective
 #' sample sizes (ESS) by wave and for the pooled person-time using
@@ -58,14 +67,16 @@
 #' @param include_tests Logical; if TRUE, runs extra overlap/positivity checks and prints
 #'   CLI messages summarising results (near‑zero uniform weights, product‑of‑r collapse,
 #'   monotone support checks). Default TRUE.
-#' @param test_thresholds Named list of thresholds for `include_tests`.
-#'   Recognised names: `near_zero_median` (default 1e-3), `near_zero_cv` (0.05),
-#'   `prod_log10` (-1, corresponding to the central band `[0.1, 10]`),
-#'   `prod_frac_ok` (0.05), and `prod_frac_warn` (0.20). Unrecognised entries
-#'   are ignored.
-#' @param include_ipsi_recommend Logical; if TRUE and IPSI shifts are present, evaluates candidate
-#'   deltas using the same tests and prints a recommendation for the largest delta that passes
-#'   guardrails. Also adds an "IPSI Recommendation" section to the returned text. Default TRUE.
+#' @param test_thresholds Named list controlling the reported band and the
+#'   near-zero flag. Recognised names: `near_zero_median` (default 1e-3),
+#'   `near_zero_cv` (0.05), and `prod_log10` (-1, corresponding to the central
+#'   band `[0.1, 10]`). `prod_frac_ok` and `prod_frac_warn` are accepted for
+#'   backward compatibility and ignored; they drove the removed support screen.
+#'   Unrecognised entries are ignored.
+#' @param include_ipsi_recommend Logical; if TRUE and IPSI shifts are present, adds an
+#'   "IPSI Candidate Summary" section describing each registered delta. No delta is
+#'   recommended: the delta-selecting screen was removed, and the registered contrast
+#'   is chosen in the study registration. Default TRUE.
 #' @param include_test_explanations Logical; if TRUE, adds a short "Test Explanations" section that
 #'   explains near‑zero flags, the product‑of‑r summary, and how censoring is handled via IPCW. Default FALSE.
 #' @param output_style Character; `"report"` (default) returns the existing
@@ -167,6 +178,10 @@ margot_interpret_lmtp_positivity <- function(x,
                                              include_test_explanations = FALSE,
                                              output_style = c("report", "manuscript"),
                                              return = c("text", "list")) {
+  margot_deprecate_positivity(
+    what = "margot_interpret_lmtp_positivity()",
+    with = "margot.lmtp::margot_lmtp_ratio_report()"
+  )
   if (!is.null(outcome)) stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
   if (!is.null(waves)) stopifnot(is.numeric(waves))
@@ -366,7 +381,7 @@ margot_interpret_lmtp_positivity <- function(x,
         "Product-of-r across waves: the SDR/TMLE estimator reweights by the product of per-wave ratios along observed histories. ",
         "We report (i) % zero including censoring (IPCW sets censored rows to zero weight), and (ii) among uncensored rows, ",
         "the fraction below ", band_strings$lower_label, " and above ", band_strings$upper_label,
-        ". The combined share outside ", band_strings$interval_label, " is a practical support screen."
+        ". The combined share outside ", band_strings$interval_label, " is reported as a quantity, not graded."
       ),
       "Censoring adjustment (IPCW): zeros in density-ratio columns primarily reflect censoring. We up-weight by inverse censoring probability to target the baseline cohort; high % zeros quantifies censoring burden rather than a treatment-positivity violation."
     )
@@ -715,8 +730,7 @@ margot_interpret_lmtp_positivity <- function(x,
       prop_zero_prod = prod_metrics$prop_zero_prod,
       frac_below = prod_metrics$prod_frac_below,
       frac_above = prod_metrics$prod_frac_above,
-      frac_outside = prod_metrics$prod_frac_outside,
-      support_status = margot_positivity_support_status(prod_metrics$prod_frac_outside, thr)
+      frac_outside = prod_metrics$prod_frac_outside
     )
   }
   metrics <- lapply(names(shift_results), compute_metrics)
@@ -735,7 +749,6 @@ margot_interpret_lmtp_positivity <- function(x,
     prod_frac_below_pct = vapply(names(shift_results), function(nm) 100 * metrics[[nm]]$frac_below, numeric(1)),
     prod_frac_above_pct = vapply(names(shift_results), function(nm) 100 * metrics[[nm]]$frac_above, numeric(1)),
     prod_frac_outside_pct = vapply(names(shift_results), function(nm) 100 * metrics[[nm]]$frac_outside, numeric(1)),
-    support_status = vapply(names(shift_results), function(nm) metrics[[nm]]$support_status, character(1)),
     ess_cum_raw = vapply(shift_results, get_overall_num, numeric(1), column = "ess_cum_raw"),
     ess_pos_frac_pt = vapply(shift_results, get_overall_num, numeric(1), column = "ess_pos_frac_pt"),
     stringsAsFactors = FALSE
@@ -769,25 +782,15 @@ margot_interpret_lmtp_positivity <- function(x,
       frac_below <- metrics[[nm]]$frac_below
       frac_above <- metrics[[nm]]$frac_above
       frac_outside <- metrics[[nm]]$frac_outside
-      support_status <- metrics[[nm]]$support_status
+      # descriptive only: the share outside the band is reported, never graded
       if (requireNamespace("cli", quietly = TRUE)) {
-        if (is.finite(frac_outside) && frac_outside > thr$prod_frac_warn) {
-          cli::cli_alert_warning(paste0(
-            "Product-of-r support strain (outcome={outcome}, shift={nm}): ",
-            "{round(100*frac_outside,1)}% of uncensored rows fall outside ",
-            "{band_strings$interval_label} ",
-            "(low={round(100*frac_below,1)}%, high={round(100*frac_above,1)}%); ",
-            "{round(100*prop_zero_prod,1)}% collapse to zero including censoring."
-          ))
-        } else {
-          cli::cli_alert_info(paste0(
-            "Product-of-r summary (outcome={outcome}, shift={nm}): ",
-            "{round(100*prop_zero_prod,1)}% zero (with censoring); ",
-            "{round(100*frac_below,1)}% below {band_strings$lower_label}; ",
-            "{round(100*frac_above,1)}% above {band_strings$upper_label}; ",
-            "support={support_status}."
-          ))
-        }
+        cli::cli_alert_info(paste0(
+          "Product-of-r summary (outcome={outcome}, shift={nm}): ",
+          "{round(100*prop_zero_prod,1)}% zero (with censoring); ",
+          "{round(100*frac_below,1)}% below {band_strings$lower_label}; ",
+          "{round(100*frac_above,1)}% above {band_strings$upper_label}; ",
+          "{round(100*frac_outside,1)}% outside {band_strings$interval_label}."
+        ))
       }
       tests_section <- c(
         tests_section,
@@ -796,7 +799,7 @@ margot_interpret_lmtp_positivity <- function(x,
           round(100 * prop_zero_prod, 1), "% zero (with censoring); ",
           round(100 * frac_below, 1), "% < ", band_strings$lower_label, "; ",
           round(100 * frac_above, 1), "% > ", band_strings$upper_label, "; ",
-          "support = ", support_status
+          round(100 * frac_outside, 1), "% outside ", band_strings$interval_label
         )
       )
     }
@@ -839,35 +842,9 @@ margot_interpret_lmtp_positivity <- function(x,
       frac_outside_vec <- vapply(ipsi_names, function(nm) metrics[[nm]]$frac_outside, numeric(1))
       prop_zero_vec <- vapply(ipsi_names, function(nm) metrics[[nm]]$prop_zero_prod, numeric(1))
       near_zero_ct <- vapply(ipsi_names, function(nm) length(metrics[[nm]]$near_zero), integer(1))
-      support_vec <- vapply(ipsi_names, function(nm) metrics[[nm]]$support_status, character(1))
-      passes <- is.finite(frac_outside_vec) & (frac_outside_vec <= thr$prod_frac_warn)
-      rec_idx <- NA_integer_
-      if (any(passes, na.rm = TRUE)) {
-        idx_pass <- which(passes)
-        rec_idx <- idx_pass[which.max(deltas[idx_pass])]
-      } else if (any(is.finite(frac_outside_vec))) {
-        min_val <- min(frac_outside_vec[is.finite(frac_outside_vec)], na.rm = TRUE)
-        cand <- which(is.finite(frac_outside_vec) & frac_outside_vec == min_val)
-        rec_idx <- cand[which.min(deltas[cand])]
-      }
-      if (is.finite(rec_idx) && !is.na(rec_idx)) {
-        rec_name <- ipsi_names[rec_idx]
-        rec_delta <- deltas[rec_idx]
-        rec_pass <- passes[rec_idx]
-        rec_msg <- if (rec_pass) {
-          paste0(
-            "Recommended delta = ", rec_delta, " (", map_shift_label(rec_name), ") with ",
-            round(100 * frac_outside_vec[rec_idx], 1), "% outside ",
-            band_strings$interval_label, "."
-          )
-        } else {
-          paste0(
-            "No candidate meets the reporting screen; choose delta = ", rec_delta,
-            " (", map_shift_label(rec_name), ") with the smallest share outside ",
-            band_strings$interval_label, "."
-          )
-        }
-        if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info(rec_msg)
+      # the delta-selecting screen is removed: each candidate is described, and
+      # the choice of delta is registered rather than derived from a constant
+      if (any(is.finite(frac_outside_vec))) {
         ipsi_lines <- character(0)
         for (k in order(deltas)) {
           ipsi_lines <- c(
@@ -877,12 +854,20 @@ margot_interpret_lmtp_positivity <- function(x,
               round(100 * prop_zero_vec[k], 1), "% zero; ",
               round(100 * frac_below_vec[k], 1), "% < ", band_strings$lower_label, "; ",
               round(100 * frac_above_vec[k], 1), "% > ", band_strings$upper_label, "; ",
-              "support = ", support_vec[k],
+              round(100 * frac_outside_vec[k], 1), "% outside ", band_strings$interval_label,
               "; near-zero flags = ", near_zero_ct[k]
             )
           )
         }
-        ipsi_recommend_section <- c("## IPSI Recommendation", rec_msg, "", ipsi_lines)
+        ipsi_recommend_section <- c(
+          "## IPSI Candidate Summary",
+          paste0(
+            "Each registered delta is described below. No constant selects a delta; ",
+            "the registered contrast is chosen in the study registration."
+          ),
+          "",
+          ipsi_lines
+        )
       }
     }
   }
@@ -1120,13 +1105,6 @@ margot_interpret_lmtp_positivity <- function(x,
           band_strings$interval_label
         ))
       }
-      descriptor <- switch(
-        row$support_status,
-        Adequate = "adequate support",
-        Caution = "some support strain",
-        Limited = "marked support strain",
-        "uncertain support"
-      )
       driver <- ""
       if (is.finite(row$prod_frac_below_pct) && is.finite(row$prod_frac_above_pct)) {
         if (row$prod_frac_below_pct > row$prod_frac_above_pct + 0.1) {
@@ -1150,8 +1128,8 @@ margot_interpret_lmtp_positivity <- function(x,
         }
       }
       paste0(
-        row$shift_label, " showed ", descriptor,
-        " with ", fmt_pct(row$prod_frac_outside_pct),
+        row$shift_label, " had ",
+        fmt_pct(row$prod_frac_outside_pct),
         " outside ", band_strings$interval_label,
         driver
       )
@@ -1170,51 +1148,26 @@ margot_interpret_lmtp_positivity <- function(x,
     precision_bits <- precision_bits[nzchar(precision_bits)]
     precision_sentence <- if (length(precision_bits)) {
       paste0(
-        "Precision showed the same pattern, with final cumulative ESS of ",
+        "Final cumulative ESS was ",
         collapse_phrases(precision_bits), "."
       )
     } else {
       ""
     }
 
-    limited_labels <- support_df$shift_label[
-      support_df$support_status == "Limited" & support_df$shift_clean != "null"
-    ]
-    caution_labels <- support_df$shift_label[
-      support_df$support_status == "Caution" & support_df$shift_clean != "null"
-    ]
-    conclusion_sentence <- if (length(limited_labels)) {
-      out <- paste0(
-        "These diagnostics suggest that estimates under ",
-        collapse_phrases(limited_labels),
-        " rely heavily on extrapolation."
-      )
-      if (length(caution_labels)) {
-        out <- paste0(
-          out, " ",
-          collapse_phrases(caution_labels),
-          if (length(caution_labels) == 1L) " may still be interpretable" else " may still be interpretable",
-          ", but with caution."
-        )
-      }
-      out
-    } else if (length(caution_labels)) {
-      paste0(
-        "These diagnostics suggest moderate support strain for ",
-        collapse_phrases(caution_labels),
-        ", so those estimates should be interpreted cautiously."
-      )
-    } else {
-      "These diagnostics do not indicate material practical positivity problems for the selected policies."
-    }
+    # no verdict: the quantities are reported and the reader draws the judgement
+    conclusion_sentence <- paste0(
+      "These are reported quantities. They carry no identification judgement, and no ",
+      "constant converts them into one."
+    )
 
     if (isTRUE(include_methods)) {
       manuscript_paragraphs <- c(
         manuscript_paragraphs,
         paste0(
-          "We screened practical support on uncensored rows using the share of cumulative density ratios outside ",
+          "We report the share of cumulative density ratios outside ",
           band_strings$interval_label,
-          "; ESS was treated as a precision diagnostic rather than a positivity test, and zero cumulative ratios were interpreted primarily as censoring burden."
+          " on uncensored rows; ESS is a precision diagnostic rather than a positivity test, and zero cumulative ratios reflect censoring burden."
         )
       )
     }
@@ -1239,7 +1192,7 @@ margot_interpret_lmtp_positivity <- function(x,
     "",
     "## Positivity/Overlap Tests",
     "",
-    "Censoring is handled via inverse probability weighting (IPCW) to target the baseline cohort. The 'zero %' below quantifies how often the cumulative density ratio collapses to zero, usually because follow-up was censored; the remaining columns screen treatment support among uncensored rows."
+    "Censoring is handled via inverse probability weighting (IPCW) to target the baseline cohort. The 'zero %' below quantifies how often the cumulative density ratio collapses to zero, usually because follow-up was censored; the remaining columns describe the cumulative ratios among uncensored rows."
   ) else character(0)
   tests_expl_block <- tests_explanations_text()
   tests_block <- if (length(tests_section)) c(tests_intro, tests_expl_block, tests_section) else character(0)

@@ -6,11 +6,20 @@
 #' `ipsi_10` without refitting, but works for any set of shifts available in an
 #' LMTP run object.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `margot_positivity_summary()` is soft-deprecated in favour of the `margot.lmtp`
+#' reporting family. It keeps working and warns once per session. Its graded
+#' support screen and its `support_status` and `verdict` columns were removed
+#' with the retired enforcement machinery: the share of rows outside the central
+#' band and the binarised-state prevalence remain as reported quantities, and no
+#' constant turns either into a status.
+#'
 #' Metrics include:
-#' - Cumulative density-ratio support across selected waves, summarised as the
+#' - Cumulative density-ratio behaviour across selected waves, summarised as the
 #'   fraction of uncensored rows falling below and above a user-defined central
-#'   band, plus a graded support screen, percent collapsing to zero including
-#'   censoring (IPCW zeros), and the final cumulative ESS.
+#'   band, percent collapsing to zero including censoring (IPCW zeros), and the
+#'   final cumulative ESS.
 #' - ESS on uncensored rows overall and relative to person-time (ESS+/(N_pt)).
 #' - Policy-implied exposure rates by wave (and overall) on uncensored rows when
 #'   `exposure_by_wave` is attached to models (best-effort from `margot_lmtp()`).
@@ -25,13 +34,13 @@
 #'   If NULL, includes all available for the outcome. When supplied, the output
 #'   preserves the order provided here.
 #' @param waves Optional integer vector of waves to include; defaults to all.
-#' @param test_thresholds Named list controlling tests. Recognised names:
-#'   - `prod_log10` (default -1) defining the central support band
+#' @param test_thresholds Named list controlling the reported band. Recognised names:
+#'   - `prod_log10` (default -1) defining the central band
 #'     `[10^{prod_log10}, 10^{-prod_log10}]`; `-1` corresponds to `[0.1, 10]`.
-#'   - `prod_frac_ok` (default 0.05) and `prod_frac_warn` (default 0.20),
-#'     defining the graded support screen from the combined fraction outside the band.
-#'   - `near_zero_median` (default 1e-3) and `near_zero_cv` (default 0.05) are computed but
-#'     not included in the support screen; they are returned as counts of flagged waves per shift.
+#'   - `near_zero_median` (default 1e-3) and `near_zero_cv` (default 0.05) are
+#'     returned as counts of flagged waves per shift.
+#'   - `prod_frac_ok` and `prod_frac_warn` are accepted for backward
+#'     compatibility and ignored; they drove the removed support screen.
 #' @param include_policy_rates Logical; if TRUE and exposure-by-wave aligned with density ratios
 #'   is available, returns policy-implied Pr(A_t=1) by wave (uncensored rows).
 #' @param effect_table Optional data.frame with effect columns to merge by (outcome, shift).
@@ -40,7 +49,7 @@
 #' @param digits Integer; rounding for numeric outputs.
 #'
 #' @return A tibble/data.frame with one row per shift containing: `outcome`, `shift_full`,
-#'   `shift_clean`, cumulative density-ratio metrics, support screen,
+#'   `shift_clean`, cumulative density-ratio metrics,
 #'   ESS metrics (including final cumulative ESS), optional policy rates
 #'   (per-wave `p_hat_wave_k` and `p_hat_overall`), optional effect columns
 #'   if provided.
@@ -90,6 +99,10 @@ margot_positivity_summary <- function(x,
                                       digits = 3,
                                       compact = TRUE,
                                       include_explanation = TRUE) {
+  margot_deprecate_positivity(
+    what = "margot_positivity_summary()",
+    with = "margot.lmtp::margot_lmtp_report_table()"
+  )
   if (!is.null(outcome)) stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
   if (!is.null(waves)) stopifnot(is.numeric(waves))
@@ -187,7 +200,6 @@ margot_positivity_summary <- function(x,
     }
 
     prod_metrics <- margot_positivity_product_metrics(dr = dr, cols = cols, thresholds = thr)
-    support_status <- margot_positivity_support_status(prod_metrics$prod_frac_outside, thr)
 
     all_w <- as.numeric(dr[, cols, drop = FALSE])
     all_w <- all_w[is.finite(all_w)]
@@ -266,8 +278,6 @@ margot_positivity_summary <- function(x,
       prod_frac_above_pct = if (is.finite(prod_metrics$prod_frac_above)) 100 * prod_metrics$prod_frac_above else NA_real_,
       prod_frac_outside_pct = if (is.finite(prod_metrics$prod_frac_outside)) 100 * prod_metrics$prod_frac_outside else NA_real_,
       prop_zero_prod_pct = if (is.finite(prod_metrics$prop_zero_prod)) 100 * prod_metrics$prop_zero_prod else NA_real_,
-      support_status = support_status,
-      verdict = support_status,
       near_zero_wave_flags = nz_count,
       ess_pos = ess_pos,
       ess_pos_frac = ess_pos_frac,
@@ -351,7 +361,6 @@ margot_positivity_summary <- function(x,
 
     compact_df <- data.frame(
       Shift = Shift,
-      Support = out$support_status,
       stringsAsFactors = FALSE
     )
     compact_df[["Zero %"]] <- out$prop_zero_prod_pct
@@ -382,13 +391,7 @@ margot_positivity_summary <- function(x,
           "' are the % of uncensored rows whose cumulative density ratio across ",
           waves_txt, " falls outside the central band ", band_strings$interval_label, "."
         ),
-        paste0(
-          "- 'Support' summarises the combined share outside that band: Adequate <= ",
-          round(100 * thr$prod_frac_ok, 1), "%; Caution <= ",
-          round(100 * thr$prod_frac_warn, 1),
-          "%; Limited > ", round(100 * thr$prod_frac_warn, 1),
-          "%. This is a reporting screen, not a formal identification test."
-        ),
+        "- These shares are reported quantities. No constant turns any of them into a status, and none carries an identification judgement.",
         "- 'Cum ESS' is the final cumulative effective sample size across the selected waves.",
         if (isTRUE(include_policy_rates)) "- 'p_hat' = policy-implied Pr(A_t=1) on uncensored rows; 'Delta_p' = difference vs null." else NULL,
         "- 'ATT [CI]' = average treatment effect with 95% CI.",

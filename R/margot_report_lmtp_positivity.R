@@ -1,5 +1,11 @@
 #' One-stop LMTP positivity/overlap reporting for an analysis
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `margot_report_lmtp_positivity()` is soft-deprecated in favour of the
+#' `margot.lmtp` reporting family. It keeps working and warns once per session.
+#' Its `flags` return field was removed with the retired enforcement machinery.
+#'
 #' Builds manuscript-ready positivity diagnostics (overall and by-wave) and an
 #' optional density-ratio grid for a selected outcome and set of shifts.
 #'
@@ -27,7 +33,6 @@
 #'   - overall: tibble with Estimand, N, Prop_zero, ESS, ESS/N
 #'   - by_wave_ess_frac: tibble wide (Wave x Estimand) with ESS/N
 #'   - by_wave_ess: tibble wide (Wave x Estimand) with ESS
-#'   - flags: tibble of positivity flags (ESS+/(N+) removed)
 #'   - overlap_grid: patchwork object (if include_plots = TRUE)
 #'   - text_summary: brief prose summary
 #' @export
@@ -38,6 +43,10 @@ margot_report_lmtp_positivity <- function(x,
                                           digits = 2,
                                           include_plots = TRUE,
                                           ymax = NULL) {
+  margot_deprecate_positivity(
+    what = "margot_report_lmtp_positivity()",
+    with = "margot.lmtp::margot_lmtp_ratio_report()"
+  )
 
   stopifnot(is.character(outcome), length(outcome) == 1L)
 
@@ -61,15 +70,12 @@ margot_report_lmtp_positivity <- function(x,
   }
   pos_overall <- pos$overall[pos$overall$outcome == outcome, , drop = FALSE]
   pos_by_wave <- pos$by_wave[pos$by_wave$outcome == outcome, , drop = FALSE]
-  pos_flags   <- pos$flags[pos$flags$outcome == outcome, , drop = FALSE]
 
   if (!is.null(shifts)) {
     keep <- pos_overall$shift %in% shifts | pos_overall$shift_clean %in% shifts
     pos_overall <- pos_overall[keep, , drop = FALSE]
     keep <- pos_by_wave$shift %in% shifts | pos_by_wave$shift_clean %in% shifts
     pos_by_wave <- pos_by_wave[keep, , drop = FALSE]
-    keep <- pos_flags$shift %in% shifts | pos_flags$shift_clean %in% shifts
-    pos_flags   <- pos_flags[keep, , drop = FALSE]
   }
 
   # Build estimand labels
@@ -166,11 +172,6 @@ margot_report_lmtp_positivity <- function(x,
     n_person_time <- if (nrow(overall)) overall$N[1] else NA_integer_
   }
 
-  # Flags: drop ESS+/(N+) flags per default manuscript reporting
-  if (nrow(pos_flags)) {
-    pos_flags <- pos_flags[!grepl("ESS\\+/\\(N\\+\\)", pos_flags$flag_reason), , drop = FALSE]
-  }
-
   # Optional overlap plot grid
   overlap_grid <- NULL
   if (isTRUE(include_plots)) {
@@ -189,15 +190,20 @@ margot_report_lmtp_positivity <- function(x,
     by_wave_counts = by_wave_counts,
     n_participants = n_participants,
     n_person_time = n_person_time,
-    flags = pos_flags,
     overlap_grid = overlap_grid,
     text_summary = sprintf("Across selected LMTP models: median zeros = %.1f%%, median ESS/N = %.3f.", 100*median(ov$prop_zero, na.rm = TRUE), median(ov$`ESS/N`, na.rm = TRUE)),
     outcome_label = outcome_label
   )
 }
 
+#' @rdname margot_report_lmtp_positivity
+#' @param ... Arguments passed to [margot_report_lmtp_positivity()].
 #' @export
 margot_lmtp_positivity_report <- function(...) {
   # Backwards-compatible alias
+  margot_deprecate_positivity(
+    what = "margot_lmtp_positivity_report()",
+    with = "margot.lmtp::margot_lmtp_ratio_report()"
+  )
   margot_report_lmtp_positivity(...)
 }

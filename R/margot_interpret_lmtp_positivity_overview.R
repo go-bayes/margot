@@ -1,5 +1,11 @@
 #' Overview bullets for multiple LMTP positivity analyses
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `margot_interpret_lmtp_positivity_overview()` is soft-deprecated in favour of
+#' the `margot.lmtp` reporting family. It keeps working and warns once per
+#' session. Its bullets describe worst-case quantities and carry no verdict.
+#'
 #' Creates concise, supplement-ready overview bullets and an optional table
 #' summarising worst-case positivity diagnostics across multiple analyses
 #' (e.g., different outcome/shift sets).
@@ -21,6 +27,10 @@ margot_interpret_lmtp_positivity_overview <- function(reports,
                                                       labels = names(reports),
                                                       digits = 2,
                                                       include_table = TRUE) {
+  margot_deprecate_positivity(
+    what = "margot_interpret_lmtp_positivity_overview()",
+    with = "margot.lmtp::margot_lmtp_report_table()"
+  )
   if (!length(reports)) return(list(bullets = character(0)))
   if (is.null(labels) || length(labels) != length(reports)) labels <- names(reports)
   if (is.null(labels)) labels <- paste0("Analysis ", seq_along(reports))

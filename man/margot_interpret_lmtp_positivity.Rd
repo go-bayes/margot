@@ -102,15 +102,17 @@ when possible, lists the named deterministic policies included (default: TRUE).}
 CLI messages summarising results (near‑zero uniform weights, product‑of‑r collapse,
 monotone support checks). Default TRUE.}
 
-\item{test_thresholds}{Named list of thresholds for `include_tests`.
-Recognised names: `near_zero_median` (default 1e-3), `near_zero_cv` (0.05),
-`prod_log10` (-1, corresponding to the central band `[0.1, 10]`),
-`prod_frac_ok` (0.05), and `prod_frac_warn` (0.20). Unrecognised entries
-are ignored.}
+\item{test_thresholds}{Named list controlling the reported band and the
+near-zero flag. Recognised names: `near_zero_median` (default 1e-3),
+`near_zero_cv` (0.05), and `prod_log10` (-1, corresponding to the central
+band `[0.1, 10]`). `prod_frac_ok` and `prod_frac_warn` are accepted for
+backward compatibility and ignored; they drove the removed support screen.
+Unrecognised entries are ignored.}
 
-\item{include_ipsi_recommend}{Logical; if TRUE and IPSI shifts are present, evaluates candidate
-deltas using the same tests and prints a recommendation for the largest delta that passes
-guardrails. Also adds an "IPSI Recommendation" section to the returned text. Default TRUE.}
+\item{include_ipsi_recommend}{Logical; if TRUE and IPSI shifts are present, adds an
+"IPSI Candidate Summary" section describing each registered delta. No delta is
+recommended: the delta-selecting screen was removed, and the registered contrast
+is chosen in the study registration. Default TRUE.}
 
 \item{include_test_explanations}{Logical; if TRUE, adds a short "Test Explanations" section that
 explains near‑zero flags, the product‑of‑r summary, and how censoring is handled via IPCW. Default FALSE.}
@@ -129,6 +131,16 @@ Either a single character string (default) or a list containing the
   when `return = "list"`.
 }
 \description{
+`r lifecycle::badge("deprecated")`
+}
+\details{
+`margot_interpret_lmtp_positivity()` is soft-deprecated in favour of the
+`margot.lmtp` reporting family. It keeps working and warns once per session.
+Its `support_status` column and every graded verdict in its prose were
+removed with the retired enforcement machinery: the share of cumulative
+ratios outside the central band is reported, and no constant converts it into
+a status.
+
 Builds a concise textual summary of LMTP density-ratio diagnostics for a
 single outcome. For each requested shift, the function computes effective
 sample sizes (ESS) by wave and for the pooled person-time using

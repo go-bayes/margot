@@ -2,6 +2,7 @@
 % Please edit documentation in R/margot_report_lmtp_positivity.R
 \name{margot_report_lmtp_positivity}
 \alias{margot_report_lmtp_positivity}
+\alias{margot_lmtp_positivity_report}
 \title{One-stop LMTP positivity/overlap reporting for an analysis}
 \usage{
 margot_report_lmtp_positivity(
@@ -13,6 +14,8 @@ margot_report_lmtp_positivity(
   include_plots = TRUE,
   ymax = NULL
 )
+
+margot_lmtp_positivity_report(...)
 }
 \arguments{
 \item{x}{LMTP run output with `$models` (e.g., result from `margot_lmtp()`),
@@ -33,21 +36,28 @@ includes all available shifts for the outcome.}
 
 \item{ymax}{Optional numeric; if supplied, sets common y-limit for histogram
 counts in the density-ratio grid; otherwise a common limit is inferred.}
+
+\item{...}{Arguments passed to [margot_report_lmtp_positivity()].}
 }
 \value{
 A list with elements:
   - overall: tibble with Estimand, N, Prop_zero, ESS, ESS/N
   - by_wave_ess_frac: tibble wide (Wave x Estimand) with ESS/N
   - by_wave_ess: tibble wide (Wave x Estimand) with ESS
-  - flags: tibble of positivity flags (ESS+/(N+) removed)
   - overlap_grid: patchwork object (if include_plots = TRUE)
   - text_summary: brief prose summary
 }
 \description{
-Builds manuscript-ready positivity diagnostics (overall and by-wave) and an
-optional density-ratio grid for a selected outcome and set of shifts.
+`r lifecycle::badge("deprecated")`
 }
 \details{
+`margot_report_lmtp_positivity()` is soft-deprecated in favour of the
+`margot.lmtp` reporting family. It keeps working and warns once per session.
+Its `flags` return field was removed with the retired enforcement machinery.
+
+Builds manuscript-ready positivity diagnostics (overall and by-wave) and an
+optional density-ratio grid for a selected outcome and set of shifts.
+
 - Computes summaries via `margot_lmtp_positivity()`
 - Produces overall table (Estimand, N, Prop_zero, ESS, ESS/N)
 - Produces combined by-wave tables (ESS/N by wave; ESS by wave)

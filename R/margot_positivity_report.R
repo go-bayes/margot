@@ -1,5 +1,11 @@
 #' Assemble a full LMTP positivity report (table, diagnostics, text, plot, methods)
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `margot_positivity_report()` is soft-deprecated in favour of the `margot.lmtp`
+#' reporting family. It keeps working and warns once per session. Its verdict and
+#' status fields were removed with the retired enforcement machinery.
+#'
 #' Bundles the per-shift diagnostics, compact summary table, interpretive text,
 #' overlap plot, and a ready-to-drop-in methods paragraph into a single object.
 #' Designed to streamline Quarto sections where you want consistent reporting
@@ -60,6 +66,10 @@ margot_positivity_report <- function(x,
                                      include_plot = TRUE,
                                      plot_args = list(),
                                      interpret_args = list()) {
+  margot_deprecate_positivity(
+    what = "margot_positivity_report()",
+    with = "margot.lmtp::margot_lmtp_ratio_report()"
+  )
   if (!is.null(outcome)) stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
 
@@ -191,6 +201,10 @@ margot_positivity_report_single_model <- function(x,
                                                   include_plot = TRUE,
                                                   plot_args = list(),
                                                   interpret_args = list()) {
+  margot_deprecate_positivity(
+    what = "margot_positivity_report_single_model()",
+    with = "margot.lmtp::margot_lmtp_ratio_report()"
+  )
   coerced <- coerce_single_lmtp_model(x, outcome = outcome, shift = shift)
   margot_positivity_report(
     x = coerced$fit,
@@ -219,8 +233,8 @@ build_positivity_method_statement <- function(include_policy_rates = TRUE,
   paragraphs <- c(
     "Density ratios act as weights in the LMTP estimator to rebalance the observed data so it mimics the intervention of interest; large or near-zero values indicate practical positivity strain.",
     paste0(
-      "We assess support on uncensored rows by monitoring the cumulative density ratio across waves and reporting the share of rows outside the central band ",
-      band_strings$interval_label, ". We classify support as adequate, caution, or limited using this share as a reporting screen."
+      "We describe the cumulative density ratio across waves on uncensored rows and report the share of rows outside the central band ",
+      band_strings$interval_label, ". The share is a reported quantity and carries no identification judgement."
     ),
     "Effective sample size (ESS) summarises weight variability/precision: ESS = (sum w)^2 / sum w^2. It is a precision indicator (low ESS = noisier estimates), not a positivity test; we report ESS relative to uncensored rows and total person-time.",
     "Zeros in density ratios primarily reflect censoring, not treatment-positivity violations, because censoring removes follow-up treatment data; we therefore separate censoring rates from the uncensored ratio diagnostics.",

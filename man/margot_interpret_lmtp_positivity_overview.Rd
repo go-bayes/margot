@@ -30,6 +30,13 @@ A list with
     worst ESS/N per analysis
 }
 \description{
+`r lifecycle::badge("deprecated")`
+}
+\details{
+`margot_interpret_lmtp_positivity_overview()` is soft-deprecated in favour of
+the `margot.lmtp` reporting family. It keeps working and warns once per
+session. Its bullets describe worst-case quantities and carry no verdict.
+
 Creates concise, supplement-ready overview bullets and an optional table
 summarising worst-case positivity diagnostics across multiple analyses
 (e.g., different outcome/shift sets).
