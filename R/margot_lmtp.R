@@ -4,6 +4,23 @@
 #' calculates contrasts, creates evaluation tables, and optionally saves
 #' checkpoints and the complete output as `.rds` files.
 #'
+#' @section Outside the registered workflow:
+#' `margot_lmtp()` is the exploratory batch driver. It is not the registered
+#' estimation path: a registered study runs through
+#' `margot.lmtp::margot_lmtp_estimate()`, which derives every modelling argument
+#' from a deposited registration manifest. Use `margot_lmtp()` for exploration,
+#' sensitivity work, and teaching.
+#'
+#' Supplying `estimator_spec` bridges the two. The `lmtp` call is then built
+#' from the sealed contract's `call_arguments` — the exposure at each node, the
+#' baseline and time-varying covariates, the censoring and competing-event
+#' indicators, the outcome and its model, the identifier, the folds, the bounds,
+#' the registered learner library, and the sealed cap — and any conflicting user
+#' argument errors with a condition of class
+#' `margot_error_estimator_spec_conflict` that names the conflict. `margot` only
+#' suggests `margot.lmtp`; supplying `estimator_spec` without it installed errors
+#' with class `margot_error_missing_dependency`.
+#'
 #' @details
 #' For very large datasets or models with many time points, parallel processing may not improve performance
 #' as much as expected. This is because LMTP models can be memory-bound rather than CPU-bound when working
@@ -12,8 +29,8 @@
 #' experience performance degradation.
 #'
 #' @param data A data frame containing all necessary variables.
-#' @param outcome_vars A character vector of outcome variable names to be modeled.
-#' @param trt A character string specifying the treatment variable.
+#' @param outcome_vars A character vector of outcome variable names to be modeled. Optional when `estimator_spec` is supplied, which seals it.
+#' @param trt A character string specifying the treatment variable. Optional when `estimator_spec` is supplied, which seals it.
 #' @param shift_functions A list of shift functions to be applied. Each function should take `data` and `trt` as arguments.
 #' @param include_null_shift Logical, whether to include a null shift. Default is TRUE.
 #' @param lmtp_model_type The LMTP model function to use. Default is lmtp_tmle.
@@ -32,6 +49,14 @@
 #' @param prefix Optional prefix to add to the saved output filename. Default is NULL.
 #' @param manage_future_plan Logical, whether to manage the future plan internally for nested parallelization. Default is FALSE. When TRUE, margot_lmtp sets up nested futures (outer loop for models, inner loop for CV) and automatically cleans up workers on exit. When FALSE, models run sequentially but can use the user's external future::plan() for parallel CV.
 #' @param progress Progress reporting method: "cli" (default CLI progress bar), "progressr" (use progressr package handlers), or "none" (no progress reporting).
+#' @param seed Optional single whole number seeding every stochastic step: the
+#'   RNG at entry, each model fit, and the parallel streams. Default NULL leaves
+#'   the RNG untouched. When `estimator_spec` is supplied the seed comes from the
+#'   sealed contract, and supplying a different one errors.
+#' @param estimator_spec Optional sealed `margot_lmtp_estimator_spec` object from
+#'   `margot.lmtp::margot_lmtp_estimator_spec()`. When supplied, the `lmtp` call
+#'   is built from the sealed contract and every conflicting user argument
+#'   errors. Requires the suggested `margot.lmtp` package.
 #'
 #' @return A list containing:
 #'   \item{models}{A list of all LMTP models for each outcome and shift function.}
@@ -80,8 +105,8 @@
 #' @export
 margot_lmtp <- function(
     data,
-    outcome_vars,
-    trt,
+    outcome_vars = NULL,
+    trt = NULL,
     shift_functions = list(),
     include_null_shift = TRUE,
     lmtp_model_type = lmtp::lmtp_tmle,
@@ -97,13 +122,58 @@ margot_lmtp <- function(
     use_timestamp = FALSE,
     prefix = NULL,
     manage_future_plan = FALSE,
-    progress = c("cli", "progressr", "none")) {
+    progress = c("cli", "progressr", "none"),
+    seed = NULL,
+    estimator_spec = NULL) {
   # Load required packages
   library(cli)
   library(progressr)
 
   contrast_type <- match.arg(contrast_type)
   contrast_scale <- match.arg(contrast_scale)
+
+  # the sealed contract, where one is supplied, is authoritative over every
+  # modelling argument it fixes; a conflicting user argument errors by name
+  mtp_by_arm <- NULL
+  if (!is.null(estimator_spec)) {
+    supplied <- c(
+      if (!missing(outcome_vars) && !is.null(outcome_vars)) "outcome_vars",
+      if (!missing(trt) && !is.null(trt)) "trt",
+      if (!missing(lmtp_model_type)) "lmtp_model_type",
+      if (!is.null(seed)) "seed"
+    )
+    if (!missing(include_null_shift) && isTRUE(include_null_shift)) {
+      supplied <- c(supplied, "include_null_shift")
+    }
+    from_spec <- margot_lmtp_args_from_spec(
+      estimator_spec = estimator_spec,
+      trt = trt,
+      outcome_vars = outcome_vars,
+      lmtp_defaults = lmtp_defaults,
+      lmtp_model_type = lmtp_model_type,
+      seed = seed,
+      shift_functions = shift_functions,
+      supplied = supplied
+    )
+    trt <- from_spec$trt
+    outcome_vars <- from_spec$outcome_vars
+    lmtp_defaults <- from_spec$lmtp_defaults
+    lmtp_model_type <- from_spec$lmtp_model_type
+    seed <- from_spec$seed
+    mtp_by_arm <- from_spec$mtp_by_arm
+    include_null_shift <- FALSE
+    cli::cli_alert_info(
+      "Building the {.pkg lmtp} call from the sealed estimator contract at seed {.val {seed}}."
+    )
+  }
+
+  if (!is.null(seed)) {
+    if (!is.numeric(seed) || length(seed) != 1L || !is.finite(seed)) {
+      cli::cli_abort("{.arg seed} must be a single whole number.")
+    }
+    seed <- as.integer(seed)
+    set.seed(seed)
+  }
 
   # ensure outcome_vars is always a character vector
   if (!is.character(outcome_vars)) {
@@ -417,6 +487,12 @@ margot_lmtp <- function(
         list(data = data, trt = trt, outcome = outcome, shift = shift),
         lmtp_defaults
       )
+      # the sealed contract fixes mtp per arm; the exploratory path leaves it alone
+      if (!is.null(mtp_by_arm)) {
+        lmtp_args$mtp <- unname(mtp_by_arm[[shift_name]])
+      }
+      # seed each fit so the run reproduces independently of task scheduling
+      if (!is.null(seed)) set.seed(seed)
 
       res <- tryCatch({
         model <- do.call(lmtp_model_type, lmtp_args)
@@ -503,7 +579,10 @@ margot_lmtp <- function(
       }
 
       if (isTRUE(manage_future_plan)) {
-        future.apply::future_lapply(seq_len(total_tasks), worker_fun, future.seed = TRUE)
+        future.apply::future_lapply(
+          seq_len(total_tasks), worker_fun,
+          future.seed = if (is.null(seed)) TRUE else seed
+        )
       } else {
         lapply(seq_len(total_tasks), worker_fun)
       }
@@ -559,6 +638,12 @@ margot_lmtp <- function(
         list(data = data, trt = trt, outcome = outcome, shift = shift),
         lmtp_defaults
       )
+      # the sealed contract fixes mtp per arm; the exploratory path leaves it alone
+      if (!is.null(mtp_by_arm)) {
+        lmtp_args$mtp <- unname(mtp_by_arm[[shift_name]])
+      }
+      # seed each fit so the run reproduces independently of task scheduling
+      if (!is.null(seed)) set.seed(seed)
 
       res <- tryCatch({
         model <- do.call(lmtp_model_type, lmtp_args)
@@ -624,7 +709,10 @@ margot_lmtp <- function(
     }
 
     if (isTRUE(manage_future_plan)) {
-      task_results <- future.apply::future_lapply(seq_len(total_tasks), worker_fun, future.seed = TRUE)
+      task_results <- future.apply::future_lapply(
+        seq_len(total_tasks), worker_fun,
+        future.seed = if (is.null(seed)) TRUE else seed
+      )
     } else {
       task_results <- lapply(seq_len(total_tasks), worker_fun)
     }

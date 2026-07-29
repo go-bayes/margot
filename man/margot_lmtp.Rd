@@ -6,8 +6,8 @@
 \usage{
 margot_lmtp(
   data,
-  outcome_vars,
-  trt,
+  outcome_vars = NULL,
+  trt = NULL,
   shift_functions = list(),
   include_null_shift = TRUE,
   lmtp_model_type = lmtp::lmtp_tmle,
@@ -23,15 +23,17 @@ margot_lmtp(
   use_timestamp = FALSE,
   prefix = NULL,
   manage_future_plan = FALSE,
-  progress = c("cli", "progressr", "none")
+  progress = c("cli", "progressr", "none"),
+  seed = NULL,
+  estimator_spec = NULL
 )
 }
 \arguments{
 \item{data}{A data frame containing all necessary variables.}
 
-\item{outcome_vars}{A character vector of outcome variable names to be modeled.}
+\item{outcome_vars}{A character vector of outcome variable names to be modeled. Optional when `estimator_spec` is supplied, which seals it.}
 
-\item{trt}{A character string specifying the treatment variable.}
+\item{trt}{A character string specifying the treatment variable. Optional when `estimator_spec` is supplied, which seals it.}
 
 \item{shift_functions}{A list of shift functions to be applied. Each function should take `data` and `trt` as arguments.}
 
@@ -66,6 +68,16 @@ FALSE.}
 \item{manage_future_plan}{Logical, whether to manage the future plan internally for nested parallelization. Default is FALSE. When TRUE, margot_lmtp sets up nested futures (outer loop for models, inner loop for CV) and automatically cleans up workers on exit. When FALSE, models run sequentially but can use the user's external future::plan() for parallel CV.}
 
 \item{progress}{Progress reporting method: "cli" (default CLI progress bar), "progressr" (use progressr package handlers), or "none" (no progress reporting).}
+
+\item{seed}{Optional single whole number seeding every stochastic step: the
+RNG at entry, each model fit, and the parallel streams. Default NULL leaves
+the RNG untouched. When `estimator_spec` is supplied the seed comes from the
+sealed contract, and supplying a different one errors.}
+
+\item{estimator_spec}{Optional sealed `margot_lmtp_estimator_spec` object from
+`margot.lmtp::margot_lmtp_estimator_spec()`. When supplied, the `lmtp` call
+is built from the sealed contract and every conflicting user argument
+errors. Requires the suggested `margot.lmtp` package.}
 }
 \value{
 A list containing:
@@ -86,6 +98,25 @@ with large data. In such cases, memory pressure and data copying between workers
 of parallelization. Consider using fewer cores or sequential processing for very large models if you
 experience performance degradation.
 }
+\section{Outside the registered workflow}{
+
+`margot_lmtp()` is the exploratory batch driver. It is not the registered
+estimation path: a registered study runs through
+`margot.lmtp::margot_lmtp_estimate()`, which derives every modelling argument
+from a deposited registration manifest. Use `margot_lmtp()` for exploration,
+sensitivity work, and teaching.
+
+Supplying `estimator_spec` bridges the two. The `lmtp` call is then built
+from the sealed contract's `call_arguments` — the exposure at each node, the
+baseline and time-varying covariates, the censoring and competing-event
+indicators, the outcome and its model, the identifier, the folds, the bounds,
+the registered learner library, and the sealed cap — and any conflicting user
+argument errors with a condition of class
+`margot_error_estimator_spec_conflict` that names the conflict. `margot` only
+suggests `margot.lmtp`; supplying `estimator_spec` without it installed errors
+with class `margot_error_missing_dependency`.
+}
+
 \examples{
 \dontrun{
 # Assume we have a dataset 'my_data' with variables 'outcome', 'treatment', and some confounders
