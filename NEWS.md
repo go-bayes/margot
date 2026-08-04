@@ -1,3 +1,33 @@
+# [2026-08-04] margot 1.1.014
+
+### Minimal best linear projection reporting surface
+
+The 4 August 2026 decision records the reported best linear projection as a
+projection onto the full registered baseline covariate set, reported as
+estimates with 95% confidence intervals and nothing else.
+
+#### Added
+- `margot_blp()` computes `grf::best_linear_projection()` for every forest
+  retained by `margot_causal_forest()`, projecting onto the full covariate
+  matrix the forests were fitted on rather than a variable-importance screen.
+  It returns a tidy frame of one row per outcome and coefficient with
+  `estimate`, `std_error`, and 95% normal-approximation interval bounds, plus
+  `target_sample`, `n`, the Kish effective sample size, a fingerprint of the
+  projection matrix, and a `status` column. Each outcome is isolated: a failed
+  projection yields one structured failure row and never aborts the batch.
+- `margot_table_blp()` formats that frame for reporting as estimate and 95%
+  confidence interval, with no significance stars and no p-values, and carries
+  the mandatory relativity sentence as its `caption` attribute.
+- `margot_plot_blp()` draws the same coefficients as a forest-style plot with a
+  zero reference line, one facet per outcome, no significance colouring, and
+  the same relativity sentence as its caption.
+
+#### Deprecated in reporting
+- The `blp_top` element of each `margot_causal_forest()` result is retired from
+  reporting. It projects onto the top variable-importance screen rather than the
+  registered covariate set. It is still computed for backwards compatibility and
+  must not be reported; use `margot_blp()` instead.
+
 # [2026-07-29] margot 1.1.013
 
 ### Retired the positivity enforcement machinery

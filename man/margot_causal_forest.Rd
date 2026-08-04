@@ -107,7 +107,12 @@ Example: c(1, 7) for a 7-point Likert scale, or list(anxiety = c(1, 7), depressi
 }
 \value{
 A list containing:
-  * `results` - per-outcome diagnostics and objects
+  * `results` - per-outcome diagnostics and objects. The `blp_top` element of
+    each outcome holds a best linear projection onto the `top_n_vars`
+    variable-importance screen. **`blp_top` is retired from reporting** in
+    favour of [margot_blp()], which projects onto the full covariate matrix
+    the forest was fitted on. It is still computed for backwards
+    compatibility, and it must not be reported.
   * `combined_table` - combined e-value table across outcomes
   * `outcome_vars` - vector of outcome names
   * `not_missing` - indices of complete-case rows
