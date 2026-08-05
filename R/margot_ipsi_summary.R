@@ -6,15 +6,6 @@
 #' `ipsi_10` without refitting, but works for any set of shifts available in an
 #' LMTP run object.
 #'
-#' `r lifecycle::badge("deprecated")`
-#'
-#' `margot_positivity_summary()` is soft-deprecated in favour of the `margot.lmtp`
-#' reporting family. It keeps working and warns once per session. Its graded
-#' support screen and its `support_status` and `verdict` columns were removed
-#' with the retired enforcement machinery: the share of rows outside the central
-#' band and the binarised-state prevalence remain as reported quantities, and no
-#' constant turns either into a status.
-#'
 #' Metrics include:
 #' - Cumulative density-ratio behaviour across selected waves, summarised as the
 #'   fraction of uncensored rows falling below and above a user-defined central
@@ -99,10 +90,6 @@ margot_positivity_summary <- function(x,
                                       digits = 3,
                                       compact = TRUE,
                                       include_explanation = TRUE) {
-  margot_deprecate_positivity(
-    what = "margot_positivity_summary()",
-    with = "margot.lmtp::margot_lmtp_report_table()"
-  )
   if (!is.null(outcome)) stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
   if (!is.null(waves)) stopifnot(is.numeric(waves))

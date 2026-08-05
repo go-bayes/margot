@@ -67,15 +67,6 @@ incremental propensity score interventions (IPSI) such as `ipsi_02`, `ipsi_05`,
 LMTP run object.
 }
 \details{
-`r lifecycle::badge("deprecated")`
-
-`margot_positivity_summary()` is soft-deprecated in favour of the `margot.lmtp`
-reporting family. It keeps working and warns once per session. Its graded
-support screen and its `support_status` and `verdict` columns were removed
-with the retired enforcement machinery: the share of rows outside the central
-band and the binarised-state prevalence remain as reported quantities, and no
-constant turns either into a status.
-
 Metrics include:
 - Cumulative density-ratio behaviour across selected waves, summarised as the
   fraction of uncensored rows falling below and above a user-defined central

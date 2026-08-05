@@ -39,27 +39,34 @@ meaning to the statistical relationships we observe from data.
 
 `margot` is currently available only on GitHub. Install it with `pak`:
 
-``` r
-
-# install.packages("pak")
-pak::pak("go-bayes/margot")
-```
+`# install.packages("pak")`` ``pak``::`[`pak`](https://pak.r-lib.org/reference/pak.html)`(``"go-bayes/margot"``)`
 
 If you prefer `remotes`, use:
 
-``` r
-
-# install.packages("remotes")
-remotes::install_github("go-bayes/margot")
-```
+`# install.packages("remotes")`` ``remotes``::`[`install_github`](https://remotes.r-lib.org/reference/install_github.html)`(``"go-bayes/margot"``)`
 
 `margot` streamlines the estimation of marginal treatment effects such
 as the ATE and ATT. It also supports workflows for heterogeneous
 treatment effects using `grf`, and longitudinal modified treatment
 policies using `lmtp`. `margot` is greatly indebted to the authors of
 these two excellent packages. `margot` is best seen as a workflow
-package for preparing data, checking assumptions, estimating causal
+package for preparing data, evaluating assumptions, estimating causal
 effects, and communicating results precisely.
+
+## Working LMTP fit-once example
+
+Margot includes a complete synthetic perfectionism example with two
+terminal outcomes and analysis weights. The script locks its execution
+settings with
+[`margot_lmtp_estimator_spec()`](https://go-bayes.github.io/margot/reference/margot_lmtp_estimator_spec.md),
+fits each policy-specific treatment and censoring density-ratio process
+once with `margot_lmtp(reuse_density_ratios = TRUE)`, selects the
+resulting combined table, and passes that table directly to
+[`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md).
+Its executable assertions require two ratio fits for two policies,
+compared with four fits under independent outcome-policy estimation.
+
+`example_path`` ``<-`` `[`system.file`](https://rdrr.io/r/base/system.file.html)`(`` `` ``"examples"``, ``"lmtp-fit-once-perfectionism.R"``,`` `` package ``=`` ``"margot"``,`` `` mustWork ``=`` ``TRUE`` ``)`` `[`sys.source`](https://rdrr.io/r/base/sys.source.html)`(``example_path``, envir ``=`` `[`new.env`](https://rdrr.io/r/base/environment.html)`(``parent ``=`` `[`globalenv`](https://rdrr.io/r/base/environment.html)`(``)``)``)`
 
 Note that Margot is being actively developed, and is not currently in a
 stable state. Expect breaking changes.
@@ -138,6 +145,7 @@ stable state. Expect breaking changes.
   : Assemble a full LMTP positivity report (table, diagnostics, text,
   plot, methods)
 - [`margot_report_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md)
+  [`margot_lmtp_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md)
   : One-stop LMTP positivity/overlap reporting for an analysis
 - [`margot_lmtp_ratio_grid()`](https://go-bayes.github.io/margot/reference/margot_lmtp_ratio_grid.md)
   : LMTP density-ratio panel (per-wave grid)
@@ -150,7 +158,7 @@ stable state. Expect breaking changes.
 - [`margot_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_lmtp_positivity.md)
   : Summarize positivity via density ratios for LMTP fits
 - [`margot_lmtp_positivity_gate()`](https://go-bayes.github.io/margot/reference/margot_lmtp_positivity_gate.md)
-  : Registered trim-ladder positivity gate for LMTP fits
+  : Registered trim-ladder positivity gate for LMTP fits (defunct)
 - [`margot_interpret_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   [`margot_interpret_lmtp_overlap()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   : Interpret LMTP positivity via effective sample sizes
@@ -171,6 +179,8 @@ stable state. Expect breaking changes.
   with Enhanced Qini Cross-Validation
 - [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md)
   : Batch Process LMTP Models
+- [`margot_lmtp_estimator_spec()`](https://go-bayes.github.io/margot/reference/margot_lmtp_estimator_spec.md)
+  : Lock the execution settings for a Margot LMTP analysis
 - [`margot_lmtp_restore_checkpoints()`](https://go-bayes.github.io/margot/reference/margot_lmtp_restore_checkpoints.md)
   : Restore LMTP Output from Saved Checkpoints
 - [`margot_naive_regressions()`](https://go-bayes.github.io/margot/reference/margot_naive_regressions.md)
@@ -209,6 +219,12 @@ stable state. Expect breaking changes.
 
 ## Interpret heterogeneity and policy
 
+- [`margot_blp()`](https://go-bayes.github.io/margot/reference/margot_blp.md)
+  : Best linear projection of conditional average treatment effects
+- [`margot_table_blp()`](https://go-bayes.github.io/margot/reference/margot_table_blp.md)
+  : Reporting table of best linear projection coefficients
+- [`margot_plot_blp()`](https://go-bayes.github.io/margot/reference/margot_plot_blp.md)
+  : Plot best linear projection coefficients
 - [`margot_interpret_heterogeneity()`](https://go-bayes.github.io/margot/reference/margot_interpret_heterogeneity.md)
   : Interpret Heterogeneity Evidence from Multiple Sources
 - [`margot_omnibus_hetero_test()`](https://go-bayes.github.io/margot/reference/margot_omnibus_hetero_test.md)

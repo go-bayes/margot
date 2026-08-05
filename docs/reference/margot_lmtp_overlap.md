@@ -108,14 +108,15 @@ margot_lmtp_overlap(
   summary (e.g., \`label_mapping\`, \`waves\`, \`remove_waves\`,
   \`include_methods\`, \`include_diagnostics\`). Unrecognised entries
   are silently ignored for backward compatibility with deprecated
-  arguments such as \`save_plots\`.
+  arguments such as \`save_plots\`. The retired arguments
+  \`test_thresholds\` and \`policy_rate_strict\` error.
 
 ## Value
 
 A list with: - overlap_summary: tibble combining by-wave and overall
-positivity/overlap metrics - ratio_plots: list of ggplot objects (if
-plot = TRUE) - flags: tibble of positivity flags - text_summary:
-markdown-ready prose from \`margot_interpret_lmtp_positivity()\`
+density-ratio metrics - ratio_plots: list of ggplot objects (if plot =
+TRUE) - text_summary: markdown-ready prose from
+\`margot_interpret_lmtp_positivity()\`
 
 ## Details
 
@@ -125,3 +126,9 @@ primarily reflect dropout/censoring rather than treatment positivity
 violations. The censoring rate (proportion r = 0) is reported in plot
 titles and summaries. Use \`show_censored = TRUE\` to include zeros in
 histograms (shown as a bar at r = 0).
+
+\*\*Descriptive outputs only.\*\* The \`flags\` return field and the
+\`test_thresholds\` and \`policy_rate_strict\` arguments were removed
+with the retired enforcement machinery. Supplying either retired
+argument errors with a condition of class
+\`margot_error_removed_argument\`.

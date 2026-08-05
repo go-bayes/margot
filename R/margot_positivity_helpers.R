@@ -329,8 +329,8 @@ margot_positivity_support_status <- function(prod_frac_outside, thresholds) {
   margot_positivity_defunct(
     what = "margot_positivity_support_status",
     replacement = paste(
-      "Report `prod_frac_outside` directly, and precommit an expectation for it",
-      "with `margot.lmtp::margot_lmtp_expectations_spec()`."
+      "Report `prod_frac_outside` directly and compare it with the expectation",
+      "stated in the study protocol."
     )
   )
 }

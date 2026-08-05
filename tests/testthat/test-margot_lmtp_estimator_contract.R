@@ -1,78 +1,40 @@
-# margot_lmtp() built from a sealed margot.lmtp estimator contract. the sealed
-# object is a fixture: constructing a real one drives the whole margot.lmtp
-# workflow, and this test asserts the bridge, not the sealing. The fixture is
-# sealed the way margot.lmtp seals, because the bridge re-verifies the content
-# hash on entry and a fixture carrying an invented hash would be refused.
+# Margot-native estimator specifications lock execution settings without
+# coupling the estimator to a separate workflow package.
 
+# create a small locked execution specification for bridge tests
 fixture_spec <- function(seed = 20260714L,
                          profile = "glm",
-                         arms = list(
-                           list(arm_id = "null", mtp = FALSE, engine_class = "static"),
-                           list(arm_id = "shift_up", mtp = TRUE, engine_class = "mtp")
-                         )) {
-  seal_fixture(
-    list(
-      question_id = "q1",
-      estimator = "lmtp::lmtp_sdr",
-      call_arguments = list(
-        trt = c("t0_a", "t1_a"),
-        baseline = c("b1", "b2"),
-        time_vary = list("t0_l", "t1_l"),
-        cens = c("t0_c", "t1_c"),
-        compete = NULL,
-        outcome = "t2_y",
-        outcome_type = "continuous",
-        id = "id",
-        folds = 5L,
-        bounds = NULL
-      ),
-      arms = arms,
-      contrast = c("shift_up", "null"),
-      seed = seed,
-      trim = 0.999,
-      learner_profile = profile
-    )
+                         policies = c(null = TRUE, shift_up = TRUE),
+                         outcomes = "t2_y",
+                         weight_column = NULL) {
+  margot_lmtp_estimator_spec(
+    trt = c("t0_a", "t1_a"),
+    outcomes = outcomes,
+    policies = policies,
+    seed = seed,
+    baseline = c("b1", "b2"),
+    time_vary = list("t0_l", "t1_l"),
+    cens = c("t0_c", "t1_c"),
+    outcome_type = "continuous",
+    id = "id",
+    folds = 5L,
+    learner_profile = profile,
+    trim = 0.999,
+    weight_column = weight_column
   )
 }
 
-# a sealed object whose content hash is the hash margot.lmtp would have computed
-# for it, so that the bridge's seal verification accepts it
-seal_fixture <- function(payload) {
-  seal <- structure(
-    list(
-      object_type = "estimator_spec",
-      schema_version = "0",
-      payload = payload,
-      parents = character(0),
-      content_hash = "fixture"
-    ),
-    class = c("margot_lmtp_estimator_spec", "margot_seal", "list")
-  )
-  if (requireNamespace("margot.lmtp", quietly = TRUE)) {
-    seal$schema_version <- margot.lmtp::margot_lmtp_schema_version()
-    seal$content_hash <- margot.lmtp:::seal_content_hash(seal)
-  }
-  seal
-}
-
+# shift an exposure upward by one unit
 shift_up <- function(data, trt) data[[trt]] + 1
 
-# --- the missing-dependency guard ------------------------------------------
-
-test_that("a sealed contract without margot.lmtp errors as a missing dependency", {
-  local_mocked_bindings(has_margot_lmtp = function() FALSE)
-  expect_error(
-    margot_lmtp(
-      data = data.frame(id = 1),
-      shift_functions = list(null = NULL, shift_up = shift_up),
-      estimator_spec = fixture_spec()
-    ),
-    class = "margot_error_missing_dependency"
-  )
+test_that("the estimator specification belongs to Margot", {
+  spec <- fixture_spec()
+  expect_s3_class(spec, "margot_lmtp_estimator_spec")
+  expect_identical(spec$schema_version, margot_lmtp_estimator_spec_version)
+  expect_silent(margot_lmtp_spec_verify(spec))
 })
 
-test_that("a non-seal errors before anything else is read", {
-  local_mocked_bindings(has_margot_lmtp = function() TRUE)
+test_that("a non-specification errors before anything else is read", {
   expect_error(
     margot_lmtp(
       data = data.frame(id = 1),
@@ -83,10 +45,7 @@ test_that("a non-seal errors before anything else is read", {
   )
 })
 
-# --- the derived call ------------------------------------------------------
-
-test_that("the lmtp call is built from the sealed contract", {
-  local_mocked_bindings(has_margot_lmtp = function() TRUE)
+test_that("the lmtp call is built from the locked specification", {
   derived <- margot_lmtp_args_from_spec(
     estimator_spec = fixture_spec(),
     trt = NULL,
@@ -106,13 +65,20 @@ test_that("the lmtp call is built from the sealed contract", {
   expect_equal(derived$lmtp_defaults$cens, c("t0_c", "t1_c"))
   expect_equal(derived$lmtp_defaults$folds, 5L)
   expect_equal(derived$lmtp_defaults$outcome_type, "continuous")
-  # the sealed cap arrives as an lmtp_control object, not as a bare number
   expect_equal(derived$lmtp_defaults$control$.trim, 0.999)
-  expect_equal(derived$mtp_by_arm, c(null = FALSE, shift_up = TRUE))
+  expect_equal(derived$mtp_by_arm, c(null = TRUE, shift_up = TRUE))
 })
 
-test_that("the learner profile maps to the registered SuperLearner library", {
-  local_mocked_bindings(has_margot_lmtp = function() TRUE)
+test_that("one specification can lock several terminal outcomes", {
+  derived <- margot_lmtp_args_from_spec(
+    fixture_spec(outcomes = c("perfectionism", "distress")),
+    NULL, NULL, list(), lmtp::lmtp_tmle, NULL,
+    list(null = NULL, shift_up = shift_up), character()
+  )
+  expect_identical(derived$outcome_vars, c("perfectionism", "distress"))
+})
+
+test_that("the learner profile maps to Margot's SuperLearner library", {
   glm_spec <- margot_lmtp_args_from_spec(
     fixture_spec(profile = "glm"), NULL, NULL, list(), lmtp::lmtp_tmle, NULL,
     list(null = NULL, shift_up = shift_up), character()
@@ -128,21 +94,41 @@ test_that("the learner profile maps to the registered SuperLearner library", {
     c("SL.mean", "SL.ranger", "SL.xgboost", "SL.glmnet")
   )
 
+  doctored <- fixture_spec()
+  doctored$payload$learner_profile <- "unregistered"
+  doctored$content_hash <- margot_lmtp_spec_hash(doctored$schema_version, doctored$payload)
   expect_error(
     margot_lmtp_args_from_spec(
-      fixture_spec(profile = "unregistered"), NULL, NULL, list(), lmtp::lmtp_tmle,
-      NULL, list(null = NULL, shift_up = shift_up), character()
+      doctored, NULL, NULL, list(), lmtp::lmtp_tmle, NULL,
+      list(null = NULL, shift_up = shift_up), character()
     ),
     class = "margot_error_invalid_input"
   )
 })
 
-# --- conflicts -------------------------------------------------------------
+test_that("the locked weight column is resolved from the analysis data", {
+  analysis_data <- data.frame(analysis_weight = c(0.5, 1, 1.5))
+  derived <- margot_lmtp_args_from_spec(
+    fixture_spec(weight_column = "analysis_weight"),
+    NULL, NULL, list(), lmtp::lmtp_tmle, NULL,
+    list(null = NULL, shift_up = shift_up), character(),
+    data = analysis_data
+  )
+  expect_identical(derived$lmtp_defaults$weights, analysis_data$analysis_weight)
+
+  expect_error(
+    margot_lmtp_args_from_spec(
+      fixture_spec(weight_column = "analysis_weight"),
+      NULL, NULL, list(), lmtp::lmtp_tmle, NULL,
+      list(null = NULL, shift_up = shift_up), character(),
+      data = data.frame(other = 1:3)
+    ),
+    class = "margot_error_invalid_input"
+  )
+})
 
 test_that("every conflicting user argument errors and names the conflict", {
-  local_mocked_bindings(has_margot_lmtp = function() TRUE)
   arms <- list(null = NULL, shift_up = shift_up)
-
   conflicting <- list(
     trt = list(trt = "other_a", supplied = "trt"),
     outcome_vars = list(outcome_vars = "other_y", supplied = "outcome_vars"),
@@ -167,12 +153,8 @@ test_that("every conflicting user argument errors and names the conflict", {
   }
 })
 
-test_that("an lmtp_defaults entry outside the sealed set is named, not discarded", {
-  local_mocked_bindings(has_margot_lmtp = function() TRUE)
+test_that("an unlocked lmtp_defaults entry is named rather than discarded", {
   arms <- list(null = NULL, shift_up = shift_up)
-
-  # `k` is not an argument the seal fixes, so the derived list would drop it in
-  # silence and the fit would run without the setting the caller asked for
   err <- tryCatch(
     margot_lmtp_args_from_spec(
       fixture_spec(), NULL, NULL, list(k = 1L), lmtp::lmtp_sdr, NULL, arms, character()
@@ -182,7 +164,6 @@ test_that("an lmtp_defaults entry outside the sealed set is named, not discarded
   expect_s3_class(err, "margot_error_estimator_spec_conflict")
   expect_match(conditionMessage(err), "k")
 
-  # an unnamed entry is named as such rather than passing unnoticed
   expect_error(
     margot_lmtp_args_from_spec(
       fixture_spec(), NULL, NULL, list(1L), lmtp::lmtp_sdr, NULL, arms, character()
@@ -190,7 +171,6 @@ test_that("an lmtp_defaults entry outside the sealed set is named, not discarded
     class = "margot_error_estimator_spec_conflict"
   )
 
-  # a sealed argument and an unsealed one arrive in the same condition
   err <- tryCatch(
     margot_lmtp_args_from_spec(
       fixture_spec(), NULL, NULL, list(folds = 2L, k = 1L), lmtp::lmtp_sdr, NULL,
@@ -201,7 +181,6 @@ test_that("an lmtp_defaults entry outside the sealed set is named, not discarded
   expect_match(conditionMessage(err), "folds")
   expect_match(conditionMessage(err), "k")
 
-  # and an empty list still builds the call
   expect_type(
     margot_lmtp_args_from_spec(
       fixture_spec(), NULL, NULL, list(), lmtp::lmtp_sdr, NULL, arms, character()
@@ -210,9 +189,7 @@ test_that("an lmtp_defaults entry outside the sealed set is named, not discarded
   )
 })
 
-test_that("the bridge re-verifies the seal and refuses a doctored payload", {
-  skip_if_not_installed("margot.lmtp")
-  local_mocked_bindings(has_margot_lmtp = function() TRUE)
+test_that("the bridge refuses a doctored payload", {
   arms <- list(null = NULL, shift_up = shift_up)
 
   doctored <- fixture_spec()
@@ -234,17 +211,7 @@ test_that("the bridge re-verifies the seal and refuses a doctored payload", {
   )
 })
 
-test_that("the learner mapping is margot.lmtp's, not a mirrored copy", {
-  skip_if_not_installed("margot.lmtp")
-  for (profile in c("glm", "ensemble")) {
-    expect_identical(
-      margot_lmtp_spec_learners(profile), margot.lmtp::lmtp_learner_library(profile)
-    )
-  }
-})
-
-test_that("shift functions must name exactly the sealed arms", {
-  local_mocked_bindings(has_margot_lmtp = function() TRUE)
+test_that("shift functions must name exactly the locked arms", {
   expect_error(
     margot_lmtp_args_from_spec(
       fixture_spec(), NULL, NULL, list(), lmtp::lmtp_sdr, NULL,
@@ -262,7 +229,6 @@ test_that("shift functions must name exactly the sealed arms", {
 })
 
 test_that("a matching argument is not a conflict", {
-  local_mocked_bindings(has_margot_lmtp = function() TRUE)
   derived <- margot_lmtp_args_from_spec(
     fixture_spec(), c("t0_a", "t1_a"), "t2_y", list(), lmtp::lmtp_sdr, 20260714L,
     list(null = NULL, shift_up = shift_up),
@@ -271,9 +237,7 @@ test_that("a matching argument is not a conflict", {
   expect_equal(derived$seed, 20260714L)
 })
 
-# --- the seed argument -----------------------------------------------------
-
-test_that("margot_lmtp() accepts a seed and rejects a non-scalar one", {
+test_that("margot_lmtp accepts and validates its seed", {
   expect_true("seed" %in% names(formals(margot_lmtp)))
   expect_null(eval(formals(margot_lmtp)$seed))
   expect_true("estimator_spec" %in% names(formals(margot_lmtp)))

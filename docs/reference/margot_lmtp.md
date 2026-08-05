@@ -10,8 +10,8 @@ complete output as \`.rds\` files.
 ``` r
 margot_lmtp(
   data,
-  outcome_vars,
-  trt,
+  outcome_vars = NULL,
+  trt = NULL,
   shift_functions = list(),
   include_null_shift = TRUE,
   lmtp_model_type = lmtp::lmtp_tmle,
@@ -27,7 +27,10 @@ margot_lmtp(
   use_timestamp = FALSE,
   prefix = NULL,
   manage_future_plan = FALSE,
-  progress = c("cli", "progressr", "none")
+  progress = c("cli", "progressr", "none"),
+  seed = NULL,
+  reuse_density_ratios = FALSE,
+  estimator_spec = NULL
 )
 ```
 
@@ -39,11 +42,13 @@ margot_lmtp(
 
 - outcome_vars:
 
-  A character vector of outcome variable names to be modeled.
+  A character vector of outcome variable names to be modelled. Optional
+  when \`estimator_spec\` is supplied, which locks it.
 
 - trt:
 
-  A character string specifying the treatment variable.
+  A character string specifying the treatment variable. Optional when
+  \`estimator_spec\` is supplied, which locks it.
 
 - shift_functions:
 
@@ -69,7 +74,9 @@ margot_lmtp(
 
 - lmtp_defaults:
 
-  A list of default parameters for the LMTP models.
+  A list of default parameters for the LMTP models. Must be empty when
+  \`estimator_spec\` is supplied, which builds the whole list from the
+  specification.
 
 - n_cores:
 
@@ -126,6 +133,28 @@ margot_lmtp(
   "progressr" (use progressr package handlers), or "none" (no progress
   reporting).
 
+- seed:
+
+  Optional single whole number seeding every stochastic step: the RNG at
+  entry, each model fit, and the parallel streams. Default NULL leaves
+  the RNG untouched. When \`estimator_spec\` is supplied the seed comes
+  from the locked specification, and supplying a different one errors.
+
+- reuse_density_ratios:
+
+  Logical. When \`TRUE\`, sequentially doubly robust fits sharing one
+  policy-specific nuisance identity fit the treatment and censoring
+  density ratios once and reuse them across \`outcome_vars\`. The
+  returned models, contrasts, and tables retain the existing Margot
+  structure. Default is \`FALSE\` while the opt-in path is validated.
+
+- estimator_spec:
+
+  Optional locked \`margot_lmtp_estimator_spec\` object from
+  \[margot_lmtp_estimator_spec()\]. When supplied, the \`lmtp\` call is
+  built from the specification and every conflicting user argument
+  errors.
+
 ## Value
 
 A list containing:
@@ -155,6 +184,28 @@ working with large data. In such cases, memory pressure and data copying
 between workers may offset the benefits of parallelization. Consider
 using fewer cores or sequential processing for very large models if you
 experience performance degradation.
+
+## Design and execution
+
+\`margot_lmtp()\` executes an LMTP analysis. A study's causal question,
+causal estimand, identification assumptions, policy rationale, and
+decision rules belong in its protocol rather than this software call.
+Keeping those design commitments outside the estimator prevents a later
+computational improvement from changing the scientific workflow.
+
+Supplying \`estimator_spec\` locks the execution settings. The \`lmtp\`
+call is then built from the specification's \`call_arguments\` — the
+exposure at each node, the baseline and time-varying covariates, the
+censoring and competing-event indicators, the outcome and its model, the
+identifier, the folds, the bounds, the registered learner library, the
+analysis-weight column, and the cap — and any conflicting user argument
+errors with a condition of class
+\`margot_error_estimator_spec_conflict\` that names the conflict. The
+specification supplies the whole \`lmtp_defaults\` list, so any entry
+supplied alongside it — one the specification fixes, or one the derived
+list would drop — raises that condition rather than passing in silence.
+Margot re-verifies the specification's content hash on entry, so an
+object edited after creation is refused.
 
 ## Examples
 

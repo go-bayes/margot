@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,82 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.014" id="id_2026-08-04-margot-11014">[2026-08-04] margot 1.1.014<a class="anchor" aria-label="anchor" href="#id_2026-08-04-margot-11014"></a></h2>
+<div class="section level4">
+<h4 id="consolidated-lmtp-workflow-in-margot-1-1-014">Consolidated LMTP workflow in Margot<a class="anchor" aria-label="anchor" href="#consolidated-lmtp-workflow-in-margot-1-1-014"></a></h4>
+<p>The 4 August 2026 package-boundary decision makes Margot the sole implementation home for the LMTP workflow. This ruling supersedes the July plan to move registered estimation and density-ratio reporting into a companion package.</p>
+<div class="section level5">
+<h5 id="added-1-1-014">Added<a class="anchor" aria-label="anchor" href="#added-1-1-014"></a></h5>
+<ul><li>
+<code>margot_lmtp(reuse_density_ratios = TRUE)</code> now fits each policy-specific treatment and censoring density-ratio process once and reuses it across terminal outcomes for sequentially doubly robust estimation. The opt-in path returns the existing four-part Margot object, including genuine <code>lmtp</code> models that continue through <code><a href="../reference/margot_lmtp_overlap.html">margot_lmtp_overlap()</a></code>, checkpoint restoration, combined tables, and <code><a href="../reference/margot_plot.html">margot_plot()</a></code>.</li>
+<li>
+<code><a href="../reference/margot_lmtp_estimator_spec.html">margot_lmtp_estimator_spec()</a></code> locks execution settings inside Margot, including several terminal outcomes and an analysis-weight column. Margot verifies the specification’s content hash before fitting and refuses conflicting call arguments.</li>
+<li>Deterministic and stochastic regression tests require exact numerical agreement between independent and shared-ratio fits for the density ratios, point estimate, standard error, influence function, and confidence interval. An end-to-end weighted perfectionism example verifies two ratio fits for two policies and two outcomes, compared with four fits under independent estimation.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="changed-1-1-014">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-014"></a></h5>
+<ul><li>Margot no longer suggests or redirects users to <code>margot.lmtp</code>. The descriptive density-ratio reporting functions remain active in Margot, while the retired threshold-based positivity gate remains defunct.</li>
+<li>The first fit-once implementation supports <code><a href="https://rdrr.io/pkg/lmtp/man/lmtp_sdr.html" class="external-link">lmtp::lmtp_sdr()</a></code> under <code>lmtp</code> 1.5.4. Margot refuses unsupported estimators, survival outcomes, precomputed shifted data, and internally managed outer futures rather than silently falling back.</li>
+</ul></div>
+</div>
+<div class="section level4">
+<h4 id="minimal-best-linear-projection-reporting-surface-1-1-014">Minimal best linear projection reporting surface<a class="anchor" aria-label="anchor" href="#minimal-best-linear-projection-reporting-surface-1-1-014"></a></h4>
+<p>The 4 August 2026 decision records the reported best linear projection as a projection onto the full registered baseline covariate set, reported as estimates with 95% confidence intervals and nothing else.</p>
+<div class="section level5">
+<h5 id="added-1-1-014-1">Added<a class="anchor" aria-label="anchor" href="#added-1-1-014-1"></a></h5>
+<ul><li>
+<code><a href="../reference/margot_blp.html">margot_blp()</a></code> computes <code><a href="https://rdrr.io/pkg/grf/man/best_linear_projection.html" class="external-link">grf::best_linear_projection()</a></code> for every forest retained by <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code>, projecting onto the full covariate matrix the forests were fitted on rather than a variable-importance screen. It returns a tidy frame of one row per outcome and coefficient with <code>estimate</code>, <code>std_error</code>, and 95% normal-approximation interval bounds, plus <code>target_sample</code>, <code>n</code>, the Kish effective sample size, a fingerprint of the projection matrix, and a <code>status</code> column. Each outcome is isolated: a failed projection yields one structured failure row and never aborts the batch.</li>
+<li>
+<code><a href="../reference/margot_table_blp.html">margot_table_blp()</a></code> formats that frame for reporting as estimate and 95% confidence interval, with no significance stars and no p-values, and carries the mandatory relativity sentence as its <code>caption</code> attribute.</li>
+<li>
+<code><a href="../reference/margot_plot_blp.html">margot_plot_blp()</a></code> draws the same coefficients as a forest-style plot with a zero reference line, one facet per outcome, no significance colouring, and the same relativity sentence as its caption.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="deprecated-in-reporting-1-1-014">Deprecated in reporting<a class="anchor" aria-label="anchor" href="#deprecated-in-reporting-1-1-014"></a></h5>
+<ul><li>The <code>blp_top</code> element of each <code><a href="../reference/margot_causal_forest.html">margot_causal_forest()</a></code> result is retired from reporting. It projects onto the top variable-importance screen rather than the registered covariate set. It is still computed for backwards compatibility and must not be reported; use <code><a href="../reference/margot_blp.html">margot_blp()</a></code> instead.</li>
+</ul></div>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.013" id="id_2026-07-29-margot-11013">[2026-07-29] margot 1.1.013<a class="anchor" aria-label="anchor" href="#id_2026-07-29-margot-11013"></a></h2>
+<div class="section level4">
+<h4 id="retired-the-positivity-enforcement-machinery-1-1-013">Retired the positivity enforcement machinery<a class="anchor" aria-label="anchor" href="#retired-the-positivity-enforcement-machinery-1-1-013"></a></h4>
+<p>The guide-architecture change of 29 July 2026 removed every traffic light, tolerance, retention profile, and override from the longitudinal modified treatment policy workflow. No <code>margot</code> function now computes a verdict from a constant, and no return value carries one. The registered workflow moves to the new <code>margot.lmtp</code> package, which <code>margot</code> suggests rather than imports. Backwards compatibility is preserved with warnings everywhere except the two defunct exports.</p>
+<div class="section level5">
+<h5 id="defunct-1-1-013">Defunct<a class="anchor" aria-label="anchor" href="#defunct-1-1-013"></a></h5>
+<ul><li>
+<code><a href="../reference/margot_lmtp_positivity_gate.html">margot_lmtp_positivity_gate()</a></code> is defunct. It implemented the retired trim ladder, the effective-sample-size floor, and the product support band as a mechanical pass/fail per policy and rung. Calling it errors with a condition of class <code>margot_error_defunct</code> naming the <code>margot.lmtp</code> question-review workflow. No registered study used it.</li>
+<li>The internal <code>margot_positivity_support_status()</code> is defunct in the same way. It emitted “Adequate”, “Caution”, or “Limited” at the retired 5% and 20% boundaries.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="removed-arguments-and-fields-1-1-013">Removed arguments and fields<a class="anchor" aria-label="anchor" href="#removed-arguments-and-fields-1-1-013"></a></h5>
+<ul><li>
+<code><a href="../reference/margot_lmtp_positivity.html">margot_lmtp_positivity()</a></code> loses the <code>ess_warn</code>, <code>zero_warn</code>, and <code>tail_warn</code> arguments and the <code>flags</code> return field. The descriptive by-wave and overall summaries remain. Supplying a removed argument errors with a condition of class <code>margot_error_removed_argument</code> rather than being ignored.</li>
+<li>
+<code><a href="../reference/margot_lmtp_overlap.html">margot_lmtp_overlap()</a></code> loses the <code>flags</code> return field and the <code>test_thresholds</code> and <code>policy_rate_strict</code> arguments, with the same error on a stale call. The summaries and plots remain.</li>
+<li>
+<code><a href="../reference/margot_positivity_summary.html">margot_positivity_summary()</a></code> (and its <code><a href="../reference/margot_positivity_summary.html">margot_ipsi_summary()</a></code> alias) loses its <code>support_status</code> and <code>verdict</code> columns, its compact <code>Support</code> column, and the graded support screen entirely. That screen graded the combined share of uncensored rows falling outside the central band at 5% and 20%, and both constants are gone with it: the share outside the band and the binarised-state prevalence remain as reported quantities with no status attached. <code>test_thresholds</code> still defines the reported band; <code>prod_frac_ok</code> and <code>prod_frac_warn</code> are accepted and ignored.</li>
+<li>
+<code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code> loses the <code>support_status</code> column of its <code>support_metrics</code> table and every graded verdict in its prose. Its <code>include_ipsi_recommend</code> argument and its “IPSI Recommendation” section go with them. The extended no-cutpoints ruling covers estimand-selecting constants, and recommending the largest delta whose share outside the band cleared a constant selected the estimand. Its IPSI section becomes a candidate summary describing each registered delta.</li>
+<li>
+<code><a href="../reference/margot_report_lmtp_positivity.html">margot_report_lmtp_positivity()</a></code> loses its <code>flags</code> return field.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="soft-deprecated-1-1-013">Soft-deprecated<a class="anchor" aria-label="anchor" href="#soft-deprecated-1-1-013"></a></h5>
+<p>Seven positivity-named wrappers keep working and warn once per session, pointing to the <code>margot.lmtp</code> reporting family: <code><a href="../reference/margot_report_lmtp_positivity.html">margot_lmtp_positivity_report()</a></code>, <code><a href="../reference/margot_positivity_report.html">margot_positivity_report()</a></code>, <code><a href="../reference/margot_positivity_report.html">margot_positivity_report_single_model()</a></code>, <code><a href="../reference/margot_positivity_summary.html">margot_positivity_summary()</a></code>, <code><a href="../reference/margot_interpret_lmtp_positivity.html">margot_interpret_lmtp_positivity()</a></code>, <code><a href="../reference/margot_interpret_lmtp_positivity_overview.html">margot_interpret_lmtp_positivity_overview()</a></code>, and <code><a href="../reference/margot_report_lmtp_positivity.html">margot_report_lmtp_positivity()</a></code>. They warn through one full release cycle after <code>margot.lmtp</code> ships and are removed the cycle after. Their verdict and status fields are removed now.</p>
+</div>
+</div>
+<div class="section level4">
+<h4 id="added-1-1-013">Added<a class="anchor" aria-label="anchor" href="#added-1-1-013"></a></h4>
+<ul><li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code> gains a <code>seed</code> argument seeding every stochastic step: the RNG at entry, each model fit, and the parallel streams.</li>
+<li>
+<code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code> gains an <code>estimator_spec</code> argument taking a sealed <code>margot_lmtp_estimator_spec</code> object from <code>margot.lmtp</code>. The <code>lmtp</code> call is then built from the sealed contract’s <code>call_arguments</code>, and a conflicting user argument errors with a condition of class <code>margot_error_estimator_spec_conflict</code> naming the conflict. <code><a href="../reference/margot_lmtp.html">margot_lmtp()</a></code> remains the exploratory batch driver and is documented as outside the registered workflow, which runs through <code><a href="https://rdrr.io/pkg/margot.lmtp/man/margot_lmtp_estimate.html" class="external-link">margot.lmtp::margot_lmtp_estimate()</a></code>.</li>
+<li>
+<code>margot.lmtp</code> joins Suggests. Every path that needs it guards with <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> and errors with class <code>margot_error_missing_dependency</code> when it is absent.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.012" id="id_2026-07-16-margot-11012">[2026-07-16] margot 1.1.012<a class="anchor" aria-label="anchor" href="#id_2026-07-16-margot-11012"></a></h2>
 <div class="section level4">
@@ -1021,7 +1097,7 @@
 <div class="section level4">
 <h4 id="new-1-0-246">New<a class="anchor" aria-label="anchor" href="#new-1-0-246"></a></h4>
 <ul><li>
-<code><a href="../reference/margot_report_lmtp_positivity.html">margot_report_lmtp_positivity()</a></code>: one‑stop reporter for LMTP positivity diagnostics that returns overall tables, combined by‑wave tables (ESS/N and ESS), optional density‑ratio grids with harmonised or custom y‑limits, and filtered flags. Backwards‑compatible alias <code>margot_lmtp_positivity_report()</code> is provided.</li>
+<code><a href="../reference/margot_report_lmtp_positivity.html">margot_report_lmtp_positivity()</a></code>: one‑stop reporter for LMTP positivity diagnostics that returns overall tables, combined by‑wave tables (ESS/N and ESS), optional density‑ratio grids with harmonised or custom y‑limits, and filtered flags. Backwards‑compatible alias <code><a href="../reference/margot_report_lmtp_positivity.html">margot_lmtp_positivity_report()</a></code> is provided.</li>
 <li>
 <code><a href="../reference/margot_plot_lmtp_overlap_grid.html">margot_plot_lmtp_overlap_grid()</a></code>: wrapper for wave‑by‑shift density‑ratio grids with optional y‑axis control.</li>
 <li>
@@ -3586,7 +3662,7 @@
 </li>
 </ul></div>
 <div class="section level3">
-<h3 id="refactored-to-acceptl-depth-policy-trees-thumbsup-1-0-29">Refactored to accept 1L depth policy trees 👍<a class="anchor" aria-label="anchor" href="#refactored-to-acceptl-depth-policy-trees-thumbsup-1-0-29"></a></h3>
+<h3 id="refactored-to-acceptl-depth-policy-trees-1-0-29">Refactored to accept 1L depth policy trees 👍<a class="anchor" aria-label="anchor" href="#refactored-to-acceptl-depth-policy-trees-1-0-29"></a></h3>
 <ul><li>
 <code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code> will plot a tree of depth = 1L.</li>
 <li><code><a href="../reference/margot_recalculate_policy_trees.html">margot_recalculate_policy_trees()</a></code></li>
@@ -5509,7 +5585,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -52,14 +52,13 @@ margot_ipsi_summary(...)
 
 - test_thresholds:
 
-  Named list controlling tests. Recognised names: - \`prod_log10\`
-  (default -1) defining the central support band \`\[10^prod_log10,
-  10^-prod_log10\]\`; \`-1\` corresponds to \`\[0.1, 10\]\`. -
-  \`prod_frac_ok\` (default 0.05) and \`prod_frac_warn\` (default 0.20),
-  defining the graded support screen from the combined fraction outside
-  the band. - \`near_zero_median\` (default 1e-3) and \`near_zero_cv\`
-  (default 0.05) are computed but not included in the support screen;
-  they are returned as counts of flagged waves per shift.
+  Named list controlling the reported band. Recognised names: -
+  \`prod_log10\` (default -1) defining the central band
+  \`\[10^prod_log10, 10^-prod_log10\]\`; \`-1\` corresponds to \`\[0.1,
+  10\]\`. - \`near_zero_median\` (default 1e-3) and \`near_zero_cv\`
+  (default 0.05) are returned as counts of flagged waves per shift. -
+  \`prod_frac_ok\` and \`prod_frac_warn\` are accepted for backward
+  compatibility and ignored; they drove the removed support screen.
 
 - include_policy_rates:
 
@@ -80,22 +79,22 @@ margot_ipsi_summary(...)
 ## Value
 
 A tibble/data.frame with one row per shift containing: \`outcome\`,
-\`shift_full\`, \`shift_clean\`, cumulative density-ratio metrics,
-support screen, ESS metrics (including final cumulative ESS), optional
-policy rates (per-wave \`p_hat_wave_k\` and \`p_hat_overall\`), optional
-effect columns if provided.
+\`shift_full\`, \`shift_clean\`, cumulative density-ratio metrics, ESS
+metrics (including final cumulative ESS), optional policy rates
+(per-wave \`p_hat_wave_k\` and \`p_hat_overall\`), optional effect
+columns if provided.
 
 ## Details
 
-Metrics include: - Cumulative density-ratio support across selected
+Metrics include: - Cumulative density-ratio behaviour across selected
 waves, summarised as the fraction of uncensored rows falling below and
-above a user-defined central band, plus a graded support screen, percent
-collapsing to zero including censoring (IPCW zeros), and the final
-cumulative ESS. - ESS on uncensored rows overall and relative to
-person-time (ESS+/(N_pt)). - Policy-implied exposure rates by wave (and
-overall) on uncensored rows when \`exposure_by_wave\` is attached to
-models (best-effort from \`margot_lmtp()\`). - Optional effect columns
-merged from a user-supplied \`effect_table\`.
+above a user-defined central band, percent collapsing to zero including
+censoring (IPCW zeros), and the final cumulative ESS. - ESS on
+uncensored rows overall and relative to person-time (ESS+/(N_pt)). -
+Policy-implied exposure rates by wave (and overall) on uncensored rows
+when \`exposure_by_wave\` is attached to models (best-effort from
+\`margot_lmtp()\`). - Optional effect columns merged from a
+user-supplied \`effect_table\`.
 
 ## Examples
 

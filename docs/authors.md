@@ -16,11 +16,8 @@ R package version 1.0 Functions to obtain MARGinal Observational
 Treatment-effects from observational data.,
 <https://go-bayes.github.io/margot/>.
 
-    @Manual{,
-      title = {margot: MARGinal Observational Treatment-effects},
-      author = {Joseph A Bulbulia},
-      year = {2024},
-      note = {R package version 1.0 Functions to obtain MARGinal Observational Treatment-effects from observational data.},
-      url = {https://go-bayes.github.io/margot/},
-      doi = {10.5281/zenodo.10907724},
-    }
+@Manual{, title = {margot: MARGinal Observational Treatment-effects},
+author = {Joseph A Bulbulia}, year = {2024}, note = {R package version
+1.0 Functions to obtain MARGinal Observational Treatment-effects from
+observational data.}, url = {https://go-bayes.github.io/margot/}, doi =
+{10.5281/zenodo.10907724}, }

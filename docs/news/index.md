@@ -1,5 +1,180 @@
 # Changelog
 
+## \[2026-08-04\] margot 1.1.014
+
+#### Consolidated LMTP workflow in Margot
+
+The 4 August 2026 package-boundary decision makes Margot the sole
+implementation home for the LMTP workflow. This ruling supersedes the
+July plan to move registered estimation and density-ratio reporting into
+a companion package.
+
+##### Added
+
+- `margot_lmtp(reuse_density_ratios = TRUE)` now fits each
+  policy-specific treatment and censoring density-ratio process once and
+  reuses it across terminal outcomes for sequentially doubly robust
+  estimation. The opt-in path returns the existing four-part Margot
+  object, including genuine `lmtp` models that continue through
+  [`margot_lmtp_overlap()`](https://go-bayes.github.io/margot/reference/margot_lmtp_overlap.md),
+  checkpoint restoration, combined tables, and
+  [`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md).
+- [`margot_lmtp_estimator_spec()`](https://go-bayes.github.io/margot/reference/margot_lmtp_estimator_spec.md)
+  locks execution settings inside Margot, including several terminal
+  outcomes and an analysis-weight column. Margot verifies the
+  specification’s content hash before fitting and refuses conflicting
+  call arguments.
+- Deterministic and stochastic regression tests require exact numerical
+  agreement between independent and shared-ratio fits for the density
+  ratios, point estimate, standard error, influence function, and
+  confidence interval. An end-to-end weighted perfectionism example
+  verifies two ratio fits for two policies and two outcomes, compared
+  with four fits under independent estimation.
+
+##### Changed
+
+- Margot no longer suggests or redirects users to `margot.lmtp`. The
+  descriptive density-ratio reporting functions remain active in Margot,
+  while the retired threshold-based positivity gate remains defunct.
+- The first fit-once implementation supports
+  [`lmtp::lmtp_sdr()`](https://rdrr.io/pkg/lmtp/man/lmtp_sdr.html) under
+  `lmtp` 1.5.4. Margot refuses unsupported estimators, survival
+  outcomes, precomputed shifted data, and internally managed outer
+  futures rather than silently falling back.
+
+#### Minimal best linear projection reporting surface
+
+The 4 August 2026 decision records the reported best linear projection
+as a projection onto the full registered baseline covariate set,
+reported as estimates with 95% confidence intervals and nothing else.
+
+##### Added
+
+- [`margot_blp()`](https://go-bayes.github.io/margot/reference/margot_blp.md)
+  computes
+  [`grf::best_linear_projection()`](https://rdrr.io/pkg/grf/man/best_linear_projection.html)
+  for every forest retained by
+  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md),
+  projecting onto the full covariate matrix the forests were fitted on
+  rather than a variable-importance screen. It returns a tidy frame of
+  one row per outcome and coefficient with `estimate`, `std_error`, and
+  95% normal-approximation interval bounds, plus `target_sample`, `n`,
+  the Kish effective sample size, a fingerprint of the projection
+  matrix, and a `status` column. Each outcome is isolated: a failed
+  projection yields one structured failure row and never aborts the
+  batch.
+- [`margot_table_blp()`](https://go-bayes.github.io/margot/reference/margot_table_blp.md)
+  formats that frame for reporting as estimate and 95% confidence
+  interval, with no significance stars and no p-values, and carries the
+  mandatory relativity sentence as its `caption` attribute.
+- [`margot_plot_blp()`](https://go-bayes.github.io/margot/reference/margot_plot_blp.md)
+  draws the same coefficients as a forest-style plot with a zero
+  reference line, one facet per outcome, no significance colouring, and
+  the same relativity sentence as its caption.
+
+##### Deprecated in reporting
+
+- The `blp_top` element of each
+  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md)
+  result is retired from reporting. It projects onto the top
+  variable-importance screen rather than the registered covariate set.
+  It is still computed for backwards compatibility and must not be
+  reported; use
+  [`margot_blp()`](https://go-bayes.github.io/margot/reference/margot_blp.md)
+  instead.
+
+## \[2026-07-29\] margot 1.1.013
+
+#### Retired the positivity enforcement machinery
+
+The guide-architecture change of 29 July 2026 removed every traffic
+light, tolerance, retention profile, and override from the longitudinal
+modified treatment policy workflow. No `margot` function now computes a
+verdict from a constant, and no return value carries one. The registered
+workflow moves to the new `margot.lmtp` package, which `margot` suggests
+rather than imports. Backwards compatibility is preserved with warnings
+everywhere except the two defunct exports.
+
+##### Defunct
+
+- [`margot_lmtp_positivity_gate()`](https://go-bayes.github.io/margot/reference/margot_lmtp_positivity_gate.md)
+  is defunct. It implemented the retired trim ladder, the
+  effective-sample-size floor, and the product support band as a
+  mechanical pass/fail per policy and rung. Calling it errors with a
+  condition of class `margot_error_defunct` naming the `margot.lmtp`
+  question-review workflow. No registered study used it.
+- The internal `margot_positivity_support_status()` is defunct in the
+  same way. It emitted “Adequate”, “Caution”, or “Limited” at the
+  retired 5% and 20% boundaries.
+
+##### Removed arguments and fields
+
+- [`margot_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_lmtp_positivity.md)
+  loses the `ess_warn`, `zero_warn`, and `tail_warn` arguments and the
+  `flags` return field. The descriptive by-wave and overall summaries
+  remain. Supplying a removed argument errors with a condition of class
+  `margot_error_removed_argument` rather than being ignored.
+- [`margot_lmtp_overlap()`](https://go-bayes.github.io/margot/reference/margot_lmtp_overlap.md)
+  loses the `flags` return field and the `test_thresholds` and
+  `policy_rate_strict` arguments, with the same error on a stale call.
+  The summaries and plots remain.
+- [`margot_positivity_summary()`](https://go-bayes.github.io/margot/reference/margot_positivity_summary.md)
+  (and its
+  [`margot_ipsi_summary()`](https://go-bayes.github.io/margot/reference/margot_positivity_summary.md)
+  alias) loses its `support_status` and `verdict` columns, its compact
+  `Support` column, and the graded support screen entirely. That screen
+  graded the combined share of uncensored rows falling outside the
+  central band at 5% and 20%, and both constants are gone with it: the
+  share outside the band and the binarised-state prevalence remain as
+  reported quantities with no status attached. `test_thresholds` still
+  defines the reported band; `prod_frac_ok` and `prod_frac_warn` are
+  accepted and ignored.
+- [`margot_interpret_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
+  loses the `support_status` column of its `support_metrics` table and
+  every graded verdict in its prose. Its `include_ipsi_recommend`
+  argument and its “IPSI Recommendation” section go with them. The
+  extended no-cutpoints ruling covers estimand-selecting constants, and
+  recommending the largest delta whose share outside the band cleared a
+  constant selected the estimand. Its IPSI section becomes a candidate
+  summary describing each registered delta.
+- [`margot_report_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md)
+  loses its `flags` return field.
+
+##### Soft-deprecated
+
+Seven positivity-named wrappers keep working and warn once per session,
+pointing to the `margot.lmtp` reporting family:
+[`margot_lmtp_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md),
+[`margot_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md),
+[`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md),
+[`margot_positivity_summary()`](https://go-bayes.github.io/margot/reference/margot_positivity_summary.md),
+[`margot_interpret_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md),
+[`margot_interpret_lmtp_positivity_overview()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity_overview.md),
+and
+[`margot_report_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md).
+They warn through one full release cycle after `margot.lmtp` ships and
+are removed the cycle after. Their verdict and status fields are removed
+now.
+
+#### Added
+
+- [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md)
+  gains a `seed` argument seeding every stochastic step: the RNG at
+  entry, each model fit, and the parallel streams.
+- [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md)
+  gains an `estimator_spec` argument taking a sealed
+  `margot_lmtp_estimator_spec` object from `margot.lmtp`. The `lmtp`
+  call is then built from the sealed contract’s `call_arguments`, and a
+  conflicting user argument errors with a condition of class
+  `margot_error_estimator_spec_conflict` naming the conflict.
+  [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md)
+  remains the exploratory batch driver and is documented as outside the
+  registered workflow, which runs through
+  [`margot.lmtp::margot_lmtp_estimate()`](https://rdrr.io/pkg/margot.lmtp/man/margot_lmtp_estimate.html).
+- `margot.lmtp` joins Suggests. Every path that needs it guards with
+  [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) and errors
+  with class `margot_error_missing_dependency` when it is absent.
+
 ## \[2026-07-16\] margot 1.1.012
 
 #### Fixed
@@ -1520,8 +1695,9 @@ welfare maximisation.
   one‑stop reporter for LMTP positivity diagnostics that returns overall
   tables, combined by‑wave tables (ESS/N and ESS), optional
   density‑ratio grids with harmonised or custom y‑limits, and filtered
-  flags. Backwards‑compatible alias `margot_lmtp_positivity_report()` is
-  provided.
+  flags. Backwards‑compatible alias
+  [`margot_lmtp_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md)
+  is provided.
 - [`margot_plot_lmtp_overlap_grid()`](https://go-bayes.github.io/margot/reference/margot_plot_lmtp_overlap_grid.md):
   wrapper for wave‑by‑shift density‑ratio grids with optional y‑axis
   control.
@@ -4370,11 +4546,7 @@ fixes.
 
   - Internal check now uses
 
-    ``` r
-
-    cols_check <- c(col, future_cols)
-    ok         <- rowSums(!is.na(out[, cols_check, drop = FALSE])) > 0
-    ```
+    `cols_check`` ``<-`` `[`c`](https://rdrr.io/r/base/c.html)`(``col``, ``future_cols``)`` ``ok`` ``<-`` `[`rowSums`](https://rdrr.io/r/base/colSums.html)`(``!`[`is.na`](https://rdrr.io/r/base/NA.html)`(``out``[``, ``cols_check``, drop ``=`` ``FALSE``]``)``)`` ``>`` ``0`
 
     to align behaviour with the documentation.
 - `margot_wide_impute_machine()` print flags now set to true

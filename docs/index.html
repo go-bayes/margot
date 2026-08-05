@@ -12,8 +12,8 @@
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
 <meta property="og:title" content="MARGinal Observational Treatment-effects">
-<meta name="description" content="Functions to obtain MARGinal Observational Treatment-effects from observational data. The plotting API has been reverted to the last stable implementation for reliability (margot_plot()); an experimental advanced plot (margot_plot_dev()) remains available for users who want multiplicity/E-value workflows and extended ordering. Robust handling of risk‑ratio E-values remains under active refinement. Utilities for incremental propensity score interventions summarise transition matrices and counterfactual initiation probabilities (e.g., `margot_transition_table()` and `margot_compute_ipsi_probability()`). The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.">
-<meta property="og:description" content="Functions to obtain MARGinal Observational Treatment-effects from observational data. The plotting API has been reverted to the last stable implementation for reliability (margot_plot()); an experimental advanced plot (margot_plot_dev()) remains available for users who want multiplicity/E-value workflows and extended ordering. Robust handling of risk‑ratio E-values remains under active refinement. Utilities for incremental propensity score interventions summarise transition matrices and counterfactual initiation probabilities (e.g., `margot_transition_table()` and `margot_compute_ipsi_probability()`). The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.">
+<meta name="description" content="Functions to obtain MARGinal Observational Treatment-effects from observational data. The plotting API has been reverted to the last stable implementation for reliability (margot_plot()); an experimental advanced plot (margot_plot_dev()) remains available for users who want multiplicity/E-value workflows and extended ordering. Robust handling of risk‑ratio E-values remains under active refinement. Utilities for incremental propensity score interventions summarise transition matrices and counterfactual initiation probabilities (e.g., `margot_transition_table()` and `margot_compute_ipsi_probability()`). Longitudinal modified treatment policy analyses can lock their execution settings in Margot, fit policy-specific density-ratio processes once across several outcomes, and pass the resulting models directly to Margot's reporting and plotting functions. The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.">
+<meta property="og:description" content="Functions to obtain MARGinal Observational Treatment-effects from observational data. The plotting API has been reverted to the last stable implementation for reliability (margot_plot()); an experimental advanced plot (margot_plot_dev()) remains available for users who want multiplicity/E-value workflows and extended ordering. Robust handling of risk‑ratio E-values remains under active refinement. Utilities for incremental propensity score interventions summarise transition matrices and counterfactual initiation probabilities (e.g., `margot_transition_table()` and `margot_compute_ipsi_probability()`). Longitudinal modified treatment policy analyses can lock their execution settings in Margot, fit policy-specific density-ratio processes once across several outcomes, and pass the resulting models directly to Margot's reporting and plotting functions. The package includes simulated data from The New Zealand Attitudes and Values Study, licensed for non-commercial use only to protect privacy. The code is licensed under the GNU General Public License (GPL) v3.0.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,6 +69,7 @@
 <li><p>Performing data analysis, interpreting results, and conveying these results to interested audiences.</p></li>
 </ol>
 <p>Although steps 1-3 are routinely skipped in social scientific research, they are indispensable. Without them, we have no way of assigning meaning to the statistical relationships we observe from data.</p>
+<!-- The package offers functions for evaluating causal assumptions, modelling time-series data, reporting results, and performing sensitivity analyses. -->
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -81,7 +82,19 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"go-bayes/margot"</span><span class="op">)</span></span></code></pre></div>
-<p><code>margot</code> streamlines the estimation of marginal treatment effects such as the ATE and ATT. It also supports workflows for heterogeneous treatment effects using <code>grf</code>, and longitudinal modified treatment policies using <code>lmtp</code>. <code>margot</code> is greatly indebted to the authors of these two excellent packages. <code>margot</code> is best seen as a workflow package for preparing data, checking assumptions, estimating causal effects, and communicating results precisely.</p>
+<p><code>margot</code> streamlines the estimation of marginal treatment effects such as the ATE and ATT. It also supports workflows for heterogeneous treatment effects using <code>grf</code>, and longitudinal modified treatment policies using <code>lmtp</code>. <code>margot</code> is greatly indebted to the authors of these two excellent packages. <code>margot</code> is best seen as a workflow package for preparing data, evaluating assumptions, estimating causal effects, and communicating results precisely.</p>
+</div>
+<div class="section level2">
+<h2 id="working-lmtp-fit-once-example">Working LMTP fit-once example<a class="anchor" aria-label="anchor" href="#working-lmtp-fit-once-example"></a>
+</h2>
+<p>Margot includes a complete synthetic perfectionism example with two terminal outcomes and analysis weights. The script locks its execution settings with <code><a href="reference/margot_lmtp_estimator_spec.html">margot_lmtp_estimator_spec()</a></code>, fits each policy-specific treatment and censoring density-ratio process once with <code>margot_lmtp(reuse_density_ratios = TRUE)</code>, selects the resulting combined table, and passes that table directly to <code><a href="reference/margot_plot.html">margot_plot()</a></code>. Its executable assertions require two ratio fits for two policies, compared with four fits under independent outcome-policy estimation.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">example_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>  <span class="st">"examples"</span>, <span class="st">"lmtp-fit-once-perfectionism.R"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"margot"</span>,</span>
+<span>  mustWork <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/sys.source.html" class="external-link">sys.source</a></span><span class="op">(</span><span class="va">example_path</span>, envir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">globalenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Note that Margot is being actively developed, and is not currently in a stable state. Expect breaking changes.</p>
 </div>
 
@@ -131,7 +144,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

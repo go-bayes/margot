@@ -4,34 +4,24 @@
 #' calculates contrasts, creates evaluation tables, and optionally saves
 #' checkpoints and the complete output as `.rds` files.
 #'
-#' @section Outside the registered workflow:
-#' `margot_lmtp()` is the exploratory batch driver. It is not the registered
-#' estimation path: a registered study runs through
-#' `margot.lmtp::margot_lmtp_estimate()`, which derives every modelling argument
-#' from a deposited registration manifest. Use `margot_lmtp()` for exploration,
-#' sensitivity work, and teaching.
+#' @section Design and execution:
+#' `margot_lmtp()` executes an LMTP analysis. A study's causal question, causal
+#' estimand, identification assumptions, policy rationale, and decision rules
+#' belong in its protocol rather than this software call. Keeping those design
+#' commitments outside the estimator prevents a later computational improvement
+#' from changing the scientific workflow.
 #'
-#' Supplying `estimator_spec` bridges the two. The `lmtp` call is then built
-#' from the sealed contract's `call_arguments` — the exposure at each node, the
+#' Supplying `estimator_spec` locks the execution settings. The `lmtp` call is
+#' then built from the specification's `call_arguments` — the exposure at each node, the
 #' baseline and time-varying covariates, the censoring and competing-event
 #' indicators, the outcome and its model, the identifier, the folds, the bounds,
-#' the registered learner library, and the sealed cap — and any conflicting user
+#' the registered learner library, the analysis-weight column, and the cap — and any conflicting user
 #' argument errors with a condition of class
-#' `margot_error_estimator_spec_conflict` that names the conflict. The contract
+#' `margot_error_estimator_spec_conflict` that names the conflict. The specification
 #' supplies the whole `lmtp_defaults` list, so any entry supplied alongside it —
-#' one the seal fixes, or one the derived list would drop — raises that condition
-#' rather than passing in silence. The seal itself is re-verified on entry with
-#' `margot.lmtp::margot_lmtp_verify_seal()`, so a sealed object edited between
-#' sealing and use is refused. `margot` only suggests `margot.lmtp`; supplying
-#' `estimator_spec` without it installed errors with class
-#' `margot_error_missing_dependency`.
-#'
-#' The design-stage `seed`, `folds`, and `learner_profile` sealed on
-#' `margot.lmtp::margot_lmtp_preassessment_manifest()` and the estimation-stage
-#' `seed`, `folds`, and `learner_profile` sealed on
-#' `margot.lmtp::margot_lmtp_estimator_spec()` are independent contracts with no
-#' inheritance: neither stage reads the other's settings, and `estimator_spec`
-#' supplies this function with the estimation-stage settings alone.
+#' one the specification fixes, or one the derived list would drop — raises that condition
+#' rather than passing in silence. Margot re-verifies the specification's
+#' content hash on entry, so an object edited after creation is refused.
 #'
 #' @details
 #' For very large datasets or models with many time points, parallel processing may not improve performance
@@ -41,14 +31,14 @@
 #' experience performance degradation.
 #'
 #' @param data A data frame containing all necessary variables.
-#' @param outcome_vars A character vector of outcome variable names to be modeled. Optional when `estimator_spec` is supplied, which seals it.
-#' @param trt A character string specifying the treatment variable. Optional when `estimator_spec` is supplied, which seals it.
+#' @param outcome_vars A character vector of outcome variable names to be modelled. Optional when `estimator_spec` is supplied, which locks it.
+#' @param trt A character string specifying the treatment variable. Optional when `estimator_spec` is supplied, which locks it.
 #' @param shift_functions A list of shift functions to be applied. Each function should take `data` and `trt` as arguments.
 #' @param include_null_shift Logical, whether to include a null shift. Default is TRUE.
 #' @param lmtp_model_type The LMTP model function to use. Default is lmtp_tmle.
 #' @param contrast_type Type of contrasts to compute: "pairwise" or "null". Default is "pairwise".
 #' @param contrast_scale Scale for contrasts: "additive", "rr", or "or". Default is "additive".
-#' @param lmtp_defaults A list of default parameters for the LMTP models. Must be empty when `estimator_spec` is supplied, which builds the whole list from the seal.
+#' @param lmtp_defaults A list of default parameters for the LMTP models. Must be empty when `estimator_spec` is supplied, which builds the whole list from the specification.
 #' @param n_cores Total number of CPU cores to budget for the batch run. Default is detectCores() - 1 (includes efficiency cores on Apple Silicon, so set manually if you want to cap at performance cores).
 #' @param models_in_parallel Optional cap on how many LMTP models to run at once. Defaults to floor(n_cores / cv_workers).
 #' @param cv_workers Number of workers consumed internally by each LMTP fit (usually the cross-validation folds). Defaults to future::nbrOfWorkers().
@@ -64,11 +54,16 @@
 #' @param seed Optional single whole number seeding every stochastic step: the
 #'   RNG at entry, each model fit, and the parallel streams. Default NULL leaves
 #'   the RNG untouched. When `estimator_spec` is supplied the seed comes from the
-#'   sealed contract, and supplying a different one errors.
-#' @param estimator_spec Optional sealed `margot_lmtp_estimator_spec` object from
-#'   `margot.lmtp::margot_lmtp_estimator_spec()`. When supplied, the `lmtp` call
-#'   is built from the sealed contract and every conflicting user argument
-#'   errors. Requires the suggested `margot.lmtp` package.
+#'   locked specification, and supplying a different one errors.
+#' @param estimator_spec Optional locked `margot_lmtp_estimator_spec` object from
+#'   [margot_lmtp_estimator_spec()]. When supplied, the `lmtp` call
+#'   is built from the specification and every conflicting user argument
+#'   errors.
+#' @param reuse_density_ratios Logical. When `TRUE`, sequentially doubly robust
+#'   fits sharing one policy-specific nuisance identity fit the treatment and
+#'   censoring density ratios once and reuse them across `outcome_vars`. The
+#'   returned models, contrasts, and tables retain the existing Margot
+#'   structure. Default is `FALSE` while the opt-in path is validated.
 #'
 #' @return A list containing:
 #'   \item{models}{A list of all LMTP models for each outcome and shift function.}
@@ -136,6 +131,7 @@ margot_lmtp <- function(
     manage_future_plan = FALSE,
     progress = c("cli", "progressr", "none"),
     seed = NULL,
+    reuse_density_ratios = FALSE,
     estimator_spec = NULL) {
   # Load required packages
   library(cli)
@@ -143,8 +139,21 @@ margot_lmtp <- function(
 
   contrast_type <- match.arg(contrast_type)
   contrast_scale <- match.arg(contrast_scale)
+  if (!is.logical(reuse_density_ratios) || length(reuse_density_ratios) != 1L ||
+      is.na(reuse_density_ratios)) {
+    cli::cli_abort("{.arg reuse_density_ratios} must be `TRUE` or `FALSE`.")
+  }
+  if (isTRUE(reuse_density_ratios) && isTRUE(manage_future_plan)) {
+    cli::cli_abort(
+      c(
+        "Density-ratio reuse does not yet manage outer model futures.",
+        "i" = "Keep {.arg manage_future_plan = FALSE}; the current future plan still governs cross-fitting workers."
+      ),
+      class = "margot_error_unsupported_parallel_plan"
+    )
+  }
 
-  # the sealed contract, where one is supplied, is authoritative over every
+  # the locked specification, where one is supplied, is authoritative over every
   # modelling argument it fixes; a conflicting user argument errors by name
   mtp_by_arm <- NULL
   if (!is.null(estimator_spec)) {
@@ -165,7 +174,8 @@ margot_lmtp <- function(
       lmtp_model_type = lmtp_model_type,
       seed = seed,
       shift_functions = shift_functions,
-      supplied = supplied
+      supplied = supplied,
+      data = data
     )
     trt <- from_spec$trt
     outcome_vars <- from_spec$outcome_vars
@@ -175,7 +185,16 @@ margot_lmtp <- function(
     mtp_by_arm <- from_spec$mtp_by_arm
     include_null_shift <- FALSE
     cli::cli_alert_info(
-      "Building the {.pkg lmtp} call from the sealed estimator contract at seed {.val {seed}}."
+      "Building the {.pkg lmtp} call from the locked Margot estimator specification at seed {.val {seed}}."
+    )
+  }
+  if (isTRUE(reuse_density_ratios) && !identical(lmtp_model_type, lmtp::lmtp_sdr)) {
+    cli::cli_abort(
+      c(
+        "Density-ratio reuse currently supports {.fn lmtp::lmtp_sdr} alone.",
+        "i" = "Use the legacy path for another estimator."
+      ),
+      class = "margot_error_unsupported_estimator"
     )
   }
 
@@ -337,7 +356,15 @@ margot_lmtp <- function(
 
   # CLI setup
   cli::cli_h1("Starting LMTP Analysis")
-  if (isTRUE(manage_future_plan)) {
+  if (isTRUE(reuse_density_ratios)) {
+    cli::cli_alert_info(
+      sprintf(
+        "Scheduling %d common ratio stage(s) and %d outcome stage(s); cross-fitting parallelism is controlled by your future::plan().",
+        length(shift_functions),
+        total_tasks
+      )
+    )
+  } else if (isTRUE(manage_future_plan)) {
     cli::cli_alert_info(
       sprintf(
         "Scheduling %d LMTP fits (%d outcomes x %d shifts) with up to %d concurrent model(s) reserving ~%d worker(s) each.",
@@ -428,9 +455,15 @@ margot_lmtp <- function(
       list(workers = 1, plan = "unknown")
     })
 
-    cli::cli_alert_info(
-      "Running {total_tasks} LMTP fit{?s} sequentially (one at a time)."
-    )
+    if (isTRUE(reuse_density_ratios)) {
+      cli::cli_alert_info(
+        "Running {length(shift_functions)} policy-specific fit-once batch{?es} sequentially."
+      )
+    } else {
+      cli::cli_alert_info(
+        "Running {total_tasks} LMTP fit{?s} sequentially (one at a time)."
+      )
+    }
     cli::cli_alert_info(
       "Each model will use your future plan for internal CV: {.strong {current_plan_info$plan}} with {.strong {current_plan_info$workers}} worker{?s}"
     )
@@ -446,7 +479,23 @@ margot_lmtp <- function(
     }
   }
 
-  if (identical(progress, "progressr")) {
+  if (isTRUE(reuse_density_ratios)) {
+    cli::cli_alert_info(
+      "Fitting {length(shift_functions)} common density-ratio stage{?s} for {length(outcome_vars)} outcome{?s}."
+    )
+    task_results <- margot_lmtp_run_shared_tasks(
+      data = data,
+      outcome_vars = outcome_vars,
+      trt = trt,
+      shift_functions = shift_functions,
+      lmtp_defaults = lmtp_defaults,
+      mtp_by_arm = mtp_by_arm,
+      seed = seed,
+      save_output = save_output,
+      checkpoint_dir = checkpoint_dir,
+      progress = progress
+    )
+  } else if (identical(progress, "progressr")) {
     task_results <- with_progress({
       p <- progressor(steps = total_tasks)
       prog <- function(msg) {
@@ -499,7 +548,7 @@ margot_lmtp <- function(
         list(data = data, trt = trt, outcome = outcome, shift = shift),
         lmtp_defaults
       )
-      # the sealed contract fixes mtp per arm; the exploratory path leaves it alone
+      # the locked specification fixes mtp per arm; the exploratory path leaves it alone
       if (!is.null(mtp_by_arm)) {
         lmtp_args$mtp <- unname(mtp_by_arm[[shift_name]])
       }
@@ -650,7 +699,7 @@ margot_lmtp <- function(
         list(data = data, trt = trt, outcome = outcome, shift = shift),
         lmtp_defaults
       )
-      # the sealed contract fixes mtp per arm; the exploratory path leaves it alone
+      # the locked specification fixes mtp per arm; the exploratory path leaves it alone
       if (!is.null(mtp_by_arm)) {
         lmtp_args$mtp <- unname(mtp_by_arm[[shift_name]])
       }
@@ -780,6 +829,16 @@ margot_lmtp <- function(
     individual_tables = all_tables,
     combined_tables = combined_tables
   )
+  if (isTRUE(reuse_density_ratios)) {
+    attr(complete_output, "margot_density_ratio_reuse") <- list(
+      enabled = TRUE,
+      ratio_fit_count = length(shift_functions),
+      legacy_ratio_fit_count = length(outcome_vars) * length(shift_functions),
+      outcomes = outcome_vars,
+      policies = shift_names,
+      lmtp_version = margot_lmtp_shared_lmtp_version
+    )
+  }
 
   # Save complete output if save_output is TRUE
   if (save_output) {

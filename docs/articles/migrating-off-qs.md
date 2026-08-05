@@ -73,12 +73,7 @@ is not available.
 If you have an older R environment where `qs` already works, use
 margot’s direct converter there:
 
-``` r
-
-margot::margot_convert_qs_dir(
-  "~/path/to/your/cache/dir"
-)
-```
+`margot``::`[`margot_convert_qs_dir`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.md)`(`` `` ``"~/path/to/your/cache/dir"`` ``)`
 
 This recursively finds `.qs` files, writes `.qs2` siblings with `qs2`,
 and read-verifies each converted file before reporting success.
@@ -87,13 +82,7 @@ Originals are kept by default.
 Once you have spot-checked the converted files, remove the originals
 with:
 
-``` r
-
-margot::margot_convert_qs_dir(
-  "~/path/to/your/cache/dir",
-  delete_qs = TRUE
-)
-```
+`margot``::`[`margot_convert_qs_dir`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.md)`(`` `` ``"~/path/to/your/cache/dir"``,`` `` delete_qs ``=`` ``TRUE`` ``)`
 
 The converter verifies the `.qs2` round trip before deleting a source
 `.qs` file.
@@ -175,12 +164,7 @@ Then verify with `docker info` from a terminal.
 
 From your normal R 4.6 session:
 
-``` r
-
-margot::margot_convert_qs_dir_docker(
-  "~/path/to/your/cache/dir"
-)
-```
+`margot``::`[`margot_convert_qs_dir_docker`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.md)`(`` `` ``"~/path/to/your/cache/dir"`` ``)`
 
 The first run pulls the `rocker/r-ver:4.5` image (~600 MB) and compiles
 `qs` 0.27.3 from a pinned **2024-12-01 Posit Package Manager snapshot**
@@ -204,22 +188,12 @@ Per-file output looks like:
 After the first run, read one of the new `.qs2` files in your normal
 session to confirm the migration:
 
-``` r
-
-obj <- qs2::qs_read("~/path/to/your/cache/dir/something.qs2")
-str(obj, max.level = 1)
-```
+`obj`` ``<-`` ``qs2``::`[`qs_read`](https://rdrr.io/pkg/qs2/man/qs_read.html)`(``"~/path/to/your/cache/dir/something.qs2"``)`` `[`str`](https://rdrr.io/r/utils/str.html)`(``obj``, max.level ``=`` ``1``)`
 
 Once you’re satisfied, run again with `delete_qs = TRUE` to remove the
 originals:
 
-``` r
-
-margot::margot_convert_qs_dir_docker(
-  "~/path/to/your/cache/dir",
-  delete_qs = TRUE
-)
-```
+`margot``::`[`margot_convert_qs_dir_docker`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.md)`(`` `` ``"~/path/to/your/cache/dir"``,`` `` delete_qs ``=`` ``TRUE`` ``)`
 
 The container performs an
 [`identical()`](https://rdrr.io/r/base/identical.html) read-verify
@@ -244,11 +218,7 @@ files before setting this parameter to TRUE.
 
 Move day-to-day object storage to the arrow helpers:
 
-``` r
-
-margot::here_save(my_models, "models")
-my_models <- margot::here_read("models")
-```
+`margot``::`[`here_save`](https://go-bayes.github.io/margot/reference/here_save.md)`(``my_models``, ``"models"``)`` ``my_models`` ``<-`` ``margot``::`[`here_read`](https://go-bayes.github.io/margot/reference/here_read.md)`(``"models"``)`
 
 LMTP crash-recovery checkpoints are separate. Keep using
 `margot_lmtp(save_output = TRUE)` for long LMTP runs; those per-model

@@ -89,33 +89,7 @@ heterogeneity. Age and socioeconomic position recur as candidate
 organising variables, while the second outcome adds a distinct baseline
 variable.
 
-``` r
-
-library(margot)
-library(dplyr)
-
-set.seed(20260620)
-n <- 900
-
-sim <- tibble(
-  age_z = rnorm(n),
-  status_z = rnorm(n),
-  income_z = rnorm(n),
-  baseline_y1 = rnorm(n),
-  baseline_y2 = rnorm(n)
-) |>
-  mutate(
-    propensity = plogis(-0.15 + 0.35 * age_z - 0.25 * status_z),
-    exposure = rbinom(n(), 1, propensity),
-    tau_y1 = 0.06 + 0.08 * (age_z > 0) + 0.04 * (status_z > 0),
-    tau_y2 = 0.03 + 0.06 * (age_z > 0) - 0.05 * (income_z < -0.5),
-    y1 = 0.25 * baseline_y1 + 0.15 * status_z + exposure * tau_y1 + rnorm(n(), sd = 0.8),
-    y2 = 0.30 * baseline_y2 - 0.10 * income_z + exposure * tau_y2 + rnorm(n(), sd = 0.8)
-  )
-
-covariates <- sim |>
-  select(age_z, status_z, income_z, baseline_y1, baseline_y2)
-```
+[`library`](https://rdrr.io/r/base/library.html)`(`[`margot`](https://go-bayes.github.io/margot)`)`` `[`library`](https://rdrr.io/r/base/library.html)`(`[`dplyr`](https://dplyr.tidyverse.org)`)`` `` `[`set.seed`](https://rdrr.io/r/base/Random.html)`(``20260620``)`` ``n`` ``<-`` ``900`` `` ``sim`` ``<-`` `[`tibble`](https://tibble.tidyverse.org/reference/tibble.html)`(`` `` age_z ``=`` `[`rnorm`](https://rdrr.io/r/stats/Normal.html)`(``n``)``,`` `` status_z ``=`` `[`rnorm`](https://rdrr.io/r/stats/Normal.html)`(``n``)``,`` `` income_z ``=`` `[`rnorm`](https://rdrr.io/r/stats/Normal.html)`(``n``)``,`` `` baseline_y1 ``=`` `[`rnorm`](https://rdrr.io/r/stats/Normal.html)`(``n``)``,`` `` baseline_y2 ``=`` `[`rnorm`](https://rdrr.io/r/stats/Normal.html)`(``n``)`` ``)`` ``|>`` `` `[`mutate`](https://dplyr.tidyverse.org/reference/mutate.html)`(`` `` propensity ``=`` `[`plogis`](https://rdrr.io/r/stats/Logistic.html)`(``-``0.15`` ``+`` ``0.35`` ``*`` ``age_z`` ``-`` ``0.25`` ``*`` ``status_z``)``,`` `` exposure ``=`` `[`rbinom`](https://rdrr.io/r/stats/Binomial.html)`(`[`n`](https://dplyr.tidyverse.org/reference/context.html)`(``)``, ``1``, ``propensity``)``,`` `` tau_y1 ``=`` ``0.06`` ``+`` ``0.08`` ``*`` ``(``age_z`` ``>`` ``0``)`` ``+`` ``0.04`` ``*`` ``(``status_z`` ``>`` ``0``)``,`` `` tau_y2 ``=`` ``0.03`` ``+`` ``0.06`` ``*`` ``(``age_z`` ``>`` ``0``)`` ``-`` ``0.05`` ``*`` ``(``income_z`` ``<`` ``-``0.5``)``,`` `` y1 ``=`` ``0.25`` ``*`` ``baseline_y1`` ``+`` ``0.15`` ``*`` ``status_z`` ``+`` ``exposure`` ``*`` ``tau_y1`` ``+`` `[`rnorm`](https://rdrr.io/r/stats/Normal.html)`(`[`n`](https://dplyr.tidyverse.org/reference/context.html)`(``)``, sd ``=`` ``0.8``)``,`` `` y2 ``=`` ``0.30`` ``*`` ``baseline_y2`` ``-`` ``0.10`` ``*`` ``income_z`` ``+`` ``exposure`` ``*`` ``tau_y2`` ``+`` `[`rnorm`](https://rdrr.io/r/stats/Normal.html)`(`[`n`](https://dplyr.tidyverse.org/reference/context.html)`(``)``, sd ``=`` ``0.8``)`` `` ``)`` `` ``covariates`` ``<-`` ``sim`` ``|>`` `` `[`select`](https://dplyr.tidyverse.org/reference/select.html)`(``age_z``, ``status_z``, ``income_z``, ``baseline_y1``, ``baseline_y2``)`
 
 ## Estimate outcome-wide ATEs
 
@@ -124,25 +98,7 @@ The ATE layer uses the fitted forests and
 Do not add an external policy-tree cross-validation step to the ATE
 estimate.
 
-``` r
-
-fit <- margot_causal_forest(
-  data = sim,
-  outcome_vars = c("y1", "y2"),
-  covariates = covariates,
-  W = sim$exposure,
-  weights = NULL,
-  use_train_test_split = FALSE,
-  compute_rate = FALSE,
-  compute_conditional_means = FALSE,
-  save_models = TRUE,
-  save_data = TRUE,
-  verbose = FALSE
-)
-
-ate_table <- margot_recompute_ate(fit)
-ate_table
-```
+`fit`` ``<-`` `[`margot_causal_forest`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md)`(`` `` data ``=`` ``sim``,`` `` outcome_vars ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"y1"``, ``"y2"``)``,`` `` covariates ``=`` ``covariates``,`` `` W ``=`` ``sim``$``exposure``,`` `` weights ``=`` ``NULL``,`` `` use_train_test_split ``=`` ``FALSE``,`` `` compute_rate ``=`` ``FALSE``,`` `` compute_conditional_means ``=`` ``FALSE``,`` `` save_models ``=`` ``TRUE``,`` `` save_data ``=`` ``TRUE``,`` `` verbose ``=`` ``FALSE`` ``)`` `` ``ate_table`` ``<-`` `[`margot_recompute_ate`](https://go-bayes.github.io/margot/reference/margot_recompute_ate.md)`(``fit``)`` ``ate_table`
 
 ## Add bridge diagnostics
 
@@ -154,21 +110,7 @@ diagnostic for heterogeneity.
 is a descriptive split-use summary. It should not be interpreted as a
 confirmed moderator test.
 
-``` r
-
-calibration <- lapply(fit$full_models, grf::test_calibration)
-
-importance <- lapply(fit$full_models, function(forest) {
-  tibble(
-    variable = colnames(covariates),
-    importance = as.numeric(grf::variable_importance(forest))
-  ) |>
-    arrange(desc(importance))
-})
-
-calibration
-importance
-```
+`calibration`` ``<-`` `[`lapply`](https://rdrr.io/r/base/lapply.html)`(``fit``$``full_models``, ``grf``::`[`test_calibration`](https://rdrr.io/pkg/grf/man/test_calibration.html)`)`` `` ``importance`` ``<-`` `[`lapply`](https://rdrr.io/r/base/lapply.html)`(``fit``$``full_models``, ``function``(``forest``)`` ``{`` `` `[`tibble`](https://tibble.tidyverse.org/reference/tibble.html)`(`` `` variable ``=`` `[`colnames`](https://rdrr.io/r/base/colnames.html)`(``covariates``)``,`` `` importance ``=`` `[`as.numeric`](https://rdrr.io/r/base/numeric.html)`(``grf``::`[`variable_importance`](https://rdrr.io/pkg/grf/man/variable_importance.html)`(``forest``)``)`` `` ``)`` ``|>`` `` `[`arrange`](https://dplyr.tidyverse.org/reference/arrange.html)`(`[`desc`](https://dplyr.tidyverse.org/reference/desc.html)`(``importance``)``)`` ``}``)`` `` ``calibration`` ``importance`
 
 ## Evaluate policy trees on held-out folds
 
@@ -179,48 +121,18 @@ treatment-control contrasts. Tree-level policy value is summarised
 against all-control, all-treatment, and the best constant action, so an
 all-treatment or all-control tree is not mistaken for a selective rule.
 
-``` r
-
-policy_cv <- margot_policy_tree_cv(
-  fit,
-  verbose = FALSE
-)
-
-policy_cv$depth_selection
-policy_cv$value_summary
-margot_table_policy_value(policy_cv)
-policy_cv$leaf_summary
-```
+`policy_cv`` ``<-`` `[`margot_policy_tree_cv`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)`(`` `` ``fit``,`` `` verbose ``=`` ``FALSE`` ``)`` `` ``policy_cv``$``depth_selection`` ``policy_cv``$``value_summary`` `[`margot_table_policy_value`](https://go-bayes.github.io/margot/reference/margot_table_policy_value.md)`(``policy_cv``)`` ``policy_cv``$``leaf_summary`
 
 The first call uses the workflow defaults. To make the defaults explicit
 in a registration, record them as:
 
-``` r
-
-# record the standard policy-tree validation settings in the study protocol.
-policy_tree_settings <- list(
-  depths = c(1L, 2L),
-  num_folds = 5L,
-  n_repeats = 20L,
-  min_gain_for_depth_switch = 0.01,
-  max_stability_loss_for_depth_switch = 0.05,
-  tree_method = "fastpolicytree"
-)
-```
+`# record the standard policy-tree validation settings in the study protocol.`` ``policy_tree_settings`` ``<-`` `[`list`](https://rdrr.io/r/base/list.html)`(`` `` depths ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``1L``, ``2L``)``,`` `` num_folds ``=`` ``5L``,`` `` n_repeats ``=`` ``20L``,`` `` min_gain_for_depth_switch ``=`` ``0.01``,`` `` max_stability_loss_for_depth_switch ``=`` ``0.05``,`` `` tree_method ``=`` ``"fastpolicytree"`` ``)`
 
 Users may restrict candidate policy-tree variables when the scientific
 question justifies it. For confirmatory analyses, variable restrictions
 should be pre-specified or chosen inside the training folds.
 
-``` r
-
-policy_cv_subset <- margot_policy_tree_cv(
-  fit,
-  custom_covariates = c("age_z", "status_z", "income_z"),
-  covariate_mode = "custom",
-  verbose = FALSE
-)
-```
+`policy_cv_subset`` ``<-`` `[`margot_policy_tree_cv`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)`(`` `` ``fit``,`` `` custom_covariates ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"age_z"``, ``"status_z"``, ``"income_z"``)``,`` `` covariate_mode ``=`` ``"custom"``,`` `` verbose ``=`` ``FALSE`` ``)`
 
 ## Report a selected policy tree
 
@@ -229,18 +141,7 @@ then shows the fitted full-sample tree at that depth. Display-tree leaf
 labels describe the displayed tree; the held-out CV object remains the
 source for depth, value, and split-frequency claims.
 
-``` r
-
-selected_depth <- policy_cv$depth_map[["model_y1"]]
-
-# use the policy-named wrapper for the branching decision tree.
-margot_plot_policy_decision_tree(
-  fit,
-  model_name = "model_y1",
-  max_depth = selected_depth,
-  show_leaf_metrics = TRUE
-)
-```
+`selected_depth`` ``<-`` ``policy_cv``$``depth_map``[[``"model_y1"``]``]`` `` ``# use the policy-named wrapper for the branching decision tree.`` `[`margot_plot_policy_decision_tree`](https://go-bayes.github.io/margot/reference/margot_plot_policy_decision_tree.md)`(`` `` ``fit``,`` `` model_name ``=`` ``"model_y1"``,`` `` max_depth ``=`` ``selected_depth``,`` `` show_leaf_metrics ``=`` ``TRUE`` ``)`
 
 Use
 [`margot_plot_policy_projection()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_projection.md)
@@ -257,61 +158,14 @@ type explicit.
 The modular reporting helpers expose the same convention at different
 levels:
 
-``` r
-
-# compute low-level leaf diagnostics for the selected display tree.
-leaf_diagnostics <- margot_policy_leaf_summary(
-  fit,
-  model_name = "model_y1",
-  depth = selected_depth
-)
-
-# create the public display-tree table with signed T-C first.
-display_leaf_table <- margot_table_policy_tree(
-  fit,
-  model_name = "model_y1",
-  depth = selected_depth
-)
-
-# create the held-out action-score summary table at the selected depth.
-heldout_leaf_table <- margot_table_policy_tree(
-  policy_cv,
-  model_name = "model_y1",
-  source = "heldout_cv"
-)
-
-# compare the learned policy with universal action baselines.
-value_table <- margot_table_policy_value(
-  policy_cv,
-  model_name = "model_y1",
-  depth = selected_depth
-)
-
-# generate cautious stock text for a manuscript or report.
-policy_text <- margot_text_policy_tree(source = "heldout_cv")
-
-display_leaf_table
-heldout_leaf_table
-value_table
-policy_text
-```
+`# compute low-level leaf diagnostics for the selected display tree.`` ``leaf_diagnostics`` ``<-`` `[`margot_policy_leaf_summary`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md)`(`` `` ``fit``,`` `` model_name ``=`` ``"model_y1"``,`` `` depth ``=`` ``selected_depth`` ``)`` `` ``# create the public display-tree table with signed T-C first.`` ``display_leaf_table`` ``<-`` `[`margot_table_policy_tree`](https://go-bayes.github.io/margot/reference/margot_table_policy_tree.md)`(`` `` ``fit``,`` `` model_name ``=`` ``"model_y1"``,`` `` depth ``=`` ``selected_depth`` ``)`` `` ``# create the held-out action-score summary table at the selected depth.`` ``heldout_leaf_table`` ``<-`` `[`margot_table_policy_tree`](https://go-bayes.github.io/margot/reference/margot_table_policy_tree.md)`(`` `` ``policy_cv``,`` `` model_name ``=`` ``"model_y1"``,`` `` source ``=`` ``"heldout_cv"`` ``)`` `` ``# compare the learned policy with universal action baselines.`` ``value_table`` ``<-`` `[`margot_table_policy_value`](https://go-bayes.github.io/margot/reference/margot_table_policy_value.md)`(`` `` ``policy_cv``,`` `` model_name ``=`` ``"model_y1"``,`` `` depth ``=`` ``selected_depth`` ``)`` `` ``# generate cautious stock text for a manuscript or report.`` ``policy_text`` ``<-`` `[`margot_text_policy_tree`](https://go-bayes.github.io/margot/reference/margot_text_policy_tree.md)`(``source ``=`` ``"heldout_cv"``)`` `` ``display_leaf_table`` ``heldout_leaf_table`` ``value_table`` ``policy_text`
 
 For exploratory diagnostics, callers can expose the lower-level
 selected-action advantage and value-contribution columns. These columns
 are useful for auditing the score arithmetic but should not lead public
 manuscript tables.
 
-``` r
-
-# request diagnostic columns only when auditing the policy-tree arithmetic.
-margot_table_policy_tree(
-  fit,
-  model_name = "model_y1",
-  depth = selected_depth,
-  include_selected_action_difference = TRUE,
-  include_value_contribution = TRUE
-)
-```
+`# request diagnostic columns only when auditing the policy-tree arithmetic.`` `[`margot_table_policy_tree`](https://go-bayes.github.io/margot/reference/margot_table_policy_tree.md)`(`` `` ``fit``,`` `` model_name ``=`` ``"model_y1"``,`` `` depth ``=`` ``selected_depth``,`` `` include_selected_action_difference ``=`` ``TRUE``,`` `` include_value_contribution ``=`` ``TRUE`` ``)`
 
 The integrated helper assembles the standard plot, display-tree table,
 held-out leaf table, held-out policy-value table, and interpretation
@@ -319,51 +173,17 @@ text. Each component remains an ordinary R object, so manuscript
 workflows can replace or omit pieces without losing the shared reporting
 convention.
 
-``` r
-
-# assemble the standard policy-tree report components for one outcome.
-policy_report <- margot_report_policy_tree(
-  fit,
-  model_name = "model_y1",
-  policy_cv = policy_cv
-)
-
-names(policy_report)
-policy_report$metadata
-policy_report$table
-policy_report$heldout_table
-policy_report$policy_value
-policy_report$text
-policy_report$plots$combined_plot
-```
+`# assemble the standard policy-tree report components for one outcome.`` ``policy_report`` ``<-`` `[`margot_report_policy_tree`](https://go-bayes.github.io/margot/reference/margot_report_policy_tree.md)`(`` `` ``fit``,`` `` model_name ``=`` ``"model_y1"``,`` `` policy_cv ``=`` ``policy_cv`` ``)`` `` `[`names`](https://rdrr.io/r/base/names.html)`(``policy_report``)`` ``policy_report``$``metadata`` ``policy_report``$``table`` ``policy_report``$``heldout_table`` ``policy_report``$``policy_value`` ``policy_report``$``text`` ``policy_report``$``plots``$``combined_plot`
 
 The table-level metadata flags whether the selected actions vary across
 leaves. When `uniform_selected_action` is `TRUE`, avoid describing the
 tree as a selective rule even if the tree has multiple leaves.
 
-``` r
-
-# check whether the selected action changes across leaves.
-display_leaf_table |>
-  select(
-    model,
-    depth,
-    node_id,
-    selected_action,
-    tc_score_contrast,
-    n_selected_actions,
-    uniform_selected_action
-  )
-```
+`# check whether the selected action changes across leaves.`` ``display_leaf_table`` ``|>`` `` `[`select`](https://dplyr.tidyverse.org/reference/select.html)`(`` `` ``model``,`` `` ``depth``,`` `` ``node_id``,`` `` ``selected_action``,`` `` ``tc_score_contrast``,`` `` ``n_selected_actions``,`` `` ``uniform_selected_action`` `` ``)`
 
 The split summaries remain separate from leaf contrasts:
 
-``` r
-
-# inspect root-split stability at the selected reporting depth.
-policy_cv$split_summary |>
-  filter(model == "model_y1", depth == selected_depth, node_id == 1)
-```
+`# inspect root-split stability at the selected reporting depth.`` ``policy_cv``$``split_summary`` ``|>`` `` `[`filter`](https://dplyr.tidyverse.org/reference/filter.html)`(``model`` ``==`` ``"model_y1"``, ``depth`` ``==`` ``selected_depth``, ``node_id`` ``==`` ``1``)`
 
 ## Summarise outcome-wide recurrence
 
@@ -371,11 +191,7 @@ Outcome-wide recurrence asks whether the same baseline variables recur
 across outcomes. This layer is descriptive unless a study defines a
 formal family-level target.
 
-``` r
-
-recurrence <- margot_policy_recurrence_summary(policy_cv)
-recurrence
-```
+`recurrence`` ``<-`` `[`margot_policy_recurrence_summary`](https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.md)`(``policy_cv``)`` ``recurrence`
 
 A cautious report might say:
 

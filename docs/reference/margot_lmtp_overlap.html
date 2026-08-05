@@ -11,7 +11,7 @@ plots of the density-ratio distributions by wave and shift."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,15 +150,15 @@ the dotted line (default `1`). On the log10 scale this is plotted at
 `margot_interpret_lmtp_positivity()` when assembling the text summary
 (e.g., `label_mapping`, `waves`, `remove_waves`, `include_methods`,
 `include_diagnostics`). Unrecognised entries are silently ignored for
-backward compatibility with deprecated arguments such as `save_plots`.</p></dd>
+backward compatibility with deprecated arguments such as `save_plots`.
+The retired arguments `test_thresholds` and `policy_rate_strict` error.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with:
-  - overlap_summary: tibble combining by-wave and overall positivity/overlap metrics
+  - overlap_summary: tibble combining by-wave and overall density-ratio metrics
   - ratio_plots: list of ggplot objects (if plot = TRUE)
-  - flags: tibble of positivity flags
   - text_summary: markdown-ready prose from `margot_interpret_lmtp_positivity()`</p>
     </div>
     <div class="section level2">
@@ -168,6 +168,11 @@ backward compatibility with deprecated arguments such as `save_plots`.</p></dd>
 dropout/censoring rather than treatment positivity violations. The censoring
 rate (proportion r = 0) is reported in plot titles and summaries. Use
 `show_censored = TRUE` to include zeros in histograms (shown as a bar at r = 0).</p>
+
+<p>**Descriptive outputs only.** The `flags` return field and the
+`test_thresholds` and `policy_rate_strict` arguments were removed with the
+retired enforcement machinery. Supplying either retired argument errors with
+a condition of class `margot_error_removed_argument`.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -179,7 +184,7 @@ rate (proportion r = 0) is reported in plot titles and summaries. Use
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

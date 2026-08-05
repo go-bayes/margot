@@ -53,6 +53,8 @@ Although steps 1-3 are routinely skipped in social scientific research,
 they are indispensable. Without them, we have no way of assigning
 meaning to the statistical relationships we observe from data.
 
+<!-- The package offers functions for evaluating causal assumptions, modelling time-series data, reporting results, and performing sensitivity analyses. -->
+
 ## Installation
 
 `margot` is currently available only on GitHub. Install it with `pak`:
@@ -74,8 +76,28 @@ as the ATE and ATT. It also supports workflows for heterogeneous
 treatment effects using `grf`, and longitudinal modified treatment
 policies using `lmtp`. `margot` is greatly indebted to the authors of
 these two excellent packages. `margot` is best seen as a workflow
-package for preparing data, checking assumptions, estimating causal
+package for preparing data, evaluating assumptions, estimating causal
 effects, and communicating results precisely.
+
+## Working LMTP fit-once example
+
+Margot includes a complete synthetic perfectionism example with two
+terminal outcomes and analysis weights. The script locks its execution
+settings with `margot_lmtp_estimator_spec()`, fits each policy-specific
+treatment and censoring density-ratio process once with
+`margot_lmtp(reuse_density_ratios = TRUE)`, selects the resulting
+combined table, and passes that table directly to `margot_plot()`. Its
+executable assertions require two ratio fits for two policies, compared
+with four fits under independent outcome-policy estimation.
+
+``` r
+example_path <- system.file(
+  "examples", "lmtp-fit-once-perfectionism.R",
+  package = "margot",
+  mustWork = TRUE
+)
+sys.source(example_path, envir = new.env(parent = globalenv()))
+```
 
 Note that Margot is being actively developed, and is not currently in a
 stable state. Expect breaking changes.

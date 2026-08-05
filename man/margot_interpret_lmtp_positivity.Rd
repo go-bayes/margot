@@ -131,16 +131,6 @@ Either a single character string (default) or a list containing the
   when `return = "list"`.
 }
 \description{
-`r lifecycle::badge("deprecated")`
-}
-\details{
-`margot_interpret_lmtp_positivity()` is soft-deprecated in favour of the
-`margot.lmtp` reporting family. It keeps working and warns once per session.
-Its `support_status` column and every graded verdict in its prose were
-removed with the retired enforcement machinery: the share of cumulative
-ratios outside the central band is reported, and no constant converts it into
-a status.
-
 Builds a concise textual summary of LMTP density-ratio diagnostics for a
 single outcome. For each requested shift, the function computes effective
 sample sizes (ESS) by wave and for the pooled person-time using

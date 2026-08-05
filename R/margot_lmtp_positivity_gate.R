@@ -8,11 +8,10 @@
 #' verdict. The function is therefore defunct, and calling it errors with a
 #' condition of class `margot_error_defunct`. No registered study used it.
 #'
-#' The replacement is the question-review workflow in the `margot.lmtp` package.
-#' There an author precommits expectations against a controlled vocabulary of
-#' report quantities, the density-ratio report prints those expectations beside
-#' their realised values, and the retain, revise, withdraw, or stop decision is
-#' recorded as a human judgement rather than derived from a constant.
+#' Investigators should state their expectations in the study protocol, report
+#' the realised density-ratio quantities with Margot's descriptive functions,
+#' and record any retain, revise, withdraw, or stop decision as a human judgement
+#' rather than deriving it from a constant.
 #'
 #' @param fit,outcome,shifts,rungs,ess_floor,trim_mass_budget,test_thresholds,label_mapping,verbose
 #'   Retained for signature compatibility; the function errors before reading
@@ -36,9 +35,9 @@ margot_lmtp_positivity_gate <- function(fit,
   margot_positivity_defunct(
     what = "margot_lmtp_positivity_gate",
     replacement = paste(
-      "Precommit expectations with `margot.lmtp::margot_lmtp_expectations_spec()`,",
-      "read the realised quantities from `margot.lmtp::margot_lmtp_ratio_report()`,",
-      "and record the decision with `margot.lmtp::margot_lmtp_question_decision()`."
+      "State expectations in the study protocol, read the realised quantities",
+      "from Margot's descriptive density-ratio reports, and record the decision",
+      "as investigators' judgement."
     )
   )
 }

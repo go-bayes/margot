@@ -13,13 +13,14 @@ test_that("margot_lmtp_positivity_gate() is defunct", {
   )
 })
 
-test_that("the defunct gate error names the margot.lmtp replacement", {
+test_that("the defunct gate directs users to descriptive Margot reports", {
   err <- tryCatch(
     margot_lmtp_positivity_gate(make_fit(matrix(1, nrow = 3, ncol = 2))),
     margot_error_defunct = function(e) e
   )
   expect_s3_class(err, "margot_error_defunct")
-  expect_match(conditionMessage(err), "margot.lmtp", fixed = TRUE)
+  expect_match(conditionMessage(err), "Margot's descriptive density-ratio reports", fixed = TRUE)
+  expect_false(grepl("margot.lmtp", conditionMessage(err), fixed = TRUE))
 })
 
 test_that("margot_positivity_support_status() is defunct", {

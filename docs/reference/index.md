@@ -67,6 +67,7 @@
   : Assemble a full LMTP positivity report (table, diagnostics, text,
   plot, methods)
 - [`margot_report_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md)
+  [`margot_lmtp_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_report_lmtp_positivity.md)
   : One-stop LMTP positivity/overlap reporting for an analysis
 - [`margot_lmtp_ratio_grid()`](https://go-bayes.github.io/margot/reference/margot_lmtp_ratio_grid.md)
   : LMTP density-ratio panel (per-wave grid)
@@ -79,7 +80,7 @@
 - [`margot_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_lmtp_positivity.md)
   : Summarize positivity via density ratios for LMTP fits
 - [`margot_lmtp_positivity_gate()`](https://go-bayes.github.io/margot/reference/margot_lmtp_positivity_gate.md)
-  : Registered trim-ladder positivity gate for LMTP fits
+  : Registered trim-ladder positivity gate for LMTP fits (defunct)
 - [`margot_interpret_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   [`margot_interpret_lmtp_overlap()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   : Interpret LMTP positivity via effective sample sizes
@@ -100,6 +101,8 @@
   with Enhanced Qini Cross-Validation
 - [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md)
   : Batch Process LMTP Models
+- [`margot_lmtp_estimator_spec()`](https://go-bayes.github.io/margot/reference/margot_lmtp_estimator_spec.md)
+  : Lock the execution settings for a Margot LMTP analysis
 - [`margot_lmtp_restore_checkpoints()`](https://go-bayes.github.io/margot/reference/margot_lmtp_restore_checkpoints.md)
   : Restore LMTP Output from Saved Checkpoints
 - [`margot_naive_regressions()`](https://go-bayes.github.io/margot/reference/margot_naive_regressions.md)
@@ -138,6 +141,12 @@
 
 ## Interpret heterogeneity and policy
 
+- [`margot_blp()`](https://go-bayes.github.io/margot/reference/margot_blp.md)
+  : Best linear projection of conditional average treatment effects
+- [`margot_table_blp()`](https://go-bayes.github.io/margot/reference/margot_table_blp.md)
+  : Reporting table of best linear projection coefficients
+- [`margot_plot_blp()`](https://go-bayes.github.io/margot/reference/margot_plot_blp.md)
+  : Plot best linear projection coefficients
 - [`margot_interpret_heterogeneity()`](https://go-bayes.github.io/margot/reference/margot_interpret_heterogeneity.md)
   : Interpret Heterogeneity Evidence from Multiple Sources
 - [`margot_omnibus_hetero_test()`](https://go-bayes.github.io/margot/reference/margot_omnibus_hetero_test.md)

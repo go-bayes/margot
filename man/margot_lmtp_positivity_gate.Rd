@@ -33,11 +33,10 @@ verdict. The function is therefore defunct, and calling it errors with a
 condition of class `margot_error_defunct`. No registered study used it.
 }
 \details{
-The replacement is the question-review workflow in the `margot.lmtp` package.
-There an author precommits expectations against a controlled vocabulary of
-report quantities, the density-ratio report prints those expectations beside
-their realised values, and the retain, revise, withdraw, or stop decision is
-recorded as a human judgement rather than derived from a constant.
+Investigators should state their expectations in the study protocol, report
+the realised density-ratio quantities with Margot's descriptive functions,
+and record any retain, revise, withdraw, or stop decision as a human judgement
+rather than deriving it from a constant.
 }
 \seealso{
 [margot_lmtp_positivity()] for the descriptive density-ratio

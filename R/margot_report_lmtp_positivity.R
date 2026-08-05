@@ -1,11 +1,5 @@
 #' One-stop LMTP positivity/overlap reporting for an analysis
 #'
-#' `r lifecycle::badge("deprecated")`
-#'
-#' `margot_report_lmtp_positivity()` is soft-deprecated in favour of the
-#' `margot.lmtp` reporting family. It keeps working and warns once per session.
-#' Its `flags` return field was removed with the retired enforcement machinery.
-#'
 #' Builds manuscript-ready positivity diagnostics (overall and by-wave) and an
 #' optional density-ratio grid for a selected outcome and set of shifts.
 #'
@@ -43,11 +37,6 @@ margot_report_lmtp_positivity <- function(x,
                                           digits = 2,
                                           include_plots = TRUE,
                                           ymax = NULL) {
-  margot_deprecate_positivity(
-    what = "margot_report_lmtp_positivity()",
-    with = "margot.lmtp::margot_lmtp_ratio_report()"
-  )
-
   stopifnot(is.character(outcome), length(outcome) == 1L)
 
   clean_shift_names <- function(df) {
@@ -201,9 +190,5 @@ margot_report_lmtp_positivity <- function(x,
 #' @export
 margot_lmtp_positivity_report <- function(...) {
   # Backwards-compatible alias
-  margot_deprecate_positivity(
-    what = "margot_lmtp_positivity_report()",
-    with = "margot.lmtp::margot_lmtp_ratio_report()"
-  )
   margot_report_lmtp_positivity(...)
 }

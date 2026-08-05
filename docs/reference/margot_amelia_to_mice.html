@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@
 <span class="r-in"><span><span class="co"># load Amelia package and perform imputation</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gking.harvard.edu/amelia" class="external-link">Amelia</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">africa</span><span class="op">)</span> <span class="co"># example dataset from Amelia package</span></span></span>
-<span class="r-in"><span><span class="va">amelia_output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Amelia/man/amelia.html" class="external-link">amelia</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">africa</span>, m <span class="op">=</span> <span class="fl">5</span>, idvars <span class="op">=</span> <span class="st">"country"</span><span class="op">)</span> <span class="co"># impute data</span></span></span>
+<span class="r-in"><span><span class="va">amelia_output</span> <span class="op">&lt;-</span> <span class="fu">amelia</span><span class="op">(</span>x <span class="op">=</span> <span class="va">africa</span>, m <span class="op">=</span> <span class="fl">5</span>, idvars <span class="op">=</span> <span class="st">"country"</span><span class="op">)</span> <span class="co"># impute data</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># convert amelia object to mice object</span></span></span>
 <span class="r-in"><span><span class="va">mids_obj</span> <span class="op">&lt;-</span> <span class="fu">margot_amelia_to_mice</span><span class="op">(</span><span class="va">amelia_output</span><span class="op">)</span></span></span>
@@ -85,7 +85,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

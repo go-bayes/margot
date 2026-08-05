@@ -15,7 +15,7 @@ LMTP run object."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,13 +99,13 @@ preserves the order provided here.</p></dd>
 
 
 <dt id="arg-test-thresholds">test_thresholds<a class="anchor" aria-label="anchor" href="#arg-test-thresholds"></a></dt>
-<dd><p>Named list controlling tests. Recognised names:
-- `prod_log10` (default -1) defining the central support band
+<dd><p>Named list controlling the reported band. Recognised names:
+- `prod_log10` (default -1) defining the central band
   `[10^prod_log10, 10^-prod_log10]`; `-1` corresponds to `[0.1, 10]`.
-- `prod_frac_ok` (default 0.05) and `prod_frac_warn` (default 0.20),
-  defining the graded support screen from the combined fraction outside the band.
-- `near_zero_median` (default 1e-3) and `near_zero_cv` (default 0.05) are computed but
-  not included in the support screen; they are returned as counts of flagged waves per shift.</p></dd>
+- `near_zero_median` (default 1e-3) and `near_zero_cv` (default 0.05) are
+  returned as counts of flagged waves per shift.
+- `prod_frac_ok` and `prod_frac_warn` are accepted for backward
+  compatibility and ignored; they drove the removed support screen.</p></dd>
 
 
 <dt id="arg-include-policy-rates">include_policy_rates<a class="anchor" aria-label="anchor" href="#arg-include-policy-rates"></a></dt>
@@ -126,7 +126,7 @@ cleaned), and any of `att`, `ci_low`, `ci_high`, `e_value`, `e_value_bound`.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble/data.frame with one row per shift containing: `outcome`, `shift_full`,
-  `shift_clean`, cumulative density-ratio metrics, support screen,
+  `shift_clean`, cumulative density-ratio metrics,
   ESS metrics (including final cumulative ESS), optional policy rates
   (per-wave `p_hat_wave_k` and `p_hat_overall`), optional effect columns
   if provided.</p>
@@ -134,10 +134,10 @@ cleaned), and any of `att`, `ci_low`, `ci_high`, `e_value`, `e_value_bound`.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Metrics include:
-- Cumulative density-ratio support across selected waves, summarised as the
+- Cumulative density-ratio behaviour across selected waves, summarised as the
   fraction of uncensored rows falling below and above a user-defined central
-  band, plus a graded support screen, percent collapsing to zero including
-  censoring (IPCW zeros), and the final cumulative ESS.
+  band, percent collapsing to zero including censoring (IPCW zeros), and the
+  final cumulative ESS.
 - ESS on uncensored rows overall and relative to person-time (ESS+/(N_pt)).
 - Policy-implied exposure rates by wave (and overall) on uncensored rows when
   `exposure_by_wave` is attached to models (best-effort from `margot_lmtp()`).
@@ -186,7 +186,7 @@ cleaned), and any of `att`, `ci_low`, `ci_high`, `e_value`, `e_value_bound`.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

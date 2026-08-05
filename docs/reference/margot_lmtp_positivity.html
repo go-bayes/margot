@@ -9,7 +9,7 @@ zeros, extreme quantiles, tail mass above thresholds, and effective sample size 
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,9 +51,7 @@ zeros, extreme quantiles, tail mass above thresholds, and effective sample size 
 <span>  <span class="va">x</span>,</span>
 <span>  thresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">25</span>, <span class="fl">50</span>, <span class="fl">100</span><span class="op">)</span>,</span>
 <span>  probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="fl">0.5</span>, <span class="fl">0.95</span>, <span class="fl">0.999</span><span class="op">)</span>,</span>
-<span>  ess_warn <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  zero_warn <span class="op">=</span> <span class="fl">0.01</span>,</span>
-<span>  tail_warn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>`10` <span class="op">=</span> <span class="fl">0.05</span>, `25` <span class="op">=</span> <span class="fl">0.02</span>, `50` <span class="op">=</span> <span class="fl">0.01</span>, `100` <span class="op">=</span> <span class="fl">0.005</span><span class="op">)</span>,</span>
+<span>  <span class="va">...</span>,</span>
 <span>  include_overall <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  digits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -79,17 +77,8 @@ zeros, extreme quantiles, tail mass above thresholds, and effective sample size 
 <dd><p>Quantiles to report (must include 0.5 if you want the median).</p></dd>
 
 
-<dt id="arg-ess-warn">ess_warn<a class="anchor" aria-label="anchor" href="#arg-ess-warn"></a></dt>
-<dd><p>Flag when ESS/N is below this fraction (per wave).</p></dd>
-
-
-<dt id="arg-zero-warn">zero_warn<a class="anchor" aria-label="anchor" href="#arg-zero-warn"></a></dt>
-<dd><p>Flag when proportion of exact zeros exceeds this fraction.</p></dd>
-
-
-<dt id="arg-tail-warn">tail_warn<a class="anchor" aria-label="anchor" href="#arg-tail-warn"></a></dt>
-<dd><p>Named numeric vector giving tail-mass flag thresholds
-(names must match thresholds). If length 1, recycled to all thresholds.</p></dd>
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Reserved. Supplying a removed threshold argument errors.</p></dd>
 
 
 <dt id="arg-include-overall">include_overall<a class="anchor" aria-label="anchor" href="#arg-include-overall"></a></dt>
@@ -101,7 +90,7 @@ zeros, extreme quantiles, tail mass above thresholds, and effective sample size 
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>If TRUE, prints concise CLI messages when flags are raised.</p></dd>
+<dd><p>If TRUE, prints concise CLI messages about the summaries computed.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -114,9 +103,6 @@ zeros, extreme quantiles, tail mass above thresholds, and effective sample size 
   <dt>overall</dt>
 <dd><p>data.frame of pooled summaries across waves (one row per outcome/shift).
     Also includes `*_pos` columns for uncensored diagnostics.</p></dd>
-
-  <dt>flags</dt>
-<dd><p>data.frame of flagged issues (subset of rows from by_wave/overall with reasons).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -132,6 +118,12 @@ treatment trajectory may be incompatible with one policy but not another. To dis
 these cases, this function computes metrics for both all observations (including zeros)
 and **uncensored observations** (\(r &gt; 0\)), with the latter denoted by `*_pos` suffixes
 in column names. The `prop_zero` column reports the censoring rate per wave.</p>
+<p>**Descriptive summaries only.** The threshold arguments `ess_warn`,
+`zero_warn`, and `tail_warn` and the `flags` return field were removed with
+the retired enforcement machinery, because each turned a constant into an
+automatic consequence. Supplying any of them errors with a condition of class
+`margot_error_removed_argument`. State expectations for these quantities in
+the study protocol and compare them with the descriptive report instead.</p>
     </div>
 
     <div class="section level2">
@@ -141,7 +133,7 @@ in column names. The `prop_zero` column reports the censoring rate per wave.</p>
 <span class="r-in"><span><span class="co">#</span></span></span>
 <span class="r-in"><span><span class="co"># Entire run from margot_lmtp():</span></span></span>
 <span class="r-in"><span><span class="co"># pos &lt;- margot_lmtp_positivity(fit)</span></span></span>
-<span class="r-in"><span><span class="co"># head(pos$by_wave); head(pos$flags)</span></span></span>
+<span class="r-in"><span><span class="co"># head(pos$by_wave); head(pos$overall)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -154,7 +146,7 @@ in column names. The `prop_zero` column reports the censoring rate per wave.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -15,7 +15,7 @@ held-out data, thereby avoiding in-sample optimism in the Qini plots.'></head><b
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -208,7 +208,12 @@ Example: c(1, 7) for a 7-point Likert scale, or list(anxiety = c(1, 7), depressi
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list containing:
-  * `results` - per-outcome diagnostics and objects
+  * `results` - per-outcome diagnostics and objects. The `blp_top` element of
+    each outcome holds a best linear projection onto the `top_n_vars`
+    variable-importance screen. **`blp_top` is retired from reporting** in
+    favour of [margot_blp()], which projects onto the full covariate matrix
+    the forest was fitted on. It is still computed for backwards
+    compatibility, and it must not be reported.
   * `combined_table` - combined e-value table across outcomes
   * `outcome_vars` - vector of outcome names
   * `not_missing` - indices of complete-case rows
@@ -226,7 +231,7 @@ Example: c(1, 7) for a 7-point Likert scale, or list(anxiety = c(1, 7), depressi
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

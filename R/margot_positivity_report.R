@@ -1,11 +1,5 @@
 #' Assemble a full LMTP positivity report (table, diagnostics, text, plot, methods)
 #'
-#' `r lifecycle::badge("deprecated")`
-#'
-#' `margot_positivity_report()` is soft-deprecated in favour of the `margot.lmtp`
-#' reporting family. It keeps working and warns once per session. Its verdict and
-#' status fields were removed with the retired enforcement machinery.
-#'
 #' Bundles the per-shift diagnostics, compact summary table, interpretive text,
 #' overlap plot, and a ready-to-drop-in methods paragraph into a single object.
 #' Designed to streamline Quarto sections where you want consistent reporting
@@ -66,10 +60,6 @@ margot_positivity_report <- function(x,
                                      include_plot = TRUE,
                                      plot_args = list(),
                                      interpret_args = list()) {
-  margot_deprecate_positivity(
-    what = "margot_positivity_report()",
-    with = "margot.lmtp::margot_lmtp_ratio_report()"
-  )
   if (!is.null(outcome)) stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
 
@@ -201,10 +191,6 @@ margot_positivity_report_single_model <- function(x,
                                                   include_plot = TRUE,
                                                   plot_args = list(),
                                                   interpret_args = list()) {
-  margot_deprecate_positivity(
-    what = "margot_positivity_report_single_model()",
-    with = "margot.lmtp::margot_lmtp_ratio_report()"
-  )
   coerced <- coerce_single_lmtp_model(x, outcome = outcome, shift = shift)
   margot_positivity_report(
     x = coerced$fit,

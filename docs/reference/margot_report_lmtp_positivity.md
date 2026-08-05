@@ -15,6 +15,8 @@ margot_report_lmtp_positivity(
   include_plots = TRUE,
   ymax = NULL
 )
+
+margot_lmtp_positivity_report(...)
 ```
 
 ## Arguments
@@ -54,13 +56,17 @@ margot_report_lmtp_positivity(
   counts in the density-ratio grid; otherwise a common limit is
   inferred.
 
+- ...:
+
+  Arguments passed to \[margot_report_lmtp_positivity()\].
+
 ## Value
 
 A list with elements: - overall: tibble with Estimand, N, Prop_zero,
 ESS, ESS/N - by_wave_ess_frac: tibble wide (Wave x Estimand) with
-ESS/N - by_wave_ess: tibble wide (Wave x Estimand) with ESS - flags:
-tibble of positivity flags (ESS+/(N+) removed) - overlap_grid: patchwork
-object (if include_plots = TRUE) - text_summary: brief prose summary
+ESS/N - by_wave_ess: tibble wide (Wave x Estimand) with ESS -
+overlap_grid: patchwork object (if include_plots = TRUE) - text_summary:
+brief prose summary
 
 ## Details
 

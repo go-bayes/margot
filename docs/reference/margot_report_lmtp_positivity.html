@@ -9,7 +9,7 @@ optional density-ratio grid for a selected outcome and set of shifts."></head><b
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,9 @@ optional density-ratio grid for a selected outcome and set of shifts.</p>
 <span>  digits <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  include_plots <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ymax <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">margot_lmtp_positivity_report</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -94,6 +96,10 @@ includes all available shifts for the outcome.</p></dd>
 <dd><p>Optional numeric; if supplied, sets common y-limit for histogram
 counts in the density-ratio grid; otherwise a common limit is inferred.</p></dd>
 
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Arguments passed to [margot_report_lmtp_positivity()].</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -101,7 +107,6 @@ counts in the density-ratio grid; otherwise a common limit is inferred.</p></dd>
   - overall: tibble with Estimand, N, Prop_zero, ESS, ESS/N
   - by_wave_ess_frac: tibble wide (Wave x Estimand) with ESS/N
   - by_wave_ess: tibble wide (Wave x Estimand) with ESS
-  - flags: tibble of positivity flags (ESS+/(N+) removed)
   - overlap_grid: patchwork object (if include_plots = TRUE)
   - text_summary: brief prose summary</p>
     </div>
@@ -124,7 +129,7 @@ counts in the density-ratio grid; otherwise a common limit is inferred.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

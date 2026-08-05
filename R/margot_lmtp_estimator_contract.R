@@ -1,70 +1,242 @@
-# bridge from a sealed margot.lmtp estimator contract to the arguments
-# margot_lmtp() passes to lmtp. the contract is authoritative: every argument it
-# seals is taken from it, and a conflicting user argument errors by name rather
-# than being silently overridden.
+# Margot-native estimator specifications for reproducible LMTP calls. The
+# specification fixes execution settings alone; it does not encode the causal
+# question, identification assumptions, or investigators' design judgement.
 
-# the SuperLearner library each sealed learner profile names, in the form lmtp
-# takes. read from margot.lmtp rather than mirrored here: a mirrored copy drifts
-# silently, and a study's estimation then runs under learners its contract did
-# not seal. the caller has already established that margot.lmtp is installed.
-margot_lmtp_spec_learners <- function(profile, call = rlang::caller_env()) {
-  library <- tryCatch(
-    margot.lmtp::lmtp_learner_library(profile),
-    error = function(e) e
+margot_lmtp_estimator_spec_version <- "1.0.0"
+
+# hash the declarative estimator payload for later integrity verification
+margot_lmtp_spec_hash <- function(schema_version, payload) {
+  digest::digest(
+    list(schema_version = schema_version, payload = payload),
+    algo = "sha256",
+    serialize = TRUE,
+    serializeVersion = 2L
   )
-  if (inherits(library, "condition")) {
+}
+
+#' Lock the execution settings for a Margot LMTP analysis
+#'
+#' `margot_lmtp_estimator_spec()` records the arguments that determine an LMTP
+#' fit and protects them with a content hash. The specification belongs to
+#' Margot and requires no companion package. It deliberately records execution
+#' settings alone: the causal question, causal estimand, identification
+#' assumptions, and policy rationale remain in the study protocol.
+#'
+#' The specification can name several terminal outcomes. When it is passed to
+#' [margot_lmtp()] with `reuse_density_ratios = TRUE`, Margot fits each
+#' policy-specific treatment and censoring density-ratio process once and reuses
+#' it across those outcomes.
+#'
+#' @param trt Character vector naming the exposure at each policy node.
+#' @param outcomes Character vector naming the terminal outcomes.
+#' @param policies Named logical vector. Each name is a policy arm and each
+#'   value is the `mtp` setting passed to `lmtp` for that arm. Continuous shifts,
+#'   including a natural-course arm represented by `shift = NULL`, ordinarily
+#'   use `TRUE`.
+#' @param seed Single whole-number estimation seed.
+#' @param baseline Optional character vector of baseline covariates.
+#' @param time_vary Optional time-varying covariate specification passed to
+#'   `lmtp`.
+#' @param cens Optional character vector of censoring indicators.
+#' @param compete Optional character vector of competing-event indicators.
+#' @param outcome_type Outcome model, `"continuous"` or `"binomial"`.
+#' @param id Optional participant identifier column.
+#' @param folds Number of cross-fitting folds.
+#' @param bounds Optional common outcome bounds passed to `lmtp`.
+#' @param learner_profile Registered learner profile, `"glm"` or
+#'   `"ensemble"`.
+#' @param trim Pooled density-ratio quantile cap passed to
+#'   [lmtp::lmtp_control()].
+#' @param weight_column Optional data column containing non-negative analysis
+#'   weights. The values remain in the analysis data rather than the
+#'   specification.
+#'
+#' @return An object of class `margot_lmtp_estimator_spec`.
+#' @export
+margot_lmtp_estimator_spec <- function(trt,
+                                       outcomes,
+                                       policies,
+                                       seed,
+                                       baseline = NULL,
+                                       time_vary = NULL,
+                                       cens = NULL,
+                                       compete = NULL,
+                                       outcome_type = c("continuous", "binomial"),
+                                       id = NULL,
+                                       folds = 5L,
+                                       bounds = NULL,
+                                       learner_profile = c("ensemble", "glm"),
+                                       trim = 0.999,
+                                       weight_column = NULL) {
+  outcome_type <- match.arg(outcome_type)
+  learner_profile <- match.arg(learner_profile)
+  character_arguments <- list(trt = trt, outcomes = outcomes)
+  invalid_character <- vapply(
+    character_arguments,
+    function(x) !is.character(x) || !length(x) || anyNA(x) || any(!nzchar(x)),
+    logical(1)
+  )
+  if (any(invalid_character)) {
+    cli::cli_abort(
+      "{.arg {names(invalid_character)[invalid_character][1]}} must contain one or more column names.",
+      class = "margot_error_invalid_input"
+    )
+  }
+  optional_character <- list(baseline = baseline, cens = cens, compete = compete)
+  invalid_optional <- vapply(
+    optional_character,
+    function(x) !is.null(x) && (!is.character(x) || anyNA(x) || any(!nzchar(x))),
+    logical(1)
+  )
+  if (any(invalid_optional)) {
+    cli::cli_abort(
+      "{.arg {names(invalid_optional)[invalid_optional][1]}} must be `NULL` or a character vector of column names.",
+      class = "margot_error_invalid_input"
+    )
+  }
+  if (!is.null(id) && (!is.character(id) || length(id) != 1L || is.na(id) || !nzchar(id))) {
+    cli::cli_abort("{.arg id} must be `NULL` or one column name.", class = "margot_error_invalid_input")
+  }
+  if (!is.numeric(seed) || length(seed) != 1L || is.na(seed) || seed != trunc(seed)) {
+    cli::cli_abort("{.arg seed} must be a single whole number.", class = "margot_error_invalid_input")
+  }
+  if (!is.numeric(folds) || length(folds) != 1L || is.na(folds) ||
+      folds < 2L || folds != trunc(folds)) {
+    cli::cli_abort("{.arg folds} must be a whole number of at least two.", class = "margot_error_invalid_input")
+  }
+  if (!is.numeric(trim) || length(trim) != 1L || is.na(trim) || trim <= 0 || trim > 1) {
+    cli::cli_abort("{.arg trim} must be a single number in (0, 1].", class = "margot_error_invalid_input")
+  }
+  if (!is.null(bounds) &&
+      (!is.numeric(bounds) || length(bounds) != 2L || anyNA(bounds) || bounds[1L] >= bounds[2L])) {
+    cli::cli_abort("{.arg bounds} must be `NULL` or an ordered pair of numbers.", class = "margot_error_invalid_input")
+  }
+  if (!is.logical(policies) || !length(policies) || is.null(names(policies)) ||
+      anyNA(policies) || any(!nzchar(names(policies))) || anyDuplicated(names(policies))) {
+    cli::cli_abort(
+      "{.arg policies} must be a named logical vector with unique, non-empty arm names.",
+      class = "margot_error_invalid_input"
+    )
+  }
+  if (!is.null(weight_column) &&
+      (!is.character(weight_column) || length(weight_column) != 1L ||
+        is.na(weight_column) || !nzchar(weight_column))) {
+    cli::cli_abort(
+      "{.arg weight_column} must be `NULL` or one column name.",
+      class = "margot_error_invalid_input"
+    )
+  }
+
+  payload <- list(
+    estimator = "lmtp::lmtp_sdr",
+    call_arguments = list(
+      trt = as.character(trt),
+      baseline = baseline,
+      time_vary = time_vary,
+      cens = cens,
+      compete = compete,
+      outcome = as.character(outcomes),
+      outcome_type = outcome_type,
+      id = id,
+      folds = as.integer(folds),
+      bounds = bounds
+    ),
+    arms = lapply(names(policies), function(arm_id) {
+      list(arm_id = arm_id, mtp = isTRUE(policies[[arm_id]]))
+    }),
+    seed = as.integer(seed),
+    trim = trim,
+    learner_profile = learner_profile,
+    weight_column = weight_column
+  )
+  content_hash <- margot_lmtp_spec_hash(margot_lmtp_estimator_spec_version, payload)
+  structure(
+    list(
+      schema_version = margot_lmtp_estimator_spec_version,
+      payload = payload,
+      content_hash = content_hash
+    ),
+    class = c("margot_lmtp_estimator_spec", "list")
+  )
+}
+
+# return the SuperLearner library named by a Margot estimator profile
+margot_lmtp_spec_learners <- function(profile, call = rlang::caller_env()) {
+  switch(profile,
+    ensemble = c("SL.mean", "SL.ranger", "SL.xgboost", "SL.glmnet"),
+    glm = "SL.glm",
     cli::cli_abort(
       c(
         "No {.pkg lmtp} learner library is registered for profile {.val {profile}}.",
-        "i" = "The sealed profiles are {.val ensemble} and {.val glm}.",
-        "i" = "The mapping comes from {.fn margot.lmtp::lmtp_learner_library}."
+        "i" = "The registered profiles are {.val ensemble} and {.val glm}."
+      ),
+      class = "margot_error_invalid_input",
+      call = call
+    )
+  )
+}
+
+# re-verify a Margot estimator specification before reading its payload
+margot_lmtp_spec_verify <- function(estimator_spec, call = rlang::caller_env()) {
+  if (!inherits(estimator_spec, "margot_lmtp_estimator_spec")) {
+    cli::cli_abort(
+      c(
+        "{.arg estimator_spec} must come from {.fn margot_lmtp_estimator_spec}.",
+        "x" = "Received an object of class {.cls {class(estimator_spec)[1]}}."
       ),
       class = "margot_error_invalid_input",
       call = call
     )
   }
-  library
-}
-
-# re-verifies the seal on entry, so a sealed object edited between sealing and use
-# is refused here rather than read. the class vector alone proves nothing.
-margot_lmtp_spec_verify <- function(estimator_spec, call = rlang::caller_env()) {
-  verify <- tryCatch(
-    utils::getFromNamespace("margot_lmtp_verify_seal", "margot.lmtp"),
-    error = function(e) NULL
-  )
-  if (is.function(verify)) {
-    verify(estimator_spec, "estimator_spec")
+  if (!identical(estimator_spec$schema_version, margot_lmtp_estimator_spec_version)) {
+    cli::cli_abort(
+      c(
+        "The estimator specification uses an unsupported schema.",
+        "x" = "Received {.val {estimator_spec$schema_version}}; expected {.val {margot_lmtp_estimator_spec_version}}.",
+        "i" = "Rebuild it with {.fn margot_lmtp_estimator_spec}."
+      ),
+      class = "margot_error_lmtp_conformity",
+      call = call
+    )
+  }
+  realised <- margot_lmtp_spec_hash(estimator_spec$schema_version, estimator_spec$payload)
+  if (!identical(realised, estimator_spec$content_hash)) {
+    cli::cli_abort(
+      c(
+        "{.arg estimator_spec} does not match its content hash.",
+        "i" = "The specification has been altered since it was created."
+      ),
+      class = "margot_error_hash_mismatch",
+      call = call
+    )
   }
   invisible(estimator_spec)
 }
 
-# errors naming the arguments the caller supplied that the sealed contract
-# already fixes, and the `lmtp_defaults` entries the contract does not fix and
-# would otherwise discard in silence
+# report caller arguments that conflict with a locked estimator specification
 margot_lmtp_spec_conflict <- function(conflicts = character(),
                                       discarded = character(),
                                       call = rlang::caller_env()) {
   bullets <- character()
   if (length(conflicts)) {
     bullets <- c(bullets, "x" = paste0(
-      "Already fixed by the seal: ",
+      "Already fixed by the specification: ",
       paste(paste0("`", conflicts, "`"), collapse = ", "), "."
     ))
   }
   if (length(discarded)) {
     bullets <- c(bullets, "x" = paste0(
-      "Named in `lmtp_defaults` and not part of the sealed call: ",
+      "Named in `lmtp_defaults` and not part of the locked call: ",
       paste(paste0("`", discarded, "`"), collapse = ", "), "."
     ))
   }
   cli::cli_abort(
     c(
-      "The sealed estimator contract builds the whole `lmtp` call.",
+      "The estimator specification builds the whole `lmtp` call.",
       bullets,
       "i" = paste(
-        "Drop them and let `estimator_spec` supply them, or reseal the contract",
-        "with `margot.lmtp::margot_lmtp_estimator_spec()`."
+        "Drop the conflicting arguments and let `estimator_spec` supply them,",
+        "or rebuild the specification with `margot_lmtp_estimator_spec()`."
       )
     ),
     class = "margot_error_estimator_spec_conflict",
@@ -72,24 +244,7 @@ margot_lmtp_spec_conflict <- function(conflicts = character(),
   )
 }
 
-#' Derive `margot_lmtp()` arguments from a sealed estimator contract
-#'
-#' Reads the `call_arguments` payload of a sealed `margot_lmtp_estimator_spec`
-#' and returns the treatment, outcome, `lmtp_defaults`, seed, and per-arm `mtp`
-#' settings the contract fixes. Every argument the caller supplied that the
-#' contract already fixes is reported as a conflict rather than overridden.
-#'
-#' @param estimator_spec A sealed `margot_lmtp_estimator_spec` object.
-#' @param trt,outcome_vars,lmtp_defaults,lmtp_model_type,seed,shift_functions
-#'   The arguments as `margot_lmtp()` received them.
-#' @param supplied Character vector naming which of those arguments the caller
-#'   supplied explicitly.
-#' @param call The calling environment, for the error condition.
-#'
-#' @return A list with `trt`, `outcome_vars`, `lmtp_defaults`,
-#'   `lmtp_model_type`, `seed`, and `mtp_by_arm`.
-#' @keywords internal
-#' @noRd
+# derive margot_lmtp arguments from a verified Margot estimator specification
 margot_lmtp_args_from_spec <- function(estimator_spec,
                                        trt,
                                        outcome_vars,
@@ -98,35 +253,15 @@ margot_lmtp_args_from_spec <- function(estimator_spec,
                                        seed,
                                        shift_functions,
                                        supplied = character(),
+                                       data = NULL,
                                        call = rlang::caller_env()) {
-  if (!has_margot_lmtp()) {
-    cli::cli_abort(
-      c(
-        "Package {.pkg margot.lmtp} is required to run {.fn margot_lmtp} from a sealed estimator contract.",
-        "i" = "Install it with: {.code pak::pak('go-bayes/margot.lmtp')}",
-        "i" = "{.pkg margot} suggests {.pkg margot.lmtp}; the exploratory driver runs without it."
-      ),
-      class = "margot_error_missing_dependency",
-      call = call
-    )
-  }
-  if (!inherits(estimator_spec, "margot_lmtp_estimator_spec")) {
-    cli::cli_abort(
-      c(
-        "{.arg estimator_spec} must be a sealed {.cls margot_lmtp_estimator_spec} object.",
-        "x" = "Received an object of class {.cls {class(estimator_spec)[1]}}."
-      ),
-      class = "margot_error_invalid_input",
-      call = call
-    )
-  }
   margot_lmtp_spec_verify(estimator_spec, call = call)
   payload <- estimator_spec$payload
   arguments <- payload$call_arguments
   if (!is.list(arguments) || is.null(arguments$trt) || is.null(arguments$outcome)) {
     cli::cli_abort(
       c(
-        "The sealed contract carries no usable {.field call_arguments}.",
+        "The estimator specification carries no usable {.field call_arguments}.",
         "x" = "{.field trt} and {.field outcome} must both be present."
       ),
       class = "margot_error_lmtp_conformity",
@@ -134,8 +269,7 @@ margot_lmtp_args_from_spec <- function(estimator_spec,
     )
   }
 
-  # every argument below is fixed by the seal; naming one again is a conflict
-  sealed_defaults <- c(
+  locked_defaults <- c(
     "baseline", "time_vary", "cens", "compete", "outcome_type", "id",
     "folds", "bounds", "learners_trt", "learners_outcome", "control",
     "mtp", "shift", "outcome", "trt", "weights"
@@ -148,16 +282,13 @@ margot_lmtp_args_from_spec <- function(estimator_spec,
       !identical(as.character(outcome_vars), as.character(arguments$outcome))) {
     conflicts <- c(conflicts, "outcome_vars")
   }
-  # the derived `lmtp_defaults` list is built from the seal alone, so every entry
-  # the caller names is either one the seal already fixes or one the derived list
-  # would drop on the floor. neither may pass in silence.
   supplied_defaults <- names(lmtp_defaults) %||% character()
   supplied_defaults <- supplied_defaults[nzchar(supplied_defaults)]
   if (length(lmtp_defaults) > length(supplied_defaults)) {
     supplied_defaults <- c(supplied_defaults, "<unnamed>")
   }
-  conflicts <- c(conflicts, intersect(sealed_defaults, supplied_defaults))
-  discarded <- setdiff(supplied_defaults, sealed_defaults)
+  conflicts <- c(conflicts, intersect(locked_defaults, supplied_defaults))
+  discarded <- setdiff(supplied_defaults, locked_defaults)
   if ("lmtp_model_type" %in% supplied &&
       !identical(lmtp_model_type, lmtp::lmtp_sdr)) {
     conflicts <- c(conflicts, "lmtp_model_type")
@@ -175,14 +306,13 @@ margot_lmtp_args_from_spec <- function(estimator_spec,
   if (!length(shift_functions) || !setequal(names(shift_functions), arm_ids)) {
     cli::cli_abort(
       c(
-        "`shift_functions` must name exactly the arms the contract seals.",
-        "x" = paste0("Sealed arms: ", paste(arm_ids, collapse = ", "), "."),
+        "{.arg shift_functions} must name exactly the arms the specification locks.",
+        "x" = paste0("Locked arms: ", paste(arm_ids, collapse = ", "), "."),
         "x" = paste0(
           "Supplied: ",
           if (length(names(shift_functions))) paste(names(shift_functions), collapse = ", ") else "<none>",
           "."
-        ),
-        "i" = "The seal fingerprints the policies by source; it does not carry the closures."
+        )
       ),
       class = "margot_error_estimator_spec_conflict",
       call = call
@@ -203,11 +333,29 @@ margot_lmtp_args_from_spec <- function(estimator_spec,
     learners_outcome = library,
     control = lmtp::lmtp_control(.trim = payload$trim)
   )
+  weight_column <- payload$weight_column
+  if (!is.null(weight_column)) {
+    if (!is.data.frame(data) || !weight_column %in% names(data)) {
+      cli::cli_abort(
+        "The analysis data carry no locked weight column {.field {weight_column}}.",
+        class = "margot_error_invalid_input",
+        call = call
+      )
+    }
+    weights <- data[[weight_column]]
+    if (!is.numeric(weights) || anyNA(weights) || any(!is.finite(weights)) || any(weights < 0)) {
+      cli::cli_abort(
+        "The locked weight column {.field {weight_column}} must be numeric, complete, finite, and non-negative.",
+        class = "margot_error_invalid_input",
+        call = call
+      )
+    }
+    derived$weights <- as.numeric(weights)
+  }
   derived <- derived[!vapply(derived, is.null, logical(1))]
 
   mtp_by_arm <- vapply(payload$arms, function(a) isTRUE(a$mtp), logical(1))
   names(mtp_by_arm) <- arm_ids
-
   list(
     trt = arguments$trt,
     outcome_vars = arguments$outcome,

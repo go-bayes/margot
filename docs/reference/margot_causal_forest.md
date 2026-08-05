@@ -175,8 +175,13 @@ margot_causal_forest(
 
 ## Value
 
-A list containing: \* \`results\` - per-outcome diagnostics and objects
-\* \`combined_table\` - combined e-value table across outcomes \*
+A list containing: \* \`results\` - per-outcome diagnostics and objects.
+The \`blp_top\` element of each outcome holds a best linear projection
+onto the \`top_n_vars\` variable-importance screen. \*\*\`blp_top\` is
+retired from reporting\*\* in favour of \[margot_blp()\], which projects
+onto the full covariate matrix the forest was fitted on. It is still
+computed for backwards compatibility, and it must not be reported. \*
+\`combined_table\` - combined e-value table across outcomes \*
 \`outcome_vars\` - vector of outcome names \* \`not_missing\` - indices
 of complete-case rows \* (\`data\`, \`covariates\`, \`weights\`, \`W\`)
 when \`save_data = TRUE\` \* \`full_models\` when \`save_models = TRUE\`

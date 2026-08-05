@@ -11,9 +11,7 @@ margot_lmtp_positivity(
   x,
   thresholds = c(10, 25, 50, 100),
   probs = c(0.001, 0.01, 0.05, 0.5, 0.95, 0.999),
-  ess_warn = 0.5,
-  zero_warn = 0.01,
-  tail_warn = c(`10` = 0.05, `25` = 0.02, `50` = 0.01, `100` = 0.005),
+  ...,
   include_overall = TRUE,
   digits = NULL,
   verbose = TRUE
@@ -36,18 +34,9 @@ margot_lmtp_positivity(
 
   Quantiles to report (must include 0.5 if you want the median).
 
-- ess_warn:
+- ...:
 
-  Flag when ESS/N is below this fraction (per wave).
-
-- zero_warn:
-
-  Flag when proportion of exact zeros exceeds this fraction.
-
-- tail_warn:
-
-  Named numeric vector giving tail-mass flag thresholds (names must
-  match thresholds). If length 1, recycled to all thresholds.
+  Reserved. Supplying a removed threshold argument errors.
 
 - include_overall:
 
@@ -60,7 +49,7 @@ margot_lmtp_positivity(
 
 - verbose:
 
-  If TRUE, prints concise CLI messages when flags are raised.
+  If TRUE, prints concise CLI messages about the summaries computed.
 
 ## Value
 
@@ -77,11 +66,6 @@ A list with:
   data.frame of pooled summaries across waves (one row per
   outcome/shift). Also includes \`\*\_pos\` columns for uncensored
   diagnostics.
-
-- flags:
-
-  data.frame of flagged issues (subset of rows from by_wave/overall with
-  reasons).
 
 ## Details
 
@@ -101,6 +85,14 @@ and \*\*uncensored observations\*\* (\\r \> 0\\), with the latter
 denoted by \`\*\_pos\` suffixes in column names. The \`prop_zero\`
 column reports the censoring rate per wave.
 
+\*\*Descriptive summaries only.\*\* The threshold arguments
+\`ess_warn\`, \`zero_warn\`, and \`tail_warn\` and the \`flags\` return
+field were removed with the retired enforcement machinery, because each
+turned a constant into an automatic consequence. Supplying any of them
+errors with a condition of class \`margot_error_removed_argument\`.
+State expectations for these quantities in the study protocol and
+compare them with the descriptive report instead.
+
 ## Examples
 
 ``` r
@@ -109,5 +101,5 @@ column reports the censoring rate per wave.
 #
 # Entire run from margot_lmtp():
 # pos <- margot_lmtp_positivity(fit)
-# head(pos$by_wave); head(pos$flags)
+# head(pos$by_wave); head(pos$overall)
 ```

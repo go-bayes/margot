@@ -48,16 +48,10 @@ A list with elements:
   - text_summary: brief prose summary
 }
 \description{
-`r lifecycle::badge("deprecated")`
-}
-\details{
-`margot_report_lmtp_positivity()` is soft-deprecated in favour of the
-`margot.lmtp` reporting family. It keeps working and warns once per session.
-Its `flags` return field was removed with the retired enforcement machinery.
-
 Builds manuscript-ready positivity diagnostics (overall and by-wave) and an
 optional density-ratio grid for a selected outcome and set of shifts.
-
+}
+\details{
 - Computes summaries via `margot_lmtp_positivity()`
 - Produces overall table (Estimand, N, Prop_zero, ESS, ESS/N)
 - Produces combined by-wave tables (ESS/N by wave; ESS by wave)

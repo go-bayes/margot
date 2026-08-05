@@ -11,7 +11,7 @@ checkpoints and the complete output as `.rds` files."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.012</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,8 +52,8 @@ checkpoints and the complete output as `.rds` files.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_lmtp</span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
-<span>  <span class="va">outcome_vars</span>,</span>
-<span>  <span class="va">trt</span>,</span>
+<span>  outcome_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  trt <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  shift_functions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  include_null_shift <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  lmtp_model_type <span class="op">=</span> <span class="fu">lmtp</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/lmtp/man/lmtp_tmle.html" class="external-link">lmtp_tmle</a></span>,</span>
@@ -69,7 +69,10 @@ checkpoints and the complete output as `.rds` files.</p>
 <span>  use_timestamp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  prefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  manage_future_plan <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  progress <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cli"</span>, <span class="st">"progressr"</span>, <span class="st">"none"</span><span class="op">)</span></span>
+<span>  progress <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cli"</span>, <span class="st">"progressr"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reuse_density_ratios <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  estimator_spec <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -82,11 +85,11 @@ checkpoints and the complete output as `.rds` files.</p>
 
 
 <dt id="arg-outcome-vars">outcome_vars<a class="anchor" aria-label="anchor" href="#arg-outcome-vars"></a></dt>
-<dd><p>A character vector of outcome variable names to be modeled.</p></dd>
+<dd><p>A character vector of outcome variable names to be modelled. Optional when `estimator_spec` is supplied, which locks it.</p></dd>
 
 
 <dt id="arg-trt">trt<a class="anchor" aria-label="anchor" href="#arg-trt"></a></dt>
-<dd><p>A character string specifying the treatment variable.</p></dd>
+<dd><p>A character string specifying the treatment variable. Optional when `estimator_spec` is supplied, which locks it.</p></dd>
 
 
 <dt id="arg-shift-functions">shift_functions<a class="anchor" aria-label="anchor" href="#arg-shift-functions"></a></dt>
@@ -110,7 +113,7 @@ checkpoints and the complete output as `.rds` files.</p>
 
 
 <dt id="arg-lmtp-defaults">lmtp_defaults<a class="anchor" aria-label="anchor" href="#arg-lmtp-defaults"></a></dt>
-<dd><p>A list of default parameters for the LMTP models.</p></dd>
+<dd><p>A list of default parameters for the LMTP models. Must be empty when `estimator_spec` is supplied, which builds the whole list from the specification.</p></dd>
 
 
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
@@ -154,6 +157,28 @@ FALSE.</p></dd>
 <dt id="arg-progress">progress<a class="anchor" aria-label="anchor" href="#arg-progress"></a></dt>
 <dd><p>Progress reporting method: "cli" (default CLI progress bar), "progressr" (use progressr package handlers), or "none" (no progress reporting).</p></dd>
 
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Optional single whole number seeding every stochastic step: the
+RNG at entry, each model fit, and the parallel streams. Default NULL leaves
+the RNG untouched. When `estimator_spec` is supplied the seed comes from the
+locked specification, and supplying a different one errors.</p></dd>
+
+
+<dt id="arg-reuse-density-ratios">reuse_density_ratios<a class="anchor" aria-label="anchor" href="#arg-reuse-density-ratios"></a></dt>
+<dd><p>Logical. When `TRUE`, sequentially doubly robust
+fits sharing one policy-specific nuisance identity fit the treatment and
+censoring density ratios once and reuse them across `outcome_vars`. The
+returned models, contrasts, and tables retain the existing Margot
+structure. Default is `FALSE` while the opt-in path is validated.</p></dd>
+
+
+<dt id="arg-estimator-spec">estimator_spec<a class="anchor" aria-label="anchor" href="#arg-estimator-spec"></a></dt>
+<dd><p>Optional locked `margot_lmtp_estimator_spec` object from
+[margot_lmtp_estimator_spec()]. When supplied, the `lmtp` call
+is built from the specification and every conflicting user argument
+errors.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -178,6 +203,27 @@ as much as expected. This is because LMTP models can be memory-bound rather than
 with large data. In such cases, memory pressure and data copying between workers may offset the benefits
 of parallelization. Consider using fewer cores or sequential processing for very large models if you
 experience performance degradation.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="design-and-execution">Design and execution<a class="anchor" aria-label="anchor" href="#design-and-execution"></a></h2>
+
+
+<p>`margot_lmtp()` executes an LMTP analysis. A study's causal question, causal
+estimand, identification assumptions, policy rationale, and decision rules
+belong in its protocol rather than this software call. Keeping those design
+commitments outside the estimator prevents a later computational improvement
+from changing the scientific workflow.</p>
+<p>Supplying `estimator_spec` locks the execution settings. The `lmtp` call is
+then built from the specification's `call_arguments` — the exposure at each node, the
+baseline and time-varying covariates, the censoring and competing-event
+indicators, the outcome and its model, the identifier, the folds, the bounds,
+the registered learner library, the analysis-weight column, and the cap — and any conflicting user
+argument errors with a condition of class
+`margot_error_estimator_spec_conflict` that names the conflict. The specification
+supplies the whole `lmtp_defaults` list, so any entry supplied alongside it —
+one the specification fixes, or one the derived list would drop — raises that condition
+rather than passing in silence. Margot re-verifies the specification's
+content hash on entry, so an object edited after creation is refused.</p>
     </div>
 
     <div class="section level2">
@@ -222,7 +268,7 @@ experience performance degradation.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -1,5 +1,18 @@
 # [2026-08-04] margot 1.1.014
 
+### Consolidated LMTP workflow in Margot
+
+The 4 August 2026 package-boundary decision makes Margot the sole implementation home for the LMTP workflow. This ruling supersedes the July plan to move registered estimation and density-ratio reporting into a companion package.
+
+#### Added
+- `margot_lmtp(reuse_density_ratios = TRUE)` now fits each policy-specific treatment and censoring density-ratio process once and reuses it across terminal outcomes for sequentially doubly robust estimation. The opt-in path returns the existing four-part Margot object, including genuine `lmtp` models that continue through `margot_lmtp_overlap()`, checkpoint restoration, combined tables, and `margot_plot()`.
+- `margot_lmtp_estimator_spec()` locks execution settings inside Margot, including several terminal outcomes and an analysis-weight column. Margot verifies the specification's content hash before fitting and refuses conflicting call arguments.
+- Deterministic and stochastic regression tests require exact numerical agreement between independent and shared-ratio fits for the density ratios, point estimate, standard error, influence function, and confidence interval. An end-to-end weighted perfectionism example verifies two ratio fits for two policies and two outcomes, compared with four fits under independent estimation.
+
+#### Changed
+- Margot no longer suggests or redirects users to `margot.lmtp`. The descriptive density-ratio reporting functions remain active in Margot, while the retired threshold-based positivity gate remains defunct.
+- The first fit-once implementation supports `lmtp::lmtp_sdr()` under `lmtp` 1.5.4. Margot refuses unsupported estimators, survival outcomes, precomputed shifted data, and internally managed outer futures rather than silently falling back.
+
 ### Minimal best linear projection reporting surface
 
 The 4 August 2026 decision records the reported best linear projection as a

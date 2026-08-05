@@ -150,18 +150,19 @@ margot_interpret_lmtp_overlap(...)
 
 - test_thresholds:
 
-  Named list of thresholds for \`include_tests\`. Recognised names:
-  \`near_zero_median\` (default 1e-3), \`near_zero_cv\` (0.05),
-  \`prod_log10\` (-1, corresponding to the central band \`\[0.1,
-  10\]\`), \`prod_frac_ok\` (0.05), and \`prod_frac_warn\` (0.20).
-  Unrecognised entries are ignored.
+  Named list controlling the reported band and the near-zero flag.
+  Recognised names: \`near_zero_median\` (default 1e-3),
+  \`near_zero_cv\` (0.05), and \`prod_log10\` (-1, corresponding to the
+  central band \`\[0.1, 10\]\`). \`prod_frac_ok\` and \`prod_frac_warn\`
+  are accepted for backward compatibility and ignored; they drove the
+  removed support screen. Unrecognised entries are ignored.
 
 - include_ipsi_recommend:
 
-  Logical; if TRUE and IPSI shifts are present, evaluates candidate
-  deltas using the same tests and prints a recommendation for the
-  largest delta that passes guardrails. Also adds an "IPSI
-  Recommendation" section to the returned text. Default TRUE.
+  Logical; if TRUE and IPSI shifts are present, adds an "IPSI Candidate
+  Summary" section describing each registered delta. No delta is
+  recommended: the delta-selecting screen was removed, and the
+  registered contrast is chosen in the study registration. Default TRUE.
 
 - include_test_explanations:
 

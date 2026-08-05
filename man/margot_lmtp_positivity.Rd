@@ -61,8 +61,8 @@ in column names. The `prop_zero` column reports the censoring rate per wave.
 `zero_warn`, and `tail_warn` and the `flags` return field were removed with
 the retired enforcement machinery, because each turned a constant into an
 automatic consequence. Supplying any of them errors with a condition of class
-`margot_error_removed_argument`. Precommit expectations for these quantities
-with `margot.lmtp::margot_lmtp_expectations_spec()` instead.
+`margot_error_removed_argument`. State expectations for these quantities in
+the study protocol and compare them with the descriptive report instead.
 }
 \examples{
 # Single model:
