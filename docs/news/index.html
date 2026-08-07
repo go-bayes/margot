@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.015</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,55 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.015" id="id_2026-08-07-margot-11015-development">[2026-08-07] margot 1.1.015 (development)<a class="anchor" aria-label="anchor" href="#id_2026-08-07-margot-11015-development"></a></h2>
+<div class="section level4">
+<h4 id="depth-selection-in-held-out-policy-tree-cross-validation-1-1-015">Depth selection in held-out policy-tree cross-validation<a class="anchor" aria-label="anchor" href="#depth-selection-in-held-out-policy-tree-cross-validation-1-1-015"></a></h4>
+<p>A simulation validation in the <code>arc</code> repository (<code>test/grf-blp-policy-cv-validation/</code>, commits <code>fa4f26d</code> and <code>6c4370b</code>) fitted the registered procedure under a constant-effect null and found that <code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code> selected depth two in 1 of 10 replicates, because the stability guard compares depth-two root stability against depth-one root stability, so a depth-one root that is itself unstable makes the guard pass trivially and leaves the 0.01 gain threshold doing all the protective work.</p>
+<div class="section level5">
+<h5 id="added-1-1-015">Added<a class="anchor" aria-label="anchor" href="#added-1-1-015"></a></h5>
+<ul><li>
+<code>margot_policy_tree_cv(min_root_stability_for_depth_switch = 0.5)</code> adds an absolute floor to the depth rule. Depth two is now eligible only when the <em>depth-one</em> root-split selection frequency reaches the floor, alongside the existing minimum held-out gain of 0.01 and maximum relative root-stability loss of 0.05. An unstable depth-one root means the procedure has found no reliable first split, so a depth-two improvement over it cannot be structure; requiring majority root agreement before depth two is eligible closes that loophole.</li>
+<li>The recorded selection reason distinguishes the new guard: a blocked switch reports <code>"depth one root split is not stable enough to license depth two"</code>. The floor, the per-model guard outcome (<code>root_stability_floor_ok</code>), and the floor value travel in <code>depth_selection</code> and in <code>metadata$min_root_stability_for_depth_switch</code>, and <code>covariate_mode</code> is now recorded in <code>metadata</code> as well.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="changed-1-1-015">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-015"></a></h5>
+<ul><li>
+<strong>Behaviour change.</strong> Depth two is harder to select than in 1.1.014. Existing results in which the depth-one root-split frequency fell below 0.5 will now report depth one. Set <code>min_root_stability_for_depth_switch = 0</code> to disable the floor and recover the pre-1.1.015 relative-only rule; this is the opt-out for studies registered under the old rule.</li>
+<li>
+<strong>Fail closed on missing stability.</strong> An <code>NA</code> or non-finite root-split stability loss previously <em>passed</em> the stability guard. It now fails it: depth two is refused, the reason records that stability could not be computed, and a warning explains why. This is not opt-outable, and setting the floor to 0 does not restore the old handling.</li>
+<li>
+<code>margot_causal_forest(verbose = FALSE)</code> is now silent. The progress bar and its updates, and the “No valid outcomes to flip found” alert, are gated behind <code>verbose</code>; the two deprecated-parameter notices are raised as warning conditions rather than printed alerts, so <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings()</a></code> silences them. Nothing about what is computed changed.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="documentation-1-1-015">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-1-015"></a></h5>
+<ul><li>
+<code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code> now states prominently that the default <code>covariate_mode = "original"</code> restricts every tree split to the top-15 variable-importance screen rather than the full covariate set, together with the measured cost of the alternative: at n = 23,000 with 57 covariates, <code>covariate_mode = "all"</code> costs roughly 167 seconds per depth-two fit, about 4.6 hours per outcome under the registered cross-validation, while the top-15 screen is roughly 14 times cheaper at depth two.</li>
+<li>The depth rule and its three guards, the new parameter, and the fail-closed handling of an uncomputable stability comparison are documented in the function’s details and parameter entries.</li>
+</ul></div>
+</div>
+<div class="section level4">
+<h4 id="best-linear-projection-interval-level-1-1-015">Best linear projection interval level<a class="anchor" aria-label="anchor" href="#best-linear-projection-interval-level-1-1-015"></a></h4>
+<div class="section level5">
+<h5 id="added-1-1-015-1">Added<a class="anchor" aria-label="anchor" href="#added-1-1-015-1"></a></h5>
+<ul><li>
+<code>margot_blp(level = 0.95)</code> makes the confidence-interval level an explicit argument rather than a hard-coded 95%, so a study registration can pick and record its level. The chosen level travels as the returned object’s <code>level</code> attribute, and <code><a href="../reference/margot_plot_blp.html">margot_plot_blp()</a></code> labels its axis from it. Point estimates and standard errors are unchanged at any level.</li>
+</ul></div>
+</div>
+<div class="section level4">
+<h4 id="consistency-of-the-depth-rule-across-functions-1-1-015">Consistency of the depth rule across functions<a class="anchor" aria-label="anchor" href="#consistency-of-the-depth-rule-across-functions-1-1-015"></a></h4>
+<div class="section level5">
+<h5 id="added-1-1-015-2">Added<a class="anchor" aria-label="anchor" href="#added-1-1-015-2"></a></h5>
+<ul><li>
+<code>margot_policy_workflow(min_root_stability_for_depth_switch = 0.5)</code> passes the new absolute floor through to its internal <code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code> call, which previously received the package default with no way to override it.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="changed-1-1-015-1">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-015-1"></a></h5>
+<ul><li>The fail-closed rule for an incomputable stability comparison now also applies in <code><a href="../reference/margot_policy_summary_compare_depths.html">margot_policy_summary_compare_depths()</a></code> and in the workflow’s depth-comparison rationale, which both carried the same fail-open pattern the validation exposed in the CV selector.</li>
+<li>The CV selector’s gain comparison is now <code>&gt;=</code> (a gain of exactly <code>min_gain_for_depth_switch</code> switches), matching the documented “minimum gain required” semantics and the comparator the depth-comparison report already used. The two code paths could previously disagree at exactly the registered 0.01 threshold.</li>
+</ul></div>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.014" id="id_2026-08-04-margot-11014">[2026-08-04] margot 1.1.014<a class="anchor" aria-label="anchor" href="#id_2026-08-04-margot-11014"></a></h2>
 <div class="section level4">

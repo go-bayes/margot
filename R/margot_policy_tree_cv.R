@@ -19,6 +19,17 @@
 #' from held-out means. Between-leaf differences describe variation in
 #' score-contrast magnitude, not the policy decision rule itself.
 #'
+#' Depth one is the default selection. Depth two is selected only when three
+#' guards pass together: the held-out value gain over depth one exceeds
+#' \code{min_gain_for_depth_switch}; the root-split stability lost in moving to
+#' depth two is no larger than \code{max_stability_loss_for_depth_switch}; and
+#' the depth-one root-split selection frequency is at least
+#' \code{min_root_stability_for_depth_switch}. The third guard is absolute
+#' rather than relative, and it was added in version 1.1.015 after a simulation
+#' under a constant-effect null selected depth two in 1 of 10 replicates by
+#' clearing the two relative guards on noise alone. When the stability
+#' comparison cannot be computed the guards fail closed and depth one is kept.
+#'
 #' @param model_results A list returned by \code{margot_causal_forest()},
 #'   \code{margot_policy_tree_stability()}, or a compatible object with
 #'   \code{results}, \code{covariates}, and stored doubly robust action scores.
@@ -29,7 +40,21 @@
 #' @param exclude_covariates Optional character vector of covariate names or
 #'   patterns to exclude.
 #' @param covariate_mode Character. One of \code{"original"},
-#'   \code{"custom"}, \code{"add"}, or \code{"all"}.
+#'   \code{"custom"}, \code{"add"}, or \code{"all"}. \strong{The default
+#'   \code{"original"} does not search the full covariate set.} It restricts
+#'   every policy-tree split to the variables already stored in
+#'   \code{model_result$top_vars}, which is the top-15 variable-importance
+#'   screen written by \code{margot_causal_forest()}. Trees therefore cannot
+#'   split on a modifier that fell outside that screen, and the reported
+#'   root-split stability describes agreement within the screened set rather
+#'   than within all covariates. Use \code{"all"} to search every covariate,
+#'   \code{"custom"} to supply your own set through
+#'   \code{custom_covariates}, or \code{"add"} to append to the screen. The
+#'   wider search is materially more expensive: at \eqn{n = 23{,}000} with 57
+#'   covariates, \code{covariate_mode = "all"} costs roughly 167 seconds per
+#'   depth-two fit, which is about 4.6 hours per outcome under the registered
+#'   cross-validation of 5 folds and 20 repeats, whereas the top-15 screen is
+#'   roughly 14 times cheaper at depth two.
 #' @param depths Integer vector containing 1, 2, or both. Character values
 #'   \code{"1"}, \code{"2"}, and \code{"both"} are also accepted.
 #' @param num_folds Integer. Number of folds per repeat. Default is 5.
@@ -39,7 +64,26 @@
 #' @param min_gain_for_depth_switch Numeric. Minimum held-out value gain required
 #'   before depth two can be selected over depth one. Default is 0.01.
 #' @param max_stability_loss_for_depth_switch Numeric. Maximum allowed loss in
-#'   root-split stability before depth two is rejected. Default is 0.05.
+#'   root-split stability before depth two is rejected. Default is 0.05. The
+#'   loss is the depth-one root-split selection frequency minus the depth-two
+#'   root-split selection frequency, so the guard is relative. When either
+#'   frequency is unavailable the loss is \code{NA}; the guard then fails
+#'   closed, depth two is refused, and a warning records that stability could
+#'   not be computed. Before version 1.1.015 an \code{NA} loss passed the
+#'   guard.
+#' @param min_root_stability_for_depth_switch Numeric in \eqn{[0, 1]}. Absolute
+#'   floor on the \emph{depth-one} root-split selection frequency before depth
+#'   two becomes eligible. Default is 0.5, that is, majority agreement on the
+#'   first split. An unstable depth-one root means the procedure has found no
+#'   reliable first split, so a depth-two "improvement" over it cannot be
+#'   structure; the relative stability guard above passes trivially in exactly
+#'   that case, because a low depth-one frequency makes the loss small or
+#'   negative whatever depth two does. Requiring majority root agreement before
+#'   depth two is eligible closes that loophole. Set to 0 to disable the floor
+#'   and recover the pre-1.1.015 relative-only rule, which is the opt-out for
+#'   studies registered under the old rule. Disabling the floor does not
+#'   restore the pre-1.1.015 handling of an \code{NA} stability loss, which now
+#'   always fails closed.
 #' @param label_mapping Optional named list mapping outcome and variable names to
 #'   display labels.
 #' @param seed Integer. Base seed for reproducible fold assignments.
@@ -69,6 +113,7 @@ margot_policy_tree_cv <- function(model_results,
                                   weights = NULL,
                                   min_gain_for_depth_switch = 0.01,
                                   max_stability_loss_for_depth_switch = 0.05,
+                                  min_root_stability_for_depth_switch = 0.5,
                                   label_mapping = NULL,
                                   seed = 42L,
                                   tree_method = c("fastpolicytree", "policytree"),
@@ -103,6 +148,13 @@ margot_policy_tree_cv <- function(model_results,
       is.na(max_stability_loss_for_depth_switch) ||
       max_stability_loss_for_depth_switch < 0) {
     stop("max_stability_loss_for_depth_switch must be a non-negative numeric value", call. = FALSE)
+  }
+  if (!is.numeric(min_root_stability_for_depth_switch) ||
+      length(min_root_stability_for_depth_switch) != 1L ||
+      is.na(min_root_stability_for_depth_switch) ||
+      min_root_stability_for_depth_switch < 0 ||
+      min_root_stability_for_depth_switch > 1) {
+    stop("min_root_stability_for_depth_switch must be a single numeric value in [0, 1]", call. = FALSE)
   }
 
   model_names <- .policy_cv_resolve_model_names(model_results, model_names)
@@ -260,7 +312,8 @@ margot_policy_tree_cv <- function(model_results,
     value_summary = value_summary,
     split_summary = split_summary,
     min_gain_for_depth_switch = min_gain_for_depth_switch,
-    max_stability_loss_for_depth_switch = max_stability_loss_for_depth_switch
+    max_stability_loss_for_depth_switch = max_stability_loss_for_depth_switch,
+    min_root_stability_for_depth_switch = min_root_stability_for_depth_switch
   )
   depth_map <- if (nrow(depth_selection)) {
     stats::setNames(depth_selection$selected_depth, depth_selection$model)
@@ -286,6 +339,8 @@ margot_policy_tree_cv <- function(model_results,
       seed = seed,
       min_gain_for_depth_switch = min_gain_for_depth_switch,
       max_stability_loss_for_depth_switch = max_stability_loss_for_depth_switch,
+      min_root_stability_for_depth_switch = min_root_stability_for_depth_switch,
+      covariate_mode = covariate_mode,
       estimand = "held-out evaluation of the policy-learning procedure"
     )
   )
@@ -815,8 +870,11 @@ margot_policy_tree_cv <- function(model_results,
 .policy_cv_select_depths <- function(value_summary,
                                      split_summary,
                                      min_gain_for_depth_switch,
-                                     max_stability_loss_for_depth_switch) {
-  # apply the depth rule: depth one unless depth two improves value and stability.
+                                     max_stability_loss_for_depth_switch,
+                                     min_root_stability_for_depth_switch = 0.5) {
+  # apply the depth rule: depth one unless depth two improves value, keeps
+  # relative root-split stability, and starts from a depth-one root that is
+  # itself stable enough to be worth improving on.
   if (is.null(value_summary) || !nrow(value_summary)) return(data.frame())
   models <- unique(value_summary$model)
   rows <- lapply(models, function(model_name) {
@@ -824,6 +882,7 @@ margot_policy_tree_cv <- function(model_results,
     d1 <- sub[sub$depth == 1L, , drop = FALSE]
     d2 <- sub[sub$depth == 2L, , drop = FALSE]
     if (!nrow(d1) && !nrow(d2)) return(NULL)
+    root_floor_ok <- TRUE
     if (!nrow(d1)) {
       selected <- 2L
       reason <- "depth one unavailable"
@@ -839,12 +898,36 @@ margot_policy_tree_cv <- function(model_results,
       root1 <- .policy_cv_root_stability(split_summary, model_name, 1L)
       root2 <- .policy_cv_root_stability(split_summary, model_name, 2L)
       stability_loss <- root1 - root2
-      stable_ok <- is.na(stability_loss) || stability_loss <= max_stability_loss_for_depth_switch
-      selected <- if (is.finite(delta) && delta > min_gain_for_depth_switch && isTRUE(stable_ok)) 2L else 1L
+      # fail closed: an incomputable stability comparison must never license
+      # depth two, because the guard that would have blocked it is missing.
+      stability_unavailable <- !is.finite(stability_loss)
+      stable_ok <- !stability_unavailable &&
+        stability_loss <= max_stability_loss_for_depth_switch
+      if (stability_unavailable) {
+        cli::cli_warn(c(
+          "Root-split stability could not be computed for {model_name}; depth two was refused.",
+          "i" = "The depth-one or depth-two root-split selection frequency is unavailable, so the stability guard fails closed and depth one is kept."
+        ))
+      }
+      # absolute floor: a depth-one root that is itself unstable means no
+      # reliable first split was found, so a depth-two gain over it cannot be
+      # structure, and the relative guard above would pass trivially.
+      root_floor_ok <- min_root_stability_for_depth_switch <= 0 ||
+        (is.finite(root1) && root1 >= min_root_stability_for_depth_switch)
+      # ">=" matches the documented "minimum gain required" semantics and the
+      # comparator the depth-comparison report already uses at the same threshold
+      selected <- if (is.finite(delta) &&
+                      delta >= min_gain_for_depth_switch &&
+                      isTRUE(stable_ok) &&
+                      isTRUE(root_floor_ok)) 2L else 1L
       reason <- if (selected == 2L) {
         "depth two clears held-out value and stability thresholds"
+      } else if (stability_unavailable) {
+        "root-split stability could not be computed, so depth two was refused"
       } else if (!isTRUE(stable_ok)) {
         "depth two loses too much root-split stability"
+      } else if (!isTRUE(root_floor_ok)) {
+        "depth one root split is not stable enough to license depth two"
       } else if (is.finite(delta) && delta > 0) {
         "depth two gain below material-improvement threshold"
       } else {
@@ -858,10 +941,12 @@ margot_policy_tree_cv <- function(model_results,
       selected_depth = selected,
       pv_depth1 = if (nrow(d1)) d1$gain_vs_control_mean[1] else NA_real_,
       pv_depth2 = if (nrow(d2)) d2$gain_vs_control_mean[1] else NA_real_,
-      depth2_minus_depth1 = if (exists("delta")) delta else NA_real_,
+      depth2_minus_depth1 = delta,
       depth1_root_stability = .policy_cv_root_stability(split_summary, model_name, 1L),
       depth2_root_stability = .policy_cv_root_stability(split_summary, model_name, 2L),
       stability_ok = stable_ok,
+      root_stability_floor_ok = root_floor_ok,
+      min_root_stability_for_depth_switch = min_root_stability_for_depth_switch,
       reason = reason,
       stringsAsFactors = FALSE
     )
@@ -905,6 +990,13 @@ print.margot_policy_tree_cv <- function(x, ...) {
   cat("Models:", length(x$depth_map), "\n")
   cat("Folds:", x$metadata$num_folds, "\n")
   cat("Repeats:", x$metadata$n_repeats, "\n")
+  if (!is.null(x$metadata$min_root_stability_for_depth_switch)) {
+    cat(
+      "Depth guards: min gain", x$metadata$min_gain_for_depth_switch,
+      "| max stability loss", x$metadata$max_stability_loss_for_depth_switch,
+      "| min depth-1 root stability", x$metadata$min_root_stability_for_depth_switch, "\n"
+    )
+  }
   if (!is.null(x$depth_selection) && nrow(x$depth_selection)) {
     cat("\nDepth selection:\n")
     print(x$depth_selection[, c("model", "selected_depth", "depth2_minus_depth1", "reason"), drop = FALSE])

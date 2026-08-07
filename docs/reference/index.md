@@ -62,6 +62,8 @@
   : Assess Covariate Overlap from Causal Forest Models
 - [`margot_lmtp_overlap()`](https://go-bayes.github.io/margot/reference/margot_lmtp_overlap.md)
   : Assess Overlap/Positivity from LMTP Models via Density Ratios
+- [`print(`*`<margot_lmtp_density_stage>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_lmtp_density_stage.md)
+  : Print a Margot LMTP density-stage result
 - [`margot_positivity_report()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
   [`margot_positivity_report_single_model()`](https://go-bayes.github.io/margot/reference/margot_positivity_report.md)
   : Assemble a full LMTP positivity report (table, diagnostics, text,

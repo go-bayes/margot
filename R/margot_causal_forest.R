@@ -461,7 +461,9 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
   }
   # handle deprecated parameters
   if (!is.null(train_prop)) {
-    cli::cli_alert_warning("Parameter 'train_prop' is deprecated. Please use 'train_proportion' instead.")
+    # raise a condition rather than printing, so verbose = FALSE stays silent
+    # while suppressWarnings() remains the caller's explicit opt-out.
+    cli::cli_warn("Parameter 'train_prop' is deprecated. Please use 'train_proportion' instead.")
     # only override if train_proportion hasn't been explicitly set
     if (missing(train_proportion)) {
       train_proportion <- train_prop
@@ -469,7 +471,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
   }
 
   if (!is.null(qini_train_prop)) {
-    cli::cli_alert_warning("Parameter 'qini_train_prop' is deprecated. Please use 'train_proportion' instead.")
+    cli::cli_warn("Parameter 'qini_train_prop' is deprecated. Please use 'train_proportion' instead.")
     # only override if train_proportion hasn't been explicitly set
     if (missing(train_proportion)) {
       train_proportion <- qini_train_prop
@@ -505,7 +507,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       flip_scale_bounds = flip_scale_bounds
     )
     if (length(flip_spec) == 0) {
-      cli::cli_alert_warning("No valid outcomes to flip found")
+      if (verbose) cli::cli_alert_warning("No valid outcomes to flip found")
       flip_spec <- NULL
     } else if (verbose) {
       cli::cli_alert_success("Will flip {length(flip_spec)} outcome{?s}: {paste(names(flip_spec), collapse = ', ')}")
@@ -648,11 +650,26 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
   results <- list()
   full_models <- list()
 
+  # purpose: run an expression while honouring verbose for console notes only.
+  # input: any expression. output: the expression's value, unchanged. The
+  # EValue helpers behind margot_model_evalue() emit a console note whenever a
+  # confidence interval crosses the null, so verbose = FALSE would otherwise
+  # still chatter once per outcome. Only the note is suppressed; warnings,
+  # errors, and every computed quantity pass through untouched.
+  quiet_notes <- function(expr) {
+    if (verbose) expr else suppressMessages(expr)
+  }
+
   if (verbose) cli::cli_alert_info("running models for each outcome variable")
-  pb <- cli::cli_progress_bar(
-    total = length(outcome_vars),
-    format = "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}"
-  )
+  # the progress bar is display only, so verbose = FALSE must suppress it too.
+  pb <- if (verbose) {
+    cli::cli_progress_bar(
+      total = length(outcome_vars),
+      format = "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}"
+    )
+  } else {
+    NULL
+  }
 
   for (outcome in outcome_vars) {
     model_name <- paste0("model_", outcome)
@@ -670,11 +687,11 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         if (use_train_test_split && !compute_marginal_only) {
           # when using train/test split, main results are computed on TEST SET
           ate_test <- grf::average_treatment_effect(model, subset = global_test_indices)
-          custom_table_test <- margot::margot_model_evalue(
+          custom_table_test <- quiet_notes(margot::margot_model_evalue(
             data.frame(estimate = ate_test[["estimate"]], std.err = ate_test[["std.err"]]),
             scale = "RD",
             new_name = outcome
-          )
+          ))
 
           # main results use test set
           results[[model_name]] <- list(
@@ -686,7 +703,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
 
           # also compute and store all-data results for reference
           ate_all <- grf::average_treatment_effect(model)
-          custom_table_all <- margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL)
+          custom_table_all <- quiet_notes(margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL))
 
           results[[model_name]]$split_info <- list(
             use_train_test_split = TRUE,
@@ -699,7 +716,7 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
         } else {
           # standard behavior: compute on all data
           ate_all <- grf::average_treatment_effect(model)
-          custom_table <- margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL)
+          custom_table <- quiet_notes(margot::margot_model_evalue(model, scale = "RD", new_name = outcome, subset = NULL))
 
           results[[model_name]] <- list(
             ate = round(ate_all, 3),
@@ -955,10 +972,10 @@ margot_causal_forest <- function(data, outcome_vars, covariates, W, weights,
       }
     )
 
-    cli::cli_progress_update()
+    if (verbose) cli::cli_progress_update(id = pb)
   }
 
-  cli::cli_progress_done()
+  if (verbose) cli::cli_progress_done(id = pb)
 
   # filter out NULL results from errors
   valid_results <- Filter(Negate(is.null), results)

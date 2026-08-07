@@ -23,6 +23,119 @@
 #' rather than passing in silence. Margot re-verifies the specification's
 #' content hash on entry, so an object edited after creation is refused.
 #'
+#' @section Scheduling modes:
+#' The shared density-ratio route (`reuse_density_ratios = TRUE`) runs in one of
+#' two modes, selected by `manage_future_plan` and the caller's `future` plan.
+#'
+#' *Fold-parallel* (`manage_future_plan = FALSE`) fits each policy and each
+#' outcome in turn, and the caller's plan parallelises the cross-fitting folds
+#' inside `lmtp`.
+#'
+#' *Task-parallel* (`manage_future_plan = TRUE`) schedules one density task for
+#' each policy-specific ratio-fit identity and, as each density task resolves,
+#' one outcome task for every terminal outcome. Each task keeps its own folds
+#' sequential. When the current plan is already an explicit multi-worker plan —
+#' `future::multisession`, or a `future::cluster` plan spanning several machines
+#' — Margot schedules over it and never alters it. Otherwise Margot opens a local
+#' `multisession` pool sized from `models_in_parallel` and `n_cores`, and
+#' restores the caller's plan exactly on success and on error. That default local
+#' pool counts performance cores alone on Apple Silicon, since a task that
+#' assumes one performance core cannot use an efficiency core, and an explicit
+#' `models_in_parallel` overrides the cap. Every worker
+#' reports its R, `lmtp`, and `margot` versions and a fingerprint of the shared
+#' path's internals before any task is dispatched; an inconsistent fleet is
+#' refused with a condition of class `margot_error_worker_ineligible`. Because
+#' nested worker pools remain deferred, `cv_workers` above one is refused with
+#' `margot_error_nested_parallel_unsupported`. The coordinator transports the
+#' recorded random-number state to each worker, so a deterministic fixture
+#' reproduces the fold-parallel route bit for bit.
+#'
+#' Task-parallel scheduling requires an explicit `seed`, and refuses `seed =
+#' NULL` with `margot_error_task_seed_required`. The sequential route lets each
+#' policy continue the previous policy's random-number state, which concurrent
+#' policies cannot reproduce. Given a seed, the mode leaves the caller's
+#' random-number state at exactly the state `set.seed(seed)` produces, on every
+#' exit path and whatever the worker count, resolution order, or checkpoint
+#' availability. That contract differs from the sequential route, which leaves
+#' whatever state its last fit reached; both routes change the caller's state,
+#' and neither preserves the state at entry. The identity is built from that
+#' full state and from `RNGkind()`, so the same integer seed under a different
+#' generator is a different identity.
+#'
+#' Shift functions travel to workers inside the task payload, so each shift must
+#' be self-contained: it may read its arguments and its own captured values, and
+#' must not depend on objects that exist only in the caller's global
+#' environment. The realised policy-shifted values enter the task identity, so a
+#' shift whose captured values change receives a new identity. A shift that
+#' draws random numbers is refused with
+#' `margot_error_stochastic_shift_unsupported`, because its realised values
+#' would depend on when each task ran; a stochastic policy needs a registered
+#' scheduling-independent design, which this mode does not yet provide.
+#'
+#' With `save_output = TRUE`, each policy-specific density result is written once
+#' to an immutable, identity-keyed checkpoint under
+#' `<save_path>/checkpoints/density`. A later call with the same inputs reads and
+#' verifies that checkpoint instead of refitting; the reuse is reported in
+#' `ratio_checkpoint_reuse_count` and does not increase `ratio_fit_count`. A
+#' checkpoint carries the density ratios, the treatment and censoring learner
+#' fits, the common fold map, and the post-density random-number state alone;
+#' every terminal-outcome task is built afresh from the current call's data, so
+#' changed outcome values are always analysed. A corrupt or mismatched
+#' checkpoint refuses with `margot_error_density_checkpoint_invalid`, and two
+#' distinct stored results under one identity refuse with
+#' `margot_error_density_checkpoint_conflict`, rather than being refitted over.
+#'
+#' The eligibility probe compares R, platform, `margot`, `lmtp`, and a fixed set
+#' of learner-package versions, together with a fingerprint over the shared
+#' path's `margot` and `lmtp` internals. It cannot fingerprint an arbitrary
+#' user-registered `SuperLearner` wrapper or its transitive dependencies, so a
+#' fleet that registers its own learners must keep those packages aligned by
+#' other means.
+#'
+#' @section Stage-split execution:
+#' The shared route fits one treatment-and-censoring density stage per policy and
+#' then one outcome regression per terminal outcome, so `K` outcomes cost
+#' `G + sum_k Q_k` rather than `sum_k (G + Q_k)`. `stages` lets the two halves run
+#' in separate calls, so positivity can be assessed before any outcome model is
+#' fitted.
+#'
+#' `stages = "density"` runs the coordinator preflight and the density stage
+#' alone, writes the density checkpoints, and returns an object of class
+#' `margot_lmtp_density_stage` carrying the per-policy density-ratio matrices,
+#' the task records, the identities and result fingerprints, and diagnostics from
+#' [margot_lmtp_positivity()] and [margot_lmtp_overlap()]. Margot supplies the
+#' assessment artefacts alone: no threshold is applied and no pass-or-fail
+#' verdict is recorded, because both belong to the investigator's registered
+#' protocol.
+#'
+#' `stages = "outcome"` fits the outcome stages and requires every policy's
+#' density result to resolve from a verified checkpoint. A policy without one
+#' refuses with `margot_error_density_checkpoint_required` rather than refitting
+#' the exposure and censoring models.
+#'
+#' @section Outcome recovery:
+#' With `save_output = TRUE`, the task route also writes each fitted outcome
+#' model once, keyed by its outcome-task fingerprint, under
+#' `<save_path>/checkpoints/outcomes`. A later call whose task fingerprint
+#' matches reuses that model instead of refitting, so an interrupted run resumes
+#' where it stopped; a changed outcome column, learner, control, or density
+#' result yields a different fingerprint and a fresh fit. The per-run checkpoint
+#' directory holds a hard link to the same single copy, so
+#' [margot_lmtp_restore_checkpoints()] keeps working on a run directory without a
+#' second copy of every model. Reuse is reported in
+#' `outcome_checkpoint_reuse_count` alongside `outcome_fit_count`.
+#'
+#' @section Thread discipline:
+#' Task-parallel scheduling assumes one thread per worker. Cap the native
+#' libraries in the launcher, before R starts, by exporting
+#' `OMP_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, `VECLIB_MAXIMUM_THREADS=1`,
+#' `MKL_NUM_THREADS=1`, and `RCPP_PARALLEL_NUM_THREADS=1`.
+#'
+#' Learner wrappers must do the same: `SL.ranger` with `num.threads = 1` and
+#' `SL.xgboost` with `nthread = 1`. Margot does not administer machines, so an
+#' uncapped learner will oversubscribe the performance cores that the outer task
+#' budget assumes.
+#'
 #' @details
 #' For very large datasets or models with many time points, parallel processing may not improve performance
 #' as much as expected. This is because LMTP models can be memory-bound rather than CPU-bound when working
@@ -45,16 +158,35 @@
 #' @param save_output Logical, whether to save per-model checkpoints and the
 #'   complete output. Saved artefacts are written as `.rds` files. Default is
 #'   FALSE.
-#' @param save_path The directory path to save the output. Default is "push_mods" in the current working directory.
+#' @param save_path The directory path to save the output. Default is
+#'   "push_mods" in the current working directory. A run that keeps checkpoints
+#'   beyond itself — any `stages` other than `"all"`, or `save_output = TRUE` on
+#'   the task-parallel shared route — must supply this argument explicitly and
+#'   errors with `margot_error_save_path_required` otherwise, because where those
+#'   artefacts live is the investigator's decision rather than Margot's.
 #' @param base_filename The base filename for saving the output. Default is "lmtp_output".
 #' @param use_timestamp Logical, whether to include a timestamp in the filename. Default is FALSE.
 #' @param prefix Optional prefix to add to the saved output filename. Default is NULL.
-#' @param manage_future_plan Logical, whether to manage the future plan internally for nested parallelization. Default is FALSE. When TRUE, margot_lmtp sets up nested futures (outer loop for models, inner loop for CV) and automatically cleans up workers on exit. When FALSE, models run sequentially but can use the user's external future::plan() for parallel CV.
+#' @param manage_future_plan Logical, whether Margot schedules the outer model
+#'   futures. Default is FALSE. On the independent route (`reuse_density_ratios
+#'   = FALSE`), TRUE sets up nested futures (outer loop for models, inner loop
+#'   for cross-validation) and restores the caller's plan on exit. On the shared
+#'   density-ratio route (`reuse_density_ratios = TRUE`), TRUE selects
+#'   task-parallel scheduling: see the "Scheduling modes" section. When FALSE,
+#'   models run one at a time and each fit uses the caller's external
+#'   `future::plan()` for parallel cross-fitting.
 #' @param progress Progress reporting method: "cli" (default CLI progress bar), "progressr" (use progressr package handlers), or "none" (no progress reporting).
 #' @param seed Optional single whole number seeding every stochastic step: the
 #'   RNG at entry, each model fit, and the parallel streams. Default NULL leaves
 #'   the RNG untouched. When `estimator_spec` is supplied the seed comes from the
 #'   locked specification, and supplying a different one errors.
+#' @param stages Which stages of the shared density-ratio route to execute:
+#'   `"all"` (default) fits the density stage and every outcome stage in one
+#'   call; `"density"` fits the policy-specific density-ratio stage alone and
+#'   returns its diagnostics for positivity assessment; `"outcome"` fits the
+#'   outcome stages from density checkpoints already written. Anything other than
+#'   `"all"` requires `reuse_density_ratios = TRUE`, `manage_future_plan = TRUE`,
+#'   and `save_output = TRUE`. See the "Stage-split execution" section.
 #' @param estimator_spec Optional locked `margot_lmtp_estimator_spec` object from
 #'   [margot_lmtp_estimator_spec()]. When supplied, the `lmtp` call
 #'   is built from the specification and every conflicting user argument
@@ -132,6 +264,7 @@ margot_lmtp <- function(
     progress = c("cli", "progressr", "none"),
     seed = NULL,
     reuse_density_ratios = FALSE,
+    stages = c("all", "density", "outcome"),
     estimator_spec = NULL) {
   # Load required packages
   library(cli)
@@ -139,19 +272,62 @@ margot_lmtp <- function(
 
   contrast_type <- match.arg(contrast_type)
   contrast_scale <- match.arg(contrast_scale)
+  stages <- match.arg(stages)
+  # where cross-run artefacts are stored is the investigator's decision, so a
+  # mode that writes or reads them cannot fall back on the default location
+  save_path_supplied <- !missing(save_path)
   if (!is.logical(reuse_density_ratios) || length(reuse_density_ratios) != 1L ||
       is.na(reuse_density_ratios)) {
     cli::cli_abort("{.arg reuse_density_ratios} must be `TRUE` or `FALSE`.")
   }
-  if (isTRUE(reuse_density_ratios) && isTRUE(manage_future_plan)) {
+  if (!identical(stages, "all")) {
+    if (!isTRUE(reuse_density_ratios) || !isTRUE(manage_future_plan)) {
+      cli::cli_abort(
+        c(
+          "Stage-split execution belongs to the task-parallel shared route.",
+          "x" = "Received {.arg stages} = {.val {stages}}.",
+          "i" = "Set {.code reuse_density_ratios = TRUE} and {.code manage_future_plan = TRUE}."
+        ),
+        class = "margot_error_unsupported_stage_split"
+      )
+    }
+    if (!isTRUE(save_output)) {
+      # a stage that writes nothing cannot hand its work to the next stage
+      cli::cli_abort(
+        c(
+          "Stage-split execution requires {.code save_output = TRUE}.",
+          "x" = "With {.arg stages} = {.val {stages}} the stages exchange work through checkpoints.",
+          "i" = "Set {.code save_output = TRUE} and a {.arg save_path} both stages can read."
+        ),
+        class = "margot_error_unsupported_stage_split"
+      )
+    }
+  }
+  # density-ratio reuse selects its scheduler from the existing plan argument:
+  # fold-parallel when the caller keeps their own plan, task-parallel when Margot
+  # is asked to manage outer model futures
+  shared_scheduler <- if (isTRUE(reuse_density_ratios) && isTRUE(manage_future_plan)) {
+    "task"
+  } else {
+    "sequential"
+  }
+  # the task route's density and outcome checkpoints outlive the run that wrote
+  # them, and a stage split reads what an earlier call stored; both need a
+  # storage root the caller chose
+  if (!save_path_supplied &&
+      (!identical(stages, "all") ||
+        (isTRUE(save_output) && identical(shared_scheduler, "task")))) {
     cli::cli_abort(
       c(
-        "Density-ratio reuse does not yet manage outer model futures.",
-        "i" = "Keep {.arg manage_future_plan = FALSE}; the current future plan still governs cross-fitting workers."
+        "This run keeps checkpoints that outlive it, so it needs an explicit {.arg save_path}.",
+        "x" = "No {.arg save_path} was supplied, and Margot does not choose a storage root for you.",
+        "i" = "Pass the directory these artefacts belong in; where they live is your decision."
       ),
-      class = "margot_error_unsupported_parallel_plan"
+      class = "margot_error_save_path_required"
     )
   }
+  # the legacy nested-plan branch governs the independent route alone
+  manage_legacy_plan <- isTRUE(manage_future_plan) && !isTRUE(reuse_density_ratios)
 
   # the locked specification, where one is supplied, is authoritative over every
   # modelling argument it fixes; a conflicting user argument errors by name
@@ -356,7 +532,15 @@ margot_lmtp <- function(
 
   # CLI setup
   cli::cli_h1("Starting LMTP Analysis")
-  if (isTRUE(reuse_density_ratios)) {
+  if (isTRUE(reuse_density_ratios) && identical(shared_scheduler, "task")) {
+    cli::cli_alert_info(
+      sprintf(
+        "Scheduling %d common ratio task(s) and %d outcome task(s) concurrently; each task keeps its cross-fitting folds sequential.",
+        length(shift_functions),
+        total_tasks
+      )
+    )
+  } else if (isTRUE(reuse_density_ratios)) {
     cli::cli_alert_info(
       sprintf(
         "Scheduling %d common ratio stage(s) and %d outcome stage(s); cross-fitting parallelism is controlled by your future::plan().",
@@ -393,36 +577,62 @@ margot_lmtp <- function(
     stringsAsFactors = FALSE
   )
 
-  # create checkpoint directory if saving output
+  # create checkpoint directory if saving output. The run identifier carries
+  # sub-second time and the process id, so two calls that start in the same
+  # second cannot share a directory; it consumes no random numbers.
   checkpoint_dir <- NULL
+  density_checkpoint_dir <- NULL
+  outcome_checkpoint_dir <- NULL
   if (save_output) {
+    run_id <- paste0(
+      format(Sys.time(), "%Y%m%d_%H%M%OS3"),
+      "_p", Sys.getpid()
+    )
     checkpoint_dir <- file.path(
       save_path,
       "checkpoints",
       paste0(
         ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
-        format(Sys.time(), "%Y%m%d_%H%M%S")
+        run_id
       )
     )
 
     dir.create(checkpoint_dir, recursive = TRUE, showWarnings = FALSE)
     cli::cli_alert_info("Checkpoints \u2192 {.path {checkpoint_dir}}")
+    if (identical(shared_scheduler, "task")) {
+      # density and outcome checkpoints are fingerprint-keyed and immutable, so
+      # they live beside the per-run directory and a later run resumes from them
+      density_checkpoint_dir <- file.path(save_path, "checkpoints", "density")
+      dir.create(density_checkpoint_dir, recursive = TRUE, showWarnings = FALSE)
+      outcome_checkpoint_dir <- file.path(save_path, "checkpoints", "outcomes")
+      dir.create(outcome_checkpoint_dir, recursive = TRUE, showWarnings = FALSE)
+    }
   }
 
   # Optionally manage the future plan internally (nested outer × inner). By default,
   # do not touch the user's plan and rely on their external configuration.
-  if (isTRUE(manage_future_plan)) {
+  if (manage_legacy_plan) {
+    # record the caller's complete plan stack and the options this branch
+    # overwrites, including whether each option was set at all, and restore both
+    # through one exit handler that runs on success and on error
+    old_plan <- future::plan("list")
+    old_options <- list(
+      mc.cores = getOption("mc.cores"),
+      parallelly.maxWorkers.localhost = getOption("parallelly.maxWorkers.localhost")
+    )
+    on.exit(
+      {
+        future::plan(old_plan, substitute = FALSE)
+        options(old_options)
+      },
+      add = TRUE
+    )
+
     # set options BEFORE creating nested futures to avoid worker limit errors
     options(mc.cores = total_cores)
     options(parallelly.maxWorkers.localhost = total_cores)
 
     cli::cli_alert_info("Using {total_cores} core{?s} for parallel processing")
-
-    old_plan <- future::plan()
-    # always shut down workers when done, even if old_plan wasn't sequential
-    on.exit({
-      future::plan(future::sequential)
-    }, add = TRUE)
 
     outer_strategy <- if (inferred_models_in_parallel > 1L) {
       future::tweak(future::multisession, workers = inferred_models_in_parallel)
@@ -442,6 +652,11 @@ margot_lmtp <- function(
       combined_plan <- c(combined_plan, list(inner_strategy))
     }
     future::plan(combined_plan, substitute = FALSE)
+  } else if (identical(shared_scheduler, "task")) {
+    # the task scheduler resolves its own worker pool and reports it there
+    cli::cli_alert_info(
+      "Each task keeps its cross-fitting folds sequential; cap every learner and native library at one thread per worker."
+    )
   } else {
     # when manage_future_plan = FALSE, respect user's external future plan
     # models run sequentially via lapply, but each model can use parallel CV
@@ -493,8 +708,37 @@ margot_lmtp <- function(
       seed = seed,
       save_output = save_output,
       checkpoint_dir = checkpoint_dir,
-      progress = progress
+      progress = progress,
+      scheduler = shared_scheduler,
+      n_cores = total_cores,
+      models_in_parallel = inferred_models_in_parallel,
+      models_in_parallel_supplied = !is.null(models_in_parallel),
+      cv_workers = cv_workers,
+      density_checkpoint_dir = density_checkpoint_dir,
+      outcome_checkpoint_dir = outcome_checkpoint_dir,
+      estimator_spec_hash = if (!is.null(estimator_spec)) estimator_spec$content_hash else NULL,
+      stages = stages
     )
+    if (inherits(task_results, "margot_lmtp_density_stage")) {
+      # the density stage returns its diagnostics; no outcome model exists yet
+      cli::cli_alert_success("Density stage complete for {length(shift_functions)} polic{?y/ies}.")
+      if (save_output) {
+        output_path <- file.path(
+          save_path,
+          paste0(
+            ifelse(!is.null(prefix), paste0(prefix, "_"), ""),
+            base_filename, "_density_stage.rds"
+          )
+        )
+        tryCatch(
+          saveRDS(task_results, file = output_path, compress = TRUE),
+          error = function(e) {
+            cli::cli_alert_danger(paste("Failed to save the density stage:", e$message))
+          }
+        )
+      }
+      return(task_results)
+    }
   } else if (identical(progress, "progressr")) {
     task_results <- with_progress({
       p <- progressor(steps = total_tasks)
@@ -781,10 +1025,8 @@ margot_lmtp <- function(
       try(cli::cli_progress_done(id = pb_id), silent = TRUE)
     }
   }
-  # Restore user's plan only if we changed it here
-  if (isTRUE(manage_future_plan)) {
-    future::plan(old_plan, substitute = FALSE)
-  }
+  # the caller's plan and options are restored by the single on.exit handler
+  # registered where this branch changed them
 
   # run models for each outcome and process downstream outputs
   for (outcome in outcome_vars) {
@@ -830,9 +1072,42 @@ margot_lmtp <- function(
     combined_tables = combined_tables
   )
   if (isTRUE(reuse_density_ratios)) {
+    # the density-fit count is observed from the returned task records rather
+    # than declared from the number of policies, and a verified checkpoint read
+    # counts as a reuse rather than as another fit
+    density_records <- attr(task_results, "margot_lmtp_density_records") %||% list()
+    observed_ratio_fits <- sum(vapply(
+      density_records,
+      function(record) {
+        isTRUE(record$success) && !identical(record$density_source, "checkpoint")
+      },
+      logical(1)
+    ))
+    observed_ratio_reuses <- sum(vapply(
+      density_records,
+      function(record) {
+        isTRUE(record$success) && identical(record$density_source, "checkpoint")
+      },
+      logical(1)
+    ))
+    # outcome models are observed the same way: a verified checkpoint read is a
+    # reuse, and everything else this call completed is a fresh fit
+    outcome_sources <- vapply(
+      task_results,
+      function(result) result$task_record$model_source %||% "fit",
+      character(1)
+    )
+    observed_outcome_fits <- sum(outcome_sources != "checkpoint")
+    observed_outcome_reuses <- sum(outcome_sources == "checkpoint")
     attr(complete_output, "margot_density_ratio_reuse") <- list(
       enabled = TRUE,
-      ratio_fit_count = length(shift_functions),
+      ratio_fit_count = as.integer(observed_ratio_fits),
+      ratio_checkpoint_reuse_count = as.integer(observed_ratio_reuses),
+      outcome_fit_count = as.integer(observed_outcome_fits),
+      outcome_checkpoint_reuse_count = as.integer(observed_outcome_reuses),
+      scheduler = shared_scheduler,
+      worker_count = as.integer(attr(task_results, "margot_lmtp_worker_count") %||% 1L),
+      density_records = density_records,
       legacy_ratio_fit_count = length(outcome_vars) * length(shift_functions),
       outcomes = outcome_vars,
       policies = shift_names,
@@ -870,7 +1145,7 @@ margot_lmtp <- function(
 
   cli::cli_alert_success("Analysis complete")
 
-  if (isTRUE(manage_future_plan)) {
+  if (manage_legacy_plan) {
     cli::cli_alert_info("Shutting down parallel workers...")
   }
 

@@ -9,6 +9,7 @@ margot_blp(
   covariates = NULL,
   target_sample = c("all", "overlap"),
   model_names = NULL,
+  level = 0.95,
   ...
 )
 }
@@ -28,14 +29,22 @@ supplied, its dimensions and column names must match that matrix.}
 without the `model_` prefix) restricting which forests are projected.
 Defaults to `NULL`, meaning every retained forest.}
 
+\item{level}{Numeric in (0, 1); the confidence level of the reported
+intervals. Default `0.95`. The chosen level travels with the returned
+object (as its `level` attribute) so downstream tables and plots label
+intervals correctly. Added in 1.1.015 so a study registration can pick its
+interval level explicitly rather than inheriting a hard-coded one.}
+
 \item{...}{Further arguments passed to `grf::best_linear_projection()`.}
 }
 \value{
 A data frame of class `margot_blp` with one row per outcome and
   coefficient, carrying the columns `outcome`, `term`, `estimate`,
   `std_error`, `conf_low`, `conf_high`, `target_sample`, `n`, `ess`,
-  `matrix_fingerprint`, and `status`. Confidence intervals are 95% normal
-  approximations from the coefficient table returned by `grf`. `ess` is the
+  `matrix_fingerprint`, and `status`. Confidence intervals are normal
+  approximations at the requested `level` (default 95%) from the coefficient
+  table returned by `grf`; the level travels as the object's `level`
+  attribute. `ess` is the
   Kish effective sample size of the forest's sample weights, or `NA` when the
   forest carries no weights. `status` is `"ok"` or `"failed: <message>"`.
 }
@@ -48,9 +57,9 @@ fitted on. This is the registered reporting surface: it replaces the internal
 is retired from reporting.
 }
 \details{
-Results are reported as estimates with 95% confidence intervals. No
-significance stars, p-values, or multiplicity corrections are produced, by
-design. Studies fitted with `use_train_test_split = FALSE` project on the
+Results are reported as estimates with confidence intervals at the requested
+`level` (default 95%). No significance stars, p-values, or multiplicity
+corrections are produced, by design. Studies fitted with `use_train_test_split = FALSE` project on the
 same sample used for the average treatment effect.
 
 Every projection is isolated: an outcome whose projection fails contributes a

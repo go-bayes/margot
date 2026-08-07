@@ -74,6 +74,10 @@
 #' @param heldout_seed Integer; seed for automatic held-out policy-tree cross-validation.
 #' @param max_stability_loss_for_depth_switch Numeric; maximum root-stability loss
 #'   allowed when selecting depth two from held-out diagnostics. Default 0.05.
+#' @param min_root_stability_for_depth_switch Numeric in \eqn{[0, 1]}; absolute
+#'   floor on the depth-one root-split selection frequency before depth two is
+#'   eligible, passed through to [margot_policy_tree_cv()]. Default 0.5; set to
+#'   0 to recover the pre-1.1.015 relative-only rule.
 #' @param ... Additional pass-through args to [margot_policy_summary_report()], e.g.,
 #'   `split_compact`, `split_top_only`, etc.
 #'
@@ -185,6 +189,7 @@ margot_policy_workflow <- function(stability,
                                    show_neutral = NULL,
                                    prefer_stability = TRUE,
                                    max_stability_loss_for_depth_switch = 0.05,
+                                   min_root_stability_for_depth_switch = 0.5,
                                    signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
                                    use_heldout_policy = TRUE,
                                    heldout_policy = NULL,
@@ -273,6 +278,7 @@ margot_policy_workflow <- function(stability,
         n_repeats = heldout_n_repeats,
         min_gain_for_depth_switch = eff_min_gain,
         max_stability_loss_for_depth_switch = max_stability_loss_for_depth_switch,
+        min_root_stability_for_depth_switch = min_root_stability_for_depth_switch,
         label_mapping = label_mapping,
         seed = heldout_seed,
         tree_method = stability$metadata$tree_method %||% "fastpolicytree",
@@ -686,7 +692,10 @@ margot_policy_workflow <- function(stability,
       rationale <- row$depth_reason
     } else if (is.na(delta)) {
       rationale <- "Missing data"
-    } else if (delta >= threshold && (is.na(stability_loss) || !is.finite(max_stability_loss) || stability_loss <= max_stability_loss)) {
+    } else if (delta >= threshold && !is.finite(stability_loss) && is.finite(max_stability_loss)) {
+      # fail closed: an incomputable stability comparison never licenses depth two
+      rationale <- "Gain passes threshold, but root-split stability could not be computed; depth two refused"
+    } else if (delta >= threshold && (!is.finite(max_stability_loss) || stability_loss <= max_stability_loss)) {
       rationale <- sprintf("Gain (%.3f) >= threshold", delta)
     } else if (delta >= threshold && !is.na(stability_loss) && stability_loss > max_stability_loss) {
       rationale <- sprintf("Gain passes threshold, but stability loss %.3f is too large", stability_loss)

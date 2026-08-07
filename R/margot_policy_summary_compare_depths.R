@@ -215,7 +215,9 @@ margot_policy_summary_compare_depths <- function(object,
       both_have <- (!is.na(v1) && !is.na(v2))
       if (both_have) {
         delta <- v2 - v1
-        stability_ok <- is.na(stability_loss) || stability_loss <= max_stability_loss_for_depth_switch
+        # fail closed: an incomputable stability comparison must never license
+        # depth two (mirrors the 1.1.015 rule in margot_policy_tree_cv)
+        stability_ok <- is.finite(stability_loss) && stability_loss <= max_stability_loss_for_depth_switch
         if (!is.na(delta) && delta >= min_gain_for_depth_switch && stability_ok) {
           pick <- "2"
         } else if (!is.na(delta) && (-delta) > min_gain_for_depth_switch) {

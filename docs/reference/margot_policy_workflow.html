@@ -13,7 +13,7 @@ depth-2 gains are material."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.014</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.015</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,6 +77,7 @@ depth-2 gains are material.</p>
 <span>  show_neutral <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  prefer_stability <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  max_stability_loss_for_depth_switch <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  min_root_stability_for_depth_switch <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  signal_score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"pv_snr"</span>, <span class="st">"uplift_snr"</span>, <span class="st">"hybrid"</span><span class="op">)</span>,</span>
 <span>  use_heldout_policy <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  heldout_policy <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -211,6 +212,13 @@ stable consensus before switching from depth-1. Default TRUE.</p></dd>
 <dt id="arg-max-stability-loss-for-depth-switch">max_stability_loss_for_depth_switch<a class="anchor" aria-label="anchor" href="#arg-max-stability-loss-for-depth-switch"></a></dt>
 <dd><p>Numeric; maximum root-stability loss
 allowed when selecting depth two from held-out diagnostics. Default 0.05.</p></dd>
+
+
+<dt id="arg-min-root-stability-for-depth-switch">min_root_stability_for_depth_switch<a class="anchor" aria-label="anchor" href="#arg-min-root-stability-for-depth-switch"></a></dt>
+<dd><p>Numeric in \([0, 1]\); absolute
+floor on the depth-one root-split selection frequency before depth two is
+eligible, passed through to [margot_policy_tree_cv()]. Default 0.5; set to
+0 to recover the pre-1.1.015 relative-only rule.</p></dd>
 
 
 <dt id="arg-signal-score">signal_score<a class="anchor" aria-label="anchor" href="#arg-signal-score"></a></dt>

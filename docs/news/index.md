@@ -1,5 +1,106 @@
 # Changelog
 
+## \[2026-08-07\] margot 1.1.015 (development)
+
+#### Depth selection in held-out policy-tree cross-validation
+
+A simulation validation in the `arc` repository
+(`test/grf-blp-policy-cv-validation/`, commits `fa4f26d` and `6c4370b`)
+fitted the registered procedure under a constant-effect null and found
+that
+[`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
+selected depth two in 1 of 10 replicates, because the stability guard
+compares depth-two root stability against depth-one root stability, so a
+depth-one root that is itself unstable makes the guard pass trivially
+and leaves the 0.01 gain threshold doing all the protective work.
+
+##### Added
+
+- `margot_policy_tree_cv(min_root_stability_for_depth_switch = 0.5)`
+  adds an absolute floor to the depth rule. Depth two is now eligible
+  only when the *depth-one* root-split selection frequency reaches the
+  floor, alongside the existing minimum held-out gain of 0.01 and
+  maximum relative root-stability loss of 0.05. An unstable depth-one
+  root means the procedure has found no reliable first split, so a
+  depth-two improvement over it cannot be structure; requiring majority
+  root agreement before depth two is eligible closes that loophole.
+- The recorded selection reason distinguishes the new guard: a blocked
+  switch reports
+  `"depth one root split is not stable enough to license depth two"`.
+  The floor, the per-model guard outcome (`root_stability_floor_ok`),
+  and the floor value travel in `depth_selection` and in
+  `metadata$min_root_stability_for_depth_switch`, and `covariate_mode`
+  is now recorded in `metadata` as well.
+
+##### Changed
+
+- **Behaviour change.** Depth two is harder to select than in 1.1.014.
+  Existing results in which the depth-one root-split frequency fell
+  below 0.5 will now report depth one. Set
+  `min_root_stability_for_depth_switch = 0` to disable the floor and
+  recover the pre-1.1.015 relative-only rule; this is the opt-out for
+  studies registered under the old rule.
+- **Fail closed on missing stability.** An `NA` or non-finite root-split
+  stability loss previously *passed* the stability guard. It now fails
+  it: depth two is refused, the reason records that stability could not
+  be computed, and a warning explains why. This is not opt-outable, and
+  setting the floor to 0 does not restore the old handling.
+- `margot_causal_forest(verbose = FALSE)` is now silent. The progress
+  bar and its updates, and the “No valid outcomes to flip found” alert,
+  are gated behind `verbose`; the two deprecated-parameter notices are
+  raised as warning conditions rather than printed alerts, so
+  [`suppressWarnings()`](https://rdrr.io/r/base/warning.html) silences
+  them. Nothing about what is computed changed.
+
+##### Documentation
+
+- [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
+  now states prominently that the default `covariate_mode = "original"`
+  restricts every tree split to the top-15 variable-importance screen
+  rather than the full covariate set, together with the measured cost of
+  the alternative: at n = 23,000 with 57 covariates,
+  `covariate_mode = "all"` costs roughly 167 seconds per depth-two fit,
+  about 4.6 hours per outcome under the registered cross-validation,
+  while the top-15 screen is roughly 14 times cheaper at depth two.
+- The depth rule and its three guards, the new parameter, and the
+  fail-closed handling of an uncomputable stability comparison are
+  documented in the function’s details and parameter entries.
+
+#### Best linear projection interval level
+
+##### Added
+
+- `margot_blp(level = 0.95)` makes the confidence-interval level an
+  explicit argument rather than a hard-coded 95%, so a study
+  registration can pick and record its level. The chosen level travels
+  as the returned object’s `level` attribute, and
+  [`margot_plot_blp()`](https://go-bayes.github.io/margot/reference/margot_plot_blp.md)
+  labels its axis from it. Point estimates and standard errors are
+  unchanged at any level.
+
+#### Consistency of the depth rule across functions
+
+##### Added
+
+- `margot_policy_workflow(min_root_stability_for_depth_switch = 0.5)`
+  passes the new absolute floor through to its internal
+  [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
+  call, which previously received the package default with no way to
+  override it.
+
+##### Changed
+
+- The fail-closed rule for an incomputable stability comparison now also
+  applies in
+  [`margot_policy_summary_compare_depths()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.md)
+  and in the workflow’s depth-comparison rationale, which both carried
+  the same fail-open pattern the validation exposed in the CV selector.
+- The CV selector’s gain comparison is now `>=` (a gain of exactly
+  `min_gain_for_depth_switch` switches), matching the documented
+  “minimum gain required” semantics and the comparator the
+  depth-comparison report already used. The two code paths could
+  previously disagree at exactly the registered 0.01 threshold.
+
 ## \[2026-08-04\] margot 1.1.014
 
 #### Consolidated LMTP workflow in Margot

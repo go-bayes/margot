@@ -353,9 +353,54 @@ margot_lmtp_run_shared_tasks <- function(
     seed,
     save_output,
     checkpoint_dir,
-    progress = c("cli", "progressr", "none")) {
+    progress = c("cli", "progressr", "none"),
+    scheduler = c("sequential", "task"),
+    n_cores = NULL,
+    models_in_parallel = NULL,
+    models_in_parallel_supplied = FALSE,
+    cv_workers = NULL,
+    density_checkpoint_dir = NULL,
+    outcome_checkpoint_dir = NULL,
+    estimator_spec_hash = NULL,
+    stages = c("all", "density", "outcome")) {
   progress <- match.arg(progress)
+  scheduler <- match.arg(scheduler)
+  stages <- match.arg(stages)
+  if (identical(scheduler, "sequential") && !identical(stages, "all")) {
+    cli::cli_abort(
+      c(
+        "Stage-split execution belongs to the task-parallel scheduler.",
+        "x" = "Received {.arg stages} = {.val {stages}} on the sequential shared route.",
+        "i" = "Set {.code manage_future_plan = TRUE} so Margot schedules the stages as tasks."
+      ),
+      class = "margot_error_unsupported_stage_split"
+    )
+  }
+  if (identical(scheduler, "task")) {
+    return(margot_lmtp_run_shared_tasks_task(
+      data = data,
+      outcome_vars = outcome_vars,
+      trt = trt,
+      shift_functions = shift_functions,
+      lmtp_defaults = lmtp_defaults,
+      mtp_by_arm = mtp_by_arm,
+      seed = seed,
+      save_output = save_output,
+      checkpoint_dir = checkpoint_dir,
+      progress = progress,
+      n_cores = n_cores,
+      models_in_parallel = models_in_parallel,
+      models_in_parallel_supplied = models_in_parallel_supplied,
+      cv_workers = cv_workers,
+      density_checkpoint_dir = density_checkpoint_dir,
+      outcome_checkpoint_dir = outcome_checkpoint_dir,
+      estimator_spec_hash = estimator_spec_hash,
+      stages = stages
+    ))
+  }
   total_tasks <- length(outcome_vars) * length(shift_functions)
+  # one observed density-fit record per policy identity, counted rather than declared
+  density_records <- list()
   pb_id <- NULL
   if (identical(progress, "cli")) {
     pb_id <- cli::cli_progress_bar(
@@ -378,7 +423,43 @@ margot_lmtp_run_shared_tasks <- function(
       set.seed(seed)
     }
 
-    fitted <- do.call(margot_lmtp_sdr_shared, shared_args)
+    started_at <- Sys.time()
+    # the policy batch fits one density process and then every outcome; a failure
+    # anywhere in it stops the shared route with an inspectable ledger
+    fitted <- tryCatch(
+      do.call(margot_lmtp_sdr_shared, shared_args),
+      error = function(e) {
+        # this route fits the density process and every outcome inside one
+        # fixed-signature call, so it cannot attribute a failure to either stage;
+        # the record names the whole policy batch rather than claiming the
+        # density fit failed
+        density_records[[shift_name]] <<- list(
+          stage = "policy_batch",
+          shift_name = shift_name,
+          success = FALSE,
+          density_source = "fit",
+          error = conditionMessage(e),
+          process_id = Sys.getpid(),
+          started_at = started_at,
+          elapsed_seconds = as.numeric(difftime(Sys.time(), started_at, units = "secs"))
+        )
+        margot_lmtp_task_abort(
+          condition = e,
+          records = unname(density_records),
+          stage = "policy batch",
+          label = shift_name
+        )
+      }
+    )
+    density_records[[shift_name]] <<- list(
+      stage = "density",
+      shift_name = shift_name,
+      success = TRUE,
+      density_source = "fit",
+      process_id = Sys.getpid(),
+      started_at = started_at,
+      elapsed_seconds = as.numeric(difftime(Sys.time(), started_at, units = "secs"))
+    )
     lapply(outcome_vars, function(outcome) {
       result <- list(
         outcome = outcome,
@@ -422,5 +503,8 @@ margot_lmtp_run_shared_tasks <- function(
       result
     })
   })
-  unlist(results, recursive = FALSE)
+  results <- unlist(results, recursive = FALSE)
+  attr(results, "margot_lmtp_density_records") <- density_records
+  attr(results, "margot_lmtp_scheduler") <- "sequential"
+  results
 }

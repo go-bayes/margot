@@ -28,6 +28,7 @@ margot_policy_workflow(
   show_neutral = NULL,
   prefer_stability = TRUE,
   max_stability_loss_for_depth_switch = 0.05,
+  min_root_stability_for_depth_switch = 0.5,
   signal_score = c("none", "pv_snr", "uplift_snr", "hybrid"),
   use_heldout_policy = TRUE,
   heldout_policy = NULL,
@@ -113,6 +114,11 @@ stable consensus before switching from depth-1. Default TRUE.}
 
 \item{max_stability_loss_for_depth_switch}{Numeric; maximum root-stability loss
 allowed when selecting depth two from held-out diagnostics. Default 0.05.}
+
+\item{min_root_stability_for_depth_switch}{Numeric in \eqn{[0, 1]}; absolute
+floor on the depth-one root-split selection frequency before depth two is
+eligible, passed through to [margot_policy_tree_cv()]. Default 0.5; set to
+0 to recover the pre-1.1.015 relative-only rule.}
 
 \item{signal_score}{Character; one of "none", "pv_snr", "uplift_snr", or "hybrid". When not
 "none", the summary text includes a "Signals Worth Monitoring" section that ranks Neutral

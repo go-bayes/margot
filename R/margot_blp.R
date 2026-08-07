@@ -7,9 +7,9 @@
 #' `blp_top` field, which projected onto a top-15 variable-importance screen and
 #' is retired from reporting.
 #'
-#' Results are reported as estimates with 95% confidence intervals. No
-#' significance stars, p-values, or multiplicity corrections are produced, by
-#' design. Studies fitted with `use_train_test_split = FALSE` project on the
+#' Results are reported as estimates with confidence intervals at the requested
+#' `level` (default 95%). No significance stars, p-values, or multiplicity
+#' corrections are produced, by design. Studies fitted with `use_train_test_split = FALSE` project on the
 #' same sample used for the average treatment effect.
 #'
 #' Every projection is isolated: an outcome whose projection fails contributes a
@@ -26,13 +26,20 @@
 #' @param model_names Optional character vector of outcome names (with or
 #'   without the `model_` prefix) restricting which forests are projected.
 #'   Defaults to `NULL`, meaning every retained forest.
+#' @param level Numeric in (0, 1); the confidence level of the reported
+#'   intervals. Default `0.95`. The chosen level travels with the returned
+#'   object (as its `level` attribute) so downstream tables and plots label
+#'   intervals correctly. Added in 1.1.015 so a study registration can pick its
+#'   interval level explicitly rather than inheriting a hard-coded one.
 #' @param ... Further arguments passed to `grf::best_linear_projection()`.
 #'
 #' @return A data frame of class `margot_blp` with one row per outcome and
 #'   coefficient, carrying the columns `outcome`, `term`, `estimate`,
 #'   `std_error`, `conf_low`, `conf_high`, `target_sample`, `n`, `ess`,
-#'   `matrix_fingerprint`, and `status`. Confidence intervals are 95% normal
-#'   approximations from the coefficient table returned by `grf`. `ess` is the
+#'   `matrix_fingerprint`, and `status`. Confidence intervals are normal
+#'   approximations at the requested `level` (default 95%) from the coefficient
+#'   table returned by `grf`; the level travels as the object's `level`
+#'   attribute. `ess` is the
 #'   Kish effective sample size of the forest's sample weights, or `NA` when the
 #'   forest carries no weights. `status` is `"ok"` or `"failed: <message>"`.
 #'
@@ -56,11 +63,16 @@ margot_blp <- function(models,
                        covariates = NULL,
                        target_sample = c("all", "overlap"),
                        model_names = NULL,
+                       level = 0.95,
                        ...) {
   # purpose: per-outcome best linear projection onto the full fitted covariate
   # set. inputs: a margot_causal_forest result (save_models = TRUE) and an
   # optional covariate matrix. output: a tidy margot_blp data frame.
   target_sample <- match.arg(target_sample)
+  if (!is.numeric(level) || length(level) != 1L || is.na(level) ||
+      level <= 0 || level >= 1) {
+    stop("`level` must be a single number strictly between 0 and 1.", call. = FALSE)
+  }
 
   if (!is.list(models)) {
     stop("`models` must be a list returned by margot_causal_forest().", call. = FALSE)
@@ -126,8 +138,9 @@ margot_blp <- function(models,
     coefs <- as.matrix(projection)
     estimate <- as.numeric(coefs[, 1])
     std_error <- as.numeric(coefs[, 2])
-    # 95% normal-approximation interval; grf reports HC3 robust standard errors
-    z <- stats::qnorm(0.975)
+    # normal-approximation interval at the requested level; grf reports HC3
+    # robust standard errors
+    z <- stats::qnorm(1 - (1 - level) / 2)
     # nobs is attached by lmtest::coeftest; fall back to the projection matrix
     n_used <- attr(projection, "nobs")
     if (is.null(n_used)) n_used <- nrow(x_matrix)
@@ -151,6 +164,7 @@ margot_blp <- function(models,
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
   attr(out, "relativity_note") <- .margot_blp_relativity_note()
+  attr(out, "level") <- level
   class(out) <- c("margot_blp", "data.frame")
   out
 }
@@ -251,6 +265,9 @@ margot_plot_blp <- function(blp,
                             caption = .margot_blp_relativity_note()) {
   # purpose: forest-style coefficient plot of a margot_blp result. inputs: the
   # tidy frame plus optional outcome/term filters. output: a ggplot object.
+  # capture the interval level before filtering strips attributes
+  level <- attr(blp, "level")
+  if (is.null(level)) level <- 0.95
   blp <- .margot_blp_filter(blp, outcomes, terms)
 
   drawable <- blp[!is.na(blp$estimate), , drop = FALSE]
@@ -282,7 +299,7 @@ margot_plot_blp <- function(blp,
     ggplot2::facet_wrap(ggplot2::vars(.data$outcome), scales = "free_x") +
     ggplot2::labs(
       title = title,
-      x = "Coefficient (95% CI)",
+      x = sprintf("Coefficient (%g%% CI)", 100 * level),
       y = NULL,
       caption = caption
     ) +

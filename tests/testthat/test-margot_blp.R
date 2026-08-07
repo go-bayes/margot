@@ -365,3 +365,27 @@ test_that("the projection recovers a known linear treatment effect surface", {
   expect_lt(x2$conf_low, 0)
   expect_gt(x2$conf_high, 0)
 })
+
+test_that("the level argument sets the interval width and travels with the object", {
+  blp95 <- margot_blp(blp_fixture$models, model_names = "y1")
+  blp90 <- margot_blp(blp_fixture$models, model_names = "y1", level = 0.90)
+
+  expect_identical(attr(blp95, "level"), 0.95)
+  expect_identical(attr(blp90, "level"), 0.90)
+  # only the interval multiplier moves; estimates and standard errors are fixed
+  expect_equal(blp90$estimate, blp95$estimate, tolerance = 1e-12)
+  expect_equal(blp90$std_error, blp95$std_error, tolerance = 1e-12)
+  z90 <- stats::qnorm(0.95)
+  expect_equal(blp90$conf_low, blp90$estimate - z90 * blp90$std_error, tolerance = 1e-12)
+  expect_equal(blp90$conf_high, blp90$estimate + z90 * blp90$std_error, tolerance = 1e-12)
+  expect_true(all(blp90$conf_high - blp90$conf_low <
+                    blp95$conf_high - blp95$conf_low))
+
+  # the plot axis label follows the recorded level
+  expect_identical(margot_plot_blp(blp90)$labels$x, "Coefficient (90% CI)")
+  expect_identical(margot_plot_blp(blp95)$labels$x, "Coefficient (95% CI)")
+
+  expect_error(margot_blp(blp_fixture$models, level = 0), "strictly between 0 and 1", fixed = TRUE)
+  expect_error(margot_blp(blp_fixture$models, level = 1), "strictly between 0 and 1", fixed = TRUE)
+  expect_error(margot_blp(blp_fixture$models, level = c(0.9, 0.95)), "strictly between 0 and 1", fixed = TRUE)
+})
