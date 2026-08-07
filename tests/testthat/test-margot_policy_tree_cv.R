@@ -105,6 +105,101 @@ test_that("margot_policy_tree_cv resolves reversed named action-score columns", 
   expect_true(all(out$fold_values$coverage == 1))
 })
 
+test_that("constant comparator is selected in training and evaluated held out", {
+  old_options <- options(margot.policy_tree.min_node_size = 1L)
+  on.exit(options(old_options), add = TRUE)
+  n <- 12L
+  fold_id <- .policy_cv_make_folds(n, num_folds = 3L, seed = 102L)
+  x <- data.frame(x1 = seq_len(n), x2 = seq_len(n) %% 2L)
+  treatment_score <- ifelse(fold_id == 1L, 10, -1)
+  object <- list(
+    results = list(
+      model_y = list(
+        dr_scores = cbind(control = rep(0, n), treated = treatment_score),
+        top_vars = c("x1", "x2")
+      )
+    ),
+    covariates = x,
+    weights = rep(1, n)
+  )
+
+  out <- margot_policy_tree_cv(
+    object,
+    model_names = "y",
+    depths = 1,
+    num_folds = 3,
+    n_repeats = 1,
+    tree_method = "policytree",
+    min_node_size = 1L,
+    seed = 101L,
+    verbose = FALSE
+  )
+
+  fold_one <- out$fold_values[out$fold_values$fold == 1L, , drop = FALSE]
+  expect_equal(fold_one$best_constant_action, "control")
+  expect_equal(fold_one$value_best_constant, 0)
+  expect_equal(fold_one$validation_best_constant_action, "treated")
+  expect_equal(fold_one$value_validation_best_constant, 10)
+  expect_lt(out$value_summary$value_best_constant_mean,
+            out$value_summary$value_validation_best_constant_mean)
+})
+
+test_that("training weights enter the tree objective exactly once", {
+  scores <- cbind(
+    control = c(1, 2),
+    treated = c(3, 4)
+  )
+  weighted <- .policy_cv_training_scores(scores, weights = c(2, 5))
+
+  expect_equal(weighted, scores * c(2, 5))
+  expect_equal(.policy_cv_training_scores(scores), scores)
+  expect_error(
+    .policy_cv_training_scores(scores, weights = c(1, 0)),
+    "finite, positive"
+  )
+})
+
+test_that("value-only depth and constant thresholds use the registered 0.01 margin", {
+  value_summary <- data.frame(
+    model = c("model_y", "model_y"),
+    outcome = c("y", "y"),
+    outcome_label = c("Y", "Y"),
+    depth = c(1L, 2L),
+    gain_vs_control_mean = c(0.20, 0.21),
+    value_policy_mean = c(0.20, 0.21),
+    value_best_constant_mean = c(0.20, 0.20),
+    best_constant_action = c("control", "control"),
+    stringsAsFactors = FALSE
+  )
+  depth_selection <- .policy_cv_select_depths(
+    value_summary = value_summary,
+    split_summary = data.frame(),
+    min_gain_for_depth_switch = 0.01,
+    depth_selection_rule = "value_only",
+    max_stability_loss_for_depth_switch = 0.05,
+    min_root_stability_for_depth_switch = 0.5
+  )
+  policy_selection <- .policy_cv_select_policy(
+    value_summary = value_summary,
+    depth_selection = depth_selection,
+    min_gain_over_constant = 0.01
+  )
+
+  expect_equal(depth_selection$selected_depth, 2L)
+  expect_equal(depth_selection$depth_selection_rule, "value_only")
+  expect_equal(depth_selection$reason, "depth two clears the held-out value threshold")
+  expect_equal(policy_selection$preferred_policy, "tree")
+  expect_equal(policy_selection$tree_minus_honest_constant, 0.01, tolerance = 1e-12)
+
+  value_summary$value_policy_mean[value_summary$depth == 2L] <- 0.209
+  below <- .policy_cv_select_policy(
+    value_summary = value_summary,
+    depth_selection = depth_selection,
+    min_gain_over_constant = 0.01
+  )
+  expect_equal(below$preferred_policy, "constant")
+})
+
 test_that("margot_policy_tree_cv aligns not_missing rows and weights", {
   old_options <- options(margot.policy_tree.min_node_size = 5L)
   on.exit(options(old_options), add = TRUE)

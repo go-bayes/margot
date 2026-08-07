@@ -19,16 +19,18 @@
 #' from held-out means. Between-leaf differences describe variation in
 #' score-contrast magnitude, not the policy decision rule itself.
 #'
-#' Depth one is the default selection. Depth two is selected only when three
-#' guards pass together: the held-out value gain over depth one exceeds
-#' \code{min_gain_for_depth_switch}; the root-split stability lost in moving to
-#' depth two is no larger than \code{max_stability_loss_for_depth_switch}; and
-#' the depth-one root-split selection frequency is at least
-#' \code{min_root_stability_for_depth_switch}. The third guard is absolute
-#' rather than relative, and it was added in version 1.1.015 after a simulation
-#' under a constant-effect null selected depth two in 1 of 10 replicates by
-#' clearing the two relative guards on noise alone. When the stability
-#' comparison cannot be computed the guards fail closed and depth one is kept.
+#' Depth one is the default selection. Under
+#' \code{depth_selection_rule = "value_only"}, depth two is selected when its
+#' repeat-averaged held-out value exceeds depth one's by at least
+#' \code{min_gain_for_depth_switch}; split recurrence remains descriptive. The
+#' backwards-compatible \code{"value_and_stability"} rule also requires the
+#' registered relative and absolute root-stability guards.
+#'
+#' The constant comparator is selected honestly. Within each training fold,
+#' the function selects the greater-valued constant action using training
+#' scores only and then evaluates that fixed action in the held-out fold. A
+#' validation-selected maximum of the two constant values is reported only as
+#' a descriptive oracle and never used to select the preferred policy.
 #'
 #' @param model_results A list returned by \code{margot_causal_forest()},
 #'   \code{margot_policy_tree_stability()}, or a compatible object with
@@ -60,10 +62,19 @@
 #'   \code{"1"}, \code{"2"}, and \code{"both"} are also accepted.
 #' @param num_folds Integer. Number of folds per repeat. Default is 5.
 #' @param n_repeats Integer. Number of repeated fold partitions. Default is 20.
-#' @param weights Optional numeric vector of evaluation weights. If
-#'   \code{NULL}, \code{model_results$weights} is used when available.
+#' @param weights Optional numeric vector of training and evaluation weights. If
+#'   \code{NULL}, \code{model_results$weights} is used when available. Training
+#'   scores are multiplied once by these weights before tree fitting; held-out
+#'   values are weighted means of the unmultiplied action scores.
 #' @param min_gain_for_depth_switch Numeric. Minimum held-out value gain required
 #'   before depth two can be selected over depth one. Default is 0.01.
+#' @param depth_selection_rule Character. \code{"value_and_stability"} retains
+#'   the historical value-plus-root-stability rule. \code{"value_only"}
+#'   selects between depths only by the registered held-out value margin and
+#'   reports stability without using it as a gate.
+#' @param min_gain_over_constant Numeric. Minimum held-out value gain required
+#'   before the preferred non-constant tree is preferred over the honestly
+#'   training-selected constant procedure. Default is 0.01.
 #' @param max_stability_loss_for_depth_switch Numeric. Maximum allowed loss in
 #'   root-split stability before depth two is rejected. Default is 0.05. The
 #'   loss is the depth-one root-split selection frequency minus the depth-two
@@ -118,6 +129,8 @@ margot_policy_tree_cv <- function(model_results,
                                   n_repeats = 20L,
                                   weights = NULL,
                                   min_gain_for_depth_switch = 0.01,
+                                  depth_selection_rule = c("value_and_stability", "value_only"),
+                                  min_gain_over_constant = 0.01,
                                   max_stability_loss_for_depth_switch = 0.05,
                                   min_root_stability_for_depth_switch = 0.5,
                                   label_mapping = NULL,
@@ -134,6 +147,8 @@ margot_policy_tree_cv <- function(model_results,
   }
 
   covariate_mode <- match.arg(covariate_mode)
+  depth_selection_rule <- match.arg(depth_selection_rule)
+  training_weights_applied <- FALSE
   tree_method <- match.arg(tree_method)
   requested_tree_method <- tree_method
   actual_tree_method <- .get_tree_method(tree_method, verbose)
@@ -151,6 +166,10 @@ margot_policy_tree_cv <- function(model_results,
   if (!is.numeric(min_gain_for_depth_switch) || length(min_gain_for_depth_switch) != 1L ||
       is.na(min_gain_for_depth_switch)) {
     stop("min_gain_for_depth_switch must be a single numeric value", call. = FALSE)
+  }
+  if (!is.numeric(min_gain_over_constant) || length(min_gain_over_constant) != 1L ||
+      is.na(min_gain_over_constant)) {
+    stop("min_gain_over_constant must be a single numeric value", call. = FALSE)
   }
   if (!is.numeric(max_stability_loss_for_depth_switch) ||
       length(max_stability_loss_for_depth_switch) != 1L ||
@@ -186,6 +205,7 @@ margot_policy_tree_cv <- function(model_results,
       model = model_result,
       weights = weights
     )
+    training_weights_applied <- training_weights_applied || !is.null(model_data$weights)
     selected_vars <- .policy_cv_selected_vars(
       model_result = model_result,
       covariates = model_data$covariates,
@@ -198,6 +218,9 @@ margot_policy_tree_cv <- function(model_results,
 
     complete_rows <- stats::complete.cases(model_data$covariates[, selected_vars, drop = FALSE]) &
       stats::complete.cases(model_data$dr_scores)
+    if (!is.null(model_data$weights)) {
+      complete_rows <- complete_rows & is.finite(model_data$weights) & model_data$weights > 0
+    }
     usable_idx <- which(complete_rows)
     if (length(usable_idx) < num_folds) {
       if (isTRUE(verbose)) {
@@ -217,7 +240,10 @@ margot_policy_tree_cv <- function(model_results,
           tree <- tryCatch(
             .compute_policy_tree(
               model_data$covariates[train_pos, selected_vars, drop = FALSE],
-              model_data$dr_scores[train_pos, , drop = FALSE],
+              .policy_cv_training_scores(
+                dr_scores = model_data$dr_scores[train_pos, , drop = FALSE],
+                weights = if (!is.null(model_data$weights)) model_data$weights[train_pos] else NULL
+              ),
               depth = depth,
               tree_method = actual_tree_method,
               min_node_size = min_node_size
@@ -231,11 +257,19 @@ margot_policy_tree_cv <- function(model_results,
           )
           if (is.null(tree)) next
 
+          training_constant <- .policy_cv_select_constant(
+            dr_scores = model_data$dr_scores[train_pos, , drop = FALSE],
+            weights = if (!is.null(model_data$weights)) model_data$weights[train_pos] else NULL,
+            tree = tree
+          )
+
           heldout <- .policy_cv_evaluate_tree(
             tree = tree,
             covariates = model_data$covariates[test_pos, , drop = FALSE],
             dr_scores = model_data$dr_scores[test_pos, , drop = FALSE],
-            weights = if (!is.null(model_data$weights)) model_data$weights[test_pos] else NULL
+            weights = if (!is.null(model_data$weights)) model_data$weights[test_pos] else NULL,
+            constant_action_id = training_constant$action_id,
+            constant_action = training_constant$action
           )
           if (is.null(heldout)) next
 
@@ -254,6 +288,8 @@ margot_policy_tree_cv <- function(model_results,
             value_treat_all = heldout$value_treat_all,
             value_best_constant = heldout$value_best_constant,
             best_constant_action = heldout$best_constant_action,
+            value_validation_best_constant = heldout$value_validation_best_constant,
+            validation_best_constant_action = heldout$validation_best_constant_action,
             gain_vs_control = heldout$gain_vs_control,
             gain_vs_treat = heldout$gain_vs_treat,
             gain_vs_best_constant = heldout$gain_vs_best_constant,
@@ -322,8 +358,14 @@ margot_policy_tree_cv <- function(model_results,
     value_summary = value_summary,
     split_summary = split_summary,
     min_gain_for_depth_switch = min_gain_for_depth_switch,
+    depth_selection_rule = depth_selection_rule,
     max_stability_loss_for_depth_switch = max_stability_loss_for_depth_switch,
     min_root_stability_for_depth_switch = min_root_stability_for_depth_switch
+  )
+  policy_selection <- .policy_cv_select_policy(
+    value_summary = value_summary,
+    depth_selection = depth_selection,
+    min_gain_over_constant = min_gain_over_constant
   )
   depth_map <- if (nrow(depth_selection)) {
     stats::setNames(depth_selection$selected_depth, depth_selection$model)
@@ -340,6 +382,7 @@ margot_policy_tree_cv <- function(model_results,
     leaf_summary = leaf_summary,
     threshold_summary = threshold_summary,
     depth_selection = depth_selection,
+    policy_selection = policy_selection,
     depth_map = depth_map,
     metadata = list(
       num_folds = num_folds,
@@ -353,9 +396,12 @@ margot_policy_tree_cv <- function(model_results,
       min_node_size = min_node_size,
       seed = seed,
       min_gain_for_depth_switch = min_gain_for_depth_switch,
+      depth_selection_rule = depth_selection_rule,
+      min_gain_over_constant = min_gain_over_constant,
       max_stability_loss_for_depth_switch = max_stability_loss_for_depth_switch,
       min_root_stability_for_depth_switch = min_root_stability_for_depth_switch,
       covariate_mode = covariate_mode,
+      training_weights_applied = training_weights_applied,
       estimand = "held-out evaluation of the policy-learning procedure"
     )
   )
@@ -500,7 +546,52 @@ margot_policy_tree_cv <- function(model_results,
 }
 
 #' @keywords internal
-.policy_cv_evaluate_tree <- function(tree, covariates, dr_scores, weights = NULL) {
+.policy_cv_training_scores <- function(dr_scores, weights = NULL) {
+  # apply the policy target weights once to the tree-training objective.
+  dr_scores <- as.matrix(dr_scores)
+  if (is.null(weights)) return(dr_scores)
+  if (length(weights) != nrow(dr_scores) || any(!is.finite(weights)) || any(weights <= 0)) {
+    stop("training weights must be finite, positive, and aligned with dr_scores", call. = FALSE)
+  }
+  dr_scores * as.numeric(weights)
+}
+
+#' @keywords internal
+.policy_cv_select_constant <- function(dr_scores, weights = NULL, tree = NULL) {
+  # select one constant action from training scores and return its stable label.
+  dr_scores <- as.matrix(dr_scores)
+  action_columns <- .margot_policy_binary_action_columns(
+    dr_scores = dr_scores,
+    tree = tree,
+    context = "margot_policy_tree_cv() training constant selection"
+  )
+  values <- vapply(seq_len(ncol(dr_scores)), function(action_id) {
+    .policy_cv_mean(dr_scores[, action_id], weights)
+  }, numeric(1))
+  if (all(!is.finite(values))) {
+    stop("training scores contain no finite constant-policy value", call. = FALSE)
+  }
+  # ties resolve to control so the training-only procedure is deterministic.
+  maximisers <- which(values == max(values, na.rm = TRUE))
+  action_id <- if (action_columns$control %in% maximisers) {
+    action_columns$control
+  } else {
+    maximisers[[1]]
+  }
+  list(
+    action_id = as.integer(action_id),
+    action = if (action_id == action_columns$treatment) "treated" else "control",
+    value_training = values[[action_id]]
+  )
+}
+
+#' @keywords internal
+.policy_cv_evaluate_tree <- function(tree,
+                                     covariates,
+                                     dr_scores,
+                                     weights = NULL,
+                                     constant_action_id,
+                                     constant_action) {
   # evaluate one trained tree on held-out rows with aligned DR action scores.
   if (is.null(tree$columns) || !all(tree$columns %in% colnames(covariates))) return(NULL)
   X <- as.data.frame(covariates[, tree$columns, drop = FALSE])
@@ -538,13 +629,19 @@ margot_policy_tree_cv <- function(model_results,
   value_policy <- .policy_cv_mean(policy_score, weights)
   value_control_all <- .policy_cv_mean(control_score, weights)
   value_treat_all <- .policy_cv_mean(treated_score, weights)
+  if (!is.numeric(constant_action_id) || length(constant_action_id) != 1L ||
+      !constant_action_id %in% c(action_columns$control, action_columns$treatment)) {
+    stop("constant_action_id must identify one of the two action-score columns", call. = FALSE)
+  }
+  value_best_constant <- .policy_cv_mean(dr_scores[, constant_action_id], weights)
+  best_constant_action <- as.character(constant_action)
   constant_values <- c(value_control_all, value_treat_all)
-  value_best_constant <- if (all(is.na(constant_values))) {
+  value_validation_best_constant <- if (all(is.na(constant_values))) {
     NA_real_
   } else {
     max(constant_values, na.rm = TRUE)
   }
-  best_constant_action <- if (all(is.na(constant_values))) {
+  validation_best_constant_action <- if (all(is.na(constant_values))) {
     NA_character_
   } else if (isTRUE(all.equal(value_control_all, value_treat_all))) {
     "tie"
@@ -564,6 +661,8 @@ margot_policy_tree_cv <- function(model_results,
     value_treat_all = value_treat_all,
     value_best_constant = value_best_constant,
     best_constant_action = best_constant_action,
+    value_validation_best_constant = value_validation_best_constant,
+    validation_best_constant_action = validation_best_constant_action,
     gain_vs_control = value_policy - value_control_all,
     gain_vs_treat = value_policy - value_treat_all,
     gain_vs_best_constant = value_policy - value_best_constant,
@@ -717,21 +816,17 @@ margot_policy_tree_cv <- function(model_results,
     value_policy_mean <- stats::weighted.mean(df$value_policy, df$n_eval, na.rm = TRUE)
     value_control_all_mean <- stats::weighted.mean(df$value_control_all, df$n_eval, na.rm = TRUE)
     value_treat_all_mean <- stats::weighted.mean(df$value_treat_all, df$n_eval, na.rm = TRUE)
-    constant_values <- c(value_control_all_mean, value_treat_all_mean)
-    value_best_constant_mean <- if (all(is.na(constant_values))) {
-      NA_real_
-    } else {
-      max(constant_values, na.rm = TRUE)
-    }
-    best_constant_action <- if (all(is.na(constant_values))) {
+    value_best_constant_mean <- stats::weighted.mean(df$value_best_constant, df$n_eval, na.rm = TRUE)
+    value_validation_best_constant_mean <- stats::weighted.mean(
+      df$value_validation_best_constant, df$n_eval, na.rm = TRUE
+    )
+    constant_actions <- unique(stats::na.omit(df$best_constant_action))
+    best_constant_action <- if (!length(constant_actions)) {
       NA_character_
-    } else if (isTRUE(all.equal(value_control_all_mean, value_treat_all_mean))) {
-      "tie"
-    } else if (!is.na(value_treat_all_mean) &&
-               (is.na(value_control_all_mean) || value_treat_all_mean > value_control_all_mean)) {
-      "treated"
+    } else if (length(constant_actions) == 1L) {
+      constant_actions[[1]]
     } else {
-      "control"
+      "varies_by_fold"
     }
     data.frame(
       model = df$model[1],
@@ -746,6 +841,7 @@ margot_policy_tree_cv <- function(model_results,
       value_treat_all_mean = value_treat_all_mean,
       value_best_constant_mean = value_best_constant_mean,
       best_constant_action = best_constant_action,
+      value_validation_best_constant_mean = value_validation_best_constant_mean,
       gain_vs_control_mean = stats::weighted.mean(df$gain_vs_control, df$n_eval, na.rm = TRUE),
       gain_vs_control_sd = stats::sd(df$gain_vs_control, na.rm = TRUE),
       gain_vs_control_q025 = stats::quantile(df$gain_vs_control, 0.025, na.rm = TRUE, names = FALSE),
@@ -885,11 +981,11 @@ margot_policy_tree_cv <- function(model_results,
 .policy_cv_select_depths <- function(value_summary,
                                      split_summary,
                                      min_gain_for_depth_switch,
+                                     depth_selection_rule = c("value_and_stability", "value_only"),
                                      max_stability_loss_for_depth_switch,
                                      min_root_stability_for_depth_switch = 0.5) {
-  # apply the depth rule: depth one unless depth two improves value, keeps
-  # relative root-split stability, and starts from a depth-one root that is
-  # itself stable enough to be worth improving on.
+  # select tree depth by the registered held-out value and optional stability rule.
+  depth_selection_rule <- match.arg(depth_selection_rule)
   if (is.null(value_summary) || !nrow(value_summary)) return(data.frame())
   models <- unique(value_summary$model)
   rows <- lapply(models, function(model_name) {
@@ -913,12 +1009,10 @@ margot_policy_tree_cv <- function(model_results,
       root1 <- .policy_cv_root_stability(split_summary, model_name, 1L)
       root2 <- .policy_cv_root_stability(split_summary, model_name, 2L)
       stability_loss <- root1 - root2
-      # fail closed: an incomputable stability comparison must never license
-      # depth two, because the guard that would have blocked it is missing.
       stability_unavailable <- !is.finite(stability_loss)
       stable_ok <- !stability_unavailable &&
         stability_loss <= max_stability_loss_for_depth_switch
-      if (stability_unavailable) {
+      if (stability_unavailable && depth_selection_rule == "value_and_stability") {
         cli::cli_warn(c(
           "Root-split stability could not be computed for {model_name}; depth two was refused.",
           "i" = "The depth-one or depth-two root-split selection frequency is unavailable, so the stability guard fails closed and depth one is kept."
@@ -931,12 +1025,20 @@ margot_policy_tree_cv <- function(model_results,
         (is.finite(root1) && root1 >= min_root_stability_for_depth_switch)
       # ">=" matches the documented "minimum gain required" semantics and the
       # comparator the depth-comparison report already uses at the same threshold
-      selected <- if (is.finite(delta) &&
-                      delta >= min_gain_for_depth_switch &&
-                      isTRUE(stable_ok) &&
-                      isTRUE(root_floor_ok)) 2L else 1L
+      value_ok <- .policy_cv_meets_margin(delta, min_gain_for_depth_switch)
+      selected <- if (value_ok &&
+                      (depth_selection_rule == "value_only" ||
+                         (isTRUE(stable_ok) && isTRUE(root_floor_ok)))) 2L else 1L
       reason <- if (selected == 2L) {
-        "depth two clears held-out value and stability thresholds"
+        if (depth_selection_rule == "value_only") {
+          "depth two clears the held-out value threshold"
+        } else {
+          "depth two clears held-out value and stability thresholds"
+        }
+      } else if (depth_selection_rule == "value_only" && is.finite(delta) && delta > 0) {
+        "depth two gain below material-improvement threshold"
+      } else if (depth_selection_rule == "value_only") {
+        "depth one has equal or higher held-out value"
       } else if (stability_unavailable) {
         "root-split stability could not be computed, so depth two was refused"
       } else if (!isTRUE(stable_ok)) {
@@ -962,6 +1064,7 @@ margot_policy_tree_cv <- function(model_results,
       stability_ok = stable_ok,
       root_stability_floor_ok = root_floor_ok,
       min_root_stability_for_depth_switch = min_root_stability_for_depth_switch,
+      depth_selection_rule = depth_selection_rule,
       reason = reason,
       stringsAsFactors = FALSE
     )
@@ -974,6 +1077,52 @@ margot_policy_tree_cv <- function(model_results,
   } else {
     data.frame()
   }
+}
+
+#' @keywords internal
+.policy_cv_select_policy <- function(value_summary,
+                                     depth_selection,
+                                     min_gain_over_constant) {
+  # compare the selected non-constant depth with the honest constant procedure.
+  if (is.null(value_summary) || !nrow(value_summary) ||
+      is.null(depth_selection) || !nrow(depth_selection)) return(data.frame())
+  rows <- lapply(seq_len(nrow(depth_selection)), function(i) {
+    selection <- depth_selection[i, , drop = FALSE]
+    selected <- value_summary[
+      value_summary$model == selection$model &
+        value_summary$depth == selection$selected_depth,
+      , drop = FALSE
+    ]
+    if (!nrow(selected)) return(NULL)
+    gain <- selected$value_policy_mean[[1]] - selected$value_best_constant_mean[[1]]
+    tree_preferred <- .policy_cv_meets_margin(gain, min_gain_over_constant)
+    data.frame(
+      model = selection$model,
+      outcome = selection$outcome,
+      outcome_label = selection$outcome_label,
+      selected_tree_depth = selection$selected_depth,
+      value_selected_tree = selected$value_policy_mean[[1]],
+      value_honest_constant = selected$value_best_constant_mean[[1]],
+      honest_constant_action = selected$best_constant_action[[1]],
+      tree_minus_honest_constant = gain,
+      min_gain_over_constant = min_gain_over_constant,
+      preferred_policy = if (tree_preferred) "tree" else "constant",
+      reason = if (tree_preferred) {
+        "selected tree clears the held-out value margin over the honest constant procedure"
+      } else {
+        "selected tree does not clear the held-out value margin over the honest constant procedure"
+      },
+      stringsAsFactors = FALSE
+    )
+  })
+  rows <- Filter(Negate(is.null), rows)
+  if (length(rows)) do.call(rbind, rows) else data.frame()
+}
+
+#' @keywords internal
+.policy_cv_meets_margin <- function(value, threshold) {
+  # compare a computed value with a registered margin at numerical precision.
+  is.finite(value) && value + sqrt(.Machine$double.eps) >= threshold
 }
 
 #' @keywords internal
@@ -1005,6 +1154,7 @@ print.margot_policy_tree_cv <- function(x, ...) {
   cat("Models:", length(x$depth_map), "\n")
   cat("Folds:", x$metadata$num_folds, "\n")
   cat("Repeats:", x$metadata$n_repeats, "\n")
+  cat("Depth rule:", x$metadata$depth_selection_rule %||% "value_and_stability", "\n")
   if (!is.null(x$metadata$min_root_stability_for_depth_switch)) {
     cat(
       "Depth guards: min gain", x$metadata$min_gain_for_depth_switch,
@@ -1015,6 +1165,12 @@ print.margot_policy_tree_cv <- function(x, ...) {
   if (!is.null(x$depth_selection) && nrow(x$depth_selection)) {
     cat("\nDepth selection:\n")
     print(x$depth_selection[, c("model", "selected_depth", "depth2_minus_depth1", "reason"), drop = FALSE])
+  }
+  if (!is.null(x$policy_selection) && nrow(x$policy_selection)) {
+    cat("\nOverall policy selection:\n")
+    print(x$policy_selection[, c(
+      "model", "selected_tree_depth", "tree_minus_honest_constant", "preferred_policy"
+    ), drop = FALSE])
   }
   invisible(x)
 }

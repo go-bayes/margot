@@ -1,4 +1,17 @@
-# [2026-08-07] margot 1.1.016 (development)
+# [2026-08-07] margot 1.1.017 (development)
+
+### Honest constant-policy comparison and value-only depth selection
+
+#### Added
+- `margot_policy_tree_cv(depth_selection_rule = "value_only")` selects depth two exactly when its repeat-averaged held-out value exceeds depth one's by the registered margin. Root recurrence and assignment agreement remain reported quantities but do not veto the value decision. The historical `"value_and_stability"` rule remains the package default for backwards compatibility.
+- `min_gain_over_constant` supplies a separate registered margin for preferring the selected tree over the constant-policy learning procedure. `policy_selection` records the selected tree depth, both held-out values, their difference, the margin, the preferred policy type, and the selection reason.
+- Supplied analysis weights now enter the policy-learning target consistently: the training action-score matrix is multiplied once by the aligned positive weights before tree fitting and constant-action selection, while held-out values remain weighted means of the unmultiplied action scores. Rows with non-positive or non-finite weights are excluded before fold assignment.
+
+#### Corrected
+- The best-constant comparator is now honestly selected in each training fold and only then evaluated in the corresponding held-out fold. Earlier versions selected the better constant action from the held-out observations themselves, which did not evaluate a learnable constant-policy procedure. Both raw held-out constant values and the validation-selected maximum remain available descriptively under names that identify the latter as a validation oracle; automatic policy selection never uses that oracle.
+- A margin attained up to numerical precision counts as attaining the registered threshold, so a computed difference of 0.01 cannot be rejected because of floating-point representation.
+
+# [2026-08-07] margot 1.1.016
 
 ### Explicit policy-tree terminal-node size
 

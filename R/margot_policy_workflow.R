@@ -17,6 +17,12 @@
 #'   recommending restricted deployment (default TRUE).
 #' @param min_gain_for_depth_switch Numeric; minimum PV gain required to switch from depth-1
 #'   to depth-2 (default 0.01 on standardized outcomes).
+#' @param depth_selection_rule Character; \code{"value_and_stability"} retains
+#'   the historical held-out depth rule, while \code{"value_only"} uses only
+#'   the registered held-out value margin and reports stability descriptively.
+#' @param min_gain_over_constant Numeric; minimum held-out value gain required
+#'   before the selected tree is preferred over the honestly training-selected
+#'   constant procedure. Default 0.01.
 #' @param include_interpretation Logical; also run [margot_interpret_policy_batch()] with the
 #'   selected depths (default TRUE).
 #' @param interpret_models Character; controls which models receive full interpretations when
@@ -177,6 +183,8 @@ margot_policy_workflow <- function(stability,
                                    dominance_threshold = 0.8,
                                    strict_branch = TRUE,
                                    min_gain_for_depth_switch = 0.01,
+                                   depth_selection_rule = c("value_and_stability", "value_only"),
+                                   min_gain_over_constant = 0.01,
                                    include_interpretation = TRUE,
                                    interpret_models = "wins",
                                    plot_models = "none",
@@ -206,6 +214,7 @@ margot_policy_workflow <- function(stability,
   audience <- match.arg(audience)
   signal_score <- match.arg(signal_score)
   order_models <- match.arg(order_models)
+  depth_selection_rule <- match.arg(depth_selection_rule)
 
   # interpret_models can be a preset keyword or a character vector of model names
   if (length(interpret_models) == 1 && interpret_models %in% c("wins", "wins_borderline", "recommended")) {
@@ -283,6 +292,8 @@ margot_policy_workflow <- function(stability,
         num_folds = heldout_num_folds,
         n_repeats = heldout_n_repeats,
         min_gain_for_depth_switch = eff_min_gain,
+        depth_selection_rule = depth_selection_rule,
+        min_gain_over_constant = min_gain_over_constant,
         max_stability_loss_for_depth_switch = max_stability_loss_for_depth_switch,
         min_root_stability_for_depth_switch = min_root_stability_for_depth_switch,
         label_mapping = label_mapping,

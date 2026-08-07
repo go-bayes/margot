@@ -13,6 +13,8 @@ margot_policy_workflow(
   dominance_threshold = 0.8,
   strict_branch = TRUE,
   min_gain_for_depth_switch = 0.01,
+  depth_selection_rule = c("value_and_stability", "value_only"),
+  min_gain_over_constant = 0.01,
   include_interpretation = TRUE,
   interpret_models = "wins",
   plot_models = "none",
@@ -60,6 +62,14 @@ recommending restricted deployment (default TRUE).}
 
 \item{min_gain_for_depth_switch}{Numeric; minimum PV gain required to switch from depth-1
 to depth-2 (default 0.01 on standardized outcomes).}
+
+\item{depth_selection_rule}{Character; \code{"value_and_stability"} retains
+the historical held-out depth rule, while \code{"value_only"} uses only
+the registered held-out value margin and reports stability descriptively.}
+
+\item{min_gain_over_constant}{Numeric; minimum held-out value gain required
+before the selected tree is preferred over the honestly training-selected
+constant procedure. Default 0.01.}
 
 \item{include_interpretation}{Logical; also run [margot_interpret_policy_batch()] with the
 selected depths (default TRUE).}
