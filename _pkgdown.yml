@@ -100,6 +100,7 @@ reference:
     - margot_lmtp
     - margot_lmtp_estimator_spec
     - margot_lmtp_restore_checkpoints
+    - print.margot_lmtp_density_stage
     - margot_naive_regressions
     - margot_policy_tree
     - margot_policy_tree_stability
