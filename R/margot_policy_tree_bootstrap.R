@@ -47,6 +47,9 @@
 #'   (default) or "policytree". The fastpolicytree package provides ~10x faster
 #'   computation, which is particularly beneficial for bootstrap analysis. Falls
 #'   back to policytree if fastpolicytree is not installed.
+#' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
+#'   terminal node, separate from \code{depth} and causal-forest node size.
+#'   \code{NULL} retains the compatibility option fallback, then 1.
 #'
 #' @return Object of class "margot_bootstrap_policy_tree" containing:
 #' \itemize{
@@ -231,7 +234,8 @@ margot_policy_tree_bootstrap <- function(
     n_cores = NULL,
     verbose = TRUE,
     seed = 12345,
-    tree_method = c("fastpolicytree", "policytree")) {
+    tree_method = c("fastpolicytree", "policytree"),
+    min_node_size = NULL) {
   # validate inputs
   if (!is.list(model_results) || !("results" %in% names(model_results))) {
     stop("model_results must be output from margot_causal_forest() or similar")
@@ -240,9 +244,11 @@ margot_policy_tree_bootstrap <- function(
   vary_type <- match.arg(vary_type)
   covariate_mode <- match.arg(covariate_mode)
   tree_method <- match.arg(tree_method)
+  requested_tree_method <- tree_method
 
   # check tree method availability
   actual_tree_method <- .get_tree_method(tree_method, verbose)
+  min_node_size <- .resolve_policy_tree_min_node_size(min_node_size)
 
   # convert depth parameter to match margot_policy_tree
   if (is.character(depth)) {
@@ -348,7 +354,13 @@ margot_policy_tree_bootstrap <- function(
       vary_train_proportion = vary_train_proportion,
       train_proportions = if (vary_train_proportion) train_proportions else train_proportion,
       consensus_threshold = consensus_threshold,
+      requested_depths = depths,
+      realised_depths = depths,
+      depths = depths,
+      requested_tree_method = requested_tree_method,
       tree_method = actual_tree_method,
+      engine_fallback = !identical(requested_tree_method, actual_tree_method),
+      min_node_size = min_node_size,
       timestamp = Sys.time(),
       seeds_used = all_seeds
     )
@@ -379,7 +391,8 @@ margot_policy_tree_bootstrap <- function(
       label_mapping = label_mapping,
       verbose = verbose,
       seed = seed,
-      tree_method = actual_tree_method
+      tree_method = actual_tree_method,
+      min_node_size = min_node_size
     )
 
     output$results[[model_name]] <- boot_result
@@ -426,7 +439,8 @@ bootstrap_single_model <- function(
     label_mapping,
     verbose,
     seed,
-    tree_method) {
+    tree_method,
+    min_node_size) {
   # get DR scores (use flipped if available)
   dr_scores <- model_result$dr_scores
   if (is.null(dr_scores)) {
@@ -510,7 +524,8 @@ bootstrap_single_model <- function(
           covariates[boot_result$train_idx, selected_vars, drop = FALSE],
           dr_scores[boot_result$train_idx, ],
           depth = 1,
-          tree_method = tree_method
+          tree_method = tree_method,
+          min_node_size = min_node_size
         )
       } else {
         # depth-2 uses train subset
@@ -518,7 +533,8 @@ bootstrap_single_model <- function(
           covariates[boot_result$train_idx, selected_vars, drop = FALSE],
           dr_scores[boot_result$train_idx, ],
           depth = 2,
-          tree_method = tree_method
+          tree_method = tree_method,
+          min_node_size = min_node_size
         )
       }
 
@@ -553,7 +569,9 @@ bootstrap_single_model <- function(
         consensus_info$consensus_splits$depth_1,
         dr_scores[not_missing, ],
         covariates[not_missing, selected_vars, drop = FALSE],
-        depth = 1
+        depth = 1,
+        tree_method = tree_method,
+        min_node_size = min_node_size
       )
     }
 
@@ -568,7 +586,9 @@ bootstrap_single_model <- function(
         consensus_info$consensus_splits$depth_2,
         dr_scores[train_idx, ],
         covariates[train_idx, selected_vars, drop = FALSE],
-        depth = 2
+        depth = 2,
+        tree_method = tree_method,
+        min_node_size = min_node_size
       )
 
       # create plot_data
@@ -798,7 +818,12 @@ compute_consensus_info <- function(accumulator, n_bootstrap, consensus_threshold
 
 #' Reconstruct a consensus tree from consensus splits
 #' @keywords internal
-reconstruct_consensus_tree <- function(consensus_splits, dr_scores, covariates, depth) {
+reconstruct_consensus_tree <- function(consensus_splits,
+                                       dr_scores,
+                                       covariates,
+                                       depth,
+                                       tree_method = "policytree",
+                                       min_node_size = NULL) {
   # for now, fit a tree with the consensus structure
   # in future, could construct manually
 
@@ -808,7 +833,8 @@ reconstruct_consensus_tree <- function(consensus_splits, dr_scores, covariates, 
     covariates,
     dr_scores,
     depth = depth,
-    tree_method = "policytree" # use standard method for consensus
+    tree_method = tree_method,
+    min_node_size = min_node_size
   )
 
   # TODO: implement manual tree construction to exactly match consensus splits

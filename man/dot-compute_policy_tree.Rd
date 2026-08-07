@@ -9,7 +9,7 @@
   Gamma,
   depth,
   tree_method = "policytree",
-  min_node_size = getOption("margot.policy_tree.min_node_size", 1L)
+  min_node_size = NULL
 )
 }
 \arguments{

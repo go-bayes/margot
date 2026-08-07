@@ -18,18 +18,11 @@
     Gamma,
     depth,
     tree_method = "policytree",
-    min_node_size = getOption("margot.policy_tree.min_node_size", 1L)
+    min_node_size = NULL
 ) {
   # validate tree_method
   tree_method <- match.arg(tree_method, c("policytree", "fastpolicytree"))
-
-  if (!is.numeric(min_node_size) || length(min_node_size) != 1L || is.na(min_node_size)) {
-    stop("min_node_size must be a single numeric value")
-  }
-  min_node_size <- as.integer(min_node_size)
-  if (min_node_size < 1L) {
-    stop("min_node_size must be >= 1")
-  }
+  min_node_size <- .resolve_policy_tree_min_node_size(min_node_size)
 
   # check if fastpolicytree is requested and available
   if (tree_method == "fastpolicytree") {
@@ -58,6 +51,27 @@
       min.node.size = min_node_size
     )
   }
+}
+
+#' Resolve and validate policy-tree terminal-node size
+#' @keywords internal
+.resolve_policy_tree_min_node_size <- function(min_node_size = NULL) {
+  # retain the session option only as a compatibility fallback.
+  if (is.null(min_node_size)) {
+    min_node_size <- getOption("margot.policy_tree.min_node_size", 1L)
+  }
+  if (!is.numeric(min_node_size) || length(min_node_size) != 1L ||
+      is.na(min_node_size) || !is.finite(min_node_size)) {
+    stop("min_node_size must be a single finite numeric value", call. = FALSE)
+  }
+  if (min_node_size != floor(min_node_size)) {
+    stop("min_node_size must be a whole number", call. = FALSE)
+  }
+  min_node_size <- as.integer(min_node_size)
+  if (min_node_size < 1L) {
+    stop("min_node_size must be >= 1", call. = FALSE)
+  }
+  min_node_size
 }
 
 #' Normalise policy tree actions to 1-based indexing

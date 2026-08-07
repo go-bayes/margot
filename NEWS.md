@@ -1,4 +1,16 @@
-# [2026-08-07] margot 1.1.015 (development)
+# [2026-08-07] margot 1.1.016 (development)
+
+### Explicit policy-tree terminal-node size
+
+#### Added
+- Every public policy-tree fitting route now accepts an explicit `min_node_size` argument: `margot_policy_tree()`, `margot_policy_tree_cv()`, `margot_policy_tree_stability()`, the deprecated `margot_policy_tree_bootstrap()`, `margot_policy_split_diagnostic()`, and `margot_recalculate_policy_trees()`. `margot_policy_workflow(policy_tree_min_node_size = ...)` passes the same setting to automatic held-out cross-validation.
+- Policy-tree metadata records the requested and realised engine, whether an engine fallback occurred, the requested branching levels, and the policy-tree terminal-node minimum. The policy-tree setting remains distinct from a causal forest's `min.node.size`.
+
+#### Changed
+- The global option `margot.policy_tree.min_node_size` remains only as a compatibility fallback when the explicit argument is `NULL`; the final fallback remains 1 for backwards compatibility. New registered analyses can therefore state the terminal-node minimum in the function call without hidden session state.
+- Policy-tree documentation now describes depths `1L` and `2L` as permitted branching levels, not node-size settings.
+
+# [2026-08-07] margot 1.1.015
 
 ### Depth selection in held-out policy-tree cross-validation
 

@@ -23,6 +23,7 @@ stability_single_model(
   verbose,
   seed,
   tree_method,
+  min_node_size,
   compute_policy_values,
   policy_value_R,
   policy_value_seed,

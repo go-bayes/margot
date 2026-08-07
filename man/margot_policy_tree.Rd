@@ -15,7 +15,8 @@ margot_policy_tree(
   label_mapping = NULL,
   verbose = TRUE,
   seed = 12345,
-  tree_method = c("fastpolicytree", "policytree")
+  tree_method = c("fastpolicytree", "policytree"),
+  min_node_size = NULL
 )
 }
 \arguments{
@@ -40,8 +41,8 @@ containing "_log").}
   \item{"all"}{Use all available covariates}
 }}
 
-\item{depth}{Numeric or character specifying which depth(s) to compute:
-1 for single split, 2 for two splits, or "both" for both depths (default).}
+\item{depth}{Numeric or character specifying permitted branching levels:
+1 for one branching level, 2 for two branching levels, or "both" (default).}
 
 \item{train_proportion}{Numeric value between 0 and 1 for the proportion of data
 used for training depth-2 trees. Default is 0.5. Note: depth-1 trees use all
@@ -57,6 +58,11 @@ available data but only the selected covariates (same as depth-2).}
 (default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
 computation with identical results. Falls back to policytree if fastpolicytree
 is not installed.}
+
+\item{min_node_size}{Integer or \code{NULL}. Smallest permitted policy-tree
+terminal node. This setting is separate from \code{depth} and from a causal
+forest's \code{grf_defaults$min.node.size}. \code{NULL} retains the
+compatibility option fallback, then 1.}
 }
 \value{
 A list structured similarly to margot_causal_forest() output, containing:

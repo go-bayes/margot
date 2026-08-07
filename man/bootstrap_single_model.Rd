@@ -22,7 +22,8 @@ bootstrap_single_model(
   label_mapping,
   verbose,
   seed,
-  tree_method
+  tree_method,
+  min_node_size
 )
 }
 \description{

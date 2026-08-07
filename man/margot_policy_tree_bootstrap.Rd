@@ -5,12 +5,16 @@
 \alias{margot_policy_tree_bootstrap}
 \title{Bootstrap Analysis for Policy Trees}
 \usage{
-margot_policy_tree_bootstrap(...)
+margot_policy_tree_bootstrap(..., min_node_size = NULL)
 
-margot_policy_tree_bootstrap(...)
+margot_policy_tree_bootstrap(..., min_node_size = NULL)
 }
 \arguments{
 \item{...}{Arguments passed to margot_policy_tree_stability}
+
+\item{min_node_size}{Integer or \code{NULL}; passed explicitly to
+\code{margot_policy_tree_stability()} as the policy-tree terminal-node
+minimum.}
 
 \item{model_results}{List returned by margot_causal_forest() or margot_flip_forests()}
 

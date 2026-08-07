@@ -5,9 +5,23 @@
 \alias{reconstruct_consensus_tree}
 \title{Reconstruct a consensus tree from consensus splits}
 \usage{
-reconstruct_consensus_tree(consensus_splits, dr_scores, covariates, depth)
+reconstruct_consensus_tree(
+  consensus_splits,
+  dr_scores,
+  covariates,
+  depth,
+  tree_method = "policytree",
+  min_node_size = NULL
+)
 
-reconstruct_consensus_tree(consensus_splits, dr_scores, covariates, depth)
+reconstruct_consensus_tree(
+  consensus_splits,
+  dr_scores,
+  covariates,
+  depth,
+  tree_method = "policytree",
+  min_node_size = NULL
+)
 }
 \description{
 Reconstruct a consensus tree from consensus splits

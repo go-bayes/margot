@@ -8,8 +8,8 @@
 #'   saved \code{covariates}, \code{not_missing}, and per-model \code{dr_scores}.
 #' @param model_names Optional model names, with or without the \code{model_}
 #'   prefix. Defaults to all models.
-#' @param depths Integer vector containing 1, 2, or both. Defaults to
-#'   \code{c(1L, 2L)}.
+#' @param depths Integer vector containing one or two permitted branching
+#'   levels. Defaults to \code{c(1L, 2L)}; these are not node sizes.
 #' @param n_splits Integer. Number of repeated train/test splits. Defaults to 50.
 #' @param train_proportion Numeric in (0,1). Fraction assigned to the training
 #'   split. Defaults to 0.5.
@@ -21,6 +21,9 @@
 #'   to exclude from the policy-tree covariates.
 #' @param tree_method Character; "fastpolicytree" when available, otherwise
 #'   "policytree".
+#' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
+#'   terminal node. It is separate from \code{depths} and causal-forest node
+#'   size. \code{NULL} retains the compatibility option fallback, then 1.
 #' @param weights Optional weights for held-out summaries. Defaults to
 #'   \code{object$weights}.
 #' @param verbose Logical; print progress messages. Defaults to TRUE.
@@ -41,6 +44,7 @@ margot_policy_split_diagnostic <- function(object,
                                            custom_covariates = NULL,
                                            exclude_covariates = NULL,
                                            tree_method = c("fastpolicytree", "policytree"),
+                                           min_node_size = NULL,
                                            weights = NULL,
                                            verbose = TRUE) {
   # validate the saved-data contract needed for repeated split diagnostics.
@@ -62,7 +66,9 @@ margot_policy_split_diagnostic <- function(object,
 
   covariate_mode <- match.arg(covariate_mode)
   tree_method <- match.arg(tree_method)
+  requested_tree_method <- tree_method
   actual_tree_method <- .get_tree_method(tree_method, verbose)
+  min_node_size <- .resolve_policy_tree_min_node_size(min_node_size)
   model_names <- .policy_regret_resolve_model_names(object, model_names)
   weights <- weights %||% object$weights %||% NULL
 
@@ -111,7 +117,8 @@ margot_policy_split_diagnostic <- function(object,
           covariates[train_idx, selected_vars, drop = FALSE],
           dr_scores[train_idx, , drop = FALSE],
           depth = depth,
-          tree_method = actual_tree_method
+          tree_method = actual_tree_method,
+          min_node_size = min_node_size
         )
 
         rows[[length(rows) + 1L]] <- .policy_split_one_row(
@@ -138,6 +145,15 @@ margot_policy_split_diagnostic <- function(object,
 
   out <- if (length(rows)) dplyr::bind_rows(rows) else tibble::tibble()
   attr(out, "summary") <- .policy_split_summary(out)
+  attr(out, "metadata") <- list(
+    requested_depths = depths,
+    realised_depths = sort(unique(as.integer(out$depth))),
+    depths = depths,
+    min_node_size = min_node_size,
+    requested_tree_method = requested_tree_method,
+    tree_method = actual_tree_method,
+    engine_fallback = !identical(requested_tree_method, actual_tree_method)
+  )
   class(out) <- c("margot_policy_split_diagnostic", class(out))
   out
 }

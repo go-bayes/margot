@@ -72,6 +72,9 @@
 #' @param heldout_n_repeats Integer; number of repeated fold partitions for automatic
 #'   held-out policy-tree cross-validation. Default 10.
 #' @param heldout_seed Integer; seed for automatic held-out policy-tree cross-validation.
+#' @param policy_tree_min_node_size Integer or \code{NULL}. Smallest permitted
+#'   terminal node for automatic held-out policy-tree fitting. When \code{NULL},
+#'   reuse the stability object's recorded value, then the compatibility option.
 #' @param max_stability_loss_for_depth_switch Numeric; maximum root-stability loss
 #'   allowed when selecting depth two from held-out diagnostics. Default 0.05.
 #' @param min_root_stability_for_depth_switch Numeric in \eqn{[0, 1]}; absolute
@@ -196,6 +199,7 @@ margot_policy_workflow <- function(stability,
                                    heldout_num_folds = 5L,
                                    heldout_n_repeats = 10L,
                                    heldout_seed = 42L,
+                                   policy_tree_min_node_size = NULL,
                                    signals_k = 3,
                                    ...) {
   se_method <- match.arg(se_method)
@@ -263,6 +267,8 @@ margot_policy_workflow <- function(stability,
   # 1) Depth comparison with parsimony and stability thresholds
   eff_min_gain <- if (isTRUE(prefer_stability)) max(min_gain_for_depth_switch, 0.01) else min_gain_for_depth_switch
   eff_stability_loss <- if (isTRUE(prefer_stability)) max_stability_loss_for_depth_switch else Inf
+  effective_policy_tree_min_node_size <- policy_tree_min_node_size %||%
+    stability$metadata$min_node_size %||% NULL
 
   # held-out policy-tree CV evaluates the learning procedure and supplies the
   # default depth map when the stability object has the data required to run it.
@@ -282,6 +288,7 @@ margot_policy_workflow <- function(stability,
         label_mapping = label_mapping,
         seed = heldout_seed,
         tree_method = stability$metadata$tree_method %||% "fastpolicytree",
+        min_node_size = effective_policy_tree_min_node_size,
         verbose = FALSE
       ),
       error = function(e) {

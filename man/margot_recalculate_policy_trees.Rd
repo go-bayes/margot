@@ -15,7 +15,8 @@ margot_recalculate_policy_trees(
   parallel = FALSE,
   n_cores = future::availableCores() - 1,
   seed = 12345,
-  tree_method = c("fastpolicytree", "policytree")
+  tree_method = c("fastpolicytree", "policytree"),
+  min_node_size = NULL
 )
 }
 \arguments{
@@ -54,6 +55,10 @@ variables starting with "t0_log_").}
   \item{"policytree"}{Use the policytree package (default)}
   \item{"fastpolicytree"}{Use the fastpolicytree package (about 10x faster)}
 }}
+
+\item{min_node_size}{Integer or \code{NULL}. Smallest permitted policy-tree
+terminal node, separate from tree depth and causal-forest node size.
+\code{NULL} retains the compatibility option fallback, then 1.}
 }
 \value{
 A modified copy of model_results with recalculated policy trees.

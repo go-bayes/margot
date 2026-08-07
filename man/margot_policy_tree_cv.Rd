@@ -20,6 +20,7 @@ margot_policy_tree_cv(
   label_mapping = NULL,
   seed = 42L,
   tree_method = c("fastpolicytree", "policytree"),
+  min_node_size = NULL,
   verbose = TRUE
 )
 }
@@ -54,7 +55,8 @@ depth-two fit, which is about 4.6 hours per outcome under the registered
 cross-validation of 5 folds and 20 repeats, whereas the top-15 screen is
 roughly 14 times cheaper at depth two.}
 
-\item{depths}{Integer vector containing 1, 2, or both. Character values
+\item{depths}{Integer vector containing 1, 2, or both. These values are
+permitted branching levels, not node-size settings. Character values
 \code{"1"}, \code{"2"}, and \code{"both"} are also accepted.}
 
 \item{num_folds}{Integer. Number of folds per repeat. Default is 5.}
@@ -97,6 +99,12 @@ display labels.}
 
 \item{tree_method}{Character. \code{"fastpolicytree"} or
 \code{"policytree"}.}
+
+\item{min_node_size}{Integer or \code{NULL}. Smallest permitted policy-tree
+terminal node. This is unrelated to \code{depths} and to a causal
+forest's \code{grf_defaults$min.node.size}. When \code{NULL}, the
+compatibility option \code{margot.policy_tree.min_node_size} is consulted,
+then 1.}
 
 \item{verbose}{Logical. Print progress messages.}
 }

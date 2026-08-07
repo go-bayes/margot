@@ -15,6 +15,7 @@ margot_policy_split_diagnostic(
   custom_covariates = NULL,
   exclude_covariates = NULL,
   tree_method = c("fastpolicytree", "policytree"),
+  min_node_size = NULL,
   weights = NULL,
   verbose = TRUE
 )
@@ -26,8 +27,8 @@ saved \code{covariates}, \code{not_missing}, and per-model \code{dr_scores}.}
 \item{model_names}{Optional model names, with or without the \code{model_}
 prefix. Defaults to all models.}
 
-\item{depths}{Integer vector containing 1, 2, or both. Defaults to
-\code{c(1L, 2L)}.}
+\item{depths}{Integer vector containing one or two permitted branching
+levels. Defaults to \code{c(1L, 2L)}; these are not node sizes.}
 
 \item{n_splits}{Integer. Number of repeated train/test splits. Defaults to 50.}
 
@@ -46,6 +47,10 @@ to exclude from the policy-tree covariates.}
 
 \item{tree_method}{Character; "fastpolicytree" when available, otherwise
 "policytree".}
+
+\item{min_node_size}{Integer or \code{NULL}. Smallest permitted policy-tree
+terminal node. It is separate from \code{depths} and causal-forest node
+size. \code{NULL} retains the compatibility option fallback, then 1.}
 
 \item{weights}{Optional weights for held-out summaries. Defaults to
 \code{object$weights}.}

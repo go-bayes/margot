@@ -17,7 +17,8 @@ compute_policy_trees_for_model(
   train_proportion,
   verbose,
   seed,
-  tree_method
+  tree_method,
+  min_node_size
 )
 }
 \description{

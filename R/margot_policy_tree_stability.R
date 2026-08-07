@@ -28,8 +28,8 @@
 #' @param covariate_mode Character string specifying how to handle covariates:
 #'   "original" (use original top variables), "custom" (use only custom_covariates),
 #'   "add" (add custom to existing), "all" (use all available covariates).
-#' @param depth Numeric or character specifying which depth(s) to compute:
-#'   1 for single split, 2 for two splits (default), or "both" for both depths.
+#' @param depth Numeric or character specifying permitted branching levels:
+#'   1, 2 (default), or "both". It is not a node-size setting.
 #' @param n_iterations Integer. Number of stability iterations (default 300).
 #' @param vary_type Character. Type of variation: "bootstrap" (bootstrap resample of rows;
 #'   the default, and the recommended resampling for a descriptive robustness report on a
@@ -52,6 +52,9 @@
 #'   (default) or "policytree". The fastpolicytree package provides ~10x faster
 #'   computation, which is particularly beneficial for stability analysis. Falls
 #'   back to policytree if fastpolicytree is not installed.
+#' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
+#'   terminal node, separate from \code{depth} and from causal-forest node size.
+#'   \code{NULL} retains the compatibility option fallback, then 1.
 #' @param n_bootstrap Deprecated. Use n_iterations instead.
 #' @param compute_policy_values Logical. If TRUE, compute bootstrap policy-value tests for
 #'   each consensus tree and store results in `policy_value_depth_*` slots (default FALSE).
@@ -254,6 +257,7 @@ margot_policy_tree_stability <- function(
     verbose = TRUE,
     seed = 12345,
     tree_method = c("fastpolicytree", "policytree"),
+    min_node_size = NULL,
     n_bootstrap = NULL, # deprecated parameter for backwards compatibility
     compute_policy_values = FALSE,
     policy_value_R = 499L,
@@ -313,9 +317,11 @@ margot_policy_tree_stability <- function(
   vary_type <- match.arg(vary_type)
   covariate_mode <- match.arg(covariate_mode)
   tree_method <- match.arg(tree_method)
+  requested_tree_method <- tree_method
 
   # check tree method availability
   actual_tree_method <- .get_tree_method(tree_method, verbose)
+  min_node_size <- .resolve_policy_tree_min_node_size(min_node_size)
 
   # convert depth parameter to match margot_policy_tree
   if (is.character(depth)) {
@@ -429,7 +435,13 @@ margot_policy_tree_stability <- function(
       vary_train_proportion = vary_train_proportion,
       train_proportions = if (vary_train_proportion) train_proportions else unique(actual_train_props),
       consensus_threshold = consensus_threshold,
+      requested_depths = depths,
+      realised_depths = depths,
+      depths = depths,
+      requested_tree_method = requested_tree_method,
       tree_method = actual_tree_method,
+      engine_fallback = !identical(requested_tree_method, actual_tree_method),
+      min_node_size = min_node_size,
       compute_policy_values = compute_policy_values,
       policy_value_R = policy_value_R,
       policy_value_seed = policy_value_seed,
@@ -475,6 +487,7 @@ margot_policy_tree_stability <- function(
       verbose = verbose,
       seed = seed,
       tree_method = actual_tree_method,
+      min_node_size = min_node_size,
       compute_policy_values = compute_policy_values,
       policy_value_R = policy_value_R,
       policy_value_seed = policy_value_seed,
@@ -560,6 +573,7 @@ stability_single_model <- function(
     verbose,
     seed,
     tree_method,
+    min_node_size,
     compute_policy_values,
     policy_value_R,
     policy_value_seed,
@@ -647,7 +661,8 @@ stability_single_model <- function(
           covariates[indices$train_idx, selected_vars, drop = FALSE],
           dr_scores[indices$train_idx, ],
           depth = 1,
-          tree_method = tree_method
+          tree_method = tree_method,
+          min_node_size = min_node_size
         )
       } else {
         # depth-2 uses train subset
@@ -655,7 +670,8 @@ stability_single_model <- function(
           covariates[indices$train_idx, selected_vars, drop = FALSE],
           dr_scores[indices$train_idx, ],
           depth = 2,
-          tree_method = tree_method
+          tree_method = tree_method,
+          min_node_size = min_node_size
         )
       }
 
@@ -721,7 +737,9 @@ stability_single_model <- function(
         consensus_info$consensus_splits$depth_1,
         dr_scores[train_idx_consensus, ],
         covariates[train_idx_consensus, selected_vars, drop = FALSE],
-        depth = 1
+        depth = 1,
+        tree_method = tree_method,
+        min_node_size = min_node_size
       )
     }
 
@@ -730,7 +748,9 @@ stability_single_model <- function(
         consensus_info$consensus_splits$depth_2,
         dr_scores[train_idx_consensus, ],
         covariates[train_idx_consensus, selected_vars, drop = FALSE],
-        depth = 2
+        depth = 2,
+        tree_method = tree_method,
+        min_node_size = min_node_size
       )
     }
   }
@@ -1729,10 +1749,13 @@ interpret_depth2_only_stability <- function(object, model_name, outcome_name, ou
 #' This function is deprecated. Please use \code{\link{margot_policy_tree_stability}} instead.
 #'
 #' @param ... Arguments passed to margot_policy_tree_stability
+#' @param min_node_size Integer or \code{NULL}; passed explicitly to
+#'   \code{margot_policy_tree_stability()} as the policy-tree terminal-node
+#'   minimum.
 #'
 #' @return Result from margot_policy_tree_stability
 #' @export
-margot_policy_tree_bootstrap <- function(...) {
+margot_policy_tree_bootstrap <- function(..., min_node_size = NULL) {
   .Deprecated("margot_policy_tree_stability",
     msg = paste0(
       "margot_policy_tree_bootstrap() is deprecated.\n",
@@ -1743,6 +1766,7 @@ margot_policy_tree_bootstrap <- function(...) {
 
   # extract arguments
   args <- list(...)
+  args$min_node_size <- min_node_size
 
   # rename n_bootstrap to n_iterations if present
   if ("n_bootstrap" %in% names(args)) {
@@ -2336,7 +2360,12 @@ compute_policy_value_summary <- function(results) {
 
 #' Reconstruct a consensus tree from consensus splits
 #' @keywords internal
-reconstruct_consensus_tree <- function(consensus_splits, dr_scores, covariates, depth) {
+reconstruct_consensus_tree <- function(consensus_splits,
+                                       dr_scores,
+                                       covariates,
+                                       depth,
+                                       tree_method = "policytree",
+                                       min_node_size = NULL) {
   # for now, fit a tree with the consensus structure
   # in future, could construct manually
 
@@ -2346,7 +2375,8 @@ reconstruct_consensus_tree <- function(consensus_splits, dr_scores, covariates, 
     covariates,
     dr_scores,
     depth = depth,
-    tree_method = "policytree" # use standard method for consensus
+    tree_method = tree_method,
+    min_node_size = min_node_size
   )
 
   # TODO: implement manual tree construction to exactly match consensus splits

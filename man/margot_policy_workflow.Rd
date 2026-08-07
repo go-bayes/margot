@@ -35,6 +35,7 @@ margot_policy_workflow(
   heldout_num_folds = 5L,
   heldout_n_repeats = 10L,
   heldout_seed = 42L,
+  policy_tree_min_node_size = NULL,
   signals_k = 3,
   ...
 )
@@ -139,6 +140,10 @@ cross-validation. Default 5.}
 held-out policy-tree cross-validation. Default 10.}
 
 \item{heldout_seed}{Integer; seed for automatic held-out policy-tree cross-validation.}
+
+\item{policy_tree_min_node_size}{Integer or \code{NULL}. Smallest permitted
+terminal node for automatic held-out policy-tree fitting. When \code{NULL},
+reuse the stability object's recorded value, then the compatibility option.}
 
 \item{signals_k}{Integer; number of top signals to display when `signal_score != "none"`}
 

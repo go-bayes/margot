@@ -30,6 +30,9 @@
 #'     \item{"policytree"}{Use the policytree package (default)}
 #'     \item{"fastpolicytree"}{Use the fastpolicytree package (about 10x faster)}
 #'   }
+#' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
+#'   terminal node, separate from tree depth and causal-forest node size.
+#'   \code{NULL} retains the compatibility option fallback, then 1.
 #'
 #' @return A modified copy of model_results with recalculated policy trees.
 #'
@@ -88,7 +91,8 @@ margot_recalculate_policy_trees <- function(model_results,
                                             parallel = FALSE,
                                             n_cores = future::availableCores() - 1,
                                             seed = 12345,
-                                            tree_method = c("fastpolicytree", "policytree")) {
+                                            tree_method = c("fastpolicytree", "policytree"),
+                                            min_node_size = NULL) {
   # validate inputs
   if (!is.list(model_results) || !"results" %in% names(model_results)) {
     stop("model_results must be a list containing a 'results' element")
@@ -96,6 +100,9 @@ margot_recalculate_policy_trees <- function(model_results,
 
   covariate_mode <- match.arg(covariate_mode)
   tree_method <- match.arg(tree_method)
+  requested_tree_method <- tree_method
+  actual_tree_method <- .get_tree_method(tree_method, verbose)
+  min_node_size <- .resolve_policy_tree_min_node_size(min_node_size)
 
   # check for required data
   if (is.null(model_results$covariates)) {
@@ -183,7 +190,9 @@ margot_recalculate_policy_trees <- function(model_results,
       covariate_mode = covariate_mode,
       verbose = verbose && !parallel,
       seed = seed,
-      tree_method = tree_method
+      tree_method = actual_tree_method,
+      min_node_size = min_node_size,
+      requested_tree_method = requested_tree_method
     )
 
     return(updated_model)
@@ -209,7 +218,9 @@ recalculate_policy_trees_single <- function(model_result,
                                             covariate_mode,
                                             verbose,
                                             seed,
-                                            tree_method) {
+                                            tree_method,
+                                            min_node_size,
+                                            requested_tree_method) {
   # set seed for reproducibility
   if (!is.null(seed)) {
     set.seed(seed + as.integer(as.factor(model_name)))
@@ -270,7 +281,8 @@ recalculate_policy_trees_single <- function(model_result,
     covariates[not_missing, selected_covars, drop = FALSE],
     dr_scores[not_missing, ],
     depth = 1,
-    tree_method = tree_method
+    tree_method = tree_method,
+    min_node_size = min_node_size
   )
 
   # handle depth-2 tree
@@ -308,7 +320,8 @@ recalculate_policy_trees_single <- function(model_result,
       covariates[train_idx, depth2_covars, drop = FALSE],
       dr_scores[train_idx, ],
       depth = 2,
-      tree_method = tree_method
+      tree_method = tree_method,
+      min_node_size = min_node_size
     )
 
     # create plot data
@@ -353,6 +366,17 @@ recalculate_policy_trees_single <- function(model_result,
     NULL
   }
   model_result$policy_tree_depth_2_auto_expanded <- auto_expanded
+  model_result$policy_tree_metadata <- list(
+    requested_depths = c(1L, 2L),
+    realised_depths = c(
+      if (!is.null(model_result$policy_tree_depth_1)) 1L,
+      if (!is.null(model_result$policy_tree_depth_2)) 2L
+    ),
+    min_node_size = min_node_size,
+    requested_tree_method = requested_tree_method,
+    tree_method = tree_method,
+    engine_fallback = !identical(requested_tree_method, tree_method)
+  )
   model_result$policy_trees_need_recalculation <- FALSE
 
   return(model_result)

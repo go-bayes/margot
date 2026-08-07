@@ -55,7 +55,8 @@
 #'   depth-two fit, which is about 4.6 hours per outcome under the registered
 #'   cross-validation of 5 folds and 20 repeats, whereas the top-15 screen is
 #'   roughly 14 times cheaper at depth two.
-#' @param depths Integer vector containing 1, 2, or both. Character values
+#' @param depths Integer vector containing 1, 2, or both. These values are
+#'   permitted branching levels, not node-size settings. Character values
 #'   \code{"1"}, \code{"2"}, and \code{"both"} are also accepted.
 #' @param num_folds Integer. Number of folds per repeat. Default is 5.
 #' @param n_repeats Integer. Number of repeated fold partitions. Default is 20.
@@ -89,6 +90,11 @@
 #' @param seed Integer. Base seed for reproducible fold assignments.
 #' @param tree_method Character. \code{"fastpolicytree"} or
 #'   \code{"policytree"}.
+#' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
+#'   terminal node. This is unrelated to \code{depths} and to a causal
+#'   forest's \code{grf_defaults$min.node.size}. When \code{NULL}, the
+#'   compatibility option \code{margot.policy_tree.min_node_size} is consulted,
+#'   then 1.
 #' @param verbose Logical. Print progress messages.
 #'
 #' @return A \code{margot_policy_tree_cv} list with fold-level held-out values,
@@ -117,6 +123,7 @@ margot_policy_tree_cv <- function(model_results,
                                   label_mapping = NULL,
                                   seed = 42L,
                                   tree_method = c("fastpolicytree", "policytree"),
+                                  min_node_size = NULL,
                                   verbose = TRUE) {
   # evaluate policy-learning procedure on held-out folds and return summaries.
   if (!is.list(model_results) || is.null(model_results$results) || !is.list(model_results$results)) {
@@ -128,7 +135,9 @@ margot_policy_tree_cv <- function(model_results,
 
   covariate_mode <- match.arg(covariate_mode)
   tree_method <- match.arg(tree_method)
+  requested_tree_method <- tree_method
   actual_tree_method <- .get_tree_method(tree_method, verbose)
+  min_node_size <- .resolve_policy_tree_min_node_size(min_node_size)
   depths <- .policy_cv_normalise_depths(depths)
 
   num_folds <- as.integer(num_folds)
@@ -210,7 +219,8 @@ margot_policy_tree_cv <- function(model_results,
               model_data$covariates[train_pos, selected_vars, drop = FALSE],
               model_data$dr_scores[train_pos, , drop = FALSE],
               depth = depth,
-              tree_method = actual_tree_method
+              tree_method = actual_tree_method,
+              min_node_size = min_node_size
             ),
             error = function(e) {
               if (isTRUE(verbose)) {
@@ -334,8 +344,13 @@ margot_policy_tree_cv <- function(model_results,
     metadata = list(
       num_folds = num_folds,
       n_repeats = n_repeats,
+      requested_depths = depths,
+      realised_depths = sort(unique(as.integer(fold_values$depth))),
       depths = depths,
+      requested_tree_method = requested_tree_method,
       tree_method = actual_tree_method,
+      engine_fallback = !identical(requested_tree_method, actual_tree_method),
+      min_node_size = min_node_size,
       seed = seed,
       min_gain_for_depth_switch = min_gain_for_depth_switch,
       max_stability_loss_for_depth_switch = max_stability_loss_for_depth_switch,

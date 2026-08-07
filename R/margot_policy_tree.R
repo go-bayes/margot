@@ -22,8 +22,8 @@
 #'     \item{"add"}{Add custom_covariates to existing top variables}
 #'     \item{"all"}{Use all available covariates}
 #'   }
-#' @param depth Numeric or character specifying which depth(s) to compute:
-#'   1 for single split, 2 for two splits, or "both" for both depths (default).
+#' @param depth Numeric or character specifying permitted branching levels:
+#'   1 for one branching level, 2 for two branching levels, or "both" (default).
 #' @param train_proportion Numeric value between 0 and 1 for the proportion of data
 #'   used for training depth-2 trees. Default is 0.5. Note: depth-1 trees use all
 #'   available data but only the selected covariates (same as depth-2).
@@ -34,6 +34,10 @@
 #'   (default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
 #'   computation with identical results. Falls back to policytree if fastpolicytree
 #'   is not installed.
+#' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
+#'   terminal node. This setting is separate from \code{depth} and from a causal
+#'   forest's \code{grf_defaults$min.node.size}. \code{NULL} retains the
+#'   compatibility option fallback, then 1.
 #'
 #' @return A list structured similarly to margot_causal_forest() output, containing:
 #' \itemize{
@@ -123,7 +127,8 @@ margot_policy_tree <- function(model_results,
                                label_mapping = NULL,
                                verbose = TRUE,
                                seed = 12345,
-                               tree_method = c("fastpolicytree", "policytree")) {
+                               tree_method = c("fastpolicytree", "policytree"),
+                               min_node_size = NULL) {
   # validate inputs
   if (!is.list(model_results) || !"results" %in% names(model_results)) {
     stop("model_results must be a list containing a 'results' element")
@@ -131,7 +136,9 @@ margot_policy_tree <- function(model_results,
 
   # validate tree method
   tree_method <- match.arg(tree_method)
+  requested_tree_method <- tree_method
   actual_tree_method <- .get_tree_method(tree_method, verbose)
+  min_node_size <- .resolve_policy_tree_min_node_size(min_node_size)
 
   covariate_mode <- match.arg(covariate_mode)
 
@@ -244,8 +251,13 @@ margot_policy_tree <- function(model_results,
       train_proportion = train_proportion,
       verbose = verbose,
       seed = seed,
-      tree_method = actual_tree_method
+      tree_method = actual_tree_method,
+      min_node_size = min_node_size
     )
+
+    updated_model$policy_tree_metadata$requested_tree_method <- requested_tree_method
+    updated_model$policy_tree_metadata$engine_fallback <-
+      !identical(requested_tree_method, actual_tree_method)
 
     output$results[[model_name]] <- updated_model
   }
@@ -270,7 +282,8 @@ compute_policy_trees_for_model <- function(model_result,
                                            train_proportion,
                                            verbose,
                                            seed,
-                                           tree_method) {
+                                           tree_method,
+                                           min_node_size) {
   # set seed for reproducibility
   if (!is.null(seed)) {
     set.seed(seed + as.integer(as.factor(model_name)))
@@ -366,7 +379,8 @@ compute_policy_trees_for_model <- function(model_result,
       covariates[train_idx, selected_covars, drop = FALSE],
       dr_scores[train_idx, ],
       depth = 1,
-      tree_method = tree_method
+      tree_method = tree_method,
+      min_node_size = min_node_size
     )
   }
 
@@ -402,7 +416,8 @@ compute_policy_trees_for_model <- function(model_result,
         covariates[train_idx, depth2_covars, drop = FALSE],
         dr_scores[train_idx, ],
         depth = 2,
-        tree_method = tree_method
+        tree_method = tree_method,
+        min_node_size = min_node_size
       )
 
       preds <- tryCatch(
@@ -450,9 +465,15 @@ compute_policy_trees_for_model <- function(model_result,
   # store metadata
   output$policy_tree_covariates <- selected_covars
   output$policy_tree_metadata <- list(
+    requested_depths = c(if (compute_depth1) 1L, if (compute_depth2) 2L),
+    realised_depths = c(
+      if (!is.null(output$policy_tree_depth_1)) 1L,
+      if (!is.null(output$policy_tree_depth_2)) 2L
+    ),
     covariate_mode = covariate_mode,
     train_proportion = train_proportion,
     tree_method = tree_method,
+    min_node_size = min_node_size,
     actual_train_size = if (compute_depth2 && exists("train_idx")) length(train_idx) else NA,
     actual_test_size = if (compute_depth2 && exists("test_idx")) length(test_idx) else NA,
     depth1_covariates = if (compute_depth1) selected_covars else NULL,

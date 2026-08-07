@@ -167,6 +167,7 @@ test_that("margot_policy_workflow uses held-out depth map when available", {
 
   testthat::local_mocked_bindings(
     margot_policy_tree_cv = function(...) {
+      calls$cv_min_node_size <- list(...)$min_node_size
       list(
         depth_map = c(model_a = 1L),
         depth_selection = data.frame(
@@ -214,8 +215,13 @@ test_that("margot_policy_workflow uses held-out depth map when available", {
     margot_build_method_explanation = function(...) list(long = "", short = "", prereg = "")
   )
 
-  wf <- margot_policy_workflow(stability, include_interpretation = FALSE)
+  wf <- margot_policy_workflow(
+    stability,
+    include_interpretation = FALSE,
+    policy_tree_min_node_size = 23L
+  )
 
+  expect_equal(calls$cv_min_node_size, 23L)
   expect_equal(calls$compare_model_names, c(model_a = 1L))
   expect_equal(calls$summary_model_names, "model_a")
   expect_equal(calls$summary_depths, c(model_a = 1L))
