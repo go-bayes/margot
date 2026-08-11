@@ -372,7 +372,7 @@ margot_naive_regressions <- function(
       prefix %||% "",
       base_filename,
       if (use_timestamp) paste0("_", format(Sys.time(), "%Y%m%d%H%M%S")) else "",
-      ".qs"
+      ""
     )
     
     output_list <- list(
@@ -385,8 +385,8 @@ margot_naive_regressions <- function(
       flip_info = flip_info
     )
     
-    here_save_qs(output_list, file.path(save_path, filename))
-    cli::cli_alert_info("Results saved to: {.path {file.path(save_path, filename)}}")
+    output_path <- here_save(output_list, filename, dir_path = save_path, quiet = TRUE)
+    cli::cli_alert_info("Results saved to: {.path {output_path}}")
   }
   
   # return results following margot ecosystem pattern

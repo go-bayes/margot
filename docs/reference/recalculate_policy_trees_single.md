@@ -15,6 +15,8 @@ recalculate_policy_trees_single(
   covariate_mode,
   verbose,
   seed,
-  tree_method
+  tree_method,
+  min_node_size,
+  requested_tree_method
 )
 ```

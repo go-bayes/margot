@@ -2,7 +2,6 @@
 <url><loc>https://go-bayes.github.io/margot/404.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/LICENSE.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/index.html</loc></url>
-<url><loc>https://go-bayes.github.io/margot/articles/migrating-off-qs.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/standard-grf-policy-tree-workflow.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
@@ -57,6 +56,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/dot-get_tree_method.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-has_fastpolicytree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-normalize_policy_actions.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/dot-resolve_policy_tree_min_node_size.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-strict_exposure_outcome_censoring.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/double_robust_marginal.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/extract_from_diff_gain.html</loc></url>
@@ -85,10 +85,8 @@
 <url><loc>https://go-bayes.github.io/margot/reference/group_tab.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/here_read.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/here_read_arrow.html</loc></url>
-<url><loc>https://go-bayes.github.io/margot/reference/here_read_qs.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/here_save.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/here_save_arrow.html</loc></url>
-<url><loc>https://go-bayes.github.io/margot/reference/here_save_qs.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/impute_and_combine.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/integrated_difference_simple.html</loc></url>
@@ -115,8 +113,6 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compare_groups.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compute_gender_weights_by_wave.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_compute_ipsi_probability.html</loc></url>
-<url><loc>https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.html</loc></url>
-<url><loc>https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_correct_combined_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_count_dyads.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_count_ids.html</loc></url>
@@ -148,9 +144,12 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_invert_measure.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_analysis_weight_report.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_censoring_report.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_combine_and_contrast.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_estimator_spec.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_evalue.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_evidence_report.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_overlap.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_overlap_plot_grid.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_lmtp_positivity.html</loc></url>
@@ -276,6 +275,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_table_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_table_policy_value.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_table_treated_only.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_target_projection_report.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_text_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_transition_ipsi_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_transition_table.html</loc></url>

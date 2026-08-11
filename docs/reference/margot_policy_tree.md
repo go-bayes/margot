@@ -20,7 +20,8 @@ margot_policy_tree(
   label_mapping = NULL,
   verbose = TRUE,
   seed = 12345,
-  tree_method = c("fastpolicytree", "policytree")
+  tree_method = c("fastpolicytree", "policytree"),
+  min_node_size = NULL
 )
 ```
 
@@ -61,8 +62,8 @@ margot_policy_tree(
 
 - depth:
 
-  Numeric or character specifying which depth(s) to compute: 1 for
-  single split, 2 for two splits, or "both" for both depths (default).
+  Numeric or character specifying permitted branching levels: 1 for one
+  branching level, 2 for two branching levels, or "both" (default).
 
 - train_proportion:
 
@@ -89,6 +90,13 @@ margot_policy_tree(
   or "fastpolicytree". The fastpolicytree package provides ~10x faster
   computation with identical results. Falls back to policytree if
   fastpolicytree is not installed.
+
+- min_node_size:
+
+  Integer or `NULL`. Smallest permitted policy-tree terminal node. This
+  setting is separate from `depth` and from a causal forest's
+  `grf_defaults$min.node.size`. `NULL` retains the compatibility option
+  fallback, then 1.
 
 ## Value
 

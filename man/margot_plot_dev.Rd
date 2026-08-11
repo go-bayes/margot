@@ -60,11 +60,11 @@ upstream helpers, e.g., group_tab()).}
 
 \item{label_mapping}{Optional named list for transform_label().}
 
-\item{save_output}{Logical; if TRUE, saves the result list via here_save_qs().}
+\item{save_output}{Logical; if TRUE, saves the result list as RDS.}
 
 \item{use_timestamp}{Logical; append timestamp to saved filename.}
 
-\item{base_filename, prefix, save_path}{Save controls passed to here_save_qs().}
+\item{base_filename, prefix, save_path}{Save controls passed to [here_save()].}
 
 \item{original_df}{Optional original data for back‑transform helpers.}
 

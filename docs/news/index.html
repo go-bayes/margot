@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.015</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,7 +19,6 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
-    <li><a class="dropdown-item" href="../articles/migrating-off-qs.html">Migrating off `qs`</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -38,7 +37,76 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.1.015" id="id_2026-08-07-margot-11015-development">[2026-08-07] margot 1.1.015 (development)<a class="anchor" aria-label="anchor" href="#id_2026-08-07-margot-11015-development"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.1.019" id="id_2026-08-11-margot-11019-development">[2026-08-11] margot 1.1.019 (development)<a class="anchor" aria-label="anchor" href="#id_2026-08-11-margot-11019-development"></a></h2>
+<div class="section level4">
+<h4 id="native-rds-and-tabular-arrow-storage-1-1-019">Native RDS and tabular Arrow storage<a class="anchor" aria-label="anchor" href="#native-rds-and-tabular-arrow-storage-1-1-019"></a></h4>
+<div class="section level5">
+<h5 id="changed-1-1-019">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-019"></a></h5>
+<ul><li>Margot now uses native RDS for R objects and Parquet through Arrow for rectangular tabular data. Plot objects, result lists, and LMTP checkpoints therefore use RDS. <code><a href="../reference/here_save.html">here_save()</a></code> remains available for any R object, including a small data frame for which a native R round trip is preferable.</li>
+<li>
+<code><a href="../reference/here_save_arrow.html">here_save_arrow()</a></code> accepts only data frames and Arrow tables. Non-tabular objects must use <code><a href="../reference/here_save.html">here_save()</a></code>.</li>
+<li>LMTP checkpoint restoration now reads RDS checkpoints only.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="removed-1-1-019">Removed<a class="anchor" aria-label="anchor" href="#removed-1-1-019"></a></h5>
+<ul><li>The QS and QS2 readers, writers, directory converters, optional dependencies, migration vignette, and package documentation have been removed. Margot no longer supplies an active QS migration route.</li>
+</ul></div>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.018" id="id_2026-08-11-margot-11018">[2026-08-11] margot 1.1.018<a class="anchor" aria-label="anchor" href="#id_2026-08-11-margot-11018"></a></h2>
+<div class="section level4">
+<h4 id="nonbinding-lmtp-censoring-projection-and-weight-reports-1-1-018">Nonbinding LMTP censoring, projection, and weight reports<a class="anchor" aria-label="anchor" href="#nonbinding-lmtp-censoring-projection-and-weight-reports-1-1-018"></a></h4>
+<div class="section level5">
+<h5 id="added-1-1-018">Added<a class="anchor" aria-label="anchor" href="#added-1-1-018"></a></h5>
+<ul><li>
+<code><a href="../reference/margot_lmtp_censoring_report.html">margot_lmtp_censoring_report()</a></code> separately reports observed retention, fitted continued-observation probabilities, censoring factors, joint exposure-and-censoring ratios, exact-zero causes, learner specification, and out-of-fold performance. The computed tables are aggregate and return no censoring-support classification or route action.</li>
+<li>
+<code><a href="../reference/margot_target_projection_report.html">margot_target_projection_report()</a></code> compares the realised source sample with the registered target population before and after projection weighting. It reports numeric and categorical balance, representation across registered strata, projection-weight concentration, harmonisation, model provenance, and uncertainty without an accept-or-reject classification.</li>
+<li>
+<code><a href="../reference/margot_lmtp_analysis_weight_report.html">margot_lmtp_analysis_weight_report()</a></code> reports the full weight <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mi>i</mi></msub><msub><mo>∏</mo><mi>t</mi></msub><msubsup><mi>r</mi><mrow><mi>i</mi><mi>t</mi></mrow><mrow><mi>A</mi><mo>,</mo><mi>C</mi></mrow></msubsup><mo stretchy="false" form="prefix">(</mo><mi>d</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">w_i\prod_t r_{it}^{A,C}(d)</annotation></semantics></math> at each longitudinal node. Zero weights remain in the distribution and the denominator for the Kish effective-sample-size fraction; the report also gives top-weight shares, exact zero and missingness causes, and the consequence of registered numerical regularisation.</li>
+<li>
+<code><a href="../reference/margot_lmtp_evidence_report.html">margot_lmtp_evidence_report()</a></code> combines the three report families under stable names. Every structurally unavailable component requires an explicit reason in the returned manifest.</li>
+</ul></div>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.017" id="id_2026-08-07-margot-11017-development">[2026-08-07] margot 1.1.017 (development)<a class="anchor" aria-label="anchor" href="#id_2026-08-07-margot-11017-development"></a></h2>
+<div class="section level4">
+<h4 id="honest-constant-policy-comparison-and-value-only-depth-selection-1-1-017">Honest constant-policy comparison and value-only depth selection<a class="anchor" aria-label="anchor" href="#honest-constant-policy-comparison-and-value-only-depth-selection-1-1-017"></a></h4>
+<div class="section level5">
+<h5 id="added-1-1-017">Added<a class="anchor" aria-label="anchor" href="#added-1-1-017"></a></h5>
+<ul><li>
+<code>margot_policy_tree_cv(depth_selection_rule = "value_only")</code> selects depth two exactly when its repeat-averaged held-out value exceeds depth one’s by the registered margin. Root recurrence and assignment agreement remain reported quantities but do not veto the value decision. The historical <code>"value_and_stability"</code> rule remains the package default for backwards compatibility.</li>
+<li>
+<code>min_gain_over_constant</code> supplies a separate registered margin for preferring the selected tree over the constant-policy learning procedure. <code>policy_selection</code> records the selected tree depth, both held-out values, their difference, the margin, the preferred policy type, and the selection reason.</li>
+<li>Supplied analysis weights now enter the policy-learning target consistently: the training action-score matrix is multiplied once by the aligned positive weights before tree fitting and constant-action selection, while held-out values remain weighted means of the unmultiplied action scores. Rows with non-positive or non-finite weights are excluded before fold assignment.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="corrected-1-1-017">Corrected<a class="anchor" aria-label="anchor" href="#corrected-1-1-017"></a></h5>
+<ul><li>The best-constant comparator is now honestly selected in each training fold and only then evaluated in the corresponding held-out fold. Earlier versions selected the better constant action from the held-out observations themselves, which did not evaluate a learnable constant-policy procedure. Both raw held-out constant values and the validation-selected maximum remain available descriptively under names that identify the latter as a validation oracle; automatic policy selection never uses that oracle.</li>
+<li>A margin attained up to numerical precision counts as attaining the registered threshold, so a computed difference of 0.01 cannot be rejected because of floating-point representation.</li>
+</ul></div>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.016" id="id_2026-08-07-margot-11016">[2026-08-07] margot 1.1.016<a class="anchor" aria-label="anchor" href="#id_2026-08-07-margot-11016"></a></h2>
+<div class="section level4">
+<h4 id="explicit-policy-tree-terminal-node-size-1-1-016">Explicit policy-tree terminal-node size<a class="anchor" aria-label="anchor" href="#explicit-policy-tree-terminal-node-size-1-1-016"></a></h4>
+<div class="section level5">
+<h5 id="added-1-1-016">Added<a class="anchor" aria-label="anchor" href="#added-1-1-016"></a></h5>
+<ul><li>Every public policy-tree fitting route now accepts an explicit <code>min_node_size</code> argument: <code><a href="../reference/margot_policy_tree.html">margot_policy_tree()</a></code>, <code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code>, <code><a href="../reference/margot_policy_tree_stability.html">margot_policy_tree_stability()</a></code>, the deprecated <code><a href="../reference/margot_policy_tree_bootstrap.html">margot_policy_tree_bootstrap()</a></code>, <code><a href="../reference/margot_policy_split_diagnostic.html">margot_policy_split_diagnostic()</a></code>, and <code><a href="../reference/margot_recalculate_policy_trees.html">margot_recalculate_policy_trees()</a></code>. <code>margot_policy_workflow(policy_tree_min_node_size = ...)</code> passes the same setting to automatic held-out cross-validation.</li>
+<li>Policy-tree metadata records the requested and realised engine, whether an engine fallback occurred, the requested branching levels, and the policy-tree terminal-node minimum. The policy-tree setting remains distinct from a causal forest’s <code>min.node.size</code>.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="changed-1-1-016">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-016"></a></h5>
+<ul><li>The global option <code>margot.policy_tree.min_node_size</code> remains only as a compatibility fallback when the explicit argument is <code>NULL</code>; the final fallback remains 1 for backwards compatibility. New registered analyses can therefore state the terminal-node minimum in the function call without hidden session state.</li>
+<li>Policy-tree documentation now describes depths <code>1L</code> and <code>2L</code> as permitted branching levels, not node-size settings.</li>
+</ul></div>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.015" id="id_2026-08-07-margot-11015">[2026-08-07] margot 1.1.015<a class="anchor" aria-label="anchor" href="#id_2026-08-07-margot-11015"></a></h2>
 <div class="section level4">
 <h4 id="depth-selection-in-held-out-policy-tree-cross-validation-1-1-015">Depth selection in held-out policy-tree cross-validation<a class="anchor" aria-label="anchor" href="#depth-selection-in-held-out-policy-tree-cross-validation-1-1-015"></a></h4>
 <p>A simulation validation in the <code>arc</code> repository (<code>test/grf-blp-policy-cv-validation/</code>, commits <code>fa4f26d</code> and <code>6c4370b</code>) fitted the registered procedure under a constant-effect null and found that <code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code> selected depth two in 1 of 10 replicates, because the stability guard compares depth-two root stability against depth-one root stability, so a depth-one root that is itself unstable makes the guard pass trivially and leaves the 0.01 gain threshold doing all the protective work.</p>
@@ -332,9 +400,9 @@
 <h2 class="pkg-version" data-toc-text="1.0.320" id="id_2026-05-06-margot-10320">[2026-05-06] margot 1.0.320<a class="anchor" aria-label="anchor" href="#id_2026-05-06-margot-10320"></a></h2>
 <div class="section level4">
 <h4 id="changed-1-0-320">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-320"></a></h4>
-<ul><li>Deprecated the remaining qs-named storage helpers. <code><a href="../reference/here_save_qs.html">here_save_qs()</a></code> and <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> now warn and point users to <code><a href="../reference/here_save_arrow.html">here_save_arrow()</a></code> and <code><a href="../reference/here_read_arrow.html">here_read_arrow()</a></code> for general object storage.</li>
+<ul><li>Deprecated the remaining qs-named storage helpers. <code>here_save_qs()</code> and <code>here_read_qs()</code> now warn and point users to <code><a href="../reference/here_save_arrow.html">here_save_arrow()</a></code> and <code><a href="../reference/here_read_arrow.html">here_read_arrow()</a></code> for general object storage.</li>
 <li>LMTP crash-recovery saves remain <code>.rds</code> files. <code>margot_lmtp(save_output = TRUE)</code> still writes per-model checkpoints immediately after each successful fit, which keeps partial work recoverable after crashes or power cuts without relying on <code>qs</code>, <code>qs2</code>, Arrow, or Docker.</li>
-<li>Retained direct host-session support for legacy <code>.qs</code> reads and conversion when the optional <code>qs</code> package is available. <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> reads legacy <code>.qs</code> files as a migration bridge, and <code><a href="../reference/margot_convert_qs_dir.html">margot_convert_qs_dir()</a></code> remains the direct local <code>.qs</code> to <code>.qs2</code> converter.</li>
+<li>Retained direct host-session support for legacy <code>.qs</code> reads and conversion when the optional <code>qs</code> package is available. <code>here_read_qs()</code> reads legacy <code>.qs</code> files as a migration bridge, and <code>margot_convert_qs_dir()</code> remains the direct local <code>.qs</code> to <code>.qs2</code> converter.</li>
 <li>
 <code><a href="../reference/margot_lmtp_restore_checkpoints.html">margot_lmtp_restore_checkpoints()</a></code> now restores <code>.rds</code> checkpoints and legacy <code>.qs</code> checkpoints when optional <code>qs</code> is installed.</li>
 <li>Soft-deprecated older <code>clarify</code>/matching workflows and moved <code>clarify</code> and <code>MatchThem</code> out of hard imports.</li>
@@ -351,7 +419,7 @@
 <div class="section level4">
 <h4 id="fixed-1-0-319">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-0-319"></a></h4>
 <ul><li>
-<code><a href="../reference/margot_convert_qs_dir_docker.html">margot_convert_qs_dir_docker()</a></code> now <code><a href="https://rdrr.io/r/base/shQuote.html" class="external-link">shQuote()</a></code>s the <code>-v</code> bind-mount values, so directory paths containing spaces (for example, <code>/Users/.../v-project Dropbox/data/...</code>) survive <code><a href="https://rdrr.io/r/base/system2.html" class="external-link">system2()</a></code>’s shell pass to <code>docker run</code>. Without this, paths with spaces produced <code>docker: invalid reference format</code> and the migration aborted.</li>
+<code>margot_convert_qs_dir_docker()</code> now <code><a href="https://rdrr.io/r/base/shQuote.html" class="external-link">shQuote()</a></code>s the <code>-v</code> bind-mount values, so directory paths containing spaces (for example, <code>/Users/.../v-project Dropbox/data/...</code>) survive <code><a href="https://rdrr.io/r/base/system2.html" class="external-link">system2()</a></code>’s shell pass to <code>docker run</code>. Without this, paths with spaces produced <code>docker: invalid reference format</code> and the migration aborted.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -359,7 +427,7 @@
 <div class="section level4">
 <h4 id="changed-1-0-318">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-318"></a></h4>
 <ul><li>
-<code><a href="../reference/here_save_qs.html">here_save_qs()</a></code> and <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> now use the <strong><code>qs2</code></strong> package internally. New saves write <code>.qs2</code> files at default <code>compress_level = 4</code>. <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> looks for <code>&lt;name&gt;.qs2</code> first and falls back to <code>&lt;name&gt;.qs</code> (legacy) when present and the optional <code>qs</code> package is installed; otherwise it errors with the exact migration command to run. The <code>preset</code> argument is soft-deprecated.</li>
+<code>here_save_qs()</code> and <code>here_read_qs()</code> now use the <strong><code>qs2</code></strong> package internally. New saves write <code>.qs2</code> files at default <code>compress_level = 4</code>. <code>here_read_qs()</code> looks for <code>&lt;name&gt;.qs2</code> first and falls back to <code>&lt;name&gt;.qs</code> (legacy) when present and the optional <code>qs</code> package is installed; otherwise it errors with the exact migration command to run. The <code>preset</code> argument is soft-deprecated.</li>
 <li>
 <code><a href="../reference/here_save_arrow.html">here_save_arrow()</a></code> and <code><a href="../reference/here_read_arrow.html">here_read_arrow()</a></code> now round-trip arbitrary R objects, not just data frames. Tabular inputs are written as native parquet; everything else (lists, fitted models, ggplots, lmtp/grf result objects) is wrapped in a single-row “margot envelope” parquet via <code><a href="https://rdrr.io/pkg/qs2/man/qs_serialize.html" class="external-link">qs2::qs_serialize()</a></code> and transparently restored on read. Existing parquet files written by earlier margot versions still read identically.</li>
 <li>
@@ -368,9 +436,9 @@
 <div class="section level4">
 <h4 id="added-1-0-318">Added<a class="anchor" aria-label="anchor" href="#added-1-0-318"></a></h4>
 <ul><li>
-<strong><code><a href="../reference/margot_convert_qs_dir.html">margot_convert_qs_dir()</a></code></strong> — recursively walks a directory and converts every <code>.qs</code> file to a <code>.qs2</code> sibling, with a built-in <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> read-verify before any optional original-deletion. Designed to be run once on a machine that still has <code>qs</code> installed.</li>
+<strong><code>margot_convert_qs_dir()</code></strong> — recursively walks a directory and converts every <code>.qs</code> file to a <code>.qs2</code> sibling, with a built-in <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> read-verify before any optional original-deletion. Designed to be run once on a machine that still has <code>qs</code> installed.</li>
 <li>
-<strong><code><a href="../reference/margot_convert_qs_dir_docker.html">margot_convert_qs_dir_docker()</a></code></strong> — the user-facing migration entry point for anyone on R 4.6+ who cannot build <code>qs</code> locally. Runs the same conversion inside a <code>rocker/r-ver:4.5</code> Docker container, using a pinned 2024-12-01 Posit Package Manager snapshot so <code>qs</code> 0.27.3 builds reproducibly against the contemporaneous <code>stringfish</code>/<code>BH</code>. One R call from the host; verified end-to-end on a 258 MB margot causal-forest output.</li>
+<strong><code>margot_convert_qs_dir_docker()</code></strong> — the user-facing migration entry point for anyone on R 4.6+ who cannot build <code>qs</code> locally. Runs the same conversion inside a <code>rocker/r-ver:4.5</code> Docker container, using a pinned 2024-12-01 Posit Package Manager snapshot so <code>qs</code> 0.27.3 builds reproducibly against the contemporaneous <code>stringfish</code>/<code>BH</code>. One R call from the host; verified end-to-end on a 258 MB margot causal-forest output.</li>
 <li>New tests: <code>tests/testthat/test-here-qs.R</code>, <code>test-here-arrow.R</code> (extended), <code>test-margot-convert-qs-dir.R</code>, <code>test-margot-convert-qs-dir-docker.R</code> (full integration test gated by <code>MARGOT_TEST_DOCKER=1</code>).</li>
 <li>New article: <code>vignettes/migrating-qs-to-qs2.Rmd</code>, walking users through the migration from R 4.5 + <code>qs</code> to R 4.6+ + <code>qs2</code>.</li>
 </ul></div>
@@ -522,7 +590,7 @@
 <div class="section level4">
 <h4 id="changed-1-0-295">Changed<a class="anchor" aria-label="anchor" href="#changed-1-0-295"></a></h4>
 <ul><li>
-<code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> and <code><a href="../reference/here_save_qs.html">here_save_qs()</a></code> now produce a compatibility warning and suggest Arrow helpers for new workflows (suppressed when <code>quiet = TRUE</code>).</li>
+<code>here_read_qs()</code> and <code>here_save_qs()</code> now produce a compatibility warning and suggest Arrow helpers for new workflows (suppressed when <code>quiet = TRUE</code>).</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -3654,7 +3722,7 @@
 <div class="section level3">
 <h3 id="improved-1-0-35">improved<a class="anchor" aria-label="anchor" href="#improved-1-0-35"></a></h3>
 <ul><li>
-<code><a href="../reference/here_save.html">here_save()</a></code> and <code><a href="../reference/here_save_qs.html">here_save_qs()</a></code> now correctly reports size of saved file.</li>
+<code><a href="../reference/here_save.html">here_save()</a></code> and <code>here_save_qs()</code> now correctly reports size of saved file.</li>
 <li>tidying of roxygen2 code (‘mc_test’ removed and replaced with ‘result_object’)</li>
 <li>
 <code><a href="../reference/margot_plot_policy_tree.html">margot_plot_policy_tree()</a></code> nicer label placement.</li>
@@ -4967,7 +5035,7 @@
 <div class="section level3">
 <h3 id="improved-0-2-1-35">Improved<a class="anchor" aria-label="anchor" href="#improved-0-2-1-35"></a></h3>
 <ul><li>
-<code><a href="../reference/here_save_qs.html">here_save_qs()</a></code> and <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> report where and object was saved and how large it is.</li>
+<code>here_save_qs()</code> and <code>here_read_qs()</code> report where and object was saved and how large it is.</li>
 <li>
 <code><a href="../reference/here_save.html">here_save()</a></code>and <code><a href="../reference/here_read.html">here_read()</a></code>, ditto, and also ask users to specify a directory path, defaulting to <code>push_mods</code> if none is supplied</li>
 </ul></div>
@@ -5057,7 +5125,7 @@
 <ul><li>
 <code><a href="../reference/margot_plot.html">margot_plot()</a></code> - consistent names for results table if these are modified using the new <code>label_mapping</code> option.</li>
 <li>
-<code><a href="../reference/here_save_qs.html">here_save_qs()</a></code> and <code><a href="../reference/here_read_qs.html">here_read_qs()</a></code> minor tweaks.</li>
+<code>here_save_qs()</code> and <code>here_read_qs()</code> minor tweaks.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -5556,7 +5624,7 @@
 <div class="section level4">
 <h4 id="fixes-1-0-242">Fixes<a class="anchor" aria-label="anchor" href="#fixes-1-0-242"></a></h4>
 <ul><li>LMTP overlap grid now respects multi-wave density ratios when stored as <code>Matrix</code> or <code>data.frame</code> by coercing to base matrices before iterating waves. This restores one panel per wave × shift.</li>
-<li>Grid axis limits use <code><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian()</a></code> to avoid dropping bars (no more “Removed rows” warnings when harmonising x/y ranges).</li>
+<li>Grid axis limits use <code>coord_cartesian()</code> to avoid dropping bars (no more “Removed rows” warnings when harmonising x/y ranges).</li>
 <li>Shift order in grids and text respects the user-supplied <code>shifts</code> vector without dropping additional wave panels.</li>
 </ul></div>
 <div class="section level4">

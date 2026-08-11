@@ -159,6 +159,14 @@ stable state. Expect breaking changes.
   : Summarize positivity via density ratios for LMTP fits
 - [`margot_lmtp_positivity_gate()`](https://go-bayes.github.io/margot/reference/margot_lmtp_positivity_gate.md)
   : Registered trim-ladder positivity gate for LMTP fits (defunct)
+- [`margot_lmtp_censoring_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_censoring_report.md)
+  : Report descriptive censoring evidence for an LMTP analysis
+- [`margot_target_projection_report()`](https://go-bayes.github.io/margot/reference/margot_target_projection_report.md)
+  : Report target-population projection evidence
+- [`margot_lmtp_analysis_weight_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_analysis_weight_report.md)
+  : Report full LMTP analysis-weight concentration
+- [`margot_lmtp_evidence_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_evidence_report.md)
+  : Assemble the mandatory nonbinding LMTP evidence reports
 - [`margot_interpret_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   [`margot_interpret_lmtp_overlap()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   : Interpret LMTP positivity via effective sample sizes
@@ -405,22 +413,13 @@ stable state. Expect breaking changes.
 ## Store and recover
 
 - [`here_read()`](https://go-bayes.github.io/margot/reference/here_read.md)
-  : Read Data Frame or Object from RDS File in a Specified Directory
+  : Read an R Object from RDS in a Specified Directory
 - [`here_save()`](https://go-bayes.github.io/margot/reference/here_save.md)
-  : Save Data Frame as RDS File in a Specified Directory
+  : Save an R Object as RDS in a Specified Directory
 - [`here_read_arrow()`](https://go-bayes.github.io/margot/reference/here_read_arrow.md)
   : Read Object from Parquet File in a Specified Directory
 - [`here_save_arrow()`](https://go-bayes.github.io/margot/reference/here_save_arrow.md)
-  : Save Object to Parquet File in a Specified Directory
-- [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  : Read Object from a Deprecated qs2 or Legacy qs File
-- [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
-  : Save Object to a Deprecated qs2 File
-- [`margot_convert_qs_dir()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.md)
-  : Convert legacy \`.qs\` files in a directory to \`.qs2\`
-- [`margot_convert_qs_dir_docker()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.md)
-  : Convert legacy \`.qs\` files via a Docker R 4.5 container
-  (deprecated)
+  : Save Tabular Data to Parquet in a Specified Directory
 - [`margot_save_png()`](https://go-bayes.github.io/margot/reference/margot_save_png.md)
   : Save Margot Plot as PNG
 - [`clear_margot_cache()`](https://go-bayes.github.io/margot/reference/clear_margot_cache.md)
@@ -528,8 +527,3 @@ stable state. Expect breaking changes.
 
 - [Standard GRF and policy-tree
   workflow](https://go-bayes.github.io/margot/articles/standard-grf-policy-tree-workflow.md):
-
-### Storage and migration
-
-- [Migrating off
-  \`qs\`](https://go-bayes.github.io/margot/articles/migrating-off-qs.md):

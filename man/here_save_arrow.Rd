@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{here_save_arrow}
 \alias{here_save_arrow}
-\title{Save Object to Parquet File in a Specified Directory}
+\title{Save Tabular Data to Parquet in a Specified Directory}
 \usage{
 here_save_arrow(
   obj,
@@ -15,7 +15,7 @@ here_save_arrow(
 )
 }
 \arguments{
-\item{obj}{Object to be saved.}
+\item{obj}{Data frame or Arrow table to be saved.}
 
 \item{name}{Character string specifying the base name of the file.}
 
@@ -30,19 +30,14 @@ here_save_arrow(
 \item{...}{Additional arguments passed to `arrow::write_parquet()`.}
 }
 \description{
-Saves the provided object as a `.parquet` file under `name`, in
-`dir_path`. Data frames (and arrow tables) are written natively. Other R
-objects (lists, fitted models, ggplots, ...) are serialised with
-`qs2::qs_serialize()` and embedded in a single-row parquet envelope so the
-round-trip is lossless via `here_read_arrow()`.
+Saves a data frame or Arrow table as a `.parquet` file under
+`name` in `dir_path`. Use [here_save()] for lists, fitted models, plots, and
+other non-tabular R objects.
 }
 \examples{
 \dontrun{
 my_df <- data.frame(x = 1:5, y = letters[1:5])
 here_save_arrow(my_df, "my_saved_dataframe")
-
-fit <- lm(mpg ~ wt, data = mtcars)
-here_save_arrow(fit, "fit_arrow")  # wrapped via qs2 envelope
 }
 
 }

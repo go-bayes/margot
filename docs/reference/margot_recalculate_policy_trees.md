@@ -19,7 +19,8 @@ margot_recalculate_policy_trees(
   parallel = FALSE,
   n_cores = future::availableCores() - 1,
   seed = 12345,
-  tree_method = c("fastpolicytree", "policytree")
+  tree_method = c("fastpolicytree", "policytree"),
+  min_node_size = NULL
 )
 ```
 
@@ -87,6 +88,12 @@ margot_recalculate_policy_trees(
   - "policytree"Use the policytree package (default)
 
   - "fastpolicytree"Use the fastpolicytree package (about 10x faster)
+
+- min_node_size:
+
+  Integer or `NULL`. Smallest permitted policy-tree terminal node,
+  separate from tree depth and causal-forest node size. `NULL` retains
+  the compatibility option fallback, then 1.
 
 ## Value
 

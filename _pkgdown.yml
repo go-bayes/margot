@@ -34,11 +34,6 @@ articles:
     navbar: ~
     contents:
     - standard-grf-policy-tree-workflow
-  - title: "Storage and migration"
-    navbar: ~
-    contents:
-    - migrating-off-qs
-
 authors:
   Joseph A Bulbulia:
     href: https://github.com/go-bayes
@@ -220,10 +215,6 @@ reference:
     - here_save
     - here_read_arrow
     - here_save_arrow
-    - here_read_qs
-    - here_save_qs
-    - margot_convert_qs_dir
-    - margot_convert_qs_dir_docker
     - margot_save_png
     - clear_margot_cache
 

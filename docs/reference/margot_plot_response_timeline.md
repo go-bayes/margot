@@ -37,7 +37,7 @@ margot_plot_response_timeline(
 
 - save:
 
-  Logical. If TRUE, saves the plot as a qs file. Default is FALSE.
+  Logical. If TRUE, saves the plot as an RDS file. Default is FALSE.
 
 - save_path:
 

@@ -1022,24 +1022,10 @@ transform_var_name <- function(var_name, label_mapping = NULL,
 
 # read utilities ----------------------------------------------------------
 
-# envelope columns used to wrap arbitrary R objects inside a 1-row parquet file
-# so here_*_arrow can round-trip lists, fitted models, ggplots, etc.
-.margot_envelope_format_col  <- "margot_envelope_format"
-.margot_envelope_payload_col <- "margot_envelope_payload"
-
-.is_margot_envelope <- function(schema_names) {
-  identical(
-    sort(schema_names),
-    sort(c(.margot_envelope_format_col, .margot_envelope_payload_col))
-  )
-}
-
 #' @title Read Object from Parquet File in a Specified Directory
 #'
-#' @description Reads a `.parquet` file specified by `name` from a directory defined by
-#' `dir_path`. If the file is a tabular parquet, returns a data frame; if it is a
-#' margot envelope (single-row parquet wrapping a serialised R object), returns
-#' the original object.
+#' @description Reads a tabular `.parquet` file specified by `name` from a
+#' directory defined by `dir_path`.
 #'
 #' @param name Character string specifying the name of the Parquet file to be read (without the ".parquet" extension).
 #' @param dir_path Character string specifying the directory path from which the file will be read. If NULL (default), uses `push_mods`.
@@ -1061,20 +1047,7 @@ here_read_arrow <- function(name, dir_path = NULL, quiet = FALSE, ...) {
     stop(sprintf("File not found: %s", file_path))
   }
 
-  schema <- arrow::open_dataset(file_path)$schema
-  if (.is_margot_envelope(names(schema))) {
-    if (!requireNamespace("qs2", quietly = TRUE)) {
-      stop("Package 'qs2' is required to read margot-envelope parquet files. Install with install.packages('qs2').")
-    }
-    df <- arrow::read_parquet(file_path)
-    fmt <- df[[.margot_envelope_format_col]][[1]]
-    if (!identical(fmt, "qs2")) {
-      stop(sprintf("Unknown envelope format: %s", fmt))
-    }
-    obj <- qs2::qs_deserialize(df[[.margot_envelope_payload_col]][[1]])
-  } else {
-    obj <- arrow::read_parquet(file_path, ...)
-  }
+  obj <- arrow::read_parquet(file_path, ...)
 
   if (!quiet) {
     file_size <- margot_size(obj)
@@ -1087,15 +1060,13 @@ here_read_arrow <- function(name, dir_path = NULL, quiet = FALSE, ...) {
 }
 
 
-#' @title Save Object to Parquet File in a Specified Directory
+#' @title Save Tabular Data to Parquet in a Specified Directory
 #'
-#' @description Saves the provided object as a `.parquet` file under `name`, in
-#' `dir_path`. Data frames (and arrow tables) are written natively. Other R
-#' objects (lists, fitted models, ggplots, ...) are serialised with
-#' `qs2::qs_serialize()` and embedded in a single-row parquet envelope so the
-#' round-trip is lossless via `here_read_arrow()`.
+#' @description Saves a data frame or Arrow table as a `.parquet` file under
+#' `name` in `dir_path`. Use [here_save()] for lists, fitted models, plots, and
+#' other non-tabular R objects.
 #'
-#' @param obj Object to be saved.
+#' @param obj Data frame or Arrow table to be saved.
 #' @param name Character string specifying the base name of the file.
 #' @param dir_path Character string specifying the directory path where the file will be saved. If NULL (default), uses `push_mods`.
 #' @param compression Character string specifying the compression codec. Default is "zstd".
@@ -1107,9 +1078,6 @@ here_read_arrow <- function(name, dir_path = NULL, quiet = FALSE, ...) {
 #' \dontrun{
 #' my_df <- data.frame(x = 1:5, y = letters[1:5])
 #' here_save_arrow(my_df, "my_saved_dataframe")
-#'
-#' fit <- lm(mpg ~ wt, data = mtcars)
-#' here_save_arrow(fit, "fit_arrow")  # wrapped via qs2 envelope
 #' }
 #'
 #' @export
@@ -1123,31 +1091,20 @@ here_save_arrow <- function(obj, name, dir_path = NULL,
   is_tabular <- inherits(obj, "data.frame") ||
     inherits(obj, c("ArrowTabular", "Table", "RecordBatch"))
 
-  if (is_tabular) {
-    arrow::write_parquet(
-      obj,
-      file_path,
-      compression = compression,
-      compression_level = compression_level,
-      ...
-    )
-  } else {
-    if (!requireNamespace("qs2", quietly = TRUE)) {
-      stop("Package 'qs2' is required to wrap non-tabular objects in a margot-envelope parquet. Install with install.packages('qs2').")
-    }
-    payload <- qs2::qs_serialize(obj, compress_level = 4)
-    envelope <- tibble::tibble(
-      margot_envelope_format = "qs2",
-      margot_envelope_payload = list(payload)
-    )
-    arrow::write_parquet(
-      envelope,
-      file_path,
-      compression = compression,
-      compression_level = compression_level,
-      ...
+  if (!is_tabular) {
+    stop(
+      "`obj` must be a data frame or Arrow table. Use `here_save()` for non-tabular R objects.",
+      call. = FALSE
     )
   }
+
+  arrow::write_parquet(
+    obj,
+    file_path,
+    compression = compression,
+    compression_level = compression_level,
+    ...
+  )
 
   if (!quiet) {
     file_size <- margot_size(obj)

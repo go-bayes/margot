@@ -1,9 +1,7 @@
 # Read Object from Parquet File in a Specified Directory
 
-Reads a \`.parquet\` file specified by \`name\` from a directory defined
-by \`dir_path\`. If the file is a tabular parquet, returns a data frame;
-if it is a margot envelope (single-row parquet wrapping a serialised R
-object), returns the original object.
+Reads a tabular \`.parquet\` file specified by \`name\` from a directory
+defined by \`dir_path\`.
 
 ## Usage
 

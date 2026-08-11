@@ -148,7 +148,7 @@ margot_plot_shift <- function(df, col_name, binwidth = 1, range_highlight = NULL
           width = width, height = height, units = "in",
           device = "png", dpi = 300
         )
-        margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+        margot::here_save(p, filename, dir_path = save_path)
         cli::cli_alert_success("Plot saved successfully as '{filename}' in '{save_path}'")
       } else {
         cli::cli_alert_info("No save path provided. Plot not saved.")
@@ -264,7 +264,7 @@ margot_plot_shift <- function(df, col_name, binwidth = 1, range_highlight = NULL
 #         dpi = 300
 #       )
 #
-#       margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+#       margot::here_save(p, filename, dir_path = save_path)
 #
 #       cli::cli_alert_success("Plot saved successfully as '{filename}' in '{save_path}'")
 #     } else {

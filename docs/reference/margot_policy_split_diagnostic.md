@@ -19,6 +19,7 @@ margot_policy_split_diagnostic(
   custom_covariates = NULL,
   exclude_covariates = NULL,
   tree_method = c("fastpolicytree", "policytree"),
+  min_node_size = NULL,
   weights = NULL,
   verbose = TRUE
 )
@@ -39,7 +40,8 @@ margot_policy_split_diagnostic(
 
 - depths:
 
-  Integer vector containing 1, 2, or both. Defaults to `c(1L, 2L)`.
+  Integer vector containing one or two permitted branching levels.
+  Defaults to `c(1L, 2L)`; these are not node sizes.
 
 - n_splits:
 
@@ -71,6 +73,12 @@ margot_policy_split_diagnostic(
 - tree_method:
 
   Character; "fastpolicytree" when available, otherwise "policytree".
+
+- min_node_size:
+
+  Integer or `NULL`. Smallest permitted policy-tree terminal node. It is
+  separate from `depths` and causal-forest node size. `NULL` retains the
+  compatibility option fallback, then 1.
 
 - weights:
 

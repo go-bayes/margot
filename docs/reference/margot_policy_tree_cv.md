@@ -20,11 +20,14 @@ margot_policy_tree_cv(
   n_repeats = 20L,
   weights = NULL,
   min_gain_for_depth_switch = 0.01,
+  depth_selection_rule = c("value_and_stability", "value_only"),
+  min_gain_over_constant = 0.01,
   max_stability_loss_for_depth_switch = 0.05,
   min_root_stability_for_depth_switch = 0.5,
   label_mapping = NULL,
   seed = 42L,
   tree_method = c("fastpolicytree", "policytree"),
+  min_node_size = NULL,
   verbose = TRUE
 )
 ```
@@ -73,7 +76,8 @@ margot_policy_tree_cv(
 
 - depths:
 
-  Integer vector containing 1, 2, or both. Character values `"1"`,
+  Integer vector containing 1, 2, or both. These values are permitted
+  branching levels, not node-size settings. Character values `"1"`,
   `"2"`, and `"both"` are also accepted.
 
 - num_folds:
@@ -86,13 +90,28 @@ margot_policy_tree_cv(
 
 - weights:
 
-  Optional numeric vector of evaluation weights. If `NULL`,
-  `model_results$weights` is used when available.
+  Optional numeric vector of training and evaluation weights. If `NULL`,
+  `model_results$weights` is used when available. Training scores are
+  multiplied once by these weights before tree fitting; held-out values
+  are weighted means of the unmultiplied action scores.
 
 - min_gain_for_depth_switch:
 
   Numeric. Minimum held-out value gain required before depth two can be
   selected over depth one. Default is 0.01.
+
+- depth_selection_rule:
+
+  Character. `"value_and_stability"` retains the historical
+  value-plus-root-stability rule. `"value_only"` selects between depths
+  only by the registered held-out value margin and reports stability
+  without using it as a gate.
+
+- min_gain_over_constant:
+
+  Numeric. Minimum held-out value gain required before the preferred
+  non-constant tree is preferred over the honestly training-selected
+  constant procedure. Default is 0.01.
 
 - max_stability_loss_for_depth_switch:
 
@@ -133,6 +152,13 @@ margot_policy_tree_cv(
 
   Character. `"fastpolicytree"` or `"policytree"`.
 
+- min_node_size:
+
+  Integer or `NULL`. Smallest permitted policy-tree terminal node. This
+  is unrelated to `depths` and to a causal forest's
+  `grf_defaults$min.node.size`. When `NULL`, the compatibility option
+  `margot.policy_tree.min_node_size` is consulted, then 1.
+
 - verbose:
 
   Logical. Print progress messages.
@@ -160,17 +186,18 @@ reselect actions from held-out means. Between-leaf differences describe
 variation in score-contrast magnitude, not the policy decision rule
 itself.
 
-Depth one is the default selection. Depth two is selected only when
-three guards pass together: the held-out value gain over depth one
-exceeds `min_gain_for_depth_switch`; the root-split stability lost in
-moving to depth two is no larger than
-`max_stability_loss_for_depth_switch`; and the depth-one root-split
-selection frequency is at least `min_root_stability_for_depth_switch`.
-The third guard is absolute rather than relative, and it was added in
-version 1.1.015 after a simulation under a constant-effect null selected
-depth two in 1 of 10 replicates by clearing the two relative guards on
-noise alone. When the stability comparison cannot be computed the guards
-fail closed and depth one is kept.
+Depth one is the default selection. Under
+`depth_selection_rule = "value_only"`, depth two is selected when its
+repeat-averaged held-out value exceeds depth one's by at least
+`min_gain_for_depth_switch`; split recurrence remains descriptive. The
+backwards-compatible `"value_and_stability"` rule also requires the
+registered relative and absolute root-stability guards.
+
+The constant comparator is selected honestly. Within each training fold,
+the function selects the greater-valued constant action using training
+scores only and then evaluates that fixed action in the held-out fold. A
+validation-selected maximum of the two constant values is reported only
+as a descriptive oracle and never used to select the preferred policy.
 
 ## References
 

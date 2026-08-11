@@ -17,7 +17,7 @@ fold increases, and the raw counts used in each estimate."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.015</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,7 +29,6 @@ fold increases, and the raw counts used in each estimate."></head><body>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
-    <li><a class="dropdown-item" href="../articles/migrating-off-qs.html">Migrating off `qs`</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -188,21 +187,16 @@ state among the upper-state cohort).</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [11] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."                                                                                                       </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $report_block</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> function (format = c("latex", "markdown")) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function(format = c("latex", "markdown")) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     format &lt;- match.arg(format)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (!length(report)) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         return("")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     if (!length(report)) return("")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     if (format == "latex") {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         paste0("\\begin{quote}\n", paste(report, collapse = "\n"), </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             "\n\\end{quote}\n")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       paste0("\\begin{quote}\n", paste(report, collapse = "\n"), "\n\\end{quote}\n")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     } else {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       paste(report, collapse = "\n")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     else {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         paste(report, collapse = "\n")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x78283ac80&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x78283b9a0&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0xc2437ba48&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

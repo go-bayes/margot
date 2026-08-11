@@ -46,7 +46,7 @@ A list with the following elements:
   \item `transformed_table`: A data frame with transformed labels according to the options and label mappings.
 }
 
-If `save_output` is TRUE, the complete output will be saved to a file using margot::here_save_qs().
+If `save_output` is TRUE, the complete output will be saved as RDS with [here_save()].
 }
 \description{
 This function is a wrapper for the `margot_plot()` function, designed for multi-arm causal forest models.

@@ -308,7 +308,7 @@ margot_plot_boxplot <- function(data,
           dpi = 300
         )
 
-        margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+        margot::here_save(p, filename, dir_path = save_path)
 
         cli::cli_alert_success("Plot saved successfully")
       } else {

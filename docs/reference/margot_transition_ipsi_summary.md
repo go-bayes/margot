@@ -141,20 +141,15 @@ margot_transition_ipsi_summary(transitions)
 #> [11] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."                                                                                                       
 #> 
 #> $report_block
-#> function (format = c("latex", "markdown")) 
-#> {
+#> function(format = c("latex", "markdown")) {
 #>     format <- match.arg(format)
-#>     if (!length(report)) 
-#>         return("")
+#>     if (!length(report)) return("")
 #>     if (format == "latex") {
-#>         paste0("\\begin{quote}\n", paste(report, collapse = "\n"), 
-#>             "\n\\end{quote}\n")
+#>       paste0("\\begin{quote}\n", paste(report, collapse = "\n"), "\n\\end{quote}\n")
+#>     } else {
+#>       paste(report, collapse = "\n")
 #>     }
-#>     else {
-#>         paste(report, collapse = "\n")
-#>     }
-#> }
-#> <bytecode: 0x78283ac80>
-#> <environment: 0x78283b9a0>
+#>   }
+#> <environment: 0xc2437ba48>
 #> 
 ```

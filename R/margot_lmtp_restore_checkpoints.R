@@ -9,8 +9,7 @@
 #' @param checkpoint_dir Path to the directory that contains the checkpoint
 #'   files saved by `margot_lmtp()` (e.g.,
 #'   `.../checkpoints/prefix_YYYYMMDD_HHMMSS`). Checkpoints are read from
-#'   `.rds` files. Legacy `.qs` checkpoints are also restored when the optional
-#'   `qs` package is installed.
+#'   `.rds` files.
 #' @param outcome_vars Optional character vector giving the desired ordering of
 #'   outcomes. When omitted, the order is inferred from the checkpoints.
 #' @param contrast_type Type of contrasts to compute: `"pairwise"` or `"null"`.
@@ -57,51 +56,22 @@ margot_lmtp_restore_checkpoints <- function(
     pattern = "\\.rds$",
     full.names = TRUE
   )
-  qs_files <- list.files(
-    checkpoint_dir,
-    pattern = "\\.qs$",
-    full.names = TRUE
-  )
-
-  if (length(rds_files) == 0 && length(qs_files) == 0) {
+  if (length(rds_files) == 0) {
     stop(
       sprintf(
-        "No checkpoint files (*.rds or *.qs) found in directory: %s",
+        "No checkpoint files (*.rds) found in directory: %s",
         checkpoint_dir
       ),
       call. = FALSE
     )
   }
 
-  if (length(qs_files) > 0L && !requireNamespace("qs", quietly = TRUE)) {
-    if (length(rds_files) == 0L) {
-      stop(
-        "Found legacy .qs checkpoints, but the optional 'qs' package is not installed. ",
-        "Install or load margot in an R environment where 'qs' is available, then rerun ",
-        "margot_lmtp_restore_checkpoints(). If local 'qs' is not available, convert the ",
-        "checkpoint directory with margot_convert_qs_dir_docker() first.",
-        call. = FALSE
-      )
-    }
-    if (!quiet) {
-      cli::cli_alert_warning(
-        "Ignoring {length(qs_files)} legacy .qs checkpoint file{?s}; optional package 'qs' is not installed."
-      )
-    }
-    qs_files <- character(0)
-  }
-
-  checkpoint_files <- sort(c(rds_files, qs_files))
+  checkpoint_files <- sort(rds_files)
 
   if (!quiet) {
     cli::cli_h1("Restoring LMTP Models from Checkpoints")
     cli::cli_alert_info("Loading checkpoints from {.path {checkpoint_dir}}")
     cli::cli_alert_info("Detected {length(checkpoint_files)} checkpoint file{?s}")
-    if (length(qs_files) > 0L) {
-      cli::cli_alert_warning(
-        "Reading {length(qs_files)} legacy .qs checkpoint file{?s}; convert to .qs2 or .rds when convenient."
-      )
-    }
   }
 
   all_models <- list()
@@ -110,17 +80,8 @@ margot_lmtp_restore_checkpoints <- function(
 
   for (file_path in checkpoint_files) {
     file_name <- basename(file_path)
-    file_ext <- tolower(tools::file_ext(file_name))
     checkpoint_obj <- tryCatch(
-      {
-        if (identical(file_ext, "rds")) {
-          readRDS(file_path)
-        } else if (identical(file_ext, "qs")) {
-          qs::qread(file_path, nthreads = 1)
-        } else {
-          stop(sprintf("Unsupported checkpoint extension: %s", file_ext), call. = FALSE)
-        }
-      },
+      readRDS(file_path),
       error = function(e) {
         if (!quiet) {
           cli::cli_alert_warning(

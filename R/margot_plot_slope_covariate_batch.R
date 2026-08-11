@@ -167,8 +167,8 @@ margot_plot_slope_covariate_batch <- function(data,
       dpi = dpi
     )
     # save the ggplot2 object
-    margot::here_save_qs(combined_plot, filename, save_path, preset = "high", nthreads = 1)
-    cli::cli_alert_success("Combined plot saved successfully as {filename}.png and {filename}.qs")
+    margot::here_save(combined_plot, filename, dir_path = save_path)
+    cli::cli_alert_success("Combined plot saved successfully as {filename}.png and {filename}.rds")
   }
 
   # return the combined plot

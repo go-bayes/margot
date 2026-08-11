@@ -199,7 +199,7 @@ margot_plot_categorical <- function(
           filename = file.path(save_path, paste0(fn, ".png")),
           plot = p, width = width, height = height, units = "in", dpi = 300
         )
-        margot::here_save_qs(p, fn, save_path, preset = "high", nthreads = 1)
+        margot::here_save(p, fn, dir_path = save_path)
         cli::cli_alert_success("saved: {fn}.png")
       }
       p

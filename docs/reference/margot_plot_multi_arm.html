@@ -11,7 +11,7 @@ If the specified contrast is not found, an error is reported."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.015</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,7 +23,6 @@ If the specified contrast is not found, an error is reported."></head><body>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
-    <li><a class="dropdown-item" href="../articles/migrating-off-qs.html">Migrating off `qs`</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -113,7 +112,7 @@ If the specified contrast is not found, an error is reported.</p>
     <p>A list with the following elements:</p><ul><li><p>`plot`: A ggplot object of the Margot plot.</p></li>
 <li><p>`interpretation`: A character string with the interpretation of the results.</p></li>
 <li><p>`transformed_table`: A data frame with transformed labels according to the options and label mappings.</p></li>
-</ul><p>If `save_output` is TRUE, the complete output will be saved to a file using margot::here_save_qs().</p>
+</ul><p>If `save_output` is TRUE, the complete output will be saved as RDS with [here_save()].</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

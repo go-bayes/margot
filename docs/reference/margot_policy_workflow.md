@@ -17,6 +17,8 @@ margot_policy_workflow(
   dominance_threshold = 0.8,
   strict_branch = TRUE,
   min_gain_for_depth_switch = 0.01,
+  depth_selection_rule = c("value_and_stability", "value_only"),
+  min_gain_over_constant = 0.01,
   include_interpretation = TRUE,
   interpret_models = "wins",
   plot_models = "none",
@@ -39,6 +41,7 @@ margot_policy_workflow(
   heldout_num_folds = 5L,
   heldout_n_repeats = 10L,
   heldout_seed = 42L,
+  policy_tree_min_node_size = NULL,
   signals_k = 3,
   ...
 )
@@ -82,6 +85,18 @@ margot_policy_workflow(
 
   Numeric; minimum PV gain required to switch from depth-1 to depth-2
   (default 0.01 on standardized outcomes).
+
+- depth_selection_rule:
+
+  Character; `"value_and_stability"` retains the historical held-out
+  depth rule, while `"value_only"` uses only the registered held-out
+  value margin and reports stability descriptively.
+
+- min_gain_over_constant:
+
+  Numeric; minimum held-out value gain required before the selected tree
+  is preferred over the honestly training-selected constant procedure.
+  Default 0.01.
 
 - include_interpretation:
 
@@ -217,6 +232,12 @@ margot_policy_workflow(
 - heldout_seed:
 
   Integer; seed for automatic held-out policy-tree cross-validation.
+
+- policy_tree_min_node_size:
+
+  Integer or `NULL`. Smallest permitted terminal node for automatic
+  held-out policy-tree fitting. When `NULL`, reuse the stability
+  object's recorded value, then the compatibility option.
 
 - signals_k:
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.015</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,7 +19,6 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
-    <li><a class="dropdown-item" href="../articles/migrating-off-qs.html">Migrating off `qs`</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -287,6 +286,34 @@
 
         </dt>
         <dd>Registered trim-ladder positivity gate for LMTP fits (defunct)</dd>
+
+        <dt>
+
+          <code><a href="margot_lmtp_censoring_report.html">margot_lmtp_censoring_report()</a></code>
+
+        </dt>
+        <dd>Report descriptive censoring evidence for an LMTP analysis</dd>
+
+        <dt>
+
+          <code><a href="margot_target_projection_report.html">margot_target_projection_report()</a></code>
+
+        </dt>
+        <dd>Report target-population projection evidence</dd>
+
+        <dt>
+
+          <code><a href="margot_lmtp_analysis_weight_report.html">margot_lmtp_analysis_weight_report()</a></code>
+
+        </dt>
+        <dd>Report full LMTP analysis-weight concentration</dd>
+
+        <dt>
+
+          <code><a href="margot_lmtp_evidence_report.html">margot_lmtp_evidence_report()</a></code>
+
+        </dt>
+        <dd>Assemble the mandatory nonbinding LMTP evidence reports</dd>
 
         <dt>
 
@@ -1089,14 +1116,14 @@
           <code><a href="here_read.html">here_read()</a></code>
 
         </dt>
-        <dd>Read Data Frame or Object from RDS File in a Specified Directory</dd>
+        <dd>Read an R Object from RDS in a Specified Directory</dd>
 
         <dt>
 
           <code><a href="here_save.html">here_save()</a></code>
 
         </dt>
-        <dd>Save Data Frame as RDS File in a Specified Directory</dd>
+        <dd>Save an R Object as RDS in a Specified Directory</dd>
 
         <dt>
 
@@ -1110,35 +1137,7 @@
           <code><a href="here_save_arrow.html">here_save_arrow()</a></code>
 
         </dt>
-        <dd>Save Object to Parquet File in a Specified Directory</dd>
-
-        <dt>
-
-          <code><a href="here_read_qs.html">here_read_qs()</a></code>
-
-        </dt>
-        <dd>Read Object from a Deprecated qs2 or Legacy qs File</dd>
-
-        <dt>
-
-          <code><a href="here_save_qs.html">here_save_qs()</a></code>
-
-        </dt>
-        <dd>Save Object to a Deprecated qs2 File</dd>
-
-        <dt>
-
-          <code><a href="margot_convert_qs_dir.html">margot_convert_qs_dir()</a></code>
-
-        </dt>
-        <dd>Convert legacy `.qs` files in a directory to `.qs2`</dd>
-
-        <dt>
-
-          <code><a href="margot_convert_qs_dir_docker.html">margot_convert_qs_dir_docker()</a></code>
-
-        </dt>
-        <dd>Convert legacy `.qs` files via a Docker R 4.5 container (deprecated)</dd>
+        <dd>Save Tabular Data to Parquet in a Specified Directory</dd>
 
         <dt>
 

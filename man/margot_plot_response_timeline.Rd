@@ -25,7 +25,7 @@ margot_plot_response_timeline(
 
 \item{n_total_participants}{The total number of unique participants. If NULL, it will be extracted from df_timeline if available.}
 
-\item{save}{Logical. If TRUE, saves the plot as a qs file. Default is FALSE.}
+\item{save}{Logical. If TRUE, saves the plot as an RDS file. Default is FALSE.}
 
 \item{save_path}{The directory path to save the plot. Default is "output" in the current working directory.}
 

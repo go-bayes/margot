@@ -280,9 +280,9 @@ margot_interpret_lmtp_positivity <- function(x,
     if (length(deltas)) {
       # for each example g, show mapping for all deltas present
       for (g in example_g_vals) {
-        qs <- vapply(deltas, function(d) fmt_num(q_fun(g, d)), character(1))
+        policy_probabilities <- vapply(deltas, function(d) fmt_num(q_fun(g, d)), character(1))
         lhs <- sprintf("for $g=%s$:", fmt_num(g))
-        rhs <- paste(paste0("ipsi(", deltas, ") $\\to$ ", qs), collapse = ", ")
+        rhs <- paste(paste0("ipsi(", deltas, ") $\\to$ ", policy_probabilities), collapse = ", ")
         example_lines <- c(example_lines, paste(lhs, rhs))
       }
     }

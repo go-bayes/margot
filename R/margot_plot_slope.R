@@ -402,9 +402,9 @@ margot_plot_slope <- function(data,
             )
             cli::cli_alert_success("Plot saved as PNG successfully")
 
-            cli::cli_alert_info("Saving plot as .qs file...")
-            # from the margot package (go-bayes/margot)
-            margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+            cli::cli_alert_info("Saving plot object as an RDS file...")
+            # keep the editable plot object in R's native serialisation format
+            margot::here_save(p, filename, dir_path = save_path)
           },
           error = function(e) {
             cli::cli_alert_danger("Error while saving: {conditionMessage(e)}")

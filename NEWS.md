@@ -1,4 +1,16 @@
-# [2026-08-11] margot 1.1.018 (development)
+# [2026-08-11] margot 1.1.019 (development)
+
+### Native RDS and tabular Arrow storage
+
+#### Changed
+- Margot now uses native RDS for R objects and Parquet through Arrow for rectangular tabular data. Plot objects, result lists, and LMTP checkpoints therefore use RDS. `here_save()` remains available for any R object, including a small data frame for which a native R round trip is preferable.
+- `here_save_arrow()` accepts only data frames and Arrow tables. Non-tabular objects must use `here_save()`.
+- LMTP checkpoint restoration now reads RDS checkpoints only.
+
+#### Removed
+- The QS and QS2 readers, writers, directory converters, optional dependencies, migration vignette, and package documentation have been removed. Margot no longer supplies an active QS migration route.
+
+# [2026-08-11] margot 1.1.018
 
 ### Nonbinding LMTP censoring, projection, and weight reports
 

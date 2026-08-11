@@ -13,9 +13,9 @@ instead.
 ## Usage
 
 ``` r
-margot_policy_tree_bootstrap(...)
+margot_policy_tree_bootstrap(..., min_node_size = NULL)
 
-margot_policy_tree_bootstrap(...)
+margot_policy_tree_bootstrap(..., min_node_size = NULL)
 ```
 
 ## Arguments
@@ -23,6 +23,12 @@ margot_policy_tree_bootstrap(...)
 - ...:
 
   Arguments passed to margot_policy_tree_stability
+
+- min_node_size:
+
+  Integer or `NULL`; passed explicitly to
+  [`margot_policy_tree_stability()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.md)
+  as the policy-tree terminal-node minimum.
 
 - model_results:
 

@@ -13,7 +13,7 @@ functionality of margot_rate() and margot_qini()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.015</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,6 @@ functionality of margot_rate() and margot_qini()."></head><body>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
-    <li><a class="dropdown-item" href="../articles/migrating-off-qs.html">Migrating off `qs`</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -64,7 +63,8 @@ functionality of margot_rate() and margot_qini().</p>
 <span>  label_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">12345</span>,</span>
-<span>  tree_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fastpolicytree"</span>, <span class="st">"policytree"</span><span class="op">)</span></span>
+<span>  tree_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fastpolicytree"</span>, <span class="st">"policytree"</span><span class="op">)</span>,</span>
+<span>  min_node_size <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -102,8 +102,8 @@ containing "_log").</p></dd>
 
 
 <dt id="arg-depth">depth<a class="anchor" aria-label="anchor" href="#arg-depth"></a></dt>
-<dd><p>Numeric or character specifying which depth(s) to compute:
-1 for single split, 2 for two splits, or "both" for both depths (default).</p></dd>
+<dd><p>Numeric or character specifying permitted branching levels:
+1 for one branching level, 2 for two branching levels, or "both" (default).</p></dd>
 
 
 <dt id="arg-train-proportion">train_proportion<a class="anchor" aria-label="anchor" href="#arg-train-proportion"></a></dt>
@@ -129,6 +129,13 @@ available data but only the selected covariates (same as depth-2).</p></dd>
 (default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
 computation with identical results. Falls back to policytree if fastpolicytree
 is not installed.</p></dd>
+
+
+<dt id="arg-min-node-size">min_node_size<a class="anchor" aria-label="anchor" href="#arg-min-node-size"></a></dt>
+<dd><p>Integer or <code>NULL</code>. Smallest permitted policy-tree
+terminal node. This setting is separate from <code>depth</code> and from a causal
+forest's <code>grf_defaults$min.node.size</code>. <code>NULL</code> retains the
+compatibility option fallback, then 1.</p></dd>
 
 </dl></div>
     <div class="section level2">

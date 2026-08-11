@@ -98,7 +98,7 @@ margot_plot_dev(
 
 - save_output:
 
-  Logical; if TRUE, saves the result list via here_save_qs().
+  Logical; if TRUE, saves the result list as RDS.
 
 - use_timestamp:
 
@@ -106,7 +106,7 @@ margot_plot_dev(
 
 - base_filename, prefix, save_path:
 
-  Save controls passed to here_save_qs().
+  Save controls passed to \[here_save()\].
 
 - original_df:
 

@@ -560,15 +560,16 @@ margot_plot <- function(
       prefix %||% "",
       base_filename,
       if (use_timestamp) paste0("_", format(Sys.time(), "%Y%m%d%H%M%S")) else "",
-      ".qs"
+      ""
     )
-    here_save_qs(
+    here_save(
       list(
         plot              = out_plot,
         interpretation    = interpretation,
         transformed_table = transformed_table
       ),
-      file.path(save_path, filename)
+      filename,
+      dir_path = save_path
     )
   }
 

@@ -31,6 +31,7 @@ margot_policy_tree_stability(
   verbose = TRUE,
   seed = 12345,
   tree_method = c("fastpolicytree", "policytree"),
+  min_node_size = NULL,
   n_bootstrap = NULL,
   compute_policy_values = FALSE,
   policy_value_R = 499L,
@@ -69,8 +70,8 @@ margot_policy_tree_stability(
 
 - depth:
 
-  Numeric or character specifying which depth(s) to compute: 1 for
-  single split, 2 for two splits (default), or "both" for both depths.
+  Numeric or character specifying permitted branching levels: 1, 2
+  (default), or "both". It is not a node-size setting.
 
 - n_iterations:
 
@@ -141,6 +142,12 @@ margot_policy_tree_stability(
   (default) or "policytree". The fastpolicytree package provides ~10x
   faster computation, which is particularly beneficial for stability
   analysis. Falls back to policytree if fastpolicytree is not installed.
+
+- min_node_size:
+
+  Integer or `NULL`. Smallest permitted policy-tree terminal node,
+  separate from `depth` and from causal-forest node size. `NULL` retains
+  the compatibility option fallback, then 1.
 
 - n_bootstrap:
 

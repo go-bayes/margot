@@ -263,9 +263,9 @@ margot_plot_individual_responses <- function(data,
         )
         cli::cli_alert_success("Plot saved as PNG: {.file {full_path_png}}")
 
-        margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
-        full_path_qs <- file.path(save_path, paste0(filename, ".qs"))
-        cli::cli_alert_success("Plot object saved using qs: {.file {full_path_qs}}")
+        margot::here_save(p, filename, dir_path = save_path)
+        full_path_rds <- file.path(save_path, paste0(filename, ".rds"))
+        cli::cli_alert_success("Plot object saved as RDS: {.file {full_path_rds}}")
       },
       error = function(e) {
         cli::cli_alert_danger("An error occurred while saving the plot: {conditionMessage(e)}")

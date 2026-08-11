@@ -21,9 +21,9 @@
 #' @param ... Additional named options merged into `options` (used by label mapping, theming, etc.).
 #' @param options Named list of plotting/label options (e.g., colours, sizes, transforms).
 #' @param label_mapping Optional named list for transform_label().
-#' @param save_output Logical; if TRUE, saves the result list via here_save_qs().
+#' @param save_output Logical; if TRUE, saves the result list as RDS.
 #' @param use_timestamp Logical; append timestamp to saved filename.
-#' @param base_filename,prefix,save_path Save controls passed to here_save_qs().
+#' @param base_filename,prefix,save_path Save controls passed to [here_save()].
 #' @param original_df Optional original data for back‑transform helpers.
 #' @param bold_rows Logical; bold rows above the E‑value bound threshold.
 #' @param rename_cols Logical; if TRUE, rename E‑value columns per `col_renames`.
@@ -281,8 +281,12 @@ margot_plot_dev <- function(
   }
 
   if (save_output) {
-    filename <- paste0(prefix %||% "", base_filename, if (use_timestamp) paste0("_", format(Sys.time(), "%Y%m%d%H%M%S")) else "", ".qs")
-    here_save_qs(list(plot = out_plot, interpretation = interpretation, transformed_table = transformed_table), file.path(save_path, filename))
+    filename <- paste0(prefix %||% "", base_filename, if (use_timestamp) paste0("_", format(Sys.time(), "%Y%m%d%H%M%S")) else "")
+    here_save(
+      list(plot = out_plot, interpretation = interpretation, transformed_table = transformed_table),
+      filename,
+      dir_path = save_path
+    )
   }
 
   invisible(list(plot = out_plot, interpretation = interpretation, transformed_table = transformed_table))

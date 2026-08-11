@@ -1,9 +1,11 @@
-# Save Data Frame as RDS File in a Specified Directory
+# Save an R Object as RDS in a Specified Directory
 
-Saves the provided data frame as an RDS file using the specified name,
-within a directory defined by \`push_mods\` This function uses the
-\`here\` package to construct the path, ensuring that file paths are
-built in a consistent and platform-independent manner.
+Saves an R object as an RDS file using the specified name, within a
+directory defined by \`push_mods\`. This helper accepts any R object,
+including a data frame. Use \[here_save_arrow()\] when Parquet is the
+appropriate representation for rectangular tabular data. This function
+uses the \`here\` package to construct the path, ensuring that file
+paths are built in a consistent and platform-independent manner.
 
 ## Usage
 
@@ -15,8 +17,7 @@ here_save(df, name, dir_path = NULL, compress = TRUE, quiet = FALSE)
 
 - df:
 
-  Data frame or object to be saved. This is the object you want to
-  persist on disk.
+  R object to be saved.
 
 - name:
 
@@ -53,10 +54,10 @@ directory exists. This function does not create directories.
 ``` r
 if (FALSE) { # \dontrun{
 # assuming `push_mods` is set in your environment to "~/mydata"
-my_df <- data.frame(x = 1:5, y = letters[1:5])
-here_save(my_df, "my_df")
+result <- list(estimate = 0.3, interval = c(0.2, 0.4))
+here_save(result, "result")
 
 # specifying a custom directory
-here_save(my_df, "my_df", dir_path = "~/custom_dir", compress = "xz")
+here_save(result, "result", dir_path = "~/custom_dir", compress = "xz")
 } # }
 ```

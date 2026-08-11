@@ -30,7 +30,7 @@
 #'   \item `transformed_table`: A data frame with transformed labels according to the options and label mappings.
 #' }
 #'
-#' If `save_output` is TRUE, the complete output will be saved to a file using margot::here_save_qs().
+#' If `save_output` is TRUE, the complete output will be saved as RDS with [here_save()].
 #'
 #' @examples
 #' \dontrun{

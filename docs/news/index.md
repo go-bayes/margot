@@ -1,6 +1,130 @@
 # Changelog
 
-## \[2026-08-07\] margot 1.1.015 (development)
+## \[2026-08-11\] margot 1.1.019 (development)
+
+#### Native RDS and tabular Arrow storage
+
+##### Changed
+
+- Margot now uses native RDS for R objects and Parquet through Arrow for
+  rectangular tabular data. Plot objects, result lists, and LMTP
+  checkpoints therefore use RDS.
+  [`here_save()`](https://go-bayes.github.io/margot/reference/here_save.md)
+  remains available for any R object, including a small data frame for
+  which a native R round trip is preferable.
+- [`here_save_arrow()`](https://go-bayes.github.io/margot/reference/here_save_arrow.md)
+  accepts only data frames and Arrow tables. Non-tabular objects must
+  use
+  [`here_save()`](https://go-bayes.github.io/margot/reference/here_save.md).
+- LMTP checkpoint restoration now reads RDS checkpoints only.
+
+##### Removed
+
+- The QS and QS2 readers, writers, directory converters, optional
+  dependencies, migration vignette, and package documentation have been
+  removed. Margot no longer supplies an active QS migration route.
+
+## \[2026-08-11\] margot 1.1.018
+
+#### Nonbinding LMTP censoring, projection, and weight reports
+
+##### Added
+
+- [`margot_lmtp_censoring_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_censoring_report.md)
+  separately reports observed retention, fitted continued-observation
+  probabilities, censoring factors, joint exposure-and-censoring ratios,
+  exact-zero causes, learner specification, and out-of-fold performance.
+  The computed tables are aggregate and return no censoring-support
+  classification or route action.
+- [`margot_target_projection_report()`](https://go-bayes.github.io/margot/reference/margot_target_projection_report.md)
+  compares the realised source sample with the registered target
+  population before and after projection weighting. It reports numeric
+  and categorical balance, representation across registered strata,
+  projection-weight concentration, harmonisation, model provenance, and
+  uncertainty without an accept-or-reject classification.
+- [`margot_lmtp_analysis_weight_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_analysis_weight_report.md)
+  reports the full weight $`w_i\prod_t r_{it}^{A,C}(d)`$ at each
+  longitudinal node. Zero weights remain in the distribution and the
+  denominator for the Kish effective-sample-size fraction; the report
+  also gives top-weight shares, exact zero and missingness causes, and
+  the consequence of registered numerical regularisation.
+- [`margot_lmtp_evidence_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_evidence_report.md)
+  combines the three report families under stable names. Every
+  structurally unavailable component requires an explicit reason in the
+  returned manifest.
+
+## \[2026-08-07\] margot 1.1.017 (development)
+
+#### Honest constant-policy comparison and value-only depth selection
+
+##### Added
+
+- `margot_policy_tree_cv(depth_selection_rule = "value_only")` selects
+  depth two exactly when its repeat-averaged held-out value exceeds
+  depth one’s by the registered margin. Root recurrence and assignment
+  agreement remain reported quantities but do not veto the value
+  decision. The historical `"value_and_stability"` rule remains the
+  package default for backwards compatibility.
+- `min_gain_over_constant` supplies a separate registered margin for
+  preferring the selected tree over the constant-policy learning
+  procedure. `policy_selection` records the selected tree depth, both
+  held-out values, their difference, the margin, the preferred policy
+  type, and the selection reason.
+- Supplied analysis weights now enter the policy-learning target
+  consistently: the training action-score matrix is multiplied once by
+  the aligned positive weights before tree fitting and constant-action
+  selection, while held-out values remain weighted means of the
+  unmultiplied action scores. Rows with non-positive or non-finite
+  weights are excluded before fold assignment.
+
+##### Corrected
+
+- The best-constant comparator is now honestly selected in each training
+  fold and only then evaluated in the corresponding held-out fold.
+  Earlier versions selected the better constant action from the held-out
+  observations themselves, which did not evaluate a learnable
+  constant-policy procedure. Both raw held-out constant values and the
+  validation-selected maximum remain available descriptively under names
+  that identify the latter as a validation oracle; automatic policy
+  selection never uses that oracle.
+- A margin attained up to numerical precision counts as attaining the
+  registered threshold, so a computed difference of 0.01 cannot be
+  rejected because of floating-point representation.
+
+## \[2026-08-07\] margot 1.1.016
+
+#### Explicit policy-tree terminal-node size
+
+##### Added
+
+- Every public policy-tree fitting route now accepts an explicit
+  `min_node_size` argument:
+  [`margot_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_policy_tree.md),
+  [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md),
+  [`margot_policy_tree_stability()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.md),
+  the deprecated
+  [`margot_policy_tree_bootstrap()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_bootstrap.md),
+  [`margot_policy_split_diagnostic()`](https://go-bayes.github.io/margot/reference/margot_policy_split_diagnostic.md),
+  and
+  [`margot_recalculate_policy_trees()`](https://go-bayes.github.io/margot/reference/margot_recalculate_policy_trees.md).
+  `margot_policy_workflow(policy_tree_min_node_size = ...)` passes the
+  same setting to automatic held-out cross-validation.
+- Policy-tree metadata records the requested and realised engine,
+  whether an engine fallback occurred, the requested branching levels,
+  and the policy-tree terminal-node minimum. The policy-tree setting
+  remains distinct from a causal forest’s `min.node.size`.
+
+##### Changed
+
+- The global option `margot.policy_tree.min_node_size` remains only as a
+  compatibility fallback when the explicit argument is `NULL`; the final
+  fallback remains 1 for backwards compatibility. New registered
+  analyses can therefore state the terminal-node minimum in the function
+  call without hidden session state.
+- Policy-tree documentation now describes depths `1L` and `2L` as
+  permitted branching levels, not node-size settings.
+
+## \[2026-08-07\] margot 1.1.015
 
 #### Depth selection in held-out policy-tree cross-validation
 
@@ -604,11 +728,8 @@ welfare maximisation.
 
 #### Changed
 
-- Deprecated the remaining qs-named storage helpers.
-  [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
-  and
-  [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  now warn and point users to
+- Deprecated the remaining qs-named storage helpers. `here_save_qs()`
+  and `here_read_qs()` now warn and point users to
   [`here_save_arrow()`](https://go-bayes.github.io/margot/reference/here_save_arrow.md)
   and
   [`here_read_arrow()`](https://go-bayes.github.io/margot/reference/here_read_arrow.md)
@@ -620,10 +741,9 @@ welfare maximisation.
   `qs2`, Arrow, or Docker.
 - Retained direct host-session support for legacy `.qs` reads and
   conversion when the optional `qs` package is available.
-  [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  reads legacy `.qs` files as a migration bridge, and
-  [`margot_convert_qs_dir()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.md)
-  remains the direct local `.qs` to `.qs2` converter.
+  `here_read_qs()` reads legacy `.qs` files as a migration bridge, and
+  `margot_convert_qs_dir()` remains the direct local `.qs` to `.qs2`
+  converter.
 - [`margot_lmtp_restore_checkpoints()`](https://go-bayes.github.io/margot/reference/margot_lmtp_restore_checkpoints.md)
   now restores `.rds` checkpoints and legacy `.qs` checkpoints when
   optional `qs` is installed.
@@ -643,8 +763,8 @@ welfare maximisation.
 
 #### Fixed
 
-- [`margot_convert_qs_dir_docker()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.md)
-  now [`shQuote()`](https://rdrr.io/r/base/shQuote.html)s the `-v`
+- `margot_convert_qs_dir_docker()` now
+  [`shQuote()`](https://rdrr.io/r/base/shQuote.html)s the `-v`
   bind-mount values, so directory paths containing spaces (for example,
   `/Users/.../v-project Dropbox/data/...`) survive
   [`system2()`](https://rdrr.io/r/base/system2.html)’s shell pass to
@@ -655,16 +775,12 @@ welfare maximisation.
 
 #### Changed
 
-- [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
-  and
-  [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  now use the **`qs2`** package internally. New saves write `.qs2` files
-  at default `compress_level = 4`.
-  [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  looks for `<name>.qs2` first and falls back to `<name>.qs` (legacy)
-  when present and the optional `qs` package is installed; otherwise it
-  errors with the exact migration command to run. The `preset` argument
-  is soft-deprecated.
+- `here_save_qs()` and `here_read_qs()` now use the **`qs2`** package
+  internally. New saves write `.qs2` files at default
+  `compress_level = 4`. `here_read_qs()` looks for `<name>.qs2` first
+  and falls back to `<name>.qs` (legacy) when present and the optional
+  `qs` package is installed; otherwise it errors with the exact
+  migration command to run. The `preset` argument is soft-deprecated.
 - [`here_save_arrow()`](https://go-bayes.github.io/margot/reference/here_save_arrow.md)
   and
   [`here_read_arrow()`](https://go-bayes.github.io/margot/reference/here_read_arrow.md)
@@ -682,19 +798,18 @@ welfare maximisation.
 
 #### Added
 
-- **[`margot_convert_qs_dir()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir.md)**
-  — recursively walks a directory and converts every `.qs` file to a
-  `.qs2` sibling, with a built-in
+- **`margot_convert_qs_dir()`** — recursively walks a directory and
+  converts every `.qs` file to a `.qs2` sibling, with a built-in
   [`identical()`](https://rdrr.io/r/base/identical.html) read-verify
   before any optional original-deletion. Designed to be run once on a
   machine that still has `qs` installed.
-- **[`margot_convert_qs_dir_docker()`](https://go-bayes.github.io/margot/reference/margot_convert_qs_dir_docker.md)**
-  — the user-facing migration entry point for anyone on R 4.6+ who
-  cannot build `qs` locally. Runs the same conversion inside a
-  `rocker/r-ver:4.5` Docker container, using a pinned 2024-12-01 Posit
-  Package Manager snapshot so `qs` 0.27.3 builds reproducibly against
-  the contemporaneous `stringfish`/`BH`. One R call from the host;
-  verified end-to-end on a 258 MB margot causal-forest output.
+- **`margot_convert_qs_dir_docker()`** — the user-facing migration entry
+  point for anyone on R 4.6+ who cannot build `qs` locally. Runs the
+  same conversion inside a `rocker/r-ver:4.5` Docker container, using a
+  pinned 2024-12-01 Posit Package Manager snapshot so `qs` 0.27.3 builds
+  reproducibly against the contemporaneous `stringfish`/`BH`. One R call
+  from the host; verified end-to-end on a 258 MB margot causal-forest
+  output.
 - New tests: `tests/testthat/test-here-qs.R`, `test-here-arrow.R`
   (extended), `test-margot-convert-qs-dir.R`,
   `test-margot-convert-qs-dir-docker.R` (full integration test gated by
@@ -896,11 +1011,9 @@ welfare maximisation.
 
 #### Changed
 
-- [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  and
-  [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
-  now produce a compatibility warning and suggest Arrow helpers for new
-  workflows (suppressed when `quiet = TRUE`).
+- `here_read_qs()` and `here_save_qs()` now produce a compatibility
+  warning and suggest Arrow helpers for new workflows (suppressed when
+  `quiet = TRUE`).
 
 ## \[2025-12-03\] margot 1.0.294
 
@@ -4668,9 +4781,7 @@ fixes.
 ### improved
 
 - [`here_save()`](https://go-bayes.github.io/margot/reference/here_save.md)
-  and
-  [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
-  now correctly reports size of saved file.
+  and `here_save_qs()` now correctly reports size of saved file.
 - tidying of roxygen2 code (‘mc_test’ removed and replaced with
   ‘result_object’)
 - [`margot_plot_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_tree.md)
@@ -6054,10 +6165,8 @@ warnings. They will be removed in a future version of the package.
 
 ### Improved
 
-- [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
-  and
-  [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  report where and object was saved and how large it is.
+- `here_save_qs()` and `here_read_qs()` report where and object was
+  saved and how large it is.
 - [`here_save()`](https://go-bayes.github.io/margot/reference/here_save.md)and
   [`here_read()`](https://go-bayes.github.io/margot/reference/here_read.md),
   ditto, and also ask users to specify a directory path, defaulting to
@@ -6144,10 +6253,7 @@ warnings. They will be removed in a future version of the package.
 - [`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md) -
   consistent names for results table if these are modified using the new
   `label_mapping` option.
-- [`here_save_qs()`](https://go-bayes.github.io/margot/reference/here_save_qs.md)
-  and
-  [`here_read_qs()`](https://go-bayes.github.io/margot/reference/here_read_qs.md)
-  minor tweaks.
+- `here_save_qs()` and `here_read_qs()` minor tweaks.
 
 ## \[2024-08-27\] margot 0.2.1.25
 
@@ -6729,10 +6835,8 @@ warnings. They will be removed in a future version of the package.
 - LMTP overlap grid now respects multi-wave density ratios when stored
   as `Matrix` or `data.frame` by coercing to base matrices before
   iterating waves. This restores one panel per wave × shift.
-- Grid axis limits use
-  [`coord_cartesian()`](https://ggplot2.tidyverse.org/reference/coord_cartesian.html)
-  to avoid dropping bars (no more “Removed rows” warnings when
-  harmonising x/y ranges).
+- Grid axis limits use `coord_cartesian()` to avoid dropping bars (no
+  more “Removed rows” warnings when harmonising x/y ranges).
 - Shift order in grids and text respects the user-supplied `shifts`
   vector without dropping additional wave panels.
 

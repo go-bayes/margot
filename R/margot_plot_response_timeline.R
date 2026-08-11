@@ -4,7 +4,7 @@
 #'
 #' @param df_timeline A data frame containing the processed timeline data, typically output from `prepare_panel_data()`.
 #' @param n_total_participants The total number of unique participants. If NULL, it will be extracted from df_timeline if available.
-#' @param save Logical. If TRUE, saves the plot as a qs file. Default is FALSE.
+#' @param save Logical. If TRUE, saves the plot as an RDS file. Default is FALSE.
 #' @param save_png Logical. If TRUE, saves the plot as a PNG file. Default is FALSE.
 #' @param use_timestamp Logical. If TRUE, includes a timestamp in the PNG filename. Default is FALSE.
 #' @param save_path The directory path to save the plot. Default is "output" in the current working directory.
@@ -186,20 +186,13 @@ margot_plot_response_timeline <- function(df_timeline,
     tryCatch(
       {
         # save as .rds (future-proof, base R)
-        rds_path <- file.path(save_path, paste0(base_filename, ".rds"))
-        saveRDS(gg, rds_path)
-        cli::cli_alert_success(paste("Plot saved as .rds file:", rds_path))
-
-        # save as .qs (backwards compatibility, will be removed in future)
-        margot::here_save_qs(
-          obj = gg,
+        rds_path <- margot::here_save(
+          df = gg,
           name = base_filename,
           dir_path = save_path,
-          preset = "high",
-          nthreads = 1,
           quiet = TRUE
         )
-        cli::cli_alert_success("Plot also saved as .qs file (deprecated format)")
+        cli::cli_alert_success("Plot saved as RDS: {.file {rds_path}}")
 
         if (save_png) {
           # Generate filename for PNG

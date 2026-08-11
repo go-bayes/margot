@@ -1,10 +1,10 @@
-# Read Data Frame or Object from RDS File in a Specified Directory
+# Read an R Object from RDS in a Specified Directory
 
 Reads an RDS file specified by \`name\` from a directory defined by
-\`dir_path\` or \`push_mods\`, returning the data frame or object stored
-within. If no .rds file is found, it searches for the file without the
-.rds extension. This function uses the \`here\` package to resolve the
-path, ensuring that file paths are built in a consistent and
+\`dir_path\` or \`push_mods\`, returning the R object stored within. If
+no .rds file is found, it searches for the file without the .rds
+extension. This function uses the \`here\` package to resolve the path,
+ensuring that file paths are built in a consistent and
 platform-independent manner.
 
 ## Usage
@@ -31,7 +31,7 @@ here_read(name, dir_path = NULL, quiet = FALSE)
 
 ## Value
 
-The data frame or R object stored in the file.
+The R object stored in the file.
 
 ## Details
 
@@ -46,10 +46,10 @@ from where files are to be read. This function will first try to read an
 ``` r
 if (FALSE) { # \dontrun{
 # Assuming `push_mods` is set in your environment to "~/mydata"
-# and you have previously saved an RDS file named "my_df.rds" in that directory
-my_df <- here_read("my_df")
+# and you have previously saved an RDS file named "result.rds" in that directory
+result <- here_read("result")
 
 # Reading from a custom directory
-my_df <- here_read("my_df", dir_path = "~/custom_dir")
+result <- here_read("result", dir_path = "~/custom_dir")
 } # }
 ```

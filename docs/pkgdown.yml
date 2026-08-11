@@ -2,9 +2,8 @@ pandoc: 3.10.1
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
-  migrating-off-qs: migrating-off-qs.html
   standard-grf-policy-tree-workflow: standard-grf-policy-tree-workflow.html
-last_built: 2026-08-07T07:42Z
+last_built: 2026-08-11T03:00Z
 urls:
   reference: https://go-bayes.github.io/margot/reference
   article: https://go-bayes.github.io/margot/articles

@@ -158,7 +158,7 @@ margot_plot_slope_covariate <- function(data,
           device = "png",
           dpi = 400
         )
-        margot::here_save_qs(p, filename, save_path, preset = "high", nthreads = 1)
+        margot::here_save(p, filename, dir_path = save_path)
         cli::cli_alert_success("Plot saved successfully")
       } else {
         cli::cli_alert_info("No save path provided. Plot not saved.")
