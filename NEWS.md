@@ -1,3 +1,13 @@
+# [2026-08-11] margot 1.1.018 (development)
+
+### Nonbinding LMTP censoring, projection, and weight reports
+
+#### Added
+- `margot_lmtp_censoring_report()` separately reports observed retention, fitted continued-observation probabilities, censoring factors, joint exposure-and-censoring ratios, exact-zero causes, learner specification, and out-of-fold performance. The computed tables are aggregate and return no censoring-support classification or route action.
+- `margot_target_projection_report()` compares the realised source sample with the registered target population before and after projection weighting. It reports numeric and categorical balance, representation across registered strata, projection-weight concentration, harmonisation, model provenance, and uncertainty without an accept-or-reject classification.
+- `margot_lmtp_analysis_weight_report()` reports the full weight $w_i\prod_t r_{it}^{A,C}(d)$ at each longitudinal node. Zero weights remain in the distribution and the denominator for the Kish effective-sample-size fraction; the report also gives top-weight shares, exact zero and missingness causes, and the consequence of registered numerical regularisation.
+- `margot_lmtp_evidence_report()` combines the three report families under stable names. Every structurally unavailable component requires an explicit reason in the returned manifest.
+
 # [2026-08-07] margot 1.1.017 (development)
 
 ### Honest constant-policy comparison and value-only depth selection

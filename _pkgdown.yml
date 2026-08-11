@@ -88,6 +88,10 @@ reference:
     - margot_lmtp_weight_diag_from_fit
     - margot_lmtp_positivity
     - margot_lmtp_positivity_gate
+    - margot_lmtp_censoring_report
+    - margot_target_projection_report
+    - margot_lmtp_analysis_weight_report
+    - margot_lmtp_evidence_report
     - margot_interpret_lmtp_positivity
     - margot_interpret_lmtp_positivity_overview
     - margot_positivity_summary
