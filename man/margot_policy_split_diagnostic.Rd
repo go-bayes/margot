@@ -46,7 +46,9 @@ Defaults to "original".}
 to exclude from the policy-tree covariates.}
 
 \item{tree_method}{Character; "fastpolicytree" when available, otherwise
-"policytree".}
+"policytree". Margot pins the fast engine to
+\code{strategy.datatype = 1}; the upstream automatic representation can
+return a different, lower-value rule for wide covariate matrices.}
 
 \item{min_node_size}{Integer or \code{NULL}. Smallest permitted policy-tree
 terminal node. It is separate from \code{depths} and causal-forest node

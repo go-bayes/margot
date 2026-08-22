@@ -63,8 +63,9 @@ vary_train_proportion = TRUE (default c(0.4, 0.5, 0.6, 0.7)).}
 \item{seed}{Integer. Additional seed parameter for compatibility (default 12345).}
 
 \item{tree_method}{Character string specifying the package to use: "fastpolicytree"
-(default) or "policytree". The fastpolicytree package provides ~10x faster
-computation, which is particularly beneficial for bootstrap analysis. Falls
+(default) or "policytree". Margot pins the fast engine to
+\code{strategy.datatype = 1}; the upstream automatic representation can
+return a different, lower-value rule for wide covariate matrices. Falls
 back to policytree if fastpolicytree is not installed.}
 }
 \value{

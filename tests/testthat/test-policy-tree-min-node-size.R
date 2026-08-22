@@ -46,6 +46,9 @@ test_that("every public fitting route records the explicit terminal-node size", 
     verbose = FALSE
   )
   expect_equal(tree$results$model_y$policy_tree_metadata$min_node_size, 7L)
+  expect_true(is.na(
+    tree$results$model_y$policy_tree_metadata$fastpolicytree_strategy_datatype
+  ))
   expect_equal(tree$results$model_y$policy_tree_metadata$requested_depths, 1L)
   expect_equal(tree$results$model_y$policy_tree_metadata$realised_depths, 1L)
 
@@ -59,6 +62,7 @@ test_that("every public fitting route records the explicit terminal-node size", 
     verbose = FALSE
   )
   expect_equal(cv$metadata$min_node_size, 7L)
+  expect_true(is.na(cv$metadata$fastpolicytree_strategy_datatype))
   expect_equal(cv$metadata$requested_depths, 1L)
   expect_equal(cv$metadata$realised_depths, 1L)
 
@@ -72,6 +76,7 @@ test_that("every public fitting route records the explicit terminal-node size", 
     verbose = FALSE
   )
   expect_equal(stability$metadata$min_node_size, 7L)
+  expect_true(is.na(stability$metadata$fastpolicytree_strategy_datatype))
   expect_equal(stability$metadata$requested_depths, 1L)
   expect_equal(stability$metadata$realised_depths, 1L)
 
@@ -85,6 +90,7 @@ test_that("every public fitting route records the explicit terminal-node size", 
     verbose = FALSE
   ))
   expect_equal(bootstrap$metadata$min_node_size, 7L)
+  expect_true(is.na(bootstrap$metadata$fastpolicytree_strategy_datatype))
 
   diagnostic <- margot_policy_split_diagnostic(
     object,
@@ -95,6 +101,9 @@ test_that("every public fitting route records the explicit terminal-node size", 
     verbose = FALSE
   )
   expect_equal(attr(diagnostic, "metadata")$min_node_size, 7L)
+  expect_true(is.na(
+    attr(diagnostic, "metadata")$fastpolicytree_strategy_datatype
+  ))
   expect_equal(attr(diagnostic, "metadata")$depths, 1L)
 
   recalculated <- margot_recalculate_policy_trees(
@@ -108,6 +117,10 @@ test_that("every public fitting route records the explicit terminal-node size", 
     recalculated$results$model_y$policy_tree_metadata$min_node_size,
     7L
   )
+  strategy <- recalculated$results$model_y$policy_tree_metadata[[
+    "fastpolicytree_strategy_datatype"
+  ]]
+  expect_true(is.na(strategy))
 })
 
 test_that("the terminal-node size reaches both policy-tree engines", {
@@ -127,6 +140,11 @@ test_that("the terminal-node size reaches both policy-tree engines", {
     expect_equal(out$metadata$tree_method, engine)
     expect_false(out$metadata$engine_fallback)
     expect_equal(out$metadata$min_node_size, 7L)
+    if (identical(engine, "fastpolicytree")) {
+      expect_identical(out$metadata$fastpolicytree_strategy_datatype, 1L)
+    } else {
+      expect_true(is.na(out$metadata$fastpolicytree_strategy_datatype))
+    }
   }
 })
 
@@ -150,6 +168,7 @@ test_that("engine fallback and forest node size cannot be confused", {
   expect_equal(out$metadata$requested_tree_method, "fastpolicytree")
   expect_equal(out$metadata$tree_method, "policytree")
   expect_true(out$metadata$engine_fallback)
+  expect_true(is.na(out$metadata$fastpolicytree_strategy_datatype))
   expect_equal(out$metadata$min_node_size, 1L)
   expect_false(identical(
     out$metadata$min_node_size,

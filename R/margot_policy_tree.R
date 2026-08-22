@@ -31,9 +31,10 @@
 #' @param verbose Logical; print progress messages (default TRUE).
 #' @param seed Integer; base seed for reproducible computations (default 12345).
 #' @param tree_method Character string specifying the package to use: "policytree"
-#'   (default) or "fastpolicytree". The fastpolicytree package provides ~10x faster
-#'   computation with identical results. Falls back to policytree if fastpolicytree
-#'   is not installed.
+#'   (default) or "fastpolicytree". Margot pins the fast engine to
+#'   \code{strategy.datatype = 1}; the upstream automatic representation can
+#'   return a different, lower-value rule for wide covariate matrices. Falls
+#'   back to policytree if fastpolicytree is not installed.
 #' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
 #'   terminal node. This setting is separate from \code{depth} and from a causal
 #'   forest's \code{grf_defaults$min.node.size}. \code{NULL} retains the
@@ -473,6 +474,8 @@ compute_policy_trees_for_model <- function(model_result,
     covariate_mode = covariate_mode,
     train_proportion = train_proportion,
     tree_method = tree_method,
+    fastpolicytree_strategy_datatype =
+      .policy_tree_fast_strategy_metadata(tree_method),
     min_node_size = min_node_size,
     actual_train_size = if (compute_depth2 && exists("train_idx")) length(train_idx) else NA,
     actual_test_size = if (compute_depth2 && exists("test_idx")) length(test_idx) else NA,

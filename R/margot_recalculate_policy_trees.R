@@ -28,7 +28,8 @@
 #' @param tree_method Character string specifying which method to use for policy tree computation:
 #'   \itemize{
 #'     \item{"policytree"}{Use the policytree package (default)}
-#'     \item{"fastpolicytree"}{Use the fastpolicytree package (about 10x faster)}
+#'     \item{"fastpolicytree"}{Use fastpolicytree with Margot's validated
+#'       \code{strategy.datatype = 1} representation}
 #'   }
 #' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
 #'   terminal node, separate from tree depth and causal-forest node size.
@@ -375,7 +376,9 @@ recalculate_policy_trees_single <- function(model_result,
     min_node_size = min_node_size,
     requested_tree_method = requested_tree_method,
     tree_method = tree_method,
-    engine_fallback = !identical(requested_tree_method, tree_method)
+    engine_fallback = !identical(requested_tree_method, tree_method),
+    fastpolicytree_strategy_datatype =
+      .policy_tree_fast_strategy_metadata(tree_method)
   )
   model_result$policy_trees_need_recalculation <- FALSE
 

@@ -36,6 +36,12 @@ The standard workflow uses the package defaults unless a registration states an
 override. For `margot_policy_tree_cv()`, the defaults compare depths one and two
 with five held-out folds repeated 20 times, select depth two only when it clears
 the package parsimony rule, and prefer `fastpolicytree` when it is available.
+Margot sets the fast engine's `strategy.datatype` to `1`, the on-demand sorted
+representation validated against `policytree` on a wide-covariate recovery
+fixture. The upstream automatic setting is not used because it can select a
+different, lower-value rule in that setting. This is an enforced correctness
+setting, not a data-adaptive tuning choice, and returned metadata records it as
+`fastpolicytree_strategy_datatype = 1` whenever the fast engine is realised.
 
 ## Reporting convention
 
@@ -202,9 +208,13 @@ policy_tree_settings <- list(
   n_repeats = 20L,
   min_gain_for_depth_switch = 0.01,
   max_stability_loss_for_depth_switch = 0.05,
-  tree_method = "fastpolicytree"
+  tree_method = "fastpolicytree",
+  fastpolicytree_strategy_datatype = 1L
 )
 ```
+
+The final entry documents Margot's enforced engine setting; users do not pass it
+to `margot_policy_tree_cv()` separately.
 
 Users may restrict candidate policy-tree variables when the scientific question
 justifies it. For confirmatory analyses, variable restrictions should be

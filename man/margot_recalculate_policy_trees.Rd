@@ -53,7 +53,8 @@ variables starting with "t0_log_").}
 \item{tree_method}{Character string specifying which method to use for policy tree computation:
 \itemize{
   \item{"policytree"}{Use the policytree package (default)}
-  \item{"fastpolicytree"}{Use the fastpolicytree package (about 10x faster)}
+  \item{"fastpolicytree"}{Use fastpolicytree with Margot's validated
+    \code{strategy.datatype = 1} representation}
 }}
 
 \item{min_node_size}{Integer or \code{NULL}. Smallest permitted policy-tree

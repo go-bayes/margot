@@ -100,7 +100,9 @@
 #'   display labels.
 #' @param seed Integer. Base seed for reproducible fold assignments.
 #' @param tree_method Character. \code{"fastpolicytree"} or
-#'   \code{"policytree"}.
+#'   \code{"policytree"}. Margot pins the fast engine to
+#'   \code{strategy.datatype = 1}; the upstream automatic representation can
+#'   return a different, lower-value rule for wide covariate matrices.
 #' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
 #'   terminal node. This is unrelated to \code{depths} and to a causal
 #'   forest's \code{grf_defaults$min.node.size}. When \code{NULL}, the
@@ -393,6 +395,8 @@ margot_policy_tree_cv <- function(model_results,
       requested_tree_method = requested_tree_method,
       tree_method = actual_tree_method,
       engine_fallback = !identical(requested_tree_method, actual_tree_method),
+      fastpolicytree_strategy_datatype =
+        .policy_tree_fast_strategy_metadata(actual_tree_method),
       min_node_size = min_node_size,
       seed = seed,
       min_gain_for_depth_switch = min_gain_for_depth_switch,
