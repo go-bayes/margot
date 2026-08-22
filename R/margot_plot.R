@@ -618,7 +618,7 @@ margot_interpret_marginal <- function(
 
   evalue_scope_note <- if (type == "RD") {
     paste0(
-      "Continuous-outcome E-values use an approximate standardised-mean-difference-to-risk-ratio conversion and assess sensitivity only to residual unmeasured exposure–outcome confounding; ",
+      "Continuous-outcome E-values use an approximate standardised-mean-difference-to-risk-ratio conversion based on a hypothetical outcome dichotomisation and distributional assumptions, and assess sensitivity only to residual unmeasured exposure–outcome confounding; ",
       "they do not assess failures of consistency, including intervention-version equivalence, interference, positivity or empirical support, measurement validity, selection or target-population projection, or assumptions about observation, attrition, and survival."
     )
   } else {

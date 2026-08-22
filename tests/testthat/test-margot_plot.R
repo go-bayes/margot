@@ -121,6 +121,11 @@ test_that("margot_plot reports E-value approximation and causal limits", {
   )
   expect_match(
     out$interpretation,
+    "hypothetical outcome dichotomisation and distributional assumptions",
+    fixed = TRUE
+  )
+  expect_match(
+    out$interpretation,
     "sensitivity only to residual unmeasured exposure–outcome confounding",
     fixed = TRUE
   )
@@ -144,6 +149,29 @@ test_that("margot_plot reports E-value approximation and causal limits", {
     "approximate standardised-mean-difference-to-risk-ratio conversion",
     fixed = TRUE
   )
+
+  rr_data <- make_margot_plot_test_data(
+    estimates = 1.3,
+    lower = 1.1,
+    upper = 1.5,
+    bounds = 1.5,
+    outcomes = "example"
+  )
+  rr_data[["E[Y(1)]/E[Y(0)]"]] <- rr_data$ATE
+  rr_data$ATE <- NULL
+  rr_out <- margot_plot(
+    rr_data,
+    type = "RR",
+    include_coefficients = FALSE,
+    options = list(use_title_case = FALSE)
+  )
+
+  expect_match(
+    rr_out$interpretation,
+    "sensitivity only to residual unmeasured exposure–outcome confounding",
+    fixed = TRUE
+  )
+  expect_false(grepl("approximate", rr_out$interpretation, fixed = TRUE))
 })
 
 test_that("adjusted confidence intervals expose corrected headers and captions", {
