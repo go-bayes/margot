@@ -268,6 +268,8 @@
   : Create a Combined Decision Tree and Policy Relationship Graph
 - [`margot_plot_policy_decision_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_decision_tree.md)
   : Plot a policy-tree branching decision tree
+- [`plot(`*`<margot_policy_tree_display>`*`)`](https://go-bayes.github.io/margot/reference/plot.margot_policy_tree_display.md)
+  : Plot a compact Margot policy-tree display
 - [`margot_plot_policy_projection()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_projection.md)
   : Plot policy-tree projections of evaluation points
 - [`margot_plot_policy_tree_panels()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_tree_panels.md)

@@ -1,5 +1,28 @@
 # Changelog
 
+## \[2026-08-25\] margot 1.1.022
+
+#### Direct plots from compact policy-tree displays
+
+##### Added
+
+- [`plot.margot_policy_tree_display()`](https://go-bayes.github.io/margot/reference/plot.margot_policy_tree_display.md)
+  and
+  [`margot_plot_policy_decision_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_decision_tree.md)
+  now draw a tree directly from the compact object returned by
+  [`margot_policy_tree_display()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_display.md).
+  A single-model display needs no model or depth argument; multi-model
+  displays require a model name, and the plot uses the held-out selected
+  depth stored with that model.
+
+##### Documented
+
+- Compact display objects contain the fitted full-sample assignment tree
+  and therefore support decision-tree plots. They deliberately omit
+  observation-level projection data, so projection and combined-panel
+  plots continue to require the compatible causal-forest workflow
+  object. The display plot supplies no additional policy-value estimate.
+
 ## \[2026-08-25\] margot 1.1.021
 
 #### Registered weighted policy evaluation and display trees

@@ -4,19 +4,48 @@
 #' Thin, explicit wrapper around \code{\link{margot_plot_decision_tree}()}.
 #' Use this helper when the intended artefact is the branching assignment rule.
 #'
-#' @param result_object A list returned by \code{margot_causal_forest()} or a
-#'   compatible policy-tree workflow object.
+#' @param result_object A list returned by \code{margot_causal_forest()},
+#'   \code{margot_policy_tree_display()}, or a compatible policy-tree workflow
+#'   object. A compact display object supports this decision-tree plot because
+#'   it stores the fitted tree; it does not supply the observation-level data
+#'   required by \code{margot_plot_policy_projection()}.
 #' @param model_name Character scalar naming the model to plot, with or without
-#'   the \code{model_} prefix.
+#'   the \code{model_} prefix. May be omitted for a
+#'   \code{margot_policy_tree_display} object containing exactly one model.
 #' @param ... Arguments passed to
 #'   \code{\link{margot_plot_decision_tree}()}.
 #'
 #' @return A ggplot object.
 #' @export
-margot_plot_policy_decision_tree <- function(result_object, model_name, ...) {
+margot_plot_policy_decision_tree <- function(result_object, model_name = NULL, ...) {
   # keep the explicit policy-tree name while preserving the stable plotter.
-  model_name <- .margot_leaf_resolve_model_name(result_object, model_name)
   margot_plot_decision_tree(result_object, model_name = model_name, ...)
+}
+
+#' Plot a compact Margot policy-tree display
+#'
+#' @description
+#' Draws the descriptive full-sample policy tree stored by
+#' \code{margot_policy_tree_display()}. The stored held-out selected depth is
+#' used automatically. The plot shows the fitted assignment rule and supplies
+#' no additional policy-value estimate.
+#'
+#' @param x A \code{margot_policy_tree_display} object.
+#' @param model_name Optional model name, with or without the \code{model_}
+#'   prefix. Required when \code{x} contains more than one model.
+#' @param ... Arguments passed to
+#'   \code{margot_plot_policy_decision_tree()}.
+#'
+#' @return A ggplot object.
+#' @method plot margot_policy_tree_display
+#' @export
+plot.margot_policy_tree_display <- function(x, model_name = NULL, ...) {
+  # make the compact display object directly graphable.
+  margot_plot_policy_decision_tree(
+    result_object = x,
+    model_name = model_name,
+    ...
+  )
 }
 
 #' Plot policy-tree projections of evaluation points

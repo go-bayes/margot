@@ -8,7 +8,7 @@ rule.
 ## Usage
 
 ``` r
-margot_plot_policy_decision_tree(result_object, model_name, ...)
+margot_plot_policy_decision_tree(result_object, model_name = NULL, ...)
 ```
 
 ## Arguments
@@ -16,13 +16,18 @@ margot_plot_policy_decision_tree(result_object, model_name, ...)
 - result_object:
 
   A list returned by
-  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md)
-  or a compatible policy-tree workflow object.
+  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md),
+  [`margot_policy_tree_display()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_display.md),
+  or a compatible policy-tree workflow object. A compact display object
+  supports this decision-tree plot because it stores the fitted tree; it
+  does not supply the observation-level data required by
+  [`margot_plot_policy_projection()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_projection.md).
 
 - model_name:
 
   Character scalar naming the model to plot, with or without the
-  `model_` prefix.
+  `model_` prefix. May be omitted for a `margot_policy_tree_display`
+  object containing exactly one model.
 
 - ...:
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.021</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.022</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">margot_plot_decision_tree</span><span class="op">(</span></span>
 <span>  <span class="va">result_object</span>,</span>
 <span>  model_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  max_depth <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>  max_depth <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  original_df <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  x_padding <span class="op">=</span> <span class="fl">0.12</span>,</span>
 <span>  y_padding <span class="op">=</span> <span class="fl">0.25</span>,</span>
@@ -74,7 +74,8 @@
 
 
 <dl><dt id="arg-result-object">result_object<a class="anchor" aria-label="anchor" href="#arg-result-object"></a></dt>
-<dd><p>A list returned by <code><a href="margot_causal_forest.html">margot_causal_forest()</a></code>.</p></dd>
+<dd><p>A list returned by <code><a href="margot_causal_forest.html">margot_causal_forest()</a></code> or
+<code><a href="margot_policy_tree_display.html">margot_policy_tree_display()</a></code>.</p></dd>
 
 
 <dt id="arg-model-name">model_name<a class="anchor" aria-label="anchor" href="#arg-model-name"></a></dt>
@@ -82,7 +83,10 @@
 
 
 <dt id="arg-max-depth">max_depth<a class="anchor" aria-label="anchor" href="#arg-max-depth"></a></dt>
-<dd><p>Maximum depth of the tree (1L or 2L)</p></dd>
+<dd><p>Maximum depth of the tree (1L or 2L). When
+<code>result_object</code> is a <code>margot_policy_tree_display</code> object,
+<code>NULL</code> uses the held-out selected depth stored with that model. For
+other supported objects, <code>NULL</code> retains the historical default of 2L.</p></dd>
 
 
 <dt id="arg-original-df">original_df<a class="anchor" aria-label="anchor" href="#arg-original-df"></a></dt>

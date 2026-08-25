@@ -114,6 +114,52 @@ test_that("policy-tree reporting helpers return modular artefacts", {
   expect_equal(selected_report$metadata$depth, 2L)
 })
 
+test_that("compact display objects plot directly at their stored depth", {
+  set.seed(49)
+  n <- 80
+  x <- data.frame(
+    x1 = stats::rnorm(n),
+    x2 = stats::rnorm(n)
+  )
+  gamma <- cbind(
+    control = rep(0, n),
+    treated = ifelse(x$x1 > 0, 0.7, -0.2)
+  )
+  tree <- policytree::policy_tree(x, gamma, depth = 1, min.node.size = 5)
+  display <- structure(
+    list(
+      results = list(
+        model_y = list(
+          tree = tree,
+          depth = 1L,
+          selected_vars = names(x),
+          n_train = n,
+          total_weight = n
+        )
+      ),
+      split_table = data.frame(),
+      leaf_table = data.frame(),
+      metadata = list(
+        estimand = "descriptive full-sample display tree; no additional value estimate"
+      )
+    ),
+    class = c("margot_policy_tree_display", "list")
+  )
+
+  expect_s3_class(margot_plot_policy_decision_tree(display), "ggplot")
+  expect_s3_class(margot_plot_decision_tree(display, model_name = "y"), "ggplot")
+  expect_s3_class(plot(display), "ggplot")
+  expect_error(
+    margot_plot_policy_decision_tree(display, max_depth = 2L),
+    "stores its fitted tree at depth 1"
+  )
+
+  multi_display <- display
+  multi_display$results$model_z <- multi_display$results$model_y
+  expect_error(plot(multi_display), "model_name.*required")
+  expect_s3_class(plot(multi_display, model_name = "z"), "ggplot")
+})
+
 test_that("held-out policy reporting exposes action-score and value summaries", {
   old_options <- options(margot.policy_tree.min_node_size = 5L)
   on.exit(options(old_options), add = TRUE)

@@ -1,7 +1,11 @@
 #' Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)
-#' @param result_object A list returned by \code{margot_causal_forest()}.
+#' @param result_object A list returned by \code{margot_causal_forest()} or
+#'   \code{margot_policy_tree_display()}.
 #' @param model_name Name of the model in the results to visualise
-#' @param max_depth Maximum depth of the tree (1L or 2L)
+#' @param max_depth Maximum depth of the tree (1L or 2L). When
+#'   \code{result_object} is a \code{margot_policy_tree_display} object,
+#'   \code{NULL} uses the held-out selected depth stored with that model. For
+#'   other supported objects, \code{NULL} retains the historical default of 2L.
 #' @param original_df Optional dataframe with original data for showing untransformed values
 #' @param x_padding Horizontal padding for the plot (proportion)
 #' @param y_padding Vertical padding for the plot (proportion)
@@ -36,7 +40,7 @@
 margot_plot_decision_tree <- function(
     result_object,
     model_name = NULL,
-    max_depth = 2L,
+    max_depth = NULL,
     original_df = NULL,
     x_padding = 0.12,
     y_padding = 0.25,
@@ -57,6 +61,13 @@ margot_plot_decision_tree <- function(
     leaf_metrics = NULL,
     leaf_metric_digits = 3L) {
   cli::cli_h1("Margot Plot Decision Tree")
+
+  if (!(is.list(result_object) && "results" %in% names(result_object))) {
+    cli::cli_abort(
+      "`result_object` must contain a named `results` list with fitted policy trees."
+    )
+  }
+  model_name <- .margot_plot_resolve_model_name(result_object, model_name)
 
   # safe wrappers for labelling
   tl <- function(x) {
@@ -84,20 +95,44 @@ margot_plot_decision_tree <- function(
     )
   }
 
-  # 1 fetch tree
+  # fetch the tree while preserving the display object's selected depth.
+  is_display <- inherits(result_object, "margot_policy_tree_display")
+  if (is_display) {
+    display_result <- result_object$results[[model_name]]
+    stored_depth <- as.integer(display_result$depth)
+    if (length(stored_depth) != 1L || is.na(stored_depth) || !stored_depth %in% c(1L, 2L)) {
+      cli::cli_abort("Display model `{model_name}` has no valid stored depth.")
+    }
+    if (is.null(max_depth)) {
+      max_depth <- stored_depth
+    } else {
+      max_depth <- suppressWarnings(as.integer(max_depth))
+      if (length(max_depth) != 1L || is.na(max_depth) || !max_depth %in% c(1L, 2L)) {
+        cli::cli_abort("`max_depth` must be 1 or 2.")
+      }
+      if (max_depth != stored_depth) {
+        cli::cli_abort(c(
+          "Display model `{model_name}` stores its fitted tree at depth {stored_depth}.",
+          "i" = "Use `max_depth = {stored_depth}` or omit `max_depth`."
+        ))
+      }
+    }
+    policy_tree_obj <- display_result$tree
+    if (is.null(policy_tree_obj)) {
+      cli::cli_abort("Stored display tree missing for model `{model_name}`.")
+    }
+  } else {
+    max_depth <- max_depth %||% 2L
+  }
   if (!max_depth %in% c(1L, 2L)) {
     cli::cli_abort("`max_depth` must be 1 or 2.")
   }
-  tag <- paste0("policy_tree_depth_", max_depth)
-  if (!(is.list(result_object) && "results" %in% names(result_object))) {
-    cli::cli_abort("`result_object` must be the full list returned by `margot_causal_forest()`.")
-  }
-  if (!model_name %in% names(result_object$results)) {
-    cli::cli_abort("model `{model_name}` not found.")
-  }
-  policy_tree_obj <- result_object$results[[model_name]][[tag]]
-  if (is.null(policy_tree_obj)) {
-    cli::cli_abort("`{tag}` object missing for model `{model_name}`.")
+  if (!is_display) {
+    tag <- paste0("policy_tree_depth_", max_depth)
+    policy_tree_obj <- result_object$results[[model_name]][[tag]]
+    if (is.null(policy_tree_obj)) {
+      cli::cli_abort("`{tag}` object missing for model `{model_name}`.")
+    }
   }
   cli::cli_alert_success("✔ Using decision tree at depth {max_depth} for model: {model_name}")
 
@@ -291,6 +326,22 @@ margot_plot_decision_tree <- function(
 
   cli::cli_alert_success("🎉 Plot created successfully")
   p
+}
+
+#' @keywords internal
+.margot_plot_resolve_model_name <- function(result_object, model_name = NULL) {
+  # infer the sole display model; require an explicit choice otherwise.
+  available <- names(result_object$results)
+  if (is.null(available) || !length(available)) {
+    cli::cli_abort("`result_object$results` must be a named, non-empty list.")
+  }
+  if (is.null(model_name) || !length(model_name)) {
+    if (inherits(result_object, "margot_policy_tree_display") && length(available) == 1L) {
+      return(available[[1]])
+    }
+    cli::cli_abort("`model_name` is required when the object contains more than one model.")
+  }
+  .margot_leaf_resolve_model_name(result_object, model_name)
 }
 
 # fallback NULL-coalescing

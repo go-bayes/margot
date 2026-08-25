@@ -9,7 +9,7 @@ labelling)
 margot_plot_decision_tree(
   result_object,
   model_name = NULL,
-  max_depth = 2L,
+  max_depth = NULL,
   original_df = NULL,
   x_padding = 0.12,
   y_padding = 0.25,
@@ -37,7 +37,9 @@ margot_plot_decision_tree(
 - result_object:
 
   A list returned by
-  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md).
+  [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md)
+  or
+  [`margot_policy_tree_display()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_display.md).
 
 - model_name:
 
@@ -45,7 +47,10 @@ margot_plot_decision_tree(
 
 - max_depth:
 
-  Maximum depth of the tree (1L or 2L)
+  Maximum depth of the tree (1L or 2L). When `result_object` is a
+  `margot_policy_tree_display` object, `NULL` uses the held-out selected
+  depth stored with that model. For other supported objects, `NULL`
+  retains the historical default of 2L.
 
 - original_df:
 

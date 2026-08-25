@@ -4,14 +4,18 @@
 \alias{margot_plot_policy_decision_tree}
 \title{Plot a policy-tree branching decision tree}
 \usage{
-margot_plot_policy_decision_tree(result_object, model_name, ...)
+margot_plot_policy_decision_tree(result_object, model_name = NULL, ...)
 }
 \arguments{
-\item{result_object}{A list returned by \code{margot_causal_forest()} or a
-compatible policy-tree workflow object.}
+\item{result_object}{A list returned by \code{margot_causal_forest()},
+\code{margot_policy_tree_display()}, or a compatible policy-tree workflow
+object. A compact display object supports this decision-tree plot because
+it stores the fitted tree; it does not supply the observation-level data
+required by \code{margot_plot_policy_projection()}.}
 
 \item{model_name}{Character scalar naming the model to plot, with or without
-the \code{model_} prefix.}
+the \code{model_} prefix. May be omitted for a
+\code{margot_policy_tree_display} object containing exactly one model.}
 
 \item{...}{Arguments passed to
 \code{\link{margot_plot_decision_tree}()}.}

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.021</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.022</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,21 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.022" id="id_2026-08-25-margot-11022">[2026-08-25] margot 1.1.022<a class="anchor" aria-label="anchor" href="#id_2026-08-25-margot-11022"></a></h2>
+<div class="section level4">
+<h4 id="direct-plots-from-compact-policy-tree-displays-1-1-022">Direct plots from compact policy-tree displays<a class="anchor" aria-label="anchor" href="#direct-plots-from-compact-policy-tree-displays-1-1-022"></a></h4>
+<div class="section level5">
+<h5 id="added-1-1-022">Added<a class="anchor" aria-label="anchor" href="#added-1-1-022"></a></h5>
+<ul><li>
+<code><a href="../reference/plot.margot_policy_tree_display.html">plot.margot_policy_tree_display()</a></code> and <code><a href="../reference/margot_plot_policy_decision_tree.html">margot_plot_policy_decision_tree()</a></code> now draw a tree directly from the compact object returned by <code><a href="../reference/margot_policy_tree_display.html">margot_policy_tree_display()</a></code>. A single-model display needs no model or depth argument; multi-model displays require a model name, and the plot uses the held-out selected depth stored with that model.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="documented-1-1-022">Documented<a class="anchor" aria-label="anchor" href="#documented-1-1-022"></a></h5>
+<ul><li>Compact display objects contain the fitted full-sample assignment tree and therefore support decision-tree plots. They deliberately omit observation-level projection data, so projection and combined-panel plots continue to require the compatible causal-forest workflow object. The display plot supplies no additional policy-value estimate.</li>
+</ul></div>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.021" id="id_2026-08-25-margot-11021">[2026-08-25] margot 1.1.021<a class="anchor" aria-label="anchor" href="#id_2026-08-25-margot-11021"></a></h2>
 <div class="section level4">

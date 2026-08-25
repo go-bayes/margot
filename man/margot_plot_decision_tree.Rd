@@ -7,7 +7,7 @@
 margot_plot_decision_tree(
   result_object,
   model_name = NULL,
-  max_depth = 2L,
+  max_depth = NULL,
   original_df = NULL,
   x_padding = 0.12,
   y_padding = 0.25,
@@ -30,11 +30,15 @@ margot_plot_decision_tree(
 )
 }
 \arguments{
-\item{result_object}{A list returned by \code{margot_causal_forest()}.}
+\item{result_object}{A list returned by \code{margot_causal_forest()} or
+\code{margot_policy_tree_display()}.}
 
 \item{model_name}{Name of the model in the results to visualise}
 
-\item{max_depth}{Maximum depth of the tree (1L or 2L)}
+\item{max_depth}{Maximum depth of the tree (1L or 2L). When
+\code{result_object} is a \code{margot_policy_tree_display} object,
+\code{NULL} uses the held-out selected depth stored with that model. For
+other supported objects, \code{NULL} retains the historical default of 2L.}
 
 \item{original_df}{Optional dataframe with original data for showing untransformed values}
 

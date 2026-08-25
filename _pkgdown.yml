@@ -176,6 +176,7 @@ reference:
     - margot_plot_policy_tree
     - margot_plot_policy_combo
     - margot_plot_policy_decision_tree
+    - plot.margot_policy_tree_display
     - margot_plot_policy_projection
     - margot_plot_policy_tree_panels
     - margot_plot_policy_regret
