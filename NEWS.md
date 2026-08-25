@@ -1,3 +1,11 @@
+# [2026-08-25] margot 1.1.021 (development)
+
+### Registered weighted policy evaluation and display trees
+
+#### Added
+- `margot_policy_tree_cv()` can pool weighted score numerators and weight denominators across held-out folds within each repeat before averaging repeat-level values, and can restrict depth comparisons to matched successful repeat-fold pairs. Historical aggregation remains the default for existing callers; both choices are recorded in metadata.
+- `margot_policy_tree_display()` fits a descriptive full-sample tree at the depth selected by held-out evaluation, using the supplied target weights, covariate library, engine, and terminal-node minimum. It returns split and leaf tables but no new held-out value estimate.
+
 # [2026-08-22] margot 1.1.020 (development)
 
 ### Validated fast policy-tree representation
