@@ -125,6 +125,7 @@ reference:
     - margot_omnibus_hetero_test
     - margot_policy_workflow
     - margot_policy_tree_cv
+    - margot_policy_tree_display
     - margot_policy_leaf_summary
     - margot_table_policy_tree
     - margot_table_policy_value

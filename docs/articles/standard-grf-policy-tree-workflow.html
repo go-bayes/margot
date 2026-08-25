@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.021</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,15 @@ observations using cross-validation.</p>
 states an override. For <code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code>, the
 defaults compare depths one and two with five held-out folds repeated 20
 times, select depth two only when it clears the package parsimony rule,
-and prefer <code>fastpolicytree</code> when it is available.</p>
+and prefer <code>fastpolicytree</code> when it is available. Margot sets
+the fast engine’s <code>strategy.datatype</code> to <code>1</code>, the
+on-demand sorted representation validated against
+<code>policytree</code> on a wide-covariate recovery fixture. The
+upstream automatic setting is not used because it can select a
+different, lower-value rule in that setting. This is an enforced
+correctness setting, not a data-adaptive tuning choice, and returned
+metadata records it as <code>fastpolicytree_strategy_datatype = 1</code>
+whenever the fast engine is realised.</p>
 <div class="section level2">
 <h2 id="reporting-convention">Reporting convention<a class="anchor" aria-label="anchor" href="#reporting-convention"></a>
 </h2>
@@ -271,8 +279,11 @@ explicit in a registration, record them as:</p>
 <span>  n_repeats <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  min_gain_for_depth_switch <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  max_stability_loss_for_depth_switch <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  tree_method <span class="op">=</span> <span class="st">"fastpolicytree"</span></span>
+<span>  tree_method <span class="op">=</span> <span class="st">"fastpolicytree"</span>,</span>
+<span>  fastpolicytree_strategy_datatype <span class="op">=</span> <span class="fl">1L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p>The final entry documents Margot’s enforced engine setting; users do
+not pass it to <code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code> separately.</p>
 <p>Users may restrict candidate policy-tree variables when the
 scientific question justifies it. For confirmatory analyses, variable
 restrictions should be pre-specified or chosen inside the training

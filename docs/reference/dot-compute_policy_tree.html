@@ -11,7 +11,7 @@ package availability."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.021</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,10 +77,24 @@ package availability.</p>
 <dt id="arg-tree-method">tree_method<a class="anchor" aria-label="anchor" href="#arg-tree-method"></a></dt>
 <dd><p>Character string: "policytree" or "fastpolicytree"</p></dd>
 
+
+<dt id="arg-min-node-size">min_node_size<a class="anchor" aria-label="anchor" href="#arg-min-node-size"></a></dt>
+<dd><p>Integer or <code>NULL</code>. Smallest permitted terminal
+node size.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Policy tree object</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Margot pins <code>fastpolicytree</code>'s <code>strategy.datatype</code> to <code>1</code>,
+which uses unsorted data sets that are sorted on demand. The upstream
+automatic strategy (<code>2</code>) can select a different, lower-value rule than
+exact <code>policytree</code> for wide covariate matrices. The pinned strategy is
+therefore part of Margot's fast-engine contract rather than an optimisation
+option selected from the input data.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

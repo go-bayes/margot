@@ -139,9 +139,10 @@ margot_policy_tree_stability(
 - tree_method:
 
   Character string specifying the package to use: "fastpolicytree"
-  (default) or "policytree". The fastpolicytree package provides ~10x
-  faster computation, which is particularly beneficial for stability
-  analysis. Falls back to policytree if fastpolicytree is not installed.
+  (default) or "policytree". Margot pins the fast engine to
+  `strategy.datatype = 1`; the upstream automatic representation can
+  return a different, lower-value rule for wide covariate matrices.
+  Falls back to policytree if fastpolicytree is not installed.
 
 - min_node_size:
 

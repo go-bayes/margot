@@ -1,6 +1,48 @@
 # Changelog
 
-## \[2026-08-11\] margot 1.1.019 (development)
+## \[2026-08-25\] margot 1.1.021
+
+#### Registered weighted policy evaluation and display trees
+
+##### Added
+
+- [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
+  can pool weighted score numerators and weight denominators across
+  held-out folds within each repeat before averaging repeat-level
+  values, and can restrict depth comparisons to repeat-fold combinations
+  successfully evaluated at every requested depth. Historical
+  aggregation remains the default for existing callers; both choices are
+  recorded in metadata.
+- [`margot_policy_tree_display()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_display.md)
+  fits a descriptive full-sample tree at the depth selected by held-out
+  evaluation, using the supplied target weights, covariate library,
+  engine, and terminal-node minimum. It returns split and leaf tables
+  but no new held-out value estimate.
+
+## \[2026-08-22\] margot 1.1.020 (development)
+
+#### Validated fast policy-tree representation
+
+##### Corrected
+
+- Every Margot route that fits `fastpolicytree` now sets
+  `strategy.datatype = 1`, which uses the on-demand sorted
+  representation. The upstream automatic setting (`2`) selected a
+  different, lower-value rule than `policytree` in a deterministic
+  wide-covariate recovery fixture. The automatic setting is therefore no
+  longer part of Margot’s policy-tree procedure.
+- Public policy-tree metadata now records
+  `fastpolicytree_strategy_datatype = 1` when the fast engine is
+  realised and `NA` when `policytree` is realised, including
+  package-fallback cases.
+
+##### Documented
+
+- Policy-tree function help and the standard GRF policy-tree workflow
+  now state that the enforced representation is a validated correctness
+  setting rather than a data-adaptive tuning choice. Earlier claims that
+  the two engines produce identical results without qualification are
+  superseded.
 
 #### Native RDS and tabular Arrow storage
 
@@ -23,6 +65,8 @@
 - The QS and QS2 readers, writers, directory converters, optional
   dependencies, migration vignette, and package documentation have been
   removed. Margot no longer supplies an active QS migration route.
+
+## \[2026-08-11\] margot 1.1.019
 
 ## \[2026-08-11\] margot 1.1.018
 
@@ -621,12 +665,11 @@ welfare maximisation.
   the standard workflow the split is unnecessary, and it costs half the
   data and makes the displayed tree depend on the luck of the partition.
 - **Reproducibility is not stability.** The policy-tree solver
-  (`policytree` / `fastpolicytree`) is a deterministic exact optimiser;
-  with a fixed seed and no split the descriptive tree reproduces
-  exactly. Whether its splits are a real feature or a draw-specific
-  artifact is a separate question, answered by the bootstrap robustness
-  report — so stability is retained but reframed as a diagnostic, not an
-  inference engine.
+  (`policytree` / `fastpolicytree`) is deterministic; with a fixed seed
+  and no split the descriptive tree reproduces exactly. Whether its
+  splits are a real feature or a draw-specific artifact is a separate
+  question, answered by the bootstrap robustness report — so stability
+  is retained but reframed as a diagnostic, not an inference engine.
 - **Two paths, no false optimism.** Descriptive (default): the full-data
   tree plus its bootstrap robustness, with no out-of-sample value claim.
   Inferential (opt-in): an honest held-out policy value via the split,
@@ -6835,8 +6878,10 @@ warnings. They will be removed in a future version of the package.
 - LMTP overlap grid now respects multi-wave density ratios when stored
   as `Matrix` or `data.frame` by coercing to base matrices before
   iterating waves. This restores one panel per wave × shift.
-- Grid axis limits use `coord_cartesian()` to avoid dropping bars (no
-  more “Removed rows” warnings when harmonising x/y ranges).
+- Grid axis limits use
+  [`coord_cartesian()`](https://ggplot2.tidyverse.org/reference/coord_cartesian.html)
+  to avoid dropping bars (no more “Removed rows” warnings when
+  harmonising x/y ranges).
 - Shift order in grids and text respects the user-supplied `shifts`
   vector without dropping additional wave panels.
 

@@ -15,7 +15,7 @@ This function is deprecated. Please use margot_policy_tree_stability instead."><
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.021</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -160,8 +160,9 @@ vary_train_proportion = TRUE (default c(0.4, 0.5, 0.6, 0.7)).</p></dd>
 
 <dt id="arg-tree-method">tree_method<a class="anchor" aria-label="anchor" href="#arg-tree-method"></a></dt>
 <dd><p>Character string specifying the package to use: "fastpolicytree"
-(default) or "policytree". The fastpolicytree package provides ~10x faster
-computation, which is particularly beneficial for bootstrap analysis. Falls
+(default) or "policytree". Margot pins the fast engine to
+<code>strategy.datatype = 1</code>; the upstream automatic representation can
+return a different, lower-value rule for wide covariate matrices. Falls
 back to policytree if fastpolicytree is not installed.</p></dd>
 
 </dl></div>

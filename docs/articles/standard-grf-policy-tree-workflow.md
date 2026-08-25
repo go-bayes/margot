@@ -24,7 +24,14 @@ states an override. For
 [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md),
 the defaults compare depths one and two with five held-out folds
 repeated 20 times, select depth two only when it clears the package
-parsimony rule, and prefer `fastpolicytree` when it is available.
+parsimony rule, and prefer `fastpolicytree` when it is available. Margot
+sets the fast engine’s `strategy.datatype` to `1`, the on-demand sorted
+representation validated against `policytree` on a wide-covariate
+recovery fixture. The upstream automatic setting is not used because it
+can select a different, lower-value rule in that setting. This is an
+enforced correctness setting, not a data-adaptive tuning choice, and
+returned metadata records it as `fastpolicytree_strategy_datatype = 1`
+whenever the fast engine is realised.
 
 ## Reporting convention
 
@@ -126,7 +133,12 @@ all-treatment or all-control tree is not mistaken for a selective rule.
 The first call uses the workflow defaults. To make the defaults explicit
 in a registration, record them as:
 
-`# record the standard policy-tree validation settings in the study protocol.`` ``policy_tree_settings`` ``<-`` `[`list`](https://rdrr.io/r/base/list.html)`(`` `` depths ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``1L``, ``2L``)``,`` `` num_folds ``=`` ``5L``,`` `` n_repeats ``=`` ``20L``,`` `` min_gain_for_depth_switch ``=`` ``0.01``,`` `` max_stability_loss_for_depth_switch ``=`` ``0.05``,`` `` tree_method ``=`` ``"fastpolicytree"`` ``)`
+`# record the standard policy-tree validation settings in the study protocol.`` ``policy_tree_settings`` ``<-`` `[`list`](https://rdrr.io/r/base/list.html)`(`` `` depths ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``1L``, ``2L``)``,`` `` num_folds ``=`` ``5L``,`` `` n_repeats ``=`` ``20L``,`` `` min_gain_for_depth_switch ``=`` ``0.01``,`` `` max_stability_loss_for_depth_switch ``=`` ``0.05``,`` `` tree_method ``=`` ``"fastpolicytree"``,`` `` fastpolicytree_strategy_datatype ``=`` ``1L`` ``)`
+
+The final entry documents Margot’s enforced engine setting; users do not
+pass it to
+[`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
+separately.
 
 Users may restrict candidate policy-tree variables when the scientific
 question justifies it. For confirmatory analyses, variable restrictions
