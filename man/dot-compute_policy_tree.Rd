@@ -20,6 +20,9 @@
 \item{depth}{Integer depth of tree (1 or 2)}
 
 \item{tree_method}{Character string: "policytree" or "fastpolicytree"}
+
+\item{min_node_size}{Integer or \code{NULL}. Smallest permitted terminal
+node size.}
 }
 \value{
 Policy tree object
@@ -28,5 +31,13 @@ Policy tree object
 Internal function that wraps either policytree::policy_tree() or
 fastpolicytree::fastpolicytree() depending on user preference and
 package availability.
+}
+\details{
+Margot pins \code{fastpolicytree}'s \code{strategy.datatype} to \code{1},
+which uses unsorted data sets that are sorted on demand. The upstream
+automatic strategy (\code{2}) can select a different, lower-value rule than
+exact \code{policytree} for wide covariate matrices. The pinned strategy is
+therefore part of Margot's fast-engine contract rather than an optimisation
+option selected from the input data.
 }
 \keyword{internal}

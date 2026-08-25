@@ -9,6 +9,16 @@
 #' @param Gamma Matrix of doubly robust scores
 #' @param depth Integer depth of tree (1 or 2)
 #' @param tree_method Character string: "policytree" or "fastpolicytree"
+#' @param min_node_size Integer or \code{NULL}. Smallest permitted terminal
+#'   node size.
+#'
+#' @details
+#' Margot pins \code{fastpolicytree}'s \code{strategy.datatype} to \code{1},
+#' which uses unsorted data sets that are sorted on demand. The upstream
+#' automatic strategy (\code{2}) can select a different, lower-value rule than
+#' exact \code{policytree} for wide covariate matrices. The pinned strategy is
+#' therefore part of Margot's fast-engine contract rather than an optimisation
+#' option selected from the input data.
 #'
 #' @return Policy tree object
 #' @keywords internal
@@ -37,19 +47,39 @@
 
   # compute tree using selected method
   if (tree_method == "fastpolicytree") {
-    fastpolicytree::fastpolicytree(
+    tree <- fastpolicytree::fastpolicytree(
       X,
       Gamma,
       depth = depth,
-      min.node.size = min_node_size
+      min.node.size = min_node_size,
+      strategy.datatype = .fastpolicytree_strategy_datatype()
     )
   } else {
-    policytree::policy_tree(
+    tree <- policytree::policy_tree(
       X,
       Gamma,
       depth = depth,
       min.node.size = min_node_size
     )
+  }
+  attr(tree, "margot_fastpolicytree_strategy_datatype") <-
+    .policy_tree_fast_strategy_metadata(tree_method)
+  tree
+}
+
+#' Return Margot's validated fastpolicytree data representation
+#' @keywords internal
+.fastpolicytree_strategy_datatype <- function() {
+  1L
+}
+
+#' Record the fastpolicytree representation for fitted-tree metadata
+#' @keywords internal
+.policy_tree_fast_strategy_metadata <- function(tree_method) {
+  if (identical(tree_method, "fastpolicytree")) {
+    .fastpolicytree_strategy_datatype()
+  } else {
+    NA_integer_
   }
 }
 

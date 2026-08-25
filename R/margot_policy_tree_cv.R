@@ -100,12 +100,23 @@
 #'   display labels.
 #' @param seed Integer. Base seed for reproducible fold assignments.
 #' @param tree_method Character. \code{"fastpolicytree"} or
-#'   \code{"policytree"}.
+#'   \code{"policytree"}. Margot pins the fast engine to
+#'   \code{strategy.datatype = 1}; the upstream automatic representation can
+#'   return a different, lower-value rule for wide covariate matrices.
 #' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
 #'   terminal node. This is unrelated to \code{depths} and to a causal
 #'   forest's \code{grf_defaults$min.node.size}. When \code{NULL}, the
 #'   compatibility option \code{margot.policy_tree.min_node_size} is consulted,
 #'   then 1.
+#' @param held_out_aggregation Character. \code{"fold_n_eval_weighted"} retains
+#'   the historical aggregation of fold means by evaluation-row count.
+#'   \code{"pool_score_numerators_and_weight_denominators_within_repeat"}
+#'   pools weighted score numerators and weight denominators across folds within
+#'   each repeat, then averages the repeat-level values equally.
+#' @param comparison_pairs Character. \code{"available_by_depth"} uses every
+#'   successful fold separately by depth. \code{"matched_successful_repeat_fold_pairs"}
+#'   restricts depth and constant comparisons to model-repeat-fold combinations
+#'   successfully evaluated at every requested depth.
 #' @param verbose Logical. Print progress messages.
 #'
 #' @return A \code{margot_policy_tree_cv} list with fold-level held-out values,
@@ -137,6 +148,14 @@ margot_policy_tree_cv <- function(model_results,
                                   seed = 42L,
                                   tree_method = c("fastpolicytree", "policytree"),
                                   min_node_size = NULL,
+                                  held_out_aggregation = c(
+                                    "fold_n_eval_weighted",
+                                    "pool_score_numerators_and_weight_denominators_within_repeat"
+                                  ),
+                                  comparison_pairs = c(
+                                    "available_by_depth",
+                                    "matched_successful_repeat_fold_pairs"
+                                  ),
                                   verbose = TRUE) {
   # evaluate policy-learning procedure on held-out folds and return summaries.
   if (!is.list(model_results) || is.null(model_results$results) || !is.list(model_results$results)) {
@@ -150,6 +169,8 @@ margot_policy_tree_cv <- function(model_results,
   depth_selection_rule <- match.arg(depth_selection_rule)
   training_weights_applied <- FALSE
   tree_method <- match.arg(tree_method)
+  held_out_aggregation <- match.arg(held_out_aggregation)
+  comparison_pairs <- match.arg(comparison_pairs)
   requested_tree_method <- tree_method
   actual_tree_method <- .get_tree_method(tree_method, verbose)
   min_node_size <- .resolve_policy_tree_min_node_size(min_node_size)
@@ -282,6 +303,13 @@ margot_policy_tree_cv <- function(model_results,
             depth = depth,
             n_train = length(train_pos),
             n_eval = heldout$n_eval,
+            evaluation_weight_sum = heldout$evaluation_weight_sum,
+            coverage_numerator = heldout$coverage_numerator,
+            policy_score_numerator = heldout$policy_score_numerator,
+            control_score_numerator = heldout$control_score_numerator,
+            treat_score_numerator = heldout$treat_score_numerator,
+            best_constant_score_numerator = heldout$best_constant_score_numerator,
+            validation_best_constant_score_numerator = heldout$validation_best_constant_score_numerator,
             coverage = heldout$coverage,
             value_policy = heldout$value_policy,
             value_control_all = heldout$value_control_all,
@@ -350,7 +378,33 @@ margot_policy_tree_cv <- function(model_results,
     data.frame()
   }
 
-  value_summary <- .policy_cv_value_summary(fold_values)
+  if (identical(comparison_pairs, "matched_successful_repeat_fold_pairs") && nrow(fold_values)) {
+    pair_key <- interaction(
+      fold_values$model,
+      fold_values$repeat_id,
+      fold_values$fold,
+      drop = TRUE
+    )
+    complete_pair <- vapply(
+      split(fold_values$depth, pair_key),
+      function(value) setequal(unique(as.integer(value)), depths),
+      logical(1)
+    )
+    retained_keys <- names(complete_pair)[complete_pair]
+    fold_values <- fold_values[as.character(pair_key) %in% retained_keys, , drop = FALSE]
+    retain_component_rows <- function(value) {
+      if (is.null(value) || !nrow(value)) return(value)
+      value_key <- interaction(value$model, value$repeat_id, value$fold, drop = TRUE)
+      value[as.character(value_key) %in% retained_keys, , drop = FALSE]
+    }
+    split_values <- retain_component_rows(split_values)
+    leaf_values <- retain_component_rows(leaf_values)
+  }
+
+  value_summary <- .policy_cv_value_summary(
+    fold_values,
+    held_out_aggregation = held_out_aggregation
+  )
   split_summary <- .policy_cv_split_summary(split_values, fold_values)
   leaf_summary <- .policy_cv_leaf_summary(leaf_values)
   threshold_summary <- .policy_cv_threshold_summary(split_values)
@@ -393,6 +447,8 @@ margot_policy_tree_cv <- function(model_results,
       requested_tree_method = requested_tree_method,
       tree_method = actual_tree_method,
       engine_fallback = !identical(requested_tree_method, actual_tree_method),
+      fastpolicytree_strategy_datatype =
+        .policy_tree_fast_strategy_metadata(actual_tree_method),
       min_node_size = min_node_size,
       seed = seed,
       min_gain_for_depth_switch = min_gain_for_depth_switch,
@@ -402,10 +458,146 @@ margot_policy_tree_cv <- function(model_results,
       min_root_stability_for_depth_switch = min_root_stability_for_depth_switch,
       covariate_mode = covariate_mode,
       training_weights_applied = training_weights_applied,
+      held_out_aggregation = held_out_aggregation,
+      comparison_pairs = comparison_pairs,
       estimand = "held-out evaluation of the policy-learning procedure"
     )
   )
   class(out) <- c("margot_policy_tree_cv", "list")
+  out
+}
+
+#' Fit full-sample display trees at held-out selected depths
+#'
+#' @description Fits one descriptive policy tree per model on the complete
+#' registered policy sample, using the depth selected by held-out policy-tree
+#' cross-validation. The returned trees supply no additional held-out value
+#' estimate.
+#'
+#' @param model_results A causal-forest result accepted by
+#'   [margot_policy_tree_cv()].
+#' @param policy_cv A [margot_policy_tree_cv()] result containing a named
+#'   `depth_map`.
+#' @param weights Optional positive training weights. Zero weights exclude rows
+#'   from the display-tree target sample.
+#' @param model_names Optional model names to process.
+#' @param custom_covariates,exclude_covariates,covariate_mode Covariate-selection
+#'   arguments with the same meaning as in [margot_policy_tree_cv()].
+#' @param label_mapping Optional display-label mapping.
+#' @param tree_method Policy-tree engine.
+#' @param min_node_size Smallest terminal-node size.
+#' @param verbose Logical; print progress messages.
+#'
+#' @return A list with fitted trees, split and leaf tables, and metadata.
+#' @export
+margot_policy_tree_display <- function(
+    model_results,
+    policy_cv,
+    weights = NULL,
+    model_names = NULL,
+    custom_covariates = NULL,
+    exclude_covariates = NULL,
+    covariate_mode = c("original", "custom", "add", "all"),
+    label_mapping = NULL,
+    tree_method = c("fastpolicytree", "policytree"),
+    min_node_size = NULL,
+    verbose = TRUE) {
+  if (is.null(policy_cv$depth_map) || !length(policy_cv$depth_map)) {
+    stop("policy_cv must contain a non-empty depth_map", call. = FALSE)
+  }
+  covariate_mode <- match.arg(covariate_mode)
+  requested_tree_method <- match.arg(tree_method)
+  actual_tree_method <- .get_tree_method(requested_tree_method, verbose)
+  min_node_size <- .resolve_policy_tree_min_node_size(min_node_size)
+  model_names <- .policy_cv_resolve_model_names(model_results, model_names)
+  result_rows <- list()
+  split_rows <- list()
+  leaf_rows <- list()
+
+  for (model_name in model_names) {
+    depth_candidates <- c(model_name, gsub("^model_", "", model_name))
+    depth_key <- depth_candidates[depth_candidates %in% names(policy_cv$depth_map)][1]
+    if (is.na(depth_key)) {
+      stop("No held-out selected depth for ", model_name, call. = FALSE)
+    }
+    depth <- as.integer(policy_cv$depth_map[[depth_key]])
+    model_result <- model_results$results[[model_name]]
+    model_data <- .policy_cv_model_data(model_results, model_result, weights)
+    selected_vars <- .policy_cv_selected_vars(
+      model_result = model_result,
+      covariates = model_data$covariates,
+      custom_covariates = custom_covariates,
+      exclude_covariates = exclude_covariates,
+      covariate_mode = covariate_mode,
+      model_name = model_name,
+      verbose = verbose
+    )
+    complete <- stats::complete.cases(model_data$covariates[, selected_vars, drop = FALSE]) &
+      stats::complete.cases(model_data$dr_scores)
+    if (!is.null(model_data$weights)) {
+      complete <- complete & is.finite(model_data$weights) & model_data$weights > 0
+    }
+    rows <- which(complete)
+    if (!length(rows)) stop("No complete positive-weight display rows for ", model_name, call. = FALSE)
+    display_weights <- if (is.null(model_data$weights)) NULL else model_data$weights[rows]
+    tree <- .compute_policy_tree(
+      X = model_data$covariates[rows, selected_vars, drop = FALSE],
+      Gamma = .policy_cv_training_scores(model_data$dr_scores[rows, , drop = FALSE], display_weights),
+      depth = depth,
+      tree_method = actual_tree_method,
+      min_node_size = min_node_size
+    )
+    split_info <- tryCatch(
+      extract_tree_info(tree, tree$columns %||% selected_vars),
+      error = function(e) NULL
+    )
+    split_rows[[model_name]] <- .policy_cv_split_rows(
+      split_info,
+      model_name = model_name,
+      repeat_id = NA_integer_,
+      fold = NA_integer_,
+      depth = depth,
+      label_mapping = label_mapping
+    )
+    leaf_rows[[model_name]] <- .policy_cv_leaf_rows(
+      tree = tree,
+      covariates = model_data$covariates[rows, , drop = FALSE],
+      dr_scores = model_data$dr_scores[rows, , drop = FALSE],
+      weights = display_weights,
+      model_name = model_name,
+      repeat_id = NA_integer_,
+      fold = NA_integer_,
+      depth = depth,
+      label_mapping = label_mapping
+    )
+    result_rows[[model_name]] <- list(
+      tree = tree,
+      depth = depth,
+      selected_vars = selected_vars,
+      n_train = length(rows),
+      total_weight = if (is.null(display_weights)) length(rows) else sum(display_weights)
+    )
+  }
+
+  bind_rows <- function(value) {
+    value <- Filter(Negate(is.null), value)
+    if (length(value)) do.call(rbind, value) else data.frame()
+  }
+  out <- list(
+    results = result_rows,
+    split_table = bind_rows(split_rows),
+    leaf_table = bind_rows(leaf_rows),
+    metadata = list(
+      estimand = "descriptive full-sample display tree; no additional value estimate",
+      requested_tree_method = requested_tree_method,
+      tree_method = actual_tree_method,
+      engine_fallback = !identical(requested_tree_method, actual_tree_method),
+      fastpolicytree_strategy_datatype = .policy_tree_fast_strategy_metadata(actual_tree_method),
+      min_node_size = min_node_size,
+      covariate_mode = covariate_mode
+    )
+  )
+  class(out) <- c("margot_policy_tree_display", "list")
   out
 }
 
@@ -625,6 +817,9 @@ margot_policy_tree_cv <- function(model_results,
   policy_score <- dr_scores[cbind(seq_along(actions), actions)]
   control_score <- dr_scores[, action_columns$control]
   treated_score <- dr_scores[, action_columns$treatment]
+  evaluation_weights <- if (is.null(weights)) rep(1, length(actions)) else as.numeric(weights)
+  valid_weight <- is.finite(evaluation_weights) & evaluation_weights > 0
+  evaluation_weight_sum <- sum(evaluation_weights[valid_weight])
 
   value_policy <- .policy_cv_mean(policy_score, weights)
   value_control_all <- .policy_cv_mean(control_score, weights)
@@ -652,9 +847,20 @@ margot_policy_tree_cv <- function(model_results,
     "control"
   }
   n_selected_actions <- length(unique(stats::na.omit(actions)))
+  weighted_score_sum <- function(score) {
+    valid <- valid_weight & is.finite(score)
+    sum(evaluation_weights[valid] * score[valid])
+  }
 
   list(
     n_eval = length(actions),
+    evaluation_weight_sum = evaluation_weight_sum,
+    coverage_numerator = weighted_score_sum(actions == action_columns$treatment),
+    policy_score_numerator = weighted_score_sum(policy_score),
+    control_score_numerator = weighted_score_sum(control_score),
+    treat_score_numerator = weighted_score_sum(treated_score),
+    best_constant_score_numerator = weighted_score_sum(dr_scores[, constant_action_id]),
+    validation_best_constant_score_numerator = evaluation_weight_sum * value_validation_best_constant,
     coverage = .policy_cv_mean(actions == action_columns$treatment, weights),
     value_policy = value_policy,
     value_control_all = value_control_all,
@@ -808,18 +1014,79 @@ margot_policy_tree_cv <- function(model_results,
 }
 
 #' @keywords internal
-.policy_cv_value_summary <- function(fold_values) {
+.policy_cv_value_summary <- function(
+    fold_values,
+    held_out_aggregation = c(
+      "fold_n_eval_weighted",
+      "pool_score_numerators_and_weight_denominators_within_repeat"
+    )) {
   # summarise held-out policy values by model and depth.
   if (is.null(fold_values) || !nrow(fold_values)) return(data.frame())
+  held_out_aggregation <- match.arg(held_out_aggregation)
   groups <- split(fold_values, interaction(fold_values$model, fold_values$depth, drop = TRUE))
   rows <- lapply(groups, function(df) {
-    value_policy_mean <- stats::weighted.mean(df$value_policy, df$n_eval, na.rm = TRUE)
-    value_control_all_mean <- stats::weighted.mean(df$value_control_all, df$n_eval, na.rm = TRUE)
-    value_treat_all_mean <- stats::weighted.mean(df$value_treat_all, df$n_eval, na.rm = TRUE)
-    value_best_constant_mean <- stats::weighted.mean(df$value_best_constant, df$n_eval, na.rm = TRUE)
-    value_validation_best_constant_mean <- stats::weighted.mean(
-      df$value_validation_best_constant, df$n_eval, na.rm = TRUE
-    )
+    repeat_values <- NULL
+    if (identical(
+      held_out_aggregation,
+      "pool_score_numerators_and_weight_denominators_within_repeat"
+    )) {
+      required <- c(
+        "evaluation_weight_sum", "coverage_numerator", "policy_score_numerator",
+        "control_score_numerator", "treat_score_numerator",
+        "best_constant_score_numerator", "validation_best_constant_score_numerator"
+      )
+      missing <- setdiff(required, names(df))
+      if (length(missing)) {
+        stop(
+          "Pooled held-out aggregation requires fold columns: ",
+          paste(missing, collapse = ", "),
+          call. = FALSE
+        )
+      }
+      repeat_values <- lapply(split(df, df$repeat_id), function(repeat_df) {
+        denominator <- sum(repeat_df$evaluation_weight_sum)
+        if (!is.finite(denominator) || denominator <= 0) return(NULL)
+        data.frame(
+          repeat_id = repeat_df$repeat_id[[1]],
+          coverage = sum(repeat_df$coverage_numerator) / denominator,
+          value_policy = sum(repeat_df$policy_score_numerator) / denominator,
+          value_control_all = sum(repeat_df$control_score_numerator) / denominator,
+          value_treat_all = sum(repeat_df$treat_score_numerator) / denominator,
+          value_best_constant = sum(repeat_df$best_constant_score_numerator) / denominator,
+          value_validation_best_constant =
+            sum(repeat_df$validation_best_constant_score_numerator) / denominator,
+          stringsAsFactors = FALSE
+        )
+      })
+      repeat_values <- Filter(Negate(is.null), repeat_values)
+      if (!length(repeat_values)) return(NULL)
+      repeat_values <- do.call(rbind, repeat_values)
+      repeat_values$gain_vs_control <- repeat_values$value_policy - repeat_values$value_control_all
+      repeat_values$gain_vs_treat <- repeat_values$value_policy - repeat_values$value_treat_all
+      repeat_values$gain_vs_best_constant <-
+        repeat_values$value_policy - repeat_values$value_best_constant
+      value_policy_mean <- mean(repeat_values$value_policy)
+      value_control_all_mean <- mean(repeat_values$value_control_all)
+      value_treat_all_mean <- mean(repeat_values$value_treat_all)
+      value_best_constant_mean <- mean(repeat_values$value_best_constant)
+      value_validation_best_constant_mean <- mean(repeat_values$value_validation_best_constant)
+      coverage_mean <- mean(repeat_values$coverage)
+      gain_vs_control <- repeat_values$gain_vs_control
+      gain_vs_treat <- repeat_values$gain_vs_treat
+      gain_vs_best_constant <- repeat_values$gain_vs_best_constant
+    } else {
+      value_policy_mean <- stats::weighted.mean(df$value_policy, df$n_eval, na.rm = TRUE)
+      value_control_all_mean <- stats::weighted.mean(df$value_control_all, df$n_eval, na.rm = TRUE)
+      value_treat_all_mean <- stats::weighted.mean(df$value_treat_all, df$n_eval, na.rm = TRUE)
+      value_best_constant_mean <- stats::weighted.mean(df$value_best_constant, df$n_eval, na.rm = TRUE)
+      value_validation_best_constant_mean <- stats::weighted.mean(
+        df$value_validation_best_constant, df$n_eval, na.rm = TRUE
+      )
+      coverage_mean <- stats::weighted.mean(df$coverage, df$n_eval, na.rm = TRUE)
+      gain_vs_control <- df$gain_vs_control
+      gain_vs_treat <- df$gain_vs_treat
+      gain_vs_best_constant <- df$gain_vs_best_constant
+    }
     constant_actions <- unique(stats::na.omit(df$best_constant_action))
     best_constant_action <- if (!length(constant_actions)) {
       NA_character_
@@ -834,27 +1101,43 @@ margot_policy_tree_cv <- function(model_results,
       outcome_label = df$outcome_label[1],
       depth = df$depth[1],
       n_folds = nrow(df),
+      n_repeats = length(unique(df$repeat_id)),
       n_eval = sum(df$n_eval, na.rm = TRUE),
-      coverage_mean = stats::weighted.mean(df$coverage, df$n_eval, na.rm = TRUE),
+      evaluation_weight_sum = if ("evaluation_weight_sum" %in% names(df)) {
+        sum(df$evaluation_weight_sum, na.rm = TRUE)
+      } else {
+        NA_real_
+      },
+      coverage_mean = coverage_mean,
       value_policy_mean = value_policy_mean,
       value_control_all_mean = value_control_all_mean,
       value_treat_all_mean = value_treat_all_mean,
       value_best_constant_mean = value_best_constant_mean,
       best_constant_action = best_constant_action,
       value_validation_best_constant_mean = value_validation_best_constant_mean,
-      gain_vs_control_mean = stats::weighted.mean(df$gain_vs_control, df$n_eval, na.rm = TRUE),
-      gain_vs_control_sd = stats::sd(df$gain_vs_control, na.rm = TRUE),
-      gain_vs_control_q025 = stats::quantile(df$gain_vs_control, 0.025, na.rm = TRUE, names = FALSE),
-      gain_vs_control_q975 = stats::quantile(df$gain_vs_control, 0.975, na.rm = TRUE, names = FALSE),
-      gain_vs_treat_mean = stats::weighted.mean(df$gain_vs_treat, df$n_eval, na.rm = TRUE),
-      gain_vs_treat_sd = stats::sd(df$gain_vs_treat, na.rm = TRUE),
+      gain_vs_control_mean = if (is.null(repeat_values)) {
+        stats::weighted.mean(df$gain_vs_control, df$n_eval, na.rm = TRUE)
+      } else {
+        mean(gain_vs_control)
+      },
+      gain_vs_control_sd = stats::sd(gain_vs_control, na.rm = TRUE),
+      gain_vs_control_q025 = stats::quantile(gain_vs_control, 0.025, na.rm = TRUE, names = FALSE),
+      gain_vs_control_q975 = stats::quantile(gain_vs_control, 0.975, na.rm = TRUE, names = FALSE),
+      gain_vs_treat_mean = if (is.null(repeat_values)) {
+        stats::weighted.mean(df$gain_vs_treat, df$n_eval, na.rm = TRUE)
+      } else {
+        mean(gain_vs_treat)
+      },
+      gain_vs_treat_sd = stats::sd(gain_vs_treat, na.rm = TRUE),
       gain_vs_best_constant_mean = value_policy_mean - value_best_constant_mean,
-      gain_vs_best_constant_sd = stats::sd(df$gain_vs_best_constant, na.rm = TRUE),
+      gain_vs_best_constant_sd = stats::sd(gain_vs_best_constant, na.rm = TRUE),
       n_selected_actions_max = max(df$n_selected_actions, na.rm = TRUE),
       uniform_selected_action_all = all(df$uniform_selected_action),
       stringsAsFactors = FALSE
     )
   })
+  rows <- Filter(Negate(is.null), rows)
+  if (!length(rows)) return(data.frame())
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
   out[order(out$model, out$depth), , drop = FALSE]

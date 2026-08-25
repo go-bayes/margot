@@ -240,6 +240,113 @@ test_that("margot_policy_tree_cv aligns not_missing rows and weights", {
   expect_true(is.finite(out$value_summary$gain_vs_control_mean))
 })
 
+test_that("registered held-out aggregation pools weight denominators within repeat", {
+  folds <- data.frame(
+    model = "model_y",
+    outcome = "y",
+    outcome_label = "Y",
+    repeat_id = c(1L, 1L, 2L, 2L),
+    fold = c(1L, 2L, 1L, 2L),
+    depth = 1L,
+    n_eval = c(10L, 10L, 10L, 10L),
+    evaluation_weight_sum = c(1, 9, 2, 8),
+    coverage_numerator = c(0, 9, 0, 0),
+    policy_score_numerator = c(1, 27, 4, 8),
+    control_score_numerator = c(0, 0, 0, 0),
+    treat_score_numerator = c(1, 27, 4, 8),
+    best_constant_score_numerator = c(1, 27, 4, 8),
+    validation_best_constant_score_numerator = c(1, 27, 4, 8),
+    coverage = c(0, 1, 0, 0),
+    value_policy = c(1, 3, 2, 1),
+    value_control_all = 0,
+    value_treat_all = c(1, 3, 2, 1),
+    value_best_constant = c(1, 3, 2, 1),
+    best_constant_action = "treated",
+    value_validation_best_constant = c(1, 3, 2, 1),
+    gain_vs_control = c(1, 3, 2, 1),
+    gain_vs_treat = 0,
+    gain_vs_best_constant = 0,
+    n_selected_actions = 1L,
+    uniform_selected_action = TRUE
+  )
+
+  out <- .policy_cv_value_summary(
+    folds,
+    held_out_aggregation = "pool_score_numerators_and_weight_denominators_within_repeat"
+  )
+
+  expect_equal(out$value_policy_mean, mean(c(2.8, 1.2)))
+  expect_equal(out$coverage_mean, mean(c(0.9, 0)))
+  expect_equal(out$n_repeats, 2L)
+  expect_equal(out$evaluation_weight_sum, 20)
+})
+
+test_that("registered policy CV records matched-pair and pooled aggregation contracts", {
+  old_options <- options(margot.policy_tree.min_node_size = 5L)
+  on.exit(options(old_options), add = TRUE)
+  set.seed(44)
+  n <- 120
+  x <- data.frame(x1 = stats::rnorm(n), x2 = stats::rnorm(n))
+  object <- list(
+    results = list(model_y = list(
+      dr_scores = cbind(control = 0, treated = ifelse(x$x1 > 0, 1, -0.5)),
+      top_vars = names(x)
+    )),
+    covariates = x,
+    weights = seq(0.5, 2, length.out = n)
+  )
+
+  out <- margot_policy_tree_cv(
+    object,
+    depths = c(1L, 2L),
+    num_folds = 3L,
+    n_repeats = 2L,
+    tree_method = "policytree",
+    held_out_aggregation = "pool_score_numerators_and_weight_denominators_within_repeat",
+    comparison_pairs = "matched_successful_repeat_fold_pairs",
+    verbose = FALSE
+  )
+
+  expect_equal(
+    out$metadata$held_out_aggregation,
+    "pool_score_numerators_and_weight_denominators_within_repeat"
+  )
+  expect_equal(out$metadata$comparison_pairs, "matched_successful_repeat_fold_pairs")
+  folds_by_depth <- table(out$fold_values$depth)
+  expect_equal(unname(folds_by_depth[["1"]]), unname(folds_by_depth[["2"]]))
+})
+
+test_that("display tree uses the complete positive-weight target and held-out depth", {
+  set.seed(45)
+  n <- 80
+  x <- data.frame(x1 = stats::rnorm(n), x2 = stats::rnorm(n))
+  object <- list(
+    results = list(model_y = list(
+      dr_scores = cbind(control = 0, treated = ifelse(x$x1 > 0, 1, -1)),
+      top_vars = names(x)
+    )),
+    covariates = x,
+    weights = c(rep(1, n - 5L), rep(0, 5L))
+  )
+  policy_cv <- list(depth_map = c(model_y = 1L))
+
+  out <- margot_policy_tree_display(
+    object,
+    policy_cv,
+    weights = object$weights,
+    covariate_mode = "all",
+    tree_method = "policytree",
+    min_node_size = 5L,
+    verbose = FALSE
+  )
+
+  expect_s3_class(out, "margot_policy_tree_display")
+  expect_equal(out$results$model_y$depth, 1L)
+  expect_equal(out$results$model_y$n_train, n - 5L)
+  expect_equal(out$metadata$estimand, "descriptive full-sample display tree; no additional value estimate")
+  expect_true(nrow(out$leaf_table) >= 1L)
+})
+
 test_that("margot_policy_workflow uses held-out depth map when available", {
   calls <- new.env(parent = emptyenv())
   stability <- structure(

@@ -53,9 +53,11 @@
 <url><loc>https://go-bayes.github.io/margot/reference/dot-build_depth_comparison_report.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-compute_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-compute_policy_value_internal.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/dot-fastpolicytree_strategy_datatype.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-get_tree_method.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-has_fastpolicytree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-normalize_policy_actions.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/dot-policy_tree_fast_strategy_metadata.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-resolve_policy_tree_min_node_size.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/dot-strict_exposure_outcome_censoring.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/double_robust_marginal.html</loc></url>
@@ -225,6 +227,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_bootstrap.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_display.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_value_explainer.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_workflow.html</loc></url>

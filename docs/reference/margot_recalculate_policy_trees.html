@@ -11,7 +11,7 @@ policy tree estimation while maintaining the original causal forest results."></
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.021</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,7 +119,8 @@ variables starting with "t0_log_").</p></dd>
 
 <dt id="arg-tree-method">tree_method<a class="anchor" aria-label="anchor" href="#arg-tree-method"></a></dt>
 <dd><p>Character string specifying which method to use for policy tree computation:</p><ul><li><p>"policytree"Use the policytree package (default)</p></li>
-<li><p>"fastpolicytree"Use the fastpolicytree package (about 10x faster)</p></li>
+<li><p>"fastpolicytree"Use fastpolicytree with Margot's validated
+    <code>strategy.datatype = 1</code> representation</p></li>
 </ul></dd>
 
 

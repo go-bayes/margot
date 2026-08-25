@@ -20,7 +20,9 @@
 #' @param exclude_covariates Optional character vector of exact names or patterns
 #'   to exclude from the policy-tree covariates.
 #' @param tree_method Character; "fastpolicytree" when available, otherwise
-#'   "policytree".
+#'   "policytree". Margot pins the fast engine to
+#'   \code{strategy.datatype = 1}; the upstream automatic representation can
+#'   return a different, lower-value rule for wide covariate matrices.
 #' @param min_node_size Integer or \code{NULL}. Smallest permitted policy-tree
 #'   terminal node. It is separate from \code{depths} and causal-forest node
 #'   size. \code{NULL} retains the compatibility option fallback, then 1.
@@ -152,7 +154,9 @@ margot_policy_split_diagnostic <- function(object,
     min_node_size = min_node_size,
     requested_tree_method = requested_tree_method,
     tree_method = actual_tree_method,
-    engine_fallback = !identical(requested_tree_method, actual_tree_method)
+    engine_fallback = !identical(requested_tree_method, actual_tree_method),
+    fastpolicytree_strategy_datatype =
+      .policy_tree_fast_strategy_metadata(actual_tree_method)
   )
   class(out) <- c("margot_policy_split_diagnostic", class(out))
   out

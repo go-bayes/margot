@@ -73,6 +73,9 @@ margot_policy_split_diagnostic(
 - tree_method:
 
   Character; "fastpolicytree" when available, otherwise "policytree".
+  Margot pins the fast engine to `strategy.datatype = 1`; the upstream
+  automatic representation can return a different, lower-value rule for
+  wide covariate matrices.
 
 - min_node_size:
 

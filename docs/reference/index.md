@@ -166,6 +166,8 @@
   interpretation)
 - [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
   : Cross-validated held-out policy-tree diagnostics
+- [`margot_policy_tree_display()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_display.md)
+  : Fit full-sample display trees at held-out selected depths
 - [`margot_policy_leaf_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.md)
   : Summarise policy-tree leaves with treatment-control contrasts and
   sample shares

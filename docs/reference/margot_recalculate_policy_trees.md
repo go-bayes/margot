@@ -87,7 +87,8 @@ margot_recalculate_policy_trees(
 
   - "policytree"Use the policytree package (default)
 
-  - "fastpolicytree"Use the fastpolicytree package (about 10x faster)
+  - "fastpolicytree"Use fastpolicytree with Margot's validated
+    `strategy.datatype = 1` representation
 
 - min_node_size:
 

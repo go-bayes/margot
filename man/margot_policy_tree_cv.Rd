@@ -23,6 +23,9 @@ margot_policy_tree_cv(
   seed = 42L,
   tree_method = c("fastpolicytree", "policytree"),
   min_node_size = NULL,
+  held_out_aggregation = c("fold_n_eval_weighted",
+    "pool_score_numerators_and_weight_denominators_within_repeat"),
+  comparison_pairs = c("available_by_depth", "matched_successful_repeat_fold_pairs"),
   verbose = TRUE
 )
 }
@@ -111,13 +114,26 @@ display labels.}
 \item{seed}{Integer. Base seed for reproducible fold assignments.}
 
 \item{tree_method}{Character. \code{"fastpolicytree"} or
-\code{"policytree"}.}
+\code{"policytree"}. Margot pins the fast engine to
+\code{strategy.datatype = 1}; the upstream automatic representation can
+return a different, lower-value rule for wide covariate matrices.}
 
 \item{min_node_size}{Integer or \code{NULL}. Smallest permitted policy-tree
 terminal node. This is unrelated to \code{depths} and to a causal
 forest's \code{grf_defaults$min.node.size}. When \code{NULL}, the
 compatibility option \code{margot.policy_tree.min_node_size} is consulted,
 then 1.}
+
+\item{held_out_aggregation}{Character. \code{"fold_n_eval_weighted"} retains
+the historical aggregation of fold means by evaluation-row count.
+\code{"pool_score_numerators_and_weight_denominators_within_repeat"}
+pools weighted score numerators and weight denominators across folds within
+each repeat, then averages the repeat-level values equally.}
+
+\item{comparison_pairs}{Character. \code{"available_by_depth"} uses every
+successful fold separately by depth. \code{"matched_successful_repeat_fold_pairs"}
+restricts depth and constant comparisons to model-repeat-fold combinations
+successfully evaluated at every requested depth.}
 
 \item{verbose}{Logical. Print progress messages.}
 }

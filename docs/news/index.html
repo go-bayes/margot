@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.019</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.021</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,21 +37,49 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.1.019" id="id_2026-08-11-margot-11019-development">[2026-08-11] margot 1.1.019 (development)<a class="anchor" aria-label="anchor" href="#id_2026-08-11-margot-11019-development"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.1.021" id="id_2026-08-25-margot-11021">[2026-08-25] margot 1.1.021<a class="anchor" aria-label="anchor" href="#id_2026-08-25-margot-11021"></a></h2>
 <div class="section level4">
-<h4 id="native-rds-and-tabular-arrow-storage-1-1-019">Native RDS and tabular Arrow storage<a class="anchor" aria-label="anchor" href="#native-rds-and-tabular-arrow-storage-1-1-019"></a></h4>
+<h4 id="registered-weighted-policy-evaluation-and-display-trees-1-1-021">Registered weighted policy evaluation and display trees<a class="anchor" aria-label="anchor" href="#registered-weighted-policy-evaluation-and-display-trees-1-1-021"></a></h4>
 <div class="section level5">
-<h5 id="changed-1-1-019">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-019"></a></h5>
+<h5 id="added-1-1-021">Added<a class="anchor" aria-label="anchor" href="#added-1-1-021"></a></h5>
+<ul><li>
+<code><a href="../reference/margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code> can pool weighted score numerators and weight denominators across held-out folds within each repeat before averaging repeat-level values, and can restrict depth comparisons to repeat-fold combinations successfully evaluated at every requested depth. Historical aggregation remains the default for existing callers; both choices are recorded in metadata.</li>
+<li>
+<code><a href="../reference/margot_policy_tree_display.html">margot_policy_tree_display()</a></code> fits a descriptive full-sample tree at the depth selected by held-out evaluation, using the supplied target weights, covariate library, engine, and terminal-node minimum. It returns split and leaf tables but no new held-out value estimate.</li>
+</ul></div>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.020" id="id_2026-08-22-margot-11020-development">[2026-08-22] margot 1.1.020 (development)<a class="anchor" aria-label="anchor" href="#id_2026-08-22-margot-11020-development"></a></h2>
+<div class="section level4">
+<h4 id="validated-fast-policy-tree-representation-1-1-020">Validated fast policy-tree representation<a class="anchor" aria-label="anchor" href="#validated-fast-policy-tree-representation-1-1-020"></a></h4>
+<div class="section level5">
+<h5 id="corrected-1-1-020">Corrected<a class="anchor" aria-label="anchor" href="#corrected-1-1-020"></a></h5>
+<ul><li>Every Margot route that fits <code>fastpolicytree</code> now sets <code>strategy.datatype = 1</code>, which uses the on-demand sorted representation. The upstream automatic setting (<code>2</code>) selected a different, lower-value rule than <code>policytree</code> in a deterministic wide-covariate recovery fixture. The automatic setting is therefore no longer part of Margot’s policy-tree procedure.</li>
+<li>Public policy-tree metadata now records <code>fastpolicytree_strategy_datatype = 1</code> when the fast engine is realised and <code>NA</code> when <code>policytree</code> is realised, including package-fallback cases.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="documented-1-1-020">Documented<a class="anchor" aria-label="anchor" href="#documented-1-1-020"></a></h5>
+<ul><li>Policy-tree function help and the standard GRF policy-tree workflow now state that the enforced representation is a validated correctness setting rather than a data-adaptive tuning choice. Earlier claims that the two engines produce identical results without qualification are superseded.</li>
+</ul></div>
+</div>
+<div class="section level4">
+<h4 id="native-rds-and-tabular-arrow-storage-1-1-020">Native RDS and tabular Arrow storage<a class="anchor" aria-label="anchor" href="#native-rds-and-tabular-arrow-storage-1-1-020"></a></h4>
+<div class="section level5">
+<h5 id="changed-1-1-020">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-020"></a></h5>
 <ul><li>Margot now uses native RDS for R objects and Parquet through Arrow for rectangular tabular data. Plot objects, result lists, and LMTP checkpoints therefore use RDS. <code><a href="../reference/here_save.html">here_save()</a></code> remains available for any R object, including a small data frame for which a native R round trip is preferable.</li>
 <li>
 <code><a href="../reference/here_save_arrow.html">here_save_arrow()</a></code> accepts only data frames and Arrow tables. Non-tabular objects must use <code><a href="../reference/here_save.html">here_save()</a></code>.</li>
 <li>LMTP checkpoint restoration now reads RDS checkpoints only.</li>
 </ul></div>
 <div class="section level5">
-<h5 id="removed-1-1-019">Removed<a class="anchor" aria-label="anchor" href="#removed-1-1-019"></a></h5>
+<h5 id="removed-1-1-020">Removed<a class="anchor" aria-label="anchor" href="#removed-1-1-020"></a></h5>
 <ul><li>The QS and QS2 readers, writers, directory converters, optional dependencies, migration vignette, and package documentation have been removed. Margot no longer supplies an active QS migration route.</li>
 </ul></div>
 </div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.019" id="id_2026-08-11-margot-11019">[2026-08-11] margot 1.1.019<a class="anchor" aria-label="anchor" href="#id_2026-08-11-margot-11019"></a></h2>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.018" id="id_2026-08-11-margot-11018">[2026-08-11] margot 1.1.018<a class="anchor" aria-label="anchor" href="#id_2026-08-11-margot-11018"></a></h2>
@@ -334,7 +362,7 @@
 <ul><li>
 <strong>Honesty already covers the forest; the split protected the wrong thing.</strong> The causal forest’s honesty and out-of-bag prediction already make the CATE estimate honest. A train/test split protects the policy <em>value</em> (the winner’s curse from selecting the tree that maximises the doubly-robust score), which a descriptive claim never makes. So for the standard workflow the split is unnecessary, and it costs half the data and makes the displayed tree depend on the luck of the partition.</li>
 <li>
-<strong>Reproducibility is not stability.</strong> The policy-tree solver (<code>policytree</code> / <code>fastpolicytree</code>) is a deterministic exact optimiser; with a fixed seed and no split the descriptive tree reproduces exactly. Whether its splits are a real feature or a draw-specific artifact is a separate question, answered by the bootstrap robustness report — so stability is retained but reframed as a diagnostic, not an inference engine.</li>
+<strong>Reproducibility is not stability.</strong> The policy-tree solver (<code>policytree</code> / <code>fastpolicytree</code>) is deterministic; with a fixed seed and no split the descriptive tree reproduces exactly. Whether its splits are a real feature or a draw-specific artifact is a separate question, answered by the bootstrap robustness report — so stability is retained but reframed as a diagnostic, not an inference engine.</li>
 <li>
 <strong>Two paths, no false optimism.</strong> Descriptive (default): the full-data tree plus its bootstrap robustness, with no out-of-sample value claim. Inferential (opt-in): an honest held-out policy value via the split, clearly caveated. We deliberately do not ship a bespoke cross-fitted policy value — GRF has worked-out cross-fitting for RATE/AUTOC only, not for QINI curves or policy-tree value — so the inferential path is one honest split, not a manufactured precision.</li>
 </ul></div>
@@ -5624,7 +5652,7 @@
 <div class="section level4">
 <h4 id="fixes-1-0-242">Fixes<a class="anchor" aria-label="anchor" href="#fixes-1-0-242"></a></h4>
 <ul><li>LMTP overlap grid now respects multi-wave density ratios when stored as <code>Matrix</code> or <code>data.frame</code> by coercing to base matrices before iterating waves. This restores one panel per wave × shift.</li>
-<li>Grid axis limits use <code>coord_cartesian()</code> to avoid dropping bars (no more “Removed rows” warnings when harmonising x/y ranges).</li>
+<li>Grid axis limits use <code><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian()</a></code> to avoid dropping bars (no more “Removed rows” warnings when harmonising x/y ranges).</li>
 <li>Shift order in grids and text respects the user-supplied <code>shifts</code> vector without dropping additional wave panels.</li>
 </ul></div>
 <div class="section level4">
