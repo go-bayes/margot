@@ -13,7 +13,7 @@ appending these values to the summary table."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.024</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.025</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,7 +75,7 @@ appending these values to the summary table.</p>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
-<dd><p>Character string specifying the E-value calculation. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio. Default is `"RD"`. Causal forest models use the `"RD"` calculation.</p></dd>
+<dd><p>Character string specifying the E-value calculation. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio. Default is `"RD"`. Causal-forest models always use the additive average treatment effect returned by [grf::average_treatment_effect()] and therefore use the `"RD"` calculation. For direct `estimate` and `std.err` input with `scale = "RR"`, the estimate and its normal-approximation confidence limits must all be positive.</p></dd>
 
 
 <dt id="arg-new-name">new_name<a class="anchor" aria-label="anchor" href="#arg-new-name"></a></dt>

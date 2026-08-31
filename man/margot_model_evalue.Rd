@@ -22,7 +22,7 @@ margot_model_evalue(
   \item A data frame with columns 'estimate' and 'std.err'
 }}
 
-\item{scale}{Character string specifying the E-value calculation. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio. Default is `"RD"`. Causal forest models use the `"RD"` calculation.}
+\item{scale}{Character string specifying the E-value calculation. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio. Default is `"RD"`. Causal-forest models always use the additive average treatment effect returned by [grf::average_treatment_effect()] and therefore use the `"RD"` calculation. For direct `estimate` and `std.err` input with `scale = "RR"`, the estimate and its normal-approximation confidence limits must all be positive.}
 
 \item{new_name}{Character string to name the row(s) in the output summary table, representing the treatment
 contrast(s). For multi-arm causal forests, this will be combined with the contrast information.}

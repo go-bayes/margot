@@ -38,8 +38,12 @@ margot_model_evalue(
   Character string specifying the E-value calculation. The legacy
   \`"RD"\` option applies the standardised-continuous-outcome
   approximation to an outcome-mean difference; \`"RR"\` treats the
-  estimate as a risk ratio. Default is \`"RD"\`. Causal forest models
-  use the \`"RD"\` calculation.
+  estimate as a risk ratio. Default is \`"RD"\`. Causal-forest models
+  always use the additive average treatment effect returned by
+  \[grf::average_treatment_effect()\] and therefore use the \`"RD"\`
+  calculation. For direct \`estimate\` and \`std.err\` input with
+  \`scale = "RR"\`, the estimate and its normal-approximation confidence
+  limits must all be positive.
 
 - new_name:
 

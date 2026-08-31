@@ -1,5 +1,18 @@
 # Changelog
 
+## \[2026-08-31\] margot 1.1.025
+
+#### Model E-value scale routing
+
+##### Corrected
+
+- [`margot_model_evalue()`](https://go-bayes.github.io/margot/reference/margot_model_evalue.md)
+  now routes direct `estimate` and `std.err` input through the requested
+  difference or risk-ratio calculation and rejects non-positive
+  risk-ratio estimates or confidence limits. Causal-forest and multi-arm
+  causal-forest summaries retain their additive average-treatment-effect
+  contract when a caller supplies `scale = "RR"`.
+
 ## \[2026-08-31\] margot 1.1.024
 
 #### Multi-bias E-value contract

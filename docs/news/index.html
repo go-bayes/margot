@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.024</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.025</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,17 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.025" id="id_2026-08-31-margot-11025">[2026-08-31] margot 1.1.025<a class="anchor" aria-label="anchor" href="#id_2026-08-31-margot-11025"></a></h2>
+<div class="section level4">
+<h4 id="model-e-value-scale-routing-1-1-025">Model E-value scale routing<a class="anchor" aria-label="anchor" href="#model-e-value-scale-routing-1-1-025"></a></h4>
+<div class="section level5">
+<h5 id="corrected-1-1-025">Corrected<a class="anchor" aria-label="anchor" href="#corrected-1-1-025"></a></h5>
+<ul><li>
+<code><a href="../reference/margot_model_evalue.html">margot_model_evalue()</a></code> now routes direct <code>estimate</code> and <code>std.err</code> input through the requested difference or risk-ratio calculation and rejects non-positive risk-ratio estimates or confidence limits. Causal-forest and multi-arm causal-forest summaries retain their additive average-treatment-effect contract when a caller supplies <code>scale = "RR"</code>.</li>
+</ul></div>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.024" id="id_2026-08-31-margot-11024">[2026-08-31] margot 1.1.024<a class="anchor" aria-label="anchor" href="#id_2026-08-31-margot-11024"></a></h2>
 <div class="section level4">
