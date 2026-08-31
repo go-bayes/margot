@@ -616,6 +616,18 @@ margot_interpret_marginal <- function(
   adjust <- match.arg(adjust)
   alpha <- as.numeric(alpha)[1]
 
+  evalue_scope_note <- if (type == "RD") {
+    paste0(
+      "Continuous-outcome E-values use an approximate standardised-mean-difference-to-risk-ratio conversion based on a hypothetical outcome dichotomisation and distributional assumptions, and assess sensitivity only to residual unmeasured exposure–outcome confounding; ",
+      "they do not assess failures of consistency, including intervention-version equivalence, interference, positivity or empirical support, measurement validity, selection or target-population projection, or assumptions about observation, attrition, and survival."
+    )
+  } else {
+    paste0(
+      "E-values assess sensitivity only to residual unmeasured exposure–outcome confounding; ",
+      "they do not assess failures of consistency, including intervention-version equivalence, interference, positivity or empirical support, measurement validity, selection or target-population projection, or assumptions about observation, attrition, and survival."
+    )
+  }
+
   if (!"confidence_level" %in% names(df)) {
     df$confidence_level <- rep(1 - alpha, nrow(df))
   } else {
@@ -672,11 +684,10 @@ margot_interpret_marginal <- function(
 
   if (nrow(df_f) == 0) {
     no_effects_msg <- "No reliable effects are evident."
-    interpretation_text <- if (nzchar(adj_note)) {
-      paste0(adj_note, "\n\n", no_effects_msg)
-    } else {
-      no_effects_msg
-    }
+    interpretation_text <- paste(
+      c(if (nzchar(adj_note)) adj_note, evalue_scope_note, no_effects_msg),
+      collapse = "\n\n"
+    )
     return(list(interpretation = interpretation_text))
   }
 
@@ -826,6 +837,8 @@ margot_interpret_marginal <- function(
 
   interpretation_text <- paste0(
     if (nzchar(adj_note)) paste0(adj_note, "\n\n") else "",
+    evalue_scope_note,
+    "\n\n",
     intro,
     paste(bullets, collapse = "\n")
   )
