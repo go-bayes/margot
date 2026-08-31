@@ -21,7 +21,7 @@ By default it implements the single–step **Bonferroni** correction at
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.022</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.023</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,13 +94,15 @@ rate (for BH) to control. Default `0.05`.</p></dd>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
-<dd><p>Scale to use when recomputing the *E*-value.
-`"RD"` (risk difference / ATE, **default**) or `"RR"` (risk ratio).</p></dd>
+<dd><p>Scale used to recompute the *E*-value. `"RD"` is the legacy label for the standardised-continuous-outcome approximation from an outcome-mean difference or ATE; `"RR"` treats the estimate as a risk ratio.</p></dd>
 
 
-<dt id="arg-delta-sd">delta, sd<a class="anchor" aria-label="anchor" href="#arg-delta-sd"></a></dt>
-<dd><p>Arguments passed to [EValue::evalues.OLS()] when
-`scale = "RD"`.  Ignored for `"RR"`.</p></dd>
+<dt id="arg-delta">delta<a class="anchor" aria-label="anchor" href="#arg-delta"></a></dt>
+<dd><p>Exposure contrast represented by an outcome-mean difference, used only when `scale = "RD"`.</p></dd>
+
+
+<dt id="arg-sd">sd<a class="anchor" aria-label="anchor" href="#arg-sd"></a></dt>
+<dd><p>Outcome standard deviation used to standardise an outcome-mean difference, used only when `scale = "RD"`.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -108,7 +110,25 @@ rate (for BH) to control. Default `0.05`.</p></dd>
     <p>A data frame with the same rows (and order) as `combined_table`, but
   with</p><ul><li><p>updated `2.5 <!-- %` and `97.5 %` columns, and --></p></li>
 <li><p>freshly computed `E_Value` and `E_Val_bound`.</p></li>
-</ul></div>
+</ul><p>Numeric columns retain their computational precision. Apply display
+  rounding only when formatting the returned table for presentation.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="e-value-calculation">E-value calculation<a class="anchor" aria-label="anchor" href="#e-value-calculation"></a></h2>
+
+
+<p>For a risk ratio \(r\), let \(r^* = r\) when \(r \ge 1\) and
+\(r^* = 1/r\) otherwise. Margot computes the null E-value as
+$$r^* + \sqrt{r^*(r^*-1)}.$$
+The confidence-bound E-value uses the confidence limit closest to 1 and
+equals 1 when the interval includes 1.</p>
+<p>For an outcome-mean difference \(b\), exposure contrast \(\delta\), and
+outcome standard deviation \(s\), Margot first forms the standardised
+difference \(d = b|\delta|/s\). It approximates the risk ratio as
+\(\exp(0.91d)\) and the risk-ratio confidence limits as
+\(\exp(0.91d \pm 1.78\,\mathrm{SE}(d))\), then applies the same null
+E-value equation. This calculation treats \(s\) as known.</p>
+    </div>
     <div class="section level2">
     <h2 id="how-the-correction-is-applied">How the correction is applied<a class="anchor" aria-label="anchor" href="#how-the-correction-is-applied"></a></h2>
 
@@ -129,6 +149,10 @@ rate (for BH) to control. Default `0.05`.</p></dd>
 *Some desirable properties of the Bonferroni correction:
 Is the Bonferroni correction really so bad?*
 **Am J Epidemiol** 188(3): 617–618.</p>
+<p>VanderWeele TJ, Ding P (2017). Sensitivity analysis in observational research: introducing the E-value. *Annals of Internal Medicine* 167(4): 268–274. <a href="https://doi.org/10.7326/M16-2607" class="external-link">doi:10.7326/M16-2607</a>
+.</p>
+<p>Chinn S (2000). A simple method for converting an odds ratio to effect size for use in meta-analysis. *Statistics in Medicine* 19(22): 3127–3131.</p>
+<p>VanderWeele TJ (2017). On a square-root transformation of the odds ratio for a common outcome. *Epidemiology* 28(6): e58.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

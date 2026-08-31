@@ -56,9 +56,9 @@ double_robust_marginal(
 
 \item{verbose}{Logical, indicating whether to print detailed output during computation.}
 
-\item{delta}{The assumed smallest worthwhile effect, used for E-value calculations in tabulation.}
+\item{delta}{The exposure contrast represented by an outcome-mean difference in the E-value calculation.}
 
-\item{sd}{The standard deviation of the effect estimate, used for E-value calculations.}
+\item{sd}{The outcome standard deviation used to standardise an outcome-mean difference in the E-value calculation.}
 
 \item{new_name}{A new name to assign to the tabulated output, typically describing the variable or model.}
 

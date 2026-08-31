@@ -13,7 +13,7 @@ appending these values to the summary table."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.022</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.023</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,8 +70,7 @@ appending these values to the summary table.</p>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
-<dd><p>Character string specifying the scale of the estimate to be used in the summary table and
-E-value calculation. Valid options are "RD" (risk difference) or "RR" (risk ratio). Default is "RD".</p></dd>
+<dd><p>Character string specifying the E-value calculation. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio. Default is `"RD"`.</p></dd>
 
 
 <dt id="arg-new-name">new_name<a class="anchor" aria-label="anchor" href="#arg-new-name"></a></dt>
@@ -80,13 +79,11 @@ contrast. This name will be applied to the first row of the summary table.</p></
 
 
 <dt id="arg-delta">delta<a class="anchor" aria-label="anchor" href="#arg-delta"></a></dt>
-<dd><p>The hypothesized increase in outcome for RD scale calculations. Used only when `scale` is "RD".
-Default value is 1.</p></dd>
+<dd><p>The exposure contrast represented by the outcome-mean difference, used only when `scale = "RD"`. Default is 1.</p></dd>
 
 
 <dt id="arg-sd">sd<a class="anchor" aria-label="anchor" href="#arg-sd"></a></dt>
-<dd><p>The standard deviation of the outcome for RD scale calculations. Used only when `scale` is "RD".
-Default value is 1.</p></dd>
+<dd><p>The outcome standard deviation used to standardise the outcome-mean difference, used only when `scale = "RD"`. Default is 1.</p></dd>
 
 </dl></div>
     <div class="section level2">

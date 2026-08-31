@@ -19,8 +19,8 @@
 #' @param splines Logical, indicating whether to use spline functions for continuous variables.
 #' @param vcov The method to use for variance-covariance estimation.
 #' @param verbose Logical, indicating whether to print detailed output during computation.
-#' @param delta The assumed smallest worthwhile effect, used for E-value calculations in tabulation.
-#' @param sd The standard deviation of the effect estimate, used for E-value calculations.
+#' @param delta The exposure contrast represented by an outcome-mean difference in the E-value calculation.
+#' @param sd The outcome standard deviation used to standardise an outcome-mean difference in the E-value calculation.
 #' @param new_name A new name to assign to the tabulated output, typically describing the variable or model.
 #' @param estimand Specifies the target of the causal inference, such as "ATE" (Average Treatment Effect) or "ATT" (Average Treatment on the Treated).
 #' @param type_causal The type of effect size (e.g., "RR" for Risk Ratio or "RD" for Risk Difference) to be computed in the causal analysis.
@@ -59,7 +59,6 @@
 #' @importFrom parallel detectCores
 #' @importFrom stats glm
 #' @importFrom dplyr filter mutate rename
-#' @importFrom EValue evalues.OLS evalues.RR
 double_robust_marginal <- function(df, Y, X, baseline_vars, treat_0, treat_1, nsims, cores, family,
                                    weights = TRUE, continuous_X = FALSE, splines = FALSE, vcov = "HC2",
                                    verbose = FALSE, delta = 1, sd = 1, new_name, estimand = c("ATE", "ATT"),

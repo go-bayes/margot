@@ -27,11 +27,11 @@ Bonferroni and Holm provide strong FWER control; BH provides FDR control.}
 \item{alpha}{Family-wise error-rate (for bonferroni/holm) or false discovery
 rate (for BH) to control. Default `0.05`.}
 
-\item{scale}{Scale to use when recomputing the *E*-value.
-`"RD"` (risk difference / ATE, **default**) or `"RR"` (risk ratio).}
+\item{scale}{Scale used to recompute the *E*-value. `"RD"` is the legacy label for the standardised-continuous-outcome approximation from an outcome-mean difference or ATE; `"RR"` treats the estimate as a risk ratio.}
 
-\item{delta, sd}{Arguments passed to [EValue::evalues.OLS()] when
-`scale = "RD"`.  Ignored for `"RR"`.}
+\item{delta}{Exposure contrast represented by an outcome-mean difference, used only when `scale = "RD"`.}
+
+\item{sd}{Outcome standard deviation used to standardise an outcome-mean difference, used only when `scale = "RD"`.}
 }
 \value{
 A data frame with the same rows (and order) as `combined_table`, but
@@ -40,6 +40,8 @@ A data frame with the same rows (and order) as `combined_table`, but
     \item updated `2.5 %` and `97.5 %` columns, and
     \item freshly computed `E_Value` and `E_Val_bound`.
   }
+  Numeric columns retain their computational precision. Apply display
+  rounding only when formatting the returned table for presentation.
 }
 \description{
 `margot_correct_combined_table()` takes the **combined_table** produced by the
@@ -53,6 +55,22 @@ various *margot* models (or by your own code) and
 By default it implements the single–step **Bonferroni** correction at
 \eqn{\alpha = 0.05} as advocated by VanderWeele & Mathur (2019).
 }
+\section{E-value calculation}{
+
+For a risk ratio \eqn{r}, let \eqn{r^* = r} when \eqn{r \ge 1} and
+\eqn{r^* = 1/r} otherwise. Margot computes the null E-value as
+\deqn{r^* + \sqrt{r^*(r^*-1)}.}
+The confidence-bound E-value uses the confidence limit closest to 1 and
+equals 1 when the interval includes 1.
+
+For an outcome-mean difference \eqn{b}, exposure contrast \eqn{\delta}, and
+outcome standard deviation \eqn{s}, Margot first forms the standardised
+difference \eqn{d = b|\delta|/s}. It approximates the risk ratio as
+\eqn{\exp(0.91d)} and the risk-ratio confidence limits as
+\eqn{\exp(0.91d \pm 1.78\,\mathrm{SE}(d))}, then applies the same null
+E-value equation. This calculation treats \eqn{s} as known.
+}
+
 \section{How the correction is applied}{
 
 Let \eqn{m} be the number of rows (tests).
@@ -74,4 +92,10 @@ VanderWeele TJ, Mathur MB (2019).
 *Some desirable properties of the Bonferroni correction:
 Is the Bonferroni correction really so bad?*
 **Am J Epidemiol** 188(3): 617–618.
+
+VanderWeele TJ, Ding P (2017). Sensitivity analysis in observational research: introducing the E-value. *Annals of Internal Medicine* 167(4): 268–274. \doi{10.7326/M16-2607}.
+
+Chinn S (2000). A simple method for converting an odds ratio to effect size for use in meta-analysis. *Statistics in Medicine* 19(22): 3127–3131.
+
+VanderWeele TJ (2017). On a square-root transformation of the odds ratio for a common outcome. *Epidemiology* 28(6): e58.
 }

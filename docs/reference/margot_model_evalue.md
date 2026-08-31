@@ -35,10 +35,11 @@ margot_model_evalue(
 
 - scale:
 
-  Character string specifying the scale of the estimate to be used in
-  the summary table and E-value calculation. Valid options are "RD"
-  (risk difference) or "RR" (risk ratio). Default is "RD". This
-  parameter is ignored for causal forest models, which always use "RD".
+  Character string specifying the E-value calculation. The legacy
+  \`"RD"\` option applies the standardised-continuous-outcome
+  approximation to an outcome-mean difference; \`"RR"\` treats the
+  estimate as a risk ratio. Default is \`"RD"\`. Causal forest models
+  use the \`"RD"\` calculation.
 
 - new_name:
 
@@ -48,13 +49,13 @@ margot_model_evalue(
 
 - delta:
 
-  The hypothesized increase in outcome for RD scale calculations. Used
-  only when \`scale\` is "RD". Default value is 1.
+  The exposure contrast represented by the outcome-mean difference, used
+  only when \`scale = "RD"\`. Default is 1.
 
 - sd:
 
-  The standard deviation of the outcome for RD scale calculations. Used
-  only when \`scale\` is "RD". Default value is 1.
+  The outcome standard deviation used to standardise the outcome-mean
+  difference, used only when \`scale = "RD"\`. Default is 1.
 
 - subset:
 
@@ -66,7 +67,9 @@ margot_model_evalue(
 A data frame with the original estimates and their E-values. The table
 includes columns for the estimate (either RD or RR), its confidence
 interval, E-Value, and the E-Value lower bound. For multi-arm causal
-forests, multiple rows will be returned, one for each contrast.
+forests, multiple rows will be returned, one for each contrast. Numeric
+columns retain their computational precision; round only when formatting
+the table for presentation.
 
 ## Examples
 

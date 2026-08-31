@@ -48,13 +48,15 @@ margot_multi_evalue(
 
 - delta_exposure:
 
-  Numeric. Exposure contrast size for OLS-type E-values (RD). Defaults
-  to 1. For IPSI, interpret as one policy contrast (α1 vs α0).
+  Numeric exposure contrast represented by an outcome-mean difference.
+  Used only when \`scale = "RD"\`. Defaults to 1. For IPSI, this is the
+  contrast between the two policies.
 
 - sd_outcome:
 
-  Numeric. Outcome standard deviation used for OLS-type E-values (RD).
-  Defaults to 1 (standardized outcomes).
+  Numeric outcome standard deviation used to standardise an outcome-mean
+  difference. Used only when \`scale = "RD"\`. Defaults to 1 for
+  standardised outcomes.
 
 - biases:
 
@@ -91,5 +93,6 @@ requested), baseline E-values (\`E_Value\`, \`E_Val_bound\`), and audit
 columns \`alpha_fwer\`, \`m\`, \`scale\`, \`intervention_type\`,
 \`delta_exposure\`, \`sd_outcome\`, and \`bias_order\`. For convenience,
 mirrored columns \`E_value_point\` and \`E_value_bound\` are also
-included. - \`notes\`: character vector (length 1) with an
-interpretation message when \`notes = TRUE\`.
+included. Numeric calculation columns retain their computational
+precision; round only for presentation. - \`notes\`: character vector
+(length 1) with an interpretation message when \`notes = TRUE\`.

@@ -1,3 +1,13 @@
+# [2026-08-31] margot 1.1.023
+
+### Unrounded E-value calculation inputs
+
+#### Corrected
+- Model, LMTP, and deprecated marginal-table E-values are now calculated from unrounded estimates, standard errors, and confidence limits. Combined tables retain their unrounded numeric values when they feed multiplicity-adjusted or multi-bias E-value calculations. Display rounding is deferred to presentation code and no longer changes the sensitivity calculation.
+
+#### Changed
+- Margot now computes ordinary risk-ratio E-values and the standardised-continuous-outcome approximation directly from the published equations. The `EValue` package is now an optional dependency used only for `margot_multi_evalue()` analyses that specify multiple biases.
+
 # [2026-08-25] margot 1.1.022
 
 ### Direct plots from compact policy-tree displays

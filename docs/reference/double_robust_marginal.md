@@ -99,13 +99,13 @@ double_robust_marginal(
 
 - delta:
 
-  The assumed smallest worthwhile effect, used for E-value calculations
-  in tabulation.
+  The exposure contrast represented by an outcome-mean difference in the
+  E-value calculation.
 
 - sd:
 
-  The standard deviation of the effect estimate, used for E-value
-  calculations.
+  The outcome standard deviation used to standardise an outcome-mean
+  difference in the E-value calculation.
 
 - new_name:
 
