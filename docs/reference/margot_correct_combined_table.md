@@ -3,8 +3,7 @@
 \`margot_correct_combined_table()\` takes the \*\*combined_table\*\*
 produced by the various \*margot\* models (or by your own code) and
 
-1.  widens the confidence interval according to the chosen
-    family–wise-error correction, \*\*and\*\*
+1.  applies the chosen confidence-interval adjustment, \*\*and\*\*
 
 2.  recalculates \*E\*-values (and their lower bounds) so they match the
     new interval.
@@ -17,11 +16,12 @@ at \\\alpha = 0.05\\ as advocated by VanderWeele & Mathur (2019).
 ``` r
 margot_correct_combined_table(
   combined_table,
-  adjust = c("bonferroni", "holm", "BH"),
+  adjust = c("bonferroni", "holm", "BH", "none"),
   alpha = 0.05,
   scale = c("RD", "RR"),
   delta = 1,
-  sd = 1
+  sd = 1,
+  m = NULL
 )
 ```
 
@@ -39,9 +39,10 @@ margot_correct_combined_table(
 
 - adjust:
 
-  Multiplicity method: \`"bonferroni"\` (default), \`"holm"\`, or
-  \`"BH"\`. Bonferroni and Holm provide strong FWER control; BH provides
-  FDR control.
+  Multiplicity method: \`"bonferroni"\` (default), \`"holm"\`, \`"BH"\`,
+  or \`"none"\`. Bonferroni and Holm provide strong FWER control; BH
+  provides FDR control. \`"none"\` retains the supplied confidence
+  limits.
 
 - alpha:
 
@@ -64,6 +65,13 @@ margot_correct_combined_table(
 
   Outcome standard deviation used to standardise an outcome-mean
   difference, used only when \`scale = "RD"\`.
+
+- m:
+
+  Positive whole number giving the total number of tests in the
+  Bonferroni family. It must be at least the number of table rows. When
+  \`NULL\`, Margot uses the number of rows. Holm and BH continue to use
+  the rows supplied in \`combined_table\` as their adjustment family.
 
 ## Value
 
@@ -93,7 +101,8 @@ This calculation treats \\s\\ as known.
 
 ## How the correction is applied
 
-Let \\m\\ be the number of rows (tests).
+For Bonferroni, let \\m\\ be the total number of tests in the
+multiplicity family.
 
 - \*\*Bonferroni\*\* uses \$\$ z^\* =
   \Phi^{-1}\\\bigl(1-\alpha/(2m)\bigr) \$\$ and rescales the original

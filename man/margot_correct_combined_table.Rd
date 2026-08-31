@@ -6,11 +6,12 @@
 \usage{
 margot_correct_combined_table(
   combined_table,
-  adjust = c("bonferroni", "holm", "BH"),
+  adjust = c("bonferroni", "holm", "BH", "none"),
   alpha = 0.05,
   scale = c("RD", "RR"),
   delta = 1,
-  sd = 1
+  sd = 1,
+  m = NULL
 )
 }
 \arguments{
@@ -21,8 +22,7 @@ margot_correct_combined_table(
 }
 Extra columns (e.g. the original *E*-values) are carried through.}
 
-\item{adjust}{Multiplicity method: `"bonferroni"` (default), `"holm"`, or `"BH"`.
-Bonferroni and Holm provide strong FWER control; BH provides FDR control.}
+\item{adjust}{Multiplicity method: `"bonferroni"` (default), `"holm"`, `"BH"`, or `"none"`. Bonferroni and Holm provide strong FWER control; BH provides FDR control. `"none"` retains the supplied confidence limits.}
 
 \item{alpha}{Family-wise error-rate (for bonferroni/holm) or false discovery
 rate (for BH) to control. Default `0.05`.}
@@ -32,6 +32,8 @@ rate (for BH) to control. Default `0.05`.}
 \item{delta}{Exposure contrast represented by an outcome-mean difference, used only when `scale = "RD"`.}
 
 \item{sd}{Outcome standard deviation used to standardise an outcome-mean difference, used only when `scale = "RD"`.}
+
+\item{m}{Positive whole number giving the total number of tests in the Bonferroni family. It must be at least the number of table rows. When `NULL`, Margot uses the number of rows. Holm and BH continue to use the rows supplied in `combined_table` as their adjustment family.}
 }
 \value{
 A data frame with the same rows (and order) as `combined_table`, but
@@ -47,8 +49,7 @@ A data frame with the same rows (and order) as `combined_table`, but
 `margot_correct_combined_table()` takes the **combined_table** produced by the
 various *margot* models (or by your own code) and
 \enumerate{
-  \item widens the confidence interval according to the chosen
-        family–wise-error correction, **and**
+  \item applies the chosen confidence-interval adjustment, **and**
   \item recalculates *E*-values (and their lower bounds) so they match the
         new interval.
 }
@@ -73,7 +74,7 @@ E-value equation. This calculation treats \eqn{s} as known.
 
 \section{How the correction is applied}{
 
-Let \eqn{m} be the number of rows (tests).
+For Bonferroni, let \eqn{m} be the total number of tests in the multiplicity family.
 \itemize{
   \item **Bonferroni** uses
     \deqn{ z^* = \Phi^{-1}\!\bigl(1-\alpha/(2m)\bigr) }

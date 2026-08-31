@@ -4,8 +4,7 @@
 #' `margot_correct_combined_table()` takes the **combined_table** produced by the
 #' various *margot* models (or by your own code) and
 #' \enumerate{
-#'   \item widens the confidence interval according to the chosen
-#'         family–wise-error correction, **and**
+#'   \item applies the chosen confidence-interval adjustment, **and**
 #'   \item recalculates *E*-values (and their lower bounds) so they match the
 #'         new interval.
 #' }
@@ -18,10 +17,10 @@
 #'     \item `2.5 %`, `97.5 %`   (unadjusted CI limits)
 #'   }
 #'   Extra columns (e.g. the original *E*-values) are carried through.
-#' @param adjust Multiplicity method: `"bonferroni"` (default), `"holm"`, or `"BH"`.
-#'   Bonferroni and Holm provide strong FWER control; BH provides FDR control.
+#' @param adjust Multiplicity method: `"bonferroni"` (default), `"holm"`, `"BH"`, or `"none"`. Bonferroni and Holm provide strong FWER control; BH provides FDR control. `"none"` retains the supplied confidence limits.
 #' @param alpha  Family-wise error-rate (for bonferroni/holm) or false discovery
 #'   rate (for BH) to control. Default `0.05`.
+#' @param m Positive whole number giving the total number of tests in the Bonferroni family. It must be at least the number of table rows. When `NULL`, Margot uses the number of rows. Holm and BH continue to use the rows supplied in `combined_table` as their adjustment family.
 #' @param scale Scale used to recompute the *E*-value. `"RD"` is the legacy label for the standardised-continuous-outcome approximation from an outcome-mean difference or ATE; `"RR"` treats the estimate as a risk ratio.
 #' @param delta Exposure contrast represented by an outcome-mean difference, used only when `scale = "RD"`.
 #' @param sd Outcome standard deviation used to standardise an outcome-mean difference, used only when `scale = "RD"`.
@@ -50,7 +49,7 @@
 #' E-value equation. This calculation treats \eqn{s} as known.
 #'
 #' @section How the correction is applied:
-#' Let \eqn{m} be the number of rows (tests).
+#' For Bonferroni, let \eqn{m} be the total number of tests in the multiplicity family.
 #' \itemize{
 #'   \item **Bonferroni** uses
 #'     \deqn{ z^* = \Phi^{-1}\!\bigl(1-\alpha/(2m)\bigr) }
@@ -79,11 +78,12 @@
 #' @importFrom dplyr mutate across any_of bind_cols
 #' @importFrom purrr pmap_dfr
 margot_correct_combined_table <- function(combined_table,
-                                          adjust = c("bonferroni", "holm", "BH"),
+                                          adjust = c("bonferroni", "holm", "BH", "none"),
                                           alpha = 0.05,
                                           scale = c("RD", "RR"),
                                           delta = 1,
-                                          sd = 1) {
+                                          sd = 1,
+                                          m = NULL) {
   adjust <- match.arg(adjust)
   scale <- match.arg(scale)
 
@@ -105,11 +105,13 @@ margot_correct_combined_table <- function(combined_table,
     stop("`combined_table` must contain '2.5 %' and '97.5 %' columns.")
   }
 
-  m <- nrow(combined_table) # number of tests
+  n_tests <- nrow(combined_table)
+  multiplicity <- .margot_resolve_multiplicity(m, n_tests)
+  m <- multiplicity$realised
   z_orig <- stats::qnorm(0.975) # 1.96
 
   tbl <- combined_table
-  confidence_level <- rep(1 - alpha, m)
+  confidence_level <- rep(1 - alpha, n_tests)
 
   # Keep original numeric columns as provided; avoid coercion to prevent
   # introducing accidental NAs in downstream interpretation/tables.
@@ -117,7 +119,7 @@ margot_correct_combined_table <- function(combined_table,
   ## ---- 1  adjust the CI ----------------------------------------------------
   if (adjust == "bonferroni") {
     z_star <- stats::qnorm(1 - alpha / (2 * m))
-    confidence_level <- rep(1 - (alpha / m), m)
+    confidence_level <- rep(1 - (alpha / m), n_tests)
 
     if (scale == "RR") {
       # Adjust on the log scale, then exponentiate back to preserve positivity
@@ -160,7 +162,7 @@ margot_correct_combined_table <- function(combined_table,
         `2.5 %`  = !!rlang::sym(est_col) - z_star * se,
         `97.5 %` = !!rlang::sym(est_col) + z_star * se
       )
-  } else { # -------- BH (Benjamini-Hochberg) -----------
+  } else if (adjust == "BH") { # -------- BH (Benjamini-Hochberg) -----------
 
     ## back-calculate SE from the *original* CI
     se <- (tbl$`97.5 %` - tbl[[est_col]]) / z_orig
@@ -176,6 +178,8 @@ margot_correct_combined_table <- function(combined_table,
         `2.5 %`  = !!rlang::sym(est_col) - z_star * se,
         `97.5 %` = !!rlang::sym(est_col) + z_star * se
       )
+  } else {
+    # Retain the supplied confidence limits when no adjustment is requested.
   }
 
   ## ---- 2  recompute E-values ----------------------------------------------
@@ -203,5 +207,6 @@ margot_correct_combined_table <- function(combined_table,
     dplyr::mutate(confidence_level = confidence_level)
 
   attr(out, "confidence_level") <- confidence_level
+  attr(out, "multiplicity") <- multiplicity
   out
 }

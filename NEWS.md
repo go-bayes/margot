@@ -1,3 +1,10 @@
+# [2026-08-31] margot 1.1.024
+
+### Multi-bias E-value contract
+
+#### Corrected
+- Disabling the Bonferroni correction now retains the supplied confidence limits. A validated, caller-supplied multiplicity count now determines the Bonferroni adjustment, and multi-bias tables distinguish the supplied count from the count used by the calculation.
+
 # [2026-08-31] margot 1.1.023
 
 ### Unrounded E-value calculation inputs

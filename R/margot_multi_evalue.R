@@ -26,15 +26,15 @@
 #' @param apply_bonferroni_first Logical; if TRUE (default), widen CIs using a
 #'   Bonferroni correction at FWER `alpha` before computing E-values.
 #' @param alpha Numeric FWER level for Bonferroni. Default 0.05.
-#' @param m Optional integer for multiplicity (number of tests). If NULL,
-#'   inferred from `nrow(results)`.
+#' @param m Optional positive whole number giving the total number of tests in the multiplicity family. It must be at least `nrow(results)`. When `NULL`, Margot uses the number of rows.
 #' @param notes Logical; if TRUE include a LaTeX-ready interpretation note in
 #'   the output list.
 #'
 #' @return A list with elements:
 #'   - `table`: data frame with adjusted CIs (if requested), baseline E-values
 #'     (`E_Value`, `E_Val_bound`), and audit columns `alpha_fwer`, `m`,
-#'     `scale`, `intervention_type`, `delta_exposure`, `sd_outcome`, and
+#'     `m_supplied`, `m_realised`, `scale`, `intervention_type`,
+#'     `delta_exposure`, `sd_outcome`, and
 #'     `bias_order`. For convenience, mirrored columns `E_value_point` and
 #'     `E_value_bound` are also included. Numeric calculation columns retain
 #'     their computational precision; round only for presentation.
@@ -78,9 +78,6 @@ margot_multi_evalue <- function(
     stop("`results` must include either 'E[Y(1)]-E[Y(0)]' (RD) or 'E[Y(1)]/E[Y(0)]' (RR) and '2.5 %', '97.5 %' columns.")
   }
 
-  # multiplicity m
-  if (is.null(m)) m <- nrow(results)
-
   # ---- CI adjustment + baseline E-values -----------------------------------
   adj_method <- if (isTRUE(apply_bonferroni_first)) "bonferroni" else "none"
   out <- margot_correct_combined_table(
@@ -89,12 +86,16 @@ margot_multi_evalue <- function(
     alpha = alpha,
     scale = scale,
     delta = delta_exposure,
-    sd = sd_outcome
+    sd = sd_outcome,
+    m = m
   )
+  multiplicity <- attr(out, "multiplicity")
 
   # audit columns
   out$alpha_fwer <- if (adj_method == "bonferroni") alpha else NA_real_
-  out$m <- m
+  out$m <- multiplicity$realised
+  out$m_supplied <- multiplicity$supplied
+  out$m_realised <- multiplicity$realised
   out$scale <- scale
   out$intervention_type <- intervention_type
   out$delta_exposure <- delta_exposure

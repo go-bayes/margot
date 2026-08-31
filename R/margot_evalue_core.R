@@ -13,6 +13,37 @@
   exp(0.91 * est * abs(delta) / sd)
 }
 
+# Resolve the supplied and calculation multiplicities for a result table.
+.margot_resolve_multiplicity <- function(m, n_tests) {
+  supplied <- !is.null(m)
+  if (is.null(m)) {
+    m <- n_tests
+  }
+
+  valid <- is.numeric(m) &&
+    length(m) == 1L &&
+    !is.na(m) &&
+    is.finite(m) &&
+    m > 0 &&
+    m == floor(m) &&
+    m <= .Machine$integer.max
+  if (!valid) {
+    stop("`m` must be one positive whole number.", call. = FALSE)
+  }
+  if (m < n_tests) {
+    stop(
+      "`m` must be at least the number of rows in `combined_table`.",
+      call. = FALSE
+    )
+  }
+
+  realised <- as.integer(m)
+  list(
+    supplied = if (supplied) realised else NA_integer_,
+    realised = realised
+  )
+}
+
 # Compute the null E-value for one risk ratio.
 .margot_evalue_threshold <- function(risk_ratio) {
   if (!is.numeric(risk_ratio) || length(risk_ratio) != 1L || is.na(risk_ratio)) {
