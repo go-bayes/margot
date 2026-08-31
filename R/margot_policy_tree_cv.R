@@ -117,6 +117,19 @@
 #'   successful fold separately by depth. \code{"matched_successful_repeat_fold_pairs"}
 #'   restricts depth and constant comparisons to model-repeat-fold combinations
 #'   successfully evaluated at every requested depth.
+#' @param parallel Logical. Evaluate different outcome models concurrently with
+#'   independent multisession workers. Fold construction, tree fitting, held-out
+#'   evaluation, aggregation, realised engine, and engine settings within each
+#'   outcome are unchanged. The default \code{FALSE} retains serial execution.
+#' @param n_workers Integer or \code{NULL}. Number of outer outcome workers when
+#'   \code{parallel = TRUE}. \code{NULL} uses at most two workers, a conservative
+#'   default intended to avoid accidental oversubscription. Set this explicitly
+#'   from the machine's approved worker budget for larger jobs. The realised
+#'   worker count cannot exceed the number of outcome models.
+#' @param future_globals_max_size Positive number of bytes or \code{NULL}.
+#'   Temporary \pkg{future} globals limit used while exporting compact
+#'   outcome-specific policy inputs. The default is 20 GiB. Worker exports omit
+#'   full causal-forest objects.
 #' @param verbose Logical. Print progress messages.
 #'
 #' @return A \code{margot_policy_tree_cv} list with fold-level held-out values,
@@ -156,6 +169,9 @@ margot_policy_tree_cv <- function(model_results,
                                     "available_by_depth",
                                     "matched_successful_repeat_fold_pairs"
                                   ),
+                                  parallel = FALSE,
+                                  n_workers = NULL,
+                                  future_globals_max_size = 20 * 1024^3,
                                   verbose = TRUE) {
   # evaluate policy-learning procedure on held-out folds and return summaries.
   if (!is.list(model_results) || is.null(model_results$results) || !is.list(model_results$results)) {
@@ -167,7 +183,6 @@ margot_policy_tree_cv <- function(model_results,
 
   covariate_mode <- match.arg(covariate_mode)
   depth_selection_rule <- match.arg(depth_selection_rule)
-  training_weights_applied <- FALSE
   tree_method <- match.arg(tree_method)
   held_out_aggregation <- match.arg(held_out_aggregation)
   comparison_pairs <- match.arg(comparison_pairs)
@@ -205,6 +220,24 @@ margot_policy_tree_cv <- function(model_results,
       min_root_stability_for_depth_switch > 1) {
     stop("min_root_stability_for_depth_switch must be a single numeric value in [0, 1]", call. = FALSE)
   }
+  if (!is.logical(parallel) || length(parallel) != 1L || is.na(parallel)) {
+    stop("parallel must be TRUE or FALSE", call. = FALSE)
+  }
+  if (!is.null(n_workers)) {
+    if (!is.numeric(n_workers) || length(n_workers) != 1L || is.na(n_workers) ||
+        !is.finite(n_workers) || n_workers != floor(n_workers) || n_workers < 1L) {
+      stop("n_workers must be NULL or a positive whole number", call. = FALSE)
+    }
+    n_workers <- as.integer(n_workers)
+  }
+  if (!is.null(future_globals_max_size)) {
+    if (!is.numeric(future_globals_max_size) || length(future_globals_max_size) != 1L ||
+        is.na(future_globals_max_size) || !is.finite(future_globals_max_size) ||
+        future_globals_max_size <= 0) {
+      stop("future_globals_max_size must be NULL or a positive number of bytes", call. = FALSE)
+    }
+    future_globals_max_size <- as.numeric(future_globals_max_size)
+  }
 
   model_names <- .policy_cv_resolve_model_names(model_results, model_names)
 
@@ -214,153 +247,66 @@ margot_policy_tree_cv <- function(model_results,
     cli::cli_alert_info("Tree method: {actual_tree_method}")
   }
 
-  fold_rows <- list()
-  split_rows <- list()
-  leaf_rows <- list()
+  jobs <- lapply(
+    model_names,
+    .policy_cv_prepare_model_job,
+    model_results = model_results,
+    weights = weights,
+    custom_covariates = custom_covariates,
+    exclude_covariates = exclude_covariates,
+    covariate_mode = covariate_mode,
+    num_folds = num_folds,
+    n_repeats = n_repeats,
+    seed = seed,
+    verbose = verbose
+  )
+  jobs <- Filter(Negate(is.null), jobs)
+  training_weights_applied <- any(vapply(
+    jobs,
+    function(job) isTRUE(job$training_weights_applied),
+    logical(1)
+  ))
 
-  for (model_name in model_names) {
-    if (isTRUE(verbose)) cli::cli_h2("Processing {model_name}")
-    model_result <- model_results$results[[model_name]]
-    model_data <- .policy_cv_model_data(
-      object = model_results,
-      model = model_result,
-      weights = weights
-    )
-    training_weights_applied <- training_weights_applied || !is.null(model_data$weights)
-    selected_vars <- .policy_cv_selected_vars(
-      model_result = model_result,
-      covariates = model_data$covariates,
-      custom_covariates = custom_covariates,
-      exclude_covariates = exclude_covariates,
-      covariate_mode = covariate_mode,
-      model_name = model_name,
-      verbose = verbose
-    )
-
-    complete_rows <- stats::complete.cases(model_data$covariates[, selected_vars, drop = FALSE]) &
-      stats::complete.cases(model_data$dr_scores)
-    if (!is.null(model_data$weights)) {
-      complete_rows <- complete_rows & is.finite(model_data$weights) & model_data$weights > 0
+  worker_config <- list(
+    depths = depths,
+    num_folds = num_folds,
+    n_repeats = n_repeats,
+    actual_tree_method = actual_tree_method,
+    min_node_size = min_node_size,
+    label_mapping = label_mapping
+  )
+  realised_workers <- .policy_cv_resolve_workers(
+    parallel = parallel,
+    n_workers = n_workers,
+    n_jobs = length(jobs)
+  )
+  if (realised_workers > 1L) {
+    if (isTRUE(verbose)) {
+      cli::cli_alert_info("Evaluating outcomes in parallel ({realised_workers} workers)")
     }
-    usable_idx <- which(complete_rows)
-    if (length(usable_idx) < num_folds) {
-      if (isTRUE(verbose)) {
-        cli::cli_alert_warning("{model_name}: fewer complete rows than folds; skipping")
-      }
-      next
+    job_results <- .policy_cv_future_lapply(
+      jobs = jobs,
+      worker_config = worker_config,
+      n_workers = realised_workers,
+      seed = seed,
+      future_globals_max_size = future_globals_max_size
+    )
+  } else {
+    if (isTRUE(parallel) && isTRUE(verbose)) {
+      cli::cli_alert_info("One outcome worker available; running serially")
     }
+    job_results <- lapply(jobs, .policy_cv_run_model_job_from_config, config = worker_config)
+  }
 
-    for (repeat_id in seq_len(n_repeats)) {
-      fold_id <- .policy_cv_make_folds(length(usable_idx), num_folds, seed + repeat_id)
-      for (fold in seq_len(num_folds)) {
-        test_pos <- usable_idx[fold_id == fold]
-        train_pos <- usable_idx[fold_id != fold]
-        if (length(test_pos) < 1L || length(train_pos) < 2L) next
-
-        for (depth in depths) {
-          tree <- tryCatch(
-            .compute_policy_tree(
-              model_data$covariates[train_pos, selected_vars, drop = FALSE],
-              .policy_cv_training_scores(
-                dr_scores = model_data$dr_scores[train_pos, , drop = FALSE],
-                weights = if (!is.null(model_data$weights)) model_data$weights[train_pos] else NULL
-              ),
-              depth = depth,
-              tree_method = actual_tree_method,
-              min_node_size = min_node_size
-            ),
-            error = function(e) {
-              if (isTRUE(verbose)) {
-                cli::cli_alert_warning("{model_name} repeat {repeat_id} fold {fold} depth {depth}: {e$message}")
-              }
-              NULL
-            }
-          )
-          if (is.null(tree)) next
-
-          training_constant <- .policy_cv_select_constant(
-            dr_scores = model_data$dr_scores[train_pos, , drop = FALSE],
-            weights = if (!is.null(model_data$weights)) model_data$weights[train_pos] else NULL,
-            tree = tree
-          )
-
-          heldout <- .policy_cv_evaluate_tree(
-            tree = tree,
-            covariates = model_data$covariates[test_pos, , drop = FALSE],
-            dr_scores = model_data$dr_scores[test_pos, , drop = FALSE],
-            weights = if (!is.null(model_data$weights)) model_data$weights[test_pos] else NULL,
-            constant_action_id = training_constant$action_id,
-            constant_action = training_constant$action
-          )
-          if (is.null(heldout)) next
-
-          fold_rows[[length(fold_rows) + 1L]] <- data.frame(
-            model = model_name,
-            outcome = gsub("^model_", "", model_name),
-            outcome_label = .policy_cv_label(gsub("^model_", "", model_name), label_mapping),
-            repeat_id = repeat_id,
-            fold = fold,
-            depth = depth,
-            n_train = length(train_pos),
-            n_eval = heldout$n_eval,
-            evaluation_weight_sum = heldout$evaluation_weight_sum,
-            coverage_numerator = heldout$coverage_numerator,
-            policy_score_numerator = heldout$policy_score_numerator,
-            control_score_numerator = heldout$control_score_numerator,
-            treat_score_numerator = heldout$treat_score_numerator,
-            best_constant_score_numerator = heldout$best_constant_score_numerator,
-            validation_best_constant_score_numerator = heldout$validation_best_constant_score_numerator,
-            coverage = heldout$coverage,
-            value_policy = heldout$value_policy,
-            value_control_all = heldout$value_control_all,
-            value_treat_all = heldout$value_treat_all,
-            value_best_constant = heldout$value_best_constant,
-            best_constant_action = heldout$best_constant_action,
-            value_validation_best_constant = heldout$value_validation_best_constant,
-            validation_best_constant_action = heldout$validation_best_constant_action,
-            gain_vs_control = heldout$gain_vs_control,
-            gain_vs_treat = heldout$gain_vs_treat,
-            gain_vs_best_constant = heldout$gain_vs_best_constant,
-            n_selected_actions = heldout$n_selected_actions,
-            uniform_selected_action = heldout$uniform_selected_action,
-            stringsAsFactors = FALSE
-          )
-
-          split_info <- tryCatch(extract_tree_info(tree, tree$columns %||% selected_vars),
-                                 error = function(e) NULL)
-          split_df <- .policy_cv_split_rows(
-            split_info = split_info,
-            model_name = model_name,
-            repeat_id = repeat_id,
-            fold = fold,
-            depth = depth,
-            label_mapping = label_mapping
-          )
-          if (!is.null(split_df) && nrow(split_df)) {
-            split_rows[[length(split_rows) + 1L]] <- split_df
-          }
-
-          leaf_df <- tryCatch(
-            .policy_cv_leaf_rows(
-              tree = tree,
-              covariates = model_data$covariates[test_pos, , drop = FALSE],
-              dr_scores = model_data$dr_scores[test_pos, , drop = FALSE],
-              weights = if (!is.null(model_data$weights)) model_data$weights[test_pos] else NULL,
-              model_name = model_name,
-              repeat_id = repeat_id,
-              fold = fold,
-              depth = depth,
-              label_mapping = label_mapping
-            ),
-            error = function(e) NULL
-          )
-          if (!is.null(leaf_df) && nrow(leaf_df)) {
-            leaf_rows[[length(leaf_rows) + 1L]] <- leaf_df
-          }
-        }
-      }
+  if (isTRUE(verbose)) {
+    for (result in job_results) {
+      cli::cli_h2("Processed {result$model_name}")
+      for (message in result$warnings) cli::cli_alert_warning(message)
     }
   }
+  fold_rows <- unlist(lapply(job_results, `[[`, "fold_rows"), recursive = FALSE)
+  split_rows <- unlist(lapply(job_results, `[[`, "split_rows"), recursive = FALSE)
+  leaf_rows <- unlist(lapply(job_results, `[[`, "leaf_rows"), recursive = FALSE)
 
   fold_values <- if (length(fold_rows)) {
     do.call(rbind, fold_rows)
@@ -460,6 +406,10 @@ margot_policy_tree_cv <- function(model_results,
       training_weights_applied = training_weights_applied,
       held_out_aggregation = held_out_aggregation,
       comparison_pairs = comparison_pairs,
+      parallel = realised_workers > 1L,
+      requested_parallel = parallel,
+      n_workers = realised_workers,
+      future_globals_max_size = future_globals_max_size,
       estimand = "held-out evaluation of the policy-learning procedure"
     )
   )
@@ -728,6 +678,300 @@ margot_policy_tree_display <- function(
     stop("No covariates remain for ", model_name, call. = FALSE)
   }
   selected_vars
+}
+
+#' @keywords internal
+.policy_cv_prepare_model_job <- function(model_name,
+                                         model_results,
+                                         weights,
+                                         custom_covariates,
+                                         exclude_covariates,
+                                         covariate_mode,
+                                         num_folds,
+                                         n_repeats,
+                                         seed,
+                                         verbose) {
+  # reduce one full model result to the inputs required by policy-tree CV.
+  model_result <- model_results$results[[model_name]]
+  model_data <- .policy_cv_model_data(
+    object = model_results,
+    model = model_result,
+    weights = weights
+  )
+  selected_vars <- .policy_cv_selected_vars(
+    model_result = model_result,
+    covariates = model_data$covariates,
+    custom_covariates = custom_covariates,
+    exclude_covariates = exclude_covariates,
+    covariate_mode = covariate_mode,
+    model_name = model_name,
+    verbose = verbose
+  )
+  model_data$covariates <- model_data$covariates[, selected_vars, drop = FALSE]
+  complete_rows <- stats::complete.cases(model_data$covariates) &
+    stats::complete.cases(model_data$dr_scores)
+  if (!is.null(model_data$weights)) {
+    complete_rows <- complete_rows & is.finite(model_data$weights) & model_data$weights > 0
+  }
+  usable_idx <- which(complete_rows)
+  if (length(usable_idx) < num_folds) {
+    if (isTRUE(verbose)) {
+      cli::cli_alert_warning("{model_name}: fewer complete rows than folds; skipping")
+    }
+    return(NULL)
+  }
+  fold_specs <- lapply(seq_len(n_repeats), function(repeat_id) {
+    fold_id <- .policy_cv_make_folds(
+      length(usable_idx),
+      num_folds,
+      seed + repeat_id
+    )
+    list(
+      fold_id = fold_id,
+      random_seed = get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+    )
+  })
+  list(
+    model_name = model_name,
+    model_data = model_data,
+    selected_vars = selected_vars,
+    usable_idx = usable_idx,
+    fold_specs = fold_specs,
+    training_weights_applied = !is.null(model_data$weights)
+  )
+}
+
+#' @keywords internal
+.policy_cv_run_model_job_from_config <- function(job, config) {
+  # run one compact outcome job from an explicit scalar configuration.
+  do.call(.policy_cv_run_model_job, c(list(job = job), config))
+}
+
+#' @keywords internal
+.policy_cv_run_model_job <- function(job,
+                                     depths,
+                                     num_folds,
+                                     n_repeats,
+                                     actual_tree_method,
+                                     min_node_size,
+                                     label_mapping = NULL) {
+  # evaluate every repeat-fold-depth task for one compact outcome input.
+  model_name <- job$model_name
+  model_data <- job$model_data
+  selected_vars <- job$selected_vars
+  usable_idx <- job$usable_idx
+  fold_rows <- list()
+  split_rows <- list()
+  leaf_rows <- list()
+  warnings <- character()
+
+  for (repeat_id in seq_len(n_repeats)) {
+    fold_spec <- job$fold_specs[[repeat_id]]
+    fold_id <- fold_spec$fold_id
+    assign(".Random.seed", fold_spec$random_seed, envir = .GlobalEnv)
+    for (fold in seq_len(num_folds)) {
+      test_pos <- usable_idx[fold_id == fold]
+      train_pos <- usable_idx[fold_id != fold]
+      if (length(test_pos) < 1L || length(train_pos) < 2L) next
+
+      for (depth in depths) {
+        failure <- NULL
+        tree <- tryCatch(
+          .compute_policy_tree(
+            model_data$covariates[train_pos, , drop = FALSE],
+            .policy_cv_training_scores(
+              dr_scores = model_data$dr_scores[train_pos, , drop = FALSE],
+              weights = if (!is.null(model_data$weights)) model_data$weights[train_pos] else NULL
+            ),
+            depth = depth,
+            tree_method = actual_tree_method,
+            min_node_size = min_node_size
+          ),
+          error = function(e) {
+            failure <<- conditionMessage(e)
+            NULL
+          }
+        )
+        if (is.null(tree)) {
+          warnings <- c(
+            warnings,
+            paste0(
+              model_name, " repeat ", repeat_id, " fold ", fold,
+              " depth ", depth, ": ", failure %||% "tree fitting failed"
+            )
+          )
+          next
+        }
+
+        training_constant <- .policy_cv_select_constant(
+          dr_scores = model_data$dr_scores[train_pos, , drop = FALSE],
+          weights = if (!is.null(model_data$weights)) model_data$weights[train_pos] else NULL,
+          tree = tree
+        )
+        heldout <- .policy_cv_evaluate_tree(
+          tree = tree,
+          covariates = model_data$covariates[test_pos, , drop = FALSE],
+          dr_scores = model_data$dr_scores[test_pos, , drop = FALSE],
+          weights = if (!is.null(model_data$weights)) model_data$weights[test_pos] else NULL,
+          constant_action_id = training_constant$action_id,
+          constant_action = training_constant$action
+        )
+        if (is.null(heldout)) next
+
+        fold_rows[[length(fold_rows) + 1L]] <- data.frame(
+          model = model_name,
+          outcome = gsub("^model_", "", model_name),
+          outcome_label = .policy_cv_label(gsub("^model_", "", model_name), label_mapping),
+          repeat_id = repeat_id,
+          fold = fold,
+          depth = depth,
+          n_train = length(train_pos),
+          n_eval = heldout$n_eval,
+          evaluation_weight_sum = heldout$evaluation_weight_sum,
+          coverage_numerator = heldout$coverage_numerator,
+          policy_score_numerator = heldout$policy_score_numerator,
+          control_score_numerator = heldout$control_score_numerator,
+          treat_score_numerator = heldout$treat_score_numerator,
+          best_constant_score_numerator = heldout$best_constant_score_numerator,
+          validation_best_constant_score_numerator = heldout$validation_best_constant_score_numerator,
+          coverage = heldout$coverage,
+          value_policy = heldout$value_policy,
+          value_control_all = heldout$value_control_all,
+          value_treat_all = heldout$value_treat_all,
+          value_best_constant = heldout$value_best_constant,
+          best_constant_action = heldout$best_constant_action,
+          value_validation_best_constant = heldout$value_validation_best_constant,
+          validation_best_constant_action = heldout$validation_best_constant_action,
+          gain_vs_control = heldout$gain_vs_control,
+          gain_vs_treat = heldout$gain_vs_treat,
+          gain_vs_best_constant = heldout$gain_vs_best_constant,
+          n_selected_actions = heldout$n_selected_actions,
+          uniform_selected_action = heldout$uniform_selected_action,
+          stringsAsFactors = FALSE
+        )
+
+        split_info <- tryCatch(
+          extract_tree_info(tree, tree$columns %||% selected_vars),
+          error = function(e) NULL
+        )
+        split_df <- .policy_cv_split_rows(
+          split_info = split_info,
+          model_name = model_name,
+          repeat_id = repeat_id,
+          fold = fold,
+          depth = depth,
+          label_mapping = label_mapping
+        )
+        if (!is.null(split_df) && nrow(split_df)) {
+          split_rows[[length(split_rows) + 1L]] <- split_df
+        }
+
+        leaf_df <- tryCatch(
+          .policy_cv_leaf_rows(
+            tree = tree,
+            covariates = model_data$covariates[test_pos, , drop = FALSE],
+            dr_scores = model_data$dr_scores[test_pos, , drop = FALSE],
+            weights = if (!is.null(model_data$weights)) model_data$weights[test_pos] else NULL,
+            model_name = model_name,
+            repeat_id = repeat_id,
+            fold = fold,
+            depth = depth,
+            label_mapping = label_mapping
+          ),
+          error = function(e) NULL
+        )
+        if (!is.null(leaf_df) && nrow(leaf_df)) {
+          leaf_rows[[length(leaf_rows) + 1L]] <- leaf_df
+        }
+      }
+    }
+  }
+
+  list(
+    model_name = model_name,
+    fold_rows = fold_rows,
+    split_rows = split_rows,
+    leaf_rows = leaf_rows,
+    warnings = warnings
+  )
+}
+
+#' @keywords internal
+.policy_cv_resolve_workers <- function(parallel, n_workers, n_jobs) {
+  # resolve a conservative outer worker count without changing serial defaults.
+  n_jobs <- as.integer(n_jobs)
+  if (!isTRUE(parallel) || is.na(n_jobs) || n_jobs < 2L) return(1L)
+  requested <- if (is.null(n_workers)) 2L else as.integer(n_workers)
+  max(1L, min(requested, n_jobs))
+}
+
+#' @keywords internal
+.policy_cv_future_worker <- function(job, worker_config, thread_variables) {
+  # execute one compact outcome job with nested futures and threads disabled.
+  previous_plan <- future::plan("list")
+  on.exit(future::plan(previous_plan, substitute = FALSE), add = TRUE)
+  future::plan(future::sequential)
+  do.call(
+    Sys.setenv,
+    as.list(stats::setNames(rep("1", length(thread_variables)), thread_variables))
+  )
+  .policy_cv_run_model_job_from_config(job, worker_config)
+}
+
+#' @keywords internal
+.policy_cv_future_lapply <- function(jobs,
+                                     worker_config,
+                                     n_workers,
+                                     seed,
+                                     future_globals_max_size = NULL) {
+  # schedule compact outcome jobs and restore caller future and thread state.
+  old_plan <- future::plan("list")
+  old_future_size <- getOption("future.globals.maxSize")
+  old_random_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  thread_variables <- c(
+    "OMP_NUM_THREADS", "OMP_THREAD_LIMIT", "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "RCPP_PARALLEL_NUM_THREADS"
+  )
+  old_threads <- Sys.getenv(thread_variables, unset = NA_character_)
+  restore_threads <- function() {
+    for (name in thread_variables) {
+      value <- old_threads[[name]]
+      if (is.na(value)) {
+        Sys.unsetenv(name)
+      } else {
+        do.call(Sys.setenv, stats::setNames(list(value), name))
+      }
+    }
+  }
+  on.exit({
+    future::plan(old_plan, substitute = FALSE)
+    options(future.globals.maxSize = old_future_size)
+    if (is.null(old_random_seed)) {
+      if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+        rm(".Random.seed", envir = .GlobalEnv)
+      }
+    } else {
+      assign(".Random.seed", old_random_seed, envir = .GlobalEnv)
+    }
+    restore_threads()
+  }, add = TRUE)
+
+  do.call(
+    Sys.setenv,
+    as.list(stats::setNames(rep("1", length(thread_variables)), thread_variables))
+  )
+  if (!is.null(future_globals_max_size)) {
+    options(future.globals.maxSize = future_globals_max_size)
+  }
+  future::plan(future::multisession, workers = n_workers)
+  future.apply::future_lapply(
+    jobs,
+    .policy_cv_future_worker,
+    worker_config = worker_config,
+    thread_variables = thread_variables,
+    future.seed = seed,
+    future.scheduling = 1
+  )
 }
 
 #' @keywords internal

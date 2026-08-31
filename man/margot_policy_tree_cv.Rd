@@ -26,6 +26,9 @@ margot_policy_tree_cv(
   held_out_aggregation = c("fold_n_eval_weighted",
     "pool_score_numerators_and_weight_denominators_within_repeat"),
   comparison_pairs = c("available_by_depth", "matched_successful_repeat_fold_pairs"),
+  parallel = FALSE,
+  n_workers = NULL,
+  future_globals_max_size = 20 * 1024^3,
   verbose = TRUE
 )
 }
@@ -134,6 +137,22 @@ each repeat, then averages the repeat-level values equally.}
 successful fold separately by depth. \code{"matched_successful_repeat_fold_pairs"}
 restricts depth and constant comparisons to model-repeat-fold combinations
 successfully evaluated at every requested depth.}
+
+\item{parallel}{Logical. Evaluate different outcome models concurrently with
+independent multisession workers. Fold construction, tree fitting, held-out
+evaluation, aggregation, realised engine, and engine settings within each
+outcome are unchanged. The default \code{FALSE} retains serial execution.}
+
+\item{n_workers}{Integer or \code{NULL}. Number of outer outcome workers when
+\code{parallel = TRUE}. \code{NULL} uses at most two workers, a conservative
+default intended to avoid accidental oversubscription. Set this explicitly
+from the machine's approved worker budget for larger jobs. The realised
+worker count cannot exceed the number of outcome models.}
+
+\item{future_globals_max_size}{Positive number of bytes or \code{NULL}.
+Temporary \pkg{future} globals limit used while exporting compact
+outcome-specific policy inputs. The default is 20 GiB. Worker exports omit
+full causal-forest objects.}
 
 \item{verbose}{Logical. Print progress messages.}
 }
