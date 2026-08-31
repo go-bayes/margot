@@ -30,4 +30,6 @@ margot_lmtp_tab(lmtp_output, scale = c("RD", "RR"), new_name = "")
 ## Value
 
 A data frame with four columns: the estimate under the specified scale,
-its standard error, and the lower and upper bounds of the 95
+its standard error, and the lower and upper bounds of the 95 and numeric
+columns retain their computational precision for downstream
+calculations.

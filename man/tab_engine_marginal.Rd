@@ -18,12 +18,11 @@ tab_engine_marginal(
 
 \item{new_name}{A new name to assign to the output row, typically describing the variable or model.}
 
-\item{delta}{The assumed smallest worthwhile effect, used for E-value calculations.}
+\item{delta}{The exposure contrast represented by the outcome-mean difference, used only when `type = "RD"`.}
 
-\item{sd}{The standard deviation of the effect estimate, used for E-value calculations.}
+\item{sd}{The outcome standard deviation used to standardise the outcome-mean difference, used only when `type = "RD"`.}
 
-\item{type}{Character vector specifying the scale of effect size, either "RD" or "RR".
-This parameter determines how the effects are calculated and presented.}
+\item{type}{Character vector specifying the E-value calculation: `"RD"` for the standardised-continuous-outcome approximation from an outcome-mean difference, or `"RR"` for a risk ratio.}
 
 \item{continuous_X}{Logical indicating whether the treatment variable X is continuous.
 If TRUE, adjusts row names based on the type parameter.}
@@ -31,12 +30,12 @@ If TRUE, adjusts row names based on the type parameter.}
 \value{
 A data frame with the specified new_name as a row name. The data frame includes
         effect estimates, confidence intervals, E-values, and other relevant statistics formatted
-        for easy reporting.
+        for easy reporting. Numeric columns retain their computational precision for downstream
+        calculations.
 }
 \description{
 This function processes simulation results to tabulate marginal effects along with E-values,
-providing a summary suited for reporting. It supports both risk difference (RD) and risk ratio (RR)
-types of estimates and handles continuous and categorical treatment variables.
+providing a summary suited for reporting. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio. The function handles continuous and categorical treatment variables.
 }
 \examples{
 \dontrun{

@@ -16,7 +16,8 @@ contrast being summarised.}
 }
 \value{
 A data frame with four columns: the estimate under the specified scale, its standard error,
-  and the lower and upper bounds of the 95% confidence interval. The row name is set to `new_name`.
+  and the lower and upper bounds of the 95% confidence interval. The row name is set to `new_name`,
+  and numeric columns retain their computational precision for downstream calculations.
 }
 \description{
 This function takes the output from `lmtp::lmtp_contrast()` and creates a data frame summarising the

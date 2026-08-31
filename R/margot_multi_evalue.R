@@ -15,10 +15,8 @@
 #'   `E[Y(1)]/E[Y(0)]`.
 #' @param intervention_type Character. One of "exposure_shift" or "ipsi".
 #'   Used only for interpretation notes.
-#' @param delta_exposure Numeric. Exposure contrast size for OLS-type E-values
-#'   (RD). Defaults to 1. For IPSI, interpret as one policy contrast (α1 vs α0).
-#' @param sd_outcome Numeric. Outcome standard deviation used for OLS-type
-#'   E-values (RD). Defaults to 1 (standardized outcomes).
+#' @param delta_exposure Numeric exposure contrast represented by an outcome-mean difference. Used only when `scale = "RD"`. Defaults to 1. For IPSI, this is the contrast between the two policies.
+#' @param sd_outcome Numeric outcome standard deviation used to standardise an outcome-mean difference. Used only when `scale = "RD"`. Defaults to 1 for standardised outcomes.
 #' @param biases Either an EValue bias object created with
 #'   `EValue::multi_bias()` (preferred), a single EValue `bias` object (e.g.,
 #'   `EValue::confounding()`), or a character vector of bias names to build
@@ -38,7 +36,8 @@
 #'     (`E_Value`, `E_Val_bound`), and audit columns `alpha_fwer`, `m`,
 #'     `scale`, `intervention_type`, `delta_exposure`, `sd_outcome`, and
 #'     `bias_order`. For convenience, mirrored columns `E_value_point` and
-#'     `E_value_bound` are also included.
+#'     `E_value_bound` are also included. Numeric calculation columns retain
+#'     their computational precision; round only for presentation.
 #'   - `notes`: character vector (length 1) with an interpretation message when
 #'     `notes = TRUE`.
 #'
@@ -110,6 +109,12 @@ margot_multi_evalue <- function(
   # of bias names we can map to EValue constructors with defaults.
   bias_order <- NA_character_
   if (!is.null(biases)) {
+    if (!requireNamespace("EValue", quietly = TRUE)) {
+      stop(
+        "Multi-bias E-values require the optional `EValue` package. Install it with `install.packages(\"EValue\")`.",
+        call. = FALSE
+      )
+    }
     mbias <- NULL
     # if user supplied an EValue bias object, use it
     if (inherits(biases, c("bias", "multi_bias"))) {
@@ -170,14 +175,13 @@ margot_multi_evalue <- function(
         out$multi_E_value_point <- cb$point
         out$multi_E_value_bound <- cb$bound
       } else {
-        # RD: transform to RR using OLS -> MD -> RR mapping
+        # Difference scale: apply the same OLS-to-RR mapping as the core E-value calculation.
         rd_point <- out$`E[Y(1)]-E[Y(0)]`
         rd_lo    <- out$`2.5 %`
         rd_hi    <- out$`97.5 %`
-        # wrap as OLS estimates with sd attribute, then map to RR with delta
-        rr_point <- as.numeric(EValue::toRR.OLS(EValue::OLS(rd_point, sd = sd_outcome), delta = delta_exposure))
-        rr_lo    <- as.numeric(EValue::toRR.OLS(EValue::OLS(rd_lo, sd = sd_outcome),    delta = delta_exposure))
-        rr_hi    <- as.numeric(EValue::toRR.OLS(EValue::OLS(rd_hi, sd = sd_outcome),    delta = delta_exposure))
+        rr_point <- .margot_ols_to_rr(rd_point, sd = sd_outcome, delta = delta_exposure)
+        rr_lo    <- .margot_ols_to_rr(rd_lo, sd = sd_outcome, delta = delta_exposure)
+        rr_hi    <- .margot_ols_to_rr(rd_hi, sd = sd_outcome, delta = delta_exposure)
         mb <- EValue::multi_evalues.RR(mbias, est = rr_point, lo = rr_lo, hi = rr_hi, true = 1)
         cb <- coalesce_bound(mb)
         out$multi_E_value_point <- cb$point

@@ -9,23 +9,23 @@ lmtp_evalue_tab(x, delta = 1, sd = 1, scale = c("RD", "RR"))
 \arguments{
 \item{x}{A data frame output from `margot_tab_lmtp()` containing the estimates of interest.}
 
-\item{delta}{The hypothesized increase in outcome, used only when `scale` is "RD". Default is 1.}
+\item{delta}{The exposure contrast represented by the outcome-mean difference, used only when `scale = "RD"`. Default is 1.}
 
-\item{sd}{The standard deviation of the outcome, used only when `scale` is "RD". Default is 1.}
+\item{sd}{The outcome standard deviation used to standardise the outcome-mean difference, used only when `scale = "RD"`. Default is 1.}
 
-\item{scale}{A character string indicating the scale of the estimate: "RD" for risk difference,
-or "RR" for risk ratio. Default is "RD".}
+\item{scale}{A character string indicating the calculation: `"RD"` for the standardised-continuous-outcome approximation from an outcome-mean difference, or `"RR"` for a risk ratio. Default is `"RD"`.}
 }
 \value{
 A data frame similar to `x`, with additional columns for E-Value and its lower bound, excluding
-  the 'standard_error' column.
+  the 'standard_error' column. Numeric columns retain their computational precision; round only when
+  formatting the table for presentation.
 }
 \description{
 This function takes the output from `margot_tab_lmtp()`, which contains estimates of treatment effects,
 and calculates E-values to assess the robustness of the estimates to potential unmeasured confounding.
 E-values quantify the minimum strength of association, on the risk ratio scale, that an unmeasured
 confounder would need to have with both the treatment and the outcome, to fully explain away the
-observed association. The function supports both risk differences (RD) and risk ratios (RR) scales.
+observed association. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio.
 }
 \examples{
 \dontrun{

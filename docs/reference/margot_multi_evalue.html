@@ -17,7 +17,7 @@ evaluation."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.022</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.023</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,13 +97,11 @@ Used only for interpretation notes.</p></dd>
 
 
 <dt id="arg-delta-exposure">delta_exposure<a class="anchor" aria-label="anchor" href="#arg-delta-exposure"></a></dt>
-<dd><p>Numeric. Exposure contrast size for OLS-type E-values
-(RD). Defaults to 1. For IPSI, interpret as one policy contrast (α1 vs α0).</p></dd>
+<dd><p>Numeric exposure contrast represented by an outcome-mean difference. Used only when `scale = "RD"`. Defaults to 1. For IPSI, this is the contrast between the two policies.</p></dd>
 
 
 <dt id="arg-sd-outcome">sd_outcome<a class="anchor" aria-label="anchor" href="#arg-sd-outcome"></a></dt>
-<dd><p>Numeric. Outcome standard deviation used for OLS-type
-E-values (RD). Defaults to 1 (standardized outcomes).</p></dd>
+<dd><p>Numeric outcome standard deviation used to standardise an outcome-mean difference. Used only when `scale = "RD"`. Defaults to 1 for standardised outcomes.</p></dd>
 
 
 <dt id="arg-biases">biases<a class="anchor" aria-label="anchor" href="#arg-biases"></a></dt>
@@ -141,7 +139,8 @@ the output list.</p></dd>
     (`E_Value`, `E_Val_bound`), and audit columns `alpha_fwer`, `m`,
     `scale`, `intervention_type`, `delta_exposure`, `sd_outcome`, and
     `bias_order`. For convenience, mirrored columns `E_value_point` and
-    `E_value_bound` are also included.
+    `E_value_bound` are also included. Numeric calculation columns retain
+    their computational precision; round only for presentation.
   - `notes`: character vector (length 1) with an interpretation message when
     `notes = TRUE`.</p>
     </div>

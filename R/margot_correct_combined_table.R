@@ -1,30 +1,3 @@
-#' @keywords internal
-process_evalue <- function(tab, scale, delta, sd) {
-  ev <- if (scale == "RD") {
-    EValue::evalues.OLS(tab$`E[Y(1)]-E[Y(0)]`,
-      se    = tab$standard_error,
-      sd    = sd,
-      delta = delta,
-      true  = 0
-    )
-  } else {
-    EValue::evalues.RR(tab$`E[Y(1)]/E[Y(0)]`,
-      lo   = tab$`2.5 %`,
-      hi   = tab$`97.5 %`,
-      true = 1
-    )
-  }
-
-  ev_df <- as.data.frame(ev)[2, c("point", "lower", "upper"), drop = FALSE]
-
-  tibble::tibble(
-    E_Value     = ev_df$point,
-    E_Val_bound = dplyr::coalesce(ev_df$lower, ev_df$upper, 1)
-  )
-}
-
-
-
 #' Correct a "combined table" for multiplicity **and** recompute *E*-values
 #'
 #' @description
@@ -49,10 +22,9 @@ process_evalue <- function(tab, scale, delta, sd) {
 #'   Bonferroni and Holm provide strong FWER control; BH provides FDR control.
 #' @param alpha  Family-wise error-rate (for bonferroni/holm) or false discovery
 #'   rate (for BH) to control. Default `0.05`.
-#' @param scale  Scale to use when recomputing the *E*-value.
-#'   `"RD"` (risk difference / ATE, **default**) or `"RR"` (risk ratio).
-#' @param delta,sd Arguments passed to [EValue::evalues.OLS()] when
-#'   `scale = "RD"`.  Ignored for `"RR"`.
+#' @param scale Scale used to recompute the *E*-value. `"RD"` is the legacy label for the standardised-continuous-outcome approximation from an outcome-mean difference or ATE; `"RR"` treats the estimate as a risk ratio.
+#' @param delta Exposure contrast represented by an outcome-mean difference, used only when `scale = "RD"`.
+#' @param sd Outcome standard deviation used to standardise an outcome-mean difference, used only when `scale = "RD"`.
 #'
 #' @return A data frame with the same rows (and order) as `combined_table`, but
 #'   with
@@ -60,6 +32,22 @@ process_evalue <- function(tab, scale, delta, sd) {
 #'     \item updated `2.5 %` and `97.5 %` columns, and
 #'     \item freshly computed `E_Value` and `E_Val_bound`.
 #'   }
+#'   Numeric columns retain their computational precision. Apply display
+#'   rounding only when formatting the returned table for presentation.
+#'
+#' @section E-value calculation:
+#' For a risk ratio \eqn{r}, let \eqn{r^* = r} when \eqn{r \ge 1} and
+#' \eqn{r^* = 1/r} otherwise. Margot computes the null E-value as
+#' \deqn{r^* + \sqrt{r^*(r^*-1)}.}
+#' The confidence-bound E-value uses the confidence limit closest to 1 and
+#' equals 1 when the interval includes 1.
+#'
+#' For an outcome-mean difference \eqn{b}, exposure contrast \eqn{\delta}, and
+#' outcome standard deviation \eqn{s}, Margot first forms the standardised
+#' difference \eqn{d = b|\delta|/s}. It approximates the risk ratio as
+#' \eqn{\exp(0.91d)} and the risk-ratio confidence limits as
+#' \eqn{\exp(0.91d \pm 1.78\,\mathrm{SE}(d))}, then applies the same null
+#' E-value equation. This calculation treats \eqn{s} as known.
 #'
 #' @section How the correction is applied:
 #' Let \eqn{m} be the number of rows (tests).
@@ -81,10 +69,15 @@ process_evalue <- function(tab, scale, delta, sd) {
 #' Is the Bonferroni correction really so bad?*
 #' **Am J Epidemiol** 188(3): 617–618.
 #'
+#' VanderWeele TJ, Ding P (2017). Sensitivity analysis in observational research: introducing the E-value. *Annals of Internal Medicine* 167(4): 268–274. \doi{10.7326/M16-2607}.
+#'
+#' Chinn S (2000). A simple method for converting an odds ratio to effect size for use in meta-analysis. *Statistics in Medicine* 19(22): 3127–3131.
+#'
+#' VanderWeele TJ (2017). On a square-root transformation of the odds ratio for a common outcome. *Epidemiology* 28(6): e58.
+#'
 #' @importFrom stats qnorm pnorm p.adjust
 #' @importFrom dplyr mutate across any_of bind_cols
 #' @importFrom purrr pmap_dfr
-#' @importFrom EValue evalues.OLS evalues.RR
 margot_correct_combined_table <- function(combined_table,
                                           adjust = c("bonferroni", "holm", "BH"),
                                           alpha = 0.05,
@@ -194,33 +187,21 @@ margot_correct_combined_table <- function(combined_table,
       se0 = (tbl$`97.5 %` - tbl[[est_col]]) / stats::qnorm(0.975)
     ),
     \(est, lo, hi, se0) {
-      if (scale == "RD") {
-        # OLS E-values on the difference scale; robust and should not yield NA
-        ev <- EValue::evalues.OLS(est, se = se0, sd = sd, delta = delta, true = 0)
-        ev_df <- as.data.frame(ev)[2, c("point", "lower", "upper"), drop = FALSE]
-        tibble::tibble(E_Value = ev_df$point, E_Val_bound = dplyr::coalesce(ev_df$lower, ev_df$upper, 1))
+      values <- if (scale == "RD") {
+        .margot_evalues_ols(est, se = se0, sd = sd, delta = delta)
       } else {
-        # RR path retained with safety catch; users can revisit later
-        out <- try(EValue::evalues.RR(est, lo = lo, hi = hi, true = 1), silent = TRUE)
-        if (inherits(out, "try-error")) {
-          tibble::tibble(E_Value = NA_real_, E_Val_bound = NA_real_)
-        } else {
-          ev_df <- as.data.frame(out)[2, c("point", "lower", "upper"), drop = FALSE]
-          tibble::tibble(E_Value = ev_df$point, E_Val_bound = dplyr::coalesce(ev_df$lower, ev_df$upper, 1))
-        }
+        .margot_evalues_rr(est, lo = lo, hi = hi)
       }
+      tibble::as_tibble_row(values)
     }
   )
 
-  ## ---- 3 bind & round -----------------------------------------------------
+  ## ---- 3 bind exact numeric results ---------------------------------------
   out <- tbl |>
     dplyr::select(-dplyr::any_of(c("E_Value", "E_Val_bound", "confidence_level"))) |>
     dplyr::bind_cols(new_EV) |>
     dplyr::mutate(confidence_level = confidence_level)
 
-  numeric_cols <- names(out)[vapply(out, is.numeric, logical(1))]
-  numeric_cols <- setdiff(numeric_cols, "confidence_level")
-  out[numeric_cols] <- lapply(out[numeric_cols], round, digits = 3)
   attr(out, "confidence_level") <- confidence_level
   out
 }

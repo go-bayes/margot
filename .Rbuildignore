@@ -7,4 +7,5 @@
 ^pkgdown$
 ^README\.Rmd$
 ^README\.html$
+^AGENTS\.md$
 ^tests/test_.*[.][Rr]$

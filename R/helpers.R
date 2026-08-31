@@ -1324,21 +1324,20 @@ group_tab <- function(
 #' Tabulate Marginal Effects with E-Values
 #'
 #' This function processes simulation results to tabulate marginal effects along with E-values,
-#' providing a summary suited for reporting. It supports both risk difference (RD) and risk ratio (RR)
-#' types of estimates and handles continuous and categorical treatment variables.
+#' providing a summary suited for reporting. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio. The function handles continuous and categorical treatment variables.
 #'
 #' @param x A data frame or matrix containing simulation results to be processed.
 #' @param new_name A new name to assign to the output row, typically describing the variable or model.
-#' @param delta The assumed smallest worthwhile effect, used for E-value calculations.
-#' @param sd The standard deviation of the effect estimate, used for E-value calculations.
-#' @param type Character vector specifying the scale of effect size, either "RD" or "RR".
-#'        This parameter determines how the effects are calculated and presented.
+#' @param delta The exposure contrast represented by the outcome-mean difference, used only when `type = "RD"`.
+#' @param sd The outcome standard deviation used to standardise the outcome-mean difference, used only when `type = "RD"`.
+#' @param type Character vector specifying the E-value calculation: `"RD"` for the standardised-continuous-outcome approximation from an outcome-mean difference, or `"RR"` for a risk ratio.
 #' @param continuous_X Logical indicating whether the treatment variable X is continuous.
 #'        If TRUE, adjusts row names based on the type parameter.
 #'
 #' @return A data frame with the specified new_name as a row name. The data frame includes
 #'         effect estimates, confidence intervals, E-values, and other relevant statistics formatted
-#'         for easy reporting.
+#'         for easy reporting. Numeric columns retain their computational precision for downstream
+#'         calculations.
 #'
 #' @examples
 #' \dontrun{
@@ -1353,7 +1352,6 @@ group_tab <- function(
 #' }
 #'
 #' @importFrom dplyr filter mutate rename select
-#' @importFrom EValue evalues.OLS evalues.RR
 #' @keywords internal
 tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "RR"), continuous_X = FALSE) {
   type <- match.arg(type, choices = c("RD", "RR"))
@@ -1364,8 +1362,7 @@ tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "
   }
 
   out <- x %>%
-    dplyr::filter(row.names(x) == type) %>%
-    dplyr::mutate(across(where(is.numeric), round, digits = 4))
+    dplyr::filter(row.names(x) == type)
 
   if (type == "RD") {
     out <- out %>%
@@ -1387,16 +1384,12 @@ tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "
   if (type == "RD") {
     out <- out %>%
       dplyr::mutate(standard_error = abs(`2.5 %` - `97.5 %`) / 3.92)
-    evalout <- as.data.frame(round(EValue::evalues.OLS(out[1, "E[Y(1)]-E[Y(0)]"], se = out$standard_error, sd = sd, delta = delta, true = 0), 3))
-  } else {
-    evalout <- as.data.frame(round(EValue::evalues.RR(out[1, "E[Y(1)]/E[Y(0)]"], lo = out[1, "2.5 %"], hi = out[1, "97.5 %"], true = 1), 3))
   }
 
-  evalout2 <- subset(evalout[2, ])
-  evalout3 <- evalout2 %>% dplyr::select_if(~ !any(is.na(.)))
-  colnames(evalout3) <- c("E_Value", "E_Val_bound")
-
-  out <- cbind.data.frame(out, evalout3)
+  out <- cbind.data.frame(
+    out,
+    .margot_compute_evalues(out, type, delta, sd)
+  )
   return(out)
 }
 

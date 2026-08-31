@@ -27,9 +27,10 @@ margot_lmtp_evalue(
 
 - scale:
 
-  Character string specifying the scale of the estimate to be used in
-  the summary table and E-value calculation. Valid options are "RD"
-  (risk difference) or "RR" (risk ratio). Default is "RD".
+  Character string specifying the E-value calculation. The legacy
+  \`"RD"\` option applies the standardised-continuous-outcome
+  approximation to an outcome-mean difference; \`"RR"\` treats the
+  estimate as a risk ratio. Default is \`"RD"\`.
 
 - new_name:
 
@@ -39,13 +40,13 @@ margot_lmtp_evalue(
 
 - delta:
 
-  The hypothesized increase in outcome for RD scale calculations. Used
-  only when \`scale\` is "RD". Default value is 1.
+  The exposure contrast represented by the outcome-mean difference, used
+  only when \`scale = "RD"\`. Default is 1.
 
 - sd:
 
-  The standard deviation of the outcome for RD scale calculations. Used
-  only when \`scale\` is "RD". Default value is 1.
+  The outcome standard deviation used to standardise the outcome-mean
+  difference, used only when \`scale = "RD"\`. Default is 1.
 
 ## Value
 

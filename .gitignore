@@ -12,3 +12,5 @@
 *.dll
 /planning/claude*.md
 /planning/codex*.md
+/docs/AGENTS.html
+/docs/AGENTS.md

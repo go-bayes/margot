@@ -32,11 +32,9 @@ function attempts to infer from the presence of `E[Y(1)]-E[Y(0)]` vs
 \item{intervention_type}{Character. One of "exposure_shift" or "ipsi".
 Used only for interpretation notes.}
 
-\item{delta_exposure}{Numeric. Exposure contrast size for OLS-type E-values
-(RD). Defaults to 1. For IPSI, interpret as one policy contrast (α1 vs α0).}
+\item{delta_exposure}{Numeric exposure contrast represented by an outcome-mean difference. Used only when `scale = "RD"`. Defaults to 1. For IPSI, this is the contrast between the two policies.}
 
-\item{sd_outcome}{Numeric. Outcome standard deviation used for OLS-type
-E-values (RD). Defaults to 1 (standardized outcomes).}
+\item{sd_outcome}{Numeric outcome standard deviation used to standardise an outcome-mean difference. Used only when `scale = "RD"`. Defaults to 1 for standardised outcomes.}
 
 \item{biases}{Either an EValue bias object created with
 `EValue::multi_bias()` (preferred), a single EValue `bias` object (e.g.,
@@ -62,7 +60,8 @@ A list with elements:
     (`E_Value`, `E_Val_bound`), and audit columns `alpha_fwer`, `m`,
     `scale`, `intervention_type`, `delta_exposure`, `sd_outcome`, and
     `bias_order`. For convenience, mirrored columns `E_value_point` and
-    `E_value_bound` are also included.
+    `E_value_bound` are also included. Numeric calculation columns retain
+    their computational precision; round only for presentation.
   - `notes`: character vector (length 1) with an interpretation message when
     `notes = TRUE`.
 }

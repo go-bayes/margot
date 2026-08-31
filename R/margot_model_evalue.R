@@ -12,20 +12,17 @@
 #'     \item Output from `grf::multi_arm_causal_forest()`
 #'     \item A data frame with columns 'estimate' and 'std.err'
 #'   }
-#' @param scale Character string specifying the scale of the estimate to be used in the summary table and
-#'   E-value calculation. Valid options are "RD" (risk difference) or "RR" (risk ratio). Default is "RD".
-#'   This parameter is ignored for causal forest models, which always use "RD".
+#' @param scale Character string specifying the E-value calculation. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio. Default is `"RD"`. Causal forest models use the `"RD"` calculation.
 #' @param new_name Character string to name the row(s) in the output summary table, representing the treatment
 #'   contrast(s). For multi-arm causal forests, this will be combined with the contrast information.
-#' @param delta The hypothesized increase in outcome for RD scale calculations. Used only when `scale` is "RD".
-#'   Default value is 1.
-#' @param sd The standard deviation of the outcome for RD scale calculations. Used only when `scale` is "RD".
-#'   Default value is 1.
+#' @param delta The exposure contrast represented by the outcome-mean difference, used only when `scale = "RD"`. Default is 1.
+#' @param sd The outcome standard deviation used to standardise the outcome-mean difference, used only when `scale = "RD"`. Default is 1.
 #' @param subset An optional logical vector for subsetting the data when the model is a `grf` model. Default is `NULL`.
 #'
 #' @return A data frame with the original estimates and their E-values. The table includes columns for the
 #'   estimate (either RD or RR), its confidence interval, E-Value, and the E-Value lower bound.
-#'   For multi-arm causal forests, multiple rows will be returned, one for each contrast.
+#'   For multi-arm causal forests, multiple rows will be returned, one for each contrast. Numeric columns
+#'   retain their computational precision; round only when formatting the table for presentation.
 #'
 #' @examples
 #' \dontrun{
@@ -56,7 +53,6 @@
 #' }
 #'
 #' @export
-#' @importFrom EValue evalues.OLS evalues.RR
 #' @importFrom dplyr mutate across select_if
 #' @importFrom stats qnorm
 margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = "character_string", delta = 1, sd = 1, subset = NULL) {
@@ -77,47 +73,16 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
       colnames(tab) <- c("E[Y(1)]/E[Y(0)]", "standard_error", "2.5 %", "97.5 %")
     }
 
-    tab_round <- tab %>%
-      dplyr::mutate(across(where(is.numeric), ~ round(.x, digits = 3)))
+    rownames(tab)[1] <- paste0(new_name)
 
-    rownames(tab_round)[1] <- paste0(new_name)
-
-    return(tab_round)
+    return(tab)
   }
 
-  # Helper function to calculate E-values and format the final output
+  # Calculate E-values before any display formatting.
   process_evalue <- function(tab_tmle, scale, delta, sd) {
-    if (scale == "RD") {
-      evalout <- as.data.frame(round(
-        EValue::evalues.OLS(
-          est = tab_tmle$`E[Y(1)]-E[Y(0)]`,
-          se = tab_tmle$standard_error,
-          sd = sd,
-          delta = delta,
-          true = 0
-        ),
-        3
-      ))
-    } else {
-      evalout <- as.data.frame(round(
-        EValue::evalues.RR(
-          est = tab_tmle$`E[Y(1)]/E[Y(0)]`,
-          lo = tab_tmle$`2.5 %`,
-          hi = tab_tmle$`97.5 %`,
-          true = 1
-        ),
-        3
-      ))
-    }
-
-    evalout2 <- evalout[2, , drop = FALSE] # Keep it as a dataframe
-    evalout3 <- evalout2 %>%
-      dplyr::select_if(~ !any(is.na(.))) %>%
-      `colnames<-`(c("E_Value", "E_Val_bound"))
-
     tab <- tab_tmle %>%
-      cbind(evalout3) %>%
-      dplyr::select(-standard_error) # Correctly reference the column to exclude
+      cbind(.margot_compute_evalues(tab_tmle, scale, delta, sd)) %>%
+      dplyr::select(-standard_error)
 
     return(tab)
   }

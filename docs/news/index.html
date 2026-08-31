@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.022</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.023</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,20 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.023" id="id_2026-08-31-margot-11023">[2026-08-31] margot 1.1.023<a class="anchor" aria-label="anchor" href="#id_2026-08-31-margot-11023"></a></h2>
+<div class="section level4">
+<h4 id="unrounded-e-value-calculation-inputs-1-1-023">Unrounded E-value calculation inputs<a class="anchor" aria-label="anchor" href="#unrounded-e-value-calculation-inputs-1-1-023"></a></h4>
+<div class="section level5">
+<h5 id="corrected-1-1-023">Corrected<a class="anchor" aria-label="anchor" href="#corrected-1-1-023"></a></h5>
+<ul><li>Model, LMTP, and deprecated marginal-table E-values are now calculated from unrounded estimates, standard errors, and confidence limits. Combined tables retain their unrounded numeric values when they feed multiplicity-adjusted or multi-bias E-value calculations. Display rounding is deferred to presentation code and no longer changes the sensitivity calculation.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="changed-1-1-023">Changed<a class="anchor" aria-label="anchor" href="#changed-1-1-023"></a></h5>
+<ul><li>Margot now computes ordinary risk-ratio E-values and the standardised-continuous-outcome approximation directly from the published equations. The <code>EValue</code> package is now an optional dependency used only for <code><a href="../reference/margot_multi_evalue.html">margot_multi_evalue()</a></code> analyses that specify multiple biases.</li>
+</ul></div>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.022" id="id_2026-08-25-margot-11022">[2026-08-25] margot 1.1.022<a class="anchor" aria-label="anchor" href="#id_2026-08-25-margot-11022"></a></h2>
 <div class="section level4">

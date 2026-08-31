@@ -15,17 +15,14 @@ margot_lmtp_evalue(
 \arguments{
 \item{lmtp_output}{The output from `lmtp::lmtp_contrast()`, to be summarized and analyzed for E-values.}
 
-\item{scale}{Character string specifying the scale of the estimate to be used in the summary table and
-E-value calculation. Valid options are "RD" (risk difference) or "RR" (risk ratio). Default is "RD".}
+\item{scale}{Character string specifying the E-value calculation. The legacy `"RD"` option applies the standardised-continuous-outcome approximation to an outcome-mean difference; `"RR"` treats the estimate as a risk ratio. Default is `"RD"`.}
 
 \item{new_name}{Character string to name the row in the output summary table, representing the treatment
 contrast. This name will be applied to the first row of the summary table.}
 
-\item{delta}{The hypothesized increase in outcome for RD scale calculations. Used only when `scale` is "RD".
-Default value is 1.}
+\item{delta}{The exposure contrast represented by the outcome-mean difference, used only when `scale = "RD"`. Default is 1.}
 
-\item{sd}{The standard deviation of the outcome for RD scale calculations. Used only when `scale` is "RD".
-Default value is 1.}
+\item{sd}{The outcome standard deviation used to standardise the outcome-mean difference, used only when `scale = "RD"`. Default is 1.}
 }
 \value{
 A data frame with the original estimates and their E-values. The table includes columns for the

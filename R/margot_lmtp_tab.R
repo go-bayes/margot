@@ -9,14 +9,13 @@
 #' @param new_name A character string to name the row of the output data frame, representing the treatment
 #'   contrast being summarised.
 #' @return A data frame with four columns: the estimate under the specified scale, its standard error,
-#'   and the lower and upper bounds of the 95% confidence interval. The row name is set to `new_name`.
+#'   and the lower and upper bounds of the 95% confidence interval. The row name is set to `new_name`,
+#'   and numeric columns retain their computational precision for downstream calculations.
 #' @keywords internal
 margot_lmtp_tab <- function(lmtp_output,
                             scale = c("RD", "RR"),
                             new_name = "") {
   scale <- match.arg(scale)
-  require(dplyr)
-
   # extract theta, se, conf.low, conf.high from either old or new lmtp output
   if (!is.null(lmtp_output$vals)) {
     vals <- lmtp_output$vals
@@ -44,9 +43,7 @@ margot_lmtp_tab <- function(lmtp_output,
     colnames(tab_tmle) <- c("E[Y(1)]/E[Y(0)]", "standard_error", "2.5 %", "97.5 %")
   }
 
-  # round numeric columns and set the row name
-  tab_tmle <- tab_tmle |>
-    mutate(across(where(is.numeric), ~ round(.x, 3)))
+  # Retain exact numerics for downstream E-value calculations.
   rownames(tab_tmle) <- new_name
 
   return(tab_tmle)
