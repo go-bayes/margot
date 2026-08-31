@@ -4,6 +4,7 @@
 
 #### Corrected
 - Model, LMTP, and deprecated marginal-table E-values are now calculated from unrounded estimates, standard errors, and confidence limits. Combined tables also retain full numeric precision when they feed multiplicity-adjusted or multi-bias E-value calculations. Display rounding is deferred to presentation code and no longer changes the sensitivity calculation.
+- RD multi-bias calculations now use the exported `EValue::toRR()` generic, disabling Bonferroni correction retains the supplied confidence limits, and a validated supplied multiplicity count now controls the adjustment. Multi-bias tables record both supplied and realised multiplicity.
 
 # [2026-08-25] margot 1.1.022
 

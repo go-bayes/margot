@@ -50,8 +50,9 @@ Bonferroni correction at FWER `alpha` before computing E-values.}
 
 \item{alpha}{Numeric FWER level for Bonferroni. Default 0.05.}
 
-\item{m}{Optional integer for multiplicity (number of tests). If NULL,
-inferred from `nrow(results)`.}
+\item{m}{Optional positive whole number for the total number of tests in the
+multiplicity family. It must be at least `nrow(results)`. If `NULL`, the
+number of rows is used.}
 
 \item{notes}{Logical; if TRUE include a LaTeX-ready interpretation note in
 the output list.}
@@ -60,7 +61,8 @@ the output list.}
 A list with elements:
   - `table`: data frame with adjusted CIs (if requested), baseline E-values
     (`E_Value`, `E_Val_bound`), and audit columns `alpha_fwer`, `m`,
-    `scale`, `intervention_type`, `delta_exposure`, `sd_outcome`, and
+    `m_supplied`, `m_realised`, `scale`, `intervention_type`,
+    `delta_exposure`, `sd_outcome`, and
     `bias_order`. For convenience, mirrored columns `E_value_point` and
     `E_value_bound` are also included. Numeric calculation columns retain
     their computational precision; round only for presentation.

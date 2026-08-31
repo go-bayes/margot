@@ -6,11 +6,12 @@
 \usage{
 margot_correct_combined_table(
   combined_table,
-  adjust = c("bonferroni", "holm", "BH"),
+  adjust = c("bonferroni", "holm", "BH", "none"),
   alpha = 0.05,
   scale = c("RD", "RR"),
   delta = 1,
-  sd = 1
+  sd = 1,
+  m = NULL
 )
 }
 \arguments{
@@ -21,8 +22,9 @@ margot_correct_combined_table(
 }
 Extra columns (e.g. the original *E*-values) are carried through.}
 
-\item{adjust}{Multiplicity method: `"bonferroni"` (default), `"holm"`, or `"BH"`.
-Bonferroni and Holm provide strong FWER control; BH provides FDR control.}
+\item{adjust}{Multiplicity method: `"bonferroni"` (default), `"holm"`, `"BH"`, or `"none"`.
+Bonferroni and Holm provide strong FWER control; BH provides FDR control.
+`"none"` leaves the supplied confidence limits unchanged.}
 
 \item{alpha}{Family-wise error-rate (for bonferroni/holm) or false discovery
 rate (for BH) to control. Default `0.05`.}
@@ -32,6 +34,11 @@ rate (for BH) to control. Default `0.05`.}
 
 \item{delta, sd}{Arguments passed to [EValue::evalues.OLS()] when
 `scale = "RD"`.  Ignored for `"RR"`.}
+
+\item{m}{Positive whole number giving the total number of tests in the
+Bonferroni family. It must be at least the number of table rows. When
+`NULL`, the number of rows is used. Holm and BH continue to use the rows
+supplied in `combined_table` as their adjustment family.}
 }
 \value{
 A data frame with the same rows (and order) as `combined_table`, but
@@ -57,7 +64,7 @@ By default it implements the single–step **Bonferroni** correction at
 }
 \section{How the correction is applied}{
 
-Let \eqn{m} be the number of rows (tests).
+For Bonferroni, let \eqn{m} be the total number of tests in the multiplicity family.
 \itemize{
   \item **Bonferroni** uses
     \deqn{ z^* = \Phi^{-1}\!\bigl(1-\alpha/(2m)\bigr) }

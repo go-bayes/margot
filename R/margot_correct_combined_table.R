@@ -1,4 +1,4 @@
-# Compute exact point and bound E-values from an unrounded one-row model summary.
+# Compute exact E-values from an unrounded one-row model summary.
 .margot_compute_evalues <- function(tab, scale, delta, sd) {
   ev <- if (scale == "RD") {
     EValue::evalues.OLS(tab$`E[Y(1)]-E[Y(0)]`,
@@ -20,6 +20,35 @@
   tibble::tibble(
     E_Value     = ev_df$point,
     E_Val_bound = dplyr::coalesce(ev_df$lower, ev_df$upper, 1)
+  )
+}
+
+# Validate a requested multiplicity and return its supplied and realised values.
+.margot_resolve_multiplicity <- function(m, n_tests) {
+  supplied <- !is.null(m)
+  if (is.null(m)) {
+    m <- n_tests
+  }
+  valid <- is.numeric(m) &&
+    length(m) == 1L &&
+    !is.na(m) &&
+    is.finite(m) &&
+    m > 0 &&
+    m == floor(m) &&
+    m <= .Machine$integer.max
+  if (!valid) {
+    stop("`m` must be one positive whole number.", call. = FALSE)
+  }
+  if (m < n_tests) {
+    stop(
+      "`m` must be at least the number of rows in `combined_table`.",
+      call. = FALSE
+    )
+  }
+  realised <- as.integer(m)
+  list(
+    supplied = if (supplied) realised else NA_integer_,
+    realised = realised
   )
 }
 
@@ -45,10 +74,15 @@
 #'     \item `2.5 %`, `97.5 %`   (unadjusted CI limits)
 #'   }
 #'   Extra columns (e.g. the original *E*-values) are carried through.
-#' @param adjust Multiplicity method: `"bonferroni"` (default), `"holm"`, or `"BH"`.
+#' @param adjust Multiplicity method: `"bonferroni"` (default), `"holm"`, `"BH"`, or `"none"`.
 #'   Bonferroni and Holm provide strong FWER control; BH provides FDR control.
+#'   `"none"` leaves the supplied confidence limits unchanged.
 #' @param alpha  Family-wise error-rate (for bonferroni/holm) or false discovery
 #'   rate (for BH) to control. Default `0.05`.
+#' @param m Positive whole number giving the total number of tests in the
+#'   Bonferroni family. It must be at least the number of table rows. When
+#'   `NULL`, the number of rows is used. Holm and BH continue to use the rows
+#'   supplied in `combined_table` as their adjustment family.
 #' @param scale  Scale to use when recomputing the *E*-value.
 #'   `"RD"` (risk difference / ATE, **default**) or `"RR"` (risk ratio).
 #' @param delta,sd Arguments passed to [EValue::evalues.OLS()] when
@@ -64,7 +98,7 @@
 #'   rounding only when formatting the returned table for presentation.
 #'
 #' @section How the correction is applied:
-#' Let \eqn{m} be the number of rows (tests).
+#' For Bonferroni, let \eqn{m} be the total number of tests in the multiplicity family.
 #' \itemize{
 #'   \item **Bonferroni** uses
 #'     \deqn{ z^* = \Phi^{-1}\!\bigl(1-\alpha/(2m)\bigr) }
@@ -88,11 +122,14 @@
 #' @importFrom purrr pmap_dfr
 #' @importFrom EValue evalues.OLS evalues.RR
 margot_correct_combined_table <- function(combined_table,
-                                          adjust = c("bonferroni", "holm", "BH"),
+                                          adjust = c(
+                                            "bonferroni", "holm", "BH", "none"
+                                          ),
                                           alpha = 0.05,
                                           scale = c("RD", "RR"),
                                           delta = 1,
-                                          sd = 1) {
+                                          sd = 1,
+                                          m = NULL) {
   adjust <- match.arg(adjust)
   scale <- match.arg(scale)
 
@@ -114,11 +151,13 @@ margot_correct_combined_table <- function(combined_table,
     stop("`combined_table` must contain '2.5 %' and '97.5 %' columns.")
   }
 
-  m <- nrow(combined_table) # number of tests
+  n_tests <- nrow(combined_table)
+  multiplicity <- .margot_resolve_multiplicity(m, n_tests)
+  m <- multiplicity$realised
   z_orig <- stats::qnorm(0.975) # 1.96
 
   tbl <- combined_table
-  confidence_level <- rep(1 - alpha, m)
+  confidence_level <- rep(1 - alpha, n_tests)
 
   # Keep original numeric columns as provided; avoid coercion to prevent
   # introducing accidental NAs in downstream interpretation/tables.
@@ -126,7 +165,7 @@ margot_correct_combined_table <- function(combined_table,
   ## ---- 1  adjust the CI ----------------------------------------------------
   if (adjust == "bonferroni") {
     z_star <- stats::qnorm(1 - alpha / (2 * m))
-    confidence_level <- rep(1 - (alpha / m), m)
+    confidence_level <- rep(1 - (alpha / m), n_tests)
 
     if (scale == "RR") {
       # Adjust on the log scale, then exponentiate back to preserve positivity
@@ -169,7 +208,7 @@ margot_correct_combined_table <- function(combined_table,
         `2.5 %`  = !!rlang::sym(est_col) - z_star * se,
         `97.5 %` = !!rlang::sym(est_col) + z_star * se
       )
-  } else { # -------- BH (Benjamini-Hochberg) -----------
+  } else if (adjust == "BH") { # -------- BH (Benjamini-Hochberg) -----------
 
     ## back-calculate SE from the *original* CI
     se <- (tbl$`97.5 %` - tbl[[est_col]]) / z_orig
@@ -185,6 +224,8 @@ margot_correct_combined_table <- function(combined_table,
         `2.5 %`  = !!rlang::sym(est_col) - z_star * se,
         `97.5 %` = !!rlang::sym(est_col) + z_star * se
       )
+  } else {
+    # No multiplicity adjustment: retain the supplied confidence limits.
   }
 
   ## ---- 2  recompute E-values ----------------------------------------------
@@ -221,5 +262,6 @@ margot_correct_combined_table <- function(combined_table,
     dplyr::mutate(confidence_level = confidence_level)
 
   attr(out, "confidence_level") <- confidence_level
+  attr(out, "multiplicity") <- multiplicity
   out
 }
