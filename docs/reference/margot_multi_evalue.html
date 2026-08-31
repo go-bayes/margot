@@ -17,7 +17,7 @@ evaluation."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.023</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.024</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -123,8 +123,7 @@ Bonferroni correction at FWER `alpha` before computing E-values.</p></dd>
 
 
 <dt id="arg-m">m<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>Optional integer for multiplicity (number of tests). If NULL,
-inferred from `nrow(results)`.</p></dd>
+<dd><p>Optional positive whole number giving the total number of tests in the multiplicity family. It must be at least `nrow(results)`. When `NULL`, Margot uses the number of rows.</p></dd>
 
 
 <dt id="arg-notes">notes<a class="anchor" aria-label="anchor" href="#arg-notes"></a></dt>
@@ -137,7 +136,8 @@ the output list.</p></dd>
     <p>A list with elements:
   - `table`: data frame with adjusted CIs (if requested), baseline E-values
     (`E_Value`, `E_Val_bound`), and audit columns `alpha_fwer`, `m`,
-    `scale`, `intervention_type`, `delta_exposure`, `sd_outcome`, and
+    `m_supplied`, `m_realised`, `scale`, `intervention_type`,
+    `delta_exposure`, `sd_outcome`, and
     `bias_order`. For convenience, mirrored columns `E_value_point` and
     `E_value_bound` are also included. Numeric calculation columns retain
     their computational precision; round only for presentation.
