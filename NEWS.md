@@ -1,3 +1,12 @@
+# Development
+
+### Outcome-parallel held-out policy-tree evaluation
+
+#### Added
+- `margot_policy_tree_cv(parallel = TRUE, n_workers = ...)` can evaluate outcome models concurrently. Within each outcome, it retains the existing repeat-fold-depth procedure. The coordinator constructs fold assignments and their post-partition random-number states before scheduling. This construction gives serial and parallel execution the same registered partitions and identical scientific and reporting objects. Worker exports contain only the selected covariates, doubly robust action scores, weights, and fold specifications for their outcomes; the coordinator retains the full causal-forest objects.
+- The parallel implementation records the requested and realised worker topology and restores the caller's future plan and globals limit. Each worker uses a single thread in common native pools. Unless the caller supplies an explicit machine-specific budget, the default uses at most two workers.
+- Outer scheduling does not change the policy-tree engine. `fastpolicytree` remains the default, retains Margot's pinned `strategy.datatype = 1`, and executes without an engine fallback when the dependency is available.
+
 # [2026-08-25] margot 1.1.022
 
 ### Direct plots from compact policy-tree displays
