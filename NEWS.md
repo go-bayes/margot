@@ -4,6 +4,7 @@
 
 #### Corrected
 - Model, LMTP, and deprecated marginal-table E-values are now calculated from unrounded estimates, standard errors, and confidence limits. Combined tables also retain full numeric precision when they feed multiplicity-adjusted or multi-bias E-value calculations. Display rounding is deferred to presentation code and no longer changes the sensitivity calculation.
+- `margot_model_evalue()` now routes direct `estimate` and `std.err` input through the requested RD or RR calculation consistently and rejects non-positive RR estimates or confidence limits. Causal-forest and multi-arm causal-forest summaries now explicitly retain their documented additive RD contract even if a caller supplies `scale = "RR"`.
 
 # [2026-08-25] margot 1.1.022
 

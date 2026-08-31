@@ -24,7 +24,9 @@ margot_model_evalue(
 
 \item{scale}{Character string specifying the scale of the estimate to be used in the summary table and
 E-value calculation. Valid options are "RD" (risk difference) or "RR" (risk ratio). Default is "RD".
-This parameter is ignored for causal forest models, which always use "RD".}
+This parameter is ignored for causal forest models, which always use the additive "RD" contract
+returned by \code{grf::average_treatment_effect()}. For direct \code{estimate} and \code{std.err} input on the
+\code{"RR"} scale, the estimate and its normal-approximation confidence limits must all be positive.}
 
 \item{new_name}{Character string to name the row(s) in the output summary table, representing the treatment
 contrast(s). For multi-arm causal forests, this will be combined with the contrast information.}

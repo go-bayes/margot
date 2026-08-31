@@ -14,7 +14,9 @@
 #'   }
 #' @param scale Character string specifying the scale of the estimate to be used in the summary table and
 #'   E-value calculation. Valid options are "RD" (risk difference) or "RR" (risk ratio). Default is "RD".
-#'   This parameter is ignored for causal forest models, which always use "RD".
+#'   This parameter is ignored for causal forest models, which always use the additive "RD" contract
+#'   returned by [grf::average_treatment_effect()]. For direct `estimate` and `std.err` input on the
+#'   `"RR"` scale, the estimate and its normal-approximation confidence limits must all be positive.
 #' @param new_name Character string to name the row(s) in the output summary table, representing the treatment
 #'   contrast(s). For multi-arm causal forests, this will be combined with the contrast information.
 #' @param delta The hypothesized increase in outcome for RD scale calculations. Used only when `scale` is "RD".
@@ -63,8 +65,34 @@
 margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = "character_string", delta = 1, sd = 1, subset = NULL) {
   scale <- match.arg(scale)
 
+  # forest average treatment effects are additive regardless of caller input
+  effective_scale <- if (any(c("causal_forest", "multi_arm_causal_forest") %in% class(model_output))) {
+    "RD"
+  } else {
+    scale
+  }
+
+  # validate ratio inputs before calling EValue's RR calculations
+  validate_ratio_summary <- function(estimate, std.error, conf.low, conf.high) {
+    ratio_values <- c(estimate, conf.low, conf.high)
+    if (!is.numeric(estimate) || !is.numeric(std.error) ||
+        !all(is.finite(ratio_values)) || !all(is.finite(std.error))) {
+      stop("RR estimates, standard errors, and confidence limits must be finite numeric values.", call. = FALSE)
+    }
+    if (any(std.error < 0)) {
+      stop("RR standard errors must be non-negative.", call. = FALSE)
+    }
+    if (any(ratio_values <= 0)) {
+      stop("RR estimates and confidence limits must be strictly positive.", call. = FALSE)
+    }
+  }
+
   # Function to create the summary data frame
   create_summary_df <- function(estimate, std.error, conf.low, conf.high, scale, new_name) {
+    if (scale == "RR") {
+      validate_ratio_summary(estimate, std.error, conf.low, conf.high)
+    }
+
     tab <- cbind.data.frame(
       estimate,
       std.error,
@@ -99,7 +127,7 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
       model_output$vals$std.error,
       model_output$vals$conf.low,
       model_output$vals$conf.high,
-      scale,
+      effective_scale,
       new_name
     )
   } else if ("causal_forest" %in% class(model_output)) {
@@ -149,7 +177,7 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
         contrast_name
       )
 
-      results_list[[i]] <- process_evalue(tab_tmle, scale, delta, sd)
+      results_list[[i]] <- process_evalue(tab_tmle, effective_scale, delta, sd)
     }
 
     # Combine all results into a single data frame
@@ -166,7 +194,7 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
       std.error,
       conf.low,
       conf.high,
-      "RD",
+      effective_scale,
       new_name
     )
   } else {
@@ -174,5 +202,5 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
   }
 
   # Process E-values and return result
-  process_evalue(tab_tmle, scale, delta, sd)
+  process_evalue(tab_tmle, effective_scale, delta, sd)
 }
