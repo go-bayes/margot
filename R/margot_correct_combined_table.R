@@ -1,5 +1,5 @@
-#' @keywords internal
-process_evalue <- function(tab, scale, delta, sd) {
+# Compute exact point and bound E-values from an unrounded one-row model summary.
+.margot_compute_evalues <- function(tab, scale, delta, sd) {
   ev <- if (scale == "RD") {
     EValue::evalues.OLS(tab$`E[Y(1)]-E[Y(0)]`,
       se    = tab$standard_error,
@@ -60,6 +60,8 @@ process_evalue <- function(tab, scale, delta, sd) {
 #'     \item updated `2.5 %` and `97.5 %` columns, and
 #'     \item freshly computed `E_Value` and `E_Val_bound`.
 #'   }
+#'   Numeric columns retain their computational precision. Apply display
+#'   rounding only when formatting the returned table for presentation.
 #'
 #' @section How the correction is applied:
 #' Let \eqn{m} be the number of rows (tests).
@@ -212,15 +214,12 @@ margot_correct_combined_table <- function(combined_table,
     }
   )
 
-  ## ---- 3 bind & round -----------------------------------------------------
+  ## ---- 3 bind exact numeric results ---------------------------------------
   out <- tbl |>
     dplyr::select(-dplyr::any_of(c("E_Value", "E_Val_bound", "confidence_level"))) |>
     dplyr::bind_cols(new_EV) |>
     dplyr::mutate(confidence_level = confidence_level)
 
-  numeric_cols <- names(out)[vapply(out, is.numeric, logical(1))]
-  numeric_cols <- setdiff(numeric_cols, "confidence_level")
-  out[numeric_cols] <- lapply(out[numeric_cols], round, digits = 3)
   attr(out, "confidence_level") <- confidence_level
   out
 }

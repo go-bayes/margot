@@ -1,3 +1,10 @@
+# [2026-08-31] margot development
+
+### Exact E-value calculation inputs
+
+#### Corrected
+- Model, LMTP, and deprecated marginal-table E-values are now calculated from unrounded estimates, standard errors, and confidence limits. Combined tables also retain full numeric precision when they feed multiplicity-adjusted or multi-bias E-value calculations. Display rounding is deferred to presentation code and no longer changes the sensitivity calculation.
+
 # [2026-08-25] margot 1.1.022
 
 ### Direct plots from compact policy-tree displays

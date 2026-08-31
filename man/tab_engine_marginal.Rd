@@ -31,7 +31,8 @@ If TRUE, adjusts row names based on the type parameter.}
 \value{
 A data frame with the specified new_name as a row name. The data frame includes
         effect estimates, confidence intervals, E-values, and other relevant statistics formatted
-        for easy reporting.
+        for easy reporting. Numeric columns retain their computational precision for downstream
+        calculations.
 }
 \description{
 This function processes simulation results to tabulate marginal effects along with E-values,

@@ -40,6 +40,8 @@ A data frame with the same rows (and order) as `combined_table`, but
     \item updated `2.5 %` and `97.5 %` columns, and
     \item freshly computed `E_Value` and `E_Val_bound`.
   }
+  Numeric columns retain their computational precision. Apply display
+  rounding only when formatting the returned table for presentation.
 }
 \description{
 `margot_correct_combined_table()` takes the **combined_table** produced by the

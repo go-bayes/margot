@@ -25,7 +25,8 @@
 #'
 #' @return A data frame with the original estimates and their E-values. The table includes columns for the
 #'   estimate (either RD or RR), its confidence interval, E-Value, and the E-Value lower bound.
-#'   For multi-arm causal forests, multiple rows will be returned, one for each contrast.
+#'   For multi-arm causal forests, multiple rows will be returned, one for each contrast. Numeric columns
+#'   retain their computational precision; round only when formatting the table for presentation.
 #'
 #' @examples
 #' \dontrun{
@@ -77,47 +78,16 @@ margot_model_evalue <- function(model_output, scale = c("RD", "RR"), new_name = 
       colnames(tab) <- c("E[Y(1)]/E[Y(0)]", "standard_error", "2.5 %", "97.5 %")
     }
 
-    tab_round <- tab %>%
-      dplyr::mutate(across(where(is.numeric), ~ round(.x, digits = 3)))
+    rownames(tab)[1] <- paste0(new_name)
 
-    rownames(tab_round)[1] <- paste0(new_name)
-
-    return(tab_round)
+    return(tab)
   }
 
-  # Helper function to calculate E-values and format the final output
+  # Calculate E-values before any display formatting.
   process_evalue <- function(tab_tmle, scale, delta, sd) {
-    if (scale == "RD") {
-      evalout <- as.data.frame(round(
-        EValue::evalues.OLS(
-          est = tab_tmle$`E[Y(1)]-E[Y(0)]`,
-          se = tab_tmle$standard_error,
-          sd = sd,
-          delta = delta,
-          true = 0
-        ),
-        3
-      ))
-    } else {
-      evalout <- as.data.frame(round(
-        EValue::evalues.RR(
-          est = tab_tmle$`E[Y(1)]/E[Y(0)]`,
-          lo = tab_tmle$`2.5 %`,
-          hi = tab_tmle$`97.5 %`,
-          true = 1
-        ),
-        3
-      ))
-    }
-
-    evalout2 <- evalout[2, , drop = FALSE] # Keep it as a dataframe
-    evalout3 <- evalout2 %>%
-      dplyr::select_if(~ !any(is.na(.))) %>%
-      `colnames<-`(c("E_Value", "E_Val_bound"))
-
     tab <- tab_tmle %>%
-      cbind(evalout3) %>%
-      dplyr::select(-standard_error) # Correctly reference the column to exclude
+      cbind(.margot_compute_evalues(tab_tmle, scale, delta, sd)) %>%
+      dplyr::select(-standard_error)
 
     return(tab)
   }

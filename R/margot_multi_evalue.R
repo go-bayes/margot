@@ -38,7 +38,8 @@
 #'     (`E_Value`, `E_Val_bound`), and audit columns `alpha_fwer`, `m`,
 #'     `scale`, `intervention_type`, `delta_exposure`, `sd_outcome`, and
 #'     `bias_order`. For convenience, mirrored columns `E_value_point` and
-#'     `E_value_bound` are also included.
+#'     `E_value_bound` are also included. Numeric calculation columns retain
+#'     their computational precision; round only for presentation.
 #'   - `notes`: character vector (length 1) with an interpretation message when
 #'     `notes = TRUE`.
 #'

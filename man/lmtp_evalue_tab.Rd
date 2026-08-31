@@ -18,7 +18,8 @@ or "RR" for risk ratio. Default is "RD".}
 }
 \value{
 A data frame similar to `x`, with additional columns for E-Value and its lower bound, excluding
-  the 'standard_error' column.
+  the 'standard_error' column. Numeric columns retain their computational precision; round only when
+  formatting the table for presentation.
 }
 \description{
 This function takes the output from `margot_tab_lmtp()`, which contains estimates of treatment effects,

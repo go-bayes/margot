@@ -1338,7 +1338,8 @@ group_tab <- function(
 #'
 #' @return A data frame with the specified new_name as a row name. The data frame includes
 #'         effect estimates, confidence intervals, E-values, and other relevant statistics formatted
-#'         for easy reporting.
+#'         for easy reporting. Numeric columns retain their computational precision for downstream
+#'         calculations.
 #'
 #' @examples
 #' \dontrun{
@@ -1364,8 +1365,7 @@ tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "
   }
 
   out <- x %>%
-    dplyr::filter(row.names(x) == type) %>%
-    dplyr::mutate(across(where(is.numeric), round, digits = 4))
+    dplyr::filter(row.names(x) == type)
 
   if (type == "RD") {
     out <- out %>%
@@ -1387,16 +1387,12 @@ tab_engine_marginal <- function(x, new_name, delta = 1, sd = 1, type = c("RD", "
   if (type == "RD") {
     out <- out %>%
       dplyr::mutate(standard_error = abs(`2.5 %` - `97.5 %`) / 3.92)
-    evalout <- as.data.frame(round(EValue::evalues.OLS(out[1, "E[Y(1)]-E[Y(0)]"], se = out$standard_error, sd = sd, delta = delta, true = 0), 3))
-  } else {
-    evalout <- as.data.frame(round(EValue::evalues.RR(out[1, "E[Y(1)]/E[Y(0)]"], lo = out[1, "2.5 %"], hi = out[1, "97.5 %"], true = 1), 3))
   }
 
-  evalout2 <- subset(evalout[2, ])
-  evalout3 <- evalout2 %>% dplyr::select_if(~ !any(is.na(.)))
-  colnames(evalout3) <- c("E_Value", "E_Val_bound")
-
-  out <- cbind.data.frame(out, evalout3)
+  out <- cbind.data.frame(
+    out,
+    .margot_compute_evalues(out, type, delta, sd)
+  )
   return(out)
 }
 

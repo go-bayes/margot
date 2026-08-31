@@ -40,7 +40,8 @@ Default value is 1.}
 \value{
 A data frame with the original estimates and their E-values. The table includes columns for the
   estimate (either RD or RR), its confidence interval, E-Value, and the E-Value lower bound.
-  For multi-arm causal forests, multiple rows will be returned, one for each contrast.
+  For multi-arm causal forests, multiple rows will be returned, one for each contrast. Numeric columns
+  retain their computational precision; round only when formatting the table for presentation.
 }
 \description{
 This function creates a summary table from the output of various causal models,

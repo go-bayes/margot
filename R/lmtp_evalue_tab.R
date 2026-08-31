@@ -13,7 +13,8 @@
 #'   or "RR" for risk ratio. Default is "RD".
 #'
 #' @return A data frame similar to `x`, with additional columns for E-Value and its lower bound, excluding
-#'   the 'standard_error' column.
+#'   the 'standard_error' column. Numeric columns retain their computational precision; round only when
+#'   formatting the table for presentation.
 #'
 #' @examples
 #' \dontrun{
@@ -25,46 +26,13 @@
 #' @importFrom EValue evalues.OLS evalues.RR
 #' @importFrom dplyr select_if select
 lmtp_evalue_tab <- function(x, delta = 1, sd = 1, scale = c("RD", "RR")) {
-  require("EValue")
-  require(dplyr)
-
   scale <- match.arg(scale)
 
   tab0 <- as.data.frame(x)
 
-  if (scale == "RD") {
-    evalout <- as.data.frame(round(
-      EValue::evalues.OLS(
-        tab0[1, 1],
-        se = tab0[1, 2],
-        sd = sd,
-        delta = delta,
-        true = 0
-      ),
-      3
-    ))
-  } else {
-    evalout <- as.data.frame(round(
-      EValue::evalues.RR(
-        tab0[1, 1],
-        lo = tab0[1, 3],
-        hi = tab0[1, 4],
-        true = 1
-      ),
-      3
-    ))
-  }
-
-  # Assuming evalout[2, ] fetches the row for E-Values, and you reshape it correctly.
-  evalout2 <- evalout[2, , drop = FALSE] # Keep it as a dataframe
-  evalout3 <- evalout2 |>
-    select_if(~ !any(is.na(.))) |>
-    `colnames<-`(c("E_Value", "E_Val_bound"))
-
-  # Bind evalout3 to tab0 while excluding 'standard_error'
   tab <- tab0 |>
-    cbind(evalout3) |>
-    select(-standard_error) # Correctly reference the column to exclude
+    cbind(.margot_compute_evalues(tab0, scale, delta, sd)) |>
+    dplyr::select(-standard_error)
 
   return(tab)
 }
