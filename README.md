@@ -79,6 +79,29 @@ these two excellent packages. `margot` is best seen as a workflow
 package for preparing data, evaluating assumptions, estimating causal
 effects, and communicating results precisely.
 
+## Outcome scales in the applied NZAVS workflow
+
+For the New Zealand Attitudes and Values Study (NZAVS), the current
+applied preparation convention retains continuous baseline and lagged
+adjustment variables on their unlogged scientific scales before
+z-standardisation. Terminal outcomes also remain unlogged; for example,
+exercise is represented by `hours_exercise`, not `log_hours_exercise`.
+Each terminal outcome is standardised once using its unweighted
+primary-row mean and sample standard deviation, and those constants
+remain the same across sensitivity analyses and reporting. Analysis
+weights retain their separate role in estimating the target-population
+contrast.
+
+Use `margot_plot_ate()`, `margot_table_ate()`, and
+`margot_interpret_ate()` with saved `scale_info` to report model-scale
+estimates and their affine original-unit companions. The [outcome-scale
+guide](https://go-bayes.github.io/margot/articles/ate-reporting-scales.html)
+demonstrates this convention for weekly exercise. General-purpose log
+and log1p reporting remain available for historical analyses and other
+questions whose outcomes are explicitly defined on those scales. The
+preparation convention does not change an existing study’s specification
+or remove those functions.
+
 ## Working LMTP fit-once example
 
 Margot includes a complete synthetic perfectionism example with two

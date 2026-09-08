@@ -209,15 +209,97 @@ converted to an original-scale ratio from that contrast alone;
 unsupported ratio conversions fail explicitly.</p>
 </div>
 <div class="section level2">
-<h2 id="logarithms-change-the-reported-quantity">Logarithms change the reported quantity<a class="anchor" aria-label="anchor" href="#logarithms-change-the-reported-quantity"></a>
+<h2 id="the-applied-nzavs-convention-uses-unlogged-values-before-standardisation">The applied NZAVS convention uses unlogged values before
+standardisation<a class="anchor" aria-label="anchor" href="#the-applied-nzavs-convention-uses-unlogged-values-before-standardisation"></a>
 </h2>
+<p>For the New Zealand Attitudes and Values Study (NZAVS), the current
+applied preparation convention keeps continuous baseline and lagged
+adjustment variables on their unlogged scientific scales before
+z-standardisation. Exposure columns used to define an intervention
+retain the registered exposure scale. Terminal outcomes also remain
+unlogged: the exercise outcome is <code>hours_exercise</code>, measured
+in hours per week. Scoring and orientation remain explicit measurement
+decisions; omitting a logarithm does not remove those decisions.</p>
+<p>For each terminal outcome, preparation records the unweighted mean
+and sample standard deviation among that outcome’s primary estimation
+rows. It applies those constants once and retains them across primary
+fits, sensitivity analyses, groups, policy folds, and reports. This is
+the same standardisation convention used by the developing GRF workflow.
+The reference rows and their missing-data rule belong in the preparation
+record. An unweighted standardisation reference does not replace the
+analysis weights used to estimate a target-population contrast. Baseline
+and lagged adjustment variables retain their own preparation constants,
+separately from terminal-outcome constants.</p>
+<p>The following example uses three invented primary-row exercise values
+and an invented estimated contrast, interval, and E-values. It fits no
+model. The saved mean is 2 hours per week, and the sample standard
+deviation is 2 hours per week.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">primary_hours_exercise</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="va">exercise_center</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">primary_hours_exercise</span><span class="op">)</span></span>
+<span><span class="va">exercise_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">primary_hours_exercise</span><span class="op">)</span></span>
+<span><span class="va">exercise_z</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">primary_hours_exercise</span> <span class="op">-</span> <span class="va">exercise_center</span><span class="op">)</span> <span class="op">/</span> <span class="va">exercise_scale</span></span>
+<span></span>
+<span><span class="va">exercise_estimate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  outcome <span class="op">=</span> <span class="st">"hours_exercise_z"</span>,</span>
+<span>  ATE <span class="op">=</span> <span class="fl">0.25</span>,</span>
+<span>  `2.5 %` <span class="op">=</span> <span class="fl">0.10</span>,</span>
+<span>  `97.5 %` <span class="op">=</span> <span class="fl">0.40</span>,</span>
+<span>  confidence_level <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  E_Value <span class="op">=</span> <span class="fl">1.8</span>,</span>
+<span>  E_Val_bound <span class="op">=</span> <span class="fl">1.4</span>,</span>
+<span>  check.names <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">exercise_scale_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  outcome <span class="op">=</span> <span class="st">"hours_exercise_z"</span>,</span>
+<span>  transformation <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  center <span class="op">=</span> <span class="va">exercise_center</span>,</span>
+<span>  scale <span class="op">=</span> <span class="va">exercise_scale</span>,</span>
+<span>  orientation <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  unit <span class="op">=</span> <span class="st">"hours per week"</span>,</span>
+<span>  unit_multiplier <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">exercise_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_table_ate.html">margot_table_ate</a></span><span class="op">(</span></span>
+<span>  <span class="va">exercise_estimate</span>,</span>
+<span>  scale_info <span class="op">=</span> <span class="va">exercise_scale_info</span>,</span>
+<span>  e_val_bound_threshold <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> no multiplicity adjustment applied</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Transformed label: hours_exercise_z -&gt; Hours Exercise</span></span>
+<span><span class="va">exercise_table</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ATE"</span>, <span class="st">"reported_estimate"</span>, <span class="st">"reported_lower"</span>, <span class="st">"reported_upper"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                 ATE reported_estimate reported_lower reported_upper</span></span>
+<span><span class="co">#&gt; Hours Exercise 0.25               0.5            0.2            0.8</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/margot_interpret_ate.html">margot_interpret_ate</a></span><span class="op">(</span></span>
+<span>  <span class="va">exercise_estimate</span>,</span>
+<span>  scale_info <span class="op">=</span> <span class="va">exercise_scale_info</span>,</span>
+<span>  label_mapping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>hours_exercise_z <span class="op">=</span> <span class="st">"Weekly exercise"</span><span class="op">)</span>,</span>
+<span>  e_val_bound_threshold <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> no multiplicity adjustment applied</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Mapped label (exact): hours_exercise_z -&gt; Weekly exercise</span></span>
+<span><span class="co">#&gt; The following estimates of average treatment effects meet the specified reporting threshold (E‑value lower bound &gt;= 1):</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; - Weekly exercise: 0.250 (95% CI: 0.100 to 0.400); on the original scale, mean difference = 0.500 hours per week (95% CI: 0.200 to 0.800). E-value bound = 1.40</span></span></code></pre></div>
+<p>The contrast of 0.25 standard deviations corresponds to 0.5 hours per
+week, with the supplied 95% interval transformed to 0.2–0.8 hours per
+week. The mean cancels from the difference. These are two scales for the
+same affine mean contrast; the original-unit companion is not a new
+fit.</p>
+</div>
+<div class="section level2">
+<h2 id="logarithms-remain-available-for-other-outcome-definitions">Logarithms remain available for other outcome definitions<a class="anchor" aria-label="anchor" href="#logarithms-remain-available-for-other-outcome-definitions"></a>
+</h2>
+<p>The applied NZAVS convention above does not remove Margot’s
+general-purpose logarithmic reporting. Historical analyses retain their
+specifications, and another scientific question may explicitly define a
+logged outcome. The reported quantity must match that definition.</p>
 <p>Exponentiating a difference of mean log outcomes gives a ratio of
 geometric means. With <code>log1p</code>, it gives a ratio of geometric
 means of <code>Y + 1</code>. Neither quantity is generally an arithmetic
 mean difference or an arithmetic mean ratio. A transformed contrast
-cannot recover a missing arithmetic-mean estimand merely by substituting
-a reference mean.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+cannot recover a missing arithmetic-mean causal estimand merely by
+substituting a reference mean.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">control</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">policy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">7</span><span class="op">)</span></span>
 <span><span class="va">log_difference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log1p</a></span><span class="op">(</span><span class="va">policy</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log1p</a></span><span class="op">(</span><span class="va">control</span><span class="op">)</span><span class="op">)</span></span>

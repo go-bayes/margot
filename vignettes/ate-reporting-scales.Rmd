@@ -52,9 +52,60 @@ Let `Y` denote the measured outcome and `g` its declared transformation. Metadat
 
 For an affine mean difference, the centre cancels. The estimate and both supplied confidence limits are multiplied by `orientation * scale * unit_multiplier`; reversed limits are reordered. This preserves asymmetric intervals and numerical precision. Display functions may round printed numbers, but the numerical table retains their precision. A ratio of centred outcomes cannot generally be converted to an original-scale ratio from that contrast alone; unsupported ratio conversions fail explicitly.
 
-## Logarithms change the reported quantity
+## The applied NZAVS convention uses unlogged values before standardisation
 
-Exponentiating a difference of mean log outcomes gives a ratio of geometric means. With `log1p`, it gives a ratio of geometric means of `Y + 1`. Neither quantity is generally an arithmetic mean difference or an arithmetic mean ratio. A transformed contrast cannot recover a missing arithmetic-mean estimand merely by substituting a reference mean.
+For the New Zealand Attitudes and Values Study (NZAVS), the current applied preparation convention keeps continuous baseline and lagged adjustment variables on their unlogged scientific scales before z-standardisation. Exposure columns used to define an intervention retain the registered exposure scale. Terminal outcomes also remain unlogged: the exercise outcome is `hours_exercise`, measured in hours per week. Scoring and orientation remain explicit measurement decisions; omitting a logarithm does not remove those decisions.
+
+For each terminal outcome, preparation records the unweighted mean and sample standard deviation among that outcome's primary estimation rows. It applies those constants once and retains them across primary fits, sensitivity analyses, groups, policy folds, and reports. This is the same standardisation convention used by the developing GRF workflow. The reference rows and their missing-data rule belong in the preparation record. An unweighted standardisation reference does not replace the analysis weights used to estimate a target-population contrast. Baseline and lagged adjustment variables retain their own preparation constants, separately from terminal-outcome constants.
+
+The following example uses three invented primary-row exercise values and an invented estimated contrast, interval, and E-values. It fits no model. The saved mean is 2 hours per week, and the sample standard deviation is 2 hours per week.
+
+```{r exercise-affine}
+primary_hours_exercise <- c(0, 2, 4)
+exercise_center <- mean(primary_hours_exercise)
+exercise_scale <- sd(primary_hours_exercise)
+exercise_z <- (primary_hours_exercise - exercise_center) / exercise_scale
+
+exercise_estimate <- data.frame(
+  outcome = "hours_exercise_z",
+  ATE = 0.25,
+  `2.5 %` = 0.10,
+  `97.5 %` = 0.40,
+  confidence_level = 0.95,
+  E_Value = 1.8,
+  E_Val_bound = 1.4,
+  check.names = FALSE
+)
+exercise_scale_info <- data.frame(
+  outcome = "hours_exercise_z",
+  transformation = "identity",
+  center = exercise_center,
+  scale = exercise_scale,
+  orientation = 1,
+  unit = "hours per week",
+  unit_multiplier = 1
+)
+exercise_table <- margot_table_ate(
+  exercise_estimate,
+  scale_info = exercise_scale_info,
+  e_val_bound_threshold = 1
+)
+exercise_table[, c("ATE", "reported_estimate", "reported_lower", "reported_upper")]
+cat(margot_interpret_ate(
+  exercise_estimate,
+  scale_info = exercise_scale_info,
+  label_mapping = list(hours_exercise_z = "Weekly exercise"),
+  e_val_bound_threshold = 1
+))
+```
+
+The contrast of 0.25 standard deviations corresponds to 0.5 hours per week, with the supplied 95% interval transformed to 0.2–0.8 hours per week. The mean cancels from the difference. These are two scales for the same affine mean contrast; the original-unit companion is not a new fit.
+
+## Logarithms remain available for other outcome definitions
+
+The applied NZAVS convention above does not remove Margot's general-purpose logarithmic reporting. Historical analyses retain their specifications, and another scientific question may explicitly define a logged outcome. The reported quantity must match that definition.
+
+Exponentiating a difference of mean log outcomes gives a ratio of geometric means. With `log1p`, it gives a ratio of geometric means of `Y + 1`. Neither quantity is generally an arithmetic mean difference or an arithmetic mean ratio. A transformed contrast cannot recover a missing arithmetic-mean causal estimand merely by substituting a reference mean.
 
 ```{r}
 control <- c(0, 3)

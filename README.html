@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.37">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,10 +12,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -68,10 +71,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="README_files/libs/quarto-html/tippy.umd.min.js"></script>
 <script src="README_files/libs/quarto-html/anchor.min.js"></script>
 <link href="README_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="README_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="README_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="README_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="README_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="README_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="README_files/libs/bootstrap/bootstrap-917079515d91bccb85b543faf8aa8bb6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
@@ -116,7 +119,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>If you prefer <code>remotes</code>, use:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("remotes")</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"go-bayes/margot"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><code>margot</code> streamlines the estimation of marginal treatment effects such as the ATE and ATT. It also supports workflows for heterogeneous treatment effects using <code>grf</code>, and longitudinal modified treatment policies using <code>lmtp</code>. <code>margot</code> is greatly indebted to the authors of these two excellent packages. <code>margot</code> is best seen as a workflow package for preparing data, checking assumptions, estimating causal effects, and communicating results precisely.</p>
+<p><code>margot</code> streamlines the estimation of marginal treatment effects such as the ATE and ATT. It also supports workflows for heterogeneous treatment effects using <code>grf</code>, and longitudinal modified treatment policies using <code>lmtp</code>. <code>margot</code> is greatly indebted to the authors of these two excellent packages. <code>margot</code> is best seen as a workflow package for preparing data, evaluating assumptions, estimating causal effects, and communicating results precisely.</p>
+</section>
+<section id="outcome-scales-in-the-applied-nzavs-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="outcome-scales-in-the-applied-nzavs-workflow">Outcome scales in the applied NZAVS workflow</h2>
+<p>For the New Zealand Attitudes and Values Study (NZAVS), the current applied preparation convention retains continuous baseline and lagged adjustment variables on their unlogged scientific scales before z-standardisation. Terminal outcomes also remain unlogged; for example, exercise is represented by <code>hours_exercise</code>, not <code>log_hours_exercise</code>. Each terminal outcome is standardised once using its unweighted primary-row mean and sample standard deviation, and those constants remain the same across sensitivity analyses and reporting. Analysis weights retain their separate role in estimating the target-population contrast.</p>
+<p>Use <code>margot_plot_ate()</code>, <code>margot_table_ate()</code>, and <code>margot_interpret_ate()</code> with saved <code>scale_info</code> to report model-scale estimates and their affine original-unit companions. The <a href="https://go-bayes.github.io/margot/articles/ate-reporting-scales.html">outcome-scale guide</a> demonstrates this convention for weekly exercise. General-purpose log and log1p reporting remain available for historical analyses and other questions whose outcomes are explicitly defined on those scales. The preparation convention does not change an existing study’s specification or remove those functions.</p>
+</section>
+<section id="working-lmtp-fit-once-example" class="level2">
+<h2 class="anchored" data-anchor-id="working-lmtp-fit-once-example">Working LMTP fit-once example</h2>
+<p>Margot includes a complete synthetic perfectionism example with two terminal outcomes and analysis weights. The script locks its execution settings with <code>margot_lmtp_estimator_spec()</code>, fits each policy-specific treatment and censoring density-ratio process once with <code>margot_lmtp(reuse_density_ratios = TRUE)</code>, selects the resulting combined table, and passes that table directly to <code>margot_plot()</code>. Its executable assertions require two ratio fits for two policies, compared with four fits under independent outcome-policy estimation.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>example_path <span class="ot">&lt;-</span> <span class="fu">system.file</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"examples"</span>, <span class="st">"lmtp-fit-once-perfectionism.R"</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">package =</span> <span class="st">"margot"</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mustWork =</span> <span class="cn">TRUE</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sys.source</span>(example_path, <span class="at">envir =</span> <span class="fu">new.env</span>(<span class="at">parent =</span> <span class="fu">globalenv</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Note that Margot is being actively developed, and is not currently in a stable state. Expect breaking changes.</p>
 </section>
 
