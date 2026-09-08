@@ -136,14 +136,40 @@ compute_margot_plot_limits <- function(df, effect_col, x_lim_lo = NULL, x_lim_hi
 
 #' @title Create a Margot Plot with Proper Multiplicity Correction
 #' @description
-#' Create a margot plot for visualising causal effects with proper simultaneous
-#' confidence intervals using multcomp for family-wise error rate control.
+#' Create coordinated plots, tables and text from supplied effect estimates and
+#' confidence intervals, with the requested multiplicity adjustment. Model-scale
+#' estimates and sensitivity quantities remain separate from reported unit conversions.
 #'
 #' @param .data data frame containing causal effect estimates with columns for
 #'   effect sizes, confidence intervals, E-values and E-value bounds
 #' @param type character. type of effect estimate: "RD" (risk difference) or "RR" (risk ratio)
 #' @param adjust character. multiplicity correction method: "none", "bonferroni"
 #' @param alpha numeric. significance level for corrections
+#' @param order Outcome ordering rule; the table and text follow the graph from top to bottom.
+#' @param custom_order Outcome labels in the requested custom factor order.
+#' @param title_binary Retained compatibility argument.
+#' @param include_coefficients Whether to print numerical coefficients on the plot.
+#' @param standardize_label Axis-label convention: New Zealand, US, or no standardisation label.
+#' @param e_val_bound_threshold E-value lower-bound threshold for colouring and prose selection.
+#' @param options Plotting options; explicit arguments override corresponding option entries.
+#' @param label_mapping Optional mapping from source outcome names to display labels.
+#' @param save_output Whether to save the complete reporting list.
+#' @param use_timestamp Whether to append a timestamp to saved filenames.
+#' @param base_filename Base name for the saved reporting object.
+#' @param prefix Optional saved-filename prefix.
+#' @param save_path Directory for saved output.
+#' @param original_df Legacy unstandardised source data for inferred scale metadata. Explicit saved metadata is preferred.
+#' @param bold_rows Whether table row labels above the reporting threshold receive Markdown emphasis.
+#' @param rename_cols Whether to apply the requested table column-name mapping.
+#' @param col_renames Named mapping from new table column names to existing names.
+#' @param rename_ate Whether to rename the estimate column, or a supplied replacement name.
+#' @param rename_evalue Whether to use display names for E-value columns.
+#' @return An invisible list with `plot`, `interpretation`, and `transformed_table`.
+#' @param scale_info Optional data frame keyed by the original outcome name, with
+#'   transformation (`identity`, `log`, or `log1p`), saved `center` and positive
+#'   `scale`, `orientation` (1 or -1), `unit`, and positive `unit_multiplier`.
+#'   Constants describe the model outcome as orientation * (g(Y) - center) / scale.
+#'   Explicit metadata overrides inference from `original_df`.
 #' @param ... other parameters as in original function
 #'
 #' @export
@@ -177,7 +203,8 @@ margot_plot <- function(
       "E-Value bound" = "E_Val_bound"
     ),
     rename_ate = FALSE,
-    rename_evalue = FALSE) {
+    rename_evalue = FALSE,
+    scale_info = NULL) {
   matched_call <- as.list(match.call(expand.dots = FALSE))
   control_arg_names <- c(
     "type",
@@ -196,6 +223,7 @@ margot_plot <- function(
     "prefix",
     "save_path",
     "original_df",
+    "scale_info",
     "bold_rows",
     "rename_cols",
     "col_renames",
@@ -324,8 +352,8 @@ margot_plot <- function(
   }
 
   # optional back‑transformation -------------------------------------------
-  if (!is.null(original_df)) {
-    .data <- back_transform_estimates(.data, original_df)
+  if (!is.null(original_df) || !is.null(scale_info)) {
+    .data <- back_transform_estimates(.data, original_df, scale_info = scale_info, type = type)
   }
 
   # label transformations ---------------------------------------------------
@@ -458,7 +486,8 @@ margot_plot <- function(
     df                    = sorted_df,
     type                  = type,
     order                 = order,
-    original_df           = original_df,
+    original_df           = NULL,
+    custom_order          = custom_order,
     e_val_bound_threshold = thresh,
     adjust                = adjust,
     alpha                 = alpha,
@@ -471,7 +500,8 @@ margot_plot <- function(
   table_for_transform <- sorted_df
 
   # keep only the core columns needed for display
-  keep_cols <- c(eff_col, "2.5 %", "97.5 %", "E_Value", "E_Val_bound")
+  keep_cols <- c(eff_col, "2.5 %", "97.5 %", "confidence_level", "E_Value", "E_Val_bound",
+    "reported_estimate", "reported_lower", "reported_upper", "reporting_quantity", "reporting_unit")
   table_for_transform <- table_for_transform[, intersect(keep_cols, names(table_for_transform)), drop = FALSE]
   table_for_transform <- as.data.frame(table_for_transform)
 
@@ -593,6 +623,8 @@ margot_plot <- function(
 #' suppressed to avoid unnecessary noise.
 #'
 #' @inheritParams margot_interpret_marginal
+#' @param df Estimate table accepted by [margot_plot()].
+#' @param effect_type Label identifying ATE, ATT, ATC, ATO or an association.
 #' @param include_adjust_note logical; if `FALSE`, any reference to adjustment
 #'   methods is omitted. default `TRUE`.
 #'
@@ -610,7 +642,9 @@ margot_interpret_marginal <- function(
     adjust = c("none", "bonferroni", "holm", "BH"),
     alpha = 0.05,
     include_adjust_note = TRUE,
-    effect_type = "ATE") {
+    effect_type = "ATE",
+    scale_info = NULL,
+    custom_order = NULL) {
   type <- match.arg(type)
   order <- match.arg(order)
   adjust <- match.arg(adjust)
@@ -628,7 +662,8 @@ margot_interpret_marginal <- function(
     ci_note <- margot_ci_caption(df, adjust = adjust, default_level = 1 - alpha)
 
     ci_sentence <- switch(adjust,
-      none = paste0("Confidence intervals were reported as ", format_margot_ci_level(1 - alpha), "."),
+      none = if (!is.null(ci_note)) paste0(ci_note, ".") else
+        paste0("Confidence intervals were reported as ", format_margot_ci_level(1 - alpha), "."),
       bonferroni = paste0(
         "Confidence intervals and E-values were adjusted for ",
         m, " comparisons using Bonferroni correction",
@@ -656,9 +691,10 @@ margot_interpret_marginal <- function(
   }
 
   # sort and optionally back‑transform ------------------------------------
-  df <- group_tab(df, type = type, order = order)
-  if (!"unit" %in% names(df)) df$unit <- ""
-  if (!is.null(original_df)) df <- back_transform_estimates(df, original_df)
+  if (!is.null(original_df) || !is.null(scale_info)) {
+    df <- back_transform_estimates(df, original_df, scale_info = scale_info, type = type)
+  }
+  df <- group_tab(df, type = type, order = order, custom_order = custom_order)
 
   # identify columns -------------------------------------------------------
   # use the helper function to detect effect column
@@ -671,7 +707,7 @@ margot_interpret_marginal <- function(
     dplyr::filter(E_Value >= 1, E_Val_bound >= e_val_bound_threshold)
 
   if (nrow(df_f) == 0) {
-    no_effects_msg <- "No reliable effects are evident."
+    no_effects_msg <- "No outcomes meet the specified E-value reporting threshold."
     interpretation_text <- if (nzchar(adj_note)) {
       paste0(adj_note, "\n\n", no_effects_msg)
     } else {
@@ -681,7 +717,7 @@ margot_interpret_marginal <- function(
   }
 
   # preserve requested ordering -------------------------------------------
-  if (grepl("_(asc|desc)$", order)) df_f <- df_f[nrow(df_f):1, ]
+  df_f <- df_f[rev(seq_len(nrow(df_f))), , drop = FALSE]
 
   # create appropriate description based on effect type
   effect_desc <- switch(effect_type,
@@ -701,128 +737,33 @@ margot_interpret_marginal <- function(
     )
   } else {
     glue::glue(
-      "The following outcomes present reliable causal evidence for {effect_desc} ",
+      "The following estimates of {effect_desc} meet the specified reporting threshold ",
       "(E‑value lower bound >= {e_val_bound_threshold}):\n\n\n"
     )
   }
 
-  bullets <- df_f %>%
-    dplyr::rowwise() %>%
-    dplyr::mutate(
-      # check if variable was log-transformed
-      was_log_transformed = if ("original_var_name" %in% names(.)) {
-        grepl("_log_", original_var_name)
-      } else {
-        FALSE
-      },
-
-      # format standardized scale label
-      lab = glue::glue(
-        "{format_minimal_decimals(.data[[effect_col]])}(",
-        "{format_minimal_decimals(`2.5 %`)},",
-        "{format_minimal_decimals(`97.5 %`)})"
-      ),
-
-      ci_label = format_margot_ci_level(confidence_level),
-
-      # format original scale label with proper interpretation
-      lab_orig = if (paste0(effect_col, "_original") %in% names(df)) {
-        if (was_log_transformed && type == "RD") {
-          # for log-transformed outcomes on difference scale, use multiplicative interpretation
-          # calculate percentage change from standardized effect
-          if ("original_var_name" %in% names(.)) {
-            transform_info <- get_outcome_transformation_info(original_var_name, original_df)
-            if (!is.null(transform_info) && transform_info$has_z && transform_info$has_log) {
-              # effect on log scale
-              delta_log <- .data[[effect_col]] * transform_info$log_sd
-              ratio <- exp(delta_log)
-              pct_change <- (ratio - 1) * 100
-
-              # confidence intervals
-              delta_log_lower <- .data[["2.5 %"]] * transform_info$log_sd
-              delta_log_upper <- .data[["97.5 %"]] * transform_info$log_sd
-              ratio_lower <- exp(delta_log_lower)
-              ratio_upper <- exp(delta_log_upper)
-              pct_lower <- (ratio_lower - 1) * 100
-              pct_upper <- (ratio_upper - 1) * 100
-
-              # detect units
-              units_info <- detect_variable_units(transform_info$original_var)
-
-              # calculate absolute change based on population mean
-              log_mean_to_use <- if (!is.null(transform_info$use_display_mean) && transform_info$use_display_mean) {
-                transform_info$log_mean_display
-              } else {
-                transform_info$log_mean
-              }
-              pop_mean_orig <- exp(log_mean_to_use) - transform_info$log_offset
-
-              if (!is.null(units_info$scale_factor)) {
-                pop_mean_orig <- pop_mean_orig * units_info$scale_factor
-              }
-
-              abs_change <- pop_mean_orig * (ratio - 1)
-              abs_change_lower <- pop_mean_orig * (ratio_lower - 1)
-              abs_change_upper <- pop_mean_orig * (ratio_upper - 1)
-
-              # format based on unit type
-              change_word <- if (pct_change >= 0) "increase" else "decrease"
-
-              if (units_info$type == "monetary") {
-                # format with confidence intervals in original units
-                glue::glue(
-                  "{units_info$symbol}{format_minimal_decimals(abs(abs_change))} average {change_word} ",
-                  "({ci_label}: {units_info$symbol}{format_minimal_decimals(abs(abs_change_lower))} to ",
-                  "{units_info$symbol}{format_minimal_decimals(abs(abs_change_upper))})"
-                )
-              } else if (units_info$type == "time") {
-                # format with confidence intervals in original units
-                glue::glue(
-                  "{format_minimal_decimals(abs(abs_change))} {units_info$name} average {change_word} ",
-                  "({ci_label}: {format_minimal_decimals(abs(abs_change_lower))} to ",
-                  "{format_minimal_decimals(abs(abs_change_upper))} {units_info$name})"
-                )
-              } else {
-                # generic format - use standardized effect since units are unknown
-                glue::glue(
-                  "{format_minimal_decimals(.data[[effect_col]])} standardized effect ",
-                  "({ci_label}: {format_minimal_decimals(.data[['2.5 %']])} to ",
-                  "{format_minimal_decimals(.data[['97.5 %']])})"
-                )
-              }
-            } else {
-              # fallback if transformation info not available
-              glue::glue(
-                "{format_minimal_decimals(.data[[paste0(effect_col, '_original')]])} {unit}(",
-                "{format_minimal_decimals(.data[[paste0('2.5 %_original')]])},",
-                "{format_minimal_decimals(.data[[paste0('97.5 %_original')]])})"
-              )
-            }
-          } else {
-            # no original_var_name available, use simple format
-            glue::glue(
-              "{format_minimal_decimals(.data[[paste0(effect_col, '_original')]])} {unit}(",
-              "{format_minimal_decimals(.data[[paste0('2.5 %_original')]])},",
-              "{format_minimal_decimals(.data[[paste0('97.5 %_original')]])})"
-            )
-          }
-        } else {
-          # not log-transformed or RR scale, use simple format
-          unit_text <- if (!is.na(unit) && unit != "") paste0(" ", unit) else ""
-          glue::glue(
-            "{format_minimal_decimals(.data[[paste0(effect_col, '_original')]])}{unit_text}(",
-            "{format_minimal_decimals(.data[[paste0('2.5 %_original')]])},",
-            "{format_minimal_decimals(.data[[paste0('97.5 %_original')]])})"
-          )
-        }
-      } else {
-        NA_character_
-      },
-      text = glue::glue(
-        "- {outcome}: {lab}{if (!is.na(lab_orig)) paste0('; on the original scale, ', lab_orig, '.') else ''} E‑value bound = {format_minimal_decimals(E_Val_bound, 2)}"
-      )
-    ) %>%
-    dplyr::pull(text)
+  # describe the shared numerical result without a second transformation or reference mean.
+  bullets <- vapply(seq_len(nrow(df_f)), function(i) {
+    row <- df_f[i, , drop = FALSE]
+    ci_label <- format_margot_ci_level(row$confidence_level)
+    lab <- paste0(format_minimal_decimals(row[[effect_col]]), " (", ci_label, ": ",
+      format_minimal_decimals(row[["2.5 %"]]), " to ", format_minimal_decimals(row[["97.5 %"]]), ")")
+    reported <- ""
+    if ("reported_estimate" %in% names(row) && !is.na(row$reported_estimate)) {
+      quantity <- switch(row$reporting_quantity,
+        mean_difference = "on the original scale, mean difference",
+        geometric_mean_ratio = "ratio of geometric means",
+        shifted_geometric_mean_ratio = "ratio of geometric means of outcome + 1",
+        risk_ratio = "risk ratio",
+        stop("Unknown reporting quantity.", call. = FALSE))
+      unit <- if (row$reporting_quantity == "mean_difference" && !is.na(row$reporting_unit) && nzchar(row$reporting_unit)) paste0(" ", row$reporting_unit) else ""
+      reported <- paste0("; ", quantity, " = ", format_minimal_decimals(row$reported_estimate), unit,
+        " (", ci_label, ": ", format_minimal_decimals(row$reported_lower), " to ",
+        format_minimal_decimals(row$reported_upper), ")")
+    }
+    paste0("- ", row$outcome, ": ", lab, reported, ". E-value bound = ",
+      format_minimal_decimals(row$E_Val_bound, 2))
+  }, character(1))
 
   interpretation_text <- paste0(
     if (nzchar(adj_note)) paste0(adj_note, "\n\n") else "",

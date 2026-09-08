@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.025</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ate-reporting-scales.html">Average-effect reporting and outcome scales</a></li>
+    <li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -36,6 +37,32 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.0" id="id_2026-09-08-margot-120">[2026-09-08] margot 1.2.0<a class="anchor" aria-label="anchor" href="#id_2026-09-08-margot-120"></a></h2>
+<div class="section level4">
+<h4 id="coordinated-average-effect-reporting-1-2-0">Coordinated average-effect reporting<a class="anchor" aria-label="anchor" href="#coordinated-average-effect-reporting-1-2-0"></a></h4>
+<div class="section level5">
+<h5 id="added-1-2-0">Added<a class="anchor" aria-label="anchor" href="#added-1-2-0"></a></h5>
+<ul><li>
+<code><a href="../reference/margot_plot_ate.html">margot_plot_ate()</a></code>, <code><a href="../reference/margot_table_ate.html">margot_table_ate()</a></code> and <code><a href="../reference/margot_interpret_ate.html">margot_interpret_ate()</a></code> return the figure, numerical table and prose from the same reporting calculation. <code><a href="../reference/margot_plot.html">margot_plot()</a></code> retains its invisible list with <code>plot</code>, <code>interpretation</code> and <code>transformed_table</code> members and its existing argument and saving conventions.</li>
+<li>Optional <code>scale_info</code> records outcome keys, transformation, saved centre and scale, orientation and display units. Tables retain model-scale estimates and add separately labelled reported estimates and supplied interval endpoints without rounding.</li>
+</ul></div>
+<div class="section level5">
+<h5 id="corrected-1-2-0">Corrected<a class="anchor" aria-label="anchor" href="#corrected-1-2-0"></a></h5>
+<ul><li><p>Affine conversions preserve asymmetric confidence intervals and reversed outcome orientation. Ratio estimates are not multiplied by an outcome standard deviation; centred or nonlinear outcome ratios cannot be converted to original-unit ratios from the contrast alone.</p></li>
+<li><p>Log differences report ratios of geometric means; log1p differences report ratios of geometric means of the outcome plus one. Neither is presented as an arithmetic mean difference or as a risk ratio for E-value calculation. Unsupported legacy arithmetic-unit columns are missing for these nonlinear contrasts.</p></li>
+<li><p>Reporting no longer substitutes fixed donation or income means. Explicit preparation constants take precedence over the reporting dataset. Legacy <code>original_df</code> calls remain supported when matching unstandardised columns identify the transformation; they warn that constants may be recomputed and interpret legacy log names as log1p. Missing or ambiguous source columns require explicit metadata.</p></li>
+<li><p>The combined interface transforms once before display labels change. Tables and prose follow the figure from top to bottom, including custom order. Automatic prose describes the E-value reporting threshold without treating it as proof of causal identification.</p></li>
+<li><p>Supplied confidence levels remain in numerical tables and automatic interval labels, including mixed coverage. The experimental plotting interface uses the same corrected transformation and interpretation logic while retaining its plotting defaults.</p></li>
+<li><p>Policy-reporting helpers now reject nonlinear or reversed original-scale conversions that their existing calculations cannot support; <code>original_df = NULL</code> retains model-scale policy reporting.</p></li>
+</ul></div>
+<div class="section level5">
+<h5 id="compatibility-1-2-0">Compatibility<a class="anchor" aria-label="anchor" href="#compatibility-1-2-0"></a></h5>
+<ul><li>Calls without transformation metadata or <code>original_df</code> retain their model-scale numerical output and legacy list shape. Corrected transformed results and wording intentionally differ from erroneous earlier output; no option restores fabricated arithmetic effects or reference means.</li>
+<li>Preserve the package version used for estimation separately when regenerating reports with this release. The new article, “Average-effect reporting and outcome scales”, gives a synthetic migration example and explains the supported quantities.</li>
+</ul></div>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.025" id="id_2026-08-31-margot-11025">[2026-08-31] margot 1.1.025<a class="anchor" aria-label="anchor" href="#id_2026-08-31-margot-11025"></a></h2>
 <div class="section level4">
@@ -3767,8 +3794,8 @@
 <h3 id="improved-1-0-38">improved<a class="anchor" aria-label="anchor" href="#improved-1-0-38"></a></h3>
 <ul><li>
 <code><a href="../reference/margot_impute_carry_forward.html">margot_impute_carry_forward()</a></code>
-<ul><li><p>eligibility now requires an observed value in the <strong>current</strong> or a following wave, rather than only in a future wave.<br></p></li>
-<li><p>The baseline wave (<code>t0_</code>) is always checked and reported –even when no later waves exist—preventing silent skips.<br></p></li>
+<ul><li><p>eligibility now requires an observed value in the <strong>current</strong> or a following wave, rather than only in a future wave.</p></li>
+<li><p>The baseline wave (<code>t0_</code>) is always checked and reported –even when no later waves exist—preventing silent skips.</p></li>
 <li>
 <p>Internal check now uses</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">

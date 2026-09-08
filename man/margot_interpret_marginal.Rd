@@ -14,12 +14,18 @@ margot_interpret_marginal(
   adjust = c("none", "bonferroni", "holm", "BH"),
   alpha = 0.05,
   include_adjust_note = TRUE,
-  effect_type = "ATE"
+  effect_type = "ATE",
+  scale_info = NULL,
+  custom_order = NULL
 )
 }
 \arguments{
+\item{df}{Estimate table accepted by [margot_plot()].}
+
 \item{include_adjust_note}{logical; if `FALSE`, any reference to adjustment
 methods is omitted. default `TRUE`.}
+
+\item{effect_type}{Label identifying ATE, ATT, ATC, ATO or an association.}
 }
 \value{
 list with one element, `interpretation` (a character string).

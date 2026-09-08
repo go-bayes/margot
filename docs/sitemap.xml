@@ -2,6 +2,7 @@
 <url><loc>https://go-bayes.github.io/margot/404.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/AGENTS.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/LICENSE.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/articles/ate-reporting-scales.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/standard-grf-policy-tree-workflow.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
@@ -130,6 +131,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_identify_variable_clusters.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_impute_carry_forward.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_inspect_qini.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_ate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_bootstrap.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_heterogeneity.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_learners.html</loc></url>
@@ -174,6 +176,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_palette_lab_resolve.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_planned_subgroups_batch.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_ate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_blp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_boxplot.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_boxplot_covariate.html</loc></url>
@@ -274,6 +277,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_subset_model.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_summary_cate_difference_gain.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_summary_panel.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_table_ate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_table_blp.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_table_consensus_policy_value.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_table_policy_tree.html</loc></url>

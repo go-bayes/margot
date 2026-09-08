@@ -1,5 +1,72 @@
 # Changelog
 
+## \[2026-09-08\] margot 1.2.0
+
+#### Coordinated average-effect reporting
+
+##### Added
+
+- [`margot_plot_ate()`](https://go-bayes.github.io/margot/reference/margot_plot_ate.md),
+  [`margot_table_ate()`](https://go-bayes.github.io/margot/reference/margot_table_ate.md)
+  and
+  [`margot_interpret_ate()`](https://go-bayes.github.io/margot/reference/margot_interpret_ate.md)
+  return the figure, numerical table and prose from the same reporting
+  calculation.
+  [`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md)
+  retains its invisible list with `plot`, `interpretation` and
+  `transformed_table` members and its existing argument and saving
+  conventions.
+- Optional `scale_info` records outcome keys, transformation, saved
+  centre and scale, orientation and display units. Tables retain
+  model-scale estimates and add separately labelled reported estimates
+  and supplied interval endpoints without rounding.
+
+##### Corrected
+
+- Affine conversions preserve asymmetric confidence intervals and
+  reversed outcome orientation. Ratio estimates are not multiplied by an
+  outcome standard deviation; centred or nonlinear outcome ratios cannot
+  be converted to original-unit ratios from the contrast alone.
+
+- Log differences report ratios of geometric means; log1p differences
+  report ratios of geometric means of the outcome plus one. Neither is
+  presented as an arithmetic mean difference or as a risk ratio for
+  E-value calculation. Unsupported legacy arithmetic-unit columns are
+  missing for these nonlinear contrasts.
+
+- Reporting no longer substitutes fixed donation or income means.
+  Explicit preparation constants take precedence over the reporting
+  dataset. Legacy `original_df` calls remain supported when matching
+  unstandardised columns identify the transformation; they warn that
+  constants may be recomputed and interpret legacy log names as log1p.
+  Missing or ambiguous source columns require explicit metadata.
+
+- The combined interface transforms once before display labels change.
+  Tables and prose follow the figure from top to bottom, including
+  custom order. Automatic prose describes the E-value reporting
+  threshold without treating it as proof of causal identification.
+
+- Supplied confidence levels remain in numerical tables and automatic
+  interval labels, including mixed coverage. The experimental plotting
+  interface uses the same corrected transformation and interpretation
+  logic while retaining its plotting defaults.
+
+- Policy-reporting helpers now reject nonlinear or reversed
+  original-scale conversions that their existing calculations cannot
+  support; `original_df = NULL` retains model-scale policy reporting.
+
+##### Compatibility
+
+- Calls without transformation metadata or `original_df` retain their
+  model-scale numerical output and legacy list shape. Corrected
+  transformed results and wording intentionally differ from erroneous
+  earlier output; no option restores fabricated arithmetic effects or
+  reference means.
+- Preserve the package version used for estimation separately when
+  regenerating reports with this release. The new article,
+  “Average-effect reporting and outcome scales”, gives a synthetic
+  migration example and explains the supported quantities.
+
 ## \[2026-08-31\] margot 1.1.025
 
 #### Model E-value scale routing
@@ -4865,14 +4932,16 @@ fixes.
 
 - [`margot_impute_carry_forward()`](https://go-bayes.github.io/margot/reference/margot_impute_carry_forward.md)
   - eligibility now requires an observed value in the **current** or a
-    following wave, rather than only in a future wave.\
+    following wave, rather than only in a future wave.
 
   - The baseline wave (`t0_`) is always checked and reported –even when
-    no later waves exist—preventing silent skips.\
+    no later waves exist—preventing silent skips.
 
   - Internal check now uses
 
-    `cols_check`` ``<-`` `[`c`](https://rdrr.io/r/base/c.html)`(``col``, ``future_cols``)`` ``ok`` ``<-`` `[`rowSums`](https://rdrr.io/r/base/colSums.html)`(``!`[`is.na`](https://rdrr.io/r/base/NA.html)`(``out``[``, ``cols_check``, drop ``=`` ``FALSE``]``)``)`` ``>`` ``0`
+    \
+    `cols_check`` ``<-`` `[`c`](https://rdrr.io/r/base/c.html)`(``col``, ``future_cols``)`\
+    `ok``         ``<-`` `[`rowSums`](https://rdrr.io/r/base/colSums.html)`(``!`[`is.na`](https://rdrr.io/r/base/NA.html)`(``out``[``, ``cols_check``, drop ``=`` ``FALSE``]``)``)`` ``>`` ``0`
 
     to align behaviour with the documentation.
 - `margot_wide_impute_machine()` print flags now set to true

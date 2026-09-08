@@ -29,7 +29,8 @@ margot_plot(
   rename_cols = FALSE,
   col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
   rename_ate = FALSE,
-  rename_evalue = FALSE
+  rename_evalue = FALSE,
+  scale_info = NULL
 )
 }
 \arguments{
@@ -38,13 +39,61 @@ effect sizes, confidence intervals, E-values and E-value bounds}
 
 \item{type}{character. type of effect estimate: "RD" (risk difference) or "RR" (risk ratio)}
 
+\item{order}{Outcome ordering rule; the table and text follow the graph from top to bottom.}
+
+\item{custom_order}{Outcome labels in the requested custom factor order.}
+
+\item{title_binary}{Retained compatibility argument.}
+
+\item{include_coefficients}{Whether to print numerical coefficients on the plot.}
+
+\item{standardize_label}{Axis-label convention: New Zealand, US, or no standardisation label.}
+
+\item{e_val_bound_threshold}{E-value lower-bound threshold for colouring and prose selection.}
+
 \item{adjust}{character. multiplicity correction method: "none", "bonferroni"}
 
 \item{alpha}{numeric. significance level for corrections}
 
 \item{...}{other parameters as in original function}
+
+\item{options}{Plotting options; explicit arguments override corresponding option entries.}
+
+\item{label_mapping}{Optional mapping from source outcome names to display labels.}
+
+\item{save_output}{Whether to save the complete reporting list.}
+
+\item{use_timestamp}{Whether to append a timestamp to saved filenames.}
+
+\item{base_filename}{Base name for the saved reporting object.}
+
+\item{prefix}{Optional saved-filename prefix.}
+
+\item{save_path}{Directory for saved output.}
+
+\item{original_df}{Legacy unstandardised source data for inferred scale metadata. Explicit saved metadata is preferred.}
+
+\item{bold_rows}{Whether table row labels above the reporting threshold receive Markdown emphasis.}
+
+\item{rename_cols}{Whether to apply the requested table column-name mapping.}
+
+\item{col_renames}{Named mapping from new table column names to existing names.}
+
+\item{rename_ate}{Whether to rename the estimate column, or a supplied replacement name.}
+
+\item{rename_evalue}{Whether to use display names for E-value columns.}
+
+\item{scale_info}{Optional data frame keyed by the original outcome name, with
+transformation (`identity`, `log`, or `log1p`), saved `center` and positive
+`scale`, `orientation` (1 or -1), `unit`, and positive `unit_multiplier`.
+Constants describe the model outcome as orientation * (g(Y) - center) / scale.
+Explicit metadata overrides inference from `original_df`.}
+}
+\value{
+An invisible list with `plot`, `interpretation`, and `transformed_table`.
 }
 \description{
-Create a margot plot for visualising causal effects with proper simultaneous
-confidence intervals using multcomp for family-wise error rate control.
+Create coordinated plots, tables and text from supplied effect estimates and
+confidence intervals, with the requested multiplicity adjustment. Model-scale
+estimates and sensitivity quantities remain separate from reported unit conversions.
 }

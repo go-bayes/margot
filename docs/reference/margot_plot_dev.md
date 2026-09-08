@@ -35,7 +35,8 @@ margot_plot_dev(
   rename_cols = FALSE,
   col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
   rename_ate = FALSE,
-  rename_evalue = FALSE
+  rename_evalue = FALSE,
+  scale_info = NULL
 )
 ```
 
@@ -110,7 +111,8 @@ margot_plot_dev(
 
 - original_df:
 
-  Optional original data for back‑transform helpers.
+  Optional original data for legacy transformation inference. Saved
+  \`scale_info\` is preferred.
 
 - bold_rows:
 
@@ -131,6 +133,12 @@ margot_plot_dev(
 - rename_evalue:
 
   Logical; if TRUE, rename E‑value column headers to display form.
+
+- scale_info:
+
+  Optional saved outcome transformation metadata as documented in
+  \[margot_plot()\]. May also be supplied through \`options\` when this
+  argument is omitted.
 
 ## Value
 

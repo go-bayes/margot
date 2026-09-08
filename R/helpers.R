@@ -1,195 +1,8 @@
 # helpers for margot plot -------------------------------------------------
 
 #' @keywords internal
-back_transform_estimates <- function(results_df, original_df) {
-  # Determine the effect size column - check new types first, then traditional
-  effect_size_col <- NULL
-  new_cols <- c("ATE", "ATT", "ATC", "ATO")
-
-  # check for new column types
-  for (col in new_cols) {
-    if (col %in% names(results_df)) {
-      effect_size_col <- col
-      break
-    }
-  }
-
-  # if not found, check for traditional columns
-  if (is.null(effect_size_col)) {
-    if ("E[Y(1)]-E[Y(0)]" %in% names(results_df)) {
-      effect_size_col <- "E[Y(1)]-E[Y(0)]"
-    } else if ("E[Y(1)]/E[Y(0)]" %in% names(results_df)) {
-      effect_size_col <- "E[Y(1)]/E[Y(0)]"
-    } else {
-      stop("Data must contain either 'E[Y(1)]-E[Y(0)]', 'E[Y(1)]/E[Y(0)]', or one of: ATE, ATT, ATC, ATO")
-    }
-  }
-
-  # ensure that results_df has an 'outcome' column
-  if (!"outcome" %in% names(results_df)) {
-    results_df$outcome <- rownames(results_df)
-  }
-
-  # store the original variable names before any transformations
-  if (!"original_var_name" %in% names(results_df)) {
-    results_df$original_var_name <- results_df$outcome
-  }
-
-  # initialise new columns for back-transformed estimates and units
-  results_df[[paste0(effect_size_col, "_original")]] <- NA_real_
-  results_df[["2.5 %_original"]] <- NA_real_
-  results_df[["97.5 %_original"]] <- NA_real_
-  results_df[["unit"]] <- NA_character_
-
-  # loop over each outcome
-  for (i in seq_len(nrow(results_df))) {
-    var_name <- results_df$original_var_name[i]
-
-    # check if this is a reversed/reduced variable
-    is_reversed <- grepl("_r$", var_name)
-    
-    # remove _r suffix before processing (since original_df won't have reversed variables)
-    if (is_reversed) {
-      var_name <- sub("_r$", "", var_name)
-    }
-
-    # determine if the variable was z-transformed and/or log-transformed
-    was_z_transformed <- grepl("_z$", var_name)
-    was_log_transformed <- grepl("_log_", var_name)
-    contains_hours <- grepl("_hours_", var_name)
-
-    # get the original variable name in original_df
-    orig_var_name <- var_name
-    if (was_z_transformed) {
-      orig_var_name <- sub("_z$", "", orig_var_name)
-    }
-
-    # try to find the variable in original_df
-    if (!(orig_var_name %in% names(original_df))) {
-      # Try removing 't0_', 't1_', 't2_' prefixes
-      orig_var_name_no_prefix <- sub("^t[0-9]+_", "", orig_var_name)
-      if (!(orig_var_name_no_prefix %in% names(original_df))) {
-        # Variable not found in original_df - skip silently
-        next
-      } else {
-        orig_var_name <- orig_var_name_no_prefix
-      }
-    }
-
-    estimate <- results_df[[effect_size_col]][i]
-    lower <- results_df$`2.5 %`[i]
-    upper <- results_df$`97.5 %`[i]
-
-    # Compute standard error on the standardized scale
-    z_value <- qnorm(0.975)
-    SE_standardized <- (upper - lower) / (2 * z_value)
-
-    # Get mean and sd from original data
-    orig_data <- original_df[[orig_var_name]]
-    orig_sd <- sd(orig_data, na.rm = TRUE)
-    mean_y <- mean(orig_data, na.rm = TRUE)
-
-    if (was_z_transformed) {
-      estimate_log <- estimate * orig_sd
-      SE_log <- SE_standardized * orig_sd
-    } else {
-      estimate_log <- estimate
-      SE_log <- SE_standardized
-    }
-
-    # Initialize unit
-    unit <- ""
-
-    if (was_log_transformed) {
-      # For log-transformed variables, back-transform to original scale
-      if (was_z_transformed) {
-        # For log+z transformed variables, use back_transform_log_z
-        # the treatment effect in z-score units
-        z_effect <- estimate
-        z_lower <- results_df$`2.5 %`[i]
-        z_upper <- results_df$`97.5 %`[i]
-        
-        # back-transform the control group mean (z=0)
-        control_orig <- back_transform_log_z(0, log_mean = mean_y, log_sd = orig_sd)
-        
-        # back-transform the treated group mean
-        treated_orig <- back_transform_log_z(z_effect, log_mean = mean_y, log_sd = orig_sd)
-        
-        # calculate the difference
-        delta_x <- treated_orig - control_orig
-        
-        # for confidence intervals
-        treated_lower <- back_transform_log_z(z_lower, log_mean = mean_y, log_sd = orig_sd)
-        treated_upper <- back_transform_log_z(z_upper, log_mean = mean_y, log_sd = orig_sd)
-        
-        delta_x_lower <- treated_lower - control_orig
-        delta_x_upper <- treated_upper - control_orig
-      } else {
-        # For only log-transformed variables (not z-scored)
-        # E[y|treatment = 0] = mean_y
-        # E[y|treatment = 1] = mean_y + estimate_log
-        E_y_treated <- mean_y + estimate_log
-        E_y_control <- mean_y
-
-        # Expected values on the original scale
-        E_x_treated <- exp(E_y_treated) - 1
-        E_x_control <- exp(E_y_control) - 1
-
-        delta_x <- E_x_treated - E_x_control
-
-        # For confidence intervals
-        estimate_log_lower <- estimate_log - z_value * SE_log
-        estimate_log_upper <- estimate_log + z_value * SE_log
-
-        E_y_treated_lower <- mean_y + estimate_log_lower
-        E_y_treated_upper <- mean_y + estimate_log_upper
-
-        E_x_treated_lower <- exp(E_y_treated_lower) - 1
-        E_x_treated_upper <- exp(E_y_treated_upper) - 1
-
-        delta_x_lower <- E_x_treated_lower - E_x_control
-        delta_x_upper <- E_x_treated_upper - E_x_control
-      }
-
-      # If variable contains '_hours_', transform to minutes
-      if (contains_hours) {
-        delta_x <- delta_x * 60
-        delta_x_lower <- delta_x_lower * 60
-        delta_x_upper <- delta_x_upper * 60
-        unit <- "minutes"
-      }
-
-      # assign to results_df
-      results_df[[paste0(effect_size_col, "_original")]][i] <- round(delta_x, 3)
-      results_df[["2.5 %_original"]][i] <- round(delta_x_lower, 3)
-      results_df[["97.5 %_original"]][i] <- round(delta_x_upper, 3)
-    } else {
-      # For variables not log-transformed, back-transform as before
-      estimate_original <- estimate_log
-      SE_original <- SE_log
-
-      lower_original <- estimate_original - z_value * SE_original
-      upper_original <- estimate_original + z_value * SE_original
-
-      # If variable contains '_hours_', transform to minutes
-      if (contains_hours) {
-        estimate_original <- estimate_original * 60
-        lower_original <- lower_original * 60
-        upper_original <- upper_original * 60
-        unit <- "minutes"
-      }
-
-      # round and assign to results_df
-      results_df[[paste0(effect_size_col, "_original")]][i] <- round(estimate_original, 3)
-      results_df[["2.5 %_original"]][i] <- round(lower_original, 3)
-      results_df[["97.5 %_original"]][i] <- round(upper_original, 3)
-    }
-
-    # assign unit to results_df
-    results_df[["unit"]][i] <- unit
-  }
-
-  return(results_df)
+back_transform_estimates <- function(results_df, original_df = NULL, scale_info = NULL, type = "RD") {
+  margot_prepare_ate_reporting(results_df, original_df, scale_info, type)
 }
 
 
@@ -537,144 +350,29 @@ get_original_value_plot <- function(var_name, split_value, original_df) {
 #' Get outcome transformation information for inverse transformation
 #' @keywords internal
 get_outcome_transformation_info <- function(model_name, original_df) {
-  if (is.null(original_df)) {
-    return(NULL)
+  if (is.null(original_df)) return(NULL)
+  outcome <- sub("^model_", "", model_name)
+  metadata <- margot_ate_legacy_scale(outcome, original_df)
+  values <- original_df[[metadata$source_column]]
+  has_z <- grepl("_z$", sub("_r$", "", outcome))
+  has_log <- metadata$transformation == "log1p"
+  result <- list(outcome_name = outcome, original_var = metadata$source_column,
+                 has_z = has_z, has_log = has_log,
+                 is_flipped = metadata$orientation == -1)
+  if (has_log) {
+    result$log_mean <- if (has_z) metadata$center else mean(values, na.rm = TRUE)
+    result$log_sd <- if (has_z) metadata$scale else stats::sd(values, na.rm = TRUE)
+    result$log_offset <- 1
+  } else if (has_z) {
+    result$orig_mean <- metadata$center
+    result$orig_sd <- metadata$scale
   }
-
-  # extract outcome name from model name (e.g., "model_t2_belong_z" -> "t2_belong_z")
-  outcome_name <- sub("^model_", "", model_name)
-
-  # detect if this is a flipped outcome model
-  has_r_suffix <- grepl("_r$", outcome_name)
-
-  # remove _r suffix for searching in original_df (which contains unflipped data)
-  outcome_name_for_search <- if (has_r_suffix) {
-    sub("_r$", "", outcome_name)
-  } else {
-    outcome_name
-  }
-
-  # detect transformation type (use cleaned name for search)
-  has_z_suffix <- grepl("_z$", outcome_name_for_search)
-  has_log_prefix <- grepl("_log_", outcome_name_for_search)
-
-  # build list of possible original variable names
-  candidates <- character()
-
-  # start with the outcome name (cleaned of _r suffix)
-  candidates <- c(candidates, outcome_name_for_search)
-
-  # remove _z suffix if present
-  if (has_z_suffix) {
-    var_no_z <- sub("_z$", "", outcome_name_for_search)
-    candidates <- c(candidates, var_no_z)
-  }
-
-  # for log-transformed variables, try to find the original
-  if (has_log_prefix) {
-    # first try keeping the log prefix (e.g., "t2_log_charity_donate_z" -> "t2_log_charity_donate")
-    candidates <- c(candidates, var_no_z)
-
-    # then try removing log prefix (e.g., "t2_log_charity_donate_z" -> "t2_charity_donate")
-    var_no_log <- gsub("_log_", "_", var_no_z)
-    candidates <- c(candidates, var_no_log)
-
-    # also try without time prefix
-    var_no_prefix <- sub("^t[0-9]+_", "", var_no_log)
-    candidates <- c(candidates, var_no_prefix)
-
-    # try without time prefix but keeping log
-    var_no_prefix_with_log <- sub("^t[0-9]+_", "", var_no_z)
-    candidates <- c(candidates, var_no_prefix_with_log)
-  }
-
-  # try to find the original variable
-  orig_var <- NULL
-  for (candidate in unique(candidates)) {
-    if (candidate %in% names(original_df)) {
-      orig_var <- candidate
-      break
-    }
-  }
-
-  if (is.null(orig_var)) {
-    return(NULL)
-  }
-
-  # get the original data
-  orig_data <- original_df[[orig_var]]
-
-  # calculate transformation parameters
-  result <- list(
-    outcome_name = outcome_name,
-    original_var = orig_var,
-    has_z = has_z_suffix,
-    has_log = has_log_prefix,
-    is_flipped = has_r_suffix
-  )
-
-  if (has_z_suffix) {
-    # for z-transformed variables, we need mean and sd
-    if (has_log_prefix) {
-      # if log+z transformed, the original variable should contain log(x+1)
-      # however, the data in original_df might be from a subset or different timepoint
-      result$log_mean <- mean(orig_data, na.rm = TRUE)
-      result$log_sd <- sd(orig_data, na.rm = TRUE)
-      result$log_offset <- 1
-
-      # check if we have stored transformation info as attributes
-      stored_log_mean <- attr(orig_data, "log_mean")
-      stored_log_sd <- attr(orig_data, "log_sd")
-
-      if (!is.null(stored_log_mean) && !is.null(stored_log_sd)) {
-        result$log_mean <- stored_log_mean
-        result$log_sd <- stored_log_sd
-      } else if (grepl("charity|donat", outcome_name, ignore.case = TRUE)) {
-        # check if the log_mean seems too low for charity data
-        if (result$log_mean < 6) {
-          # the log_mean seems too low (implies mean < $400)
-          # this is likely subset data - use more realistic values
-          cli::cli_alert_info(
-            paste0(
-              "Detected low values for {outcome_name} (mean ~${round(exp(result$log_mean)-1)}). ",
-              "Using population-based estimates for dollar calculations."
-            )
-          )
-          # use realistic population statistics for charity donations
-          result$log_mean_display <- 6.96 # log(1048 + 1)
-          result$use_display_mean <- TRUE
-        }
-      } else if (grepl("income|household.*inc", outcome_name, ignore.case = TRUE) && result$log_mean < 10) {
-        # household income seems too low
-        cli::cli_alert_info(
-          "Detected low values for {outcome_name}. Using population-based estimates."
-        )
-        result$log_mean_display <- 11.0 # ~$60k
-        result$use_display_mean <- TRUE
-      }
-    } else {
-      # just z-transformed
-      result$orig_mean <- mean(orig_data, na.rm = TRUE)
-      result$orig_sd <- sd(orig_data, na.rm = TRUE)
-    }
-  }
-
-  # for display purposes, get the original data stats
-  if (has_log_prefix && result$original_var == orig_var) {
-    # if we found a log variable, transform back to get actual values
-    actual_values <- exp(orig_data) - 1
-    result$display_mean <- mean(actual_values, na.rm = TRUE)
-    result$display_sd <- sd(actual_values, na.rm = TRUE)
-    result$display_min <- min(actual_values, na.rm = TRUE)
-    result$display_max <- max(actual_values, na.rm = TRUE)
-  } else {
-    result$display_mean <- mean(orig_data, na.rm = TRUE)
-    result$display_sd <- sd(orig_data, na.rm = TRUE)
-    result$display_min <- min(orig_data, na.rm = TRUE)
-    result$display_max <- max(orig_data, na.rm = TRUE)
-  }
-
-  return(result)
+  displayed <- if (has_log) expm1(values) else values
+  result$display_mean <- mean(displayed, na.rm = TRUE)
+  result$display_sd <- stats::sd(displayed, na.rm = TRUE)
+  result$display_min <- if (all(is.na(displayed))) NA_real_ else min(displayed, na.rm = TRUE)
+  result$display_max <- if (all(is.na(displayed))) NA_real_ else max(displayed, na.rm = TRUE)
+  result
 }
 
 #' Format number with minimal decimal places
@@ -1231,27 +929,13 @@ group_tab <- function(
     results_df <- results_df %>% mutate(outcome = dplyr::recode(outcome, !!!label_mapping))
   }
 
-  # columns for sorting - check for new column types first
-  effect_col <- NULL
-  if (type == "RR") {
-    # check for RR columns
-    if ("E[Y(1)]/E[Y(0)]" %in% names(results_df)) {
-      effect_col <- "E[Y(1)]/E[Y(0)]"
-    }
-  } else {
-    # check for RD columns (including new types)
-    possible_cols <- c("ATE", "ATT", "ATC", "ATO", "E[Y(1)]-E[Y(0)]")
-    for (col in possible_cols) {
-      if (col %in% names(results_df)) {
-        effect_col <- col
-        break
-      }
-    }
+  # use the same contrast column for sorting, labels and interval classification
+  effect_col <- margot_ate_effect_column(results_df)
+  if (type == "RD" && effect_col == "E[Y(1)]/E[Y(0)]") {
+    stop("A ratio contrast requires type = 'RR'.", call. = FALSE)
   }
-
-  # fallback to traditional columns if nothing found
-  if (is.null(effect_col)) {
-    effect_col <- if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]"
+  if (type == "RR" && effect_col == "E[Y(1)]-E[Y(0)]") {
+    stop("A difference contrast requires type = 'RD'.", call. = FALSE)
   }
 
   ev_bound <- "E_Val_bound"

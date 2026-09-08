@@ -30,6 +30,10 @@ template:
 
 
 articles:
+  - title: "Average-effect reporting"
+    navbar: ~
+    contents:
+    - ate-reporting-scales
   - title: "GRF and policy trees"
     navbar: ~
     contents:
@@ -173,6 +177,9 @@ reference:
   - title: "Plots"
     contents:
     - margot_plot
+    - margot_plot_ate
+    - margot_table_ate
+    - margot_interpret_ate
     - margot_plot_policy_tree
     - margot_plot_policy_combo
     - margot_plot_policy_decision_tree

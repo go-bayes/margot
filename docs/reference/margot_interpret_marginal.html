@@ -13,7 +13,7 @@ suppressed to avoid unnecessary noise."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.025</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,7 +24,8 @@ suppressed to avoid unnecessary noise."></head><body>
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ate-reporting-scales.html">Average-effect reporting and outcome scales</a></li>
+    <li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -62,7 +63,9 @@ suppressed to avoid unnecessary noise.</p>
 <span>  adjust <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"bonferroni"</span>, <span class="st">"holm"</span>, <span class="st">"BH"</span><span class="op">)</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  include_adjust_note <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  effect_type <span class="op">=</span> <span class="st">"ATE"</span></span>
+<span>  effect_type <span class="op">=</span> <span class="st">"ATE"</span>,</span>
+<span>  scale_info <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  custom_order <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -70,9 +73,17 @@ suppressed to avoid unnecessary noise.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-include-adjust-note">include_adjust_note<a class="anchor" aria-label="anchor" href="#arg-include-adjust-note"></a></dt>
+<dl><dt id="arg-df">df<a class="anchor" aria-label="anchor" href="#arg-df"></a></dt>
+<dd><p>Estimate table accepted by [margot_plot()].</p></dd>
+
+
+<dt id="arg-include-adjust-note">include_adjust_note<a class="anchor" aria-label="anchor" href="#arg-include-adjust-note"></a></dt>
 <dd><p>logical; if `FALSE`, any reference to adjustment
 methods is omitted. default `TRUE`.</p></dd>
+
+
+<dt id="arg-effect-type">effect_type<a class="anchor" aria-label="anchor" href="#arg-effect-type"></a></dt>
+<dd><p>Label identifying ATE, ATT, ATC, ATO or an association.</p></dd>
 
 </dl></div>
     <div class="section level2">

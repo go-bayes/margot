@@ -1,3 +1,24 @@
+# [2026-09-08] margot 1.2.0
+
+### Coordinated average-effect reporting
+
+#### Added
+- `margot_plot_ate()`, `margot_table_ate()` and `margot_interpret_ate()` return the figure, numerical table and prose from the same reporting calculation. `margot_plot()` retains its invisible list with `plot`, `interpretation` and `transformed_table` members and its existing argument and saving conventions.
+- Optional `scale_info` records outcome keys, transformation, saved centre and scale, orientation and display units. Tables retain model-scale estimates and add separately labelled reported estimates and supplied interval endpoints without rounding.
+
+#### Corrected
+- Affine conversions preserve asymmetric confidence intervals and reversed outcome orientation. Ratio estimates are not multiplied by an outcome standard deviation; centred or nonlinear outcome ratios cannot be converted to original-unit ratios from the contrast alone.
+- Log differences report ratios of geometric means; log1p differences report ratios of geometric means of the outcome plus one. Neither is presented as an arithmetic mean difference or as a risk ratio for E-value calculation. Unsupported legacy arithmetic-unit columns are missing for these nonlinear contrasts.
+- Reporting no longer substitutes fixed donation or income means. Explicit preparation constants take precedence over the reporting dataset. Legacy `original_df` calls remain supported when matching unstandardised columns identify the transformation; they warn that constants may be recomputed and interpret legacy log names as log1p. Missing or ambiguous source columns require explicit metadata.
+- The combined interface transforms once before display labels change. Tables and prose follow the figure from top to bottom, including custom order. Automatic prose describes the E-value reporting threshold without treating it as proof of causal identification.
+
+- Supplied confidence levels remain in numerical tables and automatic interval labels, including mixed coverage. The experimental plotting interface uses the same corrected transformation and interpretation logic while retaining its plotting defaults.
+- Policy-reporting helpers now reject nonlinear or reversed original-scale conversions that their existing calculations cannot support; `original_df = NULL` retains model-scale policy reporting.
+
+#### Compatibility
+- Calls without transformation metadata or `original_df` retain their model-scale numerical output and legacy list shape. Corrected transformed results and wording intentionally differ from erroneous earlier output; no option restores fabricated arithmetic effects or reference means.
+- Preserve the package version used for estimation separately when regenerating reports with this release. The new article, “Average-effect reporting and outcome scales”, gives a synthetic migration example and explains the supported quantities.
+
 # [2026-08-31] margot 1.1.025
 
 ### Model E-value scale routing
@@ -653,7 +674,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 
 ### Changed
 - Prose output now uses present tense ("yields", "is") rather than past tense ("yielded", "was") because inferences are made to the population, not the sample.
-- Policy value explainer is now more concise: adds an introductory sentence ("The following terms are used throughout this report"), removes the technically problematic definition of confidence intervals (now simply states "All estimates are reported with 95% confidence intervals"), and tightens prose throughout.  
+- Policy value explainer is now more concise: adds an introductory sentence ("The following terms are used throughout this report"), removes the technically problematic definition of confidence intervals (now simply states "All estimates are reported with 95% confidence intervals"), and tightens prose throughout.
 
 # [2025-11-28] margot 1.0.283
 
@@ -1009,10 +1030,10 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 
 # [2025-09-19] margot 1.0.242
 
-### New: 
+### New:
 - `margot_policy_workflow()`, shared explainer
 
-### Improvements: 
+### Improvements:
 - min_gain_for_depth_switch, audience + return_unit_masks, brief includes Depth, bugfix for depth-1 in summary table, interpretation reuse flags
 
 # [2025-09-19] margot 1.0.240 - 1.0.241
@@ -1025,17 +1046,17 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 - `margot_policy_summary_compare_depths()` is now exported and documented alongside the updated policy reporting workflow, returning a mixed-depth report (`best_summary`) plus depth maps/lists for downstream plotting.
 - `margot_interpret_policy_batch()` accepts `depths_by_model`, surfaces per-model depths, and returns the depth map when `return_as_list = TRUE`.
 - `margot_policy_summary_report()` better support for quarto markdown.
- 
+
 
 # [2025-09-19] margot 1.0.239
 ### Improvements
 - `margot_policy_summary_report()` better support for quarto markdown.wn.
- 
+
 # [2025-09-19] margot 1.0.238
 ### Improvements
 - `margot_policy_summary_report()` better summary of policy-tree results
- 
- 
+
+
 # [2025-09-19] margot 1.0.237
 
 ### Improvements
@@ -1081,7 +1102,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 
 
 # [2025-08-11] margot 1.0.233
-- **Returned** `simulate_ate_data_with_weights()` to exports for teaching. 
+- **Returned** `simulate_ate_data_with_weights()` to exports for teaching.
 
 # [2025-08-10] margot 1.0.232
 
@@ -1089,7 +1110,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 - Added **`margot_resort_contrast_lmtp`**
   - Flipping the effect estimates - Changes the sign of E[Y(1)]-E[Y(0)]
   - Swapping confidence intervals - Properly reverses and swaps the 2.5% and 97.5% bounds
-  - Recalculating E-values - updates these based on the flipped estimates 
+  - Recalculating E-values - updates these based on the flipped estimates
 - **`margot_view_lmtp_structure()`**: view contrasts
 
 # [2025-08-10] margot 1.0.231
@@ -1182,7 +1203,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - `compute_marginal_only = TRUE` now means skip heterogeneity (was `compute_heterogeneity = FALSE`)
   - `compute_marginal_only = FALSE` (default) means compute full analysis
   - Clearer parameter name that explicitly states what is computed
-  
+
 - **Removed `qini_split` parameter**:
   - QINI evaluation now always uses honest evaluation (test set only)
   - Simplifies the interface and follows GRF best practices
@@ -1193,7 +1214,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - `compute_marginal_only = TRUE` requires `train_proportion = NULL` (enforced)
   - `compute_marginal_only = FALSE` requires valid `train_proportion` (enforced)
   - Clear error messages prevent conflicting parameter combinations
-  
+
 ### Implementation Details
 - Default behavior unchanged: `compute_marginal_only = FALSE, train_proportion = 0.5`
 - Backward compatibility maintained through parameter detection in `margot_flip_forests()`
@@ -1220,7 +1241,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - Now inherits all computation parameters from original results
   - Uses new `computation_params` structure when available
   - Falls back to old detection method for backward compatibility
-  
+
 - **Added computation tracking**:
   - New `computation_status` field tracks what was computed
   - New `computation_params` field stores all parameters for reproducibility
@@ -1255,7 +1276,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 ### Improvements
 - **Updated default spend_levels to c(0.1, 0.4)**:
   - Changed from single value 0.1 to c(0.1, 0.4) for better QINI analysis
-  - Affected functions: margot_plot_qini(), margot_plot_qini_batch(), margot_interpret_heterogeneity(), 
+  - Affected functions: margot_plot_qini(), margot_plot_qini_batch(), margot_interpret_heterogeneity(),
     margot_policy(), margot_qini(), margot_qini_alternative(), margot_interpret_qini()
   - Provides visibility at both 10% and 40% treatment allocation levels
 
@@ -1374,14 +1395,14 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 - **Added missing knitr dependency**: Moved knitr from Suggests to Imports to fix namespace dependency error
 
 ### Documentation Fixes
-- **Fixed all documentation build warnings**: Claude code very smartly rewrote roxygen2 documentation for problematic functions to eliminate all warnings. Package now builds cleanly. 
+- **Fixed all documentation build warnings**: Claude code very smartly rewrote roxygen2 documentation for problematic functions to eliminate all warnings. Package now builds cleanly.
 
 # [2025-07-30] margot 1.0.213
 
 ### Major Changes
 - **Simplified default spend levels to 0.1 (10%) throughout the package**:
   - Changed default `spend_levels` from `c(0.1, 0.4)` to `0.1` in all functions
-  - Affected functions: `margot_interpret_heterogeneity()`, `margot_qini()`, `margot_interpret_qini()`, 
+  - Affected functions: `margot_interpret_heterogeneity()`, `margot_qini()`, `margot_interpret_qini()`,
     `margot_policy()`, `margot_plot_qini()`, `margot_plot_qini_batch()`, `margot_plot_qini_direct()`,
     `margot_qini_diagnostic()`, `margot_qini_cost_sensitivity()`, `margot_plot_qini_batch_cost_sensitivity()`,
     and `margot_batch_policy()` (deprecated)
@@ -1540,7 +1561,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 - **Fixed missing confidence intervals in CV results**:
   - CV tables now preserve numeric confidence interval columns (`2.5%` and `97.5%`)
   - Extended report now shows confidence intervals when using cross-validation (the default)
-- **Fixed misleading omnibus test language**: 
+- **Fixed misleading omnibus test language**:
   - Extended reports no longer say "confirmed by omnibus tests" when the omnibus p-values are not significant
   - Now uses neutral language "Omnibus tests:" for non-significant results
 - **Clarified decision flow language**:
@@ -1560,7 +1581,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - Now preserves outcome data, weights, and treatment assignments
   - Ensures all necessary data is available for downstream analysis
   - Maintains compatibility with plotting and interpretation functions
-  
+
 # [2025-07-29] margot 1.0.206
 
 ### Breaking Changes
@@ -1571,8 +1592,8 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - Parameter `n_bootstrap` --> `n_iterations`
   - Parameter `vary_type = "sample_only"` --> `vary_type = "bootstrap"`
   - Old function names are deprecated but still work with warnings
-  
-### New Features  
+
+### New Features
 - **Added `margot_interpret_stability_batch()` function**:
   - Processes multiple models from stability analysis in one call
   - Returns named list of interpretations or combined text
@@ -1587,7 +1608,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 - **Better backwards compatibility**:
   - `margot_policy_tree_stability()` now accepts deprecated `n_bootstrap` parameter
   - Shows warning but still works to ease transition
-  
+
 # [2025-07-29] margot 1.0.205
 
 ### Bug Fixes
@@ -1615,7 +1636,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - CV rate tables use `model_id` column, not `outcome` column
   - Fixed column reference when looking up QINI and AUTOC results in extended reports
   - Resolves error: "Unknown or uninitialised column: `outcome`"
-  
+
 ### Improvements
 - **Enhanced recommendations in `margot_interpret_heterogeneity()`**:
   - Now explains why models are excluded rather than just listing them
@@ -1646,7 +1667,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - CV rate tables now properly display transformed model names (e.g., "Personal Well-being Index" instead of "model_t2_pwi_z")
   - Fixed label transformation logic in `margot_rate_cv()` to use proper list indexing
   - Ensures consistency between evidence summary table and rate result tables
-  
+
 ### Documentation
 - **Updated citations to distinguish methodologies**:
   - Wager (2024) now correctly cited for sequential cross-validation methodology
@@ -1743,7 +1764,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - Particularly beneficial for bootstrap analysis with hundreds of iterations
   - Falls back gracefully to policytree if fastpolicytree is not installed
   - Added fastpolicytree to Suggests in DESCRIPTION
-  
+
 ### Technical Changes
 - Added internal utility functions for policy tree computation:
   - `.compute_policy_tree()`: Wrapper that handles method selection
@@ -1789,7 +1810,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - This change reflects that decision trees are highly sensitive to data perturbations
   - Bootstrap resampling can still be enabled with `vary_type = "sample_only"` or `vary_type = "both"`
 
-### Improvements  
+### Improvements
 - **Enhanced CLI output for bootstrap analysis**:
   - Now shows "seed variation (fixed train proportion)" for default behavior
   - Shows "seed + train proportion variation" when varying train proportions
@@ -1924,7 +1945,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - Parallel plan is now properly reset to sequential on function exit
   - Package loading messages from workers are suppressed with `future.stdout = FALSE`
   - Prevents hanging and repeated package loading messages
-- **Fixed seed setting in `margot_rate_cv()`**: 
+- **Fixed seed setting in `margot_rate_cv()`**:
   - Now properly sets seed at function start for full reproducibility
   - If seed = NULL, automatically defaults to 12345
 - **Fixed parallel processing memory errors**:
@@ -2051,8 +2072,8 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - Added new "exploratory_only" category for models with only QINI curve evidence
 
 ### Known Issues
-- Parallel processing in `margot_rate_cv()` may encounter memory issues with large model objects due to 
-  environment capture. Parallel processing is disabled by default. To enable at your own risk, use 
+- Parallel processing in `margot_rate_cv()` may encounter memory issues with large model objects due to
+  environment capture. Parallel processing is disabled by default. To enable at your own risk, use
   `parallel = TRUE` and increase memory limit with `options(future.globals.maxSize = 15 * 1024^3)`
 
 ### Internal Changes
@@ -2128,7 +2149,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - Fixed baseline_method metadata to correctly reflect "maq_constant" for compute_qini_curves_binary
 
 - **Default spend levels updated**: Changed default spend_levels from c(0.2, 0.5) to c(0.1, 0.4) across all functions
-  - Affected functions: `margot_plot_qini()`, `margot_plot_qini_batch()`, `margot_interpret_qini()`, 
+  - Affected functions: `margot_plot_qini()`, `margot_plot_qini_batch()`, `margot_interpret_qini()`,
     `margot_interpret_heterogeneity()`, `margot_policy()`, `margot_qini()`, `margot_qini_diagnostic()`, and `margot_batch_policy()`
   - The 10% and 40% spend levels better reflect typical analysis needs
   - 10% captures early targeting efficiency, 40% shows broader implementation potential
@@ -2215,14 +2236,14 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - users should save plots manually using ggplot2::ggsave() if needed
 
 ### major architecture change
-- **QINI curve generation moved to on-demand**: 
+- **QINI curve generation moved to on-demand**:
   - created margot_generate_qini_data() helper function for on-demand generation
   - margot_plot_qini() now generates QINI data when needed
   - margot_plot_qini_batch() updated to work with on-demand generation
   - margot_policy() and margot_summary_cate_difference_gain() generate QINI objects as needed
   - more robust approach that handles edge cases better
   - follows maq's mathematical approach for ATE baselines
-  
+
 ### fixes
 - fixed omnibus test matching for flipped models from margot_flip_forests()
 - better matching logic using original outcome names for reliability
@@ -2240,7 +2261,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
   - **margot_plot_qini_batch()**: batch processing for QINI plots across multiple models
   - **margot_flip_forests()**: enhanced with `grf_defaults` parameter for consistent GRF settings
 
-### Improvements  
+### Improvements
 - `margot_interpret_rate()` now includes `excluded_both` and `excluded_either` lists
 - `margot_interpret_qini()` now exposes harmful and no-effect model categorizations
 - Improvements to internal naming in `margot_flip_forests()`
@@ -2352,7 +2373,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - Automatically renames effect columns based on target sample
   - Recomputes E-values with the new estimates
   - Uses margot-style parameter naming (target_sample not target.sample)
-  
+
 - **margot_recompute_ate_batch()**: Compare ATEs across multiple target samples
   - Convenience function to compute all target sample types at once
   - Creates comparison table with side-by-side estimates and E-values
@@ -2362,18 +2383,18 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 - **New Column Support**: Now accepts ATE/ATT/ATC/ATO column names in addition to traditional E[Y(1)]-E[Y(0)] format
   - Automatically detects and uses the appropriate effect column
   - Maintains full backwards compatibility
-  
-- **Enhanced rename_ate Parameter**: 
+
+- **Enhanced rename_ate Parameter**:
   - Accepts boolean (TRUE auto-detects appropriate label based on column type)
   - Accepts custom string for complete control
   - Auto-detects ATE/ATT/ATC/ATO when set to TRUE
-  
-- **New rename_evalue Parameter**: 
+
+- **New rename_evalue Parameter**:
   - When TRUE, renames E_Value to "E-Value" and E_Val_bound to "E-Value Bound"
   - Makes column names more publication-ready
 
 ### Supporting Function Updates
-- **margot_interpret_marginal()**: 
+- **margot_interpret_marginal()**:
   - Now correctly describes treatment effect type (ATE/ATT/ATC/ATO)
   - Explicitly states "No reliable effects are evident." when no outcomes meet reliability threshold
   - Updated wording from "showed" to "present" for clearer communication
@@ -2388,7 +2409,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
   - Visualized with ggplot2::geom_ribbon()
   - Maintains backwards compatibility (CI display off by default)
   - Fixed geom_ribbon aesthetic inheritance issue
-  
+
 - **margot_policy()**: Added qini_args parameter
   - Allows passing additional arguments to margot_plot_qini()
   - Enables confidence interval display in policy batch processing
@@ -2418,7 +2439,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 # [2025-07-20] margot 1.0.101
 
-- **new**: margot_censor_lead() - allows for conditional censoring. 
+- **new**: margot_censor_lead() - allows for conditional censoring.
 
 # [2025-07-20] margot 1.0.100
 
@@ -2517,7 +2538,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 - Removed `margot_flip_forests_dev()` as functionality now available in `margot_recalculate_policy_trees()`
 
 # [2025-07-17] margot 1.0.70
-- `margot_flip_forests_dev()` allows custom policy trees 
+- `margot_flip_forests_dev()` allows custom policy trees
 
 # [2025-06-18] margot 1.0.65
 - `margot_plot_policy_tree()` better graphs
@@ -2552,14 +2573,14 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 # [2025-06-04] margot 1.0.61
 - added simulation function `magot_simulate()` + units tests plus vignette
 
-# [2025-06-04] margot 1.0.60 
-- fixed namespace issue/ margot_model_evalue now exported. 
+# [2025-06-04] margot 1.0.60
+- fixed namespace issue/ margot_model_evalue now exported.
 
 # [2025-06-04] margot 1.0.59
 - removing 'export' from purely internal functions/ tidying
 
 # [2025-06-03] margot 1.0.58
-- `margot_plot()` when data are corrected using e.g. bonferroni the table is also corrected -- so the interpretation text and interpretation table match. 
+- `margot_plot()` when data are corrected using e.g. bonferroni the table is also corrected -- so the interpretation text and interpretation table match.
 
 # [2025-05-30] margot 1.0.57
 
@@ -2567,7 +2588,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 # [2025-05-29] margot 1.0.56
 
-- `margot_make_tables()` now renders variables with hyphens correctly. 
+- `margot_make_tables()` now renders variables with hyphens correctly.
 
 
 # [2025-05-28] margot 1.0.55
@@ -2576,22 +2597,22 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 # [2025-05-26] margot 1.0.54
 ## new
-- `margot_plot_tau()`  creates a faceted grid of histograms showing the distribution of tau hat (individual treatment effects) for multiple models. the range is standardised across all facets to facilitate comparison. Useful for qualitatively displaying heterogenity of causal effects. 
-## improved 
+- `margot_plot_tau()`  creates a faceted grid of histograms showing the distribution of tau hat (individual treatment effects) for multiple models. the range is standardised across all facets to facilitate comparison. Useful for qualitatively displaying heterogenity of causal effects.
+## improved
 - `margot_plot()` three paragraph skips before the list
 
 # [2025-05-25] margot 1.0.53
-## improved 
+## improved
 - `margot_plot_policy_tree_depth2()`, `margot_plot_policy_combo()` - plotting enhancements to 1L and 2L trees (note Rstudio will sometime make panels gray -- just a quirk -- not an issue for final graph project.)
 
 
 # [2025-05-19] margot 1.0.52
-## improved 
-- `margot_interpret_rate()` user may specify flipped outcome labels 
+## improved
+- `margot_interpret_rate()` user may specify flipped outcome labels
 
 # [2025-05-18] margot 1.0.51
 
-## improved 
+## improved
 - `margot_interpret_qini()` improved to select reliable Qini models
 
 # [2025-05-18] margot 1.0.50
@@ -2610,7 +2631,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 ## improved
 - `margot_plot_create_options()` defaults for correcting for multiple comparisons,
   `adjust = "bonferroni"`, `alpha = 0.05`, #<- new
-- `margot_planned_subgroup_batch()` and `margot_subset_batch()` -- numerous enhancements for clear reporting 
+- `margot_planned_subgroup_batch()` and `margot_subset_batch()` -- numerous enhancements for clear reporting
 - `margot_compare_groups()` enhanced reporting
 
 
@@ -2620,22 +2641,22 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 # [2025-05-15] margot 1.0.45
 # improved
-- `margot_rate()` - allows a subset of models to be passed, allows for adjustment for multiple comparisons, reflected in reporting.(`margot_interpret_rate()` and `margot_interpret_rate_comparison()`) both modified. 
+- `margot_rate()` - allows a subset of models to be passed, allows for adjustment for multiple comparisons, reflected in reporting.(`margot_interpret_rate()` and `margot_interpret_rate_comparison()`) both modified.
 - `margot_adjust_policy_p()` - extends methods
 - `margot_plot_rate()` takes labels for outcomes.
 - `margot_plot_rate_batch()` also takes labels for outcomes
 
 # [2025-05-15] margot 1.0.44
-- `margot_plot()` only uses correction method if there is more than one outcome. 
-- `margot_interpret_marginal()` also updated. 
+- `margot_plot()` only uses correction method if there is more than one outcome.
+- `margot_interpret_marginal()` also updated.
 
 # [2025-05-15] margot 1.0.43
-- `margot_compare_groups()` computation for relative risk fixed. 
+- `margot_compare_groups()` computation for relative risk fixed.
 - `margot_plot()` no passes to `margot_correct_combined_tables()` automatically (no need for a separate call)
 
 # [2025-05-15] margot 1.0.42
 ## changed
-- `margot_process_longitudinal_data_wider` fixed error in warnings that was causing the function to fail when ordinal data are passed. 
+- `margot_process_longitudinal_data_wider` fixed error in warnings that was causing the function to fail when ordinal data are passed.
 
 
 # [2025-05-14] margot 1.0.41
@@ -2648,7 +2669,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 -  `margot_adjust_policy_p()
 ## changed
 - `margot_rate()`, and `margot_rate_batch` have deterministic seeds for reproducible results
-- `margot_plot` has two parmaters for `adjust` and `alpha` to describe whether family-wise adjustment has been made. 
+- `margot_plot` has two parmaters for `adjust` and `alpha` to describe whether family-wise adjustment has been made.
 - `margot_bind_table` now has default e_val_bound_threshold = 1.1 (previously 1, which is arguably too liberal).
 - `margot_adjust_policy_p()` - family wise corrections
 - `margot_add_policy_values_batch()` - batch add policy values to models
@@ -2660,23 +2681,23 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 # [2025-05-13] margot 1.0.39
 
 ## New
-- `margot_causal_forest_paralle()`  parallel implementation of `margot_causal_forest`. 
+- `margot_causal_forest_paralle()`  parallel implementation of `margot_causal_forest`.
 - `margot_flip_forests_parallel()` parallel implementatino of `margot_flip_forests()`
 
 ## improved
 - `margot_process_longitudinal_data_wider()` - removes otios warnings from fastDummies.
-- `margot_bind_tables()` - now accepts a dataframe and will work with single outputs. 
+- `margot_bind_tables()` - now accepts a dataframe and will work with single outputs.
 
 # [2025-05-12] margot 1.0.38
 ## improved
 - `margot_impute_carry_forward()`
-  - eligibility now requires an observed value in the **current** or a following wave, rather than only in a future wave.  
-  - The baseline wave (`t0_`) is always checked and reported --even when no later waves exist—preventing silent skips.  
-  - Internal check now uses  
+  - eligibility now requires an observed value in the **current** or a following wave, rather than only in a future wave.
+  - The baseline wave (`t0_`) is always checked and reported --even when no later waves exist—preventing silent skips.
+  - Internal check now uses
     ```r
     cols_check <- c(col, future_cols)
     ok         <- rowSums(!is.na(out[, cols_check, drop = FALSE])) > 0
-    ```  
+    ```
     to align behaviour with the documentation.
 - `margot_wide_impute_machine()` print flags now set to true
 - `margot_wide_impute_baseline()` soft deprecated
@@ -2703,15 +2724,15 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 - namespace issues for `margot_plot_policy()` and `margot_rescue_qini()`
 
 # [2025-05-04] margot 1.0.32
-## New 
-- `margot_planned_subgroup_batch()` overhauled to work with `margot_plot()` updates. 
+## New
+- `margot_planned_subgroup_batch()` overhauled to work with `margot_plot()` updates.
 -  restored decision tree plot results labelling
 -  restored margot_interpret_marginal cutpoint results on datascale
 
 
 # [2025-05-04] margot 1.0.31
-## New 
-- `margot_get_labels()` utility function for fetching labels. 
+## New
+- `margot_get_labels()` utility function for fetching labels.
 
 # [2025-05-03] margot 1.0.30
 - `margot_plot_decision_tree()`- colours robustly match decisions 'control', 'treat'
@@ -2723,7 +2744,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 -  removed `add_resistance`
 
 ## Refactored to accept 1L depth policy trees 👍
-- `margot_plot_policy_tree()` will plot a tree of depth = 1L. 
+- `margot_plot_policy_tree()` will plot a tree of depth = 1L.
 - `margot_recalculate_policy_trees()`
 - `margot_flip_forests()`
 - `margot_interpret_policy_batch()`
@@ -2735,13 +2756,13 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 
 # [2025-05-02] margot 1.0.28
-## New 
+## New
 - `margot_rate()` now computes resistance to exposure (if requested) using `add_resistance`
 
 # [2025-05-02] margot 1.0.27
-## New 
+## New
 - `margot_flip_forests()` automatic recomputing of the policy trees by default.
-- `margot_inspect_qini()` helper to evaluate extreme propensity scores from grf models. 
+- `margot_inspect_qini()` helper to evaluate extreme propensity scores from grf models.
 - `margot_rescue_qini()` (developing) - to recompute qini data for grf models when `qini_objects` are null / empty.
 
 ## Improve
@@ -2749,7 +2770,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 # [2025-05-02] margot 1.0.26
 ## Improved
-- `margot_wide_machine()` now handles allows for `imputation_method` = "none". new parameters `extend_baseline` effectively pivots all date from long to wide, and allows for time indexing of columns - userful for `grf` models. 
+- `margot_wide_machine()` now handles allows for `imputation_method` = "none". new parameters `extend_baseline` effectively pivots all date from long to wide, and allows for time indexing of columns - userful for `grf` models.
 
 # [2025-05-02] margot 1.0.25
 ## Improved
@@ -2769,17 +2790,17 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 # [2025-04-29] margot 1.0.21
 ## Improved
-- `margot_plot_rate_batch()` user can pass specific model names 
+- `margot_plot_rate_batch()` user can pass specific model names
 - `margot_rate_comparision()` outputs correct model names (and never statistically significant negative results.)
 
 # [2025-04-28] margot 1.0.20
 ## Improved
-- `margot_rate()`, `margot_rate_interpret()` now output model names for reliable result estimates. 
+- `margot_rate()`, `margot_rate_interpret()` now output model names for reliable result estimates.
 
 # [2025-04-21] margot 1.0.19
 ## Improved
-- `margot_bind_table()` flexibly modify column names 
-- `margot_plot()` - added options to transform colname for the estimand to "ATE", also the E_value colnames. 
+- `margot_bind_table()` flexibly modify column names
+- `margot_plot()` - added options to transform colname for the estimand to "ATE", also the E_value colnames.
 - `margot_interpret_marginal()` and `group_tab()` now return order consistent with the plot
 - `margot_interpret_rate()` better language, `margot_interpret_rate_comparison()` now a helper (not exported).
 - `margot_plot_policy_tree()` and `margot_policy` now defaults to shading out regions where there is no interest.
@@ -2802,16 +2823,16 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 ## Improved
 - `margot_transition_table()` -- allows filtering by observation/censoring variable, can be useful where data are entirely missing from certain waves.
 - `margot_bind_tables()` -- correct output retaining outcome names
-- `margot_impute_carry_forward()` -- better error handling/ if observation is seen in a year, may impute forward. 
+- `margot_impute_carry_forward()` -- better error handling/ if observation is seen in a year, may impute forward.
 
 # [2025-04-19] margot 1.0.15
 ## Improved
-- `margot_interpret_marginal()` - clearer wording, outcomes listed rather than dull sentences. 
+- `margot_interpret_marginal()` - clearer wording, outcomes listed rather than dull sentences.
 
 # [2025-04-19] margot 1.0.14
 ## Improved
-- `margot_bind_tables()` has additional parameter,  `sort_E_val_bound = c("none", "asc", "desc")`, which allows users to order multiple tables by E_value thresholds. 
--  fixed multiple functions to get assending order for `margot_plot()`, these are `margot_plot()`, `group_tab()`, `margot_interpret_marginal()` `transform_label()`, `transform_table_rownames()` -- and removing stray `transform_label()` label functions from various functions. `transform_table_rownames()` now internal. 
+- `margot_bind_tables()` has additional parameter,  `sort_E_val_bound = c("none", "asc", "desc")`, which allows users to order multiple tables by E_value thresholds.
+-  fixed multiple functions to get assending order for `margot_plot()`, these are `margot_plot()`, `group_tab()`, `margot_interpret_marginal()` `transform_label()`, `transform_table_rownames()` -- and removing stray `transform_label()` label functions from various functions. `transform_table_rownames()` now internal.
 
 
 # [2025-04-10] margot 1.0.13
@@ -2823,7 +2844,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 ## Improved
 - `margot_bind_models()` now bolds reliable results in markdown
-- `margot_interpret_rate()` and `margot_interpret_rate_comparison()` more accurate reporting and deal with edge cases (no RATE reliable) better. 
+- `margot_interpret_rate()` and `margot_interpret_rate_comparison()` more accurate reporting and deal with edge cases (no RATE reliable) better.
 
 # [2025-04-09] margot 1.0.11
 
@@ -2840,7 +2861,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 # [2025-04-07] margot 1.0.10
 ## Improved
-- `margot_causal_forest()` consistent use of training proportion rather than mixing training/test. 
+- `margot_causal_forest()` consistent use of training proportion rather than mixing training/test.
 
 # [2025-04-07] margot 1.0.9
 ## Improved
@@ -2873,7 +2894,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 # [2025-04-06] margot 1.0.3
 ## Improved
-- `margot_interpret_qini()` and `margot_interpret_rate()` play better with LaTeX. Use "statistically reliable" in place of statistically significant. 
+- `margot_interpret_qini()` and `margot_interpret_rate()` play better with LaTeX. Use "statistically reliable" in place of statistically significant.
 
 
 # [2025-04-06] margot 1.0.2
@@ -2887,12 +2908,12 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 # [2025-04-05] margot 1.0.0
 ## Improved
--  we are now using semantic versioning. 
+-  we are now using semantic versioning.
 -  `margot_omnibus_hetero_test` now has label mapping
 
 # [2025-03-26] margot 0.3.3.3
 ## Improved
-- `margot_censor()` - explicit call for 'cli' to avoid conflict with crayon 
+- `margot_censor()` - explicit call for 'cli' to avoid conflict with crayon
 - `create_ordered_variable()` - removed crayon
 - `margot_summary_tables_cat()` - deleted this experimental table
 - `margot_log_transform_vars()` removed crayon, made all function calls explicit, removed `require` for packages.
@@ -2932,7 +2953,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 # [2025-03-21] margot 0.3.2.6
 ## New
 - `margot_planned_subgroups_batch()` -- batch the batched analysis of planned subgroups analysis for causal forests (time-saver).
-- `backtransform_log_z()` utility function to backtranform scores from logged values to original data values. 
+- `backtransform_log_z()` utility function to backtranform scores from logged values to original data values.
 
 ## Improved
 - `margot_subset_batch()` now working as it should for complex conditions.
@@ -2942,11 +2963,11 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 - `margot_process_binary()`: if a variable already ends with "_binary" it is not processed again as binary. Also removed dependency on the `color` package.
 - `coloured_histogram_shift()`... and other deprecated functions no longer exported or maintained.
 - `margot_plot_shift()` - improved to print mean value and also to show +/- sd of distribution
-- `margot_causal_forest()` - default parameter is 0.5 training. 
+- `margot_causal_forest()` - default parameter is 0.5 training.
 
 # [2025-03-19] margot 0.3.2.4
 ## Improved
-- `margot_subset_batch()` - now correctly passes all parameters required by `margot_plot()`. 
+- `margot_subset_batch()` - now correctly passes all parameters required by `margot_plot()`.
 - `margot_plot()` - default is now: interpret_all_E_gt1 = TRUE (all results with non-null Evalues reported).
 
 
@@ -2957,7 +2978,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 # [2025-03-19] margot 0.3.2.2
 ## New
 - `margot_subset_batch()` batch process subsetted models (causal forests)
-- `margot_plot_rate_batch()` replaces `margot_plot_batch_rate()`, which is deprecated. 
+- `margot_plot_rate_batch()` replaces `margot_plot_batch_rate()`, which is deprecated.
 
 ## Improved
 - `margot_subset_model()` - streamlined
@@ -2971,7 +2992,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 
 
 # [2025-03-19] margot 0.3.2.0
-## New 
+## New
 - added `.strict_exposure_outcome_censoring()` helper function for strict dyadic censoring -- now encompassed by `margot_process_longitudinal_data_wider()` but added for backward compatibility.
 
 ## Improved
@@ -2995,17 +3016,17 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 - `margot_interpret_qini()` - improved for reporting
 - `margot_policy()` - now allows subsetting specific models
 - `margot_interpret_policy_batch()` - now allows subsetting specific models
-- `margot_causal_forest()` - added roxygen code (forgotten in last update). 
+- `margot_causal_forest()` - added roxygen code (forgotten in last update).
 
 # [2025-03-17] margot 0.3.1.8
 
 ## New
 - `margot_rate()` produce a table for RATE estimates from batched processed causal forests.
 - `margot_flip_forests()` when interpreting the effect as *benefitial* we may need to invert the outcomes. This function does this on already processed models.
-- `margot_interpret_rate()` provides automated reporting of rate outputs, allowing users to specify whether AUTOC or QINI was targeted. 
+- `margot_interpret_rate()` provides automated reporting of rate outputs, allowing users to specify whether AUTOC or QINI was targeted.
 
 ## Improved
-- `margot_causal_forest()` - now also computes RATE targeting the QINI when this is selected. 
+- `margot_causal_forest()` - now also computes RATE targeting the QINI when this is selected.
 
 # [2025-03-15] margot 0.3.1.7
 
@@ -3039,7 +3060,7 @@ major improvements to QINI curve visualisation, new functions for AIPW/IPW QINI 
 # [2025-02-06] margot 0.3.1.1
 
 ## Improved
-- `margot_plot` and `margot_interpret_marginal` now all reporting of all coefficients if E-value is above 1 (instead of 1.1, the default threshold). 
+- `margot_plot` and `margot_interpret_marginal` now all reporting of all coefficients if E-value is above 1 (instead of 1.1, the default threshold).
 
 - `margot_censor` now deletes all values of a variable if the censoring indicator is set to 1 (or year_measured == 0), instead of merely changing the indicator. This can be helpful downstream of this function when handling dyadic data.
 
@@ -3063,7 +3084,7 @@ formatted table using `kableExtra`, with optional group headers for each section
 # [2025-01-17] margot 0.3.0.8
 
 ## Improved
-- `margot_plot` has a new parameter `include_coefficients` which if set to TRUE will remove the coefficients from a graph. This makes it easier to view the results. 
+- `margot_plot` has a new parameter `include_coefficients` which if set to TRUE will remove the coefficients from a graph. This makes it easier to view the results.
 -  minor fix to `margot_save_png` so that it defaults to the output folder set by `push_mods`
 
 # [2024-12-29] margot 0.3.0.7
@@ -3084,7 +3105,7 @@ formatted table using `kableExtra`, with optional group headers for each section
 # [2024-12-07] margot 0.3.0.4
 
 ## New
-- `margot_prop_missing()` - utility function to get propoportion of missing data at baseline. 
+- `margot_prop_missing()` - utility function to get propoportion of missing data at baseline.
 
 # [2024-11-26] margot 0.3.0.3
 
@@ -3102,23 +3123,23 @@ formatted table using `kableExtra`, with optional group headers for each section
 -`margot_impute_carry_forward` - carry forward last observed value (for handling 'prodigal' id's that are lost and found).
 
 ## Fixed
-- `margot_wide_machine` - removed functionality now handled by `margot_impute_carry_forward` 
+- `margot_wide_machine` - removed functionality now handled by `margot_impute_carry_forward`
 
 
 # [2024-11-06] margot 0.3.0.0
 
 ## New
-- `margot_make_table()` - flexible longitudinal tables 
-- `margot_amelia_to_mice()` - converts `Amelia` output to `mice` output. 
+- `margot_make_table()` - flexible longitudinal tables
+- `margot_amelia_to_mice()` - converts `Amelia` output to `mice` output.
 
 # [2024-10-30] margot  0.2.3.80
 
 ## New
 
-- `margot_count_ids()` - track cumulative counts of participants, returning participants, 
+- `margot_count_ids()` - track cumulative counts of participants, returning participants,
 
 ## Improved
-- `margot_count_dyads()` - more informative information. 
+- `margot_count_dyads()` - more informative information.
 
 # [2024-10-30] margot 0.2.3.70
 ## Improved
@@ -3156,7 +3177,7 @@ formatted table using `kableExtra`, with optional group headers for each section
 
 ## Improved
 - `margot_process_longitudinal_data_wider` - more robust.
-- `margot_wide_impute` - small bug fix. 
+- `margot_wide_impute` - small bug fix.
 
 # [2024-10-26] margot 0.2.3.13
 
@@ -3167,7 +3188,7 @@ formatted table using `kableExtra`, with optional group headers for each section
 
 ## Improved
 
-- `margot_wide_machine` now correctly handling multiple time points. 
+- `margot_wide_machine` now correctly handling multiple time points.
 
 # [2024-10-26] margot 0.2.3.12
 
@@ -3201,23 +3222,23 @@ formatted table using `kableExtra`, with optional group headers for each section
 
 ## Improved
 - `margot_process_longitudinal_data_wider()` performance enhancement
-- `margot_wide_machine()` simplified.  We now have a time-varying treatment workflow in place! 
+- `margot_wide_machine()` simplified.  We now have a time-varying treatment workflow in place!
 
 # [2024-09-27] margot 0.2.3.6
 
 ## New
 - `margot_wide_machine()` converts wide data to long data so using indicators for missing observations, which allows for non-parametric stacked learning in `lmtp` without multiple-imputation assumptions. Also handles more than three time-points. Optional `imputation_method = 'mice` allows users to impute, while also creating NA dummy variables for non-parametric learning.
 
-- `margot_process_longitudinal_data_wider()` extends flexibility of `margot_process_longitudinal_data()` to more than three waves, and allows users to specify variable names. 
+- `margot_process_longitudinal_data_wider()` extends flexibility of `margot_process_longitudinal_data()` to more than three waves, and allows users to specify variable names.
 
 # [2024-09-26] margot 0.2.3.5
 
 ## New
-- helper function `back_transform_estimates()` is unique for the marginal plots and marginal interpretation, to avoid confusions with back-transforming helpers for split-points in policy trees. 
+- helper function `back_transform_estimates()` is unique for the marginal plots and marginal interpretation, to avoid confusions with back-transforming helpers for split-points in policy trees.
 
 
 ## Improved
-- `margot_plot()`, and `margot_interpret_marginal()` produce interpretable results. Fixed issue with `margot_plot()` when risk ratios are selected, where colours were not being plotted. 
+- `margot_plot()`, and `margot_interpret_marginal()` produce interpretable results. Fixed issue with `margot_plot()` when risk ratios are selected, where colours were not being plotted.
 
 
 # [2024-09-25] margot 0.2.3.4
@@ -3238,7 +3259,7 @@ formatted table using `kableExtra`, with optional group headers for each section
 ## Improved
 
 - `margot_plot_histogram()` now take optional `vertical_facets` parameter, allowing for more interpretable time-series graphs.
--  placed all internal function under `helpers.R` in the R directory, to avoid clutter. 
+-  placed all internal function under `helpers.R` in the R directory, to avoid clutter.
 
 
 # [2024-09-25] margot 0.2.3.2
@@ -3246,29 +3267,29 @@ formatted table using `kableExtra`, with optional group headers for each section
 
 ## Improved
 
-- `margot_plot()` `margot_interpret_marginal()` now back transform values to data scale. 
+- `margot_plot()` `margot_interpret_marginal()` now back transform values to data scale.
 
 # [2024-09-24] margot 0.2.3.1
 
 ## Improved
 
-- `margot_plot_policy_tree()`, `margot_plot_decision_tree()`, `margot_interpret_policy_tree()`, `margot_plot_qini_tree()` use same global function names. New helper functions back-transform logged values (as well as z-transformed values) so that we get interpretations on the data scale for variables that have been log-transformed.  This aids with interpretation. 
+- `margot_plot_policy_tree()`, `margot_plot_decision_tree()`, `margot_interpret_policy_tree()`, `margot_plot_qini_tree()` use same global function names. New helper functions back-transform logged values (as well as z-transformed values) so that we get interpretations on the data scale for variables that have been log-transformed.  This aids with interpretation.
 
 
 # [2024-09-20] margot 0.2.3.0
 
 ## New
 
--  Refactored causal tree graphs and interpretations for flexible labelling and for providing both standardised results (where relevant), and results on the data scale. Makes the interpretation of policies easier to understand. 
-- `margot_count_dyads()` counts dyads in a longitudinal dataset. 
+-  Refactored causal tree graphs and interpretations for flexible labelling and for providing both standardised results (where relevant), and results on the data scale. Makes the interpretation of policies easier to understand.
+- `margot_count_dyads()` counts dyads in a longitudinal dataset.
 - `margot_summary_panel()` summaries participants by panel wave; counts unique participants by wave, ...
-- `margot_interpret_policy_batch()` interprets the policytree results. 
+- `margot_interpret_policy_batch()` interprets the policytree results.
 
 ## Improved
 
 - `margot_summary_tables()` - now pass multiple tables, better exposure plots.
-- `margot_interpret_policy_tree()` - refactored: now returns results on data scale, better labels. 
-- `margot_plot_policy_tree()` - refactored: now returns results on data scale, better labels. 
+- `margot_interpret_policy_tree()` - refactored: now returns results on data scale, better labels.
+- `margot_plot_policy_tree()` - refactored: now returns results on data scale, better labels.
 
 
 
@@ -3307,9 +3328,9 @@ formatted table using `kableExtra`, with optional group headers for each section
 
 ## Deprecated
 
-- `compute_difference()` now use the more general `margot_compare_groups()` workflow. 
+- `compute_difference()` now use the more general `margot_compare_groups()` workflow.
 
-## Removed 
+## Removed
 
 - Removed the following deprecated functions from vignettes, instead use [https://github.com/go-bayes/boilerplate](https://github.com/go-bayes/boilerplate)
     - `boilerplate_measures`
@@ -3339,7 +3360,7 @@ formatted table using `kableExtra`, with optional group headers for each section
 # [2024-09-17] margot 0.2.1.59
 
 ## New
-- `margot_plot_save_png()` saves a margot_plot output graph as a png, user can change width, heigh, dpi, and specify a path... 
+- `margot_plot_save_png()` saves a margot_plot output graph as a png, user can change width, heigh, dpi, and specify a path...
 
 ## Improved
 - `margot_plot()` automatic saving of the output with optional timestamps
@@ -3347,7 +3368,7 @@ formatted table using `kableExtra`, with optional group headers for each section
 
 # [2024-09-16] margot 0.2.1.58
 ## New
-- `margot_compare_groups()` compare treatment effects by groups and evaluate evidence for differences 
+- `margot_compare_groups()` compare treatment effects by groups and evaluate evidence for differences
 
 # [2024-09-16] margot 0.2.1.57
 
@@ -3355,14 +3376,14 @@ formatted table using `kableExtra`, with optional group headers for each section
 - `margot_plot_multi_arm()` wrapper for `margot_plot` that enables each plots/tables for multi arm treatment models
 
 ## Improved
-- reporting of multi arm treatment models in `margot_plot_qini()` is easier to follow. 
-- `margot_lmtp()` now has automatic saving of models with optional prefix label and optional time-stamping. Also actually saves table when computing contrasts with only the null model. 
+- reporting of multi arm treatment models in `margot_plot_qini()` is easier to follow.
+- `margot_lmtp()` now has automatic saving of models with optional prefix label and optional time-stamping. Also actually saves table when computing contrasts with only the null model.
 
 # [2024-09-16] margot 0.2.1.56
 
 ## Improved
 
-- `margot_interpet_qini()` robust for both binary and multi-arm treatments. 
+- `margot_interpet_qini()` robust for both binary and multi-arm treatments.
 - `margot_plot_qini()` correct label for binarhy treatments
 - `margot_batch_policy_tree()` correctly modified function added: commputes multiple 'spends'
 
@@ -3370,7 +3391,7 @@ formatted table using `kableExtra`, with optional group headers for each section
 
 ## New
 
-- `margot_interpet_qini()` interprets results of the qini curves at pre-specified levels. 
+- `margot_interpet_qini()` interprets results of the qini curves at pre-specified levels.
 
 
 ## Improved
@@ -3390,20 +3411,20 @@ between a reference curve (maq object) and a comparison curve at a specified spe
 - `compute_qini_curves_multi_arm()` - modified so that we can now get quantitative estimates for support for CATEs
 - `margot_multi_arm_causal_forest()` - enhanced in several ways, for example to support `margot_summary_cate_differences()`
 - `margot_causal_forest()` - likewise enhanced.
-- `margot_batch_policy()` now outputs `margot_summary_cate_difference_gain() models by default 
+- `margot_batch_policy()` now outputs `margot_summary_cate_difference_gain() models by default
 
 # [2024-09-12] margot 0.2.1.53
 
 ## Improved
 
 - `margot_summary_tables()` plots take upper case letters, remove '_'
-- `margot_adjust_weights()` censored individuals are assigned zero weights, and only uncensored individuals contribute to the final analysis. 
+- `margot_adjust_weights()` censored individuals are assigned zero weights, and only uncensored individuals contribute to the final analysis.
 
 # [2024-09-12] margot 0.2.1.52
 
 ## Improved
 
-- Fixed `margot_plot_response_timeline()` to print dates, and to optionally save a 'png` image. 
+- Fixed `margot_plot_response_timeline()` to print dates, and to optionally save a 'png` image.
 
 # [2024-09-12] margot 0.2.1.51
 
@@ -3454,7 +3475,7 @@ between a reference curve (maq object) and a comparison curve at a specified spe
 
 ## Improved
 
-- `hear_read` does not require that an `.rds` file is passed. 
+- `hear_read` does not require that an `.rds` file is passed.
 - `extract_qini_data` made robust
 
 
@@ -3466,14 +3487,14 @@ between a reference curve (maq object) and a comparison curve at a specified spe
 
 ## Improved
 
-- `causal_contrast_marginal` and `causal_contrast_marginal` modified to accommated breaking change in `WeigthIt` package. 
+- `causal_contrast_marginal` and `causal_contrast_marginal` modified to accommated breaking change in `WeigthIt` package.
 - `double_robust_marginal` checks if object is a winmids object.
 
 # [2024-09-02] margot 0.2.1.44
 
 ## Improved
 
-- `margot_plot_individual_responses()` now plotting all cases by default. Default `random_draws` of 100. 
+- `margot_plot_individual_responses()` now plotting all cases by default. Default `random_draws` of 100.
 
 # [2024-09-02] margot 0.2.1.43
 
@@ -3485,15 +3506,15 @@ between a reference curve (maq object) and a comparison curve at a specified spe
 
 ## Improved
 
-- `margot_plot_individual_responses()`. Now handles factors, and robust to missing waves. 
-- `margot_plot_boxplot()` different colours for boxplots if a single variable is passed over multiple waves. 
+- `margot_plot_individual_responses()`. Now handles factors, and robust to missing waves.
+- `margot_plot_boxplot()` different colours for boxplots if a single variable is passed over multiple waves.
 
 # [2024-09-02] margot 0.2.1.41
 
 
 ## New features
 
-- `margot_plot_individual_responses()`. New function to allow random plotting of responses in a subset of the sample, useful for investigating individual trajectories of change. 
+- `margot_plot_individual_responses()`. New function to allow random plotting of responses in a subset of the sample, useful for investigating individual trajectories of change.
 - `margot_plot_boxplot()` Now user supplies `wave` values, allowing more flexible and precise plotting of intervals. Has optional prefixes. The coordinates of the graph may be optionally flipped.
 
 
@@ -3526,15 +3547,15 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 # [2024-09-02] margot 0.2.1.38
 
-## New 
-- `margot_plot_histogram()` new histogram that's more informative and more robust than previous attempts. Can be used for multiple variables and multiple waves. 
+## New
+- `margot_plot_histogram()` new histogram that's more informative and more robust than previous attempts. Can be used for multiple variables and multiple waves.
 
 ## Improved
-- `margot_plot_boxplot()` made robust to single outcome in single wave. 
+- `margot_plot_boxplot()` made robust to single outcome in single wave.
 
 # [2024-09-02] margot 0.2.1.37
 
-- `margot_plot_discontinuity()`, `margot_plot_slope()`, `margot_plot_slope_covariate()` automatically print number of unique participants and unique number of observations in the title, if no title is passed. 
+- `margot_plot_discontinuity()`, `margot_plot_slope()`, `margot_plot_slope_covariate()` automatically print number of unique participants and unique number of observations in the title, if no title is passed.
 
 
 # [2024-09-02] margot 0.2.1.36
@@ -3547,14 +3568,14 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## New
 - `margot_plot_slope()` descriptive trends in continuous variables over time; user may pass historical events which are denoted by dashed vertical lines on the plot.
-- `margot_plot_slope_covariate()` descriptive trends by covariates over time. 
+- `margot_plot_slope_covariate()` descriptive trends by covariates over time.
 - `margot_plot_bloxplot()` descriptive trends using boxplots + facets.
 - `prepare_panel_data()`helper function to get panel data into shape for plotting response timelines for repeated measures studies.
 -  `margot_response_timeline()` plot histogram of response timelines for repeated measures studies.
 
 ## Improved
 
-- `here_save_qs()` and `here_read_qs()` report where and object was saved and how large it is. 
+- `here_save_qs()` and `here_read_qs()` report where and object was saved and how large it is.
 - `here_save()`and `here_read()`, ditto, and also ask users to specify a directory path, defaulting to `push_mods` if none is supplied
 
 
@@ -3569,19 +3590,19 @@ These deprecated functions will continue to work but will issue warnings. They w
 # [2024-08-30] margot 0.2.1.33
 
 ## New
-* `read_multiple_images()` utility function to read batchs of images, for presentations, articles etc. 
+* `read_multiple_images()` utility function to read batchs of images, for presentations, articles etc.
 
 # [2024-08-30] margot 0.2.1.32
 
 ## New
 
-* `margot_plot_batch_rate`, creates and save rate plots from multiple causal forests outputs.. 
+* `margot_plot_batch_rate`, creates and save rate plots from multiple causal forests outputs..
 
 # [2024-08-29] margot 0.2.1.31
 
 ## Improved
 
-* `margot_batch_policy()` allows user to save plots automatically, with different sizes and resolutions. 
+* `margot_batch_policy()` allows user to save plots automatically, with different sizes and resolutions.
 
 # [2024-08-29] margot 0.2.1.30
 
@@ -3610,19 +3631,19 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## New
 
-* `margot_plot_exposure()` - utility to plot change in the exposure variable from baseline. 
+* `margot_plot_exposure()` - utility to plot change in the exposure variable from baseline.
 * `margot_size()` - utility to check size of object
 
 ## Improved
 
-* `margot_summary_table()` - now provides optional graphs to show densities/distributions of the exposure and outcomes at baseline, exposure waves, and end of study. 
+* `margot_summary_table()` - now provides optional graphs to show densities/distributions of the exposure and outcomes at baseline, exposure waves, and end of study.
 
 
 # [2024-08-27] margot 0.2.1.26
 
 ## Improved
 
-* `margot_plot()` - consistent names for results table if these are modified using the new `label_mapping` option. 
+* `margot_plot()` - consistent names for results table if these are modified using the new `label_mapping` option.
 * `here_save_qs()` and `here_read_qs()` minor tweaks.
 
 # [2024-08-27] margot 0.2.1.25
@@ -3661,7 +3682,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## Improved
 
-* `margot_create_bibliography` now prints binary tags correctly.  Improved presentation of items, with measures first. 
+* `margot_create_bibliography` now prints binary tags correctly.  Improved presentation of items, with measures first.
 
 * `boilerplate_methods_variables` now accepts `margot_create_bibliography`.
 
@@ -3669,14 +3690,14 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## Improved
 
-* `margot_create_database` further improved: deleted unnecessary prompts, back_up function in place. 
+* `margot_create_database` further improved: deleted unnecessary prompts, back_up function in place.
 
 
 # [2024-08-21] margot 0.2.1.20
 
 ## Improved
 
-* `boilerplate_measures` and `margot_create_bibliography` better printout.  However, again, must develop a package specifically for boilerplates. 
+* `boilerplate_measures` and `margot_create_bibliography` better printout.  However, again, must develop a package specifically for boilerplates.
 
 
 # [2024-08-21] margot 0.2.1.19
@@ -3710,15 +3731,15 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## Improved
 
-* `margot_plot_policy_tree()`, `margot_plot_qini`, `margot_plot_decision_tree` defaults to nice labels, with informative messages. 
+* `margot_plot_policy_tree()`, `margot_plot_qini`, `margot_plot_decision_tree` defaults to nice labels, with informative messages.
 
 # [2024-08-21] margot 0.2.1.14
 
 ## New
 
-* `margot_interpret_marginal` has consistent syntax with `margot_plot`. 
-* `transform_table_rownames` to allow for nicer tables with clear labels. 
-* overhauled `margot_plot` function so that it produces nice labels, and so that it also generates an interpretation. 
+* `margot_interpret_marginal` has consistent syntax with `margot_plot`.
+* `transform_table_rownames` to allow for nicer tables with clear labels.
+* overhauled `margot_plot` function so that it produces nice labels, and so that it also generates an interpretation.
 
 ## Improved
 
@@ -3748,9 +3769,9 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## New
 
-* `margot_create_database`: allows for creation of bibliography databases. 
-* `margot_merge_databases`: allows for merging of bibliography databases. 
-* `margot_create_bibliography`: purpose-build for appendices in which all measures are reported. 
+* `margot_create_database`: allows for creation of bibliography databases.
+* `margot_merge_databases`: allows for merging of bibliography databases.
+* `margot_create_bibliography`: purpose-build for appendices in which all measures are reported.
 
 
 ## Improved
@@ -3766,7 +3787,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## Improved
 * `boilerplate_measures` overhauled to allow bibliography by sections (for outcomewide studies)
-* considerably improved reporting in `boilerplate_methods`, including: selective sections to report. 
+* considerably improved reporting in `boilerplate_methods`, including: selective sections to report.
 * overhauled `boilerplate_methods` for simple and clear reporting
 * simplified `biolerplate_methods_variables` to act mostly as a wrapper for `boilerplate_measures`
 
@@ -3778,16 +3799,16 @@ These deprecated functions will continue to work but will issue warnings. They w
 ## Improved
 
 * baseline_missing_data_proportion passed to `boilerplate_methods_missing_data`.
-* all boilerplate functions now accessible with package (not just internal), allowing for better selective use. 
+* all boilerplate functions now accessible with package (not just internal), allowing for better selective use.
 * allow selective printing of `boilerplate_methods`
 
 # [2024-08-18] margot 0.2.1.8
 
 ## New
 
-* `boilerplate_methods` function allows first pass automated reporting. 
+* `boilerplate_methods` function allows first pass automated reporting.
 *  helper functions include: `boilerplate_methods_sample`, `boilerplate_methods_eligibility_criteria`, `boilerplate_methods_identification_assumptions`, `boilerplate_methods_statistical_estimator`, `boilerplate_methods_confounding_control`, `boilerplate_methods_missing_data`, `boilerplate_methods_causal_interventions`
-* implemented 
+* implemented
 
 ## Improved
 
@@ -3810,7 +3831,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 ## New
 
 * `boilerplate_measures` produces an appendix of measures and items uses from variable inputs (for Quarto manuscripts).
-* `manager_boilerplate_measures` allows to you add / modify an existing database. 
+* `manager_boilerplate_measures` allows to you add / modify an existing database.
 
 ## Improved
 
@@ -3826,7 +3847,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## New
 
-* `margot_adjust_weights` to streamline creating inverse probability of censoring weights longitudinally, allowing for sample_weights at baseline. 
+* `margot_adjust_weights` to streamline creating inverse probability of censoring weights longitudinally, allowing for sample_weights at baseline.
 
 # [2024-08-14] margot 0.2.1.3
 
@@ -3837,7 +3858,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## Restored
 
-* `coloured_histogram()` back by popular demand. 
+* `coloured_histogram()` back by popular demand.
 
 ## Improved
 
@@ -3847,7 +3868,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## Improved
 
-* `margot_plot_policy_combo`, `margot_policy_tree`, `margot_batch_policy` and  now accepts arguments for `margot_plot_decision_tree` and `margot_plot_policy_tree`, leading to customisable policy visualisations. 
+* `margot_plot_policy_combo`, `margot_policy_tree`, `margot_batch_policy` and  now accepts arguments for `margot_plot_decision_tree` and `margot_plot_policy_tree`, leading to customisable policy visualisations.
 
 * Bigger defaults for x and y axis text in `margot_plot_policy_tree` for legibility.
 
@@ -3856,14 +3877,14 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## New
 
-* `margot_batch_policy` runs `margot_policy_tree` for all outcomes in a model. 
+* `margot_batch_policy` runs `margot_policy_tree` for all outcomes in a model.
 
 
 # [2024-08-11] margot 0.2.1.0
 
 ## New
 
-* `margot_plot_policy_combo`: creates a combination plot for `margot_plot_decision_tree` and `margot_plot_policy_tree()`, easing the burden of interpretation. 
+* `margot_plot_policy_combo`: creates a combination plot for `margot_plot_decision_tree` and `margot_plot_policy_tree()`, easing the burden of interpretation.
 
 
 ## Improved
@@ -3894,7 +3915,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## New
 
-* `margot_plot_decision_tree` creates policy tree decision rule graphs in a ggplot2 format, so that the graph may be combined `margot_plot_policy` to more effectively communicate decision rules to policy makers. 
+* `margot_plot_decision_tree` creates policy tree decision rule graphs in a ggplot2 format, so that the graph may be combined `margot_plot_policy` to more effectively communicate decision rules to policy makers.
 
 * `debug_node_data_with_positions` internal so that `margot_plot_decision_tree` works properly
 
@@ -3916,14 +3937,14 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## Improved
 
-* `margot_plot` will now work even if no title or subtitle is passed. 
-* `margot_plot_policy_tree`: focus is not simply on plotting, rather than doing both plotting and interpreting. 
+* `margot_plot` will now work even if no title or subtitle is passed.
+* `margot_plot_policy_tree`: focus is not simply on plotting, rather than doing both plotting and interpreting.
 * `margot_interpret_table`: no longer requires specification of estimate. General explanation printed separately (as it is only used once).
 
 # [2024-08-8] margot 0.2.0.6
 
 ## Improved
-* Greatly enhanced the functionality of `margot_plot_policy_tree` so that it explains the result. 
+* Greatly enhanced the functionality of `margot_plot_policy_tree` so that it explains the result.
 
 ## Fixed
 
@@ -3939,7 +3960,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 ## New
 
-* `margot_process_longitudinal_data` orders correctly for `lmtp` models by updating the censoring column `not_lost` such that it handles missing responses as well as attrition. The function additionally automatically dummy codes ordinal variables and standardises continuous variables. Presently it is only implemented for three waves, but in the future it will be expanded to handle arbitrarily many. 
+* `margot_process_longitudinal_data` orders correctly for `lmtp` models by updating the censoring column `not_lost` such that it handles missing responses as well as attrition. The function additionally automatically dummy codes ordinal variables and standardises continuous variables. Presently it is only implemented for three waves, but in the future it will be expanded to handle arbitrarily many.
 
 ## Fixed
 
@@ -3962,7 +3983,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 * `coloured_histogram()` and `coloured_histogram_quantile()` are deprecated.
   Now use the new `margot_plot_hist()` instead.
-* `create_ordered_variable_custom` is deprecated. Now use `created_ordered_variable`function with `custom_breaks = c(..)` to obtain custom breaks. 
+* `create_ordered_variable_custom` is deprecated. Now use `created_ordered_variable`function with `custom_breaks = c(..)` to obtain custom breaks.
 
 ## New
 * `margot_plot_hist()` for plotting distributions of the exposure variable
@@ -3973,7 +3994,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 
 # margot 0.2.0
 
-* improved subgroup comparison function 
+* improved subgroup comparison function
 * deprecated `compare_group_means` function, with `compare_group`allowing for contrasts of on both the causal difference and relative risk scales.
 * new wrapper functions functions for `grf` plus visualising results.
 
@@ -4018,7 +4039,7 @@ These deprecated functions will continue to work but will issue warnings. They w
 ### Notes
 - All changes are backward compatible. New parameters default to previous behavior.
 # [2025-09-19] margot 1.0.240 - 1.0.241
- 
+
 # [2025-09-25] margot 1.0.242
 
 ### New

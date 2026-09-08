@@ -24,7 +24,8 @@
 #' @param save_output Logical; if TRUE, saves the result list as RDS.
 #' @param use_timestamp Logical; append timestamp to saved filename.
 #' @param base_filename,prefix,save_path Save controls passed to [here_save()].
-#' @param original_df Optional original data for back‑transform helpers.
+#' @param original_df Optional original data for legacy transformation inference. Saved `scale_info` is preferred.
+#' @param scale_info Optional saved outcome transformation metadata as documented in [margot_plot()]. May also be supplied through `options` when this argument is omitted.
 #' @param bold_rows Logical; bold rows above the E‑value bound threshold.
 #' @param rename_cols Logical; if TRUE, rename E‑value columns per `col_renames`.
 #' @param col_renames Named list of column renames.
@@ -63,7 +64,8 @@ margot_plot_dev <- function(
       "E-Value bound" = "E_Val_bound"
     ),
     rename_ate = FALSE,
-    rename_evalue = FALSE) {
+    rename_evalue = FALSE,
+    scale_info = NULL) {
 
   type              <- match.arg(type)
   order             <- match.arg(order)
@@ -120,6 +122,7 @@ margot_plot_dev <- function(
     intervention_type = "exposure_shift"
   )
   opts <- modifyList(modifyList(default_opts, options), list(...))
+  if (missing(scale_info)) scale_info <- opts$scale_info
 
   if (adjust != "none") {
     cli::cli_alert_info("applying {adjust} correction (alpha = {alpha}) to confidence intervals")
@@ -158,8 +161,8 @@ margot_plot_dev <- function(
   }
 
   # optional back‑transform to original scale
-  if (!is.null(original_df)) {
-    .data <- back_transform_estimates(.data, original_df)
+  if (!is.null(original_df) || !is.null(scale_info)) {
+    .data <- back_transform_estimates(.data, original_df, scale_info = scale_info, type = type)
   }
 
   # transform display labels
@@ -207,7 +210,7 @@ margot_plot_dev <- function(
     sorted_df,
     ggplot2::aes(y = outcome, x = !!rlang::sym(eff_col), xmin = `2.5 %`, xmax = `97.5 %`, colour = Estimate)
   ) +
-    ggplot2::geom_errorbarh(height = 0.3, linewidth = opts$linewidth, position = ggplot2::position_dodge(0.3)) +
+    ggplot2::geom_errorbar(orientation = "y", width = 0.3, linewidth = opts$linewidth, position = ggplot2::position_dodge(0.3)) +
     ggplot2::geom_point(size = opts$point_size, position = ggplot2::position_dodge(0.3)) +
     ggplot2::geom_vline(xintercept = null_val) +
     ggplot2::scale_color_manual(values = opts$colors) +
@@ -244,7 +247,8 @@ margot_plot_dev <- function(
     df                    = sorted_df,
     type                  = type,
     order                 = order,
-    original_df           = original_df,
+    original_df           = NULL,
+    custom_order          = custom_order,
     e_val_bound_threshold = thresh,
     adjust                = adjust,
     alpha                 = alpha,
@@ -320,7 +324,9 @@ margot_interpret_marginal_dev <- function(
     effect_type = "ATE",
     intervention_type = c("exposure_shift", "ipsi"),
     delta = 1,
-    sd = 1) {
+    sd = 1,
+    scale_info = NULL,
+    custom_order = NULL) {
 
   type <- match.arg(type)
   order <- match.arg(order)
@@ -329,31 +335,30 @@ margot_interpret_marginal_dev <- function(
   alpha <- as.numeric(alpha)[1]
 
   if (!"unit" %in% names(df)) df$unit <- ""
-  df <- group_tab(df, type = type, order = order)
-  if (!is.null(original_df)) df <- back_transform_estimates(df, original_df)
-
-  eff_info <- detect_effect_column_dev(df)
-  effect_col <- if (is.null(eff_info)) if (type == "RR") "E[Y(1)]/E[Y(0)]" else "E[Y(1)]-E[Y(0)]" else eff_info$column
-
-  # filter reliable effects per bound threshold
-  df_f <- df %>% dplyr::filter(E_Value > 1, E_Val_bound > e_val_bound_threshold)
-  if (nrow(df_f) == 0) {
-    no_effects_msg <- "No reliable effects are evident."
-    return(list(interpretation = no_effects_msg, transformed_table = df))
+  if (!is.null(original_df) || !is.null(scale_info)) {
+    df <- back_transform_estimates(df, original_df, scale_info = scale_info, type = type)
   }
+  df <- group_tab(df, type = type, order = order, custom_order = custom_order)
 
-  # compact bullets
-  df_f <- group_tab(df_f, type = type, order = order)
-  bullets <- df_f %>% dplyr::rowwise() %>% dplyr::mutate(
-    effect_text = sprintf(
-      "%.2f [%.2f, %.2f] (E-value: %.2f; bound: %.2f)",
-      .data[[effect_col]], `2.5 %`, `97.5 %`, E_Value, E_Val_bound)
-  ) %>% dplyr::pull(effect_text)
+  # retain the experimental interface's strict evidence threshold
+  reporting_df <- df
+  selected <- !is.na(df$E_Value) & !is.na(df$E_Val_bound) &
+    df$E_Value > 1 & df$E_Val_bound > e_val_bound_threshold
+  reporting_df$E_Value[!selected] <- NA_real_
+  interpretation <- margot_interpret_marginal(
+    df = reporting_df,
+    type = type,
+    order = order,
+    custom_order = custom_order,
+    original_df = NULL,
+    e_val_bound_threshold = e_val_bound_threshold,
+    adjust = adjust,
+    alpha = alpha,
+    include_adjust_note = include_adjust_note,
+    effect_type = effect_type
+  )$interpretation
+  interpretation <- sub("lower bound >= ", "lower bound > ", interpretation, fixed = TRUE)
 
-  adj_note <- if (include_adjust_note && adjust != "none") paste0("Confidence intervals adjusted by ", adjust, " (alpha=", alpha, "). ") else ""
-  intro <- "Reliable effects (E-value lower bound above the reporting threshold):\n\n"
-  list(
-    interpretation    = paste0(adj_note, intro, paste0("- ", bullets, collapse = "\n")),
-    transformed_table = df
-  )
+  table <- df[rev(seq_len(nrow(df))), , drop = FALSE]
+  list(interpretation = interpretation, transformed_table = table)
 }

@@ -49,7 +49,7 @@ make_margot_interpret_original_df <- function() {
 }
 
 test_that("margot_interpret_marginal includes original-scale interpretations", {
-  result <- margot_interpret_marginal(
+  result <- suppressWarnings(margot_interpret_marginal(
     df = make_margot_interpret_test_data(),
     type = "RD",
     order = "alphabetical",
@@ -57,9 +57,22 @@ test_that("margot_interpret_marginal includes original-scale interpretations", {
     e_val_bound_threshold = 1.2,
     adjust = "none",
     include_adjust_note = FALSE
-  )
+  ))
 
   expect_match(result$interpretation, "on the original scale", fixed = TRUE)
   expect_match(result$interpretation, "minutes", fixed = TRUE)
-  expect_match(result$interpretation, "average increase", fixed = TRUE)
+  expect_match(result$interpretation, "ratio of geometric means of outcome + 1", fixed = TRUE)
+  expect_false(grepl("average increase|population-based|reliable causal evidence", result$interpretation))
+})
+
+
+test_that("supplied interval coverage survives tables and automatic prose", {
+  input <- make_margot_interpret_test_data()[1:2, ]
+  input$confidence_level <- c(0.90, 0.99)
+  result <- margot_plot(input, adjust = "none", include_coefficients = FALSE)
+  expect_setequal(result$transformed_table$confidence_level, c(0.90, 0.99))
+  expect_match(result$interpretation, "coverage varies by outcome")
+  expect_match(result$interpretation, "90% CI", fixed = TRUE)
+  expect_match(result$interpretation, "99% CI", fixed = TRUE)
+  expect_false(grepl("95%", result$interpretation, fixed = TRUE))
 })

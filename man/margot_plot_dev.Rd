@@ -29,7 +29,8 @@ margot_plot_dev(
   rename_cols = FALSE,
   col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
   rename_ate = FALSE,
-  rename_evalue = FALSE
+  rename_evalue = FALSE,
+  scale_info = NULL
 )
 }
 \arguments{
@@ -66,7 +67,7 @@ upstream helpers, e.g., group_tab()).}
 
 \item{base_filename, prefix, save_path}{Save controls passed to [here_save()].}
 
-\item{original_df}{Optional original data for back‑transform helpers.}
+\item{original_df}{Optional original data for legacy transformation inference. Saved `scale_info` is preferred.}
 
 \item{bold_rows}{Logical; bold rows above the E‑value bound threshold.}
 
@@ -77,6 +78,8 @@ upstream helpers, e.g., group_tab()).}
 \item{rename_ate}{Logical or character; if TRUE/character, rename the effect column.}
 
 \item{rename_evalue}{Logical; if TRUE, rename E‑value column headers to display form.}
+
+\item{scale_info}{Optional saved outcome transformation metadata as documented in [margot_plot()]. May also be supplied through `options` when this argument is omitted.}
 }
 \value{
 A list with `plot`, `interpretation`, and `transformed_table`.

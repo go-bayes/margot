@@ -262,6 +262,12 @@
 
 - [`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md)
   : Create a Margot Plot with Proper Multiplicity Correction
+- [`margot_plot_ate()`](https://go-bayes.github.io/margot/reference/margot_plot_ate.md)
+  : Plot Average Treatment Effect Estimates
+- [`margot_table_ate()`](https://go-bayes.github.io/margot/reference/margot_table_ate.md)
+  : Tabulate Average Treatment Effect Estimates
+- [`margot_interpret_ate()`](https://go-bayes.github.io/margot/reference/margot_interpret_ate.md)
+  : Interpret Average Treatment Effect Estimates
 - [`margot_plot_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_tree.md)
   : Plot a policy tree (depth-adaptive)
 - [`margot_plot_policy_combo()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_combo.md)

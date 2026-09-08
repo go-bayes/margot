@@ -18,16 +18,26 @@ margot_interpret_marginal(
   adjust = c("none", "bonferroni", "holm", "BH"),
   alpha = 0.05,
   include_adjust_note = TRUE,
-  effect_type = "ATE"
+  effect_type = "ATE",
+  scale_info = NULL,
+  custom_order = NULL
 )
 ```
 
 ## Arguments
 
+- df:
+
+  Estimate table accepted by \[margot_plot()\].
+
 - include_adjust_note:
 
   logical; if \`FALSE\`, any reference to adjustment methods is omitted.
   default \`TRUE\`.
+
+- effect_type:
+
+  Label identifying ATE, ATT, ATC, ATO or an association.
 
 ## Value
 

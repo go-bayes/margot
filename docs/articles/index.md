@@ -1,5 +1,10 @@
 # Articles
 
+### Average-effect reporting
+
+- [Average-effect reporting and outcome
+  scales](https://go-bayes.github.io/margot/articles/ate-reporting-scales.md):
+
 ### GRF and policy trees
 
 - [Standard GRF and policy-tree

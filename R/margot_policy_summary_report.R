@@ -206,6 +206,8 @@ margot_policy_summary_report <- function(object,
     model_names <- ifelse(grepl("^model_", model_names), model_names, paste0("model_", model_names))
   }
 
+  margot_assert_policy_reporting_scale(model_names, original_df)
+
   model_depths <- setNames(rep(as.integer(depth), length(model_names)), model_names)
   if (!is.null(depths_by_model)) {
     if (is.null(names(depths_by_model))) {
@@ -535,6 +537,7 @@ margot_policy_summary_report <- function(object,
   trinfo <- list()
   if (!is.null(original_df)) {
     for (mn in model_names) {
+      margot_assert_policy_reporting_scale(mn, original_df)
       trinfo[[mn]] <- tryCatch(get_outcome_transformation_info(mn, original_df), error = function(e) NULL)
     }
   }

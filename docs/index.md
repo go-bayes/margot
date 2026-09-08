@@ -39,11 +39,15 @@ meaning to the statistical relationships we observe from data.
 
 `margot` is currently available only on GitHub. Install it with `pak`:
 
-`# install.packages("pak")`` ``pak``::`[`pak`](https://pak.r-lib.org/reference/pak.html)`(``"go-bayes/margot"``)`
+\
+`# install.packages("pak")`\
+`pak``::`[`pak`](https://pak.r-lib.org/reference/pak.html)`(``"go-bayes/margot"``)`
 
 If you prefer `remotes`, use:
 
-`# install.packages("remotes")`` ``remotes``::`[`install_github`](https://remotes.r-lib.org/reference/install_github.html)`(``"go-bayes/margot"``)`
+\
+`# install.packages("remotes")`\
+`remotes``::`[`install_github`](https://remotes.r-lib.org/reference/install_github.html)`(``"go-bayes/margot"``)`
 
 `margot` streamlines the estimation of marginal treatment effects such
 as the ATE and ATT. It also supports workflows for heterogeneous
@@ -66,7 +70,13 @@ resulting combined table, and passes that table directly to
 Its executable assertions require two ratio fits for two policies,
 compared with four fits under independent outcome-policy estimation.
 
-`example_path`` ``<-`` `[`system.file`](https://rdrr.io/r/base/system.file.html)`(`` `` ``"examples"``, ``"lmtp-fit-once-perfectionism.R"``,`` `` package ``=`` ``"margot"``,`` `` mustWork ``=`` ``TRUE`` ``)`` `[`sys.source`](https://rdrr.io/r/base/sys.source.html)`(``example_path``, envir ``=`` `[`new.env`](https://rdrr.io/r/base/environment.html)`(``parent ``=`` `[`globalenv`](https://rdrr.io/r/base/environment.html)`(``)``)``)`
+\
+`example_path`` ``<-`` `[`system.file`](https://rdrr.io/r/base/system.file.html)`(`\
+`  ``"examples"``, ``"lmtp-fit-once-perfectionism.R"``,`\
+`  package ``=`` ``"margot"``,`\
+`  mustWork ``=`` ``TRUE`\
+`)`\
+[`sys.source`](https://rdrr.io/r/base/sys.source.html)`(``example_path``, envir ``=`` `[`new.env`](https://rdrr.io/r/base/environment.html)`(``parent ``=`` `[`globalenv`](https://rdrr.io/r/base/environment.html)`(``)``)``)`
 
 Note that Margot is being actively developed, and is not currently in a
 stable state. Expect breaking changes.

@@ -46,6 +46,7 @@ margot_interpret_policy_tree <- function(model,
                                          policy_value_R = 499L,
                                          policy_value_seed = 42L,
                                          policy_value_ci_level = 0.95) {
+  if (include_conditional_means) margot_assert_policy_reporting_scale(model_name, original_df)
   cli::cli_alert_info("Starting policy tree interpretation for {model_name} (depth {max_depth})")
 
   output_format <- match.arg(output_format)
@@ -306,6 +307,7 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
                                                      use_math_notation = FALSE,
                                                      output_format = "bullet",
                                                      original_df = NULL) {
+  margot_assert_policy_reporting_scale(model_name, original_df)
   # get conditional means and other needed data
   conditional_means <- model$results[[model_name]]$conditional_means
   # fallback: if conditional means missing, approximate using DR scores on test set
@@ -681,6 +683,7 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
                 # Get transformation info if available
                 transform_info <- NULL
                 if (!is.null(original_df) && !is.null(model_name)) {
+                  margot_assert_policy_reporting_scale(model_name, original_df)
                   transform_info <- get_outcome_transformation_info(model_name, original_df)
                 }
 
@@ -773,6 +776,7 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
                 # Get transformation info if available
                 transform_info <- NULL
                 if (!is.null(original_df) && !is.null(model_name)) {
+                  margot_assert_policy_reporting_scale(model_name, original_df)
                   transform_info <- get_outcome_transformation_info(model_name, original_df)
                 }
 
@@ -876,6 +880,7 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
   # get transformation info if available
   transform_info <- NULL
   if (display_original_scale && !is.null(original_df) && !is.null(model_name)) {
+    margot_assert_policy_reporting_scale(model_name, original_df)
     transform_info <- get_outcome_transformation_info(model_name, original_df)
   }
 
