@@ -1,5 +1,8 @@
 # margot 1.2.0.9001 development
 
+- Depth-one policy projections now offer `jitter_method = "band_boundary"`: symmetric jitter bands remain centred on their predictor values, and the separator follows the inclusive band's edge. The horizontal width is reduced uniformly when neighbouring groups would overlap, including on transformed axes. Fitted cut labels and predictions are unchanged; this option is forwarded through `margot_plot_policy_combo()`. Existing defaults remain unchanged.
+
+
 - `margot_plot_policy_tree()` adds `jitter_method = "within_splits"` to keep each displayed point on its original side of every split, including values equal to the threshold. It supports transformed axes, explicit jitter widths and heights, and a reproducible seed. `margot_plot_policy_combo()` accepts these settings through `policy_tree_args`. Default `"standard"` jitter is unchanged and may cross cut lines; all action predictions still use the original covariates.
 
 - `margot_text_policy_tree()` can interpret stored cross-validation policy decisions and signed leaf summaries. It retains the training-selected comparator, checks stored arithmetic and the unrounded selection margin, and distinguishes leaf-score ranges from subgroup confidence intervals. It fits no model and computes no new policy value.

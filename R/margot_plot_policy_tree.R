@@ -59,7 +59,15 @@
 #'   containing the original value, preserving every displayed variable's tree
 #'   split inequality, including equality at the cut point. Bounds follow
 #'   continuous scale transformations. Predictions always use the original data.
-#'   Restricted jitter is a display device, not a model of measurement error.
+#'   `"band_boundary"` (depth one only) retains symmetric jitter and places the
+#'   separator at the outer edge of the inclusive jitter band. The width is capped
+#'   uniformly at 49% of the gap between the nearest observed values on opposite
+#'   sides, in transformed plotting coordinates. Closely spaced values therefore
+#'   receive little horizontal jitter. The tree and subtitle retain the fitted
+#'   cut point; the displaced line separates displayed bands, not numeric values
+#'   at the fitted threshold. With no observations on one side, horizontal jitter
+#'   is zero and the line stays at the fitted cut. Jitter is a display device,
+#'   not a model of measurement error.
 #'
 #' @return A `ggplot` object (depth 1) or a patchwork object (depth 2).
 #'
@@ -88,8 +96,11 @@ margot_plot_policy_tree <- function(
     jitter_width = 0.3,
     jitter_height = NULL,
     jitter_seed = NA,
-    jitter_method = c("standard", "within_splits")) {
+    jitter_method = c("standard", "within_splits", "band_boundary")) {
   jitter_method <- match.arg(jitter_method)
+  if (jitter_method == "band_boundary" && max_depth != 1L) {
+    stop("band_boundary jitter currently requires max_depth = 1", call. = FALSE)
+  }
   cli::cli_h1("Margot Plot Policy Tree")
 
   # pull out requested tree
@@ -210,18 +221,30 @@ margot_plot_policy_tree <- function(
       values = setNames(c(16, 17, 15, 3, 4, 18)[seq_along(act_labels)], act_labels)
     )
 
+    point_position <- if (jitter_method == "band_boundary") {
+      .margot_policy_band_position(x_vec, cp, jitter_width,
+        if (is.null(jitter_height)) 0.06 else jitter_height, jitter_seed)
+    } else {
+      .margot_policy_position_jitter(jitter_width,
+        if (is.null(jitter_height)) 0.06 else jitter_height,
+        jitter_seed, jitter_method, x_splits = cp)
+    }
+    split_line <- ggplot2::geom_vline(xintercept = cp, linetype = "dashed")
+    if (jitter_method == "band_boundary") {
+      split_line$position <- .margot_policy_band_position(
+        x_vec, cp, jitter_width, 0, jitter_seed, line = TRUE)
+    }
+
     # create the plot
     ggplot2::ggplot() +
       ggplot2::geom_point(
         data = plot_df,
         ggplot2::aes(x = .data$x, y = .data$y, colour = .data$pred, shape = .data$pred),
-        position = .margot_policy_position_jitter(
-          jitter_width, if (is.null(jitter_height)) 0.06 else jitter_height,
-          jitter_seed, jitter_method, x_splits = cp),
+        position = point_position,
         alpha = point_alpha,
         size = 1.5 # slightly larger to make shapes visible
       ) +
-      ggplot2::geom_vline(xintercept = cp, linetype = "dashed") +
+      split_line +
       colour_scale +
       shape_scale +
       ggplot2::labs(

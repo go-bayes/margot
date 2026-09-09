@@ -20,7 +20,7 @@ margot_plot_policy_tree(
   jitter_width = 0.3,
   jitter_height = NULL,
   jitter_seed = NA,
-  jitter_method = c("standard", "within_splits")
+  jitter_method = c("standard", "within_splits", "band_boundary")
 )
 }
 \arguments{
@@ -68,7 +68,15 @@ for reproducible positions without changing the caller's random-number state.}
 containing the original value, preserving every displayed variable's tree
 split inequality, including equality at the cut point. Bounds follow
 continuous scale transformations. Predictions always use the original data.
-Restricted jitter is a display device, not a model of measurement error.}
+`"band_boundary"` (depth one only) retains symmetric jitter and places the
+separator at the outer edge of the inclusive jitter band. The width is capped
+uniformly at 49% of the gap between the nearest observed values on opposite
+sides, in transformed plotting coordinates. Closely spaced values therefore
+receive little horizontal jitter. The tree and subtitle retain the fitted
+cut point; the displaced line separates displayed bands, not numeric values
+at the fitted threshold. With no observations on one side, horizontal jitter
+is zero and the line stays at the fitted cut. Jitter is a display device,
+not a model of measurement error.}
 }
 \value{
 A `ggplot` object (depth 1) or a patchwork object (depth 2).

@@ -64,3 +64,48 @@
     }
   )
 }
+
+# place a separator at the inclusive band's edge, with symmetric jitter for all rows.
+.margot_policy_band_layout <- function(x, cut, width, upper_closed = TRUE) {
+  x <- x[is.finite(x)]
+  below <- if (upper_closed) x <= cut else x < cut
+  if (!any(below) || all(below) || width == 0) {
+    return(list(width = 0, boundary = cut))
+  }
+  lower <- max(x[below])
+  upper <- min(x[!below])
+  width <- min(width, 0.49 * (upper - lower))
+  list(width = width, boundary = if (upper_closed) lower + width else upper - width)
+}
+
+# resolve band geometry after scale transformation for matching point and line layers.
+.margot_policy_band_position <- function(x, cut, width, height, seed, line = FALSE) {
+  if (any(!is.finite(c(width, height))) || any(c(width, height) < 0)) {
+    stop("jitter widths and heights must be finite non-negative numbers", call. = FALSE)
+  }
+  ggplot2::ggproto(NULL, ggplot2::PositionJitter,
+    width = width, height = height, seed = seed,
+    reference_x = x, cut = cut, line = line,
+    required_aes = if (line) character() else c("x", "y"),
+    setup_params = function(self, data) {
+      params <- ggplot2::position_jitter(width = self$width,
+        height = self$height, seed = self$seed)$setup_params(data)
+      params$reference_x <- self$reference_x
+      params$cut <- self$cut
+      params$line <- self$line
+      params
+    },
+    compute_panel = function(data, params, scales) {
+      scale <- scales$x
+      inverse <- scale$get_transformation()$inverse
+      layout <- .margot_policy_band_layout(scale$transform(params$reference_x),
+        scale$transform(params$cut), params$width, !isTRUE(inverse(1) < inverse(0)))
+      if (params$line) {
+        data$xintercept <- layout$boundary
+        return(data)
+      }
+      params$width <- layout$width
+      ggplot2::PositionJitter$compute_panel(data, params, scales)
+    }
+  )
+}
