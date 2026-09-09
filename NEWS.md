@@ -1,5 +1,7 @@
 # margot 1.2.0.9001 development
 
+- `margot_plot_policy_tree()` adds `jitter_method = "within_splits"` to keep each displayed point on its original side of every split, including values equal to the threshold. It supports transformed axes, explicit jitter widths and heights, and a reproducible seed. `margot_plot_policy_combo()` accepts these settings through `policy_tree_args`. Default `"standard"` jitter is unchanged and may cross cut lines; all action predictions still use the original covariates.
+
 - `margot_text_policy_tree()` can interpret stored cross-validation policy decisions and signed leaf summaries. It retains the training-selected comparator, checks stored arithmetic and the unrounded selection margin, and distinguishes leaf-score ranges from subgroup confidence intervals. It fits no model and computes no new policy value.
 - Tree interpretations describe assigned actions rather than advice or recommendations. The bullet introduction no longer claims that splits establish treatment-effect modification. The interpreter follows stored child links, including pruned or constant trees, and no longer assumes a half-sample training split. Failed conditional-mean interpretation raises an error instead of inserting an editing message into public prose.
 

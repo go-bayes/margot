@@ -16,7 +16,11 @@ margot_plot_policy_tree(
   label_mapping = NULL,
   label_options = list(remove_tx_prefix = TRUE, remove_z_suffix = TRUE,
     remove_underscores = TRUE, use_title_case = TRUE),
-  ...
+  ...,
+  jitter_width = 0.3,
+  jitter_height = NULL,
+  jitter_seed = NA,
+  jitter_method = c("standard", "within_splits")
 )
 }
 \arguments{
@@ -49,7 +53,22 @@ to `transform_label()`.}
 `transform_label()` (see that function for details).}
 
 \item{...}{Extra arguments forwarded **only** to the depth-2 helper
-(e.g. `title_size`, `jitter_width`, etc.).}
+(e.g. `title_size`).}
+
+\item{jitter_width}{Maximum horizontal displacement in plotted coordinates; default 0.3.}
+
+\item{jitter_height}{Maximum vertical displacement in plotted coordinates.
+`NULL` retains 0.06 for depth one and 0.3 for depth two.}
+
+\item{jitter_seed}{Seed passed to `ggplot2::position_jitter`; supply an integer
+for reproducible positions without changing the caller's random-number state.}
+
+\item{jitter_method}{`"standard"` retains ordinary symmetric jitter.
+`"within_splits"` samples within the displacement bounds and the interval
+containing the original value, preserving every displayed variable's tree
+split inequality, including equality at the cut point. Bounds follow
+continuous scale transformations. Predictions always use the original data.
+Restricted jitter is a display device, not a model of measurement error.}
 }
 \value{
 A `ggplot` object (depth 1) or a patchwork object (depth 2).

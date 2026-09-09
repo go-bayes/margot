@@ -48,7 +48,18 @@
 #' @param label_options List of logical flags understood by
 #'   `transform_label()` (see that function for details).
 #' @param ... Extra arguments forwarded **only** to the depth-2 helper
-#'   (e.g. `title_size`, `jitter_width`, etc.).
+#'   (e.g. `title_size`).
+#' @param jitter_width Maximum horizontal displacement in plotted coordinates; default 0.3.
+#' @param jitter_height Maximum vertical displacement in plotted coordinates.
+#'   `NULL` retains 0.06 for depth one and 0.3 for depth two.
+#' @param jitter_seed Seed passed to `ggplot2::position_jitter`; supply an integer
+#'   for reproducible positions without changing the caller's random-number state.
+#' @param jitter_method `"standard"` retains ordinary symmetric jitter.
+#'   `"within_splits"` samples within the displacement bounds and the interval
+#'   containing the original value, preserving every displayed variable's tree
+#'   split inequality, including equality at the cut point. Bounds follow
+#'   continuous scale transformations. Predictions always use the original data.
+#'   Restricted jitter is a display device, not a model of measurement error.
 #'
 #' @return A `ggplot` object (depth 1) or a patchwork object (depth 2).
 #'
@@ -73,7 +84,12 @@ margot_plot_policy_tree <- function(
       remove_underscores = TRUE,
       use_title_case     = TRUE
     ),
-    ...) {
+    ...,
+    jitter_width = 0.3,
+    jitter_height = NULL,
+    jitter_seed = NA,
+    jitter_method = c("standard", "within_splits")) {
+  jitter_method <- match.arg(jitter_method)
   cli::cli_h1("Margot Plot Policy Tree")
 
   # pull out requested tree
@@ -196,11 +212,12 @@ margot_plot_policy_tree <- function(
 
     # create the plot
     ggplot2::ggplot() +
-      ggplot2::geom_jitter(
+      ggplot2::geom_point(
         data = plot_df,
         ggplot2::aes(x = .data$x, y = .data$y, colour = .data$pred, shape = .data$pred),
-        width = 0.30,
-        height = 0.06,
+        position = .margot_policy_position_jitter(
+          jitter_width, if (is.null(jitter_height)) 0.06 else jitter_height,
+          jitter_seed, jitter_method, x_splits = cp),
         alpha = point_alpha,
         size = 1.5 # slightly larger to make shapes visible
       ) +
@@ -233,7 +250,11 @@ margot_plot_policy_tree <- function(
           point_alpha = point_alpha,
           theme_function = theme_function,
           label_mapping = label_mapping,
-          label_options = label_options
+          label_options = label_options,
+          jitter_width = jitter_width,
+          jitter_height = if (is.null(jitter_height)) 0.3 else jitter_height,
+          jitter_seed = jitter_seed,
+          jitter_method = jitter_method
         ),
         list(...)
       )
@@ -278,6 +299,8 @@ margot_plot_policy_tree_depth2 <- function(
     plot_selection = "both",
     shade_fill = "#6e6e6e",
     shade_alpha = 0.35,
+    jitter_seed = NA,
+    jitter_method = "standard",
     ...) {
   # ---- nudge fractions for annotation -----------------------------------
   nudge_frac_x <- 0.10 # top-of-panel label
@@ -373,6 +396,14 @@ margot_plot_policy_tree_depth2 <- function(
   var_label2 <- tv(var2)
   var_label3 <- tv(var3)
 
+  # collect every threshold on a plotted variable, including repeated splits.
+  split_points <- function(variable) {
+    unlist(lapply(nodes, function(node) {
+      if (!is.null(node$split_variable) &&
+          identical(resolve_var(node$split_variable), variable)) node$split_value else NULL
+    }), use.names = FALSE)
+  }
+
   # ---- panel constructor -----------------------------------------------
   build_panel <- function(x, y, xlab, ylab, xsp, ysp,
                           shade_side, xvar, yvar) {
@@ -432,12 +463,12 @@ margot_plot_policy_tree_depth2 <- function(
     )
 
     # --- points with both colour and shape --------------------------------
-    p <- p + ggplot2::geom_jitter(
+    p <- p + ggplot2::geom_point(
       data = plot_data_filtered,
       ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred, shape = pred),
       alpha = point_alpha,
-      width = jitter_width,
-      height = jitter_height,
+      position = .margot_policy_position_jitter(jitter_width, jitter_height,
+        jitter_seed, jitter_method, split_points(xvar), split_points(yvar)),
       size = 1.5 # slightly larger to make shapes visible
     )
 
