@@ -277,12 +277,27 @@ margot_table_policy_tree <- function(object,
 #' @param collapse Logical. If \code{TRUE}, return one character string;
 #'   otherwise return a character vector of sentences.
 #'
+#' @param object Optional \code{margot_policy_tree_cv} object. With source
+#'   \code{heldout_cv}, append an interpretation of its stored selected-depth
+#'   values and leaf summaries. No policy is fitted or re-evaluated.
+#' @param action_names Named character vector with \code{control} and
+#'   \code{treated} labels, in that order of action coding.
+#' @param label_mapping Optional named labels for outcome identifiers.
+#' @param value_units Character scalar describing the stored outcome units.
+#' @param digits Integer from 0 to 8; display precision only.
+#' @param include_definitions Logical; prepend the general explanatory text.
 #' @return A character string or character vector.
 #' @export
 margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display_tree"),
                                     include_ci = TRUE,
                                     include_plot_convention = TRUE,
-                                    collapse = TRUE) {
+                                    collapse = TRUE,
+                                    object = NULL,
+                                    action_names = c(control = "control", treated = "treatment"),
+                                    label_mapping = NULL,
+                                    value_units = "stored outcome units",
+                                    digits = 3L,
+                                    include_definitions = TRUE) {
   # return reusable text that avoids over-interpreting selected leaves.
   source <- match.arg(source)
   sentences <- c(
@@ -316,7 +331,58 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
     )
   }
 
+  if (!isTRUE(include_definitions)) sentences <- character()
+  if (!is.null(object)) {
+    if (source != "heldout_cv") stop("object requires source = 'heldout_cv'", call. = FALSE)
+    sentences <- c(sentences, .margot_text_policy_cv_values(
+      object, action_names, label_mapping, value_units, digits
+    ))
+  }
   if (isTRUE(collapse)) paste(sentences, collapse = " ") else sentences
+}
+
+# interpret stored cross-validation decisions and signed leaf summaries without refitting.
+.margot_text_policy_cv_values <- function(object, action_names, label_mapping, value_units, digits) {
+  if (!inherits(object, "margot_policy_tree_cv")) stop("object must be a margot_policy_tree_cv object", call. = FALSE)
+  if (!is.numeric(digits) || length(digits) != 1L || !is.finite(digits) || digits != as.integer(digits) || digits < 0 || digits > 8) stop("digits must be an integer from 0 to 8", call. = FALSE)
+  if (!is.character(action_names) || !all(c("control", "treated") %in% names(action_names)) || anyNA(action_names) || any(!nzchar(action_names))) stop("action_names must name control and treated", call. = FALSE)
+  if (!is.character(value_units) || length(value_units) != 1L || is.na(value_units) || !nzchar(value_units)) stop("value_units must describe the stored outcome scale", call. = FALSE)
+  decisions <- object$policy_selection
+  fields <- c("model", "outcome", "selected_tree_depth", "value_selected_tree", "value_honest_constant", "tree_minus_honest_constant", "min_gain_over_constant", "preferred_policy")
+  if (!is.data.frame(decisions) || !nrow(decisions) || !all(fields %in% names(decisions))) stop("stored policy_selection is incomplete", call. = FALSE)
+  if (anyDuplicated(decisions$model)) stop("policy_selection must contain one decision per model", call. = FALSE)
+  fmt <- function(x) formatC(x, format = "f", digits = digits)
+  signed <- function(x) paste0(ifelse(x >= 0, "+", ""), fmt(x))
+  vapply(seq_len(nrow(decisions)), function(i) {
+    row <- decisions[i, , drop = FALSE]
+    numeric_fields <- c("selected_tree_depth", "value_selected_tree", "value_honest_constant", "tree_minus_honest_constant", "min_gain_over_constant")
+    if (any(!vapply(row[numeric_fields], function(x) is.numeric(x) && length(x) == 1L && is.finite(x), logical(1)))) stop("policy decisions must contain finite numerical values", call. = FALSE)
+    if (!row$selected_tree_depth %in% c(1L, 2L)) stop("unsupported selected tree depth", call. = FALSE)
+    delta <- row$tree_minus_honest_constant
+    if (!isTRUE(all.equal(row$value_selected_tree - row$value_honest_constant, delta, tolerance = 1e-10))) stop("stored tree-minus-constant difference is inconsistent", call. = FALSE)
+    expected <- if (.policy_cv_meets_margin(delta, row$min_gain_over_constant)) "tree" else "constant"
+    if (is.na(row$preferred_policy) || row$preferred_policy != expected) stop("stored policy decision disagrees with its margin", call. = FALSE)
+    label <- .policy_cv_label(row$outcome, label_mapping)
+    text <- sprintf("For %s, the depth-%s tree-learning procedure has a held-out value of %s, compared with %s for the training-selected same-action rule. The difference is %s %s. %s the required improvement of %s. The registered comparison therefore favours %s.",
+      label, row$selected_tree_depth, fmt(row$value_selected_tree), fmt(row$value_honest_constant), signed(delta), value_units,
+      if (expected == "tree") "This reaches" else "This falls below", fmt(row$min_gain_over_constant),
+      if (expected == "tree") "the tree procedure" else "the same-action procedure")
+    leaves <- object$leaf_summary
+    required_leaves <- c("model", "depth", "action", "treatment_control_contrast_mean", "treatment_control_contrast_q025", "treatment_control_contrast_q975")
+    if (is.data.frame(leaves) && nrow(leaves)) {
+      if (!all(required_leaves %in% names(leaves))) stop("stored leaf_summary is incomplete", call. = FALSE)
+      leaves <- leaves[leaves$model == row$model & leaves$depth == row$selected_tree_depth, , drop = FALSE]
+      for (j in seq_len(nrow(leaves))) {
+        leaf <- leaves[j, , drop = FALSE]
+        vals <- unlist(leaf[required_leaves[4:6]], use.names = FALSE)
+        if (!is.numeric(vals) || any(!is.finite(vals)) || vals[2] > vals[3] || !leaf$action %in% names(action_names)) stop("invalid stored leaf summary", call. = FALSE)
+        text <- paste(text, sprintf("Across held-out leaves assigned %s, the mean score contrast (%s minus %s) is %s; the central 95%% range across fitted leaves is %s to %s.",
+          action_names[[leaf$action]], action_names[["treated"]], action_names[["control"]], signed(vals[1]), signed(vals[2]), signed(vals[3])))
+      }
+      if (nrow(leaves)) text <- paste(text, sprintf("Mean contrasts weight leaves by their observation counts; the percentile ranges give each fitted leaf equal weight. These ranges describe variation across fitted leaves, rather than confidence intervals for fixed subgroups. A negative held-out contrast among leaves assigned %s, or a positive contrast among leaves assigned %s, indicates that the training preference did not persist in the pooled summary.", action_names[["treated"]], action_names[["control"]]))
+    }
+    text
+  }, character(1))
 }
 
 #' Assemble policy-tree plots, table, and standard text

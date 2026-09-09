@@ -8,7 +8,13 @@ margot_text_policy_tree(
   source = c("generic", "heldout_cv", "display_tree"),
   include_ci = TRUE,
   include_plot_convention = TRUE,
-  collapse = TRUE
+  collapse = TRUE,
+  object = NULL,
+  action_names = c(control = "control", treated = "treatment"),
+  label_mapping = NULL,
+  value_units = "stored outcome units",
+  digits = 3L,
+  include_definitions = TRUE
 )
 }
 \arguments{
@@ -20,6 +26,21 @@ margot_text_policy_tree(
 
 \item{collapse}{Logical. If \code{TRUE}, return one character string;
 otherwise return a character vector of sentences.}
+
+\item{object}{Optional \code{margot_policy_tree_cv} object. With source
+\code{heldout_cv}, append an interpretation of its stored selected-depth
+values and leaf summaries. No policy is fitted or re-evaluated.}
+
+\item{action_names}{Named character vector with \code{control} and
+\code{treated} labels, in that order of action coding.}
+
+\item{label_mapping}{Optional named labels for outcome identifiers.}
+
+\item{value_units}{Character scalar describing the stored outcome units.}
+
+\item{digits}{Integer from 0 to 8; display precision only.}
+
+\item{include_definitions}{Logical; prepend the general explanatory text.}
 }
 \value{
 A character string or character vector.

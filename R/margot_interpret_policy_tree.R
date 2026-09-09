@@ -1,12 +1,12 @@
 #' Interpret Policy Tree Results
 #'
 #' This function creates an interpretation of policy tree results from a causal forest or multi-arm causal forest model.
-#' It generates a formatted description of the policy tree, including the main splits and recommended actions.
+#' It generates a formatted description of the policy tree, including the main splits and assigned actions.
 #'
 #' @param model A list containing the results from a multi-arm causal forest model.
 #' @param model_name A string specifying which model's results to interpret.
 #' @param max_depth Integer, 1 or 2; which stored tree to interpret.
-#' @param train_proportion Numeric value between 0 and 1 for the proportion of data used for training. Default is 0.5.
+#' @param train_proportion Numeric value between 0 and 1 for the proportion of data used for training. The legacy default is 0.5; a training proportion is printed only when explicitly supplied.
 #' @param custom_action_names Optional vector of custom names for the actions. Must match the number of actions in the policy tree.
 #' @param label_mapping Optional list that maps variable names to custom labels.
 #' @param original_df Optional dataframe with untransformed variables, used to display split values on the data scale.
@@ -95,77 +95,37 @@ margot_interpret_policy_tree <- function(model,
   if (output_format == "prose") {
     intro <- "" # prose format will include intro in the main text
   } else {
-    intro <- glue::glue(
-      "The policy tree identifies subgroups with different treatment effects by splitting the data based on key variables. ",
-      "This analysis used depth-{max_depth} trees with {train_proportion*100}% of the sample for training ",
-      "and {(1-train_proportion)*100}% for evaluation.\n\n"
-    )
+    intro <- "The fitted policy tree assigns actions using splits on baseline variables. Its partitions alone do not establish treatment-effect modification.\n\n"
+    if (!missing(train_proportion)) {
+      if (!is.numeric(train_proportion) || length(train_proportion) != 1L || !is.finite(train_proportion) || train_proportion < 0 || train_proportion > 1) stop("train_proportion must lie between 0 and 1", call. = FALSE)
+      intro <- paste0(intro, glue::glue("The supplied training proportion is {train_proportion * 100}%.\n\n"))
+    }
   }
   cli::cli_alert_success("Generated general interpretation")
 
-  if (max_depth == 1L) {
-    # single split -> two leaves
-    n1 <- nodes[[1]]
-    var1 <- cols[n1$split_variable]
-    sp1 <- format_split(var1, n1$split_value)
-    leaf_left <- nodes[[2]]$action
-    leaf_right <- nodes[[3]]$action
-
-    if (output_format == "prose") {
-      text <- glue::glue(
-        "#### Findings for {transform_var(model_name)} at the end of study\n\n",
-        "The policy-tree analysis divides cases on baseline {transform_var(var1)}. ",
-        "Those who score <= {sp1} are advised {act_labels[leaf_left]}. ",
-        "Those above {sp1} are advised {act_labels[leaf_right]}.\n\n"
-      )
-    } else {
-      text <- glue::glue(
-        "**Findings for {transform_var(model_name)} at the end of study:**\n\n",
-        "Cases are split on baseline {transform_var(var1)} at {sp1}. ",
-        "Those with baseline {transform_var(var1)} <= threshold are recommended **{act_labels[leaf_left]}**, ",
-        "and those with baseline {transform_var(var1)} > threshold are recommended **{act_labels[leaf_right]}**.\n"
-      )
+  # follow stored child links, including pruned branches and constant trees.
+  describe_node <- function(index, conditions = character(), ancestors = integer()) {
+    if (length(index) != 1L || is.na(index) || index < 1L || index > length(nodes) || index %in% ancestors) {
+      stop("invalid policy-tree child link", call. = FALSE)
     }
+    node <- nodes[[index]]
+    if (isTRUE(node$is_leaf)) {
+      action <- node$action
+      if (length(action) != 1L || is.na(action) || !action %in% seq_along(act_labels)) stop("invalid stored leaf action", call. = FALSE)
+      condition <- if (length(conditions)) paste0("For cases with ", paste(conditions, collapse = " and "), ", ") else "For all cases, "
+      return(paste0(condition, "the tree assigns ", act_labels[[action]], "."))
+    }
+    if (!node$split_variable %in% seq_along(cols) || !is.finite(node$split_value)) stop("invalid stored split", call. = FALSE)
+    variable <- paste0("baseline ", transform_var(cols[[node$split_variable]]))
+    split <- format_split(cols[[node$split_variable]], node$split_value)
+    c(describe_node(node$left_child, c(conditions, paste(variable, "<=", split)), c(ancestors, index)),
+      describe_node(node$right_child, c(conditions, paste(variable, ">", split)), c(ancestors, index)))
+  }
+  rules <- describe_node(1L)
+  if (output_format == "prose") {
+    text <- paste0("#### Findings for ", transform_var(model_name), " at the end of study\n\n", paste(rules, collapse = " "), "\n\n")
   } else {
-    # depth=2 -> four leaves
-    n1 <- nodes[[1]]
-    var1 <- cols[n1$split_variable]
-    sp1 <- format_split(var1, n1$split_value)
-    n2 <- nodes[[2]]
-    var2 <- cols[n2$split_variable]
-    sp2 <- format_split(var2, n2$split_value)
-    n3 <- nodes[[3]]
-    var3 <- cols[n3$split_variable]
-    sp3 <- format_split(var3, n3$split_value)
-    leaf_22 <- nodes[[4]]$action
-    leaf_23 <- nodes[[5]]$action
-    leaf_32 <- nodes[[6]]$action
-    leaf_33 <- nodes[[7]]$action
-
-    if (output_format == "prose") {
-      text <- glue::glue(
-        "#### Findings for {transform_var(model_name)} at the end of study\n\n",
-        "The policy-tree analysis divides cases on baseline {transform_var(var1)}. ",
-        "Those who score <= {sp1} are then split on {transform_var(var2)}: ",
-        "those at or below {sp2} are advised {act_labels[leaf_22]}, ",
-        "and those above {sp2} are advised {act_labels[leaf_23]}.\n\n",
-        "Those above {sp1} on {transform_var(var1)} split on {transform_var(var3)}: ",
-        "those at or below {sp3} are advised {act_labels[leaf_32]}, ",
-        "and those above {sp3} are advised {act_labels[leaf_33]}.\n\n"
-      )
-    } else {
-      text <- glue::glue(
-        "**Findings for {transform_var(model_name)} at the end of study:**\n\n",
-        "Split 1: baseline {transform_var(var1)} <= {sp1}.  ",
-        "Within that subgroup, split 2a: baseline {transform_var(var2)} <= {sp2}, ",
-        "-> **{act_labels[leaf_22]}**; ",
-        "baseline {transform_var(var2)} > {sp2} -> **{act_labels[leaf_23]}**.\n\n",
-        "Split 2: baseline {transform_var(var1)} > {sp1}.  ",
-        "Within that subgroup, split 2b: baseline {transform_var(var3)} <= {sp3}, ",
-        "-> **{act_labels[leaf_32]}**; ",
-        "baseline {transform_var(var3)} > {sp3} -> **{act_labels[leaf_33]}**.\n"
-      )
-    }
+    text <- paste0("**Findings for ", transform_var(model_name), " at the end of study:**\n\n", paste0("- ", rules, collapse = "\n"), "\n")
   }
 
   # add conditional means interpretation if available
@@ -194,7 +154,7 @@ margot_interpret_policy_tree <- function(model,
         if (exists("e$call")) {
           cli::cli_alert_info("Error occurred at: {deparse(e$call)}")
         }
-        cond_means_text <- "\n\n(Conditional means analysis failed due to an error)\n\n"
+        stop("Conditional means interpretation failed; no partial report returned.", call. = FALSE)
       }
     )
   }
@@ -854,8 +814,8 @@ compute_conditional_means_interpretation <- function(model, model_name, policy_t
               text <- paste0(
                 text,
                 "Among the test set:\n",
-                "- ", n_control, " cases are advised ", act_labels[1], "\n",
-                "- ", n_treatment, " cases are advised ", act_labels[2], "\n\n",
+                "- ", n_control, " cases are assigned ", act_labels[1], "\n",
+                "- ", n_treatment, " cases are assigned ", act_labels[2], "\n\n",
                 "(Detailed leaf analysis not available due to missing covariate data)\n\n"
               )
           }
@@ -994,9 +954,9 @@ compute_leaf_means <- function(leaf_idx, predictions, conditional_means, act_lab
 
         # determine if everyone or partial assignment
         assignment_text <- if (pct_assigned == 100) {
-          paste0("every participant in this group was recommended ", tolower(act_labels[predominant_action]))
+          paste0("every participant in this group was assigned ", tolower(act_labels[predominant_action]))
         } else {
-          paste0(pct_assigned, "% were recommended ", tolower(act_labels[predominant_action]))
+          paste0(pct_assigned, "% were assigned ", tolower(act_labels[predominant_action]))
         }
 
         text <- paste0(

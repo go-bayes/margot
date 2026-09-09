@@ -1,3 +1,8 @@
+# margot 1.2.0.9001 development
+
+- `margot_text_policy_tree()` can interpret stored cross-validation policy decisions and signed leaf summaries. It retains the training-selected comparator, checks stored arithmetic and the unrounded selection margin, and distinguishes leaf-score ranges from subgroup confidence intervals. It fits no model and computes no new policy value.
+- Tree interpretations describe assigned actions rather than advice or recommendations. The bullet introduction no longer claims that splits establish treatment-effect modification. The interpreter follows stored child links, including pruned or constant trees, and no longer assumes a half-sample training split. Failed conditional-mean interpretation raises an error instead of inserting an editing message into public prose.
+
 # [2026-09-08] margot 1.2.0
 
 ### Coordinated average-effect reporting

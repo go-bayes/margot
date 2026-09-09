@@ -31,7 +31,7 @@ margot_interpret_policy_tree(
 
 \item{max_depth}{Integer, 1 or 2; which stored tree to interpret.}
 
-\item{train_proportion}{Numeric value between 0 and 1 for the proportion of data used for training. Default is 0.5.}
+\item{train_proportion}{Numeric value between 0 and 1 for the proportion of data used for training. The legacy default is 0.5; a training proportion is printed only when explicitly supplied.}
 
 \item{custom_action_names}{Optional vector of custom names for the actions. Must match the number of actions in the policy tree.}
 
@@ -67,5 +67,5 @@ Invisibly returns a string containing the interpretation; also prints it to the 
 }
 \description{
 This function creates an interpretation of policy tree results from a causal forest or multi-arm causal forest model.
-It generates a formatted description of the policy tree, including the main splits and recommended actions.
+It generates a formatted description of the policy tree, including the main splits and assigned actions.
 }
