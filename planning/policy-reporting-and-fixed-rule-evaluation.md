@@ -49,7 +49,7 @@ This advantage depends on an appropriate evaluation design and score. The estima
 
 The tree, comparator, action orientation, margin and learning choices must be settled before evaluation outcomes are used. Selection of a replacement rule using evaluation outcomes requires an inference method that accounts for that selection. Full-data ATE estimation may remain separate; the independently evaluated learner uses development-only selection inputs.
 
-The development/evaluation proportion, preprocessing and outcome-scale reference, observation-weight construction, exact interval estimator and handling of a selected policy remain implementation decisions requiring resolution. A 70/30 split remains a candidate. Preserve existing registered stored-score modes and defaults until a compatible prospective alternative is explicitly implemented and selected.
+The development/evaluation proportion, preprocessing and outcome-scale reference, observation-weight construction, interval estimator and handling of a selected policy remain implementation decisions requiring resolution. A 70/30 split remains a candidate. Preserve existing registered stored-score modes and defaults until a compatible prospective alternative is explicitly implemented and selected.
 
 ## Implementation sequence
 
@@ -65,7 +65,7 @@ Additional stability computation requires a separate purpose and justification. 
 
 Reporting checks cover constant and nonconstant rules, reversed outcomes, unequal weights, exact split membership, unavailable and incompatible intervals, default and overridden margins, multiple outcomes and long labels. Verify numerical agreement among graph layers, tables and interpretations. Reject mismatched rule, population, scale and weight identities. Configure fitting and resampling functions to raise an error if called, and verify that reporting succeeds. Visually inspect a stump, a depth-two tree and the complete four-panel layout.
 
-Independent-evaluation checks additionally cover participant or cluster separation, training-only transformations, invariant learned rules when evaluation outcomes are perturbed, exactly-once weighting, agreement of paired policy differences, identical-policy zero differences, covariance preservation and explicit treatment of selection. Assess coverage against the true value of each realised learned rule, bias, interval width and runtime in simulations with realistic overlap and weight concentration. Assess confidence-interval coverage separately from plotting and numerical reconstruction.
+Independent-evaluation checks additionally cover participant or cluster separation, training-only transformations, invariant learned rules when evaluation outcomes are perturbed, exactly-once weighting, agreement of paired policy differences, identical-policy zero differences, covariance preservation and explicit treatment of selection. Assess coverage against the true value of each realised learned rule, bias, interval width and runtime in simulations with realistic overlap and weight concentration. Separately assess confidence-interval coverage and the correctness of plotting and numerical reconstruction.
 
 ## Method references
 
