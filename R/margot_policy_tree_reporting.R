@@ -468,6 +468,7 @@ margot_report_policy_tree <- function(result_object,
                                       reporting_layout = c("standard", "compact"),
                                       panel_labels = list()) {
   reporting_layout <- match.arg(reporting_layout)
+  if (is.null(panel_labels)) panel_labels <- list()
   if (is.null(reporting_data) && (reporting_layout != "standard" || length(panel_labels))) stop("reporting_layout and panel_labels require reporting_data.", call. = FALSE)
   if (missing(reporting_heights) && reporting_layout == "compact") reporting_heights <- NULL
   # stored reporting bypasses every legacy score-summary and interval calculation.

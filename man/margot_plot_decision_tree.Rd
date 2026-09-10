@@ -36,7 +36,7 @@ margot_plot_decision_tree(
 \item{result_object}{A list returned by \code{margot_causal_forest()} or
 \code{margot_policy_tree_display()}, or a native \code{policytree::policy_tree()} tree. Native trees need no causal-forest wrapper; supply stored leaf labels explicitly if desired.}
 
-\item{model_name}{Name of the model in the results to visualise}
+\item{model_name}{Name of the model in the results to visualise. For a native tree, NULL takes the model recorded on \code{leaf_metrics} when supplied, otherwise \code{"model_tree"}; an unprefixed name is matched against the prefixed \code{leaf_metrics} model.}
 
 \item{max_depth}{Maximum depth of the tree (1L or 2L). When
 \code{result_object} is a \code{margot_policy_tree_display} object,
@@ -53,9 +53,9 @@ other supported objects, \code{NULL} retains the historical default of 2L.}
 
 \item{text_size}{Size of text in plot elements}
 
-\item{edge_label_offset}{Offset for edge labels from connecting lines}
+\item{edge_label_offset}{Horizontal offset of edge labels from the connecting lines, in x data units. Legacy layouts span a unit interval; compact layouts index leaves 1 to n, so the same value moves labels a smaller fraction of the panel width.}
 
-\item{span_ratio}{Controls the aspect ratio of the plot}
+\item{span_ratio}{Controls the fixed aspect ratio of the legacy layout; ignored by the compact layout, which uses the available panel aspect.}
 
 \item{non_leaf_fill}{Colour for non-leaf nodes (decision nodes)}
 
@@ -81,7 +81,7 @@ signed treatment-control contrasts and sample shares from
 
 \item{leaf_metrics}{Optional data frame from
 \code{margot_policy_leaf_summary()}.
-If supplied, these labels are used instead of recomputing metrics.}
+If supplied, these labels are used instead of recomputing metrics. Native trees accept metrics whose recorded model matches \code{model_name} (see above) and whose depth matches \code{max_depth}.}
 
 \item{leaf_metric_digits}{Integer; number of decimals for leaf
 treatment-control contrasts.}

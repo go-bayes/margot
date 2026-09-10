@@ -122,7 +122,8 @@ test_that("custom titles and wrapping preserve caller labels", {
   p <- margot_plot_decision_tree(tree, title = title)
   expect_identical(p$labels$title, title)
   p <- margot_plot_decision_tree(tree, title = "")
-  expect_true(is.null(p$labels$title) || identical(p$labels$title, ""))
+  expect_null(p$labels$title)
+  expect_equal(as.numeric(grid::convertHeight(ggplot2::ggplotGrob(p)$heights[3], "pt")), 0)
   mapping <- list(hours_z = "Paid work hours at the baseline measurement occasion")
   plain <- margot_plot_decision_tree(tree, label_mapping = mapping)
   wrapped <- margot_plot_decision_tree(tree, label_mapping = mapping, node_label_width = 12L)
@@ -131,6 +132,7 @@ test_that("custom titles and wrapping preserve caller labels", {
   expect_gt(length(strsplit(label_wrapped, "\n", fixed = TRUE)[[1]]),
     length(strsplit(label_plain, "\n", fixed = TRUE)[[1]]))
   expect_identical(unname(gsub("[[:space:]]+", " ", label_wrapped)), unname(gsub("[[:space:]]+", " ", label_plain)))
+  expect_null(names(wrapped$layers[[2]]$data$label))
   for (width in list(0, -1, 1.5, NA_real_, "narrow")) {
     expect_error(margot_plot_decision_tree(tree, node_label_width = width))
   }
@@ -165,8 +167,21 @@ test_that("native and wrapped inputs preserve the same rule and leaf labels", {
   expect_identical(native$layers[[2]]$data$label[native$layers[[2]]$data$is_leaf], metrics$label)
 })
 
+test_that("native trees accept stored leaf metrics carrying their model attribute", {
+  tree <- policy_layout_fixture()
+  metrics <- structure(data.frame(node_id = c(2L, 3L), label = c("Leaf A", "Leaf B")),
+    model = "model_y", depth = 1L)
+  implicit <- margot_plot_decision_tree(tree, leaf_metrics = metrics)
+  short <- margot_plot_decision_tree(tree, leaf_metrics = metrics, model_name = "y")
+  full <- margot_plot_decision_tree(tree, leaf_metrics = metrics, model_name = "model_y")
+  expect_identical(implicit$layers[[2]]$data$label[implicit$layers[[2]]$data$is_leaf], metrics$label)
+  expect_equal(short$layers[[2]]$data, full$layers[[2]]$data)
+  expect_equal(implicit$layers[[2]]$data, full$layers[[2]]$data)
+  expect_error(margot_plot_decision_tree(tree, leaf_metrics = metrics, model_name = "other"), "model_y")
+})
+
 # bind synthetic display records and explicitly constructed intervals to a rule.
-policy_layout_report_fixture <- function(depth = 1L) {
+policy_layout_report_fixture <- function(depth = 1L, min_node_size = 1) {
   set.seed(20260911)
   reference <- expand.grid(hours = 1:7, second = 1:5)
   reward <- if (depth == 1L) ifelse(reference$hours <= 3, 1, -1) else {
@@ -174,7 +189,7 @@ policy_layout_report_fixture <- function(depth = 1L) {
       ifelse(reference$second <= 4, -1, 1))
   }
   tree <- policytree::policy_tree(reference, cbind(control = 0, treated = reward),
-    depth = depth, min.node.size = 1)
+    depth = depth, min.node.size = min_node_size)
   ids <- which(vapply(tree$nodes, function(node) isTRUE(node$is_leaf), logical(1)))
   leaves <- data.frame(node_id = ids, leaf_label = paste0("L", seq_along(ids)),
     estimate = rep(c(.12, -.04), length.out = length(ids)), lower = -.1, upper = .2,
@@ -223,6 +238,46 @@ test_that("compact reports change presentation while preserving stored science",
     expect_equal(explicit$plots$combined_plot$patches$layout$heights, c(2, 3, 4))
     expect_silent(patchwork::patchworkGrob(compact$plots$combined_plot))
   }
+})
+
+test_that("compact spacing reaches nested depth-two projections", {
+  f <- policy_layout_report_fixture(2)
+  standard <- margot_report_policy_tree(f$object, "y", depth = 2, reporting_data = f$data)
+  compact <- margot_report_policy_tree(f$object, "y", depth = 2, reporting_data = f$data,
+    reporting_layout = "compact")
+  nested <- function(report) attr(report$plots$combined_plot$patches$plots[[2]], "grobs")$panel
+  inner_compact <- nested(compact)
+  inner_standard <- nested(standard)
+  expect_s3_class(inner_compact, "patchwork")
+  expect_equal(as.numeric(inner_compact$theme$plot.margin), c(4, 6, 4, 6))
+  expect_equal(as.numeric(inner_compact$theme$legend.margin), c(0, 0, 0, 0))
+  expect_null(inner_standard$theme$plot.margin)
+  for (patch in inner_compact$patches$plots) {
+    expect_equal(as.numeric(patch$theme$plot.margin), c(4, 6, 4, 6))
+  }
+  expect_identical(compact$reporting_data, standard$reporting_data)
+})
+
+test_that("compact default heights follow the fitted depth of the stored rule", {
+  # a large minimum node size prunes the depth-two fit to a constant rule stored at depth 2
+  f <- policy_layout_report_fixture(2, min_node_size = 15)
+  expect_equal(f$data$leaves$node_id, 1L)
+  expect_equal(f$object$results$model_y$policy_tree_depth_2$depth, 2)
+  compact <- margot_report_policy_tree(f$object, "y", depth = 2, reporting_data = f$data,
+    reporting_layout = "compact")
+  expect_equal(compact$plots$combined_plot$patches$layout$heights, c(.8, 1.3, 1))
+})
+
+test_that("standard reports keep validating explicit heights and accept NULL panel labels", {
+  f <- policy_layout_report_fixture()
+  expect_error(margot_report_policy_tree(f$object, "y", depth = 1, reporting_data = f$data,
+    reporting_heights = NULL), "reporting_heights")
+  standard <- margot_report_policy_tree(f$object, "y", depth = 1, reporting_data = f$data)
+  no_labels <- margot_report_policy_tree(f$object, "y", depth = 1, reporting_data = f$data,
+    panel_labels = NULL)
+  expect_equal(no_labels$plots$combined_plot$patches$layout$heights, c(1.5, 1.7, 1))
+  expect_identical(no_labels$plots$decision_tree$labels, standard$plots$decision_tree$labels)
+  expect_identical(no_labels$reporting_data, standard$reporting_data)
 })
 
 test_that("stored panel label overrides are literal and preserve provenance", {

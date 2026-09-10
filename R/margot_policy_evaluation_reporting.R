@@ -331,7 +331,11 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
     actual <- .policy_tree_build_predict_df(result_object$results[[model]]$plot_data, tree$columns)
     if (!identical(as.data.frame(actual), as.data.frame(x$reference))) stop("Projection rows differ from the reporting reference rows or their order.", call. = FALSE)
     compact <- reporting_layout == "compact"
-    if (is.null(heights)) heights <- c(if (tree$depth > 1L) 1.2 else .8, if (tree$depth > 1L) 1.8 else 1.3, 1)
+    if (compact && is.null(heights)) {
+      # size the tree row by the fitted link depth, not the requested slot depth
+      fitted_depth <- .margot_policy_plot_validate_tree(tree)
+      heights <- if (fitted_depth > 1L) c(1.2, 1.8, 1) else c(.8, 1.3, 1)
+    }
     if (compact) decision_tree_args <- .margot_policy_reporting_args(list(layout_style = "compact"), decision_tree_args)
     if (!is.numeric(heights) || length(heights) != 3 || any(!is.finite(heights) | heights <= 0)) stop("reporting_heights must contain three positive numbers.", call. = FALSE)
     forbidden <- intersect(names(projection_args), c("display_weights", "jitter_width", "jitter_height", "jitter_method", "plot_selection"))
@@ -350,11 +354,15 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
       plot.tag = ggplot2::element_text(face = "bold", hjust = 0), plot.caption = ggplot2::element_text(hjust = 0))
     panels$decision_tree$coordinates$clip <- "off"
     a <- panels$decision_tree + ggplot2::labs(title = x$context$outcome_label, subtitle = "Decision tree") + heading
+    compact_spacing <- ggplot2::theme(plot.margin = ggplot2::margin(4, 6, 4, 6),
+      legend.margin = ggplot2::margin(0, 0, 0, 0), legend.box.spacing = grid::unit(1, "mm"),
+      legend.spacing.y = grid::unit(1, "mm"))
     b <- panels$projection
     if (inherits(b, "patchwork")) {
       # axes belong to the nested projections, before their panel is wrapped.
       axes <- panel_labels$B[intersect(names(panel_labels$B), c("x", "y"))]
       if (length(axes)) b <- b & do.call(ggplot2::labs, axes)
+      if (compact) b <- b & compact_spacing
       b <- b + patchwork::plot_annotation(title = NULL)
       b <- patchwork::wrap_elements(panel = b)
     }
@@ -367,13 +375,10 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
       b <- b + ggplot2::labs(title = "Weighted participant projection")
       c <- c + ggplot2::labs(subtitle = .margot_policy_scope(x$context))
       d <- d + ggplot2::labs(subtitle = .margot_policy_wrap(c(.margot_policy_scope(x$value_context), x$value$comparator_label), 55))
-      spacing <- ggplot2::theme(plot.margin = ggplot2::margin(4, 6, 4, 6),
-        legend.margin = ggplot2::margin(0, 0, 0, 0), legend.box.spacing = grid::unit(1, "mm"),
-        legend.spacing.y = grid::unit(1, "mm"))
-      a <- a + spacing
-      b <- b & spacing
-      c <- c + spacing
-      d <- d + spacing
+      a <- a + compact_spacing
+      b <- b + compact_spacing
+      c <- c + compact_spacing
+      d <- d + compact_spacing
     }
     labelled <- .margot_policy_panel_labels(list(A = a, B = b, C = c, D = d), panel_labels)
     a <- labelled$A

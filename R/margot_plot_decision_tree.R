@@ -1,7 +1,7 @@
 #' Plot a stored policy assignment tree
 #' @param result_object A list returned by \code{margot_causal_forest()} or
 #'   \code{margot_policy_tree_display()}, or a native \code{policytree::policy_tree()} tree. Native trees need no causal-forest wrapper; supply stored leaf labels explicitly if desired.
-#' @param model_name Name of the model in the results to visualise
+#' @param model_name Name of the model in the results to visualise. For a native tree, NULL takes the model recorded on \code{leaf_metrics} when supplied, otherwise \code{"model_tree"}; an unprefixed name is matched against the prefixed \code{leaf_metrics} model.
 #' @param max_depth Maximum depth of the tree (1L or 2L). When
 #'   \code{result_object} is a \code{margot_policy_tree_display} object,
 #'   \code{NULL} uses the held-out selected depth stored with that model. For
@@ -11,8 +11,8 @@
 #' @param y_padding Vertical padding for the plot (proportion)
 #' @param border_size Size of node borders in lines
 #' @param text_size Size of text in plot elements
-#' @param edge_label_offset Offset for edge labels from connecting lines
-#' @param span_ratio Controls the aspect ratio of the plot
+#' @param edge_label_offset Horizontal offset of edge labels from the connecting lines, in x data units. Legacy layouts span a unit interval; compact layouts index leaves 1 to n, so the same value moves labels a smaller fraction of the panel width.
+#' @param span_ratio Controls the fixed aspect ratio of the legacy layout; ignored by the compact layout, which uses the available panel aspect.
 #' @param non_leaf_fill Colour for non-leaf nodes (decision nodes)
 #' @param title Optional literal title, preserved exactly. An empty string suppresses the title. NULL uses the formatted model label, or 'Policy tree' for a native tree.
 #' @param plot_margin Margins around the plot
@@ -27,7 +27,7 @@
 #'   \code{margot_policy_leaf_summary()}.
 #' @param leaf_metrics Optional data frame from
 #'   \code{margot_policy_leaf_summary()}.
-#'   If supplied, these labels are used instead of recomputing metrics.
+#'   If supplied, these labels are used instead of recomputing metrics. Native trees accept metrics whose recorded model matches \code{model_name} (see above) and whose depth matches \code{max_depth}.
 #' @param leaf_metric_digits Integer; number of decimals for leaf
 #'   treatment-control contrasts.
 #' @param branch_labels A named character pair with names \code{left} and \code{right} (default True/False), \code{"condition"} for threshold inequalities, a data frame with \code{parent_id}, \code{side} and \code{label} identifying every edge, or a function taking an edge data frame and returning one label per edge. Edge metadata includes \code{parent_id}, \code{child_id}, \code{side}, \code{variable}, \code{threshold}, \code{original_threshold} and \code{threshold_label}. Left branches retain the inclusive inequality. Display thresholds use the same rounding as node labels; they do not replace the stored routing threshold.
@@ -74,7 +74,13 @@ margot_plot_decision_tree <- function(
     max_depth <- max_depth %||% max(1L, actual_depth)
     if (length(max_depth) != 1 || !max_depth %in% 1:2 || max_depth < actual_depth) stop("max_depth is incompatible with the native tree.", call. = FALSE)
     if (isTRUE(show_leaf_metrics) && is.null(leaf_metrics)) stop("Native trees require explicit stored leaf_metrics; plotting does not estimate them.", call. = FALSE)
-    model_name <- model_name %||% "model_tree"
+    # key the native container by the stored leaf-metric model so the provenance check passes
+    metric_model <- if (!is.null(leaf_metrics)) attr(leaf_metrics, "model", exact = TRUE) else NULL
+    if (is.null(model_name)) {
+      model_name <- if (!is.null(metric_model)) as.character(metric_model) else "model_tree"
+    } else if (!is.null(metric_model) && identical(paste0("model_", model_name), as.character(metric_model))) {
+      model_name <- as.character(metric_model)
+    }
     stored <- setNames(list(result_object), paste0("policy_tree_depth_", max_depth))
     result_object <- list(results = setNames(list(stored), model_name))
   }
@@ -369,7 +375,7 @@ margot_plot_decision_tree <- function(
       plot.caption = ggplot2::element_text(hjust = 1, size = text_size + 2)
     ) +
     ggplot2::labs(
-      title = if (!is.null(title)) title else if (native_tree) "Policy tree" else paste0(tv(model_name), " Outcome"),
+      title = if (is.null(title)) (if (native_tree) "Policy tree" else paste0(tv(model_name), " Outcome")) else if (nzchar(title)) title else NULL,
       caption = if (!is.null(original_df)) "* original scale value" else NULL
     )
 

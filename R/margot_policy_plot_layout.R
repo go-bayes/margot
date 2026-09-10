@@ -73,8 +73,7 @@
 .margot_policy_wrap_nodes <- function(labels, width) {
   if (is.null(width)) return(labels)
   if (!is.numeric(width) || length(width) != 1 || !is.finite(width) || width < 1 || width != as.integer(width)) stop("node_label_width must be a positive integer.", call. = FALSE)
-  vapply(labels, function(label) paste(vapply(strsplit(label, "\n", fixed = TRUE)[[1]],
-    function(line) paste(strwrap(line, width = width), collapse = "\n"), character(1)), collapse = "\n"), character(1))
+  vapply(labels, .margot_policy_wrap, character(1), width = width, USE.NAMES = FALSE)
 }
 
 # validate panel names and literal ggplot labels before assembling nested plots.
