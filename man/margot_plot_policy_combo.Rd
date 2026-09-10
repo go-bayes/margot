@@ -29,10 +29,10 @@ margot_plot_policy_combo(
 
 \item{original_df}{Optional dataframe with untransformed variables.}
 
-\item{layout}{A list specifying the layout of the combined plot when max_depth==2. Default is
+\item{layout}{A list specifying the layout of the combined plot at either depth. Default is
 `list(heights = c(1, 2))`, which sets the relative heights of the two plots.}
 
-\item{annotation}{A list specifying the annotation for the combined plot when max_depth==2. Default is
+\item{annotation}{A list specifying the annotation for the combined plot at either depth. Default is
 `list(tag_levels = "A")`, which adds alphabetic tags to the subplots.}
 
 \item{generate_policy_tree}{Logical, whether to generate the policy tree plot. Default is TRUE.}

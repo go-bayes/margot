@@ -38,6 +38,7 @@ articles:
     navbar: ~
     contents:
     - standard-grf-policy-tree-workflow
+    - policy-reporting-stored
 authors:
   Joseph A Bulbulia:
     href: https://github.com/go-bayes
@@ -135,6 +136,11 @@ reference:
     - margot_table_policy_value
     - margot_text_policy_tree
     - margot_report_policy_tree
+    - margot_policy_reporting_data
+    - margot_plot_policy_leaf_effects
+    - margot_plot_policy_value_gain
+    - margot_text_policy_leaf_effects
+    - margot_text_policy_value_gain
     - margot_policy_recurrence_summary
     - margot_policy_summary_report
     - margot_policy_summary_compare_depths

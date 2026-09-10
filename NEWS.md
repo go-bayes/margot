@@ -1,5 +1,10 @@
 # margot 1.2.0.9001 development
 
+- Weighted policy projections now remove the point stroke so rendered circle areas remain proportional to display weights, including zero area for zero-weight records. Constant-tree projection subtitles honour custom action labels. SVG geometry tests cover stumps, depth-two trees and constant rules.
+
+- Policy reporting can now bind stored leaf contrasts and policy-value gains to explicit rule, population, scale, weight and uncertainty metadata with `margot_policy_reporting_data()`. Two standalone plots and matching text functions share these stored quantities. `margot_report_policy_tree(reporting_data = ...)` adds the tall A/B combo and side-by-side C/D evaluation panels. Missing intervals remain explicitly unavailable; reporting fits no model or interval. Legacy calls retain their existing calculations.
+- Policy projections accept `display_weights` mapped to circular point area. Weighted displays retain exact predictor coordinates and use every reference row once across root branches, with a common area scale. The native combo now honours heights and A/B tags at both depths. Constant trees plot successfully, pruned child branches follow their stored links, and threshold-equal points occur only in the inclusive branch when shading filters unweighted projections. Existing unweighted jitter defaults remain unchanged.
+
 - Depth-one policy projections now offer `jitter_method = "band_boundary"`: symmetric jitter bands remain centred on their predictor values, and the separator follows the inclusive band's edge. The horizontal width is reduced uniformly when neighbouring groups would overlap, including on transformed axes. Fitted cut labels and predictions are unchanged; this option is forwarded through `margot_plot_policy_combo()`. Existing defaults remain unchanged.
 
 

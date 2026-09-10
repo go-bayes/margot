@@ -21,7 +21,9 @@ margot_report_policy_tree(
   layout = list(heights = c(1, 2)),
   annotation = list(tag_levels = "A"),
   projection_args = list(),
-  decision_tree_args = list()
+  decision_tree_args = list(),
+  reporting_data = NULL,
+  reporting_heights = c(1.5, 1.7, 1)
 )
 }
 \arguments{
@@ -64,6 +66,10 @@ when available; otherwise depth one is used.}
 \item{projection_args}{Optional list of arguments for the projection plot.}
 
 \item{decision_tree_args}{Optional list of arguments for the decision tree.}
+
+\item{reporting_data}{Optional \code{\link{margot_policy_reporting_data}()} object. Enables the stored four-panel report: A/B use the existing combo; C/D show supplied leaf contrasts and value gain. This path consumes supplied estimates and intervals, requires matching rule and reference rows, and uses the stored weights and margin. Calls with \code{reporting_data = NULL} retain their existing calculations and return shape.}
+
+\item{reporting_heights}{Relative heights of A, B and the C/D row for a stored report; default \code{c(1.5, 1.7, 1)}.}
 }
 \value{
 A list with \code{table}, \code{text}, \code{plots}, and

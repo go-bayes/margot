@@ -69,6 +69,9 @@
 #'   is zero and the line stays at the fitted cut. Jitter is a display device,
 #'   not a model of measurement error.
 #'
+#' @param display_weights Optional finite non-negative weights aligned with every prediction row; at least one must be positive. Point area represents these weights, with a common scale across depth-two panels. Weighted projections retain exact predictor coordinates (vertical jitter only for a stump) and display each row in its applicable root branch, irrespective of shading. Existing unweighted jitter defaults remain unchanged.
+#' @param weight_max_size Maximum weighted point size in millimetres; default 4.
+#'
 #' @return A `ggplot` object (depth 1) or a patchwork object (depth 2).
 #'
 #' @import ggplot2
@@ -96,7 +99,8 @@ margot_plot_policy_tree <- function(
     jitter_width = 0.3,
     jitter_height = NULL,
     jitter_seed = NA,
-    jitter_method = c("standard", "within_splits", "band_boundary")) {
+    jitter_method = c("standard", "within_splits", "band_boundary"),
+    display_weights = NULL, weight_max_size = 4) {
   jitter_method <- match.arg(jitter_method)
   if (jitter_method == "band_boundary" && max_depth != 1L) {
     stop("band_boundary jitter currently requires max_depth = 1", call. = FALSE)
@@ -110,6 +114,17 @@ margot_plot_policy_tree <- function(
     cli::cli_abort("no {tag} stored for model '{model_name}'")
   }
 
+  pd <- result_object$results[[model_name]]$plot_data
+  reference <- .policy_tree_build_predict_df(pd, tree$columns)
+  if (!is.null(display_weights)) {
+    .margot_policy_display_weights(display_weights, nrow(reference), weight_max_size)
+    if (jitter_method == "band_boundary") stop("Weighted projections use exact cut points; band_boundary is incompatible.", call. = FALSE)
+    jitter_width <- 0
+  }
+  if (isTRUE(tree$nodes[[1L]]$is_leaf)) {
+    return(.margot_policy_constant_projection(tree, reference, display_weights,
+      weight_max_size, point_alpha, jitter_seed, theme_function, label_mapping))
+  }
   depth <- tree$depth
   if (!depth %in% 1:2) {
     cli::cli_abort("only depth 1 or 2 supported (got {depth})")
@@ -214,6 +229,7 @@ margot_plot_policy_tree <- function(
     }
 
     plot_df <- tibble::tibble(x = x_vec, y = 0, pred = preds)
+    if (!is.null(display_weights)) plot_df$display_weight <- display_weights
     colour_scale <- build_colour_scale(act_labels)
 
     # build shape scale (now that act_labels is available)
@@ -235,15 +251,19 @@ margot_plot_policy_tree <- function(
         x_vec, cp, jitter_width, 0, jitter_seed, line = TRUE)
     }
 
-    # create the plot
-    ggplot2::ggplot() +
-      ggplot2::geom_point(
-        data = plot_df,
+    # equal shapes make weighted areas comparable across assigned actions.
+    point_layer <- if (is.null(display_weights)) {
+      ggplot2::geom_point(data = plot_df,
         ggplot2::aes(x = .data$x, y = .data$y, colour = .data$pred, shape = .data$pred),
-        position = point_position,
-        alpha = point_alpha,
-        size = 1.5 # slightly larger to make shapes visible
-      ) +
+        position = point_position, alpha = point_alpha, size = 1.5)
+    } else {
+      shape_scale <- ggplot2::scale_size_area(max_size = weight_max_size, name = "Weight",
+        limits = c(0, max(display_weights)))
+      ggplot2::geom_point(data = plot_df,
+        ggplot2::aes(x = .data$x, y = .data$y, colour = .data$pred, size = .data$display_weight),
+        position = point_position, alpha = point_alpha, shape = 16, stroke = 0)
+    }
+    ggplot2::ggplot() + point_layer +
       split_line +
       colour_scale +
       shape_scale +
@@ -251,7 +271,7 @@ margot_plot_policy_tree <- function(
         x        = paste0(var_label, " (baseline)"),
         y        = NULL,
         colour   = "Prediction",
-        shape    = "Prediction", # add shape to legend
+        shape    = if (is.null(display_weights)) "Prediction" else NULL,
         subtitle = subtitle_txt
       ) +
       theme_function() +
@@ -277,7 +297,8 @@ margot_plot_policy_tree <- function(
           jitter_width = jitter_width,
           jitter_height = if (is.null(jitter_height)) 0.3 else jitter_height,
           jitter_seed = jitter_seed,
-          jitter_method = jitter_method
+          jitter_method = jitter_method,
+          display_weights = display_weights, weight_max_size = weight_max_size
         ),
         list(...)
       )
@@ -324,6 +345,7 @@ margot_plot_policy_tree_depth2 <- function(
     shade_alpha = 0.35,
     jitter_seed = NA,
     jitter_method = "standard",
+    display_weights = NULL, weight_max_size = 4,
     ...) {
   # ---- nudge fractions for annotation -----------------------------------
   nudge_frac_x <- 0.10 # top-of-panel label
@@ -386,10 +408,14 @@ margot_plot_policy_tree_depth2 <- function(
   # ---- split variables & cut-points ------------------------------------
   sv1 <- nodes[[1]]$split_variable
   cp1 <- nodes[[1]]$split_value
-  sv2 <- nodes[[2]]$split_variable
-  cp2 <- nodes[[2]]$split_value
-  sv3 <- nodes[[3]]$split_variable
-  cp3 <- nodes[[3]]$split_value
+  left_node <- nodes[[nodes[[1]]$left_child]]
+  right_node <- nodes[[nodes[[1]]$right_child]]
+  left_leaf <- isTRUE(left_node$is_leaf)
+  right_leaf <- isTRUE(right_node$is_leaf)
+  sv2 <- if (left_leaf) sv1 else left_node$split_variable
+  cp2 <- if (left_leaf) NA_real_ else left_node$split_value
+  sv3 <- if (right_leaf) sv1 else right_node$split_variable
+  cp3 <- if (right_leaf) NA_real_ else right_node$split_value
 
   resolve_var <- function(sv) {
     if (is.numeric(sv)) {
@@ -415,6 +441,14 @@ margot_plot_policy_tree_depth2 <- function(
     pred = preds
   )
 
+  if (left_leaf) plot_df$x2 <- 0
+  if (right_leaf) plot_df$x3 <- 0
+  plot_df$reference_row <- seq_len(nrow(plot_df))
+  if (!is.null(display_weights)) {
+    .margot_policy_display_weights(display_weights, nrow(plot_df), weight_max_size)
+    plot_df$display_weight <- display_weights
+    jitter_width <- jitter_height <- 0
+  }
   var_label1 <- tv(var1)
   var_label2 <- tv(var2)
   var_label3 <- tv(var3)
@@ -429,7 +463,7 @@ margot_plot_policy_tree_depth2 <- function(
 
   # ---- panel constructor -----------------------------------------------
   build_panel <- function(x, y, xlab, ylab, xsp, ysp,
-                          shade_side, xvar, yvar) {
+                          shade_side, xvar, yvar, branch) {
     p <- ggplot2::ggplot()
 
     # --- shading ---------------------------------------------------------
@@ -469,11 +503,13 @@ margot_plot_policy_tree_depth2 <- function(
 
     # --- back-transformed thresholds for annotation ----------------------
     orig_xsp <- get_original_value_plot(xvar, xsp, original_df)
-    orig_ysp <- get_original_value_plot(yvar, ysp, original_df)
+    orig_ysp <- if (is.finite(ysp)) get_original_value_plot(yvar, ysp, original_df) else NULL
 
     # --- filter data based on shading to improve masking -----------------
-    plot_data_filtered <- if (shade_enabled && shade_side == "left") {
-      plot_df[plot_df[[x]] >= xsp, ] # only show right side (non-shaded)
+    plot_data_filtered <- if (!is.null(display_weights)) {
+      plot_df[if (branch == "left") plot_df$x1 <= cp1 else plot_df$x1 > cp1, ]
+    } else if (shade_enabled && shade_side == "left") {
+      plot_df[plot_df[[x]] > xsp, ] # only show right side (non-shaded)
     } else if (shade_enabled && shade_side == "right") {
       plot_df[plot_df[[x]] <= xsp, ] # only show left side (non-shaded)
     } else {
@@ -485,15 +521,18 @@ margot_plot_policy_tree_depth2 <- function(
       values = setNames(c(16, 17, 15, 3, 4, 18)[seq_along(act_labels)], act_labels)
     )
 
-    # --- points with both colour and shape --------------------------------
-    p <- p + ggplot2::geom_point(
-      data = plot_data_filtered,
-      ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = pred, shape = pred),
-      alpha = point_alpha,
+    point_mapping <- ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = .data$pred, shape = .data$pred)
+    point_args <- list(size = 1.5)
+    if (!is.null(display_weights)) {
+      point_mapping <- ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = .data$pred, size = .data$display_weight)
+      point_args <- list(shape = 16, stroke = 0)
+      shape_scale <- ggplot2::scale_size_area(max_size = weight_max_size,
+        limits = c(0, max(display_weights)), name = "Weight")
+    }
+    p <- p + do.call(ggplot2::geom_point, c(list(data = plot_data_filtered,
+      mapping = point_mapping, alpha = point_alpha,
       position = .margot_policy_position_jitter(jitter_width, jitter_height,
-        jitter_seed, jitter_method, split_points(xvar), split_points(yvar)),
-      size = 1.5 # slightly larger to make shapes visible
-    )
+        jitter_seed, jitter_method, split_points(xvar), split_points(yvar))), point_args))
 
     # --- split lines -----------------------------------------------------
     p <- p + ggplot2::geom_vline(
@@ -501,8 +540,8 @@ margot_plot_policy_tree_depth2 <- function(
       alpha = split_line_alpha,
       linetype = split_line_type,
       linewidth = split_line_linewidth
-    ) +
-      ggplot2::geom_hline(
+    )
+    if (is.finite(ysp)) p <- p + ggplot2::geom_hline(
         yintercept = ysp, colour = split_line_color,
         alpha = split_line_alpha,
         linetype = split_line_type,
@@ -540,7 +579,7 @@ margot_plot_policy_tree_depth2 <- function(
     } else {
       sprintf("%.3f", ysp)
     }
-    p <- p + ggplot2::annotate(
+    if (is.finite(ysp)) p <- p + ggplot2::annotate(
       "text",
       x      = x_rng[1] + abs(off_x),
       y      = ysp + off_y,
@@ -555,10 +594,10 @@ margot_plot_policy_tree_depth2 <- function(
     p + color_scale + shape_scale +
       ggplot2::labs(
         x        = paste0(xlab, " (baseline)"),
-        y        = paste0(ylab, " (baseline)"),
-        subtitle = paste(xlab, "(baseline) vs", ylab, "(baseline)"),
+        y        = if (is.finite(ysp)) paste0(ylab, " (baseline)") else NULL,
+        subtitle = if (is.finite(ysp)) paste(xlab, "(baseline) vs", ylab, "(baseline)") else "Terminal root branch",
         colour   = "Prediction",
-        shape    = "Prediction" # add shape to legend
+        shape    = if (is.null(display_weights)) "Prediction" else NULL
       ) +
       theme_function() +
       ggplot2::theme(
@@ -583,8 +622,8 @@ margot_plot_policy_tree_depth2 <- function(
       "x1", "x2",
       var_label1, var_label2,
       cp1, cp2,
-      shade_side = if (shading) "right" else "none",
-      xvar = var1, yvar = var2
+      shade_side = if (shade_enabled) "right" else "none",
+      xvar = var1, yvar = var2, branch = "left"
     )
   }
   if (plot_selection %in% c("both", "p2")) {
@@ -592,8 +631,8 @@ margot_plot_policy_tree_depth2 <- function(
       "x1", "x3",
       var_label1, var_label3,
       cp1, cp3,
-      shade_side = if (shading) "left" else "none",
-      xvar = var1, yvar = var3
+      shade_side = if (shade_enabled) "left" else "none",
+      xvar = var1, yvar = var3, branch = "right"
     )
   }
 

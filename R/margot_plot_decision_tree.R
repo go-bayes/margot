@@ -271,6 +271,10 @@ margot_plot_decision_tree <- function(
     }
     dplyr::bind_rows(rows)
   })
+  if (!nrow(edge_data)) {
+    edge_data <- tibble::tibble(x = numeric(), y = numeric(), xend = numeric(),
+      yend = numeric(), edge_lab = character(), hjust = numeric(), vjust = numeric())
+  }
   cli::cli_alert_success("✔ Edge data created")
 
   edge_data <- edge_data |>

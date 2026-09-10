@@ -20,7 +20,9 @@ margot_plot_policy_tree(
   jitter_width = 0.3,
   jitter_height = NULL,
   jitter_seed = NA,
-  jitter_method = c("standard", "within_splits", "band_boundary")
+  jitter_method = c("standard", "within_splits", "band_boundary"),
+  display_weights = NULL,
+  weight_max_size = 4
 )
 }
 \arguments{
@@ -77,6 +79,10 @@ cut point; the displaced line separates displayed bands, not numeric values
 at the fitted threshold. With no observations on one side, horizontal jitter
 is zero and the line stays at the fitted cut. Jitter is a display device,
 not a model of measurement error.}
+
+\item{display_weights}{Optional finite non-negative weights aligned with every prediction row; at least one must be positive. Point area represents these weights, with a common scale across depth-two panels. Weighted projections retain exact predictor coordinates (vertical jitter only for a stump) and display each row in its applicable root branch, irrespective of shading. Existing unweighted jitter defaults remain unchanged.}
+
+\item{weight_max_size}{Maximum weighted point size in millimetres; default 4.}
 }
 \value{
 A `ggplot` object (depth 1) or a patchwork object (depth 2).

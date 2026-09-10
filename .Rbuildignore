@@ -9,3 +9,5 @@
 ^README\.html$
 ^AGENTS\.md$
 ^tests/test_.*[.][Rr]$
+^\.git$
+^tests/testthat/Rplots\.pdf$
