@@ -220,16 +220,20 @@ test_that("compact reports change presentation while preserving stored science",
       reporting_layout = "compact")
     expect_equal(standard$plots$combined_plot$patches$layout$heights, c(1.5, 1.7, 1))
     compact_heights <- compact$plots$combined_plot$patches$layout$heights
-    expect_lt(compact_heights[1], standard$plots$combined_plot$patches$layout$heights[1])
-    expect_equal(compact_heights, if (depth == 1) c(.8, 1.3, 1) else c(1.2, 1.8, 1))
+    expect_lte(compact_heights[1], standard$plots$combined_plot$patches$layout$heights[1])
+    expect_equal(compact_heights, if (depth == 1) c(.8, 1.3, 1) else c(1.5, 1.8, 1))
     expect_null(compact$plots$decision_tree$coordinates$ratio)
     expect_identical(compact$plots$decision_tree$labels$title, f$data$context$outcome_label)
     expect_identical(standard$plots$projection$labels$title, f$data$context$outcome_label)
     expect_false(identical(compact$plots$projection$labels$title, f$data$context$outcome_label))
-    for (panel in c("leaf_effects", "value_gain")) {
-      expect_false(grepl(f$data$context$outcome_label, compact$plots[[panel]]$labels$subtitle, fixed = TRUE))
-      expect_identical(compact$plots[[panel]]$data, standard$plots[[panel]]$data)
+    for (panel in c("decision_tree", "projection", "leaf_effects", "value_gain")) {
+      expect_null(compact$plots[[panel]]$labels$subtitle, info = panel)
     }
+    for (panel in c("leaf_effects", "value_gain")) {
+      expect_identical(compact$plots[[panel]]$data, standard$plots[[panel]]$data)
+      expect_true(grepl(standard$plots[[panel]]$labels$caption, compact$plots[[panel]]$labels$caption, fixed = TRUE), info = panel)
+    }
+    expect_true(grepl(f$data$value$comparator_label, compact$plots$value_gain$labels$caption, fixed = TRUE))
     for (field in c("table", "policy_value", "text", "reporting_data", "metadata")) {
       expect_identical(compact[[field]], standard[[field]], info = field)
     }

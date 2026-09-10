@@ -226,6 +226,7 @@ margot_plot_policy_leaf_effects <- function(data, digits = 3L, title = "Contrast
     ggplot2::geom_segment(data = d[available, ], ggplot2::aes(x = .data$lower, xend = .data$upper, yend = .data$position), linewidth = .8) +
     ggplot2::geom_point(size = 3, colour = "#28658b") +
     ggplot2::scale_y_continuous(breaks = d$position, labels = d$leaf_label) +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = .15)) +
     ggplot2::labs(title = .margot_policy_wrap(title, 40), subtitle = .margot_policy_wrap(c(x$context$outcome_label, .margot_policy_scope(x$context)), 55),
       x = paste0(x$context$contrast_label, " (", x$context$scale_label, ")"), y = NULL,
       caption = .margot_policy_wrap(c(paste(d$leaf_label, .margot_policy_interval_label(d, digits), sep = ": "), x$context$qualification))) +
@@ -251,6 +252,7 @@ margot_plot_policy_value_gain <- function(data, digits = 3L, title = "Gain over 
       ggplot2::aes(x = .data$lower, xend = .data$upper, yend = .data$position), linewidth = .8) +
     ggplot2::geom_point(size = 3, shape = 18, colour = "#263747") +
     ggplot2::scale_y_continuous(breaks = NULL, limits = c(.5, 1.5)) +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = .15)) +
     ggplot2::labs(title = .margot_policy_wrap(title, 40), subtitle = .margot_policy_wrap(c(x$context$outcome_label, .margot_policy_scope(x$value_context), d$comparator_label), 55),
       x = paste0("Rule minus comparator (", x$context$scale_label, ")"), y = NULL,
       caption = .margot_policy_wrap(paste0("Gain: ", .margot_policy_number(d$estimate, digits), ". ", .margot_policy_interval_label(d, digits),
@@ -334,7 +336,7 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
     if (compact && is.null(heights)) {
       # size the tree row by the fitted link depth, not the requested slot depth
       fitted_depth <- .margot_policy_plot_validate_tree(tree)
-      heights <- if (fitted_depth > 1L) c(1.2, 1.8, 1) else c(.8, 1.3, 1)
+      heights <- if (fitted_depth > 1L) c(1.5, 1.8, 1) else c(.8, 1.3, 1)
     }
     if (compact) decision_tree_args <- .margot_policy_reporting_args(list(layout_style = "compact"), decision_tree_args)
     if (!is.numeric(heights) || length(heights) != 3 || any(!is.finite(heights) | heights <= 0)) stop("reporting_heights must contain three positive numbers.", call. = FALSE)
@@ -371,10 +373,11 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
     c <- margot_plot_policy_leaf_effects(x, digits)
     d <- margot_plot_policy_value_gain(x, digits)
     if (compact) {
+      # compact panels carry no subtitles; scope and comparator move to the captions
       a <- a + ggplot2::labs(subtitle = NULL)
-      b <- b + ggplot2::labs(title = "Weighted participant projection")
-      c <- c + ggplot2::labs(subtitle = .margot_policy_scope(x$context))
-      d <- d + ggplot2::labs(subtitle = .margot_policy_wrap(c(.margot_policy_scope(x$value_context), x$value$comparator_label), 55))
+      b <- b + ggplot2::labs(title = "Weighted participant projection", subtitle = NULL)
+      c <- c + ggplot2::labs(subtitle = NULL, caption = .margot_policy_wrap(c(.margot_policy_scope(x$context), c$labels$caption)))
+      d <- d + ggplot2::labs(subtitle = NULL, caption = .margot_policy_wrap(c(paste0(.margot_policy_scope(x$value_context), "; comparator: ", x$value$comparator_label, "."), d$labels$caption)))
       a <- a + compact_spacing
       b <- b + compact_spacing
       c <- c + compact_spacing

@@ -328,10 +328,12 @@ margot_plot_decision_tree <- function(
   edge_data$edge_lab <- .margot_policy_branch_labels(edge_data, branch_labels)
   cli::cli_alert_success("✔ Edge data created")
 
+  # compact edges label the upper part of the segment, clear of tall child boxes
+  edge_fraction <- if (layout_style == "compact") .38 else .5
   edge_data <- edge_data |>
     dplyr::mutate(
-      label_x = (x + xend) / 2 + edge_label_offset * sign(xend - x),
-      label_y = (y + yend) / 2
+      label_x = x + edge_fraction * (xend - x) + edge_label_offset * sign(xend - x),
+      label_y = y + edge_fraction * (yend - y)
     )
 
   node_data <- node_data |>
