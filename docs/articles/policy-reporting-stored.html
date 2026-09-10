@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,7 @@
 <li><a class="dropdown-item" href="../articles/ate-reporting-scales.html">Average-effect reporting and outcome scales</a></li>
     <li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
     <li><a class="dropdown-item" href="../articles/policy-reporting-stored.html">Policy rules, weighted projections and stored evaluation</a></li>
+    <li><a class="dropdown-item" href="../articles/policy-value-thresholds.html">Interpretable policy trees with benefit thresholds</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -162,6 +163,89 @@ rule and reference signatures detect subsequent structural or row-order
 changes.</p>
 </div>
 <div class="section level2">
+<h2 id="compact-layouts-and-explicit-labels">Compact layouts and explicit labels<a class="anchor" aria-label="anchor" href="#compact-layouts-and-explicit-labels"></a>
+</h2>
+<p>The compact layout makes the branching rule use the available panel
+dimensions and reduces outer margins and repeated headings. A one-split
+rule needs less height than a two-level rule. Use
+<code>reporting_layout = "compact"</code> to choose depth-specific row
+proportions; an explicit <code>reporting_heights</code> value takes
+precedence. C and D remain side by side. Export height still determines
+the space available for labels. Therefore, inspect the rendered figure
+at its intended publication size.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">compact_report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/margot_report_policy_tree.html">margot_report_policy_tree</a></span><span class="op">(</span></span>
+<span>  <span class="va">object</span>, <span class="st">"example"</span>, depth <span class="op">=</span> <span class="fl">1</span>, reporting_data <span class="op">=</span> <span class="va">reporting</span>,</span>
+<span>  reporting_layout <span class="op">=</span> <span class="st">"compact"</span>,</span>
+<span>  label_mapping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>control <span class="op">=</span> <span class="st">"g0"</span>, treated <span class="op">=</span> <span class="st">"g1"</span><span class="op">)</span>,</span>
+<span>  decision_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>branch_labels <span class="op">=</span> <span class="st">"condition"</span>, text_size <span class="op">=</span> <span class="fl">3.5</span><span class="op">)</span>,</span>
+<span>  projection_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>jitter_seed <span class="op">=</span> <span class="fl">20260910</span>, weight_max_size <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span>
+<span>  panel_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    C <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Outcome contrast: g1 minus g0 (SD)"</span><span class="op">)</span>,</span>
+<span>    D <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Gain over uniform assignment (SD)"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">compact_report</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">combined_plot</span></span></code></pre></div>
+<p><img src="policy-reporting-stored_files/figure-html/compact-report-1.png" class="r-plt" alt="" width="100%"></p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">report</span><span class="op">$</span><span class="va">table</span>, <span class="va">compact_report</span><span class="op">$</span><span class="va">table</span><span class="op">)</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">report</span><span class="op">$</span><span class="va">policy_value</span>, <span class="va">compact_report</span><span class="op">$</span><span class="va">policy_value</span><span class="op">)</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">report</span><span class="op">$</span><span class="va">reporting_data</span>, <span class="va">compact_report</span><span class="op">$</span><span class="va">reporting_data</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Branch conditions, assigned actions and outcome contrasts have
+separate meanings. A branch condition identifies which participants
+enter a leaf. The leaf label names their assigned action. Panel C
+compares outcomes under g1 and g0 within that leaf. Panel D compares the
+rule with assigning g1 to everyone in this constructed example. For a
+training-selected constant comparator, explain that its action is chosen
+in the training data and may differ across folds. “Uniform assignment”
+means that everyone receives the same action within an evaluation
+fold.</p>
+<p><code>panel_labels</code> accepts named lists for A, B, C and D. Each
+list can set <code>title</code>, <code>subtitle</code>, <code>x</code>,
+<code>y</code> and <code>caption</code>; <code>NULL</code> removes a
+label. This supports clean figures with a separately supplied caption.
+Retain the rule identity, evaluation scope, comparator and interval
+qualifications somewhere in the complete figure and caption. Label
+overrides affect presentation only; they preserve the stored estimates,
+weights, intervals, provenance and interpretation text.</p>
+<div class="section level3">
+<h3 id="plot-a-native-rule-directly">Plot a native rule directly<a class="anchor" aria-label="anchor" href="#plot-a-native-rule-directly"></a>
+</h3>
+<p>The branching plot also accepts a native
+<code><a href="https://rdrr.io/pkg/policytree/man/policy_tree.html" class="external-link">policytree::policy_tree()</a></code> object directly. This is useful
+when a stored rule is all that needs to be drawn. Supply additional leaf
+metrics as stored labels. A tree alone records its assignment rule.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/margot_plot_policy_decision_tree.html">margot_plot_policy_decision_tree</a></span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>, layout_style <span class="op">=</span> <span class="st">"compact"</span>, branch_labels <span class="op">=</span> <span class="st">"condition"</span>,</span>
+<span>  title <span class="op">=</span> <span class="st">"Constructed policy rule"</span>, text_size <span class="op">=</span> <span class="fl">3.2</span>,</span>
+<span>  label_mapping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>score <span class="op">=</span> <span class="st">"Baseline score"</span>, control <span class="op">=</span> <span class="st">"Assign g0"</span>, treated <span class="op">=</span> <span class="st">"Assign g1"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="policy-reporting-stored_files/figure-html/compact-native-1.png" class="r-plt" alt="" width="100%"></p>
+<p><code>branch_labels = "condition"</code> prints the threshold
+inequality on each branch. The inclusive left branch and exclusive right
+branch retain the fitted rule’s routing. Thresholds have the same
+display rounding as their parent node; routing continues to use the full
+stored value. Supply <code>c(left = "Yes", right = "No")</code> for a
+common pair of labels, or a table with <code>parent_id</code>,
+<code>side</code> and <code>label</code> for edge-specific wording. A
+callback can use the edge metadata to append units:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/margot_plot_policy_decision_tree.html">margot_plot_policy_decision_tree</a></span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>, layout_style <span class="op">=</span> <span class="st">"compact"</span>,</span>
+<span>  branch_labels <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">edges</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">edges</span><span class="op">$</span><span class="va">side</span> <span class="op">==</span> <span class="st">"left"</span>, <span class="st">"&lt;="</span>, <span class="st">"&gt;"</span><span class="op">)</span>, <span class="va">edges</span><span class="op">$</span><span class="va">threshold_label</span>, <span class="st">"points"</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Use <code>node_label_width</code> to wrap long node labels while
+preserving their existing line breaks. Explicit padding and margin
+settings override compact defaults. Supplied titles now retain exactly
+the caller’s text, including punctuation and case. Existing calls retain
+the legacy geometry and True/False branch labels unless compact layout
+or alternative labels are requested.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="standalone-plots-tables-and-interpretations">Standalone plots, tables and interpretations<a class="anchor" aria-label="anchor" href="#standalone-plots-tables-and-interpretations"></a>
 </h2>
 <p>The report object contains <code>decision_tree</code>,
@@ -171,7 +255,7 @@ changes.</p>
 <code>reporting</code> object. Every interval records its type, level
 and supplied method. Interpretation functions compare the unrounded gain
 with the resolved margin. They then format the numbers for readers.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report</span><span class="op">$</span><span class="va">table</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"leaf_label"</span>, <span class="st">"estimate"</span>, <span class="st">"n_reference"</span>, <span class="st">"reference_share"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
 <span><span class="co">#&gt;   leaf_label estimate n_reference reference_share</span></span>
@@ -234,7 +318,7 @@ variability. A sampling interval requires a variance estimator that
 accounts for participant reuse across folds and repeats. When compatible
 uncertainty is unavailable, retain the estimate and provide its
 reason:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">value_unavailable</span> <span class="op">&lt;-</span> <span class="va">value</span></span>
 <span><span class="va">value_unavailable</span><span class="op">$</span><span class="va">lower</span> <span class="op">&lt;-</span> <span class="va">value_unavailable</span><span class="op">$</span><span class="va">upper</span> <span class="op">&lt;-</span> <span class="cn">NA_real_</span></span>
 <span><span class="va">value_unavailable</span><span class="op">$</span><span class="va">interval_type</span> <span class="op">&lt;-</span> <span class="st">"unavailable"</span></span>

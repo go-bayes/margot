@@ -54,7 +54,11 @@ margot_policy_reporting_data(
   `repeated_learning` and `constructed`. Independent evaluation
   additionally requires distinct `development_id` and `evaluation_id`.
   The qualification states the inferential limitations, including any
-  multiplicity adjustment.
+  multiplicity adjustment. Optional `value_threshold` is a resolved list
+  with finite signed `value`, `source` (`ate` or `fixed`), non-negative
+  `multiplier`, and `development_ate` for an ATE reference. Leaf
+  contrasts stay unadjusted while value gains use this threshold.
+  Matching rule contexts require identical threshold metadata.
 
 - value_context:
 

@@ -11,3 +11,5 @@
   workflow](https://go-bayes.github.io/margot/articles/standard-grf-policy-tree-workflow.md):
 - [Policy rules, weighted projections and stored
   evaluation](https://go-bayes.github.io/margot/articles/policy-reporting-stored.md):
+- [Interpretable policy trees with benefit
+  thresholds](https://go-bayes.github.io/margot/articles/policy-value-thresholds.md):

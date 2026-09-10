@@ -26,7 +26,9 @@ margot_report_policy_tree(
   projection_args = list(),
   decision_tree_args = list(),
   reporting_data = NULL,
-  reporting_heights = c(1.5, 1.7, 1)
+  reporting_heights = c(1.5, 1.7, 1),
+  reporting_layout = c("standard", "compact", "two_panel"),
+  panel_labels = list()
 )
 ```
 
@@ -121,8 +123,27 @@ margot_report_policy_tree(
 
 - reporting_heights:
 
-  Relative heights of A, B and the C/D row for a stored report; default
-  `c(1.5, 1.7, 1)`.
+  Relative heights of A, B and the C/D row for a stored report (two
+  numbers also accepted for two-panel reporting); default
+  `c(1.5, 1.7, 1)`. When omitted with compact reporting, depth-adaptive
+  shorter tree rows are used.
+
+- reporting_layout:
+
+  `"two_panel"` combines only the tree and weighted projection without
+  stamped captions, retaining uncertainty plots and text as separate
+  report components. `"standard"` preserves the stored report's layout.
+  `"compact"` uses compact tree geometry, smaller margins and legend
+  spacing, and prints the outcome heading once. Applies only with
+  reporting_data.
+
+- panel_labels:
+
+  Named list of ggplot label overrides for stored panels `A`, `B`, `C`,
+  and `D`; each may name `title`, `subtitle`, `x`, `y`, and `caption`.
+  Values are character scalars or NULL. Presentation overrides leave
+  numerical tables and provenance unchanged; retain the applicable
+  inferential qualifications in the figure or accompanying caption.
 
 ## Value
 

@@ -24,7 +24,7 @@ margot_report_policy_tree(
   decision_tree_args = list(),
   reporting_data = NULL,
   reporting_heights = c(1.5, 1.7, 1),
-  reporting_layout = c("standard", "compact"),
+  reporting_layout = c("standard", "compact", "two_panel"),
   panel_labels = list()
 )
 }
@@ -71,9 +71,9 @@ when available; otherwise depth one is used.}
 
 \item{reporting_data}{Optional \code{\link{margot_policy_reporting_data}()} object. Enables the stored four-panel report: A/B use the existing combo; C/D show supplied leaf contrasts and value gain. This path consumes supplied estimates and intervals, requires matching rule and reference rows, and uses the stored weights and margin. Calls with \code{reporting_data = NULL} retain their existing calculations and return shape.}
 
-\item{reporting_heights}{Relative heights of A, B and the C/D row for a stored report; default \code{c(1.5, 1.7, 1)}. When omitted with compact reporting, depth-adaptive shorter tree rows are used.}
+\item{reporting_heights}{Relative heights of A, B and the C/D row for a stored report (two numbers also accepted for two-panel reporting); default \code{c(1.5, 1.7, 1)}. When omitted with compact reporting, depth-adaptive shorter tree rows are used.}
 
-\item{reporting_layout}{\code{"standard"} preserves the stored report's layout. \code{"compact"} uses compact tree geometry, smaller margins and legend spacing, and prints the outcome heading once. Applies only with reporting_data.}
+\item{reporting_layout}{\code{"two_panel"} combines only the tree and weighted projection without stamped captions, retaining uncertainty plots and text as separate report components. \code{"standard"} preserves the stored report's layout. \code{"compact"} uses compact tree geometry, smaller margins and legend spacing, and prints the outcome heading once. Applies only with reporting_data.}
 
 \item{panel_labels}{Named list of ggplot label overrides for stored panels \code{A}, \code{B}, \code{C}, and \code{D}; each may name \code{title}, \code{subtitle}, \code{x}, \code{y}, and \code{caption}. Values are character scalars or NULL. Presentation overrides leave numerical tables and provenance unchanged; retain the applicable inferential qualifications in the figure or accompanying caption.}
 }

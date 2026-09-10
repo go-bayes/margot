@@ -209,6 +209,14 @@ margot_table_policy_tree <- function(object,
                                      include_value_contribution = FALSE,
                                      baseline = c("control_all", "treat_all")) {
   # build a stable machine-readable leaf table for manuscripts and reports.
+  if (inherits(object, "margot_policy_reporting_data")) {
+    x <- .margot_policy_reporting_validate(object)
+    out <- x$leaves
+    out$rule_id <- x$context$rule_id
+    out$evaluation_mode <- x$context$evaluation_mode
+    if (!is.null(x$context$value_threshold)) out$value_threshold <- x$context$value_threshold$value
+    return(out)
+  }
   source <- match.arg(source)
   baseline <- match.arg(baseline)
   if (identical(source, "auto")) {
@@ -305,6 +313,8 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
     "Selected actions are the actions stored by the learned tree; evaluation summaries do not reselect actions from evaluation-row means."
   )
 
+  if (!is.null(object) && identical(object$metadata$value_objective, "threshold_adjusted")) sentences[1] <- "Policy-tree leaves retain original signed treatment-control contrasts (`T-C`). Net assignment value additionally subtracts the saved benefit threshold from treatment scores."
+
   if (identical(source, "heldout_cv")) {
     sentences <- c(
       sentences,
@@ -347,6 +357,7 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
   if (!is.numeric(digits) || length(digits) != 1L || !is.finite(digits) || digits != as.integer(digits) || digits < 0 || digits > 8) stop("digits must be an integer from 0 to 8", call. = FALSE)
   if (!is.character(action_names) || !all(c("control", "treated") %in% names(action_names)) || anyNA(action_names) || any(!nzchar(action_names))) stop("action_names must name control and treated", call. = FALSE)
   if (!is.character(value_units) || length(value_units) != 1L || is.na(value_units) || !nzchar(value_units)) stop("value_units must describe the stored outcome scale", call. = FALSE)
+  threshold_adjusted <- identical(object$metadata$value_objective, "threshold_adjusted")
   decisions <- object$policy_selection
   fields <- c("model", "outcome", "selected_tree_depth", "value_selected_tree", "value_honest_constant", "tree_minus_honest_constant", "min_gain_over_constant", "preferred_policy")
   if (!is.data.frame(decisions) || !nrow(decisions) || !all(fields %in% names(decisions))) stop("stored policy_selection is incomplete", call. = FALSE)
@@ -367,6 +378,11 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
       label, row$selected_tree_depth, fmt(row$value_selected_tree), fmt(row$value_honest_constant), signed(delta), value_units,
       if (expected == "tree") "This reaches" else "This falls below", fmt(row$min_gain_over_constant),
       if (expected == "tree") "the tree procedure" else "the same-action procedure")
+    if (threshold_adjusted) {
+      text <- sub("held-out value", "held-out threshold-adjusted net value", text, fixed = TRUE)
+      text <- sub("The registered comparison", "The specified comparison", text, fixed = TRUE)
+      text <- paste(text, "Each training fold resolves its benefit threshold before evaluation. The same threshold adjusts the tree and every comparator. Original treatment-control leaf contrasts remain unadjusted; a below-threshold effect need not indicate harm.")
+    }
     leaves <- object$leaf_summary
     required_leaves <- c("model", "depth", "action", "treatment_control_contrast_mean", "treatment_control_contrast_q025", "treatment_control_contrast_q975")
     if (is.data.frame(leaves) && nrow(leaves)) {
@@ -379,8 +395,9 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
         text <- paste(text, sprintf("Across held-out leaves assigned %s, the mean score contrast (%s minus %s) is %s; the central 95%% range across fitted leaves is %s to %s.",
           action_names[[leaf$action]], action_names[["treated"]], action_names[["control"]], signed(vals[1]), signed(vals[2]), signed(vals[3])))
       }
-      if (nrow(leaves)) text <- paste(text, sprintf("Mean contrasts weight leaves by their observation counts; the percentile ranges give each fitted leaf equal weight. These ranges describe variation across fitted leaves, rather than confidence intervals for fixed subgroups. A negative held-out contrast among leaves assigned %s, or a positive contrast among leaves assigned %s, indicates that the training preference did not persist in the pooled summary.", action_names[["treated"]], action_names[["control"]]))
+      if (nrow(leaves) && !threshold_adjusted) text <- paste(text, sprintf("Mean contrasts weight leaves by their observation counts; the percentile ranges give each fitted leaf equal weight. These ranges describe variation across fitted leaves, rather than confidence intervals for fixed subgroups. A negative held-out contrast among leaves assigned %s, or a positive contrast among leaves assigned %s, indicates that the training preference did not persist in the pooled summary.", action_names[["treated"]], action_names[["control"]]))
     }
+    if (threshold_adjusted && is.data.frame(leaves) && nrow(leaves)) text <- paste(text, "Leaf ranges describe variation across repeated fitted groups; they are not sampling intervals for a fixed subgroup. Assignment depends on the training threshold, not solely on the sign of the original effect.")
     text
   }, character(1))
 }
@@ -439,8 +456,8 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
 #' @param decision_tree_args Optional list of arguments for the decision tree.
 #'
 #' @param reporting_data Optional \code{\link{margot_policy_reporting_data}()} object. Enables the stored four-panel report: A/B use the existing combo; C/D show supplied leaf contrasts and value gain. This path consumes supplied estimates and intervals, requires matching rule and reference rows, and uses the stored weights and margin. Calls with \code{reporting_data = NULL} retain their existing calculations and return shape.
-#' @param reporting_heights Relative heights of A, B and the C/D row for a stored report; default \code{c(1.5, 1.7, 1)}. When omitted with compact reporting, depth-adaptive shorter tree rows are used.
-#' @param reporting_layout \code{"standard"} preserves the stored report's layout. \code{"compact"} uses compact tree geometry, smaller margins and legend spacing, and prints the outcome heading once. Applies only with reporting_data.
+#' @param reporting_heights Relative heights of A, B and the C/D row for a stored report (two numbers also accepted for two-panel reporting); default \code{c(1.5, 1.7, 1)}. When omitted with compact reporting, depth-adaptive shorter tree rows are used.
+#' @param reporting_layout \code{"two_panel"} combines only the tree and weighted projection without stamped captions, retaining uncertainty plots and text as separate report components. \code{"standard"} preserves the stored report's layout. \code{"compact"} uses compact tree geometry, smaller margins and legend spacing, and prints the outcome heading once. Applies only with reporting_data.
 #' @param panel_labels Named list of ggplot label overrides for stored panels \code{A}, \code{B}, \code{C}, and \code{D}; each may name \code{title}, \code{subtitle}, \code{x}, \code{y}, and \code{caption}. Values are character scalars or NULL. Presentation overrides leave numerical tables and provenance unchanged; retain the applicable inferential qualifications in the figure or accompanying caption.
 #'
 #' @return A list with \code{table}, \code{text}, \code{plots}, and
@@ -465,12 +482,12 @@ margot_report_policy_tree <- function(result_object,
                                       decision_tree_args = list(),
                                       reporting_data = NULL,
                                       reporting_heights = c(1.5, 1.7, 1),
-                                      reporting_layout = c("standard", "compact"),
+                                      reporting_layout = c("standard", "compact", "two_panel"),
                                       panel_labels = list()) {
   reporting_layout <- match.arg(reporting_layout)
   if (is.null(panel_labels)) panel_labels <- list()
   if (is.null(reporting_data) && (reporting_layout != "standard" || length(panel_labels))) stop("reporting_layout and panel_labels require reporting_data.", call. = FALSE)
-  if (missing(reporting_heights) && reporting_layout == "compact") reporting_heights <- NULL
+  if (missing(reporting_heights) && reporting_layout %in% c("compact", "two_panel")) reporting_heights <- NULL
   # stored reporting bypasses every legacy score-summary and interval calculation.
   if (!is.null(reporting_data)) {
     if (!is.null(policy_cv) || !is.null(weights)) stop("Supply stored contexts and weights through reporting_data; policy_cv and weights are legacy arguments.", call. = FALSE)
@@ -588,7 +605,7 @@ margot_report_policy_tree <- function(result_object,
 #' Summarises cross-validated policy-tree values against all-control,
 #' all-treatment, and best-constant baselines.
 #'
-#' @param object A \code{margot_policy_tree_cv} object.
+#' @param object A \code{margot_policy_tree_cv} or \code{margot_policy_reporting_data} object.
 #' @param model_name Optional model name, with or without the \code{model_}
 #'   prefix.
 #' @param depth Optional tree depth. If \code{NULL}, all depths are returned.
@@ -601,6 +618,14 @@ margot_table_policy_value <- function(object,
                                       depth = NULL,
                                       digits = 3L) {
   # report tree-level value against universal action baselines.
+  if (inherits(object, "margot_policy_reporting_data")) {
+    x <- .margot_policy_reporting_validate(object)
+    out <- x$value
+    out$rule_id <- x$value_context$rule_id
+    out$evaluation_mode <- x$value_context$evaluation_mode
+    if (!is.null(x$value_context$value_threshold)) out$value_threshold <- x$value_context$value_threshold$value
+    return(out)
+  }
   if (!inherits(object, "margot_policy_tree_cv")) {
     stop("object must be a margot_policy_tree_cv object", call. = FALSE)
   }
@@ -634,6 +659,9 @@ margot_table_policy_value <- function(object,
     value_policy_label = .margot_policy_format_signed(df$value_policy_mean, digits),
     gain_vs_best_constant_label = .margot_policy_format_signed(df$gain_vs_best_constant_mean, digits)
   )
+  optional <- grep("^(original_|value_threshold|threshold_source|threshold_multiplier|value_objective)", names(df), value = TRUE)
+  for (field in optional) out[[field]] <- df[[field]]
+  if (!is.null(object$metadata$value_objective)) attr(out, "value_objective") <- object$metadata$value_objective
   attr(out, "source") <- "heldout_cv"
   out
 }

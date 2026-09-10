@@ -116,7 +116,7 @@ str(df_margot_example)
 
 # basic summary by wave
 table(df_margot_example$wave)
-#> 
-#>   0   1   2 
-#> 100 100 100 
+#>
+#>   0   1   2
+#> 100 100 100
 ```

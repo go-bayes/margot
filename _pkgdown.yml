@@ -39,6 +39,7 @@ articles:
     contents:
     - standard-grf-policy-tree-workflow
     - policy-reporting-stored
+    - policy-value-thresholds
 authors:
   Joseph A Bulbulia:
     href: https://github.com/go-bayes
@@ -129,6 +130,11 @@ reference:
     - margot_interpret_heterogeneity
     - margot_omnibus_hetero_test
     - margot_policy_workflow
+    - margot_policy_value_threshold
+    - margot_policy_action_scores
+    - margot_policy_development_scores
+    - margot_policy_tree_evaluate
+    - margot_policy_evaluation_reporting_data
     - margot_policy_tree_cv
     - margot_policy_tree_display
     - margot_policy_leaf_summary

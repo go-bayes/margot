@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ate-reporting-scales.html">Average-effect reporting and outcome scales</a></li>
     <li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
     <li><a class="dropdown-item" href="../articles/policy-reporting-stored.html">Policy rules, weighted projections and stored evaluation</a></li>
+    <li><a class="dropdown-item" href="../articles/policy-value-thresholds.html">Interpretable policy trees with benefit thresholds</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -38,6 +39,15 @@
       <small>Source: <a href="https://github.com/go-bayes/margot/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.2" id="id_2026-09-11-margot-122">[2026-09-11] margot 1.2.2<a class="anchor" aria-label="anchor" href="#id_2026-09-11-margot-122"></a></h2>
+<ul><li><p>Policy learning accepts explicit benefit thresholds, including signed fixed values and a development-sample ATE reference. Treatment rewards subtract the threshold before analysis weights are applied once. Tree learning and constant comparisons use the same net-value objective; original effects and values remain available. Existing CV and display calls retain their zero-threshold default and legacy scientific results.</p></li>
+<li><p><code><a href="../reference/margot_policy_development_scores.html">margot_policy_development_scores()</a></code> fits outcome, exposure and causal forests using development participants, producing out-of-bag development scores and development-trained evaluation predictions. <code><a href="../reference/margot_policy_action_scores.html">margot_policy_action_scores()</a></code> constructs binary doubly robust action scores without applying weights or thresholds. Invalid propensities fail rather than being silently clipped.</p></li>
+<li><p><code><a href="../reference/margot_policy_tree_evaluate.html">margot_policy_tree_evaluate()</a></code> learns a threshold, constant comparator and shallow rule in development, then evaluates that same rule on separate supplied scores. It reports original and net values, leaf contrasts, paired-score differences and nominal pointwise intervals conditional on the learned rule and supplied preparation. These intervals require appropriate sampling and nuisance-estimation assumptions and do not quantify every source of preparation or population-projection uncertainty. Existing stored-score CV remains a different evaluation mode.</p></li>
+<li><p><code><a href="../reference/margot_policy_evaluation_reporting_data.html">margot_policy_evaluation_reporting_data()</a></code> binds evaluated rules to stored reporting. <code>reporting_layout = "two_panel"</code> supplies caption-free tree and weighted-projection artwork while retaining standalone leaf and value evaluation plots and text. Labels distinguish original effects from net value and below-threshold benefit from harm. An estimated ATE is a relative reference; positive targeting value under that realised threshold does not by itself establish heterogeneous effects.</p></li>
+<li><p>Policy decision trees accept a native <code>policytree</code> object without a causal-forest wrapper. Branch labels can show the fitted inequalities, use a named left/right pair, or use per-edge tables or callbacks. Existing supplied leaf labels retain their separate assignment and outcome-contrast meanings. Custom titles are now printed literally, without title-casing or an appended “Outcome”.</p></li>
+<li><p><code>layout_style = "compact"</code> reduces decision-tree margins and title spacing, centres parents over ordered children, and uses the available panel aspect ratio. Optional node-label wrapping supports longer labels. The default <code>"legacy"</code> layout preserves historical geometry. Stored reports offer <code>reporting_layout = "compact"</code>, configurable row heights, and <code>panel_labels</code> for titles, axes and captions; figures and tables retain the same stored estimates, weights, thresholds and uncertainty metadata. Compact spacing also reaches nested depth-two projections, compact default heights follow the fitted rather than the requested depth, an empty decision-tree title removes the title row, <code>panel_labels = NULL</code> is accepted, and native trees take the model recorded on supplied leaf metrics. <code>edge_label_offset</code> is documented in x data units and <code>span_ratio</code> as legacy-only. Compact reports drop panel subtitles and move scope and comparator statements into captions, give the depth-two tree row more height, place compact edge labels on the upper part of each branch, and pad the contrast and gain axes so intervals do not span the full panel.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.1" id="id_2026-09-10-margot-121">[2026-09-10] margot 1.2.1<a class="anchor" aria-label="anchor" href="#id_2026-09-10-margot-121"></a></h2>
 <ul><li><p>Weighted policy projections now remove the point stroke so rendered circle areas remain proportional to display weights, including zero area for zero-weight records. Constant-tree projection subtitles honour custom action labels. SVG geometry tests cover stumps, depth-two trees and constant rules.</p></li>
@@ -5828,4 +5838,3 @@
 
 
   </body></html>
-

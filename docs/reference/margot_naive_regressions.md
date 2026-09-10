@@ -165,7 +165,7 @@ naive_results_adjusted <- margot_naive_regressions(
 # perform naive regressions scaled for 4-unit change
 naive_results_scaled <- margot_naive_regressions(
   data = my_data,
-  exposure_var = "treatment", 
+  exposure_var = "treatment",
   outcome_vars = c("outcome1_z", "outcome2_z", "outcome3_z"),
   coefficient_scale = 4
 )

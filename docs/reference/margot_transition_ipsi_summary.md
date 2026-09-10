@@ -126,35 +126,35 @@ margot_transition_ipsi_summary(transitions)
 #> 4             1.00           1.0
 #> 5             1.00           1.0
 #> 6             1.00           1.0
-#> 
+#>
 #> $report
-#>  [1] "Wave 2018 $\\to$ 2019: The natural rate of moving up (State 0 $\\to$ State 1) was approximately 50.0\\% (95\\% CI 1.3\\%--98.7\\%) based on 1 transitions out of 2 at-risk participants in State 0."                                                                                
+#>  [1] "Wave 2018 $\\to$ 2019: The natural rate of moving up (State 0 $\\to$ State 1) was approximately 50.0\\% (95\\% CI 1.3\\%--98.7\\%) based on 1 transitions out of 2 at-risk participants in State 0."
 #>  [2] "Counterfactual probabilities follow $p' = 1 - (1 - p)/\\delta$ for this transition (the risk-ratio incremental propensity score intervention of `lmtp::ipsi()`, which divides the probability of remaining in the natural state by $\\delta$; $\\delta$ is not an odds multiplier)."
-#>  [3] "For $\\delta = 2$ (so $1/\\delta = 0.5$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 75.0\\% (natural $p$ 50.0\\%; 1.5-fold increase)."                                                                                                          
-#>  [4] "For $\\delta = 5$ (so $1/\\delta = 0.2$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 90.0\\% (natural $p$ 50.0\\%; 1.8-fold increase)."                                                                                                          
-#>  [5] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 95.0\\% (natural $p$ 50.0\\%; 1.9-fold increase)."                                                                                                         
-#>  [6] ""                                                                                                                                                                                                                                                                                   
-#>  [7] "Wave 2019 $\\to$ 2022: The natural rate of moving up (State 0 $\\to$ State 1) was approximately 100.0\\% (95\\% CI 2.5\\%--100.0\\%) based on 1 transitions out of 1 at-risk participants in State 0."                                                                              
+#>  [3] "For $\\delta = 2$ (so $1/\\delta = 0.5$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 75.0\\% (natural $p$ 50.0\\%; 1.5-fold increase)."
+#>  [4] "For $\\delta = 5$ (so $1/\\delta = 0.2$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 90.0\\% (natural $p$ 50.0\\%; 1.8-fold increase)."
+#>  [5] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 95.0\\% (natural $p$ 50.0\\%; 1.9-fold increase)."
+#>  [6] ""
+#>  [7] "Wave 2019 $\\to$ 2022: The natural rate of moving up (State 0 $\\to$ State 1) was approximately 100.0\\% (95\\% CI 2.5\\%--100.0\\%) based on 1 transitions out of 1 at-risk participants in State 0."
 #>  [8] "Counterfactual probabilities follow $p' = 1 - (1 - p)/\\delta$ for this transition (the risk-ratio incremental propensity score intervention of `lmtp::ipsi()`, which divides the probability of remaining in the natural state by $\\delta$; $\\delta$ is not an odds multiplier)."
-#>  [9] "For $\\delta = 2$ (so $1/\\delta = 0.5$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."                                                                                                        
-#> [10] "For $\\delta = 5$ (so $1/\\delta = 0.2$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."                                                                                                        
-#> [11] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."                                                                                                       
-#> 
+#>  [9] "For $\\delta = 2$ (so $1/\\delta = 0.5$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."
+#> [10] "For $\\delta = 5$ (so $1/\\delta = 0.2$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."
+#> [11] "For $\\delta = 10$ (so $1/\\delta = 0.1$), the counterfactual probability of moving up (State 0 $\\to$ State 1) is about 100.0\\% (natural $p$ 100.0\\%; 1.0-fold increase)."
+#>
 #> $report_block
-#> function (format = c("latex", "markdown")) 
+#> function (format = c("latex", "markdown"))
 #> {
 #>     format <- match.arg(format)
-#>     if (!length(report)) 
+#>     if (!length(report))
 #>         return("")
 #>     if (format == "latex") {
-#>         paste0("\\begin{quote}\n", paste(report, collapse = "\n"), 
+#>         paste0("\\begin{quote}\n", paste(report, collapse = "\n"),
 #>             "\n\\end{quote}\n")
 #>     }
 #>     else {
 #>         paste(report, collapse = "\n")
 #>     }
 #> }
-#> <bytecode: 0x90c2b9d58>
-#> <environment: 0x90c2b4dd0>
-#> 
+#> <bytecode: 0x6eec62bd8>
+#> <environment: 0x6eec63968>
+#>
 ```

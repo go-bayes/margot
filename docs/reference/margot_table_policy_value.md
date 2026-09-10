@@ -13,7 +13,7 @@ margot_table_policy_value(object, model_name = NULL, depth = NULL, digits = 3L)
 
 - object:
 
-  A `margot_policy_tree_cv` object.
+  A `margot_policy_tree_cv` or `margot_policy_reporting_data` object.
 
 - model_name:
 

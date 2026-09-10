@@ -18,9 +18,11 @@ margot_plot_policy_decision_tree(result_object, model_name = NULL, ...)
   A list returned by
   [`margot_causal_forest()`](https://go-bayes.github.io/margot/reference/margot_causal_forest.md),
   [`margot_policy_tree_display()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_display.md),
-  or a compatible policy-tree workflow object. A compact display object
-  supports this decision-tree plot because it stores the fitted tree; it
-  does not supply the observation-level data required by
+  or a compatible policy-tree workflow object, or a native
+  [`policytree::policy_tree()`](https://rdrr.io/pkg/policytree/man/policy_tree.html)
+  tree. A compact display object supports this decision-tree plot
+  because it stores the fitted tree; it does not supply the
+  observation-level data required by
   [`margot_plot_policy_projection()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_projection.md).
 
 - model_name:

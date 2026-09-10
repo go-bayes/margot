@@ -32,6 +32,9 @@ margot_policy_tree_display(
 - policy_cv:
 
   A \[margot_policy_tree_cv()\] result containing a named \`depth_map\`.
+  Its saved benefit-threshold specification is resolved anew on the
+  display sample. This full-sample refit does not inherit a fold rule's
+  evaluation.
 
 - weights:
 

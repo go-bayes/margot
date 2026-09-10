@@ -11,7 +11,7 @@ omitted in manuscript workflows."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,6 +25,7 @@ omitted in manuscript workflows."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ate-reporting-scales.html">Average-effect reporting and outcome scales</a></li>
     <li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
     <li><a class="dropdown-item" href="../articles/policy-reporting-stored.html">Policy rules, weighted projections and stored evaluation</a></li>
+    <li><a class="dropdown-item" href="../articles/policy-value-thresholds.html">Interpretable policy trees with benefit thresholds</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -70,7 +71,9 @@ omitted in manuscript workflows.</p>
 <span>  projection_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  decision_tree_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  reporting_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  reporting_heights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">1.7</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span>  reporting_heights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">1.7</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  reporting_layout <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"standard"</span>, <span class="st">"compact"</span>, <span class="st">"two_panel"</span><span class="op">)</span>,</span>
+<span>  panel_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -157,7 +160,15 @@ when available; otherwise depth one is used.</p></dd>
 
 
 <dt id="arg-reporting-heights">reporting_heights<a class="anchor" aria-label="anchor" href="#arg-reporting-heights"></a></dt>
-<dd><p>Relative heights of A, B and the C/D row for a stored report; default <code>c(1.5, 1.7, 1)</code>.</p></dd>
+<dd><p>Relative heights of A, B and the C/D row for a stored report (two numbers also accepted for two-panel reporting); default <code>c(1.5, 1.7, 1)</code>. When omitted with compact reporting, depth-adaptive shorter tree rows are used.</p></dd>
+
+
+<dt id="arg-reporting-layout">reporting_layout<a class="anchor" aria-label="anchor" href="#arg-reporting-layout"></a></dt>
+<dd><p><code>"two_panel"</code> combines only the tree and weighted projection without stamped captions, retaining uncertainty plots and text as separate report components. <code>"standard"</code> preserves the stored report's layout. <code>"compact"</code> uses compact tree geometry, smaller margins and legend spacing, and prints the outcome heading once. Applies only with reporting_data.</p></dd>
+
+
+<dt id="arg-panel-labels">panel_labels<a class="anchor" aria-label="anchor" href="#arg-panel-labels"></a></dt>
+<dd><p>Named list of ggplot label overrides for stored panels <code>A</code>, <code>B</code>, <code>C</code>, and <code>D</code>; each may name <code>title</code>, <code>subtitle</code>, <code>x</code>, <code>y</code>, and <code>caption</code>. Values are character scalars or NULL. Presentation overrides leave numerical tables and provenance unchanged; retain the applicable inferential qualifications in the figure or accompanying caption.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -208,4 +219,3 @@ rule.</p>
 
 
   </body></html>
-

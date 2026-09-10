@@ -130,7 +130,7 @@ margot_plot_histogram(
   id_col = "participant_id",
   wave_col = "survey_wave"
 )
-#> 
+#>
 #> ── Margot Plot Histogram ───────────────────────────────────────────────────────
 #> ✖ An error occurred: object 'your_data' not found
 #> <simpleError in eval(expr, envir): object 'your_data' not found>
@@ -143,7 +143,7 @@ margot_plot_histogram(
   waves = c(2018, 2020),
   binwidth = 1
 )
-#> 
+#>
 #> ── Margot Plot Histogram ───────────────────────────────────────────────────────
 #> ✖ An error occurred: object 'your_data' not found
 #> <simpleError in eval(expr, envir): object 'your_data' not found>
@@ -159,7 +159,7 @@ margot_plot_histogram(
   add_timestamp = TRUE,
   file_prefix = "study1"
 )
-#> 
+#>
 #> ── Margot Plot Histogram ───────────────────────────────────────────────────────
 #> ✖ An error occurred: object 'your_data' not found
 #> <simpleError in eval(expr, envir): object 'your_data' not found>
@@ -174,7 +174,7 @@ margot_plot_histogram(
   mean_line_color = "red",
   sd_line_color = "blue"
 )
-#> 
+#>
 #> ── Margot Plot Histogram ───────────────────────────────────────────────────────
 #> ✖ An error occurred: object 'your_data' not found
 #> <simpleError in eval(expr, envir): object 'your_data' not found>
@@ -186,7 +186,7 @@ margot_plot_histogram(
   col_names = c("var1", "var2"),
   vertical_facets = TRUE
 )
-#> 
+#>
 #> ── Margot Plot Histogram ───────────────────────────────────────────────────────
 #> ✖ An error occurred: object 'your_data' not found
 #> <simpleError in eval(expr, envir): object 'your_data' not found>

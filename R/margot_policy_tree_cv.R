@@ -117,6 +117,7 @@
 #'   successful fold separately by depth. \code{"matched_successful_repeat_fold_pairs"}
 #'   restricts depth and constant comparisons to model-repeat-fold combinations
 #'   successfully evaluated at every requested depth.
+#' @param value_threshold,threshold_multiplier Benefit-threshold specification as in [margot_policy_value_threshold()]. Default zero preserves the original objective. The ATE reference is resolved separately from each training fold and carried unchanged into its held-out evaluation; leaf effects retain the original outcome scale. Existing value and gain columns then describe threshold-adjusted values, with original values saved in separate columns. This stored-score CV does not refit original nuisance models or variable screening within folds.
 #' @param verbose Logical. Print progress messages.
 #'
 #' @return A \code{margot_policy_tree_cv} list with fold-level held-out values,
@@ -156,7 +157,9 @@ margot_policy_tree_cv <- function(model_results,
                                     "available_by_depth",
                                     "matched_successful_repeat_fold_pairs"
                                   ),
-                                  verbose = TRUE) {
+                                  verbose = TRUE,
+                                  value_threshold = 0,
+                                  threshold_multiplier = 1) {
   # evaluate policy-learning procedure on held-out folds and return summaries.
   if (!is.list(model_results) || is.null(model_results$results) || !is.list(model_results$results)) {
     stop("model_results must be a list with a 'results' element", call. = FALSE)
@@ -165,6 +168,7 @@ margot_policy_tree_cv <- function(model_results,
     stop("model_results must contain covariates for held-out policy-tree CV", call. = FALSE)
   }
 
+  .policy_value_validate_spec(value_threshold, threshold_multiplier)
   covariate_mode <- match.arg(covariate_mode)
   depth_selection_rule <- match.arg(depth_selection_rule)
   training_weights_applied <- FALSE
@@ -257,13 +261,26 @@ margot_policy_tree_cv <- function(model_results,
         train_pos <- usable_idx[fold_id != fold]
         if (length(test_pos) < 1L || length(train_pos) < 2L) next
 
+        train_scores <- model_data$dr_scores[train_pos, , drop = FALSE]
+        train_weights <- if (!is.null(model_data$weights)) model_data$weights[train_pos] else NULL
+        reference <- margot_policy_value_threshold(
+          train_scores, train_weights, value_threshold, threshold_multiplier
+        )
+        net_train_scores <- .policy_value_net_scores(train_scores, reference)
+        net_test_scores <- .policy_value_net_scores(
+          model_data$dr_scores[test_pos, , drop = FALSE], reference
+        )
+        tie_tolerance <- if (reference$source == "ate") {
+          .policy_value_constant_tolerance(train_scores, train_weights)
+        } else 0
+
         for (depth in depths) {
           tree <- tryCatch(
             .compute_policy_tree(
               model_data$covariates[train_pos, selected_vars, drop = FALSE],
               .policy_cv_training_scores(
-                dr_scores = model_data$dr_scores[train_pos, , drop = FALSE],
-                weights = if (!is.null(model_data$weights)) model_data$weights[train_pos] else NULL
+                dr_scores = net_train_scores,
+                weights = train_weights
               ),
               depth = depth,
               tree_method = actual_tree_method,
@@ -279,12 +296,22 @@ margot_policy_tree_cv <- function(model_results,
           if (is.null(tree)) next
 
           training_constant <- .policy_cv_select_constant(
-            dr_scores = model_data$dr_scores[train_pos, , drop = FALSE],
-            weights = if (!is.null(model_data$weights)) model_data$weights[train_pos] else NULL,
-            tree = tree
+            dr_scores = net_train_scores,
+            weights = train_weights,
+            tree = tree,
+            tie_tolerance = tie_tolerance
           )
 
           heldout <- .policy_cv_evaluate_tree(
+            tree = tree,
+            covariates = model_data$covariates[test_pos, , drop = FALSE],
+            dr_scores = net_test_scores,
+            weights = if (!is.null(model_data$weights)) model_data$weights[test_pos] else NULL,
+            constant_action_id = training_constant$action_id,
+            constant_action = training_constant$action
+          )
+          if (is.null(heldout)) next
+          original <- .policy_cv_evaluate_tree(
             tree = tree,
             covariates = model_data$covariates[test_pos, , drop = FALSE],
             dr_scores = model_data$dr_scores[test_pos, , drop = FALSE],
@@ -292,7 +319,6 @@ margot_policy_tree_cv <- function(model_results,
             constant_action_id = training_constant$action_id,
             constant_action = training_constant$action
           )
-          if (is.null(heldout)) next
 
           fold_rows[[length(fold_rows) + 1L]] <- data.frame(
             model = model_name,
@@ -302,6 +328,19 @@ margot_policy_tree_cv <- function(model_results,
             fold = fold,
             depth = depth,
             n_train = length(train_pos),
+            value_threshold = reference$value,
+            threshold_source = reference$source,
+            threshold_multiplier = reference$multiplier,
+            development_ate = reference$development_ate,
+            constant_tie_tolerance = tie_tolerance,
+            original_value_policy = original$value_policy,
+            original_value_control_all = original$value_control_all,
+            original_value_treat_all = original$value_treat_all,
+            original_value_best_constant = original$value_best_constant,
+            original_policy_score_numerator = original$policy_score_numerator,
+            original_control_score_numerator = original$control_score_numerator,
+            original_treat_score_numerator = original$treat_score_numerator,
+            original_best_constant_score_numerator = original$best_constant_score_numerator,
             n_eval = heldout$n_eval,
             evaluation_weight_sum = heldout$evaluation_weight_sum,
             coverage_numerator = heldout$coverage_numerator,
@@ -355,6 +394,9 @@ margot_policy_tree_cv <- function(model_results,
             error = function(e) NULL
           )
           if (!is.null(leaf_df) && nrow(leaf_df)) {
+            leaf_df$value_threshold <- reference$value
+            leaf_df$threshold_source <- reference$source
+            leaf_df$threshold_multiplier <- reference$multiplier
             leaf_rows[[length(leaf_rows) + 1L]] <- leaf_df
           }
         }
@@ -439,6 +481,11 @@ margot_policy_tree_cv <- function(model_results,
     policy_selection = policy_selection,
     depth_map = depth_map,
     metadata = list(
+      value_threshold = value_threshold,
+      threshold_multiplier = threshold_multiplier,
+      value_objective = if (is.numeric(value_threshold) && value_threshold * threshold_multiplier == 0) "original" else "threshold_adjusted",
+      evaluation_mode = "stored_score_cv",
+      constant_tie_rule = "control within stated training rounding tolerance",
       num_folds = num_folds,
       n_repeats = n_repeats,
       requested_depths = depths,
@@ -477,7 +524,7 @@ margot_policy_tree_cv <- function(model_results,
 #' @param model_results A causal-forest result accepted by
 #'   [margot_policy_tree_cv()].
 #' @param policy_cv A [margot_policy_tree_cv()] result containing a named
-#'   `depth_map`.
+#'   `depth_map`. Its saved benefit-threshold specification is resolved anew on the display sample. This full-sample refit does not inherit a fold rule's evaluation.
 #' @param weights Optional positive training weights. Zero weights exclude rows
 #'   from the display-tree target sample.
 #' @param model_names Optional model names to process.
@@ -540,9 +587,14 @@ margot_policy_tree_display <- function(
     rows <- which(complete)
     if (!length(rows)) stop("No complete positive-weight display rows for ", model_name, call. = FALSE)
     display_weights <- if (is.null(model_data$weights)) NULL else model_data$weights[rows]
+    reference <- margot_policy_value_threshold(
+      model_data$dr_scores[rows, , drop = FALSE], display_weights,
+      policy_cv$metadata$value_threshold %||% 0,
+      policy_cv$metadata$threshold_multiplier %||% 1
+    )
     tree <- .compute_policy_tree(
       X = model_data$covariates[rows, selected_vars, drop = FALSE],
-      Gamma = .policy_cv_training_scores(model_data$dr_scores[rows, , drop = FALSE], display_weights),
+      Gamma = .policy_cv_training_scores(.policy_value_net_scores(model_data$dr_scores[rows, , drop = FALSE], reference), display_weights),
       depth = depth,
       tree_method = actual_tree_method,
       min_node_size = min_node_size
@@ -570,7 +622,13 @@ margot_policy_tree_display <- function(
       depth = depth,
       label_mapping = label_mapping
     )
+    if (!is.null(leaf_rows[[model_name]]) && nrow(leaf_rows[[model_name]])) {
+      leaf_rows[[model_name]]$value_threshold <- reference$value
+      leaf_rows[[model_name]]$threshold_source <- reference$source
+      leaf_rows[[model_name]]$threshold_multiplier <- reference$multiplier
+    }
     result_rows[[model_name]] <- list(
+      value_threshold = reference,
       tree = tree,
       depth = depth,
       selected_vars = selected_vars,
@@ -749,7 +807,7 @@ margot_policy_tree_display <- function(
 }
 
 #' @keywords internal
-.policy_cv_select_constant <- function(dr_scores, weights = NULL, tree = NULL) {
+.policy_cv_select_constant <- function(dr_scores, weights = NULL, tree = NULL, tie_tolerance = 0) {
   # select one constant action from training scores and return its stable label.
   dr_scores <- as.matrix(dr_scores)
   action_columns <- .margot_policy_binary_action_columns(
@@ -763,8 +821,12 @@ margot_policy_tree_display <- function(
   if (all(!is.finite(values))) {
     stop("training scores contain no finite constant-policy value", call. = FALSE)
   }
+  if (!is.numeric(tie_tolerance) || length(tie_tolerance) != 1L ||
+      !is.finite(tie_tolerance) || tie_tolerance < 0) {
+    stop("tie_tolerance must be a finite non-negative scalar", call. = FALSE)
+  }
   # ties resolve to control so the training-only procedure is deterministic.
-  maximisers <- which(values == max(values, na.rm = TRUE))
+  maximisers <- which(max(values, na.rm = TRUE) - values <= tie_tolerance)
   action_id <- if (action_columns$control %in% maximisers) {
     action_columns$control
   } else {
@@ -1140,6 +1202,34 @@ margot_policy_tree_display <- function(
   if (!length(rows)) return(data.frame())
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
+  if ("value_threshold" %in% names(fold_values)) {
+    out$threshold_source <- vapply(seq_len(nrow(out)), function(i) {
+      unique(fold_values$threshold_source[fold_values$model == out$model[i] & fold_values$depth == out$depth[i]])[[1]]
+    }, character(1))
+    out$threshold_multiplier <- vapply(seq_len(nrow(out)), function(i) {
+      unique(fold_values$threshold_multiplier[fold_values$model == out$model[i] & fold_values$depth == out$depth[i]])[[1]]
+    }, numeric(1))
+    for (edge in c("min", "max")) {
+      out[[paste0("value_threshold_", edge)]] <- vapply(seq_len(nrow(out)), function(i) {
+        ref <- fold_values$value_threshold[fold_values$model == out$model[i] & fold_values$depth == out$depth[i]]
+        if (edge == "min") min(ref) else max(ref)
+      }, numeric(1))
+    }
+    numerator_names <- c(policy = "policy", control_all = "control", treat_all = "treat", best_constant = "best_constant")
+    for (value_name in names(numerator_names)) {
+      out[[paste0("original_value_", value_name, "_mean")]] <- vapply(seq_len(nrow(out)), function(i) {
+        df <- fold_values[fold_values$model == out$model[i] & fold_values$depth == out$depth[i], , drop = FALSE]
+        if (held_out_aggregation == "fold_n_eval_weighted") {
+          stats::weighted.mean(df[[paste0("original_value_", value_name)]], df$n_eval)
+        } else {
+          numerator <- paste0("original_", numerator_names[[value_name]], "_score_numerator")
+          mean(vapply(split(df, df$repeat_id), function(repeat_df) {
+            sum(repeat_df[[numerator]]) / sum(repeat_df$evaluation_weight_sum)
+          }, numeric(1)))
+        }
+      }, numeric(1))
+    }
+  }
   out[order(out$model, out$depth), , drop = FALSE]
 }
 

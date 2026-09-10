@@ -101,6 +101,95 @@ caller-verified condition, assessed using participant identifiers. Saved
 rule and reference signatures detect subsequent structural or row-order
 changes.
 
+## Compact layouts and explicit labels
+
+The compact layout makes the branching rule use the available panel
+dimensions and reduces outer margins and repeated headings. A one-split
+rule needs less height than a two-level rule. Use
+`reporting_layout = "compact"` to choose depth-specific row proportions;
+an explicit `reporting_heights` value takes precedence. C and D remain
+side by side. Export height still determines the space available for
+labels. Therefore, inspect the rendered figure at its intended
+publication size.
+
+\
+`compact_report`` ``<-`` `[`margot_report_policy_tree`](https://go-bayes.github.io/margot/reference/margot_report_policy_tree.md)`(`\
+`  ``object``, ``"example"``, depth ``=`` ``1``, reporting_data ``=`` ``reporting``,`\
+`  reporting_layout ``=`` ``"compact"``,`\
+`  label_mapping ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``control ``=`` ``"g0"``, treated ``=`` ``"g1"``)``,`\
+`  decision_tree_args ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``branch_labels ``=`` ``"condition"``, text_size ``=`` ``3.5``)``,`\
+`  projection_args ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``jitter_seed ``=`` ``20260910``, weight_max_size ``=`` ``5``)``,`\
+`  panel_labels ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`    C ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``x ``=`` ``"Outcome contrast: g1 minus g0 (SD)"``)``,`\
+`    D ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``x ``=`` ``"Gain over uniform assignment (SD)"``)`\
+`  ``)`\
+`)`\
+`compact_report``$``plots``$``combined_plot`
+
+![](policy-reporting-stored_files/figure-html/compact-report-1.png)
+
+\
+[`stopifnot`](https://rdrr.io/r/base/stopifnot.html)`(`[`identical`](https://rdrr.io/r/base/identical.html)`(``report``$``table``, ``compact_report``$``table``)``,`\
+`          `[`identical`](https://rdrr.io/r/base/identical.html)`(``report``$``policy_value``, ``compact_report``$``policy_value``)``,`\
+`          `[`identical`](https://rdrr.io/r/base/identical.html)`(``report``$``reporting_data``, ``compact_report``$``reporting_data``)``)`
+
+Branch conditions, assigned actions and outcome contrasts have separate
+meanings. A branch condition identifies which participants enter a leaf.
+The leaf label names their assigned action. Panel C compares outcomes
+under g1 and g0 within that leaf. Panel D compares the rule with
+assigning g1 to everyone in this constructed example. For a
+training-selected constant comparator, explain that its action is chosen
+in the training data and may differ across folds. “Uniform assignment”
+means that everyone receives the same action within an evaluation fold.
+
+`panel_labels` accepts named lists for A, B, C and D. Each list can set
+`title`, `subtitle`, `x`, `y` and `caption`; `NULL` removes a label.
+This supports clean figures with a separately supplied caption. Retain
+the rule identity, evaluation scope, comparator and interval
+qualifications somewhere in the complete figure and caption. Label
+overrides affect presentation only; they preserve the stored estimates,
+weights, intervals, provenance and interpretation text.
+
+### Plot a native rule directly
+
+The branching plot also accepts a native
+[`policytree::policy_tree()`](https://rdrr.io/pkg/policytree/man/policy_tree.html)
+object directly. This is useful when a stored rule is all that needs to
+be drawn. Supply additional leaf metrics as stored labels. A tree alone
+records its assignment rule.
+
+\
+[`margot_plot_policy_decision_tree`](https://go-bayes.github.io/margot/reference/margot_plot_policy_decision_tree.md)`(`\
+`  ``tree``, layout_style ``=`` ``"compact"``, branch_labels ``=`` ``"condition"``,`\
+`  title ``=`` ``"Constructed policy rule"``, text_size ``=`` ``3.2``,`\
+`  label_mapping ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``score ``=`` ``"Baseline score"``, control ``=`` ``"Assign g0"``, treated ``=`` ``"Assign g1"``)`\
+`)`
+
+![](policy-reporting-stored_files/figure-html/compact-native-1.png)
+
+`branch_labels = "condition"` prints the threshold inequality on each
+branch. The inclusive left branch and exclusive right branch retain the
+fitted rule’s routing. Thresholds have the same display rounding as
+their parent node; routing continues to use the full stored value.
+Supply `c(left = "Yes", right = "No")` for a common pair of labels, or a
+table with `parent_id`, `side` and `label` for edge-specific wording. A
+callback can use the edge metadata to append units:
+
+\
+[`margot_plot_policy_decision_tree`](https://go-bayes.github.io/margot/reference/margot_plot_policy_decision_tree.md)`(`\
+`  ``tree``, layout_style ``=`` ``"compact"``,`\
+`  branch_labels ``=`` ``function``(``edges``)`` ``{`\
+`    `[`paste`](https://rdrr.io/r/base/paste.html)`(`[`ifelse`](https://rdrr.io/r/base/ifelse.html)`(``edges``$``side`` ``==`` ``"left"``, ``"<="``, ``">"``)``, ``edges``$``threshold_label``, ``"points"``)`\
+`  ``}`\
+`)`
+
+Use `node_label_width` to wrap long node labels while preserving their
+existing line breaks. Explicit padding and margin settings override
+compact defaults. Supplied titles now retain exactly the caller’s text,
+including punctuation and case. Existing calls retain the legacy
+geometry and True/False branch labels unless compact layout or
+alternative labels are requested.
+
 ## Standalone plots, tables and interpretations
 
 The report object contains `decision_tree`, `projection`,
