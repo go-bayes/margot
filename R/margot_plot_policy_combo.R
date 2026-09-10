@@ -8,9 +8,9 @@
 #' @param max_depth Integer, 1 or 2; which decision tree depth to plot. Default: 2.
 #' @param label_mapping Optional named list for custom label mappings.
 #' @param original_df Optional dataframe with untransformed variables.
-#' @param layout A list specifying the layout of the combined plot when max_depth==2. Default is
+#' @param layout A list specifying the layout of the combined plot at either depth. Default is
 #'   `list(heights = c(1, 2))`, which sets the relative heights of the two plots.
-#' @param annotation A list specifying the annotation for the combined plot when max_depth==2. Default is
+#' @param annotation A list specifying the annotation for the combined plot at either depth. Default is
 #'   `list(tag_levels = "A")`, which adds alphabetic tags to the subplots.
 #' @param generate_policy_tree Logical, whether to generate the policy tree plot. Default is TRUE.
 #' @param generate_decision_tree Logical, whether to generate the decision tree plot. Default is TRUE.
@@ -39,7 +39,23 @@ margot_plot_policy_combo <- function(result_object,
                                      decision_tree_args = list()) {
   cli::cli_h1("Margot Plot Policy Combo")
 
-  # validate inputs (omitted here for brevity)...
+  # weighted display labels use every projection row and the same supplied weights.
+  if (!is.null(policy_tree_args$display_weights) &&
+      isTRUE(decision_tree_args$show_leaf_metrics) && is.null(decision_tree_args$leaf_metrics)) {
+    tree <- result_object$results[[model_name]][[paste0("policy_tree_depth_", max_depth)]]
+    reference <- .policy_tree_build_predict_df(result_object$results[[model_name]]$plot_data, tree$columns)
+    w <- policy_tree_args$display_weights
+    .margot_policy_display_weights(w, nrow(reference))
+    ids <- .margot_policy_tree_leaf_ids(tree, reference)
+    if (anyNA(ids)) stop("Every reference row must have a finite leaf assignment.", call. = FALSE)
+    terminal <- which(vapply(tree$nodes, function(node) isTRUE(node$is_leaf), logical(1)))
+    labels <- vapply(terminal, function(id) {
+      action <- .margot_policy_reporting_action_label(tree$action.names[tree$nodes[[id]]$action], label_mapping)
+      paste0(action, "\n", formatC(100 * sum(w[ids == id]) / sum(w), format = "f", digits = 1),
+        "% weighted\nn = ", sum(ids == id))
+    }, character(1))
+    decision_tree_args$leaf_metrics <- data.frame(node_id = terminal, label = labels)
+  }
 
   policy_tree_plot <- NULL
   decision_tree_plot <- NULL
@@ -86,15 +102,14 @@ margot_plot_policy_combo <- function(result_object,
   # 3) combine
   if (generate_decision_tree && generate_policy_tree) {
     cli::cli_alert_info("Combining plots...")
-    if (max_depth == 1L) {
-      # simple stack, equal heights, no tags
-      combined_plot <- decision_tree_plot / policy_tree_plot
-    } else {
-      # previous two‐part layout with annotation
-      combined_plot <- (decision_tree_plot / policy_tree_plot) +
-        patchwork::plot_layout(heights = layout$heights) +
-        patchwork::plot_annotation(tag_levels = annotation$tag_levels)
-    }
+    # treat a nested depth-two projection as one labelled panel.
+    projection_panel <- if (inherits(policy_tree_plot, "patchwork")) {
+      patchwork::wrap_elements(panel = policy_tree_plot)
+    } else policy_tree_plot
+    combined_plot <- (decision_tree_plot / projection_panel) +
+      patchwork::plot_layout(heights = layout$heights) +
+      patchwork::plot_annotation(tag_levels = annotation$tag_levels) &
+      ggplot2::theme(plot.tag = ggplot2::element_text(face = "bold", hjust = 0))
     cli::cli_alert_success("Plots combined successfully.")
   } else if (generate_decision_tree) {
     combined_plot <- decision_tree_plot

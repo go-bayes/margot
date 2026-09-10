@@ -1,6 +1,6 @@
 # Policy reporting and independent fixed-rule evaluation
 
-Status: development specification. The function names below are proposed interfaces. This PR contains the development specification only.
+Status: reporting implementation with tests and a constructed example. The PR adds the stored reporting interface, weighted native projections, two evaluation plots and complementary interpretations. Independent evaluation estimation and coverage validation remain prospective.
 
 ## Purpose
 
@@ -18,14 +18,14 @@ Represent the supplied display weight by point area. Retain exact horizontal pre
 
 ## Add two plots and complementary interpretations
 
-| Proposed interface | Purpose |
+| Reporting interface | Purpose |
 |---|---|
 | `margot_plot_policy_leaf_effects()` | Plot stored action contrasts within the identified leaves, with compatible intervals where available. |
 | `margot_plot_policy_value_gain()` | Plot the stored rule-minus-comparator value difference, its compatible interval and resolved practical gain margin. |
 | `margot_text_policy_leaf_effects()` | Interpret the same contrasts, leaf identities, scale, reference population and interval types. |
 | `margot_text_policy_value_gain()` | Interpret the same comparator, gain, uncertainty and practical margin. |
 
-Prefer extending `margot_report_policy_tree()` to compose these outputs with the existing combo. Add a thin plotting wrapper only where it improves the existing interface. Complement `margot_text_policy_tree()`, `margot_interpret_policy_tree()` and the batch interpreter by sharing validated tables and formatting helpers.
+`margot_report_policy_tree(reporting_data = ...)` composes these outputs with the existing combo. `margot_policy_reporting_data()` validates their stored tables and scientific identities. The new interpretation functions complement the existing tree and batch interpreters. See the runnable article, `vignettes/policy-reporting-stored.Rmd`, for construction and legacy-table adaptation.
 
 Reporting functions consume stored estimates. Model fitting, score reconstruction, interval estimation and repeated learning belong in explicit estimation functions, invoked before reporting.
 
@@ -51,11 +51,11 @@ The tree, comparator, action orientation, margin and learning choices must be se
 
 The development/evaluation proportion, preprocessing and outcome-scale reference, observation-weight construction, interval estimator and handling of a selected policy remain implementation decisions requiring resolution. A 70/30 split remains a candidate. Preserve existing registered stored-score modes and defaults until a compatible prospective alternative is explicitly implemented and selected.
 
-## Implementation sequence
+## Implementation and remaining estimation work
 
-1. Define a validated reporting object and adapt existing stored results while preserving their statistical meaning.
-2. Implement the two standalone plots, their complementary text functions and the shared report assembly.
-3. Add weighted projection support to the maintained combo, with consistent titles and panel tags at every supported depth.
+1. Implemented: a validated reporting object with explicit stored-result inputs and documented legacy-table adaptation.
+2. Implemented: the two standalone plots, complementary text functions and shared report assembly.
+3. Implemented: weighted native projections, consistent titles and panel tags, constant trees and pruned depth-two branches.
 4. Resolve the independent-evaluation score, weighting and variance specification before implementing the new estimator.
 5. Validate that estimator against known policy values in focused simulations before recommending routine use.
 

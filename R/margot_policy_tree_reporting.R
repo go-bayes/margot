@@ -438,6 +438,9 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
 #' @param projection_args Optional list of arguments for the projection plot.
 #' @param decision_tree_args Optional list of arguments for the decision tree.
 #'
+#' @param reporting_data Optional \code{\link{margot_policy_reporting_data}()} object. Enables the stored four-panel report: A/B use the existing combo; C/D show supplied leaf contrasts and value gain. This path consumes supplied estimates and intervals, requires matching rule and reference rows, and uses the stored weights and margin. Calls with \code{reporting_data = NULL} retain their existing calculations and return shape.
+#' @param reporting_heights Relative heights of A, B and the C/D row for a stored report; default \code{c(1.5, 1.7, 1)}.
+#'
 #' @return A list with \code{table}, \code{text}, \code{plots}, and
 #'   \code{metadata}.
 #' @export
@@ -457,7 +460,16 @@ margot_report_policy_tree <- function(result_object,
                                       layout = list(heights = c(1, 2)),
                                       annotation = list(tag_levels = "A"),
                                       projection_args = list(),
-                                      decision_tree_args = list()) {
+                                      decision_tree_args = list(),
+                                      reporting_data = NULL,
+                                      reporting_heights = c(1.5, 1.7, 1)) {
+  # stored reporting bypasses every legacy score-summary and interval calculation.
+  if (!is.null(reporting_data)) {
+    if (!is.null(policy_cv) || !is.null(weights)) stop("Supply stored contexts and weights through reporting_data; policy_cv and weights are legacy arguments.", call. = FALSE)
+    return(.margot_report_stored_policy(result_object, model_name, reporting_data, depth, original_df,
+      digits, label_mapping, include_plots, include_table, include_text, projection_args,
+      decision_tree_args, reporting_heights, annotation))
+  }
   # assemble policy-tree artefacts while keeping each component inspectable.
   model_resolved <- .margot_leaf_resolve_model_name(result_object, model_name)
   report_depth <- .margot_policy_report_depth(policy_cv, model_resolved, depth)
