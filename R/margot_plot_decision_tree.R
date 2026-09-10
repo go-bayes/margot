@@ -1,6 +1,6 @@
-#' Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)
+#' Plot a stored policy assignment tree
 #' @param result_object A list returned by \code{margot_causal_forest()} or
-#'   \code{margot_policy_tree_display()}.
+#'   \code{margot_policy_tree_display()}, or a native \code{policytree::policy_tree()} tree. Native trees need no causal-forest wrapper; supply stored leaf labels explicitly if desired.
 #' @param model_name Name of the model in the results to visualise
 #' @param max_depth Maximum depth of the tree (1L or 2L). When
 #'   \code{result_object} is a \code{margot_policy_tree_display} object,
@@ -14,7 +14,7 @@
 #' @param edge_label_offset Offset for edge labels from connecting lines
 #' @param span_ratio Controls the aspect ratio of the plot
 #' @param non_leaf_fill Colour for non-leaf nodes (decision nodes)
-#' @param title Optional custom title for the plot
+#' @param title Optional literal title, preserved exactly. An empty string suppresses the title. NULL uses the formatted model label, or 'Policy tree' for a native tree.
 #' @param plot_margin Margins around the plot
 #' @param remove_tx_prefix Whether to remove treatment prefixes from variable names
 #' @param remove_z_suffix Whether to remove z-suffixes from variable names
@@ -30,6 +30,9 @@
 #'   If supplied, these labels are used instead of recomputing metrics.
 #' @param leaf_metric_digits Integer; number of decimals for leaf
 #'   treatment-control contrasts.
+#' @param branch_labels A named character pair with names \code{left} and \code{right} (default True/False), \code{"condition"} for threshold inequalities, a data frame with \code{parent_id}, \code{side} and \code{label} identifying every edge, or a function taking an edge data frame and returning one label per edge. Edge metadata includes \code{parent_id}, \code{child_id}, \code{side}, \code{variable}, \code{threshold}, \code{original_threshold} and \code{threshold_label}. Left branches retain the inclusive inequality. Display thresholds use the same rounding as node labels; they do not replace the stored routing threshold.
+#' @param layout_style \code{"legacy"} retains the historical geometry. \code{"compact"} centres parents over their ordered children, lets the panel use the available aspect ratio and reduces default outer margins and title spacing. Explicit padding and margin arguments take precedence. Supply an appropriate output height for the number of levels and label lines.
+#' @param node_label_width Optional positive integer for wrapping node labels by character count; existing line breaks are retained. NULL preserves supplied labels.
 #' @importFrom dplyr case_when mutate
 #' @importFrom tibble tibble
 #' @importFrom purrr map_dfr
@@ -59,8 +62,29 @@ margot_plot_decision_tree <- function(
     label_mapping = NULL,
     show_leaf_metrics = FALSE,
     leaf_metrics = NULL,
-    leaf_metric_digits = 3L) {
+    leaf_metric_digits = 3L,
+    branch_labels = c(left = "True", right = "False"),
+    layout_style = c("legacy", "compact"),
+    node_label_width = NULL) {
   cli::cli_h1("Margot Plot Decision Tree")
+  layout_style <- match.arg(layout_style)
+  native_tree <- inherits(result_object, "policy_tree")
+  if (native_tree) {
+    actual_depth <- .margot_policy_plot_validate_tree(result_object)
+    max_depth <- max_depth %||% max(1L, actual_depth)
+    if (length(max_depth) != 1 || !max_depth %in% 1:2 || max_depth < actual_depth) stop("max_depth is incompatible with the native tree.", call. = FALSE)
+    if (isTRUE(show_leaf_metrics) && is.null(leaf_metrics)) stop("Native trees require explicit stored leaf_metrics; plotting does not estimate them.", call. = FALSE)
+    model_name <- model_name %||% "model_tree"
+    stored <- setNames(list(result_object), paste0("policy_tree_depth_", max_depth))
+    result_object <- list(results = setNames(list(stored), model_name))
+  }
+  if (layout_style == "compact") {
+    if (missing(x_padding)) x_padding <- .25
+    if (missing(y_padding)) y_padding <- .20
+    if (missing(plot_margin)) plot_margin <- ggplot2::margin(6, 6, 6, 6)
+    if (missing(border_size)) border_size <- .3
+  }
+  if (!is.null(title) && (!is.character(title) || length(title) != 1L || is.na(title))) stop("title must be a character scalar or NULL.", call. = FALSE)
 
   if (!(is.list(result_object) && "results" %in% names(result_object))) {
     cli::cli_abort(
@@ -165,6 +189,8 @@ margot_plot_decision_tree <- function(
     }
   }
 
+  .margot_policy_plot_validate_tree(policy_tree_obj)
+
   # extract nodes
   nodes <- policy_tree_obj$nodes
   columns <- policy_tree_obj$columns
@@ -208,6 +234,8 @@ margot_plot_decision_tree <- function(
       )
     )
 
+  node_data$threshold_label <- NA_character_
+  node_data$original_threshold <- NA_real_
   # 3 create labels
   for (i in seq_len(nrow(node_data))) {
     if (node_data$is_leaf[i]) {
@@ -225,6 +253,9 @@ margot_plot_decision_tree <- function(
       val_s <- round(node_data$split_val[i], 3)
       orig <- get_original_value_plot(var, node_data$split_val[i], original_df)
       var_lb <- tv(var)
+      node_data$original_threshold[i] <- if (is.null(orig)) NA_real_ else orig
+      node_data$threshold_label[i] <- if (is.null(orig)) as.character(val_s) else
+        paste0(val_s, "\n(", format(orig, big.mark = ",", scientific = FALSE), ")*")
       node_data$label[i] <- if (!is.null(orig)) {
         sprintf(
           "%s\n<= %s\n(%s)*", var_lb, val_s,
@@ -236,7 +267,9 @@ margot_plot_decision_tree <- function(
     }
   }
 
-  # 4 layout, edges, colours unchanged
+  node_data$label <- .margot_policy_wrap_nodes(node_data$label, node_label_width)
+
+  # lay out the stored links without changing node identities.
   max_d <- policy_tree_obj$depth
   assign_pos <- function(id, depth, xpos) {
     node_data$y[id] <<- max_d - depth + 1
@@ -248,7 +281,11 @@ margot_plot_decision_tree <- function(
       assign_pos(node_data$right_child[id], depth + 1, xpos + 1 / (2^depth))
     }
   }
-  assign_pos(1, 1, 0.5)
+  if (layout_style == "compact") {
+    positions <- .margot_policy_compact_positions(nodes)
+    node_data$x <- positions$x
+    node_data$y <- positions$y
+  } else assign_pos(1, 1, 0.5)
   cli::cli_alert_success("✔ Node positions calculated")
 
   edge_data <- purrr::map_dfr(seq_len(nrow(node_data)), function(i) {
@@ -258,6 +295,7 @@ margot_plot_decision_tree <- function(
         x = node_data$x[i], y = node_data$y[i],
         xend = node_data$x[node_data$left_child[i]],
         yend = node_data$y[node_data$left_child[i]],
+        parent_id = node_data$id[i], child_id = node_data$left_child[i], side = "left",
         edge_lab = "True", hjust = 1, vjust = .5
       )
     }
@@ -266,6 +304,7 @@ margot_plot_decision_tree <- function(
         x = node_data$x[i], y = node_data$y[i],
         xend = node_data$x[node_data$right_child[i]],
         yend = node_data$y[node_data$right_child[i]],
+        parent_id = node_data$id[i], child_id = node_data$right_child[i], side = "right",
         edge_lab = "False", hjust = 0, vjust = .5
       )
     }
@@ -273,8 +312,14 @@ margot_plot_decision_tree <- function(
   })
   if (!nrow(edge_data)) {
     edge_data <- tibble::tibble(x = numeric(), y = numeric(), xend = numeric(),
-      yend = numeric(), edge_lab = character(), hjust = numeric(), vjust = numeric())
+      yend = numeric(), parent_id = integer(), child_id = integer(), side = character(),
+      edge_lab = character(), hjust = numeric(), vjust = numeric())
   }
+  edge_data$variable <- node_data$split_var[edge_data$parent_id]
+  edge_data$threshold <- node_data$split_val[edge_data$parent_id]
+  edge_data$original_threshold <- node_data$original_threshold[edge_data$parent_id]
+  edge_data$threshold_label <- node_data$threshold_label[edge_data$parent_id]
+  edge_data$edge_lab <- .margot_policy_branch_labels(edge_data, branch_labels)
   cli::cli_alert_success("✔ Edge data created")
 
   edge_data <- edge_data |>
@@ -314,17 +359,17 @@ margot_plot_decision_tree <- function(
       size = text_size
     ) +
     ggplot2::scale_fill_identity(guide = "none") +
-    ggplot2::coord_fixed(ratio = aspect) +
+    (if (layout_style == "compact") ggplot2::coord_cartesian(clip = "off") else ggplot2::coord_fixed(ratio = aspect)) +
     ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(x_padding, x_padding))) +
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(y_padding, y_padding))) +
     ggplot2::theme_void() +
     ggplot2::theme(
       plot.margin  = plot_margin,
-      plot.title   = ggplot2::element_text(hjust = .5, face = "bold", margin = ggplot2::margin(b = 20)),
+      plot.title   = ggplot2::element_text(hjust = .5, face = "bold", margin = ggplot2::margin(b = if (layout_style == "compact") 4 else 20)),
       plot.caption = ggplot2::element_text(hjust = 1, size = text_size + 2)
     ) +
     ggplot2::labs(
-      title   = if (is.null(title)) paste0(tv(model_name), " Outcome") else paste0(tv(title), " Outcome"),
+      title = if (!is.null(title)) title else if (native_tree) "Policy tree" else paste0(tv(model_name), " Outcome"),
       caption = if (!is.null(original_df)) "* original scale value" else NULL
     )
 

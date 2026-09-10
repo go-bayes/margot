@@ -309,8 +309,9 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
 .margot_report_stored_policy <- function(result_object, model_name, data, depth, original_df,
                                          digits, label_mapping, include_plots, include_table,
                                          include_text, projection_args, decision_tree_args,
-                                         heights, annotation) {
+                                         heights, annotation, reporting_layout, panel_labels) {
   x <- .margot_policy_reporting_validate(data)
+  .margot_policy_validate_panel_labels(panel_labels)
   model <- .margot_leaf_resolve_model_name(result_object, model_name)
   if (!identical(sub("^model_", "", model), sub("^model_", "", x$context$outcome))) stop("Reporting outcome does not match model_name.", call. = FALSE)
   if (is.null(depth)) {
@@ -329,6 +330,9 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
     if (is.null(x$reference)) stop("The combined report requires complete reference rows and display weights.", call. = FALSE)
     actual <- .policy_tree_build_predict_df(result_object$results[[model]]$plot_data, tree$columns)
     if (!identical(as.data.frame(actual), as.data.frame(x$reference))) stop("Projection rows differ from the reporting reference rows or their order.", call. = FALSE)
+    compact <- reporting_layout == "compact"
+    if (is.null(heights)) heights <- c(if (tree$depth > 1L) 1.2 else .8, if (tree$depth > 1L) 1.8 else 1.3, 1)
+    if (compact) decision_tree_args <- .margot_policy_reporting_args(list(layout_style = "compact"), decision_tree_args)
     if (!is.numeric(heights) || length(heights) != 3 || any(!is.finite(heights) | heights <= 0)) stop("reporting_heights must contain three positive numbers.", call. = FALSE)
     forbidden <- intersect(names(projection_args), c("display_weights", "jitter_width", "jitter_height", "jitter_method", "plot_selection"))
     if (length(forbidden)) stop("Stored reports control projection weights, exact coordinates and complete branch display; remove: ", paste(forbidden, collapse = ", "), call. = FALSE)
@@ -348,6 +352,9 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
     a <- panels$decision_tree + ggplot2::labs(title = x$context$outcome_label, subtitle = "Decision tree") + heading
     b <- panels$projection
     if (inherits(b, "patchwork")) {
+      # axes belong to the nested projections, before their panel is wrapped.
+      axes <- panel_labels$B[intersect(names(panel_labels$B), c("x", "y"))]
+      if (length(axes)) b <- b & do.call(ggplot2::labs, axes)
       b <- b + patchwork::plot_annotation(title = NULL)
       b <- patchwork::wrap_elements(panel = b)
     }
@@ -355,6 +362,24 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
       subtitle = paste0("Weighted projection: ", x$reference_label, "\nPoint area represents ", x$display_weight_id)) + heading
     c <- margot_plot_policy_leaf_effects(x, digits)
     d <- margot_plot_policy_value_gain(x, digits)
+    if (compact) {
+      a <- a + ggplot2::labs(subtitle = NULL)
+      b <- b + ggplot2::labs(title = "Weighted participant projection")
+      c <- c + ggplot2::labs(subtitle = .margot_policy_scope(x$context))
+      d <- d + ggplot2::labs(subtitle = .margot_policy_wrap(c(.margot_policy_scope(x$value_context), x$value$comparator_label), 55))
+      spacing <- ggplot2::theme(plot.margin = ggplot2::margin(4, 6, 4, 6),
+        legend.margin = ggplot2::margin(0, 0, 0, 0), legend.box.spacing = grid::unit(1, "mm"),
+        legend.spacing.y = grid::unit(1, "mm"))
+      a <- a + spacing
+      b <- b & spacing
+      c <- c + spacing
+      d <- d + spacing
+    }
+    labelled <- .margot_policy_panel_labels(list(A = a, B = b, C = c, D = d), panel_labels)
+    a <- labelled$A
+    b <- labelled$B
+    c <- labelled$C
+    d <- labelled$D
     caption <- if (x$mixed_scope) "A-C describe selected full-sample leaves; D evaluates the repeated-learning procedure." else "A-D refer to the same stored rule."
     combined <- patchwork::wrap_plots(a, b, patchwork::wrap_plots(c, d, nrow = 1), ncol = 1, heights = heights) +
       patchwork::plot_annotation(tag_levels = annotation$tag_levels, caption = caption) & heading

@@ -6,7 +6,7 @@
 #'
 #' @param result_object A list returned by \code{margot_causal_forest()},
 #'   \code{margot_policy_tree_display()}, or a compatible policy-tree workflow
-#'   object. A compact display object supports this decision-tree plot because
+#'   object, or a native \code{policytree::policy_tree()} tree. A compact display object supports this decision-tree plot because
 #'   it stores the fitted tree; it does not supply the observation-level data
 #'   required by \code{margot_plot_policy_projection()}.
 #' @param model_name Character scalar naming the model to plot, with or without
@@ -439,7 +439,9 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
 #' @param decision_tree_args Optional list of arguments for the decision tree.
 #'
 #' @param reporting_data Optional \code{\link{margot_policy_reporting_data}()} object. Enables the stored four-panel report: A/B use the existing combo; C/D show supplied leaf contrasts and value gain. This path consumes supplied estimates and intervals, requires matching rule and reference rows, and uses the stored weights and margin. Calls with \code{reporting_data = NULL} retain their existing calculations and return shape.
-#' @param reporting_heights Relative heights of A, B and the C/D row for a stored report; default \code{c(1.5, 1.7, 1)}.
+#' @param reporting_heights Relative heights of A, B and the C/D row for a stored report; default \code{c(1.5, 1.7, 1)}. When omitted with compact reporting, depth-adaptive shorter tree rows are used.
+#' @param reporting_layout \code{"standard"} preserves the stored report's layout. \code{"compact"} uses compact tree geometry, smaller margins and legend spacing, and prints the outcome heading once. Applies only with reporting_data.
+#' @param panel_labels Named list of ggplot label overrides for stored panels \code{A}, \code{B}, \code{C}, and \code{D}; each may name \code{title}, \code{subtitle}, \code{x}, \code{y}, and \code{caption}. Values are character scalars or NULL. Presentation overrides leave numerical tables and provenance unchanged; retain the applicable inferential qualifications in the figure or accompanying caption.
 #'
 #' @return A list with \code{table}, \code{text}, \code{plots}, and
 #'   \code{metadata}.
@@ -462,13 +464,18 @@ margot_report_policy_tree <- function(result_object,
                                       projection_args = list(),
                                       decision_tree_args = list(),
                                       reporting_data = NULL,
-                                      reporting_heights = c(1.5, 1.7, 1)) {
+                                      reporting_heights = c(1.5, 1.7, 1),
+                                      reporting_layout = c("standard", "compact"),
+                                      panel_labels = list()) {
+  reporting_layout <- match.arg(reporting_layout)
+  if (is.null(reporting_data) && (reporting_layout != "standard" || length(panel_labels))) stop("reporting_layout and panel_labels require reporting_data.", call. = FALSE)
+  if (missing(reporting_heights) && reporting_layout == "compact") reporting_heights <- NULL
   # stored reporting bypasses every legacy score-summary and interval calculation.
   if (!is.null(reporting_data)) {
     if (!is.null(policy_cv) || !is.null(weights)) stop("Supply stored contexts and weights through reporting_data; policy_cv and weights are legacy arguments.", call. = FALSE)
     return(.margot_report_stored_policy(result_object, model_name, reporting_data, depth, original_df,
       digits, label_mapping, include_plots, include_table, include_text, projection_args,
-      decision_tree_args, reporting_heights, annotation))
+      decision_tree_args, reporting_heights, annotation, reporting_layout, panel_labels))
   }
   # assemble policy-tree artefacts while keeping each component inspectable.
   model_resolved <- .margot_leaf_resolve_model_name(result_object, model_name)

@@ -1,3 +1,8 @@
+# margot (development)
+
+- Policy decision trees accept a native `policytree` object without a causal-forest wrapper. Branch labels can show the fitted inequalities, use a named left/right pair, or use per-edge tables or callbacks. Existing supplied leaf labels retain their separate assignment and outcome-contrast meanings. Custom titles are now printed literally, without title-casing or an appended “Outcome”.
+- `layout_style = "compact"` reduces decision-tree margins and title spacing, centres parents over ordered children, and uses the available panel aspect ratio. Optional node-label wrapping supports longer labels. The default `"legacy"` layout preserves historical geometry. Stored reports offer `reporting_layout = "compact"`, configurable row heights, and `panel_labels` for titles, axes and captions; figures and tables retain the same stored estimates, weights, thresholds and uncertainty metadata.
+
 # [2026-09-10] margot 1.2.1
 
 - Weighted policy projections now remove the point stroke so rendered circle areas remain proportional to display weights, including zero area for zero-weight records. Constant-tree projection subtitles honour custom action labels. SVG geometry tests cover stumps, depth-two trees and constant rules.

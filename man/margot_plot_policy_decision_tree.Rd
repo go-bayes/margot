@@ -9,7 +9,7 @@ margot_plot_policy_decision_tree(result_object, model_name = NULL, ...)
 \arguments{
 \item{result_object}{A list returned by \code{margot_causal_forest()},
 \code{margot_policy_tree_display()}, or a compatible policy-tree workflow
-object. A compact display object supports this decision-tree plot because
+object, or a native \code{policytree::policy_tree()} tree. A compact display object supports this decision-tree plot because
 it stores the fitted tree; it does not supply the observation-level data
 required by \code{margot_plot_policy_projection()}.}
 
