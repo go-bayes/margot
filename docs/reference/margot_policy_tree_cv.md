@@ -31,7 +31,9 @@ margot_policy_tree_cv(
   held_out_aggregation = c("fold_n_eval_weighted",
     "pool_score_numerators_and_weight_denominators_within_repeat"),
   comparison_pairs = c("available_by_depth", "matched_successful_repeat_fold_pairs"),
-  verbose = TRUE
+  verbose = TRUE,
+  value_threshold = 0,
+  threshold_multiplier = 1
 )
 ```
 
@@ -183,6 +185,17 @@ margot_policy_tree_cv(
 - verbose:
 
   Logical. Print progress messages.
+
+- value_threshold, threshold_multiplier:
+
+  Benefit-threshold specification as in
+  \[margot_policy_value_threshold()\]. Default zero preserves the
+  original objective. The ATE reference is resolved separately from each
+  training fold and carried unchanged into its held-out evaluation; leaf
+  effects retain the original outcome scale. Existing value and gain
+  columns then describe threshold-adjusted values, with original values
+  saved in separate columns. This stored-score CV does not refit
+  original nuisance models or variable screening within folds.
 
 ## Value
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ate-reporting-scales.html">Average-effect reporting and outcome scales</a></li>
     <li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
     <li><a class="dropdown-item" href="../articles/policy-reporting-stored.html">Policy rules, weighted projections and stored evaluation</a></li>
+    <li><a class="dropdown-item" href="../articles/policy-value-thresholds.html">Interpretable policy trees with benefit thresholds</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -554,6 +555,41 @@
 
         <dt>
 
+          <code><a href="margot_policy_value_threshold.html">margot_policy_value_threshold()</a></code>
+
+        </dt>
+        <dd>Resolve a benefit threshold from development action scores</dd>
+
+        <dt>
+
+          <code><a href="margot_policy_action_scores.html">margot_policy_action_scores()</a></code>
+
+        </dt>
+        <dd>Construct binary action scores from independent nuisance predictions</dd>
+
+        <dt>
+
+          <code><a href="margot_policy_development_scores.html">margot_policy_development_scores()</a></code>
+
+        </dt>
+        <dd>Fit development-only forest nuisances for policy action scores</dd>
+
+        <dt>
+
+          <code><a href="margot_policy_tree_evaluate.html">margot_policy_tree_evaluate()</a></code>
+
+        </dt>
+        <dd>Learn a benefit-threshold rule and evaluate it on separate supplied scores</dd>
+
+        <dt>
+
+          <code><a href="margot_policy_evaluation_reporting_data.html">margot_policy_evaluation_reporting_data()</a></code>
+
+        </dt>
+        <dd>Prepare stored reporting from an independently evaluated policy rule</dd>
+
+        <dt>
+
           <code><a href="margot_policy_tree_cv.html">margot_policy_tree_cv()</a></code>
 
         </dt>
@@ -1058,7 +1094,7 @@
           <code><a href="margot_plot_decision_tree.html">margot_plot_decision_tree()</a></code>
 
         </dt>
-        <dd>Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)</dd>
+        <dd>Plot a stored policy assignment tree</dd>
 
         <dt>
 
@@ -1577,4 +1613,3 @@
 
 
   </body></html>
-

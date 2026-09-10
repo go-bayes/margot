@@ -7,7 +7,7 @@
 margot_table_policy_value(object, model_name = NULL, depth = NULL, digits = 3L)
 }
 \arguments{
-\item{object}{A \code{margot_policy_tree_cv} object.}
+\item{object}{A \code{margot_policy_tree_cv} or \code{margot_policy_reporting_data} object.}
 
 \item{model_name}{Optional model name, with or without the \code{model_}
 prefix.}

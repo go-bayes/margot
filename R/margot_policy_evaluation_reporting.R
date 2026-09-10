@@ -51,11 +51,29 @@
     }
     if (identical(context$development_id, context$evaluation_id)) stop("Development and evaluation identities must differ.", call. = FALSE)
   }
+  if (!is.null(context$value_threshold)) {
+    threshold <- context$value_threshold
+    if (!is.list(threshold) || !is.numeric(threshold$value) || length(threshold$value) != 1L || !is.finite(threshold$value)) stop("value_threshold requires a finite resolved value.", call. = FALSE)
+    if (!is.character(threshold$source) || length(threshold$source) != 1L || !threshold$source %in% c("ate", "fixed")) stop("value_threshold source must be ate or fixed.", call. = FALSE)
+    if (!is.numeric(threshold$multiplier) || length(threshold$multiplier) != 1L || !is.finite(threshold$multiplier) || threshold$multiplier < 0) stop("value_threshold requires a finite multiplier.", call. = FALSE)
+    if (threshold$source == "ate" && (!is.numeric(threshold$development_ate) || length(threshold$development_ate) != 1L || !is.finite(threshold$development_ate) || !isTRUE(all.equal(threshold$value, threshold$multiplier * threshold$development_ate)))) stop("ATE threshold must equal its development ATE times its multiplier.", call. = FALSE)
+  }
   context
 }
 
+# describe the objective separately from unadjusted leaf effects.
+.margot_policy_threshold_text <- function(context, digits = 3L) {
+  threshold <- context$value_threshold
+  if (is.null(threshold)) return(character())
+  paste0(if (threshold$source == "ate") "ATE-referenced benefit threshold" else "Fixed benefit threshold",
+    ": ", .margot_policy_number(threshold$value, digits), " ", context$scale_label,
+    if (threshold$source == "ate") paste0(" (development ATE multiplied by ", format(threshold$multiplier, trim = TRUE), "; hypothetical cost equivalent)") else "",
+    ". Net values subtract this threshold for each treatment assignment. Leaf contrasts retain their original outcome scale; a contrast below the threshold need not indicate harm.",
+    if (threshold$value <= 0) " This signed threshold is a relative reference, not a positive treatment expense." else "")
+}
+
 # validate supplied intervals without deriving uncertainty from estimates or repeats.
-.margot_policy_interval_table <- function(d, context) {
+.margot_policy_interval_table <- function(d, context, allow_missing_estimate = FALSE) {
   required <- c("estimate", "lower", "upper", "interval_type", "interval_level", "interval_method", "unavailable_reason")
   if (!is.data.frame(d) || !nrow(d) || !all(required %in% names(d))) {
     stop("Stored tables require rows and columns: ", paste(required, collapse = ", "), call. = FALSE)
@@ -63,8 +81,10 @@
   for (field in c("estimate", "lower", "upper", "interval_level")) {
     if (!is.numeric(d[[field]])) stop(field, " must be numeric.", call. = FALSE)
   }
-  if (any(!is.finite(d$estimate))) stop("Stored estimates must be finite.", call. = FALSE)
+  missing_estimate <- is.na(d$estimate)
+  if (any(!is.finite(d$estimate) & !missing_estimate) || (!allow_missing_estimate && any(missing_estimate))) stop("Stored estimates must be finite.", call. = FALSE)
   available <- !is.na(d$lower) & !is.na(d$upper)
+  if (any(missing_estimate & available)) stop("An unavailable estimate cannot have an interval.", call. = FALSE)
   if (any(xor(is.na(d$lower), is.na(d$upper)))) stop("Supply both interval endpoints or neither.", call. = FALSE)
   if (any(!is.finite(d$lower[available]) | !is.finite(d$upper[available]) | d$lower[available] > d$upper[available])) stop("Invalid interval endpoints.", call. = FALSE)
   for (field in c("interval_type", "interval_method", "unavailable_reason")) {
@@ -101,7 +121,7 @@
 #' @param tree The stored policy tree whose terminal node identifiers occur in `leaves`.
 #' @param leaves Data frame with `node_id`, unique `leaf_label`, `estimate`, `lower`, `upper`, `interval_type`, `interval_level`, `interval_method` and `unavailable_reason`. Estimates are already on the declared scale and orientation. Every terminal node must appear exactly once. Use numeric `NA` for unavailable endpoints.
 #' @param value One-row data frame with the same estimate and interval fields, plus `comparator_id`, `comparator_label` and finite non-negative `gain_margin`. Supply the resolved analysis margin.
-#' @param context Named list of character scalars: `outcome`, `outcome_label`, `rule_id`, `population_id`, `population_label`, `scale_id`, `scale_label`, `orientation` (`as_scored` or `reversed`), `weight_id`, `evaluation_mode`, `contrast_label` and `qualification`. Evaluation modes are `independent_fixed_rule`, `selected_full_sample`, `repeated_learning` and `constructed`. Independent evaluation additionally requires distinct `development_id` and `evaluation_id`. The qualification states the inferential limitations, including any multiplicity adjustment.
+#' @param context Named list of character scalars: `outcome`, `outcome_label`, `rule_id`, `population_id`, `population_label`, `scale_id`, `scale_label`, `orientation` (`as_scored` or `reversed`), `weight_id`, `evaluation_mode`, `contrast_label` and `qualification`. Evaluation modes are `independent_fixed_rule`, `selected_full_sample`, `repeated_learning` and `constructed`. Independent evaluation additionally requires distinct `development_id` and `evaluation_id`. The qualification states the inferential limitations, including any multiplicity adjustment. Optional `value_threshold` is a resolved list with finite signed `value`, `source` (`ate` or `fixed`), non-negative `multiplier`, and `development_ate` for an ATE reference. Leaf contrasts stay unadjusted while value gains use this threshold. Matching rule contexts require identical threshold metadata.
 #' @param value_context Context for D; defaults to `context`. A separate rule identity is allowed only for explicitly labelled `selected_full_sample` leaves with `repeated_learning` value. Outcome, population, scale, orientation and weight identities must agree.
 #' @param reference Optional complete prediction data frame for A/B. Its rows define the display population, which may differ from the evaluation population. Only tree columns are retained. Supply unique participant rows verified using participant identifiers.
 #' @param display_weights Optional weights aligned with reference rows. `NULL` means equal display weights. A zero-weight record contributes to the unweighted count and has zero weight in the share calculation.
@@ -131,7 +151,8 @@ margot_policy_reporting_data <- function(tree, leaves, value, context, value_con
     }
   }
   if (context$evaluation_mode == "repeated_learning") stop("A single displayed tree cannot represent repeated-learning leaves.", call. = FALSE)
-  leaves <- .margot_policy_interval_table(leaves, context)
+  if (!mixed && !identical(context$value_threshold, value_context$value_threshold)) stop("Incompatible value_threshold between leaves and value.", call. = FALSE)
+  leaves <- .margot_policy_interval_table(leaves, context, allow_missing_estimate = TRUE)
   value <- .margot_policy_interval_table(value, value_context)
   if (is.null(tree$nodes) || !length(tree$nodes) || !length(tree$columns) || !length(tree$action.names)) stop("tree must contain nodes, columns and action names.", call. = FALSE)
   terminal <- which(vapply(tree$nodes, function(node) isTRUE(node$is_leaf), logical(1)))
@@ -185,7 +206,7 @@ margot_policy_reporting_data <- function(tree, leaves, value, context, value_con
 # format stored numbers only at the presentation boundary.
 .margot_policy_number <- function(x, digits) {
   if (length(digits) != 1 || !is.numeric(digits) || !is.finite(digits) || digits != as.integer(digits) || digits < 0 || digits > 10) stop("digits must be an integer from 0 to 10.", call. = FALSE)
-  formatC(x, format = "f", digits = digits)
+  ifelse(is.na(x), "unavailable", formatC(x, format = "f", digits = digits))
 }
 
 # retain interval method and inferential status in a shared display string.
@@ -224,8 +245,9 @@ margot_plot_policy_leaf_effects <- function(data, digits = 3L, title = "Contrast
   ggplot2::ggplot(d, ggplot2::aes(x = .data$estimate, y = .data$position)) +
     ggplot2::geom_vline(xintercept = 0, colour = "grey70") +
     ggplot2::geom_segment(data = d[available, ], ggplot2::aes(x = .data$lower, xend = .data$upper, yend = .data$position), linewidth = .8) +
-    ggplot2::geom_point(size = 3, colour = "#28658b") +
+    ggplot2::geom_point(data = d[is.finite(d$estimate), ], size = 3, colour = "#28658b") +
     ggplot2::scale_y_continuous(breaks = d$position, labels = d$leaf_label) +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = .15)) +
     ggplot2::labs(title = .margot_policy_wrap(title, 40), subtitle = .margot_policy_wrap(c(x$context$outcome_label, .margot_policy_scope(x$context)), 55),
       x = paste0(x$context$contrast_label, " (", x$context$scale_label, ")"), y = NULL,
       caption = .margot_policy_wrap(c(paste(d$leaf_label, .margot_policy_interval_label(d, digits), sep = ": "), x$context$qualification))) +
@@ -251,10 +273,11 @@ margot_plot_policy_value_gain <- function(data, digits = 3L, title = "Gain over 
       ggplot2::aes(x = .data$lower, xend = .data$upper, yend = .data$position), linewidth = .8) +
     ggplot2::geom_point(size = 3, shape = 18, colour = "#263747") +
     ggplot2::scale_y_continuous(breaks = NULL, limits = c(.5, 1.5)) +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = .15)) +
     ggplot2::labs(title = .margot_policy_wrap(title, 40), subtitle = .margot_policy_wrap(c(x$context$outcome_label, .margot_policy_scope(x$value_context), d$comparator_label), 55),
-      x = paste0("Rule minus comparator (", x$context$scale_label, ")"), y = NULL,
+      x = paste0(if (!is.null(x$value_context$value_threshold)) "Net value: rule minus comparator (" else "Rule minus comparator (", x$context$scale_label, ")"), y = NULL,
       caption = .margot_policy_wrap(paste0("Gain: ", .margot_policy_number(d$estimate, digits), ". ", .margot_policy_interval_label(d, digits),
-        "\nDashed line: margin ", .margot_policy_number(d$gain_margin, digits), " ", x$context$scale_label, ".\n", x$value_context$qualification))) +
+        "\nDashed line: margin ", .margot_policy_number(d$gain_margin, digits), " ", x$context$scale_label, ".\n", paste(.margot_policy_threshold_text(x$value_context, digits), collapse = " "), "\n", x$value_context$qualification))) +
     ggplot2::theme_minimal() + ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", hjust = 0),
       plot.caption = ggplot2::element_text(hjust = 0), panel.grid.major.y = ggplot2::element_blank())
 }
@@ -275,6 +298,7 @@ margot_text_policy_leaf_effects <- function(data, digits = 3L) {
     paste0(d$leaf_label, ": ", x$context$contrast_label, " = ", .margot_policy_number(d$estimate, digits), " ",
       x$context$scale_label, "; ", .margot_policy_interval_label(d, digits), ".", counts),
     if (!is.null(x$reference)) paste0("Display population: ", x$reference_label, "; display weights: ", x$display_weight_id, "."),
+    .margot_policy_threshold_text(x$context, digits),
     x$context$qualification,
     "A difference between leaf effects requires a direct contrast and its uncertainty. Splitting variables describe the assignment rule; their own causal effects require a separate analysis.")
 }
@@ -302,15 +326,16 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
   c(paste0(x$context$outcome_label, ": ", .margot_policy_scope(x$value_context), "; ", x$value_context$population_label, "."),
     paste0("Relative to ", d$comparator_label, ", the stored gain is ", .margot_policy_number(d$estimate, digits), " ",
       x$context$scale_label, ". The estimate ", comparison, " the practical margin of ", .margot_policy_number(d$gain_margin, digits), " ", x$context$scale_label, "."),
-    uncertainty, x$value_context$qualification)
+    uncertainty, .margot_policy_threshold_text(x$value_context, digits), x$value_context$qualification)
 }
 
 # assemble a stored report using the maintained combo and explicit reference identity.
 .margot_report_stored_policy <- function(result_object, model_name, data, depth, original_df,
                                          digits, label_mapping, include_plots, include_table,
                                          include_text, projection_args, decision_tree_args,
-                                         heights, annotation) {
+                                         heights, annotation, reporting_layout, panel_labels) {
   x <- .margot_policy_reporting_validate(data)
+  .margot_policy_validate_panel_labels(panel_labels)
   model <- .margot_leaf_resolve_model_name(result_object, model_name)
   if (!identical(sub("^model_", "", model), sub("^model_", "", x$context$outcome))) stop("Reporting outcome does not match model_name.", call. = FALSE)
   if (is.null(depth)) {
@@ -329,14 +354,24 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
     if (is.null(x$reference)) stop("The combined report requires complete reference rows and display weights.", call. = FALSE)
     actual <- .policy_tree_build_predict_df(result_object$results[[model]]$plot_data, tree$columns)
     if (!identical(as.data.frame(actual), as.data.frame(x$reference))) stop("Projection rows differ from the reporting reference rows or their order.", call. = FALSE)
-    if (!is.numeric(heights) || length(heights) != 3 || any(!is.finite(heights) | heights <= 0)) stop("reporting_heights must contain three positive numbers.", call. = FALSE)
+    two_panel <- reporting_layout == "two_panel"
+    compact <- reporting_layout %in% c("compact", "two_panel")
+    if (compact && is.null(heights)) {
+      # size the tree row by the fitted link depth, not the requested slot depth
+      fitted_depth <- .margot_policy_plot_validate_tree(tree)
+      heights <- if (fitted_depth > 1L) c(1.5, 1.8, 1) else if (two_panel) c(1.1, 1.3) else c(.8, 1.3, 1)
+    }
+    if (compact) decision_tree_args <- .margot_policy_reporting_args(list(layout_style = "compact"), decision_tree_args)
+    if (two_panel) decision_tree_args <- .margot_policy_reporting_args(list(branch_labels = "condition"), decision_tree_args)
+    if (!is.numeric(heights) || !length(heights) %in% (if (two_panel) c(2L, 3L) else 3L) || any(!is.finite(heights) | heights <= 0)) stop("reporting_heights must contain positive numbers for the reporting rows.", call. = FALSE)
     forbidden <- intersect(names(projection_args), c("display_weights", "jitter_width", "jitter_height", "jitter_method", "plot_selection"))
     if (length(forbidden)) stop("Stored reports control projection weights, exact coordinates and complete branch display; remove: ", paste(forbidden, collapse = ", "), call. = FALSE)
     if (any(c("leaf_metrics", "show_leaf_metrics") %in% names(decision_tree_args))) stop("Stored reports supply their own leaf metrics.", call. = FALSE)
     leaves <- x$leaves
     actions <- vapply(leaves$selected_action, .margot_policy_reporting_action_label, character(1), label_mapping = label_mapping)
     metrics <- data.frame(node_id = leaves$node_id, label = paste0(leaves$leaf_label, ": ", actions,
-      "\n", .margot_policy_number(100 * leaves$reference_share, 1), "% weighted\nn = ", leaves$n_reference))
+      "\n", .margot_policy_number(100 * leaves$reference_share, 1), "% weighted\nn = ", leaves$n_reference,
+      if (two_panel) paste0("\n", x$context$contrast_label, ": ", .margot_policy_number(leaves$estimate, digits), " ", x$context$scale_label) else ""))
     args <- .margot_policy_reporting_args(list(display_weights = x$display_weights,
       jitter_width = 0, jitter_height = if (depth == 1) .06 else 0, jitter_seed = 20260910), projection_args)
     panels <- margot_plot_policy_tree_panels(result_object, model, max_depth = depth,
@@ -346,8 +381,15 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
       plot.tag = ggplot2::element_text(face = "bold", hjust = 0), plot.caption = ggplot2::element_text(hjust = 0))
     panels$decision_tree$coordinates$clip <- "off"
     a <- panels$decision_tree + ggplot2::labs(title = x$context$outcome_label, subtitle = "Decision tree") + heading
+    compact_spacing <- ggplot2::theme(plot.margin = ggplot2::margin(4, 6, 4, 6),
+      legend.margin = ggplot2::margin(0, 0, 0, 0), legend.box.spacing = grid::unit(1, "mm"),
+      legend.spacing.y = grid::unit(1, "mm"))
     b <- panels$projection
     if (inherits(b, "patchwork")) {
+      # axes belong to the nested projections, before their panel is wrapped.
+      axes <- panel_labels$B[intersect(names(panel_labels$B), c("x", "y"))]
+      if (length(axes)) b <- b & do.call(ggplot2::labs, axes)
+      if (compact) b <- b & compact_spacing
       b <- b + patchwork::plot_annotation(title = NULL)
       b <- patchwork::wrap_elements(panel = b)
     }
@@ -355,9 +397,33 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
       subtitle = paste0("Weighted projection: ", x$reference_label, "\nPoint area represents ", x$display_weight_id)) + heading
     c <- margot_plot_policy_leaf_effects(x, digits)
     d <- margot_plot_policy_value_gain(x, digits)
+    if (compact) {
+      # compact panels carry no subtitles; scope and comparator move to the captions
+      a <- a + ggplot2::labs(subtitle = NULL)
+      b <- b + ggplot2::labs(title = "Weighted participant projection", subtitle = NULL)
+      c <- c + ggplot2::labs(subtitle = NULL, caption = .margot_policy_wrap(c(.margot_policy_scope(x$context), c$labels$caption)))
+      d <- d + ggplot2::labs(subtitle = NULL, caption = .margot_policy_wrap(c(paste0(.margot_policy_scope(x$value_context), "; comparator: ", x$value$comparator_label, "."), d$labels$caption)))
+      a <- a + compact_spacing
+      b <- b + compact_spacing
+      c <- c + compact_spacing
+      d <- d + compact_spacing
+    }
+    labelled <- .margot_policy_panel_labels(list(A = a, B = b, C = c, D = d), panel_labels)
+    a <- labelled$A
+    b <- labelled$B
+    c <- labelled$C
+    d <- labelled$D
     caption <- if (x$mixed_scope) "A-C describe selected full-sample leaves; D evaluates the repeated-learning procedure." else "A-D refer to the same stored rule."
-    combined <- patchwork::wrap_plots(a, b, patchwork::wrap_plots(c, d, nrow = 1), ncol = 1, heights = heights) +
-      patchwork::plot_annotation(tag_levels = annotation$tag_levels, caption = caption) & heading
+    if (two_panel) {
+      a <- a + ggplot2::theme(plot.margin = ggplot2::margin(4, 6, 14, 6)) + ggplot2::labs(caption = NULL,
+        subtitle = if (!is.null(x$context$value_threshold)) paste0("Benefit threshold: ", .margot_policy_number(x$context$value_threshold$value, digits), " ", x$context$scale_label) else NULL)
+      b <- b + ggplot2::labs(caption = NULL)
+      combined <- patchwork::wrap_plots(a, b, ncol = 1, heights = heights[1:2]) +
+        patchwork::plot_annotation(tag_levels = annotation$tag_levels) & heading
+    } else {
+      combined <- patchwork::wrap_plots(a, b, patchwork::wrap_plots(c, d, nrow = 1), ncol = 1, heights = heights) +
+        patchwork::plot_annotation(tag_levels = annotation$tag_levels, caption = caption) & heading
+    }
     plots <- list(decision_tree = a, projection = b, leaf_effects = c, value_gain = d, combined_plot = combined)
   }
   structure(list(table = if (include_table) x$leaves else NULL,
@@ -365,4 +431,36 @@ margot_text_policy_value_gain <- function(data, digits = 3L) {
     text = if (include_text) list(leaves = margot_text_policy_leaf_effects(x, digits), value = margot_text_policy_value_gain(x, digits)) else NULL,
     plots = plots, reporting_data = x, metadata = list(context = x$context, value_context = x$value_context,
       depth = depth, rule_signature = x$rule_signature, mixed_scope = x$mixed_scope)), class = c("margot_policy_tree_report", "list"))
+}
+
+
+#' Prepare stored reporting from an independently evaluated policy rule
+#'
+#' @description
+#' Binds an evaluation object's original leaf contrasts and threshold-adjusted rule gain to explicit outcome, scale and population metadata. This adapter performs no fitting or interval estimation.
+#' @param evaluation An object returned by [margot_policy_tree_evaluate()].
+#' @param context Reporting context as in [margot_policy_reporting_data()]. Rule and development/evaluation identities are supplied from the evaluation object; conflicting caller identities fail. The evaluation qualification is retained.
+#' @inheritParams margot_policy_reporting_data
+#' @return A `margot_policy_reporting_data` object compatible with stored tables, text and plots. Leaf estimates remain original treatment-control effects; the value estimate uses the saved threshold-adjusted objective. Full-sample refits require their own reporting object and cannot inherit these intervals.
+#' @md
+#' @export
+margot_policy_evaluation_reporting_data <- function(evaluation, context,
+                                                    reference = NULL, display_weights = NULL,
+                                                    reference_label = NULL, display_weight_id = NULL) {
+  # preserve the independently evaluated rule and its saved uncertainty.
+  if (!inherits(evaluation, "margot_policy_tree_evaluation")) stop("evaluation must be margot_policy_tree_evaluation.", call. = FALSE)
+  .policy_evaluation_validate(evaluation)
+  if (!is.list(context)) stop("context must be a named list.", call. = FALSE)
+  identities <- list(rule_id = evaluation$rule_id, evaluation_mode = "independent_fixed_rule",
+    development_id = evaluation$metadata$development_id, evaluation_id = evaluation$metadata$evaluation_id)
+  for (field in names(identities)) {
+    if (!is.null(context[[field]]) && !identical(context[[field]], identities[[field]])) stop("Incompatible ", field, " with evaluated rule.", call. = FALSE)
+    context[[field]] <- identities[[field]]
+  }
+  if (!is.null(context$value_threshold) && !identical(context$value_threshold, evaluation$threshold)) stop("Incompatible value_threshold with evaluated rule.", call. = FALSE)
+  context$value_threshold <- evaluation$threshold
+  context$qualification <- paste(c(context$qualification, evaluation$inference$qualification), collapse = " ")
+  margot_policy_reporting_data(evaluation$tree, evaluation$evaluation$leaves,
+    evaluation$evaluation$value, context, reference = reference, display_weights = display_weights,
+    reference_label = reference_label, display_weight_id = display_weight_id)
 }

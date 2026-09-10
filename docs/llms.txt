@@ -279,6 +279,17 @@ stable state. Expect breaking changes.
 - [`margot_policy_workflow()`](https://go-bayes.github.io/margot/reference/margot_policy_workflow.md)
   : End-to-end Policy Workflow (depth selection -\> report -\>
   interpretation)
+- [`margot_policy_value_threshold()`](https://go-bayes.github.io/margot/reference/margot_policy_value_threshold.md)
+  : Resolve a benefit threshold from development action scores
+- [`margot_policy_action_scores()`](https://go-bayes.github.io/margot/reference/margot_policy_action_scores.md)
+  : Construct binary action scores from independent nuisance predictions
+- [`margot_policy_development_scores()`](https://go-bayes.github.io/margot/reference/margot_policy_development_scores.md)
+  : Fit development-only forest nuisances for policy action scores
+- [`margot_policy_tree_evaluate()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_evaluate.md)
+  : Learn a benefit-threshold rule and evaluate it on separate supplied
+  scores
+- [`margot_policy_evaluation_reporting_data()`](https://go-bayes.github.io/margot/reference/margot_policy_evaluation_reporting_data.md)
+  : Prepare stored reporting from an independently evaluated policy rule
 - [`margot_policy_tree_cv()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.md)
   : Cross-validated held-out policy-tree diagnostics
 - [`margot_policy_tree_display()`](https://go-bayes.github.io/margot/reference/margot_policy_tree_display.md)
@@ -430,8 +441,7 @@ stable state. Expect breaking changes.
 - [`margot_plot_lmtp_learners()`](https://go-bayes.github.io/margot/reference/margot_plot_lmtp_learners.md)
   : Plot Super Learner weights for LMTP nuisance fits
 - [`margot_plot_decision_tree()`](https://go-bayes.github.io/margot/reference/margot_plot_decision_tree.md)
-  : Plot a Decision Tree from Margot Causal-Forest Results (robust
-  labelling)
+  : Plot a stored policy assignment tree
 - [`margot_view_lmtp_structure()`](https://go-bayes.github.io/margot/reference/margot_view_lmtp_structure.md)
   : Helper function to view available models and contrasts
 
@@ -591,3 +601,5 @@ stable state. Expect breaking changes.
   workflow](https://go-bayes.github.io/margot/articles/standard-grf-policy-tree-workflow.md):
 - [Policy rules, weighted projections and stored
   evaluation](https://go-bayes.github.io/margot/articles/policy-reporting-stored.md):
+- [Interpretable policy trees with benefit
+  thresholds](https://go-bayes.github.io/margot/articles/policy-value-thresholds.md):

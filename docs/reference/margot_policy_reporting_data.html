@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ate-reporting-scales.html">Average-effect reporting and outcome scales</a></li>
     <li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
     <li><a class="dropdown-item" href="../articles/policy-reporting-stored.html">Policy rules, weighted projections and stored evaluation</a></li>
+    <li><a class="dropdown-item" href="../articles/policy-value-thresholds.html">Interpretable policy trees with benefit thresholds</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -75,7 +76,7 @@
 
 
 <dt id="arg-context">context<a class="anchor" aria-label="anchor" href="#arg-context"></a></dt>
-<dd><p>Named list of character scalars: <code>outcome</code>, <code>outcome_label</code>, <code>rule_id</code>, <code>population_id</code>, <code>population_label</code>, <code>scale_id</code>, <code>scale_label</code>, <code>orientation</code> (<code>as_scored</code> or <code>reversed</code>), <code>weight_id</code>, <code>evaluation_mode</code>, <code>contrast_label</code> and <code>qualification</code>. Evaluation modes are <code>independent_fixed_rule</code>, <code>selected_full_sample</code>, <code>repeated_learning</code> and <code>constructed</code>. Independent evaluation additionally requires distinct <code>development_id</code> and <code>evaluation_id</code>. The qualification states the inferential limitations, including any multiplicity adjustment.</p></dd>
+<dd><p>Named list of character scalars: <code>outcome</code>, <code>outcome_label</code>, <code>rule_id</code>, <code>population_id</code>, <code>population_label</code>, <code>scale_id</code>, <code>scale_label</code>, <code>orientation</code> (<code>as_scored</code> or <code>reversed</code>), <code>weight_id</code>, <code>evaluation_mode</code>, <code>contrast_label</code> and <code>qualification</code>. Evaluation modes are <code>independent_fixed_rule</code>, <code>selected_full_sample</code>, <code>repeated_learning</code> and <code>constructed</code>. Independent evaluation additionally requires distinct <code>development_id</code> and <code>evaluation_id</code>. The qualification states the inferential limitations, including any multiplicity adjustment. Optional <code>value_threshold</code> is a resolved list with finite signed <code>value</code>, <code>source</code> (<code>ate</code> or <code>fixed</code>), non-negative <code>multiplier</code>, and <code>development_ate</code> for an ATE reference. Leaf contrasts stay unadjusted while value gains use this threshold. Matching rule contexts require identical threshold metadata.</p></dd>
 
 
 <dt id="arg-value-context">value_context<a class="anchor" aria-label="anchor" href="#arg-value-context"></a></dt>

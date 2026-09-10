@@ -1,9 +1,11 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://go-bayes.github.io/margot/404.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/AGENTS.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/LICENSE.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/ate-reporting-scales.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/index.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/policy-reporting-stored.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/articles/policy-value-thresholds.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/standard-grf-policy-tree-workflow.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
@@ -223,6 +225,9 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_slope_covariate_combo.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_tau.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_action_scores.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_development_scores.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_evaluation_reporting_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_leaf_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_methods_statement.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.html</loc></url>
@@ -235,8 +240,10 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_bootstrap.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_cv.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_display.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_evaluate.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_tree_stability.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_value_explainer.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_value_threshold.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_workflow.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_positivity_report.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_positivity_summary.html</loc></url>
@@ -328,4 +335,3 @@
 <url><loc>https://go-bayes.github.io/margot/reference/update_accumulator.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/update_stability_accumulator.html</loc></url>
 </urlset>
-

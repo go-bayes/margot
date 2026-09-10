@@ -9,7 +9,7 @@ Use this helper when the intended artefact is the branching assignment rule."></
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@ Use this helper when the intended artefact is the branching assignment rule."></
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ate-reporting-scales.html">Average-effect reporting and outcome scales</a></li>
     <li><a class="dropdown-item" href="../articles/standard-grf-policy-tree-workflow.html">Standard GRF and policy-tree workflow</a></li>
     <li><a class="dropdown-item" href="../articles/policy-reporting-stored.html">Policy rules, weighted projections and stored evaluation</a></li>
+    <li><a class="dropdown-item" href="../articles/policy-value-thresholds.html">Interpretable policy trees with benefit thresholds</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -58,7 +59,7 @@ Use this helper when the intended artefact is the branching assignment rule.</p>
 <dl><dt id="arg-result-object">result_object<a class="anchor" aria-label="anchor" href="#arg-result-object"></a></dt>
 <dd><p>A list returned by <code><a href="margot_causal_forest.html">margot_causal_forest()</a></code>,
 <code><a href="margot_policy_tree_display.html">margot_policy_tree_display()</a></code>, or a compatible policy-tree workflow
-object. A compact display object supports this decision-tree plot because
+object, or a native <code><a href="https://rdrr.io/pkg/policytree/man/policy_tree.html" class="external-link">policytree::policy_tree()</a></code> tree. A compact display object supports this decision-tree plot because
 it stores the fitted tree; it does not supply the observation-level data
 required by <code><a href="margot_plot_policy_projection.html">margot_plot_policy_projection()</a></code>.</p></dd>
 
@@ -98,4 +99,3 @@ the <code>model_</code> prefix. May be omitted for a
 
 
   </body></html>
-

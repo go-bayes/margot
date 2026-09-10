@@ -23,7 +23,7 @@ margot_policy_tree_display(
 [margot_policy_tree_cv()].}
 
 \item{policy_cv}{A [margot_policy_tree_cv()] result containing a named
-`depth_map`.}
+`depth_map`. Its saved benefit-threshold specification is resolved anew on the display sample. This full-sample refit does not inherit a fold rule's evaluation.}
 
 \item{weights}{Optional positive training weights. Zero weights exclude rows
 from the display-tree target sample.}

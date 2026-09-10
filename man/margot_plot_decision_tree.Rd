@@ -2,7 +2,7 @@
 % Please edit documentation in R/margot_plot_decision_tree.R
 \name{margot_plot_decision_tree}
 \alias{margot_plot_decision_tree}
-\title{Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)}
+\title{Plot a stored policy assignment tree}
 \usage{
 margot_plot_decision_tree(
   result_object,
@@ -26,14 +26,17 @@ margot_plot_decision_tree(
   label_mapping = NULL,
   show_leaf_metrics = FALSE,
   leaf_metrics = NULL,
-  leaf_metric_digits = 3L
+  leaf_metric_digits = 3L,
+  branch_labels = c(left = "True", right = "False"),
+  layout_style = c("legacy", "compact"),
+  node_label_width = NULL
 )
 }
 \arguments{
 \item{result_object}{A list returned by \code{margot_causal_forest()} or
-\code{margot_policy_tree_display()}.}
+\code{margot_policy_tree_display()}, or a native \code{policytree::policy_tree()} tree. Native trees need no causal-forest wrapper; supply stored leaf labels explicitly if desired.}
 
-\item{model_name}{Name of the model in the results to visualise}
+\item{model_name}{Name of the model in the results to visualise. For a native tree, NULL takes the model recorded on \code{leaf_metrics} when supplied, otherwise \code{"model_tree"}; an unprefixed name is matched against the prefixed \code{leaf_metrics} model.}
 
 \item{max_depth}{Maximum depth of the tree (1L or 2L). When
 \code{result_object} is a \code{margot_policy_tree_display} object,
@@ -50,13 +53,13 @@ other supported objects, \code{NULL} retains the historical default of 2L.}
 
 \item{text_size}{Size of text in plot elements}
 
-\item{edge_label_offset}{Offset for edge labels from connecting lines}
+\item{edge_label_offset}{Horizontal offset of edge labels from the connecting lines, in x data units. Legacy layouts span a unit interval; compact layouts index leaves 1 to n, so the same value moves labels a smaller fraction of the panel width.}
 
-\item{span_ratio}{Controls the aspect ratio of the plot}
+\item{span_ratio}{Controls the fixed aspect ratio of the legacy layout; ignored by the compact layout, which uses the available panel aspect.}
 
 \item{non_leaf_fill}{Colour for non-leaf nodes (decision nodes)}
 
-\item{title}{Optional custom title for the plot}
+\item{title}{Optional literal title, preserved exactly. An empty string suppresses the title. NULL uses the formatted model label, or 'Policy tree' for a native tree.}
 
 \item{plot_margin}{Margins around the plot}
 
@@ -78,11 +81,17 @@ signed treatment-control contrasts and sample shares from
 
 \item{leaf_metrics}{Optional data frame from
 \code{margot_policy_leaf_summary()}.
-If supplied, these labels are used instead of recomputing metrics.}
+If supplied, these labels are used instead of recomputing metrics. Native trees accept metrics whose recorded model matches \code{model_name} (see above) and whose depth matches \code{max_depth}.}
 
 \item{leaf_metric_digits}{Integer; number of decimals for leaf
 treatment-control contrasts.}
+
+\item{branch_labels}{A named character pair with names \code{left} and \code{right} (default True/False), \code{"condition"} for threshold inequalities, a data frame with \code{parent_id}, \code{side} and \code{label} identifying every edge, or a function taking an edge data frame and returning one label per edge. Edge metadata includes \code{parent_id}, \code{child_id}, \code{side}, \code{variable}, \code{threshold}, \code{original_threshold} and \code{threshold_label}. Left branches retain the inclusive inequality. Display thresholds use the same rounding as node labels; they do not replace the stored routing threshold.}
+
+\item{layout_style}{\code{"legacy"} retains the historical geometry. \code{"compact"} centres parents over their ordered children, lets the panel use the available aspect ratio and reduces default outer margins and title spacing. Explicit padding and margin arguments take precedence. Supply an appropriate output height for the number of levels and label lines.}
+
+\item{node_label_width}{Optional positive integer for wrapping node labels by character count; existing line breaks are retained. NULL preserves supplied labels.}
 }
 \description{
-Plot a Decision Tree from Margot Causal-Forest Results (robust labelling)
+Plot a stored policy assignment tree
 }
