@@ -46,15 +46,15 @@ margot_plot_policy_combo(
 
 - layout:
 
-  A list specifying the layout of the combined plot when max_depth==2.
+  A list specifying the layout of the combined plot at either depth.
   Default is \`list(heights = c(1, 2))\`, which sets the relative
   heights of the two plots.
 
 - annotation:
 
-  A list specifying the annotation for the combined plot when
-  max_depth==2. Default is \`list(tag_levels = "A")\`, which adds
-  alphabetic tags to the subplots.
+  A list specifying the annotation for the combined plot at either
+  depth. Default is \`list(tag_levels = "A")\`, which adds alphabetic
+  tags to the subplots.
 
 - generate_policy_tree:
 

@@ -1,9 +1,9 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://go-bayes.github.io/margot/404.html</loc></url>
-<url><loc>https://go-bayes.github.io/margot/AGENTS.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/LICENSE.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/ate-reporting-scales.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/index.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/articles/policy-reporting-stored.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/articles/standard-grf-policy-tree-workflow.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/authors.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/index.html</loc></url>
@@ -197,10 +197,12 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_multi_arm.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_combo.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_decision_tree.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_leaf_effects.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_projection.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_regret.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_tree.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_tree_panels.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_plot_policy_value_gain.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_qini.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_qini_annotated_dev.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_plot_qini_batch.html</loc></url>
@@ -225,6 +227,7 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_methods_statement.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_regret_summary.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_policy_reporting_data.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_split_diagnostic.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_summary_compare_depths.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_policy_summary_report.html</loc></url>
@@ -284,7 +287,9 @@
 <url><loc>https://go-bayes.github.io/margot/reference/margot_table_policy_value.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_table_treated_only.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_target_projection_report.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_text_policy_leaf_effects.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_text_policy_tree.html</loc></url>
+<url><loc>https://go-bayes.github.io/margot/reference/margot_text_policy_value_gain.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_transition_ipsi_summary.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_transition_table.html</loc></url>
 <url><loc>https://go-bayes.github.io/margot/reference/margot_trim_sample_weights.html</loc></url>

@@ -24,7 +24,9 @@ margot_report_policy_tree(
   layout = list(heights = c(1, 2)),
   annotation = list(tag_levels = "A"),
   projection_args = list(),
-  decision_tree_args = list()
+  decision_tree_args = list(),
+  reporting_data = NULL,
+  reporting_heights = c(1.5, 1.7, 1)
 )
 ```
 
@@ -105,6 +107,22 @@ margot_report_policy_tree(
 - decision_tree_args:
 
   Optional list of arguments for the decision tree.
+
+- reporting_data:
+
+  Optional
+  [`margot_policy_reporting_data()`](https://go-bayes.github.io/margot/reference/margot_policy_reporting_data.md)
+  object. Enables the stored four-panel report: A/B use the existing
+  combo; C/D show supplied leaf contrasts and value gain. This path
+  consumes supplied estimates and intervals, requires matching rule and
+  reference rows, and uses the stored weights and margin. Calls with
+  `reporting_data = NULL` retain their existing calculations and return
+  shape.
+
+- reporting_heights:
+
+  Relative heights of A, B and the C/D row for a stored report; default
+  `c(1.5, 1.7, 1)`.
 
 ## Value
 

@@ -179,6 +179,16 @@
   : Generate standard policy-tree reporting text
 - [`margot_report_policy_tree()`](https://go-bayes.github.io/margot/reference/margot_report_policy_tree.md)
   : Assemble policy-tree plots, table, and standard text
+- [`margot_policy_reporting_data()`](https://go-bayes.github.io/margot/reference/margot_policy_reporting_data.md)
+  : Bind stored policy estimates to a rule and reporting context
+- [`margot_plot_policy_leaf_effects()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_leaf_effects.md)
+  : Plot stored contrasts within policy-tree leaves
+- [`margot_plot_policy_value_gain()`](https://go-bayes.github.io/margot/reference/margot_plot_policy_value_gain.md)
+  : Plot a stored policy-value gain and practical margin
+- [`margot_text_policy_leaf_effects()`](https://go-bayes.github.io/margot/reference/margot_text_policy_leaf_effects.md)
+  : Describe stored contrasts within policy-tree leaves
+- [`margot_text_policy_value_gain()`](https://go-bayes.github.io/margot/reference/margot_text_policy_value_gain.md)
+  : Describe a stored policy-value gain and its practical margin
 - [`margot_policy_recurrence_summary()`](https://go-bayes.github.io/margot/reference/margot_policy_recurrence_summary.md)
   : Summarise outcome-wide recurrence in held-out policy-tree splits
 - [`margot_policy_summary_report()`](https://go-bayes.github.io/margot/reference/margot_policy_summary_report.md)

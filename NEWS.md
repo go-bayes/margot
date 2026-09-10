@@ -1,4 +1,4 @@
-# margot 1.2.0.9001 development
+# [2026-09-10] margot 1.2.1
 
 - Weighted policy projections now remove the point stroke so rendered circle areas remain proportional to display weights, including zero area for zero-weight records. Constant-tree projection subtitles honour custom action labels. SVG geometry tests cover stumps, depth-two trees and constant rules.
 
