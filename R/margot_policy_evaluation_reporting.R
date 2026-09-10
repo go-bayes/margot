@@ -11,7 +11,7 @@
 }
 
 # display a constant assignment without inventing a predictor threshold.
-.margot_policy_constant_projection <- function(tree, reference, weights, max_size, alpha, seed, theme_function) {
+.margot_policy_constant_projection <- function(tree, reference, weights, max_size, alpha, seed, theme_function, label_mapping = NULL) {
   d <- data.frame(x = 1, y = rep(0, nrow(reference)))
   mapping <- ggplot2::aes(x = .data$x, y = .data$y)
   args <- list(size = 1.5)
@@ -19,13 +19,14 @@
   if (!is.null(weights)) {
     d$display_weight <- weights
     mapping$size <- ggplot2::aes(size = .data$display_weight)$size
-    args <- list(shape = 16)
+    args <- list(shape = 16, stroke = 0)
     size_scale <- ggplot2::scale_size_area(max_size = max_size, limits = c(0, max(weights)), name = "Weight")
   }
   ggplot2::ggplot(d, mapping) + do.call(ggplot2::geom_point, c(list(alpha = alpha,
     position = ggplot2::position_jitter(width = 0, height = .06, seed = seed)), args)) +
     size_scale + ggplot2::scale_x_continuous(breaks = 1, labels = "All reference records") +
-    ggplot2::labs(x = NULL, y = NULL, subtitle = paste("Constant assignment:", tree$action.names[tree$nodes[[1]]$action])) +
+    ggplot2::labs(x = NULL, y = NULL, subtitle = paste("Constant assignment:",
+      .margot_policy_reporting_action_label(tree$action.names[tree$nodes[[1]]$action], label_mapping))) +
     theme_function() + ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.ticks.y = ggplot2::element_blank())
 }
 

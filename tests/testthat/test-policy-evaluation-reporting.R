@@ -219,3 +219,54 @@ test_that("weighted combo leaf labels use the projection weights", {
   labels <- nodes$label[nodes$is_leaf]
   expect_true(all(vapply(seq_along(expected), function(i) grepl(expected[i], labels[i], fixed = TRUE), logical(1))))
 })
+
+# inspect the device geometry, including any stroke contribution to point radius.
+policy_reporting_svg_radii <- function(plot) {
+  path <- tempfile(fileext = ".svg")
+  on.exit(unlink(path), add = TRUE)
+  ggplot2::ggsave(path, plot + ggplot2::theme(legend.position = "none"),
+    device = svglite::svglite, width = 6, height = 3)
+  circles <- grep("<circle ", readLines(path, warn = FALSE), value = TRUE)
+  as.numeric(sub(".* r=['\"]([0-9.]+)['\"].*", "\\1", circles))
+}
+
+test_that("rendered weighted circles have proportional area and zero-weight points disappear", {
+  skip_if_not_installed("svglite")
+  for (kind in c("stump", "depth_two", "constant")) {
+    depth <- if (kind == "depth_two") 2 else 1
+    f <- policy_reporting_fixture(depth, constant = kind == "constant")
+    weights <- rep(c(0, .01, 1), length.out = nrow(f$data$reference))
+    p <- margot_plot_policy_tree(f$object, "model_y", max_depth = depth,
+      display_weights = weights, weight_max_size = 4, jitter_seed = 20260910)
+    panels <- if (depth == 2) list(p[[1]], p[[2]]) else list(p)
+    for (panel in panels) {
+      layer <- Filter(function(l) inherits(l$geom, "GeomPoint"), panel$layers)[[1]]
+      expected <- if (is.data.frame(layer$data)) layer$data$display_weight else panel$data$display_weight
+      radii <- policy_reporting_svg_radii(panel)
+      # devices may emit a zero-radius circle or omit it entirely.
+      expect_true(length(radii) %in% c(length(expected), sum(expected > 0)), info = kind)
+      if (length(radii) == sum(expected > 0)) expected <- expected[expected > 0]
+      if (length(radii) != length(expected)) next
+      expect_true(all(radii[expected == 0] == 0), info = kind)
+      # svglite rounds SVG radii to two decimals; allow only that rendering error.
+      expect_true(max(abs(radii^2 / max(radii)^2 - expected / max(expected))) <= .0003, info = kind)
+    }
+  }
+})
+
+test_that("constant projections honour custom action labels with either weight mode", {
+  f <- policy_reporting_fixture(constant = TRUE)
+  labels <- list(treated = "Positive volunteering hours", control = "Zero volunteering hours")
+  for (action in c("treated", "control")) {
+    if (action == "control") {
+      f$object$results$model_y$policy_tree_depth_1 <- policytree::policy_tree(
+        f$data$reference, cbind(control = 1, treated = rep(0, nrow(f$data$reference))),
+        depth = 1, min.node.size = 1)
+    }
+    for (weights in list(NULL, f$data$display_weights)) {
+      p <- margot_plot_policy_tree(f$object, "model_y", max_depth = 1,
+        label_mapping = labels, display_weights = weights, jitter_seed = 20260910)
+      expect_identical(p$labels$subtitle, paste("Constant assignment:", labels[[action]]))
+    }
+  }
+})

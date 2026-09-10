@@ -123,7 +123,7 @@ margot_plot_policy_tree <- function(
   }
   if (isTRUE(tree$nodes[[1L]]$is_leaf)) {
     return(.margot_policy_constant_projection(tree, reference, display_weights,
-      weight_max_size, point_alpha, jitter_seed, theme_function))
+      weight_max_size, point_alpha, jitter_seed, theme_function, label_mapping))
   }
   depth <- tree$depth
   if (!depth %in% 1:2) {
@@ -261,7 +261,7 @@ margot_plot_policy_tree <- function(
         limits = c(0, max(display_weights)))
       ggplot2::geom_point(data = plot_df,
         ggplot2::aes(x = .data$x, y = .data$y, colour = .data$pred, size = .data$display_weight),
-        position = point_position, alpha = point_alpha, shape = 16)
+        position = point_position, alpha = point_alpha, shape = 16, stroke = 0)
     }
     ggplot2::ggplot() + point_layer +
       split_line +
@@ -525,7 +525,7 @@ margot_plot_policy_tree_depth2 <- function(
     point_args <- list(size = 1.5)
     if (!is.null(display_weights)) {
       point_mapping <- ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = .data$pred, size = .data$display_weight)
-      point_args <- list(shape = 16)
+      point_args <- list(shape = 16, stroke = 0)
       shape_scale <- ggplot2::scale_size_area(max_size = weight_max_size,
         limits = c(0, max(display_weights)), name = "Weight")
     }
