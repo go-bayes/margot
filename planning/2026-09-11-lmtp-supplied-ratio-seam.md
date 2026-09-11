@@ -1,12 +1,12 @@
-# Proposal: a supported seam for supplied density ratios in the LMTP outcome stage
+# Proposal: supplied density ratios for the LMTP outcome stage
 
-Date: 2026-09-11. Status: PROPOSED. Scope: public API only; no study, dataset, or private workflow detail.
+Date: 2026-09-11. Status: PROPOSED. Scope: public API design and implementation acceptance requirements.
 
 ## Problem
 
-Downstream orchestration code that fits its own exposure and censoring models needs to hand `lmtp`'s sequentially doubly robust (SDR) outcome stage a ratio matrix, a fold map, and weights, and to be certain that no density-ratio fit runs. Today that requires three unexported internals, reached with `getFromNamespace()`: `margot_lmtp_make_task()`, `margot_lmtp_fit_sdr_outcome()`, and a post-construction assignment of the caller's fold map into the task object. Two consequences follow. A Margot release can change those internals without any signal to callers. And two engine defaults enter silently: `LmtpTask` derives continuous-outcome bounds from the observed outcome range when `bounds` is `NULL`, and it generates its own folds before the caller can replace them.
+Callers that fit exposure and censoring models need a supported interface to supply density ratios to the longitudinal modified treatment policy (LMTP) sequentially doubly robust (SDR) outcome stage. The existing interface uses unexported task-construction and outcome-fitting functions in `margot`, followed by replacement of generated folds. A public interface should validate the supplied ratios and partitions, specify the random-number procedure and record the outcome transformation.
 
-A second gap is in the worker probe. `margot_lmtp_worker_report()` fingerprints five `lmtp` internals (`cf_density_ratios`, `cf_sdr`, `theta_dr`, `make_shifted`, `LmtpTask`) by deparsed body. A locally modified helper that those functions call, such as `estimate_density_ratios`, `stack_data`, `trim`, `run_ensemble`, `followed_rule`, `shift_data`, `shift_cens`, `get_folded_data`, or `predict.lmtp_ensemble`, passes the probe while changing the fitted result, and so does a rebuilt binary of an unchanged source.
+The worker report fingerprints five `lmtp` objects: `cf_density_ratios`, `cf_sdr`, `theta_dr`, `make_shifted` and `LmtpTask`. Changes to called helpers or installed binaries can escape that comparison. The extension below records those dependencies and tests their use in worker admission and checkpoint identity.
 
 ## Proposed exports
 
@@ -15,21 +15,22 @@ A second gap is in the worker probe. `margot_lmtp_worker_report()` fingerprints 
 ```r
 margot_lmtp_sdr_from_ratios(
   data, trt, outcome, baseline = NULL, time_vary = NULL, cens = NULL,
-  shift, density_ratios, folds, id, weights = NULL,
+  shift, density_ratios, ratio_ids, folds, id, weights = NULL,
   outcome_type = c("continuous", "binomial"),
-  bounds,                      # numeric length 2, or "observed_range"
-  learners_outcome, control = lmtp::lmtp_control(),
+  bounds, learners_outcome, seed, rng_kind, rng_state = NULL,
+  control = lmtp::lmtp_control(),
   label = "supplied ratios", ratio_digest = NULL
 )
 ```
 
-Behaviour:
+The interface has the following requirements:
 
-- Builds the task through the existing internals, installs `folds` (a list of `training_set` and `validation_set` index vectors, or an integer fold id vector) before any regression, and never calls `cf_density_ratios()`.
-- Verifies that `density_ratios` is a numeric matrix with one row per record in `data` order and one column per exposure node, finite and non-negative, and that `id` order matches the task's identifiers.
-- Requires `bounds`. `"observed_range"` is accepted only as an explicit election; the realised bounds are returned in `$bounds_realised` either way.
-- Records the supplied weights and the task's internal weights side by side with a `normalised_by_engine` flag, because `lmtp` 1.5.4 rescales weights to mean one outside its tolerance.
-- Returns an ordinary `lmtp` object with class `c("margot_lmtp_supplied_ratio_fit", "lmtp")`, `$density_ratios` identical to the input, `$outcome_history` (the per-node history the engine actually used), and `$provenance` (`ratio_source = "supplied"`, `ratio_digest`, `folds_source = "supplied"`, `label`).
+- `density_ratios` is a finite, nonnegative numeric matrix in input-row and exposure-node order. `ratio_ids` identifies its rows and must equal the identifiers selected by `id` from `data`. The supplied ratios pass unchanged to the outcome regressions. Calling the density fitter is an error.
+- `folds` accepts an integer fold-label vector or a list of training and validation index sets. Validation indices partition all input rows exactly once. Each fold has nonempty training and validation sets, unique in-range integer indices and disjoint sets; its training indices equal the complement of its validation indices. Repeated identifiers remain within a validation fold. Validate the complete partition before task construction or regression.
+- `seed` is an explicit integer and `rng_kind` specifies the generator, normal generator and sampling method. Save the caller's RNG kind, state and seed-existence status, and restore them on success and error. Deterministically seed task construction and install the validated folds. Immediately before SDR fitting, restore the supplied `rng_state` when present, or reset the declared RNG kind and seed otherwise. Validate a supplied state against `rng_kind` and privately record the regression-start state. To preserve an existing procedure during migration, supply its recorded regression-start state; a matching scalar seed alone may omit random draws made during earlier task construction. Instrumented tests observe the partitions and RNG state inside the regression calls.
+- `bounds` is explicit: numeric limits in the supplied outcome's scale, or `"observed_range"` for a continuous outcome. Validate the realised limits as finite, ordered and containing the observed values. Binary outcomes use limits zero and one. Return the realised limits in `$bounds_realised`.
+- Record supplied and internally normalised weights with `normalised_by_engine`. Record the effective control settings, seed, RNG kind, supplied partitions and engine version with the fit. These fit records may contain private inputs and require an explicit export operation before public use.
+- Return an ordinary `lmtp` object with class `c("margot_lmtp_supplied_ratio_fit", "lmtp")`, `$density_ratios` identical to the input, `$outcome_history` from the fitted task and `$provenance` containing `ratio_source = "supplied"`, `folds_source = "supplied"`, `ratio_digest` and `label`. The optional caller digest is an opaque reference; verifying it against a checkpoint belongs to the caller.
 
 ### `margot_lmtp_node_histories()`
 
@@ -37,31 +38,26 @@ Behaviour:
 margot_lmtp_node_histories(trt, baseline = NULL, time_vary = NULL, cens = NULL, k = Inf)
 ```
 
-Returns the per-node history vectors the outcome stage will condition on, using the same construction as the task, without an outcome and without data. Orchestrators use it to assert that their declared histories equal the engine's before any fit.
+Return the per-node history vectors using the task's construction rules and variable names alone. Test equality with the histories consumed by a fitted task on the same specification. History equality and partition equality are distinct assertions.
 
-### `margot_lmtp_worker_report()` extension
+### Worker report extension
 
-Add two fields and change none:
+Extend `margot_lmtp_worker_report()` with:
 
-- `lmtp_helper_fingerprint`: deparsed-body digests of the nine called helpers listed above, alongside the existing five.
-- `build_fingerprint`: SHA-256 digests of the installed `R/*.rdb`, `R/*.rdx`, and `libs/*` files for `margot`, `lmtp`, `SuperLearner`, `ranger`, `xgboost`, `glmnet`, and `nnls`.
+- `lmtp_helper_fingerprint`: function-body digests for `estimate_density_ratios`, `stack_data`, `trim`, `run_ensemble`, `followed_rule`, `shift_data`, `shift_cens`, `get_folded_data` and `predict.lmtp_ensemble`.
+- `build_fingerprint`: SHA-256 digests of installed `R/*.rdb`, `R/*.rdx` and `libs/*` files for `margot`, `lmtp`, `SuperLearner`, `ranger`, `xgboost`, `glmnet` and `nnls`.
 
-`source_fingerprint` is unchanged, so existing task identities remain valid; schedulers may opt into the stricter identity by including the new fields.
+Retain the existing fields for compatibility. Consumers adopting the stronger report must include the new fields in worker admission and checkpoint identity. A changed helper or build must reject an incompatible worker and invalidate the corresponding cached execution identity. Older identities remain explicitly associated with the earlier verification scheme.
 
-## Non-goals
+## Acceptance
 
-No change to `margot_lmtp()`, `margot_lmtp_sdr_shared()`, or the task scheduler's density stage. No new estimator. No change to reporting. Survival outcomes and competing events remain outside the seam, as they are outside `margot_lmtp_sdr_shared()` today.
+Use synthetic inputs for these tests:
 
-## Tests (synthetic)
+- Instrument the SDR call to assert that its ratio matrix equals the supplied matrix. Replace the density fitter with a function that aborts; the outcome fit must still complete.
+- Reject overlapping training and validation rows, incomplete validation coverage, duplicated indices, out-of-range indices, empty sets and identifiers split across validation folds. Accept equivalent label-vector and index-list partitions. Observe training and validation rows inside the regression calls; returned history metadata alone is insufficient evidence.
+- Repeat calls from different ambient RNG states using the same declared seed and folds. Scientific outputs must agree on the same installed environment. Verify restoration of the caller's RNG kind and state after successful fitting and an injected regression error, covering both seed-existence states. Include a migration fixture using the recorded regression-start state from the earlier implementation and compare its scientific outputs.
+- Reject omitted or invalid bounds. For `"observed_range"`, return the realised range and verify the transformation used by the task. Reject row-order disagreement between `ratio_ids` and `data`.
+- Verify proportional weight normalisation and agreement of estimates, influence scores and standard errors under the declared numerical comparison rule. Assert `normalised_by_engine` against the actual supplied and internal vectors.
+- Change a helper or build file in an isolated test environment. Verify both the changed report and the consumer's rejection of the mismatched worker or cached identity.
 
-- Supplied ratios flow through unchanged: `identical(fit$density_ratios, supplied)`.
-- The density fitter is never reached: `local_mocked_bindings()` on the internal accessor makes `cf_density_ratios` abort; the seam still returns.
-- The supplied fold map is the one the regressions used, checked against `fit$outcome_history` and the task's fold sets.
-- A call without `bounds` errors; `"observed_range"` returns the realised range.
-- Weights multiplied by a constant leave estimates, influence scores, and standard errors unchanged and set `normalised_by_engine` to `TRUE`.
-- `margot_lmtp_node_histories()` equals the histories reported by a fitted task on the same specification.
-- The worker report changes when a helper body or a build file changes (simulated with a temporary library).
-
-## Release
-
-Minor version bump at implementation (new exported API), a `NEWS.md` entry, and pkgdown reference entries. No study-derived example appears in documentation.
+Existing public estimation functions retain their current interfaces. This proposal covers continuous and binary outcomes. Survival outcomes and competing events remain outside this interface. Implementation requires a minor version increment, a `NEWS.md` entry and updated reference documentation and site.
