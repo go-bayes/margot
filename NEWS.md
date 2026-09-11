@@ -1,3 +1,7 @@
+# margot development
+
+- Stored policy-tree interpretations now honour `include_definitions = FALSE` for leaf-summary explanations as well as introductory definitions. Explicit outcome labels are preserved without adding redundant direction prefixes. The interpreter uses depth-one/depth-two policy-tree terminology and describes a specified comparison without assuming pre-registration. Numerical summaries and decisions are unchanged.
+
 # [2026-09-11] margot 1.2.2
 
 

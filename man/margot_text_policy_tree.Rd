@@ -40,7 +40,8 @@ values and leaf summaries. No policy is fitted or re-evaluated.}
 
 \item{digits}{Integer from 0 to 8; display precision only.}
 
-\item{include_definitions}{Logical; prepend the general explanatory text.}
+\item{include_definitions}{Logical; include general explanatory text, including
+leaf-summary definitions. If false, retain only the object-specific results.}
 }
 \value{
 A character string or character vector.

@@ -293,7 +293,8 @@ margot_table_policy_tree <- function(object,
 #' @param label_mapping Optional named labels for outcome identifiers.
 #' @param value_units Character scalar describing the stored outcome units.
 #' @param digits Integer from 0 to 8; display precision only.
-#' @param include_definitions Logical; prepend the general explanatory text.
+#' @param include_definitions Logical; include general explanatory text, including
+#'   leaf-summary definitions. If false, retain only the object-specific results.
 #' @return A character string or character vector.
 #' @export
 margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display_tree"),
@@ -345,14 +346,14 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
   if (!is.null(object)) {
     if (source != "heldout_cv") stop("object requires source = 'heldout_cv'", call. = FALSE)
     sentences <- c(sentences, .margot_text_policy_cv_values(
-      object, action_names, label_mapping, value_units, digits
+      object, action_names, label_mapping, value_units, digits, include_definitions
     ))
   }
   if (isTRUE(collapse)) paste(sentences, collapse = " ") else sentences
 }
 
 # interpret stored cross-validation decisions and signed leaf summaries without refitting.
-.margot_text_policy_cv_values <- function(object, action_names, label_mapping, value_units, digits) {
+.margot_text_policy_cv_values <- function(object, action_names, label_mapping, value_units, digits, include_definitions = TRUE) {
   if (!inherits(object, "margot_policy_tree_cv")) stop("object must be a margot_policy_tree_cv object", call. = FALSE)
   if (!is.numeric(digits) || length(digits) != 1L || !is.finite(digits) || digits != as.integer(digits) || digits < 0 || digits > 8) stop("digits must be an integer from 0 to 8", call. = FALSE)
   if (!is.character(action_names) || !all(c("control", "treated") %in% names(action_names)) || anyNA(action_names) || any(!nzchar(action_names))) stop("action_names must name control and treated", call. = FALSE)
@@ -374,13 +375,12 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
     expected <- if (.policy_cv_meets_margin(delta, row$min_gain_over_constant)) "tree" else "constant"
     if (is.na(row$preferred_policy) || row$preferred_policy != expected) stop("stored policy decision disagrees with its margin", call. = FALSE)
     label <- .policy_cv_label(row$outcome, label_mapping)
-    text <- sprintf("For %s, the depth-%s tree-learning procedure has a held-out value of %s, compared with %s for the training-selected same-action rule. The difference is %s %s. %s the required improvement of %s. The registered comparison therefore favours %s.",
-      label, row$selected_tree_depth, fmt(row$value_selected_tree), fmt(row$value_honest_constant), signed(delta), value_units,
+    text <- sprintf("For %s, the depth-%s policy-tree procedure has a held-out value of %s, compared with %s for the training-selected same-action rule. The difference is %s %s. %s the required improvement of %s. The specified comparison therefore favours %s.",
+      label, c("one", "two")[[row$selected_tree_depth]], fmt(row$value_selected_tree), fmt(row$value_honest_constant), signed(delta), value_units,
       if (expected == "tree") "This reaches" else "This falls below", fmt(row$min_gain_over_constant),
       if (expected == "tree") "the tree procedure" else "the same-action procedure")
     if (threshold_adjusted) {
       text <- sub("held-out value", "held-out threshold-adjusted net value", text, fixed = TRUE)
-      text <- sub("The registered comparison", "The specified comparison", text, fixed = TRUE)
       text <- paste(text, "Each training fold resolves its benefit threshold before evaluation. The same threshold adjusts the tree and every comparator. Original treatment-control leaf contrasts remain unadjusted; a below-threshold effect need not indicate harm.")
     }
     leaves <- object$leaf_summary
@@ -395,9 +395,9 @@ margot_text_policy_tree <- function(source = c("generic", "heldout_cv", "display
         text <- paste(text, sprintf("Across held-out leaves assigned %s, the mean score contrast (%s minus %s) is %s; the central 95%% range across fitted leaves is %s to %s.",
           action_names[[leaf$action]], action_names[["treated"]], action_names[["control"]], signed(vals[1]), signed(vals[2]), signed(vals[3])))
       }
-      if (nrow(leaves) && !threshold_adjusted) text <- paste(text, sprintf("Mean contrasts weight leaves by their observation counts; the percentile ranges give each fitted leaf equal weight. These ranges describe variation across fitted leaves, rather than confidence intervals for fixed subgroups. A negative held-out contrast among leaves assigned %s, or a positive contrast among leaves assigned %s, indicates that the training preference did not persist in the pooled summary.", action_names[["treated"]], action_names[["control"]]))
+      if (nrow(leaves) && !threshold_adjusted && isTRUE(include_definitions)) text <- paste(text, sprintf("Mean contrasts weight leaves by their observation counts; the percentile ranges give each fitted leaf equal weight. These ranges describe variation across fitted leaves, rather than confidence intervals for fixed subgroups. A negative held-out contrast among leaves assigned %s, or a positive contrast among leaves assigned %s, indicates that the training preference did not persist in the pooled summary.", action_names[["treated"]], action_names[["control"]]))
     }
-    if (threshold_adjusted && is.data.frame(leaves) && nrow(leaves)) text <- paste(text, "Leaf ranges describe variation across repeated fitted groups; they are not sampling intervals for a fixed subgroup. Assignment depends on the training threshold, not solely on the sign of the original effect.")
+    if (threshold_adjusted && isTRUE(include_definitions) && is.data.frame(leaves) && nrow(leaves)) text <- paste(text, "Leaf ranges describe variation across repeated fitted groups; they are not sampling intervals for a fixed subgroup. Assignment depends on the training threshold, not solely on the sign of the original effect.")
     text
   }, character(1))
 }

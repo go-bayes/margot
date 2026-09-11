@@ -1511,8 +1511,23 @@ margot_policy_tree_display <- function(
 
 #' @keywords internal
 .policy_cv_label <- function(x, label_mapping = NULL) {
-  # apply labels consistently while falling back to raw names.
-  tryCatch(.apply_label_stability(x, label_mapping), error = function(e) x)
+  # preserve explicit display labels; format only identifiers without a mapping.
+  labels <- tryCatch(.apply_label_stability(x, label_mapping), error = function(e) x)
+  if (!is.null(label_mapping) && !is.null(names(label_mapping))) {
+    matched <- match(x, names(label_mapping))
+    base_match <- is.na(matched) & grepl("_r$", x)
+    matched[base_match] <- match(sub("_r$", "", x[base_match]), names(label_mapping))
+    for (i in which(!is.na(matched))) {
+      explicit <- label_mapping[[matched[[i]]]]
+      if (is.character(explicit) && length(explicit) == 1L && !is.na(explicit) && nzchar(explicit)) {
+        if (base_match[[i]] && !grepl("(reversed)", explicit, fixed = TRUE)) {
+          explicit <- paste0(explicit, " (reversed)")
+        }
+        labels[[i]] <- explicit
+      }
+    }
+  }
+  labels
 }
 
 #' Print held-out policy-tree CV results
