@@ -204,6 +204,22 @@ stable state. Expect breaking changes.
   : Report full LMTP analysis-weight concentration
 - [`margot_lmtp_evidence_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_evidence_report.md)
   : Assemble the mandatory nonbinding LMTP evidence reports
+- [`print(`*`<margot_lmtp_censoring_report>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_lmtp_censoring_report.md)
+  : Print an LMTP censoring report
+- [`plot(`*`<margot_lmtp_censoring_report>`*`)`](https://go-bayes.github.io/margot/reference/plot.margot_lmtp_censoring_report.md)
+  : Plot an LMTP censoring report
+- [`print(`*`<margot_target_projection_report>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_target_projection_report.md)
+  : Print a target-population projection report
+- [`plot(`*`<margot_target_projection_report>`*`)`](https://go-bayes.github.io/margot/reference/plot.margot_target_projection_report.md)
+  : Plot a target-population projection report
+- [`print(`*`<margot_lmtp_analysis_weight_report>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_lmtp_analysis_weight_report.md)
+  : Print an LMTP full analysis-weight report
+- [`plot(`*`<margot_lmtp_analysis_weight_report>`*`)`](https://go-bayes.github.io/margot/reference/plot.margot_lmtp_analysis_weight_report.md)
+  : Plot an LMTP full analysis-weight report
+- [`print(`*`<margot_lmtp_evidence_report>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_lmtp_evidence_report.md)
+  : Print an LMTP evidence report
+- [`plot(`*`<margot_lmtp_evidence_report>`*`)`](https://go-bayes.github.io/margot/reference/plot.margot_lmtp_evidence_report.md)
+  : Plot an LMTP evidence report
 - [`margot_interpret_lmtp_positivity()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   [`margot_interpret_lmtp_overlap()`](https://go-bayes.github.io/margot/reference/margot_interpret_lmtp_positivity.md)
   : Interpret LMTP positivity via effective sample sizes

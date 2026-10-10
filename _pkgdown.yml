@@ -93,6 +93,14 @@ reference:
     - margot_target_projection_report
     - margot_lmtp_analysis_weight_report
     - margot_lmtp_evidence_report
+    - print.margot_lmtp_censoring_report
+    - plot.margot_lmtp_censoring_report
+    - print.margot_target_projection_report
+    - plot.margot_target_projection_report
+    - print.margot_lmtp_analysis_weight_report
+    - plot.margot_lmtp_analysis_weight_report
+    - print.margot_lmtp_evidence_report
+    - plot.margot_lmtp_evidence_report
     - margot_interpret_lmtp_positivity
     - margot_interpret_lmtp_positivity_overview
     - margot_positivity_summary
