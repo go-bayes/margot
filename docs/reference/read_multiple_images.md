@@ -21,7 +21,7 @@ read_multiple_images(path_multi_plots, pattern = "policy_tree_plot\\.png$")
 - pattern:
 
   Character string specifying the pattern to match in the filenames.
-  Default is "policy_tree_plot\\png\$".
+  Default is "policy_tree_plot\\.png\$".
 
 ## Value
 

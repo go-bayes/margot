@@ -70,18 +70,18 @@ A list with:
 ## Details
 
 \*\*Censoring vs. Treatment Positivity:\*\* In longitudinal LMTP, zeros
-(\\r_t = 0\\) in density ratios primarily reflect \*\*censoring\*\*
+(\\(r_t = 0\\)) in density ratios primarily reflect \*\*censoring\*\*
 (dropout) rather than treatment positivity violations. When an
-individual is censored at time \\t\\, they have no observed treatment at
-subsequent waves, yielding \\r_t = 0\\ in the numerator regardless of
-the policy. These censoring-induced zeros appear identically across all
-policies for the same individual.
+individual is censored at time \\(t\\), they have no observed treatment
+at subsequent waves, yielding \\(r_t = 0\\) in the numerator regardless
+of the policy. These censoring-induced zeros appear identically across
+all policies for the same individual.
 
 In contrast, true \*\*treatment positivity violations\*\* are
 policy-specific: an observed treatment trajectory may be incompatible
 with one policy but not another. To distinguish these cases, this
 function computes metrics for both all observations (including zeros)
-and \*\*uncensored observations\*\* (\\r \> 0\\), with the latter
+and \*\*uncensored observations\*\* (\\(r \> 0\\)), with the latter
 denoted by \`\*\_pos\` suffixes in column names. The \`prop_zero\`
 column reports the censoring rate per wave.
 

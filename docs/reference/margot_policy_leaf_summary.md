@@ -63,18 +63,18 @@ contributions.
 
 ## Details
 
-Let \\\Gamma\_{ja}\\ denote the action score for observation \\j\\ under
-action \\a\\, let \\L\\ denote a policy-tree leaf, and let \\E_L\\
-denote the evaluation observations routed to that leaf. For binary
-actions \\C\\ and \\T\\, this helper reports the signed
+Let \\(\Gamma\_{ja}\\) denote the action score for observation \\(j\\)
+under action \\(a\\), let \\(L\\) denote a policy-tree leaf, and let
+\\(E_L\\) denote the evaluation observations routed to that leaf. For
+binary actions \\(C\\) and \\(T\\), this helper reports the signed
 evaluation-sample contrast \$\$ \Delta_L = \frac{\sum\_{j \in E_L}
-w_j\\\Gamma\_{jT} - \Gamma\_{jC}\\} {\sum\_{j \in E_L} w_j}. \$\$ The
+w_j\\{\Gamma\_{jT} - \Gamma\_{jC}\\}} {\sum\_{j \in E_L} w_j}. \$\$ The
 selected action is reported separately. For the fitted tree, the
 selected action is the action stored in the terminal node, learned on
-the training observations \\S_L\\ routed to that node: \$\$ \pi(L) =
-\arg\max\_{a \in \\C,T\\} \frac{\sum\_{j \in S_L} w_j
-\Gamma\_{ja}}{\sum\_{j \in S_L} w_j}. \$\$ The reported \\\Delta_L\\ is
-computed on the evaluation rows and does not reselect the action from
-evaluation-row means. Between-leaf differences in \\\Delta_L\\ describe
-variation in magnitude. They are not the decision rule used by the
-policy tree.
+the training observations \\(S_L\\) routed to that node: \$\$ \pi(L) =
+\arg\max\_{a \in \\{C,T\\}} \frac{\sum\_{j \in S_L} w_j
+\Gamma\_{ja}}{\sum\_{j \in S_L} w_j}. \$\$ The reported \\(\Delta_L\\)
+is computed on the evaluation rows and does not reselect the action from
+evaluation-row means. Between-leaf differences in \\(\Delta_L\\)
+describe variation in magnitude. They are not the decision rule used by
+the policy tree.

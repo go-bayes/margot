@@ -82,18 +82,18 @@ A tibble with one row per reported leaf or held-out leaf-action summary.
 
 ## Details
 
-Let \\\Gamma\_{ja}\\ denote the action score for observation \\j\\ under
-action \\a\\, let \\L\\ denote a policy-tree leaf, and let \\E_L\\
-denote the evaluation observations routed to that leaf. For binary
-actions \\C\\ and \\T\\, the reported evaluation-sample contrast is \$\$
-\Delta_L = \frac{\sum\_{j \in E_L} w_j\\\Gamma\_{jT} - \Gamma\_{jC}\\}
-{\sum\_{j \in E_L} w_j}. \$\$ The selected action is reported
-separately. For the fitted tree, it is the action stored in the terminal
-node, learned on the training observations \\S_L\\ routed to that node:
-\$\$ \pi(L) = \arg\max\_{a \in \\C,T\\} \frac{\sum\_{j \in S_L} w_j
-\Gamma\_{ja}}{\sum\_{j \in S_L} w_j}. \$\$ Held-out CV tables therefore
-report actions learned on training folds and signed contrasts computed
-on held-out evaluation rows; they do not reselect actions from held-out
-means. Between-leaf differences in \\\Delta_L\\ describe variation in
-the magnitude of the score contrast; they are not the decision rule used
-by the policy tree.
+Let \\(\Gamma\_{ja}\\) denote the action score for observation \\(j\\)
+under action \\(a\\), let \\(L\\) denote a policy-tree leaf, and let
+\\(E_L\\) denote the evaluation observations routed to that leaf. For
+binary actions \\(C\\) and \\(T\\), the reported evaluation-sample
+contrast is \$\$ \Delta_L = \frac{\sum\_{j \in E_L} w_j\\{\Gamma\_{jT} -
+\Gamma\_{jC}\\}} {\sum\_{j \in E_L} w_j}. \$\$ The selected action is
+reported separately. For the fitted tree, it is the action stored in the
+terminal node, learned on the training observations \\(S_L\\) routed to
+that node: \$\$ \pi(L) = \arg\max\_{a \in \\{C,T\\}} \frac{\sum\_{j \in
+S_L} w_j \Gamma\_{ja}}{\sum\_{j \in S_L} w_j}. \$\$ Held-out CV tables
+therefore report actions learned on training folds and signed contrasts
+computed on held-out evaluation rows; they do not reselect actions from
+held-out means. Between-leaf differences in \\(\Delta_L\\) describe
+variation in the magnitude of the score contrast; they are not the
+decision rule used by the policy tree.

@@ -148,6 +148,9 @@
 - [`margot_lmtp_resort_contrast()`](https://go-bayes.github.io/margot/reference/margot_lmtp_resort_contrast.md)
   [`margot_resort_contrast_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp_resort_contrast.md)
   : Resort/Reorder LMTP Contrasts by Recomputing from Models
+- [`margot_lmtp_linearised_inference()`](https://go-bayes.github.io/margot/reference/margot_lmtp_linearised_inference.md)
+  : Linearised inference for weighted LMTP policy means and additive
+  contrasts
 
 ## Interpret heterogeneity and policy
 

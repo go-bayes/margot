@@ -2,9 +2,9 @@
 
 Constructs per-wave density-ratio summaries and cumulative effective
 sample sizes (ESS) directly from an LMTP model object. For incremental
-propensity score interventions (IPSI) with \\\delta \> 1\\, zeros in the
-density ratios arise solely from dropout, so the helper reconstructs the
-observation mask via \`density_ratios \> 0\`, computes per-wave
+propensity score interventions (IPSI) with \\(\delta \> 1\\), zeros in
+the density ratios arise solely from dropout, so the helper reconstructs
+the observation mask via \`density_ratios \> 0\`, computes per-wave
 quantiles/tail probabilities, applies optional right-tail winsorisation,
 and reports ESS for the cumulative weight trajectories (raw and
 trimmed).
