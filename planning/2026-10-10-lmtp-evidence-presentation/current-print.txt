@@ -1,0 +1,151 @@
+LMTP evidence report
+--------------------
+Descriptive and nonbinding: the report carries no verdict, threshold or route action.
+
+censoring_report         6 transitions; rows observed 84.73% to 37.13% (weighted 84.67% to 36.03%); with fitted probabilities, censoring factors, joint ratios
+projection_report        variables age, gender, income; Kish effective n 1,492.36 (0.50 of 3,000 rows); largest difference after projection -9.26 pp (gender Male); strata without source representation: 0 of 6
+analysis_weight_reports  2 policies; intervention: final-node Kish/n 0.09 (raw), 0.10 (regularised); max 66.89; natural_course: final-node Kish/n 0.09 (raw), 0.10 (regularised); max 66.89
+
+Print a component for its tables: x$censoring_report, x$projection_report, x$analysis_weight_reports[[i]]. plot(x) draws the available components.
+LMTP censoring report
+---------------------
+Descriptive and nonbinding: the report carries no verdict, threshold or route action.
+Policy: none recorded | transitions: 6 | missing observation indicator read as unobserved
+
+Observed retention (share of all rows still observed)
+           transition n observed % unweighted % weighted indicator missing
+   Time 10 to Time 11      2,542        84.73      84.67                 0
+   Time 11 to Time 12      2,169        72.30      72.07                 0
+   Time 12 to Time 13      1,823        60.77      59.87                 0
+   Time 13 to Time 14      1,544        51.47      50.81                 0
+   Time 14 to Time 15      1,304        43.47      42.04                 0
+   Time 15 to Time 16      1,114        37.13      36.03                 0
+
+Fitted continued-observation probability by transition
+           transition median  p01  p99  min  max n zero n missing
+   Time 10 to Time 11   0.88 0.52 0.98 0.34 0.99      0         0
+   Time 11 to Time 12   0.88 0.56 0.98 0.23 0.99      0       458
+   Time 12 to Time 13   0.88 0.54 0.98 0.36 1.00      0       831
+   Time 13 to Time 14   0.88 0.50 0.98 0.32 0.99      0     1,177
+   Time 14 to Time 15   0.88 0.55 0.98 0.36 0.99      0     1,456
+   Time 15 to Time 16   0.88 0.55 0.98 0.33 0.99      0     1,696
+
+Censoring factor by transition
+           transition median  p01  p99  min  max n zero n missing
+   Time 10 to Time 11   1.10 0.00 1.69 0.00 2.75    458         0
+   Time 11 to Time 12   1.09 0.00 1.69 0.00 2.54    831         0
+   Time 12 to Time 13   1.06 0.00 1.67 0.00 2.50  1,177         0
+   Time 13 to Time 14   1.03 0.00 1.66 0.00 2.47  1,456         0
+   Time 14 to Time 15   0.00 0.00 1.59 0.00 2.57  1,696         0
+   Time 15 to Time 16   0.00 0.00 1.54 0.00 3.02  1,886         0
+
+Joint exposure-and-censoring ratio by transition
+           transition median  p01  p99  min  max n zero n missing
+   Time 10 to Time 11   1.08 0.00 3.09 0.00 4.89    458         0
+   Time 11 to Time 12   0.94 0.00 2.75 0.00 4.22    831         0
+   Time 12 to Time 13   0.77 0.00 2.89 0.00 4.47  1,177         0
+   Time 13 to Time 14   0.54 0.00 2.65 0.00 3.88  1,456         0
+   Time 14 to Time 15   0.00 0.00 2.53 0.00 4.90  1,696         0
+   Time 15 to Time 16   0.00 0.00 2.52 0.00 4.53  1,886         0
+
+Exact zeros and unavailable values
+          component         transition
+   censoring_factor Time 10 to Time 11
+   censoring_factor Time 11 to Time 12
+   censoring_factor Time 12 to Time 13
+   censoring_factor Time 13 to Time 14
+   censoring_factor Time 14 to Time 15
+   censoring_factor Time 15 to Time 16
+        joint_ratio Time 10 to Time 11
+        joint_ratio Time 11 to Time 12
+        joint_ratio Time 12 to Time 13
+        joint_ratio Time 13 to Time 14
+        joint_ratio Time 14 to Time 15
+        joint_ratio Time 15 to Time 16
+                                         cause     n
+             zero_factor_after_non_observation   458
+             zero_factor_after_non_observation   831
+             zero_factor_after_non_observation 1,177
+             zero_factor_after_non_observation 1,456
+             zero_factor_after_non_observation 1,696
+             zero_factor_after_non_observation 1,886
+   zero_joint_ratio_with_zero_censoring_factor   458
+   zero_joint_ratio_with_zero_censoring_factor   831
+   zero_joint_ratio_with_zero_censoring_factor 1,177
+   zero_joint_ratio_with_zero_censoring_factor 1,456
+   zero_joint_ratio_with_zero_censoring_factor 1,696
+   zero_joint_ratio_with_zero_censoring_factor 1,886
+Target-population projection report
+-----------------------------------
+Descriptive and nonbinding: the report carries no verdict, threshold or route action.
+Variables: age, gender, income | source rows: 3,000 | target rows: 5,000 | strata: age x gender
+
+Categorical balance (percent of rows; differences in percentage points)
+   variable  level source % projected % target % diff before diff after
+        age  18-29    14.60       14.10    21.94       -7.34      -7.84
+        age  30-49    36.17       35.76    34.22        1.95       1.54
+        age    50+    49.23       50.14    43.84        5.39       6.30
+     gender Female    58.47       57.80    48.54        9.93       9.26
+     gender   Male    41.53       42.20    51.46       -9.93      -9.26
+
+Numeric balance (means; standardised differences)
+   variable source mean projected mean target mean std diff before std diff after
+     income        0.18           0.17        0.01            0.18           0.16
+
+Strata: 6 in source or target; 0 without source representation.
+
+Projection weights: 3,000 rows (0 missing, 0 zero); min 0.00, median 0.68, mean 1.00, max 8.40.
+Kish effective sample size 1,492.36 (0.50 of rows); top 1% of rows (30) hold 5.52% of the weight; top 5% of rows (150) hold 20.16% of the weight; top 10% of rows (300) hold 33.50% of the weight.
+LMTP full analysis-weight report
+--------------------------------
+Descriptive and nonbinding: the report carries no verdict, threshold or route action.
+Policy: intervention | nodes: Time 10 to Time 11, Time 11 to Time 12, Time 12 to Time 13, Time 13 to Time 14, Time 14 to Time 15, Time 15 to Time 16 | regularised ratios: supplied | zero weights retained in every denominator
+
+Full analysis weight by node (baseline weight x cumulative joint ratio)
+         stage               node     n n zero n missing median   p99    max
+           raw Time 10 to Time 11 3,000    458         0   0.59  6.28  13.13
+           raw Time 11 to Time 12 3,000    831         0   0.45  9.00  26.50
+           raw Time 12 to Time 13 3,000  1,177         0   0.25 11.88  62.78
+           raw Time 13 to Time 14 3,000  1,456         0   0.04 14.07  87.19
+           raw Time 14 to Time 15 3,000  1,696         0   0.00 17.15 130.16
+           raw Time 15 to Time 16 3,000  1,886         0   0.00 19.38  66.89
+   regularised Time 10 to Time 11 3,000    458         0   0.59  6.09  13.13
+   regularised Time 11 to Time 12 3,000    831         0   0.45  8.83  26.50
+   regularised Time 12 to Time 13 3,000  1,177         0   0.25 11.50  44.92
+   regularised Time 13 to Time 14 3,000  1,456         0   0.04 13.78  58.63
+   regularised Time 14 to Time 15 3,000  1,696         0   0.00 16.87  87.52
+   regularised Time 15 to Time 16 3,000  1,886         0   0.00 18.94  49.19
+     Kish n Kish/n
+   1,095.54   0.37
+     737.55   0.25
+     468.78   0.16
+     330.35   0.11
+     214.47   0.07
+     265.99   0.09
+   1,116.94   0.37
+     757.98   0.25
+     546.56   0.18
+     386.23   0.13
+     268.30   0.09
+     285.25   0.10
+
+Concentration at the final node (Time 15 to Time 16)
+  raw: top 1% of rows (30) hold 24.94% of the weight; top 5% of rows (150) hold 58.25% of the weight; top 10% of rows (300) hold 76.30% of the weight
+  regularised: top 1% of rows (30) hold 24.13% of the weight; top 5% of rows (150) hold 57.50% of the weight; top 10% of rows (300) hold 75.81% of the weight
+
+Zero or unavailable final weights, by first cause
+         stage                                  cause   n
+           raw joint_ratio_zero_at_Time 10 to Time 11 458
+           raw joint_ratio_zero_at_Time 11 to Time 12 373
+           raw joint_ratio_zero_at_Time 12 to Time 13 346
+           raw joint_ratio_zero_at_Time 13 to Time 14 279
+           raw joint_ratio_zero_at_Time 14 to Time 15 240
+           raw joint_ratio_zero_at_Time 15 to Time 16 190
+   regularised joint_ratio_zero_at_Time 10 to Time 11 458
+   regularised joint_ratio_zero_at_Time 11 to Time 12 373
+   regularised joint_ratio_zero_at_Time 12 to Time 13 346
+   regularised joint_ratio_zero_at_Time 13 to Time 14 279
+   regularised joint_ratio_zero_at_Time 14 to Time 15 240
+   regularised joint_ratio_zero_at_Time 15 to Time 16 190
+
+Regularisation: raw final weight sum 3,911.70; regularised 3,792.94; relative difference -3.04%.
