@@ -9,7 +9,7 @@ produced by the various \*margot\* models (or by your own code) and
     new interval.
 
 By default it implements the single–step \*\*Bonferroni\*\* correction
-at \\\alpha = 0.05\\ as advocated by VanderWeele & Mathur (2019).
+at \\(\alpha = 0.05\\) as advocated by VanderWeele & Mathur (2019).
 
 ## Usage
 
@@ -87,25 +87,26 @@ rounding only when formatting the returned table for presentation.
 
 ## E-value calculation
 
-For a risk ratio \\r\\, let \\r^\* = r\\ when \\r \ge 1\\ and \\r^\* =
-1/r\\ otherwise. Margot computes the null E-value as \$\$r^\* +
-\sqrt{r^\*(r^\*-1)}.\$\$ The confidence-bound E-value uses the
-confidence limit closest to 1 and equals 1 when the interval includes 1.
+For a risk ratio \\(r\\), let \\(r^\* = r\\) when \\(r \ge 1\\) and
+\\(r^\* = 1/r\\) otherwise. Margot computes the null E-value as
+\$\$r^\* + \sqrt{r^\*(r^\*-1)}.\$\$ The confidence-bound E-value uses
+the confidence limit closest to 1 and equals 1 when the interval
+includes 1.
 
-For an outcome-mean difference \\b\\, exposure contrast \\\delta\\, and
-outcome standard deviation \\s\\, Margot first forms the standardised
-difference \\d = b\|\delta\|/s\\. It approximates the risk ratio as
-\\\exp(0.91d)\\ and the risk-ratio confidence limits as \\\exp(0.91d \pm
-1.78\\\mathrm{SE}(d))\\, then applies the same null E-value equation.
-This calculation treats \\s\\ as known.
+For an outcome-mean difference \\(b\\), exposure contrast \\(\delta\\),
+and outcome standard deviation \\(s\\), Margot first forms the
+standardised difference \\(d = b\|\delta\|/s\\). It approximates the
+risk ratio as \\(\exp(0.91d)\\) and the risk-ratio confidence limits as
+\\(\exp(0.91d \pm 1.78\\,\mathrm{SE}(d))\\), then applies the same null
+E-value equation. This calculation treats \\(s\\) as known.
 
 ## How the correction is applied
 
-For Bonferroni, let \\m\\ be the total number of tests in the
+For Bonferroni, let \\(m\\) be the total number of tests in the
 multiplicity family.
 
 - \*\*Bonferroni\*\* uses \$\$ z^\* =
-  \Phi^{-1}\\\bigl(1-\alpha/(2m)\bigr) \$\$ and rescales the original
+  \Phi^{-1}\\!\bigl(1-\alpha/(2m)\bigr) \$\$ and rescales the original
   half-width.
 
 - \*\*Holm\*\* first step-down adjusts the (two-sided) \*p\*-value for

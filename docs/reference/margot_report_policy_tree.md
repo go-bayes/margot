@@ -154,13 +154,14 @@ A list with `table`, `text`, `plots`, and `metadata`.
 This helper reports display-tree artefacts and can also attach held-out
 policy-value summaries when supplied a `margot_policy_tree_cv` object.
 Leaf tables use the signed evaluation-sample `T-C` contrast \$\$
-\Delta_L = \frac{\sum\_{j \in E_L} w_j\\\Gamma\_{jT} - \Gamma\_{jC}\\}
-{\sum\_{j \in E_L} w_j} \$\$ where \\\Gamma\_{ja}\\ is the action score
-for observation \\j\\ under action \\a\\ and \\E_L\\ are evaluation
-observations in leaf \\L\\. The selected action is reported separately
-as the fitted tree's stored action, learned on training observations
-\\S_L\\: \$\$ \pi(L) = \arg\max\_{a \in \\C,T\\} \frac{\sum\_{j \in S_L}
-w_j \Gamma\_{ja}}{\sum\_{j \in S_L} w_j}. \$\$ Tree-level value
-summaries compare the learned rule with all-control, all-treatment, and
-best-constant baselines. Between-leaf differences in \\\Delta_L\\
-describe variation in magnitude, not the policy-tree decision rule.
+\Delta_L = \frac{\sum\_{j \in E_L} w_j\\{\Gamma\_{jT} - \Gamma\_{jC}\\}}
+{\sum\_{j \in E_L} w_j} \$\$ where \\(\Gamma\_{ja}\\) is the action
+score for observation \\(j\\) under action \\(a\\) and \\(E_L\\) are
+evaluation observations in leaf \\(L\\). The selected action is reported
+separately as the fitted tree's stored action, learned on training
+observations \\(S_L\\): \$\$ \pi(L) = \arg\max\_{a \in \\{C,T\\}}
+\frac{\sum\_{j \in S_L} w_j \Gamma\_{ja}}{\sum\_{j \in S_L} w_j}. \$\$
+Tree-level value summaries compare the learned rule with all-control,
+all-treatment, and best-constant baselines. Between-leaf differences in
+\\(\Delta_L\\) describe variation in magnitude, not the policy-tree
+decision rule.

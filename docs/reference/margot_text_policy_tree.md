@@ -65,7 +65,8 @@ margot_text_policy_tree(
 
 - include_definitions:
 
-  Logical; prepend the general explanatory text.
+  Logical; include general explanatory text, including leaf-summary
+  definitions. If false, retain only the object-specific results.
 
 ## Value
 
@@ -75,14 +76,15 @@ A character string or character vector.
 
 Policy-tree reporting separates the selected action learned by the
 fitted tree from the signed treatment-control score contrast computed on
-evaluation rows. Let \\\Gamma\_{ja}\\ denote the action score for
-observation \\j\\ under action \\a\\, let \\L\\ denote a policy-tree
-leaf, and let \\E_L\\ denote the evaluation observations routed to that
-leaf. For binary actions \\C\\ and \\T\\, the reported contrast is \$\$
-\Delta_L = \frac{\sum\_{j \in E_L} w_j\\\Gamma\_{jT} - \Gamma\_{jC}\\}
-{\sum\_{j \in E_L} w_j}. \$\$ The stored selected action is learned on
-training observations \\S_L\\: \$\$ \pi(L) = \arg\max\_{a \in \\C,T\\}
-\frac{\sum\_{j \in S_L} w_j \Gamma\_{ja}}{\sum\_{j \in S_L} w_j}. \$\$
-If every displayed leaf has the same selected action, the tree describes
-variation in score-contrast magnitude rather than a selective rule that
-changes actions across leaves.
+evaluation rows. Let \\(\Gamma\_{ja}\\) denote the action score for
+observation \\(j\\) under action \\(a\\), let \\(L\\) denote a
+policy-tree leaf, and let \\(E_L\\) denote the evaluation observations
+routed to that leaf. For binary actions \\(C\\) and \\(T\\), the
+reported contrast is \$\$ \Delta_L = \frac{\sum\_{j \in E_L}
+w_j\\{\Gamma\_{jT} - \Gamma\_{jC}\\}} {\sum\_{j \in E_L} w_j}. \$\$ The
+stored selected action is learned on training observations \\(S_L\\):
+\$\$ \pi(L) = \arg\max\_{a \in \\{C,T\\}} \frac{\sum\_{j \in S_L} w_j
+\Gamma\_{ja}}{\sum\_{j \in S_L} w_j}. \$\$ If every displayed leaf has
+the same selected action, the tree describes variation in score-contrast
+magnitude rather than a selective rule that changes actions across
+leaves.

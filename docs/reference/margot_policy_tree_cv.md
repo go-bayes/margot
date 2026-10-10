@@ -73,7 +73,7 @@ margot_policy_tree_cv(
   within the screened set rather than within all covariates. Use `"all"`
   to search every covariate, `"custom"` to supply your own set through
   `custom_covariates`, or `"add"` to append to the screen. The wider
-  search is materially more expensive: at \\n = 23{,}000\\ with 57
+  search is materially more expensive: at \\(n = 23{,}000\\) with 57
   covariates, `covariate_mode = "all"` costs roughly 167 seconds per
   depth-two fit, which is about 4.6 hours per outcome under the
   registered cross-validation of 5 folds and 20 repeats, whereas the
@@ -130,19 +130,19 @@ margot_policy_tree_cv(
 
 - min_root_stability_for_depth_switch:
 
-  Numeric in \\\[0, 1\]\\. Absolute floor on the *depth-one* root-split
-  selection frequency before depth two becomes eligible. Default is 0.5,
-  that is, majority agreement on the first split. An unstable depth-one
-  root means the procedure has found no reliable first split, so a
-  depth-two "improvement" over it cannot be structure; the relative
-  stability guard above passes trivially in exactly that case, because a
-  low depth-one frequency makes the loss small or negative whatever
-  depth two does. Requiring majority root agreement before depth two is
-  eligible closes that loophole. Set to 0 to disable the floor and
-  recover the pre-1.1.015 relative-only rule, which is the opt-out for
-  studies registered under the old rule. Disabling the floor does not
-  restore the pre-1.1.015 handling of an `NA` stability loss, which now
-  always fails closed.
+  Numeric in \\(\[0, 1\]\\). Absolute floor on the *depth-one*
+  root-split selection frequency before depth two becomes eligible.
+  Default is 0.5, that is, majority agreement on the first split. An
+  unstable depth-one root means the procedure has found no reliable
+  first split, so a depth-two "improvement" over it cannot be structure;
+  the relative stability guard above passes trivially in exactly that
+  case, because a low depth-one frequency makes the loss small or
+  negative whatever depth two does. Requiring majority root agreement
+  before depth two is eligible closes that loophole. Set to 0 to disable
+  the floor and recover the pre-1.1.015 relative-only rule, which is the
+  opt-out for studies registered under the old rule. Disabling the floor
+  does not restore the pre-1.1.015 handling of an `NA` stability loss,
+  which now always fails closed.
 
 - label_mapping:
 
@@ -208,17 +208,17 @@ or
 
 ## Details
 
-Let \\\Gamma\_{ja}\\ denote the action score for observation \\j\\ under
-action \\a\\. Policy-tree evaluation averages the score for the action
-selected by the learned policy \\\pi\\. For binary actions \\C\\ and
-\\T\\, held-out summaries report value against all-control,
-all-treatment, and best-constant baselines. Leaf summaries report the
-signed held-out evaluation contrast \\\Gamma\_{jT} - \Gamma\_{jC}\\ for
-observations routed by trees learned on training folds. Selected actions
-are the actions stored by those learned trees; held-out summaries do not
-reselect actions from held-out means. Between-leaf differences describe
-variation in score-contrast magnitude, not the policy decision rule
-itself.
+Let \\(\Gamma\_{ja}\\) denote the action score for observation \\(j\\)
+under action \\(a\\). Policy-tree evaluation averages the score for the
+action selected by the learned policy \\(\pi\\). For binary actions
+\\(C\\) and \\(T\\), held-out summaries report value against
+all-control, all-treatment, and best-constant baselines. Leaf summaries
+report the signed held-out evaluation contrast \\(\Gamma\_{jT} -
+\Gamma\_{jC}\\) for observations routed by trees learned on training
+folds. Selected actions are the actions stored by those learned trees;
+held-out summaries do not reselect actions from held-out means.
+Between-leaf differences describe variation in score-contrast magnitude,
+not the policy decision rule itself.
 
 Depth one is the default selection. Under
 `depth_selection_rule = "value_only"`, depth two is selected when its

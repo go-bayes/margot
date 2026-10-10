@@ -1,5 +1,36 @@
 # Changelog
 
+## \[2026-10-10\] margot 1.3.0
+
+- [`margot_lmtp_linearised_inference()`](https://go-bayes.github.io/margot/reference/margot_lmtp_linearised_inference.md)
+  recomputes the standard error of a weighted LMTP policy mean, or of an
+  additive contrast between two fits to the same participants, from the
+  stored pseudo-outcomes and weights. It uses the linearisation of the
+  weighted (Hájek) mean. `lmtp` 1.5.4 with `ife` 0.2.5 instead computes
+  the variance of the weighted uncentred pseudo-outcome; the two agree
+  under constant weights without clustering, and differ when weights
+  vary, substantially for policy means far from zero. With repeated
+  identifiers, `ife` sums uncentred products within clusters, so
+  clusters of unequal size produce a discrepancy even under constant
+  weights. Point estimates are unchanged. Existing functions that report
+  `lmtp_contrast()` standard errors are unchanged in this version.
+
+- The defect in the weighted standard error was identified by Claude
+  Opus 5.5 during a four-model panel review of population targeting for
+  NZAVS LMTP studies (with Claude Fable 5.1, GPT-6.1 Sol and GPT-6
+  Astra). GPT-6 Astra verified it against the installed `lmtp` and `ife`
+  code, derived the exact discrepancy, and confirmed it by simulation:
+  for a raw-scale policy mean near 10 with weights of 0.2 and 1.8, the
+  reported standard error was about 6.3 times the correct value.
+
+- Stored policy-tree interpretations now honour
+  `include_definitions = FALSE` for leaf-summary explanations as well as
+  introductory definitions. Explicit outcome labels are preserved
+  without adding redundant direction prefixes. The interpreter uses
+  depth-one/depth-two policy-tree terminology and describes a specified
+  comparison without assuming pre-registration. Numerical summaries and
+  decisions are unchanged.
+
 ## \[2026-09-11\] margot 1.2.2
 
 - Policy learning accepts explicit benefit thresholds, including signed
@@ -7142,10 +7173,8 @@ warnings. They will be removed in a future version of the package.
 - LMTP overlap grid now respects multi-wave density ratios when stored
   as `Matrix` or `data.frame` by coercing to base matrices before
   iterating waves. This restores one panel per wave × shift.
-- Grid axis limits use
-  [`coord_cartesian()`](https://ggplot2.tidyverse.org/reference/coord_cartesian.html)
-  to avoid dropping bars (no more “Removed rows” warnings when
-  harmonising x/y ranges).
+- Grid axis limits use `coord_cartesian()` to avoid dropping bars (no
+  more “Removed rows” warnings when harmonising x/y ranges).
 - Shift order in grids and text respects the user-supplied `shifts`
   vector without dropping additional wave panels.
 

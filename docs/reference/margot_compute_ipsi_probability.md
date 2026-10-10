@@ -54,13 +54,13 @@ natural-probability interval used to compute \`p\`.
 ## Details
 
 The delta here matches \`lmtp::ipsi()\`, which implements the risk-ratio
-incremental propensity score intervention: with probability \\1 -
-1/\delta\\ the intervention sets the exposure to the target state, and
+incremental propensity score intervention: with probability \\(1 -
+1/\delta\\) the intervention sets the exposure to the target state, and
 otherwise leaves the natural value. The counterfactual probability of
-the target state is therefore \\p' = 1 - (1 - p)/\delta\\: the natural
+the target state is therefore \\(p' = 1 - (1 - p)/\delta\\): the natural
 probability of \*not\* reaching the target state is divided by
-\\\delta\\. This is not the odds-multiplier IPSI of Kennedy (2019),
-where \\\delta\\ multiplies the odds of exposure; describe registered
+\\(\delta\\). This is not the odds-multiplier IPSI of Kennedy (2019),
+where \\(\delta\\) multiplies the odds of exposure; describe registered
 estimands accordingly.
 
 Direction selects the transition of interest. With \`direction = "up"\`

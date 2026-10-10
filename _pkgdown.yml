@@ -121,6 +121,7 @@ reference:
     - margot_recompute_qini_ipw
     - margot_lmtp_combine_and_contrast
     - margot_lmtp_resort_contrast
+    - margot_lmtp_linearised_inference
 
   - title: "Interpret heterogeneity and policy"
     contents:

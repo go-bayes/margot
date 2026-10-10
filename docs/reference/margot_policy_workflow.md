@@ -193,7 +193,7 @@ margot_policy_workflow(
 
 - min_root_stability_for_depth_switch:
 
-  Numeric in \\\[0, 1\]\\; absolute floor on the depth-one root-split
+  Numeric in \\(\[0, 1\]\\); absolute floor on the depth-one root-split
   selection frequency before depth two is eligible, passed through to
   \[margot_policy_tree_cv()\]. Default 0.5; set to 0 to recover the
   pre-1.1.015 relative-only rule.
