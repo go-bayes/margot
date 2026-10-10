@@ -1,5 +1,7 @@
 # margot development
 
+- `margot_lmtp_linearised_inference()` recomputes the standard error of a weighted LMTP policy mean, or of an additive contrast between two fits to the same participants, from the stored pseudo-outcomes and weights. It uses the linearisation of the weighted (Hájek) mean. `lmtp` 1.5.4 with `ife` 0.2.5 instead computes the variance of the weighted uncentred pseudo-outcome; the two agree under constant weights and differ when weights vary, substantially for policy means far from zero. Point estimates are unchanged. Existing functions that report `lmtp_contrast()` standard errors are unchanged in this version.
+
 - Stored policy-tree interpretations now honour `include_definitions = FALSE` for leaf-summary explanations as well as introductory definitions. Explicit outcome labels are preserved without adding redundant direction prefixes. The interpreter uses depth-one/depth-two policy-tree terminology and describes a specified comparison without assuming pre-registration. Numerical summaries and decisions are unchanged.
 
 # [2026-09-11] margot 1.2.2
