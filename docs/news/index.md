@@ -8,10 +8,12 @@
   stored pseudo-outcomes and weights. It uses the linearisation of the
   weighted (Hájek) mean. `lmtp` 1.5.4 with `ife` 0.2.5 instead computes
   the variance of the weighted uncentred pseudo-outcome; the two agree
-  under constant weights and differ when weights vary, substantially for
-  policy means far from zero. Point estimates are unchanged. Existing
-  functions that report `lmtp_contrast()` standard errors are unchanged
-  in this version.
+  under constant weights without clustering, and differ when weights
+  vary, substantially for policy means far from zero. With repeated
+  identifiers, `ife` sums uncentred products within clusters, so
+  clusters of unequal size produce a discrepancy even under constant
+  weights. Point estimates are unchanged. Existing functions that report
+  `lmtp_contrast()` standard errors are unchanged in this version.
 
 - The defect in the weighted standard error was identified by Claude
   Opus 5.5 during a four-model panel review of population targeting for
@@ -7171,10 +7173,8 @@ warnings. They will be removed in a future version of the package.
 - LMTP overlap grid now respects multi-wave density ratios when stored
   as `Matrix` or `data.frame` by coercing to base matrices before
   iterating waves. This restores one panel per wave × shift.
-- Grid axis limits use
-  [`coord_cartesian()`](https://ggplot2.tidyverse.org/reference/coord_cartesian.html)
-  to avoid dropping bars (no more “Removed rows” warnings when
-  harmonising x/y ranges).
+- Grid axis limits use `coord_cartesian()` to avoid dropping bars (no
+  more “Removed rows” warnings when harmonising x/y ranges).
 - Shift order in grids and text respects the user-supplied `shifts`
   vector without dropping additional wave panels.
 

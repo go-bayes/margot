@@ -42,8 +42,11 @@ summed within clusters and the cluster-robust form used by `ife` is applied.
 }
 \details{
 `lmtp` 1.5.4 with `ife` 0.2.5 computes \eqn{s^2(w_i\varphi_i)/n}, which
-centres the weighted product rather than the pseudo-outcome. The two agree
-when the weights are constant and differ when they vary. The difference can
+centres the weighted product rather than the pseudo-outcome; with repeated
+identifiers it sums the uncentred products within clusters. The two agree
+when the weights are constant and no identifier repeats. They differ when the
+weights vary, and with clusters of unequal size even under constant weights.
+The difference can
 be large for policy means on a scale far from zero and depends on the
 contrast's size for additive contrasts. Point estimates are unchanged. The
 function fits no model and does not account for estimation of the weights.

@@ -81,6 +81,20 @@ test_that("repeated identifiers use cluster-robust sums of centred contributions
   expect_equal(out$std_error, sqrt(stats::var(sums * 60 / 180) / 60), tolerance = 1e-12)
 })
 
+test_that("unequal clusters differ from the package value under constant weights", {
+  skip_if_not_installed("ife")
+  set.seed(2032)
+  size <- rep(c(1, 2, 5), length.out = 90)
+  id <- rep(seq_along(size), times = size)
+  eif <- 8 + stats::rnorm(length(id))
+  est <- make_ife(eif, rep(1, length(id)), id)
+  out <- margot_lmtp_linearised_inference(est)
+  contribution <- eif - est@x
+  sums <- as.numeric(rowsum(contribution, as.character(id), reorder = FALSE))
+  expect_equal(out$std_error, sqrt(stats::var(sums * 90 / length(id)) / 90), tolerance = 1e-12)
+  expect_gt(abs(out$package_std_error / out$std_error - 1), 0.1)
+})
+
 test_that("contrasts require identical weights and identifiers", {
   skip_if_not_installed("ife")
   eif <- stats::rnorm(50)
