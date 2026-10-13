@@ -127,6 +127,12 @@
   : Batch Process LMTP Models
 - [`margot_lmtp_estimator_spec()`](https://go-bayes.github.io/margot/reference/margot_lmtp_estimator_spec.md)
   : Lock the execution settings for a Margot LMTP analysis
+- [`margot_lmtp_sdr_from_components()`](https://go-bayes.github.io/margot/reference/margot_lmtp_sdr_from_components.md)
+  : Fit SDR from verified, previously estimated components
+- [`margot_lmtp_checkpoint_read()`](https://go-bayes.github.io/margot/reference/margot_lmtp_checkpoints.md)
+  [`margot_lmtp_checkpoint_compute()`](https://go-bayes.github.io/margot/reference/margot_lmtp_checkpoints.md)
+  [`margot_lmtp_checkpoint_inventory()`](https://go-bayes.github.io/margot/reference/margot_lmtp_checkpoints.md)
+  : Save and reuse verified LMTP task results
 - [`margot_lmtp_restore_checkpoints()`](https://go-bayes.github.io/margot/reference/margot_lmtp_restore_checkpoints.md)
   : Restore LMTP Output from Saved Checkpoints
 - [`print(`*`<margot_lmtp_density_stage>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_lmtp_density_stage.md)

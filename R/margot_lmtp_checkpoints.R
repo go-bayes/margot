@@ -15,6 +15,7 @@
 #' @return `read` returns a verified record or `NULL`; `compute` returns a
 #'   record containing `value`, `path`, `reused` and checksums; `inventory`
 #'   returns completion status, a task table and verified records.
+#' @md
 #' @name margot_lmtp_checkpoints
 NULL
 

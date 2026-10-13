@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.1</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,13 +40,17 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.2" id="id_2026-10-13-margot-132">[2026-10-13] margot 1.3.2<a class="anchor" aria-label="anchor" href="#id_2026-10-13-margot-132"></a></h2>
+<ul><li><p>Verified task checkpoint storage is available through <code><a href="../reference/margot_lmtp_checkpoints.html">margot_lmtp_checkpoint_read()</a></code>, <code><a href="../reference/margot_lmtp_checkpoints.html">margot_lmtp_checkpoint_compute()</a></code> and <code><a href="../reference/margot_lmtp_checkpoints.html">margot_lmtp_checkpoint_inventory()</a></code>. The functions preserve the existing orchestration store’s ownership, integrity and complete-task checks.</p></li>
+<li><p><code><a href="../reference/margot_lmtp_sdr_from_components.html">margot_lmtp_sdr_from_components()</a></code> accepts verified supplied ratios and realised folds through the existing batch-wrapper estimator hook, without fitting nuisance models or applying another cap. Multi-wave shift closures retain their original environments.</p></li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.1" id="id_2026-10-10-margot-131">[2026-10-10] margot 1.3.1<a class="anchor" aria-label="anchor" href="#id_2026-10-10-margot-131"></a></h2>
 <ul><li>The four LMTP evidence reports gain <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> methods. <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> lays out the stored aggregates as readable tables: observed retention and fitted summaries by transition for <code>margot_lmtp_censoring_report</code>; categorical balance in percentages and percentage points, numeric balance in means and standardised differences, unrepresented strata and the projection-weight summary for <code>margot_target_projection_report</code>; the full analysis weight by node and stage, final-node concentration, first causes of zero or unavailable weights and the regularisation comparison for <code>margot_lmtp_analysis_weight_report</code>; and a one-line summary or structural reason per component for <code>margot_lmtp_evidence_report</code>. <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws retention by transition with fitted-probability and joint-ratio ranges, the difference from the target before and after projection with weight concentration beside the equal-weight share, Kish fraction, maximum weight and zero share by node, and a stacked display of the available components with unavailable ones named in the caption. The constructors, their stored tables and their descriptive, nonbinding role are unchanged.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.0" id="id_2026-10-10-margot-130">[2026-10-10] margot 1.3.0<a class="anchor" aria-label="anchor" href="#id_2026-10-10-margot-130"></a></h2>
 <ul><li><p><code><a href="../reference/margot_lmtp_linearised_inference.html">margot_lmtp_linearised_inference()</a></code> recomputes the standard error of a weighted LMTP policy mean, or of an additive contrast between two fits to the same participants, from the stored pseudo-outcomes and weights. It uses the linearisation of the weighted (Hájek) mean. <code>lmtp</code> 1.5.4 with <code>ife</code> 0.2.5 instead computes the variance of the weighted uncentred pseudo-outcome; the two agree under constant weights without clustering, and differ when weights vary, substantially for policy means far from zero. With repeated identifiers, <code>ife</code> sums uncentred products within clusters, so clusters of unequal size produce a discrepancy even under constant weights. Point estimates are unchanged. Existing functions that report <code>lmtp_contrast()</code> standard errors are unchanged in this version.</p></li>
-<li><p>The defect in the weighted standard error was identified by Claude Opus 5.5 during a four-model panel review of population targeting for NZAVS LMTP studies (with Claude Fable 5.1, GPT-6.1 Sol and GPT-6 Astra). GPT-6 Astra verified it against the installed <code>lmtp</code> and <code>ife</code> code, derived the exact discrepancy, and confirmed it by simulation: for a raw-scale policy mean near 10 with weights of 0.2 and 1.8, the reported standard error was about 6.3 times the correct value.</p></li>
 <li><p>Stored policy-tree interpretations now honour <code>include_definitions = FALSE</code> for leaf-summary explanations as well as introductory definitions. Explicit outcome labels are preserved without adding redundant direction prefixes. The interpreter uses depth-one/depth-two policy-tree terminology and describes a specified comparison without assuming pre-registration. Numerical summaries and decisions are unchanged.</p></li>
 </ul></div>
     <div class="section level2">
@@ -5760,7 +5764,7 @@
 <div class="section level4">
 <h4 id="fixes-1-0-242">Fixes<a class="anchor" aria-label="anchor" href="#fixes-1-0-242"></a></h4>
 <ul><li>LMTP overlap grid now respects multi-wave density ratios when stored as <code>Matrix</code> or <code>data.frame</code> by coercing to base matrices before iterating waves. This restores one panel per wave × shift.</li>
-<li>Grid axis limits use <code><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian()</a></code> to avoid dropping bars (no more “Removed rows” warnings when harmonising x/y ranges).</li>
+<li>Grid axis limits use <code>coord_cartesian()</code> to avoid dropping bars (no more “Removed rows” warnings when harmonising x/y ranges).</li>
 <li>Shift order in grids and text respects the user-supplied <code>shifts</code> vector without dropping additional wave panels.</li>
 </ul></div>
 <div class="section level4">

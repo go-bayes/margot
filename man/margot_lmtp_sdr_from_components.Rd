@@ -20,7 +20,7 @@ margot_lmtp_sdr_from_components(
 )
 }
 \arguments{
-\item{data}{Analysis frame, including one outcome.}
+\item{data}{Analysis frame, including one continuous outcome and \code{id}.}
 
 \item{trt}{Ordered exposure column names.}
 
@@ -28,32 +28,42 @@ margot_lmtp_sdr_from_components(
 
 \item{shift}{Registered shift function.}
 
-\item{components}{List containing `frame` (all non-outcome analysis columns),
-`history`, `trt`, `cens`, `density_ratios`, `folds`, `weights`, `seed`,
-`rng_kind`, `shift_source_sha256` and `shifted_exposures`.}
+\item{components}{List containing \code{frame} (all non-outcome analysis columns),
+\code{history}, \code{baseline}, \code{time_vary}, \code{trt}, \code{cens}, \code{density_ratios}, \code{folds}, \code{weights}, \code{seed},
+\code{rng_kind}, \code{shift_source_sha256} and \code{shifted_exposures}.}
 
-\item{baseline}{Baseline covariate names.}
+\item{baseline}{Baseline covariate names, identical to \code{components$baseline}.}
 
-\item{time_vary}{List of covariates entering each node.}
+\item{time_vary}{List of covariates entering each node, identical to
+\code{components$time_vary}, including node order and within-node variable order.}
 
 \item{learners_outcome}{Outcome learner library.}
 
 \item{bounds}{Explicit outcome limits on the analysis scale.}
 
-\item{control}{An `lmtp_control` object with `.trim = 1`.}
+\item{control}{An \code{lmtp_control} object with \code{.trim = 1}.}
 
 \item{progress_bar}{Optional native SDR progress callback.}
 
 \item{learners_trt}{Ignored; exposure components are already supplied.}
 }
 \value{
-An ordinary `lmtp` fit with supplied folds, histories, bounds and RNG
-  provenance attached.
+An ordinary \code{lmtp} fit with supplied folds, histories, bounds and RNG
+provenance attached.
 }
 \description{
-Use with [margot_lmtp()] through its `lmtp_model_type` argument. The caller
+Use with \code{\link[=margot_lmtp]{margot_lmtp()}} through its \code{lmtp_model_type} argument. The caller
 supplies node density ratios, the realised fold map and the RNG procedure.
 No exposure or observation model is fitted and no additional cap is applied.
 The caller remains responsible for the provenance and scientific validity of
 the components. Input identities are checked before outcome fitting.
+}
+\details{
+The current implementation supports continuous outcomes and requires a unique,
+nonmissing \code{id} column. It uses the internal interface of \code{lmtp} 1.5.4;
+other versions are rejected by the shared interface guard. At least two
+outer folds must be supplied, and the active future plan must provide exactly
+one worker per fold. This function does not change the future plan.
+Exposure waves may be nonconsecutive, and each node may include covariates
+from multiple earlier surveys; the caller declares when each covariate enters.
 }

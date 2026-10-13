@@ -26,9 +26,9 @@ ordered participants, histories, folds, weights, settings and code/builds.}
 \item{identities}{Named list of identities for the complete expected task set.}
 }
 \value{
-`read` returns a verified record or `NULL`; `compute` returns a
-  record containing `value`, `path`, `reused` and checksums; `inventory`
-  returns completion status, a task table and verified records.
+\code{read} returns a verified record or \code{NULL}; \code{compute} returns a
+record containing \code{value}, \code{path}, \code{reused} and checksums; \code{inventory}
+returns completion status, a task table and verified records.
 }
 \description{
 A caller defines each task's complete scientific and runtime identity. A
