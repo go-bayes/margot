@@ -1,3 +1,9 @@
+# Development version
+
+- Verified task checkpoint storage is available through `margot_lmtp_checkpoint_read()`, `margot_lmtp_checkpoint_compute()` and `margot_lmtp_checkpoint_inventory()`. The functions preserve the existing orchestration store’s ownership, integrity and complete-task checks.
+
+- `margot_lmtp_sdr_from_components()` accepts verified supplied ratios and realised folds through the existing batch-wrapper estimator hook, without fitting nuisance models or applying another cap. Multi-wave shift closures retain their original environments.
+
 # [2026-10-10] margot 1.3.1
 
 - The four LMTP evidence reports gain `print()` and `plot()` methods. `print()` lays out the stored aggregates as readable tables: observed retention and fitted summaries by transition for `margot_lmtp_censoring_report`; categorical balance in percentages and percentage points, numeric balance in means and standardised differences, unrepresented strata and the projection-weight summary for `margot_target_projection_report`; the full analysis weight by node and stage, final-node concentration, first causes of zero or unavailable weights and the regularisation comparison for `margot_lmtp_analysis_weight_report`; and a one-line summary or structural reason per component for `margot_lmtp_evidence_report`. `plot()` draws retention by transition with fitted-probability and joint-ratio ranges, the difference from the target before and after projection with weight concentration beside the equal-weight share, Kish fraction, maximum weight and zero share by node, and a stacked display of the available components with unavailable ones named in the caption. The constructors, their stored tables and their descriptive, nonbinding role are unchanged.
