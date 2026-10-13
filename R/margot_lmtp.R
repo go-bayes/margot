@@ -765,7 +765,8 @@ margot_lmtp <- function(
       shift <- shift_functions[[shift_name]]
 
       # Wrap shift function to carry treatment-name globals some users reference in closures
-      if (is.function(shift)) {
+      if (is.function(shift) && is.character(trt) && length(trt) == 1L && nzchar(trt) &&
+          (identical(lmtp_model_type, lmtp::lmtp_sdr) || identical(lmtp_model_type, lmtp::lmtp_tmle))) {
         # create a child environment so we don't mutate user's function
         parent_env <- environment(shift)
         if (is.null(parent_env)) parent_env <- baseenv()
@@ -918,7 +919,8 @@ margot_lmtp <- function(
       shift_name <- task_grid$shift_name[[task_idx]]
       shift <- shift_functions[[shift_name]]
 
-      if (is.function(shift)) {
+      if (is.function(shift) && is.character(trt) && length(trt) == 1L && nzchar(trt) &&
+          (identical(lmtp_model_type, lmtp::lmtp_sdr) || identical(lmtp_model_type, lmtp::lmtp_tmle))) {
         parent_env <- environment(shift)
         if (is.null(parent_env)) parent_env <- baseenv()
         wrap_env <- new.env(parent = parent_env)
