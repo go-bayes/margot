@@ -34,7 +34,8 @@ margot_lmtp_exposure_ratio(
 
 \item{learners}{SuperLearner library, in order.}
 
-\item{inner_folds}{Number of participant-grouped inner validation folds.}
+\item{inner_folds}{Number of participant-grouped inner validation folds.
+The default lasso learner retains ten separate penalty-selection folds.}
 
 \item{structural_zero}{Logical vector identifying observed exposure values
 outside the policy image. Defaults to no known structural zeros.}

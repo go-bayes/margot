@@ -33,3 +33,41 @@ test_that("paired validation keeps participants together and restores row order"
   args$id[2] <- args$id[1]
   expect_error(do.call(margot_lmtp_exposure_ratio, args))
 })
+
+
+test_that("lasso's fixed penalty folds are checked before dispatch", {
+  d <- data.frame(a = rep(1:5, 4), x = seq_len(20))
+  expect_error(margot_lmtp_exposure_ratio(d, "a", "x", pmax(1, d$a - 1),
+    1:20, rep(1:2, each = 10), rep(TRUE, 20), learners = "SL.glmnet", inner_folds = 2L),
+    "Insufficient reached participants")
+})
+
+test_that("nonconstant classification preserves grouped lasso folds across plans", {
+  skip_on_cran()
+  old <- future::plan()
+  on.exit(future::plan(old), add = TRUE)
+  n <- 140L
+  set.seed(42)
+  d <- data.frame(a = rep(seq(1, 7, length.out = 20), 7), x = stats::rnorm(n))
+  args <- list(data = d, exposure = "a", history = "x", shifted = pmax(1, d$a - 1),
+    id = seq_len(n), fold_id = as.integer(rep(1:2, length.out = n)), reached = rep(TRUE, n),
+    structural_zero = d$a > 6, learners = "SL.glmnet")
+  future::plan(future::sequential)
+  set.seed(42)
+  serial <- do.call(margot_lmtp_exposure_ratio, args)
+  future::plan(future::multisession, workers = 2L)
+  set.seed(42)
+  parallel <- do.call(margot_lmtp_exposure_ratio, args)
+  expect_equal(parallel$probability, serial$probability, tolerance = 1e-12)
+  expect_equal(parallel$ratio, serial$ratio, tolerance = 1e-12)
+  expect_gt(mean(serial$ratio[d$a <= 2]), mean(serial$ratio[d$a >= 5 & d$a <= 6]))
+  expect_gt(stats::sd(serial$probability), .01)
+  for (fit in parallel$fits) {
+    expect_length(fit$lasso_folds, 11L)
+    for (membership in fit$lasso_folds) {
+      expect_true(all(vapply(split(membership$fold, membership$id),
+        function(x) length(unique(x)) == 1L, logical(1))))
+      expect_setequal(unique(membership$fold), 1:10)
+    }
+  }
+})

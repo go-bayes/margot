@@ -21,6 +21,7 @@
 #' @param reached Logical vector identifying records observed at this assignment.
 #' @param learners SuperLearner library, in order.
 #' @param inner_folds Number of participant-grouped inner validation folds.
+#'   The default lasso learner retains ten separate penalty-selection folds.
 #' @param structural_zero Logical vector identifying observed exposure values
 #'   outside the policy image. Defaults to no known structural zeros.
 #' @return A list containing uncapped `ratio`, classifier `probability`, complete
@@ -59,9 +60,10 @@ margot_lmtp_exposure_ratio <- function(data, exposure, history, shifted, id,
     }
   }
   # reject insufficient participant counts before fitting any fold.
+  minimum_training <- max(inner_folds, if ("SL.glmnet" %in% learners) 10L else 2L)
   for (k in folds) {
     count <- sum(reached & fold_id != k)
-    if (!any(reached & fold_id == k) || count - ceiling(count / inner_folds) < inner_folds) {
+    if (!any(reached & fold_id == k) || count - ceiling(count / inner_folds) < minimum_training) {
       stop("Insufficient reached participants for grouped inner validation in outer fold ", k,
         call. = FALSE)
     }
