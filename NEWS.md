@@ -1,3 +1,7 @@
+# Development
+
+- `margot_lmtp_exposure_ratio()` estimates cross-fitted exposure-only ratios using paired natural and shifted records, with participant-grouped validation at the ensemble and lasso penalty stages. It retains uncapped ratios, learner failures and full validation membership; observation probabilities remain separate.
+
 # [2026-10-13] margot 1.3.2
 
 - Verified task checkpoint storage is available through `margot_lmtp_checkpoint_read()`, `margot_lmtp_checkpoint_compute()` and `margot_lmtp_checkpoint_inventory()`. The functions preserve the existing orchestration store’s ownership, integrity and complete-task checks.
