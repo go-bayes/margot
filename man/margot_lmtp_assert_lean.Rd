@@ -4,7 +4,7 @@
 \alias{margot_lmtp_assert_lean}
 \title{Check that an object holds no fitted learner}
 \usage{
-margot_lmtp_assert_lean(x, what = deparse(substitute(x)))
+margot_lmtp_assert_lean(x, what = deparse1(substitute(x)))
 }
 \arguments{
 \item{x}{Object to check.}

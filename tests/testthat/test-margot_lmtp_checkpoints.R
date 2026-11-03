@@ -1,4 +1,5 @@
 test_that("checkpoint identities ignore the location a study file was read from", {
+  skip_if_not_installed("RcppTOML")
   first <- file.path(tempfile("study-a-"), "study.toml")
   second <- file.path(tempfile("study-b-"), "study.toml")
   for (path in c(first, second)) {
@@ -63,6 +64,7 @@ test_that("content attributes are kept, so different inputs never share an ident
 test_that("identities refuse reference and S4 objects", {
   expect_error(margot_lmtp_checkpoint_identity(list(env = new.env())), "environment objects")
   expect_error(margot_lmtp_checkpoint_identity(list(nested = list(f = function(x) x))), "closure objects")
+  expect_error(margot_lmtp_checkpoint_identity(list(expr = as.expression(list(new.env())))), "environment objects")
   setClass("MargotIdentityProbe", representation(x = "numeric"), where = environment())
   expect_error(margot_lmtp_checkpoint_identity(list(s4 = methods::new("MargotIdentityProbe", x = 1))),
     "S4 objects")

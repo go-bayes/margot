@@ -64,6 +64,8 @@ Suggests:
     EValue,
     MatchThem,
     parallelly,
+    ranger,
+    RcppTOML,
     rmarkdown,
     svglite,
     testthat (>= 3.0.0),

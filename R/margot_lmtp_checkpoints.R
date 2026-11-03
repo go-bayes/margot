@@ -72,7 +72,7 @@ margot_lmtp_checkpoint_identity <- function(identity) {
         "); pass a fingerprint or a plain representation instead.", call. = FALSE)
     }
     changed <- FALSE
-    if (typeof(x) == "list" && length(x)) {
+    if (typeof(x) %in% c("list", "expression") && length(x)) {
       # walk the underlying list so class methods for `[[` cannot recurse or reshape.
       labels <- if (is.null(names(x))) seq_along(x) else names(x)
       replacements <- list()
@@ -86,6 +86,8 @@ margot_lmtp_checkpoint_identity <- function(identity) {
         rows <- .row_names_info(x, type = 2L)
         values <- lapply(seq_along(x), function(i) .subset2(x, i))
         for (r in replacements) values[r$i] <- list(r$value)
+        # an expression vector stays an expression after its elements change.
+        if (typeof(x) == "expression") values <- as.expression(values)
         # restore attributes one at a time in their original order, with a data frame's
         # compact row names, so the serialised form matches an unmodified object.
         for (name in names(kept)) {
@@ -213,7 +215,7 @@ margot_lmtp_checkpoint_inventory <- function(directory, identities, load = TRUE)
 #' @examples
 #' margot_lmtp_assert_lean(list(estimate = 1, weights = c(a = 0.5, b = 0.5)))
 #' @export
-margot_lmtp_assert_lean <- function(x, what = deparse(substitute(x))) {
+margot_lmtp_assert_lean <- function(x, what = deparse1(substitute(x))) {
   heavy <- c("SuperLearner", "ranger", "randomForest", "xgb.Booster", "glmnet", "cv.glmnet", "earth", "gam")
   found <- character()
   walk <- function(object, path) {
