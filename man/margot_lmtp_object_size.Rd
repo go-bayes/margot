@@ -13,7 +13,7 @@ margot_lmtp_object_size(x)
 A named numeric vector with \code{memory_bytes} and \code{serialised_bytes}.
 }
 \description{
-Returns the in-memory size reported by \code{\link[utils:object.size]{utils::object.size()}} and the length of the object's serialised form, \code{length(serialize(x, NULL, version = 3L))}, which is the form \code{margot_lmtp_checkpoint_compute()} writes. Use it on objects built from generated fixtures at the study's number of participants and variables, so that \code{\link[=margot_lmtp_memory_preflight]{margot_lmtp_memory_preflight()}} receives measured sizes rather than guesses. \code{object.size()} does not count the contents of environments and counts shared memory once for each reference, so it can understate an object that holds environments; the serialised length includes environment contents.
+Returns the in-memory size reported by \code{\link[utils:object.size]{utils::object.size()}} and the length of the object's serialised form, \code{length(serialize(x, NULL, version = 3L))}, which is the form \code{margot_lmtp_checkpoint_compute()} writes. Use it on objects built from generated fixtures at the study's number of participants and variables, so that \code{\link[=margot_lmtp_memory_preflight]{margot_lmtp_memory_preflight()}} receives measured sizes rather than guesses. \code{object.size()} does not count the contents of environments and counts shared memory once for each reference, so it can report almost nothing for an object whose data sit in an environment (a fitted model's closure or an R6 object, for example); the serialised length includes environment contents, and the memory estimate rests mainly on it.
 }
 \examples{
 margot_lmtp_object_size(matrix(stats::rnorm(1000), ncol = 10))

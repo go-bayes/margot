@@ -12,10 +12,13 @@ margot_lmtp_memory_preflight(
   workers,
   worker_data_bytes,
   worker_fold_fit_bytes,
+  concurrent_tasks = 1L,
   ceiling = 0.7,
   swap_limit_bytes = 2^30,
   allow_other_r = FALSE,
   other_r_reason = NULL,
+  allow_unreadable_processes = FALSE,
+  unreadable_processes_reason = NULL,
   receipt_path = NULL
 )
 
@@ -34,13 +37,19 @@ margot_lmtp_memory_preflight(
 
 \item{worker_fold_fit_bytes}{Measured bytes of one outer fold's full fit on a worker.}
 
+\item{concurrent_tasks}{Number of task results that can be written at the same time, for example \code{K} on the task-parallel route. The largest-task term is multiplied by it. The default is 1.}
+
 \item{ceiling}{Largest permitted fraction of physical memory for the estimate. The default 0.70 is a provisional administrative ceiling, not a validated bound.}
 
 \item{swap_limit_bytes}{Largest permitted swap in use, in bytes. The default is 1 GiB (\code{2^30} bytes).}
 
-\item{allow_other_r}{Whether to proceed when other R processes or orphaned workers are present. Requires \code{other_r_reason}.}
+\item{allow_other_r}{Whether to proceed when other R processes, R ancestors or orphaned workers are present. Requires \code{other_r_reason}.}
 
 \item{other_r_reason}{A non-empty reason, recorded in the receipt, for allowing other R processes.}
+
+\item{allow_unreadable_processes}{Whether to proceed when the process listing cannot be read. Requires \code{unreadable_processes_reason}.}
+
+\item{unreadable_processes_reason}{A non-empty reason, recorded in the receipt, for proceeding without a process listing.}
 
 \item{receipt_path}{Optional path without extension. When given, the receipt is written to \verb{<receipt_path>.rds} and a readable \verb{<receipt_path>.txt}, whether the preflight passes or refuses. The receipt records the host name, process identifiers and command lines, so keep it in private storage.}
 
@@ -49,21 +58,25 @@ margot_lmtp_memory_preflight(
 \item{...}{Unused.}
 }
 \value{
-A \code{margot_lmtp_memory_preflight} receipt, a list with \code{passed}, \code{created_utc}, \code{system} (host name, platform, process identifier, R and margot versions), \code{host} (memory and swap readings in bytes, pressure and the readings that were unavailable), \code{processes} (a data frame of other R processes with their parent, owner and role, or \code{NULL} when the listing is unavailable), \code{estimate} (inputs, components, total and formula), \code{rules} (one row per stop rule with its status and detail) and \code{settings}, and, when \code{receipt_path} is given, \code{files}. On refusal the function stops with an error of class \code{margot_lmtp_memory_preflight_error} whose \code{receipt} element holds the same receipt.
+A \code{margot_lmtp_memory_preflight} receipt, a list with \code{passed}, \code{created_utc}, \code{system} (host name, platform, process identifier, R and margot versions), \code{host} (memory and swap readings in bytes, pressure and the readings that were unavailable), \code{processes} (a data frame of other R processes with their parent, owner, role and resident bytes, or \code{NULL} when the listing is unavailable), \code{estimate} (inputs, components, total, formula and its basis), \code{rules} (one row per stop rule with its status and detail), \code{warnings} (a character vector, empty when there are none) and \code{settings}, and, when \code{receipt_path} is given, \code{files}. On refusal the function stops with an error of class \code{margot_lmtp_memory_preflight_error} whose \code{receipt} element holds the same receipt.
 }
 \description{
 \code{margot_lmtp_memory_preflight()} checks, before a run is launched, that the host is clean and that a measured memory estimate fits within an administrative ceiling. It returns a receipt and stops with a classed error when a rule fails. It reads the host and lists processes; it never stops, signals or kills a process, and it does not set memory limits or monitor a running job.
 }
 \details{
-\strong{Clean host.} The receipt records physical memory, free plus inactive memory, memory pressure and swap in use, and lists other R processes. On macOS these come from \verb{sysctl hw.memsize}, \code{vm_stat}, \code{memory_pressure -Q} and \verb{sysctl vm.swapusage}; on Linux from \verb{/proc/meminfo}, \verb{/proc/swaps} and, when present, \verb{/proc/pressure/memory}. Processes are listed with \code{ps} on both. An R process is one whose executable is \code{R}, \code{Rscript}, \code{Rterm} or \code{rsession}; a parallelly or future PSOCK worker is an R process whose command line runs \code{workRSOCK}. A parallelly worker is launched detached, so its owner is read from the \verb{parallelly.parent=<pid>} tag on its command line; any other process is owned by its parent. A worker is orphaned when its owner is process 1 or no longer exists. The current process, its descendants and the parallelly workers it owns are excluded; its ancestors are not, so an R process that launched this one counts as another R process. Workers started by base \code{parallel::makePSOCKcluster()} carry no owner tag and may be reported as orphaned even when the current process started them, so run the preflight before creating workers or setting a \code{future} plan. On another platform, or when a command fails, the affected readings are recorded as unavailable and are not estimated.
+\strong{Clean host.} The receipt records physical memory, free plus inactive memory, memory pressure and swap in use, and lists other R processes with their resident memory. On macOS these come from \verb{/usr/sbin/sysctl hw.memsize}, \verb{/usr/bin/vm_stat}, \verb{/usr/bin/memory_pressure -Q} and \verb{/usr/sbin/sysctl vm.swapusage}; on Linux from \verb{/proc/meminfo}, \verb{/proc/swaps} and, when present, \verb{/proc/pressure/memory}. Processes are listed with \verb{/bin/ps} on both. A command found at another location on the search path is used when the standard path is absent.
+
+An R process is one whose executable is \code{R}, \code{Rscript}, \code{Rterm} or \code{rsession}. R embedded in another executable, such as an IDE or notebook kernel or radian running under Python, is not detected. A parallelly or future PSOCK worker is an R process whose command line runs \code{workRSOCK}. A parallelly worker is launched detached, so its owner is read from the \verb{parallelly.parent=<pid>} tag on its command line; any other process is owned by its parent. A tagged owner is accepted only if it is running and started no later than the worker, so a stale tag naming a process identifier that has since been reused, including the current one, does not make an orphan look owned. A worker is orphaned when it has no running owner. The current process, its descendants and the workers it owns are excluded. Its R ancestors are reported with the role \code{ancestor} and count as other R processes, so an R process that launched this one must be allowed explicitly. Workers started by base \code{parallel::makePSOCKcluster()} carry no owner tag and may be reported as orphaned even when the current process started them, so run the preflight before creating workers or setting a \code{future} plan. On another platform, or when a command fails, the affected readings are recorded as unavailable and are not estimated.
 
 \strong{Measured estimate.} The estimate, in bytes, is
 
-\code{coordinator_bytes + (2 * largest_task_value_bytes + 2 * largest_task_payload_bytes) + workers * (worker_data_bytes + worker_fold_fit_bytes)}.
+\code{coordinator_bytes + concurrent_tasks * (2 * max(largest_task_value_bytes, largest_task_payload_bytes) + 10 * largest_task_payload_bytes) + workers * (worker_data_bytes + worker_fold_fit_bytes)}.
 
-The middle term is the transient peak of the largest single task when its checkpoint is computed: the computed value, its serialised payload, the re-read raw record (taken as the payload size) and the unserialised copy of the value (taken as the value size) may be held at once. The last term is one copy of the data and one outer fold's fit for each of the \code{workers} workers. Every size is supplied by the caller and should be measured with \code{\link[=margot_lmtp_object_size]{margot_lmtp_object_size()}} on lean-loaded checkpoints and on full fits from a generated fixture at the study's n and p. The formula is an accounting of known copies, not a validated bound: it omits the observed process-tree peak, temporary allocations inside learners and the memory of other processes.
+The middle term bounds the growth of R's heap while the largest task's checkpoint is written by \code{margot_lmtp_checkpoint_compute()}. It counts every allocation of the write as if none were released: the computed value, its serialised payload and the payload's checksum serialisation; in the atomic writer, the read-back of the scratch file, the read-back of the installed file and four fingerprint serialisations; and, in the final read, the re-read record, its checksum serialisation and the unserialised value. Each of the two copies of the value is taken as the larger of its in-memory and serialised sizes, because \code{object.size()} misses data held in environments. The bound does not depend on when R collects garbage; it leaves out the write's small allocations (identities, checksums, lock records and function frames), about a megabyte in tests, which matter only for small tasks. Fewer copies are live at once: after the value is released, the writer holds the record, two read-backs and a fingerprint serialisation together, \code{max(value + payload, 4 * payload)}, which is recorded in the receipt as \code{largest_task_live_bytes}. On generated values of 50 to 300 MB, R's maximum heap use during the write rose by 4 to 5 payloads, so the bound is conservative by a factor of about 2 to 3; a single fixed multiple of the payload was exceeded at some sizes because collection timing varies. The payload carries most of the term, so measure \code{serialised_bytes} with \code{\link[=margot_lmtp_object_size]{margot_lmtp_object_size()}}. \code{concurrent_tasks} is the number of task results that can be written at the same time, for example \code{K} on the task-parallel route. The last term is one copy of the data and one outer fold's fit for each of the \code{workers} workers.
 
-\strong{Stop rules.} The preflight refuses when (1) the estimate exceeds \code{ceiling} times physical memory; (2) another R process or an orphaned worker is present, unless \code{allow_other_r = TRUE} with a reason; or (3) swap in use exceeds \code{swap_limit_bytes}. A rule whose reading is unavailable fails, because an unmeasured host cannot be shown to be clean; an unavailable process listing is accepted only under \code{allow_other_r = TRUE}. The default \code{ceiling = 0.70} is a provisional administrative ceiling, not a validated bound.
+Every size is supplied by the caller and should be measured with \code{\link[=margot_lmtp_object_size]{margot_lmtp_object_size()}} on lean-loaded checkpoints and on full fits from a generated fixture at the study's n and p. The formula is an accounting of known copies, not a validated bound: it omits the observed process-tree peak, temporary allocations inside learners and the memory of other processes.
+
+\strong{Stop rules.} The preflight refuses when (1) the estimate exceeds \code{ceiling} times physical memory; (2) another R process, an R ancestor or an orphaned worker is present, unless \code{allow_other_r = TRUE} with a reason; (3) the process listing cannot be read, unless \code{allow_unreadable_processes = TRUE} with a reason; or (4) swap in use exceeds \code{swap_limit_bytes}. It also refuses when physical memory or swap in use cannot be read, because an unmeasured host cannot be shown to be clean; there is no override for those. The default \code{ceiling = 0.70} is a provisional administrative ceiling, not a validated bound. An estimate above free plus inactive memory is recorded as a warning in the receipt, not a refusal, because the operating system can usually reclaim other memory.
 }
 \examples{
 \dontrun{

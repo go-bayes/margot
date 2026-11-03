@@ -2,7 +2,7 @@
 
 #' Measure an object's size in memory and serialised
 #'
-#' Returns the in-memory size reported by [utils::object.size()] and the length of the object's serialised form, `length(serialize(x, NULL, version = 3L))`, which is the form `margot_lmtp_checkpoint_compute()` writes. Use it on objects built from generated fixtures at the study's number of participants and variables, so that [margot_lmtp_memory_preflight()] receives measured sizes rather than guesses. `object.size()` does not count the contents of environments and counts shared memory once for each reference, so it can understate an object that holds environments; the serialised length includes environment contents.
+#' Returns the in-memory size reported by [utils::object.size()] and the length of the object's serialised form, `length(serialize(x, NULL, version = 3L))`, which is the form `margot_lmtp_checkpoint_compute()` writes. Use it on objects built from generated fixtures at the study's number of participants and variables, so that [margot_lmtp_memory_preflight()] receives measured sizes rather than guesses. `object.size()` does not count the contents of environments and counts shared memory once for each reference, so it can report almost nothing for an object whose data sit in an environment (a fitted model's closure or an R6 object, for example); the serialised length includes environment contents, and the memory estimate rests mainly on it.
 #'
 #' @param x Object to measure.
 #' @return A named numeric vector with `memory_bytes` and `serialised_bytes`.
@@ -20,15 +20,19 @@ margot_lmtp_object_size <- function(x) {
 #'
 #' `margot_lmtp_memory_preflight()` checks, before a run is launched, that the host is clean and that a measured memory estimate fits within an administrative ceiling. It returns a receipt and stops with a classed error when a rule fails. It reads the host and lists processes; it never stops, signals or kills a process, and it does not set memory limits or monitor a running job.
 #'
-#' **Clean host.** The receipt records physical memory, free plus inactive memory, memory pressure and swap in use, and lists other R processes. On macOS these come from `sysctl hw.memsize`, `vm_stat`, `memory_pressure -Q` and `sysctl vm.swapusage`; on Linux from `/proc/meminfo`, `/proc/swaps` and, when present, `/proc/pressure/memory`. Processes are listed with `ps` on both. An R process is one whose executable is `R`, `Rscript`, `Rterm` or `rsession`; a parallelly or future PSOCK worker is an R process whose command line runs `workRSOCK`. A parallelly worker is launched detached, so its owner is read from the `parallelly.parent=<pid>` tag on its command line; any other process is owned by its parent. A worker is orphaned when its owner is process 1 or no longer exists. The current process, its descendants and the parallelly workers it owns are excluded; its ancestors are not, so an R process that launched this one counts as another R process. Workers started by base `parallel::makePSOCKcluster()` carry no owner tag and may be reported as orphaned even when the current process started them, so run the preflight before creating workers or setting a `future` plan. On another platform, or when a command fails, the affected readings are recorded as unavailable and are not estimated.
+#' **Clean host.** The receipt records physical memory, free plus inactive memory, memory pressure and swap in use, and lists other R processes with their resident memory. On macOS these come from `/usr/sbin/sysctl hw.memsize`, `/usr/bin/vm_stat`, `/usr/bin/memory_pressure -Q` and `/usr/sbin/sysctl vm.swapusage`; on Linux from `/proc/meminfo`, `/proc/swaps` and, when present, `/proc/pressure/memory`. Processes are listed with `/bin/ps` on both. A command found at another location on the search path is used when the standard path is absent.
+#'
+#' An R process is one whose executable is `R`, `Rscript`, `Rterm` or `rsession`. R embedded in another executable, such as an IDE or notebook kernel or radian running under Python, is not detected. A parallelly or future PSOCK worker is an R process whose command line runs `workRSOCK`. A parallelly worker is launched detached, so its owner is read from the `parallelly.parent=<pid>` tag on its command line; any other process is owned by its parent. A tagged owner is accepted only if it is running and started no later than the worker, so a stale tag naming a process identifier that has since been reused, including the current one, does not make an orphan look owned. A worker is orphaned when it has no running owner. The current process, its descendants and the workers it owns are excluded. Its R ancestors are reported with the role `ancestor` and count as other R processes, so an R process that launched this one must be allowed explicitly. Workers started by base `parallel::makePSOCKcluster()` carry no owner tag and may be reported as orphaned even when the current process started them, so run the preflight before creating workers or setting a `future` plan. On another platform, or when a command fails, the affected readings are recorded as unavailable and are not estimated.
 #'
 #' **Measured estimate.** The estimate, in bytes, is
 #'
-#' `coordinator_bytes + (2 * largest_task_value_bytes + 2 * largest_task_payload_bytes) + workers * (worker_data_bytes + worker_fold_fit_bytes)`.
+#' `coordinator_bytes + concurrent_tasks * (2 * max(largest_task_value_bytes, largest_task_payload_bytes) + 10 * largest_task_payload_bytes) + workers * (worker_data_bytes + worker_fold_fit_bytes)`.
 #'
-#' The middle term is the transient peak of the largest single task when its checkpoint is computed: the computed value, its serialised payload, the re-read raw record (taken as the payload size) and the unserialised copy of the value (taken as the value size) may be held at once. The last term is one copy of the data and one outer fold's fit for each of the `workers` workers. Every size is supplied by the caller and should be measured with [margot_lmtp_object_size()] on lean-loaded checkpoints and on full fits from a generated fixture at the study's n and p. The formula is an accounting of known copies, not a validated bound: it omits the observed process-tree peak, temporary allocations inside learners and the memory of other processes.
+#' The middle term bounds the growth of R's heap while the largest task's checkpoint is written by `margot_lmtp_checkpoint_compute()`. It counts every allocation of the write as if none were released: the computed value, its serialised payload and the payload's checksum serialisation; in the atomic writer, the read-back of the scratch file, the read-back of the installed file and four fingerprint serialisations; and, in the final read, the re-read record, its checksum serialisation and the unserialised value. Each of the two copies of the value is taken as the larger of its in-memory and serialised sizes, because `object.size()` misses data held in environments. The bound does not depend on when R collects garbage; it leaves out the write's small allocations (identities, checksums, lock records and function frames), about a megabyte in tests, which matter only for small tasks. Fewer copies are live at once: after the value is released, the writer holds the record, two read-backs and a fingerprint serialisation together, `max(value + payload, 4 * payload)`, which is recorded in the receipt as `largest_task_live_bytes`. On generated values of 50 to 300 MB, R's maximum heap use during the write rose by 4 to 5 payloads, so the bound is conservative by a factor of about 2 to 3; a single fixed multiple of the payload was exceeded at some sizes because collection timing varies. The payload carries most of the term, so measure `serialised_bytes` with [margot_lmtp_object_size()]. `concurrent_tasks` is the number of task results that can be written at the same time, for example `K` on the task-parallel route. The last term is one copy of the data and one outer fold's fit for each of the `workers` workers.
 #'
-#' **Stop rules.** The preflight refuses when (1) the estimate exceeds `ceiling` times physical memory; (2) another R process or an orphaned worker is present, unless `allow_other_r = TRUE` with a reason; or (3) swap in use exceeds `swap_limit_bytes`. A rule whose reading is unavailable fails, because an unmeasured host cannot be shown to be clean; an unavailable process listing is accepted only under `allow_other_r = TRUE`. The default `ceiling = 0.70` is a provisional administrative ceiling, not a validated bound.
+#' Every size is supplied by the caller and should be measured with [margot_lmtp_object_size()] on lean-loaded checkpoints and on full fits from a generated fixture at the study's n and p. The formula is an accounting of known copies, not a validated bound: it omits the observed process-tree peak, temporary allocations inside learners and the memory of other processes.
+#'
+#' **Stop rules.** The preflight refuses when (1) the estimate exceeds `ceiling` times physical memory; (2) another R process, an R ancestor or an orphaned worker is present, unless `allow_other_r = TRUE` with a reason; (3) the process listing cannot be read, unless `allow_unreadable_processes = TRUE` with a reason; or (4) swap in use exceeds `swap_limit_bytes`. It also refuses when physical memory or swap in use cannot be read, because an unmeasured host cannot be shown to be clean; there is no override for those. The default `ceiling = 0.70` is a provisional administrative ceiling, not a validated bound. An estimate above free plus inactive memory is recorded as a warning in the receipt, not a refusal, because the operating system can usually reclaim other memory.
 #'
 #' @param coordinator_bytes Measured bytes held by the coordinating process: its data and the lean results it keeps.
 #' @param largest_task_value_bytes Measured in-memory bytes of the largest single task's computed value.
@@ -36,12 +40,15 @@ margot_lmtp_object_size <- function(x) {
 #' @param workers Number of workers, `K`, each holding one copy of the data and one outer fold's fit.
 #' @param worker_data_bytes Measured bytes of the data each worker holds.
 #' @param worker_fold_fit_bytes Measured bytes of one outer fold's full fit on a worker.
+#' @param concurrent_tasks Number of task results that can be written at the same time, for example `K` on the task-parallel route. The largest-task term is multiplied by it. The default is 1.
 #' @param ceiling Largest permitted fraction of physical memory for the estimate. The default 0.70 is a provisional administrative ceiling, not a validated bound.
 #' @param swap_limit_bytes Largest permitted swap in use, in bytes. The default is 1 GiB (`2^30` bytes).
-#' @param allow_other_r Whether to proceed when other R processes or orphaned workers are present. Requires `other_r_reason`.
+#' @param allow_other_r Whether to proceed when other R processes, R ancestors or orphaned workers are present. Requires `other_r_reason`.
 #' @param other_r_reason A non-empty reason, recorded in the receipt, for allowing other R processes.
+#' @param allow_unreadable_processes Whether to proceed when the process listing cannot be read. Requires `unreadable_processes_reason`.
+#' @param unreadable_processes_reason A non-empty reason, recorded in the receipt, for proceeding without a process listing.
 #' @param receipt_path Optional path without extension. When given, the receipt is written to `<receipt_path>.rds` and a readable `<receipt_path>.txt`, whether the preflight passes or refuses. The receipt records the host name, process identifiers and command lines, so keep it in private storage.
-#' @return A `margot_lmtp_memory_preflight` receipt, a list with `passed`, `created_utc`, `system` (host name, platform, process identifier, R and margot versions), `host` (memory and swap readings in bytes, pressure and the readings that were unavailable), `processes` (a data frame of other R processes with their parent, owner and role, or `NULL` when the listing is unavailable), `estimate` (inputs, components, total and formula), `rules` (one row per stop rule with its status and detail) and `settings`, and, when `receipt_path` is given, `files`. On refusal the function stops with an error of class `margot_lmtp_memory_preflight_error` whose `receipt` element holds the same receipt.
+#' @return A `margot_lmtp_memory_preflight` receipt, a list with `passed`, `created_utc`, `system` (host name, platform, process identifier, R and margot versions), `host` (memory and swap readings in bytes, pressure and the readings that were unavailable), `processes` (a data frame of other R processes with their parent, owner, role and resident bytes, or `NULL` when the listing is unavailable), `estimate` (inputs, components, total, formula and its basis), `rules` (one row per stop rule with its status and detail), `warnings` (a character vector, empty when there are none) and `settings`, and, when `receipt_path` is given, `files`. On refusal the function stops with an error of class `margot_lmtp_memory_preflight_error` whose `receipt` element holds the same receipt.
 #' @examples
 #' \dontrun{
 #' fit_size <- margot_lmtp_object_size(fixture_fit)
@@ -64,10 +71,13 @@ margot_lmtp_memory_preflight <- function(coordinator_bytes,
                                          workers,
                                          worker_data_bytes,
                                          worker_fold_fit_bytes,
+                                         concurrent_tasks = 1L,
                                          ceiling = 0.70,
                                          swap_limit_bytes = 2^30,
                                          allow_other_r = FALSE,
                                          other_r_reason = NULL,
+                                         allow_unreadable_processes = FALSE,
+                                         unreadable_processes_reason = NULL,
                                          receipt_path = NULL) {
   bytes <- function(x, name) {
     if (!is.numeric(x) || length(x) != 1L || is.na(x) || !is.finite(x) || x < 0) {
@@ -75,29 +85,39 @@ margot_lmtp_memory_preflight <- function(coordinator_bytes,
     }
     as.numeric(x)
   }
+  count <- function(x, name) {
+    if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 1 || x != round(x)) {
+      stop("`", name, "` must be one positive whole number.", call. = FALSE)
+    }
+    as.integer(x)
+  }
+  flag <- function(x, name) {
+    if (!isTRUE(x) && !isFALSE(x)) stop("`", name, "` must be TRUE or FALSE.", call. = FALSE)
+    x
+  }
+  reason <- function(allowed, x, allow_name, reason_name) {
+    if (allowed && (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(trimws(x)))) {
+      stop("`", allow_name, " = TRUE` requires a non-empty `", reason_name, "`.", call. = FALSE)
+    }
+  }
   inputs <- list(
     coordinator_bytes = bytes(coordinator_bytes, "coordinator_bytes"),
     largest_task_value_bytes = bytes(largest_task_value_bytes, "largest_task_value_bytes"),
     largest_task_payload_bytes = bytes(largest_task_payload_bytes, "largest_task_payload_bytes"),
     worker_data_bytes = bytes(worker_data_bytes, "worker_data_bytes"),
-    worker_fold_fit_bytes = bytes(worker_fold_fit_bytes, "worker_fold_fit_bytes")
+    worker_fold_fit_bytes = bytes(worker_fold_fit_bytes, "worker_fold_fit_bytes"),
+    workers = count(workers, "workers"),
+    concurrent_tasks = count(concurrent_tasks, "concurrent_tasks")
   )
-  if (!is.numeric(workers) || length(workers) != 1L || is.na(workers) || workers < 1 ||
-      workers != round(workers)) {
-    stop("`workers` must be one positive whole number.", call. = FALSE)
-  }
-  inputs$workers <- as.integer(workers)
   if (!is.numeric(ceiling) || length(ceiling) != 1L || is.na(ceiling) || ceiling <= 0 || ceiling > 1) {
     stop("`ceiling` must be one number in (0, 1].", call. = FALSE)
   }
   swap_limit_bytes <- bytes(swap_limit_bytes, "swap_limit_bytes")
-  if (!isTRUE(allow_other_r) && !isFALSE(allow_other_r)) {
-    stop("`allow_other_r` must be TRUE or FALSE.", call. = FALSE)
-  }
-  if (allow_other_r && (!is.character(other_r_reason) || length(other_r_reason) != 1L ||
-      is.na(other_r_reason) || !nzchar(trimws(other_r_reason)))) {
-    stop("`allow_other_r = TRUE` requires a non-empty `other_r_reason`.", call. = FALSE)
-  }
+  flag(allow_other_r, "allow_other_r")
+  flag(allow_unreadable_processes, "allow_unreadable_processes")
+  reason(allow_other_r, other_r_reason, "allow_other_r", "other_r_reason")
+  reason(allow_unreadable_processes, unreadable_processes_reason, "allow_unreadable_processes",
+    "unreadable_processes_reason")
   if (!is.null(receipt_path) && (!is.character(receipt_path) || length(receipt_path) != 1L ||
       is.na(receipt_path) || !nzchar(receipt_path))) {
     stop("`receipt_path` must be NULL or one path.", call. = FALSE)
@@ -107,6 +127,7 @@ margot_lmtp_memory_preflight <- function(coordinator_bytes,
   sysname <- margot_lmtp_preflight_sysname()
   host <- margot_lmtp_preflight_host(sysname)
   processes <- margot_lmtp_preflight_other_r(margot_lmtp_preflight_processes(sysname), Sys.getpid())
+  gib <- margot_lmtp_format_bytes
 
   rules <- list()
   limit <- ceiling * host$physical_bytes
@@ -114,16 +135,19 @@ margot_lmtp_memory_preflight <- function(coordinator_bytes,
     c("unavailable", "physical memory could not be read")
   } else {
     c(if (estimate$total_bytes > limit) "fail" else "pass",
-      sprintf("estimate %s; ceiling %s (%.2f of %s physical)", margot_lmtp_format_bytes(estimate$total_bytes),
-        margot_lmtp_format_bytes(limit), ceiling, margot_lmtp_format_bytes(host$physical_bytes)))
+      sprintf("estimate %s; ceiling %s (%.2f of %s physical)", gib(estimate$total_bytes), gib(limit), ceiling,
+        gib(host$physical_bytes)))
   }
   rules$other_r <- if (is.null(processes)) {
-    if (allow_other_r) c("allowed", paste0("process listing unavailable; allowed: ", other_r_reason))
-    else c("unavailable", "the process listing could not be read")
+    if (allow_unreadable_processes) {
+      c("allowed", paste0("process listing unavailable; allowed: ", unreadable_processes_reason))
+    } else {
+      c("unavailable", "the process listing could not be read")
+    }
   } else {
     found <- nrow(processes)
-    orphaned <- sum(processes$role == "orphaned_worker")
-    detail <- sprintf("%d other R process(es), of which %d orphaned worker(s)", found, orphaned)
+    detail <- sprintf("%d other R process(es): %d ancestor(s), %d orphaned worker(s)", found,
+      sum(processes$role == "ancestor"), sum(processes$role == "orphaned_worker"))
     if (!found) c("pass", detail)
     else if (allow_other_r) c("allowed", paste0(detail, "; allowed: ", other_r_reason))
     else c("fail", detail)
@@ -132,11 +156,16 @@ margot_lmtp_memory_preflight <- function(coordinator_bytes,
     c("unavailable", "swap in use could not be read")
   } else {
     c(if (host$swap_used_bytes > swap_limit_bytes) "fail" else "pass",
-      sprintf("swap in use %s; limit %s", margot_lmtp_format_bytes(host$swap_used_bytes),
-        margot_lmtp_format_bytes(swap_limit_bytes)))
+      sprintf("swap in use %s; limit %s", gib(host$swap_used_bytes), gib(swap_limit_bytes)))
   }
   rules <- data.frame(rule = names(rules), status = vapply(rules, `[[`, "", 1L),
     detail = vapply(rules, `[[`, "", 2L), stringsAsFactors = FALSE, row.names = NULL)
+
+  warnings <- character()
+  if (!is.na(host$free_inactive_bytes) && estimate$total_bytes > host$free_inactive_bytes) {
+    warnings <- c(warnings, sprintf("the estimate (%s) exceeds free plus inactive memory (%s)",
+      gib(estimate$total_bytes), gib(host$free_inactive_bytes)))
+  }
 
   receipt <- structure(list(
     schema = "margot_lmtp_memory_preflight_v1",
@@ -148,8 +177,10 @@ margot_lmtp_memory_preflight <- function(coordinator_bytes,
     processes = processes,
     estimate = estimate,
     rules = rules,
+    warnings = warnings,
     settings = list(ceiling = ceiling, swap_limit_bytes = swap_limit_bytes, allow_other_r = allow_other_r,
-      other_r_reason = other_r_reason)
+      other_r_reason = other_r_reason, allow_unreadable_processes = allow_unreadable_processes,
+      unreadable_processes_reason = unreadable_processes_reason)
   ), class = "margot_lmtp_memory_preflight")
 
   if (!is.null(receipt_path)) {
@@ -170,15 +201,29 @@ margot_lmtp_memory_preflight <- function(coordinator_bytes,
 
 # the stated formula, kept separate so it can be tested on supplied sizes.
 margot_lmtp_memory_estimate <- function(inputs) {
+  value <- inputs$largest_task_value_bytes
+  payload <- inputs$largest_task_payload_bytes
+  # every allocation of a checkpoint write, none released: two copies of the value (computed and
+  # unserialised) and ten payload-sized vectors (the payload and its checksum serialisation; the
+  # writer's two read-backs and four fingerprints; the re-read record and its checksum serialisation).
+  copy <- max(value, payload)
+  per_task <- 2 * copy + 10 * payload
   components <- c(
     coordinator = inputs$coordinator_bytes,
-    largest_task = 2 * inputs$largest_task_value_bytes + 2 * inputs$largest_task_payload_bytes,
+    largest_task = inputs$concurrent_tasks * per_task,
     workers = inputs$workers * (inputs$worker_data_bytes + inputs$worker_fold_fit_bytes)
   )
   list(inputs = inputs, components = components, total_bytes = sum(components),
-    formula = paste("coordinator_bytes + (largest_task_value_bytes + largest_task_payload_bytes",
-      "+ re-read record [= largest_task_payload_bytes] + unserialised copy [= largest_task_value_bytes])",
-      "+ workers * (worker_data_bytes + worker_fold_fit_bytes)"))
+    largest_task_live_bytes = max(value + payload, 4 * payload),
+    formula = paste("coordinator_bytes + concurrent_tasks * (2 * max(largest_task_value_bytes,",
+      "largest_task_payload_bytes) + 10 * largest_task_payload_bytes)",
+      "+ workers * (worker_data_bytes + worker_fold_fit_bytes)"),
+    basis = paste("largest task: every allocation of margot_lmtp_checkpoint_compute() counted as if none",
+      "were released (the value, its payload and checksum serialisation; the writer's two read-backs and",
+      "four fingerprint serialisations; the re-read record, its checksum serialisation and the unserialised",
+      "value), with each value copy taken as max(value, payload) because object.size() misses data held in",
+      "environments. At most max(value + payload, 4 * payload) is live at once; measured heap growth on",
+      "generated values of 50 to 300 MB was 4 to 5 payloads."))
 }
 
 margot_lmtp_format_bytes <- function(x) {
@@ -189,10 +234,20 @@ margot_lmtp_format_bytes <- function(x) {
 # platform name; a separate function so tests can stand in another platform.
 margot_lmtp_preflight_sysname <- function() tolower(unname(Sys.info()[["sysname"]]))
 
+# the standard location of a system command, or the search path when it is absent there.
+margot_lmtp_preflight_binary <- function(command) {
+  standard <- c(sysctl = "/usr/sbin/sysctl", vm_stat = "/usr/bin/vm_stat",
+    memory_pressure = "/usr/bin/memory_pressure", ps = "/bin/ps")
+  path <- standard[command]
+  if (!is.na(path) && file.exists(path)) return(unname(path))
+  unname(Sys.which(command))
+}
+
 # run a system command, returning its output lines or NULL when it is missing or fails.
 margot_lmtp_preflight_command <- function(command, args = character()) {
-  if (!nzchar(Sys.which(command))) return(NULL)
-  out <- tryCatch(suppressWarnings(system2(command, args, stdout = TRUE, stderr = FALSE)),
+  binary <- margot_lmtp_preflight_binary(command)
+  if (!nzchar(binary)) return(NULL)
+  out <- tryCatch(suppressWarnings(system2(binary, args, stdout = TRUE, stderr = FALSE)),
     error = function(e) NULL)
   if (is.null(out) || !is.null(attr(out, "status"))) return(NULL)
   out
@@ -282,47 +337,87 @@ margot_lmtp_parse_proc_swaps <- function(lines) {
   list(swap_total_bytes = sum(number(3L)) * 1024, swap_used_bytes = sum(number(4L)) * 1024)
 }
 
-# process table (pid, ppid, command) or NULL when it cannot be read; overridden in tests.
-margot_lmtp_preflight_processes <- function(sysname = margot_lmtp_preflight_sysname()) {
-  if (!sysname %in% c("darwin", "linux")) return(NULL)
-  out <- margot_lmtp_preflight_command("ps", c("-A", "-o", "pid=", "-o", "ppid=", "-o", "args="))
-  if (is.null(out)) return(NULL)
-  m <- regmatches(out, regexec("^[[:space:]]*([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+(.*)$", out))
-  m <- m[lengths(m) == 4L]
-  data.frame(pid = as.integer(vapply(m, `[[`, "", 2L)), ppid = as.integer(vapply(m, `[[`, "", 3L)),
-    command = vapply(m, `[[`, "", 4L), stringsAsFactors = FALSE)
+# ps elapsed time, [[dd-]hh:]mm:ss, in seconds; NA when it cannot be read.
+margot_lmtp_parse_etime <- function(x) {
+  vapply(x, function(s) {
+    s <- trimws(s)
+    if (is.na(s) || !grepl("^([0-9]+-)?([0-9]+:){1,2}[0-9]+$", s)) return(NA_real_)
+    days <- 0
+    if (grepl("-", s, fixed = TRUE)) {
+      days <- as.numeric(sub("-.*$", "", s))
+      s <- sub("^[0-9]+-", "", s)
+    }
+    parts <- rev(as.numeric(strsplit(s, ":", fixed = TRUE)[[1L]]))
+    days * 86400 + sum(parts * c(1, 60, 3600)[seq_along(parts)])
+  }, numeric(1), USE.NAMES = FALSE)
 }
 
-# other R processes, excluding `self` and its descendants, with their role. a parallelly
-# worker is launched detached (its parent is process 1), so its owner is read from the
-# `parallelly.parent=<pid>` tag on its command line; other processes are owned by their parent.
+# process table (pid, ppid, rss in kB, elapsed seconds, command) or NULL when it cannot be read;
+# overridden in tests.
+margot_lmtp_preflight_processes <- function(sysname = margot_lmtp_preflight_sysname()) {
+  if (!sysname %in% c("darwin", "linux")) return(NULL)
+  out <- margot_lmtp_preflight_command("ps",
+    c("-A", "-o", "pid=", "-o", "ppid=", "-o", "rss=", "-o", "etime=", "-o", "args="))
+  if (is.null(out)) return(NULL)
+  pattern <- "^[[:space:]]*([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9:-]+)[[:space:]]+(.*)$"
+  m <- regmatches(out, regexec(pattern, out))
+  m <- m[lengths(m) == 6L]
+  if (!length(m)) return(NULL)
+  field <- function(i) vapply(m, `[[`, "", i)
+  data.frame(pid = as.integer(field(2L)), ppid = as.integer(field(3L)), rss = as.numeric(field(4L)),
+    elapsed = margot_lmtp_parse_etime(field(5L)), command = field(6L), stringsAsFactors = FALSE)
+}
+
+# other R processes, excluding `self`, its descendants and the workers it owns, with their role.
+# a parallelly worker is launched detached (its parent is process 1), so its owner is read from
+# the `parallelly.parent=<pid>` tag on its command line; other processes are owned by their parent.
 margot_lmtp_preflight_other_r <- function(processes, self) {
   if (is.null(processes)) return(NULL)
   stopifnot(is.data.frame(processes), all(c("pid", "ppid", "command") %in% names(processes)))
   empty <- data.frame(pid = integer(), ppid = integer(), owner_pid = integer(), role = character(),
-    command = character(), stringsAsFactors = FALSE)
+    rss_bytes = numeric(), command = character(), stringsAsFactors = FALSE)
   if (!nrow(processes)) return(empty)
+  if (is.null(processes$rss)) processes$rss <- NA_real_
+  if (is.null(processes$elapsed)) processes$elapsed <- NA_real_
+  self <- as.integer(self)
   # executable name: the first token of the command line, without its directory.
   executable <- basename(sub("[[:space:]].*$", "", sub("^[[:space:]]+", "", processes$command)))
   is_r <- executable %in% c("R", "Rscript", "Rterm", "rsession")
   tagged <- grepl("parallelly[.]parent=[0-9]+", processes$command)
+  tag <- rep(NA_integer_, nrow(processes))
+  tag[tagged] <- as.integer(sub(".*parallelly[.]parent=([0-9]+).*", "\\1", processes$command[tagged]))
   owner <- processes$ppid
-  owner[tagged] <- as.integer(sub(".*parallelly[.]parent=([0-9]+).*", "\\1", processes$command[tagged]))
-  own <- as.integer(self)
+  owner[tagged] <- tag[tagged]
+  # a tagged owner counts only if it is running and started no later than the worker; a reused
+  # process identifier, including the current one, otherwise makes an orphan look owned.
+  owner_elapsed <- processes$elapsed[match(owner, processes$pid)]
+  stale <- tagged & (!owner %in% processes$pid |
+    (!is.na(owner_elapsed) & !is.na(processes$elapsed) & owner_elapsed < processes$elapsed))
+  effective <- owner
+  effective[stale] <- NA_integer_
+  own <- self
   repeat {
-    children <- processes$pid[owner %in% own & !processes$pid %in% own]
+    children <- processes$pid[effective %in% own & !processes$pid %in% own]
     if (!length(children)) break
     own <- c(own, children)
   }
+  ancestors <- integer()
+  current <- processes$ppid[processes$pid == self]
+  while (length(current) == 1L && current > 1L && current %in% processes$pid && !current %in% ancestors) {
+    ancestors <- c(ancestors, current)
+    current <- processes$ppid[processes$pid == current]
+  }
   keep <- is_r & !processes$pid %in% own
   if (!any(keep)) return(empty)
-  found <- processes[keep, c("pid", "ppid", "command"), drop = FALSE]
-  found$owner_pid <- owner[keep]
-  worker <- grepl("workRSOCK", found$command, fixed = TRUE)
-  orphaned <- worker & (found$owner_pid == 1L | !found$owner_pid %in% processes$pid)
-  found$role <- ifelse(orphaned, "orphaned_worker", ifelse(worker, "worker", "r_process"))
+  worker <- grepl("workRSOCK", processes$command, fixed = TRUE)
+  orphaned <- worker & (is.na(effective) | effective <= 1L | !effective %in% processes$pid)
+  role <- ifelse(processes$pid %in% ancestors, "ancestor",
+    ifelse(orphaned, "orphaned_worker", ifelse(worker, "worker", "r_process")))
+  found <- data.frame(pid = as.integer(processes$pid), ppid = as.integer(processes$ppid),
+    owner_pid = as.integer(owner), role = role, rss_bytes = processes$rss * 1024,
+    command = processes$command, stringsAsFactors = FALSE)[keep, , drop = FALSE]
   rownames(found) <- NULL
-  found[, c("pid", "ppid", "owner_pid", "role", "command")]
+  found
 }
 
 #' @rdname margot_lmtp_memory_preflight
@@ -337,11 +432,13 @@ print.margot_lmtp_memory_preflight <- function(x, ...) {
     x$system$pid, "\n", sep = "")
   cat(x$system$r_version, "; margot ", x$system$margot_version, "\n\n", sep = "")
   cat("Host\n")
-  cat("  physical memory:       ", gib(x$host$physical_bytes), "\n", sep = "")
-  cat("  free plus inactive:    ", gib(x$host$free_inactive_bytes), "\n", sep = "")
-  cat("  swap in use:           ", gib(x$host$swap_used_bytes), " of ", gib(x$host$swap_total_bytes), "\n", sep = "")
-  cat("  memory pressure:       ", if (is.na(x$host$pressure)) "unavailable" else x$host$pressure, "\n", sep = "")
-  if (length(x$host$unavailable)) cat("  unavailable readings:  ", paste(x$host$unavailable, collapse = ", "), "\n", sep = "")
+  cat("  physical memory:     ", gib(x$host$physical_bytes), "\n", sep = "")
+  cat("  free plus inactive:  ", gib(x$host$free_inactive_bytes), "\n", sep = "")
+  cat("  swap in use:         ", gib(x$host$swap_used_bytes), " of ", gib(x$host$swap_total_bytes), "\n", sep = "")
+  cat("  memory pressure:     ", if (is.na(x$host$pressure)) "unavailable" else x$host$pressure, "\n", sep = "")
+  if (length(x$host$unavailable)) {
+    cat("  unavailable:         ", paste(x$host$unavailable, collapse = ", "), "\n", sep = "")
+  }
   cat("\nOther R processes\n")
   if (is.null(x$processes)) {
     cat("  process listing unavailable\n")
@@ -350,18 +447,25 @@ print.margot_lmtp_memory_preflight <- function(x, ...) {
   } else {
     for (i in seq_len(nrow(x$processes))) {
       p <- x$processes[i, ]
-      cat("  ", p$pid, " (parent ", p$ppid, ", ", p$role, "): ", substr(p$command, 1L, 120L), "\n", sep = "")
+      cat("  ", p$pid, " (parent ", p$ppid, ", ", p$role, ", resident ", gib(p$rss_bytes), "): ",
+        substr(p$command, 1L, 120L), "\n", sep = "")
     }
   }
   e <- x$estimate
   cat("\nEstimate: ", gib(e$total_bytes), "\n", sep = "")
-  cat("  coordinator:           ", gib(e$components[["coordinator"]]), "\n", sep = "")
-  cat("  largest task (transient): ", gib(e$components[["largest_task"]]), "\n", sep = "")
-  cat("  ", e$inputs$workers, " worker(s):           ", gib(e$components[["workers"]]), "\n", sep = "")
+  cat("  coordinator:         ", gib(e$components[["coordinator"]]), "\n", sep = "")
+  cat("  largest task x ", e$inputs$concurrent_tasks, ":    ", gib(e$components[["largest_task"]]), "\n", sep = "")
+  cat("  workers x ", e$inputs$workers, ":         ", gib(e$components[["workers"]]), "\n", sep = "")
+  cat("  largest task live:   ", gib(e$largest_task_live_bytes), " (at most held at once, per task)\n", sep = "")
   cat("  formula: ", e$formula, "\n", sep = "")
+  cat("  basis: ", e$basis, "\n", sep = "")
   cat("\nRules\n")
   for (i in seq_len(nrow(x$rules))) {
     cat("  ", x$rules$rule[[i]], ": ", x$rules$status[[i]], " (", x$rules$detail[[i]], ")\n", sep = "")
+  }
+  if (length(x$warnings)) {
+    cat("\nWarnings\n")
+    for (w in x$warnings) cat("  ", w, "\n", sep = "")
   }
   invisible(x)
 }
