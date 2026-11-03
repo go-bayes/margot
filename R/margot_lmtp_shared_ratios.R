@@ -178,7 +178,8 @@ margot_lmtp_sdr_shared <- function(
     folds = 10,
     weights = NULL,
     control = lmtp::lmtp_control(),
-    after_model = NULL) {
+    after_model = NULL,
+    untrimmed = FALSE) {
   margot_lmtp_internal("LmtpTask")
   if (!is.character(outcomes) || length(outcomes) < 1L || anyNA(outcomes) || any(!nzchar(outcomes))) {
     cli::cli_abort(
@@ -242,14 +243,46 @@ margot_lmtp_sdr_shared <- function(
   progress_bar <- progressr::progressor(
     steps = source_task$time_horizon * folds * (length(outcomes) + 1L)
   )
+  # for the untrimmed sensitivity (D19), the density stage is fitted once without a
+  # cap; lmtp applies its cap after the density fits, without random numbers, so the
+  # registered cap applied below to a copy reproduces lmtp's capped ratios exactly
+  density_control <- control
+  if (isTRUE(untrimmed)) {
+    cap <- control$.trim
+    if (!is.numeric(cap) || length(cap) != 1L || is.na(cap) || cap <= 0 || cap >= 1) {
+      cli::cli_abort(
+        "The untrimmed sensitivity needs the registered cap in {.code control$.trim}, between 0 and 1.",
+        class = "margot_error_invalid_input"
+      )
+    }
+    density_control$.trim <- 1
+  }
   density_fit <- margot_lmtp_fit_density_ratios(
     task = source_task,
     learners_trt = learners_trt,
     mtp = mtp,
-    control = control,
+    control = density_control,
     progress_bar = progress_bar
   )
   post_ratio_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  untrimmed_fit <- NULL
+  untrimmed_record <- NULL
+  if (isTRUE(untrimmed)) {
+    untrimmed_fit <- density_fit
+    raw <- untrimmed_fit$density_ratios
+    density_fit$density_ratios <- margot_lmtp_internal("trim")(raw, cap)
+    threshold <- unname(stats::quantile(raw, cap, na.rm = TRUE))
+    untrimmed_record <- list(
+      cap = cap,
+      threshold = threshold,
+      entries = sum(!is.na(raw)),
+      capped_entries = sum(raw > threshold, na.rm = TRUE),
+      capped_proportion = mean(raw[!is.na(raw)] > threshold),
+      raw_range = range(raw, na.rm = TRUE),
+      capped_range = range(density_fit$density_ratios, na.rm = TRUE)
+    )
+    rm(raw)
+  }
   common_folds <- source_task$folds
   shared_variables <- c(
     unlist(trt), unlist(time_vary), baseline, cens, compete, id, "..i..lmtp_id"
@@ -299,6 +332,23 @@ margot_lmtp_sdr_shared <- function(
     attr(model, "margot_density_ratio_reused") <- !identical(outcome, outcomes[[1L]])
     # an optional per-model step (the learner audit) runs before the next outcome is fitted
     if (!is.null(after_model)) model <- after_model(model)
+    if (isTRUE(untrimmed)) {
+      # the untrimmed recursion starts from the same post-density state as the capped one
+      margot_lmtp_restore_seed(post_ratio_seed)
+      untrimmed_model <- margot_lmtp_fit_sdr_outcome(
+        task = task,
+        density_fit = untrimmed_fit,
+        learners_outcome = learners_outcome,
+        control = control,
+        progress_bar = progress_bar,
+        shift_label = shift_label
+      )
+      attr(untrimmed_model, "margot_density_ratio_source") <- outcomes[[1L]]
+      attr(untrimmed_model, "margot_density_ratio_reused") <- !identical(outcome, outcomes[[1L]])
+      if (!is.null(after_model)) untrimmed_model <- after_model(untrimmed_model)
+      model$untrimmed_model <- untrimmed_model
+      model$untrimmed_record <- untrimmed_record
+    }
     model
   })
   names(models) <- outcomes
@@ -366,7 +416,8 @@ margot_lmtp_run_shared_tasks <- function(
     outcome_checkpoint_dir = NULL,
     estimator_spec_hash = NULL,
     stages = c("all", "density", "outcome"),
-    learner_audit = FALSE) {
+    learner_audit = FALSE,
+    untrimmed_sensitivity = FALSE) {
   progress <- match.arg(progress)
   scheduler <- match.arg(scheduler)
   stages <- match.arg(stages)
@@ -425,6 +476,9 @@ margot_lmtp_run_shared_tasks <- function(
     }
     if (isTRUE(learner_audit)) {
       shared_args$after_model <- margot_lmtp_audit_model
+    }
+    if (isTRUE(untrimmed_sensitivity)) {
+      shared_args$untrimmed <- TRUE
     }
     if (!is.null(seed)) {
       set.seed(seed)
