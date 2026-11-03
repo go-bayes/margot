@@ -93,7 +93,8 @@ test_that("the largest-task term covers the heap peak of a checkpoint write", {
   result <- margot_lmtp_checkpoint_compute(directory, "task", list(k = 1L), make_value)
   after <- gc()
   # vector-heap growth in bytes: "max used" cells after, less cells in use before, at 8 bytes a cell.
-  peak <- (after["Vcells", 6] - before["Vcells", 1]) * 8
+  # columns by name: gc() omits its limit column when no memory limit is set.
+  peak <- (after["Vcells", "max used"] - before["Vcells", "used"]) * 8
   rm(result)
   term <- margot_lmtp_memory_estimate(list(coordinator_bytes = 0, largest_task_value_bytes = size[["memory_bytes"]],
     largest_task_payload_bytes = size[["serialised_bytes"]], worker_data_bytes = 0, worker_fold_fit_bytes = 0,
