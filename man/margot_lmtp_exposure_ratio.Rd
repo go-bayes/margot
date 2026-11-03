@@ -41,12 +41,7 @@ The default lasso learner retains ten separate penalty-selection folds.}
 \item{structural_zero}{Logical vector identifying observed exposure values
 outside the policy image. Defaults to no known structural zeros.}
 
-\item{retain_fits}{Logical. When `FALSE`, each outer fold's fitted
-SuperLearner is replaced, inside its worker, by a small record of learner
-names, ensemble coefficients, cross-validated risks, error flags and inner
-folds, so fitted learners never reach the calling process. Ratios,
-probabilities, validation membership and warnings are unchanged. Default
-`TRUE` keeps the earlier behaviour.}
+\item{retain_fits}{Logical. When `FALSE`, each outer fold's fitted SuperLearner is replaced, inside its worker, by a small record of learner names, ensemble coefficients, cross-validated risks, error flags and inner folds, so fitted learners never reach the calling process. Ratios, probabilities, validation membership and warnings are unchanged. Default `TRUE` keeps the earlier behaviour.}
 }
 \value{
 A list containing uncapped `ratio`, classifier `probability`, complete

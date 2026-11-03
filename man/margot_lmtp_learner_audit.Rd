@@ -10,18 +10,10 @@ margot_lmtp_learner_audit(model)
 \item{model}{An lmtp model holding full fits.}
 }
 \value{
-A `margot_lmtp_learner_audit` list with two data frames: `learners`
-  (one row per stage, time, outer fold and learner) and `inner_folds` (one row
-  per ensemble, with the number and sizes of its inner validation folds).
+A `margot_lmtp_learner_audit` list with two data frames: `learners` (one row per stage, time, outer fold and learner) and `inner_folds` (one row per ensemble, with the number and sizes of its inner validation folds).
 }
 \description{
-Reads every SuperLearner ensemble held in an lmtp model fitted with
-`lmtp::lmtp_control(.return_full_fits = TRUE)`: the outcome regressions
-(`fits_m`) and the density-ratio classifiers (`fits_r`), for each outer fold
-and time point (lmtp 1.5.4 nests fits by fold, then time). For each ensemble
-it records the learner names, ensemble coefficients, cross-validated risks,
-the two error flags and the realised inner folds. These are the quantities a learner audit reports; the fitted
-learners themselves are not kept.
+Reads every SuperLearner ensemble held in an lmtp model fitted with `lmtp::lmtp_control(.return_full_fits = TRUE)`: the outcome regressions (`fits_m`) and the density-ratio classifiers (`fits_r`), for each outer fold and time point (lmtp 1.5.4 nests fits by fold, then time). For each ensemble it records the learner names, ensemble coefficients, cross-validated risks, the two error flags and the realised inner folds. These are the quantities a learner audit reports; the fitted learners themselves are not kept.
 }
 \seealso{
 [margot_lmtp_reduce_fits()], [margot_lmtp()] with `learner_audit = TRUE`.
