@@ -50,6 +50,9 @@ margot_lmtp_provenance_attributes <- c("file", "srcref", "srcfile", "wholeSrcref
 #' external pointers, other reference objects and S4 objects are refused,
 #' because their serialised form depends on the R process or holds content in
 #' slots; identify a function by a fingerprint of its source instead.
+#' Environments held in attributes, such as a formula's `.Environment`, are not
+#' refused; they make an identity depend on where the object was created, so
+#' pass a formula as deparsed text.
 #'
 #' @param identity A list identifying a checkpoint task.
 #' @return The canonical identity.
@@ -79,9 +82,16 @@ margot_lmtp_checkpoint_identity <- function(identity) {
       }
       if (length(replacements)) {
         kept <- attributes(x)
-        x <- unclass(x)
-        for (r in replacements) x[r$i] <- list(r$value)
-        attributes(x) <- kept
+        compact <- is.data.frame(x) && .row_names_info(x) < 0L
+        rows <- .row_names_info(x, type = 2L)
+        values <- lapply(seq_along(x), function(i) .subset2(x, i))
+        for (r in replacements) values[r$i] <- list(r$value)
+        # restore attributes one at a time in their original order, with a data frame's
+        # compact row names, so the serialised form matches an unmodified object.
+        for (name in names(kept)) {
+          attr(values, name) <- if (compact && name == "row.names") .set_row_names(rows) else kept[[name]]
+        }
+        x <- values
         changed <- TRUE
       }
     }

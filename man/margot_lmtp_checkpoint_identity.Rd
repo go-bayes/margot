@@ -23,6 +23,9 @@ identities written by earlier versions still match. Environments, closures,
 external pointers, other reference objects and S4 objects are refused,
 because their serialised form depends on the R process or holds content in
 slots; identify a function by a fingerprint of its source instead.
+Environments held in attributes, such as a formula's `.Environment`, are not
+refused; they make an identity depend on where the object was created, so
+pass a formula as deparsed text.
 }
 \examples{
 study <- structure(list(seed = 42L), class = c("toml", "list"), file = "/a/study.toml")
