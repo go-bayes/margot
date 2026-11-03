@@ -19,9 +19,10 @@
 #'   fingerprint of a function instead of the function.
 #' @param compute Zero-argument function computing a missing task.
 #' @param identities Named list of identities for the complete expected task set.
-#' @param load For `inventory`, whether to return each verified value. The
-#'   default `FALSE` verifies every file but returns metadata only (path and
-#'   checksums), so an inventory never holds the saved results in memory.
+#' @param load For `inventory`, whether to return each verified value. With
+#'   `load = FALSE`, every file is still verified but records hold metadata only
+#'   (path and checksums), so the inventory does not hold the saved results in
+#'   memory. The default `TRUE` keeps the earlier behaviour.
 #' @return `read` returns a verified record or `NULL`; `compute` returns a
 #'   record containing `value`, `path`, `reused` and checksums; `inventory`
 #'   returns completion status, a task table and verified records, which hold
@@ -34,19 +35,21 @@ NULL
 # reuse margot's verified atomic writer under exclusive local ownership.
 margot_lmtp_checkpoint_hash <- function(object) digest::digest(object, algo = "sha256")
 
-# attributes that describe content; every other attribute is dropped.
-margot_lmtp_identity_attributes <- c("names", "dim", "dimnames", "class", "levels", "row.names", "tzone")
+# attributes that record where an input came from rather than what it holds.
+margot_lmtp_provenance_attributes <- c("file", "srcref", "srcfile", "wholeSrcref")
 
 #' Canonical form of a checkpoint identity
 #'
-#' Returns `identity` with every attribute other than names, dimensions,
-#' dimension names, class, factor levels, row names and time zone removed,
-#' recursively. Attributes such as the absolute file path that RcppTOML attaches
-#' to a parsed TOML file therefore do not enter a checkpoint identity, and the
-#' same inputs read from two locations give the same identity. Environments,
-#' closures, external pointers and other reference objects are refused, because
-#' their serialised form depends on the R process rather than on the inputs;
-#' identify a function by a fingerprint of its source instead.
+#' Returns `identity` with provenance attributes removed, recursively: the
+#' absolute `file` path that RcppTOML attaches to a parsed TOML file, and
+#' source references (`srcref`, `srcfile`, `wholeSrcref`). The same inputs read
+#' from two locations therefore give the same identity. Every other attribute is
+#' kept, because attributes such as units, time-series parameters and contrasts
+#' carry content. An identity with nothing to remove is returned unchanged, so
+#' identities written by earlier versions still match. Environments, closures,
+#' external pointers, other reference objects and S4 objects are refused,
+#' because their serialised form depends on the R process or holds content in
+#' slots; identify a function by a fingerprint of its source instead.
 #'
 #' @param identity A list identifying a checkpoint task.
 #' @return The canonical identity.
@@ -57,23 +60,37 @@ margot_lmtp_identity_attributes <- c("names", "dim", "dimnames", "class", "level
 #' @export
 margot_lmtp_checkpoint_identity <- function(identity) {
   stopifnot(is.list(identity), length(identity) > 0L)
+  # returns NULL when `x` needs no change, so unchanged objects keep their exact
+  # serialised form; otherwise returns the canonical replacement.
   canonical <- function(x, path) {
-    if (is.environment(x) || is.function(x) || typeof(x) %in% c("externalptr", "weakref", "bytecode", "promise")) {
-      stop("A checkpoint identity cannot hold ", typeof(x), " objects (at ", path,
-        "); pass a fingerprint instead.", call. = FALSE)
+    if (is.environment(x) || is.function(x) || isS4(x) ||
+        typeof(x) %in% c("externalptr", "weakref", "bytecode", "promise", "S4")) {
+      stop("A checkpoint identity cannot hold ", if (isS4(x)) "S4" else typeof(x), " objects (at ", path,
+        "); pass a fingerprint or a plain representation instead.", call. = FALSE)
     }
-    if (is.list(x) && length(x)) {
+    changed <- FALSE
+    if (typeof(x) == "list" && length(x)) {
+      # walk the underlying list so class methods for `[[` cannot recurse or reshape.
       labels <- if (is.null(names(x))) seq_along(x) else names(x)
+      replacements <- list()
       for (i in seq_along(x)) {
-        value <- canonical(x[[i]], paste0(path, "/", labels[[i]]))
-        if (!is.null(value)) x[[i]] <- value
+        value <- canonical(.subset2(x, i), paste0(path, "/", labels[[i]]))
+        if (!is.null(value)) replacements[[as.character(i)]] <- list(i = i, value = value)
+      }
+      if (length(replacements)) {
+        kept <- attributes(x)
+        x <- unclass(x)
+        for (r in replacements) x[r$i] <- list(r$value)
+        attributes(x) <- kept
+        changed <- TRUE
       }
     }
-    kept <- attributes(x)[intersect(names(attributes(x)), margot_lmtp_identity_attributes)]
-    attributes(x) <- if (length(kept)) kept else NULL
-    x
+    drop <- intersect(names(attributes(x)), margot_lmtp_provenance_attributes)
+    for (name in drop) attr(x, name) <- NULL
+    if (changed || length(drop)) x else NULL
   }
-  canonical(identity, "identity")
+  result <- canonical(identity, "identity")
+  if (is.null(result)) identity else result
 }
 
 margot_lmtp_checkpoint_path <- function(directory, key) {
@@ -126,7 +143,9 @@ margot_lmtp_checkpoint_compute <- function(directory, key, identity, compute) {
   if (!is.null(existing)) return(existing)
   value <- compute()
   payload <- serialize(value, NULL, version = 3L)
-  # the computed value is released before the read-back, so two full copies are never held.
+  # release the computed value and payload as soon as each is no longer needed, which
+  # lowers the number of full copies held at the peak; the writer and the read-back
+  # still hold a record and its value together for a time.
   rm(value)
   record <- list(schema = "mlmtp_verified_checkpoint_v1", key = key, identity = identity,
     identity_sha256 = margot_lmtp_checkpoint_hash(identity), payload = payload,
@@ -145,7 +164,7 @@ margot_lmtp_checkpoint_compute <- function(directory, key, identity, compute) {
 # completion is reconciled against the caller's full task set, never inferred from existing files.
 #' @rdname margot_lmtp_checkpoints
 #' @export
-margot_lmtp_checkpoint_inventory <- function(directory, identities, load = FALSE) {
+margot_lmtp_checkpoint_inventory <- function(directory, identities, load = TRUE) {
   stopifnot(is.list(identities), length(identities) > 0L, !is.null(names(identities)),
     !anyDuplicated(names(identities)), isTRUE(load) || isFALSE(load))
   paths <- vapply(names(identities), function(key) margot_lmtp_checkpoint_path(directory, key), character(1))
@@ -171,7 +190,10 @@ margot_lmtp_checkpoint_inventory <- function(directory, identities, load = FALSE
 #'
 #' Walks `x` (lists and their elements, recursively) and stops if it reaches a
 #' fitted learner object: a SuperLearner ensemble (including lmtp's
-#' `lmtp_ensemble`), a ranger forest, an xgboost booster or a glmnet fit. Use it
+#' `lmtp_ensemble`), a ranger or randomForest forest, an xgboost booster, a
+#' glmnet fit, or an earth or gam fit. Lists are walked; environments
+#' (including R6 objects) and attributes are not, so a learner held inside an
+#' environment is not detected. Use it
 #' at each stage boundary of an analysis to confirm that results kept in memory
 #' or saved for reporting hold estimates and diagnostics, not fitted models.
 #'
@@ -182,7 +204,7 @@ margot_lmtp_checkpoint_inventory <- function(directory, identities, load = FALSE
 #' margot_lmtp_assert_lean(list(estimate = 1, weights = c(a = 0.5, b = 0.5)))
 #' @export
 margot_lmtp_assert_lean <- function(x, what = deparse(substitute(x))) {
-  heavy <- c("SuperLearner", "ranger", "xgb.Booster", "glmnet", "cv.glmnet")
+  heavy <- c("SuperLearner", "ranger", "randomForest", "xgb.Booster", "glmnet", "cv.glmnet", "earth", "gam")
   found <- character()
   walk <- function(object, path) {
     if (length(found) >= 5L) return(invisible(NULL))

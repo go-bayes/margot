@@ -1,12 +1,12 @@
 # Development
 
-- `margot_lmtp_checkpoint_inventory()` gains `load`, with default `FALSE`: it verifies every file's identity and checksum but returns metadata only, so an inventory no longer holds every saved result in memory. Callers that read `records[[key]]$value` from an inventory must pass `load = TRUE`.
+- `margot_lmtp_checkpoint_inventory()` gains `load`. With `load = FALSE`, every file's identity and checksums are still verified, but records hold path and checksums only, so the inventory does not hold the saved results in memory. The default `load = TRUE` keeps the earlier return.
 
-- Checkpoint identities are compared in canonical form through the new `margot_lmtp_checkpoint_identity()`. Attributes other than names, dimensions, dimension names, class, factor levels, row names and time zone are dropped, so the absolute file path RcppTOML attaches to a parsed study file no longer changes a task's identity, and the same code and inputs extracted at two locations reuse the same checkpoints. Environments, closures and external pointers are refused in an identity. Checkpoints written by margot 1.3.2 whose identities carried such attributes will not be reused by this version; a study that must reuse them keeps its pinned 1.3.2 library.
+- Checkpoint identities pass through the new `margot_lmtp_checkpoint_identity()`, which removes provenance attributes at any depth: the absolute `file` path RcppTOML attaches to a parsed study file, and source references. The same code and inputs extracted at two locations therefore reuse the same checkpoints. All other attributes are kept, and an identity with nothing to remove is unchanged byte for byte, so checkpoints written by 1.3.2 still verify unless their identity held a provenance attribute; those are recomputed under a new identity, or reused by a study that keeps its pinned 1.3.2 library. Environments, closures, external pointers and S4 objects are refused in an identity.
 
-- `margot_lmtp_checkpoint_compute()` releases the computed value and its serialised payload before reading the installed file back, so it no longer holds two full copies of a result at once. Its return value is unchanged.
+- `margot_lmtp_checkpoint_compute()` releases the computed value and its serialised payload as soon as each is no longer needed, lowering the number of full copies held at its peak. Its return value is unchanged.
 
-- `margot_lmtp_assert_lean()` stops if a fitted learner (a SuperLearner ensemble, including lmtp's `lmtp_ensemble`, a ranger forest, an xgboost booster or a glmnet fit) is reachable in an object, for use at each stage boundary of an analysis.
+- `margot_lmtp_assert_lean()` stops if a fitted learner (a SuperLearner ensemble, including lmtp's `lmtp_ensemble`; a ranger or randomForest forest; an xgboost booster; a glmnet, earth or gam fit) is reachable through the lists of an object, for use at each stage boundary of an analysis. Learners held inside environments are not detected.
 
 - `margot_lmtp_exposure_ratio()` estimates cross-fitted exposure-only ratios using paired natural and shifted records, with participant-grouped validation at the ensemble and lasso penalty stages. It retains uncapped ratios, learner failures and full validation membership; observation probabilities remain separate.
 

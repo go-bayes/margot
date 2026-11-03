@@ -11,7 +11,7 @@ margot_lmtp_checkpoint_read(directory, key, identity)
 
 margot_lmtp_checkpoint_compute(directory, key, identity, compute)
 
-margot_lmtp_checkpoint_inventory(directory, identities, load = FALSE)
+margot_lmtp_checkpoint_inventory(directory, identities, load = TRUE)
 }
 \arguments{
 \item{directory}{Private directory for these tasks.}
@@ -27,9 +27,10 @@ fingerprint of a function instead of the function.}
 
 \item{identities}{Named list of identities for the complete expected task set.}
 
-\item{load}{For \code{inventory}, whether to return each verified value. The
-default \code{FALSE} verifies every file but returns metadata only (path and
-checksums), so an inventory never holds the saved results in memory.}
+\item{load}{For \code{inventory}, whether to return each verified value. With
+\code{load = FALSE}, every file is still verified but records hold metadata only
+(path and checksums), so the inventory does not hold the saved results in
+memory. The default \code{TRUE} keeps the earlier behaviour.}
 }
 \value{
 \code{read} returns a verified record or \code{NULL}; \code{compute} returns a
