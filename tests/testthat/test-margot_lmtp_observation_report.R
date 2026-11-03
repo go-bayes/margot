@@ -1,7 +1,7 @@
 # generated observation masks and probabilities only.
 
-# the ARC study calculation this report generalises, kept verbatim for comparison.
-mqi_reference <- function(reached_matrix, observed_matrix, probability_matrix) {
+# the earlier study-local calculation this report generalises, kept verbatim for comparison.
+reference_calculation <- function(reached_matrix, observed_matrix, probability_matrix) {
   do.call(rbind, lapply(seq_len(ncol(reached_matrix)), function(j) {
     reached <- reached_matrix[, j]
     y <- as.numeric(observed_matrix[reached, j])
@@ -45,7 +45,7 @@ test_that("valid random inputs reproduce the study calculation exactly", {
   }
   observed[!reached] <- FALSE
   report <- margot_lmtp_observation_report(reached, observed, probability)
-  reference <- mqi_reference(reached, observed, probability)
+  reference <- reference_calculation(reached, observed, probability)
   expect_identical(report$wave, paste0("Wave ", seq_len(waves)))
   expect_identical(report$brier, reference$brier)
   expect_identical(report$log_loss, reference$log_loss)
