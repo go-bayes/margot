@@ -241,7 +241,8 @@ margot_lmtp_sdr_shared <- function(
     weights = weights
   )
   progress_bar <- progressr::progressor(
-    steps = source_task$time_horizon * folds * (length(outcomes) + 1L)
+    steps = source_task$time_horizon * folds *
+      ((if (isTRUE(untrimmed)) 2L else 1L) * length(outcomes) + 1L)
   )
   # for the untrimmed sensitivity (D19), the density stage is fitted once without a
   # cap; lmtp applies its cap after the density fits, without random numbers, so the
@@ -335,17 +336,24 @@ margot_lmtp_sdr_shared <- function(
     if (isTRUE(untrimmed)) {
       # the untrimmed recursion starts from the same post-density state as the capped one
       margot_lmtp_restore_seed(post_ratio_seed)
-      untrimmed_model <- margot_lmtp_fit_sdr_outcome(
-        task = task,
-        density_fit = untrimmed_fit,
-        learners_outcome = learners_outcome,
-        control = control,
-        progress_bar = progress_bar,
-        shift_label = shift_label
-      )
-      attr(untrimmed_model, "margot_density_ratio_source") <- outcomes[[1L]]
-      attr(untrimmed_model, "margot_density_ratio_reused") <- !identical(outcome, outcomes[[1L]])
-      if (!is.null(after_model)) untrimmed_model <- after_model(untrimmed_model)
+      # a failed sensitivity is recorded beside the primary, which is kept (D19)
+      untrimmed_model <- tryCatch({
+        fitted_untrimmed <- margot_lmtp_fit_sdr_outcome(
+          task = task,
+          density_fit = untrimmed_fit,
+          learners_outcome = learners_outcome,
+          control = control,
+          progress_bar = progress_bar,
+          shift_label = shift_label
+        )
+        attr(fitted_untrimmed, "margot_density_ratio_source") <- outcomes[[1L]]
+        attr(fitted_untrimmed, "margot_density_ratio_reused") <- !identical(outcome, outcomes[[1L]])
+        if (!is.null(after_model)) fitted_untrimmed <- after_model(fitted_untrimmed)
+        fitted_untrimmed
+      }, error = function(e) {
+        model$untrimmed_failure <<- list(message = conditionMessage(e), class = class(e))
+        NULL
+      })
       model$untrimmed_model <- untrimmed_model
       model$untrimmed_record <- untrimmed_record
     }
@@ -534,6 +542,12 @@ margot_lmtp_run_shared_tasks <- function(
         fitted[[outcome]], data = data, trt = trt
       )
       attr(result$model, "margot_density_ratio_fit_id") <- shift_name
+      if (!is.null(result$model$untrimmed_model)) {
+        result$model$untrimmed_model <- margot_lmtp_attach_exposure_by_wave(
+          result$model$untrimmed_model, data = data, trt = trt
+        )
+        attr(result$model$untrimmed_model, "margot_density_ratio_fit_id") <- shift_name
+      }
       if (save_output && !is.null(checkpoint_dir)) {
         checkpoint_file <- paste0(outcome, "_", shift_name, ".rds")
         checkpoint_path <- file.path(checkpoint_dir, checkpoint_file)

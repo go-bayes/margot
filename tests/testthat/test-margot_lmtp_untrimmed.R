@@ -53,7 +53,7 @@ test_that("capped and untrimmed results equal native lmtp calls exactly (sequent
   # the primary output keeps its usual structure, with the capping record beside it.
   expect_null(output$models$y$y_down$untrimmed_model)
   expect_identical(output$models$y$y_down$untrimmed_record, record)
-  expect_true(length(output$untrimmed_sensitivity$contrasts) >= 0L)
+  expect_length(output$untrimmed_sensitivity$failures, 0L)
 })
 
 test_that("results do not depend on worker timing (multisession plan)", {
@@ -71,6 +71,9 @@ test_that("results do not depend on worker timing (multisession plan)", {
       shared_ratio_numerics(sequential$models[[outcome]][[name]]))
     expect_identical(shared_ratio_numerics(parallel$untrimmed_sensitivity$models[[outcome]][[name]]),
       shared_ratio_numerics(sequential$untrimmed_sensitivity$models[[outcome]][[name]]))
+    expect_identical(parallel$models[[outcome]][[name]]$fits_m, sequential$models[[outcome]][[name]]$fits_m)
+    expect_identical(parallel$untrimmed_sensitivity$models[[outcome]][[name]]$fits_m,
+      sequential$untrimmed_sensitivity$models[[outcome]][[name]]$fits_m)
   }
 })
 
@@ -97,4 +100,67 @@ test_that("the untrimmed route refuses calls without a registered cap or on anot
     untrimmed_sensitivity = TRUE)), class = "margot_error_untrimmed_route")
   expect_error(run_untrimmed(data, cap = 0.9, manage_future_plan = TRUE),
     class = "margot_error_untrimmed_route")
+})
+
+test_that("censoring, two policies and a stochastic learner match native calls and give contrasts", {
+  skip_if_not_installed("ranger")
+  old_plan <- future::plan()
+  on.exit(future::plan(old_plan), add = TRUE)
+  future::plan(future::sequential)
+  set.seed(19)
+  n <- 220L
+  data <- data.frame(id = seq_len(n), w = stats::rnorm(n), a1 = stats::rnorm(n), l2 = stats::rnorm(n),
+    a2 = stats::rnorm(n))
+  data$c1 <- as.numeric(stats::runif(n) > 0.1)
+  data$c2 <- ifelse(data$c1 == 1, as.numeric(stats::runif(n) > 0.1), 0)
+  data$y <- data$a1 + data$a2 + data$w + stats::rnorm(n)
+  data$y[data$c2 == 0] <- NA_real_
+  data$a2[data$c1 == 0] <- NA_real_
+  data$l2[data$c1 == 0] <- NA_real_
+  shifts <- list(down = function(data, trt) data[[trt]] - 0.5, up = function(data, trt) data[[trt]] + 0.5)
+  defaults <- function(cap) list(baseline = "w", time_vary = list(NULL, "l2"), cens = c("c1", "c2"),
+    outcome_type = "continuous", id = "id", folds = 2L, learners_trt = c("SL.glm", "SL.ranger"),
+    learners_outcome = c("SL.glm", "SL.mean"), control = lmtp::lmtp_control(.trim = cap))
+  output <- suppressMessages(margot_lmtp(data, outcome_vars = "y", trt = c("a1", "a2"),
+    shift_functions = shifts, include_null_shift = FALSE, lmtp_model_type = lmtp::lmtp_sdr,
+    lmtp_defaults = defaults(0.9), seed = 3031L, progress = "none", reuse_density_ratios = TRUE,
+    untrimmed_sensitivity = TRUE))
+  native <- function(shift, cap) {
+    set.seed(3031L)
+    do.call(lmtp::lmtp_sdr, c(list(data = data, trt = c("a1", "a2"), outcome = "y", shift = shift), defaults(cap)))
+  }
+  for (name in names(shifts)) {
+    model_name <- paste0("y_", name)
+    expect_identical(shared_ratio_numerics(output$models$y[[model_name]]),
+      shared_ratio_numerics(native(shifts[[name]], 0.9)))
+    expect_identical(shared_ratio_numerics(output$untrimmed_sensitivity$models$y[[model_name]]),
+      shared_ratio_numerics(native(shifts[[name]], 1)))
+    expect_gt(output$untrimmed_sensitivity$capping$y[[model_name]]$capped_entries, 0L)
+  }
+  # the sensitivity has its own contrasts and tables, in the primary's structure.
+  expect_identical(names(output$untrimmed_sensitivity$contrasts), names(output$contrasts))
+  expect_true(length(output$untrimmed_sensitivity$contrasts) > 0L)
+  expect_identical(names(output$untrimmed_sensitivity$combined_tables), names(output$combined_tables))
+})
+
+test_that("a failed untrimmed recursion is reported and the capped primary is kept", {
+  old_plan <- future::plan()
+  on.exit(future::plan(old_plan), add = TRUE)
+  future::plan(future::sequential)
+  data <- untrimmed_fixture()
+  real_fit <- margot_lmtp_fit_sdr_outcome
+  calls <- 0L
+  # every second outcome recursion is an untrimmed one; make the first of those fail.
+  testthat::local_mocked_bindings(margot_lmtp_fit_sdr_outcome = function(...) {
+    calls <<- calls + 1L
+    if (calls == 2L) stop("simulated learner failure on raw ratios")
+    real_fit(...)
+  })
+  output <- run_untrimmed(data, cap = 0.9)
+  expect_identical(shared_ratio_numerics(output$models$y$y_down), shared_ratio_numerics(native_fit(data, "y", 0.9)))
+  expect_length(output$untrimmed_sensitivity$failures, 1L)
+  expect_match(output$untrimmed_sensitivity$failures[[1L]]$message, "simulated learner failure")
+  expect_null(output$untrimmed_sensitivity$models$y$y_down)
+  expect_identical(shared_ratio_numerics(output$untrimmed_sensitivity$models$z$z_down),
+    shared_ratio_numerics(native_fit(data, "z", 1)))
 })

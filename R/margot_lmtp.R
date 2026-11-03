@@ -197,7 +197,7 @@
 #'   returned models, contrasts, and tables retain the existing Margot
 #'   structure. Default is `FALSE` while the opt-in path is validated.
 #' @param learner_audit Logical. When `TRUE`, each model is fitted with full learner fits, a learner audit is recorded from them (learner names, ensemble coefficients, cross-validated risks, error flags and realised inner folds; see [margot_lmtp_learner_audit()]), and the model is then reduced to lmtp's lean form before it is saved or returned. On the per-fit route one model's full fits exist only while it is being fitted; on the shared route each outcome's fits are reduced as soon as it is fitted, while the policy's full density fits are held until all its outcomes are done. The returned model equals a default lmtp fit plus a `learner_audit` element. Applies to the lmtp estimators on the per-fit and fold-parallel shared routes; it stops on the task-parallel route and when `.return_full_fits = TRUE` is requested. Default `FALSE` keeps the earlier behaviour.
-#' @param untrimmed_sensitivity Logical. When `TRUE`, runs the prespecified untrimmed outcome-stage sensitivity (ARC decision D19) beside the capped primary. On the fold-parallel shared route (`reuse_density_ratios = TRUE`, `manage_future_plan = FALSE`), each policy's density stage is fitted once without a cap; the registered cap in `lmtp_defaults$control$.trim` is applied to a copy with lmtp's own pooled quantile rule; and the capped and untrimmed outcome recursions both start from the same post-density random-number state. The capped models equal a native `lmtp::lmtp_sdr()` call at the registered cap, and the untrimmed models equal a native call at `.trim = 1`, with the same seed, folds and histories. The primary output is unchanged apart from an `untrimmed_record` element on each model (cap, threshold, number and proportion of capped entries, raw and capped ranges); the sensitivity is returned as `untrimmed_sensitivity`, with its own models, contrasts and tables and the capping records. Outcomes must share censoring and histories within one call; run outcome groups separately where they differ. Default `FALSE`.
+#' @param untrimmed_sensitivity Logical. When `TRUE`, runs the prespecified untrimmed outcome-stage sensitivity (ARC decision D19) beside the capped primary. On the fold-parallel shared route (`reuse_density_ratios = TRUE`, `manage_future_plan = FALSE`), each policy's density stage is fitted once without a cap; the registered cap in `lmtp_defaults$control$.trim` is applied to a copy with lmtp's own pooled quantile rule; and the capped and untrimmed outcome recursions both start from the same post-density random-number state. The capped models equal a native `lmtp::lmtp_sdr()` call at the registered cap, and the untrimmed models equal a native call at `.trim = 1`, with the same seed, folds and histories. The primary output is unchanged apart from an `untrimmed_record` element on each model (cap, threshold, number and proportion of capped entries, raw and capped ranges; the denominator counts every entry of the pooled ratio matrix, including censored and not-at-risk cells); the sensitivity is returned as `untrimmed_sensitivity`, with its own models, contrasts and tables, the capping records and `failures`. A failed untrimmed recursion is recorded in `failures` with its reason, and the capped primary is kept. Restoring from checkpoints does not yet rebuild `untrimmed_sensitivity`, and the uncapped density stage is not checkpointed for a restart within a run (a rerun refits it and reproduces the same results). Outcomes must share censoring and histories within one call; run outcome groups separately where they differ. Default `FALSE`.
 #'
 #' @return A list containing:
 #'   \item{models}{A list of all LMTP models for each outcome and shift function.}
@@ -1120,8 +1120,10 @@ margot_lmtp <- function(
   # primary output keeps its usual structure and the sensitivity gets its own
   untrimmed_models <- NULL
   if (isTRUE(untrimmed_sensitivity)) {
+    # a failed sensitivity cell is absent from the sensitivity models, as a failed
+    # model is from the primary, and its reason is reported in `failures`
     untrimmed_models <- lapply(all_models, function(outcome_models) {
-      lapply(outcome_models, function(model) model$untrimmed_model)
+      Filter(Negate(is.null), lapply(outcome_models, function(model) model$untrimmed_model))
     })
     all_models <- lapply(all_models, function(outcome_models) {
       lapply(outcome_models, function(model) {
@@ -1166,8 +1168,16 @@ margot_lmtp <- function(
       combined_tables = untrimmed_finalized$combined_tables,
       capping = lapply(all_models, function(outcome_models) {
         lapply(outcome_models, function(model) model$untrimmed_record)
-      })
+      }),
+      failures = Filter(Negate(is.null), unlist(lapply(all_models, function(outcome_models) {
+        lapply(outcome_models, function(model) model$untrimmed_failure)
+      }), recursive = FALSE))
     )
+    if (length(complete_output$untrimmed_sensitivity$failures)) {
+      cli::cli_alert_warning(
+        "Untrimmed sensitivity failed for {length(complete_output$untrimmed_sensitivity$failures)} model{?s}; the capped primary results are kept and the reasons are in {.code untrimmed_sensitivity$failures}."
+      )
+    }
   }
   if (isTRUE(reuse_density_ratios)) {
     # the density-fit count is observed from the returned task records rather
