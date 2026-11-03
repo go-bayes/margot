@@ -24,6 +24,7 @@
 #'   The default lasso learner retains ten separate penalty-selection folds.
 #' @param structural_zero Logical vector identifying observed exposure values
 #'   outside the policy image. Defaults to no known structural zeros.
+#' @param retain_fits Logical. When `FALSE`, each outer fold's fitted SuperLearner is replaced, inside its worker, by a small record of learner names, ensemble coefficients, cross-validated risks, error flags and inner folds, so fitted learners never reach the calling process. Ratios, probabilities, validation membership and warnings are unchanged. Default `TRUE` keeps the earlier behaviour.
 #' @return A list containing uncapped `ratio`, classifier `probability`, complete
 #'   outer-fold `fits`, input row identities and the requested learner settings.
 #'   Unreached records have missing ratios and probabilities. Fits retain models,
@@ -37,7 +38,7 @@
 #' @export
 margot_lmtp_exposure_ratio <- function(data, exposure, history, shifted, id,
     fold_id, reached, learners = c("SL.mean", "SL.glmnet", "SL.ranger", "SL.xgboost"),
-    inner_folds = 10L, structural_zero = rep(FALSE, nrow(data))) {
+    inner_folds = 10L, structural_zero = rep(FALSE, nrow(data)), retain_fits = TRUE) {
   n <- nrow(data)
   stopifnot(is.data.frame(data), n > 0L, is.character(exposure), length(exposure) == 1L,
     is.character(history), !anyNA(history), !anyDuplicated(history),
@@ -49,7 +50,7 @@ margot_lmtp_exposure_ratio <- function(data, exposure, history, shifted, id,
     is.logical(structural_zero), length(structural_zero) == n, !anyNA(structural_zero),
     is.character(learners), length(learners) > 0L, !anyNA(learners), !anyDuplicated(learners),
     length(inner_folds) == 1L, is.finite(inner_folds), inner_folds >= 2L,
-    inner_folds == as.integer(inner_folds))
+    inner_folds == as.integer(inner_folds), isTRUE(retain_fits) || isFALSE(retain_fits))
   folds <- sort(unique(fold_id))
   stopifnot(length(folds) >= 2L, identical(folds, seq_along(folds)),
     all(is.finite(data[[exposure]][reached])), all(is.finite(shifted[reached])),
@@ -113,7 +114,7 @@ margot_lmtp_exposure_ratio <- function(data, exposure, history, shifted, id,
     }
     p <- as.numeric(fit$SL.predict)
     ratios <- margot_exposure_odds(p, structural_zero[valid])
-    list(model = fit, probability = p, ratio = ratios,
+    list(model = if (retain_fits) fit else margot_lmtp_lean_sl(fit), probability = p, ratio = ratios,
       training = train, validation = valid, training_ids = id[train],
       validation_ids = id[valid], stack_ids = stack_ids,
       inner_valid_rows = valid_rows, lasso_folds = learner_environment$.lasso_folds,

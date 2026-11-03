@@ -27,7 +27,8 @@ margot_lmtp(
   seed = NULL,
   reuse_density_ratios = FALSE,
   stages = c("all", "density", "outcome"),
-  estimator_spec = NULL
+  estimator_spec = NULL,
+  learner_audit = FALSE
 )
 }
 \arguments{
@@ -106,6 +107,8 @@ and `save_output = TRUE`. See the "Stage-split execution" section.}
 [margot_lmtp_estimator_spec()]. When supplied, the `lmtp` call
 is built from the specification and every conflicting user argument
 errors.}
+
+\item{learner_audit}{Logical. When `TRUE`, each model is fitted with full learner fits, a learner audit is recorded from them (learner names, ensemble coefficients, cross-validated risks, error flags and realised inner folds; see [margot_lmtp_learner_audit()]), and the model is then reduced to lmtp's lean form before it is saved or returned. On the per-fit route one model's full fits exist only while it is being fitted; on the shared route each outcome's fits are reduced as soon as it is fitted, while the policy's full density fits are held until all its outcomes are done. The returned model equals a default lmtp fit plus a `learner_audit` element. Applies to the lmtp estimators on the per-fit and fold-parallel shared routes; it stops on the task-parallel route and when `.return_full_fits = TRUE` is requested. Default `FALSE` keeps the earlier behaviour.}
 }
 \value{
 A list containing:

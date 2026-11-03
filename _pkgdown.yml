@@ -116,6 +116,8 @@ reference:
     - margot_lmtp_checkpoints
     - margot_lmtp_checkpoint_identity
     - margot_lmtp_assert_lean
+    - margot_lmtp_learner_audit
+    - margot_lmtp_reduce_fits
     - margot_lmtp_restore_checkpoints
     - print.margot_lmtp_density_stage
     - margot_naive_regressions
