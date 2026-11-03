@@ -204,6 +204,7 @@
 #'   \item{contrasts}{A list of contrasts computed for each outcome.}
 #'   \item{individual_tables}{A list of individual tables for each contrast and outcome.}
 #'   \item{combined_tables}{A list of combined tables for each contrast type across all outcomes.}
+#'   \item{untrimmed_sensitivity}{Only when `untrimmed_sensitivity = TRUE`: a list with `models`, `contrasts`, `individual_tables`, `combined_tables`, `capping` records and `failures`.}
 #'
 #' @examples
 #' \dontrun{
