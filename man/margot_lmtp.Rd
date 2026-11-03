@@ -28,7 +28,8 @@ margot_lmtp(
   reuse_density_ratios = FALSE,
   stages = c("all", "density", "outcome"),
   estimator_spec = NULL,
-  learner_audit = FALSE
+  learner_audit = FALSE,
+  untrimmed_sensitivity = FALSE
 )
 }
 \arguments{
@@ -109,6 +110,8 @@ is built from the specification and every conflicting user argument
 errors.}
 
 \item{learner_audit}{Logical. When `TRUE`, each model is fitted with full learner fits, a learner audit is recorded from them (learner names, ensemble coefficients, cross-validated risks, error flags and realised inner folds; see [margot_lmtp_learner_audit()]), and the model is then reduced to lmtp's lean form before it is saved or returned. On the per-fit route one model's full fits exist only while it is being fitted; on the shared route each outcome's fits are reduced as soon as it is fitted, while the policy's full density fits are held until all its outcomes are done. The returned model equals a default lmtp fit plus a `learner_audit` element. Applies to the lmtp estimators on the per-fit and fold-parallel shared routes; it stops on the task-parallel route and when `.return_full_fits = TRUE` is requested. Default `FALSE` keeps the earlier behaviour.}
+
+\item{untrimmed_sensitivity}{Logical. When `TRUE`, runs the prespecified untrimmed outcome-stage sensitivity (ARC decision D19) beside the capped primary. On the fold-parallel shared route (`reuse_density_ratios = TRUE`, `manage_future_plan = FALSE`), each policy's density stage is fitted once without a cap; the registered cap in `lmtp_defaults$control$.trim` is applied to a copy with lmtp's own pooled quantile rule; and the capped and untrimmed outcome recursions both start from the same post-density random-number state. The capped models equal a native `lmtp::lmtp_sdr()` call at the registered cap, and the untrimmed models equal a native call at `.trim = 1`, with the same seed, folds and histories. The primary output is unchanged apart from an `untrimmed_record` element on each model (cap, threshold, number and proportion of capped entries, raw and capped ranges; the denominator counts every entry of the pooled ratio matrix, including censored and not-at-risk cells); the sensitivity is returned as `untrimmed_sensitivity`, with its own models, contrasts and tables, the capping records and `failures`. A failed untrimmed recursion is recorded in `failures` with its reason, and the capped primary is kept. Restoring from checkpoints does not yet rebuild `untrimmed_sensitivity`, and the uncapped density stage is not checkpointed for a restart within a run (a rerun refits it and reproduces the same results). Outcomes must share censoring and histories within one call; run outcome groups separately where they differ. Default `FALSE`.}
 }
 \value{
 A list containing:
@@ -116,6 +119,7 @@ A list containing:
   \item{contrasts}{A list of contrasts computed for each outcome.}
   \item{individual_tables}{A list of individual tables for each contrast and outcome.}
   \item{combined_tables}{A list of combined tables for each contrast type across all outcomes.}
+  \item{untrimmed_sensitivity}{Only when `untrimmed_sensitivity = TRUE`: a list with `models`, `contrasts`, `individual_tables`, `combined_tables`, `capping` records and `failures`.}
 }
 \description{
 This function runs multiple Longitudinal Modified Treatment Policy (LMTP) models for specified outcome variables,
