@@ -1,5 +1,13 @@
 # Development
 
+- `margot_lmtp_checkpoint_inventory()` gains `load`. With `load = FALSE`, every file's identity and checksums are still verified, but records hold path and checksums only, so the inventory does not hold the saved results in memory. The default `load = TRUE` keeps the earlier return.
+
+- Checkpoint identities pass through the new `margot_lmtp_checkpoint_identity()`, which removes provenance attributes at any depth: the absolute `file` path RcppTOML attaches to a parsed study file, and source references. The same code and inputs extracted at two locations therefore reuse the same checkpoints. All other attributes are kept, and an identity with nothing to remove is unchanged byte for byte, so checkpoints written by 1.3.2 still verify unless their identity held a provenance attribute (for example a parsed study TOML). Reading such a checkpoint stops with an identity mismatch; move the earlier file aside to recompute it, or keep the study's pinned 1.3.2 library to reuse it. Environments, closures, external pointers and S4 objects are refused in an identity.
+
+- `margot_lmtp_checkpoint_compute()` releases the computed value and its serialised payload as soon as each is no longer needed, lowering the number of full copies held at its peak. Its return value is unchanged.
+
+- `margot_lmtp_assert_lean()` stops if a fitted learner (a SuperLearner ensemble, including lmtp's `lmtp_ensemble`; a ranger or randomForest forest; an xgboost booster; a glmnet, earth or gam fit) is reachable through the lists of an object, for use at each stage boundary of an analysis. Learners held inside environments are not detected.
+
 - `margot_lmtp_exposure_ratio()` estimates cross-fitted exposure-only ratios using paired natural and shifted records, with participant-grouped validation at the ensemble and lasso penalty stages. It retains uncapped ratios, learner failures and full validation membership; observation probabilities remain separate.
 
 # [2026-10-13] margot 1.3.2

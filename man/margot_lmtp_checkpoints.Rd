@@ -11,7 +11,7 @@ margot_lmtp_checkpoint_read(directory, key, identity)
 
 margot_lmtp_checkpoint_compute(directory, key, identity, compute)
 
-margot_lmtp_checkpoint_inventory(directory, identities)
+margot_lmtp_checkpoint_inventory(directory, identities, load = TRUE)
 }
 \arguments{
 \item{directory}{Private directory for these tasks.}
@@ -19,16 +19,24 @@ margot_lmtp_checkpoint_inventory(directory, identities)
 \item{key}{Unique task name using lowercase letters, digits and underscores.}
 
 \item{identity}{Nonempty list identifying all result-affecting inputs,
-ordered participants, histories, folds, weights, settings and code/builds.}
+ordered participants, histories, folds, weights, settings and code/builds.
+Environments, closures and external pointers are refused; pass a
+fingerprint of a function instead of the function.}
 
 \item{compute}{Zero-argument function computing a missing task.}
 
 \item{identities}{Named list of identities for the complete expected task set.}
+
+\item{load}{For \code{inventory}, whether to return each verified value. With
+\code{load = FALSE}, every file is still verified but records hold metadata only
+(path and checksums), so the inventory does not hold the saved results in
+memory. The default \code{TRUE} keeps the earlier behaviour.}
 }
 \value{
 \code{read} returns a verified record or \code{NULL}; \code{compute} returns a
 record containing \code{value}, \code{path}, \code{reused} and checksums; \code{inventory}
-returns completion status, a task table and verified records.
+returns completion status, a task table and verified records, which hold
+\code{value} only when \code{load = TRUE}.
 }
 \description{
 A caller defines each task's complete scientific and runtime identity. A
@@ -36,4 +44,10 @@ completed result is reused only after checking that identity and the payload
 checksum. Computation and installation hold exclusive local ownership.
 An existing ownership directory requires inspection; locks never expire
 automatically. These functions do not define estimators or schedule workers.
+}
+\details{
+Identities are compared in canonical form (see
+\code{\link[=margot_lmtp_checkpoint_identity]{margot_lmtp_checkpoint_identity()}}), so attributes that record where an
+input came from, such as the file path RcppTOML attaches to a parsed study
+file, do not change a task's identity.
 }
