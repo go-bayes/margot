@@ -362,7 +362,8 @@ margot_lmtp_run_shared_tasks <- function(
     density_checkpoint_dir = NULL,
     outcome_checkpoint_dir = NULL,
     estimator_spec_hash = NULL,
-    stages = c("all", "density", "outcome")) {
+    stages = c("all", "density", "outcome"),
+    learner_audit = FALSE) {
   progress <- match.arg(progress)
   scheduler <- match.arg(scheduler)
   stages <- match.arg(stages)
@@ -469,9 +470,9 @@ margot_lmtp_run_shared_tasks <- function(
         model = NULL,
         error = NULL
       )
-      result$model <- margot_lmtp_attach_exposure_by_wave(
-        fitted[[outcome]], data = data, trt = trt
-      )
+      model <- fitted[[outcome]]
+      if (isTRUE(learner_audit)) model <- margot_lmtp_audit_model(model)
+      result$model <- margot_lmtp_attach_exposure_by_wave(model, data = data, trt = trt)
       attr(result$model, "margot_density_ratio_fit_id") <- shift_name
       if (save_output && !is.null(checkpoint_dir)) {
         checkpoint_file <- paste0(outcome, "_", shift_name, ".rds")
