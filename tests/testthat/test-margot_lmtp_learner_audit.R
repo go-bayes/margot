@@ -110,3 +110,43 @@ test_that("exposure ratios keep only learner records when retain_fits = FALSE", 
   expect_error(margot_lmtp_assert_lean(full))
   margot_lmtp_assert_lean(lean)
 })
+
+test_that("the audit labels every fold and time point and checkpoints stay lean", {
+  old_plan <- future::plan()
+  on.exit(future::plan(old_plan), add = TRUE)
+  future::plan(future::sequential)
+  set.seed(7)
+  n <- 150L
+  data <- data.frame(id = seq_len(n), w = stats::rnorm(n), a1 = stats::rnorm(n), l2 = stats::rnorm(n),
+    a2 = stats::rnorm(n))
+  data$y <- data$a1 + data$a2 + data$w + stats::rnorm(n)
+  shift <- function(data, trt) data[[trt]] - 0.2
+  defaults <- list(baseline = "w", time_vary = list(NULL, "l2"), outcome_type = "continuous", id = "id",
+    folds = 2L, learners_trt = c("SL.glm", "SL.mean"), learners_outcome = c("SL.glm", "SL.mean"))
+  fit <- function(full) {
+    set.seed(11L)
+    do.call(lmtp::lmtp_sdr, c(list(data = data, trt = c("a1", "a2"), outcome = "y", shift = shift,
+      control = lmtp::lmtp_control(.return_full_fits = full)), defaults))
+  }
+  lean <- fit(FALSE)
+  audit <- margot_lmtp_learner_audit(fit(TRUE))
+  # every (stage, fold, time) coefficient matches the lean model's fits[[fold]][[time]].
+  stored <- list(outcome = lean$fits_m, density = lean$fits_r)
+  keys <- unique(audit$learners[c("stage", "fold", "time")])
+  expect_equal(nrow(keys), 2L * 2L * 2L)
+  for (i in seq_len(nrow(keys))) {
+    rows <- audit$learners[audit$learners$stage == keys$stage[i] & audit$learners$fold == keys$fold[i] &
+      audit$learners$time == keys$time[i], ]
+    expect_equal(rows$coefficient, unname(stored[[keys$stage[i]]][[keys$fold[i]]][[keys$time[i]]]))
+  }
+  destination <- tempfile("audited-")
+  on.exit(unlink(destination, recursive = TRUE), add = TRUE)
+  output <- suppressMessages(margot_lmtp(data, outcome_vars = "y", trt = c("a1", "a2"),
+    shift_functions = list(down = shift), include_null_shift = FALSE, lmtp_model_type = lmtp::lmtp_sdr,
+    lmtp_defaults = defaults, seed = 11L, progress = "none", save_output = TRUE,
+    save_path = destination, learner_audit = TRUE))
+  saved <- list.files(destination, "[.]rds$", recursive = TRUE, full.names = TRUE)
+  expect_true(length(saved) >= 1L)
+  for (path in saved) margot_lmtp_assert_lean(readRDS(path), what = basename(path))
+  expect_s3_class(output$models$y$y_down$learner_audit, "margot_lmtp_learner_audit")
+})

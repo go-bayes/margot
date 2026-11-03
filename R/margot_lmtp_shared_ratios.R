@@ -177,7 +177,8 @@ margot_lmtp_sdr_shared <- function(
     learners_trt = "SL.glm",
     folds = 10,
     weights = NULL,
-    control = lmtp::lmtp_control()) {
+    control = lmtp::lmtp_control(),
+    after_model = NULL) {
   margot_lmtp_internal("LmtpTask")
   if (!is.character(outcomes) || length(outcomes) < 1L || anyNA(outcomes) || any(!nzchar(outcomes))) {
     cli::cli_abort(
@@ -296,6 +297,8 @@ margot_lmtp_sdr_shared <- function(
     )
     attr(model, "margot_density_ratio_source") <- outcomes[[1L]]
     attr(model, "margot_density_ratio_reused") <- !identical(outcome, outcomes[[1L]])
+    # an optional per-model step (the learner audit) runs before the next outcome is fitted
+    if (!is.null(after_model)) model <- after_model(model)
     model
   })
   names(models) <- outcomes
@@ -420,6 +423,9 @@ margot_lmtp_run_shared_tasks <- function(
     if (!is.null(mtp_by_arm)) {
       shared_args$mtp <- unname(mtp_by_arm[[shift_name]])
     }
+    if (isTRUE(learner_audit)) {
+      shared_args$after_model <- margot_lmtp_audit_model
+    }
     if (!is.null(seed)) {
       set.seed(seed)
     }
@@ -470,9 +476,9 @@ margot_lmtp_run_shared_tasks <- function(
         model = NULL,
         error = NULL
       )
-      model <- fitted[[outcome]]
-      if (isTRUE(learner_audit)) model <- margot_lmtp_audit_model(model)
-      result$model <- margot_lmtp_attach_exposure_by_wave(model, data = data, trt = trt)
+      result$model <- margot_lmtp_attach_exposure_by_wave(
+        fitted[[outcome]], data = data, trt = trt
+      )
       attr(result$model, "margot_density_ratio_fit_id") <- shift_name
       if (save_output && !is.null(checkpoint_dir)) {
         checkpoint_file <- paste0(outcome, "_", shift_name, ".rds")

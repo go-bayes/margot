@@ -17,5 +17,6 @@ Replaces each SuperLearner ensemble in `fits_m` and `fits_r` by its ensemble
 coefficients, which is what lmtp 1.5.4 stores when a model is fitted with the
 default `.return_full_fits = FALSE`. Estimates, influence functions, density
 ratios and every other component are unchanged, so the reduced model equals
-the model lmtp returns under its default setting.
+the model lmtp returns under its default setting. Both functions are
+validated for lmtp 1.5.4 and stop under another lmtp version.
 }

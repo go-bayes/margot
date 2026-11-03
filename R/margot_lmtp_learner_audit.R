@@ -1,5 +1,16 @@
 # learner audit and lean reduction for lmtp models.
 
+# the fold-then-time nesting and the coefficient-only lean form are those of the
+# validated lmtp release; another release must be checked before the audit is used.
+margot_lmtp_check_audit_version <- function() {
+  installed <- as.character(utils::packageVersion("lmtp"))
+  if (!identical(installed, margot_lmtp_shared_lmtp_version)) {
+    stop("The learner audit is validated for lmtp ", margot_lmtp_shared_lmtp_version,
+      "; lmtp ", installed, " is installed.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 # the numbers an audit keeps from one fitted SuperLearner ensemble.
 margot_lmtp_lean_sl <- function(fit) {
   stopifnot(inherits(fit, "SuperLearner"))
@@ -32,6 +43,7 @@ margot_lmtp_lean_sl <- function(fit) {
 #' @export
 margot_lmtp_learner_audit <- function(model) {
   stopifnot(inherits(model, "lmtp"))
+  margot_lmtp_check_audit_version()
   stages <- list(outcome = model$fits_m, density = model$fits_r)
   learners <- list()
   inner <- list()
@@ -66,13 +78,15 @@ margot_lmtp_learner_audit <- function(model) {
 #' coefficients, which is what lmtp 1.5.4 stores when a model is fitted with the
 #' default `.return_full_fits = FALSE`. Estimates, influence functions, density
 #' ratios and every other component are unchanged, so the reduced model equals
-#' the model lmtp returns under its default setting.
+#' the model lmtp returns under its default setting. Both functions are
+#' validated for lmtp 1.5.4 and stop under another lmtp version.
 #'
 #' @param model An lmtp model.
 #' @return The model with learner weights in place of fitted learners.
 #' @export
 margot_lmtp_reduce_fits <- function(model) {
   stopifnot(inherits(model, "lmtp"))
+  margot_lmtp_check_audit_version()
   reduce <- function(fits) {
     lapply(fits, function(fold) lapply(fold, function(fit) {
       if (inherits(fit, "SuperLearner")) fit$coef else fit
