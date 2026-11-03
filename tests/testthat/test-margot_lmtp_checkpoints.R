@@ -52,9 +52,9 @@ test_that("content attributes are kept, so different inputs never share an ident
   nested <- list(study = list(design = structure(list(seed = 1L), file = "/a/study.toml")))
   expect_null(attr(margot_lmtp_checkpoint_identity(nested)$study$design, "file"))
   # a rebuilt data frame serialises like the same frame without the provenance attribute.
-  plain <- data.frame(a = 1:3)
+  plain <- data.frame(a = c(4L, 1L, 9L))
   plain$a <- plain$a
-  tagged <- data.frame(a = 1:3)
+  tagged <- data.frame(a = c(4L, 1L, 9L))
   tagged$a <- structure(tagged$a, srcref = "x")
   expect_identical(serialize(margot_lmtp_checkpoint_identity(list(f = tagged)), NULL),
     serialize(list(f = plain), NULL))
