@@ -114,6 +114,8 @@ reference:
     - margot_lmtp_estimator_spec
     - margot_lmtp_sdr_from_components
     - margot_lmtp_checkpoints
+    - margot_lmtp_checkpoint_identity
+    - margot_lmtp_assert_lean
     - margot_lmtp_restore_checkpoints
     - print.margot_lmtp_density_stage
     - margot_naive_regressions
