@@ -181,3 +181,29 @@ test_that("margot_report_lmtp_learners bundles learner outputs", {
   expect_type(rep$narrative$text, "character")
   expect_match(rep$method_statement, "Super Learner diagnostics")
 })
+
+test_that("margot_report_lmtp_learners reads a lean margot_lmtp fit", {
+  # the fixtures live in helper-lmtp-shared.R.
+  old_plan <- future::plan()
+  on.exit(future::plan(old_plan), add = TRUE)
+  future::plan(future::sequential)
+  data <- make_shared_ratio_data()
+  output <- suppressMessages(margot_lmtp(data, outcome_vars = "perfectionism", trt = "exposure",
+    shift_functions = list(down = shared_ratio_shift_down), include_null_shift = TRUE,
+    lmtp_model_type = lmtp::lmtp_sdr, lmtp_defaults = shared_ratio_defaults(), seed = 3031L,
+    progress = "none"))
+  # the default per-fit route keeps lmtp's lean fits: learner weights, not fitted learners.
+  margot_lmtp_assert_lean(output$models)
+  report <- margot_report_lmtp_learners(output, outcome = "perfectionism", include_plot = FALSE)
+  learner_data <- report$learner_data
+  expect_true(nrow(report$summary_table) > 0L)
+  expect_setequal(unique(learner_data$component), c("outcome", "treatment"))
+  expect_setequal(unique(learner_data$learner), c("SL.glm_All", "SL.mean_All"))
+  expect_true(all(learner_data$weight_mean >= 0 & learner_data$weight_mean <= 1))
+  # every reported weight comes from the coefficients lmtp kept in the lean model.
+  model <- output$models$perfectionism$perfectionism_down
+  kept <- unlist(lapply(model$fits_m, function(x) lapply(x, function(w) w[["SL.glm_All"]])))
+  reported <- learner_data[learner_data$component == "outcome" & learner_data$learner == "SL.glm_All" &
+    learner_data$shift_full == "perfectionism_down", ]
+  expect_equal(sum(reported$weight_mean * reported$weight_n), sum(kept))
+})
