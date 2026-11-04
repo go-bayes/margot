@@ -178,7 +178,6 @@ margot_lmtp_sdr_shared <- function(
     folds = 10,
     weights = NULL,
     control = lmtp::lmtp_control(),
-    after_model = NULL,
     untrimmed = FALSE) {
   margot_lmtp_internal("LmtpTask")
   if (!is.character(outcomes) || length(outcomes) < 1L || anyNA(outcomes) || any(!nzchar(outcomes))) {
@@ -331,8 +330,6 @@ margot_lmtp_sdr_shared <- function(
     )
     attr(model, "margot_density_ratio_source") <- outcomes[[1L]]
     attr(model, "margot_density_ratio_reused") <- !identical(outcome, outcomes[[1L]])
-    # an optional per-model step (the learner audit) runs before the next outcome is fitted
-    if (!is.null(after_model)) model <- after_model(model)
     if (isTRUE(untrimmed)) {
       # the untrimmed recursion starts from the same post-density state as the capped one
       margot_lmtp_restore_seed(post_ratio_seed)
@@ -348,7 +345,6 @@ margot_lmtp_sdr_shared <- function(
         )
         attr(fitted_untrimmed, "margot_density_ratio_source") <- outcomes[[1L]]
         attr(fitted_untrimmed, "margot_density_ratio_reused") <- !identical(outcome, outcomes[[1L]])
-        if (!is.null(after_model)) fitted_untrimmed <- after_model(fitted_untrimmed)
         fitted_untrimmed
       }, error = function(e) {
         model$untrimmed_failure <<- list(message = conditionMessage(e), class = class(e))
@@ -424,7 +420,6 @@ margot_lmtp_run_shared_tasks <- function(
     outcome_checkpoint_dir = NULL,
     estimator_spec_hash = NULL,
     stages = c("all", "density", "outcome"),
-    learner_audit = FALSE,
     untrimmed_sensitivity = FALSE) {
   progress <- match.arg(progress)
   scheduler <- match.arg(scheduler)
@@ -481,9 +476,6 @@ margot_lmtp_run_shared_tasks <- function(
     )
     if (!is.null(mtp_by_arm)) {
       shared_args$mtp <- unname(mtp_by_arm[[shift_name]])
-    }
-    if (isTRUE(learner_audit)) {
-      shared_args$after_model <- margot_lmtp_audit_model
     }
     if (isTRUE(untrimmed_sensitivity)) {
       shared_args$untrimmed <- TRUE
