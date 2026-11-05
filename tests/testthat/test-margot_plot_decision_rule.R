@@ -1021,3 +1021,20 @@ test_that("group_tab restores the drop policy of a grouped table", {
   dropped <- margot:::group_tab(dplyr::group_by(input, family), type = "RD", order = "magnitude_desc")
   expect_true(dplyr::group_by_drop_default(dropped))
 })
+
+test_that("a table with both bound spellings keeps both and nothing is overwritten", {
+  report <- decision_plot()$transformed_table
+  both <- report
+  both$E_Val_bound <- both[["E-value bound"]] + 1
+  expect_error(margot_bind_tables(list(first = report, second = both)), "'E_Val_bound'", fixed = TRUE)
+  # binding the double-spelled table with itself keeps both columns intact
+  md <- margot_bind_tables(list(first = both, second = both), output_format = "markdown")
+  header <- trimws(strsplit(md[grepl("^\\|", md)][1], "|", fixed = TRUE)[[1]])
+  expect_identical(sum(header == "E-value bound"), 1L)
+  expect_identical(sum(header %in% c("E_Val_bound", "E-Value bound")), 1L)
+
+  # a single outcome skips the requested correction instead of stopping
+  single <- suppressMessages(margot_plot(make_decision_fixture()[1, ], adjust = "holm",
+    include_coefficients = FALSE))
+  expect_match(single$interpretation, "Intervals are 95% confidence intervals.", fixed = TRUE)
+})

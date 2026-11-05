@@ -27,8 +27,11 @@ For a list of domain tables, rows are sorted within each domain and the domains 
 Every table in a list must have the same columns once its outcome and E-value bound
 columns take the first table's spelling; otherwise binding would split values across
 columns, and the function stops with an error naming the differing columns. Tables from
-the report and legacy layouts of margot_plot(), or built with different corrections or
-renames, therefore cannot be bound together.}
+the report and legacy layouts of margot_plot(), or whose interval or estimate headers
+differ (for example Bonferroni intervals at different levels), therefore cannot be bound
+together. Tables whose headers coincide bind even if their corrections differ; legacy
+tables with coverage that varies by row (headers "CI lower" and "CI upper") keep each
+row's own `confidence_level`.}
 
 \item{e_val_bound_threshold}{numeric; threshold for highlighting rows. default 1.1.}
 

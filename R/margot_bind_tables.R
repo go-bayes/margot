@@ -15,8 +15,11 @@
 #'   Every table in a list must have the same columns once its outcome and E-value bound
 #'   columns take the first table's spelling; otherwise binding would split values across
 #'   columns, and the function stops with an error naming the differing columns. Tables from
-#'   the report and legacy layouts of margot_plot(), or built with different corrections or
-#'   renames, therefore cannot be bound together.
+#'   the report and legacy layouts of margot_plot(), or whose interval or estimate headers
+#'   differ (for example Bonferroni intervals at different levels), therefore cannot be bound
+#'   together. Tables whose headers coincide bind even if their corrections differ; legacy
+#'   tables with coverage that varies by row (headers "CI lower" and "CI upper") keep each
+#'   row's own `confidence_level`.
 #' @param e_val_bound_threshold numeric; threshold for highlighting rows. default 1.1.
 #' @param highlight_color character or NULL; background colour for highlighted rows. default "yellow".
 #' @param bold logical; whether to bold highlighted rows. default TRUE.
@@ -85,7 +88,10 @@ margot_bind_tables <- function(
     if (!is.na(target_bound)) {
       for (i in seq_along(tables_list)) {
         current <- table_bound_cols[[i]]
-        if (!is.na(current) && current != target_bound) {
+        # a table that already holds a column under the target spelling keeps
+        # both, so nothing is overwritten or duplicated; the column check below
+        # then decides whether the tables can bind
+        if (!is.na(current) && current != target_bound && !target_bound %in% names(tables_list[[i]])) {
           names(tables_list[[i]])[names(tables_list[[i]]) == current] <- target_bound
         }
       }
