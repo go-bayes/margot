@@ -522,7 +522,7 @@ margot_stop_on_duplicate_headers <- function(headers) {
 #' @details
 #' The statistical decision and the E-value flag are reported separately. By default the decision for each outcome follows its (adjusted) confidence interval alone, and the E-value flag records whether the interval's E-value bound exceeds `e_val_bound_threshold`. The flag sits beside the decision and does not change the plotted colour, legend, table decision or which outcomes the prose lists. The prose lists every outcome whose interval excludes the null, in plot order, with its E-value bound and flag, and names the correction and confidence level. An outcome without both interval limits has no decision: the prose names it, the table reports "not available", and the figure omits it with a message.
 #'
-#' To reproduce output from margot 1.3.2 and earlier, set `category_rule = "interval_and_evalue"`, `e_val_bound_comparison = ">="`, `e_val_bound_conversion = "rounded"`, `order_direction = "bottom_to_top"` and `table_columns = "legacy"`. Each argument restores one behaviour and can be set on its own. Together they reproduce the categories, plotted values, table and prose of margot 1.3.2; the figure keeps the current styling (legend centred on the figure, point shapes, black coefficients and sentence-case axis titles), which `options = list(point_shapes = NULL, coefficient_colour = NULL, coefficient_header = NULL, text_size = 2.75)` partly restores. For ratio estimates, the magnitude orderings now rank by the absolute log ratio; supply the earlier order through `order = "custom"` if it is needed.
+#' To reproduce output from margot 1.3.2 and earlier, set `category_rule = "interval_and_evalue"`, `e_val_bound_comparison = ">="`, `e_val_bound_conversion = "rounded"`, `order_direction = "bottom_to_top"` and `table_columns = "legacy"`. Each argument restores one behaviour and can be set on its own. Together they reproduce the categories, plotted values, table and prose of margot 1.3.2; the figure keeps the current styling (legend centred on the figure, point shapes, black coefficients and sentence-case axis titles), which `options = list(point_shapes = NULL, coefficient_colour = NULL, coefficient_header = NULL, text_size = 2.75)` partly restores. For ratio estimates under `"magnitude_desc"` or `"magnitude_asc"`, the five options do not restore the earlier order, because the orderings now rank by the absolute log ratio; reproducing that order exactly needs `order = "custom"` with the earlier order.
 #' @param scale_info Optional data frame keyed by the original outcome name, with
 #'   transformation (`identity`, `log`, or `log1p`), saved `center` and positive
 #'   `scale`, `orientation` (1 or -1), `unit`, and positive `unit_multiplier`.
@@ -1062,6 +1062,7 @@ margot_plot <- function(
     rownames(transformed_table) <- transformed_table[[label_col]]
     # renderers find the outcome column through this attribute, also after renaming
     attr(transformed_table, "margot_outcome_column") <- label_col
+    attr(transformed_table, "margot_table_layout") <- "report"
   } else {
     # legacy layout: the columns of margot 1.3.2 and earlier
     table_for_transform <- sorted_df
@@ -1146,6 +1147,8 @@ margot_plot <- function(
     if ("97.5 %" %in% names(transformed_table)) {
       names(transformed_table)[names(transformed_table) == "97.5 %"] <- ci_headers[2]
     }
+    # table binders read the layout from this attribute, which survives renaming
+    attr(transformed_table, "margot_table_layout") <- "legacy"
   }
 
   # optional save -----------------------------------------------------------

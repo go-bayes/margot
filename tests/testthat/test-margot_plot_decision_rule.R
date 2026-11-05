@@ -944,3 +944,40 @@ test_that("domain tables with differently named outcome columns bind into one co
   clash$Endpoint <- "x"
   expect_error(margot_bind_tables(list(first = renamed, second = clash)), "Cannot use 'Endpoint'")
 })
+
+test_that("group_tab orders a grouped table as a whole and keeps its grouping", {
+  input <- tibble::tibble(
+    outcome = c("a", "b", "c", "d"),
+    family = c("x", "x", "y", "y"),
+    ATE = c(0.1, 0.4, 0.3, 0.2),
+    `2.5 %` = c(0.05, 0.3, 0.2, 0.1),
+    `97.5 %` = c(0.15, 0.5, 0.4, 0.3),
+    E_Value = c(1.3, 1.9, 1.7, 1.5),
+    E_Val_bound = c(1.1, 1.6, 1.4, 1.2)
+  )
+  grouped <- dplyr::group_by(input, family)
+  desc <- margot:::group_tab(grouped, type = "RD", order = "magnitude_desc")
+  asc <- margot:::group_tab(grouped, type = "RD", order = "magnitude_asc")
+  custom <- margot:::group_tab(grouped, type = "RD", order = "custom", custom_order = c("c", "a", "d", "b"))
+  expect_identical(desc$ATE, c(0.4, 0.3, 0.2, 0.1))
+  expect_identical(asc$ATE, c(0.1, 0.2, 0.3, 0.4))
+  expect_identical(custom$outcome, c("c", "a", "d", "b"))
+  expect_identical(dplyr::group_vars(desc), "family")
+  expect_identical(desc$ATE, margot:::group_tab(input, type = "RD", order = "magnitude_desc")$ATE)
+})
+
+test_that("a legacy table with renamed columns is still recognised as legacy", {
+  report <- decision_plot()$transformed_table
+  legacy <- decision_plot(table_columns = "legacy", rename_cols = TRUE,
+    col_renames = list(Coverage = "confidence_level", Lower = "2.5 %", Upper = "97.5 %",
+      "E-value bound" = "E_Val_bound"))$transformed_table
+  # the legacy layout renames before it writes its quantile headers
+  expect_true(all(c("Coverage", "Lower", "Upper") %in% names(legacy)))
+  expect_false(any(c("confidence_level", "0.21 %", "99.79 %") %in% names(legacy)))
+  expect_identical(attr(legacy, "margot_table_layout"), "legacy")
+  expect_identical(attr(report, "margot_table_layout"), "report")
+  expect_error(
+    margot_bind_tables(list(report = report, legacy = legacy)),
+    "mix the report and legacy layouts"
+  )
+})

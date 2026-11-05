@@ -940,6 +940,11 @@ group_tab <- function(
 
   ev_bound <- "E_Val_bound"
 
+  # order the whole table: row positions apply to the ungrouped frame, and any
+  # grouping is restored on return
+  grouping <- dplyr::group_vars(results_df)
+  results_df <- dplyr::ungroup(results_df)
+
   # magnitude is the distance from the null: |difference|, or |log ratio| for
   # ratios, so that a protective ratio of 0.5 ranks with a harmful ratio of 2.
   # row indices are computed outside the data mask and injected, so that an
@@ -989,6 +994,9 @@ group_tab <- function(
     )
   }
 
+  if (length(grouping)) {
+    results_df <- dplyr::group_by(results_df, dplyr::across(dplyr::all_of(grouping)))
+  }
   results_df
 }
 

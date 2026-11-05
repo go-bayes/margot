@@ -12,7 +12,8 @@
 #'   For lists, row names are captured as an "Outcome" column; for data frames, same applies.
 #' @param sort_E_val_bound character: one of "none", "asc", or "desc". default "none".
 #'   For a list of domain tables, rows are sorted within each domain and the domains keep their order.
-#'   Every table in a list must use the same layout (report or legacy, read from the columns
+#'   Every table in a list must use the same layout (report or legacy, read from the
+#'   `margot_table_layout` attribute that margot_plot() records, or otherwise from the columns,
 #'   rather than from the spelling of the bound column); mixed layouts stop with an error.
 #'   Within one layout, bound columns spelled differently are given the first table's spelling.
 #' @param e_val_bound_threshold numeric; threshold for highlighting rows. default 1.1.
@@ -78,6 +79,12 @@ margot_bind_tables <- function(
     # spelling of the bound column: legacy tables carry `confidence_level` or
     # quantile-headed interval columns such as "2.5 %", report tables neither
     table_layout <- function(df) {
+      # margot_plot() records the layout; tables without the record, or whose
+      # rows were subset, fall back to the schema
+      recorded <- attr(df, "margot_table_layout", exact = TRUE)
+      if (!is.null(recorded)) {
+        return(recorded)
+      }
       legacy <- "confidence_level" %in% names(df) || any(grepl("^[0-9.]+ %$", names(df)))
       if (legacy) "legacy" else "report"
     }
