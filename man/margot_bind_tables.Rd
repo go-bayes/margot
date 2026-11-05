@@ -23,15 +23,23 @@ margot_bind_tables(
 For lists, row names are captured as an "Outcome" column; for data frames, same applies.}
 
 \item{sort_E_val_bound}{character: one of "none", "asc", or "desc". default "none".
-For a list of domain tables, rows are sorted within each domain and the domains keep their order.
-Every table in a list must have the same columns once its outcome and E-value bound
-columns take the first table's spelling; otherwise binding would split values across
-columns, and the function stops with an error naming the differing columns. Tables from
-the report and legacy layouts of margot_plot(), or whose interval or estimate headers
-differ (for example Bonferroni intervals at different levels), therefore cannot be bound
-together. Tables whose headers coincide bind even if their corrections differ; legacy
-tables with coverage that varies by row (headers "CI lower" and "CI upper") keep each
-row's own `confidence_level`.}
+  For a list of domain tables, rows are sorted within each domain and the domains keep their order.
+  Every table in a list must have the same columns once its outcome and E-value bound
+  columns take the first table's spelling and any difference in interval level is
+  resolved; otherwise binding would split values across columns, and the function stops
+  with an error naming the differing columns.
+
+  Tables that differ only in their interval level, for example domains each
+  Bonferroni-corrected over their own outcomes ("99.58\% CI lower" in one, "99.17\% CI
+  lower" in another), bind with level-free headers ("CI lower", "CI upper", "CI relative
+  to 0" and the original-unit equivalents) and a per-row "CI level" column (for example
+  "99.58\%") after the last interval limit. Legacy tables with different quantile headers
+  (for example "0.21 \%" and "0.42 \%") take "CI lower" and "CI upper", and their
+  `confidence_level` column keeps each row's level. Tables that share one level keep
+  their headers unchanged.
+
+  Tables from the report and legacy layouts of margot_plot(), or with different estimate
+  columns, renames or E-value thresholds, cannot be bound together.}
 
 \item{e_val_bound_threshold}{numeric; threshold for highlighting rows. default 1.1.}
 
