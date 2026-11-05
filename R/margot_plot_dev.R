@@ -132,7 +132,9 @@ margot_plot_dev <- function(
       alpha  = alpha,
       scale  = type,
       delta  = opts$delta_exposure,
-      sd     = opts$sd_outcome
+      sd     = opts$sd_outcome,
+      # the development interface keeps its earlier bound conversion
+      e_val_bound_conversion = "rounded"
     )
     .data <- corrected_table_df
   } else {
