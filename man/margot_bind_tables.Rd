@@ -22,7 +22,16 @@ margot_bind_tables(
 \item{tables_list}{a named list of data frames, each a domain table, or a single data frame.
 For lists, row names are captured as an "Outcome" column; for data frames, same applies.}
 
-\item{sort_E_val_bound}{character: one of "none", "asc", or "desc". default "none".}
+\item{sort_E_val_bound}{character: one of "none", "asc", or "desc". default "none".
+For a list of domain tables, rows are sorted within each domain and the domains keep their order.
+Every table in a list must have the same columns once its outcome and E-value bound
+columns take the first table's spelling; otherwise binding would split values across
+columns, and the function stops with an error naming the differing columns. Tables from
+the report and legacy layouts of margot_plot(), or whose interval or estimate headers
+differ (for example Bonferroni intervals at different levels), therefore cannot be bound
+together. Tables whose headers coincide bind even if their corrections differ; legacy
+tables with coverage that varies by row (headers "CI lower" and "CI upper") keep each
+row's own `confidence_level`.}
 
 \item{e_val_bound_threshold}{numeric; threshold for highlighting rows. default 1.1.}
 
@@ -39,12 +48,18 @@ default list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound").}
 
 \item{rename_ate}{logical; if TRUE, renames the effect column to "ATE". default FALSE.}
 
-\item{threshold_col}{character; name of the (pre-rename) column to test. default "E_Val_bound".}
+\item{threshold_col}{character; name of the (pre-rename) column to test and sort by. default "E_Val_bound".
+When that column is absent, the first of "E_Val_bound", "E-value bound", "E-Value bound" and
+"E-Value Bound" that is present is used.}
 
 \item{kbl_args}{list; extra arguments for kableExtra::kbl(). default list(booktabs=TRUE, caption="Combined Results", align=NULL).}
 }
 \description{
 This function binds a named list of domain-specific tables, or handles a single data frame.
-It optionally sorts by the raw E_Val_bound column, renames columns, highlights rows above a threshold,
+It optionally sorts by the E-value bound column, renames columns, highlights rows above a threshold,
 and groups rows by domain when provided. Works for latex, html, or markdown output.
+It accepts both `transformed_table` layouts of [margot_plot()]: the default reporting layout,
+whose bound column is "E-value bound" and whose outcomes are in an "Outcome" column, and the
+legacy layout, whose bound column is "E_Val_bound" and whose outcomes are row names.
+A table that already has an "Outcome" column keeps it, and row names are not printed.
 }

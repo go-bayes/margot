@@ -120,6 +120,32 @@ test_that("corrected tables retain unrounded values for downstream E-values", {
     adjust = "bonferroni",
     scale = "RD"
   )
+  # the exact conversion uses the returned limit nearest the null
+  expected <- margot:::.margot_evalues_rr(
+    exp(0.91 * input$`E[Y(1)]-E[Y(0)]`),
+    lo = exp(0.91 * out$`2.5 %`),
+    hi = exp(0.91 * out$`97.5 %`)
+  )
+
+  expect_identical(out$`E[Y(1)]-E[Y(0)]`, input$`E[Y(1)]-E[Y(0)]`)
+  expect_equal(out$E_Value, expected[["E_Value"]], tolerance = 1e-14)
+  expect_equal(out$E_Val_bound, expected[["E_Val_bound"]], tolerance = 1e-14)
+})
+
+test_that("the rounded bound conversion reproduces earlier corrected tables", {
+  input <- data.frame(
+    `E[Y(1)]-E[Y(0)]` = 0.0123456,
+    `2.5 %` = 0.00387644,
+    `97.5 %` = 0.02081476,
+    check.names = FALSE
+  )
+
+  out <- margot_correct_combined_table(
+    input,
+    adjust = "bonferroni",
+    scale = "RD",
+    e_val_bound_conversion = "rounded"
+  )
   se <- (out$`97.5 %` - out$`E[Y(1)]-E[Y(0)]`) / stats::qnorm(0.975)
   expected <- margot:::.margot_evalues_ols(
     input$`E[Y(1)]-E[Y(0)]`,
@@ -131,6 +157,24 @@ test_that("corrected tables retain unrounded values for downstream E-values", {
   expect_identical(out$`E[Y(1)]-E[Y(0)]`, input$`E[Y(1)]-E[Y(0)]`)
   expect_equal(out$E_Value, expected[["E_Value"]], tolerance = 1e-14)
   expect_equal(out$E_Val_bound, expected[["E_Val_bound"]], tolerance = 1e-14)
+})
+
+test_that("exact interval E-values respect the exposure contrast and outcome scale", {
+  est <- -0.6
+  lo <- -0.9
+  hi <- -0.3
+  out <- margot:::.margot_evalues_ols_limits(est, lo = lo, hi = hi, sd = 2, delta = -1.5)
+  expected <- margot:::.margot_evalues_rr(
+    exp(0.91 * est * 1.5 / 2),
+    lo = exp(0.91 * lo * 1.5 / 2),
+    hi = exp(0.91 * hi * 1.5 / 2)
+  )
+  expect_equal(out, expected, tolerance = 1e-14)
+  expect_equal(
+    margot:::.margot_evalues_ols_limits(0.2, lo = -0.1, hi = 0.5, sd = 1)[["E_Val_bound"]],
+    1
+  )
+  expect_error(margot:::.margot_evalues_ols_limits(0.2, lo = Inf, hi = 0.5, sd = 1), "finite")
 })
 
 test_that("internal E-values agree with the optional reference implementation", {

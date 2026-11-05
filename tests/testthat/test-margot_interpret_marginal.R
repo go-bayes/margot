@@ -70,7 +70,8 @@ test_that("supplied interval coverage survives tables and automatic prose", {
   input <- make_margot_interpret_test_data()[1:2, ]
   input$confidence_level <- c(0.90, 0.99)
   result <- margot_plot(input, adjust = "none", include_coefficients = FALSE)
-  expect_setequal(result$transformed_table$confidence_level, c(0.90, 0.99))
+  expect_setequal(result$transformed_table[["CI level"]], c(0.90, 0.99))
+  expect_true(all(c("CI lower", "CI upper") %in% names(result$transformed_table)))
   expect_match(result$interpretation, "coverage varies by outcome")
   expect_match(result$interpretation, "90% CI", fixed = TRUE)
   expect_match(result$interpretation, "99% CI", fixed = TRUE)
