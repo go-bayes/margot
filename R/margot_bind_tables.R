@@ -11,7 +11,9 @@
 #'   For lists, row names are captured as an "Outcome" column; for data frames, same applies.
 #' @param sort_E_val_bound character: one of "none", "asc", or "desc". default "none".
 #'   For a list of domain tables, rows are sorted within each domain and the domains keep their order.
-#'   Every table in a list must use the same layout; mixed layouts stop with an error.
+#'   Every table in a list must use the same layout (report or legacy, read from the columns
+#'   rather than from the spelling of the bound column); mixed layouts stop with an error.
+#'   Within one layout, bound columns spelled differently are given the first table's spelling.
 #' @param e_val_bound_threshold numeric; threshold for highlighting rows. default 1.1.
 #' @param highlight_color character or NULL; background colour for highlighted rows. default "yellow".
 #' @param bold logical; whether to bold highlighted rows. default TRUE.
@@ -62,15 +64,32 @@ margot_bind_tables <- function(
     combined <- df
     domain_mode <- FALSE
   } else {
-    # tables from different layouts would bind into split columns, so refuse them
-    table_bound_cols <- vapply(tables_list, find_bound_col, character(1))
-    if (length(unique(table_bound_cols)) > 1L) {
+    # tables from different layouts would bind into split estimate and interval
+    # columns, so refuse them. the layout is read from the schema, not from the
+    # spelling of the bound column: legacy tables carry `confidence_level` or
+    # quantile-headed interval columns such as "2.5 %", report tables neither
+    table_layout <- function(df) {
+      legacy <- "confidence_level" %in% names(df) || any(grepl("^[0-9.]+ %$", names(df)))
+      if (legacy) "legacy" else "report"
+    }
+    layouts <- vapply(tables_list, table_layout, character(1))
+    if (length(unique(layouts)) > 1L) {
       stop(
-        "The tables use different column layouts (E-value bound columns: ",
-        paste(unique(ifelse(is.na(table_bound_cols), "none", table_bound_cols)), collapse = ", "),
-        "). Build every table with the same `table_columns` value in margot_plot().",
+        "The tables mix the report and legacy layouts of margot_plot(). ",
+        "Build every table with the same `table_columns` value.",
         call. = FALSE
       )
+    }
+    # within one layout, give every bound column the first table's spelling
+    table_bound_cols <- vapply(tables_list, find_bound_col, character(1))
+    target_bound <- table_bound_cols[!is.na(table_bound_cols)][1]
+    if (!is.na(target_bound)) {
+      for (i in seq_along(tables_list)) {
+        current <- table_bound_cols[[i]]
+        if (!is.na(current) && current != target_bound) {
+          names(tables_list[[i]])[names(tables_list[[i]]) == current] <- target_bound
+        }
+      }
     }
     # process list of tables with domain id
     tables_list <- lapply(tables_list, function(df) {
