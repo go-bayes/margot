@@ -998,10 +998,17 @@ test_that("the binding guard compares columns, so copies without attributes beha
   expect_error(margot_bind_tables(list(report = report, copy = copy)), "do not share the same columns")
   expect_error(margot_bind_tables(list(report = report, copy = copy)), "'0.21 %'", fixed = TRUE)
 
-  # tables corrected for different family sizes would split their interval columns
-  smaller <- suppressMessages(margot_plot(make_decision_fixture()[1:6, ], adjust = "bonferroni",
+  # tables corrected for different family sizes bind with a per-row level, but
+  # a table without the original-scale columns still differs and is refused
+  fixture <- make_decision_fixture()[1:6, ]
+  smaller <- suppressMessages(margot_plot(fixture, adjust = "bonferroni",
+    label_mapping = decision_labels, scale_info = decision_scale_info(fixture),
+    e_val_bound_threshold = 1.1, include_coefficients = FALSE))$transformed_table
+  bound <- margot_bind_tables(list(all = report, some = smaller), output_format = "markdown")
+  expect_true(any(grepl("CI level", bound, fixed = TRUE)))
+  no_units <- suppressMessages(margot_plot(fixture, adjust = "bonferroni",
     label_mapping = decision_labels, e_val_bound_threshold = 1.1, include_coefficients = FALSE))$transformed_table
-  expect_error(margot_bind_tables(list(all = report, some = smaller)), "do not share the same columns")
+  expect_error(margot_bind_tables(list(all = report, some = no_units)), "do not share the same columns")
 })
 
 test_that("group_tab restores the drop policy of a grouped table", {
