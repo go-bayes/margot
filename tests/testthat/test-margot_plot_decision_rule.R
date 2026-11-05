@@ -463,16 +463,20 @@ test_that("standalone prose says it follows the requested order rather than a pl
 
 test_that("the figure repeats the category in the point shape and keeps coefficients out of the legend", {
   out <- decision_plot()
-  # the coefficients form a column on a secondary axis, headed "Estimate"
-  expect_false(any(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))))
+  # the coefficients form a column just outside the panel, headed "Estimate"
+  layers <- out$plot$layers
+  is_text <- vapply(layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))
+  maps_label <- vapply(layers, function(layer) !is.null(layer$mapping$label), logical(1))
   built <- ggplot2::ggplot_build(out$plot)
-  secondary <- built$layout$panel_params[[1]]$y.sec
+  coefficients <- built$data[[which(is_text & maps_label)]]
   top_to_bottom <- plot_top_to_bottom(out$plot)
-  labels <- stats::setNames(secondary$get_labels(), rev(top_to_bottom))
-  expect_identical(trimws(labels[["Trust in science"]]), "0.20")
-  expect_identical(trimws(labels[["Anxiety"]]), "-0.12")
-  expect_identical(secondary$name, "Estimate")
-  expect_identical(out$plot$theme$axis.text.y.right$colour, "black")
+  labels <- stats::setNames(trimws(coefficients$label), levels(out$plot$data$outcome)[coefficients$y])
+  expect_identical(labels[["Trust in science"]], "0.20")
+  expect_identical(labels[["Anxiety"]], "-0.12")
+  expect_true(all(is.infinite(coefficients$x) & coefficients$x > 0))
+  expect_identical(trimws(layers[[which(is_text & !maps_label)]]$aes_params$label), "Estimate")
+  expect_identical(layers[[which(is_text & maps_label)]]$aes_params$colour, "black")
+  expect_identical(out$plot$coordinates$clip, "off")
 
   scales <- built$plot$scales
   shape_map <- scales$get_scales("shape")$map(c("positive", "includes null", "negative"))
@@ -744,10 +748,15 @@ test_that("ratio coefficients sit clear of the intervals", {
     E_Value = c(3.41, 2.58, 1.28),
     E_Val_bound = c(2.61, 1.92, 1)
   )
-  # by default the coefficients sit outside the panel, so no interval runs under them
+  # by default the coefficients sit outside the right edge of the panel, so no
+  # interval runs under them
   out <- suppressMessages(margot_plot(input, type = "RR", options = list(use_title_case = FALSE)))
-  expect_false(any(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))))
-  expect_length(ggplot2::ggplot_build(out$plot)$layout$panel_params[[1]]$y.sec$get_labels(), 3)
+  text_index <- which(vapply(out$plot$layers, function(layer) {
+    inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label)
+  }, logical(1)))
+  outside <- ggplot2::ggplot_build(out$plot)$data[[text_index]]
+  expect_true(all(is.infinite(outside$x) & outside$x > 0))
+  expect_lte(max(input$`97.5 %`), out$plot$coordinates$limits$x[2])
 
   # inside the panel, the label column is moved clear of the intervals
   inside <- suppressMessages(margot_plot(input, type = "RR",

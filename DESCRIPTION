@@ -25,7 +25,7 @@ Imports:
     future,
     flextable,
     ggokabeito,
-    ggplot2 (>= 3.5.0),
+    ggplot2,
     ggeffects,
     grf,
     glue,
