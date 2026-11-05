@@ -1,0 +1,293 @@
+# synthetic twelve-outcome fixture with edge cases, as in the reporting panel's harness:
+# an interval that excludes zero with a small E-value bound, a bound near 1.1,
+# negative effects, a zero estimate and intervals that cross zero
+make_decision_fixture <- function() {
+  z <- stats::qnorm(0.975)
+  ev <- function(d) {
+    r <- exp(0.91 * abs(d))
+    r + sqrt(r * (r - 1))
+  }
+  d_at_1.1 <- stats::uniroot(function(d) ev(d) - 1.1, c(0, 1))$root
+  zb <- stats::qnorm(1 - 0.05 / (2 * 12))
+  fixture <- data.frame(
+    outcome = c("trust", "warmth", "edge_small", "anxiety", "null_cross", "exact_zero",
+      "threshold_edge", "small_negative_cross", "moderate", "clear_positive",
+      "negative_small_bound", "wide_positive"),
+    ATE = c(0.20, 0.09, 0.03, -0.12, 0.01, 0, d_at_1.1 + zb * 0.012, -0.02, 0.05, 0.07, -0.04, 0.15),
+    standard_error = c(0.03, 0.02, 0.01, 0.03, 0.02, 0.015, 0.012, 0.02, 0.012, 0.02, 0.012, 0.05)
+  )
+  fixture[["2.5 %"]] <- fixture$ATE - z * fixture$standard_error
+  fixture[["97.5 %"]] <- fixture$ATE + z * fixture$standard_error
+  fixture$E_Value <- NA_real_
+  fixture$E_Val_bound <- NA_real_
+  fixture
+}
+
+decision_labels <- c(trust = "Trust in science", warmth = "Warmth to refugees",
+  edge_small = "Interval excludes zero, small bound", anxiety = "Anxiety",
+  null_cross = "Interval crosses zero", exact_zero = "Zero estimate",
+  threshold_edge = "E-value bound at threshold", small_negative_cross = "Small negative, crosses zero",
+  moderate = "Moderate positive", clear_positive = "Clear positive",
+  negative_small_bound = "Negative, small bound", wide_positive = "Wide positive")
+
+decision_scale_info <- function(fixture) {
+  data.frame(outcome = fixture$outcome, transformation = "identity",
+    center = 4, scale = 1.25, orientation = 1, unit = "scale points", unit_multiplier = 1)
+}
+
+decision_plot <- function(...) {
+  fixture <- make_decision_fixture()
+  suppressMessages(margot_plot(fixture, adjust = "bonferroni", alpha = 0.05,
+    order = "magnitude_desc", label_mapping = decision_labels,
+    scale_info = decision_scale_info(fixture), e_val_bound_threshold = 1.1,
+    save_output = FALSE, ...))
+}
+
+# the plot's top-to-bottom order: ggplot draws the last factor level at the top
+plot_top_to_bottom <- function(plot) rev(levels(plot$data$outcome))
+
+test_that("categories follow the corrected interval alone by default", {
+  out <- decision_plot()
+  data <- out$plot$data
+  category <- stats::setNames(as.character(data$Estimate), data$original_var_name)
+
+  # the corrected interval decides the category
+  expect_identical(levels(data$Estimate), c("positive", "includes null", "negative"))
+  expect_true(all(category[data$original_var_name[data$`2.5 %` > 0]] == "positive"))
+  expect_true(all(category[data$original_var_name[data$`97.5 %` < 0]] == "negative"))
+  expect_identical(
+    sort(names(category)[category == "includes null"]),
+    sort(c("null_cross", "exact_zero", "small_negative_cross"))
+  )
+
+  # an interval that excludes zero keeps its category when its bound is small
+  expect_lt(data$E_Val_bound[data$original_var_name == "edge_small"], 1.1)
+  expect_identical(category[["edge_small"]], "positive")
+  expect_identical(category[["negative_small_bound"]], "negative")
+  expect_identical(category[["wide_positive"]], "positive")
+
+  # neutral legend wording; no "not reliable" in the default outputs
+  built <- ggplot2::ggplot_build(out$plot)
+  legend_labels <- built$plot$scales$get_scales("colour")$get_labels()
+  expect_identical(legend_labels, c("Interval above 0", "Interval includes 0", "Interval below 0"))
+  expect_false(any(grepl("not reliable", c(legend_labels, out$interpretation, unlist(out$transformed_table)))))
+})
+
+test_that("the E-value flag is a separate table column and never changes the decision", {
+  out <- decision_plot()
+  table <- out$transformed_table
+
+  expect_true(all(c("Interval", "E-value", "E-value bound", "E-value bound > 1.1") %in% names(table)))
+  expect_identical(table[["Interval"]][rownames(table) == "Interval excludes zero, small bound"], "above 0")
+  expect_identical(table[["E-value bound > 1.1"]][rownames(table) == "Interval excludes zero, small bound"], "no")
+  expect_identical(
+    table[["E-value bound > 1.1"]],
+    ifelse(table[["E-value bound"]] > 1.1, "yes", "no")
+  )
+  expect_setequal(unique(table[["Interval"]]), c("above 0", "includes 0", "below 0"))
+})
+
+test_that("the E-value flag uses a strict comparison by default", {
+  input <- tibble::tibble(
+    outcome = c("equal", "above"),
+    ATE = c(0.3, 0.4),
+    `2.5 %` = c(0.1, 0.2),
+    `97.5 %` = c(0.5, 0.6),
+    E_Value = c(1.5, 1.6),
+    E_Val_bound = c(1.1, 1.1 + 1e-9)
+  )
+  args <- list(input, type = "RD", e_val_bound_threshold = 1.1, include_coefficients = FALSE,
+    options = list(use_title_case = FALSE))
+  strict <- suppressMessages(do.call(margot_plot, args))
+  inclusive <- suppressMessages(do.call(margot_plot, c(args, list(e_val_bound_comparison = ">="))))
+
+  expect_identical(strict$transformed_table[c("equal", "above"), "E-value bound > 1.1"], c("no", "yes"))
+  expect_identical(inclusive$transformed_table[c("equal", "above"), "E-value bound >= 1.1"], c("yes", "yes"))
+  expect_match(strict$interpretation, "E-value bound = 1.10 (does not exceed 1.1)", fixed = TRUE)
+  # a bound that only rounds to the threshold is printed with enough decimals to agree with its flag
+  expect_match(strict$interpretation, "E-value bound = 1.100000001 (exceeds 1.1)", fixed = TRUE)
+  # emphasis in the table follows the same comparison
+  bold <- suppressMessages(do.call(margot_plot, c(args, list(bold_rows = TRUE))))
+  expect_setequal(rownames(bold$transformed_table), c("equal", "**above**"))
+  # the category is the same under either comparison
+  expect_identical(as.character(strict$plot$data$Estimate), c("positive", "positive"))
+  expect_identical(as.character(inclusive$plot$data$Estimate), c("positive", "positive"))
+})
+
+test_that("corrected E-value bounds use the exact conversion of the limit nearest the null", {
+  fixture <- make_decision_fixture()
+  corrected <- margot_correct_combined_table(fixture, adjust = "bonferroni", alpha = 0.05, scale = "RD")
+  rounded <- margot_correct_combined_table(fixture, adjust = "bonferroni", alpha = 0.05, scale = "RD",
+    e_val_bound_conversion = "rounded")
+  z_star <- stats::qnorm(1 - 0.05 / (2 * 12))
+
+  # exact: RR = exp(0.91 |d|) at the corrected limit nearest zero, that is exp(0.91 (|est| - z* SE))
+  nearest <- ifelse(fixture$ATE > 0, corrected$`2.5 %`, corrected$`97.5 %`)
+  excludes <- corrected$`2.5 %` > 0 | corrected$`97.5 %` < 0
+  rr <- exp(0.91 * abs(nearest))
+  expected <- ifelse(excludes, rr + sqrt(rr * (rr - 1)), 1)
+  expect_equal(corrected$E_Val_bound, expected, tolerance = 1e-14)
+  rr_se <- exp(0.91 * (abs(fixture$ATE[excludes]) - z_star * fixture$standard_error[excludes]))
+  expect_equal(corrected$E_Val_bound[excludes], rr_se + sqrt(rr_se * (rr_se - 1)), tolerance = 1e-12)
+
+  # the threshold edge case sits at 1.1 under the exact conversion
+  edge <- fixture$outcome == "threshold_edge"
+  expect_equal(corrected$E_Val_bound[edge], 1.1, tolerance = 1e-4)
+
+  # rounded: the earlier 1.78 x SE* with SE* rescaled from the corrected interval
+  se_star <- (rounded$`97.5 %` - rounded$ATE) / stats::qnorm(0.975)
+  expected_rounded <- vapply(seq_len(nrow(fixture)), function(i) {
+    margot:::.margot_evalues_ols(fixture$ATE[i], se = se_star[i], sd = 1)[["E_Val_bound"]]
+  }, numeric(1))
+  expect_equal(rounded$E_Val_bound, expected_rounded, tolerance = 1e-14)
+  expect_true(all(rounded$E_Val_bound[excludes] > corrected$E_Val_bound[excludes]))
+
+  # point E-values and intervals do not depend on the conversion
+  expect_identical(corrected$E_Value, rounded$E_Value)
+  expect_identical(corrected$`2.5 %`, rounded$`2.5 %`)
+
+  # margot_plot uses the exact conversion and passes the legacy option through
+  expect_equal(decision_plot()$plot$data$E_Val_bound,
+    corrected$E_Val_bound[match(decision_plot()$plot$data$original_var_name, fixture$outcome)],
+    tolerance = 1e-14)
+})
+
+test_that("the interpretation lists every interval that excludes zero in plot order with its flag", {
+  out <- decision_plot()
+  lines <- strsplit(out$interpretation, "\n", fixed = TRUE)[[1]]
+  bullets <- lines[startsWith(lines, "- ")]
+  listed <- sub(":.*$", "", substring(bullets, 3))
+
+  table <- out$transformed_table
+  excludes <- rownames(table)[table[["Interval"]] != "includes 0"]
+  expect_identical(listed, excludes)
+  expect_identical(listed, plot_top_to_bottom(out$plot)[plot_top_to_bottom(out$plot) %in% excludes])
+  expect_length(listed, 9L)
+
+  edge_line <- bullets[listed == "Interval excludes zero, small bound"]
+  expect_match(edge_line, "E-value bound = 1.04 (does not exceed 1.1)", fixed = TRUE)
+  expect_match(bullets[listed == "E-value bound at threshold"], "(exceeds 1.1)", fixed = TRUE)
+  expect_match(out$interpretation, "Bonferroni correction", fixed = TRUE)
+  expect_match(out$interpretation, "99.58% confidence intervals", fixed = TRUE)
+  expect_match(out$interpretation, "12 comparisons", fixed = TRUE)
+  expect_match(out$interpretation, "Of the 12 average treatment effects, 9 have adjusted confidence intervals that exclude 0", fixed = TRUE)
+  expect_match(out$interpretation, "the other 3 outcomes include 0: Small negative, crosses zero; Interval crosses zero; Zero estimate.", fixed = TRUE)
+})
+
+test_that("each ordering runs from the top of the plot and the table and prose follow it", {
+  fixture <- make_decision_fixture()
+  labels <- decision_labels[fixture$outcome]
+  magnitude <- abs(fixture$ATE)
+  custom <- rev(sort(unname(labels)))
+  expected_top <- list(
+    magnitude_desc = labels[[which.max(magnitude)]],
+    magnitude_asc = labels[[which.min(magnitude)]],
+    alphabetical = sort(unname(labels))[[1]],
+    custom = custom[[1]]
+  )
+
+  for (ordering in names(expected_top)) {
+    args <- list(fixture, adjust = "bonferroni", order = ordering, label_mapping = decision_labels,
+      e_val_bound_threshold = 1.1, include_coefficients = FALSE)
+    if (ordering == "custom") args$custom_order <- custom
+    out <- suppressMessages(do.call(margot_plot, args))
+    top_to_bottom <- plot_top_to_bottom(out$plot)
+    bullets <- strsplit(out$interpretation, "\n", fixed = TRUE)[[1]]
+    listed <- sub(":.*$", "", substring(bullets[startsWith(bullets, "- ")], 3))
+
+    expect_identical(top_to_bottom[[1]], expected_top[[ordering]], info = ordering)
+    expect_identical(rownames(out$transformed_table), top_to_bottom, info = ordering)
+    expect_identical(listed, top_to_bottom[top_to_bottom %in% listed], info = ordering)
+    if (ordering == "custom") expect_identical(top_to_bottom, custom)
+  }
+
+  # evaluebound_desc puts the largest corrected bound at the top
+  out <- suppressMessages(margot_plot(fixture, adjust = "bonferroni", order = "evaluebound_desc",
+    label_mapping = decision_labels, include_coefficients = FALSE))
+  bounds <- out$transformed_table[["E-value bound"]]
+  expect_identical(bounds, sort(bounds, decreasing = TRUE))
+})
+
+test_that("supplied colours keyed by the earlier level name still apply", {
+  out <- decision_plot(options = list(colors = c(positive = "red", "not reliable" = "grey40", negative = "blue")))
+  scale <- ggplot2::ggplot_build(out$plot)$plot$scales$get_scales("colour")
+  expect_identical(unname(scale$map(c("positive", "includes null", "negative"))), c("red", "grey40", "blue"))
+})
+
+test_that("risk-ratio plots describe intervals relative to one", {
+  input <- tibble::tibble(
+    outcome = c("higher", "lower", "unclear"),
+    `E[Y(1)]/E[Y(0)]` = c(1.5, 0.7, 1.05),
+    `2.5 %` = c(1.2, 0.5, 0.9),
+    `97.5 %` = c(1.9, 0.95, 1.2),
+    E_Value = c(2.37, 2.21, 1.27),
+    E_Val_bound = c(1.69, 1.29, 1)
+  )
+  out <- suppressMessages(margot_plot(input, type = "RR", include_coefficients = FALSE,
+    options = list(use_title_case = FALSE)))
+  expect_identical(out$transformed_table[c("higher", "lower", "unclear"), "Interval"],
+    c("above 1", "below 1", "includes 1"))
+  expect_match(out$interpretation, "exclude 1", fixed = TRUE)
+  expect_true("ATE (risk ratio)" %in% names(out$transformed_table))
+})
+
+test_that("legacy options reproduce the categories, E-values, table and prose of margot 1.3.2", {
+  # reference values produced by margot main (1.3.2.9000, commit 1421ea5) on this fixture
+  main_levels <- c("Trust in science", "Wide positive", "Anxiety", "Warmth to refugees",
+    "Clear positive", "Moderate positive", "E-value bound at threshold", "Negative, small bound",
+    "Interval excludes zero, small bound", "Small negative, crosses zero", "Interval crosses zero",
+    "Zero estimate")
+  main_keys <- c("trust", "wide_positive", "anxiety", "warmth", "clear_positive", "moderate",
+    "threshold_edge", "negative_small_bound", "edge_small", "small_negative_cross", "null_cross",
+    "exact_zero")
+  main_categories <- c("positive", "not reliable", "negative", "positive", "positive", "positive",
+    "positive", "not reliable", "not reliable", "not reliable", "not reliable", "not reliable")
+  main_bounds <- c(1.4581319112183322, 1.0867423483044134, 1.2122477368163227, 1.2070133773524114,
+    1.1206386493516125, 1.1351362814987047, 1.1004634988238682, 1.0773971335315329,
+    1.0370664471990478, 1, 1, 1)
+  main_evalues <- c(1.6889607176012267, 1.5557000719702674, 1.474132108000181, 1.3897013827031621,
+    1.3305341275860969, 1.2672725501062652, 1.245379478409641, 1.233144099793509,
+    1.196323690812481, 1.1551290599487309, 1.1051889070468919, 1)
+  main_table_names <- c("ATE", "0.21 %", "99.79 %", "confidence_level", "E_Value", "E_Val_bound",
+    "reported_estimate", "reported_lower", "reported_upper", "reporting_quantity", "reporting_unit")
+  main_interpretation <- paste0(
+    "Confidence intervals and E-values were adjusted for 12 comparisons using Bonferroni correction ",
+    "(Bonferroni-adjusted 99.58% confidence intervals). \n\nThe following estimates of average ",
+    "treatment effects meet the specified reporting threshold (E‑value lower bound >= 1.1):\n\n",
+    "- E-value bound at threshold: 0.044 (99.58% CI: 0.009 to 0.078); on the original scale, mean difference = 0.054 scale points (99.58% CI: 0.011 to 0.097). E-value bound = 1.10\n",
+    "- Moderate positive: 0.050 (99.58% CI: 0.016 to 0.084); on the original scale, mean difference = 0.062 scale points (99.58% CI: 0.020 to 0.105). E-value bound = 1.14\n",
+    "- Clear positive: 0.070 (99.58% CI: 0.013 to 0.127); on the original scale, mean difference = 0.088 scale points (99.58% CI: 0.016 to 0.159). E-value bound = 1.12\n",
+    "- Warmth to refugees: 0.090 (99.58% CI: 0.033 to 0.147); on the original scale, mean difference = 0.112 scale points (99.58% CI: 0.041 to 0.184). E-value bound = 1.21\n",
+    "- Anxiety: -0.120 (99.58% CI: -0.206 to -0.034); on the original scale, mean difference = -0.150 scale points (99.58% CI: -0.257 to -0.043). E-value bound = 1.21\n",
+    "- Trust in science: 0.200 (99.58% CI: 0.114 to 0.286); on the original scale, mean difference = 0.250 scale points (99.58% CI: 0.143 to 0.357). E-value bound = 1.46"
+  )
+
+  legacy <- decision_plot(
+    category_rule = "interval_and_evalue",
+    e_val_bound_comparison = ">=",
+    e_val_bound_conversion = "rounded",
+    order_direction = "bottom_to_top",
+    table_columns = "legacy"
+  )
+  data <- legacy$plot$data
+
+  expect_identical(levels(data$outcome), main_levels)
+  expect_identical(data$original_var_name, main_keys)
+  expect_identical(levels(data$Estimate), c("positive", "not reliable", "negative"))
+  expect_identical(as.character(data$Estimate), main_categories)
+  expect_equal(data$E_Val_bound, main_bounds, tolerance = 1e-14)
+  expect_equal(data$E_Value, main_evalues, tolerance = 1e-14)
+
+  table <- legacy$transformed_table
+  expect_identical(names(table), main_table_names)
+  expect_identical(rownames(table), rev(main_levels))
+  expect_equal(table$E_Val_bound, rev(main_bounds), tolerance = 1e-14)
+  expect_equal(table$E_Value, rev(main_evalues), tolerance = 1e-14)
+  expect_identical(legacy$interpretation, main_interpretation)
+  expect_identical(legacy$plot$labels$colour %||% "Estimate", "Estimate")
+
+  # the two decision arguments alone reproduce the earlier categories on this fixture
+  partial <- decision_plot(category_rule = "interval_and_evalue", e_val_bound_comparison = ">=")
+  partial_category <- stats::setNames(as.character(partial$plot$data$Estimate), partial$plot$data$original_var_name)
+  expect_identical(unname(partial_category[main_keys]), main_categories)
+})

@@ -357,7 +357,11 @@ margot_interpret_marginal_dev <- function(
     adjust = adjust,
     alpha = alpha,
     include_adjust_note = include_adjust_note,
-    effect_type = effect_type
+    effect_type = effect_type,
+    # the development interface keeps the earlier prose and ordering
+    category_rule = "interval_and_evalue",
+    e_val_bound_comparison = ">=",
+    order_direction = "bottom_to_top"
   )$interpretation
   interpretation <- sub("lower bound >= ", "lower bound > ", interpretation, fixed = TRUE)
 

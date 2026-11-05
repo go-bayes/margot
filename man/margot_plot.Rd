@@ -30,7 +30,12 @@ margot_plot(
   col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
   rename_ate = FALSE,
   rename_evalue = FALSE,
-  scale_info = NULL
+  scale_info = NULL,
+  category_rule = c("interval", "interval_and_evalue"),
+  e_val_bound_comparison = c(">", ">="),
+  e_val_bound_conversion = c("exact", "rounded"),
+  order_direction = c("top_to_bottom", "bottom_to_top"),
+  table_columns = c("report", "legacy")
 )
 }
 \arguments{
@@ -39,9 +44,9 @@ effect sizes, confidence intervals, E-values and E-value bounds}
 
 \item{type}{character. type of effect estimate: "RD" (risk difference) or "RR" (risk ratio)}
 
-\item{order}{Outcome ordering rule; the table and text follow the graph from top to bottom.}
+\item{order}{Outcome ordering rule. The first outcome in the ordering is drawn at the top of the plot (see `order_direction`), and the table and text follow the graph from top to bottom. `"magnitude_desc"` puts the largest absolute effect at the top; `"magnitude_asc"` the smallest; `"evaluebound_desc"` the largest E-value bound; `"alphabetical"` runs A to Z down the plot; `"custom"` follows `custom_order` from the top.}
 
-\item{custom_order}{Outcome labels in the requested custom factor order.}
+\item{custom_order}{Outcome display labels in the requested order, first at the top of the plot (with the default `order_direction`).}
 
 \item{title_binary}{Retained compatibility argument.}
 
@@ -49,15 +54,15 @@ effect sizes, confidence intervals, E-values and E-value bounds}
 
 \item{standardize_label}{Axis-label convention: New Zealand, US, or no standardisation label.}
 
-\item{e_val_bound_threshold}{E-value lower-bound threshold for colouring and prose selection.}
+\item{e_val_bound_threshold}{Reporting threshold for the E-value bound. By default it sets only the E-value flag reported beside each estimate (table column and prose); it does not change the plotted category. Under `category_rule = "interval_and_evalue"` it also gates the category, as in earlier versions.}
 
-\item{adjust}{character. multiplicity correction method: "none", "bonferroni"}
+\item{adjust}{character. multiplicity correction method: "none", "bonferroni", "holm" or "BH". With `"none"`, the supplied intervals and E-values are used unchanged.}
 
 \item{alpha}{numeric. significance level for corrections}
 
 \item{...}{other parameters as in original function}
 
-\item{options}{Plotting options; explicit arguments override corresponding option entries.}
+\item{options}{Plotting options; explicit arguments override corresponding option entries. `colors` may name the levels `"positive"`, `"includes null"` and `"negative"`; a colour named `"not reliable"` is used for `"includes null"` when that level has no colour of its own.}
 
 \item{label_mapping}{Optional mapping from source outcome names to display labels.}
 
@@ -73,7 +78,7 @@ effect sizes, confidence intervals, E-values and E-value bounds}
 
 \item{original_df}{Legacy unstandardised source data for inferred scale metadata. Explicit saved metadata is preferred.}
 
-\item{bold_rows}{Whether table row labels above the reporting threshold receive Markdown emphasis.}
+\item{bold_rows}{Whether table row labels whose E-value bound passes the reporting threshold (under `e_val_bound_comparison`) receive Markdown emphasis.}
 
 \item{rename_cols}{Whether to apply the requested table column-name mapping.}
 
@@ -81,19 +86,36 @@ effect sizes, confidence intervals, E-values and E-value bounds}
 
 \item{rename_ate}{Whether to rename the estimate column, or a supplied replacement name.}
 
-\item{rename_evalue}{Whether to use display names for E-value columns.}
+\item{rename_evalue}{Whether to use display names for E-value columns. The default `"report"` table already uses display names, so this argument affects only `table_columns = "legacy"`.}
 
 \item{scale_info}{Optional data frame keyed by the original outcome name, with
 transformation (`identity`, `log`, or `log1p`), saved `center` and positive
 `scale`, `orientation` (1 or -1), `unit`, and positive `unit_multiplier`.
 Constants describe the model outcome as orientation * (g(Y) - center) / scale.
 Explicit metadata overrides inference from `original_df`.}
+
+\item{category_rule}{How estimates are classified for colour, legend, table and prose. `"interval"` (default) uses the (adjusted) confidence interval alone: above the null, below the null, or including the null. `"interval_and_evalue"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only: an estimate is "positive" or "negative" only when its interval excludes the null and its E-value bound passes the threshold, and is otherwise labelled "not reliable"; the prose then lists only estimates whose bound passes the threshold.}
+
+\item{e_val_bound_comparison}{Comparison between the E-value bound and `e_val_bound_threshold`: `">"` (default) flags a bound that exceeds the threshold; `">="` reproduces margot 1.3.2 and earlier, which also flagged a bound equal to it. The comparison uses full precision.}
+
+\item{e_val_bound_conversion}{How the E-value bound is computed from the adjusted interval of a difference-scale estimate when `adjust` is not `"none"`. `"exact"` (default) converts the limit nearest the null directly, RR = exp(0.91 d); `"rounded"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only (see [margot_correct_combined_table()]). Not used when `adjust = "none"`.}
+
+\item{order_direction}{Where the ordering starts. `"top_to_bottom"` (default) draws the first outcome of `order` at the top. `"bottom_to_top"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only: the first outcome was drawn at the bottom, so `"magnitude_desc"` put the largest effect at the bottom. The table and prose follow the plot from top to bottom under either value.}
+
+\item{table_columns}{Layout of `transformed_table`. `"report"` (default) gives named reporting columns, described under Value. `"legacy"` reproduces the columns of margot 1.3.2 and earlier, for reproducing earlier results only: the effect column, interval columns headed by their quantiles (for example `"0.21 \%"`), `confidence_level`, `E_Value`, `E_Val_bound` and the `reported_*` and `reporting_*` columns.}
 }
 \value{
 An invisible list with `plot`, `interpretation`, and `transformed_table`.
+
+  With the default `table_columns = "report"`, `transformed_table` has one row per outcome, named by its display label and ordered as in the plot from top to bottom. Numbers keep full precision. Its columns are: the model-scale estimate (for example `"ATE (standardised)"`); its interval limits (for example `"99.58\% CI lower"`, or `"CI lower"` with a `"CI level"` column when coverage varies by outcome); when `scale_info` or `original_df` is supplied, the original-scale estimate and limits, headed by the quantity and unit when every outcome shares them (for example `"Mean difference (scale points)"`) and otherwise followed by an `"Original-scale quantity"` column; `"Interval"`, the decision (`"above 0"`, `"includes 0"` or `"below 0"`; `"Estimate"` under the legacy category rule); `"E-value"`; `"E-value bound"`; and the E-value flag (`"yes"` or `"no"`), headed by the comparison, for example `"E-value bound > 1.1"`.
 }
 \description{
 Create coordinated plots, tables and text from supplied effect estimates and
 confidence intervals, with the requested multiplicity adjustment. Model-scale
 estimates and sensitivity quantities remain separate from reported unit conversions.
+}
+\details{
+The statistical decision and the E-value flag are reported separately. By default the decision for each outcome follows its (adjusted) confidence interval alone, and the E-value flag records whether the interval's E-value bound exceeds `e_val_bound_threshold`. The flag sits beside the decision and does not change the plotted colour, legend, table decision or which outcomes the prose lists. The prose lists every outcome whose interval excludes the null, in plot order, with its E-value bound and flag, and names the correction and confidence level.
+
+To reproduce output from margot 1.3.2 and earlier, set `category_rule = "interval_and_evalue"`, `e_val_bound_comparison = ">="`, `e_val_bound_conversion = "rounded"`, `order_direction = "bottom_to_top"` and `table_columns = "legacy"`. Each argument restores one behaviour and can be set on its own.
 }
