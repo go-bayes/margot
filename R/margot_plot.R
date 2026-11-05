@@ -961,7 +961,7 @@ margot_plot <- function(
     out_plot <- out_plot + do.call(ggplot2::geom_text, text_args)
 
     # name the coefficient column at its foot; coefficient_header = NULL omits
-    # it. y = -Inf with hjust = 0 and vjust = 0 keeps the header inside the
+    # it. y = -Inf with hjust = 0 and a vjust below 0 keeps the header inside the
     # panel under coord_flip too, and does not train the y scale, so faceted
     # panels keep their own ranges
     if (!is.null(opts$coefficient_header) && nzchar(opts$coefficient_header)) {
@@ -971,7 +971,8 @@ margot_plot <- function(
         y = -Inf,
         label = opts$coefficient_header,
         hjust = 0,
-        vjust = 0,
+        # lift the header a little off the panel edge so the axis line does not cut it
+        vjust = -0.4,
         size = opts$text_size,
         fontface = "bold",
         colour = opts$coefficient_colour %||% "black"

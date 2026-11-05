@@ -109,12 +109,13 @@ test_that("legends, strips and coord_flip leave the column and header inside the
   built <- ggplot2::ggplot_build(flipped)
   layers <- text_layers(flipped)
   # after flipping, the coefficients keep their place along the effect axis and
-  # the header keeps a finite effect position with hjust = 0 and vjust = 0,
+  # the header keeps a finite effect position with hjust = 0 and vjust below 0,
   # which keep it inside the panel
   expect_true(all(is.finite(built$data[[layers$coefficients]]$x)))
   header <- flipped$layers[[layers$header]]
   expect_identical(header$aes_params$label, "Estimate")
-  expect_identical(c(header$aes_params$hjust, header$aes_params$vjust), c(0, 0))
+  expect_identical(header$aes_params$hjust, 0)
+  expect_lt(header$aes_params$vjust, 0)
   expect_identical(header$data$y, -Inf)
 })
 
