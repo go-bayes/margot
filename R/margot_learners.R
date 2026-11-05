@@ -76,6 +76,11 @@ summarise_lmtp_learners <- function(x,
 
   collapse_weights <- function(fits_list, component, wave_labels = NULL) {
     if (is.null(fits_list) || !length(fits_list)) return(data.frame())
+    # lmtp stores nuisance fits by outer fold, then by time point; regroup them by time point.
+    n_time <- max(lengths(fits_list))
+    fits_list <- lapply(seq_len(n_time), function(t) {
+      lapply(fits_list, function(fold) if (length(fold) >= t) fold[[t]] else NULL)
+    })
     wave_indices <- seq_along(fits_list)
     if (!is.null(waves)) {
       wave_indices <- intersect(wave_indices, as.integer(waves))
@@ -102,6 +107,8 @@ summarise_lmtp_learners <- function(x,
                     dimnames = list(NULL, learners))
       for (i in seq_along(weights_list)) {
         vec <- weights_list[[i]]
+        # full fits keep the SuperLearner object; lean fits keep its coefficients.
+        if (inherits(vec, "SuperLearner")) vec <- vec$coef
         if (is.null(vec) || !length(vec)) next
         mat[i, names(vec)] <- as.numeric(vec)
       }
