@@ -131,20 +131,7 @@ margot_bind_tables <- function(
     # tables whose columns still differ, after the outcome and bound columns
     # share one spelling, would bind into split, partly empty columns, so
     # refuse them
-    reference <- names(tables_list[[1]])
-    differing <- unique(unlist(lapply(tables_list[-1], function(df) {
-      c(setdiff(names(df), reference), setdiff(reference, names(df)))
-    })))
-    if (length(differing)) {
-      stop(
-        if (length(unique(recorded_layouts)) > 1L) "The tables mix the report and legacy layouts of margot_plot(). " else "",
-        "The tables do not share the same columns (",
-        paste0("'", differing, "'", collapse = ", "),
-        "), so binding them would split values across columns. ",
-        "Build every table with the same `table_columns`, correction and `col_renames` settings.",
-        call. = FALSE
-      )
-    }
+    margot_check_shared_columns(tables_list, recorded_layouts)
     combined <- dplyr::bind_rows(tables_list, .id = "Domain") %>%
       dplyr::select(dplyr::all_of(c("Domain", label_col)), dplyr::everything())
     domain_mode <- TRUE
@@ -417,13 +404,16 @@ margot_bind_tables <- function(
 
 # give level-free interval headers to tables that differ only in their interval
 # level, for example domains Bonferroni-corrected over their own outcomes.
-# report-layout headers such as "99.58% CI lower", "99.58% CI upper (unit)" and
-# "99.58% CI relative to 0" lose their level, which moves into a per-row
-# "CI level" column (for example "99.58%") placed after the last interval limit;
-# legacy quantile headers such as "0.21 %" and "99.79 %" become "CI lower" and
-# "CI upper", as in margot_plot()'s legacy layout when coverage varies, whose
-# `confidence_level` column already records each row's level. tables that
-# already share their columns are returned unchanged.
+# only the complete headers that margot_plot() writes are changed:
+# "99.58% CI lower", "99.58% CI upper", their original-unit forms such as
+# "99.58% CI lower (scale points)", and the decision header
+# "99.58% CI relative to 0". they lose their level, which moves into a per-row
+# "CI level" column (for example "99.58%") placed after the last interval
+# limit. legacy quantile headers such as "0.21 %" and "99.79 %" become
+# "CI lower" and "CI upper", as in margot_plot()'s legacy layout when coverage
+# varies, whose `confidence_level` column already records each row's level.
+# tables that already share their columns are returned unchanged, as are
+# tables that cannot be aligned; the shared-column check then refuses them.
 margot_align_ci_levels <- function(tables) {
   same_columns <- function(tables) {
     reference <- sort(names(tables[[1]]))
@@ -433,20 +423,26 @@ margot_align_ci_levels <- function(tables) {
     return(tables)
   }
 
-  report_pattern <- "^([0-9.]+%) CI (lower|upper|relative to)"
+  level_prefix <- "^([0-9.]+%) CI "
+  generated_pattern <- "^[0-9.]+% CI ((lower|upper)( \\(.+\\))?|relative to [01])$"
+  model_limits_pattern <- "^[0-9.]+% CI (lower|upper)$"
   quantile_pattern <- "^([0-9.]+) %$"
 
   strip_levels <- function(df) {
     headers <- names(df)
-    report_hits <- grepl(report_pattern, headers)
-    if (any(report_hits)) {
-      levels <- unique(sub(paste0(report_pattern, ".*$"), "\\1", headers[report_hits]))
-      if (length(levels) == 1L && !"CI level" %in% headers) {
-        names(df)[report_hits] <- sub("^[0-9.]+% CI ", "CI ", headers[report_hits])
-        limits <- grepl("^CI (lower|upper)", names(df))
-        after <- max(which(limits))
+    generated <- grepl(generated_pattern, headers)
+    if (any(generated)) {
+      levels <- unique(sub(paste0(level_prefix, ".*$"), "\\1", headers[generated]))
+      # align only a table that has both model-scale limits and one level
+      aligns <- length(levels) == 1L &&
+        sum(grepl(model_limits_pattern, headers)) == 2L &&
+        !"CI level" %in% headers
+      if (aligns) {
+        names(df)[generated] <- sub(level_prefix, "CI ", headers[generated])
+        margot_stop_on_duplicate_headers(names(df))
+        limits <- grepl("^CI (lower|upper)( \\(.+\\))?$", names(df)) & generated
         df[["CI level"]] <- rep(levels, nrow(df))
-        positions <- append(seq_len(ncol(df) - 1L), ncol(df), after = after)
+        positions <- append(seq_len(ncol(df) - 1L), ncol(df), after = max(which(limits)))
         df <- df[, positions, drop = FALSE]
       }
     } else if ("CI level" %in% headers && is.numeric(df[["CI level"]])) {
@@ -463,4 +459,25 @@ margot_align_ci_levels <- function(tables) {
 
   aligned <- lapply(tables, strip_levels)
   if (same_columns(aligned)) aligned else tables
+}
+
+# stop when tables do not share their columns: binding them would split values
+# across columns. `layouts` holds the recorded margot_plot() layouts, which
+# only sharpen the message
+margot_check_shared_columns <- function(tables, layouts = character()) {
+  reference <- names(tables[[1]])
+  differing <- unique(unlist(lapply(tables[-1], function(df) {
+    c(setdiff(names(df), reference), setdiff(reference, names(df)))
+  })))
+  if (length(differing)) {
+    stop(
+      if (length(unique(layouts)) > 1L) "The tables mix the report and legacy layouts of margot_plot(). " else "",
+      "The tables do not share the same columns (",
+      paste0("'", differing, "'", collapse = ", "),
+      "), so binding them would split values across columns. ",
+      "Build every table with the same `table_columns`, correction and `col_renames` settings.",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }

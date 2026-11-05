@@ -21,9 +21,9 @@ ci_level_scale_info <- function(n) {
     center = 4, scale = 1.25, orientation = 1, unit = "scale points", unit_multiplier = 1)
 }
 
-ci_level_table <- function(n, ...) {
+ci_level_table <- function(n, ..., threshold = 1.1) {
   suppressMessages(margot_plot(ci_level_fixture(n), adjust = "bonferroni", alpha = 0.05,
-    order = "magnitude_desc", scale_info = ci_level_scale_info(n), e_val_bound_threshold = 1.1,
+    order = "magnitude_desc", scale_info = ci_level_scale_info(n), e_val_bound_threshold = threshold,
     include_coefficients = FALSE, options = list(use_title_case = FALSE), ...))$transformed_table
 }
 
@@ -158,4 +158,74 @@ test_that("margot_combine_results binds domains with different levels", {
   expect_identical(lengths(regmatches(rendered, gregexpr("CI level", rendered, fixed = TRUE))), 1L)
   expect_identical(lengths(regmatches(rendered, gregexpr("99.17%", rendered, fixed = TRUE))), 6L)
   expect_false(grepl(">NA<", rendered, fixed = TRUE))
+})
+
+test_that("only complete generated interval headers lose their level", {
+  twelve <- ci_level_table(12, rename_ate = "99.58% CI lower estimate")
+  six <- ci_level_table(6, rename_ate = "99.17% CI lower estimate")
+  for (bind in list(
+    function(x) margot_bind_tables(x),
+    function(x) margot:::margot_combine_results(x, format = "html")
+  )) {
+    expect_error(bind(list(twelve = twelve, six = six)), "'99.58% CI lower estimate'", fixed = TRUE)
+  }
+  # the generated headers of these tables would still align on their own
+  aligned <- margot:::margot_align_ci_levels(list(ci_level_table(12), ci_level_table(6)))
+  expect_true("CI lower" %in% names(aligned[[1]]))
+})
+
+test_that("margot_combine_results refuses tables that do not share their columns", {
+  twelve <- ci_level_table(12)
+  combine <- function(x) margot:::margot_combine_results(x, format = "html")
+  expect_error(combine(list(a = twelve, b = ci_level_table(6, rename_ate = "Contrast"))), "do not share the same columns")
+  expect_error(combine(list(a = twelve, b = ci_level_table(6, threshold = 1.2))), "'E-value bound > 1.2'", fixed = TRUE)
+  expect_error(combine(list(a = twelve, b = ci_level_table(6, table_columns = "legacy"))), "mix the report and legacy layouts")
+})
+
+test_that("renamed limits that leave only the decision header levelled are refused cleanly", {
+  rename_limits <- function(level) {
+    stats::setNames(
+      as.list(paste0(level, c(" CI lower", " CI upper", " CI lower (scale points)", " CI upper (scale points)"))),
+      c("Lower", "Upper", "Lower (scale points)", "Upper (scale points)")
+    )
+  }
+  twelve <- ci_level_table(12, rename_cols = TRUE, col_renames = rename_limits("99.58%"))
+  six <- ci_level_table(6, rename_cols = TRUE, col_renames = rename_limits("99.17%"))
+  expect_true(all(c("Lower", "99.58% CI relative to 0") %in% names(twelve)))
+  warnings <- character()
+  result <- withCallingHandlers(
+    tryCatch(margot_bind_tables(list(twelve = twelve, six = six)), error = function(e) conditionMessage(e)),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_match(result, "do not share the same columns")
+  expect_length(warnings, 0L)
+})
+
+test_that("a renamed estimate that would clash with a level-free limit is refused", {
+  twelve <- ci_level_table(12, rename_ate = "CI lower")
+  six <- ci_level_table(6, rename_ate = "CI lower")
+  expect_error(margot_bind_tables(list(twelve = twelve, six = six)), "share the header 'CI lower'")
+})
+
+test_that("margot_combine_results labels each domain's own rows", {
+  twelve <- ci_level_table(12)
+  six <- ci_level_table(6)
+  rendered <- as.character(margot:::margot_combine_results(list(twelve = twelve, six = six), format = "html"))
+  position <- function(pattern) regexpr(pattern, rendered, fixed = TRUE)[[1]]
+  last_position <- function(pattern) max(gregexpr(pattern, rendered, fixed = TRUE)[[1]])
+  expect_lt(position(">twelve<"), position("99.58%"))
+  expect_gt(position(">six<"), last_position("99.58%"))
+  expect_lt(position(">six<"), position("99.17%"))
+})
+
+test_that("margot_combine_results keeps legacy coverage unrounded", {
+  twelve <- ci_level_table(12, table_columns = "legacy")
+  six <- ci_level_table(6, table_columns = "legacy")
+  rendered <- as.character(margot:::margot_combine_results(list(twelve = twelve, six = six), format = "html"))
+  expect_match(rendered, "0.9958333", fixed = TRUE)
+  expect_match(rendered, "0.9916667", fixed = TRUE)
+  expect_false(grepl(">1.00<", rendered, fixed = TRUE))
 })
