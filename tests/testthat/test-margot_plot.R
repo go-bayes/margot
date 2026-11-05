@@ -42,13 +42,13 @@ test_that("coefficient labels use fixed-width monospace formatting", {
     bounds = c(1.5, 1.7, 1.2)
   )
 
-  # by default the coefficients form a monospace column just outside the right edge of the panel
+  # by default the coefficients form a monospace column inside the panel, at its left
   out <- margot_plot(data, type = "RD", options = list(use_title_case = FALSE))
   layer_index <- which(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label), logical(1)))
   expect_length(layer_index, 1)
   expect_identical(out$plot$layers[[layer_index]]$aes_params$family, "mono")
   built <- ggplot2::ggplot_build(out$plot)$data[[layer_index]]
-  expect_true(all(is.infinite(built$x) & built$x > 0))
+  expect_true(all(built$x == out$plot$coordinates$limits$x[1]))
   expect_length(built$label, 3)
   expect_length(unique(nchar(built$label)), 1)
 

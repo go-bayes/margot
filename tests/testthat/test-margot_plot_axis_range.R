@@ -15,7 +15,8 @@ axis_range_data <- function(type = "RD") {
     `2.5 %` = c(0.06, 0.01, -0.02),
     `97.5 %` = c(0.12, 0.07, 0.04),
     E_Value = c(1.4, 1.2, 1.1),
-    E_Val_bound = c(1.3, 1.1, 1)
+    E_Val_bound = c(1.3, 1.1, 1),
+    panel = c("one", "two", "two")
   )
 }
 
@@ -25,21 +26,19 @@ axis_range_plot <- function(type = "RD", ..., data = axis_range_data(type), orde
     custom_order = custom_order, options = list(use_title_case = FALSE, ...)))
 }
 
-coefficient_layer <- function(out) {
-  which(vapply(out$plot$layers, function(layer) {
-    inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label)
-  }, logical(1)))
+text_layers <- function(plot) {
+  layers <- plot$layers
+  is_text <- vapply(layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))
+  maps_label <- vapply(layers, function(layer) !is.null(layer$mapping$label), logical(1))
+  list(coefficients = which(is_text & maps_label), header = which(is_text & !maps_label))
 }
 
 # every drawn coefficient equals its own row's estimate, panel by panel
 expect_labels_match_estimates <- function(plot, info = NULL) {
   built <- ggplot2::ggplot_build(plot)
   layers <- plot$layers
-  text_index <- which(vapply(layers, function(layer) {
-    inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label)
-  }, logical(1)))
   point_index <- which(vapply(layers, function(layer) inherits(layer$geom, "GeomPoint"), logical(1)))
-  labels <- built$data[[text_index]]
+  labels <- built$data[[text_layers(plot)$coefficients]]
   points <- built$data[[point_index]]
   key <- function(d) paste(d$PANEL, round(d$y, 6))
   estimate <- points$x[match(key(labels), key(points))]
@@ -47,51 +46,76 @@ expect_labels_match_estimates <- function(plot, info = NULL) {
   expect_identical(trimws(labels$label), sprintf("%.2f", estimate), info = info)
 }
 
-test_that("the default range contains the null and every limit on both scales", {
+# the column lies inside the drawn range and, with the default range, left of every interval
+expect_column_clear <- function(out, data = axis_range_data()) {
+  limits <- out$plot$coordinates$limits$x
+  label_x <- unique(ggplot2::ggplot_build(out$plot)$data[[text_layers(out$plot)$coefficients]]$x)
+  expect_gte(label_x, limits[1])
+  expect_lte(label_x + 0.15 * diff(limits), min(c(data[[2]], data[["2.5 %"]])))
+}
+
+test_that("the default range contains the null and every limit, with a band for the column", {
   for (type in c("RD", "RR")) {
     data <- axis_range_data(type)
-    limits <- axis_range_plot(type)$plot$coordinates$limits$x
+    out <- axis_range_plot(type)
+    limits <- out$plot$coordinates$limits$x
     null <- if (type == "RR") 1 else 0
     expect_lte(limits[1], min(c(null, data[["2.5 %"]])), label = type)
     expect_gte(limits[2], max(c(null, data[["97.5 %"]])), label = type)
-    # fitted, with modest padding rather than a fixed range
+    # fitted, with modest padding and the column band rather than a fixed range
     span <- diff(range(c(null, data[["2.5 %"]], data[["97.5 %"]])))
-    expect_lt(diff(limits), 1.5 * span, label = type)
+    expect_lt(diff(limits), 1.6 * span, label = type)
+    expect_column_clear(out, data)
+    expect_labels_match_estimates(out$plot, type)
   }
 })
 
-test_that("coefficients sit outside the panel and clear of every interval", {
-  for (limits in list(NULL, c(-0.05, 0.15))) {
-    out <- if (is.null(limits)) axis_range_plot("RD") else axis_range_plot("RD", x_lim_lo = limits[1], x_lim_hi = limits[2])
-    drawn <- out$plot$coordinates$limits$x
-    built <- ggplot2::ggplot_build(out$plot)$data[[coefficient_layer(out)]]
-    # placed at the right edge of the panel, beyond every interval
-    expect_true(all(is.infinite(built$x) & built$x > 0))
-    expect_lte(max(axis_range_data()[["97.5 %"]]), drawn[2])
-    expect_identical(out$plot$coordinates$clip, "off")
-    expect_gt(as.numeric(out$plot$theme$plot.margin[2]), 5.5)
-    expect_labels_match_estimates(out$plot)
-  }
-})
+test_that("explicit limits are honoured exactly, with the column at the left edge", {
+  out <- axis_range_plot("RD", x_lim_lo = 0.1, x_lim_hi = 0.35)
+  expect_equal(out$plot$coordinates$limits$x, c(0.1, 0.35))
+  built <- ggplot2::ggplot_build(out$plot)$data[[text_layers(out$plot)$coefficients]]
+  expect_true(all(built$x == 0.1))
 
-test_that("a range that cuts the data keeps the panel clipped and the column inside it", {
-  out <- axis_range_plot("RD", x_lim_lo = 0, x_lim_hi = 0.13)
-  limits <- out$plot$coordinates$limits$x
+  only_upper <- axis_range_plot("RD", x_lim_hi = 0.2)
+  expect_equal(only_upper$plot$coordinates$limits$x[2], 0.2)
   expect_identical(out$plot$coordinates$clip, "on")
-  label_x <- unique(ggplot2::ggplot_build(out$plot)$data[[coefficient_layer(out)]]$x)
-  # within the drawn area and left of every interval
-  expect_gte(label_x, limits[1])
-  expect_lte(label_x + 0.15 * diff(limits), min(axis_range_data()[["2.5 %"]]))
-  expect_equal(limits[2], 0.13)
 })
 
 test_that("a supplied x_offset is respected", {
   out <- axis_range_plot("RD", x_offset = -0.05, x_lim_lo = -0.06, x_lim_hi = 0.13)
-  index <- coefficient_layer(out)
+  index <- text_layers(out$plot)$coefficients
   expect_length(index, 1)
   expect_true(all(ggplot2::ggplot_build(out$plot)$data[[index]]$x == -0.05))
   expect_equal(out$plot$coordinates$limits$x, c(-0.06, 0.13))
-  expect_identical(out$plot$coordinates$clip, "on")
+})
+
+test_that("legends, strips and coord_flip leave the column and header inside the panel", {
+  out <- axis_range_plot("RD")
+  limits <- out$plot$coordinates$limits$x
+  variants <- list(
+    legend_right = out$plot + ggplot2::theme(legend.position = "right"),
+    grid_free = out$plot + ggplot2::facet_grid(panel ~ ., scales = "free_y", space = "free_y")
+  )
+  for (name in names(variants)) {
+    plot <- variants[[name]]
+    expect_no_error(ggplot2::ggplotGrob(plot))
+    built <- ggplot2::ggplot_build(plot)$data[[text_layers(plot)$coefficients]]
+    expect_true(all(built$x >= limits[1] & built$x <= limits[2]), info = name)
+    expect_labels_match_estimates(plot, name)
+  }
+
+  flipped <- out$plot + ggplot2::coord_flip()
+  expect_no_error(ggplot2::ggplotGrob(flipped))
+  built <- ggplot2::ggplot_build(flipped)
+  layers <- text_layers(flipped)
+  # after flipping, the coefficients keep their place along the effect axis and
+  # the header keeps a finite effect position with hjust = 0 and vjust = 0,
+  # which keep it inside the panel
+  expect_true(all(is.finite(built$data[[layers$coefficients]]$x)))
+  header <- flipped$layers[[layers$header]]
+  expect_identical(header$aes_params$label, "Estimate")
+  expect_identical(c(header$aes_params$hjust, header$aes_params$vjust), c(0, 0))
+  expect_identical(header$data$y, -Inf)
 })
 
 test_that("labels stay with their outcomes under free-y faceting and any ordering", {
