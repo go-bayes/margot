@@ -833,8 +833,8 @@ here_save_arrow <- function(obj, name, dir_path = NULL,
 #' @param order Sorting option for outcomes. Options are:
 #'   \itemize{
 #'     \item 'alphabetical': sort by outcome name (A-Z)
-#'     \item 'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')
-#'     \item 'magnitude_asc': sort by absolute effect size, ascending
+#'     \item 'magnitude_desc': sort by distance from the null, descending: absolute difference for 'RD', absolute log ratio for 'RR'
+#'     \item 'magnitude_asc': sort by distance from the null, ascending
 #'     \item 'evaluebound_desc': sort by E-value bound, descending
 #'     \item 'evaluebound_asc': sort by E-value bound, ascending
 #'     \item 'custom': user-defined order (requires custom_order)
@@ -940,11 +940,15 @@ group_tab <- function(
 
   ev_bound <- "E_Val_bound"
 
+  # magnitude is the distance from the null: |difference|, or |log ratio| for
+  # ratios, so that a protective ratio of 0.5 ranks with a harmful ratio of 2
+  magnitude <- if (type == "RR") abs(log(results_df[[effect_col]])) else abs(results_df[[effect_col]])
+
   # apply ordering
   results_df <- switch(order,
     alphabetical = results_df %>% arrange(outcome),
-    magnitude_desc = results_df %>% arrange(desc(abs(!!sym(effect_col)))),
-    magnitude_asc = results_df %>% arrange(abs(!!sym(effect_col))),
+    magnitude_desc = results_df %>% slice(order(-magnitude)),
+    magnitude_asc = results_df %>% slice(order(magnitude)),
     evaluebound_desc = results_df %>% arrange(desc(!!sym(ev_bound))),
     evaluebound_asc = results_df %>% arrange(!!sym(ev_bound)),
     custom = {

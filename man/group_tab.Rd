@@ -22,8 +22,8 @@ the results data frame and label mapping from transform_to_original_scale().}
 \item{order}{Sorting option for outcomes. Options are:
 \itemize{
   \item 'alphabetical': sort by outcome name (A-Z)
-  \item 'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')
-  \item 'magnitude_asc': sort by absolute effect size, ascending
+  \item 'magnitude_desc': sort by distance from the null, descending: absolute difference for 'RD', absolute log ratio for 'RR'
+  \item 'magnitude_asc': sort by distance from the null, ascending
   \item 'evaluebound_desc': sort by E-value bound, descending
   \item 'evaluebound_asc': sort by E-value bound, ascending
   \item 'custom': user-defined order (requires custom_order)
