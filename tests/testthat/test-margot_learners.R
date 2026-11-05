@@ -207,3 +207,23 @@ test_that("margot_report_lmtp_learners reads a lean margot_lmtp fit", {
     learner_data$shift_full == "perfectionism_down", ]
   expect_equal(sum(reported$weight_mean * reported$weight_n), sum(kept))
 })
+
+test_that("learner summaries group lmtp fits by time point, not by outer fold", {
+  # lmtp 1.5.4 stores fits as fits[[fold]][[time]]; three time points, two folds here.
+  fold <- function(a) lapply(a, function(w) c(SL.mean = w, SL.ranger = 1 - w))
+  model <- list(
+    density_ratios = matrix(1, nrow = 4, ncol = 3, dimnames = list(NULL, c("t1", "t2", "t3"))),
+    fits_m = list(fold(c(0.1, 0.2, 0.3)), fold(c(0.3, 0.4, 0.5))),
+    fits_r = list(fold(c(0.6, 0.6, 0.6)), fold(c(0.8, 0.8, 0.8)))
+  )
+  fit <- list(models = list(y = list(y_shift = model)))
+  rows <- summarise_lmtp_learners(fit, outcome = "y")
+  outcome_mean <- rows[rows$component == "outcome" & rows$learner == "SL.mean", ]
+  expect_equal(nrow(outcome_mean), 3L)
+  expect_equal(outcome_mean$wave_index, 1:3)
+  expect_equal(outcome_mean$wave_label, c("t1", "t2", "t3"))
+  expect_equal(outcome_mean$weight_n, rep(2L, 3L))
+  expect_equal(outcome_mean$weight_mean, c(0.2, 0.3, 0.4))
+  treatment_mean <- rows[rows$component == "treatment" & rows$learner == "SL.mean", ]
+  expect_equal(treatment_mean$weight_mean, rep(0.7, 3L))
+})

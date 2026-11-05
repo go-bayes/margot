@@ -22,8 +22,8 @@ the results data frame and label mapping from transform_to_original_scale().}
 \item{order}{Sorting option for outcomes. Options are:
 \itemize{
   \item 'alphabetical': sort by outcome name (A-Z)
-  \item 'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')
-  \item 'magnitude_asc': sort by absolute effect size, ascending
+  \item 'magnitude_desc': sort by distance from the null, descending: absolute difference for 'RD', absolute log ratio for 'RR'
+  \item 'magnitude_asc': sort by distance from the null, ascending
   \item 'evaluebound_desc': sort by E-value bound, descending
   \item 'evaluebound_asc': sort by E-value bound, ascending
   \item 'custom': user-defined order (requires custom_order)
@@ -53,7 +53,8 @@ It also handles original scale estimates when available.
 The function detects whether `df` is a list output from transform_to_original_scale()
 and extracts `results_df` and `label_mapping` accordingly. It then ensures an `outcome`
 column, applies any label mapping, and sorts based on the chosen `order`. New options
-'magnitude_desc' and 'magnitude_asc' sort by absolute effect size; 'evaluebound_desc'
+'magnitude_desc' and 'magnitude_asc' sort by distance from the null (absolute difference
+for 'RD', absolute log ratio for 'RR'); 'evaluebound_desc'
 and 'evaluebound_asc' sort by the E-Value bound; 'alphabetical' sorts by outcome
 name; 'custom' respects a user-provided vector; 'default' is an alias for 'magnitude_desc'.
 }

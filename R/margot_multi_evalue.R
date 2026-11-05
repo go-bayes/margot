@@ -87,7 +87,9 @@ margot_multi_evalue <- function(
     scale = scale,
     delta = delta_exposure,
     sd = sd_outcome,
-    m = m
+    m = m,
+    # retain the earlier bound conversion; the exact conversion is a separate follow-up
+    e_val_bound_conversion = "rounded"
   )
   multiplicity <- attr(out, "multiplicity")
 

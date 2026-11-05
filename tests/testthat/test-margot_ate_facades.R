@@ -40,7 +40,7 @@ test_that("ATE interfaces preserve the legacy components and numerical precision
   expect_identical(figure$labels, legacy$plot$labels)
   expect_identical(prose, legacy$interpretation)
   expect_identical(table, legacy$transformed_table)
-  expect_identical(sort(table$ATE), sort(estimates$ATE))
+  expect_identical(sort(table[["ATE (standardised)"]]), sort(estimates$ATE))
 })
 
 test_that("ATE interfaces preserve options precedence and custom outcome ordering", {
@@ -61,7 +61,9 @@ test_that("ATE interfaces preserve options precedence and custom outcome orderin
   expect_identical(figure$data, legacy$plot$data)
   expect_identical(prose, legacy$interpretation)
   expect_identical(table, legacy$transformed_table)
-  expect_identical(levels(figure$data$outcome), args$custom_order)
+  # the first custom outcome is drawn at the top, which ggplot holds as the last level
+  expect_identical(levels(figure$data$outcome), rev(args$custom_order))
+  expect_identical(table$Outcome, args$custom_order)
   expect_false(any(vapply(figure$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))))
 })
 
@@ -82,14 +84,20 @@ test_that("ATE interfaces share supplied scale metadata without replacing model 
   expect_identical(figure$data, legacy$plot$data)
   expect_identical(prose, legacy$interpretation)
   expect_identical(table, legacy$transformed_table)
-  expect_true(all(c("reported_estimate", "reported_lower", "reported_upper", "reporting_quantity", "reporting_unit") %in% names(table)))
-  rows <- match(estimates$ATE, table$ATE)
+  reported_names <- c("Mean difference (points)", "95% CI lower (points)", "95% CI upper (points)")
+  expect_true(all(reported_names %in% names(table)))
+  rows <- match(estimates$ATE, table[["ATE (standardised)"]])
   expect_false(anyNA(rows))
-  expect_equal(table$reported_estimate[rows], estimates$ATE * metadata$scale)
-  expect_equal(table$reported_lower[rows], estimates[["2.5 %"]] * metadata$scale)
-  expect_equal(table$reported_upper[rows], estimates[["97.5 %"]] * metadata$scale)
-  expect_identical(sort(table$ATE), sort(estimates$ATE))
-  expect_true(all(table$reporting_unit == "points"))
+  expect_equal(table[["Mean difference (points)"]][rows], estimates$ATE * metadata$scale)
+  expect_equal(table[["95% CI lower (points)"]][rows], estimates[["2.5 %"]] * metadata$scale)
+  expect_equal(table[["95% CI upper (points)"]][rows], estimates[["97.5 %"]] * metadata$scale)
+  expect_identical(sort(table[["ATE (standardised)"]]), sort(estimates$ATE))
+
+  # the earlier column layout remains available
+  earlier <- do.call(margot_table_ate, c(args, list(table_columns = "legacy")))
+  expect_true(all(c("reported_estimate", "reported_lower", "reported_upper", "reporting_quantity", "reporting_unit") %in% names(earlier)))
+  expect_true(all(earlier$reporting_unit == "points"))
+  expect_equal(earlier$reported_estimate, table[["Mean difference (points)"]])
 })
 
 test_that("ATE table renaming and multiplicity arguments reach the shared implementation", {
@@ -105,7 +113,10 @@ test_that("ATE table renaming and multiplicity arguments reach the shared implem
   table <- do.call(margot_table_ate, args)
 
   expect_identical(table, legacy$transformed_table)
-  expect_true(all(c("Mean difference", "E-Value", "E-Value Bound", "1.25 %", "98.75 %") %in% names(table)))
+  expect_true(all(c("Mean difference", "E-value", "E-value bound", "97.5% CI lower", "97.5% CI upper") %in% names(table)))
+
+  earlier <- do.call(margot_table_ate, c(args, list(table_columns = "legacy")))
+  expect_true(all(c("Mean difference", "E-Value", "E-Value Bound", "1.25 %", "98.75 %") %in% names(earlier)))
 })
 
 
@@ -121,7 +132,8 @@ test_that("ATE interfaces distinguish an omitted scale argument from explicit NU
   disabled <- do.call(margot_table_ate, c(args, list(scale_info = NULL)))
 
   expect_identical(inherited, direct)
-  expect_false("reported_estimate" %in% names(disabled))
+  expect_true("Mean difference (points)" %in% names(inherited))
+  expect_false(any(grepl("points", names(disabled), fixed = TRUE)))
 })
 
 test_that("ATE prose and tables follow the figure from top to bottom", {
@@ -140,8 +152,8 @@ test_that("ATE prose and tables follow the figure from top to bottom", {
     bullets <- bullets[startsWith(bullets, "- ")]
     prose_order <- sub(":.*$", "", substring(bullets, 3))
 
-    expect_identical(rownames(table), rev(levels(figure$data$outcome)), info = ordering)
-    expect_identical(prose_order, rownames(table), info = ordering)
+    expect_identical(table$Outcome, rev(levels(figure$data$outcome)), info = ordering)
+    expect_identical(prose_order, table$Outcome, info = ordering)
   }
 })
 
@@ -162,8 +174,9 @@ test_that("legacy scale inference runs once before display labels are applied", 
   )
 
   expect_equal(sum(grepl("Inferring legacy transformations", warnings, fixed = TRUE)), 1)
-  rows <- match(make_ate_facade_data()$ATE, result$transformed_table$ATE)
-  expect_equal(result$transformed_table$reported_estimate[rows], make_ate_facade_data()$ATE * c(1, 2))
+  rows <- match(make_ate_facade_data()$ATE, result$transformed_table[["ATE (standardised)"]])
+  expect_equal(result$transformed_table[["Mean difference (original scale)"]][rows], make_ate_facade_data()$ATE * c(1, 2))
+  expect_true("95% CI lower (original scale)" %in% names(result$transformed_table))
 })
 
 test_that("display labels and metadata row order do not change reported quantities", {
@@ -175,8 +188,8 @@ test_that("display labels and metadata row order do not change reported quantiti
     include_coefficients = FALSE,
     label_mapping = list(t2_first_z = "Unrelated display name", t2_second_z = "Different display name")
   )
-  rows <- match(estimates$ATE, result$ATE)
+  rows <- match(estimates$ATE, result[["ATE (standardised)"]])
 
-  expect_equal(result$reported_estimate[rows], estimates$ATE * c(2, 3))
-  expect_setequal(rownames(result), c("Unrelated display name", "Different display name"))
+  expect_equal(result[["Mean difference (points)"]][rows], estimates$ATE * c(2, 3))
+  expect_setequal(result$Outcome, c("Unrelated display name", "Different display name"))
 })

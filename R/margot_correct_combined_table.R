@@ -14,7 +14,7 @@
 #' @param combined_table A data frame with *at least* the columns
 #'   \itemize{
 #'     \item `E[Y(1)]-E[Y(0)]` **or** `E[Y(1)]/E[Y(0)]`
-#'     \item `2.5 %`, `97.5 %`   (unadjusted CI limits)
+#'     \item `2.5 \%`, `97.5 \%`   (unadjusted CI limits)
 #'   }
 #'   Extra columns (e.g. the original *E*-values) are carried through.
 #' @param adjust Multiplicity method: `"bonferroni"` (default), `"holm"`, `"BH"`, or `"none"`. Bonferroni and Holm provide strong FWER control; BH provides FDR control. `"none"` retains the supplied confidence limits.
@@ -24,11 +24,12 @@
 #' @param scale Scale used to recompute the *E*-value. `"RD"` is the legacy label for the standardised-continuous-outcome approximation from an outcome-mean difference or ATE; `"RR"` treats the estimate as a risk ratio.
 #' @param delta Exposure contrast represented by an outcome-mean difference, used only when `scale = "RD"`.
 #' @param sd Outcome standard deviation used to standardise an outcome-mean difference, used only when `scale = "RD"`.
+#' @param e_val_bound_conversion How the confidence-bound E-value is computed from the returned interval when `scale = "RD"`. `"exact"` (default) converts the interval limit nearest the null directly. When the interval excludes the null, the risk ratio away from the null at that limit is \eqn{\exp(0.91 |d_{\mathrm{limit}}|)}, which equals \eqn{\exp(0.91 (|d| - z^{*} \mathrm{SE}(d)))} for a symmetric interval with critical value \eqn{z^{*}}; for a negative \eqn{d} the nearest limit is the upper one, and its ratio below 1 is inverted. `"rounded"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only: it infers \eqn{\mathrm{SE}^{*} = (\mathrm{upper} - \mathrm{estimate}) / \Phi^{-1}(0.975)} from the returned interval and uses \eqn{\exp(0.91 |d| - 1.78\,\mathrm{SE}^{*})}, which replaces \eqn{0.91 z^{*}} by \eqn{1.78 z^{*} / 1.96} and so gives a slightly larger bound for an adjusted interval. Ignored when `scale = "RR"`, where the returned limits are used directly.
 #'
 #' @return A data frame with the same rows (and order) as `combined_table`, but
 #'   with
 #'   \itemize{
-#'     \item updated `2.5 %` and `97.5 %` columns, and
+#'     \item updated `2.5 \%` and `97.5 \%` columns, and
 #'     \item freshly computed `E_Value` and `E_Val_bound`.
 #'   }
 #'   Numeric columns retain their computational precision. Apply display
@@ -44,9 +45,15 @@
 #' For an outcome-mean difference \eqn{b}, exposure contrast \eqn{\delta}, and
 #' outcome standard deviation \eqn{s}, Margot first forms the standardised
 #' difference \eqn{d = b|\delta|/s}. It approximates the risk ratio as
-#' \eqn{\exp(0.91d)} and the risk-ratio confidence limits as
-#' \eqn{\exp(0.91d \pm 1.78\,\mathrm{SE}(d))}, then applies the same null
-#' E-value equation. This calculation treats \eqn{s} as known.
+#' \eqn{\exp(0.91d)}. With the default `e_val_bound_conversion = "exact"`, each
+#' returned (adjusted) confidence limit is standardised and converted in the same
+#' way, so the confidence-bound E-value uses \eqn{\exp(0.91 d_{\mathrm{limit}})}
+#' for the limit nearest the null (inverted when it lies below 1). With
+#' `e_val_bound_conversion = "rounded"`,
+#' the risk-ratio confidence limits are \eqn{\exp(0.91d \pm 1.78\,\mathrm{SE}^{*})},
+#' with \eqn{\mathrm{SE}^{*}} inferred from the returned interval as described
+#' under that argument. Either way Margot then applies the same null E-value
+#' equation. This calculation treats \eqn{s} as known.
 #'
 #' @section How the correction is applied:
 #' For Bonferroni, let \eqn{m} be the total number of tests in the multiplicity family.
@@ -61,6 +68,10 @@
 #'     then back-calculates symmetric CIs. Controls false discovery rate rather
 #'     than family-wise error rate.
 #' }
+#' Because an adjusted *p*-value is never smaller than the unadjusted one, the
+#' Holm and BH intervals exclude (or touch) the null whatever the adjusted
+#' *p*-value. Read the Holm or BH decision from the adjusted *p*-value, not from
+#' these intervals; [margot_plot()] refuses its default interval rule with them.
 #'
 #' @references
 #' VanderWeele TJ, Mathur MB (2019).
@@ -83,9 +94,11 @@ margot_correct_combined_table <- function(combined_table,
                                           scale = c("RD", "RR"),
                                           delta = 1,
                                           sd = 1,
-                                          m = NULL) {
+                                          m = NULL,
+                                          e_val_bound_conversion = c("exact", "rounded")) {
   adjust <- match.arg(adjust)
   scale <- match.arg(scale)
+  e_val_bound_conversion <- match.arg(e_val_bound_conversion)
 
   ## ---- 0 • sanity checks ----------------------------------------------------
   if (scale == "RD") {
@@ -191,7 +204,10 @@ margot_correct_combined_table <- function(combined_table,
       se0 = (tbl$`97.5 %` - tbl[[est_col]]) / stats::qnorm(0.975)
     ),
     \(est, lo, hi, se0) {
-      values <- if (scale == "RD") {
+      values <- if (scale == "RD" && e_val_bound_conversion == "exact") {
+        .margot_evalues_ols_limits(est, lo = lo, hi = hi, sd = sd, delta = delta)
+      } else if (scale == "RD") {
+        # legacy: standard error rescaled from the returned interval, rounded constant 1.78
         .margot_evalues_ols(est, se = se0, sd = sd, delta = delta)
       } else {
         .margot_evalues_rr(est, lo = lo, hi = hi)

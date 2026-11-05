@@ -20,7 +20,7 @@ A character string containing the formatted interpretation.
 Return the prose produced by [margot_plot()], using the same estimates, intervals, ordering and transformation metadata as its figure and table.
 }
 \details{
-Arguments in `...` retain their [margot_plot()] behaviour, including the evidence threshold controlling which estimates enter the prose. If `save_output = TRUE`, the complete reporting list is saved.
+Arguments in `...` retain their [margot_plot()] behaviour. By default the prose lists every outcome whose (adjusted) confidence interval excludes the null, and `e_val_bound_threshold` only sets the E-value flag reported beside each estimate; with `category_rule = "interval_and_evalue"`, the earlier rule, the threshold also decides which estimates enter the prose. If `save_output = TRUE`, the complete reporting list is saved.
 }
 \seealso{
 [margot_plot_ate()], [margot_table_ate()], [margot_plot()]
