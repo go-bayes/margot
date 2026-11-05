@@ -6,6 +6,7 @@
 #' It accepts both `transformed_table` layouts of [margot_plot()]: the default reporting layout,
 #' whose bound column is "E-value bound" and whose outcomes are in an "Outcome" column, and the
 #' legacy layout, whose bound column is "E_Val_bound" and whose outcomes are row names.
+#' A table that already has an "Outcome" column keeps it, and row names are not printed.
 #'
 #' @param tables_list a named list of data frames, each a domain table, or a single data frame.
 #'   For lists, row names are captured as an "Outcome" column; for data frames, same applies.
@@ -102,6 +103,10 @@ margot_bind_tables <- function(
       dplyr::select(Domain, Outcome, everything())
     domain_mode <- TRUE
   }
+
+  # labels now live in the Outcome column; drop row names so that no rendered
+  # table prints them a second time
+  rownames(combined) <- NULL
 
   bound_col <- find_bound_col(combined)
   if (is.na(bound_col)) bound_col <- threshold_col

@@ -30,11 +30,11 @@ scales <- data.frame(
   unit = c("points", "drinks"), unit_multiplier = 1
 )
 margot_plot_ate(estimates, scale_info = scales, e_val_bound_threshold = 1)
-margot_table_ate(estimates, scale_info = scales, e_val_bound_threshold = 1)
+print(margot_table_ate(estimates, scale_info = scales, e_val_bound_threshold = 1), row.names = FALSE)
 cat(margot_interpret_ate(estimates, scale_info = scales, e_val_bound_threshold = 1))
 ```
 
-The graph retains the supplied model-scale estimates and intervals. The table retains those numbers in an "ATE (standardised)" column with its interval limits, and adds the original-scale estimate and limits, headed by the quantity and unit (for example "Mean difference (points)"). The interval level appears in the headers, or in a "CI level" column when coverage varies by outcome. A decision column states whether each interval lies above, includes or lies below the null, and a separate column flags whether the E-value bound exceeds the threshold. Prose lists every outcome whose interval excludes the null and reports the supported conversion alongside the model-scale estimate. The E-value threshold sets only that flag; it does not decide which estimates are reported, establish identification or remove the need to report other planned outcomes. E-values remain tied to their supplied scientific scale and calculation, not to a change of display units.
+The graph retains the supplied model-scale estimates and intervals. The table names each outcome in an "Outcome" column, which its row names repeat, and retains those numbers in an "ATE (standardised)" column with its interval limits, and adds the original-scale estimate and limits, headed by the quantity and unit (for example "Mean difference (points)"). The interval level appears in the headers, or in a "CI level" column when coverage varies by outcome. A decision column states whether each interval lies above, includes or lies below the null, and a separate column flags whether the E-value bound exceeds the threshold. Prose lists every outcome whose interval excludes the null and reports the supported conversion alongside the model-scale estimate. The E-value threshold sets only that flag; it does not decide which estimates are reported, establish identification or remove the need to report other planned outcomes. E-values remain tied to their supplied scientific scale and calculation, not to a change of display units.
 
 ## Record preparation constants
 
@@ -90,8 +90,8 @@ exercise_table <- margot_table_ate(
   scale_info = exercise_scale_info,
   e_val_bound_threshold = 1
 )
-exercise_table[, c("Outcome", "ATE (standardised)", "Mean difference (hours per week)",
-  "95% CI lower (hours per week)", "95% CI upper (hours per week)")]
+print(exercise_table[, c("Outcome", "ATE (standardised)", "Mean difference (hours per week)",
+  "95% CI lower (hours per week)", "95% CI upper (hours per week)")], row.names = FALSE)
 cat(margot_interpret_ate(
   exercise_estimate,
   scale_info = exercise_scale_info,

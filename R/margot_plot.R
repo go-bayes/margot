@@ -317,6 +317,15 @@ margot_format_triple <- function(values, null_value, min_digits, max_digits = 10
   out
 }
 
+# join names as "a and b" or "a, b and c"
+margot_join_names <- function(x) {
+  n <- length(x)
+  if (n <= 1L) {
+    return(paste(x, collapse = ""))
+  }
+  paste0(paste(x[-n], collapse = ", "), " and ", x[n])
+}
+
 # describe the E-value flag beside a value in prose
 margot_evalue_flag_phrase <- function(flag, threshold, comparison) {
   threshold_text <- format(threshold)
@@ -490,7 +499,7 @@ margot_stop_on_duplicate_headers <- function(headers) {
 #' @param rename_evalue Whether to use display names for E-value columns. The default `"report"` table already uses display names, so this argument affects only `table_columns = "legacy"`.
 #' @return An invisible list with `plot`, `interpretation`, and `transformed_table`.
 #'
-#'   With the default `table_columns = "report"`, `transformed_table` has one row per outcome, ordered as in the plot from top to bottom, with automatic row names. Numbers keep full precision. Its columns are: `"Outcome"`, the display label (in Markdown bold when `bold_rows = TRUE` and the E-value flag is set); the model-scale estimate (for example `"ATE (standardised)"`); its interval limits (for example `"99.58\% CI lower"`, or `"CI lower"` with a `"CI level"` column when coverage varies by outcome); when `scale_info` or `original_df` is supplied, the original-scale estimate and limits, headed by the quantity and unit when every outcome shares them (for example `"Mean difference (scale points)"`, or `"Mean difference (original scale)"` without a unit) and otherwise followed by an `"Original-scale quantity"` column; the decision, headed by the interval and the null (for example `"99.58\% CI relative to 0"`, with values `"above 0"`, `"includes 0"` or `"below 0"`; `"Estimate"` under the legacy category rule); `"E-value"`; `"E-value bound"`; and the E-value flag (`"yes"` or `"no"`), headed by the comparison, for example `"E-value bound > 1.1"`. Two columns never share a header: a clash, for example from `rename_ate`, stops with an error.
+#'   With the default `table_columns = "report"`, `transformed_table` has one row per outcome, ordered as in the plot from top to bottom. Its row names repeat the `"Outcome"` column (including any emphasis from `bold_rows`), so code that reads `rownames()` keeps working; when printing with `knitr::kable()`, pass `row.names = FALSE` to show the labels once. Numbers keep full precision. Its columns are: `"Outcome"`, the display label (in Markdown bold when `bold_rows = TRUE` and the E-value flag is set); the model-scale estimate (for example `"ATE (standardised)"`); its interval limits (for example `"99.58\% CI lower"`, or `"CI lower"` with a `"CI level"` column when coverage varies by outcome); when `scale_info` or `original_df` is supplied, the original-scale estimate and limits, headed by the quantity and unit when every outcome shares them (for example `"Mean difference (scale points)"`, or `"Mean difference (original scale)"` without a unit) and otherwise followed by an `"Original-scale quantity"` column; the decision, headed by the interval and the null (for example `"99.58\% CI relative to 0"`, with values `"above 0"`, `"includes 0"` or `"below 0"`; `"Estimate"` under the legacy category rule); `"E-value"`; `"E-value bound"`; and the E-value flag (`"yes"` or `"no"`), headed by the comparison, for example `"E-value bound > 1.1"`. Two columns never share a header: a clash, for example from `rename_ate`, stops with an error.
 #'
 #' @details
 #' The statistical decision and the E-value flag are reported separately. By default the decision for each outcome follows its (adjusted) confidence interval alone, and the E-value flag records whether the interval's E-value bound exceeds `e_val_bound_threshold`. The flag sits beside the decision and does not change the plotted colour, legend, table decision or which outcomes the prose lists. The prose lists every outcome whose interval excludes the null, in plot order, with its E-value bound and flag, and names the correction and confidence level. An outcome without both interval limits has no decision: the prose names it, the table reports "not available", and the figure omits it with a message.
@@ -1003,15 +1012,21 @@ margot_plot <- function(
       }
     }
 
+    label_col <- "Outcome"
     if (rename_cols && length(col_renames) > 0) {
       for (new_nm in names(col_renames)) {
         old_nm <- col_renames[[new_nm]]
         if (old_nm %in% names(transformed_table)) {
           names(transformed_table)[names(transformed_table) == old_nm] <- new_nm
+          if (identical(old_nm, label_col)) label_col <- new_nm
         }
       }
       margot_stop_on_duplicate_headers(names(transformed_table))
     }
+
+    # the row names repeat the outcome column, including any emphasis, so that
+    # callers reading rownames() keep working
+    rownames(transformed_table) <- transformed_table[[label_col]]
   } else {
     # legacy layout: the columns of margot 1.3.2 and earlier
     table_for_transform <- sorted_df
@@ -1329,7 +1344,7 @@ margot_interpret_marginal <- function(
     missing_names <- as.character(df$outcome[missing_interval])
     count_sentence <- paste0(
       count_sentence, " No confidence interval was available for ",
-      paste(missing_names, collapse = "; "), ", so no interval decision was made for ",
+      margot_join_names(missing_names), ", so no interval decision was made for ",
       if (n_missing == 1L) "it." else "them."
     )
   }

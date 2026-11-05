@@ -806,3 +806,46 @@ test_that("tiny intervals fall back to significant digits that keep the decision
   expect_match(out$interpretation, "ATE (standardised) = 2e-11 (95% CI: 1e-11 to 3e-11)", fixed = TRUE)
   expect_false(grepl("0.0000000000", out$interpretation, fixed = TRUE))
 })
+
+test_that("report-table row names repeat the outcome labels", {
+  out <- decision_plot()
+  table <- out$transformed_table
+  expect_identical(rownames(table), table$Outcome)
+
+  bold <- decision_plot(bold_rows = TRUE)
+  expect_identical(rownames(bold$transformed_table), bold$transformed_table$Outcome)
+  expect_true(any(grepl("^\\*\\*", rownames(bold$transformed_table))))
+
+  renamed <- decision_plot(rename_cols = TRUE, col_renames = list(Endpoint = "Outcome"))
+  expect_identical(rownames(renamed$transformed_table), renamed$transformed_table$Endpoint)
+
+  # margot renders each label once
+  html <- as.character(margot_bind_tables(table, output_format = "html"))
+  expect_identical(lengths(regmatches(html, gregexpr("Trust in science", html, fixed = TRUE))), 1L)
+  html_list <- as.character(margot_bind_tables(list(first = table[1:6, ], second = table[7:12, ]),
+    output_format = "html"))
+  expect_identical(lengths(regmatches(html_list, gregexpr("Trust in science", html_list, fixed = TRUE))), 1L)
+  md <- margot_bind_tables(table, output_format = "markdown")
+  expect_identical(sum(grepl("Trust in science", md, fixed = TRUE)), 1L)
+  combined <- as.character(margot:::margot_combine_results(list(first = table), format = "html"))
+  expect_identical(lengths(regmatches(combined, gregexpr("Trust in science", combined, fixed = TRUE))), 1L)
+})
+
+test_that("several outcomes without an interval are joined in plain English", {
+  expect_identical(margot:::margot_join_names("a"), "a")
+  expect_identical(margot:::margot_join_names(c("a", "b")), "a and b")
+  expect_identical(margot:::margot_join_names(c("a", "b", "c")), "a, b and c")
+
+  input <- tibble::tibble(
+    outcome = c("a", "b", "c", "d"),
+    ATE = c(0.05, 0.1, 0.2, -0.1),
+    `2.5 %` = c(-0.05, NA, NA, NA),
+    `97.5 %` = c(0.15, NA, NA, NA),
+    E_Value = c(1.2, NA, NA, NA),
+    E_Val_bound = c(1, NA, NA, NA)
+  )
+  out <- suppressMessages(margot_plot(input, include_coefficients = FALSE, order = "alphabetical",
+    options = list(use_title_case = FALSE)))
+  expect_match(out$interpretation,
+    "No confidence interval was available for b, c and d, so no interval decision was made for them.", fixed = TRUE)
+})

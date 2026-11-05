@@ -56,4 +56,5 @@ and groups rows by domain when provided. Works for latex, html, or markdown outp
 It accepts both `transformed_table` layouts of [margot_plot()]: the default reporting layout,
 whose bound column is "E-value bound" and whose outcomes are in an "Outcome" column, and the
 legacy layout, whose bound column is "E_Val_bound" and whose outcomes are row names.
+A table that already has an "Outcome" column keeps it, and row names are not printed.
 }
