@@ -10,6 +10,8 @@
 #' @param tables_list a named list of data frames, each a domain table, or a single data frame.
 #'   For lists, row names are captured as an "Outcome" column; for data frames, same applies.
 #' @param sort_E_val_bound character: one of "none", "asc", or "desc". default "none".
+#'   For a list of domain tables, rows are sorted within each domain and the domains keep their order.
+#'   Every table in a list must use the same layout; mixed layouts stop with an error.
 #' @param e_val_bound_threshold numeric; threshold for highlighting rows. default 1.1.
 #' @param highlight_color character or NULL; background colour for highlighted rows. default "yellow".
 #' @param bold logical; whether to bold highlighted rows. default TRUE.
@@ -43,6 +45,13 @@ margot_bind_tables <- function(
   # coerce sort argument
   sort_E_val_bound <- match.arg(sort_E_val_bound)
 
+  # the bound column of either margot_plot() table layout
+  bound_candidates <- unique(c(threshold_col, "E_Val_bound", "E-value bound", "E-Value bound", "E-Value Bound"))
+  find_bound_col <- function(df) {
+    found <- bound_candidates[bound_candidates %in% names(df)]
+    if (length(found)) found[[1]] else NA_character_
+  }
+
   # handle single data-frame vs named list
   if (inherits(tables_list, "data.frame")) {
     df <- tables_list
@@ -53,6 +62,16 @@ margot_bind_tables <- function(
     combined <- df
     domain_mode <- FALSE
   } else {
+    # tables from different layouts would bind into split columns, so refuse them
+    table_bound_cols <- vapply(tables_list, find_bound_col, character(1))
+    if (length(unique(table_bound_cols)) > 1L) {
+      stop(
+        "The tables use different column layouts (E-value bound columns: ",
+        paste(unique(ifelse(is.na(table_bound_cols), "none", table_bound_cols)), collapse = ", "),
+        "). Build every table with the same `table_columns` value in margot_plot().",
+        call. = FALSE
+      )
+    }
     # process list of tables with domain id
     tables_list <- lapply(tables_list, function(df) {
       if (!"Outcome" %in% names(df)) {
@@ -65,19 +84,20 @@ margot_bind_tables <- function(
     domain_mode <- TRUE
   }
 
-  # resolve the bound column for either margot_plot() table layout
-  bound_candidates <- unique(c(threshold_col, "E_Val_bound", "E-value bound", "E-Value bound", "E-Value Bound"))
-  bound_col <- bound_candidates[bound_candidates %in% names(combined)][1]
+  bound_col <- find_bound_col(combined)
   if (is.na(bound_col)) bound_col <- threshold_col
 
-  # sort by the E-value bound if requested
+  # sort by the E-value bound if requested; domains keep their order and
+  # contiguous rows, so that the grouped row ranges stay correct
   if (sort_E_val_bound != "none" && !bound_col %in% names(combined)) {
     stop("No E-value bound column found to sort by; set `threshold_col`.", call. = FALSE)
   }
-  if (sort_E_val_bound == "asc") {
-    combined <- dplyr::arrange(combined, .data[[bound_col]])
-  } else if (sort_E_val_bound == "desc") {
-    combined <- dplyr::arrange(combined, dplyr::desc(.data[[bound_col]]))
+  if (sort_E_val_bound != "none") {
+    domain_rank <- if (domain_mode) match(combined$Domain, unique(combined$Domain)) else rep(1L, nrow(combined))
+    bound_values <- combined[[bound_col]]
+    sort_key <- if (sort_E_val_bound == "asc") bound_values else -bound_values
+    combined <- combined[order(domain_rank, sort_key), , drop = FALSE]
+    rownames(combined) <- NULL
   }
 
   # rename ATE column if requested

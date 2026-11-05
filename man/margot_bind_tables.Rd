@@ -22,7 +22,9 @@ margot_bind_tables(
 \item{tables_list}{a named list of data frames, each a domain table, or a single data frame.
 For lists, row names are captured as an "Outcome" column; for data frames, same applies.}
 
-\item{sort_E_val_bound}{character: one of "none", "asc", or "desc". default "none".}
+\item{sort_E_val_bound}{character: one of "none", "asc", or "desc". default "none".
+For a list of domain tables, rows are sorted within each domain and the domains keep their order.
+Every table in a list must use the same layout; mixed layouts stop with an error.}
 
 \item{e_val_bound_threshold}{numeric; threshold for highlighting rows. default 1.1.}
 
