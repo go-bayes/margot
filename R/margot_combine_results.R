@@ -74,10 +74,6 @@ margot_combine_results <- function(
     # Extract the domain's table
     df <- results[[nm]]
 
-    # Round numeric columns
-    df <- df %>%
-      mutate(across(where(is.numeric), ~ round(.x, digits)))
-
     # Add Variable column from the Outcome column of the default margot_plot()
     # table, or from row names in the legacy layout
     label_col <- attr(df, "margot_outcome_column", exact = TRUE)
@@ -91,6 +87,20 @@ margot_combine_results <- function(
         mutate(Variable = rownames(df)) %>%
         select(Variable, everything())
     }
+    df
+  })
+
+  # domains that differ only in their interval level share level-free headers
+  # and a per-row "CI level" column, so that their limits bind into one column
+  df_list <- margot_align_ci_levels(df_list)
+
+  df_list <- lapply(seq_along(domain_names), function(i) {
+    nm <- domain_names[[i]]
+    df <- df_list[[i]]
+
+    # Round numeric columns
+    df <- df %>%
+      mutate(across(where(is.numeric), ~ round(.x, digits)))
 
     # Add .domain_label for grouping
     df$.domain_label <- if (!is.null(options) && !is.null(options[[nm]]$subtitle)) {
