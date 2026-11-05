@@ -1,12 +1,25 @@
 #' Bind and format domain-specific tables or a single table
 #'
 #' This function binds a named list of domain-specific tables, or handles a single data frame.
-#' It optionally sorts by the raw E_Val_bound column, renames columns, highlights rows above a threshold,
+#' It optionally sorts by the E-value bound column, renames columns, highlights rows above a threshold,
 #' and groups rows by domain when provided. Works for latex, html, or markdown output.
+#' It accepts both `transformed_table` layouts of [margot_plot()]: the default reporting layout,
+#' whose bound column is "E-value bound" and whose outcomes are in an "Outcome" column, and the
+#' legacy layout, whose bound column is "E_Val_bound" and whose outcomes are row names.
+#' A table that already has an "Outcome" column keeps it, and row names are not printed.
 #'
 #' @param tables_list a named list of data frames, each a domain table, or a single data frame.
 #'   For lists, row names are captured as an "Outcome" column; for data frames, same applies.
 #' @param sort_E_val_bound character: one of "none", "asc", or "desc". default "none".
+#'   For a list of domain tables, rows are sorted within each domain and the domains keep their order.
+#'   Every table in a list must have the same columns once its outcome and E-value bound
+#'   columns take the first table's spelling; otherwise binding would split values across
+#'   columns, and the function stops with an error naming the differing columns. Tables from
+#'   the report and legacy layouts of margot_plot(), or whose interval or estimate headers
+#'   differ (for example Bonferroni intervals at different levels), therefore cannot be bound
+#'   together. Tables whose headers coincide bind even if their corrections differ; legacy
+#'   tables with coverage that varies by row (headers "CI lower" and "CI upper") keep each
+#'   row's own `confidence_level`.
 #' @param e_val_bound_threshold numeric; threshold for highlighting rows. default 1.1.
 #' @param highlight_color character or NULL; background colour for highlighted rows. default "yellow".
 #' @param bold logical; whether to bold highlighted rows. default TRUE.
@@ -15,7 +28,9 @@
 #' @param col_renames named list; mapping new_name = old_name for renaming.
 #'   default list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound").
 #' @param rename_ate logical; if TRUE, renames the effect column to "ATE". default FALSE.
-#' @param threshold_col character; name of the (pre-rename) column to test. default "E_Val_bound".
+#' @param threshold_col character; name of the (pre-rename) column to test and sort by. default "E_Val_bound".
+#'   When that column is absent, the first of "E_Val_bound", "E-value bound", "E-Value bound" and
+#'   "E-Value Bound" that is present is used.
 #' @param kbl_args list; extra arguments for kableExtra::kbl(). default list(booktabs=TRUE, caption="Combined Results", align=NULL).
 #'
 #' @importFrom dplyr bind_rows arrange desc select everything
@@ -38,33 +53,108 @@ margot_bind_tables <- function(
   # coerce sort argument
   sort_E_val_bound <- match.arg(sort_E_val_bound)
 
-  # handle single data-frame vs named list
-  if (inherits(tables_list, "data.frame")) {
-    df <- tables_list
-    # ensure outcome column
-    if (!"Outcome" %in% names(df)) {
+  # the bound column of either margot_plot() table layout
+  bound_candidates <- unique(c(threshold_col, "E_Val_bound", "E-value bound", "E-Value bound", "E-Value Bound"))
+  find_bound_col <- function(df) {
+    found <- bound_candidates[bound_candidates %in% names(df)]
+    if (length(found)) found[[1]] else NA_character_
+  }
+
+  # the outcome column: "Outcome", or the renamed column that margot_plot()
+  # records in the "margot_outcome_column" attribute
+  outcome_column <- function(df) {
+    recorded <- attr(df, "margot_outcome_column", exact = TRUE)
+    if (!is.null(recorded) && recorded %in% names(df)) recorded else "Outcome"
+  }
+  ensure_outcome <- function(df) {
+    if (!outcome_column(df) %in% names(df)) {
       df <- tibble::rownames_to_column(df, var = "Outcome")
     }
-    combined <- df
+    df
+  }
+
+  # handle single data-frame vs named list
+  if (inherits(tables_list, "data.frame")) {
+    combined <- ensure_outcome(tables_list)
     domain_mode <- FALSE
   } else {
-    # process list of tables with domain id
+    # the recorded layouts only sharpen the error message below; the safety
+    # check compares the columns themselves
+    recorded_layouts <- unlist(lapply(tables_list, function(df) attr(df, "margot_table_layout", exact = TRUE)))
+
+    # give every bound column the first table's spelling
+    table_bound_cols <- vapply(tables_list, find_bound_col, character(1))
+    target_bound <- table_bound_cols[!is.na(table_bound_cols)][1]
+    if (!is.na(target_bound)) {
+      for (i in seq_along(tables_list)) {
+        current <- table_bound_cols[[i]]
+        # a table that already holds a column under the target spelling keeps
+        # both, so nothing is overwritten or duplicated; the column check below
+        # then decides whether the tables can bind
+        if (!is.na(current) && current != target_bound && !target_bound %in% names(tables_list[[i]])) {
+          names(tables_list[[i]])[names(tables_list[[i]]) == current] <- target_bound
+        }
+      }
+    }
+    # process list of tables with domain id; every recognised outcome column
+    # takes the first table's header so that labels bind into one column
+    label_col <- outcome_column(tables_list[[1]])
     tables_list <- lapply(tables_list, function(df) {
-      if (!"Outcome" %in% names(df)) {
-        df <- tibble::rownames_to_column(df, var = "Outcome")
+      current <- outcome_column(df)
+      if (!current %in% names(df)) {
+        return(tibble::rownames_to_column(df, var = label_col))
+      }
+      if (current != label_col) {
+        if (label_col %in% names(df)) {
+          stop(
+            "Cannot use '", label_col, "' as the outcome column: a table already has a column of that name.",
+            call. = FALSE
+          )
+        }
+        names(df)[names(df) == current] <- label_col
       }
       df
     })
+
+    # tables whose columns differ, after the outcome and bound columns share
+    # one spelling, would bind into split, partly empty columns, so refuse them
+    reference <- names(tables_list[[1]])
+    differing <- unique(unlist(lapply(tables_list[-1], function(df) {
+      c(setdiff(names(df), reference), setdiff(reference, names(df)))
+    })))
+    if (length(differing)) {
+      stop(
+        if (length(unique(recorded_layouts)) > 1L) "The tables mix the report and legacy layouts of margot_plot(). " else "",
+        "The tables do not share the same columns (",
+        paste0("'", differing, "'", collapse = ", "),
+        "), so binding them would split values across columns. ",
+        "Build every table with the same `table_columns`, correction and `col_renames` settings.",
+        call. = FALSE
+      )
+    }
     combined <- dplyr::bind_rows(tables_list, .id = "Domain") %>%
-      dplyr::select(Domain, Outcome, everything())
+      dplyr::select(dplyr::all_of(c("Domain", label_col)), dplyr::everything())
     domain_mode <- TRUE
   }
 
-  # sort by E_Val_bound if requested
-  if (sort_E_val_bound == "asc") {
-    combined <- dplyr::arrange(combined, .data$E_Val_bound)
-  } else if (sort_E_val_bound == "desc") {
-    combined <- dplyr::arrange(combined, dplyr::desc(.data$E_Val_bound))
+  # labels now live in the Outcome column; drop row names so that no rendered
+  # table prints them a second time
+  rownames(combined) <- NULL
+
+  bound_col <- find_bound_col(combined)
+  if (is.na(bound_col)) bound_col <- threshold_col
+
+  # sort by the E-value bound if requested; domains keep their order and
+  # contiguous rows, so that the grouped row ranges stay correct
+  if (sort_E_val_bound != "none" && !bound_col %in% names(combined)) {
+    stop("No E-value bound column found to sort by; set `threshold_col`.", call. = FALSE)
+  }
+  if (sort_E_val_bound != "none") {
+    domain_rank <- if (domain_mode) match(combined$Domain, unique(combined$Domain)) else rep(1L, nrow(combined))
+    bound_values <- combined[[bound_col]]
+    sort_key <- if (sort_E_val_bound == "asc") bound_values else -bound_values
+    combined <- combined[order(domain_rank, sort_key), , drop = FALSE]
+    rownames(combined) <- NULL
   }
 
   # rename ATE column if requested
@@ -85,10 +175,11 @@ margot_bind_tables <- function(
   }
 
   # determine threshold column name after renaming
-  threshold_col_name <- if (threshold_col %in% names(combined)) {
-    threshold_col
+  threshold_col_name <- if (bound_col %in% names(combined)) {
+    bound_col
   } else {
-    names(col_renames)[col_renames == threshold_col] %||% threshold_col
+    renamed <- names(col_renames)[col_renames == bound_col]
+    if (length(renamed)) renamed[[1]] else bound_col
   }
 
   # output for markdown

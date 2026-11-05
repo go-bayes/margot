@@ -833,8 +833,8 @@ here_save_arrow <- function(obj, name, dir_path = NULL,
 #' @param order Sorting option for outcomes. Options are:
 #'   \itemize{
 #'     \item 'alphabetical': sort by outcome name (A-Z)
-#'     \item 'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')
-#'     \item 'magnitude_asc': sort by absolute effect size, ascending
+#'     \item 'magnitude_desc': sort by distance from the null, descending: absolute difference for 'RD', absolute log ratio for 'RR'
+#'     \item 'magnitude_asc': sort by distance from the null, ascending
 #'     \item 'evaluebound_desc': sort by E-value bound, descending
 #'     \item 'evaluebound_asc': sort by E-value bound, ascending
 #'     \item 'custom': user-defined order (requires custom_order)
@@ -855,7 +855,8 @@ here_save_arrow <- function(obj, name, dir_path = NULL,
 #' The function detects whether `df` is a list output from transform_to_original_scale()
 #' and extracts `results_df` and `label_mapping` accordingly. It then ensures an `outcome`
 #' column, applies any label mapping, and sorts based on the chosen `order`. New options
-#' 'magnitude_desc' and 'magnitude_asc' sort by absolute effect size; 'evaluebound_desc'
+#' 'magnitude_desc' and 'magnitude_asc' sort by distance from the null (absolute difference
+#' for 'RD', absolute log ratio for 'RR'); 'evaluebound_desc'
 #' and 'evaluebound_asc' sort by the E-Value bound; 'alphabetical' sorts by outcome
 #' name; 'custom' respects a user-provided vector; 'default' is an alias for 'magnitude_desc'.
 #'
@@ -940,66 +941,64 @@ group_tab <- function(
 
   ev_bound <- "E_Val_bound"
 
+  # order the whole table: row positions apply to the ungrouped frame, and any
+  # grouping is restored on return
+  grouping <- dplyr::group_vars(results_df)
+  grouping_drop <- dplyr::group_by_drop_default(results_df)
+  results_df <- dplyr::ungroup(results_df)
+
+  # magnitude is the distance from the null: |difference|, or |log ratio| for
+  # ratios, so that a protective ratio of 0.5 ranks with a harmful ratio of 2.
+  # row indices are computed outside the data mask and injected, so that an
+  # input column cannot stand in for a local value
+  effect_values <- results_df[[effect_col]]
+  magnitude <- if (type == "RR") abs(log(effect_values)) else abs(effect_values)
+
   # apply ordering
   results_df <- switch(order,
-    alphabetical = results_df %>% arrange(outcome),
-    magnitude_desc = results_df %>% arrange(desc(abs(!!sym(effect_col)))),
-    magnitude_asc = results_df %>% arrange(abs(!!sym(effect_col))),
-    evaluebound_desc = results_df %>% arrange(desc(!!sym(ev_bound))),
-    evaluebound_asc = results_df %>% arrange(!!sym(ev_bound)),
+    alphabetical = results_df %>% arrange(.data$outcome),
+    magnitude_desc = results_df %>% slice(!!order(-magnitude)),
+    magnitude_asc = results_df %>% slice(!!order(magnitude)),
+    evaluebound_desc = results_df %>% arrange(desc(.data[[!!ev_bound]])),
+    evaluebound_asc = results_df %>% arrange(.data[[!!ev_bound]]),
     custom = {
       if (is.null(custom_order)) stop("custom_order must be provided for 'custom' order")
-      results_df %>% slice(match(custom_order, outcome))
+      results_df %>% slice(!!match(custom_order, results_df$outcome))
     }
   )
 
-  # annotate estimates
-  results_df <- results_df %>% mutate(
-    Estimate = factor(
-      if (type == "RR") {
-        ifelse(.data[[effect_col]] > 1 & `2.5 %` > 1,
-          "positive",
-          ifelse(.data[[effect_col]] < 1 & `97.5 %` < 1,
-            "negative",
-            "not reliable"
-          )
-        )
-      } else {
-        ifelse(.data[[effect_col]] > 0 & `2.5 %` > 0,
-          "positive",
-          ifelse(.data[[effect_col]] < 0 & `97.5 %` < 0,
-            "negative",
-            "not reliable"
-          )
-        )
-      }
-    ),
-    estimate_lab = if (type == "RR") {
-      paste0(
-        round(.data[[effect_col]], 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
+  # annotate estimates from vectors taken outside the data mask
+  effect_values <- results_df[[effect_col]]
+  lower <- results_df[["2.5 %"]]
+  upper <- results_df[["97.5 %"]]
+  null_value <- if (type == "RR") 1 else 0
+  results_df$Estimate <- factor(
+    ifelse(effect_values > null_value & lower > null_value,
+      "positive",
+      ifelse(effect_values < null_value & upper < null_value,
+        "negative",
+        "not reliable"
       )
-    } else {
-      paste0(
-        round(.data[[effect_col]], 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
-      )
-    }
+    )
+  )
+  results_df$estimate_lab <- paste0(
+    round(effect_values, 3), " (",
+    round(lower, 3), "-", round(upper, 3), ")",
+    " [EV ", round(results_df[["E_Value"]], 3), "/", round(results_df[["E_Val_bound"]], 3), "]"
   )
 
   # add original-scale label if present
   if (paste0(effect_col, "_original") %in% names(results_df)) {
-    results_df <- results_df %>% mutate(
-      estimate_lab_original = paste0(
-        round(.data[[paste0(effect_col, "_original")]], 3), " (",
-        round(.data[["2.5 %_original"]], 3), "-",
-        round(.data[["97.5 %_original"]], 3), ")"
-      )
+    results_df$estimate_lab_original <- paste0(
+      round(results_df[[paste0(effect_col, "_original")]], 3), " (",
+      round(results_df[["2.5 %_original"]], 3), "-",
+      round(results_df[["97.5 %_original"]], 3), ")"
     )
   }
 
+  if (length(grouping)) {
+    results_df <- dplyr::group_by(results_df, dplyr::across(dplyr::all_of(grouping)), .drop = grouping_drop)
+  }
   results_df
 }
 

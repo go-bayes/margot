@@ -112,6 +112,28 @@
   .margot_evalues_rr(rr_point, lo = rr_lo, hi = rr_hi)
 }
 
+# Compute point and confidence-bound E-values for one OLS estimate from its
+# confidence limits. each limit is converted with the same exact approximation
+# as the estimate, RR = exp(0.91 * d), so the bound uses the limit nearest the
+# null directly rather than a standard error rescaled by the rounded 1.78.
+.margot_evalues_ols_limits <- function(est, lo = NA_real_, hi = NA_real_, sd, delta = 1) {
+  limits <- list(lo = lo, hi = hi)
+  valid_limit <- vapply(
+    limits,
+    function(x) is.numeric(x) && length(x) == 1L && !is.nan(x) && (is.na(x) || is.finite(x)),
+    logical(1)
+  )
+  if (!all(valid_limit)) {
+    stop("`lo` and `hi` must each be one finite numeric value or `NA`.", call. = FALSE)
+  }
+
+  rr_point <- .margot_ols_to_rr(est, sd = sd, delta = delta)
+  rr_lo <- if (is.na(lo)) NA_real_ else .margot_ols_to_rr(lo, sd = sd, delta = delta)
+  rr_hi <- if (is.na(hi)) NA_real_ else .margot_ols_to_rr(hi, sd = sd, delta = delta)
+
+  .margot_evalues_rr(rr_point, lo = rr_lo, hi = rr_hi)
+}
+
 # Compute E-values from unrounded model-summary rows.
 .margot_compute_evalues <- function(tab, scale, delta, sd) {
   if (!is.data.frame(tab) || nrow(tab) < 1L) {
