@@ -68,6 +68,7 @@ margot_combine_results <- function(
   }
 
   domain_names <- names(results)
+  recorded_layouts <- unlist(lapply(results, function(df) attr(df, "margot_table_layout", exact = TRUE)))
 
   # 2. Build a list of domain-specific data frames
   df_list <- lapply(domain_names, function(nm) {
@@ -93,14 +94,18 @@ margot_combine_results <- function(
   # domains that differ only in their interval level share level-free headers
   # and a per-row "CI level" column, so that their limits bind into one column
   df_list <- margot_align_ci_levels(df_list)
+  # tables whose columns still differ would bind into split, partly empty
+  # columns, so refuse them as margot_bind_tables() does
+  margot_check_shared_columns(df_list, recorded_layouts)
 
   df_list <- lapply(seq_along(domain_names), function(i) {
     nm <- domain_names[[i]]
     df <- df_list[[i]]
 
-    # Round numeric columns
+    # Round numeric columns, except interval coverage, which rounding would
+    # misstate (0.9958 would read 1)
     df <- df %>%
-      mutate(across(where(is.numeric), ~ round(.x, digits)))
+      mutate(across(where(is.numeric) & !dplyr::any_of(c("confidence_level", "CI level")), ~ round(.x, digits)))
 
     # Add .domain_label for grouping
     df$.domain_label <- if (!is.null(options) && !is.null(options[[nm]]$subtitle)) {
@@ -115,10 +120,14 @@ margot_combine_results <- function(
   # 3. Combine all data frames
   combined_df <- bind_rows(df_list)
 
-  # 4. Get rows per domain for group_rows
-  domain_info <- combined_df %>%
-    group_by(.domain_label) %>%
-    summarise(rows = n(), .groups = "drop")
+  # 4. Get rows per domain for group_rows, in row order: grouping by label
+  # would sort the labels alphabetically and attach them to the wrong rows
+  domain_runs <- rle(as.character(combined_df$.domain_label))
+  domain_info <- data.frame(
+    .domain_label = domain_runs$values,
+    rows = domain_runs$lengths,
+    stringsAsFactors = FALSE
+  )
 
   # 5. Create kable without .domain_label
   kbl_df <- combined_df %>%
