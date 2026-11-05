@@ -463,21 +463,32 @@ test_that("standalone prose says it follows the requested order rather than a pl
 
 test_that("the figure repeats the category in the point shape and keeps coefficients out of the legend", {
   out <- decision_plot()
-  layers <- out$plot$layers
+  # the coefficients form a column on a secondary axis, headed "Estimate"
+  expect_false(any(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))))
+  built <- ggplot2::ggplot_build(out$plot)
+  secondary <- built$layout$panel_params[[1]]$y.sec
+  top_to_bottom <- plot_top_to_bottom(out$plot)
+  labels <- stats::setNames(secondary$get_labels(), rev(top_to_bottom))
+  expect_identical(trimws(labels[["Trust in science"]]), "0.20")
+  expect_identical(trimws(labels[["Anxiety"]]), "-0.12")
+  expect_identical(secondary$name, "Estimate")
+  expect_identical(out$plot$theme$axis.text.y.right$colour, "black")
+
+  scales <- built$plot$scales
+  shape_map <- scales$get_scales("shape")$map(c("positive", "includes null", "negative"))
+  expect_equal(unname(shape_map), c(24, 21, 25))
+  expect_identical(out$plot$labels$x, "Standardised effect (difference scale)")
+
+  # colouring coefficients by category draws them inside the panel, out of the legend
+  inside <- decision_plot(options = list(coefficient_colour = NULL))
+  layers <- inside$plot$layers
   is_text <- vapply(layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))
   maps_label <- vapply(layers, function(layer) !is.null(layer$mapping$label), logical(1))
-  text_layer <- layers[[which(is_text & maps_label)]]
-  expect_false(text_layer$show.legend)
-  expect_identical(text_layer$aes_params$colour, "black")
+  expect_false(layers[[which(is_text & maps_label)]]$show.legend)
   # the coefficient column is named above its top row
   header_layer <- layers[[which(is_text & !maps_label)]]
   expect_identical(header_layer$aes_params$label, "Estimate")
   expect_equal(header_layer$data$y, 12 + 0.55)
-
-  scales <- ggplot2::ggplot_build(out$plot)$plot$scales
-  shape_map <- scales$get_scales("shape")$map(c("positive", "includes null", "negative"))
-  expect_equal(unname(shape_map), c(24, 21, 25))
-  expect_identical(out$plot$labels$x, "Standardised effect (difference scale)")
 
   plain <- decision_plot(options = list(point_shapes = NULL, coefficient_colour = NULL, coefficient_header = NULL))
   expect_null(ggplot2::ggplot_build(plain$plot)$plot$scales$get_scales("shape"))
@@ -733,14 +744,20 @@ test_that("ratio coefficients sit clear of the intervals", {
     E_Value = c(3.41, 2.58, 1.28),
     E_Val_bound = c(2.61, 1.92, 1)
   )
+  # by default the coefficients sit outside the panel, so no interval runs under them
   out <- suppressMessages(margot_plot(input, type = "RR", options = list(use_title_case = FALSE)))
-  layers <- out$plot$layers
-  text_layer <- layers[[which(vapply(layers, function(layer) {
+  expect_false(any(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))))
+  expect_length(ggplot2::ggplot_build(out$plot)$layout$panel_params[[1]]$y.sec$get_labels(), 3)
+
+  # inside the panel, the label column is moved clear of the intervals
+  inside <- suppressMessages(margot_plot(input, type = "RR",
+    options = list(use_title_case = FALSE, coefficient_colour = NULL)))
+  layers <- inside$plot$layers
+  text_index <- which(vapply(layers, function(layer) {
     inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label)
-  }, logical(1)))]]
-  built <- ggplot2::ggplot_build(out$plot)
-  label_x <- unique(built$data[[which(vapply(layers, identical, logical(1), text_layer))]]$x)
-  limits <- out$plot$coordinates$limits$x
+  }, logical(1)))
+  label_x <- unique(ggplot2::ggplot_build(inside$plot)$data[[text_index]]$x)
+  limits <- inside$plot$coordinates$limits$x
   # the label column, about 15% of the panel, ends before the smallest lower limit
   expect_lte(label_x + 0.15 * diff(limits), min(input$`2.5 %`))
   expect_equal(label_x, limits[1])

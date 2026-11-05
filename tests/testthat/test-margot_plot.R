@@ -35,50 +35,61 @@ test_that("recognised control arguments can be supplied through options", {
 })
 
 test_that("coefficient labels use fixed-width monospace formatting", {
-  out <- margot_plot(
-    make_margot_plot_test_data(
-      estimates = c(-10.2, 2.3, 0.45),
-      lower = c(-11.0, 1.5, 0.2),
-      upper = c(-9.4, 3.1, 0.7),
-      bounds = c(1.5, 1.7, 1.2)
-    ),
-    type = "RD",
-    options = list(use_title_case = FALSE)
+  data <- make_margot_plot_test_data(
+    estimates = c(-10.2, 2.3, 0.45),
+    lower = c(-11.0, 1.5, 0.2),
+    upper = c(-9.4, 3.1, 0.7),
+    bounds = c(1.5, 1.7, 1.2)
   )
 
+  # by default the coefficients form a column on a secondary axis to the right of the panel
+  out <- margot_plot(data, type = "RD", options = list(use_title_case = FALSE))
+  expect_false(any(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))))
+  expect_identical(out$plot$theme$axis.text.y.right$family, "mono")
+  labels <- ggplot2::ggplot_build(out$plot)$layout$panel_params[[1]]$y.sec$get_labels()
+  expect_length(labels, 3)
+  expect_length(unique(nchar(labels)), 1)
+
+  # a supplied x_offset draws them inside the panel, as earlier versions did
+  inside <- margot_plot(data, type = "RD", options = list(use_title_case = FALSE, x_offset = -12))
   # the coefficient layer maps its labels; the column header is a separate annotation
-  text_layer_index <- which(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label), logical(1)))
+  text_layer_index <- which(vapply(inside$plot$layers, function(layer) inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label), logical(1)))
   expect_length(text_layer_index, 1)
 
-  text_layer <- out$plot$layers[[text_layer_index]]
+  text_layer <- inside$plot$layers[[text_layer_index]]
   text_family <- text_layer$aes_params$family
   if (is.null(text_family)) {
     text_family <- text_layer$geom_params$family
   }
 
   expect_equal(text_family, "mono")
-  labels <- ggplot2::ggplot_build(out$plot)$data[[text_layer_index]]$label
+  labels <- ggplot2::ggplot_build(inside$plot)$data[[text_layer_index]]$label
   expect_length(unique(nchar(labels)), 1)
 })
 
-test_that("difference-scale plots use compact default x limits and label offset", {
-  out <- margot_plot(
-    make_margot_plot_test_data(
-      estimates = c(0.2, 0.3),
-      lower = c(0.1, 0.2),
-      upper = c(0.3, 0.4),
-      bounds = c(1.4, 1.5),
-      outcomes = c("first", "second")
-    ),
-    type = "RD",
-    options = list(use_title_case = FALSE)
+test_that("difference-scale plots fit the default range to the data and the null", {
+  data <- make_margot_plot_test_data(
+    estimates = c(0.2, 0.3),
+    lower = c(0.1, 0.2),
+    upper = c(0.3, 0.4),
+    bounds = c(1.4, 1.5),
+    outcomes = c("first", "second")
   )
+  out <- margot_plot(data, type = "RD", options = list(use_title_case = FALSE))
 
-  expect_equal(out$plot$coordinates$limits$x, c(-0.5, 0.5))
+  limits <- out$plot$coordinates$limits$x
+  expect_lte(limits[1], 0)
+  expect_gte(limits[2], 0.4)
+  expect_false(isTRUE(all.equal(limits, c(-0.5, 0.5))))
+
+  # the earlier layout is available through explicit options
+  earlier <- margot_plot(data, type = "RD",
+    options = list(use_title_case = FALSE, x_lim_lo = -0.5, x_lim_hi = 0.5, x_offset = -0.5))
+  expect_equal(earlier$plot$coordinates$limits$x, c(-0.5, 0.5))
 
   # the coefficient layer maps its labels; the column header is a separate annotation
-  text_layer_index <- which(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label), logical(1)))
-  text_data <- ggplot2::ggplot_build(out$plot)$data[[text_layer_index]]
+  text_layer_index <- which(vapply(earlier$plot$layers, function(layer) inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label), logical(1)))
+  text_data <- ggplot2::ggplot_build(earlier$plot)$data[[text_layer_index]]
 
   expect_true(all(text_data$x == -0.5))
 })

@@ -117,12 +117,14 @@ format_margot_coefficient_labels <- function(x, digits = 2) {
 }
 
 #' @keywords internal
-compute_margot_plot_limits <- function(df, effect_col, x_lim_lo = NULL, x_lim_hi = NULL, expansion = 0.1) {
+compute_margot_plot_limits <- function(df, effect_col, x_lim_lo = NULL, x_lim_hi = NULL, expansion = 0.1,
+                                       null_value = NULL) {
   if (!is.null(x_lim_lo) && !is.null(x_lim_hi)) {
     return(c(x_lim_lo, x_lim_hi))
   }
 
-  data_range <- range(c(df[[effect_col]], df$`2.5 %`, df$`97.5 %`), na.rm = TRUE)
+  # the fitted range covers every estimate and interval limit, and the null
+  data_range <- range(c(df[[effect_col]], df$`2.5 %`, df$`97.5 %`, null_value), na.rm = TRUE)
   x_range <- diff(data_range)
   if (!is.finite(x_range) || x_range == 0) {
     x_range <- max(abs(data_range), 1, na.rm = TRUE)
@@ -502,7 +504,7 @@ margot_stop_on_duplicate_headers <- function(headers) {
 #' @param e_val_bound_conversion How the E-value bound is computed from the adjusted interval of a difference-scale estimate when `adjust` is not `"none"`. `"exact"` (default) converts the limit nearest the null directly, RR = exp(0.91 |d_limit|); `"rounded"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only (see [margot_correct_combined_table()]). Not used when `adjust = "none"`.
 #' @param order_direction Where the ordering starts. `"top_to_bottom"` (default) draws the first outcome of `order` at the top. `"bottom_to_top"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only: the first outcome was drawn at the bottom, so `"magnitude_desc"` put the largest effect at the bottom. The table and prose follow the plot from top to bottom under either value.
 #' @param table_columns Layout of `transformed_table`. `"report"` (default) gives named reporting columns, described under Value. `"legacy"` reproduces the columns of margot 1.3.2 and earlier, for reproducing earlier results only: the effect column, interval columns headed by their quantiles (for example `"0.21 \%"`), `confidence_level`, `E_Value`, `E_Val_bound` and the `reported_*` and `reporting_*` columns.
-#' @param options Plotting options; explicit arguments override corresponding option entries. `colors` may name the levels `"positive"`, `"includes null"` and `"negative"`; a colour named `"not reliable"` is used for `"includes null"` when that level has no colour of its own. `point_shapes` (default up-triangle 24, circle 21 and down-triangle 25 for above, including and below the null) repeats the category in the point shape; `NULL` draws one filled circle for every point, as earlier versions did. `coefficient_colour` (default `"black"`) colours the printed coefficients; `NULL` colours them by category, as earlier versions did. `coefficient_header` (default `"Estimate"`) labels the coefficient column above its top row; `NULL` omits it. Unless `x_offset` or `x_lim_lo` is supplied, the panel is widened to the left when the intervals would run under the coefficient column. `text_size` (default 3.5; 2.75 earlier) sets their size.
+#' @param options Plotting options; explicit arguments override corresponding option entries. `colors` may name the levels `"positive"`, `"includes null"` and `"negative"`; a colour named `"not reliable"` is used for `"includes null"` when that level has no colour of its own. `point_shapes` (default up-triangle 24, circle 21 and down-triangle 25 for above, including and below the null) repeats the category in the point shape; `NULL` draws one filled circle for every point, as earlier versions did. `coefficient_colour` (default `"black"`) colours the printed coefficients; `NULL` colours them by category, as earlier versions did. `coefficient_header` (default `"Estimate"`) heads the coefficient column; `NULL` omits it. `text_size` (default 3.5; 2.75 earlier) sets their size. `x_lim_lo` and `x_lim_hi` set the ends of the x range; by default the range is fitted to the null and every estimate and interval limit, with 10\% padding (earlier versions fixed the difference-scale range at -0.5 to 0.5). By default the coefficients form a column to the right of the panel, which stays visible and clear of the intervals whatever the range. A supplied `x_offset`, or `coefficient_colour = NULL`, draws them inside the panel instead, as earlier versions did; without `x_offset` that column sits at the left of the panel, which is widened when the intervals would run under it. `x_lim_lo = -0.5`, `x_lim_hi = 0.5` and `x_offset = -0.5` reproduce the earlier difference-scale layout.
 #' @param label_mapping Optional mapping from source outcome names to display labels.
 #' @param save_output Whether to save the complete reporting list.
 #' @param use_timestamp Whether to append a timestamp to saved filenames.
@@ -674,9 +676,9 @@ margot_plot <- function(
     subtitle_size = 18,
     legend_text_size = 10,
     legend_title_size = 10,
-    x_offset = if (type == "RR") NULL else -0.5,
-    x_lim_lo = if (type == "RR") NULL else -0.5,
-    x_lim_hi = if (type == "RR") NULL else 0.5,
+    x_offset = NULL,
+    x_lim_lo = NULL,
+    x_lim_hi = NULL,
     linewidth = 0.4,
     plot_theme = NULL,
     colors = c(
@@ -813,31 +815,38 @@ margot_plot <- function(
     "Effect (difference scale)"
   }
 
-  # coefficient column position ----------------------------------------------
-  # coefficients sit along the left edge of the panel. unless the caller set
-  # x_offset or x_lim_lo, the panel is widened to the left when the intervals
-  # would run under the coefficient column (common on ratio scales)
-  x_limits <- c(opts$x_lim_lo, opts$x_lim_hi)
-  if (include_coefficients && nrow(plot_df) > 0) {
-    plot_limits <- compute_margot_plot_limits(
+  # x range and coefficient column -------------------------------------------
+  # the default range is fitted to the null and every estimate and interval
+  # limit, with 10% padding; x_lim_lo and x_lim_hi override either end
+  x_limits <- if (nrow(plot_df) > 0) {
+    compute_margot_plot_limits(
       plot_df,
       effect_col = eff_col,
       x_lim_lo = opts$x_lim_lo,
-      x_lim_hi = opts$x_lim_hi
+      x_lim_hi = opts$x_lim_hi,
+      null_value = null_val
     )
-    x_lim_lo <- plot_limits[1]
-    x_lim_hi <- plot_limits[2]
-    coeff_x_position <- opts$x_offset %||% (x_lim_lo + (0.05 * (x_lim_hi - x_lim_lo)))
+  } else {
+    c(opts$x_lim_lo, opts$x_lim_hi)
+  }
 
-    supplied_opts <- c(names(plot_options), names(list(...)))
-    if (!any(c("x_offset", "x_lim_lo") %in% supplied_opts)) {
+  # by default the coefficients form a column outside the panel, on the right,
+  # where ggplot reserves their space whatever the x range, so they can never
+  # run under an interval. a supplied x_offset, or coefficient_colour = NULL
+  # (colour by category), draws them inside the panel as earlier versions did;
+  # without x_offset that column then sits in a band at the left of the panel,
+  # which is widened when the intervals would run under it
+  coefficients_in_panel <- include_coefficients && nrow(plot_df) > 0 &&
+    (!is.null(opts$x_offset) || is.null(opts$coefficient_colour))
+  if (coefficients_in_panel) {
+    coeff_x_position <- opts$x_offset %||% (x_limits[1] + (0.05 * diff(x_limits)))
+    if (is.null(opts$x_offset)) {
       label_band <- 0.15
       data_lo <- min(c(plot_df[[eff_col]], plot_df$`2.5 %`), na.rm = TRUE)
-      if (data_lo < coeff_x_position + label_band * (x_lim_hi - x_lim_lo)) {
-        x_lim_lo <- (data_lo - label_band * x_lim_hi) / (1 - label_band) -
-          0.03 * (x_lim_hi - data_lo)
-        coeff_x_position <- x_lim_lo
-        x_limits <- c(x_lim_lo, x_lim_hi)
+      if (data_lo < coeff_x_position + label_band * diff(x_limits)) {
+        x_limits[1] <- (data_lo - label_band * x_limits[2]) / (1 - label_band) -
+          0.03 * (x_limits[2] - data_lo)
+        coeff_x_position <- x_limits[1]
       }
     }
   }
@@ -931,9 +940,42 @@ margot_plot <- function(
       plot_df[[eff_col]],
       digits = opts$coefficient_digits
     )
+    has_header <- !is.null(opts$coefficient_header) && nzchar(opts$coefficient_header)
+  }
 
-    # coefficients are printed in one dark colour for contrast and kept out of
-    # the legend; coefficient_colour = NULL colours them by category as before
+  if (include_coefficients && nrow(plot_df) > 0 && !coefficients_in_panel) {
+    # one label per y level, in level order: the secondary axis passes the
+    # mapped positions 1, 2, ... of the levels
+    outcome_levels <- levels(plot_df$outcome)
+    level_labels <- coefficient_labels[match(outcome_levels, as.character(plot_df$outcome))]
+    label_for <- function(breaks) {
+      if (is.character(breaks)) {
+        return(level_labels[match(breaks, outcome_levels)])
+      }
+      level_labels[as.integer(round(as.numeric(breaks)))]
+    }
+    text_points <- opts$text_size * ggplot2::.pt
+    out_plot <- out_plot +
+      ggplot2::scale_y_discrete(
+        sec.axis = ggplot2::dup_axis(
+          name = if (has_header) opts$coefficient_header else NULL,
+          labels = label_for
+        )
+      ) +
+      ggplot2::theme(
+        axis.text.y.right = ggplot2::element_text(
+          family = "mono", face = "bold", size = text_points, colour = opts$coefficient_colour
+        ),
+        axis.title.y.right = ggplot2::element_text(
+          angle = 0, vjust = 1, face = "bold", size = text_points, colour = opts$coefficient_colour
+        ),
+        axis.line.y.right = ggplot2::element_blank()
+      )
+  }
+
+  if (coefficients_in_panel) {
+    # coefficients are kept out of the legend; coefficient_colour = NULL colours
+    # them by category as before
     text_args <- list(
       mapping = ggplot2::aes(
         x     = coeff_x_position,
@@ -949,7 +991,7 @@ margot_plot <- function(
     out_plot <- out_plot + do.call(ggplot2::geom_text, text_args)
 
     # name the coefficient column above its top row; coefficient_header = NULL omits it
-    if (!is.null(opts$coefficient_header) && nzchar(opts$coefficient_header)) {
+    if (has_header) {
       out_plot <- out_plot + ggplot2::annotate(
         "text",
         x = coeff_x_position,
