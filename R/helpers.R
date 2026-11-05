@@ -941,66 +941,51 @@ group_tab <- function(
   ev_bound <- "E_Val_bound"
 
   # magnitude is the distance from the null: |difference|, or |log ratio| for
-  # ratios, so that a protective ratio of 0.5 ranks with a harmful ratio of 2
-  magnitude <- if (type == "RR") abs(log(results_df[[effect_col]])) else abs(results_df[[effect_col]])
+  # ratios, so that a protective ratio of 0.5 ranks with a harmful ratio of 2.
+  # row indices are computed outside the data mask and injected, so that an
+  # input column cannot stand in for a local value
+  effect_values <- results_df[[effect_col]]
+  magnitude <- if (type == "RR") abs(log(effect_values)) else abs(effect_values)
 
   # apply ordering
   results_df <- switch(order,
-    alphabetical = results_df %>% arrange(outcome),
-    magnitude_desc = results_df %>% slice(order(-magnitude)),
-    magnitude_asc = results_df %>% slice(order(magnitude)),
-    evaluebound_desc = results_df %>% arrange(desc(!!sym(ev_bound))),
-    evaluebound_asc = results_df %>% arrange(!!sym(ev_bound)),
+    alphabetical = results_df %>% arrange(.data$outcome),
+    magnitude_desc = results_df %>% slice(!!order(-magnitude)),
+    magnitude_asc = results_df %>% slice(!!order(magnitude)),
+    evaluebound_desc = results_df %>% arrange(desc(.data[[!!ev_bound]])),
+    evaluebound_asc = results_df %>% arrange(.data[[!!ev_bound]]),
     custom = {
       if (is.null(custom_order)) stop("custom_order must be provided for 'custom' order")
-      results_df %>% slice(match(custom_order, outcome))
+      results_df %>% slice(!!match(custom_order, results_df$outcome))
     }
   )
 
-  # annotate estimates
-  results_df <- results_df %>% mutate(
-    Estimate = factor(
-      if (type == "RR") {
-        ifelse(.data[[effect_col]] > 1 & `2.5 %` > 1,
-          "positive",
-          ifelse(.data[[effect_col]] < 1 & `97.5 %` < 1,
-            "negative",
-            "not reliable"
-          )
-        )
-      } else {
-        ifelse(.data[[effect_col]] > 0 & `2.5 %` > 0,
-          "positive",
-          ifelse(.data[[effect_col]] < 0 & `97.5 %` < 0,
-            "negative",
-            "not reliable"
-          )
-        )
-      }
-    ),
-    estimate_lab = if (type == "RR") {
-      paste0(
-        round(.data[[effect_col]], 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
+  # annotate estimates from vectors taken outside the data mask
+  effect_values <- results_df[[effect_col]]
+  lower <- results_df[["2.5 %"]]
+  upper <- results_df[["97.5 %"]]
+  null_value <- if (type == "RR") 1 else 0
+  results_df$Estimate <- factor(
+    ifelse(effect_values > null_value & lower > null_value,
+      "positive",
+      ifelse(effect_values < null_value & upper < null_value,
+        "negative",
+        "not reliable"
       )
-    } else {
-      paste0(
-        round(.data[[effect_col]], 3), " (",
-        round(`2.5 %`, 3), "-", round(`97.5 %`, 3), ")",
-        " [EV ", round(E_Value, 3), "/", round(E_Val_bound, 3), "]"
-      )
-    }
+    )
+  )
+  results_df$estimate_lab <- paste0(
+    round(effect_values, 3), " (",
+    round(lower, 3), "-", round(upper, 3), ")",
+    " [EV ", round(results_df[["E_Value"]], 3), "/", round(results_df[["E_Val_bound"]], 3), "]"
   )
 
   # add original-scale label if present
   if (paste0(effect_col, "_original") %in% names(results_df)) {
-    results_df <- results_df %>% mutate(
-      estimate_lab_original = paste0(
-        round(.data[[paste0(effect_col, "_original")]], 3), " (",
-        round(.data[["2.5 %_original"]], 3), "-",
-        round(.data[["97.5 %_original"]], 3), ")"
-      )
+    results_df$estimate_lab_original <- paste0(
+      round(results_df[[paste0(effect_col, "_original")]], 3), " (",
+      round(results_df[["2.5 %_original"]], 3), "-",
+      round(results_df[["97.5 %_original"]], 3), ")"
     )
   }
 
