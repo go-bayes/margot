@@ -492,7 +492,7 @@ test_that("the figure repeats the category in the point shape and keeps coeffici
   # the coefficient column is named above its top row
   header_layer <- layers[[which(is_text & !maps_label)]]
   expect_identical(header_layer$aes_params$label, "Estimate")
-  expect_equal(header_layer$data$y, 12 + 0.55)
+  expect_identical(header_layer$data$y, Inf)
 
   plain <- decision_plot(options = list(point_shapes = NULL, coefficient_colour = NULL, coefficient_header = NULL))
   expect_null(ggplot2::ggplot_build(plain$plot)$plot$scales$get_scales("shape"))

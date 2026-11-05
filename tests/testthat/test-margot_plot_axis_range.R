@@ -105,7 +105,13 @@ test_that("labels stay with their outcomes under free-y faceting and any orderin
     panel = c("one", "two", "two")
   )
   base <- axis_range_plot("RD", data = data)
-  expect_labels_match_estimates(base$plot + ggplot2::facet_wrap(~panel, scales = "free_y"), "free_y")
+  faceted <- base$plot + ggplot2::facet_wrap(~panel, scales = "free_y")
+  expect_labels_match_estimates(faceted, "free_y")
+  # each free-y panel keeps its own range: the header does not stretch it to
+  # the overall outcome count
+  ranges <- lapply(ggplot2::ggplot_build(faceted)$layout$panel_params, function(p) p$y$continuous_range)
+  expect_lt(ranges[[1]][2], 3)
+  expect_lt(ranges[[2]][2], 4)
   expect_labels_match_estimates(axis_range_plot("RD", data = data, order = "custom",
     custom_order = c("beta", "gamma", "alpha"))$plot, "custom")
   expect_labels_match_estimates(axis_range_plot("RD", data = data, order_direction = "bottom_to_top")$plot,

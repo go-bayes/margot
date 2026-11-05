@@ -970,10 +970,12 @@ margot_plot <- function(
       out_plot <- out_plot + ggplot2::annotate(
         "text",
         x = Inf,
-        y = nlevels(plot_df$outcome) + 0.55,
+        # y = Inf pins the header to the top of every panel without training the
+        # y scale, so faceted panels keep their own ranges
+        y = Inf,
         label = header_text,
         hjust = 0,
-        vjust = 0,
+        vjust = 1,
         size = opts$text_size,
         fontface = "bold",
         family = "mono",
@@ -1015,10 +1017,12 @@ margot_plot <- function(
       out_plot <- out_plot + ggplot2::annotate(
         "text",
         x = coeff_x_position,
-        y = nlevels(plot_df$outcome) + 0.55,
+        # y = Inf pins the header to the top of every panel without training the
+        # y scale, so faceted panels keep their own ranges
+        y = Inf,
         label = opts$coefficient_header,
         hjust = 0,
-        vjust = 0,
+        vjust = 1,
         size = opts$text_size,
         fontface = "bold",
         colour = opts$coefficient_colour %||% "black"
