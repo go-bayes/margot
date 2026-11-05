@@ -46,7 +46,8 @@ test_that("coefficient labels use fixed-width monospace formatting", {
     options = list(use_title_case = FALSE)
   )
 
-  text_layer_index <- which(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1)))
+  # the coefficient layer maps its labels; the column header is a separate annotation
+  text_layer_index <- which(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label), logical(1)))
   expect_length(text_layer_index, 1)
 
   text_layer <- out$plot$layers[[text_layer_index]]
@@ -75,7 +76,8 @@ test_that("difference-scale plots use compact default x limits and label offset"
 
   expect_equal(out$plot$coordinates$limits$x, c(-0.5, 0.5))
 
-  text_layer_index <- which(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1)))
+  # the coefficient layer maps its labels; the column header is a separate annotation
+  text_layer_index <- which(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label), logical(1)))
   text_data <- ggplot2::ggplot_build(out$plot)$data[[text_layer_index]]
 
   expect_true(all(text_data$x == -0.5))

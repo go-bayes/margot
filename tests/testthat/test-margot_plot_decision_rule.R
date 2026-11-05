@@ -175,8 +175,9 @@ test_that("the interpretation lists every interval that excludes zero in plot or
   expect_match(edge_line, "E-value bound = 1.036 (does not exceed 1.1)", fixed = TRUE)
   expect_match(bullets[listed == "E-value bound near threshold"], "E-value bound = 1.1001 (exceeds 1.1)", fixed = TRUE)
   expect_match(out$interpretation, "They are listed in plot order, from top to bottom.", fixed = TRUE)
-  expect_match(out$interpretation, "conditional on the measured covariates", fixed = TRUE)
-  expect_match(out$interpretation, "approximate conversion of a standardised mean difference d to a risk ratio, exp(0.91 d)", fixed = TRUE)
+  expect_match(out$interpretation, "beyond the measured covariates", fixed = TRUE)
+  expect_match(out$interpretation, "the approximation RR = exp(0.91 |d|)", fixed = TRUE)
+  expect_match(out$interpretation, "The note in brackets says whether the bound exceeds 1.1;", fixed = TRUE)
   expect_match(out$interpretation, "Bonferroni correction", fixed = TRUE)
   expect_match(out$interpretation, "99.58% confidence intervals", fixed = TRUE)
   expect_match(out$interpretation, "12 comparisons", fixed = TRUE)
@@ -239,7 +240,7 @@ test_that("risk-ratio plots describe intervals relative to one", {
   expect_identical(table[match(c("higher", "lower", "unclear"), table$Outcome), "95% CI relative to 1"],
     c("above 1", "below 1", "includes 1"))
   expect_match(out$interpretation, "exclude 1", fixed = TRUE)
-  expect_false(grepl("exp(0.91 d)", out$interpretation, fixed = TRUE))
+  expect_false(grepl("exp(0.91", out$interpretation, fixed = TRUE))
   expect_true("ATE (risk ratio)" %in% names(table))
 })
 
@@ -334,10 +335,28 @@ test_that("holm and BH stop under the interval rule because their intervals cann
     "includes null"
   )
 
-  # the legacy rule still reproduces earlier holm output
-  legacy <- suppressMessages(margot_plot(fixture, adjust = "holm", label_mapping = decision_labels,
-    category_rule = "interval_and_evalue", e_val_bound_threshold = 1.1))
+  # the message names the shared limitation of the legacy rule
+  expect_error(
+    suppressMessages(margot_plot(fixture, adjust = "holm", label_mapping = decision_labels)),
+    "carries the same limitation"
+  )
+
+  # the legacy rule still reproduces earlier holm output, with one warning per call
+  warnings <- character()
+  legacy <- withCallingHandlers(
+    suppressMessages(margot_plot(fixture, adjust = "holm", label_mapping = decision_labels,
+      category_rule = "interval_and_evalue", e_val_bound_threshold = 1.1)),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
   expect_s3_class(legacy$plot, "ggplot")
+  expect_length(grep("exclude the null by construction", warnings, fixed = TRUE), 1L)
+  expect_warning(
+    margot:::margot_interpret_marginal(fixture, adjust = "BH", category_rule = "interval_and_evalue"),
+    "exclude the null by construction"
+  )
 })
 
 test_that("report-table headers never collide and a clash stops", {
@@ -445,17 +464,24 @@ test_that("standalone prose says it follows the requested order rather than a pl
 test_that("the figure repeats the category in the point shape and keeps coefficients out of the legend", {
   out <- decision_plot()
   layers <- out$plot$layers
-  text_layer <- layers[[which(vapply(layers, function(layer) inherits(layer$geom, "GeomText"), logical(1)))]]
+  is_text <- vapply(layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))
+  maps_label <- vapply(layers, function(layer) !is.null(layer$mapping$label), logical(1))
+  text_layer <- layers[[which(is_text & maps_label)]]
   expect_false(text_layer$show.legend)
   expect_identical(text_layer$aes_params$colour, "black")
+  # the coefficient column is named above its top row
+  header_layer <- layers[[which(is_text & !maps_label)]]
+  expect_identical(header_layer$aes_params$label, "Estimate")
+  expect_equal(header_layer$data$y, 12 + 0.55)
 
   scales <- ggplot2::ggplot_build(out$plot)$plot$scales
   shape_map <- scales$get_scales("shape")$map(c("positive", "includes null", "negative"))
   expect_equal(unname(shape_map), c(24, 21, 25))
   expect_identical(out$plot$labels$x, "Standardised effect (difference scale)")
 
-  plain <- decision_plot(options = list(point_shapes = NULL, coefficient_colour = NULL))
+  plain <- decision_plot(options = list(point_shapes = NULL, coefficient_colour = NULL, coefficient_header = NULL))
   expect_null(ggplot2::ggplot_build(plain$plot)$plot$scales$get_scales("shape"))
+  expect_equal(sum(vapply(plain$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))), 1)
 })
 
 test_that("margot_bind_tables sorts and highlights either table layout", {
@@ -481,4 +507,102 @@ test_that("margot_bind_tables sorts and highlights either table layout", {
   combined <- margot:::margot_combine_results(list(first = out$transformed_table), format = "html")
   expect_match(as.character(combined), "Trust in science", fixed = TRUE)
   expect_match(as.character(combined), "Variable", fixed = TRUE)
+})
+
+test_that("input columns cannot stand in for the computed ordering", {
+  base <- tibble::tibble(
+    outcome = c("small", "large"),
+    ATE = c(0.1, 0.2),
+    `2.5 %` = c(0.05, 0.1),
+    `97.5 %` = c(0.15, 0.3),
+    E_Value = c(1.4, 1.6),
+    E_Val_bound = c(1.2, 1.3)
+  )
+  # columns named like local values used inside group_tab()
+  masked <- base
+  masked$magnitude <- c(3, 2)
+  masked$custom_order <- c("x", "y")
+  masked$type <- c("RR", "RR")
+  masked$effect_col <- c("E_Value", "E_Value")
+  run <- function(data, ordering, ...) {
+    out <- suppressMessages(margot_plot(data, order = ordering, include_coefficients = FALSE,
+      options = list(use_title_case = FALSE), ...))
+    out$transformed_table$Outcome
+  }
+  expect_identical(run(masked, "magnitude_desc"), c("large", "small"))
+  expect_identical(run(masked, "magnitude_asc"), c("small", "large"))
+  expect_identical(run(masked, "custom", custom_order = c("small", "large")), c("small", "large"))
+  expect_identical(run(masked, "magnitude_desc"), run(base, "magnitude_desc"))
+
+  annotated <- margot:::group_tab(masked, type = "RD", order = "magnitude_desc")
+  expect_identical(as.character(annotated$Estimate), c("positive", "positive"))
+  expect_match(annotated$estimate_lab[1], "^0.2 \\(0.1-0.3\\)")
+})
+
+test_that("custom estimate headers reach the prose", {
+  renamed <- decision_plot(rename_ate = "Standardised contrast")
+  expect_true("Standardised contrast" %in% names(renamed$transformed_table))
+  expect_match(renamed$interpretation, "- Trust in science: Standardised contrast = 0.200", fixed = TRUE)
+
+  remapped <- decision_plot(rename_cols = TRUE, col_renames = list("Effect (SD)" = "ATE (standardised)"))
+  expect_true("Effect (SD)" %in% names(remapped$transformed_table))
+  expect_match(remapped$interpretation, "- Trust in science: Effect (SD) = 0.200", fixed = TRUE)
+})
+
+test_that("renaming the Outcome column keeps bolding on the renamed column", {
+  out <- decision_plot(rename_cols = TRUE, col_renames = list(Endpoint = "Outcome"), bold_rows = TRUE)
+  table <- out$transformed_table
+  expect_false("Outcome" %in% names(table))
+  expect_identical(names(table)[1], "Endpoint")
+  flagged <- table[["E-value bound > 1.1"]] == "yes"
+  expect_true(all(grepl("^\\*\\*.*\\*\\*$", table$Endpoint[flagged])))
+  expect_false(any(grepl("**", table$Endpoint[!flagged], fixed = TRUE)))
+})
+
+test_that("ratio prose uses fixed decimals for each scale", {
+  input <- tibble::tibble(
+    outcome = c("protective", "harmful"),
+    `E[Y(1)]/E[Y(0)]` = c(0.5, 1.6),
+    `2.5 %` = c(0.4, 1.3),
+    `97.5 %` = c(0.62, 1.95),
+    E_Value = c(3.41, 2.58),
+    E_Val_bound = c(2.61, 1.92)
+  )
+  out <- suppressMessages(margot_plot(input, type = "RR", include_coefficients = FALSE,
+    options = list(use_title_case = FALSE)))
+  expect_match(out$interpretation, "ATE (risk ratio) = 0.50 (95% CI: 0.40 to 0.62)", fixed = TRUE)
+  expect_match(out$interpretation, "ATE (risk ratio) = 1.60 (95% CI: 1.30 to 1.95)", fixed = TRUE)
+  expect_match(out$interpretation, "E-value bound = 2.610 (exceeds 1.2)", fixed = TRUE)
+
+  # original units share one choice of decimals within a bullet, with no negative zero
+  expect_identical(margot:::format_margot_fixed(-0.0001, 3), "0.000")
+  expect_identical(margot:::margot_unit_digits(c(0.95, 0.4, 1.5)), 2L)
+  expect_identical(margot:::format_margot_fixed(12345.678, 0), "12,346")
+})
+
+test_that("margot_bind_tables refuses mixed layouts and sorts within domains", {
+  out <- decision_plot()
+  legacy <- decision_plot(table_columns = "legacy")
+  expect_error(
+    margot_bind_tables(list(report = out$transformed_table, legacy = legacy$transformed_table),
+      sort_E_val_bound = "desc"),
+    "different column layouts"
+  )
+
+  first <- out$transformed_table[1:6, ]
+  second <- out$transformed_table[7:12, ]
+  md <- margot_bind_tables(list(first = first, second = second), sort_E_val_bound = "desc",
+    output_format = "markdown")
+  rows <- md[grepl("^\\|", md)][-(1:2)]
+  cells <- strsplit(rows, "|", fixed = TRUE)
+  domains <- trimws(gsub("\\*", "", vapply(cells, `[`, character(1), 2)))
+  outcomes <- trimws(gsub("\\*", "", vapply(cells, `[`, character(1), 3)))
+  # domains stay contiguous and in their supplied order
+  expect_identical(domains, rep(c("first", "second"), each = 6))
+  expect_identical(outcomes[1:6], first$Outcome[order(-first[["E-value bound"]])])
+  expect_identical(outcomes[7:12], second$Outcome[order(-second[["E-value bound"]])])
+
+  html <- margot_bind_tables(list(first = first, second = second), sort_E_val_bound = "asc",
+    output_format = "html")
+  expect_match(as.character(html), "first", fixed = TRUE)
 })

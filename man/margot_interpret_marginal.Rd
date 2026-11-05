@@ -36,7 +36,7 @@ multiplicity when `adjust` is not `"none"`.}
 
 \item{e_val_bound_threshold}{Reporting threshold for the E-value bound. By default it sets only the E-value flag reported beside each estimate (table column and prose); it does not change the plotted category. Under `category_rule = "interval_and_evalue"` it also gates the category, as in earlier versions.}
 
-\item{adjust}{character. multiplicity correction method: "none", "bonferroni", "holm" or "BH". With `"none"`, the supplied intervals and E-values are used unchanged. `"holm"` and `"BH"` require `category_rule = "interval_and_evalue"`: margot builds their intervals at coverage 1 - adjusted p, so the intervals exclude the null whatever the adjusted p-value and cannot carry the default interval decision.}
+\item{adjust}{character. multiplicity correction method: "none", "bonferroni", "holm" or "BH". With `"none"`, the supplied intervals and E-values are used unchanged. `"holm"` and `"BH"` stop under the default interval rule: margot builds their intervals at coverage 1 - adjusted p, so the intervals exclude the null whatever the adjusted p-value and cannot carry an interval decision. `category_rule = "interval_and_evalue"` still runs them, with a warning, to reproduce earlier output; it carries the same limitation.}
 
 \item{alpha}{numeric. significance level for corrections}
 
