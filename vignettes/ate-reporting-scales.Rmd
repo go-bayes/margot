@@ -34,7 +34,7 @@ margot_table_ate(estimates, scale_info = scales, e_val_bound_threshold = 1)
 cat(margot_interpret_ate(estimates, scale_info = scales, e_val_bound_threshold = 1))
 ```
 
-The graph retains the supplied model-scale estimates and intervals. The table retains those numbers and adds `reported_estimate`, `reported_lower`, `reported_upper`, `reporting_quantity` and `reporting_unit`. Its `confidence_level` column preserves each interval's supplied coverage. Prose reports the supported conversion alongside the model-scale estimate. The E-value threshold controls which estimates enter the prose; it does not establish identification or remove the need to report other planned outcomes. E-values remain tied to their supplied scientific scale and calculation, not to a change of display units.
+The graph retains the supplied model-scale estimates and intervals. The table retains those numbers in an "ATE (standardised)" column with its interval limits, and adds the original-scale estimate and limits, headed by the quantity and unit (for example "Mean difference (points)"). The interval level appears in the headers, or in a "CI level" column when coverage varies by outcome. A decision column states whether each interval lies above, includes or lies below the null, and a separate column flags whether the E-value bound exceeds the threshold. Prose lists every outcome whose interval excludes the null and reports the supported conversion alongside the model-scale estimate. The E-value threshold sets only that flag; it does not decide which estimates are reported, establish identification or remove the need to report other planned outcomes. E-values remain tied to their supplied scientific scale and calculation, not to a change of display units.
 
 ## Record preparation constants
 
@@ -90,7 +90,8 @@ exercise_table <- margot_table_ate(
   scale_info = exercise_scale_info,
   e_val_bound_threshold = 1
 )
-exercise_table[, c("ATE", "reported_estimate", "reported_lower", "reported_upper")]
+exercise_table[, c("Outcome", "ATE (standardised)", "Mean difference (hours per week)",
+  "95% CI lower (hours per week)", "95% CI upper (hours per week)")]
 cat(margot_interpret_ate(
   exercise_estimate,
   scale_info = exercise_scale_info,
@@ -119,6 +120,6 @@ The shifted geometric ratio is 2, whereas the arithmetic mean difference is 2.5.
 
 ## Existing calls
 
-Calls to `margot_plot()` retain the combined list, argument precedence and saving behaviour. The three focused interfaces select their respective component; `save_output = TRUE` still saves the complete list. Existing `original_df` calls infer transformations from outcome suffixes and matching unstandardised source columns, with a warning that scale constants may be recomputed. Legacy log names mean `log1p`; explicit `scale_info` distinguishes ordinary logarithms. Missing or ambiguous source columns require explicit metadata. No reporting path should substitute an invented population mean.
+Calls to `margot_plot()` retain the combined list, argument precedence and saving behaviour. From the development version after 1.3.2, the decision, ordering, table columns and E-value comparison follow new defaults; `category_rule = "interval_and_evalue"`, `e_val_bound_comparison = ">="`, `e_val_bound_conversion = "rounded"`, `order_direction = "bottom_to_top"` and `table_columns = "legacy"` reproduce the earlier categories, values, table and prose. The three focused interfaces select their respective component; `save_output = TRUE` still saves the complete list. Existing `original_df` calls infer transformations from outcome suffixes and matching unstandardised source columns, with a warning that scale constants may be recomputed. Legacy log names mean `log1p`; explicit `scale_info` distinguishes ordinary logarithms. Missing or ambiguous source columns require explicit metadata. No reporting path should substitute an invented population mean.
 
 When regenerating an existing study report, retain its estimation-version record and separately record the reporting version and corrected quantities. Reporting corrections do not imply that an earlier study was estimated with a later package release.

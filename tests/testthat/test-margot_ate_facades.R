@@ -63,7 +63,7 @@ test_that("ATE interfaces preserve options precedence and custom outcome orderin
   expect_identical(table, legacy$transformed_table)
   # the first custom outcome is drawn at the top, which ggplot holds as the last level
   expect_identical(levels(figure$data$outcome), rev(args$custom_order))
-  expect_identical(rownames(table), args$custom_order)
+  expect_identical(table$Outcome, args$custom_order)
   expect_false(any(vapply(figure$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))))
 })
 
@@ -152,8 +152,8 @@ test_that("ATE prose and tables follow the figure from top to bottom", {
     bullets <- bullets[startsWith(bullets, "- ")]
     prose_order <- sub(":.*$", "", substring(bullets, 3))
 
-    expect_identical(rownames(table), rev(levels(figure$data$outcome)), info = ordering)
-    expect_identical(prose_order, rownames(table), info = ordering)
+    expect_identical(table$Outcome, rev(levels(figure$data$outcome)), info = ordering)
+    expect_identical(prose_order, table$Outcome, info = ordering)
   }
 })
 
@@ -175,7 +175,7 @@ test_that("legacy scale inference runs once before display labels are applied", 
 
   expect_equal(sum(grepl("Inferring legacy transformations", warnings, fixed = TRUE)), 1)
   rows <- match(make_ate_facade_data()$ATE, result$transformed_table[["ATE (standardised)"]])
-  expect_equal(result$transformed_table[["Mean difference"]][rows], make_ate_facade_data()$ATE * c(1, 2))
+  expect_equal(result$transformed_table[["Mean difference (original scale)"]][rows], make_ate_facade_data()$ATE * c(1, 2))
   expect_true("95% CI lower (original scale)" %in% names(result$transformed_table))
 })
 
@@ -191,5 +191,5 @@ test_that("display labels and metadata row order do not change reported quantiti
   rows <- match(estimates$ATE, result[["ATE (standardised)"]])
 
   expect_equal(result[["Mean difference (points)"]][rows], estimates$ATE * c(2, 3))
-  expect_setequal(rownames(result), c("Unrelated display name", "Different display name"))
+  expect_setequal(result$Outcome, c("Unrelated display name", "Different display name"))
 })

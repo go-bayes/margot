@@ -36,7 +36,7 @@ rate (for BH) to control. Default `0.05`.}
 
 \item{m}{Positive whole number giving the total number of tests in the Bonferroni family. It must be at least the number of table rows. When `NULL`, Margot uses the number of rows. Holm and BH continue to use the rows supplied in `combined_table` as their adjustment family.}
 
-\item{e_val_bound_conversion}{How the confidence-bound E-value is computed from the returned interval when `scale = "RD"`. `"exact"` (default) converts the interval limit nearest the null directly, \eqn{\exp(0.91 d_{\mathrm{limit}})}, which equals \eqn{\exp(0.91 d - 0.91 z^{*} \mathrm{SE}(d))} for a symmetric interval with critical value \eqn{z^{*}}. `"rounded"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only: it infers \eqn{\mathrm{SE}^{*} = (\mathrm{upper} - \mathrm{estimate}) / \Phi^{-1}(0.975)} from the returned interval and uses \eqn{\exp(0.91 d - 1.78\,\mathrm{SE}^{*})}, which replaces \eqn{0.91 z^{*}} by \eqn{1.78 z^{*} / 1.96} and so gives a slightly larger bound for an adjusted interval. Ignored when `scale = "RR"`, where the returned limits are used directly.}
+\item{e_val_bound_conversion}{How the confidence-bound E-value is computed from the returned interval when `scale = "RD"`. `"exact"` (default) converts the interval limit nearest the null directly. When the interval excludes the null, the risk ratio away from the null at that limit is \eqn{\exp(0.91 |d_{\mathrm{limit}}|)}, which equals \eqn{\exp(0.91 (|d| - z^{*} \mathrm{SE}(d)))} for a symmetric interval with critical value \eqn{z^{*}}; for a negative \eqn{d} the nearest limit is the upper one, and its ratio below 1 is inverted. `"rounded"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only: it infers \eqn{\mathrm{SE}^{*} = (\mathrm{upper} - \mathrm{estimate}) / \Phi^{-1}(0.975)} from the returned interval and uses \eqn{\exp(0.91 |d| - 1.78\,\mathrm{SE}^{*})}, which replaces \eqn{0.91 z^{*}} by \eqn{1.78 z^{*} / 1.96} and so gives a slightly larger bound for an adjusted interval. Ignored when `scale = "RR"`, where the returned limits are used directly.}
 }
 \value{
 A data frame with the same rows (and order) as `combined_table`, but
@@ -73,7 +73,8 @@ difference \eqn{d = b|\delta|/s}. It approximates the risk ratio as
 \eqn{\exp(0.91d)}. With the default `e_val_bound_conversion = "exact"`, each
 returned (adjusted) confidence limit is standardised and converted in the same
 way, so the confidence-bound E-value uses \eqn{\exp(0.91 d_{\mathrm{limit}})}
-for the limit nearest the null. With `e_val_bound_conversion = "rounded"`,
+for the limit nearest the null (inverted when it lies below 1). With
+`e_val_bound_conversion = "rounded"`,
 the risk-ratio confidence limits are \eqn{\exp(0.91d \pm 1.78\,\mathrm{SE}^{*})},
 with \eqn{\mathrm{SE}^{*}} inferred from the returned interval as described
 under that argument. Either way Margot then applies the same null E-value
@@ -94,6 +95,10 @@ For Bonferroni, let \eqn{m} be the total number of tests in the multiplicity fam
     then back-calculates symmetric CIs. Controls false discovery rate rather
     than family-wise error rate.
 }
+Because an adjusted *p*-value is never smaller than the unadjusted one, the
+Holm and BH intervals exclude (or touch) the null whatever the adjusted
+*p*-value. Read the Holm or BH decision from the adjusted *p*-value, not from
+these intervals; [margot_plot()] refuses its default interval rule with them.
 }
 
 \references{

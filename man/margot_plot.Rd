@@ -56,13 +56,13 @@ effect sizes, confidence intervals, E-values and E-value bounds}
 
 \item{e_val_bound_threshold}{Reporting threshold for the E-value bound. By default it sets only the E-value flag reported beside each estimate (table column and prose); it does not change the plotted category. Under `category_rule = "interval_and_evalue"` it also gates the category, as in earlier versions.}
 
-\item{adjust}{character. multiplicity correction method: "none", "bonferroni", "holm" or "BH". With `"none"`, the supplied intervals and E-values are used unchanged.}
+\item{adjust}{character. multiplicity correction method: "none", "bonferroni", "holm" or "BH". With `"none"`, the supplied intervals and E-values are used unchanged. `"holm"` and `"BH"` require `category_rule = "interval_and_evalue"`: margot builds their intervals at coverage 1 - adjusted p, so the intervals exclude the null whatever the adjusted p-value and cannot carry the default interval decision.}
 
 \item{alpha}{numeric. significance level for corrections}
 
 \item{...}{other parameters as in original function}
 
-\item{options}{Plotting options; explicit arguments override corresponding option entries. `colors` may name the levels `"positive"`, `"includes null"` and `"negative"`; a colour named `"not reliable"` is used for `"includes null"` when that level has no colour of its own.}
+\item{options}{Plotting options; explicit arguments override corresponding option entries. `colors` may name the levels `"positive"`, `"includes null"` and `"negative"`; a colour named `"not reliable"` is used for `"includes null"` when that level has no colour of its own. `point_shapes` (default up-triangle 24, circle 21 and down-triangle 25 for above, including and below the null) repeats the category in the point shape; `NULL` draws one filled circle for every point, as earlier versions did. `coefficient_colour` (default `"black"`) colours the printed coefficients; `NULL` colours them by category, as earlier versions did. `text_size` (default 3.5; 2.75 earlier) sets their size.}
 
 \item{label_mapping}{Optional mapping from source outcome names to display labels.}
 
@@ -107,7 +107,7 @@ Explicit metadata overrides inference from `original_df`.}
 \value{
 An invisible list with `plot`, `interpretation`, and `transformed_table`.
 
-  With the default `table_columns = "report"`, `transformed_table` has one row per outcome, named by its display label and ordered as in the plot from top to bottom. Numbers keep full precision. Its columns are: the model-scale estimate (for example `"ATE (standardised)"`); its interval limits (for example `"99.58\% CI lower"`, or `"CI lower"` with a `"CI level"` column when coverage varies by outcome); when `scale_info` or `original_df` is supplied, the original-scale estimate and limits, headed by the quantity and unit when every outcome shares them (for example `"Mean difference (scale points)"`) and otherwise followed by an `"Original-scale quantity"` column; `"Interval"`, the decision (`"above 0"`, `"includes 0"` or `"below 0"`; `"Estimate"` under the legacy category rule); `"E-value"`; `"E-value bound"`; and the E-value flag (`"yes"` or `"no"`), headed by the comparison, for example `"E-value bound > 1.1"`.
+  With the default `table_columns = "report"`, `transformed_table` has one row per outcome, ordered as in the plot from top to bottom, with automatic row names. Numbers keep full precision. Its columns are: `"Outcome"`, the display label (in Markdown bold when `bold_rows = TRUE` and the E-value flag is set); the model-scale estimate (for example `"ATE (standardised)"`); its interval limits (for example `"99.58\% CI lower"`, or `"CI lower"` with a `"CI level"` column when coverage varies by outcome); when `scale_info` or `original_df` is supplied, the original-scale estimate and limits, headed by the quantity and unit when every outcome shares them (for example `"Mean difference (scale points)"`, or `"Mean difference (original scale)"` without a unit) and otherwise followed by an `"Original-scale quantity"` column; the decision, headed by the interval and the null (for example `"99.58\% CI relative to 0"`, with values `"above 0"`, `"includes 0"` or `"below 0"`; `"Estimate"` under the legacy category rule); `"E-value"`; `"E-value bound"`; and the E-value flag (`"yes"` or `"no"`), headed by the comparison, for example `"E-value bound > 1.1"`. Two columns never share a header: a clash, for example from `rename_ate`, stops with an error.
 }
 \description{
 Create coordinated plots, tables and text from supplied effect estimates and
@@ -117,5 +117,5 @@ estimates and sensitivity quantities remain separate from reported unit conversi
 \details{
 The statistical decision and the E-value flag are reported separately. By default the decision for each outcome follows its (adjusted) confidence interval alone, and the E-value flag records whether the interval's E-value bound exceeds `e_val_bound_threshold`. The flag sits beside the decision and does not change the plotted colour, legend, table decision or which outcomes the prose lists. The prose lists every outcome whose interval excludes the null, in plot order, with its E-value bound and flag, and names the correction and confidence level.
 
-To reproduce output from margot 1.3.2 and earlier, set `category_rule = "interval_and_evalue"`, `e_val_bound_comparison = ">="`, `e_val_bound_conversion = "rounded"`, `order_direction = "bottom_to_top"` and `table_columns = "legacy"`. Each argument restores one behaviour and can be set on its own.
+To reproduce output from margot 1.3.2 and earlier, set `category_rule = "interval_and_evalue"`, `e_val_bound_comparison = ">="`, `e_val_bound_conversion = "rounded"`, `order_direction = "bottom_to_top"` and `table_columns = "legacy"`. Each argument restores one behaviour and can be set on its own. Together they reproduce the categories, plotted values, table and prose of margot 1.3.2; the figure keeps the current styling (legend centred on the figure, point shapes, black coefficients and sentence-case axis titles), which `options = list(point_shapes = NULL, coefficient_colour = NULL, text_size = 2.75)` partly restores. For ratio estimates, the magnitude orderings now rank by the absolute log ratio; supply the earlier order through `order = "custom"` if it is needed.
 }

@@ -29,7 +29,7 @@ test_that("recognised control arguments can be supplied through options", {
 
   # ggplot draws the last level at the top, so magnitude_desc puts beta, the largest, there
   expect_equal(levels(out$plot$data$outcome), c("alpha", "gamma", "beta"))
-  expect_equal(rownames(out$transformed_table), c("beta", "gamma", "alpha"))
+  expect_equal(out$transformed_table$Outcome, c("beta", "gamma", "alpha"))
   expect_true(all(out$plot$data$confidence_level > 0.95))
   expect_false(any(vapply(out$plot$layers, function(layer) inherits(layer$geom, "GeomText"), logical(1))))
 })

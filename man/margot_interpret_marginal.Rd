@@ -19,7 +19,9 @@ margot_interpret_marginal(
   custom_order = NULL,
   category_rule = c("interval", "interval_and_evalue"),
   e_val_bound_comparison = c(">", ">="),
-  order_direction = c("top_to_bottom", "bottom_to_top")
+  order_direction = c("top_to_bottom", "bottom_to_top"),
+  effect_label = NULL,
+  listed_in_plot_order = FALSE
 )
 }
 \arguments{
@@ -34,7 +36,7 @@ multiplicity when `adjust` is not `"none"`.}
 
 \item{e_val_bound_threshold}{Reporting threshold for the E-value bound. By default it sets only the E-value flag reported beside each estimate (table column and prose); it does not change the plotted category. Under `category_rule = "interval_and_evalue"` it also gates the category, as in earlier versions.}
 
-\item{adjust}{character. multiplicity correction method: "none", "bonferroni", "holm" or "BH". With `"none"`, the supplied intervals and E-values are used unchanged.}
+\item{adjust}{character. multiplicity correction method: "none", "bonferroni", "holm" or "BH". With `"none"`, the supplied intervals and E-values are used unchanged. `"holm"` and `"BH"` require `category_rule = "interval_and_evalue"`: margot builds their intervals at coverage 1 - adjusted p, so the intervals exclude the null whatever the adjusted p-value and cannot carry the default interval decision.}
 
 \item{alpha}{numeric. significance level for corrections}
 
@@ -56,6 +58,12 @@ Explicit metadata overrides inference from `original_df`.}
 \item{e_val_bound_comparison}{Comparison between the E-value bound and `e_val_bound_threshold`: `">"` (default) flags a bound that exceeds the threshold; `">="` reproduces margot 1.3.2 and earlier, which also flagged a bound equal to it. The comparison uses full precision.}
 
 \item{order_direction}{Where the ordering starts. `"top_to_bottom"` (default) draws the first outcome of `order` at the top. `"bottom_to_top"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only: the first outcome was drawn at the bottom, so `"magnitude_desc"` put the largest effect at the bottom. The table and prose follow the plot from top to bottom under either value.}
+
+\item{effect_label}{Name for the model-scale estimate in each bullet, for
+example `"ATE (standardised)"`; `NULL` uses the effect type.}
+
+\item{listed_in_plot_order}{logical; `TRUE` when the prose accompanies a
+plot, so that it says the outcomes are listed in plot order.}
 }
 \value{
 list with one element, `interpretation` (a character string).

@@ -26,7 +26,7 @@ make_decision_fixture <- function() {
 decision_labels <- c(trust = "Trust in science", warmth = "Warmth to refugees",
   edge_small = "Interval excludes zero, small bound", anxiety = "Anxiety",
   null_cross = "Interval crosses zero", exact_zero = "Zero estimate",
-  threshold_edge = "E-value bound at threshold", small_negative_cross = "Small negative, crosses zero",
+  threshold_edge = "E-value bound near threshold", small_negative_cross = "Small negative, crosses zero",
   moderate = "Moderate positive", clear_positive = "Clear positive",
   negative_small_bound = "Negative, small bound", wide_positive = "Wide positive")
 
@@ -77,14 +77,17 @@ test_that("the E-value flag is a separate table column and never changes the dec
   out <- decision_plot()
   table <- out$transformed_table
 
-  expect_true(all(c("Interval", "E-value", "E-value bound", "E-value bound > 1.1") %in% names(table)))
-  expect_identical(table[["Interval"]][rownames(table) == "Interval excludes zero, small bound"], "above 0")
-  expect_identical(table[["E-value bound > 1.1"]][rownames(table) == "Interval excludes zero, small bound"], "no")
+  decision <- "99.58% CI relative to 0"
+  expect_identical(names(table)[1], "Outcome")
+  expect_true(all(c(decision, "E-value", "E-value bound", "E-value bound > 1.1") %in% names(table)))
+  expect_identical(table[[decision]][table$Outcome == "Interval excludes zero, small bound"], "above 0")
+  expect_identical(table[["E-value bound > 1.1"]][table$Outcome == "Interval excludes zero, small bound"], "no")
   expect_identical(
     table[["E-value bound > 1.1"]],
     ifelse(table[["E-value bound"]] > 1.1, "yes", "no")
   )
-  expect_setequal(unique(table[["Interval"]]), c("above 0", "includes 0", "below 0"))
+  expect_setequal(unique(table[[decision]]), c("above 0", "includes 0", "below 0"))
+  expect_false(anyDuplicated(names(table)) > 0)
 })
 
 test_that("the E-value flag uses a strict comparison by default", {
@@ -96,19 +99,20 @@ test_that("the E-value flag uses a strict comparison by default", {
     E_Value = c(1.5, 1.6),
     E_Val_bound = c(1.1, 1.1 + 1e-9)
   )
+  row <- function(out, outcome) match(outcome, out$transformed_table$Outcome)
   args <- list(input, type = "RD", e_val_bound_threshold = 1.1, include_coefficients = FALSE,
     options = list(use_title_case = FALSE))
   strict <- suppressMessages(do.call(margot_plot, args))
   inclusive <- suppressMessages(do.call(margot_plot, c(args, list(e_val_bound_comparison = ">="))))
 
-  expect_identical(strict$transformed_table[c("equal", "above"), "E-value bound > 1.1"], c("no", "yes"))
-  expect_identical(inclusive$transformed_table[c("equal", "above"), "E-value bound >= 1.1"], c("yes", "yes"))
-  expect_match(strict$interpretation, "E-value bound = 1.10 (does not exceed 1.1)", fixed = TRUE)
+  expect_identical(strict$transformed_table[row(strict, c("equal", "above")), "E-value bound > 1.1"], c("no", "yes"))
+  expect_identical(inclusive$transformed_table[row(inclusive, c("equal", "above")), "E-value bound >= 1.1"], c("yes", "yes"))
+  expect_match(strict$interpretation, "E-value bound = 1.100 (does not exceed 1.1)", fixed = TRUE)
   # a bound that only rounds to the threshold is printed with enough decimals to agree with its flag
   expect_match(strict$interpretation, "E-value bound = 1.100000001 (exceeds 1.1)", fixed = TRUE)
   # emphasis in the table follows the same comparison
   bold <- suppressMessages(do.call(margot_plot, c(args, list(bold_rows = TRUE))))
-  expect_setequal(rownames(bold$transformed_table), c("equal", "**above**"))
+  expect_setequal(bold$transformed_table$Outcome, c("equal", "**above**"))
   # the category is the same under either comparison
   expect_identical(as.character(strict$plot$data$Estimate), c("positive", "positive"))
   expect_identical(as.character(inclusive$plot$data$Estimate), c("positive", "positive"))
@@ -130,9 +134,10 @@ test_that("corrected E-value bounds use the exact conversion of the limit neares
   rr_se <- exp(0.91 * (abs(fixture$ATE[excludes]) - z_star * fixture$standard_error[excludes]))
   expect_equal(corrected$E_Val_bound[excludes], rr_se + sqrt(rr_se * (rr_se - 1)), tolerance = 1e-12)
 
-  # the threshold edge case sits at 1.1 under the exact conversion
+  # the threshold edge case sits just above 1.1 under the exact conversion
   edge <- fixture$outcome == "threshold_edge"
   expect_equal(corrected$E_Val_bound[edge], 1.1, tolerance = 1e-4)
+  expect_gt(corrected$E_Val_bound[edge], 1.1)
 
   # rounded: the earlier 1.78 x SE* with SE* rescaled from the corrected interval
   se_star <- (rounded$`97.5 %` - rounded$ATE) / stats::qnorm(0.975)
@@ -159,14 +164,19 @@ test_that("the interpretation lists every interval that excludes zero in plot or
   listed <- sub(":.*$", "", substring(bullets, 3))
 
   table <- out$transformed_table
-  excludes <- rownames(table)[table[["Interval"]] != "includes 0"]
+  excludes <- table$Outcome[table[["99.58% CI relative to 0"]] != "includes 0"]
   expect_identical(listed, excludes)
   expect_identical(listed, plot_top_to_bottom(out$plot)[plot_top_to_bottom(out$plot) %in% excludes])
   expect_length(listed, 9L)
 
+  # each bullet names the model-scale quantity with the table's header
+  expect_true(all(grepl(": ATE (standardised) = ", bullets, fixed = TRUE)))
   edge_line <- bullets[listed == "Interval excludes zero, small bound"]
-  expect_match(edge_line, "E-value bound = 1.04 (does not exceed 1.1)", fixed = TRUE)
-  expect_match(bullets[listed == "E-value bound at threshold"], "(exceeds 1.1)", fixed = TRUE)
+  expect_match(edge_line, "E-value bound = 1.036 (does not exceed 1.1)", fixed = TRUE)
+  expect_match(bullets[listed == "E-value bound near threshold"], "E-value bound = 1.1001 (exceeds 1.1)", fixed = TRUE)
+  expect_match(out$interpretation, "They are listed in plot order, from top to bottom.", fixed = TRUE)
+  expect_match(out$interpretation, "conditional on the measured covariates", fixed = TRUE)
+  expect_match(out$interpretation, "approximate conversion of a standardised mean difference d to a risk ratio, exp(0.91 d)", fixed = TRUE)
   expect_match(out$interpretation, "Bonferroni correction", fixed = TRUE)
   expect_match(out$interpretation, "99.58% confidence intervals", fixed = TRUE)
   expect_match(out$interpretation, "12 comparisons", fixed = TRUE)
@@ -196,7 +206,7 @@ test_that("each ordering runs from the top of the plot and the table and prose f
     listed <- sub(":.*$", "", substring(bullets[startsWith(bullets, "- ")], 3))
 
     expect_identical(top_to_bottom[[1]], expected_top[[ordering]], info = ordering)
-    expect_identical(rownames(out$transformed_table), top_to_bottom, info = ordering)
+    expect_identical(out$transformed_table$Outcome, top_to_bottom, info = ordering)
     expect_identical(listed, top_to_bottom[top_to_bottom %in% listed], info = ordering)
     if (ordering == "custom") expect_identical(top_to_bottom, custom)
   }
@@ -225,16 +235,19 @@ test_that("risk-ratio plots describe intervals relative to one", {
   )
   out <- suppressMessages(margot_plot(input, type = "RR", include_coefficients = FALSE,
     options = list(use_title_case = FALSE)))
-  expect_identical(out$transformed_table[c("higher", "lower", "unclear"), "Interval"],
+  table <- out$transformed_table
+  expect_identical(table[match(c("higher", "lower", "unclear"), table$Outcome), "95% CI relative to 1"],
     c("above 1", "below 1", "includes 1"))
   expect_match(out$interpretation, "exclude 1", fixed = TRUE)
-  expect_true("ATE (risk ratio)" %in% names(out$transformed_table))
+  expect_false(grepl("exp(0.91 d)", out$interpretation, fixed = TRUE))
+  expect_true("ATE (risk ratio)" %in% names(table))
 })
 
 test_that("legacy options reproduce the categories, E-values, table and prose of margot 1.3.2", {
-  # reference values produced by margot main (1.3.2.9000, commit 1421ea5) on this fixture
+  # reference values produced by margot main (1.3.2.9000, commit 1421ea5) on this fixture;
+  # the display label "E-value bound at threshold" was later renamed "near threshold"
   main_levels <- c("Trust in science", "Wide positive", "Anxiety", "Warmth to refugees",
-    "Clear positive", "Moderate positive", "E-value bound at threshold", "Negative, small bound",
+    "Clear positive", "Moderate positive", "E-value bound near threshold", "Negative, small bound",
     "Interval excludes zero, small bound", "Small negative, crosses zero", "Interval crosses zero",
     "Zero estimate")
   main_keys <- c("trust", "wide_positive", "anxiety", "warmth", "clear_positive", "moderate",
@@ -254,7 +267,7 @@ test_that("legacy options reproduce the categories, E-values, table and prose of
     "Confidence intervals and E-values were adjusted for 12 comparisons using Bonferroni correction ",
     "(Bonferroni-adjusted 99.58% confidence intervals). \n\nThe following estimates of average ",
     "treatment effects meet the specified reporting threshold (E‑value lower bound >= 1.1):\n\n",
-    "- E-value bound at threshold: 0.044 (99.58% CI: 0.009 to 0.078); on the original scale, mean difference = 0.054 scale points (99.58% CI: 0.011 to 0.097). E-value bound = 1.10\n",
+    "- E-value bound near threshold: 0.044 (99.58% CI: 0.009 to 0.078); on the original scale, mean difference = 0.054 scale points (99.58% CI: 0.011 to 0.097). E-value bound = 1.10\n",
     "- Moderate positive: 0.050 (99.58% CI: 0.016 to 0.084); on the original scale, mean difference = 0.062 scale points (99.58% CI: 0.020 to 0.105). E-value bound = 1.14\n",
     "- Clear positive: 0.070 (99.58% CI: 0.013 to 0.127); on the original scale, mean difference = 0.088 scale points (99.58% CI: 0.016 to 0.159). E-value bound = 1.12\n",
     "- Warmth to refugees: 0.090 (99.58% CI: 0.033 to 0.147); on the original scale, mean difference = 0.112 scale points (99.58% CI: 0.041 to 0.184). E-value bound = 1.21\n",
@@ -290,4 +303,182 @@ test_that("legacy options reproduce the categories, E-values, table and prose of
   partial <- decision_plot(category_rule = "interval_and_evalue", e_val_bound_comparison = ">=")
   partial_category <- stats::setNames(as.character(partial$plot$data$Estimate), partial$plot$data$original_var_name)
   expect_identical(unname(partial_category[main_keys]), main_categories)
+})
+
+test_that("holm and BH stop under the interval rule because their intervals cannot carry it", {
+  fixture <- make_decision_fixture()
+  for (method in c("holm", "BH")) {
+    expect_error(
+      suppressMessages(margot_plot(fixture, adjust = method, label_mapping = decision_labels)),
+      "cannot be combined with adjust",
+      info = method
+    )
+    expect_error(
+      margot:::margot_interpret_marginal(fixture, adjust = method),
+      "cannot be combined with adjust",
+      info = method
+    )
+  }
+
+  # margot's holm intervals exclude zero even for an outcome with raw p = 0.62,
+  # which is why an interval decision is refused
+  holm <- margot_correct_combined_table(fixture, adjust = "holm", scale = "RD")
+  null_cross <- fixture$outcome == "null_cross"
+  expect_gt(2 * stats::pnorm(-abs(fixture$ATE / fixture$standard_error))[null_cross], 0.5)
+  expect_false(holm$`2.5 %`[null_cross] < 0 && holm$`97.5 %`[null_cross] > 0)
+
+  # under bonferroni the same non-significant outcome is classed as including the null
+  bonferroni <- decision_plot()
+  expect_identical(
+    as.character(bonferroni$plot$data$Estimate[bonferroni$plot$data$original_var_name == "null_cross"]),
+    "includes null"
+  )
+
+  # the legacy rule still reproduces earlier holm output
+  legacy <- suppressMessages(margot_plot(fixture, adjust = "holm", label_mapping = decision_labels,
+    category_rule = "interval_and_evalue", e_val_bound_threshold = 1.1))
+  expect_s3_class(legacy$plot, "ggplot")
+})
+
+test_that("report-table headers never collide and a clash stops", {
+  fixture <- make_decision_fixture()[1:3, ]
+  unitless <- decision_scale_info(fixture)
+  unitless$unit <- ""
+  out <- suppressMessages(margot_plot(fixture, adjust = "none", scale_info = unitless,
+    rename_ate = "Mean difference", include_coefficients = FALSE))
+  table <- out$transformed_table
+  expect_false(anyDuplicated(names(table)) > 0)
+  expect_true(all(c("Mean difference", "Mean difference (original scale)",
+    "95% CI lower (original scale)") %in% names(table)))
+  # the model-scale estimate stays inside its own interval
+  expect_true(all(table[["Mean difference"]] >= table[["95% CI lower"]] &
+    table[["Mean difference"]] <= table[["95% CI upper"]]))
+  expect_equal(table[["Mean difference (original scale)"]], table[["Mean difference"]] * 1.25)
+
+  expect_error(
+    suppressMessages(margot_plot(fixture, adjust = "none", rename_ate = "E-value", include_coefficients = FALSE)),
+    "share the header 'E-value'"
+  )
+  expect_error(
+    suppressMessages(margot_plot(fixture, adjust = "none", include_coefficients = FALSE,
+      rename_cols = TRUE, col_renames = list("E-value" = "E-value bound"))),
+    "share the header"
+  )
+})
+
+test_that("bounds print with three decimals and enough digits to agree with the flag", {
+  fmt <- margot:::format_margot_evalue_bound
+  expect_identical(fmt(1.4577, 1.1, ">"), "1.458")
+  expect_identical(fmt(1.1, 1.1, ">"), "1.100")
+  expect_identical(fmt(1.10005126520, 1.1, ">"), "1.1001")
+  expect_identical(fmt(1.1 + .Machine$double.eps, 1.1, ">"), "1.1000000000000003")
+  expect_identical(fmt(1.1 - .Machine$double.eps, 1.1, ">"), "1.0999999999999999")
+  expect_identical(fmt(1.1 - .Machine$double.eps, 1.1, ">="), "1.0999999999999999")
+  # the printed value always agrees with the flag
+  for (x in c(1.0995, 1.1 - 1e-12, 1.1, 1.1 + 1e-12, 1.1004)) {
+    printed <- as.numeric(fmt(x, 1.1, ">"))
+    expect_identical(printed > 1.1, x > 1.1, info = x)
+  }
+})
+
+test_that("the exact conversion can leave a bound below the threshold that the rounded one passes", {
+  rr_at <- function(e_value) e_value^2 / (2 * e_value - 1)
+  d_threshold <- log(rr_at(1.1)) / 0.91
+  z_star <- stats::qnorm(1 - 0.05 / 4)
+  se <- 0.012
+  # place the adjusted lower limit just below the exact threshold
+  estimate <- d_threshold - 2e-5 + z_star * se
+  input <- data.frame(outcome = c("between_conversions", "clear"), ATE = c(estimate, 0.3))
+  input[["2.5 %"]] <- input$ATE - stats::qnorm(0.975) * c(se, 0.05)
+  input[["97.5 %"]] <- input$ATE + stats::qnorm(0.975) * c(se, 0.05)
+  input$E_Value <- NA_real_
+  input$E_Val_bound <- NA_real_
+
+  args <- list(input, adjust = "bonferroni", e_val_bound_threshold = 1.1, include_coefficients = FALSE,
+    options = list(use_title_case = FALSE, remove_underscores = FALSE))
+  exact <- suppressMessages(do.call(margot_plot, args))
+  rounded <- suppressMessages(do.call(margot_plot, c(args, list(e_val_bound_conversion = "rounded"))))
+  pick <- function(out) out$transformed_table[out$transformed_table$Outcome == "between_conversions", ]
+
+  expect_lt(pick(exact)[["E-value bound"]], 1.1)
+  expect_gt(pick(rounded)[["E-value bound"]], 1.1)
+  expect_identical(pick(exact)[["E-value bound > 1.1"]], "no")
+  expect_identical(pick(rounded)[["E-value bound > 1.1"]], "yes")
+  # the decision is the same under either conversion
+  expect_identical(pick(exact)[["97.5% CI relative to 0"]], "above 0")
+  expect_identical(pick(rounded)[["97.5% CI relative to 0"]], "above 0")
+})
+
+test_that("magnitude orderings rank ratios by their distance from one on the log scale", {
+  input <- tibble::tibble(
+    outcome = c("harm_big", "harm_small", "protective"),
+    `E[Y(1)]/E[Y(0)]` = c(2, 1.1, 0.4),
+    `2.5 %` = c(1.5, 1.02, 0.3),
+    `97.5 %` = c(2.6, 1.2, 0.55),
+    E_Value = c(3.41, 1.43, 4.4),
+    E_Val_bound = c(2.37, 1.16, 3.1)
+  )
+  desc <- suppressMessages(margot_plot(input, type = "RR", order = "magnitude_desc",
+    include_coefficients = FALSE, options = list(use_title_case = FALSE, remove_underscores = FALSE)))
+  asc <- suppressMessages(margot_plot(input, type = "RR", order = "magnitude_asc",
+    include_coefficients = FALSE, options = list(use_title_case = FALSE, remove_underscores = FALSE)))
+  expect_identical(desc$transformed_table$Outcome, c("protective", "harm_big", "harm_small"))
+  expect_identical(plot_top_to_bottom(desc$plot), c("protective", "harm_big", "harm_small"))
+  expect_identical(asc$transformed_table$Outcome, c("harm_small", "harm_big", "protective"))
+})
+
+test_that("standalone prose says it follows the requested order rather than a plot", {
+  input <- tibble::tibble(
+    outcome = c("a", "b"),
+    ATE = c(0.3, -0.2),
+    `2.5 %` = c(0.1, -0.35),
+    `97.5 %` = c(0.5, -0.05),
+    E_Value = c(1.9, 1.7),
+    E_Val_bound = c(1.4, 1.2)
+  )
+  standalone <- margot:::margot_interpret_marginal(input, order = "alphabetical", e_val_bound_threshold = 1.1)
+  expect_match(standalone$interpretation, "listed in the requested order", fixed = TRUE)
+  expect_false(grepl("plot order", standalone$interpretation, fixed = TRUE))
+  expect_match(standalone$interpretation, "- a: ATE = 0.300", fixed = TRUE)
+})
+
+test_that("the figure repeats the category in the point shape and keeps coefficients out of the legend", {
+  out <- decision_plot()
+  layers <- out$plot$layers
+  text_layer <- layers[[which(vapply(layers, function(layer) inherits(layer$geom, "GeomText"), logical(1)))]]
+  expect_false(text_layer$show.legend)
+  expect_identical(text_layer$aes_params$colour, "black")
+
+  scales <- ggplot2::ggplot_build(out$plot)$plot$scales
+  shape_map <- scales$get_scales("shape")$map(c("positive", "includes null", "negative"))
+  expect_equal(unname(shape_map), c(24, 21, 25))
+  expect_identical(out$plot$labels$x, "Standardised effect (difference scale)")
+
+  plain <- decision_plot(options = list(point_shapes = NULL, coefficient_colour = NULL))
+  expect_null(ggplot2::ggplot_build(plain$plot)$plot$scales$get_scales("shape"))
+})
+
+test_that("margot_bind_tables sorts and highlights either table layout", {
+  out <- decision_plot()
+  legacy <- decision_plot(table_columns = "legacy")
+  bound_order <- out$transformed_table$Outcome[order(-out$transformed_table[["E-value bound"]])]
+
+  for (table in list(out$transformed_table, legacy$transformed_table)) {
+    md <- margot_bind_tables(table, sort_E_val_bound = "desc", e_val_bound_threshold = 1.1)
+    rows <- md[grepl("^\\|", md)][-(1:2)]
+    first_cells <- trimws(gsub("\\*", "", vapply(strsplit(rows, "|", fixed = TRUE), `[`, character(1), 2)))
+    expect_identical(first_cells, bound_order)
+    # rows whose bound exceeds the threshold are emphasised
+    bold_rows <- grepl("**", rows, fixed = TRUE)
+    expect_identical(bold_rows, sort(out$transformed_table[["E-value bound"]], decreasing = TRUE) > 1.1)
+  }
+
+  # domain lists bind report tables too
+  domains <- margot_bind_tables(list(first = out$transformed_table, second = out$transformed_table),
+    sort_E_val_bound = "asc")
+  expect_true(any(grepl("Trust in science", domains, fixed = TRUE)))
+
+  combined <- margot:::margot_combine_results(list(first = out$transformed_table), format = "html")
+  expect_match(as.character(combined), "Trust in science", fixed = TRUE)
+  expect_match(as.character(combined), "Variable", fixed = TRUE)
 })
