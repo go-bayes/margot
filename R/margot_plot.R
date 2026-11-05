@@ -985,8 +985,11 @@ margot_plot <- function(
     # a right margin wide enough for the widest label: a monospace character
     # is about 0.6 of the text size, which ggplot gives in millimetres
     widest <- max(nchar(c(label_rows(plot_df[[eff_col]]), header_text)))
+    label_width <- 0.6 * opts$text_size * (widest + 1) * ggplot2::.pt
     out_plot <- out_plot + ggplot2::theme(
-      plot.margin = ggplot2::margin(5.5, 0.6 * opts$text_size * (widest + 1) * ggplot2::.pt, 5.5, 5.5, unit = "pt")
+      plot.margin = ggplot2::margin(5.5, label_width, 5.5, 5.5, unit = "pt"),
+      # if the caller facets the plot, leave the same room between panels
+      panel.spacing.x = grid::unit(5.5 + label_width, "pt")
     )
   }
 
