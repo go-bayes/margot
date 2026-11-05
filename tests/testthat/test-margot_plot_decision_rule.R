@@ -750,3 +750,59 @@ test_that("ratio coefficients sit clear of the intervals", {
     options = list(use_title_case = FALSE, x_lim_lo = 0.3, x_lim_hi = 2, x_offset = 0.35)))
   expect_equal(kept$plot$coordinates$limits$x, c(0.3, 2))
 })
+
+test_that("one missing limit gives no decision even when the other sits at the null", {
+  cases <- list(
+    list(type = "RD", lower = 0, upper = NA, estimate = 0.1, null = "0"),
+    list(type = "RD", lower = NA, upper = 0, estimate = -0.1, null = "0"),
+    list(type = "RR", lower = 1, upper = NA, estimate = 1.2, null = "1"),
+    list(type = "RR", lower = NA, upper = 1, estimate = 0.8, null = "1")
+  )
+  for (case in cases) {
+    info <- paste(case$type, case$lower, case$upper)
+    category <- margot:::margot_interval_category(case$lower, case$upper, as.numeric(case$null))
+    expect_true(is.na(category), info = info)
+
+    effect_name <- if (case$type == "RR") "E[Y(1)]/E[Y(0)]" else "ATE"
+    input <- data.frame(outcome = c("partial", "crossing"), check.names = FALSE)
+    input[[effect_name]] <- c(case$estimate, if (case$type == "RR") 1.05 else 0.05)
+    input[["2.5 %"]] <- c(case$lower, if (case$type == "RR") 0.9 else -0.05)
+    input[["97.5 %"]] <- c(case$upper, if (case$type == "RR") 1.2 else 0.15)
+    input$E_Value <- c(NA, 1.2)
+    input$E_Val_bound <- c(NA, 1)
+    out <- suppressMessages(margot_plot(input, type = case$type, include_coefficients = FALSE,
+      options = list(use_title_case = FALSE)))
+    table <- out$transformed_table
+    decision <- table[[paste0("95% CI relative to ", case$null)]]
+    expect_identical(decision[table$Outcome == "partial"], "not available", info = info)
+    expect_identical(as.character(out$plot$data$outcome), "crossing", info = info)
+    expect_match(out$interpretation, "No confidence interval was available for partial", fixed = TRUE, info = info)
+    expect_match(out$interpretation, "Only one estimate has a confidence interval, and it includes", fixed = TRUE, info = info)
+  }
+})
+
+test_that("tiny intervals fall back to significant digits that keep the decision visible", {
+  fmt <- margot:::margot_format_triple
+  difference <- fmt(c(2e-11, 1e-11, 3e-11), 0, 3L)
+  expect_identical(difference, c("2e-11", "1e-11", "3e-11"))
+  ratio <- fmt(1 + c(2e-11, 1e-11, 3e-11), 1, 2L)
+  expect_true(all(as.numeric(ratio) > 1))
+  expect_identical(length(unique(ratio)), 3L)
+  below <- fmt(1 - c(2e-11, 3e-11, 1e-11), 1, 2L)
+  expect_true(all(as.numeric(below) < 1))
+  # ordinary values keep fixed decimals
+  expect_identical(fmt(c(0.2, 0.114, 0.286), 0, 3L), c("0.200", "0.114", "0.286"))
+
+  input <- tibble::tibble(
+    outcome = "tiny",
+    ATE = 2e-11,
+    `2.5 %` = 1e-11,
+    `97.5 %` = 3e-11,
+    E_Value = 1,
+    E_Val_bound = 1
+  )
+  out <- suppressMessages(margot_plot(input, include_coefficients = FALSE,
+    options = list(use_title_case = FALSE)))
+  expect_match(out$interpretation, "ATE (standardised) = 2e-11 (95% CI: 1e-11 to 3e-11)", fixed = TRUE)
+  expect_false(grepl("0.0000000000", out$interpretation, fixed = TRUE))
+})

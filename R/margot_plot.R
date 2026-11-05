@@ -165,6 +165,9 @@ margot_interval_category <- function(lower, upper, null_val, bound = NULL, thres
 
   if (category_rule == "interval") {
     out <- ifelse(above, "positive", ifelse(below, "negative", "includes null"))
+    # without both limits there is no interval decision, even when the one
+    # supplied limit sits at the null (FALSE & NA is FALSE, not NA)
+    out[is.na(lower) | is.na(upper)] <- NA_character_
     return(factor(out, levels = c("positive", "includes null", "negative")))
   }
 
@@ -271,21 +274,47 @@ margot_unit_digits <- function(values) {
 
 # decimals for an estimate and its limits: at least min_digits, and more when
 # fewer would move a printed number onto or across the null or merge two
-# distinct numbers
+# distinct numbers; NA when no fixed number of decimals up to max_digits works
 margot_triple_digits <- function(values, null_value, min_digits, max_digits = 10L) {
   values <- values[!is.na(values)]
   if (!length(values)) {
     return(as.integer(min_digits))
   }
   for (d in seq.int(min_digits, max_digits)) {
-    shown <- vapply(values, function(x) as.numeric(gsub(",", "", format_margot_fixed(x, d), fixed = TRUE)), numeric(1))
-    keeps_side <- all(sign(shown - null_value) == sign(values - null_value))
-    keeps_distinct <- length(unique(shown)) == length(unique(values))
-    if (keeps_side && keeps_distinct) {
+    printed <- vapply(values, format_margot_fixed, character(1), digits = d)
+    if (margot_printed_agrees(printed, values, null_value)) {
       return(as.integer(d))
     }
   }
-  as.integer(max_digits)
+  NA_integer_
+}
+
+# whether printed numbers keep each value's side of the null and stay distinct
+margot_printed_agrees <- function(printed, values, null_value) {
+  shown <- as.numeric(gsub(",", "", printed, fixed = TRUE))
+  all(sign(shown - null_value) == sign(values - null_value)) &&
+    length(unique(shown)) == length(unique(values))
+}
+
+# print an estimate and its limits together: fixed decimals when they suffice,
+# otherwise enough significant digits (scientific notation if needed) for the
+# whole triple to keep its relation to the null and stay distinct
+margot_format_triple <- function(values, null_value, min_digits, max_digits = 10L) {
+  digits <- margot_triple_digits(values, null_value, min_digits, max_digits)
+  if (!is.na(digits)) {
+    return(vapply(values, format_margot_fixed, character(1), digits = digits))
+  }
+  present <- !is.na(values)
+  out <- rep("NA", length(values))
+  for (k in 2:17) {
+    printed <- formatC(values[present], format = "g", digits = k)
+    if (margot_printed_agrees(printed, values[present], null_value)) {
+      out[present] <- trimws(printed)
+      return(out)
+    }
+  }
+  out[present] <- sprintf("%.17g", values[present])
+  out
 }
 
 # describe the E-value flag beside a value in prose
@@ -1337,11 +1366,13 @@ margot_interpret_marginal <- function(
   bullets <- vapply(which(excludes), function(i) {
     row <- df[i, , drop = FALSE]
     ci_label <- format_margot_ci_level(row$confidence_level)
-    model_values <- c(row[[effect_col]], row[["2.5 %"]], row[["97.5 %"]])
-    row_digits <- margot_triple_digits(model_values, null_val, model_digits)
-    lab <- paste0(effect_label, " = ", format_margot_fixed(row[[effect_col]], row_digits), " (", ci_label, ": ",
-      format_margot_fixed(row[["2.5 %"]], row_digits), " to ",
-      format_margot_fixed(row[["97.5 %"]], row_digits), ")")
+    model_text <- margot_format_triple(
+      c(row[[effect_col]], row[["2.5 %"]], row[["97.5 %"]]),
+      null_val,
+      model_digits
+    )
+    lab <- paste0(effect_label, " = ", model_text[1], " (", ci_label, ": ",
+      model_text[2], " to ", model_text[3], ")")
     reported <- ""
     if ("reported_estimate" %in% names(row) && !is.na(row$reported_estimate)) {
       quantity <- switch(row$reporting_quantity,
@@ -1353,14 +1384,13 @@ margot_interpret_marginal <- function(
       unit <- if (row$reporting_quantity == "mean_difference" && !is.na(row$reporting_unit) && nzchar(row$reporting_unit)) paste0(" ", row$reporting_unit) else ""
       reported_values <- c(row$reported_estimate, row$reported_lower, row$reported_upper)
       reported_null <- if (row$reporting_quantity == "mean_difference") 0 else 1
-      reported_digits <- margot_triple_digits(
+      reported_text <- margot_format_triple(
         reported_values,
         reported_null,
         if (row$reporting_quantity == "mean_difference") margot_unit_digits(reported_values) else 2L
       )
-      reported <- paste0("; ", quantity, " = ", format_margot_fixed(row$reported_estimate, reported_digits), unit,
-        " (", ci_label, ": ", format_margot_fixed(row$reported_lower, reported_digits), " to ",
-        format_margot_fixed(row$reported_upper, reported_digits), ")")
+      reported <- paste0("; ", quantity, " = ", reported_text[1], unit,
+        " (", ci_label, ": ", reported_text[2], " to ", reported_text[3], ")")
     }
     bound_text <- format_margot_evalue_bound(bound[i], e_val_bound_threshold, e_val_bound_comparison)
     paste0("- ", row$outcome, ": ", lab, reported, ". E-value bound = ", bound_text,
