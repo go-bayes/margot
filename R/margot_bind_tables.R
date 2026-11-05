@@ -100,9 +100,25 @@ margot_bind_tables <- function(
         }
       }
     }
-    # process list of tables with domain id
+    # process list of tables with domain id; every recognised outcome column
+    # takes the first table's header so that labels bind into one column
     label_col <- outcome_column(tables_list[[1]])
-    tables_list <- lapply(tables_list, ensure_outcome)
+    tables_list <- lapply(tables_list, function(df) {
+      current <- outcome_column(df)
+      if (!current %in% names(df)) {
+        return(tibble::rownames_to_column(df, var = label_col))
+      }
+      if (current != label_col) {
+        if (label_col %in% names(df)) {
+          stop(
+            "Cannot use '", label_col, "' as the outcome column: a table already has a column of that name.",
+            call. = FALSE
+          )
+        }
+        names(df)[names(df) == current] <- label_col
+      }
+      df
+    })
     combined <- dplyr::bind_rows(tables_list, .id = "Domain") %>%
       dplyr::select(dplyr::all_of(c("Domain", label_col)), dplyr::everything())
     domain_mode <- TRUE

@@ -160,7 +160,7 @@ format_margot_threshold <- function(threshold, bounds = numeric(), comparison = 
   bounds <- bounds[!is.na(bounds)]
   truth <- margot_evalue_flag(bounds, threshold, comparison)
   for (digits in 7:17) {
-    text <- format(threshold, digits = digits)
+    text <- format(threshold, digits = digits, decimal.mark = ".")
     if (identical(margot_evalue_flag(bounds, as.numeric(text), comparison), truth)) {
       return(text)
     }
@@ -255,7 +255,7 @@ format_margot_evalue_bound <- function(x, threshold, comparison, digits = 3, max
   }
   flag <- margot_evalue_flag(x, threshold, comparison)
   for (d in digits:max_digits) {
-    printed <- formatC(x, format = "f", digits = d)
+    printed <- formatC(x, format = "f", digits = d, decimal.mark = ".")
     shown <- as.numeric(printed)
     agrees <- identical(margot_evalue_flag(shown, threshold, comparison), flag)
     if (agrees && (shown != threshold || x == threshold)) {
@@ -265,13 +265,16 @@ format_margot_evalue_bound <- function(x, threshold, comparison, digits = 3, max
   sprintf("%.17g", x)
 }
 
-# print a number with fixed decimals, without a negative zero
+# print a number with fixed decimals, without a negative zero. numbers in the
+# default prose and table headers always use "." as the decimal mark, whatever
+# options(OutDec) says, because some printed strings are parsed back to check
+# them against the null and the threshold
 format_margot_fixed <- function(x, digits) {
   if (is.na(x)) {
     return("NA")
   }
   if (round(x, digits) == 0) x <- 0
-  formatC(x, format = "f", digits = digits, big.mark = ",")
+  formatC(x, format = "f", digits = digits, big.mark = ",", decimal.mark = ".")
 }
 
 # decimals for one row's original-unit numbers, chosen from the largest of them
@@ -323,7 +326,7 @@ margot_format_triple <- function(values, null_value, min_digits, max_digits = 10
   present <- !is.na(values)
   out <- rep("NA", length(values))
   for (k in 2:17) {
-    printed <- formatC(values[present], format = "g", digits = k)
+    printed <- formatC(values[present], format = "g", digits = k, decimal.mark = ".")
     if (margot_printed_agrees(printed, values[present], null_value)) {
       out[present] <- trimws(printed)
       return(out)
@@ -1308,17 +1311,17 @@ margot_interpret_marginal <- function(
       none = paste0("Intervals are ", level_phrase, "; this call applied no further adjustment for multiple comparisons."),
       bonferroni = paste0(
         "Confidence intervals were adjusted for ", n_outcomes,
-        " comparisons using the Bonferroni correction (family-wise alpha = ", format(alpha),
+        " comparisons using the Bonferroni correction (family-wise alpha = ", format(alpha, decimal.mark = "."),
         "), giving ", level_phrase, "."
       ),
       holm = paste0(
         "Confidence intervals were adjusted for ", n_outcomes,
-        " comparisons using the Holm correction (family-wise alpha = ", format(alpha),
+        " comparisons using the Holm correction (family-wise alpha = ", format(alpha, decimal.mark = "."),
         "), giving ", level_phrase, "."
       ),
       BH = paste0(
         "Confidence intervals were adjusted for ", n_outcomes,
-        " comparisons using the Benjamini-Hochberg correction (false discovery rate = ", format(alpha),
+        " comparisons using the Benjamini-Hochberg correction (false discovery rate = ", format(alpha, decimal.mark = "."),
         "), giving ", level_phrase, "."
       )
     )

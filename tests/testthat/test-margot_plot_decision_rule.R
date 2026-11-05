@@ -904,3 +904,43 @@ test_that("renderers keep a renamed outcome column and print each label once", {
     output_format = "html"))), 2L)
   expect_identical(count(as.character(margot:::margot_combine_results(list(first = table), format = "html"))), 1L)
 })
+
+test_that("a comma decimal mark neither warns nor changes the printed numbers", {
+  withr::local_options(OutDec = ",", warn = 2)
+  out <- decision_plot()
+  expect_match(out$interpretation, "family-wise alpha = 0.05", fixed = TRUE)
+  expect_match(out$interpretation, "ATE (standardised) = 0.200 (99.58% CI: 0.114 to 0.286)", fixed = TRUE)
+  expect_match(out$interpretation, "E-value bound = 1.1001 (exceeds 1.1)", fixed = TRUE)
+  expect_true("E-value bound > 1.1" %in% names(out$transformed_table))
+
+  precise <- tibble::tibble(
+    outcome = c("close", "tiny"),
+    ATE = c(0.3, 2e-11),
+    `2.5 %` = c(0.1, 1e-11),
+    `97.5 %` = c(0.5, 3e-11),
+    E_Value = c(1.5, 1),
+    E_Val_bound = c(1.100000005, 1)
+  )
+  out <- suppressMessages(margot_plot(precise, e_val_bound_threshold = 1.10000001,
+    include_coefficients = FALSE, options = list(use_title_case = FALSE)))
+  expect_match(out$interpretation, "(does not exceed 1.10000001)", fixed = TRUE)
+  expect_match(out$interpretation, "2e-11 (95% CI: 1e-11 to 3e-11)", fixed = TRUE)
+  expect_identical(margot:::format_margot_fixed(1234.5, 1), "1,234.5")
+})
+
+test_that("domain tables with differently named outcome columns bind into one column", {
+  renamed <- decision_plot(rename_cols = TRUE, col_renames = list(Endpoint = "Outcome"))$transformed_table
+  plain <- decision_plot()$transformed_table
+  md <- margot_bind_tables(list(first = renamed, second = plain), output_format = "markdown")
+  header <- trimws(strsplit(md[grepl("^\\|", md)][1], "|", fixed = TRUE)[[1]])
+  expect_identical(header[2:3], c("Domain", "Endpoint"))
+  expect_false("Outcome" %in% header)
+  rows <- md[grepl("^\\|", md)][-(1:2)]
+  labels <- trimws(gsub("\\*", "", vapply(strsplit(rows, "|", fixed = TRUE), `[`, character(1), 3)))
+  expect_identical(labels, c(renamed$Endpoint, plain$Outcome))
+
+  # a table that already has a column with the first table's header cannot be renamed into it
+  clash <- plain
+  clash$Endpoint <- "x"
+  expect_error(margot_bind_tables(list(first = renamed, second = clash)), "Cannot use 'Endpoint'")
+})
