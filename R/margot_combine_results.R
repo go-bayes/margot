@@ -78,10 +78,17 @@ margot_combine_results <- function(
     df <- df %>%
       mutate(across(where(is.numeric), ~ round(.x, digits)))
 
-    # Add Variable column from row names
-    df <- df %>%
-      mutate(Variable = rownames(df)) %>%
-      select(Variable, everything())
+    # Add Variable column from the Outcome column of the default margot_plot()
+    # table, or from row names in the legacy layout
+    if ("Outcome" %in% names(df)) {
+      df <- df %>%
+        dplyr::rename(Variable = Outcome) %>%
+        select(Variable, everything())
+    } else {
+      df <- df %>%
+        mutate(Variable = rownames(df)) %>%
+        select(Variable, everything())
+    }
 
     # Add .domain_label for grouping
     df$.domain_label <- if (!is.null(options) && !is.null(options[[nm]]$subtitle)) {

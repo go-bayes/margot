@@ -1,8 +1,11 @@
 #' Bind and format domain-specific tables or a single table
 #'
 #' This function binds a named list of domain-specific tables, or handles a single data frame.
-#' It optionally sorts by the raw E_Val_bound column, renames columns, highlights rows above a threshold,
+#' It optionally sorts by the E-value bound column, renames columns, highlights rows above a threshold,
 #' and groups rows by domain when provided. Works for latex, html, or markdown output.
+#' It accepts both `transformed_table` layouts of [margot_plot()]: the default reporting layout,
+#' whose bound column is "E-value bound" and whose outcomes are in an "Outcome" column, and the
+#' legacy layout, whose bound column is "E_Val_bound" and whose outcomes are row names.
 #'
 #' @param tables_list a named list of data frames, each a domain table, or a single data frame.
 #'   For lists, row names are captured as an "Outcome" column; for data frames, same applies.
@@ -15,7 +18,9 @@
 #' @param col_renames named list; mapping new_name = old_name for renaming.
 #'   default list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound").
 #' @param rename_ate logical; if TRUE, renames the effect column to "ATE". default FALSE.
-#' @param threshold_col character; name of the (pre-rename) column to test. default "E_Val_bound".
+#' @param threshold_col character; name of the (pre-rename) column to test and sort by. default "E_Val_bound".
+#'   When that column is absent, the first of "E_Val_bound", "E-value bound", "E-Value bound" and
+#'   "E-Value Bound" that is present is used.
 #' @param kbl_args list; extra arguments for kableExtra::kbl(). default list(booktabs=TRUE, caption="Combined Results", align=NULL).
 #'
 #' @importFrom dplyr bind_rows arrange desc select everything
@@ -60,11 +65,19 @@ margot_bind_tables <- function(
     domain_mode <- TRUE
   }
 
-  # sort by E_Val_bound if requested
+  # resolve the bound column for either margot_plot() table layout
+  bound_candidates <- unique(c(threshold_col, "E_Val_bound", "E-value bound", "E-Value bound", "E-Value Bound"))
+  bound_col <- bound_candidates[bound_candidates %in% names(combined)][1]
+  if (is.na(bound_col)) bound_col <- threshold_col
+
+  # sort by the E-value bound if requested
+  if (sort_E_val_bound != "none" && !bound_col %in% names(combined)) {
+    stop("No E-value bound column found to sort by; set `threshold_col`.", call. = FALSE)
+  }
   if (sort_E_val_bound == "asc") {
-    combined <- dplyr::arrange(combined, .data$E_Val_bound)
+    combined <- dplyr::arrange(combined, .data[[bound_col]])
   } else if (sort_E_val_bound == "desc") {
-    combined <- dplyr::arrange(combined, dplyr::desc(.data$E_Val_bound))
+    combined <- dplyr::arrange(combined, dplyr::desc(.data[[bound_col]]))
   }
 
   # rename ATE column if requested
@@ -85,10 +98,11 @@ margot_bind_tables <- function(
   }
 
   # determine threshold column name after renaming
-  threshold_col_name <- if (threshold_col %in% names(combined)) {
-    threshold_col
+  threshold_col_name <- if (bound_col %in% names(combined)) {
+    bound_col
   } else {
-    names(col_renames)[col_renames == threshold_col] %||% threshold_col
+    renamed <- names(col_renames)[col_renames == bound_col]
+    if (length(renamed)) renamed[[1]] else bound_col
   }
 
   # output for markdown

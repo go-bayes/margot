@@ -39,12 +39,17 @@ default list("E-Value" = "E_Value", "E-Value bound" = "E_Val_bound").}
 
 \item{rename_ate}{logical; if TRUE, renames the effect column to "ATE". default FALSE.}
 
-\item{threshold_col}{character; name of the (pre-rename) column to test. default "E_Val_bound".}
+\item{threshold_col}{character; name of the (pre-rename) column to test and sort by. default "E_Val_bound".
+When that column is absent, the first of "E_Val_bound", "E-value bound", "E-Value bound" and
+"E-Value Bound" that is present is used.}
 
 \item{kbl_args}{list; extra arguments for kableExtra::kbl(). default list(booktabs=TRUE, caption="Combined Results", align=NULL).}
 }
 \description{
 This function binds a named list of domain-specific tables, or handles a single data frame.
-It optionally sorts by the raw E_Val_bound column, renames columns, highlights rows above a threshold,
+It optionally sorts by the E-value bound column, renames columns, highlights rows above a threshold,
 and groups rows by domain when provided. Works for latex, html, or markdown output.
+It accepts both `transformed_table` layouts of [margot_plot()]: the default reporting layout,
+whose bound column is "E-value bound" and whose outcomes are in an "Outcome" column, and the
+legacy layout, whose bound column is "E_Val_bound" and whose outcomes are row names.
 }
