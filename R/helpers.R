@@ -943,6 +943,7 @@ group_tab <- function(
   # order the whole table: row positions apply to the ungrouped frame, and any
   # grouping is restored on return
   grouping <- dplyr::group_vars(results_df)
+  grouping_drop <- dplyr::group_by_drop_default(results_df)
   results_df <- dplyr::ungroup(results_df)
 
   # magnitude is the distance from the null: |difference|, or |log ratio| for
@@ -995,7 +996,7 @@ group_tab <- function(
   }
 
   if (length(grouping)) {
-    results_df <- dplyr::group_by(results_df, dplyr::across(dplyr::all_of(grouping)))
+    results_df <- dplyr::group_by(results_df, dplyr::across(dplyr::all_of(grouping)), .drop = grouping_drop)
   }
   results_df
 }

@@ -24,10 +24,11 @@ For lists, row names are captured as an "Outcome" column; for data frames, same 
 
 \item{sort_E_val_bound}{character: one of "none", "asc", or "desc". default "none".
 For a list of domain tables, rows are sorted within each domain and the domains keep their order.
-Every table in a list must use the same layout (report or legacy, read from the
-`margot_table_layout` attribute that margot_plot() records, or otherwise from the columns,
-rather than from the spelling of the bound column); mixed layouts stop with an error.
-Within one layout, bound columns spelled differently are given the first table's spelling.}
+Every table in a list must have the same columns once its outcome and E-value bound
+columns take the first table's spelling; otherwise binding would split values across
+columns, and the function stops with an error naming the differing columns. Tables from
+the report and legacy layouts of margot_plot(), or built with different corrections or
+renames, therefore cannot be bound together.}
 
 \item{e_val_bound_threshold}{numeric; threshold for highlighting rows. default 1.1.}
 

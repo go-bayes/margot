@@ -12,10 +12,11 @@
 #'   For lists, row names are captured as an "Outcome" column; for data frames, same applies.
 #' @param sort_E_val_bound character: one of "none", "asc", or "desc". default "none".
 #'   For a list of domain tables, rows are sorted within each domain and the domains keep their order.
-#'   Every table in a list must use the same layout (report or legacy, read from the
-#'   `margot_table_layout` attribute that margot_plot() records, or otherwise from the columns,
-#'   rather than from the spelling of the bound column); mixed layouts stop with an error.
-#'   Within one layout, bound columns spelled differently are given the first table's spelling.
+#'   Every table in a list must have the same columns once its outcome and E-value bound
+#'   columns take the first table's spelling; otherwise binding would split values across
+#'   columns, and the function stops with an error naming the differing columns. Tables from
+#'   the report and legacy layouts of margot_plot(), or built with different corrections or
+#'   renames, therefore cannot be bound together.
 #' @param e_val_bound_threshold numeric; threshold for highlighting rows. default 1.1.
 #' @param highlight_color character or NULL; background colour for highlighted rows. default "yellow".
 #' @param bold logical; whether to bold highlighted rows. default TRUE.
@@ -74,29 +75,11 @@ margot_bind_tables <- function(
     combined <- ensure_outcome(tables_list)
     domain_mode <- FALSE
   } else {
-    # tables from different layouts would bind into split estimate and interval
-    # columns, so refuse them. the layout is read from the schema, not from the
-    # spelling of the bound column: legacy tables carry `confidence_level` or
-    # quantile-headed interval columns such as "2.5 %", report tables neither
-    table_layout <- function(df) {
-      # margot_plot() records the layout; tables without the record, or whose
-      # rows were subset, fall back to the schema
-      recorded <- attr(df, "margot_table_layout", exact = TRUE)
-      if (!is.null(recorded)) {
-        return(recorded)
-      }
-      legacy <- "confidence_level" %in% names(df) || any(grepl("^[0-9.]+ %$", names(df)))
-      if (legacy) "legacy" else "report"
-    }
-    layouts <- vapply(tables_list, table_layout, character(1))
-    if (length(unique(layouts)) > 1L) {
-      stop(
-        "The tables mix the report and legacy layouts of margot_plot(). ",
-        "Build every table with the same `table_columns` value.",
-        call. = FALSE
-      )
-    }
-    # within one layout, give every bound column the first table's spelling
+    # the recorded layouts only sharpen the error message below; the safety
+    # check compares the columns themselves
+    recorded_layouts <- unlist(lapply(tables_list, function(df) attr(df, "margot_table_layout", exact = TRUE)))
+
+    # give every bound column the first table's spelling
     table_bound_cols <- vapply(tables_list, find_bound_col, character(1))
     target_bound <- table_bound_cols[!is.na(table_bound_cols)][1]
     if (!is.na(target_bound)) {
@@ -126,6 +109,23 @@ margot_bind_tables <- function(
       }
       df
     })
+
+    # tables whose columns differ, after the outcome and bound columns share
+    # one spelling, would bind into split, partly empty columns, so refuse them
+    reference <- names(tables_list[[1]])
+    differing <- unique(unlist(lapply(tables_list[-1], function(df) {
+      c(setdiff(names(df), reference), setdiff(reference, names(df)))
+    })))
+    if (length(differing)) {
+      stop(
+        if (length(unique(recorded_layouts)) > 1L) "The tables mix the report and legacy layouts of margot_plot(). " else "",
+        "The tables do not share the same columns (",
+        paste0("'", differing, "'", collapse = ", "),
+        "), so binding them would split values across columns. ",
+        "Build every table with the same `table_columns`, correction and `col_renames` settings.",
+        call. = FALSE
+      )
+    }
     combined <- dplyr::bind_rows(tables_list, .id = "Domain") %>%
       dplyr::select(dplyr::all_of(c("Domain", label_col)), dplyr::everything())
     domain_mode <- TRUE

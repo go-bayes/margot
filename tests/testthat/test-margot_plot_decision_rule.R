@@ -981,3 +981,43 @@ test_that("a legacy table with renamed columns is still recognised as legacy", {
     "mix the report and legacy layouts"
   )
 })
+
+test_that("the binding guard compares columns, so copies without attributes behave", {
+  report <- decision_plot()$transformed_table
+  legacy <- decision_plot(table_columns = "legacy")$transformed_table
+  copy <- legacy[, names(legacy), drop = FALSE]
+  expect_null(attr(copy, "margot_table_layout"))
+
+  # a legacy table and its attribute-free copy share their columns and bind
+  md <- margot_bind_tables(list(original = legacy, copy = copy), sort_E_val_bound = "desc")
+  rows <- md[grepl("^\\|", md)][-(1:2)]
+  expect_length(rows, 24L)
+  expect_false(any(grepl("|NA|", gsub(" ", "", rows), fixed = TRUE)))
+
+  # an intact report table and the copy do not, and the error names the columns
+  expect_error(margot_bind_tables(list(report = report, copy = copy)), "do not share the same columns")
+  expect_error(margot_bind_tables(list(report = report, copy = copy)), "'0.21 %'", fixed = TRUE)
+
+  # tables corrected for different family sizes would split their interval columns
+  smaller <- suppressMessages(margot_plot(make_decision_fixture()[1:6, ], adjust = "bonferroni",
+    label_mapping = decision_labels, e_val_bound_threshold = 1.1, include_coefficients = FALSE))$transformed_table
+  expect_error(margot_bind_tables(list(all = report, some = smaller)), "do not share the same columns")
+})
+
+test_that("group_tab restores the drop policy of a grouped table", {
+  input <- tibble::tibble(
+    outcome = c("a", "b"),
+    family = factor(c("x", "x"), levels = c("x", "y")),
+    ATE = c(0.1, 0.4),
+    `2.5 %` = c(0.05, 0.3),
+    `97.5 %` = c(0.15, 0.5),
+    E_Value = c(1.3, 1.9),
+    E_Val_bound = c(1.1, 1.6)
+  )
+  kept <- dplyr::group_by(input, family, .drop = FALSE)
+  out <- margot:::group_tab(kept, type = "RD", order = "magnitude_desc")
+  expect_false(dplyr::group_by_drop_default(out))
+  expect_identical(dplyr::n_groups(out), dplyr::n_groups(kept))
+  dropped <- margot:::group_tab(dplyr::group_by(input, family), type = "RD", order = "magnitude_desc")
+  expect_true(dplyr::group_by_drop_default(dropped))
+})
