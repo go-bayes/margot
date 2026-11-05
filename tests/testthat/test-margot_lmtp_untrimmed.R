@@ -77,17 +77,15 @@ test_that("results do not depend on worker timing (multisession plan)", {
   }
 })
 
-test_that("the untrimmed route combines with the learner audit and stays lean", {
+test_that("the untrimmed route keeps lean fits", {
   old_plan <- future::plan()
   on.exit(future::plan(old_plan), add = TRUE)
   future::plan(future::sequential)
   data <- untrimmed_fixture()
-  output <- run_untrimmed(data, cap = 0.9, learner_audit = TRUE)
+  output <- run_untrimmed(data, cap = 0.9)
   margot_lmtp_assert_lean(output$models)
   margot_lmtp_assert_lean(output$untrimmed_sensitivity$models)
   untrimmed <- output$untrimmed_sensitivity$models$y$y_down
-  expect_s3_class(untrimmed$learner_audit, "margot_lmtp_learner_audit")
-  untrimmed$learner_audit <- NULL
   expect_identical(shared_ratio_numerics(untrimmed), shared_ratio_numerics(native_fit(data, "y", 1)))
 })
 

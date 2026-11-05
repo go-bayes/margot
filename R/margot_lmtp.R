@@ -196,7 +196,6 @@
 #'   censoring density ratios once and reuse them across `outcome_vars`. The
 #'   returned models, contrasts, and tables retain the existing Margot
 #'   structure. Default is `FALSE` while the opt-in path is validated.
-#' @param learner_audit Logical. When `TRUE`, each model is fitted with full learner fits, a learner audit is recorded from them (learner names, ensemble coefficients, cross-validated risks, error flags and realised inner folds; see [margot_lmtp_learner_audit()]), and the model is then reduced to lmtp's lean form before it is saved or returned. On the per-fit route one model's full fits exist only while it is being fitted; on the shared route each outcome's fits are reduced as soon as it is fitted, while the policy's full density fits are held until all its outcomes are done. The returned model equals a default lmtp fit plus a `learner_audit` element. Applies to the lmtp estimators on the per-fit and fold-parallel shared routes; it stops on the task-parallel route and when `.return_full_fits = TRUE` is requested. Default `FALSE` keeps the earlier behaviour.
 #' @param untrimmed_sensitivity Logical. When `TRUE`, runs the prespecified untrimmed outcome-stage sensitivity (ARC decision D19) beside the capped primary. On the fold-parallel shared route (`reuse_density_ratios = TRUE`, `manage_future_plan = FALSE`), each policy's density stage is fitted once without a cap; the registered cap in `lmtp_defaults$control$.trim` is applied to a copy with lmtp's own pooled quantile rule; and the capped and untrimmed outcome recursions both start from the same post-density random-number state. The capped models equal a native `lmtp::lmtp_sdr()` call at the registered cap, and the untrimmed models equal a native call at `.trim = 1`, with the same seed, folds and histories. The primary output is unchanged apart from an `untrimmed_record` element on each model (cap, threshold, number and proportion of capped entries, raw and capped ranges; the denominator counts every entry of the pooled ratio matrix, including censored and not-at-risk cells); the sensitivity is returned as `untrimmed_sensitivity`, with its own models, contrasts and tables, the capping records and `failures`. A failed untrimmed recursion is recorded in `failures` with its reason, and the capped primary is kept. Restoring from checkpoints does not yet rebuild `untrimmed_sensitivity`, and the uncapped density stage is not checkpointed for a restart within a run (a rerun refits it and reproduces the same results). Outcomes must share censoring and histories within one call; run outcome groups separately where they differ. Default `FALSE`.
 #'
 #' @return A list containing:
@@ -269,7 +268,6 @@ margot_lmtp <- function(
     reuse_density_ratios = FALSE,
     stages = c("all", "density", "outcome"),
     estimator_spec = NULL,
-    learner_audit = FALSE,
     untrimmed_sensitivity = FALSE) {
   # Load required packages
   library(cli)
@@ -368,42 +366,6 @@ margot_lmtp <- function(
     cli::cli_alert_info(
       "Building the {.pkg lmtp} call from the locked Margot estimator specification at seed {.val {seed}}."
     )
-  }
-  # the learner audit fits each model with full learners, records them, and reduces
-  # the model to lmtp's lean form before it is saved or returned
-  if (!isTRUE(learner_audit) && !isFALSE(learner_audit)) {
-    cli::cli_abort("{.arg learner_audit} must be `TRUE` or `FALSE`.")
-  }
-  if (isTRUE(learner_audit)) {
-    lmtp_estimators <- list(lmtp::lmtp_sdr, lmtp::lmtp_tmle, lmtp::lmtp_ipw, lmtp::lmtp_sub)
-    if (!any(vapply(lmtp_estimators, identical, logical(1), lmtp_model_type))) {
-      cli::cli_abort(
-        "{.code learner_audit = TRUE} applies to the {.pkg lmtp} estimators, not a custom {.arg lmtp_model_type}.",
-        class = "margot_error_learner_audit_route"
-      )
-    }
-    if (identical(shared_scheduler, "task")) {
-      cli::cli_abort(
-        c(
-          "{.code learner_audit = TRUE} is not yet available on the task-parallel shared route.",
-          "i" = "Use the fold-parallel route ({.code manage_future_plan = FALSE})."
-        ),
-        class = "margot_error_learner_audit_route"
-      )
-    }
-    audit_control <- if (is.null(lmtp_defaults$control)) lmtp::lmtp_control() else lmtp_defaults$control
-    if (isTRUE(audit_control$.return_full_fits)) {
-      cli::cli_abort(
-        c(
-          "{.code learner_audit = TRUE} records the learners and then keeps only their weights.",
-          "x" = "{.code .return_full_fits = TRUE} asks to keep the full fits.",
-          "i" = "Remove {.code .return_full_fits = TRUE} from {.arg lmtp_defaults$control}."
-        ),
-        class = "margot_error_learner_audit_route"
-      )
-    }
-    audit_control$.return_full_fits <- TRUE
-    lmtp_defaults$control <- audit_control
   }
   # the untrimmed sensitivity (D19) shares one uncapped density fit per policy with
   # the capped primary, so it runs on the fold-parallel shared route alone
@@ -778,7 +740,6 @@ margot_lmtp <- function(
       outcome_checkpoint_dir = outcome_checkpoint_dir,
       estimator_spec_hash = if (!is.null(estimator_spec)) estimator_spec$content_hash else NULL,
       stages = stages,
-      learner_audit = learner_audit,
       untrimmed_sensitivity = untrimmed_sensitivity
     )
     if (inherits(task_results, "margot_lmtp_density_stage")) {
@@ -864,7 +825,6 @@ margot_lmtp <- function(
 
       res <- tryCatch({
         model <- do.call(lmtp_model_type, lmtp_args)
-        if (isTRUE(learner_audit)) model <- margot_lmtp_audit_model(model)
         # Attach exposure-by-wave for downstream policy-rate summaries when possible
         # Best-effort: only if `trt` is a character vector of column names and
         # dimensions align with the model's density ratios.
@@ -1017,7 +977,6 @@ margot_lmtp <- function(
 
       res <- tryCatch({
         model <- do.call(lmtp_model_type, lmtp_args)
-        if (isTRUE(learner_audit)) model <- margot_lmtp_audit_model(model)
         result$success <- TRUE
         result$model <- model
 

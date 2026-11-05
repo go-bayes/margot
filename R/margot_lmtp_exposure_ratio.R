@@ -148,3 +148,17 @@ margot_exposure_odds <- function(probability, structural_zero) {
   if (any(!is.finite(ratio))) stop("Exposure classifier returned nonfinite odds.", call. = FALSE)
   ratio
 }
+
+# the small record kept in place of one fitted SuperLearner when retain_fits = FALSE.
+margot_lmtp_lean_sl <- function(fit) {
+  stopifnot(inherits(fit, "SuperLearner"))
+  structure(list(
+    library = names(fit$coef),
+    coefficient = unname(fit$coef),
+    cv_risk = unname(fit$cvRisk),
+    error = unname(fit$errorsInLibrary),
+    cv_error = unname(fit$errorsInCVLibrary),
+    inner_folds = length(fit$validRows),
+    inner_fold_sizes = unname(lengths(fit$validRows))
+  ), class = "margot_lmtp_lean_fit")
+}

@@ -119,8 +119,6 @@ reference:
     - margot_lmtp_assert_lean
     - margot_lmtp_memory_preflight
     - margot_lmtp_object_size
-    - margot_lmtp_learner_audit
-    - margot_lmtp_reduce_fits
     - margot_lmtp_restore_checkpoints
     - print.margot_lmtp_density_stage
     - margot_naive_regressions
