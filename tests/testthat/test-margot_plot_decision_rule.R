@@ -849,3 +849,58 @@ test_that("several outcomes without an interval are joined in plain English", {
   expect_match(out$interpretation,
     "No confidence interval was available for b, c and d, so no interval decision was made for them.", fixed = TRUE)
 })
+
+test_that("the displayed threshold keeps every stated comparison true", {
+  input <- tibble::tibble(
+    outcome = c("close", "clear"),
+    ATE = c(0.3, 0.4),
+    `2.5 %` = c(0.1, 0.2),
+    `97.5 %` = c(0.5, 0.6),
+    E_Value = c(1.5, 1.6),
+    E_Val_bound = c(1.100000005, 1.4)
+  )
+  run <- function(threshold) {
+    suppressMessages(margot_plot(input, e_val_bound_threshold = threshold, include_coefficients = FALSE,
+      options = list(use_title_case = FALSE)))
+  }
+  precise <- run(1.10000001)
+  table <- precise$transformed_table
+  expect_true("E-value bound > 1.10000001" %in% names(table))
+  expect_identical(table[["E-value bound > 1.10000001"]][table$Outcome == "close"], "no")
+  expect_match(precise$interpretation, "(does not exceed 1.10000001)", fixed = TRUE)
+  expect_match(precise$interpretation, "the bound exceeds 1.10000001;", fixed = TRUE)
+  expect_false(grepl("exceed 1.1)", precise$interpretation, fixed = TRUE))
+
+  # the usual epsilon adjustment still reads as 1.1
+  usual <- run(1.1 + .Machine$double.eps)
+  expect_true("E-value bound > 1.1" %in% names(usual$transformed_table))
+  expect_match(usual$interpretation, "(exceeds 1.1)", fixed = TRUE)
+
+  fmt <- margot:::format_margot_threshold
+  expect_identical(fmt(1.1, c(1.4, 1.036)), "1.1")
+  expect_identical(fmt(1.10000001, 1.100000005), "1.10000001")
+  expect_identical(fmt(1.1 + .Machine$double.eps, c(1.458, 1.1000513)), "1.1")
+})
+
+test_that("legacy columns renamed by col_renames reach the prose", {
+  renamed <- decision_plot(table_columns = "legacy", rename_cols = TRUE, col_renames = list(Contrast = "ATE"))
+  expect_true("Contrast" %in% names(renamed$transformed_table))
+  expect_match(renamed$interpretation, "- Trust in science: Contrast = 0.200", fixed = TRUE)
+
+  plain <- decision_plot(table_columns = "legacy")
+  expect_match(plain$interpretation, "- Trust in science: ATE (standardised) = 0.200", fixed = TRUE)
+})
+
+test_that("renderers keep a renamed outcome column and print each label once", {
+  table <- decision_plot(rename_cols = TRUE, col_renames = list(Endpoint = "Outcome"))$transformed_table
+  expect_identical(attr(table, "margot_outcome_column"), "Endpoint")
+  count <- function(text) lengths(regmatches(text, gregexpr("Trust in science", text, fixed = TRUE)))
+
+  md <- margot_bind_tables(table, output_format = "markdown")
+  expect_identical(sum(grepl("Trust in science", md, fixed = TRUE)), 1L)
+  expect_false(any(grepl("| Outcome", md, fixed = TRUE)))
+  expect_identical(count(as.character(margot_bind_tables(table, output_format = "html"))), 1L)
+  expect_identical(count(as.character(margot_bind_tables(list(first = table, second = table),
+    output_format = "html"))), 2L)
+  expect_identical(count(as.character(margot:::margot_combine_results(list(first = table), format = "html"))), 1L)
+})

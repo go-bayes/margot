@@ -148,8 +148,24 @@ margot_evalue_flag <- function(bound, threshold, comparison = c(">", ">=")) {
 }
 
 # header naming the E-value flag, e.g. "E-value bound > 1.1"
-margot_evalue_flag_header <- function(threshold, comparison) {
-  paste0("E-value bound ", comparison, " ", format(threshold))
+margot_evalue_flag_header <- function(threshold_text, comparison) {
+  paste0("E-value bound ", comparison, " ", threshold_text)
+}
+
+# display the threshold with the fewest significant digits (at least seven) for
+# which every bound compares with the displayed value as it does with the
+# threshold itself; ordinary thresholds such as 1.1 or 1.1 + .Machine$double.eps
+# print as 1.1, and the stated comparisons stay true
+format_margot_threshold <- function(threshold, bounds = numeric(), comparison = ">") {
+  bounds <- bounds[!is.na(bounds)]
+  truth <- margot_evalue_flag(bounds, threshold, comparison)
+  for (digits in 7:17) {
+    text <- format(threshold, digits = digits)
+    if (identical(margot_evalue_flag(bounds, as.numeric(text), comparison), truth)) {
+      return(text)
+    }
+  }
+  sprintf("%.17g", threshold)
 }
 
 # classify each interval relative to the null. the default rule uses the
@@ -327,8 +343,7 @@ margot_join_names <- function(x) {
 }
 
 # describe the E-value flag beside a value in prose
-margot_evalue_flag_phrase <- function(flag, threshold, comparison) {
-  threshold_text <- format(threshold)
+margot_evalue_flag_phrase <- function(flag, threshold_text, comparison) {
   if (is.na(flag)) {
     return(paste0("not compared with ", threshold_text))
   }
@@ -956,13 +971,25 @@ margot_plot <- function(
   } else {
     margot_effect_header(effect_type, type, standardize_label)
   }
-  effect_label <- effect_header
+  # the estimate's header in the selected layout, before col_renames
+  layout_header <- if (table_columns == "report") {
+    effect_header
+  } else if (is.character(rename_ate)) {
+    rename_ate
+  } else if (isTRUE(rename_ate) && !eff_col %in% c("ATE", "ATT", "ATC", "ATO")) {
+    if (eff_col == "E[Y|A]") "E[Y|A] (misspecified)" else effect_type
+  } else {
+    eff_col
+  }
+  renamed_header <- layout_header
   if (rename_cols && length(col_renames) > 0) {
     # follow the mappings in order, as the table does, so chained renames agree
     for (new_nm in names(col_renames)) {
-      if (identical(col_renames[[new_nm]], effect_label)) effect_label <- new_nm
+      if (identical(col_renames[[new_nm]], renamed_header)) renamed_header <- new_nm
     }
   }
+  # the prose uses a renamed header; otherwise the descriptive one
+  effect_label <- if (!identical(renamed_header, layout_header)) renamed_header else effect_header
 
   # interpretation ----------------------------------------------------------
   # pass character labels so that re-sorting cannot follow the plot's factor levels
@@ -1000,7 +1027,10 @@ margot_plot <- function(
       category_rule = category_rule,
       null_label = null_label,
       flag = evalue_flag[table_rows],
-      flag_header = margot_evalue_flag_header(thresh, e_val_bound_comparison),
+      flag_header = margot_evalue_flag_header(
+        format_margot_threshold(thresh, bound_values, e_val_bound_comparison),
+        e_val_bound_comparison
+      ),
       alpha = alpha
     )
 
@@ -1027,6 +1057,8 @@ margot_plot <- function(
     # the row names repeat the outcome column, including any emphasis, so that
     # callers reading rownames() keep working
     rownames(transformed_table) <- transformed_table[[label_col]]
+    # renderers find the outcome column through this attribute, also after renaming
+    attr(transformed_table, "margot_outcome_column") <- label_col
   } else {
     # legacy layout: the columns of margot 1.3.2 and earlier
     table_for_transform <- sorted_df
@@ -1236,7 +1268,6 @@ margot_interpret_marginal <- function(
   effect_col <- detect_effect_column(df)$column
   null_val <- if (type == "RR") 1 else 0
   null_label <- margot_null_label(type)
-  threshold_text <- format(e_val_bound_threshold)
 
   # decision from the interval alone; the E-value flag is reported beside it
   category <- margot_interval_category(
@@ -1247,6 +1278,10 @@ margot_interpret_marginal <- function(
   )
   bound <- if ("E_Val_bound" %in% names(df)) df$E_Val_bound else rep(NA_real_, nrow(df))
   flag <- margot_evalue_flag(bound, e_val_bound_threshold, e_val_bound_comparison)
+  # the threshold as displayed, chosen so that every bound compares with it as
+  # with the threshold itself; the same rule sets the table header
+  threshold_text <- format_margot_threshold(e_val_bound_threshold, bound, e_val_bound_comparison)
+  displayed_threshold <- as.numeric(threshold_text)
   excludes <- !is.na(category) & category != "includes null"
   includes <- !is.na(category) & category == "includes null"
   # an outcome without both interval limits has no interval decision
@@ -1407,9 +1442,9 @@ margot_interpret_marginal <- function(
       reported <- paste0("; ", quantity, " = ", reported_text[1], unit,
         " (", ci_label, ": ", reported_text[2], " to ", reported_text[3], ")")
     }
-    bound_text <- format_margot_evalue_bound(bound[i], e_val_bound_threshold, e_val_bound_comparison)
+    bound_text <- format_margot_evalue_bound(bound[i], displayed_threshold, e_val_bound_comparison)
     paste0("- ", row$outcome, ": ", lab, reported, ". E-value bound = ", bound_text,
-      " (", margot_evalue_flag_phrase(flag[i], e_val_bound_threshold, e_val_bound_comparison), ").")
+      " (", margot_evalue_flag_phrase(flag[i], threshold_text, e_val_bound_comparison), ").")
   }, character(1))
 
   # outcomes whose interval includes the null, in plot order -----------------

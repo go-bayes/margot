@@ -80,9 +80,11 @@ margot_combine_results <- function(
 
     # Add Variable column from the Outcome column of the default margot_plot()
     # table, or from row names in the legacy layout
-    if ("Outcome" %in% names(df)) {
+    label_col <- attr(df, "margot_outcome_column", exact = TRUE)
+    if (is.null(label_col) || !label_col %in% names(df)) label_col <- "Outcome"
+    if (label_col %in% names(df)) {
       df <- df %>%
-        dplyr::rename(Variable = Outcome) %>%
+        dplyr::rename(Variable = dplyr::all_of(label_col)) %>%
         select(Variable, everything())
     } else {
       df <- df %>%

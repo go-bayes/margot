@@ -55,14 +55,22 @@ margot_bind_tables <- function(
     if (length(found)) found[[1]] else NA_character_
   }
 
-  # handle single data-frame vs named list
-  if (inherits(tables_list, "data.frame")) {
-    df <- tables_list
-    # ensure outcome column
-    if (!"Outcome" %in% names(df)) {
+  # the outcome column: "Outcome", or the renamed column that margot_plot()
+  # records in the "margot_outcome_column" attribute
+  outcome_column <- function(df) {
+    recorded <- attr(df, "margot_outcome_column", exact = TRUE)
+    if (!is.null(recorded) && recorded %in% names(df)) recorded else "Outcome"
+  }
+  ensure_outcome <- function(df) {
+    if (!outcome_column(df) %in% names(df)) {
       df <- tibble::rownames_to_column(df, var = "Outcome")
     }
-    combined <- df
+    df
+  }
+
+  # handle single data-frame vs named list
+  if (inherits(tables_list, "data.frame")) {
+    combined <- ensure_outcome(tables_list)
     domain_mode <- FALSE
   } else {
     # tables from different layouts would bind into split estimate and interval
@@ -93,14 +101,10 @@ margot_bind_tables <- function(
       }
     }
     # process list of tables with domain id
-    tables_list <- lapply(tables_list, function(df) {
-      if (!"Outcome" %in% names(df)) {
-        df <- tibble::rownames_to_column(df, var = "Outcome")
-      }
-      df
-    })
+    label_col <- outcome_column(tables_list[[1]])
+    tables_list <- lapply(tables_list, ensure_outcome)
     combined <- dplyr::bind_rows(tables_list, .id = "Domain") %>%
-      dplyr::select(Domain, Outcome, everything())
+      dplyr::select(dplyr::all_of(c("Domain", label_col)), dplyr::everything())
     domain_mode <- TRUE
   }
 
