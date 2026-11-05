@@ -269,6 +269,25 @@ margot_unit_digits <- function(values) {
   }
 }
 
+# decimals for an estimate and its limits: at least min_digits, and more when
+# fewer would move a printed number onto or across the null or merge two
+# distinct numbers
+margot_triple_digits <- function(values, null_value, min_digits, max_digits = 10L) {
+  values <- values[!is.na(values)]
+  if (!length(values)) {
+    return(as.integer(min_digits))
+  }
+  for (d in seq.int(min_digits, max_digits)) {
+    shown <- vapply(values, function(x) as.numeric(gsub(",", "", format_margot_fixed(x, d), fixed = TRUE)), numeric(1))
+    keeps_side <- all(sign(shown - null_value) == sign(values - null_value))
+    keeps_distinct <- length(unique(shown)) == length(unique(values))
+    if (keeps_side && keeps_distinct) {
+      return(as.integer(d))
+    }
+  }
+  as.integer(max_digits)
+}
+
 # describe the E-value flag beside a value in prose
 margot_evalue_flag_phrase <- function(flag, threshold, comparison) {
   threshold_text <- format(threshold)
@@ -374,7 +393,10 @@ margot_report_table <- function(rows, eff_col, effect_header, category, category
   }
   if (category_rule == "interval") {
     values <- sub("^Interval ", "", margot_category_labels(category_rule, null_label))
-    columns <- c(columns, column(paste(ci, "relative to", null_label), unname(values[as.character(category)])))
+    decision <- unname(values[as.character(category)])
+    # an outcome without both interval limits has no decision
+    decision[is.na(decision)] <- "not available"
+    columns <- c(columns, column(paste(ci, "relative to", null_label), decision))
   } else {
     columns <- c(columns, column("Estimate", as.character(category)))
   }
@@ -424,7 +446,7 @@ margot_stop_on_duplicate_headers <- function(headers) {
 #' @param e_val_bound_conversion How the E-value bound is computed from the adjusted interval of a difference-scale estimate when `adjust` is not `"none"`. `"exact"` (default) converts the limit nearest the null directly, RR = exp(0.91 |d_limit|); `"rounded"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only (see [margot_correct_combined_table()]). Not used when `adjust = "none"`.
 #' @param order_direction Where the ordering starts. `"top_to_bottom"` (default) draws the first outcome of `order` at the top. `"bottom_to_top"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only: the first outcome was drawn at the bottom, so `"magnitude_desc"` put the largest effect at the bottom. The table and prose follow the plot from top to bottom under either value.
 #' @param table_columns Layout of `transformed_table`. `"report"` (default) gives named reporting columns, described under Value. `"legacy"` reproduces the columns of margot 1.3.2 and earlier, for reproducing earlier results only: the effect column, interval columns headed by their quantiles (for example `"0.21 \%"`), `confidence_level`, `E_Value`, `E_Val_bound` and the `reported_*` and `reporting_*` columns.
-#' @param options Plotting options; explicit arguments override corresponding option entries. `colors` may name the levels `"positive"`, `"includes null"` and `"negative"`; a colour named `"not reliable"` is used for `"includes null"` when that level has no colour of its own. `point_shapes` (default up-triangle 24, circle 21 and down-triangle 25 for above, including and below the null) repeats the category in the point shape; `NULL` draws one filled circle for every point, as earlier versions did. `coefficient_colour` (default `"black"`) colours the printed coefficients; `NULL` colours them by category, as earlier versions did. `coefficient_header` (default `"Estimate"`) labels the coefficient column above its top row; `NULL` omits it. `text_size` (default 3.5; 2.75 earlier) sets their size.
+#' @param options Plotting options; explicit arguments override corresponding option entries. `colors` may name the levels `"positive"`, `"includes null"` and `"negative"`; a colour named `"not reliable"` is used for `"includes null"` when that level has no colour of its own. `point_shapes` (default up-triangle 24, circle 21 and down-triangle 25 for above, including and below the null) repeats the category in the point shape; `NULL` draws one filled circle for every point, as earlier versions did. `coefficient_colour` (default `"black"`) colours the printed coefficients; `NULL` colours them by category, as earlier versions did. `coefficient_header` (default `"Estimate"`) labels the coefficient column above its top row; `NULL` omits it. Unless `x_offset` or `x_lim_lo` is supplied, the panel is widened to the left when the intervals would run under the coefficient column. `text_size` (default 3.5; 2.75 earlier) sets their size.
 #' @param label_mapping Optional mapping from source outcome names to display labels.
 #' @param save_output Whether to save the complete reporting list.
 #' @param use_timestamp Whether to append a timestamp to saved filenames.
@@ -442,7 +464,7 @@ margot_stop_on_duplicate_headers <- function(headers) {
 #'   With the default `table_columns = "report"`, `transformed_table` has one row per outcome, ordered as in the plot from top to bottom, with automatic row names. Numbers keep full precision. Its columns are: `"Outcome"`, the display label (in Markdown bold when `bold_rows = TRUE` and the E-value flag is set); the model-scale estimate (for example `"ATE (standardised)"`); its interval limits (for example `"99.58\% CI lower"`, or `"CI lower"` with a `"CI level"` column when coverage varies by outcome); when `scale_info` or `original_df` is supplied, the original-scale estimate and limits, headed by the quantity and unit when every outcome shares them (for example `"Mean difference (scale points)"`, or `"Mean difference (original scale)"` without a unit) and otherwise followed by an `"Original-scale quantity"` column; the decision, headed by the interval and the null (for example `"99.58\% CI relative to 0"`, with values `"above 0"`, `"includes 0"` or `"below 0"`; `"Estimate"` under the legacy category rule); `"E-value"`; `"E-value bound"`; and the E-value flag (`"yes"` or `"no"`), headed by the comparison, for example `"E-value bound > 1.1"`. Two columns never share a header: a clash, for example from `rename_ate`, stops with an error.
 #'
 #' @details
-#' The statistical decision and the E-value flag are reported separately. By default the decision for each outcome follows its (adjusted) confidence interval alone, and the E-value flag records whether the interval's E-value bound exceeds `e_val_bound_threshold`. The flag sits beside the decision and does not change the plotted colour, legend, table decision or which outcomes the prose lists. The prose lists every outcome whose interval excludes the null, in plot order, with its E-value bound and flag, and names the correction and confidence level.
+#' The statistical decision and the E-value flag are reported separately. By default the decision for each outcome follows its (adjusted) confidence interval alone, and the E-value flag records whether the interval's E-value bound exceeds `e_val_bound_threshold`. The flag sits beside the decision and does not change the plotted colour, legend, table decision or which outcomes the prose lists. The prose lists every outcome whose interval excludes the null, in plot order, with its E-value bound and flag, and names the correction and confidence level. An outcome without both interval limits has no decision: the prose names it, the table reports "not available", and the figure omits it with a message.
 #'
 #' To reproduce output from margot 1.3.2 and earlier, set `category_rule = "interval_and_evalue"`, `e_val_bound_comparison = ">="`, `e_val_bound_conversion = "rounded"`, `order_direction = "bottom_to_top"` and `table_columns = "legacy"`. Each argument restores one behaviour and can be set on its own. Together they reproduce the categories, plotted values, table and prose of margot 1.3.2; the figure keeps the current styling (legend centred on the figure, point shapes, black coefficients and sentence-case axis titles), which `options = list(point_shapes = NULL, coefficient_colour = NULL, coefficient_header = NULL, text_size = 2.75)` partly restores. For ratio estimates, the magnitude orderings now rank by the absolute log ratio; supply the earlier order through `order = "custom"` if it is needed.
 #' @param scale_info Optional data frame keyed by the original outcome name, with
@@ -706,6 +728,21 @@ margot_plot <- function(
   category_labels <- margot_category_labels(category_rule, null_label)
   category_colours <- margot_category_values(opts$colors, category_rule)
 
+  # an outcome without both interval limits has no interval decision; under the
+  # interval rule it stays in the table and prose but is not drawn
+  plot_df <- sorted_df
+  if (category_rule == "interval") {
+    no_interval <- is.na(sorted_df$`2.5 %`) | is.na(sorted_df$`97.5 %`)
+    if (any(no_interval)) {
+      missing_names <- as.character(sorted_df$outcome[no_interval])
+      cli::cli_alert_warning(
+        "No confidence interval for {.val {missing_names}}; omitted from the plot and reported as not available."
+      )
+      plot_df <- sorted_df[!no_interval, , drop = FALSE]
+      plot_df$outcome <- droplevels(plot_df$outcome)
+    }
+  }
+
   # axis label --------------------------------------------------------------
   lw <- switch(standardize_label,
     NZ = "Standardised",
@@ -720,9 +757,38 @@ margot_plot <- function(
     "Effect (difference scale)"
   }
 
+  # coefficient column position ----------------------------------------------
+  # coefficients sit along the left edge of the panel. unless the caller set
+  # x_offset or x_lim_lo, the panel is widened to the left when the intervals
+  # would run under the coefficient column (common on ratio scales)
+  x_limits <- c(opts$x_lim_lo, opts$x_lim_hi)
+  if (include_coefficients && nrow(plot_df) > 0) {
+    plot_limits <- compute_margot_plot_limits(
+      plot_df,
+      effect_col = eff_col,
+      x_lim_lo = opts$x_lim_lo,
+      x_lim_hi = opts$x_lim_hi
+    )
+    x_lim_lo <- plot_limits[1]
+    x_lim_hi <- plot_limits[2]
+    coeff_x_position <- opts$x_offset %||% (x_lim_lo + (0.05 * (x_lim_hi - x_lim_lo)))
+
+    supplied_opts <- c(names(plot_options), names(list(...)))
+    if (!any(c("x_offset", "x_lim_lo") %in% supplied_opts)) {
+      label_band <- 0.15
+      data_lo <- min(c(plot_df[[eff_col]], plot_df$`2.5 %`), na.rm = TRUE)
+      if (data_lo < coeff_x_position + label_band * (x_lim_hi - x_lim_lo)) {
+        x_lim_lo <- (data_lo - label_band * x_lim_hi) / (1 - label_band) -
+          0.03 * (x_lim_hi - data_lo)
+        coeff_x_position <- x_lim_lo
+        x_limits <- c(x_lim_lo, x_lim_hi)
+      }
+    }
+  }
+
   # build ggplot ------------------------------------------------------------
   out_plot <- ggplot2::ggplot(
-    sorted_df,
+    plot_df,
     ggplot2::aes(
       y = outcome,
       x = !!rlang::sym(eff_col),
@@ -750,7 +816,7 @@ margot_plot <- function(
       subtitle = opts$subtitle,
       caption  = opts$caption %||% margot_ci_caption(sorted_df, adjust = adjust, default_level = 1 - alpha)
     ) +
-    ggplot2::coord_cartesian(xlim = c(opts$x_lim_lo, opts$x_lim_hi)) +
+    ggplot2::coord_cartesian(xlim = x_limits) +
     ggplot2::theme_classic(base_size = opts$base_size) +
     ggplot2::theme(
       legend.position   = "top",
@@ -804,22 +870,9 @@ margot_plot <- function(
   }
 
   # add numeric labels if requested ----------------------------------------
-  # coefficients aligned along inside edge of plot area
-  if (include_coefficients) {
-    plot_limits <- compute_margot_plot_limits(
-      sorted_df,
-      effect_col = eff_col,
-      x_lim_lo = opts$x_lim_lo,
-      x_lim_hi = opts$x_lim_hi
-    )
-    x_lim_lo <- plot_limits[1]
-    x_lim_hi <- plot_limits[2]
-
-    plot_width <- x_lim_hi - x_lim_lo
-    fixed_offset_pct <- 0.05
-    coeff_x_position <- opts$x_offset %||% (x_lim_lo + (fixed_offset_pct * plot_width))
+  if (include_coefficients && nrow(plot_df) > 0) {
     coefficient_labels <- format_margot_coefficient_labels(
-      sorted_df[[eff_col]],
+      plot_df[[eff_col]],
       digits = opts$coefficient_digits
     )
 
@@ -844,7 +897,7 @@ margot_plot <- function(
       out_plot <- out_plot + ggplot2::annotate(
         "text",
         x = coeff_x_position,
-        y = nlevels(sorted_df$outcome) + 0.55,
+        y = nlevels(plot_df$outcome) + 0.55,
         label = opts$coefficient_header,
         hjust = 0,
         vjust = 0,
@@ -867,8 +920,10 @@ margot_plot <- function(
   }
   effect_label <- effect_header
   if (rename_cols && length(col_renames) > 0) {
-    renamed_to <- names(col_renames)[vapply(col_renames, identical, logical(1), effect_header)]
-    if (length(renamed_to)) effect_label <- renamed_to[[1]]
+    # follow the mappings in order, as the table does, so chained renames agree
+    for (new_nm in names(col_renames)) {
+      if (identical(col_renames[[new_nm]], effect_label)) effect_label <- new_nm
+    }
   }
 
   # interpretation ----------------------------------------------------------
@@ -1150,9 +1205,13 @@ margot_interpret_marginal <- function(
   flag <- margot_evalue_flag(bound, e_val_bound_threshold, e_val_bound_comparison)
   excludes <- !is.na(category) & category != "includes null"
   includes <- !is.na(category) & category == "includes null"
+  # an outcome without both interval limits has no interval decision
+  missing_interval <- is.na(category)
 
   n_outcomes <- nrow(df)
   n_excludes <- sum(excludes)
+  n_missing <- sum(missing_interval)
+  n_available <- n_outcomes - n_missing
   interval_noun <- if (adjust == "none") "confidence interval" else "adjusted confidence interval"
   interval_article <- if (adjust == "none") "a" else "an"
 
@@ -1167,7 +1226,7 @@ margot_interpret_marginal <- function(
     paste0("Intervals are ", level_phrase, ".")
   } else {
     switch(adjust,
-      none = paste0("Intervals are ", level_phrase, ", with no adjustment for multiple comparisons."),
+      none = paste0("Intervals are ", level_phrase, "; this call applied no further adjustment for multiple comparisons."),
       bonferroni = paste0(
         "Confidence intervals were adjusted for ", n_outcomes,
         " comparisons using the Bonferroni correction (family-wise alpha = ", format(alpha),
@@ -1198,16 +1257,34 @@ margot_interpret_marginal <- function(
     "naive" = "naive regression associations (ignoring confounding)",
     "treatment effects" # fallback
   )
-  count_sentence <- if (n_outcomes == 1L) {
+  # outcomes counted here have an interval; those without one are named after
+  with_interval <- if (n_missing > 0L) paste0(" with ", interval_article, " ", interval_noun) else ""
+  count_sentence <- if (n_available == 0L) {
+    if (n_outcomes == 1L) {
+      "No confidence interval was available for this estimate, so no interval decision was made."
+    } else {
+      paste0("No confidence interval was available for any of the ", n_outcomes, " ", effect_desc,
+        ", so no interval decision was made.")
+    }
+  } else if (n_outcomes == 1L) {
     paste0(
       "The ", interval_noun, " for this estimate ",
       if (n_excludes == 1L) "excludes " else "includes ", null_label, "."
     )
+  } else if (n_available == 1L) {
+    paste0(
+      "Only one estimate has ", interval_article, " ", interval_noun, ", and it ",
+      if (n_excludes == 1L) "excludes " else "includes ", null_label, "."
+    )
   } else if (n_excludes == 0L) {
-    paste0("The ", interval_noun, "s of all ", n_outcomes, " ", effect_desc, " include ", null_label, ".")
+    paste0(
+      "The ", interval_noun, "s of ",
+      if (n_available == 2L) "both " else paste0("all ", n_available, " "),
+      effect_desc, with_interval, " include ", null_label, "."
+    )
   } else {
     paste0(
-      "Of the ", n_outcomes, " ", effect_desc, ", ", n_excludes,
+      "Of the ", n_available, " ", effect_desc, with_interval, ", ", n_excludes,
       if (n_excludes == 1L) paste0(" has ", interval_article, " ", interval_noun, " that excludes ") else paste0(" have ", interval_noun, "s that exclude "),
       null_label,
       if (n_excludes == 1L) {
@@ -1217,6 +1294,14 @@ margot_interpret_marginal <- function(
       } else {
         ". They are listed in the requested order."
       }
+    )
+  }
+  if (n_missing > 0L && n_available > 0L) {
+    missing_names <- as.character(df$outcome[missing_interval])
+    count_sentence <- paste0(
+      count_sentence, " No confidence interval was available for ",
+      paste(missing_names, collapse = "; "), ", so no interval decision was made for ",
+      if (n_missing == 1L) "it." else "them."
     )
   }
   if (effect_type == "naive") {
@@ -1252,9 +1337,11 @@ margot_interpret_marginal <- function(
   bullets <- vapply(which(excludes), function(i) {
     row <- df[i, , drop = FALSE]
     ci_label <- format_margot_ci_level(row$confidence_level)
-    lab <- paste0(effect_label, " = ", format_margot_fixed(row[[effect_col]], model_digits), " (", ci_label, ": ",
-      format_margot_fixed(row[["2.5 %"]], model_digits), " to ",
-      format_margot_fixed(row[["97.5 %"]], model_digits), ")")
+    model_values <- c(row[[effect_col]], row[["2.5 %"]], row[["97.5 %"]])
+    row_digits <- margot_triple_digits(model_values, null_val, model_digits)
+    lab <- paste0(effect_label, " = ", format_margot_fixed(row[[effect_col]], row_digits), " (", ci_label, ": ",
+      format_margot_fixed(row[["2.5 %"]], row_digits), " to ",
+      format_margot_fixed(row[["97.5 %"]], row_digits), ")")
     reported <- ""
     if ("reported_estimate" %in% names(row) && !is.na(row$reported_estimate)) {
       quantity <- switch(row$reporting_quantity,
@@ -1265,7 +1352,12 @@ margot_interpret_marginal <- function(
         stop("Unknown reporting quantity.", call. = FALSE))
       unit <- if (row$reporting_quantity == "mean_difference" && !is.na(row$reporting_unit) && nzchar(row$reporting_unit)) paste0(" ", row$reporting_unit) else ""
       reported_values <- c(row$reported_estimate, row$reported_lower, row$reported_upper)
-      reported_digits <- if (row$reporting_quantity == "mean_difference") margot_unit_digits(reported_values) else 2L
+      reported_null <- if (row$reporting_quantity == "mean_difference") 0 else 1
+      reported_digits <- margot_triple_digits(
+        reported_values,
+        reported_null,
+        if (row$reporting_quantity == "mean_difference") margot_unit_digits(reported_values) else 2L
+      )
       reported <- paste0("; ", quantity, " = ", format_margot_fixed(row$reported_estimate, reported_digits), unit,
         " (", ci_label, ": ", format_margot_fixed(row$reported_lower, reported_digits), " to ",
         format_margot_fixed(row$reported_upper, reported_digits), ")")

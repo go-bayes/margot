@@ -586,7 +586,7 @@ test_that("margot_bind_tables refuses mixed layouts and sorts within domains", {
   expect_error(
     margot_bind_tables(list(report = out$transformed_table, legacy = legacy$transformed_table),
       sort_E_val_bound = "desc"),
-    "different column layouts"
+    "mix the report and legacy layouts"
   )
 
   first <- out$transformed_table[1:6, ]
@@ -605,4 +605,148 @@ test_that("margot_bind_tables refuses mixed layouts and sorts within domains", {
   html <- margot_bind_tables(list(first = first, second = second), sort_E_val_bound = "asc",
     output_format = "html")
   expect_match(as.character(html), "first", fixed = TRUE)
+})
+
+test_that("outcomes without an interval are reported as having no decision", {
+  input <- tibble::tibble(
+    outcome = c("a", "b", "c"),
+    ATE = c(0.05, -0.02, 0.1),
+    `2.5 %` = c(-0.05, -0.1, NA),
+    `97.5 %` = c(0.15, 0.06, NA),
+    E_Value = c(1.2, 1.1, 1.4),
+    E_Val_bound = c(1, 1, NA)
+  )
+  run <- function(data) {
+    suppressMessages(margot_plot(data, include_coefficients = FALSE, options = list(use_title_case = FALSE)))
+  }
+  crossing <- run(input)
+  expect_match(crossing$interpretation,
+    "The confidence intervals of both average treatment effects with a confidence interval include 0.", fixed = TRUE)
+  expect_match(crossing$interpretation,
+    "No confidence interval was available for c, so no interval decision was made for it.", fixed = TRUE)
+  table <- crossing$transformed_table
+  expect_identical(table[["95% CI relative to 0"]][table$Outcome == "c"], "not available")
+  # the outcome stays in the table but is not drawn
+  expect_setequal(as.character(crossing$plot$data$outcome), c("a", "b"))
+  expect_setequal(table$Outcome, c("a", "b", "c"))
+
+  mixed <- input
+  mixed[1, c("2.5 %", "97.5 %")] <- list(0.01, 0.09)
+  out <- run(mixed)
+  expect_match(out$interpretation,
+    "Of the 2 average treatment effects with a confidence interval, 1 has a confidence interval that excludes 0.", fixed = TRUE)
+  expect_match(out$interpretation, "No confidence interval was available for c", fixed = TRUE)
+  expect_match(out$interpretation, "The confidence interval of the other outcome includes 0: b.", fixed = TRUE)
+  expect_match(out$interpretation, "- a: ATE (standardised) = 0.050", fixed = TRUE)
+
+  # two outcomes without a missing interval read "both", not "all 2"
+  both <- run(input[1:2, ])
+  expect_match(both$interpretation, "The confidence intervals of both average treatment effects include 0.", fixed = TRUE)
+  expect_false(grepl("all 2", both$interpretation, fixed = TRUE))
+})
+
+test_that("prose without adjustment says only that this call applied none", {
+  out <- decision_plot()
+  fixture <- make_decision_fixture()
+  corrected <- margot_correct_combined_table(fixture, adjust = "bonferroni", scale = "RD")
+  again <- suppressMessages(margot_plot(corrected, adjust = "none", label_mapping = decision_labels,
+    include_coefficients = FALSE))
+  expect_match(again$interpretation,
+    "Intervals are 99.58% confidence intervals; this call applied no further adjustment for multiple comparisons.",
+    fixed = TRUE)
+  expect_false(grepl("with no adjustment", again$interpretation, fixed = TRUE))
+})
+
+test_that("printed limits keep their side of the null and stay distinct", {
+  ratio <- tibble::tibble(
+    outcome = "near_one",
+    `E[Y(1)]/E[Y(0)]` = 0.992,
+    `2.5 %` = 0.988,
+    `97.5 %` = 0.996,
+    E_Value = 1.1,
+    E_Val_bound = 1.08
+  )
+  out <- suppressMessages(margot_plot(ratio, type = "RR", include_coefficients = FALSE,
+    options = list(use_title_case = FALSE, remove_underscores = FALSE)))
+  expect_match(out$interpretation, "ATE (risk ratio) = 0.992 (95% CI: 0.988 to 0.996)", fixed = TRUE)
+  expect_false(grepl("1.00)", out$interpretation, fixed = TRUE))
+
+  difference <- tibble::tibble(
+    outcome = "near_zero",
+    ATE = 0.0006,
+    `2.5 %` = 0.0002,
+    `97.5 %` = 0.001,
+    E_Value = 1.01,
+    E_Val_bound = 1.002
+  )
+  out <- suppressMessages(margot_plot(difference, include_coefficients = FALSE,
+    options = list(use_title_case = FALSE, remove_underscores = FALSE)))
+  expect_match(out$interpretation, "ATE (standardised) = 0.0006 (95% CI: 0.0002 to 0.0010)", fixed = TRUE)
+
+  digits <- margot:::margot_triple_digits
+  expect_identical(digits(c(0.5, 0.4, 0.62), 1, 2L), 2L)
+  expect_identical(digits(c(0.992, 0.988, 0.996), 1, 2L), 3L)
+  expect_identical(digits(c(-0.12, -0.206, -0.034), 0, 3L), 3L)
+})
+
+test_that("chained column renames give the prose the final header", {
+  out <- decision_plot(rename_cols = TRUE,
+    col_renames = list(Intermediate = "ATE (standardised)", Final = "Intermediate"))
+  expect_true("Final" %in% names(out$transformed_table))
+  expect_false("Intermediate" %in% names(out$transformed_table))
+  expect_match(out$interpretation, "- Trust in science: Final = 0.200", fixed = TRUE)
+  expect_false(grepl("Intermediate", out$interpretation, fixed = TRUE))
+})
+
+test_that("margot_bind_tables reads the layout from the schema, not the bound spelling", {
+  report <- decision_plot()$transformed_table
+  legacy_renamed <- decision_plot(table_columns = "legacy", rename_cols = TRUE,
+    col_renames = list("E-value bound" = "E_Val_bound"))$transformed_table
+  expect_true("E-value bound" %in% names(legacy_renamed))
+  expect_error(
+    margot_bind_tables(list(report = report, legacy = legacy_renamed), sort_E_val_bound = "desc"),
+    "mix the report and legacy layouts"
+  )
+
+  # two report tables whose bound columns are spelled differently bind as one layout
+  respelled <- report
+  names(respelled)[names(respelled) == "E-value bound"] <- "E-Value bound"
+  md <- margot_bind_tables(list(first = report[1:6, ], second = respelled[7:12, ]),
+    sort_E_val_bound = "desc", output_format = "markdown")
+  header <- md[grepl("^\\|", md)][1]
+  expect_false(grepl("E-Value bound", header, fixed = TRUE))
+  rows <- md[grepl("^\\|", md)][-(1:2)]
+  expect_length(rows, 12L)
+  # every row has its bound, so none is left blank
+  cells <- strsplit(rows, "|", fixed = TRUE)
+  bound_index <- which(trimws(strsplit(header, "|", fixed = TRUE)[[1]]) == "E-value bound")
+  bounds <- trimws(gsub("\\*", "", vapply(cells, `[`, character(1), bound_index)))
+  expect_false(any(bounds %in% c("", "NA")))
+})
+
+test_that("ratio coefficients sit clear of the intervals", {
+  input <- tibble::tibble(
+    outcome = c("protective", "harmful", "small"),
+    `E[Y(1)]/E[Y(0)]` = c(0.5, 1.6, 1.05),
+    `2.5 %` = c(0.4, 1.3, 0.95),
+    `97.5 %` = c(0.62, 1.95, 1.16),
+    E_Value = c(3.41, 2.58, 1.28),
+    E_Val_bound = c(2.61, 1.92, 1)
+  )
+  out <- suppressMessages(margot_plot(input, type = "RR", options = list(use_title_case = FALSE)))
+  layers <- out$plot$layers
+  text_layer <- layers[[which(vapply(layers, function(layer) {
+    inherits(layer$geom, "GeomText") && !is.null(layer$mapping$label)
+  }, logical(1)))]]
+  built <- ggplot2::ggplot_build(out$plot)
+  label_x <- unique(built$data[[which(vapply(layers, identical, logical(1), text_layer))]]$x)
+  limits <- out$plot$coordinates$limits$x
+  # the label column, about 15% of the panel, ends before the smallest lower limit
+  expect_lte(label_x + 0.15 * diff(limits), min(input$`2.5 %`))
+  expect_equal(label_x, limits[1])
+
+  # caller-set positions are kept
+  kept <- suppressMessages(margot_plot(input, type = "RR",
+    options = list(use_title_case = FALSE, x_lim_lo = 0.3, x_lim_hi = 2, x_offset = 0.35)))
+  expect_equal(kept$plot$coordinates$limits$x, c(0.3, 2))
 })
