@@ -3,9 +3,11 @@
 
 effects_fixture <- local({
   cache <- list()
-  function(scale = c("additive", "rr")) {
+  function(scale = c("additive", "rr", "pairwise")) {
     scale <- match.arg(scale)
     if (!is.null(cache[[scale]])) return(cache[[scale]])
+    pairwise <- scale == "pairwise"
+    if (pairwise) scale <- "additive"
     seed <- if (scale == "additive") 20261106L else 20261107L
     set.seed(seed)
     n <- if (scale == "additive") 600L else 800L
@@ -24,16 +26,19 @@ effects_fixture <- local({
       outcomes <- c("y_smoke", "y_volunteer")
     }
     lower <- function(data, trt) pmax(1, data[[trt]] - 1)
+    upper <- function(data, trt) pmin(7, data[[trt]] + 1)
+    shifts <- if (pairwise) list(lower = lower, upper = upper) else list(lower = lower)
     fit <- suppressMessages(margot_lmtp(
-      data = dat, outcome_vars = outcomes, trt = "a", shift_functions = list(lower = lower),
-      lmtp_model_type = lmtp::lmtp_tmle, contrast_type = "null", contrast_scale = scale,
+      data = dat, outcome_vars = outcomes, trt = "a", shift_functions = shifts,
+      lmtp_model_type = lmtp::lmtp_tmle, contrast_type = if (pairwise) "pairwise" else "null",
+      contrast_scale = scale,
       lmtp_defaults = list(baseline = c("l1", "l2"),
                            outcome_type = if (scale == "additive") "continuous" else "binomial",
                            folds = 2, learners_trt = "SL.glm", learners_outcome = "SL.glm"),
       n_cores = 1, save_output = FALSE, progress = "none", seed = seed
     ))
     out <- list(combined_tables = fit$combined_tables, contrasts = fit$contrasts)
-    cache[[scale]] <<- out
+    cache[[if (pairwise) "pairwise" else scale]] <<- out
     out
   }
 })
@@ -372,4 +377,44 @@ test_that("documented examples parse and run", {
                 collapse = " ")
   expect_match(text, "odds ratios")
   expect_match(text, "\\(2.5 %\\)|2.5 %")
+})
+
+test_that("pairwise contrasts resolve margot_lmtp()'s contrast names", {
+  skip_on_cran()
+  px <- effects_fixture("pairwise")
+  expect_true("combined_outcomes_lower_vs_upper" %in% names(px$combined_tables))
+  pw <- margot_lmtp_effects(px, contrast = "lower_vs_upper")
+  obj <- px$contrasts$y_warm$y_warm_lower_vs_y_warm_upper$estimates
+  row <- pw[pw$outcome == "y_warm", ]
+  expect_equal(row$estimate, obj$estimate, tolerance = 1e-10)
+  expect_equal(row$upper, obj$conf.high, tolerance = 1e-10)
+  expect_equal(row$mean_reference, obj$ref)
+  all_contrasts <- margot_lmtp_effects(px)
+  expect_setequal(unique(all_contrasts$contrast), sub("^combined_outcomes_", "", names(px$combined_tables)))
+})
+
+test_that("all-null tables draw on both scales", {
+  zero <- data.frame(outcome = c("a", "b"), estimate = 0, lower = 0, upper = 0, conf_level = 0.95, type = "difference")
+  one <- transform(zero, estimate = 1, lower = 1, upper = 1, type = "ratio")
+  for (d in list(zero, one)) {
+    ax <- attr(margot_plot_effects(d, xlab = "x", width_mm = 89), "axis")
+    expect_gt(diff(range(ax$breaks)), 0)
+    expect_true(if (d$type[1L] == "ratio") 1 %in% ax$breaks else 0 %in% ax$breaks)
+  }
+})
+
+test_that("long unbreakable labels widen the label column instead of overlapping", {
+  d <- synthetic_effects(c(0.1, -0.02), 0.04,
+                         label = c("t2_a_very_long_outcome_identifier_without_any_spaces_at_all", "Short"))
+  fig <- margot_plot_effects(d, xlab = "x", width_mm = 183)
+  family <- attr(fig, "font")[["family"]]
+  need <- .margot_effects_text_mm(d$label[1L], 6.5, family) + 2
+  expect_gte(attr(fig, "layout_mm")[["label"]], need)
+})
+
+test_that("contrast titles may be partial", {
+  d <- synthetic_effects(c(0.12, -0.03, 0.05), 0.05)
+  two <- rbind(transform(d, contrast = "a"), transform(d, contrast = "b"))
+  expect_s3_class(margot_plot_effects(two, xlab = "x", columns = "estimate", contrast_titles = c(a = "Gain"),
+                                      width_mm = 183), "patchwork")
 })

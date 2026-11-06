@@ -110,6 +110,10 @@ margot_plot_effects <- function(data, xlab, plot = c("estimate", "raw"), columns
     rows <- first[first$group == g, , drop = FALSE]
     if (ordering == "estimate") rows[base::order(-rows$plot_estimate), , drop = FALSE] else rows
   }))
+  contrast_title <- function(k) {
+    title <- if (is.null(contrast_titles)) NA_character_ else unname(contrast_titles[k])
+    if (is.na(title)) k else title
+  }
   group_title <- function(g) {
     if (is.null(group_titles)) return(g)
     titles <- unname(group_titles[g])
@@ -120,6 +124,9 @@ margot_plot_effects <- function(data, xlab, plot = c("estimate", "raw"), columns
   indent_mm <- if (has_group) 2 else 0
   heads <- c(family_title, if (has_group) group_title(groups))
   label_mm <- min(label_max_mm, max(c(text_mm(keyed$label) + indent_mm, text_mm(heads, bold = TRUE))) + 2)
+  # a word or heading that cannot wrap widens the column rather than spill into the panel.
+  words <- unlist(strsplit(keyed$label, " ", fixed = TRUE))
+  label_mm <- max(label_mm, max(text_mm(words)) + indent_mm + 2, max(c(0, text_mm(heads, bold = TRUE))) + 2)
   wrap_label <- function(s) {
     room <- label_mm - indent_mm - 2
     if (text_mm(s) <= room) return(s)
@@ -271,7 +278,7 @@ margot_plot_effects <- function(data, xlab, plot = c("estimate", "raw"), columns
     # one column set per contrast: the contrast title above, the column title and unit below.
     grid <- expand.grid(i = seq_along(columns), k = contrasts, stringsAsFactors = FALSE)
     p_columns <- Map(function(i, k) numeric_column(columns[i],
-      c(contrast_titles[[k]] %||% k, gsub("|", ", ", paste(column_titles[[i]], collapse = " "), fixed = TRUE)), k),
+      c(contrast_title(k), gsub("|", ", ", paste(column_titles[[i]], collapse = " "), fixed = TRUE)), k),
       grid$i, grid$k)
   }
   column_mm <- vapply(p_columns, function(p) attr(p, "width_mm"), numeric(1))
@@ -333,7 +340,7 @@ margot_plot_effects <- function(data, xlab, plot = c("estimate", "raw"), columns
     } else {
       p + ggplot2::scale_x_continuous(limits = limits, breaks = breaks, labels = labeller, expand = c(0, 0))
     }
-    if (length(contrasts) > 1L) p <- p + header_text(gi(mean(g(limits))), contrast_titles[[k]] %||% k)
+    if (length(contrasts) > 1L) p <- p + header_text(gi(mean(g(limits))), contrast_title(k))
     if (key_in_header && k == contrasts[1L]) {
       x_point <- c(to_data(limits[1L], 1.5), to_data(limits[1L], 1.5 + 1.6 + key_w[1L] + 4))
       key_y <- if (two_line) header_y - 0.45 else header_y

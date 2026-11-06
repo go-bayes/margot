@@ -98,14 +98,23 @@ margot_lmtp_effects <- function(x, contrast = NULL, outcomes = NULL, labels = NU
     hi <- tab[["97.5 %"]]
     ref <- shifted <- rep(NA_real_, length(est))
     if (!is.null(contrasts_obj)) {
+      # margot_lmtp() names a null contrast <outcome>_<shift>_vs_null and a pairwise one
+      # <outcome>_<shift1>_vs_<outcome>_<shift2>; the combined table is <shift1>_vs_<shift2>.
+      contrast_object <- function(o) {
+        shifts <- strsplit(k, "_vs_", fixed = TRUE)[[1L]]
+        keys <- paste0(o, "_", k)
+        if (length(shifts) == 2L) keys <- c(keys, paste0(o, "_", shifts[1L], "_vs_", o, "_", shifts[2L]))
+        for (key in keys) if (!is.null(contrasts_obj[[o]][[key]])) return(contrasts_obj[[o]][[key]])
+        NULL
+      }
       vals <- lapply(found, function(o) {
-        obj <- contrasts_obj[[o]][[paste0(o, "_", k)]]
+        obj <- contrast_object(o)
         if (is.null(obj) || is.null(obj$estimates)) {
           stop("no contrast object for ", o, " (", k, ").", call. = FALSE)
         }
         obj$estimates
       })
-      kinds <- unique(unlist(lapply(found, function(o) contrasts_obj[[o]][[paste0(o, "_", k)]]$type)))
+      kinds <- unique(unlist(lapply(found, function(o) contrast_object(o)$type)))
       if ("or" %in% kinds) {
         stop("contrast ", k, " is an odds ratio; margot_lmtp_effects() supports differences and risk ratios.",
              call. = FALSE)

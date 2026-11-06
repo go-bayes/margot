@@ -178,6 +178,11 @@
 .margot_effects_breaks <- function(data_range, type = c("difference", "ratio"), panel_mm = NULL,
                                    size_pt = 6.5, min_gap_mm = 2.5, family) {
   type <- match.arg(type)
+  # a zero-width range (every estimate and limit at the null) gets a small span around it.
+  if (diff(data_range) == 0) {
+    data_range <- if (type == "difference") data_range + c(-0.1, 0.1) * max(1, abs(data_range[1L]))
+                  else data_range * c(1 / 1.1, 1.1)
+  }
   if (type == "difference") {
     steps <- as.vector(outer(c(1, 2, 2.5, 5), 10^(floor(log10(diff(data_range))) + (-2:1))))
     sets <- lapply(steps, function(st) {
