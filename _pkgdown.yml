@@ -205,6 +205,9 @@ reference:
   - title: "Plots"
     contents:
     - margot_plot
+    - margot_lmtp_effects
+    - margot_plot_effects
+    - margot_save_effects_plot
     - margot_plot_ate
     - margot_table_ate
     - margot_interpret_ate
