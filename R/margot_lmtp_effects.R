@@ -100,12 +100,20 @@ margot_lmtp_effects <- function(x, contrast = NULL, outcomes = NULL, labels = NU
     if (!is.null(contrasts_obj)) {
       # margot_lmtp() names a null contrast <outcome>_<shift>_vs_null and a pairwise one
       # <outcome>_<shift1>_vs_<outcome>_<shift2>; the combined table is <shift1>_vs_<shift2>.
+      # shift names may themselves contain "_vs_", so every split point is tried.
       contrast_object <- function(o) {
-        shifts <- strsplit(k, "_vs_", fixed = TRUE)[[1L]]
+        parts <- strsplit(k, "_vs_", fixed = TRUE)[[1L]]
         keys <- paste0(o, "_", k)
-        if (length(shifts) == 2L) keys <- c(keys, paste0(o, "_", shifts[1L], "_vs_", o, "_", shifts[2L]))
-        for (key in keys) if (!is.null(contrasts_obj[[o]][[key]])) return(contrasts_obj[[o]][[key]])
-        NULL
+        for (i in seq_len(length(parts) - 1L)) {
+          keys <- c(keys, paste0(o, "_", paste(parts[seq_len(i)], collapse = "_vs_"), "_vs_", o, "_",
+                                 paste(parts[-seq_len(i)], collapse = "_vs_")))
+        }
+        keys <- intersect(unique(keys), names(contrasts_obj[[o]]))
+        if (length(keys) > 1L) {
+          stop("contrast ", k, " matches several contrast objects for ", o, ": ", paste(keys, collapse = ", "),
+               call. = FALSE)
+        }
+        if (length(keys)) contrasts_obj[[o]][[keys]] else NULL
       }
       vals <- lapply(found, function(o) {
         obj <- contrast_object(o)

@@ -391,6 +391,15 @@ test_that("pairwise contrasts resolve margot_lmtp()'s contrast names", {
   expect_equal(row$mean_reference, obj$ref)
   all_contrasts <- margot_lmtp_effects(px)
   expect_setequal(unique(all_contrasts$contrast), sub("^combined_outcomes_", "", names(px$combined_tables)))
+  # a shift name containing "_vs_" still resolves (renamed copy of the genuine fit).
+  renamed <- px
+  names(renamed$combined_tables) <- sub("_lower_vs_upper$", "_lower_vs_baseline_vs_upper", names(renamed$combined_tables))
+  for (o in names(renamed$contrasts)) {
+    names(renamed$contrasts[[o]]) <- sub(paste0("^", o, "_lower_vs_", o, "_upper$"),
+                                         paste0(o, "_lower_vs_baseline_vs_", o, "_upper"), names(renamed$contrasts[[o]]))
+  }
+  odd <- margot_lmtp_effects(renamed, contrast = "lower_vs_baseline_vs_upper")
+  expect_equal(odd$estimate, pw$estimate)
 })
 
 test_that("all-null tables draw on both scales", {
