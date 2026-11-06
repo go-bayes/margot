@@ -339,3 +339,32 @@ test_that("the bonferroni family cannot be smaller than the outcomes reported", 
   expect_equal(unique(larger$conf_level), 1 - 0.05 / 12)
   expect_equal(unique(larger$family_size), 12L)
 })
+
+test_that("odds-ratio contrasts are refused", {
+  skip_on_cran()
+  rx <- effects_fixture("rr")
+  odds <- rx
+  for (o in names(odds$contrasts)) {
+    for (k in names(odds$contrasts[[o]])) odds$contrasts[[o]][[k]]$type <- "or"
+  }
+  expect_error(margot_lmtp_effects(odds), "is an odds ratio")
+})
+
+test_that("point fill follows the interval that is drawn", {
+  d <- synthetic_effects(0.2, 0.1, raw_estimate = 0.01, raw_lower = -0.05, raw_upper = 0.07)
+  raw_fig <- margot_plot_effects(d, xlab = "x", plot = "raw", width_mm = 89)
+  expect_false(attr(raw_fig, "plotted")$excludes_null)
+  expect_equal(attr(raw_fig, "plotted")$lower, -0.05)
+  sd_fig <- margot_plot_effects(d, xlab = "x", width_mm = 89)
+  expect_true(attr(sd_fig, "plotted")$excludes_null)
+})
+
+test_that("documented examples parse and run", {
+  for (rd in c("margot_lmtp_effects", "margot_plot_effects")) {
+    path <- testthat::test_path("..", "..", "man", paste0(rd, ".Rd"))
+    skip_if_not(file.exists(path), "source man pages not available")
+    ex <- tempfile(fileext = ".R")
+    tools::Rd2ex(path, ex)
+    expect_no_error(source(ex, local = new.env()))
+  }
+})

@@ -26,7 +26,7 @@
 #' @param margin_mm White margin inside `width_mm`.
 #' @param family Font family; `NULL` chooses as described above.
 #'
-#' @return A patchwork object. Attributes: `size_mm` (final width and height), `margin_mm`, `layout_mm` (widths of the label column, each interval panel and each numeric column), `axis` (breaks, data range, limits and smallest gap between tick labels in mm) and `font` (family, font file and its MD5 checksum). Save it with [margot_save_effects_plot()], which uses `size_mm`.
+#' @return A patchwork object. Attributes: `size_mm` (final width and height), `margin_mm`, `layout_mm` (widths of the label column, each interval panel and each numeric column), `axis` (breaks, data range, limits and smallest gap between tick labels in mm), `font` (family, font file and its MD5 checksum) and `plotted` (the drawn estimate and interval for each outcome and contrast, top to bottom, with `excludes_null`, which sets the filled point). Save it with [margot_save_effects_plot()], which uses `size_mm`.
 #'
 #' @seealso [margot_lmtp_effects()], [margot_save_effects_plot()]
 #' @md
@@ -212,7 +212,8 @@ margot_plot_effects <- function(data, xlab, plot = c("estimate", "raw"), columns
 
   # numeric columns: parts placed glyph by glyph and right-aligned.
   plot_rows <- merge(rows_layout, data, by.x = "key", by.y = "outcome")
-  plot_rows$excludes <- plot_rows$lower > null | plot_rows$upper < null
+  # status follows the interval that is drawn.
+  plot_rows$excludes <- plot_rows$plot_lower > null | plot_rows$plot_upper < null
   numeric_column <- function(which, titles, k = contrasts[1L]) {
     d <- plot_rows[plot_rows$contrast == k, , drop = FALSE]
     if (which == "evalue") {
@@ -407,6 +408,11 @@ margot_plot_effects <- function(data, xlab, plot = c("estimate", "raw"), columns
   }
   attr(out, "axis") <- list(breaks = breaks, data_range = data_range, limits = limits, label_gap_mm = label_gap)
   attr(out, "font") <- .margot_effects_font_record(family)
+  plotted <- plot_rows[base::order(-plot_rows$y, match(plot_rows$contrast, contrasts)),
+                       c("key", "contrast", "plot_estimate", "plot_lower", "plot_upper", "excludes")]
+  names(plotted) <- c("outcome", "contrast", "estimate", "lower", "upper", "excludes_null")
+  rownames(plotted) <- NULL
+  attr(out, "plotted") <- plotted
   out
 }
 

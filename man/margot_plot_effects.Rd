@@ -60,7 +60,7 @@ margot_plot_effects(
 \item{family}{Font family; \code{NULL} chooses as described above.}
 }
 \value{
-A patchwork object. Attributes: \code{size_mm} (final width and height), \code{margin_mm}, \code{layout_mm} (widths of the label column, each interval panel and each numeric column), \code{axis} (breaks, data range, limits and smallest gap between tick labels in mm) and \code{font} (family, font file and its MD5 checksum). Save it with \code{\link[=margot_save_effects_plot]{margot_save_effects_plot()}}, which uses \code{size_mm}.
+A patchwork object. Attributes: \code{size_mm} (final width and height), \code{margin_mm}, \code{layout_mm} (widths of the label column, each interval panel and each numeric column), \code{axis} (breaks, data range, limits and smallest gap between tick labels in mm), \code{font} (family, font file and its MD5 checksum) and \code{plotted} (the drawn estimate and interval for each outcome and contrast, top to bottom, with \code{excludes_null}, which sets the filled point). Save it with \code{\link[=margot_save_effects_plot]{margot_save_effects_plot()}}, which uses \code{size_mm}.
 }
 \description{
 Draws estimated effects and their confidence intervals as a horizontal forest figure built to a journal column width: a label column, one interval panel per contrast, optional decimal-aligned numeric columns, and a footer with one axis title and a key. Every dimension is derived from the content and the target width, so the same call works across studies with different numbers of outcomes, label lengths, contrasts and scales.

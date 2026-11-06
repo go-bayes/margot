@@ -2,7 +2,7 @@
 #'
 #' Converts the output of [margot_lmtp()], or one of its combined tables, into the tidy effects table that [margot_plot_effects()] draws: one row per outcome and contrast, with the estimate, interval limits, confidence level and scale. Intervals are rebuilt from standard errors when a multiplicity correction or a different `alpha` is requested, or when registered standard errors are supplied. The function checks that the inputs agree before it returns anything.
 #'
-#' With the full [margot_lmtp()] output, standard errors and the regime means come from lmtp's contrast objects (`x$contrasts`). Each table interval must equal g(estimate) -/+ 1.96 SE from those objects, where g is the identity for differences and the log for ratios; lmtp reports the standard error of a ratio on the log scale. With a bare combined table, the standard error is recovered from the 95\% interval, which must be a symmetric Wald interval (on the log scale for ratios); an asymmetric interval is refused rather than recentred.
+#' With the full [margot_lmtp()] output, standard errors and the regime means come from lmtp's contrast objects (`x$contrasts`). Each table interval must equal g(estimate) -/+ 1.96 SE from those objects, where g is the identity for differences and the log for ratios; lmtp reports the standard error of a ratio on the log scale. With a bare combined table, the standard error is recovered from the 95\% interval, which must be a symmetric Wald interval (on the log scale for ratios); an asymmetric interval is refused rather than recentred. A ratio in a bare table is read as a risk ratio; odds ratios (`contrast_scale = "or"` in [margot_lmtp()]) are refused when the contrast objects show them, because the E-value and the regime-mean interpretation used here assume risk ratios.
 #'
 #' Under `adjust = "bonferroni"` the interval is g^-1(g(estimate) -/+ z SE) with z = qnorm(1 - alpha / (2 m)) and m = `family_size`. The family size is required, so that the correction follows the registered family of outcomes rather than the number of rows in a table.
 #'
@@ -29,8 +29,8 @@
 #' @examples
 #' tab <- data.frame(
 #'   `E[Y(1)]-E[Y(0)]` = c(0.12, -0.03),
-#'   `2.5 \%` = c(0.12, -0.03) - 1.96 * 0.02,
-#'   `97.5 \%` = c(0.12, -0.03) + 1.96 * 0.02,
+#'   `2.5 %` = c(0.12, -0.03) - 1.96 * 0.02,
+#'   `97.5 %` = c(0.12, -0.03) + 1.96 * 0.02,
 #'   check.names = FALSE, row.names = c("y_warmth", "y_trust")
 #' )
 #' margot_lmtp_effects(tab, contrast = "lower_vs_null", adjust = "bonferroni",
@@ -105,6 +105,11 @@ margot_lmtp_effects <- function(x, contrast = NULL, outcomes = NULL, labels = NU
         }
         obj$estimates
       })
+      kinds <- unique(unlist(lapply(found, function(o) contrasts_obj[[o]][[paste0(o, "_", k)]]$type)))
+      if ("or" %in% kinds) {
+        stop("contrast ", k, " is an odds ratio; margot_lmtp_effects() supports differences and risk ratios.",
+             call. = FALSE)
+      }
       se <- vapply(vals, function(v) v$std.error, numeric(1))
       ref <- vapply(vals, function(v) v$ref, numeric(1))
       shifted <- vapply(vals, function(v) v$shift, numeric(1))
