@@ -12,7 +12,7 @@
 #' @param xlab Axis title for the interval panels. A line break in the string starts a second line.
 #' @param plot Plotted quantity: `"estimate"` or `"raw"` (the original-unit columns).
 #' @param columns Numeric columns to the right of the panels, in order: any of `"plotted"` (the plotted quantity), `"estimate"`, `"raw"`, `"means"` (reference and intervention means) and `"evalue"` (point and interval E-values).
-#' @param column_titles List with one `c(title, subtitle)` per column; `NULL` entries use the defaults. `"{ci}"` is replaced by the interval label (for example `"99.58\% CI"`), and a subtitle written `"a|b"` puts one sub-heading over each number.
+#' @param column_titles List with one `c(title, subtitle)` per column; `NULL` entries use the defaults. `"{ci}"` is replaced by the interval label (for example `"99.58% CI"`), and a subtitle written `"a|b"` puts one sub-heading over each number.
 #' @param family_title Title above the label column, for example `"Outcome"`.
 #' @param group_titles Named character vector mapping values of `group` to display titles, in display order.
 #' @param order `"estimate"` (descending within each group, by the first contrast's plotted estimate) or `"given"` (row order of `data`).

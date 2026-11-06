@@ -367,4 +367,9 @@ test_that("documented examples parse and run", {
     tools::Rd2ex(path, ex)
     expect_no_error(source(ex, local = new.env()))
   }
+  # rendered help keeps every paragraph (an escaped percent sign once cut one short).
+  text <- paste(utils::capture.output(tools::Rd2txt(testthat::test_path("..", "..", "man", "margot_lmtp_effects.Rd"))),
+                collapse = " ")
+  expect_match(text, "odds ratios")
+  expect_match(text, "\\(2.5 %\\)|2.5 %")
 })

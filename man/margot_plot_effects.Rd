@@ -33,7 +33,7 @@ margot_plot_effects(
 
 \item{columns}{Numeric columns to the right of the panels, in order: any of \code{"plotted"} (the plotted quantity), \code{"estimate"}, \code{"raw"}, \code{"means"} (reference and intervention means) and \code{"evalue"} (point and interval E-values).}
 
-\item{column_titles}{List with one \code{c(title, subtitle)} per column; \code{NULL} entries use the defaults. \code{"{ci}"} is replaced by the interval label (for example \code{"99.58\\\% CI"}), and a subtitle written \code{"a|b"} puts one sub-heading over each number.}
+\item{column_titles}{List with one \code{c(title, subtitle)} per column; \code{NULL} entries use the defaults. \code{"{ci}"} is replaced by the interval label (for example \code{"99.58\% CI"}), and a subtitle written \code{"a|b"} puts one sub-heading over each number.}
 
 \item{family_title}{Title above the label column, for example \code{"Outcome"}.}
 

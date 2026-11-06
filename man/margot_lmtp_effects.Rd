@@ -20,7 +20,7 @@ margot_lmtp_effects(
 )
 }
 \arguments{
-\item{x}{Output of \code{\link[=margot_lmtp]{margot_lmtp()}} (a list with \code{combined_tables} and \code{contrasts}), or one combined table with columns \code{"E[Y(1)]-E[Y(0)]"} or \code{"E[Y(1)]/E[Y(0)]"}, \code{"2.5 \\\%"} and \code{"97.5 \\\%"}, and outcomes as row names.}
+\item{x}{Output of \code{\link[=margot_lmtp]{margot_lmtp()}} (a list with \code{combined_tables} and \code{contrasts}), or one combined table with columns \code{"E[Y(1)]-E[Y(0)]"} or \code{"E[Y(1)]/E[Y(0)]"}, \code{"2.5 \%"} and \code{"97.5 \%"}, and outcomes as row names.}
 
 \item{contrast}{Contrast names to keep (for example \code{"lower_vs_null"}), matching the suffix of \verb{combined_outcomes_<contrast>}. \code{NULL} keeps every contrast of the full output; for a bare table it names the contrast (default \code{"contrast"}).}
 
@@ -51,7 +51,7 @@ A data frame with columns \code{outcome}, \code{label}, \code{contrast}, \code{e
 Converts the output of \code{\link[=margot_lmtp]{margot_lmtp()}}, or one of its combined tables, into the tidy effects table that \code{\link[=margot_plot_effects]{margot_plot_effects()}} draws: one row per outcome and contrast, with the estimate, interval limits, confidence level and scale. Intervals are rebuilt from standard errors when a multiplicity correction or a different \code{alpha} is requested, or when registered standard errors are supplied. The function checks that the inputs agree before it returns anything.
 }
 \details{
-With the full \code{\link[=margot_lmtp]{margot_lmtp()}} output, standard errors and the regime means come from lmtp's contrast objects (\code{x$contrasts}). Each table interval must equal g(estimate) -/+ 1.96 SE from those objects, where g is the identity for differences and the log for ratios; lmtp reports the standard error of a ratio on the log scale. With a bare combined table, the standard error is recovered from the 95\\% interval, which must be a symmetric Wald interval (on the log scale for ratios); an asymmetric interval is refused rather than recentred. A ratio in a bare table is read as a risk ratio; odds ratios (\code{contrast_scale = "or"} in \code{\link[=margot_lmtp]{margot_lmtp()}}) are refused when the contrast objects show them, because the E-value and the regime-mean interpretation used here assume risk ratios.
+With the full \code{\link[=margot_lmtp]{margot_lmtp()}} output, standard errors and the regime means come from lmtp's contrast objects (\code{x$contrasts}). Each table interval must equal g(estimate) -/+ 1.96 SE from those objects, where g is the identity for differences and the log for ratios; lmtp reports the standard error of a ratio on the log scale. With a bare combined table, the standard error is recovered from the 95\% interval, which must be a symmetric Wald interval (on the log scale for ratios); an asymmetric interval is refused rather than recentred. A ratio in a bare table is read as a risk ratio; odds ratios (\code{contrast_scale = "or"} in \code{\link[=margot_lmtp]{margot_lmtp()}}) are refused when the contrast objects show them, because the E-value and the regime-mean interpretation used here assume risk ratios.
 
 Under \code{adjust = "bonferroni"} the interval is g^-1(g(estimate) -/+ z SE) with z = qnorm(1 - alpha / (2 m)) and m = \code{family_size}. The family size is required, so that the correction follows the registered family of outcomes rather than the number of rows in a table.
 
