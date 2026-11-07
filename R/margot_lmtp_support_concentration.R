@@ -7,7 +7,8 @@
 #' @param natural_mass,policy_mass Numeric probability matrices. Rows have
 #'   names equal to row_id; matching column names identify discrete values
 #'   or regions with a common ratio within each region. Each reached row sums
-#'   to one, within a tolerance of 1e-12.
+#'   to one, within a tolerance of 1e-12. Each entry must lie in [0, 1]
+#'   exactly; the tolerance applies only to the row sum.
 #' @param preceding_weight Named numeric vector of products of exposure ratios
 #'   before this assignment. Use ones for the first assignment.
 #' @param reached Named logical vector marking the current observation risk set.
@@ -47,8 +48,10 @@ margot_lmtp_support_concentration <- function(natural_mass, policy_mass,
     stop("minimum must be a single number in (0, 1].", call. = FALSE)
   }
   n <- if (is.logical(reached) && !anyNA(reached)) sum(reached) else NA_integer_
-  unassessable <- list(fraction = NA_real_, equivalent = NA_real_, n = n,
-                      state = "unassessable")
+  unassessable <- function(reason) {
+    list(fraction = NA_real_, equivalent = NA_real_, n = n,
+      state = "unassessable", reason = reason)
+  }
 
   # ordered identities cover every input, including rows outside the risk set.
   valid_ids <- is.character(row_id) && !anyNA(row_id) &&
@@ -66,7 +69,7 @@ margot_lmtp_support_concentration <- function(natural_mass, policy_mass,
       !identical(names(preceding_weight), row_id) ||
       !is.logical(reached) || length(reached) != length(row_id) || anyNA(reached) ||
       !identical(names(reached), row_id) || is.na(n) || n == 0L) {
-    return(unassessable)
+    return(unassessable("Invalid probability inputs or ordered identities."))
   }
 
   # optional IPC weights define the averaging measure, including zero-exposure-weight rows.
@@ -74,11 +77,11 @@ margot_lmtp_support_concentration <- function(natural_mass, policy_mass,
     if (!is.numeric(observation_weight) || length(observation_weight) != length(row_id) ||
         !identical(names(observation_weight), row_id) ||
         any(!is.finite(observation_weight[reached])) || any(observation_weight[reached] <= 0)) {
-      return(unassessable)
+      return(unassessable("Required observation weights are zero, nonfinite or misaligned."))
     }
     averaging <- observation_weight[reached] / max(observation_weight[reached])
     averaging <- averaging / sum(averaging)
-    if (any(!is.finite(averaging)) || any(averaging <= 0)) return(unassessable)
+    if (any(!is.finite(averaging)) || any(averaging <= 0)) return(unassessable("Normalised observation weights underflowed or are invalid."))
   }
 
   natural_mass <- natural_mass[reached, , drop = FALSE]
@@ -90,15 +93,17 @@ margot_lmtp_support_concentration <- function(natural_mass, policy_mass,
       all(abs(rowSums(mass) - 1) <= 1e-12)
   }
   if (!valid_law(natural_mass) || !valid_law(policy_mass) ||
-      any(!is.finite(preceding_weight)) || any(preceding_weight < 0) ||
-      !any(preceding_weight > 0)) {
-    return(unassessable)
+      any(!is.finite(preceding_weight)) || any(preceding_weight < 0)) {
+    return(unassessable("Probability laws or preceding exposure weights are invalid."))
+  }
+  if (!any(preceding_weight > 0)) {
+    return(unassessable("Every reached record has zero preceding exposure weight."))
   }
 
   # common rescaling leaves T^2/V unchanged and avoids squaring large weights.
   positive <- preceding_weight > 0
   weight <- preceding_weight[positive] / max(preceding_weight)
-  if (any(weight == 0) || any(weight^2 == 0)) return(unassessable)
+  if (any(weight == 0) || any(weight^2 == 0)) return(unassessable("Rescaled preceding exposure weights underflowed."))
   natural_mass <- natural_mass[positive, , drop = FALSE]
   policy_mass <- policy_mass[positive, , drop = FALSE]
   second_moment <- numeric(length(weight))
@@ -114,7 +119,7 @@ margot_lmtp_support_concentration <- function(natural_mass, policy_mass,
       next
     }
     term <- q * (q / g)
-    if (any(!is.finite(term)) || any(term == 0)) return(unassessable)
+    if (any(!is.finite(term)) || any(term == 0)) return(unassessable("Conditional second-moment terms overflowed or underflowed."))
     second_moment[i] <- sum(term)
   }
   if (any(boundary)) {
@@ -129,14 +134,14 @@ margot_lmtp_support_concentration <- function(natural_mass, policy_mass,
   } else {
     weighted_value <- averaging[positive] * weight
     weighted_moment <- averaging[positive] * contribution
-    if (any(weighted_value == 0) || any(weighted_moment == 0)) return(unassessable)
+    if (any(weighted_value == 0) || any(weighted_moment == 0)) return(unassessable("Weighted exposure-moment contributions underflowed."))
     total_weight <- sum(weighted_value)
     total_moment <- sum(weighted_moment)
   }
   if (any(!is.finite(contribution)) || any(contribution == 0) ||
       !is.finite(total_weight) || total_weight <= 0 ||
       !is.finite(total_moment) || total_moment <= 0) {
-    return(unassessable)
+    return(unassessable("Exposure-moment sums are zero or nonfinite."))
   }
   if (is.null(observation_weight)) {
     equivalent <- total_weight^2 / total_moment
@@ -146,7 +151,7 @@ margot_lmtp_support_concentration <- function(natural_mass, policy_mass,
     equivalent <- n * fraction
   }
   if (!is.finite(equivalent) || equivalent <= 0 ||
-      !is.finite(fraction) || fraction <= 0) return(unassessable)
+      !is.finite(fraction) || fraction <= 0) return(unassessable("Concentration is zero or nonfinite."))
   # records whose contribution alone would put the fraction below the threshold.
   sole <- if (is.null(observation_weight)) contribution > total_weight^2 / (minimum * n) else
     averaging[positive] * contribution > total_weight^2 / minimum

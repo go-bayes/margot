@@ -16,13 +16,17 @@
 #'   ensemble probability, learner_probability, a compact fit record,
 #'   warnings, reason and seed. The compact record retains coefficients,
 #'   cross-validated risks, error flags and fold sizes via the same helper as
-#'   [margot_lmtp_exposure_ratio()]. Fitted learner objects are not returned.
+#'   \\code{\\link{margot_lmtp_exposure_ratio}()}. It also retains the inner
+#'   validation-row indices. Fitted learner objects are not returned.
 #' @details Empty and one-class training responses return constant predictions.
 #'   An empty conditional set is usable only when its parent probability is
 #'   zero; the calling conditional-law calculation must check this condition.
 #'   Failed learners and invalid predictions give an unassessable result.
 #'   Probabilities within 1e-12 outside [0, 1] are snapped to the nearest bound;
-#'   larger departures remain invalid. Warnings are recorded.
+#'   larger departures remain invalid. Warnings are recorded and muffled,
+#'   preserving the support-stage caller's behaviour. Invalid arguments raise
+#'   an error before fitting; fitting failures return an unassessable record.
+#'   The empty_training field explicitly marks an empty conditional set.
 #'   The caller owns outer folds, checkpoints and worker/thread settings.
 #'   This function sets the seed before a nonconstant fit and uses no future
 #'   plan of its own. It does not inspect terminal outcomes or select a schedule.
@@ -45,32 +49,35 @@ margot_lmtp_support_probability <- function(y, x, new_x, ids, learners,
     is.numeric(seed), length(seed) == 1L, is.finite(seed), seed >= 0,
     seed <= .Machine$integer.max, seed == floor(seed),
     is.character(method), length(method) == 1L, !is.na(method), nzchar(method))
-  settings <- list(learners = learners, inner_folds = inner_folds, method = method)
+  y <- as.numeric(y)
   warnings <- character()
   run <- function() {
     if (!length(y)) return(list(state = "constant", probability = rep(0, nrow(new_x)),
-      learner_probability = matrix(0, nrow(new_x), length(settings$learners)),
+      learner_probability = matrix(0, nrow(new_x), length(learners), dimnames = list(NULL, paste0(learners, "_All"))),
       fit = NULL, reason = "empty conditional training set; parent probability must be zero"))
     if (length(unique(y)) == 1L) return(list(state = "constant",
       probability = rep(y[1L], nrow(new_x)),
-      learner_probability = matrix(y[1L], nrow(new_x), length(settings$learners)),
+      learner_probability = matrix(y[1L], nrow(new_x), length(learners), dimnames = list(NULL, paste0(learners, "_All"))),
       fit = NULL, reason = "one observed class in the conditional training set"))
-    if (length(y) < settings$inner_folds) stop("Too few conditional training records for the requested inner folds.")
+    if (length(y) < inner_folds) stop("Too few conditional training records for the requested inner folds.")
     set.seed(seed)
     fit <- SuperLearner::SuperLearner(Y = y, X = x, newX = new_x,
-      family = stats::binomial(), SL.library = settings$learners,
-      method = settings$method, id = ids,
-      cvControl = list(V = settings$inner_folds),
+      family = stats::binomial(), SL.library = learners,
+      method = method, id = ids,
+      cvControl = list(V = inner_folds),
       control = list(saveFitLibrary = TRUE),
       env = environment(SuperLearner::SuperLearner))
     failed <- any(unlist(fit$errorsInCVLibrary)) || any(unlist(fit$errorsInLibrary))
     p <- margot_lmtp_support_snap_probability(as.numeric(fit$SL.predict))
     library_p <- margot_lmtp_support_snap_probability(as.matrix(fit$library.predict))
     valid <- length(p) == nrow(new_x) && all(is.finite(p)) && all(p >= 0 & p <= 1) &&
-      ncol(library_p) == length(settings$learners) && all(is.finite(library_p)) &&
+      nrow(library_p) == nrow(new_x) && ncol(library_p) == length(learners) &&
+      all(is.finite(library_p)) &&
       all(library_p >= 0 & library_p <= 1)
+    record <- margot_lmtp_lean_sl(fit)
+    record$inner_validation_rows <- fit$validRows
     list(state = if (!failed && valid) "fitted" else "unassessable",
-      probability = p, learner_probability = library_p, fit = margot_lmtp_lean_sl(fit),
+      probability = p, learner_probability = library_p, fit = record,
       reason = if (!failed && valid) NULL else "A requested learner failed or returned invalid probabilities.")
   }
   result <- tryCatch(withCallingHandlers(run(), warning = function(w) {
@@ -78,6 +85,7 @@ margot_lmtp_support_probability <- function(y, x, new_x, ids, learners,
     invokeRestart("muffleWarning")
   }), error = function(e) list(state = "unassessable", fit = NULL,
     probability = NULL, learner_probability = NULL, reason = conditionMessage(e)))
+  result$empty_training <- !length(y)
   result$warnings <- warnings
   result$seed <- seed
   result

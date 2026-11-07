@@ -36,7 +36,8 @@ A list with state (fitted, constant, or unassessable),
   ensemble probability, learner_probability, a compact fit record,
   warnings, reason and seed. The compact record retains coefficients,
   cross-validated risks, error flags and fold sizes via the same helper as
-  [margot_lmtp_exposure_ratio()]. Fitted learner objects are not returned.
+  \\code{\\link{margot_lmtp_exposure_ratio}()}. It also retains the inner
+  validation-row indices. Fitted learner objects are not returned.
 }
 \description{
 Fit a SuperLearner ensemble on an explicitly supplied training set and
@@ -49,7 +50,10 @@ Empty and one-class training responses return constant predictions.
   zero; the calling conditional-law calculation must check this condition.
   Failed learners and invalid predictions give an unassessable result.
   Probabilities within 1e-12 outside [0, 1] are snapped to the nearest bound;
-  larger departures remain invalid. Warnings are recorded.
+  larger departures remain invalid. Warnings are recorded and muffled,
+  preserving the support-stage caller's behaviour. Invalid arguments raise
+  an error before fitting; fitting failures return an unassessable record.
+  The empty_training field explicitly marks an empty conditional set.
   The caller owns outer folds, checkpoints and worker/thread settings.
   This function sets the seed before a nonconstant fit and uses no future
   plan of its own. It does not inspect terminal outcomes or select a schedule.

@@ -129,7 +129,7 @@ test_that("constant probability paths need no learner fit", {
 test_that("probability fitting preserves settings and returns a lean diagnostic record", {
   called <- NULL
   fake_fit <- function(Y, X, newX, family, SL.library, method, id, cvControl, control, env) {
-    called <<- list(y = Y, x = X, new_x = newX, learners = SL.library,
+    called <<- list(y = Y, x = X, new_x = newX, family = family$family, learners = SL.library,
       method = method, id = id, inner = cvControl$V, control = control, random = runif(1))
     warning("retained learner warning")
     structure(list(SL.predict = c(-1e-13, 1 + 1e-13),
@@ -143,12 +143,17 @@ test_that("probability fitting preserves settings and returns a lean diagnostic 
   y <- c(0, 1, 0, 1)
   x <- data.frame(x = 1:4)
   new_x <- data.frame(x = 5:6)
-  value <- margot_lmtp_support_probability(y, x, new_x, letters[1:4],
-    c("SL.mean", "SL.glm"), inner_folds = 2L, seed = 42L)
+  expect_no_warning(value <- margot_lmtp_support_probability(y, x, new_x, letters[1:4],
+    c("SL.mean", "SL.glm"), inner_folds = 2L, seed = 42L))
   expect_identical(value$state, "fitted")
   expect_equal(value$probability, c(0, 1))
   expect_identical(value$warnings, "retained learner warning")
   expect_identical(called$y, y)
+  expect_identical(called$x, x)
+  expect_identical(called$new_x, new_x)
+  expect_identical(called$id, letters[1:4])
+  expect_identical(called$method, "method.NNLS")
+  expect_identical(called$family, "binomial")
   expect_identical(called$learners, c("SL.mean", "SL.glm"))
   expect_identical(called$control, list(saveFitLibrary = TRUE))
   expect_identical(called$inner, 2L)
@@ -157,6 +162,7 @@ test_that("probability fitting preserves settings and returns a lean diagnostic 
   expect_s3_class(value$fit, "margot_lmtp_lean_fit")
   expect_equal(value$fit$coefficient, c(.4, .6))
   expect_identical(value$fit$inner_fold_sizes, c(2L, 2L))
+  expect_identical(value$fit$inner_validation_rows, list(1:2, 3:4))
   expect_invisible(margot_lmtp_assert_lean(value))
 })
 
@@ -172,4 +178,101 @@ test_that("failed learners and invalid predictions remain unassessable", {
     "SL.mean", inner_folds = 2L, seed = 42L)
   expect_identical(run()$state, "unassessable")
   expect_match(run()$reason, "requested learner failed")
+})
+
+test_that("empty and constant paths are explicit and leave RNG untouched", {
+  run <- function(y) margot_lmtp_support_probability(y,
+    data.frame(x = seq_along(y)), data.frame(x = 1:2),
+    as.character(seq_along(y)), "SL.mean", 3L, 42L)
+  set.seed(812L)
+  before <- .Random.seed
+  empty <- run(numeric())
+  constant <- run(c(TRUE, TRUE))
+  expect_identical(empty$empty_training, TRUE)
+  expect_identical(constant$empty_training, FALSE)
+  expect_type(constant$probability, "double")
+  expect_identical(colnames(constant$learner_probability), "SL.mean_All")
+  expect_identical(.Random.seed, before)
+})
+
+test_that("invalid probabilities and cross-validation errors cannot pass", {
+  scenario <- "outside"
+  fake_fit <- function(...) {
+    structure(list(SL.predict = if (scenario == "outside") c(0, 1 + 1e-10) else c(.2, .8),
+      library.predict = if (scenario == "rows") matrix(.5, 3, 1) else matrix(c(.2, .8), 2),
+      coef = c(SL.mean_All = 1), cvRisk = .3, errorsInLibrary = FALSE,
+      errorsInCVLibrary = scenario == "cv", validRows = list(1:2, 3:4)),
+      class = "SuperLearner")
+  }
+  local_mocked_bindings(SuperLearner = fake_fit, .package = "SuperLearner")
+  run <- function() margot_lmtp_support_probability(c(0, 1, 0, 1),
+    data.frame(x = 1:4), data.frame(x = 5:6), letters[1:4],
+    "SL.mean", 2L, 42L)
+  expect_identical(run()$state, "unassessable")
+  scenario <- "cv"
+  expect_identical(run()$state, "unassessable")
+  scenario <- "rows"
+  expect_identical(run()$state, "unassessable")
+})
+
+test_that("concentration preserves failure reasons and the row-sum tolerance", {
+  x <- support_fixture()
+  run <- function() margot_lmtp_support_concentration(x$g, x$q, x$w,
+    x$reached, x$ids, minimum = .05)
+  x$w[] <- 0
+  expect_match(run()$reason, "Every reached record")
+  x$w[] <- 1
+  x$g[1, 1] <- x$g[1, 1] + 1e-13
+  expect_identical(run()$state, "pass")
+  x$g[1, 1] <- x$g[1, 1] + 1e-10
+  expect_identical(run()$state, "unassessable")
+  x <- support_fixture()
+  x$q[1, 3] <- .2
+  expect_identical(run()$state, "unassessable")
+  g <- matrix(c(.01, .99), 1, dimnames = list("a", c("zero", "positive")))
+  q <- matrix(c(1, 0), 1, dimnames = dimnames(g))
+  result <- margot_lmtp_support_concentration(g, q, c(a = 1), c(a = TRUE), "a", .05)
+  expect_identical(result$sole_failures, 1L)
+})
+
+test_that("two-wave propagation keeps missing values only outside the risk set", {
+  x <- support_fixture()
+  observed <- setNames(c("threshold", "low"), x$ids)
+  first <- margot_lmtp_support_prefix(x$g, x$q, observed, x$w, x$reached, x$ids,
+    minimum = .05, excluded = c("zero", "low"))
+  reached <- setNames(c(TRUE, FALSE), x$ids)
+  probability <- matrix(c(.5, NA_real_), 2, dimnames = list(x$ids, "c1"))
+  ipc <- margot_lmtp_support_weights(probability, reached, x$ids)
+  next_g <- x$g
+  next_g[2, ] <- NA_real_
+  next_q <- x$q
+  next_q[2, ] <- NA_real_
+  second <- margot_lmtp_support_prefix(next_g, next_q, observed, first$next_weight,
+    reached, x$ids, minimum = .05, excluded = c("zero", "low"),
+    observation_weight = ipc$weight, propagate = FALSE)
+  expect_identical(second$state, "pass")
+  expect_equal(second$concentration$fraction, 1 / 6.6)
+  next_weight <- first$next_weight
+  next_weight[2] <- NA_real_
+  non_monotone <- margot_lmtp_support_prefix(x$g, x$q, observed, next_weight,
+    x$reached, x$ids, minimum = .05, excluded = c("zero", "low"))
+  expect_identical(non_monotone$state, "unassessable")
+  expect_match(non_monotone$reason, "preceding exposure weights")
+  x$g[1, ] <- c(1, 0, 0, 0)
+  boundary <- margot_lmtp_support_prefix(x$g, x$q, observed, x$w,
+    x$reached, x$ids, minimum = .05, excluded = c("zero", "low"))
+  expect_identical(boundary$state, "boundary_fail")
+  expect_identical(boundary$diagnostics$boundary_records, 1L)
+})
+
+test_that("overflow during propagation retains the valid concentration diagnostics", {
+  x <- support_fixture()
+  x$w[] <- 1e308
+  result <- margot_lmtp_support_prefix(x$g, x$q,
+    setNames(c("threshold", "threshold"), x$ids),
+    x$w, x$reached, x$ids, minimum = .05, excluded = c("zero", "low"))
+  expect_identical(result$state, "unassessable")
+  expect_match(result$reason, "nonfinite or underflowed")
+  expect_identical(result$concentration$state, "pass")
+  expect_identical(result$diagnostics$other_zero_mass, 0L)
 })

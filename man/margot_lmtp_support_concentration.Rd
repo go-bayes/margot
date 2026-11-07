@@ -18,7 +18,8 @@ margot_lmtp_support_concentration(
 \item{natural_mass, policy_mass}{Numeric probability matrices. Rows have
 names equal to row_id; matching column names identify discrete values
 or regions with a common ratio within each region. Each reached row sums
-to one, within a tolerance of 1e-12.}
+to one, within a tolerance of 1e-12. Each entry must lie in [0, 1]
+exactly; the tolerance applies only to the row sum.}
 
 \item{preceding_weight}{Named numeric vector of products of exposure ratios
 before this assignment. Use ones for the first assignment.}

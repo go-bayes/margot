@@ -21,7 +21,8 @@ margot_lmtp_support_prefix(
 \item{natural_mass, policy_mass}{Numeric probability matrices. Rows have
 names equal to row_id; matching column names identify discrete values
 or regions with a common ratio within each region. Each reached row sums
-to one, within a tolerance of 1e-12.}
+to one, within a tolerance of 1e-12. Each entry must lie in [0, 1]
+exactly; the tolerance applies only to the row sum.}
 
 \item{observed}{Named character vector of observed discrete values or region
 labels, matching the probability-matrix column names on reached rows.}
@@ -49,7 +50,8 @@ a pass. Set FALSE at the last assigned wave when no propagation is needed.}
 \value{
 A list containing state, reason, concentration, diagnostics,
   realised_ratio and next_weight, with the supplied probability laws and
-  observed categories. Unassessable inputs return a reason and empty results.
+  observed categories. Invalid inputs return a reason and empty results.
+  Failures after concentration retain the assessment and its diagnostics.
 }
 \description{
 Evaluate the current conditional moment and, after a pass, optionally carry
@@ -60,6 +62,8 @@ A required zero natural mass fails the conditional-moment check.
   During propagation, an observed category with zero natural mass is allowed
   only when it is explicitly excluded by the policy. Otherwise propagation
   is unassessable. Rows with zero prior weight stay zero without division.
+  With propagate = FALSE, callers must still report other_zero_mass in
+  diagnostics, even if the conditional-moment assessment passes.
   This function does not choose or shorten a study's assignment schedule.
 }
 \examples{

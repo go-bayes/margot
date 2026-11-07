@@ -12,11 +12,14 @@
 #'   a pass. Set FALSE at the last assigned wave when no propagation is needed.
 #' @return A list containing state, reason, concentration, diagnostics,
 #'   realised_ratio and next_weight, with the supplied probability laws and
-#'   observed categories. Unassessable inputs return a reason and empty results.
+#'   observed categories. Invalid inputs return a reason and empty results.
+#'   Failures after concentration retain the assessment and its diagnostics.
 #' @details A required zero natural mass fails the conditional-moment check.
 #'   During propagation, an observed category with zero natural mass is allowed
 #'   only when it is explicitly excluded by the policy. Otherwise propagation
 #'   is unassessable. Rows with zero prior weight stay zero without division.
+#'   With propagate = FALSE, callers must still report other_zero_mass in
+#'   diagnostics, even if the conditional-moment assessment passes.
 #'   This function does not choose or shorten a study's assignment schedule.
 #' @examples
 #' ids <- c("a", "b")
@@ -67,7 +70,8 @@ margot_lmtp_support_prefix <- function(natural_mass, policy_mass, observed,
   assessment <- margot_lmtp_support_concentration(natural_mass, policy_mass,
     preceding_weight, reached, row_id, minimum, observation_weight)
   if (!assessment$state %in% c("pass", "fail", "boundary_fail")) {
-    return(unassessable("Concentration assessment is unassessable."))
+    return(unassessable(paste("Concentration assessment is unassessable.",
+      assessment$reason)))
   }
   active <- reached & preceding_weight > 0
   rows <- which(active)
@@ -93,13 +97,17 @@ margot_lmtp_support_prefix <- function(natural_mass, policy_mass, observed,
   value[!is_excluded] <- policy_mass[cell][!is_excluded] / natural_mass[cell][!is_excluded]
   ratio[active] <- value
   if (any(!is.finite(ratio[active]))) {
-    return(unassessable("A required realised exposure ratio is nonfinite."))
+    result$state <- "unassessable"
+    result$reason <- "A required realised exposure ratio is nonfinite."
+    return(result)
   }
   next_weight[reached & !active] <- 0
   next_weight[active] <- preceding_weight[active] * ratio[active]
   if (any(!is.finite(next_weight[reached])) ||
       any(next_weight[active] == 0 & ratio[active] > 0)) {
-    return(unassessable("Cumulative exposure weights are nonfinite or underflowed."))
+    result$state <- "unassessable"
+    result$reason <- "Cumulative exposure weights are nonfinite or underflowed."
+    return(result)
   }
   result$realised_ratio <- ratio
   result$next_weight <- next_weight
