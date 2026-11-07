@@ -16,7 +16,7 @@
 #'   ensemble probability, learner_probability, a compact fit record,
 #'   warnings, reason and seed. The compact record retains coefficients,
 #'   cross-validated risks, error flags and fold sizes via the same helper as
-#'   \\code{\\link{margot_lmtp_exposure_ratio}()}. It also retains the inner
+#'   \code{\link{margot_lmtp_exposure_ratio}()}. It also retains the inner
 #'   validation-row indices. Fitted learner objects are not returned.
 #' @details Empty and one-class training responses return constant predictions.
 #'   An empty conditional set is usable only when its parent probability is
