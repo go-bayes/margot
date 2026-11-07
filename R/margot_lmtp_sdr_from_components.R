@@ -29,6 +29,12 @@
 #' @param control An `lmtp_control` object with `.trim = 1`.
 #' @param progress_bar Optional native SDR progress callback.
 #' @param learners_trt Ignored; exposure components are already supplied.
+#' @param allow_full_fits `NULL` (default) or a single non-empty character
+#'   string giving the reason for keeping full SuperLearner outcome fits. A
+#'   control that sets `.return_full_fits = TRUE` is refused before fitting
+#'   unless a reason is given, as in [margot_lmtp()], which passes its own
+#'   `allow_full_fits` on. A permitted reason is recorded in the fit's
+#'   `full_fits_reason` element.
 #' @return An ordinary `lmtp` fit with supplied folds, histories, bounds and RNG
 #'   provenance attached.
 #' @md
@@ -36,7 +42,11 @@
 margot_lmtp_sdr_from_components <- function(data, trt, outcome, shift,
     components, baseline, time_vary, learners_outcome, bounds,
     control = lmtp::lmtp_control(.trim = 1),
-    progress_bar = function(...) invisible(NULL), learners_trt = NULL) {
+    progress_bar = function(...) invisible(NULL), learners_trt = NULL,
+    allow_full_fits = NULL) {
+  # refuse full outcome fits before any input is touched or model fitted
+  keeps_full_fits <- margot_lmtp_check_full_fits(control, allow_full_fits,
+    caller = "margot_lmtp_sdr_from_components")
   x <- components
   stopifnot(is.data.frame(data), is.data.frame(x$frame), is.function(shift),
     is.character(outcome), length(outcome) == 1L, !outcome %in% names(x$frame),
@@ -100,5 +110,6 @@ margot_lmtp_sdr_from_components <- function(data, trt, outcome, shift,
   fit$folds_supplied <- x$folds
   fit$weight_identity <- list(supplied = x$weights, internal = task$weights,
     normalised_by_engine = !identical(x$weights, task$weights))
+  if (isTRUE(keeps_full_fits)) fit$full_fits_reason <- allow_full_fits
   fit
 }

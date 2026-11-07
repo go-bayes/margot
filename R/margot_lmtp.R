@@ -197,6 +197,23 @@
 #'   returned models, contrasts, and tables retain the existing Margot
 #'   structure. Default is `FALSE` while the opt-in path is validated.
 #' @param untrimmed_sensitivity Logical. When `TRUE`, runs the prespecified untrimmed outcome-stage sensitivity (ARC decision D19) beside the capped primary. On the fold-parallel shared route (`reuse_density_ratios = TRUE`, `manage_future_plan = FALSE`), each policy's density stage is fitted once without a cap; the registered cap in `lmtp_defaults$control$.trim` is applied to a copy with lmtp's own pooled quantile rule; and the capped and untrimmed outcome recursions both start from the same post-density random-number state. The capped models equal a native `lmtp::lmtp_sdr()` call at the registered cap, and the untrimmed models equal a native call at `.trim = 1`, with the same seed, folds and histories. The primary output is unchanged apart from an `untrimmed_record` element on each model (cap, threshold, number and proportion of capped entries, raw and capped ranges; the denominator counts every entry of the pooled ratio matrix, including censored and not-at-risk cells); the sensitivity is returned as `untrimmed_sensitivity`, with its own models, contrasts and tables, the capping records and `failures`. A failed untrimmed recursion is recorded in `failures` with its reason, and the capped primary is kept. Restoring from checkpoints does not yet rebuild `untrimmed_sensitivity`, and the uncapped density stage is not checkpointed for a restart within a run (a rerun refits it and reproduces the same results). Outcomes must share censoring and histories within one call; run outcome groups separately where they differ. Default `FALSE`.
+#' @param allow_full_fits `NULL` (default) or a single non-empty character string
+#'   giving the reason for keeping full SuperLearner fits. By default
+#'   `margot_lmtp()` refuses, before any model is fitted, an lmtp control that
+#'   sets `.return_full_fits = TRUE`, with a condition of class
+#'   `margot_error_full_fits_refused`. Full fits keep every fitted learner for
+#'   every fold and time point and can need tens of GiB per outcome, while
+#'   estimates and influence functions do not depend on the setting; lmtp's
+#'   default (`FALSE`) keeps the learner weights. The control is resolved over
+#'   the installed lmtp's [lmtp::lmtp_control()] defaults, so an absent setting
+#'   takes lmtp's default. A value other than a single `TRUE` or `FALSE`, or a
+#'   name that R would match to `.return_full_fits` (for example
+#'   `.return_full`), is refused whatever this argument says. When a reason is
+#'   supplied and the control keeps full fits, the call proceeds, reports the
+#'   reason, and records it in the `margot_full_fits` attribute of the returned
+#'   object. The check covers every route: the independent route, the shared
+#'   density-ratio route in both scheduling modes and stages, and the untrimmed
+#'   sensitivity, all of which fit from `lmtp_defaults$control`.
 #'
 #' @return A list containing:
 #'   \item{models}{A list of all LMTP models for each outcome and shift function.}
@@ -204,6 +221,8 @@
 #'   \item{individual_tables}{A list of individual tables for each contrast and outcome.}
 #'   \item{combined_tables}{A list of combined tables for each contrast type across all outcomes.}
 #'   \item{untrimmed_sensitivity}{Only when `untrimmed_sensitivity = TRUE`: a list with `models`, `contrasts`, `individual_tables`, `combined_tables`, `capping` records and `failures`.}
+#'   When `allow_full_fits` permitted full fits, the object carries an attribute
+#'   `margot_full_fits`: a list with `return_full_fits = TRUE` and the `reason`.
 #'
 #' @examples
 #' \dontrun{
@@ -268,7 +287,8 @@ margot_lmtp <- function(
     reuse_density_ratios = FALSE,
     stages = c("all", "density", "outcome"),
     estimator_spec = NULL,
-    untrimmed_sensitivity = FALSE) {
+    untrimmed_sensitivity = FALSE,
+    allow_full_fits = NULL) {
   # Load required packages
   library(cli)
   library(progressr)
@@ -276,6 +296,7 @@ margot_lmtp <- function(
   contrast_type <- match.arg(contrast_type)
   contrast_scale <- match.arg(contrast_scale)
   stages <- match.arg(stages)
+  margot_lmtp_check_allow_full_fits(allow_full_fits)
   # where cross-run artefacts are stored is the investigator's decision, so a
   # mode that writes or reads them cannot fall back on the default location
   save_path_supplied <- !missing(save_path)
@@ -367,6 +388,23 @@ margot_lmtp <- function(
       "Building the {.pkg lmtp} call from the locked Margot estimator specification at seed {.val {seed}}."
     )
   }
+  # every route fits from lmtp_defaults$control, now final, so one check here,
+  # before any model is fitted, covers them all; the control is inspected and
+  # passed on unchanged
+  keeps_full_fits <- margot_lmtp_check_full_fits(
+    control = margot_lmtp_control_from_defaults(lmtp_defaults),
+    allow_full_fits = allow_full_fits,
+    caller = "margot_lmtp"
+  )
+  full_fits_record <- if (isTRUE(keeps_full_fits)) {
+    list(return_full_fits = TRUE, reason = allow_full_fits)
+  } else {
+    NULL
+  }
+  # an estimator that runs the same check itself receives the reason
+  forward_allow_full_fits <- !is.null(allow_full_fits) && is.function(lmtp_model_type) &&
+    "allow_full_fits" %in% names(formals(lmtp_model_type))
+
   # the untrimmed sensitivity (D19) shares one uncapped density fit per policy with
   # the capped primary, so it runs on the fold-parallel shared route alone
   if (!isTRUE(untrimmed_sensitivity) && !isFALSE(untrimmed_sensitivity)) {
@@ -745,6 +783,9 @@ margot_lmtp <- function(
     if (inherits(task_results, "margot_lmtp_density_stage")) {
       # the density stage returns its diagnostics; no outcome model exists yet
       cli::cli_alert_success("Density stage complete for {length(shift_functions)} polic{?y/ies}.")
+      if (!is.null(full_fits_record)) {
+        attr(task_results, "margot_full_fits") <- full_fits_record
+      }
       if (save_output) {
         output_path <- file.path(
           save_path,
@@ -819,6 +860,9 @@ margot_lmtp <- function(
       # the locked specification fixes mtp per arm; the exploratory path leaves it alone
       if (!is.null(mtp_by_arm)) {
         lmtp_args$mtp <- unname(mtp_by_arm[[shift_name]])
+      }
+      if (forward_allow_full_fits) {
+        lmtp_args$allow_full_fits <- allow_full_fits
       }
       # seed each fit so the run reproduces independently of task scheduling
       if (!is.null(seed)) set.seed(seed)
@@ -972,6 +1016,9 @@ margot_lmtp <- function(
       if (!is.null(mtp_by_arm)) {
         lmtp_args$mtp <- unname(mtp_by_arm[[shift_name]])
       }
+      if (forward_allow_full_fits) {
+        lmtp_args$allow_full_fits <- allow_full_fits
+      }
       # seed each fit so the run reproduces independently of task scheduling
       if (!is.null(seed)) set.seed(seed)
 
@@ -1112,6 +1159,10 @@ margot_lmtp <- function(
     individual_tables = all_tables,
     combined_tables = combined_tables
   )
+  # the record shows why full fits were kept
+  if (!is.null(full_fits_record)) {
+    attr(complete_output, "margot_full_fits") <- full_fits_record
+  }
   if (isTRUE(untrimmed_sensitivity)) {
     untrimmed_finalized <- margot_lmtp_finalize_outputs(
       all_models = untrimmed_models,
