@@ -48,19 +48,19 @@ p <- matrix(c(1, .25), dimnames = list(ids, "observation"))
 margot_lmtp_support_weights(p, setNames(c(TRUE, TRUE), ids), ids)
 #> $state
 #> [1] "assessable"
-#> 
+#>
 #> $weight
-#>   a   b 
-#> 0.2 0.8 
-#> 
+#>   a   b
+#> 0.2 0.8
+#>
 #> $log_inverse_observation
-#>        a        b 
-#> 0.000000 1.386294 
-#> 
+#>        a        b
+#> 0.000000 1.386294
+#>
 #> $observation_effective_n
 #> [1] 1.470588
-#> 
+#>
 #> $n
 #> [1] 2
-#> 
+#>
 ```

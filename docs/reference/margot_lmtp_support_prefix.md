@@ -99,64 +99,64 @@ margot_lmtp_support_prefix(g, q, setNames(c("zero", "positive"), ids),
   minimum = .05, excluded = "positive")
 #> $state
 #> [1] "pass"
-#> 
+#>
 #> $reason
 #> NULL
-#> 
+#>
 #> $concentration
 #> $concentration$fraction
 #> [1] 0.2
-#> 
+#>
 #> $concentration$equivalent
 #> [1] 0.4
-#> 
+#>
 #> $concentration$n
 #> [1] 2
-#> 
+#>
 #> $concentration$state
 #> [1] "pass"
-#> 
+#>
 #> $concentration$boundary_records
 #> [1] 0
-#> 
+#>
 #> $concentration$sole_failures
 #> [1] 0
-#> 
-#> 
+#>
+#>
 #> $diagnostics
 #> $diagnostics$boundary_records
 #> [1] 0
-#> 
+#>
 #> $diagnostics$sole_failures
 #> [1] 0
-#> 
+#>
 #> $diagnostics$excluded_zero_mass
 #> [1] 0
-#> 
+#>
 #> $diagnostics$other_zero_mass
 #> [1] 0
-#> 
-#> 
+#>
+#>
 #> $realised_ratio
-#> a b 
-#> 5 0 
-#> 
+#> a b
+#> 5 0
+#>
 #> $next_weight
-#> a b 
-#> 5 0 
-#> 
+#> a b
+#> 5 0
+#>
 #> $natural_mass
 #>   zero positive
 #> a  0.2      0.8
 #> b  0.2      0.8
-#> 
+#>
 #> $policy_mass
 #>   zero positive
 #> a    1        0
 #> b    1        0
-#> 
+#>
 #> $observed
-#>          a          b 
-#>     "zero" "positive" 
-#> 
+#>          a          b
+#>     "zero" "positive"
+#>
 ```

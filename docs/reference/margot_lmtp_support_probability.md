@@ -85,28 +85,28 @@ margot_lmtp_support_probability(rep(1, 4), data.frame(x = 1:4),
   data.frame(x = 5:6), letters[1:4], "SL.mean", 2L, 42L)
 #> $state
 #> [1] "constant"
-#> 
+#>
 #> $probability
 #> [1] 1 1
-#> 
+#>
 #> $learner_probability
 #>      SL.mean_All
 #> [1,]           1
 #> [2,]           1
-#> 
+#>
 #> $fit
 #> NULL
-#> 
+#>
 #> $reason
 #> [1] "one observed class in the conditional training set"
-#> 
+#>
 #> $empty_training
 #> [1] FALSE
-#> 
+#>
 #> $warnings
 #> character(0)
-#> 
+#>
 #> $seed
 #> [1] 42
-#> 
+#>
 ```

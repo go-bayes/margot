@@ -82,20 +82,20 @@ margot_lmtp_support_concentration(g, q, setNames(c(1, 1), ids),
   setNames(c(TRUE, TRUE), ids), ids, minimum = .05)
 #> $fraction
 #> [1] 0.2
-#> 
+#>
 #> $equivalent
 #> [1] 0.4
-#> 
+#>
 #> $n
 #> [1] 2
-#> 
+#>
 #> $state
 #> [1] "pass"
-#> 
+#>
 #> $boundary_records
 #> [1] 0
-#> 
+#>
 #> $sole_failures
 #> [1] 0
-#> 
+#>
 ```

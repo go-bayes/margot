@@ -175,6 +175,6 @@ effects <- data.frame(
 fig <- margot_plot_effects(effects, xlab = "Difference in mean outcome, SD units",
   columns = "estimate", family_title = "Outcome", width_mm = 120)
 attr(fig, "size_mm")
-#>     width    height 
-#> 120.00000  28.96041 
+#>     width    height
+#> 120.00000  28.96041
 ```

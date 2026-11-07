@@ -40,6 +40,6 @@ A named numeric vector with `memory_bytes` and `serialised_bytes`.
 
 ``` r
 margot_lmtp_object_size(matrix(stats::rnorm(1000), ncol = 10))
-#>     memory_bytes serialised_bytes 
-#>             8216             8070 
+#>     memory_bytes serialised_bytes
+#>             8216             8070
 ```
