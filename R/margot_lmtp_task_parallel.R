@@ -844,6 +844,9 @@ margot_lmtp_write_density_checkpoint <- function(record, directory,
     post_ratio_seed = record$post_ratio_seed,
     lmtp_version = record$lmtp_version,
     margot_version = record$margot_version,
+    # the density fit's warnings are provenance: they are stored for a restart
+    # but take no part in the identity or the comparison of installed files
+    warnings = record$warnings,
     timestamp = Sys.time()
   )
   margot_lmtp_write_rds_atomic(
@@ -934,6 +937,9 @@ margot_lmtp_read_density_checkpoint <- function(directory, identity, shift_name,
     code_fingerprint = stored$code_fingerprint,
     lmtp_version = stored$lmtp_version,
     margot_version = stored$margot_version,
+    # NULL for a checkpoint written before warnings were recorded
+    warnings = stored$warnings,
+    dropped_learners = if (is.null(stored$warnings)) NULL else margot_lmtp_dropped_learners(stored$warnings),
     checkpoint_path = path,
     host = unname(Sys.info()[["nodename"]]),
     process_id = Sys.getpid(),
@@ -1655,10 +1661,16 @@ margot_lmtp_run_shared_tasks_task <- function(
       if (!isTRUE(resolved)) {
         next
       }
-      record <- guard_task(
-        future::value(density_futures[[policy_index]]),
+      # future re-signals the worker's warnings here; they are collected, not
+      # muffled, and kept on the density record
+      captured <- guard_task(
+        margot_lmtp_capture_warnings(future::value(density_futures[[policy_index]])),
         paste0("density-", policy_index), "density", shift_name
       )
+      record <- captured$value
+      record$warnings <- margot_lmtp_stage_warnings(captured$warnings, "density")
+      record$dropped_learners <- margot_lmtp_dropped_learners(record$warnings)
+      rm(captured)
       release_future(paste0("density-", policy_index))
       progressed <- TRUE
       pending <- setdiff(pending, policy_index)
@@ -1690,12 +1702,27 @@ margot_lmtp_run_shared_tasks_task <- function(
       key <- paste0("outcome-", policy_index, "-", outcome_index)
       restored <- outcome_restored[[policy_index]][[outcome_index]]
       outcome_record <- if (!is.null(restored)) {
+        # a restored model keeps the warnings stored with it
         restored
       } else {
-        guard_task(
-          future::value(outcome_futures[[policy_index]][[outcome_index]]),
+        captured <- guard_task(
+          margot_lmtp_capture_warnings(
+            future::value(outcome_futures[[policy_index]][[outcome_index]])
+          ),
           key, "outcome", label
         )
+        fitted_record <- captured$value
+        if (is.list(fitted_record) && !is.null(fitted_record$model)) {
+          fitted_record$model <- margot_lmtp_record_warnings(
+            fitted_record$model,
+            c(
+              density_records[[policy_index]]$warnings,
+              margot_lmtp_stage_warnings(captured$warnings, "outcome")
+            )
+          )
+        }
+        rm(captured)
+        fitted_record
       }
       release_future(key)
       expected <- ledger$entries[[key]]
@@ -1734,6 +1761,7 @@ margot_lmtp_run_shared_tasks_task <- function(
             trt = trt
           )
           attr(assembled$model, "margot_density_ratio_fit_id") <- shift_name
+          margot_lmtp_alert_dropped_learners(assembled$model, label)
           assembled$task_record <- margot_lmtp_task_record_summary(outcome_record)
           assembled
         },
