@@ -16,7 +16,8 @@ margot_lmtp_sdr_from_components(
   bounds,
   control = lmtp::lmtp_control(.trim = 1),
   progress_bar = function(...) invisible(NULL),
-  learners_trt = NULL
+  learners_trt = NULL,
+  allow_full_fits = NULL
 )
 }
 \arguments{
@@ -46,6 +47,13 @@ margot_lmtp_sdr_from_components(
 \item{progress_bar}{Optional native SDR progress callback.}
 
 \item{learners_trt}{Ignored; exposure components are already supplied.}
+
+\item{allow_full_fits}{\code{NULL} (default) or a single non-empty character
+string giving the reason for keeping full SuperLearner outcome fits. A
+control that sets \code{.return_full_fits = TRUE} is refused before fitting
+unless a reason is given, as in \code{\link[=margot_lmtp]{margot_lmtp()}}, which passes its own
+\code{allow_full_fits} on. A permitted reason is recorded in the fit's
+\code{full_fits_reason} element.}
 }
 \value{
 An ordinary \code{lmtp} fit with supplied folds, histories, bounds and RNG
