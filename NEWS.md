@@ -1,5 +1,7 @@
 # [2026-11-08] margot 1.4.0
 
+- `here_read_arrow(..., lazy = TRUE)` opens an Arrow Dataset without reading rows. Callers can filter waves and convert outcome values to availability flags before collecting any records. The eager reader remains the default; additional Parquet-read arguments apply to eager mode.
+
 - Known dependency limitation: lmtp 1.5.4 can fail with `non-numeric matrix extent` when a nuisance model has exactly one predictor. The upstream prediction method drops the data-frame dimension. Native lmtp and Margot's independent and shared routes inherit the failure; omitting baseline covariates is one way to encounter it. This release documents the limitation and preserves the declared model histories.
 
 - Four support helpers are available for discrete modified treatment policies. They fit an explicitly specified binary probability model, construct normalised inverse-observation weights, calculate censoring-corrected conditional-moment concentration, and propagate exposure ratios after a passing prefix. The caller supplies the probability laws, observation history, threshold and schedule. The concentration calculation uses uncapped probabilities and keeps inverse-observation weights separate from exposure ratios. Support probability fits return predictions and compact learner diagnostics without retaining fitted learner objects. Existing native estimation and descriptive ratio reports keep their interfaces.
