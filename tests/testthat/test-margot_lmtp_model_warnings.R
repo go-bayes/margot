@@ -295,6 +295,22 @@ test_that("the task-parallel route records worker warnings and keeps them in che
     shared_ratio_numerics(again$models$perfectionism$perfectionism_down),
     shared_ratio_numerics(first)
   )
+
+  # a fresh outcome fit that reuses a density checkpoint written before warnings were
+  # recorded leaves both fields NULL, not a record that silently omits the density stage
+  stored <- readRDS(density_file)
+  stored$warnings <- NULL
+  saveRDS(stored, density_file)
+  checkpoint_root <- file.path(output_dir, "checkpoints")
+  outcome_dirs <- setdiff(list.dirs(checkpoint_root, recursive = FALSE), file.path(checkpoint_root, "density"))
+  unlink(outcome_dirs, recursive = TRUE)
+  older <- run_task()
+  expect_identical(attr(older, "margot_density_ratio_reuse")$ratio_checkpoint_reuse_count, 1L)
+  for (outcome in c("perfectionism", "distress")) {
+    model <- older$models[[outcome]][[paste0(outcome, "_down")]]
+    expect_null(model$warnings, info = outcome)
+    expect_null(model$dropped_learners, info = outcome)
+  }
 })
 
 test_that("margot_lmtp_sdr_from_components records its outcome warnings", {

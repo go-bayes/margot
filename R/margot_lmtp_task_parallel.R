@@ -1712,13 +1712,14 @@ margot_lmtp_run_shared_tasks_task <- function(
           key, "outcome", label
         )
         fitted_record <- captured$value
-        if (is.list(fitted_record) && !is.null(fitted_record$model)) {
+        density_warnings <- density_records[[policy_index]]$warnings
+        # a density result restored from a checkpoint written before warnings were
+        # recorded has no record; leave the model's fields NULL ("not recorded")
+        # rather than a record that silently omits the density stage
+        if (is.list(fitted_record) && !is.null(fitted_record$model) && !is.null(density_warnings)) {
           fitted_record$model <- margot_lmtp_record_warnings(
             fitted_record$model,
-            c(
-              density_records[[policy_index]]$warnings,
-              margot_lmtp_stage_warnings(captured$warnings, "outcome")
-            )
+            c(density_warnings, margot_lmtp_stage_warnings(captured$warnings, "outcome"))
           )
         }
         rm(captured)
