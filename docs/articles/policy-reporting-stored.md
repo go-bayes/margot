@@ -30,47 +30,48 @@ representation used for plotting. Every effect estimate and interval
 below is stipulated; their precision is unrelated to the number of
 displayed points.
 
-\
-[`set.seed`](https://rdrr.io/r/base/Random.html)`(``20260910``)`\
-`reference`` ``<-`` `[`data.frame`](https://rdrr.io/r/base/data.frame.html)`(``score ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(`[`seq`](https://rdrr.io/r/base/seq.html)`(``1.08``, ``2.94``, length.out ``=`` ``300``)``,`\
-`                                 `[`seq`](https://rdrr.io/r/base/seq.html)`(``3.06``, ``6.92``, length.out ``=`` ``300``)``)``)`\
-`weights`` ``<-`` `[`c`](https://rdrr.io/r/base/c.html)`(`[`seq`](https://rdrr.io/r/base/seq.html)`(``.5``, ``1.1``, length.out ``=`` ``300``)``, `[`seq`](https://rdrr.io/r/base/seq.html)`(``.7``, ``1.7``, length.out ``=`` ``300``)``)`\
-`tree`` ``<-`` ``policytree``::`[`policy_tree`](https://rdrr.io/pkg/policytree/man/policy_tree.html)`(`\
-`  `[`data.frame`](https://rdrr.io/r/base/data.frame.html)`(``score ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``1``, ``3``, ``4``, ``7``)``)``,`\
-`  `[`cbind`](https://rdrr.io/r/base/cbind.html)`(``control ``=`` ``0``, treated ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``1``, ``1``, ``-``1``, ``-``1``)``)``,`\
-`  depth ``=`` ``1``, min.node.size ``=`` ``1`\
-`)`\
-`object`` ``<-`` `[`list`](https://rdrr.io/r/base/list.html)`(``results ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``model_example ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
-`  policy_tree_depth_1 ``=`` ``tree``, plot_data ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``X_test ``=`` ``reference``)`\
-`)``)``)`\
-`leaves`` ``<-`` `[`data.frame`](https://rdrr.io/r/base/data.frame.html)`(`\
-`  node_id ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``2L``, ``3L``)``, leaf_label ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"L1"``, ``"L2"``)``,`\
-`  estimate ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``.12``, ``-``.04``)``, lower ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``.06``, ``-``.075``)``, upper ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``.18``, ``-``.005``)``,`\
-`  interval_type ``=`` ``"constructed"``, interval_level ``=`` ``.95``,`\
-`  interval_method ``=`` ``"Specified illustration"``, unavailable_reason ``=`` ``NA_character_`\
-`)`\
-`value`` ``<-`` `[`data.frame`](https://rdrr.io/r/base/data.frame.html)`(`\
-`  estimate ``=`` ``.024``, lower ``=`` ``.003``, upper ``=`` ``.045``,`\
-`  interval_type ``=`` ``"constructed"``, interval_level ``=`` ``.95``,`\
-`  interval_method ``=`` ``"Specified illustration"``, unavailable_reason ``=`` ``NA_character_``,`\
-`  comparator_id ``=`` ``"constant_g1"``, comparator_label ``=`` ``"assigning g1 to everyone"``,`\
-`  gain_margin ``=`` ``.01`\
-`)`\
-`context`` ``<-`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
-`  outcome ``=`` ``"example"``, outcome_label ``=`` ``"Outcome of interest"``,`\
-`  rule_id ``=`` ``"example-rule"``, population_id ``=`` ``"example-target"``,`\
-`  population_label ``=`` ``"Illustrative target population"``,`\
-`  scale_id ``=`` ``"example-sd"``, scale_label ``=`` ``"outcome SD"``,`\
-`  orientation ``=`` ``"as_scored"``, weight_id ``=`` ``"example-analysis-weights"``,`\
-`  evaluation_mode ``=`` ``"constructed"``, contrast_label ``=`` ``"g1 minus g0"``,`\
-`  qualification ``=`` ``"Constructed estimates and intervals; coverage is unspecified."`\
-`)`\
-`reporting`` ``<-`` `[`margot_policy_reporting_data`](https://go-bayes.github.io/margot/reference/margot_policy_reporting_data.md)`(`\
-`  ``tree``, ``leaves``, ``value``, ``context``, reference ``=`` ``reference``,`\
-`  display_weights ``=`` ``weights``, reference_label ``=`` ``"600 constructed records"``,`\
-`  display_weight_id ``=`` ``"reference weights"`\
-`)`\
-[`stopifnot`](https://rdrr.io/r/base/stopifnot.html)`(`[`isTRUE`](https://rdrr.io/r/base/Logic.html)`(`[`all.equal`](https://rdrr.io/r/base/all.equal.html)`(``reporting``$``leaves``$``reference_share``, `[`c`](https://rdrr.io/r/base/c.html)`(``.4``, ``.6``)``)``)``)`
+``` r
+set.seed(20260910)
+reference <- data.frame(score = c(seq(1.08, 2.94, length.out = 300),
+                                 seq(3.06, 6.92, length.out = 300)))
+weights <- c(seq(.5, 1.1, length.out = 300), seq(.7, 1.7, length.out = 300))
+tree <- policytree::policy_tree(
+  data.frame(score = c(1, 3, 4, 7)),
+  cbind(control = 0, treated = c(1, 1, -1, -1)),
+  depth = 1, min.node.size = 1
+)
+object <- list(results = list(model_example = list(
+  policy_tree_depth_1 = tree, plot_data = list(X_test = reference)
+)))
+leaves <- data.frame(
+  node_id = c(2L, 3L), leaf_label = c("L1", "L2"),
+  estimate = c(.12, -.04), lower = c(.06, -.075), upper = c(.18, -.005),
+  interval_type = "constructed", interval_level = .95,
+  interval_method = "Specified illustration", unavailable_reason = NA_character_
+)
+value <- data.frame(
+  estimate = .024, lower = .003, upper = .045,
+  interval_type = "constructed", interval_level = .95,
+  interval_method = "Specified illustration", unavailable_reason = NA_character_,
+  comparator_id = "constant_g1", comparator_label = "assigning g1 to everyone",
+  gain_margin = .01
+)
+context <- list(
+  outcome = "example", outcome_label = "Outcome of interest",
+  rule_id = "example-rule", population_id = "example-target",
+  population_label = "Illustrative target population",
+  scale_id = "example-sd", scale_label = "outcome SD",
+  orientation = "as_scored", weight_id = "example-analysis-weights",
+  evaluation_mode = "constructed", contrast_label = "g1 minus g0",
+  qualification = "Constructed estimates and intervals; coverage is unspecified."
+)
+reporting <- margot_policy_reporting_data(
+  tree, leaves, value, context, reference = reference,
+  display_weights = weights, reference_label = "600 constructed records",
+  display_weight_id = "reference weights"
+)
+stopifnot(isTRUE(all.equal(reporting$leaves$reference_share, c(.4, .6))))
+```
 
 The constructor retains full numerical precision. It computes reference
 counts and shares from every supplied row, routing threshold equality to
@@ -81,15 +82,16 @@ projections preserve both predictor coordinates and display each record
 in its applicable root branch. Zero-weight records contribute to
 unweighted counts and have zero point area.
 
-\
-`report`` ``<-`` `[`margot_report_policy_tree`](https://go-bayes.github.io/margot/reference/margot_report_policy_tree.md)`(`\
-`  ``object``, ``"example"``, depth ``=`` ``1``, reporting_data ``=`` ``reporting``,`\
-`  label_mapping ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``control ``=`` ``"g0"``, treated ``=`` ``"g1"``)``,`\
-`  projection_args ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``jitter_seed ``=`` ``20260910``, weight_max_size ``=`` ``5``)``,`\
-`  decision_tree_args ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``text_size ``=`` ``4``)``,`\
-`  reporting_heights ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``1.5``, ``1.7``, ``1``)`\
-`)`\
-`report``$``plots``$``combined_plot`
+``` r
+report <- margot_report_policy_tree(
+  object, "example", depth = 1, reporting_data = reporting,
+  label_mapping = list(control = "g0", treated = "g1"),
+  projection_args = list(jitter_seed = 20260910, weight_max_size = 5),
+  decision_tree_args = list(text_size = 4),
+  reporting_heights = c(1.5, 1.7, 1)
+)
+report$plots$combined_plot
+```
 
 ![](policy-reporting-stored_files/figure-html/complete-report-1.png)
 
@@ -112,26 +114,28 @@ side by side. Export height still determines the space available for
 labels. Therefore, inspect the rendered figure at its intended
 publication size.
 
-\
-`compact_report`` ``<-`` `[`margot_report_policy_tree`](https://go-bayes.github.io/margot/reference/margot_report_policy_tree.md)`(`\
-`  ``object``, ``"example"``, depth ``=`` ``1``, reporting_data ``=`` ``reporting``,`\
-`  reporting_layout ``=`` ``"compact"``,`\
-`  label_mapping ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``control ``=`` ``"g0"``, treated ``=`` ``"g1"``)``,`\
-`  decision_tree_args ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``branch_labels ``=`` ``"condition"``, text_size ``=`` ``3.5``)``,`\
-`  projection_args ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``jitter_seed ``=`` ``20260910``, weight_max_size ``=`` ``5``)``,`\
-`  panel_labels ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
-`    C ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``x ``=`` ``"Outcome contrast: g1 minus g0 (SD)"``)``,`\
-`    D ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``x ``=`` ``"Gain over uniform assignment (SD)"``)`\
-`  ``)`\
-`)`\
-`compact_report``$``plots``$``combined_plot`
+``` r
+compact_report <- margot_report_policy_tree(
+  object, "example", depth = 1, reporting_data = reporting,
+  reporting_layout = "compact",
+  label_mapping = list(control = "g0", treated = "g1"),
+  decision_tree_args = list(branch_labels = "condition", text_size = 3.5),
+  projection_args = list(jitter_seed = 20260910, weight_max_size = 5),
+  panel_labels = list(
+    C = list(x = "Outcome contrast: g1 minus g0 (SD)"),
+    D = list(x = "Gain over uniform assignment (SD)")
+  )
+)
+compact_report$plots$combined_plot
+```
 
 ![](policy-reporting-stored_files/figure-html/compact-report-1.png)
 
-\
-[`stopifnot`](https://rdrr.io/r/base/stopifnot.html)`(`[`identical`](https://rdrr.io/r/base/identical.html)`(``report``$``table``, ``compact_report``$``table``)``,`\
-`          `[`identical`](https://rdrr.io/r/base/identical.html)`(``report``$``policy_value``, ``compact_report``$``policy_value``)``,`\
-`          `[`identical`](https://rdrr.io/r/base/identical.html)`(``report``$``reporting_data``, ``compact_report``$``reporting_data``)``)`
+``` r
+stopifnot(identical(report$table, compact_report$table),
+          identical(report$policy_value, compact_report$policy_value),
+          identical(report$reporting_data, compact_report$reporting_data))
+```
 
 Branch conditions, assigned actions and outcome contrasts have separate
 meanings. A branch condition identifies which participants enter a leaf.
@@ -158,12 +162,13 @@ object directly. This is useful when a stored rule is all that needs to
 be drawn. Supply additional leaf metrics as stored labels. A tree alone
 records its assignment rule.
 
-\
-[`margot_plot_policy_decision_tree`](https://go-bayes.github.io/margot/reference/margot_plot_policy_decision_tree.md)`(`\
-`  ``tree``, layout_style ``=`` ``"compact"``, branch_labels ``=`` ``"condition"``,`\
-`  title ``=`` ``"Constructed policy rule"``, text_size ``=`` ``3.2``,`\
-`  label_mapping ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``score ``=`` ``"Baseline score"``, control ``=`` ``"Assign g0"``, treated ``=`` ``"Assign g1"``)`\
-`)`
+``` r
+margot_plot_policy_decision_tree(
+  tree, layout_style = "compact", branch_labels = "condition",
+  title = "Constructed policy rule", text_size = 3.2,
+  label_mapping = list(score = "Baseline score", control = "Assign g0", treated = "Assign g1")
+)
+```
 
 ![](policy-reporting-stored_files/figure-html/compact-native-1.png)
 
@@ -175,13 +180,14 @@ Supply `c(left = "Yes", right = "No")` for a common pair of labels, or a
 table with `parent_id`, `side` and `label` for edge-specific wording. A
 callback can use the edge metadata to append units:
 
-\
-[`margot_plot_policy_decision_tree`](https://go-bayes.github.io/margot/reference/margot_plot_policy_decision_tree.md)`(`\
-`  ``tree``, layout_style ``=`` ``"compact"``,`\
-`  branch_labels ``=`` ``function``(``edges``)`` ``{`\
-`    `[`paste`](https://rdrr.io/r/base/paste.html)`(`[`ifelse`](https://rdrr.io/r/base/ifelse.html)`(``edges``$``side`` ``==`` ``"left"``, ``"<="``, ``">"``)``, ``edges``$``threshold_label``, ``"points"``)`\
-`  ``}`\
-`)`
+``` r
+margot_plot_policy_decision_tree(
+  tree, layout_style = "compact",
+  branch_labels = function(edges) {
+    paste(ifelse(edges$side == "left", "<=", ">"), edges$threshold_label, "points")
+  }
+)
+```
 
 Use `node_label_width` to wrap long node labels while preserving their
 existing line breaks. Explicit padding and margin settings override
@@ -199,23 +205,24 @@ interval records its type, level and supplied method. Interpretation
 functions compare the unrounded gain with the resolved margin. They then
 format the numbers for readers.
 
-\
-`report``$``table``[``, `[`c`](https://rdrr.io/r/base/c.html)`(``"leaf_label"``, ``"estimate"``, ``"n_reference"``, ``"reference_share"``)``]`\
-`#> ``# A tibble: 2 × 4`\
-`#>   leaf_label estimate n_reference reference_share`\
-`#>   ``<chr>``         ``<dbl>``       ``<int>``           ``<dbl>`\
-`#> ``1`` L1             0.12         300             0.4`\
-`#> ``2`` L2            -``0.04``         300             0.6`\
-[`cat`](https://rdrr.io/r/base/cat.html)`(`[`paste`](https://rdrr.io/r/base/paste.html)`(`[`margot_text_policy_value_gain`](https://go-bayes.github.io/margot/reference/margot_text_policy_value_gain.md)`(``reporting``)``, collapse ``=`` ``"\n\n"``)``)`\
-`#> Outcome of interest: Constructed illustration; Illustrative target population.`\
-`#> `\
-`#> Relative to assigning g1 to everyone, the stored gain is 0.024 outcome SD. The estimate exceeds the practical margin of 0.010 outcome SD.`\
-`#> `\
-`#> 95% constructed interval [0.003, 0.045]; Specified illustration.`\
-`#> `\
-`#> The interval includes gains below the practical margin.`\
-`#> `\
-`#> Constructed estimates and intervals; coverage is unspecified.`
+``` r
+report$table[, c("leaf_label", "estimate", "n_reference", "reference_share")]
+#> # A tibble: 2 × 4
+#>   leaf_label estimate n_reference reference_share
+#>   <chr>         <dbl>       <int>           <dbl>
+#> 1 L1             0.12         300             0.4
+#> 2 L2            -0.04         300             0.6
+cat(paste(margot_text_policy_value_gain(reporting), collapse = "\n\n"))
+#> Outcome of interest: Constructed illustration; Illustrative target population.
+#>
+#> Relative to assigning g1 to everyone, the stored gain is 0.024 outcome SD. The estimate exceeds the practical margin of 0.010 outcome SD.
+#>
+#> 95% constructed interval [0.003, 0.045]; Specified illustration.
+#>
+#> The interval includes gains below the practical margin.
+#>
+#> Constructed estimates and intervals; coverage is unspecified.
+```
 
 Here the gain of 0.024 SD exceeds the practical margin of 0.01 SD.
 However, the constructed interval, from 0.003 to 0.045 SD, includes
@@ -263,20 +270,21 @@ variability. A sampling interval requires a variance estimator that
 accounts for participant reuse across folds and repeats. When compatible
 uncertainty is unavailable, retain the estimate and provide its reason:
 
-\
-`value_unavailable`` ``<-`` ``value`\
-`value_unavailable``$``lower`` ``<-`` ``value_unavailable``$``upper`` ``<-`` ``NA_real_`\
-`value_unavailable``$``interval_type`` ``<-`` ``"unavailable"`\
-`value_unavailable``$``unavailable_reason`` ``<-`` ``"Saved outputs omit compatible sampling uncertainty"`\
-`without_interval`` ``<-`` `[`margot_policy_reporting_data`](https://go-bayes.github.io/margot/reference/margot_policy_reporting_data.md)`(``tree``, ``leaves``, ``value_unavailable``, ``context``)`\
-[`cat`](https://rdrr.io/r/base/cat.html)`(`[`paste`](https://rdrr.io/r/base/paste.html)`(`[`margot_text_policy_value_gain`](https://go-bayes.github.io/margot/reference/margot_text_policy_value_gain.md)`(``without_interval``)``, collapse ``=`` ``"\n\n"``)``)`\
-`#> Outcome of interest: Constructed illustration; Illustrative target population.`\
-`#> `\
-`#> Relative to assigning g1 to everyone, the stored gain is 0.024 outcome SD. The estimate exceeds the practical margin of 0.010 outcome SD.`\
-`#> `\
-`#> Interval unavailable: Saved outputs omit compatible sampling uncertainty.`\
-`#> `\
-`#> Constructed estimates and intervals; coverage is unspecified.`
+``` r
+value_unavailable <- value
+value_unavailable$lower <- value_unavailable$upper <- NA_real_
+value_unavailable$interval_type <- "unavailable"
+value_unavailable$unavailable_reason <- "Saved outputs omit compatible sampling uncertainty"
+without_interval <- margot_policy_reporting_data(tree, leaves, value_unavailable, context)
+cat(paste(margot_text_policy_value_gain(without_interval), collapse = "\n\n"))
+#> Outcome of interest: Constructed illustration; Illustrative target population.
+#>
+#> Relative to assigning g1 to everyone, the stored gain is 0.024 outcome SD. The estimate exceeds the practical margin of 0.010 outcome SD.
+#>
+#> Interval unavailable: Saved outputs omit compatible sampling uncertainty.
+#>
+#> Constructed estimates and intervals; coverage is unspecified.
+```
 
 ## Independently evaluated rules
 

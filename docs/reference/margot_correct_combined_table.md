@@ -9,7 +9,7 @@ produced by the various \*margot\* models (or by your own code) and
     new interval.
 
 By default it implements the single–step \*\*Bonferroni\*\* correction
-at \\(\alpha = 0.05\\) as advocated by VanderWeele & Mathur (2019).
+at \\\alpha = 0.05\\ as advocated by VanderWeele & Mathur (2019).
 
 ## Usage
 
@@ -21,7 +21,8 @@ margot_correct_combined_table(
   scale = c("RD", "RR"),
   delta = 1,
   sd = 1,
-  m = NULL
+  m = NULL,
+  e_val_bound_conversion = c("exact", "rounded")
 )
 ```
 
@@ -33,7 +34,7 @@ margot_correct_combined_table(
 
   - \`E\[Y(1)\]-E\[Y(0)\]\` \*\*or\*\* \`E\[Y(1)\]/E\[Y(0)\]\`
 
-  - \`2.5
+  - \`2.5 %\`, \`97.5 %\` (unadjusted CI limits)
 
   Extra columns (e.g. the original \*E\*-values) are carried through.
 
@@ -73,12 +74,30 @@ margot_correct_combined_table(
   \`NULL\`, Margot uses the number of rows. Holm and BH continue to use
   the rows supplied in \`combined_table\` as their adjustment family.
 
+- e_val_bound_conversion:
+
+  How the confidence-bound E-value is computed from the returned
+  interval when \`scale = "RD"\`. \`"exact"\` (default) converts the
+  interval limit nearest the null directly. When the interval excludes
+  the null, the risk ratio away from the null at that limit is
+  \\\exp(0.91 \|d\_{\mathrm{limit}}\|)\\, which equals \\\exp(0.91
+  (\|d\| - z^{\*} \mathrm{SE}(d)))\\ for a symmetric interval with
+  critical value \\z^{\*}\\; for a negative \\d\\ the nearest limit is
+  the upper one, and its ratio below 1 is inverted. \`"rounded"\`
+  reproduces margot 1.3.2 and earlier, for reproducing earlier results
+  only: it infers \\\mathrm{SE}^{\*} = (\mathrm{upper} -
+  \mathrm{estimate}) / \Phi^{-1}(0.975)\\ from the returned interval and
+  uses \\\exp(0.91 \|d\| - 1.78\\\mathrm{SE}^{\*})\\, which replaces
+  \\0.91 z^{\*}\\ by \\1.78 z^{\*} / 1.96\\ and so gives a slightly
+  larger bound for an adjusted interval. Ignored when \`scale = "RR"\`,
+  where the returned limits are used directly.
+
 ## Value
 
 A data frame with the same rows (and order) as \`combined_table\`, but
 with
 
-- updated \`2.5
+- updated \`2.5 %\` and \`97.5 %\` columns, and
 
 - freshly computed \`E_Value\` and \`E_Val_bound\`.
 
@@ -87,26 +106,32 @@ rounding only when formatting the returned table for presentation.
 
 ## E-value calculation
 
-For a risk ratio \\(r\\), let \\(r^\* = r\\) when \\(r \ge 1\\) and
-\\(r^\* = 1/r\\) otherwise. Margot computes the null E-value as
-\$\$r^\* + \sqrt{r^\*(r^\*-1)}.\$\$ The confidence-bound E-value uses
-the confidence limit closest to 1 and equals 1 when the interval
-includes 1.
+For a risk ratio \\r\\, let \\r^\* = r\\ when \\r \ge 1\\ and \\r^\* =
+1/r\\ otherwise. Margot computes the null E-value as \$\$r^\* +
+\sqrt{r^\*(r^\*-1)}.\$\$ The confidence-bound E-value uses the
+confidence limit closest to 1 and equals 1 when the interval includes 1.
 
-For an outcome-mean difference \\(b\\), exposure contrast \\(\delta\\),
-and outcome standard deviation \\(s\\), Margot first forms the
-standardised difference \\(d = b\|\delta\|/s\\). It approximates the
-risk ratio as \\(\exp(0.91d)\\) and the risk-ratio confidence limits as
-\\(\exp(0.91d \pm 1.78\\,\mathrm{SE}(d))\\), then applies the same null
-E-value equation. This calculation treats \\(s\\) as known.
+For an outcome-mean difference \\b\\, exposure contrast \\\delta\\, and
+outcome standard deviation \\s\\, Margot first forms the standardised
+difference \\d = b\|\delta\|/s\\. It approximates the risk ratio as
+\\\exp(0.91d)\\. With the default \`e_val_bound_conversion = "exact"\`,
+each returned (adjusted) confidence limit is standardised and converted
+in the same way, so the confidence-bound E-value uses \\\exp(0.91
+d\_{\mathrm{limit}})\\ for the limit nearest the null (inverted when it
+lies below 1). With \`e_val_bound_conversion = "rounded"\`, the
+risk-ratio confidence limits are \\\exp(0.91d \pm
+1.78\\\mathrm{SE}^{\*})\\, with \\\mathrm{SE}^{\*}\\ inferred from the
+returned interval as described under that argument. Either way Margot
+then applies the same null E-value equation. This calculation treats
+\\s\\ as known.
 
 ## How the correction is applied
 
-For Bonferroni, let \\(m\\) be the total number of tests in the
+For Bonferroni, let \\m\\ be the total number of tests in the
 multiplicity family.
 
 - \*\*Bonferroni\*\* uses \$\$ z^\* =
-  \Phi^{-1}\\!\bigl(1-\alpha/(2m)\bigr) \$\$ and rescales the original
+  \Phi^{-1}\\\bigl(1-\alpha/(2m)\bigr) \$\$ and rescales the original
   half-width.
 
 - \*\*Holm\*\* first step-down adjusts the (two-sided) \*p\*-value for
@@ -116,6 +141,12 @@ multiplicity family.
 - \*\*BH\*\* (Benjamini-Hochberg) applies FDR correction to
   \*p\*-values, then back-calculates symmetric CIs. Controls false
   discovery rate rather than family-wise error rate.
+
+Because an adjusted \*p\*-value is never smaller than the unadjusted
+one, the Holm and BH intervals exclude (or touch) the null whatever the
+adjusted \*p\*-value. Read the Holm or BH decision from the adjusted
+\*p\*-value, not from these intervals; \[margot_plot()\] refuses its
+default interval rule with them.
 
 ## References
 

@@ -15,7 +15,7 @@ automatically. These functions do not define estimators or schedule workers."></
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.2</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@ automatically. These functions do not define estimators or schedule workers.</p>
 <span></span>
 <span><span class="fu">margot_lmtp_checkpoint_compute</span><span class="op">(</span><span class="va">directory</span>, <span class="va">key</span>, <span class="va">identity</span>, <span class="va">compute</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">margot_lmtp_checkpoint_inventory</span><span class="op">(</span><span class="va">directory</span>, <span class="va">identities</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">margot_lmtp_checkpoint_inventory</span><span class="op">(</span><span class="va">directory</span>, <span class="va">identities</span>, load <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -79,7 +79,9 @@ automatically. These functions do not define estimators or schedule workers.</p>
 
 <dt id="arg-identity">identity<a class="anchor" aria-label="anchor" href="#arg-identity"></a></dt>
 <dd><p>Nonempty list identifying all result-affecting inputs,
-ordered participants, histories, folds, weights, settings and code/builds.</p></dd>
+ordered participants, histories, folds, weights, settings and code/builds.
+Environments, closures and external pointers are refused; pass a
+fingerprint of a function instead of the function.</p></dd>
 
 
 <dt id="arg-compute">compute<a class="anchor" aria-label="anchor" href="#arg-compute"></a></dt>
@@ -89,12 +91,27 @@ ordered participants, histories, folds, weights, settings and code/builds.</p></
 <dt id="arg-identities">identities<a class="anchor" aria-label="anchor" href="#arg-identities"></a></dt>
 <dd><p>Named list of identities for the complete expected task set.</p></dd>
 
+
+<dt id="arg-load">load<a class="anchor" aria-label="anchor" href="#arg-load"></a></dt>
+<dd><p>For <code>inventory</code>, whether to return each verified value. With
+<code>load = FALSE</code>, every file is still verified but records hold metadata only
+(path and checksums), so the inventory does not hold the saved results in
+memory. The default <code>TRUE</code> keeps the earlier behaviour.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>read</code> returns a verified record or <code>NULL</code>; <code>compute</code> returns a
 record containing <code>value</code>, <code>path</code>, <code>reused</code> and checksums; <code>inventory</code>
-returns completion status, a task table and verified records.</p>
+returns completion status, a task table and verified records, which hold
+<code>value</code> only when <code>load = TRUE</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Identities are compared in canonical form (see
+<code><a href="margot_lmtp_checkpoint_identity.html">margot_lmtp_checkpoint_identity()</a></code>), so attributes that record where an
+input came from, such as the file path RcppTOML attaches to a parsed study
+file, do not change a task's identity.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

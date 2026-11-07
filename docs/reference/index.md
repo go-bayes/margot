@@ -54,6 +54,16 @@
 
 ## Diagnose support
 
+- [`margot_lmtp_exposure_ratio()`](https://go-bayes.github.io/margot/reference/margot_lmtp_exposure_ratio.md)
+  : Cross-fitted exposure-only density ratios
+- [`margot_lmtp_support_probability()`](https://go-bayes.github.io/margot/reference/margot_lmtp_support_probability.md)
+  : Fit one binary probability model for a support assessment
+- [`margot_lmtp_support_weights()`](https://go-bayes.github.io/margot/reference/margot_lmtp_support_weights.md)
+  : Normalised inverse-observation weights for support assessment
+- [`margot_lmtp_support_concentration()`](https://go-bayes.github.io/margot/reference/margot_lmtp_support_concentration.md)
+  : Conditional-moment concentration for a discrete intervention
+- [`margot_lmtp_support_prefix()`](https://go-bayes.github.io/margot/reference/margot_lmtp_support_prefix.md)
+  : Assess and propagate one discrete exposure-support prefix
 - [`margot_exposure_overlap()`](https://go-bayes.github.io/margot/reference/margot_exposure_overlap.md)
   : Outcome-blind exposure overlap diagnostics
 - [`margot_grf_overlap()`](https://go-bayes.github.io/margot/reference/margot_grf_overlap.md)
@@ -83,6 +93,8 @@
   : Registered trim-ladder positivity gate for LMTP fits (defunct)
 - [`margot_lmtp_censoring_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_censoring_report.md)
   : Report descriptive censoring evidence for an LMTP analysis
+- [`margot_lmtp_observation_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_observation_report.md)
+  : Report the calibration of predicted observation probabilities
 - [`margot_target_projection_report()`](https://go-bayes.github.io/margot/reference/margot_target_projection_report.md)
   : Report target-population projection evidence
 - [`margot_lmtp_analysis_weight_report()`](https://go-bayes.github.io/margot/reference/margot_lmtp_analysis_weight_report.md)
@@ -133,6 +145,15 @@
   [`margot_lmtp_checkpoint_compute()`](https://go-bayes.github.io/margot/reference/margot_lmtp_checkpoints.md)
   [`margot_lmtp_checkpoint_inventory()`](https://go-bayes.github.io/margot/reference/margot_lmtp_checkpoints.md)
   : Save and reuse verified LMTP task results
+- [`margot_lmtp_checkpoint_identity()`](https://go-bayes.github.io/margot/reference/margot_lmtp_checkpoint_identity.md)
+  : Canonical form of a checkpoint identity
+- [`margot_lmtp_assert_lean()`](https://go-bayes.github.io/margot/reference/margot_lmtp_assert_lean.md)
+  : Check that an object holds no fitted learner
+- [`margot_lmtp_memory_preflight()`](https://go-bayes.github.io/margot/reference/margot_lmtp_memory_preflight.md)
+  [`print(`*`<margot_lmtp_memory_preflight>`*`)`](https://go-bayes.github.io/margot/reference/margot_lmtp_memory_preflight.md)
+  : Check memory before launching an LMTP run
+- [`margot_lmtp_object_size()`](https://go-bayes.github.io/margot/reference/margot_lmtp_object_size.md)
+  : Measure an object's size in memory and serialised
 - [`margot_lmtp_restore_checkpoints()`](https://go-bayes.github.io/margot/reference/margot_lmtp_restore_checkpoints.md)
   : Restore LMTP Output from Saved Checkpoints
 - [`print(`*`<margot_lmtp_density_stage>`*`)`](https://go-bayes.github.io/margot/reference/print.margot_lmtp_density_stage.md)
@@ -308,6 +329,12 @@
 
 - [`margot_plot()`](https://go-bayes.github.io/margot/reference/margot_plot.md)
   : Create a Margot Plot with Proper Multiplicity Correction
+- [`margot_lmtp_effects()`](https://go-bayes.github.io/margot/reference/margot_lmtp_effects.md)
+  : Tidy effects table from margot_lmtp() output
+- [`margot_plot_effects()`](https://go-bayes.github.io/margot/reference/margot_plot_effects.md)
+  : Publication forest figure of estimated effects
+- [`margot_save_effects_plot()`](https://go-bayes.github.io/margot/reference/margot_save_effects_plot.md)
+  : Save an effects figure at print size
 - [`margot_plot_ate()`](https://go-bayes.github.io/margot/reference/margot_plot_ate.md)
   : Plot Average Treatment Effect Estimates
 - [`margot_table_ate()`](https://go-bayes.github.io/margot/reference/margot_table_ate.md)

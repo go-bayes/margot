@@ -45,6 +45,7 @@ authors:
     href: https://github.com/go-bayes
 
 development:
+  mode: release
   version_label: default
   version_tooltip: "Version"
 
@@ -77,6 +78,7 @@ reference:
 
   - title: "Diagnose support"
     contents:
+    - margot_lmtp_exposure_ratio
     - margot_lmtp_support_probability
     - margot_lmtp_support_weights
     - margot_lmtp_support_concentration

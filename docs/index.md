@@ -3,7 +3,7 @@ name](reference/figures/margot.png)
 
 ## margot
 
-**MARG**inal **O**bservational **T**reatment-effects.[^1]
+**MARG**inal **O**bservational **T**reatment-effects.[¹](#fn1)
 
 The goal of `margot` is to enhance understanding of causality in
 observational research. We do this by:
@@ -39,15 +39,17 @@ meaning to the statistical relationships we observe from data.
 
 `margot` is currently available only on GitHub. Install it with `pak`:
 
-\
-`# install.packages("pak")`\
-`pak``::`[`pak`](https://pak.r-lib.org/reference/pak.html)`(``"go-bayes/margot"``)`
+``` r
+# install.packages("pak")
+pak::pak("go-bayes/margot")
+```
 
 If you prefer `remotes`, use:
 
-\
-`# install.packages("remotes")`\
-`remotes``::`[`install_github`](https://remotes.r-lib.org/reference/install_github.html)`(``"go-bayes/margot"``)`
+``` r
+# install.packages("remotes")
+remotes::install_github("go-bayes/margot")
+```
 
 `margot` streamlines the estimation of marginal treatment effects such
 as the ATE and ATT. It also supports workflows for heterogeneous
@@ -97,18 +99,21 @@ resulting combined table, and passes that table directly to
 Its executable assertions require two ratio fits for two policies,
 compared with four fits under independent outcome-policy estimation.
 
-\
-`example_path`` ``<-`` `[`system.file`](https://rdrr.io/r/base/system.file.html)`(`\
-`  ``"examples"``, ``"lmtp-fit-once-perfectionism.R"``,`\
-`  package ``=`` ``"margot"``,`\
-`  mustWork ``=`` ``TRUE`\
-`)`\
-[`sys.source`](https://rdrr.io/r/base/sys.source.html)`(``example_path``, envir ``=`` `[`new.env`](https://rdrr.io/r/base/environment.html)`(``parent ``=`` `[`globalenv`](https://rdrr.io/r/base/environment.html)`(``)``)``)`
+``` r
+example_path <- system.file(
+  "examples", "lmtp-fit-once-perfectionism.R",
+  package = "margot",
+  mustWork = TRUE
+)
+sys.source(example_path, envir = new.env(parent = globalenv()))
+```
 
 Note that Margot is being actively developed, and is not currently in a
 stable state. Expect breaking changes.
 
-[^1]: The logo is a *Single World Intervention Template* (SWIT). We use
-    a SWIT to generate *Single World Intervention Graphs* (SWIGs) –
-    causal diagrams for which identification assumptions can be read
-    separately for each treatment (regime) to be compared.
+------------------------------------------------------------------------
+
+1.  The logo is a *Single World Intervention Template* (SWIT). We use a
+    SWIT to generate *Single World Intervention Graphs* (SWIGs) – causal
+    diagrams for which identification assumptions can be read separately
+    for each treatment (regime) to be compared.

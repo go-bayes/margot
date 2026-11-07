@@ -154,7 +154,7 @@ margot_transition_ipsi_summary(transitions)
 #>         paste(report, collapse = "\n")
 #>     }
 #> }
-#> <bytecode: 0x9768bfc40>
-#> <environment: 0x9768baa88>
+#> <bytecode: 0x786e9c6858>
+#> <environment: 0x786e9c75e8>
 #> 
 ```

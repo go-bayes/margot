@@ -38,10 +38,10 @@ group_tab(
 
   - 'alphabetical': sort by outcome name (A-Z)
 
-  - 'magnitude_desc': sort by absolute effect size, descending (default
-    for 'magnitude')
+  - 'magnitude_desc': sort by distance from the null, descending:
+    absolute difference for 'RD', absolute log ratio for 'RR'
 
-  - 'magnitude_asc': sort by absolute effect size, ascending
+  - 'magnitude_asc': sort by distance from the null, ascending
 
   - 'evaluebound_desc': sort by E-value bound, descending
 
@@ -74,10 +74,11 @@ The function detects whether \`df\` is a list output from
 transform_to_original_scale() and extracts \`results_df\` and
 \`label_mapping\` accordingly. It then ensures an \`outcome\` column,
 applies any label mapping, and sorts based on the chosen \`order\`. New
-options 'magnitude_desc' and 'magnitude_asc' sort by absolute effect
-size; 'evaluebound_desc' and 'evaluebound_asc' sort by the E-Value
-bound; 'alphabetical' sorts by outcome name; 'custom' respects a
-user-provided vector; 'default' is an alias for 'magnitude_desc'.
+options 'magnitude_desc' and 'magnitude_asc' sort by distance from the
+null (absolute difference for 'RD', absolute log ratio for 'RR');
+'evaluebound_desc' and 'evaluebound_asc' sort by the E-Value bound;
+'alphabetical' sorts by outcome name; 'custom' respects a user-provided
+vector; 'default' is an alias for 'magnitude_desc'.
 
 ## Examples
 

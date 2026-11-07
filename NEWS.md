@@ -1,4 +1,6 @@
-# Development
+# [2026-11-08] margot 1.4.0
+
+- Known dependency limitation: lmtp 1.5.4 can fail with `non-numeric matrix extent` when a nuisance model has exactly one predictor. The upstream prediction method drops the data-frame dimension. Native lmtp and Margot's independent and shared routes inherit the failure; omitting baseline covariates is one way to encounter it. This release documents the limitation and preserves the declared model histories.
 
 - Four support helpers are available for discrete modified treatment policies. They fit an explicitly specified binary probability model, construct normalised inverse-observation weights, calculate censoring-corrected conditional-moment concentration, and propagate exposure ratios after a passing prefix. The caller supplies the probability laws, observation history, threshold and schedule. The concentration calculation uses uncapped probabilities and keeps inverse-observation weights separate from exposure ratios. Support probability fits return predictions and compact learner diagnostics without retaining fitted learner objects. Existing native estimation and descriptive ratio reports keep their interfaces.
 
@@ -583,7 +585,7 @@ The GRF policy-tree pipeline is reorganised to ensure the **standard workflow is
 # [2026-04-30] margot 1.0.319
 
 ### Fixed
-- `margot_convert_qs_dir_docker()` now `shQuote()`s the `-v` bind-mount values, so directory paths containing spaces (for example, `/Users/.../v-project Dropbox/data/...`) survive `system2()`'s shell pass to `docker run`. Without this, paths with spaces produced `docker: invalid reference format` and the migration aborted.
+- `margot_convert_qs_dir_docker()` now `shQuote()`s the `-v` bind-mount values, so directory paths containing spaces (for example, `/path with spaces/data`) survive `system2()`'s shell pass to `docker run`. Without this, paths with spaces produced `docker: invalid reference format` and the migration aborted.
 
 # [2026-04-29] margot 1.0.318
 

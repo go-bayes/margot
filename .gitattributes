@@ -1,0 +1,6 @@
+AGENTS.md export-ignore
+_temp/ export-ignore
+Rplots.pdf export-ignore
+README_files/ export-ignore
+planning/ export-ignore
+tests/test_* export-ignore
