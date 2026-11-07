@@ -136,6 +136,30 @@
 #' uncapped learner will oversubscribe the performance cores that the outer task
 #' budget assumes.
 #'
+#' @section Fit warnings:
+#' Every fitted model records the warnings raised while it was fitted, in
+#' `model$warnings` (a character vector, empty when there were none), and the
+#' learners SuperLearner removed after an error, in `model$dropped_learners`.
+#' With lean fits (`.return_full_fits = FALSE`, lmtp's default) SuperLearner's
+#' warning is the only record that a learner was dropped and given weight 0, so
+#' a run that keeps only coefficients still shows which learners failed. Each
+#' entry is named by the stage that raised it: `"fit"` for one lmtp call that
+#' fits both the density ratios and the outcome regressions (the independent
+#' route), and `"density"` or `"outcome"` on the shared density-ratio route,
+#' where the density stage's warnings are shared by every outcome model of the
+#' policy. One alert is printed for each model that lost a learner.
+#'
+#' The warnings are collected with calling handlers, so none is muffled: they
+#' reach the caller exactly as before, and the estimates are unchanged. lmtp
+#' fits its cross-fitting folds inside futures, and `future` re-signals a
+#' worker's warnings when the coordinator collects the fold, so warnings raised
+#' in fold-parallel or task-parallel workers are recorded too. The fields are
+#' saved with the model by `save_output = TRUE` and in checkpoints. They take no
+#' part in any checkpoint identity or task fingerprint; a task-parallel density
+#' checkpoint stores its stage's warnings as provenance. A model or density
+#' result restored from a checkpoint written before this version has `NULL`
+#' fields, meaning the warnings were not recorded.
+#'
 #' @details
 #' For very large datasets or models with many time points, parallel processing may not improve performance
 #' as much as expected. This is because LMTP models can be memory-bound rather than CPU-bound when working
@@ -221,6 +245,7 @@
 #'   \item{individual_tables}{A list of individual tables for each contrast and outcome.}
 #'   \item{combined_tables}{A list of combined tables for each contrast type across all outcomes.}
 #'   \item{untrimmed_sensitivity}{Only when `untrimmed_sensitivity = TRUE`: a list with `models`, `contrasts`, `individual_tables`, `combined_tables`, `capping` records and `failures`.}
+#'   Each model carries `warnings` and `dropped_learners`; see the "Fit warnings" section.
 #'   When `allow_full_fits` permitted full fits, the object carries an attribute
 #'   `margot_full_fits`: a list with `return_full_fits = TRUE` and the `reason`.
 #'
@@ -868,7 +893,18 @@ margot_lmtp <- function(
       if (!is.null(seed)) set.seed(seed)
 
       res <- tryCatch({
-        model <- do.call(lmtp_model_type, lmtp_args)
+        # collect the fit's warnings, which still reach the caller, so a learner
+        # SuperLearner drops leaves a record on the model
+        captured <- margot_lmtp_capture_warnings(do.call(lmtp_model_type, lmtp_args))
+        model <- captured$value
+        # an estimator that records its own warnings keeps its record
+        if (is.null(model[["warnings", exact = TRUE]])) {
+          model <- margot_lmtp_record_warnings(
+            model,
+            margot_lmtp_stage_warnings(captured$warnings, "fit")
+          )
+        }
+        margot_lmtp_alert_dropped_learners(model, paste0(outcome, " - ", shift_name))
         # Attach exposure-by-wave for downstream policy-rate summaries when possible
         # Best-effort: only if `trt` is a character vector of column names and
         # dimensions align with the model's density ratios.
@@ -1023,7 +1059,18 @@ margot_lmtp <- function(
       if (!is.null(seed)) set.seed(seed)
 
       res <- tryCatch({
-        model <- do.call(lmtp_model_type, lmtp_args)
+        # collect the fit's warnings, which still reach the caller, so a learner
+        # SuperLearner drops leaves a record on the model
+        captured <- margot_lmtp_capture_warnings(do.call(lmtp_model_type, lmtp_args))
+        model <- captured$value
+        # an estimator that records its own warnings keeps its record
+        if (is.null(model[["warnings", exact = TRUE]])) {
+          model <- margot_lmtp_record_warnings(
+            model,
+            margot_lmtp_stage_warnings(captured$warnings, "fit")
+          )
+        }
+        margot_lmtp_alert_dropped_learners(model, paste0(outcome, " - ", shift_name))
         result$success <- TRUE
         result$model <- model
 
