@@ -89,4 +89,3 @@ margot_lmtp_support_snap_probability <- function(x) {
   x[!is.na(x) & x > 1 & x <= 1 + 1e-12] <- 1
   x
 }
-
