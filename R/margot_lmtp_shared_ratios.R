@@ -556,6 +556,10 @@ margot_lmtp_run_shared_tasks <- function(
           result$model$untrimmed_model, data = data, trt = trt
         )
         attr(result$model$untrimmed_model, "margot_density_ratio_fit_id") <- shift_name
+        # the untrimmed recursion fits its own outcome regressions and can lose a learner alone
+        margot_lmtp_alert_dropped_learners(
+          result$model$untrimmed_model, paste0(outcome, " - ", shift_name, " (untrimmed)")
+        )
       }
       if (save_output && !is.null(checkpoint_dir)) {
         checkpoint_file <- paste0(outcome, "_", shift_name, ".rds")

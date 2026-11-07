@@ -327,3 +327,18 @@ test_that("margot_lmtp_sdr_from_components records its outcome warnings", {
   expect_identical(fit$dropped_learners, c(outcome = "SL.margot_fail"))
   expect_identical(names(fit$warnings), "outcome")
 })
+
+test_that("the untrimmed sensitivity model gets its own dropped-learner alert", {
+  local_sequential_plan()
+  local_warning_learners()
+  defaults <- warning_defaults(learners_outcome = c("SL.glm", "SL.margot_fail"))
+  defaults$control <- lmtp::lmtp_control(.trim = 0.9)
+  messages <- testthat::capture_messages(suppressWarnings(run_warnings(
+    defaults,
+    reuse_density_ratios = TRUE,
+    untrimmed_sensitivity = TRUE
+  )))
+  dropped <- messages[grepl("SuperLearner dropped", messages)]
+  expect_true(any(grepl("perfectionism - down:", dropped, fixed = TRUE)))
+  expect_true(any(grepl("perfectionism - down (untrimmed):", dropped, fixed = TRUE)))
+})

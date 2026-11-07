@@ -276,3 +276,20 @@ test_that("margot_lmtp_sdr_from_components refuses full fits before reading its 
   ))
   expect_false(inherits(error, "margot_error_full_fits_refused"))
 })
+
+test_that("an estimator named by string also receives the reason", {
+  reason <- "forwarded to a named estimator"
+  forwarded <- new.env()
+  # a stub that records the reason it receives; the real call is not needed here
+  assign("margot_test_named_estimator", function(data, trt, outcome, shift, ..., allow_full_fits = NULL) {
+    forwarded$reason <- allow_full_fits
+    stop("stop after recording the reason")
+  }, envir = globalenv())
+  withr::defer(rm("margot_test_named_estimator", envir = globalenv()))
+  with_sequential_plan(suppressWarnings(try(run_full_fits(
+    full_fits_defaults(lmtp::lmtp_control(.return_full_fits = TRUE)),
+    lmtp_model_type = "margot_test_named_estimator",
+    allow_full_fits = reason
+  ), silent = TRUE)))
+  expect_identical(forwarded$reason, reason)
+})

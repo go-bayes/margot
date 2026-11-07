@@ -137,28 +137,9 @@
 #' budget assumes.
 #'
 #' @section Fit warnings:
-#' Every fitted model records the warnings raised while it was fitted, in
-#' `model$warnings` (a character vector, empty when there were none), and the
-#' learners SuperLearner removed after an error, in `model$dropped_learners`.
-#' With lean fits (`.return_full_fits = FALSE`, lmtp's default) SuperLearner's
-#' warning is the only record that a learner was dropped and given weight 0, so
-#' a run that keeps only coefficients still shows which learners failed. Each
-#' entry is named by the stage that raised it: `"fit"` for one lmtp call that
-#' fits both the density ratios and the outcome regressions (the independent
-#' route), and `"density"` or `"outcome"` on the shared density-ratio route,
-#' where the density stage's warnings are shared by every outcome model of the
-#' policy. One alert is printed for each model that lost a learner.
+#' Every fitted model records the warnings raised while it was fitted, in `model$warnings` (a character vector, empty when there were none), and the learners SuperLearner removed after an error, in `model$dropped_learners`. With lean fits (`.return_full_fits = FALSE`, lmtp's default) SuperLearner's warning is the only record that a learner was dropped and given weight 0, so a run that keeps only coefficients still shows which learners failed. Each entry is named by the stage that raised it: `"fit"` for one lmtp call that fits both the density ratios and the outcome regressions (the independent route), and `"density"` or `"outcome"` on the shared density-ratio route, where the density stage's warnings are shared by every outcome model of the policy. One alert is printed for each model that lost a learner.
 #'
-#' The warnings are collected with calling handlers, so none is muffled: they
-#' reach the caller exactly as before, and the estimates are unchanged. lmtp
-#' fits its cross-fitting folds inside futures, and `future` re-signals a
-#' worker's warnings when the coordinator collects the fold, so warnings raised
-#' in fold-parallel or task-parallel workers are recorded too. The fields are
-#' saved with the model by `save_output = TRUE` and in checkpoints. They take no
-#' part in any checkpoint identity or task fingerprint; a task-parallel density
-#' checkpoint stores its stage's warnings as provenance. A model or density
-#' result restored from a checkpoint written before this version has `NULL`
-#' fields, meaning the warnings were not recorded.
+#' The warnings are collected with calling handlers, so none is muffled: they reach the caller exactly as before, and the estimates are unchanged. lmtp fits its cross-fitting folds inside futures, and `future` re-signals a worker's warnings when the coordinator collects the fold, so warnings raised in fold-parallel or task-parallel workers are recorded too. The fields are saved with the model by `save_output = TRUE` and in checkpoints. They take no part in any checkpoint identity or task fingerprint; a task-parallel density checkpoint stores its stage's warnings as provenance. A model or density result restored from a checkpoint written before this version has `NULL` fields, meaning the warnings were not recorded.
 #'
 #' @details
 #' For very large datasets or models with many time points, parallel processing may not improve performance
@@ -427,8 +408,14 @@ margot_lmtp <- function(
     NULL
   }
   # an estimator that runs the same check itself receives the reason
-  forward_allow_full_fits <- !is.null(allow_full_fits) && is.function(lmtp_model_type) &&
-    "allow_full_fits" %in% names(formals(lmtp_model_type))
+  # an estimator named by string is resolved first, so it is treated like the function itself
+  estimator_function <- if (is.character(lmtp_model_type) && length(lmtp_model_type) == 1L) {
+    tryCatch(match.fun(lmtp_model_type), error = function(e) NULL)
+  } else {
+    lmtp_model_type
+  }
+  forward_allow_full_fits <- !is.null(allow_full_fits) && is.function(estimator_function) &&
+    "allow_full_fits" %in% names(formals(estimator_function))
 
   # the untrimmed sensitivity (D19) shares one uncapped density fit per policy with
   # the capped primary, so it runs on the fold-parallel shared route alone

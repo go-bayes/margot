@@ -35,10 +35,7 @@
 #'   unless a reason is given, as in [margot_lmtp()], which passes its own
 #'   `allow_full_fits` on. A permitted reason is recorded in the fit's
 #'   `full_fits_reason` element.
-#' @return An ordinary `lmtp` fit with supplied folds, histories, bounds and RNG
-#'   provenance attached, and with the outcome regressions' warnings in
-#'   `warnings` and the learners SuperLearner dropped in `dropped_learners`
-#'   (both named `"outcome"`), as described in [margot_lmtp()].
+#' @return An ordinary `lmtp` fit with supplied folds, histories, bounds and RNG provenance attached, and with the outcome regressions' warnings in `warnings` and the learners SuperLearner dropped in `dropped_learners` (both named `"outcome"`), as described in [margot_lmtp()].
 #' @md
 #' @export
 margot_lmtp_sdr_from_components <- function(data, trt, outcome, shift,
