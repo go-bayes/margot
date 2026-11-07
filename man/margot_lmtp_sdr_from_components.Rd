@@ -57,7 +57,9 @@ unless a reason is given, as in \code{\link[=margot_lmtp]{margot_lmtp()}}, which
 }
 \value{
 An ordinary \code{lmtp} fit with supplied folds, histories, bounds and RNG
-provenance attached.
+provenance attached, and with the outcome regressions' warnings in
+\code{warnings} and the learners SuperLearner dropped in \code{dropped_learners}
+(both named \code{"outcome"}), as described in \code{\link[=margot_lmtp]{margot_lmtp()}}.
 }
 \description{
 Use with \code{\link[=margot_lmtp]{margot_lmtp()}} through its \code{lmtp_model_type} argument. The caller
