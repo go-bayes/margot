@@ -728,7 +728,12 @@ transform_var_name <- function(var_name, label_mapping = NULL,
 #' @param name Character string specifying the name of the Parquet file to be read (without the ".parquet" extension).
 #' @param dir_path Character string specifying the directory path from which the file will be read. If NULL (default), uses `push_mods`.
 #' @param quiet Logical. If TRUE, suppresses console output. Default is FALSE.
-#' @param ... Additional arguments passed to `arrow::read_parquet()`.
+#' @param ... Additional arguments passed to `arrow::read_parquet()` in eager mode.
+#'   Leave empty in lazy mode and select or filter the returned dataset instead.
+#' @return The usual Parquet result in eager mode, or an Arrow Dataset in lazy mode.
+#' @param lazy Logical. If TRUE, open an Arrow Dataset without reading its rows.
+#'   Apply filters, projections or validity expressions before collecting data.
+#'   The default FALSE retains the existing eager Parquet reader.
 #'
 #' @examples
 #' \dontrun{
@@ -737,7 +742,8 @@ transform_var_name <- function(var_name, label_mapping = NULL,
 #'
 #' @export
 #' @keywords internal
-here_read_arrow <- function(name, dir_path = NULL, quiet = FALSE, ...) {
+here_read_arrow <- function(name, dir_path = NULL, quiet = FALSE, ..., lazy = FALSE) {
+  stopifnot(is.logical(lazy), length(lazy) == 1L, !is.na(lazy))
   read_dir <- if (is.null(dir_path)) push_mods else dir_path
   file_path <- here::here(read_dir, paste0(name, ".parquet"))
 
@@ -745,7 +751,13 @@ here_read_arrow <- function(name, dir_path = NULL, quiet = FALSE, ...) {
     stop(sprintf("File not found: %s", file_path))
   }
 
-  obj <- arrow::read_parquet(file_path, ...)
+  if (lazy) {
+    if (dir.exists(file_path)) stop("Lazy reading requires one Parquet file, not a directory.")
+    if (...length() > 0L) stop("Leave additional arguments empty in lazy mode; query the returned Dataset.")
+    obj <- arrow::open_dataset(file_path, format = "parquet")
+  } else {
+    obj <- arrow::read_parquet(file_path, ...)
+  }
 
   if (!quiet) {
     file_size <- margot_size(obj)

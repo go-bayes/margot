@@ -32,5 +32,5 @@ back_transformed_result <- back_transform_logmean(log_mean)
 print(back_transformed_result)
 #> $mean_original
 #> [1] 1.999999
-#> 
+#>
 ```

@@ -73,10 +73,10 @@ label_mapping_new <- margot_reversed_labels(label_mapping_all, flip_outcomes)
 print(label_mapping_new[c("t2_kessler_latent_anxiety_z", "t2_kessler_latent_anxiety_z_r")])
 #> $t2_kessler_latent_anxiety_z
 #> [1] "Anxiety"
-#> 
+#>
 #> $t2_kessler_latent_anxiety_z_r
 #> [1] "(reduced) Anxiety"
-#> 
+#>
 #> $t2_kessler_latent_anxiety_z
 #> [1] "Anxiety"
 #> $t2_kessler_latent_anxiety_z_r

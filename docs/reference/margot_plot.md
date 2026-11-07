@@ -34,7 +34,12 @@ margot_plot(
   col_renames = list(`E-Value` = "E_Value", `E-Value bound` = "E_Val_bound"),
   rename_ate = FALSE,
   rename_evalue = FALSE,
-  scale_info = NULL
+  scale_info = NULL,
+  category_rule = c("interval", "interval_and_evalue"),
+  e_val_bound_comparison = c(">", ">="),
+  e_val_bound_conversion = c("exact", "rounded"),
+  order_direction = c("top_to_bottom", "bottom_to_top"),
+  table_columns = c("report", "legacy")
 )
 ```
 
@@ -52,12 +57,18 @@ margot_plot(
 
 - order:
 
-  Outcome ordering rule; the table and text follow the graph from top to
-  bottom.
+  Outcome ordering rule. The first outcome in the ordering is drawn at
+  the top of the plot (see \`order_direction\`), and the table and text
+  follow the graph from top to bottom. \`"magnitude_desc"\` puts the
+  largest absolute effect at the top; \`"magnitude_asc"\` the smallest;
+  \`"evaluebound_desc"\` the largest E-value bound; \`"alphabetical"\`
+  runs A to Z down the plot; \`"custom"\` follows \`custom_order\` from
+  the top.
 
 - custom_order:
 
-  Outcome labels in the requested custom factor order.
+  Outcome display labels in the requested order, first at the top of the
+  plot (with the default \`order_direction\`).
 
 - title_binary:
 
@@ -73,11 +84,22 @@ margot_plot(
 
 - e_val_bound_threshold:
 
-  E-value lower-bound threshold for colouring and prose selection.
+  Reporting threshold for the E-value bound. By default it sets only the
+  E-value flag reported beside each estimate (table column and prose);
+  it does not change the plotted category. Under \`category_rule =
+  "interval_and_evalue"\` it also gates the category, as in earlier
+  versions.
 
 - adjust:
 
-  character. multiplicity correction method: "none", "bonferroni"
+  character. multiplicity correction method: "none", "bonferroni",
+  "holm" or "BH". With \`"none"\`, the supplied intervals and E-values
+  are used unchanged. \`"holm"\` and \`"BH"\` stop under the default
+  interval rule: margot builds their intervals at coverage 1 - adjusted
+  p, so the intervals exclude the null whatever the adjusted p-value and
+  cannot carry an interval decision. \`category_rule =
+  "interval_and_evalue"\` still runs them, with a warning, to reproduce
+  earlier output; it carries the same limitation.
 
 - alpha:
 
@@ -90,7 +112,31 @@ margot_plot(
 - options:
 
   Plotting options; explicit arguments override corresponding option
-  entries.
+  entries. \`colors\` may name the levels \`"positive"\`, \`"includes
+  null"\` and \`"negative"\`; a colour named \`"not reliable"\` is used
+  for \`"includes null"\` when that level has no colour of its own.
+  \`point_shapes\` (default up-triangle 24, circle 21 and down-triangle
+  25 for above, including and below the null) repeats the category in
+  the point shape; \`NULL\` draws one filled circle for every point, as
+  earlier versions did. \`coefficient_colour\` (default \`"black"\`)
+  colours the printed coefficients; \`NULL\` colours them by category,
+  as earlier versions did. \`coefficient_header\` (default
+  \`"Estimate"\`) heads the coefficient column; \`NULL\` omits it.
+  \`text_size\` (default 3.5; 2.75 earlier) sets their size.
+  \`x_lim_lo\` and \`x_lim_hi\` set the ends of the x range; by default
+  the range is fitted to the null and every estimate and interval limit,
+  with 10% padding (earlier versions fixed the difference-scale range at
+  -0.5 to 0.5). The coefficients form a column inside the panel, drawn
+  from each row's own estimate, so legends, facet strips, faceting,
+  ordering and \`coord_flip()\` keep them with their outcomes; the
+  "Estimate" header sits at the foot of the column. With the fitted
+  default range the column sits in a band at the left of the panel, and
+  the range is widened to the left when the intervals would run under
+  it. User limits are honoured exactly and the column sits at the left
+  edge of the drawn range; if intervals then run under it, that follows
+  from the chosen range. A supplied \`x_offset\` places the column
+  there. \`x_lim_lo = -0.5\`, \`x_lim_hi = 0.5\` and \`x_offset = -0.5\`
+  reproduce the earlier difference-scale layout.
 
 - label_mapping:
 
@@ -123,8 +169,9 @@ margot_plot(
 
 - bold_rows:
 
-  Whether table row labels above the reporting threshold receive
-  Markdown emphasis.
+  Whether table row labels whose E-value bound passes the reporting
+  threshold (under \`e_val_bound_comparison\`) receive Markdown
+  emphasis.
 
 - rename_cols:
 
@@ -140,7 +187,9 @@ margot_plot(
 
 - rename_evalue:
 
-  Whether to use display names for E-value columns.
+  Whether to use display names for E-value columns. The default
+  \`"report"\` table already uses display names, so this argument
+  affects only \`table_columns = "legacy"\`.
 
 - scale_info:
 
@@ -151,7 +200,106 @@ margot_plot(
   orientation \* (g(Y) - center) / scale. Explicit metadata overrides
   inference from \`original_df\`.
 
+- category_rule:
+
+  How estimates are classified for colour, legend, table and prose.
+  \`"interval"\` (default) uses the (adjusted) confidence interval
+  alone: above the null, below the null, or including the null.
+  \`"interval_and_evalue"\` reproduces margot 1.3.2 and earlier, for
+  reproducing earlier results only: an estimate is "positive" or
+  "negative" only when its interval excludes the null and its E-value
+  bound passes the threshold, and is otherwise labelled "not reliable";
+  the prose then lists only estimates whose bound passes the threshold.
+
+- e_val_bound_comparison:
+
+  Comparison between the E-value bound and \`e_val_bound_threshold\`:
+  \`"\>"\` (default) flags a bound that exceeds the threshold; \`"\>="\`
+  reproduces margot 1.3.2 and earlier, which also flagged a bound equal
+  to it. The comparison uses full precision.
+
+- e_val_bound_conversion:
+
+  How the E-value bound is computed from the adjusted interval of a
+  difference-scale estimate when \`adjust\` is not \`"none"\`.
+  \`"exact"\` (default) converts the limit nearest the null directly, RR
+  = exp(0.91 \|d_limit\|); \`"rounded"\` reproduces margot 1.3.2 and
+  earlier, for reproducing earlier results only (see
+  \[margot_correct_combined_table()\]). Not used when \`adjust =
+  "none"\`.
+
+- order_direction:
+
+  Where the ordering starts. \`"top_to_bottom"\` (default) draws the
+  first outcome of \`order\` at the top. \`"bottom_to_top"\` reproduces
+  margot 1.3.2 and earlier, for reproducing earlier results only: the
+  first outcome was drawn at the bottom, so \`"magnitude_desc"\` put the
+  largest effect at the bottom. The table and prose follow the plot from
+  top to bottom under either value.
+
+- table_columns:
+
+  Layout of \`transformed_table\`. \`"report"\` (default) gives named
+  reporting columns, described under Value. \`"legacy"\` reproduces the
+  columns of margot 1.3.2 and earlier, for reproducing earlier results
+  only: the effect column, interval columns headed by their quantiles
+  (for example \`"0.21 %"\`), \`confidence_level\`, \`E_Value\`,
+  \`E_Val_bound\` and the \`reported\_\*\` and \`reporting\_\*\`
+  columns.
+
 ## Value
 
 An invisible list with \`plot\`, \`interpretation\`, and
 \`transformed_table\`.
+
+With the default \`table_columns = "report"\`, \`transformed_table\` has
+one row per outcome, ordered as in the plot from top to bottom. Its row
+names repeat the \`"Outcome"\` column (including any emphasis from
+\`bold_rows\`), so code that reads \`rownames()\` keeps working; when
+printing with \`knitr::kable()\`, pass \`row.names = FALSE\` to show the
+labels once. Numbers keep full precision. Its columns are:
+\`"Outcome"\`, the display label (in Markdown bold when \`bold_rows =
+TRUE\` and the E-value flag is set); the model-scale estimate (for
+example \`"ATE (standardised)"\`); its interval limits (for example
+\`"99.58% CI lower"\`, or \`"CI lower"\` with a \`"CI level"\` column
+when coverage varies by outcome); when \`scale_info\` or \`original_df\`
+is supplied, the original-scale estimate and limits, headed by the
+quantity and unit when every outcome shares them (for example \`"Mean
+difference (scale points)"\`, or \`"Mean difference (original scale)"\`
+without a unit) and otherwise followed by an \`"Original-scale
+quantity"\` column; the decision, headed by the interval and the null
+(for example \`"99.58% CI relative to 0"\`, with values \`"above 0"\`,
+\`"includes 0"\` or \`"below 0"\`; \`"Estimate"\` under the legacy
+category rule); \`"E-value"\`; \`"E-value bound"\`; and the E-value flag
+(\`"yes"\` or \`"no"\`), headed by the comparison, for example
+\`"E-value bound \> 1.1"\`. Two columns never share a header: a clash,
+for example from \`rename_ate\`, stops with an error.
+
+## Details
+
+The statistical decision and the E-value flag are reported separately.
+By default the decision for each outcome follows its (adjusted)
+confidence interval alone, and the E-value flag records whether the
+interval's E-value bound exceeds \`e_val_bound_threshold\`. The flag
+sits beside the decision and does not change the plotted colour, legend,
+table decision or which outcomes the prose lists. The prose lists every
+outcome whose interval excludes the null, in plot order, with its
+E-value bound and flag, and names the correction and confidence level.
+An outcome without both interval limits has no decision: the prose names
+it, the table reports "not available", and the figure omits it with a
+message.
+
+To reproduce output from margot 1.3.2 and earlier, set \`category_rule =
+"interval_and_evalue"\`, \`e_val_bound_comparison = "\>="\`,
+\`e_val_bound_conversion = "rounded"\`, \`order_direction =
+"bottom_to_top"\` and \`table_columns = "legacy"\`. Each argument
+restores one behaviour and can be set on its own. Together they
+reproduce the categories, plotted values, table and prose of margot
+1.3.2; the figure keeps the current styling (legend centred on the
+figure, point shapes, black coefficients and sentence-case axis titles),
+which \`options = list(point_shapes = NULL, coefficient_colour = NULL,
+coefficient_header = NULL, text_size = 2.75)\` partly restores. For
+ratio estimates under \`"magnitude_desc"\` or \`"magnitude_asc"\`, the
+five options do not restore the earlier order, because the orderings now
+rank by the absolute log ratio; reproducing that order exactly needs
+\`order = "custom"\` with the earlier order.

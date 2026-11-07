@@ -19,7 +19,7 @@ By default it implements the single–step **Bonferroni** correction at
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.2</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,8 @@ various *margot* models (or by your own code) and</p><ol><li><p>applies the chos
 <span>  scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RD"</span>, <span class="st">"RR"</span><span class="op">)</span>,</span>
 <span>  delta <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  m <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  m <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  e_val_bound_conversion <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"exact"</span>, <span class="st">"rounded"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,7 +81,7 @@ various *margot* models (or by your own code) and</p><ol><li><p>applies the chos
 
 <dl><dt id="arg-combined-table">combined_table<a class="anchor" aria-label="anchor" href="#arg-combined-table"></a></dt>
 <dd><p>A data frame with *at least* the columns</p><ul><li><p>`E[Y(1)]-E[Y(0)]` **or** `E[Y(1)]/E[Y(0)]`</p></li>
-<li><p>`2.5 <!-- %`, `97.5 %`   (unadjusted CI limits) --></p></li>
+<li><p>`2.5 %`, `97.5 %`   (unadjusted CI limits)</p></li>
 </ul><p>Extra columns (e.g. the original *E*-values) are carried through.</p></dd>
 
 
@@ -108,11 +109,15 @@ rate (for BH) to control. Default `0.05`.</p></dd>
 <dt id="arg-m">m<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
 <dd><p>Positive whole number giving the total number of tests in the Bonferroni family. It must be at least the number of table rows. When `NULL`, Margot uses the number of rows. Holm and BH continue to use the rows supplied in `combined_table` as their adjustment family.</p></dd>
 
+
+<dt id="arg-e-val-bound-conversion">e_val_bound_conversion<a class="anchor" aria-label="anchor" href="#arg-e-val-bound-conversion"></a></dt>
+<dd><p>How the confidence-bound E-value is computed from the returned interval when `scale = "RD"`. `"exact"` (default) converts the interval limit nearest the null directly. When the interval excludes the null, the risk ratio away from the null at that limit is \(\exp(0.91 |d_{\mathrm{limit}}|)\), which equals \(\exp(0.91 (|d| - z^{*} \mathrm{SE}(d)))\) for a symmetric interval with critical value \(z^{*}\); for a negative \(d\) the nearest limit is the upper one, and its ratio below 1 is inverted. `"rounded"` reproduces margot 1.3.2 and earlier, for reproducing earlier results only: it infers \(\mathrm{SE}^{*} = (\mathrm{upper} - \mathrm{estimate}) / \Phi^{-1}(0.975)\) from the returned interval and uses \(\exp(0.91 |d| - 1.78\,\mathrm{SE}^{*})\), which replaces \(0.91 z^{*}\) by \(1.78 z^{*} / 1.96\) and so gives a slightly larger bound for an adjusted interval. Ignored when `scale = "RR"`, where the returned limits are used directly.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with the same rows (and order) as `combined_table`, but
-  with</p><ul><li><p>updated `2.5 <!-- %` and `97.5 %` columns, and --></p></li>
+  with</p><ul><li><p>updated `2.5 %` and `97.5 %` columns, and</p></li>
 <li><p>freshly computed `E_Value` and `E_Val_bound`.</p></li>
 </ul><p>Numeric columns retain their computational precision. Apply display
   rounding only when formatting the returned table for presentation.</p>
@@ -129,9 +134,15 @@ equals 1 when the interval includes 1.</p>
 <p>For an outcome-mean difference \(b\), exposure contrast \(\delta\), and
 outcome standard deviation \(s\), Margot first forms the standardised
 difference \(d = b|\delta|/s\). It approximates the risk ratio as
-\(\exp(0.91d)\) and the risk-ratio confidence limits as
-\(\exp(0.91d \pm 1.78\,\mathrm{SE}(d))\), then applies the same null
-E-value equation. This calculation treats \(s\) as known.</p>
+\(\exp(0.91d)\). With the default `e_val_bound_conversion = "exact"`, each
+returned (adjusted) confidence limit is standardised and converted in the same
+way, so the confidence-bound E-value uses \(\exp(0.91 d_{\mathrm{limit}})\)
+for the limit nearest the null (inverted when it lies below 1). With
+`e_val_bound_conversion = "rounded"`,
+the risk-ratio confidence limits are \(\exp(0.91d \pm 1.78\,\mathrm{SE}^{*})\),
+with \(\mathrm{SE}^{*}\) inferred from the returned interval as described
+under that argument. Either way Margot then applies the same null E-value
+equation. This calculation treats \(s\) as known.</p>
     </div>
     <div class="section level2">
     <h2 id="how-the-correction-is-applied">How the correction is applied<a class="anchor" aria-label="anchor" href="#how-the-correction-is-applied"></a></h2>
@@ -146,7 +157,11 @@ E-value equation. This calculation treats \(s\) as known.</p>
 <li><p>**BH** (Benjamini-Hochberg) applies FDR correction to *p*-values,
     then back-calculates symmetric CIs. Controls false discovery rate rather
     than family-wise error rate.</p></li>
-</ul></div>
+</ul><p>Because an adjusted *p*-value is never smaller than the unadjusted one, the
+Holm and BH intervals exclude (or touch) the null whatever the adjusted
+*p*-value. Read the Holm or BH decision from the adjusted *p*-value, not from
+these intervals; [margot_plot()] refuses its default interval rule with them.</p>
+    </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>VanderWeele TJ, Mathur MB (2019).
@@ -178,4 +193,3 @@ Is the Bonferroni correction really so bad?*
 
 
   </body></html>
-

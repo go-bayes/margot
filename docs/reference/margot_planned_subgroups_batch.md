@@ -65,7 +65,11 @@ margot_planned_subgroups_batch(
 - adjust:
 
   character; correction method for multiple comparisons in plots. one of
-  "none", "bonferroni", or "holm". default: "none".
+  "none", "bonferroni", or "holm". default: "none". \`"holm"\` stops
+  under the default interval rule of \[margot_plot()\], because margot's
+  Holm intervals exclude the null whatever the adjusted p-value. Passing
+  \`category_rule = "interval_and_evalue"\` through \`...\` reproduces
+  earlier output, with a warning, and carries the same limitation.
 
 - alpha:
 

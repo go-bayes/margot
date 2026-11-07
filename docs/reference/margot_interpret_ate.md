@@ -33,9 +33,13 @@ A character string containing the formatted interpretation.
 
 ## Details
 
-Arguments in \`...\` retain their \[margot_plot()\] behaviour, including
-the evidence threshold controlling which estimates enter the prose. If
-\`save_output = TRUE\`, the complete reporting list is saved.
+Arguments in \`...\` retain their \[margot_plot()\] behaviour. By
+default the prose lists every outcome whose (adjusted) confidence
+interval excludes the null, and \`e_val_bound_threshold\` only sets the
+E-value flag reported beside each estimate; with \`category_rule =
+"interval_and_evalue"\`, the earlier rule, the threshold also decides
+which estimates enter the prose. If \`save_output = TRUE\`, the complete
+reporting list is saved.
 
 ## See also
 

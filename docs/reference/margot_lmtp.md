@@ -31,7 +31,9 @@ margot_lmtp(
   seed = NULL,
   reuse_density_ratios = FALSE,
   stages = c("all", "density", "outcome"),
-  estimator_spec = NULL
+  estimator_spec = NULL,
+  untrimmed_sensitivity = FALSE,
+  allow_full_fits = NULL
 )
 ```
 
@@ -174,6 +176,55 @@ margot_lmtp(
   built from the specification and every conflicting user argument
   errors.
 
+- untrimmed_sensitivity:
+
+  Logical. When \`TRUE\`, runs the prespecified untrimmed outcome-stage
+  sensitivity (ARC decision D19) beside the capped primary. On the
+  fold-parallel shared route (\`reuse_density_ratios = TRUE\`,
+  \`manage_future_plan = FALSE\`), each policy's density stage is fitted
+  once without a cap; the registered cap in
+  \`lmtp_defaults\$control\$.trim\` is applied to a copy with lmtp's own
+  pooled quantile rule; and the capped and untrimmed outcome recursions
+  both start from the same post-density random-number state. The capped
+  models equal a native \`lmtp::lmtp_sdr()\` call at the registered cap,
+  and the untrimmed models equal a native call at \`.trim = 1\`, with
+  the same seed, folds and histories. The primary output is unchanged
+  apart from an \`untrimmed_record\` element on each model (cap,
+  threshold, number and proportion of capped entries, raw and capped
+  ranges; the denominator counts every entry of the pooled ratio matrix,
+  including censored and not-at-risk cells); the sensitivity is returned
+  as \`untrimmed_sensitivity\`, with its own models, contrasts and
+  tables, the capping records and \`failures\`. A failed untrimmed
+  recursion is recorded in \`failures\` with its reason, and the capped
+  primary is kept. Restoring from checkpoints does not yet rebuild
+  \`untrimmed_sensitivity\`, and the uncapped density stage is not
+  checkpointed for a restart within a run (a rerun refits it and
+  reproduces the same results). Outcomes must share censoring and
+  histories within one call; run outcome groups separately where they
+  differ. Default \`FALSE\`.
+
+- allow_full_fits:
+
+  \`NULL\` (default) or a single non-empty character string giving the
+  reason for keeping full SuperLearner fits. By default
+  \`margot_lmtp()\` refuses, before any model is fitted, an lmtp control
+  that sets \`.return_full_fits = TRUE\`, with a condition of class
+  \`margot_error_full_fits_refused\`. Full fits keep every fitted
+  learner for every fold and time point and can need tens of GiB per
+  outcome, while estimates and influence functions do not depend on the
+  setting; lmtp's default (\`FALSE\`) keeps the learner weights. The
+  control is resolved over the installed lmtp's \[lmtp::lmtp_control()\]
+  defaults, so an absent setting takes lmtp's default. A value other
+  than a single \`TRUE\` or \`FALSE\`, or a name that R would match to
+  \`.return_full_fits\` (for example \`.return_full\`), is refused
+  whatever this argument says. When a reason is supplied and the control
+  keeps full fits, the call proceeds, reports the reason, and records it
+  in the \`margot_full_fits\` attribute of the returned object. The
+  check covers every route: the independent route, the shared
+  density-ratio route in both scheduling modes and stages, and the
+  untrimmed sensitivity, all of which fit from
+  \`lmtp_defaults\$control\`.
+
 ## Value
 
 A list containing:
@@ -193,6 +244,17 @@ A list containing:
 - combined_tables:
 
   A list of combined tables for each contrast type across all outcomes.
+
+- untrimmed_sensitivity:
+
+  Only when \`untrimmed_sensitivity = TRUE\`: a list with \`models\`,
+  \`contrasts\`, \`individual_tables\`, \`combined_tables\`, \`capping\`
+  records and \`failures\`.
+
+Each model carries \`warnings\` and \`dropped_learners\`; see the "Fit
+warnings" section. When \`allow_full_fits\` permitted full fits, the
+object carries an attribute \`margot_full_fits\`: a list with
+\`return_full_fits = TRUE\` and the \`reason\`.
 
 ## Details
 
@@ -351,6 +413,42 @@ Learner wrappers must do the same: \`SL.ranger\` with \`num.threads =
 1\` and \`SL.xgboost\` with \`nthread = 1\`. Margot does not administer
 machines, so an uncapped learner will oversubscribe the performance
 cores that the outer task budget assumes.
+
+## Fit warnings
+
+Every fitted model records the warnings raised while it was fitted, in
+\`model\$warnings\` (a character vector, empty when there were none),
+and the learners SuperLearner removed after an error, in
+\`model\$dropped_learners\`. With lean fits (\`.return_full_fits =
+FALSE\`, lmtp's default) SuperLearner's warning is the only record that
+a learner was dropped and given weight 0, so a run that keeps only
+coefficients still shows which learners failed. Each entry is named by
+the stage that raised it: \`"fit"\` for one lmtp call that fits both the
+density ratios and the outcome regressions (the independent route), and
+\`"density"\` or \`"outcome"\` on the shared density-ratio route, where
+the density stage's warnings are shared by every outcome model of the
+policy. One alert is printed for each model that lost a learner.
+
+The warnings are collected with calling handlers, so none is muffled:
+they reach the caller exactly as before, and the estimates are
+unchanged. lmtp fits its cross-fitting folds inside futures, and
+\`future\` re-signals a worker's warnings when the coordinator collects
+the fold, so warnings raised in fold-parallel or task-parallel workers
+are recorded too. The fields are saved with the model by \`save_output =
+TRUE\` and in checkpoints. They take no part in any checkpoint identity
+or task fingerprint; a task-parallel density checkpoint stores its
+stage's warnings as provenance. A model or density result restored from
+a checkpoint written before this version has \`NULL\` fields, meaning
+the warnings were not recorded.
+
+## Upstream prediction limitation
+
+With lmtp 1.5.4, a nuisance model with exactly one predictor can fail
+with \`non-numeric matrix extent\` because the upstream prediction
+method drops the data-frame dimension. Native lmtp and Margot's
+independent and shared routes inherit this limitation. Check the
+declared nuisance histories; adding an artificial baseline variable
+changes the model specification.
 
 ## Examples
 

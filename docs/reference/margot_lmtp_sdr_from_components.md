@@ -23,7 +23,8 @@ margot_lmtp_sdr_from_components(
   bounds,
   control = lmtp::lmtp_control(.trim = 1),
   progress_bar = function(...) invisible(NULL),
-  learners_trt = NULL
+  learners_trt = NULL,
+  allow_full_fits = NULL
 )
 ```
 
@@ -82,10 +83,23 @@ margot_lmtp_sdr_from_components(
 
   Ignored; exposure components are already supplied.
 
+- allow_full_fits:
+
+  `NULL` (default) or a single non-empty character string giving the
+  reason for keeping full SuperLearner outcome fits. A control that sets
+  `.return_full_fits = TRUE` is refused before fitting unless a reason
+  is given, as in
+  [`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md),
+  which passes its own `allow_full_fits` on. A permitted reason is
+  recorded in the fit's `full_fits_reason` element.
+
 ## Value
 
 An ordinary `lmtp` fit with supplied folds, histories, bounds and RNG
-provenance attached.
+provenance attached, and with the outcome regressions' warnings in
+`warnings` and the learners SuperLearner dropped in `dropped_learners`
+(both named `"outcome"`), as described in
+[`margot_lmtp()`](https://go-bayes.github.io/margot/reference/margot_lmtp.md).
 
 ## Details
 

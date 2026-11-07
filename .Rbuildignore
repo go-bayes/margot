@@ -11,3 +11,8 @@
 ^tests/test_.*[.][Rr]$
 ^\.git$
 ^tests/testthat/Rplots\.pdf$
+^_temp$
+^Rplots[.]pdf$
+^README_files$
+^\.github$
+^\.gitattributes$

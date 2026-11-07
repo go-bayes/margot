@@ -11,7 +11,7 @@ checkpoints and the complete output as `.rds` files."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.2</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,7 +75,9 @@ checkpoints and the complete output as `.rds` files.</p>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  reuse_density_ratios <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  stages <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"density"</span>, <span class="st">"outcome"</span><span class="op">)</span>,</span>
-<span>  estimator_spec <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  estimator_spec <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  untrimmed_sensitivity <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  allow_full_fits <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -204,6 +206,30 @@ and `save_output = TRUE`. See the "Stage-split execution" section.</p></dd>
 is built from the specification and every conflicting user argument
 errors.</p></dd>
 
+
+<dt id="arg-untrimmed-sensitivity">untrimmed_sensitivity<a class="anchor" aria-label="anchor" href="#arg-untrimmed-sensitivity"></a></dt>
+<dd><p>Logical. When `TRUE`, runs the prespecified untrimmed outcome-stage sensitivity (ARC decision D19) beside the capped primary. On the fold-parallel shared route (`reuse_density_ratios = TRUE`, `manage_future_plan = FALSE`), each policy's density stage is fitted once without a cap; the registered cap in `lmtp_defaults$control$.trim` is applied to a copy with lmtp's own pooled quantile rule; and the capped and untrimmed outcome recursions both start from the same post-density random-number state. The capped models equal a native `lmtp::lmtp_sdr()` call at the registered cap, and the untrimmed models equal a native call at `.trim = 1`, with the same seed, folds and histories. The primary output is unchanged apart from an `untrimmed_record` element on each model (cap, threshold, number and proportion of capped entries, raw and capped ranges; the denominator counts every entry of the pooled ratio matrix, including censored and not-at-risk cells); the sensitivity is returned as `untrimmed_sensitivity`, with its own models, contrasts and tables, the capping records and `failures`. A failed untrimmed recursion is recorded in `failures` with its reason, and the capped primary is kept. Restoring from checkpoints does not yet rebuild `untrimmed_sensitivity`, and the uncapped density stage is not checkpointed for a restart within a run (a rerun refits it and reproduces the same results). Outcomes must share censoring and histories within one call; run outcome groups separately where they differ. Default `FALSE`.</p></dd>
+
+
+<dt id="arg-allow-full-fits">allow_full_fits<a class="anchor" aria-label="anchor" href="#arg-allow-full-fits"></a></dt>
+<dd><p>`NULL` (default) or a single non-empty character string
+giving the reason for keeping full SuperLearner fits. By default
+`margot_lmtp()` refuses, before any model is fitted, an lmtp control that
+sets `.return_full_fits = TRUE`, with a condition of class
+`margot_error_full_fits_refused`. Full fits keep every fitted learner for
+every fold and time point and can need tens of GiB per outcome, while
+estimates and influence functions do not depend on the setting; lmtp's
+default (`FALSE`) keeps the learner weights. The control is resolved over
+the installed lmtp's [lmtp::lmtp_control()] defaults, so an absent setting
+takes lmtp's default. A value other than a single `TRUE` or `FALSE`, or a
+name that R would match to `.return_full_fits` (for example
+`.return_full`), is refused whatever this argument says. When a reason is
+supplied and the control keeps full fits, the call proceeds, reports the
+reason, and records it in the `margot_full_fits` attribute of the returned
+object. The check covers every route: the independent route, the shared
+density-ratio route in both scheduling modes and stages, and the untrimmed
+sensitivity, all of which fit from `lmtp_defaults$control`.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -220,7 +246,13 @@ errors.</p></dd>
   <dt>combined_tables</dt>
 <dd><p>A list of combined tables for each contrast type across all outcomes.</p></dd>
 
-</dl></div>
+  <dt>untrimmed_sensitivity</dt>
+<dd><p>Only when `untrimmed_sensitivity = TRUE`: a list with `models`, `contrasts`, `individual_tables`, `combined_tables`, `capping` records and `failures`.</p></dd>
+
+</dl><p>Each model carries `warnings` and `dropped_learners`; see the "Fit warnings" section.
+  When `allow_full_fits` permitted full fits, the object carries an attribute
+  `margot_full_fits`: a list with `return_full_fits = TRUE` and the `reason`.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>For very large datasets or models with many time points, parallel processing may not improve performance
@@ -366,6 +398,23 @@ libraries in the launcher, before R starts, by exporting
 uncapped learner will oversubscribe the performance cores that the outer task
 budget assumes.</p>
     </div>
+    <div class="section level2">
+    <h2 id="fit-warnings">Fit warnings<a class="anchor" aria-label="anchor" href="#fit-warnings"></a></h2>
+
+
+<p>Every fitted model records the warnings raised while it was fitted, in `model$warnings` (a character vector, empty when there were none), and the learners SuperLearner removed after an error, in `model$dropped_learners`. With lean fits (`.return_full_fits = FALSE`, lmtp's default) SuperLearner's warning is the only record that a learner was dropped and given weight 0, so a run that keeps only coefficients still shows which learners failed. Each entry is named by the stage that raised it: `"fit"` for one lmtp call that fits both the density ratios and the outcome regressions (the independent route), and `"density"` or `"outcome"` on the shared density-ratio route, where the density stage's warnings are shared by every outcome model of the policy. One alert is printed for each model that lost a learner.</p>
+<p>The warnings are collected with calling handlers, so none is muffled: they reach the caller exactly as before, and the estimates are unchanged. lmtp fits its cross-fitting folds inside futures, and `future` re-signals a worker's warnings when the coordinator collects the fold, so warnings raised in fold-parallel or task-parallel workers are recorded too. The fields are saved with the model by `save_output = TRUE` and in checkpoints. They take no part in any checkpoint identity or task fingerprint; a task-parallel density checkpoint stores its stage's warnings as provenance. A model or density result restored from a checkpoint written before this version has `NULL` fields, meaning the warnings were not recorded.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="upstream-prediction-limitation">Upstream prediction limitation<a class="anchor" aria-label="anchor" href="#upstream-prediction-limitation"></a></h2>
+
+
+<p>With lmtp 1.5.4, a nuisance model with exactly one predictor can fail with
+`non-numeric matrix extent` because the upstream prediction method drops
+the data-frame dimension. Native lmtp and Margot's independent and shared
+routes inherit this limitation. Check the declared nuisance histories;
+adding an artificial baseline variable changes the model specification.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -419,4 +468,3 @@ budget assumes.</p>
 
 
   </body></html>
-

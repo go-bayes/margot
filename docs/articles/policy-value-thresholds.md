@@ -10,10 +10,10 @@ effects alongside its net value.
 
 ## Set the benefit threshold before evaluation
 
-Let the benefit threshold be $`\phi`$, expressed in outcome units where
+Let the benefit threshold be $\phi$, expressed in outcome units where
 larger values are preferred. Under additive costs and linear outcome
-valuation, an incremental treatment cost $`c`$ and a value $`v>0`$ per
-outcome unit give $`\phi=c/v`$. Net value subtracts $`\phi`$ for each
+valuation, an incremental treatment cost $c$ and a value $v > 0$ per
+outcome unit give $\phi = c/v$. Net value subtracts $\phi$ for each
 person assigned treatment. The comparison between a policy tree and a
 constant assignment must apply the same threshold to both rules.
 
@@ -41,17 +41,18 @@ higher support. Artificial analysis weights give older participants
 greater weight in the target average. Outcome units remain unchanged
 throughout scoring, threshold estimation and evaluation.
 
-\
-[`set.seed`](https://rdrr.io/r/base/Random.html)`(``20260911``)`\
-`n`` ``<-`` ``500L`\
-`features`` ``<-`` `[`cbind`](https://rdrr.io/r/base/cbind.html)`(``support ``=`` `[`runif`](https://rdrr.io/r/stats/Uniform.html)`(``n``)``, age ``=`` `[`runif`](https://rdrr.io/r/stats/Uniform.html)`(``n``, ``18``, ``80``)``)`\
-`treatment`` ``<-`` `[`rbinom`](https://rdrr.io/r/stats/Binomial.html)`(``n``, ``1``, ``.5``)`\
-`true_effect`` ``<-`` `[`ifelse`](https://rdrr.io/r/base/ifelse.html)`(``features``[``, ``"support"``]`` ``<=`` ``.5``, ``.10``, ``.50``)`\
-`outcome`` ``<-`` ``.1`` ``*`` ``features``[``, ``"support"``]`` ``+`` ``.005`` ``*`` ``features``[``, ``"age"``]`` ``+`\
-`  ``treatment`` ``*`` ``true_effect`` ``+`` `[`rnorm`](https://rdrr.io/r/stats/Normal.html)`(``n``, sd ``=`` ``.15``)`\
-`weights`` ``<-`` `[`ifelse`](https://rdrr.io/r/base/ifelse.html)`(``features``[``, ``"age"``]`` ``>`` ``50``, ``1.5``, ``1``)`\
-`development`` ``<-`` `[`sample`](https://rdrr.io/r/base/sample.html)`(`[`seq_len`](https://rdrr.io/r/base/seq.html)`(``n``)``, ``350L``)`\
-`evaluation`` ``<-`` `[`setdiff`](https://generics.r-lib.org/reference/setops.html)`(`[`seq_len`](https://rdrr.io/r/base/seq.html)`(``n``)``, ``development``)`
+``` r
+set.seed(20260911)
+n <- 500L
+features <- cbind(support = runif(n), age = runif(n, 18, 80))
+treatment <- rbinom(n, 1, .5)
+true_effect <- ifelse(features[, "support"] <= .5, .10, .50)
+outcome <- .1 * features[, "support"] + .005 * features[, "age"] +
+  treatment * true_effect + rnorm(n, sd = .15)
+weights <- ifelse(features[, "age"] > 50, 1.5, 1)
+development <- sample(seq_len(n), 350L)
+evaluation <- setdiff(seq_len(n), development)
+```
 
 The random partition precedes every fitted model. In an empirical study,
 the development boundary must also govern imputation, outcome scaling,
@@ -70,19 +71,20 @@ into residual corrections. The returned action scores retain their
 original outcome units. Weighting and threshold subtraction occur in the
 next step.
 
-\
-`scores`` ``<-`` `[`margot_policy_development_scores`](https://go-bayes.github.io/margot/reference/margot_policy_development_scores.md)`(`\
-`  development_X ``=`` ``features``[``development``, , drop ``=`` ``FALSE``]``,`\
-`  development_Y ``=`` ``outcome``[``development``]``,`\
-`  development_W ``=`` ``treatment``[``development``]``,`\
-`  evaluation_X ``=`` ``features``[``evaluation``, , drop ``=`` ``FALSE``]``,`\
-`  evaluation_Y ``=`` ``outcome``[``evaluation``]``,`\
-`  evaluation_W ``=`` ``treatment``[``evaluation``]``,`\
-`  development_weights ``=`` ``weights``[``development``]``,`\
-`  forest_args ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``num.trees ``=`` ``200L``, min.node.size ``=`` ``5L``)``,`\
-`  seed ``=`` ``20260912L``,`\
-`  num_threads ``=`` ``1L`\
-`)`
+``` r
+scores <- margot_policy_development_scores(
+  development_X = features[development, , drop = FALSE],
+  development_Y = outcome[development],
+  development_W = treatment[development],
+  evaluation_X = features[evaluation, , drop = FALSE],
+  evaluation_Y = outcome[evaluation],
+  evaluation_W = treatment[evaluation],
+  development_weights = weights[development],
+  forest_args = list(num.trees = 200L, min.node.size = 5L),
+  seed = 20260912L,
+  num_threads = 1L
+)
+```
 
 This small forest count keeps the example quick to execute. Applied
 analyses need an appropriate, prespecified forest configuration. The
@@ -105,24 +107,25 @@ comparator deterministically chooses control. The evaluator retains a
 constant rule when its development value equals or exceeds the tree
 value within numerical tolerance.
 
-\
-`fit`` ``<-`` `[`margot_policy_tree_evaluate`](https://go-bayes.github.io/margot/reference/margot_policy_tree_evaluate.md)`(`\
-`  development_X ``=`` ``features``[``development``, , drop ``=`` ``FALSE``]``,`\
-`  development_scores ``=`` ``scores``$``development_scores``,`\
-`  evaluation_X ``=`` ``features``[``evaluation``, , drop ``=`` ``FALSE``]``,`\
-`  evaluation_scores ``=`` ``scores``$``evaluation_scores``,`\
-`  development_weights ``=`` ``weights``[``development``]``,`\
-`  evaluation_weights ``=`` ``weights``[``evaluation``]``,`\
-`  value_threshold ``=`` ``"ate"``,`\
-`  depth ``=`` ``1L``,`\
-`  min_node_size ``=`` ``30L``,`\
-`  tree_method ``=`` ``"policytree"``,`\
-`  development_ids ``=`` ``development``,`\
-`  evaluation_ids ``=`` ``evaluation``,`\
-`  gain_margin ``=`` ``.01`\
-`)`\
-`fit``$``threshold``$``value`\
-`#> [1] 0.2924217`
+``` r
+fit <- margot_policy_tree_evaluate(
+  development_X = features[development, , drop = FALSE],
+  development_scores = scores$development_scores,
+  evaluation_X = features[evaluation, , drop = FALSE],
+  evaluation_scores = scores$evaluation_scores,
+  development_weights = weights[development],
+  evaluation_weights = weights[evaluation],
+  value_threshold = "ate",
+  depth = 1L,
+  min_node_size = 30L,
+  tree_method = "policytree",
+  development_ids = development,
+  evaluation_ids = evaluation,
+  gain_margin = .01
+)
+fit$threshold$value
+#> [1] 0.2924217
+```
 
 The realised threshold, tree, constant comparator and participant
 identities are stored together. Evaluation applies the unchanged
@@ -135,8 +138,9 @@ denotes the hypothetical threshold adjustment. The following comparisons
 all use net value. They remain prespecified comparisons, with the
 primary comparator selected during development.
 
-\
-`knitr``::`[`kable`](https://rdrr.io/pkg/knitr/man/kable.html)`(``fit``$``evaluation``$``values``, digits ``=`` ``3``)`
+``` r
+knitr::kable(fit$evaluation$values, digits = 3)
+```
 
 | policy               | gross_value |  cost | net_value |
 |:---------------------|------------:|------:|----------:|
@@ -145,12 +149,13 @@ primary comparator selected during development.
 | universal_control    |       0.313 | 0.000 |     0.313 |
 | universal_treated    |       0.599 | 0.292 |     0.307 |
 
-\
-`knitr``::`[`kable`](https://rdrr.io/pkg/knitr/man/kable.html)`(`\
-`  ``fit``$``evaluation``$``comparisons``[``, `[`c`](https://rdrr.io/r/base/c.html)`(``"comparator_label"``, ``"estimate"``, ``"lower"``, ``"upper"``)``]``,`\
-`  digits ``=`` ``3``,`\
-`  col.names ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"Comparator"``, ``"Net gain"``, ``"Lower"``, ``"Upper"``)`\
-`)`
+``` r
+knitr::kable(
+  fit$evaluation$comparisons[, c("comparator_label", "estimate", "lower", "upper")],
+  digits = 3,
+  col.names = c("Comparator", "Net gain", "Lower", "Upper")
+)
+```
 
 | Comparator                           | Net gain | Lower | Upper |
 |:-------------------------------------|---------:|------:|------:|
@@ -175,40 +180,42 @@ reporting. Original treatment-minus-control leaf effects stay distinct
 from threshold-adjusted net comparisons: below-average benefit can still
 be positive benefit.
 
-\
-`context`` ``<-`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
-`  outcome ``=`` ``"example"``,`\
-`  outcome_label ``=`` ``"Simulated outcome"``,`\
-`  population_id ``=`` ``"age-weighted-simulation"``,`\
-`  population_label ``=`` ``"Simulated population weighted towards older participants"``,`\
-`  scale_id ``=`` ``"original-units"``,`\
-`  scale_label ``=`` ``"units"``,`\
-`  orientation ``=`` ``"as_scored"``,`\
-`  weight_id ``=`` ``"fixed-age-weights"``,`\
-`  contrast_label ``=`` ``"Treatment - control"``,`\
-`  qualification ``=`` ``"Simulated randomised treatment; fixed age-based weights."`\
-`)`\
-`reporting`` ``<-`` `[`margot_policy_evaluation_reporting_data`](https://go-bayes.github.io/margot/reference/margot_policy_evaluation_reporting_data.md)`(`\
-`  ``fit``, ``context``,`\
-`  reference ``=`` `[`as.data.frame`](https://rdrr.io/r/base/as.data.frame.html)`(``features``[``evaluation``, , drop ``=`` ``FALSE``]``)``,`\
-`  display_weights ``=`` ``weights``[``evaluation``]``,`\
-`  reference_label ``=`` ``"Evaluation participants"``,`\
-`  display_weight_id ``=`` ``"Age-based analysis weights"`\
-`)`\
-`plot_object`` ``<-`` `[`list`](https://rdrr.io/r/base/list.html)`(``results ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``model_example ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
-`  policy_tree_depth_1 ``=`` ``fit``$``tree``,`\
-`  plot_data ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``X_test ``=`` `[`as.data.frame`](https://rdrr.io/r/base/as.data.frame.html)`(``features``[``evaluation``, , drop ``=`` ``FALSE``]``)``)`\
-`)``)``)`\
-`report`` ``<-`` `[`margot_report_policy_tree`](https://go-bayes.github.io/margot/reference/margot_report_policy_tree.md)`(`\
-`  ``plot_object``, ``"example"``, depth ``=`` ``1``,`\
-`  reporting_data ``=`` ``reporting``,`\
-`  reporting_layout ``=`` ``"two_panel"``,`\
-`  label_mapping ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``support ``=`` ``"Support"``, age ``=`` ``"Age"``)``,`\
-`  projection_args ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``jitter_seed ``=`` ``20260913L``)`\
-`)`
+``` r
+context <- list(
+  outcome = "example",
+  outcome_label = "Simulated outcome",
+  population_id = "age-weighted-simulation",
+  population_label = "Simulated population weighted towards older participants",
+  scale_id = "original-units",
+  scale_label = "units",
+  orientation = "as_scored",
+  weight_id = "fixed-age-weights",
+  contrast_label = "Treatment - control",
+  qualification = "Simulated randomised treatment; fixed age-based weights."
+)
+reporting <- margot_policy_evaluation_reporting_data(
+  fit, context,
+  reference = as.data.frame(features[evaluation, , drop = FALSE]),
+  display_weights = weights[evaluation],
+  reference_label = "Evaluation participants",
+  display_weight_id = "Age-based analysis weights"
+)
+plot_object <- list(results = list(model_example = list(
+  policy_tree_depth_1 = fit$tree,
+  plot_data = list(X_test = as.data.frame(features[evaluation, , drop = FALSE]))
+)))
+report <- margot_report_policy_tree(
+  plot_object, "example", depth = 1,
+  reporting_data = reporting,
+  reporting_layout = "two_panel",
+  label_mapping = list(support = "Support", age = "Age"),
+  projection_args = list(jitter_seed = 20260913L)
+)
+```
 
-\
-`report``$``plots``$``combined_plot`
+``` r
+report$plots$combined_plot
+```
 
 ![](policy-value-thresholds_files/figure-html/two-panel-rule-1.png)
 
@@ -227,12 +234,13 @@ treatment-control effects and their conditional intervals. A claim that
 the leaf effects differ needs a direct between-leaf contrast and its
 uncertainty.
 
-\
-`knitr``::`[`kable`](https://rdrr.io/pkg/knitr/man/kable.html)`(`\
-`  ``report``$``table``[``, `[`c`](https://rdrr.io/r/base/c.html)`(``"leaf_label"``, ``"selected_action"``, ``"reference_share"``, ``"estimate"``, ``"lower"``, ``"upper"``)``]``,`\
-`  digits ``=`` ``3``,`\
-`  col.names ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"Leaf"``, ``"Assignment"``, ``"Weighted share"``, ``"Original effect"``, ``"Lower"``, ``"Upper"``)`\
-`)`
+``` r
+knitr::kable(
+  report$table[, c("leaf_label", "selected_action", "reference_share", "estimate", "lower", "upper")],
+  digits = 3,
+  col.names = c("Leaf", "Assignment", "Weighted share", "Original effect", "Lower", "Upper")
+)
+```
 
 | Leaf   | Assignment | Weighted share | Original effect | Lower | Upper |
 |:-------|:-----------|---------------:|----------------:|------:|------:|
@@ -243,11 +251,12 @@ The standalone evaluation plot shows the net gain and its conditional
 95% interval. Its dashed line marks the illustrative 0.01-unit
 population-average gain margin.
 
-\
-`report``$``plots``$``value_gain`` ``+`` ``ggplot2``::`[`labs`](https://ggplot2.tidyverse.org/reference/labs.html)`(`\
-`  caption ``=`` ``NULL``,`\
-`  title ``=`` ``"Net gain over development-selected uniform control"`\
-`)`
+``` r
+report$plots$value_gain + ggplot2::labs(
+  caption = NULL,
+  title = "Net gain over development-selected uniform control"
+)
+```
 
 ![](policy-value-thresholds_files/figure-html/optional-evaluation-plot-1.png)
 

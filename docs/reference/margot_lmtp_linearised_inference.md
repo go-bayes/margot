@@ -5,15 +5,15 @@ a weighted policy-specific mean, or of an additive contrast between two
 policy means fitted to the same participants, from the pseudo-outcomes
 and weights stored in \`lmtp\` fits. It uses the linearisation of the
 weighted (Hájek) mean, \$\$\hat\theta = \sum_i w_i \varphi_i / \sum_i
-w_i, \qquad \widehat{\mathrm{se}}(\hat\theta) = \\{ s^2(u) / n
-\\}^{1/2}, \qquad u_i = w_i(\varphi_i - \hat\theta)/\bar w,\$\$ where
-\\(\hat\theta\\) is the estimate stored in the fit (for the SDR
-estimator, the weighted mean shown), \\(\varphi_i\\) is participant
-\\(i\\)'s uncentred pseudo-outcome, \\(w_i\\) the baseline weight,
-\\(\bar w\\) the mean weight and \\(s^2\\) the sample variance. For a
-contrast, \\(\varphi_i\\) is the difference of the two pseudo-outcomes.
-With repeated identifiers, the contributions are summed within clusters
-and the cluster-robust form used by \`ife\` is applied.
+w_i, \qquad \widehat{\mathrm{se}}(\hat\theta) = \\ s^2(u) / n \\^{1/2},
+\qquad u_i = w_i(\varphi_i - \hat\theta)/\bar w,\$\$ where
+\\\hat\theta\\ is the estimate stored in the fit (for the SDR estimator,
+the weighted mean shown), \\\varphi_i\\ is participant \\i\\'s uncentred
+pseudo-outcome, \\w_i\\ the baseline weight, \\\bar w\\ the mean weight
+and \\s^2\\ the sample variance. For a contrast, \\\varphi_i\\ is the
+difference of the two pseudo-outcomes. With repeated identifiers, the
+contributions are summed within clusters and the cluster-robust form
+used by \`ife\` is applied.
 
 ## Usage
 
@@ -48,7 +48,7 @@ clusters, and the variance method.
 
 ## Details
 
-\`lmtp\` 1.5.4 with \`ife\` 0.2.5 computes \\(s^2(w_i\varphi_i)/n\\),
+\`lmtp\` 1.5.4 with \`ife\` 0.2.5 computes \\s^2(w_i\varphi_i)/n\\,
 which centres the weighted product rather than the pseudo-outcome; with
 repeated identifiers it sums the uncentred products within clusters. The
 two agree when the weights are constant and no identifier repeats. They

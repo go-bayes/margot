@@ -141,6 +141,13 @@
 #'
 #' The warnings are collected with calling handlers, so none is muffled: they reach the caller exactly as before, and the estimates are unchanged. lmtp fits its cross-fitting folds inside futures, and `future` re-signals a worker's warnings when the coordinator collects the fold, so warnings raised in fold-parallel or task-parallel workers are recorded too. The fields are saved with the model by `save_output = TRUE` and in checkpoints. They take no part in any checkpoint identity or task fingerprint; a task-parallel density checkpoint stores its stage's warnings as provenance. A model or density result restored from a checkpoint written before this version has `NULL` fields, meaning the warnings were not recorded.
 #'
+#' @section Upstream prediction limitation:
+#' With lmtp 1.5.4, a nuisance model with exactly one predictor can fail with
+#' `non-numeric matrix extent` because the upstream prediction method drops
+#' the data-frame dimension. Native lmtp and Margot's independent and shared
+#' routes inherit this limitation. Check the declared nuisance histories;
+#' adding an artificial baseline variable changes the model specification.
+#'
 #' @details
 #' For very large datasets or models with many time points, parallel processing may not improve performance
 #' as much as expected. This is because LMTP models can be memory-bound rather than CPU-bound when working

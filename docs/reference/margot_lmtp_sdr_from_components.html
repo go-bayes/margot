@@ -15,7 +15,7 @@ the components. Input identities are checked before outcome fitting."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.2</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,8 @@ the components. Input identities are checked before outcome fitting.</p>
 <span>  <span class="va">bounds</span>,</span>
 <span>  control <span class="op">=</span> <span class="fu">lmtp</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/lmtp/man/lmtp_control.html" class="external-link">lmtp_control</a></span><span class="op">(</span>.trim <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  progress_bar <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="cn">NULL</span><span class="op">)</span>,</span>
-<span>  learners_trt <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  learners_trt <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  allow_full_fits <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -128,11 +129,19 @@ the components. Input identities are checked before outcome fitting.</p>
 <dt id="arg-learners-trt">learners_trt<a class="anchor" aria-label="anchor" href="#arg-learners-trt"></a></dt>
 <dd><p>Ignored; exposure components are already supplied.</p></dd>
 
+
+<dt id="arg-allow-full-fits">allow_full_fits<a class="anchor" aria-label="anchor" href="#arg-allow-full-fits"></a></dt>
+<dd><p><code>NULL</code> (default) or a single non-empty character
+string giving the reason for keeping full SuperLearner outcome fits. A
+control that sets <code>.return_full_fits = TRUE</code> is refused before fitting
+unless a reason is given, as in <code><a href="margot_lmtp.html">margot_lmtp()</a></code>, which passes its own
+<code>allow_full_fits</code> on. A permitted reason is recorded in the fit's
+<code>full_fits_reason</code> element.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An ordinary <code>lmtp</code> fit with supplied folds, histories, bounds and RNG
-provenance attached.</p>
+    <p>An ordinary <code>lmtp</code> fit with supplied folds, histories, bounds and RNG provenance attached, and with the outcome regressions' warnings in <code>warnings</code> and the learners SuperLearner dropped in <code>dropped_learners</code> (both named <code>"outcome"</code>), as described in <code><a href="margot_lmtp.html">margot_lmtp()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -164,4 +173,3 @@ from multiple earlier surveys; the caller declares when each covariate enters.</
 
 
   </body></html>
-

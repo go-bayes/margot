@@ -15,7 +15,7 @@ It also handles original scale estimates when available."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.2</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,8 +83,8 @@ the results data frame and label mapping from transform_to_original_scale().</p>
 
 <dt id="arg-order">order<a class="anchor" aria-label="anchor" href="#arg-order"></a></dt>
 <dd><p>Sorting option for outcomes. Options are:</p><ul><li><p>'alphabetical': sort by outcome name (A-Z)</p></li>
-<li><p>'magnitude_desc': sort by absolute effect size, descending (default for 'magnitude')</p></li>
-<li><p>'magnitude_asc': sort by absolute effect size, ascending</p></li>
+<li><p>'magnitude_desc': sort by distance from the null, descending: absolute difference for 'RD', absolute log ratio for 'RR'</p></li>
+<li><p>'magnitude_asc': sort by distance from the null, ascending</p></li>
 <li><p>'evaluebound_desc': sort by E-value bound, descending</p></li>
 <li><p>'evaluebound_asc': sort by E-value bound, ascending</p></li>
 <li><p>'custom': user-defined order (requires custom_order)</p></li>
@@ -108,7 +108,8 @@ used when order = 'custom'. Must contain all outcomes exactly once.</p></dd>
     <p>The function detects whether `df` is a list output from transform_to_original_scale()
 and extracts `results_df` and `label_mapping` accordingly. It then ensures an `outcome`
 column, applies any label mapping, and sorts based on the chosen `order`. New options
-'magnitude_desc' and 'magnitude_asc' sort by absolute effect size; 'evaluebound_desc'
+'magnitude_desc' and 'magnitude_asc' sort by distance from the null (absolute difference
+for 'RD', absolute log ratio for 'RR'); 'evaluebound_desc'
 and 'evaluebound_asc' sort by the E-Value bound; 'alphabetical' sorts by outcome
 name; 'custom' respects a user-provided vector; 'default' is an alias for 'magnitude_desc'.</p>
     </div>
@@ -154,4 +155,3 @@ name; 'custom' respects a user-provided vector; 'default' is an alias for 'magni
 
 
   </body></html>
-

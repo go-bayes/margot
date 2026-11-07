@@ -41,49 +41,49 @@ df <- data.frame(
 )
 processed_df <- margot_process_binary_vars(df, exceptions = "c")
 #> Loading required package: dplyr
-#> 
+#>
 #> Attaching package: ‘dplyr’
 #> The following objects are masked from ‘package:stats’:
-#> 
+#>
 #>     filter, lag
 #> The following objects are masked from ‘package:base’:
-#> 
+#>
 #>     intersect, setdiff, setequal, union
 #> Loading required package: cli
 #> Loading required package: knitr
-#> 
+#>
 #> ── Processing Binary Variables ─────────────────────────────────────────────────
 #> ℹ Ignoring variables with suffix '_binary': e_binary
-#> 
+#>
 #> ── Initial Data Summary ──
-#> 
+#>
 #> Total variables: 5
 #> Total observations: 3
 #> Exceptions specified: 1
-#> 
+#>
 #> ── Binary Variables Identified ──
-#> 
+#>
 #> Total binary variables: 3
 #> List of binary variables:
-#> 
-#> 
+#>
+#>
 #> |Variable |
 #> |:--------|
 #> |a        |
 #> |b        |
 #> |d        |
-#> 
+#>
 #> ── Variable Renaming ──
-#> 
-#> 
-#> 
+#>
+#>
+#>
 #> |Original |New      |
 #> |:--------|:--------|
 #> |a        |a_binary |
 #> |b        |b_binary |
 #> |d        |d_binary |
 #> ── Final Data Summary ──
-#> 
+#>
 #> Total variables: 5
 #> Variables processed: 3
 #> Variables excluded (exceptions and ignored): 2

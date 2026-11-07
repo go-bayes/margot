@@ -4,7 +4,7 @@
 \alias{here_read_arrow}
 \title{Read Object from Parquet File in a Specified Directory}
 \usage{
-here_read_arrow(name, dir_path = NULL, quiet = FALSE, ...)
+here_read_arrow(name, dir_path = NULL, quiet = FALSE, ..., lazy = FALSE)
 }
 \arguments{
 \item{name}{Character string specifying the name of the Parquet file to be read (without the ".parquet" extension).}
@@ -13,7 +13,15 @@ here_read_arrow(name, dir_path = NULL, quiet = FALSE, ...)
 
 \item{quiet}{Logical. If TRUE, suppresses console output. Default is FALSE.}
 
-\item{...}{Additional arguments passed to `arrow::read_parquet()`.}
+\item{...}{Additional arguments passed to `arrow::read_parquet()` in eager mode.
+Leave empty in lazy mode and select or filter the returned dataset instead.}
+
+\item{lazy}{Logical. If TRUE, open an Arrow Dataset without reading its rows.
+Apply filters, projections or validity expressions before collecting data.
+The default FALSE retains the existing eager Parquet reader.}
+}
+\value{
+The usual Parquet result in eager mode, or an Arrow Dataset in lazy mode.
 }
 \description{
 Reads a tabular `.parquet` file specified by `name` from a

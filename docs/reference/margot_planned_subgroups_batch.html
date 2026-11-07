@@ -11,7 +11,7 @@ correction for multiple comparisons."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">margot</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.2</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,7 +109,11 @@ must be the same length as `domain_names`</p></dd>
 
 <dt id="arg-adjust">adjust<a class="anchor" aria-label="anchor" href="#arg-adjust"></a></dt>
 <dd><p>character; correction method for multiple comparisons in plots.
-one of "none", "bonferroni", or "holm". default: "none".</p></dd>
+one of "none", "bonferroni", or "holm". default: "none". `"holm"` stops under
+the default interval rule of [margot_plot()], because margot's Holm intervals
+exclude the null whatever the adjusted p-value. Passing
+`category_rule = "interval_and_evalue"` through `...` reproduces earlier output,
+with a warning, and carries the same limitation.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
@@ -146,4 +150,3 @@ one of "none", "bonferroni", or "holm". default: "none".</p></dd>
 
 
   </body></html>
-
