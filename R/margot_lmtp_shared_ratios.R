@@ -257,13 +257,18 @@ margot_lmtp_sdr_shared <- function(
     }
     density_control$.trim <- 1
   }
-  density_fit <- margot_lmtp_fit_density_ratios(
+  # the density stage's warnings are shared by every outcome model of this
+  # policy; they are collected, not muffled, and consume no random numbers
+  density_captured <- margot_lmtp_capture_warnings(margot_lmtp_fit_density_ratios(
     task = source_task,
     learners_trt = learners_trt,
     mtp = mtp,
     control = density_control,
     progress_bar = progress_bar
-  )
+  ))
+  density_fit <- density_captured$value
+  density_warnings <- margot_lmtp_stage_warnings(density_captured$warnings, "density")
+  rm(density_captured)
   post_ratio_seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
   untrimmed_fit <- NULL
   untrimmed_record <- NULL
@@ -320,14 +325,19 @@ margot_lmtp_sdr_shared <- function(
     )
     task$folds <- common_folds
     margot_lmtp_restore_seed(post_ratio_seed)
-    model <- margot_lmtp_fit_sdr_outcome(
+    outcome_captured <- margot_lmtp_capture_warnings(margot_lmtp_fit_sdr_outcome(
       task = task,
       density_fit = density_fit,
       learners_outcome = learners_outcome,
       control = control,
       progress_bar = progress_bar,
       shift_label = shift_label
+    ))
+    model <- margot_lmtp_record_warnings(
+      outcome_captured$value,
+      c(density_warnings, margot_lmtp_stage_warnings(outcome_captured$warnings, "outcome"))
     )
+    rm(outcome_captured)
     attr(model, "margot_density_ratio_source") <- outcomes[[1L]]
     attr(model, "margot_density_ratio_reused") <- !identical(outcome, outcomes[[1L]])
     if (isTRUE(untrimmed)) {
@@ -335,13 +345,19 @@ margot_lmtp_sdr_shared <- function(
       margot_lmtp_restore_seed(post_ratio_seed)
       # a failed sensitivity is recorded beside the primary, which is kept (D19)
       untrimmed_model <- tryCatch({
-        fitted_untrimmed <- margot_lmtp_fit_sdr_outcome(
+        untrimmed_captured <- margot_lmtp_capture_warnings(margot_lmtp_fit_sdr_outcome(
           task = task,
           density_fit = untrimmed_fit,
           learners_outcome = learners_outcome,
           control = control,
           progress_bar = progress_bar,
           shift_label = shift_label
+        ))
+        # the uncapped density fit is the one the capped primary trimmed, so the
+        # sensitivity shares its density-stage warnings
+        fitted_untrimmed <- margot_lmtp_record_warnings(
+          untrimmed_captured$value,
+          c(density_warnings, margot_lmtp_stage_warnings(untrimmed_captured$warnings, "outcome"))
         )
         attr(fitted_untrimmed, "margot_density_ratio_source") <- outcomes[[1L]]
         attr(fitted_untrimmed, "margot_density_ratio_reused") <- !identical(outcome, outcomes[[1L]])
@@ -534,11 +550,16 @@ margot_lmtp_run_shared_tasks <- function(
         fitted[[outcome]], data = data, trt = trt
       )
       attr(result$model, "margot_density_ratio_fit_id") <- shift_name
+      margot_lmtp_alert_dropped_learners(result$model, paste0(outcome, " - ", shift_name))
       if (!is.null(result$model$untrimmed_model)) {
         result$model$untrimmed_model <- margot_lmtp_attach_exposure_by_wave(
           result$model$untrimmed_model, data = data, trt = trt
         )
         attr(result$model$untrimmed_model, "margot_density_ratio_fit_id") <- shift_name
+        # the untrimmed recursion fits its own outcome regressions and can lose a learner alone
+        margot_lmtp_alert_dropped_learners(
+          result$model$untrimmed_model, paste0(outcome, " - ", shift_name, " (untrimmed)")
+        )
       }
       if (save_output && !is.null(checkpoint_dir)) {
         checkpoint_file <- paste0(outcome, "_", shift_name, ".rds")

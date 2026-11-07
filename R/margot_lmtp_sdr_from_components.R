@@ -35,8 +35,7 @@
 #'   unless a reason is given, as in [margot_lmtp()], which passes its own
 #'   `allow_full_fits` on. A permitted reason is recorded in the fit's
 #'   `full_fits_reason` element.
-#' @return An ordinary `lmtp` fit with supplied folds, histories, bounds and RNG
-#'   provenance attached.
+#' @return An ordinary `lmtp` fit with supplied folds, histories, bounds and RNG provenance attached, and with the outcome regressions' warnings in `warnings` and the learners SuperLearner dropped in `dropped_learners` (both named `"outcome"`), as described in [margot_lmtp()].
 #' @md
 #' @export
 margot_lmtp_sdr_from_components <- function(data, trt, outcome, shift,
@@ -100,9 +99,13 @@ margot_lmtp_sdr_from_components <- function(data, trt, outcome, shift,
   for (node in seq_along(trt)) stopifnot(setequal(histories[[node]],
     c(baseline, trt[seq_len(node)], unlist(time_vary[seq_len(node)]))))
   regression_seed <- get(".Random.seed", envir = .GlobalEnv)
-  fit <- margot_lmtp_fit_sdr_outcome(task,
+  # the outcome regressions' warnings are collected, not muffled, so a learner
+  # SuperLearner drops leaves a record on the fit
+  captured <- margot_lmtp_capture_warnings(margot_lmtp_fit_sdr_outcome(task,
     list(density_ratios = x$density_ratios, fits = list(provenance = "supplied components; no nuisance refit")),
-    learners_outcome, control, progress_bar, "supplied components")
+    learners_outcome, control, progress_bar, "supplied components"))
+  fit <- margot_lmtp_record_warnings(captured$value,
+    margot_lmtp_stage_warnings(captured$warnings, "outcome"))
   stopifnot(identical(fit$density_ratios, x$density_ratios))
   fit$outcome_history <- histories
   fit$bounds_realised <- bounds
