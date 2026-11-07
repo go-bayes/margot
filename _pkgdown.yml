@@ -77,6 +77,10 @@ reference:
 
   - title: "Diagnose support"
     contents:
+    - margot_lmtp_support_probability
+    - margot_lmtp_support_weights
+    - margot_lmtp_support_concentration
+    - margot_lmtp_support_prefix
     - margot_exposure_overlap
     - margot_grf_overlap
     - margot_assess_overlap
