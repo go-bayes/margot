@@ -2,6 +2,12 @@
 
 ## \[2026-11-08\] margot 1.4.0
 
+- `here_read_arrow(..., lazy = TRUE)` opens an Arrow Dataset without
+  reading rows. Callers can filter waves and convert outcome values to
+  availability flags before collecting any records. The eager reader
+  remains the default; additional Parquet-read arguments apply to eager
+  mode.
+
 - Known dependency limitation: lmtp 1.5.4 can fail with
   `non-numeric matrix extent` when a nuisance model has exactly one
   predictor. The upstream prediction method drops the data-frame

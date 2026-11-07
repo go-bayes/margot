@@ -6,7 +6,7 @@ defined by \`dir_path\`.
 ## Usage
 
 ``` r
-here_read_arrow(name, dir_path = NULL, quiet = FALSE, ...)
+here_read_arrow(name, dir_path = NULL, quiet = FALSE, ..., lazy = FALSE)
 ```
 
 ## Arguments
@@ -27,7 +27,20 @@ here_read_arrow(name, dir_path = NULL, quiet = FALSE, ...)
 
 - ...:
 
-  Additional arguments passed to \`arrow::read_parquet()\`.
+  Additional arguments passed to \`arrow::read_parquet()\` in eager
+  mode. Leave empty in lazy mode and select or filter the returned
+  dataset instead.
+
+- lazy:
+
+  Logical. If TRUE, open an Arrow Dataset without reading its rows.
+  Apply filters, projections or validity expressions before collecting
+  data. The default FALSE retains the existing eager Parquet reader.
+
+## Value
+
+The usual Parquet result in eager mode, or an Arrow Dataset in lazy
+mode.
 
 ## Examples
 
