@@ -16,7 +16,7 @@ margot_target_trial_figure(
   scale_ends = NULL,
   outcome_label,
   title,
-  subtitle = "The same three hypothetical participants in each arm",
+  subtitle = NULL,
   footer = NULL,
   notes = NULL,
   outcome_width = 1.83,
@@ -25,7 +25,7 @@ margot_target_trial_figure(
 )
 }
 \arguments{
-\item{observed}{A named list with one numeric vector per hypothetical participant, holding that participant's observed exposure at each element of `times`. The names label the participants, for example `A`, `B` and `C`. At most three participants are drawn.}
+\item{observed}{A named list with one numeric vector per hypothetical participant, holding that participant's observed exposure at each element of `times`. The names label the participants, for example `A`, `B` and `C`, and must differ. At most three participants are drawn.}
 
 \item{times}{Survey times shown on the horizontal axis, in increasing order. The first is baseline.}
 
@@ -33,13 +33,13 @@ margot_target_trial_figure(
 
 \item{outcome_time}{The time at which the outcomes are measured, shown in the endpoint region.}
 
-\item{arms}{A list of two arms, the comparator first. Each arm is a list with `name` (the panel heading), `descriptor` (a short phrase after the heading) and `shift`. `shift` is a function that takes a numeric vector of observed values and returns the shifted values, or `NULL` for an arm that leaves exposure unassigned.}
+\item{arms}{A list of two arms, the comparator first. Each arm is a list with `name` (the panel heading, different for each arm), `descriptor` (a short phrase after the heading) and `shift`. `shift` is a function of one observed value that returns the shifted value, or `NULL` for an arm that leaves exposure unassigned. It is called once for each participant at each assignment time, so it cannot depend on a participant's other values.}
 
 \item{exposure_label}{Title of the vertical axis.}
 
 \item{unit}{Singular word for one exposure value, used in the legend and footer, for example `"decile"`, `"score"` or `"count"`.}
 
-\item{scale}{Exposure values labelled on the vertical axis, in increasing order.}
+\item{scale}{Exposure values labelled on the vertical axis, in increasing order. The scale must span at least 0.01 and stay within 10,000 of zero, which is what TikZ can draw; rescale an exposure outside that range.}
 
 \item{scale_ends}{Optional character vector of two words placed beside the lowest and highest scale values, for example `c("least", "most")`.}
 
@@ -47,7 +47,7 @@ margot_target_trial_figure(
 
 \item{title}{Figure title.}
 
-\item{subtitle}{Line under the title.}
+\item{subtitle}{Line under the title. The default says that the same hypothetical participants appear in each arm.}
 
 \item{footer}{Line at the foot of the figure. The default states that the shift function acts on observed values and that censoring weights address attrition.}
 
@@ -57,7 +57,7 @@ margot_target_trial_figure(
 
 \item{file}{Optional path of the `.tex` file to write. The style file `margot-target-trial.sty` is copied beside it.}
 
-\item{build}{If `TRUE`, run `pdflatex` on `file` and, when `pdftoppm` is available, write a 300 dpi PNG.}
+\item{build}{If `TRUE`, run `pdflatex` on `file` and, when `pdftoppm` is available, write a 300 dpi PNG. The PDF is the vector form for beamer slides, manuscripts and reports; the PNG is for PowerPoint.}
 }
 \value{
 Invisibly, a list with `tikz` (the source as a character vector of lines), `values` (a data frame with one row per arm, participant and time, giving the observed value, the value drawn after the shift function and whether the time is an assignment time) and `files` (the paths written).
@@ -74,7 +74,9 @@ This first version draws two arms, up to three participants and assignment times
 
 Text arguments are placed in the TikZ source as given, so they may contain LaTeX and must escape characters that LaTeX treats specially.
 
-The canvas is 160 mm by 90 mm. A scale with more than ten labelled values leaves less than 0.52 cm per step, and the function warns because a one-step arrow is then hard to see when projected.
+A line joining two values is solid only when the shift function leaves both unchanged; a line that reaches or leaves a shifted value is dashed.
+
+The canvas is 160 mm by 90 mm, which fits a 16:9 slide and the text width of an A4 page. The function warns when the scale leaves less than 0.52 cm per labelled step, because a one-step arrow is then hard to see when projected.
 }
 \examples{
 reduce <- function(a) pmax(1, a - 1)

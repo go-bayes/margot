@@ -66,6 +66,15 @@ test_that("a value returned unchanged after a shifted value keeps the dashed lin
   expect_true(any(grepl("\\node[heldring=personA] at (\\tE,1) {};", tikz, fixed = TRUE)))
 })
 
+test_that("a shifted value after an unchanged one leaves the edge of its ring", {
+  people <- list(A = c(5, 5, 5, 1, 5))
+  tikz <- draw_deciles(assignment_times = 13:14, people = people)$tikz
+
+  expect_true(any(grepl("\\ottohold{personA}{(\\tC,5)}{(\\tD,1)}", tikz, fixed = TRUE)))
+  expect_true(any(grepl("\\draw[assignpath, personA, shorten <=5.9pt] (\\tD,1) -- (\\tE,4);", tikz, fixed = TRUE)))
+  expect_true(any(grepl("The same hypothetical participant in each arm", tikz, fixed = TRUE)))
+})
+
 test_that("half-point values are written without rounding", {
   figure <- margot_target_trial_figure(
     observed = list(A = c(4, 3.5, 3.5)),
@@ -99,6 +108,33 @@ test_that("a specification that cannot be drawn is refused", {
     class = "margot_error_target_trial_spec"
   )
   expect_error(draw_deciles(build = TRUE), class = "margot_error_target_trial_spec")
+  expect_error(
+    draw_deciles(people = list(A = rep(3, 5), A = rep(4, 5))),
+    class = "margot_error_target_trial_spec"
+  )
+  same_names <- decile_arms
+  same_names[[1]]$name <- "Reduction"
+  expect_error(draw_deciles(arms = same_names), class = "margot_error_target_trial_spec")
+  expect_error(
+    draw_deciles(notes = list(list(text = "x", arm = 2, participant = "Z", time = 13, value = 2))),
+    class = "margot_error_target_trial_spec"
+  )
+})
+
+test_that("a scale too fine or too crowded to draw is refused or flagged", {
+  draw_scale <- function(scale, value) {
+    margot_target_trial_figure(
+      observed = list(A = rep(value, 2)), times = 1:2, assignment_times = 2, outcome_time = 3,
+      arms = list(
+        list(name = "No shift", descriptor = "", shift = NULL),
+        list(name = "Same", descriptor = "", shift = function(a) a)
+      ),
+      exposure_label = "x", unit = "value", scale = scale, outcome_label = "y", title = "t"
+    )
+  }
+
+  expect_error(draw_scale(seq(0, 0.0009, by = 0.0001), 0.0003), class = "margot_error_target_trial_spec")
+  expect_warning(draw_scale(0:12, 3), "0.52 cm")
 })
 
 test_that("a shift function that leaves the scale is refused", {
@@ -106,6 +142,13 @@ test_that("a shift function that leaves the scale is refused", {
   arms[[2]]$shift <- function(a) a - 1
 
   expect_error(draw_deciles(arms = arms), class = "margot_error_target_trial_shift")
+
+  # the function sees one observed value at a time
+  arms[[2]]$shift <- function(a) pmax(1, a - stats::sd(a))
+  expect_error(
+    draw_deciles(assignment_times = 12:14, arms = arms),
+    class = "margot_error_target_trial_shift"
+  )
 })
 
 test_that("the source is written with its style file", {
@@ -122,7 +165,8 @@ test_that("the figure builds when pdflatex is available", {
   skip_on_cran()
   skip_if(!nzchar(Sys.which("pdflatex")), "pdflatex is not available")
   directory <- withr::local_tempdir()
-  figure <- draw_deciles(assignment_times = 12:14, file = file.path(directory, "figure.tex"), build = TRUE)
+  # a space in the name checks that file names reach the shell quoted
+  figure <- draw_deciles(assignment_times = 12:14, file = file.path(directory, "my figure.tex"), build = TRUE)
 
-  expect_true(file.exists(file.path(directory, "figure.pdf")))
+  expect_true(file.exists(file.path(directory, "my figure.pdf")))
 })

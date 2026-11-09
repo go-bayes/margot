@@ -8,27 +8,29 @@
 #'
 #' This first version draws two arms, up to three participants and assignment times that form the last surveyed times before the outcome. Times without a usable exposure measurement, sideways spreading of marks that share a value, the theory figure and arm SWIGs are not yet drawn.
 #'
-#' @param observed A named list with one numeric vector per hypothetical participant, holding that participant's observed exposure at each element of `times`. The names label the participants, for example `A`, `B` and `C`. At most three participants are drawn.
+#' @param observed A named list with one numeric vector per hypothetical participant, holding that participant's observed exposure at each element of `times`. The names label the participants, for example `A`, `B` and `C`, and must differ. At most three participants are drawn.
 #' @param times Survey times shown on the horizontal axis, in increasing order. The first is baseline.
 #' @param assignment_times The times at which the arms assign exposure. They must be the last elements of `times`, and baseline cannot be an assignment time.
 #' @param outcome_time The time at which the outcomes are measured, shown in the endpoint region.
-#' @param arms A list of two arms, the comparator first. Each arm is a list with `name` (the panel heading), `descriptor` (a short phrase after the heading) and `shift`. `shift` is a function that takes a numeric vector of observed values and returns the shifted values, or `NULL` for an arm that leaves exposure unassigned.
+#' @param arms A list of two arms, the comparator first. Each arm is a list with `name` (the panel heading, different for each arm), `descriptor` (a short phrase after the heading) and `shift`. `shift` is a function of one observed value that returns the shifted value, or `NULL` for an arm that leaves exposure unassigned. It is called once for each participant at each assignment time, so it cannot depend on a participant's other values.
 #' @param exposure_label Title of the vertical axis.
 #' @param unit Singular word for one exposure value, used in the legend and footer, for example `"decile"`, `"score"` or `"count"`.
-#' @param scale Exposure values labelled on the vertical axis, in increasing order.
+#' @param scale Exposure values labelled on the vertical axis, in increasing order. The scale must span at least 0.01 and stay within 10,000 of zero, which is what TikZ can draw; rescale an exposure outside that range.
 #' @param scale_ends Optional character vector of two words placed beside the lowest and highest scale values, for example `c("least", "most")`.
 #' @param outcome_label Character vector with one element per line of the outcome description.
 #' @param title Figure title.
-#' @param subtitle Line under the title.
+#' @param subtitle Line under the title. The default says that the same hypothetical participants appear in each arm.
 #' @param footer Line at the foot of the figure. The default states that the shift function acts on observed values and that censoring weights address attrition.
 #' @param notes Optional list of annotations. Each is a list with `text`, `arm` (1 or 2), `time` and `value` (the position, in axis units; `time` may fall between survey times), and optionally `participant` (a name in `observed`, which sets the colour), `anchor` (a TikZ anchor, default `"south east"`) and `align` (default `"right"`).
 #' @param outcome_width Width of the endpoint region in centimetres. Widen it for a long outcome description.
 #' @param file Optional path of the `.tex` file to write. The style file `margot-target-trial.sty` is copied beside it.
-#' @param build If `TRUE`, run `pdflatex` on `file` and, when `pdftoppm` is available, write a 300 dpi PNG.
+#' @param build If `TRUE`, run `pdflatex` on `file` and, when `pdftoppm` is available, write a 300 dpi PNG. The PDF is the vector form for beamer slides, manuscripts and reports; the PNG is for PowerPoint.
 #'
 #' @details Text arguments are placed in the TikZ source as given, so they may contain LaTeX and must escape characters that LaTeX treats specially.
 #'
-#' The canvas is 160 mm by 90 mm. A scale with more than ten labelled values leaves less than 0.52 cm per step, and the function warns because a one-step arrow is then hard to see when projected.
+#' A line joining two values is solid only when the shift function leaves both unchanged; a line that reaches or leaves a shifted value is dashed.
+#'
+#' The canvas is 160 mm by 90 mm, which fits a 16:9 slide and the text width of an A4 page. The function warns when the scale leaves less than 0.52 cm per labelled step, because a one-step arrow is then hard to see when projected.
 #'
 #' @return Invisibly, a list with `tikz` (the source as a character vector of lines), `values` (a data frame with one row per arm, participant and time, giving the observed value, the value drawn after the shift function and whether the time is an assignment time) and `files` (the paths written).
 #'
@@ -64,7 +66,7 @@ margot_target_trial_figure <- function(observed,
                                        scale_ends = NULL,
                                        outcome_label,
                                        title,
-                                       subtitle = "The same three hypothetical participants in each arm",
+                                       subtitle = NULL,
                                        footer = NULL,
                                        notes = NULL,
                                        outcome_width = 1.83,
@@ -77,6 +79,13 @@ margot_target_trial_figure <- function(observed,
   geometry <- target_trial_geometry(times, assignment_times, scale, outcome_width, values)
   if (is.null(footer)) {
     footer <- target_trial_footer(arms, unit, assignment_times)
+  }
+  if (is.null(subtitle)) {
+    subtitle <- c(
+      "The same hypothetical participant in each arm",
+      "The same two hypothetical participants in each arm",
+      "The same three hypothetical participants in each arm"
+    )[length(observed)]
   }
   tikz <- target_trial_document(
     values, observed, times, assignment_times, outcome_time, arms, exposure_label, unit,
@@ -100,6 +109,9 @@ target_trial_check_inputs <- function(observed, times, assignment_times, outcome
   }
   if (length(observed) > 3) {
     stop_spec("At most three hypothetical participants can be drawn.")
+  }
+  if (anyDuplicated(names(observed))) {
+    stop_spec("Each participant in {.arg observed} needs a different name.")
   }
   if (!is.numeric(times) || length(times) < 2 || is.unsorted(times, strictly = TRUE)) {
     stop_spec("{.arg times} must hold at least two survey times in increasing order.")
@@ -132,8 +144,14 @@ target_trial_check_inputs <- function(observed, times, assignment_times, outcome
       stop_spec("An arm's {.field shift} must be a function or {.code NULL}.")
     }
   }
+  if (identical(arms[[1]]$name, arms[[2]]$name)) {
+    stop_spec("The two arms need different names.")
+  }
   if (!is.numeric(scale) || length(scale) < 2 || is.unsorted(scale, strictly = TRUE)) {
     stop_spec("{.arg scale} must hold at least two exposure values in increasing order.")
+  }
+  if (max(scale) - min(scale) < 0.01 || max(abs(scale)) > 10000) {
+    stop_spec("{.arg scale} must span at least 0.01 and stay within 10,000 of zero; rescale the exposure.")
   }
   if (!is.null(scale_ends) && length(scale_ends) != 2) {
     stop_spec("{.arg scale_ends} must give two words: one for the lowest and one for the highest scale value.")
@@ -145,6 +163,9 @@ target_trial_check_inputs <- function(observed, times, assignment_times, outcome
   for (note in notes) {
     if (!all(c("text", "arm", "time", "value") %in% names(note)) || !note$arm %in% 1:2) {
       stop_spec("Each note needs {.field text}, {.field arm} (1 or 2), {.field time} and {.field value}.")
+    }
+    if (!is.null(note$participant) && !note$participant %in% names(observed)) {
+      stop_spec("A note names participant {note$participant}, who is not in {.arg observed}.")
     }
   }
   if (isTRUE(build) && is.null(file)) {
@@ -163,15 +184,17 @@ target_trial_values <- function(observed, times, assignment_times, arms, scale) 
       trajectory <- as.numeric(observed[[person]])
       shifted <- trajectory
       if (!is.null(arm$shift)) {
-        result <- arm$shift(trajectory[assigned])
-        if (!is.numeric(result) || length(result) != sum(assigned) || anyNA(result) ||
-          any(result < min(scale) | result > max(scale))) {
+        result <- lapply(trajectory[assigned], arm$shift)
+        valid <- vapply(result, function(x) {
+          is.numeric(x) && length(x) == 1 && !is.na(x) && x >= min(scale) && x <= max(scale)
+        }, logical(1))
+        if (!all(valid)) {
           cli::cli_abort(
             "The shift function of arm {.val {arm$name}} must return one value within {.arg scale} for each observed value; check it for participant {person}.",
             class = "margot_error_target_trial_shift", call = NULL
           )
         }
-        shifted[assigned] <- result
+        shifted[assigned] <- unlist(result)
       }
       rows[[length(rows) + 1]] <- data.frame(
         arm = arm$name,
@@ -244,10 +267,11 @@ target_trial_footer <- function(arms, unit, assignment_times) {
   paste(acts, "Inverse probability of censoring weights address attrition.")
 }
 
-# print a number without trailing zeros
+# print a number without trailing zeros. exposure values keep ten significant
+# digits, so that distinct values stay distinct in the figure
 target_trial_number <- function(x) {
   vapply(
-    round(x, 3),
+    signif(x, 10),
     function(value) format(value, trim = TRUE, scientific = FALSE, drop0trailing = TRUE),
     character(1)
   )
@@ -293,7 +317,17 @@ target_trial_person <- function(colour, observed, shifted, assigned, has_shift) 
     }
     previous_ring <- target_trial_point(i - 1, shifted[i - 1])
     previous_held <- same(observed[i - 1], shifted[i - 1])
-    if (!held) {
+    if (!held && previous_held) {
+      # both lines leave the ring around the unchanged value, at its edge
+      lines <- c(
+        lines,
+        paste0("  \\draw[natpath, ", colour, ", draw opacity=0.4, shorten <=5.9pt] ", previous_ring, " -- ", here_observed, ";"),
+        paste0("  \\draw[assignpath, ", colour, ", shorten <=5.9pt] ", previous_ring, " -- ", here_shifted, ";"),
+        paste0("  \\node[replaceddot=", colour, "] at ", here_observed, " {};"),
+        paste0("  \\draw[shiftarrow, ", colour, "] ", here_observed, " -- ", here_shifted, ";"),
+        paste0("  \\node[assigndot=", colour, "] at ", here_shifted, " {};")
+      )
+    } else if (!held) {
       lines <- c(lines, paste0(
         "  \\ottoshiftobs{", colour, "}{", previous_observed, "}{", previous_ring, "}{",
         here_observed, "}{", here_shifted, "}"
@@ -403,7 +437,7 @@ target_trial_panel <- function(arm_index, origin_macro, arm, values, observed, t
     lines <- c(
       lines,
       paste0("  \\node[font=\\ottosmall, text=", colour, ", align=", align, ", anchor=", anchor, ", inner sep=1pt]"),
-      paste0("    at (", target_trial_number(x), ",", target_trial_number(note$value), ") {", note$text, "};")
+      paste0("    at (", target_trial_number(round(x, 3)), ",", target_trial_number(note$value), ") {", note$text, "};")
     )
   }
   first_values <- vapply(observed, function(x) x[1], numeric(1))
@@ -424,7 +458,7 @@ target_trial_document <- function(values, observed, times, assignment_times, out
   number <- target_trial_number
   n_times <- length(times)
   definition <- function(name, value, comment) {
-    sprintf("%-22s %% %s", paste0("\\def\\", name, "{", number(value), "}"), comment)
+    sprintf("%-22s %% %s", paste0("\\def\\", name, "{", number(round(value, 3)), "}"), comment)
   }
   time_role <- ifelse(times %in% assignment_times, ", assignment time", "")
   time_role[1] <- ", baseline"
@@ -524,7 +558,11 @@ target_trial_write <- function(tikz, file, build) {
   writeLines(tikz, file)
   style <- system.file("tikz", "margot-target-trial.sty", package = "margot")
   style_copy <- file.path(directory, "margot-target-trial.sty")
-  file.copy(style, style_copy, overwrite = TRUE)
+  if (!file.copy(style, style_copy, overwrite = TRUE)) {
+    cli::cli_abort("The style file could not be written to {.file {style_copy}}.",
+      class = "margot_error_target_trial_build", call = NULL
+    )
+  }
   files <- c(file, style_copy)
   if (!isTRUE(build)) {
     return(files)
@@ -539,7 +577,7 @@ target_trial_write <- function(tikz, file, build) {
   old_directory <- setwd(directory)
   on.exit(setwd(old_directory), add = TRUE)
   log <- suppressWarnings(system2(
-    pdflatex, c("-interaction=nonstopmode", "-halt-on-error", basename(file)),
+    pdflatex, c("-interaction=nonstopmode", "-halt-on-error", shQuote(basename(file))),
     stdout = TRUE, stderr = TRUE
   ))
   pdf <- paste0(stem, ".pdf")
@@ -552,8 +590,13 @@ target_trial_write <- function(tikz, file, build) {
   files <- c(files, file.path(directory, pdf))
   pdftoppm <- Sys.which("pdftoppm")
   if (nzchar(pdftoppm)) {
-    system2(pdftoppm, c("-png", "-r", "300", "-singlefile", pdf, stem))
-    files <- c(files, file.path(directory, paste0(stem, ".png")))
+    system2(pdftoppm, c("-png", "-r", "300", "-singlefile", shQuote(pdf), shQuote(stem)))
+    png <- file.path(directory, paste0(stem, ".png"))
+    if (file.exists(png)) {
+      files <- c(files, png)
+    } else {
+      cli::cli_warn("pdftoppm did not write {.file {png}}.")
+    }
   }
   files
 }
