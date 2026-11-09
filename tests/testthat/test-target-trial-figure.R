@@ -108,6 +108,8 @@ test_that("a specification that cannot be drawn is refused", {
     class = "margot_error_target_trial_spec"
   )
   expect_error(draw_deciles(build = TRUE), class = "margot_error_target_trial_spec")
+  # an endpoint region that leaves no room for the survey times
+  expect_error(draw_deciles(outcome_width = 6), class = "margot_error_target_trial_spec")
   expect_error(
     draw_deciles(people = list(A = rep(3, 5), A = rep(4, 5))),
     class = "margot_error_target_trial_spec"
@@ -177,4 +179,10 @@ test_that("the figure builds when pdflatex is available", {
   if (nzchar(Sys.which("pdftoppm"))) {
     expect_true(any(basename(figure$files) == "my figure.png"))
   }
+
+  # a tex error reaches the user as the build error, with the log's braces intact
+  expect_error(
+    draw_deciles(subtitle = "Bad \\nosuchmacro{} subtitle", file = file.path(directory, "bad.tex"), build = TRUE),
+    class = "margot_error_target_trial_build"
+  )
 })

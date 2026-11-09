@@ -164,7 +164,7 @@ target_trial_check_inputs <- function(observed, times, assignment_times, outcome
     stop_spec("Observed values for {names(observed)[outside]} fall outside {.arg scale}.")
   }
   for (note in notes) {
-    if (!all(c("text", "arm", "time", "value") %in% names(note)) || !note$arm %in% 1:2) {
+    if (!all(c("text", "arm", "time", "value") %in% names(note)) || !isTRUE(note$arm %in% 1:2)) {
       stop_spec("Each note needs {.field text}, {.field arm} (1 or 2), {.field time} and {.field value}.")
     }
     if (!is.null(note$participant) && !note$participant %in% names(observed)) {
@@ -236,6 +236,12 @@ target_trial_geometry <- function(times, assignment_times, scale, outcome_width,
     step <- (last_x - first_x) / (n_times - 1)
     column_half <- min(0.38, 0.42 * step)
   }
+  if (step < 0.3) {
+    cli::cli_abort(
+      "The survey times have less than 0.3 cm each; show fewer {.arg times} or narrow {.arg outcome_width}.",
+      class = "margot_error_target_trial_spec", call = NULL
+    )
+  }
   list(
     panel_width = panel_width,
     left_x = 1.90,
@@ -275,7 +281,7 @@ target_trial_footer <- function(arms, unit, assignment_times) {
 target_trial_number <- function(x) {
   vapply(
     signif(x, 10),
-    function(value) format(value, trim = TRUE, scientific = FALSE, drop0trailing = TRUE),
+    function(value) format(value, digits = 10, trim = TRUE, scientific = FALSE, drop0trailing = TRUE),
     character(1)
   )
 }
@@ -591,7 +597,9 @@ target_trial_write <- function(tikz, file, build) {
   ))
   pdf <- paste0(stem, ".pdf")
   if (!identical(attr(log, "status") %||% 0L, 0L) || !file.exists(pdf)) {
-    cli::cli_abort(c("pdflatex could not build {.file {file}}.", utils::tail(log, 12)),
+    # the log goes in as a value: its braces are tex, not message markup
+    log_tail <- paste(utils::tail(log, 12), collapse = "\n")
+    cli::cli_abort(c("pdflatex could not build {.file {file}}.", " " = "{log_tail}"),
       class = "margot_error_target_trial_build", call = NULL
     )
   }
