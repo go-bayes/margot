@@ -134,6 +134,11 @@ test_that("a scale too fine or too crowded to draw is refused or flagged", {
   }
 
   expect_error(draw_scale(seq(0, 0.0009, by = 0.0001), 0.0003), class = "margot_error_target_trial_spec")
+  # a narrow scale far from zero would put its origin outside what tex can hold
+  expect_error(draw_scale(c(9999, 10000), 9999), class = "margot_error_target_trial_spec")
+  # a large scale keeps the height of one exposure unit instead of rounding it to zero
+  large <- draw_scale(seq(0, 10000, by = 2000), 2000)$tikz
+  expect_true(any(grepl("\\def\\yunit{0.000468}", large, fixed = TRUE)))
   expect_warning(draw_scale(0:12, 3), "0.52 cm")
 })
 
@@ -169,4 +174,7 @@ test_that("the figure builds when pdflatex is available", {
   figure <- draw_deciles(assignment_times = 12:14, file = file.path(directory, "my figure.tex"), build = TRUE)
 
   expect_true(file.exists(file.path(directory, "my figure.pdf")))
+  if (nzchar(Sys.which("pdftoppm"))) {
+    expect_true(any(basename(figure$files) == "my figure.png"))
+  }
 })

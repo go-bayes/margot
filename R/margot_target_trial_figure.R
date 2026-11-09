@@ -15,7 +15,7 @@
 #' @param arms A list of two arms, the comparator first. Each arm is a list with `name` (the panel heading, different for each arm), `descriptor` (a short phrase after the heading) and `shift`. `shift` is a function of one observed value that returns the shifted value, or `NULL` for an arm that leaves exposure unassigned. It is called once for each participant at each assignment time, so it cannot depend on a participant's other values.
 #' @param exposure_label Title of the vertical axis.
 #' @param unit Singular word for one exposure value, used in the legend and footer, for example `"decile"`, `"score"` or `"count"`.
-#' @param scale Exposure values labelled on the vertical axis, in increasing order. The scale must span at least 0.01 and stay within 10,000 of zero, which is what TikZ can draw; rescale an exposure outside that range.
+#' @param scale Exposure values labelled on the vertical axis, in increasing order. TikZ cannot draw a scale that is very fine, very large, or far from zero relative to its span, such as calendar years; the function refuses such a scale, and the exposure must then be rescaled or recentred.
 #' @param scale_ends Optional character vector of two words placed beside the lowest and highest scale values, for example `c("least", "most")`.
 #' @param outcome_label Character vector with one element per line of the outcome description.
 #' @param title Figure title.
@@ -150,8 +150,11 @@ target_trial_check_inputs <- function(observed, times, assignment_times, outcome
   if (!is.numeric(scale) || length(scale) < 2 || is.unsorted(scale, strictly = TRUE)) {
     stop_spec("{.arg scale} must hold at least two exposure values in increasing order.")
   }
-  if (max(scale) - min(scale) < 0.01 || max(abs(scale)) > 10000) {
-    stop_spec("{.arg scale} must span at least 0.01 and stay within 10,000 of zero; rescale the exposure.")
+  # tex cannot hold a length beyond about 575 cm. one exposure unit is at most
+  # 4.68 / span centimetres tall, and the largest value is drawn that many units up
+  unit_height <- 4.68 / (max(scale) - min(scale))
+  if (unit_height > 500 || max(abs(scale)) * unit_height > 500 || max(abs(scale)) > 10000) {
+    stop_spec("{.arg scale} is too fine, too large or too far from zero for TikZ to draw; rescale or recentre the exposure.")
   }
   if (!is.null(scale_ends) && length(scale_ends) != 2) {
     stop_spec("{.arg scale_ends} must give two words: one for the lowest and one for the highest scale value.")
@@ -456,9 +459,12 @@ target_trial_document <- function(values, observed, times, assignment_times, out
                                   exposure_label, unit, scale, scale_ends, outcome_label, title,
                                   subtitle, footer, notes, geometry) {
   number <- target_trial_number
+  # positions across the page are written to the nearest hundredth of a millimetre;
+  # quantities in exposure units keep their precision
+  centimetres <- function(x) round(x, 3)
   n_times <- length(times)
   definition <- function(name, value, comment) {
-    sprintf("%-22s %% %s", paste0("\\def\\", name, "{", number(round(value, 3)), "}"), comment)
+    sprintf("%-22s %% %s", paste0("\\def\\", name, "{", number(value), "}"), comment)
   }
   time_role <- ifelse(times %in% assignment_times, ", assignment time", "")
   time_role[1] <- ", baseline"
@@ -494,17 +500,17 @@ target_trial_document <- function(values, observed, times, assignment_times, out
     "",
     "% --- panel geometry (cm across; one y unit = one exposure unit) ---------",
     definition("yunit", geometry$y_unit, "cm per exposure unit"),
-    definition("yorigin", geometry$y_origin, "page height of exposure value 0"),
-    definition("panelw", geometry$panel_width, "panel width"),
-    definition("leftx", geometry$left_x, "left panel origin"),
-    definition("rightx", geometry$right_x, "right panel origin"),
+    definition("yorigin", centimetres(geometry$y_origin), "page height of exposure value 0"),
+    definition("panelw", centimetres(geometry$panel_width), "panel width"),
+    definition("leftx", centimetres(geometry$left_x), "left panel origin"),
+    definition("rightx", centimetres(geometry$right_x), "right panel origin"),
     vapply(seq_len(n_times), function(i) {
-      definition(paste0("t", LETTERS[i]), geometry$time_x[i], paste0("Time ", number(times[i]), time_role[i]))
+      definition(paste0("t", LETTERS[i]), centimetres(geometry$time_x[i]), paste0("Time ", number(times[i]), time_role[i]))
     }, character(1)),
-    definition("colhalf", geometry$column_half, "half-width of an assignment column"),
-    definition("tzero", geometry$time_zero, "time zero, after baseline"),
-    definition("endlo", geometry$end_low, "endpoint region"),
-    definition("endmid", geometry$end_mid, "centre of the endpoint region"),
+    definition("colhalf", centimetres(geometry$column_half), "half-width of an assignment column"),
+    definition("tzero", centimetres(geometry$time_zero), "time zero, after baseline"),
+    definition("endlo", centimetres(geometry$end_low), "endpoint region"),
+    definition("endmid", centimetres(geometry$end_mid), "centre of the endpoint region"),
     definition("bottom", geometry$bottom, "axis, in exposure units"),
     definition("top", geometry$top, "top of the panel"),
     definition("tickdrop", geometry$tick_drop, "time labels below the axis"),
@@ -555,6 +561,9 @@ target_trial_write <- function(tikz, file, build) {
   if (!dir.exists(directory)) {
     dir.create(directory, recursive = TRUE)
   }
+  # an absolute directory stays valid after the build changes the working directory
+  directory <- normalizePath(directory)
+  file <- file.path(directory, basename(file))
   writeLines(tikz, file)
   style <- system.file("tikz", "margot-target-trial.sty", package = "margot")
   style_copy <- file.path(directory, "margot-target-trial.sty")
@@ -590,9 +599,9 @@ target_trial_write <- function(tikz, file, build) {
   files <- c(files, file.path(directory, pdf))
   pdftoppm <- Sys.which("pdftoppm")
   if (nzchar(pdftoppm)) {
-    system2(pdftoppm, c("-png", "-r", "300", "-singlefile", shQuote(pdf), shQuote(stem)))
+    status <- system2(pdftoppm, c("-png", "-r", "300", "-singlefile", shQuote(pdf), shQuote(stem)))
     png <- file.path(directory, paste0(stem, ".png"))
-    if (file.exists(png)) {
+    if (identical(status, 0L) && file.exists(png)) {
       files <- c(files, png)
     } else {
       cli::cli_warn("pdftoppm did not write {.file {png}}.")

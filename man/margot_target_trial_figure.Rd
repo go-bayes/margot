@@ -39,7 +39,7 @@ margot_target_trial_figure(
 
 \item{unit}{Singular word for one exposure value, used in the legend and footer, for example `"decile"`, `"score"` or `"count"`.}
 
-\item{scale}{Exposure values labelled on the vertical axis, in increasing order. The scale must span at least 0.01 and stay within 10,000 of zero, which is what TikZ can draw; rescale an exposure outside that range.}
+\item{scale}{Exposure values labelled on the vertical axis, in increasing order. TikZ cannot draw a scale that is very fine, very large, or far from zero relative to its span, such as calendar years; the function refuses such a scale, and the exposure must then be rescaled or recentred.}
 
 \item{scale_ends}{Optional character vector of two words placed beside the lowest and highest scale values, for example `c("least", "most")`.}
 
