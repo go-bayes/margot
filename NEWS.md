@@ -1,3 +1,7 @@
+# margot (development version)
+
+- `margot_target_trial_figure()` writes the TikZ source of a target-trial figure for a modified treatment policy analysis: two arms, the same hypothetical participants in each, and a mark wherever a shift function changes an observed value. The function applies the supplied shift functions itself, so the drawn values come from the analysis code, and it returns them in a table for checking. It can build the PDF and a 300 dpi PNG when `pdflatex` is available. This first version draws estimation figures for two arms and up to three participants; times without a usable measurement, theory figures and arm SWIGs are not yet drawn.
+
 # [2026-11-08] margot 1.4.0
 
 - `here_read_arrow(..., lazy = TRUE)` opens an Arrow Dataset without reading rows. Callers can filter waves and convert outcome values to availability flags before collecting any records. The eager reader remains the default; additional Parquet-read arguments apply to eager mode.

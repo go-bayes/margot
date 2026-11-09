@@ -235,6 +235,7 @@ reference:
     - margot_plot_cv_results
     - margot_plot_cv_summary
     - margot_plot_lmtp_learners
+    - margot_target_trial_figure
     - margot_plot_decision_tree
     - margot_view_lmtp_structure
 

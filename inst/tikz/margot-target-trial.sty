@@ -1,0 +1,163 @@
+% margot-target-trial.sty: shared style for target-trial trajectory figures
+% written by margot::margot_target_trial_figure().
+%
+% The figures put exposure on the vertical axis and survey times on the
+% horizontal axis, show the same hypothetical participants in every arm
+% panel, and mark each value that a shift function changes.
+%
+% Each figure is a 160 mm x 90 mm (16:9) canvas. At that size 8 pt text
+% projects at about the size of 17 pt text on a standard 13.33 in slide,
+% so no label is set below 8 pt. Allow at least 0.52 cm per scale step,
+% so that a one-step shift arrow stays visible at projected size.
+%
+% Line and mark code
+%   solid line, filled dot      observed value (estimation figure) or
+%                               natural value (theory figure)
+%   dashed line, open ring      shifted observed value or assigned value;
+%                               an arrow runs from the faded input to the ring
+%   ring around a dot           the shift function returns its input
+%   dotted arrow                carries a person into the endpoint region
+% Dashes mean assignment only; structural lines (time zero, region
+% edges) are solid.
+%
+% A pale kowhai column marks an assignment time. Letter labels keep the
+% participants distinct where their colours cannot be told apart.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{margot-target-trial}[2026/11/10 margot target-trial figures]
+
+\RequirePackage[T1]{fontenc}
+\RequirePackage{tgheros}
+\renewcommand{\familydefault}{\sfdefault}
+\RequirePackage{amsmath}
+\RequirePackage{sansmath}
+\RequirePackage{tikz}
+\usetikzlibrary{arrows.meta,calc,decorations.pathreplacing,patterns}
+
+% palette
+\definecolor{paper}{HTML}{FFFFFF}     % page: white
+\definecolor{ink}{HTML}{10172F}       % main text
+\definecolor{muted}{HTML}{4A5068}     % secondary text
+\definecolor{band}{HTML}{EDE8DA}      % endpoint region
+\definecolor{ruleline}{HTML}{D9D3C3}  % gridlines
+\definecolor{axisline}{HTML}{6E7287}  % axes and structural lines
+\definecolor{kowhai}{HTML}{F2C14E}    % accent: assignment time
+% hypothetical participants; letter labels keep them distinct in greyscale
+\definecolor{personA}{HTML}{3D6A96}
+\definecolor{personB}{HTML}{A3501D}
+\definecolor{personC}{HTML}{247153}
+
+% type sizes, in points at the 160 mm canvas
+\newcommand{\ottotitle}{\fontsize{13.5}{16}\selectfont\bfseries}
+\newcommand{\ottosub}{\fontsize{9.5}{11.5}\selectfont}
+\newcommand{\ottopanel}{\fontsize{10.5}{12.5}\selectfont\bfseries}
+\newcommand{\ottolabel}{\fontsize{9}{11}\selectfont}
+\newcommand{\ottosmall}{\fontsize{8}{9.6}\selectfont}
+
+\tikzset{
+  % paths and marks for the hypothetical participants
+  natpath/.style={line width=1.3pt, line cap=round, line join=round},
+  assignpath/.style={line width=1.3pt, dash pattern=on 3.2pt off 2.4pt,
+    line cap=round},
+  natdot/.style={circle, fill=#1, draw=none, inner sep=0pt,
+    minimum size=6.4pt},
+  natdot/.default=ink,
+  replaceddot/.style={circle, fill=#1, fill opacity=0.5, draw=none,
+    inner sep=0pt, minimum size=5.2pt},
+  assigndot/.style={circle, draw=#1, fill=paper, line width=1.4pt,
+    inner sep=0pt, minimum size=8pt},
+  assigndot/.default=ink,
+  heldring/.style={circle, draw=#1, fill=paper, line width=1.2pt,
+    inner sep=0pt, minimum size=10.6pt},
+  helddot/.style={circle, fill=#1, draw=none, inner sep=0pt,
+    minimum size=4.8pt},
+  shiftarrow/.style={-{Stealth[length=4.6pt, width=5.8pt]},
+    line width=1.5pt, shorten <=2.6pt, shorten >=4.6pt},
+  connector/.style={line width=0.8pt, dotted, shorten <=5pt,
+    -{Stealth[length=3.6pt, width=3.6pt]}},
+  personlabel/.style={font=\ottolabel\bfseries, anchor=east,
+    inner sep=1.5pt},
+  % frame elements
+  gridline/.style={ruleline, line width=0.4pt},
+  axis/.style={axisline, line width=0.8pt},
+  timezero/.style={axisline, line width=0.7pt},
+  regionedge/.style={axisline, line width=0.6pt},
+  assigncol/.style={fill=kowhai, fill opacity=0.40},
+  gapcol/.style={pattern=north east lines, pattern color=ruleline},
+  endregion/.style={fill=band},
+  note/.style={font=\ottosmall, text=muted, inner sep=1pt},
+  legendtext/.style={font=\ottosmall, anchor=west, text height=1.6ex,
+    text depth=0.35ex},
+  periodbrace/.style={axisline, line width=0.6pt,
+    decorate, decoration={brace, mirror, amplitude=3pt}},
+}
+
+% --- paths for one hypothetical person ---------------------------------
+% Points are TikZ coordinates in the panel scope, e.g. (\tD,4).
+% #1 colour; #2 comma-separated x/y pairs, e.g. {\tA/8, \tB/8, \tC/9}
+\newcommand{\ottohistory}[2]{%
+  \foreach[count=\i] \x/\y in {#2} {%
+    \ifnum\i=1 \xdef\ottopath{(\x,\y)}\else\xdef\ottopath{\ottopath -- (\x,\y)}\fi}%
+  \draw[natpath, #1] \ottopath;
+  \foreach \x/\y in {#2} {\node[natdot=#1] at (\x,\y) {};}
+}
+% natural value kept: #1 colour, #2 previous point, #3 point
+\newcommand{\ottokeep}[3]{%
+  \draw[natpath, #1] #2 -- #3;
+  \node[natdot=#1] at #3 {};
+}
+% natural value replaced: #1 colour, #2 previous point, #3 natural point,
+% #4 assigned point
+\newcommand{\ottoshift}[4]{%
+  \draw[natpath, #1, draw opacity=0.4] #2 -- #3;
+  \draw[assignpath, #1] #2 -- #4;
+  \node[replaceddot=#1] at #3 {};
+  \draw[shiftarrow, #1] #3 -- #4;
+  \node[assigndot=#1] at #4 {};
+}
+% assigned value equals the natural value: #1 colour, #2 previous point,
+% #3 point
+\newcommand{\ottohold}[3]{%
+  \draw[natpath, #1] #2 -- #3;
+  \node[heldring=#1] at #3 {};
+  \node[helddot=#1] at #3 {};
+}
+% --- theory figures: later assignment times --------------------------------
+% After the first assignment time, a person's next natural value arises
+% under the earlier assignments, so its lines start at the previous ring.
+% The optional argument shortens the start to that ring's edge: 4.7pt for
+% an assigned ring, 5.9pt for a held ring.
+% natural value replaced: [#1 start], #2 colour, #3 previous ring,
+% #4 natural point, #5 assigned point
+\newcommand{\ottoshiftnext}[5][4.7pt]{%
+  \draw[natpath, #2, draw opacity=0.4, shorten <=#1] #3 -- #4;
+  \draw[assignpath, #2, shorten <=#1] #3 -- #5;
+  \node[replaceddot=#2] at #4 {};
+  \draw[shiftarrow, #2] #4 -- #5;
+  \node[assigndot=#2] at #5 {};
+}
+% assigned value equals the natural value: [#1 start], #2 colour,
+% #3 previous ring, #4 point
+\newcommand{\ottoholdnext}[4][4.7pt]{%
+  \draw[natpath, #2, shorten <=#1] #3 -- #4;
+  \node[heldring=#2] at #4 {};
+  \node[helddot=#2] at #4 {};
+}
+% --- estimation figures: later assignment times -----------------------------
+% The estimator applies the shift function to each observed value at every
+% assignment time, working back from the last; strong sequential
+% exchangeability entitles this. The faded line therefore joins the
+% observed values, and the dashed line joins the shifted observed values.
+% #1 colour, #2 previous observed point, #3 previous ring,
+% #4 observed point, #5 assigned point
+\newcommand{\ottoshiftobs}[5]{%
+  \draw[natpath, #1, draw opacity=0.4] #2 -- #4;
+  \draw[assignpath, #1, shorten <=4.7pt] #3 -- #5;
+  \node[replaceddot=#1] at #4 {};
+  \draw[shiftarrow, #1] #4 -- #5;
+  \node[assigndot=#1] at #5 {};
+}
+% carry a person into the endpoint region: #1 colour, #2 x, #3 y,
+% #4 x of the region edge
+\newcommand{\ottoconnect}[4]{%
+  \draw[connector, #1] (#2,#3) -- ({#4-0.04},#3);
+}
