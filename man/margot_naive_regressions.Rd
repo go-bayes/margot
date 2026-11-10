@@ -145,7 +145,7 @@ naive_results_scaled <- margot_naive_regressions(
   coefficient_scale = 4
 )
 
-# weighted regressions, scaled for a one-unit reduction in the exposure
+# weighted regressions, scaled to compare exposures one unit apart
 naive_results_weighted <- margot_naive_regressions(
   data = my_data,
   exposure_var = "treatment",
@@ -154,8 +154,26 @@ naive_results_weighted <- margot_naive_regressions(
   coefficient_scale = -1
 )
 
-# plot results with misspecified label
-margot_plot(naive_results$combined_table, rename_ate = "Naive Association")
+# plot the weighted coefficients and their confidence intervals
+weighted_table <- naive_results_weighted$combined_table
+weighted_associations <- data.frame(
+  outcome = rownames(weighted_table),
+  association = weighted_table[[1L]], # the first column holds the coefficient
+  lower = weighted_table[["2.5 \%"]],
+  upper = weighted_table[["97.5 \%"]]
+)
+
+ggplot2::ggplot(
+  weighted_associations,
+  ggplot2::aes(x = association, y = outcome, xmin = lower, xmax = upper)
+) +
+  ggplot2::geom_vline(xintercept = 0, linetype = "dashed") +
+  ggplot2::geom_pointrange(orientation = "y") +
+  ggplot2::labs(
+    x = "Weighted association with a one-unit lower exposure",
+    y = "Outcome",
+    caption = "Bars show 95\% confidence intervals."
+  )
 }
 
 }
