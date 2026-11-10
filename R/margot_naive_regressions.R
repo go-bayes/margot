@@ -18,8 +18,16 @@
 #' @param sd The standard deviation of the outcome for RD scale E-value calculations. 
 #'   Default value is 1.
 #' @param coefficient_scale Numeric value to scale coefficients by. Default is 1 (no scaling).
-#'   Use this to interpret effects for multi-unit changes (e.g., set to 4 to get 
-#'   effects for a 4-unit change in the exposure variable).
+#'   Use this to interpret effects for multi-unit changes (e.g., set to 4 to get
+#'   effects for a 4-unit change in the exposure variable). A negative value, such as
+#'   -1 for a one-unit reduction, reverses the sign of the estimate; the standard error
+#'   is scaled by the absolute value and the interval limits are returned in order.
+#' @param weights Optional survey weights: `NULL` (default, unweighted), a single
+#'   character string naming a column in `data`, or a numeric vector with one value
+#'   per row of `data`. Every weight must be finite and positive; missing, zero or
+#'   negative weights stop the function with an error of class
+#'   `margot_error_invalid_input`, so rows are never dropped silently. See Details for
+#'   the estimator and standard errors.
 #' @param save_output Logical, whether to save the complete output. Default is FALSE.
 #' @param save_path The directory path to save the output. Default is "push_mods" 
 #'   in the current working directory.
@@ -53,6 +61,22 @@
 #' This function is intended for educational purposes to demonstrate the difference
 #' between naive associations and properly estimated causal effects.
 #'
+#' When `weights` is supplied, the point estimates are weighted least squares
+#' (`lm(weights = )`). The standard errors and intervals are design-based for a
+#' single-stage design with independent sampling and no strata. Write \eqn{x_i} for
+#' row \eqn{i} of the design matrix \eqn{X} of a fitted model, \eqn{e_i} for its
+#' residual, \eqn{w_i} for its weight, \eqn{W} for the diagonal matrix of the weights
+#' and \eqn{n} for the number of rows of `data`. The variance is the sandwich
+#' \eqn{\frac{n}{n - 1} (X^\top W X)^{-1} \left(\sum_i w_i^2 e_i^2 x_i x_i^\top\right)
+#' (X^\top W X)^{-1}}, and the 95\% interval uses the \eqn{t} distribution on the
+#' residual degrees of freedom. These equal the results of `survey::svyglm()` with
+#' `svydesign(ids = ~1, weights = ~w)`, including its treatment of rows dropped for
+#' missing values, without making `survey` a dependency. They do not account for
+#' clustering or stratification. The models stored in `models` are the weighted
+#' `lm()` fits, whose `summary()` standard errors are model-based and are not the ones
+#' reported in `combined_table`. With `weights = NULL` the function fits unweighted
+#' `lm()` models and reports their model-based intervals from `confint()`, as before.
+#'
 #' @examples
 #' \dontrun{
 #' # perform naive regressions
@@ -78,6 +102,15 @@
 #'   coefficient_scale = 4
 #' )
 #' 
+#' # weighted regressions, scaled for a one-unit reduction in the exposure
+#' naive_results_weighted <- margot_naive_regressions(
+#'   data = my_data,
+#'   exposure_var = "treatment",
+#'   outcome_vars = c("outcome1_z", "outcome2_z", "outcome3_z"),
+#'   weights = "sample_weights",
+#'   coefficient_scale = -1
+#' )
+#'
 #' # plot results with misspecified label
 #' margot_plot(naive_results$combined_table, rename_ate = "Naive Association")
 #' }
@@ -101,7 +134,8 @@ margot_naive_regressions <- function(
     prefix = NULL,
     flip_outcomes = NULL,
     flip_method = "zscore",
-    flip_scale_bounds = NULL) {
+    flip_scale_bounds = NULL,
+    weights = NULL) {
 
   # capture original expression for better diagnostics
   flip_outcomes_expr <- substitute(flip_outcomes)
@@ -123,7 +157,10 @@ margot_naive_regressions <- function(
   if (length(missing_vars) > 0) {
     stop(paste("Variables not found in data:", paste(missing_vars, collapse = ", ")))
   }
-  
+
+  # validate survey weights before any model is fitted
+  weight_values <- .margot_naive_weights(data, weights)
+
   # validate and prepare flip specifications if provided
   if (is.character(flip_outcomes) &&
       length(flip_outcomes) == 1 &&
@@ -164,6 +201,9 @@ margot_naive_regressions <- function(
   cli::cli_alert_info("Number of outcomes: {.val {length(outcome_vars)}}")
   if (!is.null(baseline_vars)) {
     cli::cli_alert_info("Baseline covariates: {.var {paste(baseline_vars, collapse = ', ')}}")
+  }
+  if (!is.null(weight_values)) {
+    cli::cli_alert_info("Survey weights supplied: weighted least squares with design-based standard errors")
   }
   cli::cli_alert_warning("These are naive regressions that ignore confounding")
   
@@ -223,7 +263,13 @@ margot_naive_regressions <- function(
         covariates_str <- paste(c(exposure_var, baseline_vars), collapse = " + ")
         formula_str <- paste(outcome_var, "~", covariates_str)
       }
-      model <- lm(as.formula(formula_str), data = data)
+      if (is.null(weight_values)) {
+        model <- lm(as.formula(formula_str), data = data)
+      } else {
+        # lm() finds the weights in the formula environment; the name avoids data columns
+        .margot_naive_survey_weights <- weight_values
+        model <- lm(as.formula(formula_str), data = data, weights = .margot_naive_survey_weights)
+      }
       models[[model_name]] <- model
       
       cli::cli_alert_info("Step 2: Extracting coefficients")
@@ -239,11 +285,20 @@ margot_naive_regressions <- function(
         conf_low <- NA
         conf_high <- NA
       } else {
-        exposure_coef <- coef_summary[exposure_var, "Estimate"] * coefficient_scale
-        exposure_se <- coef_summary[exposure_var, "Std. Error"] * coefficient_scale
-        
-        # calculate confidence intervals and scale them
-        conf_int <- confint(model)[exposure_var, ] * coefficient_scale
+        exposure_coef <- coef_summary[exposure_var, "Estimate"]
+        if (is.null(weight_values)) {
+          exposure_se <- coef_summary[exposure_var, "Std. Error"]
+          conf_int <- confint(model)[exposure_var, ]
+        } else {
+          exposure_se <- .margot_naive_design_se(model, exposure_var, n_design = nrow(data))
+          t_crit <- stats::qt(0.975, df = model$df.residual)
+          conf_int <- exposure_coef + c(-1, 1) * t_crit * exposure_se
+        }
+
+        # scale, keeping the standard error positive and the limits in order
+        exposure_coef <- exposure_coef * coefficient_scale
+        exposure_se <- exposure_se * abs(coefficient_scale)
+        conf_int <- sort(unname(conf_int) * coefficient_scale, na.last = TRUE)
         conf_low <- conf_int[1]
         conf_high <- conf_int[2]
       }
@@ -428,4 +483,61 @@ process_evalue <- function(tab, scale, delta, sd) {
     E_Val_bound = round(simple_evalue * 0.8, 3),
     row.names = rownames(tab)
   ))
+}
+
+# resolve survey weights to a numeric vector, refusing values that would drop rows
+.margot_naive_weights <- function(data, weights) {
+  if (is.null(weights)) {
+    return(NULL)
+  }
+  if (is.character(weights) && length(weights) == 1L) {
+    if (!weights %in% names(data)) {
+      cli::cli_abort(
+        "{.arg weights} names column {.val {weights}}, which is not in {.arg data}.",
+        class = "margot_error_invalid_input"
+      )
+    }
+    out <- data[[weights]]
+  } else if (is.numeric(weights) && length(weights) == nrow(data)) {
+    out <- weights
+  } else {
+    cli::cli_abort(
+      c(
+        "{.arg weights} must be {.code NULL}, one column name, or a numeric vector with one value per row of {.arg data}.",
+        "i" = "{.arg data} has {nrow(data)} row{?s}; {.arg weights} has length {length(weights)}."
+      ),
+      class = "margot_error_invalid_input"
+    )
+  }
+  if (!is.numeric(out)) {
+    cli::cli_abort("{.arg weights} must be numeric.", class = "margot_error_invalid_input")
+  }
+  out <- as.numeric(out)
+  bad <- !is.finite(out) | out <= 0
+  if (any(bad)) {
+    cli::cli_abort(
+      c(
+        "{.arg weights} must be finite and positive for every row of {.arg data}.",
+        "x" = "{sum(bad)} row{?s} {?has/have} a missing, infinite, zero or negative weight.",
+        "i" = "Remove or correct these rows before calling the function."
+      ),
+      class = "margot_error_invalid_input"
+    )
+  }
+  out
+}
+
+# design-based standard error for one coefficient of a weighted lm(): the sandwich
+# variance with an n / (n - 1) correction, as in survey::svyglm() with ids = ~1;
+# n counts every row of the design, so rows lm() drops for missing values act as a
+# domain outside the fit, as they do in svyglm()
+.margot_naive_design_se <- function(model, term, n_design) {
+  keep <- !is.na(stats::coef(model))
+  x <- stats::model.matrix(model)[, keep, drop = FALSE]
+  w <- stats::weights(model)
+  e <- stats::residuals(model)
+  bread <- solve(crossprod(x, x * w))
+  meat <- crossprod(x * (w * e))
+  v <- bread %*% meat %*% bread * n_design / (n_design - 1)
+  sqrt(v[term, term])
 }
