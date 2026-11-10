@@ -92,6 +92,48 @@ test_that("half-point values are written without rounding", {
   expect_true(any(grepl("\\ottoshift{personA}{(\\tB,3.5)}{(\\tC,3.5)}{(\\tC,2.5)}", figure$tikz, fixed = TRUE)))
 })
 
+test_that("columns can stand for several survey times and carry their own labels", {
+  labels <- c("$H_{10}$", "$(L_{11}, A_{11})$", "$(L_{12\\text{--}13}, A_{14})$", "$(L_{14}, A_{15})$", "$Y_{16}$")
+  draw_gap <- function(time_labels = NULL) {
+    margot_target_trial_figure(
+      observed = list(A = c(2, 1, 0, 0), B = c(3, 2, 3, 2)),
+      times = c(10, 11, 14, 15),
+      assignment_times = 14:15,
+      outcome_time = 16,
+      arms = list(
+        list(name = "Zero", descriptor = "set to 0", shift = function(a) 0),
+        list(name = "At least four", descriptor = "raised to 4", shift = function(a) pmax(a, 4))
+      ),
+      exposure_label = "Services in the past month",
+      unit = "count",
+      scale = 0:7,
+      outcome_label = "meaning",
+      title = "Attendance",
+      time_labels = time_labels
+    )$tikz
+  }
+
+  tikz <- draw_gap(labels)
+  # the survey times keep their numbers, evenly spaced across the gap
+  expect_true(any(grepl("\\tA/10,\\tB/11,\\tC/14,\\tD/15,\\endmid/16", tikz, fixed = TRUE)))
+  expect_true(any(grepl(
+    "\\node[note, align=center, anchor=north] at (\\tC,{\\bottom-\\labeldrop}) {$(L_{12\\text{--}13}, A_{14})$};", tikz,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("at (\\endmid,{\\bottom-\\labeldrop}) {$Y_{16}$};", tikz, fixed = TRUE)))
+  expect_false(any(grepl("{unassigned}", tikz, fixed = TRUE)))
+
+  # without labels the period words are drawn; a label for the outcome time is optional
+  expect_true(any(grepl("{unassigned}", draw_gap(), fixed = TRUE)))
+  expect_false(any(grepl("\\endmid,{\\bottom-\\labeldrop}", draw_gap(labels[1:4]), fixed = TRUE)))
+  # a stacked label takes its second line's room from the foot of the panel
+  stacked <- draw_gap(c("$H_{10}$", "$L_{11}$\\\\$A_{11}$", "$L_{12,13}$\\\\$A_{14}$", "$L_{14}$\\\\$A_{15}$"))
+  expect_true(any(grepl("\\def\\yorigin{2.16}", stacked, fixed = TRUE)))
+  expect_true(any(grepl("\\def\\yorigin{1.82}", tikz, fixed = TRUE)))
+  expect_error(draw_gap(labels[1:3]), class = "margot_error_target_trial_spec")
+  expect_error(draw_gap(1:4), class = "margot_error_target_trial_spec")
+})
+
 test_that("a specification that cannot be drawn is refused", {
   expect_error(draw_deciles(assignment_times = 12), class = "margot_error_target_trial_spec")
   expect_error(draw_deciles(assignment_times = 10:14), class = "margot_error_target_trial_spec")
