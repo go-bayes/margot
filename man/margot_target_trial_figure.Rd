@@ -19,6 +19,7 @@ margot_target_trial_figure(
   subtitle = NULL,
   footer = NULL,
   notes = NULL,
+  time_labels = NULL,
   outcome_width = 1.83,
   file = NULL,
   build = FALSE
@@ -27,7 +28,7 @@ margot_target_trial_figure(
 \arguments{
 \item{observed}{A named list with one numeric vector per hypothetical participant, holding that participant's observed exposure at each element of `times`. The names label the participants, for example `A`, `B` and `C`, and must differ. At most three participants are drawn.}
 
-\item{times}{Survey times shown on the horizontal axis, in increasing order. The first is baseline.}
+\item{times}{Survey times shown on the horizontal axis, in increasing order. The first is baseline. The times need not be consecutive, and the columns are evenly spaced whatever the gaps between them.}
 
 \item{assignment_times}{The times at which the arms assign exposure. They must be the last elements of `times`, and baseline cannot be an assignment time.}
 
@@ -53,6 +54,8 @@ margot_target_trial_figure(
 
 \item{notes}{Optional list of annotations. Each is a list with `text`, `arm` (1 or 2), `time` and `value` (the position, in axis units; `time` may fall between survey times), and optionally `participant` (a name in `observed`, which sets the colour), `anchor` (a TikZ anchor, default `"south east"`) and `align` (default `"right"`).}
 
+\item{time_labels}{Optional character vector that labels each column under its survey time: one label for each element of `times`, and optionally one more for the outcome time. Use it when a column stands for more than one survey time. For an exposure at Time 14 whose preceding covariates come from Times 12 and 13, the label could be `"$L_{12\\\\text{--}13}$\\\\\\\\$A_{14}$"`, which stacks the covariates above the exposure. The labels replace the words "baseline" and "unassigned". Each must fit within its column's share of the axis, so stack a long label on two lines with a LaTeX line break; the panel gives up a little height to make room.}
+
 \item{outcome_width}{Width of the endpoint region in centimetres. Widen it for a long outcome description.}
 
 \item{file}{Optional path of the `.tex` file to write. The style file `margot-target-trial.sty` is copied beside it.}
@@ -70,7 +73,7 @@ The figure is an estimation figure: at every assignment time the shift function 
 
 The participants are hypothetical. Supply trajectories that show the cases a reader needs to see, such as a participant at a bound of the scale, and never supply records of real participants.
 
-This first version draws two arms, up to three participants and assignment times that form the last surveyed times before the outcome. Times without a usable exposure measurement, sideways spreading of marks that share a value, the theory figure and arm SWIGs are not yet drawn.
+This first version draws two arms, up to three participants and assignment times that form the last surveyed times before the outcome. Leave a time without a usable exposure measurement out of `times`, and use `time_labels` to say which measurements each remaining column carries. Sideways spreading of marks that share a value, the theory figure and arm SWIGs are not yet drawn.
 
 Text arguments are placed in the TikZ source as given, so they may contain LaTeX and must escape characters that LaTeX treats specially.
 

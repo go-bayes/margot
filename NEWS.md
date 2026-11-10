@@ -1,6 +1,6 @@
 # margot (development version)
 
-- `margot_target_trial_figure()` writes the TikZ source of a target-trial figure for a modified treatment policy analysis: two arms, the same hypothetical participants in each, and a mark wherever a shift function changes an observed value. The function applies the supplied shift functions itself, so the drawn values come from the analysis code, and it returns them in a table for checking. It can build the PDF when `pdflatex` is available, and a 300 dpi PNG when `pdftoppm` is too. This first version draws estimation figures for two arms and up to three participants; times without a usable measurement, theory figures and arm SWIGs are not yet drawn.
+- `margot_target_trial_figure()` writes the TikZ source of a target-trial figure for a modified treatment policy analysis: two arms, the same hypothetical participants in each, and a mark wherever a shift function changes an observed value. The function applies the supplied shift functions itself, so the drawn values come from the analysis code, and it returns them in a table for checking. It can build the PDF when `pdflatex` is available, and a 300 dpi PNG when `pdftoppm` is too. This first version draws estimation figures for two arms and up to three participants. A time without a usable exposure measurement is left out of `times`, and `time_labels` says which measurements each remaining column carries. Theory figures and arm SWIGs are not yet drawn.
 
 # [2026-11-08] margot 1.4.0
 

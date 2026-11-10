@@ -6,10 +6,10 @@
 #'
 #' The participants are hypothetical. Supply trajectories that show the cases a reader needs to see, such as a participant at a bound of the scale, and never supply records of real participants.
 #'
-#' This first version draws two arms, up to three participants and assignment times that form the last surveyed times before the outcome. Times without a usable exposure measurement, sideways spreading of marks that share a value, the theory figure and arm SWIGs are not yet drawn.
+#' This first version draws two arms, up to three participants and assignment times that form the last surveyed times before the outcome. Leave a time without a usable exposure measurement out of `times`, and use `time_labels` to say which measurements each remaining column carries. Sideways spreading of marks that share a value, the theory figure and arm SWIGs are not yet drawn.
 #'
 #' @param observed A named list with one numeric vector per hypothetical participant, holding that participant's observed exposure at each element of `times`. The names label the participants, for example `A`, `B` and `C`, and must differ. At most three participants are drawn.
-#' @param times Survey times shown on the horizontal axis, in increasing order. The first is baseline.
+#' @param times Survey times shown on the horizontal axis, in increasing order. The first is baseline. The times need not be consecutive, and the columns are evenly spaced whatever the gaps between them.
 #' @param assignment_times The times at which the arms assign exposure. They must be the last elements of `times`, and baseline cannot be an assignment time.
 #' @param outcome_time The time at which the outcomes are measured, shown in the endpoint region.
 #' @param arms A list of two arms, the comparator first. Each arm is a list with `name` (the panel heading, different for each arm), `descriptor` (a short phrase after the heading) and `shift`. `shift` is a function of one observed value that returns the shifted value, or `NULL` for an arm that leaves exposure unassigned. It is called once for each participant at each assignment time, so it cannot depend on a participant's other values.
@@ -22,6 +22,7 @@
 #' @param subtitle Line under the title. The default says that the same hypothetical participants appear in each arm.
 #' @param footer Line at the foot of the figure. The default states that the shift function acts on observed values and that censoring weights address attrition.
 #' @param notes Optional list of annotations. Each is a list with `text`, `arm` (1 or 2), `time` and `value` (the position, in axis units; `time` may fall between survey times), and optionally `participant` (a name in `observed`, which sets the colour), `anchor` (a TikZ anchor, default `"south east"`) and `align` (default `"right"`).
+#' @param time_labels Optional character vector that labels each column under its survey time: one label for each element of `times`, and optionally one more for the outcome time. Use it when a column stands for more than one survey time. For an exposure at Time 14 whose preceding covariates come from Times 12 and 13, the label could be `"$L_{12\\\\text{--}13}$\\\\\\\\$A_{14}$"`, which stacks the covariates above the exposure. The labels replace the words "baseline" and "unassigned". Each must fit within its column's share of the axis, so stack a long label on two lines with a LaTeX line break; the panel gives up a little height to make room.
 #' @param outcome_width Width of the endpoint region in centimetres. Widen it for a long outcome description.
 #' @param file Optional path of the `.tex` file to write. The style file `margot-target-trial.sty` is copied beside it.
 #' @param build If `TRUE`, run `pdflatex` on `file` and, when `pdftoppm` is available, write a 300 dpi PNG. The PDF is the vector form for beamer slides, manuscripts and reports; the PNG is for PowerPoint.
@@ -69,14 +70,17 @@ margot_target_trial_figure <- function(observed,
                                        subtitle = NULL,
                                        footer = NULL,
                                        notes = NULL,
+                                       time_labels = NULL,
                                        outcome_width = 1.83,
                                        file = NULL,
                                        build = FALSE) {
   target_trial_check_inputs(
-    observed, times, assignment_times, outcome_time, arms, scale, scale_ends, notes, file, build
+    observed, times, assignment_times, outcome_time, arms, scale, scale_ends, notes, time_labels, file, build
   )
   values <- target_trial_values(observed, times, assignment_times, arms, scale)
-  geometry <- target_trial_geometry(times, assignment_times, scale, outcome_width, values)
+  # a label may stack lines with \\, and each further line needs room under the axis
+  label_lines <- max(1, lengths(strsplit(as.character(time_labels), "\\\\", fixed = TRUE)))
+  geometry <- target_trial_geometry(times, assignment_times, scale, outcome_width, values, label_lines)
   if (is.null(footer)) {
     footer <- target_trial_footer(arms, unit, assignment_times)
   }
@@ -89,7 +93,7 @@ margot_target_trial_figure <- function(observed,
   }
   tikz <- target_trial_document(
     values, observed, times, assignment_times, outcome_time, arms, exposure_label, unit,
-    scale, scale_ends, outcome_label, title, subtitle, footer, notes, geometry
+    scale, scale_ends, outcome_label, title, subtitle, footer, notes, time_labels, geometry
   )
   files <- character()
   if (!is.null(file)) {
@@ -100,7 +104,7 @@ margot_target_trial_figure <- function(observed,
 
 # stop with a classed condition when the specification cannot be drawn
 target_trial_check_inputs <- function(observed, times, assignment_times, outcome_time, arms,
-                                      scale, scale_ends, notes, file, build) {
+                                      scale, scale_ends, notes, time_labels, file, build) {
   stop_spec <- function(message) {
     cli::cli_abort(message, class = "margot_error_target_trial_spec", call = NULL, .envir = parent.frame())
   }
@@ -122,7 +126,7 @@ target_trial_check_inputs <- function(observed, times, assignment_times, outcome
       stop_spec("Participant {person} needs one observed value for each element of {.arg times}.")
     }
     if (anyNA(trajectory)) {
-      stop_spec("Participant {person} has a missing value. Times without a usable measurement are not yet drawn.")
+      stop_spec("Participant {person} has a missing value. Leave a time without a usable measurement out of {.arg times}.")
     }
   }
   n_assigned <- length(assignment_times)
@@ -171,6 +175,10 @@ target_trial_check_inputs <- function(observed, times, assignment_times, outcome
       stop_spec("A note names participant {note$participant}, who is not in {.arg observed}.")
     }
   }
+  if (!is.null(time_labels) &&
+    (!is.character(time_labels) || anyNA(time_labels) || !length(time_labels) %in% (length(times) + 0:1))) {
+    stop_spec("{.arg time_labels} needs one label for each element of {.arg times}, and optionally one more for the outcome time.")
+  }
   if (isTRUE(build) && is.null(file)) {
     stop_spec("{.arg build} needs a {.arg file} to build.")
   }
@@ -214,16 +222,19 @@ target_trial_values <- function(observed, times, assignment_times, arms, scale) 
 }
 
 # positions in centimetres across a panel and in exposure units up it
-target_trial_geometry <- function(times, assignment_times, scale, outcome_width, values) {
+target_trial_geometry <- function(times, assignment_times, scale, outcome_width, values, label_lines = 1) {
   panel_width <- 6.55
   n_times <- length(times)
-  # the panel is 4.836 cm tall above the lowest gridline. a value near the top of the
-  # scale would run through the time-zero label, so the label then gets its own headroom
+  # the panel is 4.836 cm tall above the lowest gridline, less 0.34 cm for each further
+  # line of a column label. a value near the top of the scale would run through the
+  # time-zero label, so the label then gets its own headroom
+  label_room <- 0.34 * (label_lines - 1)
+  panel_height <- 4.836 - label_room
   top_margin <- 0.156
-  y_unit <- (4.836 - top_margin) / (max(scale) - min(scale))
+  y_unit <- (panel_height - top_margin) / (max(scale) - min(scale))
   if (any(c(values$observed, values$shifted) > max(scale) - 0.3 / y_unit)) {
     top_margin <- 0.50
-    y_unit <- (4.836 - top_margin) / (max(scale) - min(scale))
+    y_unit <- (panel_height - top_margin) / (max(scale) - min(scale))
   }
   if (y_unit * min(diff(scale)) < 0.52 - 1e-8) {
     cli::cli_warn("The scale leaves less than 0.52 cm per labelled step; a one-step arrow may be hard to see when projected.")
@@ -247,7 +258,7 @@ target_trial_geometry <- function(times, assignment_times, scale, outcome_width,
     left_x = 1.90,
     right_x = 8.90,
     y_unit = y_unit,
-    y_origin = 1.82 - min(scale) * y_unit,
+    y_origin = 1.82 + label_room - min(scale) * y_unit,
     bottom = min(scale) - 0.364 / y_unit,
     top = max(scale) + top_margin / y_unit,
     time_x = first_x + step * (seq_len(n_times) - 1),
@@ -362,14 +373,14 @@ target_trial_person <- function(colour, observed, shifted, assigned, has_shift) 
 }
 
 # the frame shared by both panels: endpoint region, columns, gridlines, axis and time labels
-target_trial_frame <- function(times, assignment_times, outcome_time, scale, outcome_label, geometry) {
+target_trial_frame <- function(times, assignment_times, outcome_time, scale, outcome_label, time_labels, geometry) {
   n_times <- length(times)
   assigned <- which(times %in% assignment_times)
   unassigned <- setdiff(seq_len(n_times)[-1], assigned)
   macro <- target_trial_time_macro
   last_macro <- macro(n_times)
   columns <- paste0(macro(assigned), collapse = ",")
-  time_labels <- paste0(
+  time_ticks <- paste0(
     c(paste0(macro(seq_len(n_times)), "/", target_trial_number(times)),
       paste0("\\endmid/", target_trial_number(outcome_time))),
     collapse = ","
@@ -387,10 +398,17 @@ target_trial_frame <- function(times, assignment_times, outcome_time, scale, out
     "  \\draw[timezero] (\\tzero,\\bottom) -- (\\tzero,\\top);",
     "  \\node[note, anchor=north west, fill=paper, inner sep=1.5pt]",
     "    at ({\\tzero+0.04},{\\top-\\tickdrop/2}) {time zero};",
-    paste0("  \\foreach \\x/\\w in {", time_labels, "}"),
+    paste0("  \\foreach \\x/\\w in {", time_ticks, "}"),
     "    {\\node[font=\\ottolabel, anchor=north] at (\\x,{\\bottom-\\tickdrop}) {\\w};}"
   )
-  if (length(unassigned) >= 3) {
+  if (!is.null(time_labels)) {
+    # one line per label, because a label may hold a comma
+    positions <- c(macro(seq_len(n_times)), "\\endmid")[seq_along(time_labels)]
+    lines <- c(
+      lines,
+      paste0("  \\node[note, align=center, anchor=north] at (", positions, ",{\\bottom-\\labeldrop}) {", time_labels, "};")
+    )
+  } else if (length(unassigned) >= 3) {
     lines <- c(
       lines,
       "  \\node[note, anchor=north] at (\\tA,{\\bottom-\\labeldrop}) {baseline};",
@@ -463,7 +481,7 @@ target_trial_panel <- function(arm_index, origin_macro, arm, values, observed, t
 # assemble the standalone document
 target_trial_document <- function(values, observed, times, assignment_times, outcome_time, arms,
                                   exposure_label, unit, scale, scale_ends, outcome_label, title,
-                                  subtitle, footer, notes, geometry) {
+                                  subtitle, footer, notes, time_labels, geometry) {
   number <- target_trial_number
   # positions across the page are written to the nearest hundredth of a millimetre;
   # quantities in exposure units keep their precision
@@ -521,10 +539,10 @@ target_trial_document <- function(values, observed, times, assignment_times, out
     definition("top", geometry$top, "top of the panel"),
     definition("tickdrop", geometry$tick_drop, "time labels below the axis"),
     definition("bracedrop", geometry$brace_drop, "brace below the axis"),
-    definition("labeldrop", geometry$label_drop, "period labels below the axis"),
+    definition("labeldrop", geometry$label_drop, "period or column labels below the axis"),
     definition("ruledrop", geometry$rule_drop, "time-zero rule below the axis"),
     "",
-    target_trial_frame(times, assignment_times, outcome_time, scale, outcome_label, geometry),
+    target_trial_frame(times, assignment_times, outcome_time, scale, outcome_label, time_labels, geometry),
     "",
     "\\begin{document}",
     "\\sansmath",
