@@ -19,10 +19,10 @@ margot_target_trial_figure(
   subtitle = NULL,
   footer = NULL,
   notes = NULL,
-  time_labels = NULL,
   outcome_width = 1.83,
   file = NULL,
-  build = FALSE
+  build = FALSE,
+  time_labels = NULL
 )
 }
 \arguments{
@@ -54,13 +54,13 @@ margot_target_trial_figure(
 
 \item{notes}{Optional list of annotations. Each is a list with `text`, `arm` (1 or 2), `time` and `value` (the position, in axis units; `time` may fall between survey times), and optionally `participant` (a name in `observed`, which sets the colour), `anchor` (a TikZ anchor, default `"south east"`) and `align` (default `"right"`).}
 
-\item{time_labels}{Optional character vector that labels each column under its survey time: one label for each element of `times`, and optionally one more for the outcome time. Use it when a column stands for more than one survey time. For an exposure at Time 14 whose preceding covariates come from Times 12 and 13, the label could be `"$L_{12\\\\text{--}13}$\\\\\\\\$A_{14}$"`, which stacks the covariates above the exposure. The labels replace the words "baseline" and "unassigned". Each must fit within its column's share of the axis, so stack a long label on two lines with a LaTeX line break; the panel gives up a little height to make room.}
-
 \item{outcome_width}{Width of the endpoint region in centimetres. Widen it for a long outcome description.}
 
 \item{file}{Optional path of the `.tex` file to write. The style file `margot-target-trial.sty` is copied beside it.}
 
 \item{build}{If `TRUE`, run `pdflatex` on `file` and, when `pdftoppm` is available, write a 300 dpi PNG. The PDF is the vector form for beamer slides, manuscripts and reports; the PNG is for PowerPoint.}
+
+\item{time_labels}{Optional character vector that labels each column under its survey time: one label for each element of `times`, and optionally one more for the outcome time. Use it when a column stands for more than one survey time. For an exposure at Time 14 whose preceding covariates come from Times 12 and 13, the label could be `"$L_{12\\\\text{--}13}$\\\\\\\\$A_{14}$"`, which stacks the covariates above the exposure. The labels replace the words "baseline" and "unassigned". Each must fit within its column's share of the axis, so stack a long label on two lines with a LaTeX line break; the panel gives up a little height to make room.}
 }
 \value{
 Invisibly, a list with `tikz` (the source as a character vector of lines), `values` (a data frame with one row per arm, participant and time, giving the observed value, the value drawn after the shift function and whether the time is an assignment time) and `files` (the paths written).

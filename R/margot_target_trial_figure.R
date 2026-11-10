@@ -22,10 +22,10 @@
 #' @param subtitle Line under the title. The default says that the same hypothetical participants appear in each arm.
 #' @param footer Line at the foot of the figure. The default states that the shift function acts on observed values and that censoring weights address attrition.
 #' @param notes Optional list of annotations. Each is a list with `text`, `arm` (1 or 2), `time` and `value` (the position, in axis units; `time` may fall between survey times), and optionally `participant` (a name in `observed`, which sets the colour), `anchor` (a TikZ anchor, default `"south east"`) and `align` (default `"right"`).
-#' @param time_labels Optional character vector that labels each column under its survey time: one label for each element of `times`, and optionally one more for the outcome time. Use it when a column stands for more than one survey time. For an exposure at Time 14 whose preceding covariates come from Times 12 and 13, the label could be `"$L_{12\\\\text{--}13}$\\\\\\\\$A_{14}$"`, which stacks the covariates above the exposure. The labels replace the words "baseline" and "unassigned". Each must fit within its column's share of the axis, so stack a long label on two lines with a LaTeX line break; the panel gives up a little height to make room.
 #' @param outcome_width Width of the endpoint region in centimetres. Widen it for a long outcome description.
 #' @param file Optional path of the `.tex` file to write. The style file `margot-target-trial.sty` is copied beside it.
 #' @param build If `TRUE`, run `pdflatex` on `file` and, when `pdftoppm` is available, write a 300 dpi PNG. The PDF is the vector form for beamer slides, manuscripts and reports; the PNG is for PowerPoint.
+#' @param time_labels Optional character vector that labels each column under its survey time: one label for each element of `times`, and optionally one more for the outcome time. Use it when a column stands for more than one survey time. For an exposure at Time 14 whose preceding covariates come from Times 12 and 13, the label could be `"$L_{12\\\\text{--}13}$\\\\\\\\$A_{14}$"`, which stacks the covariates above the exposure. The labels replace the words "baseline" and "unassigned". Each must fit within its column's share of the axis, so stack a long label on two lines with a LaTeX line break; the panel gives up a little height to make room.
 #'
 #' @details Text arguments are placed in the TikZ source as given, so they may contain LaTeX and must escape characters that LaTeX treats specially.
 #'
@@ -70,10 +70,10 @@ margot_target_trial_figure <- function(observed,
                                        subtitle = NULL,
                                        footer = NULL,
                                        notes = NULL,
-                                       time_labels = NULL,
                                        outcome_width = 1.83,
                                        file = NULL,
-                                       build = FALSE) {
+                                       build = FALSE,
+                                       time_labels = NULL) {
   target_trial_check_inputs(
     observed, times, assignment_times, outcome_time, arms, scale, scale_ends, notes, time_labels, file, build
   )
