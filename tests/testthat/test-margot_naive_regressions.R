@@ -75,6 +75,32 @@ test_that("weighted estimates are weighted least squares with design-based inter
   expect_false(isTRUE(all.equal(tab, unweighted$combined_table)))
 })
 
+test_that("weighted results survive na.exclude, large units and a clashing column name", {
+  d <- make_naive_data()
+  d$y1[1:10] <- NA
+  ref <- run_naive(data = d, exposure_var = "a", outcome_vars = c("y1", "y2"), weights = "w")$combined_table
+
+  # na.exclude pads residuals() and weights(); the variance must use the fitted rows
+  withr::with_options(list(na.action = "na.exclude"), {
+    excluded <- run_naive(data = d, exposure_var = "a", outcome_vars = c("y1", "y2"), weights = "w")
+  })
+  expect_identical(excluded$combined_table, ref)
+
+  # an exposure in large units fits through lm(); rescaling back recovers the same table
+  d$a_big <- d$a * 1e9 + 5e9
+  big <- run_naive(
+    data = d, exposure_var = "a_big", outcome_vars = c("y1", "y2"),
+    weights = "w", coefficient_scale = 1e9
+  )$combined_table
+  expect_equal(unname(as.matrix(big[, 1:4])), unname(as.matrix(ref[, 1:4])), tolerance = 1e-3)
+
+  # a data column with the internal weight name must not replace the requested weights
+  d$.margot_naive_survey_weights <- 1
+  clash <- run_naive(data = d, exposure_var = "a", outcome_vars = c("y1", "y2"), weights = "w")
+  expect_identical(clash$combined_table, ref)
+  expect_equal(stats::weights(clash$models$model_y2), d$w)
+})
+
 test_that("a negative coefficient_scale flips the sign and keeps the limits in order", {
   d <- make_naive_data()
   base <- run_naive(data = d, exposure_var = "a", outcome_vars = c("y1", "y2"))$combined_table
@@ -116,9 +142,11 @@ test_that("bad weights raise a classed error before any model is fitted", {
     infinite = replace(d$w, 3, Inf),
     wrong_length = d$w[-1],
     unknown_column = "not_a_column",
-    character_column = "label"
+    character_column = "label",
+    matrix_column = "w_matrix"
   )
   d$label <- "x"
+  d$w_matrix <- cbind(d$w, d$w)
 
   for (w in bad) {
     expect_error(

@@ -266,9 +266,15 @@ margot_naive_regressions <- function(
       if (is.null(weight_values)) {
         model <- lm(as.formula(formula_str), data = data)
       } else {
-        # lm() finds the weights in the formula environment; the name avoids data columns
-        .margot_naive_survey_weights <- weight_values
-        model <- lm(as.formula(formula_str), data = data, weights = .margot_naive_survey_weights)
+        # lm() looks up weights in data before the formula environment, so bind them
+        # under a name that no column of data uses
+        weight_name <- ".margot_naive_survey_weights"
+        while (weight_name %in% names(data)) weight_name <- paste0(weight_name, "_")
+        assign(weight_name, weight_values)
+        model <- do.call(
+          "lm",
+          list(formula = as.formula(formula_str), data = quote(data), weights = as.name(weight_name))
+        )
       }
       models[[model_name]] <- model
       
@@ -509,8 +515,11 @@ process_evalue <- function(tab, scale, delta, sd) {
       class = "margot_error_invalid_input"
     )
   }
-  if (!is.numeric(out)) {
-    cli::cli_abort("{.arg weights} must be numeric.", class = "margot_error_invalid_input")
+  if (!is.numeric(out) || !is.null(dim(out)) || length(out) != nrow(data)) {
+    cli::cli_abort(
+      "{.arg weights} must resolve to a numeric vector with one value per row of {.arg data}.",
+      class = "margot_error_invalid_input"
+    )
   }
   out <- as.numeric(out)
   bad <- !is.finite(out) | out <= 0
@@ -530,14 +539,16 @@ process_evalue <- function(tab, scale, delta, sd) {
 # design-based standard error for one coefficient of a weighted lm(): the sandwich
 # variance with an n / (n - 1) correction, as in survey::svyglm() with ids = ~1;
 # n counts every row of the design, so rows lm() drops for missing values act as a
-# domain outside the fit, as they do in svyglm()
+# domain outside the fit, as they do in svyglm(). the variance is built from the
+# fit's pivoted qr of sqrt(w) x, which avoids inverting the normal equations:
+# with sqrt(w) x = q r, the sandwich is r^-1 (s' s) r^-t, where row i of s is
+# sqrt(w_i) e_i q_i. model$weights and model$residuals hold the fitted rows only,
+# even under na.exclude
 .margot_naive_design_se <- function(model, term, n_design) {
-  keep <- !is.na(stats::coef(model))
-  x <- stats::model.matrix(model)[, keep, drop = FALSE]
-  w <- stats::weights(model)
-  e <- stats::residuals(model)
-  bread <- solve(crossprod(x, x * w))
-  meat <- crossprod(x * (w * e))
-  v <- bread %*% meat %*% bread * n_design / (n_design - 1)
-  sqrt(v[term, term])
+  p <- model$rank
+  r_inv <- backsolve(qr.R(model$qr)[seq_len(p), seq_len(p), drop = FALSE], diag(p))
+  s <- qr.Q(model$qr)[, seq_len(p), drop = FALSE] * (sqrt(model$weights) * model$residuals)
+  v <- r_inv %*% crossprod(s) %*% t(r_inv) * n_design / (n_design - 1)
+  position <- match(term, names(stats::coef(model))[model$qr$pivot[seq_len(p)]])
+  sqrt(v[position, position])
 }
