@@ -20,7 +20,8 @@ margot_naive_regressions(
   prefix = NULL,
   flip_outcomes = NULL,
   flip_method = "zscore",
-  flip_scale_bounds = NULL
+  flip_scale_bounds = NULL,
+  weights = NULL
 )
 }
 \arguments{
@@ -43,8 +44,10 @@ Default value is 1.}
 Default value is 1.}
 
 \item{coefficient_scale}{Numeric value to scale coefficients by. Default is 1 (no scaling).
-Use this to interpret effects for multi-unit changes (e.g., set to 4 to get 
-effects for a 4-unit change in the exposure variable).}
+Use this to interpret effects for multi-unit changes (e.g., set to 4 to get
+effects for a 4-unit change in the exposure variable). A negative value, such as
+-1 for a one-unit reduction, reverses the sign of the estimate; the standard error
+is scaled by the absolute value and the interval limits are returned in order.}
 
 \item{save_output}{Logical, whether to save the complete output. Default is FALSE.}
 
@@ -69,6 +72,13 @@ and appends an `_r` suffix to flipped outcomes.}
 \item{flip_scale_bounds}{Numeric vector of length 2 [min, max] or named list supplying
 bounds for ordinal flipping. Required when `flip_method = "ordinal"` unless bounds
 should be inferred from the data.}
+
+\item{weights}{Optional survey weights: `NULL` (default, unweighted), a single
+character string naming a column in `data`, or a numeric vector with one value
+per row of `data`. Every weight must be finite and positive; missing, zero or
+negative weights stop the function with an error of class
+`margot_error_invalid_input`, so rows are never dropped silently. See Details for
+the estimator and standard errors.}
 }
 \value{
 A list containing:
@@ -93,6 +103,22 @@ technically incorrect since they assume causal interpretation of the coefficient
 
 This function is intended for educational purposes to demonstrate the difference
 between naive associations and properly estimated causal effects.
+
+When `weights` is supplied, the point estimates are weighted least squares
+(`lm(weights = )`). The standard errors and intervals are design-based for a
+single-stage design with independent sampling and no strata. Write \eqn{x_i} for
+row \eqn{i} of the design matrix \eqn{X} of a fitted model, \eqn{e_i} for its
+residual, \eqn{w_i} for its weight, \eqn{W} for the diagonal matrix of the weights
+and \eqn{n} for the number of rows of `data`. The variance is the sandwich
+\eqn{\frac{n}{n - 1} (X^\top W X)^{-1} \left(\sum_i w_i^2 e_i^2 x_i x_i^\top\right)
+(X^\top W X)^{-1}}, and the 95\% interval uses the \eqn{t} distribution on the
+residual degrees of freedom. These equal the results of `survey::svyglm()` with
+`svydesign(ids = ~1, weights = ~w)`, including its treatment of rows dropped for
+missing values, without making `survey` a dependency. They do not account for
+clustering or stratification. The models stored in `models` are the weighted
+`lm()` fits, whose `summary()` standard errors are model-based and are not the ones
+reported in `combined_table`. With `weights = NULL` the function fits unweighted
+`lm()` models and reports their model-based intervals from `confint()`, as before.
 }
 \examples{
 \dontrun{
@@ -119,8 +145,36 @@ naive_results_scaled <- margot_naive_regressions(
   coefficient_scale = 4
 )
 
-# plot results with misspecified label
-margot_plot(naive_results$combined_table, rename_ate = "Naive Association")
+# weighted regressions, scaled to compare exposures one unit apart
+# the _z columns contain outcomes standardised before fitting
+naive_results_weighted <- margot_naive_regressions(
+  data = my_data,
+  exposure_var = "treatment",
+  outcome_vars = c("outcome1_z", "outcome2_z", "outcome3_z"),
+  weights = "sample_weights",
+  coefficient_scale = -1
+)
+
+# plot the weighted coefficients and their confidence intervals
+weighted_table <- naive_results_weighted$combined_table
+weighted_associations <- data.frame(
+  outcome = rownames(weighted_table),
+  association = weighted_table[[1L]], # the first column holds the coefficient
+  lower = weighted_table[["2.5 \%"]],
+  upper = weighted_table[["97.5 \%"]]
+)
+
+ggplot2::ggplot(
+  weighted_associations,
+  ggplot2::aes(x = association, y = outcome, xmin = lower, xmax = upper)
+) +
+  ggplot2::geom_vline(xintercept = 0, linetype = "dashed") +
+  ggplot2::geom_pointrange(orientation = "y") +
+  ggplot2::labs(
+    x = "Weighted difference in outcome SDs for a one-unit lower exposure",
+    y = "Outcome",
+    caption = "Bars show 95\% confidence intervals."
+  )
 }
 
 }
