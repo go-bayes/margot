@@ -103,6 +103,7 @@
 #' )
 #' 
 #' # weighted regressions, scaled to compare exposures one unit apart
+#' # the _z columns contain outcomes standardised before fitting
 #' naive_results_weighted <- margot_naive_regressions(
 #'   data = my_data,
 #'   exposure_var = "treatment",
@@ -127,7 +128,7 @@
 #'   ggplot2::geom_vline(xintercept = 0, linetype = "dashed") +
 #'   ggplot2::geom_pointrange(orientation = "y") +
 #'   ggplot2::labs(
-#'     x = "Weighted association with a one-unit lower exposure",
+#'     x = "Weighted difference in outcome SDs for a one-unit lower exposure",
 #'     y = "Outcome",
 #'     caption = "Bars show 95% confidence intervals."
 #'   )
