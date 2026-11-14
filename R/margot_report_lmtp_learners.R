@@ -26,6 +26,13 @@
 #'   [margot_plot_lmtp_learners()].
 #' @param interpret_args Optional named list overriding defaults passed to
 #'   [margot_interpret_lmtp_learners()] (for example, `digits = 1`).
+#' @param learner_order Optional learner order passed to
+#'   [margot_plot_lmtp_learners()]; see that function. The default, `NULL`,
+#'   keeps its default order.
+#' @param learner_labels Optional named character vector of learner display
+#'   labels used in the plot, the summary table and the narrative; see
+#'   [margot_plot_lmtp_learners()]. The default, `NULL`, keeps the package-name
+#'   labels.
 #'
 #' @return A named list with elements:
 #'   - `summary_table`: compact dominant-learner table by shift, component, and wave.
@@ -46,7 +53,9 @@ margot_report_lmtp_learners <- function(x,
                                         digits = 1,
                                         include_plot = TRUE,
                                         plot_args = list(),
-                                        interpret_args = list()) {
+                                        interpret_args = list(),
+                                        learner_order = NULL,
+                                        learner_labels = NULL) {
   component <- match.arg(component)
   if (!is.null(outcome)) stopifnot(is.character(outcome), length(outcome) == 1L)
   if (!is.null(shifts)) stopifnot(is.character(shifts))
@@ -82,7 +91,8 @@ margot_report_lmtp_learners <- function(x,
 
   summary_table <- build_lmtp_learner_summary_table(
     learner_data = learner_data,
-    digits = digits
+    digits = digits,
+    learner_labels = learner_labels
   )
 
   plot <- NULL
@@ -95,7 +105,9 @@ margot_report_lmtp_learners <- function(x,
       waves = waves,
       remove_waves = remove_waves,
       title = title,
-      component = component
+      component = component,
+      learner_order = learner_order,
+      learner_labels = learner_labels
     )
     plot_call <- utils::modifyList(plot_defaults, plot_args)
     plot <- do.call(margot_plot_lmtp_learners, plot_call)
@@ -110,7 +122,8 @@ margot_report_lmtp_learners <- function(x,
     remove_waves = remove_waves,
     component = component,
     digits = digits,
-    return = "list"
+    return = "list",
+    learner_labels = learner_labels
   )
   interpret_call <- utils::modifyList(interpret_defaults, interpret_args)
   interpret_call$return <- "list"
@@ -143,7 +156,7 @@ margot_report_lmtp_learners <- function(x,
   )
 }
 
-build_lmtp_learner_summary_table <- function(learner_data, digits = 1) {
+build_lmtp_learner_summary_table <- function(learner_data, digits = 1, learner_labels = NULL) {
   if (is.null(learner_data) || !nrow(learner_data)) {
     return(NULL)
   }
@@ -167,7 +180,7 @@ build_lmtp_learner_summary_table <- function(learner_data, digits = 1) {
         wave_data <- component_data[component_data$wave_index == wave_index, , drop = FALSE]
         if (!nrow(wave_data)) next
 
-        wave_data$learner_label <- pretty_learner_label(wave_data$learner)
+        wave_data$learner_label <- resolve_learner_labels(wave_data$learner, learner_labels)
         wave_data <- wave_data[order(-wave_data$weight_mean, wave_data$learner_label), , drop = FALSE]
 
         top <- wave_data[1, , drop = FALSE]

@@ -12,7 +12,10 @@ margot_plot_lmtp_learners(
   waves = NULL,
   remove_waves = NULL,
   title = NULL,
-  component = c("both", "outcome", "treatment")
+  component = c("both", "outcome", "treatment"),
+  learner_order = NULL,
+  learner_labels = NULL,
+  x_label = "Time point"
 )
 }
 \arguments{
@@ -29,10 +32,10 @@ If `NULL`, all available shifts for the outcome are used.}
 \item{label_mapping}{Optional named list passed to [transform_label()] for
 readable outcome/shift labels.}
 
-\item{waves}{Optional integer vector of waves to keep (matching the wave index
-used by the LMTP fits).}
+\item{waves}{Optional integer vector of time points to keep (matching the
+time-point index used by the LMTP fits).}
 
-\item{remove_waves}{Optional integer vector of waves to drop after
+\item{remove_waves}{Optional integer vector of time points to drop after
 subsetting.}
 
 \item{title}{Optional plot title. Defaults to the pretty outcome label of the
@@ -40,13 +43,47 @@ requested contrast when `NULL`.}
 
 \item{component}{Which nuisance models to include: `"both"` (default),
 `"outcome"` (only `m`), or `"treatment"` (only `r`).}
+
+\item{learner_order}{Optional character vector giving the order of learners
+from the top of each panel downwards, for example
+`c("SL.mean", "SL.glmnet", "SL.ranger", "SL.xgboost")`. Entries may be
+learner names, learner names without SuperLearner's `"_All"` suffix, or
+display labels. Learners not listed are placed below the listed ones in the
+default order; listed learners absent from the fits are ignored. Use the
+same value in every call to give separate figures one order. The default,
+`NULL`, orders learners by their mean weight in the call, with the largest
+at the bottom.}
+
+\item{learner_labels}{Optional named character vector of display labels,
+named by learner, for example `c(SL.mean = "Mean only", SL.glmnet =
+"Lasso-penalised regression")`. A name matches a learner with or without
+SuperLearner's `"_All"` suffix. Learners without a label keep the default,
+which drops the `"SL."` prefix and `"_All"` suffix (for example `"glmnet"`).
+Two learners may not share a label.}
+
+\item{x_label}{Title of the time-point axis. Defaults to `"Time point"`.}
 }
 \value{
 A `ggplot2` object.
 }
 \description{
-Produces a heatmap of average Super Learner weights by wave, learner, shift,
-and nuisance component (outcome regression `m` and density-ratio regression
-`r`). Colours encode the mean Super Learner weight averaged across
-cross-fitting folds.
+Produces a heatmap of average Super Learner weights by time point, learner,
+shift, and nuisance component (outcome regression `m` and density-ratio
+regression `r`). Columns are the time points at which lmtp fitted its
+nuisance models, labelled by the column names of the model's
+`density_ratios` when it has them and by their index otherwise. Rows are
+learners. Panels are arranged with components in rows and shifts in columns.
+Each tile's colour and printed percentage (rounded to a whole percentage)
+give the learner's Super Learner weight averaged across cross-fitting folds.
+Each component row shows only the learners present in its fits.
+}
+\details{
+Nuisance fits are read from `fits_m` and `fits_r`, stored by outer fold and
+then by time point, as lmtp stores them. Each element may be a fitted
+`SuperLearner` object, the named coefficient vector that lmtp keeps under
+`.return_full_fits = FALSE`, or a `margot_lmtp_lean_fit` record (from
+[margot_lmtp_exposure_ratio()] with `retain_fits = FALSE`, or
+[margot_lmtp_support_probability()]). Elements that hold no weights, such as
+the provenance note that [margot_lmtp_sdr_from_components()] leaves in
+`fits_r`, are skipped.
 }

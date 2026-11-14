@@ -214,6 +214,56 @@ pretty_learner_label <- function(x) {
   gsub("_", " ", x, fixed = TRUE)
 }
 
+# display labels for learner names: a supplied label where one is given, matched
+# on the full name or on the name without SuperLearner's "_All" screen suffix,
+# and the package-name label otherwise.
+resolve_learner_labels <- function(learner, learner_labels = NULL) {
+  out <- pretty_learner_label(learner)
+  if (is.null(learner_labels)) return(out)
+  if (!is.character(learner_labels) || !length(learner_labels) || is.null(names(learner_labels)) ||
+      anyNA(learner_labels) || anyNA(names(learner_labels)) || any(!nzchar(names(learner_labels))) ||
+      anyDuplicated(names(learner_labels))) {
+    stop("`learner_labels` must be a named character vector with unique, non-empty names, ",
+      "for example c(SL.glmnet = \"Lasso\").", call. = FALSE)
+  }
+  hit <- match(learner, names(learner_labels))
+  by_key <- match(gsub("_All$", "", learner), names(learner_labels))
+  hit[is.na(hit)] <- by_key[is.na(hit)]
+  out[!is.na(hit)] <- unname(learner_labels[hit[!is.na(hit)]])
+  # two learners drawn under one label would hide each other's tiles.
+  pairs <- unique(data.frame(learner = learner, label = out, stringsAsFactors = FALSE))
+  if (anyDuplicated(pairs$label)) {
+    shared <- unique(pairs$label[duplicated(pairs$label)])
+    stop("More than one learner has the label: ", paste(shared, collapse = ", "),
+      ". Give each learner its own label in `learner_labels`.", call. = FALSE)
+  }
+  out
+}
+
+# factor levels for learner labels, which ggplot2 draws from the bottom of the
+# axis upwards. by default learners are ordered by mean weight, largest at the
+# bottom. a supplied order lists learners from the top; learners it omits
+# follow below them in the default order.
+learner_label_levels <- function(data, learner_order = NULL) {
+  by_weight <- stats::aggregate(weight_mean ~ learner_label, data, mean)
+  default_levels <- by_weight$learner_label[order(-by_weight$weight_mean)]
+  if (is.null(learner_order)) return(default_levels)
+  if (!is.character(learner_order) || !length(learner_order) || anyNA(learner_order) ||
+      anyDuplicated(learner_order)) {
+    stop("`learner_order` must be a character vector of unique learner names or labels.",
+      call. = FALSE)
+  }
+  # an entry may give the display label, the learner name, or the name without "_All".
+  position <- vapply(default_levels, function(lbl) {
+    names_here <- unique(data$learner[data$learner_label == lbl])
+    keys <- c(lbl, names_here, gsub("_All$", "", names_here))
+    hit <- which(learner_order %in% keys)
+    if (length(hit)) min(hit) else NA_integer_
+  }, integer(1))
+  listed <- default_levels[!is.na(position)][order(position[!is.na(position)])]
+  rev(c(listed, default_levels[is.na(position)]))
+}
+
 component_titles <- function(component) {
   out <- ifelse(component == "outcome", "Outcome regression (m)", "Treatment regression (r)")
   factor(out, levels = c("Outcome regression (m)", "Treatment regression (r)"))
@@ -226,20 +276,50 @@ component_strip_titles <- function(component) {
 
 #' Plot Super Learner weights for LMTP nuisance fits
 #'
-#' Produces a heatmap of average Super Learner weights by wave, learner, shift,
-#' and nuisance component (outcome regression `m` and density-ratio regression
-#' `r`). Colours encode the mean Super Learner weight averaged across
-#' cross-fitting folds.
+#' Produces a heatmap of average Super Learner weights by time point, learner,
+#' shift, and nuisance component (outcome regression `m` and density-ratio
+#' regression `r`). Columns are the time points at which lmtp fitted its
+#' nuisance models, labelled by the column names of the model's
+#' `density_ratios` when it has them and by their index otherwise. Rows are
+#' learners. Panels are arranged with components in rows and shifts in columns.
+#' Each tile's colour and printed percentage (rounded to a whole percentage)
+#' give the learner's Super Learner weight averaged across cross-fitting folds.
+#' Each component row shows only the learners present in its fits.
+#'
+#' Nuisance fits are read from `fits_m` and `fits_r`, stored by outer fold and
+#' then by time point, as lmtp stores them. Each element may be a fitted
+#' `SuperLearner` object, the named coefficient vector that lmtp keeps under
+#' `.return_full_fits = FALSE`, or a `margot_lmtp_lean_fit` record (from
+#' [margot_lmtp_exposure_ratio()] with `retain_fits = FALSE`, or
+#' [margot_lmtp_support_probability()]). Elements that hold no weights, such as
+#' the provenance note that [margot_lmtp_sdr_from_components()] leaves in
+#' `fits_r`, are skipped.
 #'
 #' @inheritParams margot_interpret_lmtp_positivity
-#' @param waves Optional integer vector of waves to keep (matching the wave index
-#'   used by the LMTP fits).
-#' @param remove_waves Optional integer vector of waves to drop after
+#' @param waves Optional integer vector of time points to keep (matching the
+#'   time-point index used by the LMTP fits).
+#' @param remove_waves Optional integer vector of time points to drop after
 #'   subsetting.
 #' @param title Optional plot title. Defaults to the pretty outcome label of the
 #'   requested contrast when `NULL`.
 #' @param component Which nuisance models to include: `"both"` (default),
 #'   `"outcome"` (only `m`), or `"treatment"` (only `r`).
+#' @param learner_order Optional character vector giving the order of learners
+#'   from the top of each panel downwards, for example
+#'   `c("SL.mean", "SL.glmnet", "SL.ranger", "SL.xgboost")`. Entries may be
+#'   learner names, learner names without SuperLearner's `"_All"` suffix, or
+#'   display labels. Learners not listed are placed below the listed ones in the
+#'   default order; listed learners absent from the fits are ignored. Use the
+#'   same value in every call to give separate figures one order. The default,
+#'   `NULL`, orders learners by their mean weight in the call, with the largest
+#'   at the bottom.
+#' @param learner_labels Optional named character vector of display labels,
+#'   named by learner, for example `c(SL.mean = "Mean only", SL.glmnet =
+#'   "Lasso-penalised regression")`. A name matches a learner with or without
+#'   SuperLearner's `"_All"` suffix. Learners without a label keep the default,
+#'   which drops the `"SL."` prefix and `"_All"` suffix (for example `"glmnet"`).
+#'   Two learners may not share a label.
+#' @param x_label Title of the time-point axis. Defaults to `"Time point"`.
 #' @return A `ggplot2` object.
 #' @export
 margot_plot_lmtp_learners <- function(x,
@@ -249,8 +329,12 @@ margot_plot_lmtp_learners <- function(x,
                                       waves = NULL,
                                       remove_waves = NULL,
                                       title = NULL,
-                                      component = c("both", "outcome", "treatment")) {
+                                      component = c("both", "outcome", "treatment"),
+                                      learner_order = NULL,
+                                      learner_labels = NULL,
+                                      x_label = "Time point") {
   component <- match.arg(component)
+  stopifnot(is.character(x_label), length(x_label) == 1L, !is.na(x_label))
   data <- summarise_lmtp_learners(x, outcome, shifts, label_mapping, waves, remove_waves)
   if (!nrow(data)) {
     stop("No learner weights available for the requested configuration.", call. = FALSE)
@@ -263,10 +347,9 @@ margot_plot_lmtp_learners <- function(x,
     stop("No learner weights available after filtering components.", call. = FALSE)
   }
 
-  data$learner_label <- pretty_learner_label(data$learner)
-  learner_order <- stats::aggregate(weight_mean ~ learner_label, data, mean)
-  learner_levels <- learner_order$learner_label[order(-learner_order$weight_mean)]
-  data$learner_label <- factor(data$learner_label, levels = learner_levels)
+  data$learner_label <- resolve_learner_labels(data$learner, learner_labels)
+  data$learner_label <- factor(data$learner_label,
+    levels = learner_label_levels(data, learner_order))
 
   wave_levels <- unique(data$wave_label[order(data$wave_index)])
   data$wave_label <- factor(data$wave_label, levels = wave_levels)
@@ -299,7 +382,7 @@ margot_plot_lmtp_learners <- function(x,
       limits = c(0, 1),
       oob = clamp01
     ) +
-    ggplot2::labs(x = "Wave", y = NULL, title = title) +
+    ggplot2::labs(x = x_label, y = NULL, title = title) +
     ggplot2::facet_grid(component_strip_label ~ shift_label, scales = "free_y", switch = "y") +
     ggplot2::theme_minimal(base_size = 12) +
     ggplot2::theme(
@@ -353,7 +436,8 @@ margot_interpret_lmtp_learners <- function(x,
                                            remove_waves = NULL,
                                            component = c("both", "outcome", "treatment"),
                                            digits = 0,
-                                           return = c("text", "list")) {
+                                           return = c("text", "list"),
+                                           learner_labels = NULL) {
   component <- match.arg(component)
   return <- match.arg(return)
   digits <- max(0L, as.integer(digits))
@@ -366,7 +450,7 @@ margot_interpret_lmtp_learners <- function(x,
   }
   if (!nrow(data)) return(if (identical(return, "text")) "" else list())
 
-  data$learner_label <- pretty_learner_label(data$learner)
+  data$learner_label <- resolve_learner_labels(data$learner, learner_labels)
   data$component_label <- component_titles(data$component)
 
   outcome_label <- unique(data$outcome_label)

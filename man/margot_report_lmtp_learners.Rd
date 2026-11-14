@@ -16,7 +16,9 @@ margot_report_lmtp_learners(
   digits = 1,
   include_plot = TRUE,
   plot_args = list(),
-  interpret_args = list()
+  interpret_args = list(),
+  learner_order = NULL,
+  learner_labels = NULL
 )
 }
 \arguments{
@@ -52,6 +54,15 @@ table and to the narrative produced by
 
 \item{interpret_args}{Optional named list overriding defaults passed to
 [margot_interpret_lmtp_learners()] (for example, `digits = 1`).}
+
+\item{learner_order}{Optional learner order passed to
+[margot_plot_lmtp_learners()]; see that function. The default, `NULL`,
+keeps its default order.}
+
+\item{learner_labels}{Optional named character vector of learner display
+labels used in the plot, the summary table and the narrative; see
+[margot_plot_lmtp_learners()]. The default, `NULL`, keeps the package-name
+labels.}
 }
 \value{
 A named list with elements:

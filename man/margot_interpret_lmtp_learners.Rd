@@ -13,7 +13,8 @@ margot_interpret_lmtp_learners(
   remove_waves = NULL,
   component = c("both", "outcome", "treatment"),
   digits = 0,
-  return = c("text", "list")
+  return = c("text", "list"),
+  learner_labels = NULL
 )
 }
 \arguments{
@@ -30,10 +31,10 @@ If `NULL`, all available shifts for the outcome are used.}
 \item{label_mapping}{Optional named list passed to [transform_label()] for
 readable outcome/shift labels.}
 
-\item{waves}{Optional integer vector of waves to keep (matching the wave index
-used by the LMTP fits).}
+\item{waves}{Optional integer vector of time points to keep (matching the
+time-point index used by the LMTP fits).}
 
-\item{remove_waves}{Optional integer vector of waves to drop after
+\item{remove_waves}{Optional integer vector of time points to drop after
 subsetting.}
 
 \item{component}{Which nuisance models to include: `"both"` (default),
@@ -44,6 +45,13 @@ percentages.}
 
 \item{return}{Either `"text"` (default) for a single character string or
 `"list"` for structured components.}
+
+\item{learner_labels}{Optional named character vector of display labels,
+named by learner, for example `c(SL.mean = "Mean only", SL.glmnet =
+"Lasso-penalised regression")`. A name matches a learner with or without
+SuperLearner's `"_All"` suffix. Learners without a label keep the default,
+which drops the `"SL."` prefix and `"_All"` suffix (for example `"glmnet"`).
+Two learners may not share a label.}
 }
 \value{
 Either a character string or a list (depending on `return`).

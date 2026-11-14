@@ -239,6 +239,54 @@ learner_test_fit <- function(m_mean = c(0.2, 0.3), r_mean = c(0.6, 0.7)) {
   ))))
 }
 
+test_that("learner plots keep the default order, labels and axis title", {
+  p <- margot_plot_lmtp_learners(learner_test_fit(), outcome = "y")
+  # default: mean weight across the call, largest first level (bottom of the axis).
+  expect_equal(levels(p$data$learner_label), c("mean", "glmnet", "ranger"))
+  expect_equal(p$labels$x, "Time point")
+  expect_equal(levels(p$data$wave_label), c("1", "2"))
+  p_wave <- margot_plot_lmtp_learners(learner_test_fit(), outcome = "y", x_label = "Wave")
+  expect_equal(p_wave$labels$x, "Wave")
+})
+
+test_that("a fixed learner order and labels give separate figures one order", {
+  labels <- c(SL.mean = "Mean only", SL.glmnet = "Lasso-penalised regression",
+    SL.ranger = "Random forest", SL.xgboost = "Gradient boosting")
+  order <- c("SL.mean", "SL.glmnet", "SL.ranger", "SL.xgboost")
+  low <- margot_plot_lmtp_learners(learner_test_fit(c(0.1, 0.1), c(0.1, 0.1)), outcome = "y",
+    learner_order = order, learner_labels = labels)
+  high <- margot_plot_lmtp_learners(learner_test_fit(c(0.9, 0.9), c(0.9, 0.9)), outcome = "y",
+    learner_order = order, learner_labels = labels)
+  # levels run from the bottom of the axis, so the first listed learner is last.
+  expected <- c("Random forest", "Lasso-penalised regression", "Mean only")
+  expect_equal(levels(low$data$learner_label), expected)
+  expect_equal(levels(high$data$learner_label), expected)
+  # labels match with or without the "_All" suffix and keep each learner's weights.
+  lasso <- low$data[low$data$learner == "SL.glmnet_All", ]
+  expect_true(all(lasso$learner_label == "Lasso-penalised regression"))
+  expect_equal(lasso$weight_mean, rep(0.45, 4L))
+  # an order may also name display labels; unlisted learners follow in default order.
+  by_label <- margot_plot_lmtp_learners(learner_test_fit(), outcome = "y",
+    learner_order = "Random forest", learner_labels = labels)
+  expect_equal(levels(by_label$data$learner_label),
+    c("Lasso-penalised regression", "Mean only", "Random forest"))
+  # unlabelled learners keep the package-name label.
+  partial <- margot_plot_lmtp_learners(learner_test_fit(), outcome = "y",
+    learner_labels = c(SL.ranger = "Random forest"))
+  expect_setequal(levels(partial$data$learner_label), c("mean", "glmnet", "Random forest"))
+})
+
+test_that("invalid learner labels and orders are refused", {
+  fit <- learner_test_fit()
+  expect_error(margot_plot_lmtp_learners(fit, outcome = "y", learner_labels = c("Mean only")),
+    "named character vector")
+  expect_error(margot_plot_lmtp_learners(fit, outcome = "y",
+    learner_labels = c(SL.mean = "Same", SL.ranger = "Same")), "More than one learner")
+  expect_error(margot_plot_lmtp_learners(fit, outcome = "y", learner_order = c("a", "a")),
+    "unique learner names")
+  expect_error(margot_plot_lmtp_learners(fit, outcome = "y", x_label = NA_character_))
+})
+
 test_that("learner summaries read full SuperLearner fits through their coefficients", {
   sl <- function(w) structure(list(call = quote(SuperLearner()),
     libraryNames = c("SL.mean_All", "SL.ranger_All"), cvRisk = c(1, 2),
@@ -269,6 +317,9 @@ test_that("learner summaries read margot's lean component records", {
   expect_equal(treatment$wave_label, c("t1", "t2"))
   expect_equal(treatment$weight_mean, c(0.7, 0.5))
   expect_equal(treatment$weight_n, c(2L, 2L))
+  p <- margot_plot_lmtp_learners(fit, outcome = "y", component = "treatment",
+    learner_labels = c(SL.glmnet = "Lasso-penalised regression"))
+  expect_setequal(as.character(unique(p$data$learner_label)), c("mean", "Lasso-penalised regression"))
   broken <- model
   broken$fits_r[[1]][[1]]$coefficient <- 1
   expect_error(summarise_lmtp_learners(list(models = list(y = list(y_null = broken))), outcome = "y"),
@@ -287,4 +338,21 @@ test_that("supplied-component fits give outcome-regression weights only", {
   expect_equal(as.character(unique(p$data$component_strip_label)), "Outcome regression\n(m)")
   expect_error(margot_plot_lmtp_learners(fit, outcome = "y", component = "treatment"),
     "after filtering components")
+})
+
+test_that("margot_report_lmtp_learners passes learner order and labels on", {
+  labels <- c(SL.mean = "Mean only", SL.glmnet = "Lasso-penalised regression",
+    SL.ranger = "Random forest")
+  rep <- margot_report_lmtp_learners(learner_test_fit(), outcome = "y",
+    learner_order = c("SL.mean", "SL.glmnet", "SL.ranger"), learner_labels = labels)
+  expect_equal(levels(rep$plot$data$learner_label),
+    c("Random forest", "Lasso-penalised regression", "Mean only"))
+  expect_true(all(c("Top.learner", "Runner.up") %in% names(rep$summary_table)))
+  expect_true(all(c(rep$summary_table[["Top.learner"]], rep$summary_table[["Runner.up"]]) %in% labels))
+  expect_match(rep$narrative$text, "Lasso-penalised regression|Mean only")
+  expect_false(grepl("glmnet", rep$narrative$text, fixed = TRUE))
+  # plot_args still take precedence over the report's arguments.
+  rep_override <- margot_report_lmtp_learners(learner_test_fit(), outcome = "y",
+    learner_labels = labels, plot_args = list(learner_labels = NULL))
+  expect_true("glmnet" %in% levels(rep_override$plot$data$learner_label))
 })
