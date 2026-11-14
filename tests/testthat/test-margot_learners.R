@@ -227,3 +227,64 @@ test_that("learner summaries group lmtp fits by time point, not by outer fold", 
   treatment_mean <- rows[rows$component == "treatment" & rows$learner == "SL.mean", ]
   expect_equal(treatment_mean$weight_mean, rep(0.7, 3L))
 })
+
+# a two-fold, two-time-point fit whose learner weights differ by component.
+learner_test_fit <- function(m_mean = c(0.2, 0.3), r_mean = c(0.6, 0.7)) {
+  fold <- function(w) lapply(w, function(v) c(SL.mean = v, SL.glmnet_All = (1 - v) / 2,
+    SL.ranger = (1 - v) / 2))
+  list(models = list(y = list(y_null = list(
+    density_ratios = matrix(1, nrow = 4, ncol = 2),
+    fits_m = list(fold(m_mean), fold(m_mean)),
+    fits_r = list(fold(r_mean), fold(r_mean))
+  ))))
+}
+
+test_that("learner summaries read full SuperLearner fits through their coefficients", {
+  sl <- function(w) structure(list(call = quote(SuperLearner()),
+    libraryNames = c("SL.mean_All", "SL.ranger_All"), cvRisk = c(1, 2),
+    coef = c(SL.mean_All = w, SL.ranger_All = 1 - w)), class = "SuperLearner")
+  model <- list(fits_m = list(list(sl(0.2)), list(sl(0.4))),
+    fits_r = list(list(sl(0.6)), list(sl(0.8))))
+  rows <- summarise_lmtp_learners(list(models = list(y = list(y_null = model))), outcome = "y")
+  expect_setequal(unique(rows$learner), c("SL.mean_All", "SL.ranger_All"))
+  expect_equal(rows$weight_mean[rows$component == "outcome" & rows$learner == "SL.mean_All"], 0.3)
+  expect_equal(rows$weight_mean[rows$component == "treatment" & rows$learner == "SL.mean_All"], 0.7)
+})
+
+test_that("learner summaries read margot's lean component records", {
+  # the record kept by margot_lmtp_exposure_ratio(retain_fits = FALSE).
+  lean <- function(w) structure(list(library = c("SL.mean_All", "SL.glmnet_All"),
+    coefficient = c(w, 1 - w), cv_risk = c(0.25, 0.2), error = c(FALSE, FALSE),
+    cv_error = c(FALSE, FALSE), inner_folds = 10L, inner_fold_sizes = rep(5L, 10L)),
+    class = "margot_lmtp_lean_fit")
+  model <- list(
+    density_ratios = matrix(1, nrow = 4, ncol = 2, dimnames = list(NULL, c("t1", "t2"))),
+    fits_m = list(list(c(SL.mean_All = 1), c(SL.mean_All = 1)),
+      list(c(SL.mean_All = 1), c(SL.mean_All = 1))),
+    fits_r = list(list(lean(0.1), lean(0.3)), list(lean(0.5), lean(0.7)))
+  )
+  fit <- list(models = list(y = list(y_null = model)))
+  rows <- summarise_lmtp_learners(fit, outcome = "y")
+  treatment <- rows[rows$component == "treatment" & rows$learner == "SL.glmnet_All", ]
+  expect_equal(treatment$wave_label, c("t1", "t2"))
+  expect_equal(treatment$weight_mean, c(0.7, 0.5))
+  expect_equal(treatment$weight_n, c(2L, 2L))
+  broken <- model
+  broken$fits_r[[1]][[1]]$coefficient <- 1
+  expect_error(summarise_lmtp_learners(list(models = list(y = list(y_null = broken))), outcome = "y"),
+    "2 learners but 1 coefficients")
+})
+
+test_that("supplied-component fits give outcome-regression weights only", {
+  # margot_lmtp_sdr_from_components() fits no density-ratio model and leaves a note in fits_r.
+  model <- learner_test_fit()$models$y$y_null
+  model$fits_r <- list(provenance = "supplied components; no nuisance refit")
+  fit <- list(models = list(y = list(y_null = model)))
+  rows <- summarise_lmtp_learners(fit, outcome = "y")
+  expect_equal(unique(rows$component), "outcome")
+  expect_equal(nrow(rows), 6L)
+  p <- margot_plot_lmtp_learners(fit, outcome = "y")
+  expect_equal(as.character(unique(p$data$component_strip_label)), "Outcome regression\n(m)")
+  expect_error(margot_plot_lmtp_learners(fit, outcome = "y", component = "treatment"),
+    "after filtering components")
+})

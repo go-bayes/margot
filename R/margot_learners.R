@@ -99,6 +99,7 @@ summarise_lmtp_learners <- function(x,
     rows <- lapply(wave_indices, function(w) {
       weights_list <- fits_list[[w]]
       if (is.null(weights_list) || !length(weights_list)) return(NULL)
+      weights_list <- lapply(weights_list, learner_weight_vector)
 
       learners <- unique(unlist(lapply(weights_list, names)))
       if (!length(learners)) return(NULL)
@@ -107,8 +108,6 @@ summarise_lmtp_learners <- function(x,
                     dimnames = list(NULL, learners))
       for (i in seq_along(weights_list)) {
         vec <- weights_list[[i]]
-        # full fits keep the SuperLearner object; lean fits keep its coefficients.
-        if (inherits(vec, "SuperLearner")) vec <- vec$coef
         if (is.null(vec) || !length(vec)) next
         mat[i, names(vec)] <- as.numeric(vec)
       }
@@ -185,6 +184,29 @@ summarise_lmtp_learners <- function(x,
   out
 }
 
+
+# one ensemble's learner weights as a named numeric vector, or NULL when the
+# element holds no weights (for example the provenance note left in `fits_r`
+# by a route that supplied its density ratios instead of fitting them).
+learner_weight_vector <- function(fit) {
+  # full fits keep the SuperLearner object; lmtp's lean fits keep its coefficients.
+  if (inherits(fit, "SuperLearner")) return(fit$coef)
+  # margot's lean component records keep the library and coefficients separately.
+  if (inherits(fit, "margot_lmtp_lean_fit")) {
+    if (length(fit$library) != length(fit$coefficient)) {
+      stop("A `margot_lmtp_lean_fit` record has ", length(fit$library), " learners but ",
+        length(fit$coefficient), " coefficients.", call. = FALSE)
+    }
+    return(stats::setNames(as.numeric(fit$coefficient), fit$library))
+  }
+  if (is.numeric(fit) && !is.null(names(fit))) return(fit)
+  # a named list of single weights was read before, so keep reading it.
+  if (is.list(fit) && length(fit) && !is.null(names(fit)) &&
+      all(vapply(fit, function(v) is.numeric(v) && length(v) == 1L, logical(1)))) {
+    return(unlist(fit))
+  }
+  NULL
+}
 
 pretty_learner_label <- function(x) {
   x <- gsub("^SL\\.", "", x)
